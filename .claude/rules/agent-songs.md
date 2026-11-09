@@ -185,7 +185,13 @@ paths:
   refusing a path it wrote -- words planted in a song could ask for any
   file. Translating has two ways and the PERSON picks: the card's buttons
   carry the way (`readLyricTranslateMode` → a line on the ask), and a
-  typed request that does not say is asked first. Seen live 2026-11-06:
+  typed request that does not say is asked first. The language they offer
+  (`pickTranslateLanguage`, shared by the song, slide and note cards) is
+  the one the name says; for a name WRITTEN in a language other than
+  English, the other one of the two -- English in a window of its own
+  language, else the window's (2026-11-08, BN-25: a Khmer note in a Khmer
+  window had offered _Replace the words with Khmer_); else the window's.
+  Seen live 2026-11-06:
   _Add another language under each line_ → _Spanish_ wrote a Spanish line
   under all 18 sung lines with `Locales: en-US, es-ES`, chords and play
   order untouched, and **Undo this change** put it back.

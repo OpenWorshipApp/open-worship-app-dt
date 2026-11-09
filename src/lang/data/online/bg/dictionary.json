@@ -4109,5 +4109,6 @@
     "Summarize this note": "Обобщи тази бележка",
     "Tidy it into headings and lists": "Подреди я в заглавия и списъци",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Готово с една промяна: думите на {count} блока от „{name}“ имат нов размер. Още не е запазено: Запази в прозореца на бележката го запазва, а Отмени тази промяна го връща.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Готово с една промяна: думите на {count} блока от „{name}“ имат нов стил. Още не е запазено: Запази в прозореца на бележката го запазва, а Отмени тази промяна го връща."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Готово с една промяна: думите на {count} блока от „{name}“ имат нов стил. Още не е запазено: Запази в прозореца на бележката го запазва, а Отмени тази промяна го връща.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ беше променено, но асистентът спря, преди да каже какво е направил. Отмени тази промяна го връща обратно."
 }

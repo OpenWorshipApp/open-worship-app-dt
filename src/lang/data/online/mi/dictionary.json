@@ -4109,5 +4109,6 @@
     "Summarize this note": "Whakarāpopotohia tēnei tuhipoka",
     "Tidy it into headings and lists": "Whakaritea ki ngā upoko me ngā rārangi",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kua oti i te huringa kotahi: he rahi hou tō ngā kupu o ngā poraka {count} o “{name}”. Kāore anō kia tiakina: mā te Tiaki i te matapihi tuhipoka e pupuri, mā te Wete i tēnei huringa e whakahoki.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kua oti i te huringa kotahi: he āhua hou tō ngā kupu o ngā poraka {count} o “{name}”. Kāore anō kia tiakina: mā te Tiaki i te matapihi tuhipoka e pupuri, mā te Wete i tēnei huringa e whakahoki."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kua oti i te huringa kotahi: he āhua hou tō ngā kupu o ngā poraka {count} o “{name}”. Kāore anō kia tiakina: mā te Tiaki i te matapihi tuhipoka e pupuri, mā te Wete i tēnei huringa e whakahoki.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Kua whakarerekēhia a “{name}”, engari i mutu te kaiāwhina i mua i tana kī i tāna i mahi ai. Mā te Wetekina tēnei panoni e whakahoki."
 }

@@ -4109,5 +4109,6 @@
     "Summarize this note": "Sažmi ovu bilješku",
     "Tidy it into headings and lists": "Složi je u naslove i popise",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gotovo u jednoj promjeni: riječi {count} blokova bilješke „{name}” imaju novu veličinu. Još nije spremljeno: Spremi u prozoru bilješke to zadržava, a Poništi ovu promjenu to vraća.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gotovo u jednoj promjeni: riječi {count} blokova bilješke „{name}” imaju novi stil. Još nije spremljeno: Spremi u prozoru bilješke to zadržava, a Poništi ovu promjenu to vraća."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gotovo u jednoj promjeni: riječi {count} blokova bilješke „{name}” imaju novi stil. Još nije spremljeno: Spremi u prozoru bilješke to zadržava, a Poništi ovu promjenu to vraća.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}” je promijenjen, ali pomoćnik je stao prije nego što je rekao što je učinio. Poništi ovu promjenu vraća ga natrag."
 }

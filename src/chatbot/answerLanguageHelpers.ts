@@ -742,7 +742,10 @@ export function toRepliesShownInLanguage(
                 return true;
             }
             if (language.isLatinScript) {
-                return detectTypedLanguage(reply) !== DEFAULT_CHAT_LANG_CODE;
+                return (
+                    detectTypedLanguage(reply, langCode) !==
+                    DEFAULT_CHAT_LANG_CODE
+                );
             }
             // Mostly the reader's own letters: a Khmer "no" then _thanks_, and
             // _Back to the_ then a Khmer button's name, carry a few and are

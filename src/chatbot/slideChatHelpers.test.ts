@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ChatAttachmentType } from './attachmentHelpers';
+import { setChatTranslator } from './chatTranHelpers';
 import {
     SLIDE_EDIT_TOOL_NAME,
     SLIDE_PLACEMENT_HINT_MAP,
@@ -10,6 +11,7 @@ import {
     checkIsSlideFileName,
     findOpenSlideAttachments,
     findSlideAskFiles,
+    findWindowDoneCardAsk,
     genSlideOpeningAnswer,
     genSlideSizeChanges,
     genSlideSizeDoneText,
@@ -542,5 +544,41 @@ describe('sizes the window changes by itself', () => {
         expect(text).toContain('3 boxes of “Talk”');
         expect(text).toContain('(70 → 88, 90 → 113)');
         expect(text).toMatch(/not saved yet.*Undo this change/);
+    });
+});
+
+// BN-16 (2026-11-08): a card keeps its buttons as the window shows them, so
+// Make the words larger pressed in another language had reached the
+// assistant; the window asks it in its English, which its reader reads.
+describe('a card button the window does by itself, pressed in any language', () => {
+    afterEach(() => {
+        setChatTranslator(
+            (text) => text,
+            (text) => text,
+        );
+    });
+
+    it('is asked in its English', () => {
+        const shown: Record<string, string> = {
+            'Make the words larger': 'Xx larger',
+            'Make the words smaller': 'Xx smaller',
+        };
+        setChatTranslator(
+            (text) => shown[text] ?? text,
+            (text) => shown[text] ?? text,
+        );
+        expect(findWindowDoneCardAsk('Xx larger')).toBe(
+            'Make the words larger',
+        );
+        expect(findWindowDoneCardAsk(' Xx smaller ')).toBe(
+            'Make the words smaller',
+        );
+        expect(readSlideSizeAsk(findWindowDoneCardAsk('Xx larger')!)).toEqual({
+            kind: 'scale',
+            factor: 1.25,
+        });
+        // Already English, or another button: asked as it is.
+        expect(findWindowDoneCardAsk('Make the words larger')).toBeNull();
+        expect(findWindowDoneCardAsk('Check the spelling')).toBeNull();
     });
 });

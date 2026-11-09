@@ -6,6 +6,19 @@
         "words": "ang ng mga sa na at ay si ni kay ko mo niya namin natin ninyo nila ako ikaw ka siya kami tayo kayo sila paano ano saan bakit kailan sino alin ito iyan iyon dito doon hindi wala may mayroon puwede pwede gusto kailangan din rin lang po salamat",
         "yes": ["oo", "opo", "oo, salamat"],
         "no": ["hindi po", "hindi, salamat"],
-        "order": 27
+        "order": 27,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:palakihin\\s+ang\\s+teksto|lakihan\\s+ang\\s+teksto|palakihin\\s+ang\\s+mga\\s+letra|palakihin\\s+ang\\s+sulat)$"
+            ],
+            "smaller": [
+                "^(?:paliitin\\s+ang\\s+teksto|liitan\\s+ang\\s+teksto|paliitin\\s+ang\\s+mga\\s+letra|paliitin\\s+ang\\s+sulat)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:gawing\\s+bold\\s+ang\\s+lahat\\s+ng\\s+teksto|gawing\\s+makapal\\s+ang\\s+lahat\\s+ng\\s+teksto)$"
+            ]
+        }
     }
 }

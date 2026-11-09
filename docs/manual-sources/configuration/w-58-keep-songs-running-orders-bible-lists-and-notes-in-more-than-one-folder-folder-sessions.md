@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-170, PM-171]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-09"
 ---
 # W-58 — Keep songs, running orders, Bible lists and notes in more than one folder (folder sessions)
 
@@ -64,5 +64,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-170` · `PM-171`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
 :::

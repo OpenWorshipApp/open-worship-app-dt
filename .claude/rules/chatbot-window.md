@@ -102,6 +102,14 @@ the record's chat, family line, related verses, word study).
     is locked), dropped by render once `canAdd` is true again. Shared with
     the ✨ window (8 tabs). A driver still gets no tab: count tabs, never
     read `disabled`.
+  - **A language installed or changed while the window is open reloads
+    it** (2026-11-09, BN-45, `chatLangReloadHelpers.ts`). The window reads
+    every language's small files once, at load (`chatLangHelpers.ts` and
+    the readers built on its marks), so it listens (`onLangPluginsChanged`)
+    and loads again when its turned-on languages or their versions change
+    -- once nothing is on its way, the tabs saved first -- as Settings >
+    Languages reloads every window. Its own offer to install a language
+    had left the new one unnamed and its shortcuts to a model.
   - **The head row belongs to the tab in front**: three `<select>`s — _asking
     about_ (`BOT_FOCUS_LIST`, following the opener window until picked), the
     assistant, the model. **Which WINDOW the tab works in is NOT in the head**:
@@ -398,7 +406,13 @@ the record's chat, family line, related verses, word study).
     option was a duplicate of nothing.
   - **Every answer ends with things to PRESS**: **Copy**, **Ask again**, and
     options from an `OPTIONS:` line that `parseAnswerOptions`
-    (`quickReplyHelpers.ts`) always strips (own line or inline at the end);
+    (`quickReplyHelpers.ts`) always strips (own line or inline at the end,
+    or -- since 2026-11-08, BN-27, a Chinese note answer drawn as four
+    lines of words -- a bare marker with up to five short options listed
+    one a line under it to the end; `Choices:` is the same frame, BN-29,
+    Free's Nemotron writing it as often as `OPTIONS:`); a card button the
+    window does by itself, pressed in any language, is asked in its English
+    (`findWindowDoneCardAsk`, BN-16); an options line under a marker word of the person's OWN language (_Opcje:_) is read by its shape -- the last line, one to three words and a colon, two to five items between `|`, never another frame or a list (2026-11-09, BN-47);
     failing that, the answer's trailing yes/no or either-or question, then the
     nearest corpus questions (`genFollowUpQuestions`). LAST message only,
     never duplicating an action button, both rows capped at 5. An option
@@ -458,7 +472,22 @@ the record's chat, family line, related verses, word study).
     the app's words. Latin-script languages are told apart by their little
     words (`functionWords`; a French elision `l'` counts at the front of a
     word, 2026-10-29, `EC-446`: an English line with none of English's had
-    been answered in a French window's French). **Any language a person
+    been answered in a French window's French). **English and the language
+    the app is SHOWN in are believed on half the evidence**
+    (`SHOWN_LANGUAGE_PRIOR`, `detectTypedLanguage(text, appLangCode)`), and
+    languages sharing another script that a line fits alike go to the app's
+    language, then one family, else `other` -- answered in the language it
+    was written in (2026-11-08, `BN-33`, the goal _work great for all
+    languages_: the half had gone to every language with an
+    `assistant.json`, French in every app, and a script tie to the first
+    listed, so with every language installed a Dutch, Italian, Haitian or
+    Samoan line in an English app was named French, a Ukrainian or Bulgarian
+    one Russian, a Nepali one Hindi -- and answered in it). A line a
+    language loses is fixed in ITS list: thirteen got their commonest words
+    the same day (Hausa "mai", Kinyarwanda "wa"/"mu" and its `z'` elisions,
+    French "moi"/"tout"/"fait"), and the okina (U+02BB) reads as the
+    apostrophe. `typedEditAsks.test.ts` holds every language's four edit
+    lines to its own language or nothing, in an English app and in its own. **Any language a person
     TYPES is named** (2026-11-03, the user: _no matter what language I type
     it work seamlessly_; `EC-447`..`EC-451`): each language's own
     `typed.json` (`src/lang/data/online/<code>/`, 84 of them, 47 in a
@@ -507,7 +536,7 @@ the record's chat, family line, related verses, word study).
     words as they are. With no Gemma 4 to translate, or when a translation
     fails, the model is asked in their language directly; an answer that
     could not be put into it is shown in English under one sentence saying
-    so. Not for a verse being looked for (it has its own English head start
+    so. A translation that is the English handed back with a word changed counts as not put into it (`checkIsEnglishEcho`), and an answer a model asked in their language wrote in English is translated after the fact (`planForEnglishAnswer`; 2026-11-09, BN-48: Catalan and Xhosa answers had been shown in English with no note). Not for a verse being looked for (it has its own English head start
     and names verses a translation would reword), and an answer the app
     wrote itself, already in their language, is left alone. A pressed chip
     asks its row's ENGLISH (`StarterQuestionType.textEn`, `echoText` for

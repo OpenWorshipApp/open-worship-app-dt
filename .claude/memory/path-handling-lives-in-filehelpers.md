@@ -35,4 +35,4 @@ tested in `src/server/fileHelpers.test.ts`, which mocks `appProvider` with
 fileHelpers. A test file that stubs `./fileHelpers` wholesale needs the real
 rule borrowed with `importOriginal` (and `pathUtils.sep` on its appProvider
 stub, which fileHelpers reads at load). `dataDirAliasHelpers.ts` predates this
-and is still separate. Related: [[portable-data-dir-alias]].
+and is still separate. **Two paths are one file by `toPathCompareKey`** (storageFileHelpers): case dropped on Windows and macOS, and on Windows a forward slash IS the backslash (2026-11-09, BN-38 -- an agent naming a note `C:/…/Default.own` had its undo dropped by the note window holding `C:\…`, which then wrote the undone line back). Compare paths only through it, and a separator added to a key goes through it too (`toPathCompareKey(dir + sep)`), or a prefix check misses on Windows. Related: [[portable-data-dir-alias]].

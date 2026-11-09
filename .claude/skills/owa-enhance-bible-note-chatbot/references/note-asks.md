@@ -37,3 +37,41 @@ asks (**Undo this change** or _undo that_).
 
 21. _Undo that_ — action `undo`; _redo it_ — action `redo`
 22. _How do I draw a diagram in this note?_ — the editor's guide (Excalidraw), no change
+
+## Every language (2026-11-08, the goal _work great for all languages_)
+
+On a scratch profile with each language installed (`npm run lang:pack --
+--pack=<codes>`, then `owa_language install`) and a Bible of each (the Bible
+import's `check` and `import` over a fresh stdio server, or a copy of the
+person's own `bibles-data/<key>.xml`), the Lookup left on another Bible, one
+note per language (`owa_bible_note add` with mark-up and a verse token naming
+its Bible). Ask in the language; grade as above, plus: the answer in the
+language typed, the button names as the window shows them.
+
+23. Colour ONE word that also starts a longer word, in a script with no
+    spaces -- Khmer _ព្រះ_ beside _ព្រះជាម្ចាស់_, Thai _พระ_ beside _พระเจ้า_:
+    that word alone (`words`, BN-24)
+24. _Make the text bigger_ in the language -- every block `size: "larger"`
+25. _Add a line at the end: …_ with words in the language -- written as given
+26. _Put John 1:1 under the first line_ in the language -- `passage`, read
+    from that language's Bible (`bible` filled in by the window, BN-26), in
+    its own digits
+27. The note's card in a window of the note's own language -- the translate
+    pair offers English (BN-25)
+28. On an assistant that is not a Gemma 4 (Free's Nemotron): a word of the
+    note named in the language -- `words` in the note's own letters (BN-23)
+29. _Make the text bigger_ / _make all the letters bold_ typed in a language
+    whose `assistant.json` says them (Khmer, French) -- done by the WINDOW,
+    no model (point the tab at a stand-in model and count its requests: 0)
+30. **Undo this change**, then at once another change -- one edit, the read
+    carrying the restored note (BN-28)
+31. _Make the text bigger_ and _make the first line bold_ in EVERY installed
+    language at once (two scratch copies, 42 languages each; the lines in
+    `src/lang/data/tests/chatbot/typedEditAsks.json`, the first-line one
+    with the loanword "bold" where the language's own word is a colour) --
+    the size done by the window, the bold in one edit, and the answer in the
+    language TYPED, never a neighbour sharing its little words or its script
+    (BN-31, BN-33, BN-34)
+32. On Free: _add a line at the end saying …_ typed in Khmer, Arabic, Thai,
+    Chinese, Russian and Spanish, twice each -- the words go in exactly as
+    typed, the answer in the language (BN-23, BN-30)

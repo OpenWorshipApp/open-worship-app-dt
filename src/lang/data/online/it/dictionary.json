@@ -4109,5 +4109,6 @@
     "Summarize this note": "Riassumi questa nota",
     "Tidy it into headings and lists": "Ordinala in titoli ed elenchi",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fatto in una sola modifica: le parole di {count} blocchi di «{name}» hanno una nuova dimensione. Non è ancora salvato: Salva nella finestra della nota lo conserva, e Annulla questa modifica lo riporta indietro.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fatto in una sola modifica: le parole di {count} blocchi di «{name}» hanno un nuovo stile. Non è ancora salvato: Salva nella finestra della nota lo conserva, e Annulla questa modifica lo riporta indietro."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fatto in una sola modifica: le parole di {count} blocchi di «{name}» hanno un nuovo stile. Non è ancora salvato: Salva nella finestra della nota lo conserva, e Annulla questa modifica lo riporta indietro.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» è stato cambiato, ma l’assistente si è fermato prima di dire che cosa ha fatto. Annulla questa modifica lo riporta com’era."
 }

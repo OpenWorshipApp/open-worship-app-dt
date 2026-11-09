@@ -400,8 +400,14 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             return readdirSync(dirPath, { withFileTypes: true }).flatMap(
                 (entry) => {
                     const entryPath = path.join(dirPath, entry.name);
+                    // A language package's own dependencies
+                    // (`src/lang/data/online/<code>/node_modules`) are no
+                    // source of the app's: walking their typings took the
+                    // test past its 5 s under load (2026-11-08).
                     if (entry.isDirectory()) {
-                        return listSources(entryPath);
+                        return entry.name === 'node_modules'
+                            ? []
+                            : listSources(entryPath);
                     }
                     return /\.tsx?$/.test(entry.name) &&
                         !/\.test\.tsx?$/.test(entry.name)

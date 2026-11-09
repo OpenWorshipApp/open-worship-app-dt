@@ -3,9 +3,20 @@
         "name": "Swahili",
         "nativeName": "Kiswahili",
         "script": "Latin",
-        "words": "na ya wa kwa ni la za katika kama je nini wapi kwanini lini nani gani mimi wewe yeye sisi ninyi wao yangu yako yake yetu hii hiyo hizi hayo hapa pale sana zaidi pia tu si siyo naweza unaweza nataka nahitaji tafadhali asante kwenye jinsi ninawezaje kuna hakuna ndani juu kutoka kwamba lakini au kila vipi",
+        "words": "na ya wa kwa ni la za katika kama je nini wapi kwanini lini nani gani mimi wewe yeye sisi ninyi wao yangu yako yake yetu hii hiyo hizi hayo hapa pale sana zaidi pia tu si siyo naweza unaweza nataka nahitaji tafadhali asante kwenye jinsi ninawezaje kuna hakuna ndani juu kutoka kwamba lakini au kila vipi ongeza weka ondoa badilisha andika mwishoni mwanzoni mmoja",
         "yes": ["ndiyo", "ndio", "sawa"],
         "no": ["hapana", "hapana, asante"],
-        "order": 29
+        "order": 29,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ongeza\\s+ukubwa\\s+wa\\s+maandishi|kuza\\s+maandishi|fanya\\s+maandishi\\s+kuwa\\s+makubwa|ongeza\\s+ukubwa\\s+wa\\s+herufi)$"
+            ],
+            "smaller": [
+                "^(?:punguza\\s+ukubwa\\s+wa\\s+maandishi|fanya\\s+maandishi\\s+kuwa\\s+madogo|punguza\\s+ukubwa\\s+wa\\s+herufi)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:fanya\\s+maandishi\\s+yote\\s+kuwa\\s+mazito)$"]
+        }
     }
 }

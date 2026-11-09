@@ -105,7 +105,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   Tools) are the MAIN process's (`electron/appMenuAgentHelpers.ts`), not the
   firewall's: a menu item has no DOM for the page half to read;
   acting calls are capped at 25 per rolling minute ACROSS sessions because the
-  thing protected is one window; **`owa_read_website` inverts the URL rule and
+  thing protected is one window; **an `owa_undo` putting back, by its own id, a change THIS session made with a tool that takes nothing away is an acting call and no removal** (2026-11-09, BN-46, `genOwnChangeMemory`: per transport, the `undoId` each such answer carries, 200 at most for half an hour); kept at the user's word when asked the same day -- the help window's own **Undo this change** goes through this door, and after ten in five minutes it had been refused with the change left in place; an undo of a removal, one naming no id and a redo (an undo's own id, never remembered) stay counted; **`owa_read_website` inverts the URL rule and
   gets a budget of its own** (10 per 5 minutes — a separate counter, because
   the thing protected there is the one network rather than the one window);
   and provider keys, bearer tokens and JWTs are

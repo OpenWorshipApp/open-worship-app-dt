@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+    checkIsEnglishAnswer,
+    checkIsEnglishEcho,
     checkIsLanguageNativeModel,
     findPageLanguage,
     findTranslatedLanguage,
@@ -105,6 +107,80 @@ describe('readAnswerTranslation', () => {
                 readAnswerTranslation('  ', 'Press **Show**.', language),
             ).toBeNull();
         }
+    });
+});
+
+// BN-48 (2026-11-09): the English handed back with a word changed is no
+// translation, and an answer that came back in English when another
+// language was asked for is put into it after the fact.
+describe('an answer still in English', () => {
+    const ENGLISH =
+        'Done: block 1 is now bold. It is not saved yet, and **Undo this ' +
+        'change** puts it back.';
+
+    it('a translation that is the English near enough is none', () => {
+        expect(
+            checkIsEnglishEcho(
+                'Done: block 1 is bold now. It is not saved yet, and ' +
+                    '**Undo this change** puts it back.',
+                ENGLISH,
+            ),
+        ).toBe(true);
+        // Words of another language with the button name kept: a translation.
+        expect(
+            checkIsEnglishEcho(
+                'Zork blip 1 wug fep. Nib wug zap blorp, **Undo this ' +
+                    'change** zeb dax.',
+                ENGLISH,
+            ),
+        ).toBe(false);
+        for (const language of OTHER_LANGUAGE_LIST) {
+            expect(
+                readAnswerTranslation(
+                    'Done: block 1 is bold now. It is not saved yet, and ' +
+                        '**Undo this change** puts it back.',
+                    ENGLISH,
+                    language,
+                ),
+            ).toBeNull();
+        }
+    });
+
+    it('is an English answer to another language, given enough words', () => {
+        expect(checkIsEnglishAnswer(ENGLISH, 'xx')).toBe(true);
+        expect(checkIsEnglishAnswer(ENGLISH, 'en')).toBe(false);
+        expect(checkIsEnglishAnswer(ENGLISH, 'other')).toBe(false);
+        expect(checkIsEnglishAnswer('Done.', 'xx')).toBe(false);
+    });
+
+    it('a language with data and a translator gets a late plan', async () => {
+        for (const { code } of OTHER_LANGUAGE_LIST) {
+            const asking = genAskTranslation({
+                replyLang: code,
+                words: 'x',
+                findTranslator: async () => GEMMA,
+                translate: vi.fn(),
+            });
+            const late = await asking.planForEnglishAnswer();
+            expect(late?.language.code).toBe(code);
+            expect(late?.translator).toBe(GEMMA);
+        }
+        for (const replyLang of ['en', 'other']) {
+            const asking = genAskTranslation({
+                replyLang,
+                words: 'x',
+                findTranslator: async () => GEMMA,
+                translate: vi.fn(),
+            });
+            expect(await asking.planForEnglishAnswer()).toBeNull();
+        }
+        const noTranslator = genAskTranslation({
+            replyLang: OTHER_LANGUAGE_LIST[0]?.code ?? 'xx',
+            words: 'x',
+            findTranslator: async () => null,
+            translate: vi.fn(),
+        });
+        expect(await noTranslator.planForEnglishAnswer()).toBeNull();
     });
 });
 

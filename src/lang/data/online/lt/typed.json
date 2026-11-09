@@ -7,6 +7,19 @@
         "letters": "ąčęėįšųūž",
         "yes": ["taip", "taip, prašau"],
         "no": ["ne", "ne, ačiū"],
-        "order": 19
+        "order": 19,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:padidink\\s+tekstą|padidink\\s+teksta|padidinti\\s+tekstą|padidinti\\s+teksta|didesnis\\s+tekstas|padidink\\s+šriftą|padidink\\s+srifta)$"
+            ],
+            "smaller": [
+                "^(?:sumažink\\s+tekstą|sumazink\\s+teksta|sumažinti\\s+tekstą|sumazinti\\s+teksta|mažesnis\\s+tekstas|mazesnis\\s+tekstas|sumažink\\s+šriftą|sumazink\\s+srifta)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:paryškink\\s+visą\\s+tekstą|paryskink\\s+visa\\s+teksta)$"
+            ]
+        }
     }
 }

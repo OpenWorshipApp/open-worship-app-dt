@@ -3,7 +3,7 @@ id: W-08
 title: "Définir l'arrière-plan (couleur / image / vidéo / web)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 0a8b33fdd764580f
+translatedFrom: 2ba34cc3bcced4e0
 ---
 # W-08 — Définir l'arrière-plan (couleur / image / vidéo / web)
 
@@ -46,7 +46,9 @@ images de ce dimanche sur une clé USB à votre série habituelle d'arrière-pla
 changer le dossier avec lequel l'application a été configurée. **[en:tran:Default]** EST ce dossier : c'est
 celui que nomment les Paramètres des chemins, et ajouter des sessions n'y touche jamais. Une nouvelle session commence
 sans dossier et propose d'utiliser celui par défaut. Pour qu'une session lise un dossier à vous, appuyez sur la ligne du dossier au-dessus de la liste (le chemin qu'elle lit) : une case s'ouvre dessous — tapez le chemin du dossier et appuyez sur Entrée, ou appuyez sur **[en:tran:Choose a folder]** (l'icône de dossier) et choisissez-le. Le **⋮** de la session sur laquelle vous êtes (ou un
-clic droit sur n'importe laquelle) la renomme ou la supprime. Supprimer oublie le dossier et le diaporama
-de cette session — jamais les fichiers eux-mêmes. Dans les onglets Images, Vidéos et Sites web,
+clic droit sur n'importe laquelle) la renomme ou la supprime — la session **[en:tran:Default]** peut être renommée,
+jamais supprimée. Supprimer oublie le dossier et le diaporama
+de cette session — jamais les fichiers eux-mêmes. **[en:tran:Documents]**, **[en:tran:Presenting Flows]**, **[en:tran:Bibles]**
+et **[en:tran:Bible Notes]** ont la même rangée sous leur titre (W-58). Dans les onglets Images, Vidéos et Sites web,
 le diaporama se trouve sur la même rangée, et un ▶ bleu sur un bouton signifie que le diaporama de cette session
 continue pendant que vous en regardez une autre.

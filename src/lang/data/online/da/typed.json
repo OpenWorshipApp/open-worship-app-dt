@@ -8,6 +8,19 @@
         "family": "danish-norwegian",
         "yes": ["ja", "ja tak"],
         "no": ["nej", "nej tak"],
-        "order": 16
+        "order": 16,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:gør\\s+teksten\\s+større|større\\s+tekst|forstør\\s+teksten|gør\\s+skriften\\s+større|større\\s+skrift)$"
+            ],
+            "smaller": [
+                "^(?:gør\\s+teksten\\s+mindre|mindre\\s+tekst|formindsk\\s+teksten|gør\\s+skriften\\s+mindre|mindre\\s+skrift)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:gør\\s+al\\s+teksten\\s+fed|gør\\s+hele\\s+teksten\\s+fed)$"
+            ]
+        }
     }
 }

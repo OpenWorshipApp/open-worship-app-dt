@@ -25,6 +25,8 @@
 import type { ChatAttachmentType } from './attachmentHelpers';
 import {
     DEFAULT_CHAT_LANG_CODE,
+    detectTypedLanguage,
+    getAssistantLanguage,
     type AssistantLanguageType,
 } from './chatLangHelpers';
 import { fillWords, tran } from './chatTranHelpers';
@@ -415,19 +417,37 @@ export function findSongLanguage(
 }
 
 /**
- * The language a translation chip offers: the one the song's name says, or
- * the language the app is shown in -- never English, which is what most of
- * the songs here are already in. Null: offer "another language".
+ * The language a translation chip offers: the one the song's name says; for
+ * a name WRITTEN in a language other than English, the other one of the two
+ * -- English for a name in the window's own language, else the window's
+ * (2026-11-08, BN-25: a note named in Khmer, in a Khmer window, offered to
+ * put its words "into Khmer"); else the language the app is shown in --
+ * never English, which is what most of the songs here are already in. A
+ * name too short to tell (one Latin word) is the last case. Null: offer
+ * "another language".
  */
 export function pickTranslateLanguage(
     songName: string,
     appLanguage: AssistantLanguageType,
     languages: readonly AssistantLanguageType[],
 ) {
-    return (
-        findSongLanguage(songName, languages) ??
-        (appLanguage.code === DEFAULT_CHAT_LANG_CODE ? null : appLanguage)
+    const named = findSongLanguage(songName, languages);
+    if (named !== null) {
+        return named;
+    }
+    const writtenIn = detectTypedLanguage(
+        toSongName(songName),
+        appLanguage.code,
     );
+    // A name in a language no installed one can be told from (`other`)
+    // is not English either (2026-11-08, BN-33: a Macedonian name).
+    if (writtenIn !== null && writtenIn !== DEFAULT_CHAT_LANG_CODE) {
+        return writtenIn === appLanguage.code ||
+            appLanguage.code === DEFAULT_CHAT_LANG_CODE
+            ? getAssistantLanguage(DEFAULT_CHAT_LANG_CODE)
+            : appLanguage;
+    }
+    return appLanguage.code === DEFAULT_CHAT_LANG_CODE ? null : appLanguage;
 }
 
 /**

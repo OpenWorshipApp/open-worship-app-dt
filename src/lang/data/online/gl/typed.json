@@ -3,10 +3,23 @@
         "name": "Galician",
         "nativeName": "Galego",
         "script": "Latin",
-        "words": "unha non cando moi máis tamén xa aínda axuda axúdame grazas facer fago podo pode quero teño tes ten hai isto iso nós vós coma sen miña túa súa ningún ningunha algún algunha onde que como por para con o a os as do da no na un eu ti el ela meu teu seu este esta aquí ver pero nada todo",
+        "words": "unha non cando moi máis tamén xa aínda axuda axúdame grazas facer fago podo pode quero teño tes ten hai isto iso nós vós coma sen miña túa súa ningún ningunha algún algunha onde que como por para con o a os as do da no na un eu ti el ela meu teu seu este esta aquí ver pero nada todo en e pon engade ao",
         "letters": "ñáéíóú",
         "yes": ["si", "claro", "si, por favor"],
         "no": ["non", "non, grazas"],
-        "order": 85
+        "order": 85,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:fai\\s+o\\s+texto\\s+máis\\s+grande|fai\\s+o\\s+texto\\s+mais\\s+grande|aumenta\\s+o\\s+tamaño\\s+do\\s+texto|aumenta\\s+o\\s+tamano\\s+do\\s+texto|texto\\s+máis\\s+grande|texto\\s+mais\\s+grande|letra\\s+máis\\s+grande|letra\\s+mais\\s+grande)$"
+            ],
+            "smaller": [
+                "^(?:fai\\s+o\\s+texto\\s+máis\\s+pequeno|fai\\s+o\\s+texto\\s+mais\\s+pequeno|reduce\\s+o\\s+tamaño\\s+do\\s+texto|reduce\\s+o\\s+tamano\\s+do\\s+texto|texto\\s+máis\\s+pequeno|texto\\s+mais\\s+pequeno|letra\\s+máis\\s+pequena|letra\\s+mais\\s+pequena)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:pon\\s+todo\\s+o\\s+texto\\s+en\\s+negriña|pon\\s+todo\\s+en\\s+negriña|pon\\s+todo\\s+o\\s+texto\\s+en\\s+negrina|pon\\s+todo\\s+en\\s+negrina)$"
+            ]
+        }
     }
 }

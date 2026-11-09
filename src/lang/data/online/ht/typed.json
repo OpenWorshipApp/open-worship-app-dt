@@ -3,10 +3,23 @@
         "name": "Haitian Creole",
         "nativeName": "Kreyòl ayisyen",
         "script": "Latin",
-        "words": "ak oswa men pa mwen ou li nou yo kijan kisa kote poukisa kilè kiyès kiles sa se nan pou sou avèk ka vle dwe tou deja anpil plis tanpri mèsi",
+        "words": "ak oswa men pa mwen ou li nou yo kijan kisa kote poukisa kilè kiyès kiles sa se nan pou sou avèk ka vle dwe tou deja anpil plis tanpri mèsi la an pi fè tout mete yon ki gen bay konn",
         "letters": "òè",
         "yes": ["wi", "wi, tanpri"],
         "no": ["non", "non, mèsi"],
-        "order": 42
+        "order": 42,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:fè\\s+tèks\\s+la\\s+pi\\s+gwo|fe\\s+teks\\s+la\\s+pi\\s+gwo|agrandi\\s+tèks\\s+la|agrandi\\s+teks\\s+la|grandi\\s+tèks\\s+la|grandi\\s+teks\\s+la)$"
+            ],
+            "smaller": [
+                "^(?:fè\\s+tèks\\s+la\\s+pi\\s+piti|fe\\s+teks\\s+la\\s+pi\\s+piti|diminye\\s+tèks\\s+la|diminye\\s+teks\\s+la|rapetise\\s+tèks\\s+la|rapetise\\s+teks\\s+la)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:mete\\s+tout\\s+tèks\\s+la\\s+an\\s+gra|mete\\s+tout\\s+teks\\s+la\\s+an\\s+gra)$"
+            ]
+        }
     }
 }

@@ -150,6 +150,7 @@ import {
     checkCanSeeImages,
     checkIsReasoningOffRemembered,
     describeLlmError,
+    genChangedWithoutAnswer,
     genGeneralAskAction,
     genGuideRescueSummary,
     genLlmModelTitle,
@@ -1200,6 +1201,152 @@ describe('the Anthropic loop', () => {
         });
     });
 
+    // BN-26 (2026-11-08, seen live): asked in Khmer under a Khmer note,
+    // "add John 1:1 under the first line" read the verse from the KJV the
+    // Lookup was on, a Khmer Bible installed.
+    test('a new verse in a note asked in another language comes from a Bible in it', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
+        fake.toolResultMap.owa_find_verse = JSON.stringify({
+            bible: 'KJV',
+            bibles: [
+                { key: 'KJV', locale: 'en-US' },
+                { key: 'XXB', locale: 'xx-XX' },
+            ],
+        });
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            isChanged: true,
+            summary: 'ok',
+        });
+        const passage = { after: 1, kind: 'passage', ref: 'John 1:1' };
+        useAnthropic(
+            [
+                anthropicToolUse(
+                    {
+                        name: 'owa_note_edit',
+                        input: { action: 'edit', changes: [passage] },
+                    },
+                    {
+                        name: 'owa_note_edit',
+                        input: {
+                            action: 'edit',
+                            changes: [
+                                { block: 2, words: 'love', color: 'red' },
+                            ],
+                        },
+                    },
+                    {
+                        name: 'owa_note_edit',
+                        input: {
+                            action: 'edit',
+                            bible: 'NIV',
+                            changes: [passage],
+                        },
+                    },
+                ),
+                anthropicText('Done.'),
+            ],
+            'anthropic',
+        );
+        const file = {
+            name: 'Grace',
+            filePath: 'C:\\notes\\Default.own',
+            noteId: 3,
+        };
+
+        await askLlmBot(
+            'Put John 1:1 under the first line',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { note: { files: [file], verseLang: 'xx' } },
+        );
+
+        const target = { file: file.filePath, id: 3, note: 'Grace' };
+        expect(fake.toolCallList).toEqual([
+            // Looked up once, at the first edit that adds a verse.
+            { name: 'owa_find_verse', args: {} },
+            {
+                name: 'owa_note_edit',
+                args: {
+                    action: 'edit',
+                    changes: [passage],
+                    ...target,
+                    bible: 'XXB',
+                },
+            },
+            // No verse added: no Bible put in.
+            {
+                name: 'owa_note_edit',
+                args: {
+                    action: 'edit',
+                    changes: [{ block: 2, words: 'love', color: 'red' }],
+                    ...target,
+                },
+            },
+            // A Bible the model named stands.
+            {
+                name: 'owa_note_edit',
+                args: {
+                    action: 'edit',
+                    bible: 'NIV',
+                    changes: [passage],
+                    ...target,
+                },
+            },
+        ]);
+    });
+
+    test('a new verse in a note asked in English is the Lookup’s, nothing looked up', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({ isChanged: true });
+        const passage = { after: 1, kind: 'passage', ref: 'John 1:1' };
+        useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_note_edit',
+                    input: { action: 'edit', changes: [passage] },
+                }),
+                anthropicText('Done.'),
+            ],
+            'anthropic',
+        );
+
+        await askLlmBot(
+            'Put John 1:1 under the first line',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Grace',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 3,
+                        },
+                    ],
+                },
+            },
+        );
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_note_edit',
+                args: {
+                    action: 'edit',
+                    changes: [passage],
+                    file: 'C:\\notes\\Default.own',
+                    id: 3,
+                    note: 'Grace',
+                },
+            },
+        ]);
+    });
+
     test('a failed tool is handed back to the model as words', async () => {
         fake.toolList = [
             { name: 'owa_help_search' },
@@ -1675,6 +1822,63 @@ describe('the OpenAI-shaped loop', () => {
 
         expect(raised.message).toContain('it wrote no answer this time');
         expect(raised.cause.message).toBe('ChatGPT returned no answer (stop)');
+    });
+
+    // BN-36 (2026-11-08): on Free's Nemotron, three typed lines of twelve
+    // went into the note and the answer was "could not answer" -- no word of
+    // the change, no button to take it back.
+    test('a change made before the model went quiet is said and offered back', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Grace',
+            isChanged: true,
+            undoId: 'undo-1',
+            summary: 'blocks: 1 added -- added paragraph',
+        });
+        useOpenAiShaped(
+            [
+                openAiToolCall('owa_note_edit', {
+                    action: 'edit',
+                    changes: [{ after: 2, text: 'God is love' }],
+                }),
+                openAiText('', 'stop'),
+                openAiText('', 'stop'),
+            ],
+            'openai',
+        );
+        const file = {
+            name: 'Grace',
+            filePath: 'C:\\notes\\Default.own',
+            noteId: 3,
+        };
+
+        const answer = await askLlmBot(
+            'Add a line at the end saying God is love',
+            'bibleNote',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+            { note: { files: [file] } },
+        );
+
+        expect(answer.text).toBe(
+            '“Grace” was changed, but the assistant stopped before saying ' +
+                'what it did. Undo this change puts it back.',
+        );
+        expect(answer.actions?.map((action) => action.label)).toEqual([
+            'Undo this change',
+        ]);
+        expect(answer.shows?.map((show) => show.name)).toEqual([
+            'Show it in the list',
+        ]);
+    });
+
+    test('nothing changed is no change to say', () => {
+        expect(genChangedWithoutAnswer(null)).toBeNull();
+        expect(
+            genChangedWithoutAnswer({ name: 'Grace', undoId: null })?.actions,
+        ).toEqual([]);
     });
 
     test('a reply the server dropped is asked for once more', async () => {

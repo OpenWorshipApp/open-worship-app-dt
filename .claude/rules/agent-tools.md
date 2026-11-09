@@ -740,7 +740,7 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   store is shared by every agent on the machine**, so a script checking undo
   passes each change's own `undoId`. The firewall rations removals — every
   `delete*` and `owa_undo` — at 10 per 5 minutes, a counter apart from the 25
-  presses a minute, because what it protects is the user's files; and
+  presses a minute, because what it protects is the user's files; except that an `owa_undo` naming, by its own id, a change THIS session made with a tool that takes nothing away is no removal (2026-11-09, BN-46: the help window's own **Undo this change** had been refused after ten in five minutes); and
   `owa_bible_note` refuses a write while that file is open in a
   `bibleNote.html` window, which saves its stale copy back over it --
   **except `add`** (2026-11-08): a new note is the panel's own +, pressed with
@@ -1527,8 +1527,13 @@ false` and searches only a dataset a lookup panel already holds
   night, `readSlideSizeAsk` / `genSlideSizeChanges` in
   `src/chatbot/slideChatHelpers.ts`, run in `ChatbotAppComp` right after the
   options card): the card's **Make the words larger** (a pressed button asks
-  its own English, so in any language), _make the words smaller_ and
-  _make every box 110 px_ -- a short English line and nothing else in it;
+  its own English, so in any language -- since 2026-11-08, BN-16: a card
+  stores its buttons as the window shows them, and until then a press in
+  another language was asked in its own words, which only the model read;
+  `findWindowDoneCardAsk` maps it back), _make the words smaller_ and
+  _make every box 110 px_ -- a short English line and nothing else in it,
+  or the same in a language whose `assistant.json` says it
+  (`textSizeAsks`, `languageEditAskHelpers.ts`: Khmer and French);
   a slide named, a box chosen or a look asked for stays the model's. The
   window reads the document (`slides`), scales every unlocked text box
   (×1.25 / ×0.8, so a 90 title over a 70 subtitle stays above it --
@@ -1705,7 +1710,14 @@ false` and searches only a dataset a lookup panel already holds
   the one before, as the editor does it, or taken back out) -- for the
   block, or with `words` for those words only, runs split where they
   start and end, WHOLE words first (`fas` had matched inside
-  `tasdfasd`), and HTML a model writes round the words read as the
+  `tasdfasd`) -- in a script written with no spaces, whole where the
+  browser's word segmenter puts its edges (2026-11-08, BN-24: Khmer
+  _ព្រះ_ had coloured the start of _ព្រះជាម្ចាស់_ too; Electron's ICU cuts
+  Khmer, Thai, Chinese and Burmese into words, measured), else anywhere
+  widened to whole letter clusters (a mark, or a letter set under an
+  invisible stacker, never a run of its own), and a word asked in another
+  case found at its own offset (a dotted capital I lowers to two letters)
+  -- and HTML a model writes round the words read as the
   words and their style (`readWordsMarkup`: gemma4:cloud sent a
   `<span style="color:red">` and no `color`). A fixed block takes them
   too (a passage in Georgia), never words. Adds take the Insert menu's
@@ -1753,10 +1765,21 @@ false` and searches only a dataset a lookup panel already holds
   the ORIGINAL node, a run of unchanged words keeps its own style, new words
   take the block's (a Khmer note's font), and every other node is copied
   through byte for byte -- proven on all 227 editable blocks of the dev data
-  folder's real notes, each given its own words back. A NEW verse (`[^ref]`
+  folder's real notes, each given its own words back. **And a block given
+  its OWN words back keeps its nodes** (2026-11-08, BN-35,
+  `ownWordsChangeSet`): the mark-up says no space inside a bold run, no
+  comment's mark (`type: "mark"`) and no code block's colouring, and
+  rebuilding from it had moved a space out of the bold, dropped a comment
+  and flattened a Markdown code block in a note the editor wrote -- a
+  model sends a block's words back with a style or a kind all the time;
+  its summary says no "new words" (round trip 254 / 292, 0 failures). A NEW verse (`[^ref]`
   or a `passage`) is read by the app from the installed Bible
   (`owa_present_bible`'s resolvers, the lookup's version unless `bible`
-  names one); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
+  names one -- and in the chatbot a note ask typed in another language
+  than English fills `bible` with an installed Bible of that language when
+  the Lookup's is not one, BN-26, `findNoteVerseBible` in
+  `llmBotHelpers.ts`: asked in Khmer, John 1:1 had come from the KJV the
+  Lookup was on); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
   is never loaded for it). **A verse token names its Bible**
   (2026-11-08, the user's picture of a note chat claiming the English
   lines' verses were now KJV while every chip still read the Khmer Bible,
@@ -1797,7 +1820,10 @@ false` and searches only a dataset a lookup panel already holds
   `all:app:note-head-changed`, main relays `main:app:note-head-changed` to
   every window (`electronEventListener.ts`), and `initBibleNote` reloads its
   head (`noteHeadChangeHelpers.ts`); the window the change was made in
-  finds nothing new. Seen live on a scratch profile with a copy of the
+  finds nothing new. The file is matched by `toPathCompareKey`, which on
+  Windows reads a forward slash as the backslash (2026-11-09, BN-38: a
+  change named `C:/…/Default.own` and undone never reached the window
+  holding `C:\…`, whose editor kept the undone line and wrote it back). Seen live on a scratch profile with a copy of the
   user's note: no window open, a read opened it and read in 1.9 s; the six
   English chips moved to KJV in one edit (0.5 s), the Khmer ones kept;
   words typed a moment before a read were in it; the toolbar's Undo took
@@ -1807,9 +1833,11 @@ false` and searches only a dataset a lookup panel already holds
   the FILE's state taken as the head, or the undo would have nothing to put
   back. Guards: a verse-marks item is refused; a stale `hash` (typed into
   since the read) is refused; a "new" block repeating a block the call does
-  not touch is refused with that block's number; a block given another kind
+  not touch is refused with that block's number; unless the add says `again: true`, the same words on purpose (2026-11-09, BN-44: refused twice with no way out, a model told the person the line was added); a block given another kind
   AND fewer than half its own words is refused (`checkLosesWords`, seen
-  live). Only a `.own` inside a Bible Notes folder of any session
+  live; the segmenter's words, so a Khmer or Chinese paragraph -- one or
+  two "words" split at its spaces -- is held to it too). Only a `.own`
+  inside a Bible Notes folder of any session
   (`findSessionIdByFilePath`). Firewall: `read` reads, `edit` acts
   (`READING_ACTION_MAP`); no removal (a block taken out is an edit with its
   undo). Banner: _changed the Bible note "<title>"_ (key

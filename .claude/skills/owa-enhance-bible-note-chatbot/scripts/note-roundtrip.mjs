@@ -41,6 +41,7 @@ const MODULE_LIST = [
     'agentNoteBlockLinkHelpers',
     'agentNoteNormalizeHelpers',
     'agentNoteMarkupHelpers',
+    'scriptClusterHelpers',
 ];
 const workDir = mkdtempSync(join(tmpdir(), 'note-roundtrip-'));
 try {

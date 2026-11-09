@@ -450,7 +450,11 @@ export type DataDirCopyResultType = {
 function checkIsPathInside(dirPath: string, parentDirPath: string) {
     const key = toPathCompareKey(pathResolve(dirPath));
     const parentKey = toPathCompareKey(pathResolve(parentDirPath));
-    return key === parentKey || key.startsWith(parentKey + pathSeparator);
+    // The separator as the keys write it (BN-38).
+    return (
+        key === parentKey ||
+        key.startsWith(parentKey + toPathCompareKey(pathSeparator))
+    );
 }
 
 /**

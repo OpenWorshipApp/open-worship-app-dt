@@ -7,6 +7,19 @@
         "letters": "əçğıöşü",
         "yes": ["bəli", "hə"],
         "no": ["xeyr", "yox"],
-        "order": 23
+        "order": 23,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:mətni\\s+böyüt|mətni\\s+boyut|yazını\\s+böyüt|yazını\\s+boyut|hərfləri\\s+böyüt|hərfləri\\s+boyut|şrifti\\s+böyüt|srifti\\s+boyut|mətni\\s+daha\\s+böyük\\s+et|mətni\\s+daha\\s+boyuk\\s+et)$"
+            ],
+            "smaller": [
+                "^(?:mətni\\s+kiçilt|mətni\\s+kicilt|yazını\\s+kiçilt|yazını\\s+kicilt|hərfləri\\s+kiçilt|hərfləri\\s+kicilt|şrifti\\s+kiçilt|srifti\\s+kicilt|mətni\\s+daha\\s+kiçik\\s+et|mətni\\s+daha\\s+kicik\\s+et)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:bütün\\s+mətni\\s+qalın\\s+et|butun\\s+mətni\\s+qalın\\s+et|hamısını\\s+qalın\\s+et)$"
+            ]
+        }
     }
 }

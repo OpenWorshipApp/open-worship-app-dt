@@ -7,6 +7,19 @@
         "letters": "ãõçâêôàáéíóú",
         "yes": ["sim", "claro", "sim, por favor"],
         "no": ["não", "não, obrigado", "não, obrigada"],
-        "order": 1
+        "order": 1,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:aumenta\\s+o\\s+texto|aumente\\s+o\\s+texto|letra\\s+maior|aumentar\\s+o\\s+texto|aumente\\s+a\\s+letra|aumenta\\s+a\\s+letra|aumenta\\s+o\\s+tamanho\\s+do\\s+texto|aumente\\s+o\\s+tamanho\\s+do\\s+texto)$"
+            ],
+            "smaller": [
+                "^(?:diminui\\s+o\\s+texto|diminua\\s+o\\s+texto|letra\\s+menor|diminuir\\s+o\\s+texto|diminua\\s+a\\s+letra|diminui\\s+a\\s+letra|diminui\\s+o\\s+tamanho\\s+do\\s+texto|diminua\\s+o\\s+tamanho\\s+do\\s+texto)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:coloque\\s+todo\\s+o\\s+texto\\s+em\\s+negrito|deixe\\s+todo\\s+o\\s+texto\\s+em\\s+negrito|põe\\s+tudo\\s+em\\s+negrito|poe\\s+tudo\\s+em\\s+negrito|deixa\\s+tudo\\s+em\\s+negrito)$"
+            ]
+        }
     }
 }

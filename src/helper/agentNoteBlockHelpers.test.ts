@@ -622,6 +622,25 @@ describe('what a change is refused for', () => {
         ).toBe(true);
     });
 
+    // BN-44: a line the note has already, added on purpose -- the refusal
+    // says how, and `again` adds it with the twin left as it was.
+    test('the same words again, on purpose', () => {
+        expect(reasonOf([{ after: 2, text: 'first point' }])).toContain(
+            '`again: true`',
+        );
+        const result = edit([
+            { after: 10, kind: 'paragraph', text: 'first point', again: true },
+        ]);
+        expect(result.isChanged).toBe(true);
+        const blocks = readNoteBlocks(result.content)!.blocks;
+        expect(
+            blocks.filter((block) => {
+                return block.text === 'first point';
+            }).length,
+        ).toBe(2);
+        expect(blocks.at(-1)?.text).toBe('first point');
+    });
+
     test('a block named twice, out of range, or with nothing to change', () => {
         expect(
             reasonOf([
@@ -764,5 +783,115 @@ describe('a block at another text size', () => {
         const result = edit([{ after: 0, kind: 'h2', text: 'Big', size: 40 }]);
         // Its words took the note's own style (20px), then the size asked.
         expect(sizesOf(result.content, 0)).toEqual(['font-size: 40px;']);
+    });
+});
+
+// BN-35 (2026-11-08): three blocks of a note in the dev data folder came out
+// changed when given their own words back -- a space inside a bold run moved
+// out of it, a comment's mark was dropped, a code block's colouring was
+// flattened. The mark-up says none of them; the block keeps its nodes.
+describe('a block given its own words back', () => {
+    const MARK = {
+        children: [text('Let there be light')],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'mark',
+        version: 1,
+        ids: ['comment-1'],
+    };
+    const highlight = (words: string, highlightType?: string) => {
+        return {
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: words,
+            type: 'code-highlight',
+            version: 1,
+            ...(highlightType === undefined ? {} : { highlightType }),
+        };
+    };
+    const OWN_CONTENT = JSON.stringify({
+        root: {
+            children: [
+                paragraph([
+                    text('Theme: ', 1),
+                    text('God '),
+                    text('creates', 1),
+                    text(', orders and speaks.'),
+                ]),
+                paragraph([
+                    text('Comment anchor: '),
+                    MARK,
+                    text(' is the phrase to revisit.'),
+                ]),
+                {
+                    children: [
+                        highlight('#', 'punctuation'),
+                        highlight(' Genesis 1 Study', 'title'),
+                        { type: 'linebreak', version: 1 },
+                        highlight('- creation, light'),
+                    ],
+                    direction: null,
+                    format: '',
+                    indent: 0,
+                    type: 'code',
+                    version: 1,
+                    language: 'markdown',
+                },
+            ],
+            direction: null,
+            format: '',
+            indent: 0,
+            type: 'root',
+            version: 1,
+        },
+    });
+    const ownBlocks = readNoteBlocks(OWN_CONTENT)!.blocks;
+
+    test.each(ownBlocks.map((block) => [block.n, block.kind, block.text]))(
+        'block %s (%s) is left byte for byte',
+        (n, _kind, words) => {
+            const result = applyNoteEdit({
+                content: OWN_CONTENT,
+                changes: [{ block: n, text: words }],
+            });
+            if ('reason' in result) {
+                throw new Error(result.reason);
+            }
+            expect(result.content).toBe(OWN_CONTENT);
+            expect(result.isChanged).toBe(false);
+            expect(result.summary).not.toContain('new words');
+        },
+    );
+
+    test('with a colour, the comment keeps its mark and the words go red', () => {
+        const result = applyNoteEdit({
+            content: OWN_CONTENT,
+            changes: [{ block: 2, text: ownBlocks[1].text, color: 'red' }],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        const block = rootOf(result.content).children[1];
+        const mark = block.children.find((child: any) => {
+            return child.type === 'mark';
+        });
+        expect(mark?.ids).toEqual(['comment-1']);
+        expect(JSON.stringify(block)).toContain('color: red');
+        expect(result.summary).not.toContain('new words');
+    });
+
+    test('words that differ are still new words', () => {
+        const result = applyNoteEdit({
+            content: OWN_CONTENT,
+            changes: [{ block: 1, text: '**Theme:** God makes light.' }],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(result.summary).toContain('new words');
+        expect(result.content).not.toBe(OWN_CONTENT);
     });
 });

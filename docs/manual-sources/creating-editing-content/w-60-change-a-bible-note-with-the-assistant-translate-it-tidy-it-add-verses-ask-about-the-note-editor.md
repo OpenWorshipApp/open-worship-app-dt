@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-110, CB-169]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-09"
 ---
 # W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)
 
@@ -60,8 +60,11 @@ row's own **[en:tran:Delete]**.
 3. Press a button under the card, or type what you want:
    - **Replace the words with …** puts the note's words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation under them.
-     The language offered is the one the note's title says, else the one the app is shown in;
-     with neither, the buttons say _another language_ and the assistant asks which.
+     The language offered is the one the note's title names; else, for a title written in the
+     language the app is shown in, English, and for one written in another language, the
+     app's (a Khmer note in a Khmer window offers English, an English one Khmer); else the
+     one the app is shown in. In an English window with a title that says none, the buttons
+     say _another language_ and the assistant asks which.
    - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
    - **[en:tran:Summarize this note]** sums the note up in the chat; nothing in the note
      changes.
@@ -70,13 +73,18 @@ row's own **[en:tran:Delete]**.
    - Text size: _Make the words larger_ (or _make text bigger_), _make the words smaller_
      and _make the words 20 px_ change every part of the note at once, each part
      keeping its size against the others (a heading stays larger than its lines). The
-     help window does these by itself, so they work with no AI key and no internet.
+     help window does these by itself, so they work with no AI key and no internet --
+     typed in the language of any installed language pack, and pressed as a card's
+     button in any language.
      _Make only the heading bigger_ and other sizes for one part, the assistant does.
    - Anything the note editor's toolbar does, asked in words: _make the word grace red
      and bold_, _use Georgia for the whole note_, _highlight the verse references_,
      _put the second point in capitals_, _clear the formatting of the first line_,
      _centre the title_, _indent the second bullet under the first_. Name some words
-     and only those words change, as a selection in the editor would. The **+** Insert
+     and only those words change, as a selection in the editor would -- in a language
+     written with no spaces (Khmer, Thai, Chinese) too: the word itself, not the same
+     letters at the start of a longer word, and never half of a letter with its marks.
+     Ask in any language: the assistant answers in it. The **+** Insert
      menu too: _add a table of the readings with book and chapter_, _add a pink sticky
      note saying call Tom_, _put today's date at the top_, _add a poll_, an equation,
      two columns, a collapsible part, a page break, a YouTube video or a website by
@@ -88,12 +96,18 @@ row's own **[en:tran:Delete]**.
      parts as the editor's Link block text does; _show the invisible characters_ turns
      on the **¶**; _put the editor's example in_ adds its sample study note; a code block
      takes a language (_make it Python_) and a colour theme. A style for the whole note
-     in a short English line -- _make all the text bold_, _centre everything_, _use
-     Georgia for the whole note_, _clear the formatting_ -- the help window does by
-     itself, with no AI key and no internet, as it does the size.
+     in a short line -- _make all the text bold_, _centre everything_, _use Georgia for
+     the whole note_, _clear the formatting_ -- the help window does by itself, with no
+     AI key and no internet, as it does the size: all of them in English, Khmer and
+     French, and _make all the text bold_ in every other installed language -- said
+     with the word _bold_ where the language's own word for it also means black or
+     big. The rest, in those languages, the assistant does.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
      words read from the Bible installed on this computer — the assistant never types a
-     verse itself. A verse can also go in the middle of a line as a verse mention.
+     verse itself. A verse can also go in the middle of a line as a verse mention. Asked in
+     another language than English, the verse comes from a Bible in that language when one
+     is installed and the Bible Lookup is on another (asked in Khmer with the Lookup on the
+     KJV, the Khmer Bible's words, in Khmer digits); name a Bible to have another.
    - Put an answer into the note: right after the assistant has answered or taught you
      something in this chat, _add it_, _put it in_ or _new section_ adds that answer at the
      end of the note — its headings, points and verses as the editor's own — and _new page_
@@ -107,7 +121,10 @@ row's own **[en:tran:Delete]**.
    stays exactly as it was. A table, picture, drawing, sticky note or passage can be moved or
    taken out, never rewritten. The change is **not saved yet**; a Bible Note window that is
    open on the note shows it at once. **[en:tran:Undo this change]** under the answer puts it
-   back, and **[en:tran:Show it in the list]** finds its row.
+   back, and **[en:tran:Show it in the list]** finds its row. Words you typed to go into the
+   note go in letter for letter as you typed them. If the assistant changes the note and
+   then stops without an answer, the answer still says the note was changed, with the same
+   two buttons under it.
 5. To keep it, open the note (W-14) and press **[en:tran:Save]** (**Ctrl+S**); a new title
    asked for in the chat is kept at once, as **[en:tran:Edit Title]** does.
 
@@ -121,5 +138,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-110` · `CB-169`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
 :::

@@ -422,7 +422,11 @@
                         "open in chatbot",
                         "selected text",
                         "selected words",
-                        "ask about the words I selected"
+                        "ask about the words I selected",
+                        "note in my language",
+                        "verse in my language",
+                        "undo what the assistant changed",
+                        "assistant stopped"
                     ],
                     "resources": {
                         "recipe": "W-60",

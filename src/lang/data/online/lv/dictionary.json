@@ -4109,5 +4109,6 @@
     "Summarize this note": "Apkopo šo piezīmi",
     "Tidy it into headings and lists": "Sakārto to virsrakstos un sarakstos",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Izdarīts ar vienu izmaiņu: “{name}” {count} bloku vārdiem ir jauns izmērs. Tas vēl nav saglabāts: piezīmes loga Saglabāt to paturēs, bet Atsaukt šo izmaiņu to atgriezīs.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Izdarīts ar vienu izmaiņu: “{name}” {count} bloku vārdiem ir jauns stils. Tas vēl nav saglabāts: piezīmes loga Saglabāt to paturēs, bet Atsaukt šo izmaiņu to atgriezīs."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Izdarīts ar vienu izmaiņu: “{name}” {count} bloku vārdiem ir jauns stils. Tas vēl nav saglabāts: piezīmes loga Saglabāt to paturēs, bet Atsaukt šo izmaiņu to atgriezīs.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” tika mainīts, bet palīgs apstājās, pirms pateica, ko izdarīja. Atsaukt šīs izmaiņas to atjauno."
 }

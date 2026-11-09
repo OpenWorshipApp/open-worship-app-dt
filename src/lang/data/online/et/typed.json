@@ -3,10 +3,23 @@
         "name": "Estonian",
         "nativeName": "Eesti",
         "script": "Latin",
-        "words": "ja või aga ei on oli olen oled mina ma sina sa tema ta meie me teie te nemad nad minu sinu kuidas mida mis kus kuhu miks millal kes kelle kellega saab saan saad tahan pean ka veel juba väga palju rohkem see need siin seal palun aitäh",
+        "words": "ja või aga ei on oli olen oled mina ma sina sa tema ta meie me teie te nemad nad minu sinu kuidas mida mis kus kuhu miks millal kes kelle kellega saab saan saad tahan pean ka veel juba väga palju rohkem see need siin seal palun aitäh tee lisa lõppu kogu",
         "letters": "õäöüšž",
         "yes": ["jah", "jah, palun"],
         "no": ["ei", "ei, aitäh"],
-        "order": 18
+        "order": 18,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:suurenda\\s+teksti|tee\\s+tekst\\s+suuremaks|suurem\\s+tekst|suurenda\\s+kirja)$"
+            ],
+            "smaller": [
+                "^(?:vähenda\\s+teksti|vahenda\\s+teksti|tee\\s+tekst\\s+väiksemaks|tee\\s+tekst\\s+vaiksemaks|väiksem\\s+tekst|vaiksem\\s+tekst|vähenda\\s+kirja|vahenda\\s+kirja)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:tee\\s+kogu\\s+tekst\\s+paksuks|tee\\s+kogu\\s+tekst\\s+rasvaseks)$"
+            ]
+        }
     }
 }

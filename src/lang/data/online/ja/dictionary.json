@@ -4109,5 +4109,6 @@
     "Summarize this note": "このノートを要約する",
     "Tidy it into headings and lists": "見出しと箇条書きに整理する",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字の大きさを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字のスタイルを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。"
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字のスタイルを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "「{name}」は変更されましたが、アシスタントは何をしたかを伝える前に止まりました。「この変更を元に戻す」で元に戻せます。"
 }

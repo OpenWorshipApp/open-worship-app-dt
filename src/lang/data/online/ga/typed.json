@@ -3,10 +3,23 @@
         "name": "Irish",
         "nativeName": "Gaeilge",
         "script": "Latin",
-        "words": "agus ní níl tá bhí beidh conas cad cá cén cathain cé fáth mé tú sé sí muid sibh siad mo ár bhur seo sin ansin anseo gach chun faoi ó roimh nuair féidir liom leat dom duit uaim mhaith cabhair cabhraigh thoil raibh agat déan taispeáin athraigh freisin fós anois níos rud aon na ar",
+        "words": "agus ní níl tá bhí beidh conas cad cá cén cathain cé fáth mé tú sé sí muid sibh siad mo ár bhur seo sin ansin anseo gach chun faoi ó roimh nuair féidir liom leat dom duit uaim mhaith cabhair cabhraigh thoil raibh agat déan taispeáin athraigh freisin fós anois níos rud aon na ar an i le do go ag sa is ach nó cuir leis don den ina atá bhfuil",
         "letters": "áéíóú",
         "yes": ["tá", "sea", "is ea", "cinnte"],
         "no": ["níl", "ní hea", "níl, go raibh maith agat"],
-        "order": 84
+        "order": 84,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:déan\\s+an\\s+téacs\\s+níos\\s+mó|dean\\s+an\\s+teacs\\s+nios\\s+mo|méadaigh\\s+an\\s+téacs|meadaigh\\s+an\\s+teacs|téacs\\s+níos\\s+mó|teacs\\s+nios\\s+mo)$"
+            ],
+            "smaller": [
+                "^(?:déan\\s+an\\s+téacs\\s+níos\\s+lú|dean\\s+an\\s+teacs\\s+nios\\s+lu|laghdaigh\\s+an\\s+téacs|laghdaigh\\s+an\\s+teacs|téacs\\s+níos\\s+lú|teacs\\s+nios\\s+lu)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:cuir\\s+an\\s+téacs\\s+ar\\s+fad\\s+i\\s+gcló\\s+trom|cuir\\s+an\\s+teacs\\s+ar\\s+fad\\s+i\\s+gclo\\s+trom|déan\\s+an\\s+téacs\\s+ar\\s+fad\\s+trom|dean\\s+an\\s+teacs\\s+ar\\s+fad\\s+trom)$"
+            ]
+        }
     }
 }

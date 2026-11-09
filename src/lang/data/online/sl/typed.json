@@ -3,11 +3,22 @@
         "name": "Slovenian",
         "nativeName": "Slovenščina",
         "script": "Latin",
-        "words": "in v na s z za od do o po iz pri brez je so sem si smo bil bila da ne kako kaj kje zakaj kdaj kdo kateri katera moj moja tvoj njegov njen naš jaz ti on ona mi vi oni lahko morem moram želim tudi že še zelo več ta to tukaj prosim hvala",
+        "words": "in v na s z za od do o po iz pri brez je so sem si smo bil bila da ne kako kaj kje zakaj kdaj kdo kateri katera moj moja tvoj njegov njen naš jaz ti on ona mi vi oni lahko morem moram želim tudi že še zelo več ta to tukaj prosim hvala dodaj konec vrstico naredi",
         "letters": "čšž",
         "family": "south-slavic",
         "yes": ["da", "ja", "da, prosim"],
         "no": ["ne", "ne, hvala"],
-        "order": 12
+        "order": 12,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:povečaj\\s+besedilo|povecaj\\s+besedilo|povečaj\\s+pisavo|povecaj\\s+pisavo|večje\\s+besedilo|vecje\\s+besedilo|povečaj\\s+črke|povecaj\\s+crke)$"
+            ],
+            "smaller": [
+                "^(?:pomanjšaj\\s+besedilo|pomanjsaj\\s+besedilo|zmanjšaj\\s+pisavo|zmanjsaj\\s+pisavo|manjše\\s+besedilo|manjse\\s+besedilo|zmanjšaj\\s+črke|zmanjsaj\\s+crke)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:naredi\\s+vse\\s+besedilo\\s+krepko)$"]
+        }
     }
 }

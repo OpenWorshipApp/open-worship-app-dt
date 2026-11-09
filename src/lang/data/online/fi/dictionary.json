@@ -4109,5 +4109,6 @@
     "Summarize this note": "Tiivistä tämä muistiinpano",
     "Tidy it into headings and lists": "Järjestä se otsikoiksi ja luetteloiksi",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehty yhdellä muutoksella: muistiinpanon {name}” {count} lohkon sanoilla on uusi koko. Sitä ei ole vielä tallennettu: muistiinpanoikkunan Tallenna säilyttää sen, ja Kumoa tämä muutos palauttaa sen.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehty yhdellä muutoksella: muistiinpanon {name}” {count} lohkon sanoilla on uusi tyyli. Sitä ei ole vielä tallennettu: muistiinpanoikkunan Tallenna säilyttää sen, ja Kumoa tämä muutos palauttaa sen."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehty yhdellä muutoksella: muistiinpanon {name}” {count} lohkon sanoilla on uusi tyyli. Sitä ei ole vielä tallennettu: muistiinpanoikkunan Tallenna säilyttää sen, ja Kumoa tämä muutos palauttaa sen.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "”{name}” muutettiin, mutta avustaja pysähtyi ennen kuin kertoi, mitä teki. Kumoa tämä muutos palauttaa sen."
 }

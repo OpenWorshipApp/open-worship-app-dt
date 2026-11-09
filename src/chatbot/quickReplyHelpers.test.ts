@@ -50,10 +50,94 @@ describe('parseAnswerOptions', () => {
         expect(parsed.text).toBe('Press **F9**.');
     });
 
+    // BN-47: a marker in a word the window does not know, read by the
+    // options' own shape -- and only that shape, only at the end.
+    test('options under a marker word of another language, by their shape', () => {
+        const parsed = parseAnswerOptions(
+            'The first line is bold now.\nXyzzy: Undo it | Make line two bold',
+        );
+        expect(parsed.options).toEqual(['Undo it', 'Make line two bold']);
+        expect(parsed.text).toBe('The first line is bold now.');
+        const inline = parseAnswerOptions(
+            'Done, the line is bold. Xyzzy plugh: Undo it | Bold line two',
+        );
+        expect(inline.options).toEqual(['Undo it', 'Bold line two']);
+        expect(inline.text).toBe('Done, the line is bold.');
+        // One item, a list one a line, or a line before the last: words.
+        for (const answer of [
+            'Done.\nXyzzy: Undo it',
+            'Steps:\n- Open the note\n- Press Save',
+            'Xyzzy: Undo it | Bold line two\nThat is all.',
+        ]) {
+            expect(parseAnswerOptions(answer)).toEqual({
+                text: answer,
+                options: [],
+            });
+        }
+    });
+
     test('an empty options line is removed too', () => {
         const parsed = parseAnswerOptions('Press **F9**.\nOPTIONS:');
         expect(parsed.options).toEqual([]);
         expect(parsed.text).toBe('Press **F9**.');
+    });
+
+    // BN-27 (2026-11-08, seen live): a note answer ended with a bare
+    // `OPTIONS:` and its three options on the lines below it, and all four
+    // lines were drawn as words, with no button.
+    test('options listed one a line under a bare marker are the options', () => {
+        const parsed = parseAnswerOptions(
+            [
+                'Added John 1:1 under the first line.',
+                'OPTIONS:',
+                '',
+                'Make it a heading',
+                '- Add more verses at the end',
+                '2. Change the text size',
+            ].join('\n'),
+        );
+        expect(parsed.options).toEqual([
+            'Make it a heading',
+            'Add more verses at the end',
+            'Change the text size',
+        ]);
+        expect(parsed.text).toBe('Added John 1:1 under the first line.');
+        // One listed option is not left in the text either.
+        expect(parseAnswerOptions('Done.\nOPTIONS:\nUndo it')).toEqual({
+            text: 'Done.',
+            options: ['Undo it'],
+        });
+    });
+
+    // BN-29 (2026-11-08, seen live on Free's Nemotron): its options line was
+    // "Choices:", which stayed in the answer as words.
+    test('options under "Choices:" are the options', () => {
+        expect(
+            parseAnswerOptions(
+                'Saved.\nChoices: Undo this change | Add a verse',
+            ),
+        ).toEqual({
+            text: 'Saved.',
+            options: ['Undo this change', 'Add a verse'],
+        });
+        expect(parseAnswerOptions('Saved.\nCHOICES:\nUndo it')).toEqual({
+            text: 'Saved.',
+            options: ['Undo it'],
+        });
+    });
+
+    test('a list that is not short options is left as the answer', () => {
+        const longLine = 'word '.repeat(30).trim();
+        const text = ['Done.', 'OPTIONS:', longLine].join('\n');
+        // Too long to be a button: the bare marker alone goes.
+        expect(parseAnswerOptions(text)).toEqual({
+            text: ['Done.', longLine].join('\n'),
+            options: [],
+        });
+        // A marker WITH options keeps reading its own line.
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: Yes | No\n').options,
+        ).toEqual(['Yes', 'No']);
     });
 
     // Measured live on the first run: GPT-5 wrote the marker at the end of a

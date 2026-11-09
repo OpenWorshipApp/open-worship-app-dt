@@ -29,7 +29,11 @@ import {
     DEFAULT_CHAT_LANG_CODE,
     type AssistantLanguageType,
 } from './chatLangHelpers';
-import { fillWords, tran } from './chatTranHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import {
+    readLanguageSizeAsk,
+    type LanguageSizeAskType,
+} from './languageEditAskHelpers';
 import {
     type LyricAskFileType,
     type LyricTranslateModeType,
@@ -621,17 +625,45 @@ const SLIDE_SIZE_SHOWN_PAIRS = 4;
 const SIZE_FILLER_PATTERN =
     /\b(?:please|pls|all|the|every|each|of|on|in|to|a|bit|little|slides?|everywhere)\b/g;
 
+// The card buttons whose press the window does by itself: pressed in any
+// language they are asked in their English (`findWindowDoneCardAsk`), which
+// is what the readers below read.
+const WINDOW_DONE_CARD_KEY_LIST = [
+    'Make the words larger',
+    'Make the words smaller',
+];
+
 /**
- * The size request in `asked`, or null. English only, a short line and
- * nothing else in it: "make the words larger on slide 2", "make the title
- * larger" or "make it look nicer" are the assistant's -- they choose boxes.
- * A pressed card button asks its own English, so a press in any language is
- * read here.
+ * The English of a card button pressed in the window's language, when the
+ * window does that button's work itself, or null (2026-11-08, BN-16: a card
+ * keeps its buttons as the window shows them, so **Make the words larger**
+ * pressed in a Khmer window had reached the assistant, its Khmer words no
+ * reader here knew).
+ */
+export function findWindowDoneCardAsk(pressed: string): string | null {
+    const text = String(pressed ?? '').trim();
+    return (
+        WINDOW_DONE_CARD_KEY_LIST.find((key) => {
+            return key !== text && tranLabel(key) === text;
+        }) ?? null
+    );
+}
+
+/**
+ * The size request in `asked`, or null. A short line and nothing else in
+ * it: "make the words larger on slide 2", "make the title larger" or "make
+ * it look nicer" are the assistant's -- they choose boxes. English in code;
+ * another language in its own words (`readLanguageSizeAsk`, its
+ * `assistant.json`), and a card button pressed in any language is asked in
+ * its English (`findWindowDoneCardAsk`).
  */
 export function readSlideSizeAsk(asked: string): SlideSizeAskType | null {
     const raw = String(asked ?? '').trim();
-    if (raw.length === 0 || raw.length > 80 || /\n/.test(raw)) {
+    if (raw.length === 0 || /\n/.test(raw)) {
         return null;
+    }
+    if (raw.length > 80) {
+        return toSlideSizeAsk(readLanguageSizeAsk(raw));
     }
     const words = raw
         .toLowerCase()
@@ -663,7 +695,29 @@ export function readSlideSizeAsk(asked: string): SlideSizeAskType | null {
             ? { kind: 'set', size }
             : null;
     }
-    return null;
+    return toSlideSizeAsk(readLanguageSizeAsk(raw));
+}
+
+/** A size asked in another language's words, as the English one reads. */
+function toSlideSizeAsk(
+    ask: LanguageSizeAskType | null,
+): SlideSizeAskType | null {
+    if (ask === null) {
+        return null;
+    }
+    if (ask.kind === 'set') {
+        return ask.size >= SLIDE_FONT_SIZE_MIN &&
+            ask.size <= SLIDE_FONT_SIZE_MAX
+            ? { kind: 'set', size: ask.size }
+            : null;
+    }
+    return {
+        kind: 'scale',
+        factor:
+            ask.kind === 'smaller'
+                ? SLIDE_SIZE_SMALLER_FACTOR
+                : SLIDE_SIZE_LARGER_FACTOR,
+    };
 }
 
 export type SlideSizeChangeType = {

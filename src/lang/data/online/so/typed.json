@@ -6,6 +6,12 @@
         "words": "iyo ama laakiin waa ma aan aniga adiga isaga iyada annaga idinka iyaga sidee maxay xaggee maxaa yaa kee kan kaas halkan aad sidoo karaa doonayaa fadlan mahadsanid",
         "yes": ["haa"],
         "no": ["maya"],
-        "order": 40
+        "order": 40,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:weynee\\s+qoraalka|weynee\\s+cabbirka\\s+qoraalka)$"
+            ],
+            "smaller": ["^(?:yaree\\s+cabbirka\\s+qoraalka)$"]
+        }
     }
 }

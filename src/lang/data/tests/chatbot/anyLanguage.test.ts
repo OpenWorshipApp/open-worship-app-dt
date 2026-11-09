@@ -26,11 +26,14 @@ import {
     toQuestionTranslationAsk,
     toRepliesTranslationAsk,
 } from '../../../../chatbot/chatTranslateHelpers';
+import { genNoteOpeningAnswer } from '../../../../chatbot/noteChatHelpers';
 
 // The same two questions, as a person in each language types them: a how-to
 // about the app and one about what is too small to read. A third column is a
-// language of the same family the line cannot be told from: Slovenian and
-// Croatian share every little word in it.
+// language the line cannot be told from: Slovenian and Croatian share every
+// little word in it. Named either -- or, in a script of their own, `other`:
+// answered in the language it was written in (2026-11-08, BN-33: a tie in a
+// script had gone to the first listed, Macedonian to Serbian).
 const SAMPLE_LIST: [string, string, string?][] = [
     ['es', '¿Cómo pongo un versículo de la Biblia en la pantalla?'],
     ['es', 'Las letras son muy pequeñas, ¿cómo las hago más grandes?'],
@@ -188,6 +191,12 @@ const NAMED_SAMPLE_LIST = SAMPLE_LIST.filter(([code]) => {
 const UNNAMED_SAMPLE_LIST = SAMPLE_LIST.filter(([code]) => {
     return !NAMED_CODE_SET.has(code);
 });
+function toAcceptedList(code: string, sibling: string | undefined) {
+    return sibling === undefined
+        ? [code]
+        : [code, sibling, OTHER_CHAT_LANG_CODE];
+}
+
 // A case about particular languages runs while every one of them is named
 // here -- installed, its package in the checkout -- so the suite still runs
 // with every non-English package deleted.
@@ -199,7 +208,9 @@ function checkHasAll(...codeList: string[]) {
 
 describe('the language a question is written in', () => {
     test.each(NAMED_SAMPLE_LIST)('%s: %s', (code, text, sibling) => {
-        expect([code, sibling]).toContain(detectTypedLanguage(text));
+        expect(toAcceptedList(code, sibling)).toContain(
+            detectTypedLanguage(text),
+        );
     });
 
     // Its words wait in its own folder until it has a package.
@@ -441,6 +452,37 @@ describe('an answer shown on a screen in another language', () => {
             ).toEqual([]);
         },
     );
+});
+
+// BN-25 (2026-11-08, the goal _work great for all languages_): a note
+// named in a language, its card in a window of that language, offered to
+// put its words into that same language. Every line above, as a note's
+// name: English in a window of its own language and in an English one, the
+// window's own in another's.
+describe('the translation a note card offers, in every language', () => {
+    const languageList = [...listAssistantLanguages(), ...listTypedLanguages()];
+    test.each(NAMED_SAMPLE_LIST)('%s: %s', (code, text, sibling) => {
+        const detected = detectTypedLanguage(text);
+        expect(toAcceptedList(code, sibling)).toContain(detected);
+        // `other`: shown in its own language's window, it is that window's.
+        const writtenIn =
+            detected === OTHER_CHAT_LANG_CODE ? code : (detected ?? code);
+        const offeredIn = (windowCode: string) => {
+            return genNoteOpeningAnswer(
+                text,
+                getAssistantLanguage(windowCode),
+                languageList,
+            ).translateLanguage?.code;
+        };
+        expect(offeredIn(writtenIn)).toBe('en');
+        expect(offeredIn('en')).toBe('en');
+        const otherWindow = listAssistantLanguages().find((language) => {
+            return language.code !== writtenIn && language.code !== 'en';
+        });
+        if (otherWindow !== undefined) {
+            expect(offeredIn(otherWindow.code)).toBe(otherWindow.code);
+        }
+    });
 });
 
 describe('worked in English behind the scenes', () => {

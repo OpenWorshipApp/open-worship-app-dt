@@ -3,10 +3,23 @@
         "name": "Spanish",
         "nativeName": "Español",
         "script": "Latin",
-        "words": "el la los las un una unos unas lo del al y o a que qué cual cuál cuales cuáles como cómo donde dónde cuando cuándo quien quién porque por para con sin en de es son está están estoy soy hay mi mis tu tus su sus me te se le les nos este esta esto ese esa eso aquí puedo puede quiero necesito hago hacer ver muy más pero también ya todavía nada todo ayuda ayúdame favor gracias no",
+        "words": "el la los las un una unos unas lo del al y o a que qué cual cuál cuales cuáles como cómo donde dónde cuando cuándo quien quién porque por para con sin en de es son está están estoy soy hay mi mis tu tus su sus me te se le les nos este esta esto ese esa eso aquí puedo puede quiero necesito hago hacer ver muy más pero también ya todavía nada todo ayuda ayúdame favor gracias no pon haz muestra muéstrame añade agrega busca",
         "letters": "ñ¿¡áéíóú",
         "yes": ["sí", "si", "claro", "vale", "sí, por favor"],
         "no": ["no", "no, gracias"],
-        "order": 0
+        "order": 0,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:haz\\s+el\\s+texto\\s+más\\s+grande|haz\\s+el\\s+texto\\s+mas\\s+grande|agranda\\s+el\\s+texto|aumenta\\s+el\\s+tamaño\\s+del\\s+texto|aumenta\\s+el\\s+tamano\\s+del\\s+texto|letra\\s+más\\s+grande|letra\\s+mas\\s+grande|haz\\s+la\\s+letra\\s+más\\s+grande|haz\\s+la\\s+letra\\s+mas\\s+grande|texto\\s+más\\s+grande|texto\\s+mas\\s+grande|aumenta\\s+la\\s+letra|agrandar\\s+el\\s+texto)$"
+            ],
+            "smaller": [
+                "^(?:haz\\s+el\\s+texto\\s+más\\s+pequeño|haz\\s+el\\s+texto\\s+mas\\s+pequeno|achica\\s+el\\s+texto|reduce\\s+el\\s+tamaño\\s+del\\s+texto|reduce\\s+el\\s+tamano\\s+del\\s+texto|letra\\s+más\\s+pequeña|letra\\s+mas\\s+pequena|haz\\s+la\\s+letra\\s+más\\s+pequeña|haz\\s+la\\s+letra\\s+mas\\s+pequena|texto\\s+más\\s+pequeño|texto\\s+mas\\s+pequeno|reduce\\s+la\\s+letra|achicar\\s+el\\s+texto)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:pon\\s+todo\\s+el\\s+texto\\s+en\\s+negrita|pon\\s+todo\\s+en\\s+negrita|haz\\s+todo\\s+el\\s+texto\\s+en\\s+negrita)$"
+            ]
+        }
     }
 }

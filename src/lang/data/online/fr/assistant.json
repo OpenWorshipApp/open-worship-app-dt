@@ -81,7 +81,43 @@
         "dit",
         "disent",
         "dire",
-        "signifie"
+        "signifie",
+        "moi",
+        "toi",
+        "elle",
+        "ils",
+        "elles",
+        "eux",
+        "fait",
+        "fais",
+        "font",
+        "depuis",
+        "donc",
+        "quand",
+        "ça",
+        "cela",
+        "ceci",
+        "voici",
+        "voilà",
+        "ici",
+        "tout",
+        "tous",
+        "toute",
+        "toutes",
+        "notre",
+        "votre",
+        "leurs",
+        "aide",
+        "aidez",
+        "montre",
+        "montrez",
+        "trouve",
+        "trouver",
+        "oui",
+        "merci",
+        "mettre",
+        "mets",
+        "mettez"
     ],
     "yesWords": ["oui", "oui merci", "d'accord", "volontiers", "ok"],
     "noWords": ["non", "non merci", "pas maintenant"],
@@ -459,5 +495,77 @@
         "\\bil\\s+n['’]y\\s+a\\s+pas\\b"
     ],
     "unsureWords": ["ou", "peut-être"],
-    "rangeWords": ["à"]
+    "rangeWords": ["à"],
+    "textSizeAsks": {
+        "larger": [
+            "^(?:peux-tu |pouvez-vous )?(?:agrandi[rs]?|agrandissez|grossi[rs]?|grossissez) (?:tout |toute )?(?:le |les |la |l['’])?(?:texte|mots|lettres|écriture|note)(?: de (?:la|cette|ma) note)?(?:,? s['’]il (?:te|vous) pla[iî]t)?$",
+            "^(?:peux-tu |pouvez-vous )?(?:augmente[rz]?|augmentez) la taille (?:du texte|des mots|des lettres|de l['’]écriture|de (?:la|cette|ma) note)(?:,? s['’]il (?:te|vous) pla[iî]t)?$",
+            "^(?:peux-tu |pouvez-vous )?(?:mets?|mettez|mettre|rends?|rendez|rendre|fais|faites|faire) (?:tout |toute )?(?:le |les |la |l['’])?(?:texte|mots|lettres|écriture|note)(?: de (?:la|cette|ma) note)? plus grande?s?(?:,? s['’]il (?:te|vous) pla[iî]t)?$"
+        ],
+        "smaller": [
+            "^(?:peux-tu |pouvez-vous )?(?:rédui(?:re|s|t|sez) (?:tout |toute )?(?:les |l['’])?(?:lettres|écriture)|(?:rapetisse[rz]?|rapetissez) (?:tout |toute )?(?:le |les |la |l['’])?(?:texte|mots|lettres|écriture|note))(?: de (?:la|cette|ma) note)?(?:,? s['’]il (?:te|vous) pla[iî]t)?$",
+            "^(?:peux-tu |pouvez-vous )?(?:diminue[rz]?|diminuez|rédui(?:re|s|t|sez)) la taille (?:du texte|des mots|des lettres|de l['’]écriture|de (?:la|cette|ma) note)(?:,? s['’]il (?:te|vous) pla[iî]t)?$",
+            "^(?:peux-tu |pouvez-vous )?(?:mets?|mettez|mettre|rends?|rendez|rendre|fais|faites|faire) (?:tout |toute )?(?:le |les |la |l['’])?(?:texte|mots|lettres|écriture|note)(?: de (?:la|cette|ma) note)? plus petite?s?(?:,? s['’]il (?:te|vous) pla[iî]t)?$"
+        ],
+        "set": [
+            "^(?:peux-tu |pouvez-vous )?(?:mets?|mettez|mettre|règle[rz]?|réglez) (?:tout |toute )?(?:le |les |la |l['’])?(?:texte|mots|lettres|écriture|note)(?: de (?:la|cette|ma) note)? (?:en |à )(?<size>\\d{1,3}) ?(?:px|pixels?|points?)?(?:,? s['’]il (?:te|vous) pla[iî]t)?$"
+        ]
+    },
+    "noteStyleAsks": {
+        "bold": [
+            "^(?:mets?|mettez|mettre) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) en gras$"
+        ],
+        "italic": [
+            "^(?:mets?|mettez|mettre) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) en italique$"
+        ],
+        "underline": [
+            "^(?:souligne[rz]?|soulignez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ],
+        "strikethrough": [
+            "^(?:barre[rz]?|barrez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ],
+        "highlight": [
+            "^(?:surligne[rz]?|surlignez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ],
+        "uppercase": [
+            "^(?:mets?|mettez|mettre) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) en majuscules?$"
+        ],
+        "lowercase": [
+            "^(?:mets?|mettez|mettre) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) en minuscules?$"
+        ],
+        "center": [
+            "^(?:centre[rz]?|centrez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ],
+        "left": [
+            "^(?:aligne[rz]?|alignez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) à gauche$"
+        ],
+        "right": [
+            "^(?:aligne[rz]?|alignez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) à droite$"
+        ],
+        "justify": [
+            "^(?:justifie[rz]?|justifiez) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ],
+        "clear": [
+            "^(?:efface[rz]?|effacez|supprime[rz]?|supprimez|enlève|enlevez|enlever|retire[rz]?|retirez) (?:toute )?la mise en forme(?: (?:de |du )(?:tout|tout le texte|toute la note|la note|cette note|ma note))?$"
+        ],
+        "color": [
+            "^(?:mets?|mettez|mettre) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note) en (?<color>\\p{L}+)$"
+        ],
+        "font": [
+            "^(?:utilise[rz]?|utilisez|mets?|mettez|mettre) (?:la police )?(?<font>[A-Za-z][A-Za-z0-9 -]{1,40}?) (?:pour|sur|dans) (?:tout|tout le texte|toute la note|toute ma note|tous les mots|tout le texte de (?:la|cette|ma) note)$"
+        ]
+    },
+    "colorWords": {
+        "rouge": "red",
+        "bleu": "blue",
+        "vert": "green",
+        "jaune": "yellow",
+        "noir": "black",
+        "blanc": "white",
+        "violet": "purple",
+        "orange": "orange",
+        "rose": "pink",
+        "gris": "gray",
+        "marron": "brown"
+    }
 }

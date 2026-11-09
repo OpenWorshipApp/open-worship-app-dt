@@ -3,10 +3,18 @@
         "name": "Yoruba",
         "nativeName": "Yorùbá",
         "script": "Latin",
-        "words": "ati tabi ṣugbọn sugbon ko kò ni ti si fun pẹlu bi kini kí nibo nitori igba wo tani mo o a wọn won mi rẹ re yi yìí naa le fẹ fe jọwọ ẹ ṣe",
+        "words": "ati tabi ṣugbọn sugbon ko kò ni ti si fun pẹlu bi kini kí nibo nitori igba wo tani mo o a wọn won mi rẹ re yi yìí naa le fẹ fe jọwọ ẹ ṣe fi kan ní kún ìparí",
         "letters": "ẹọṣ",
         "yes": ["bẹẹni", "beeni"],
         "no": ["rara"],
-        "order": 33
+        "order": 33,
+        "textSizeAsks": {
+            "larger": ["^(?:mú\\s+ọ̀rọ̀\\s+tóbi\\s+síi|jẹ́\\s+kí\\s+ọ̀rọ̀\\s+tóbi)$"]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:jẹ́\\s+kí\\s+gbogbo\\s+ọ̀rọ̀\\s+jẹ́\\s+bold|je\\s+ki\\s+gbogbo\\s+oro\\s+je\\s+bold)$"
+            ]
+        }
     }
 }

@@ -4109,5 +4109,6 @@
     "Summarize this note": "ཟིན་བྲིས་འདིའི་གནད་བསྡུས་བྱོས།",
     "Tidy it into headings and lists": "ཁ་བྱང་དང་ཐོ་གཞུང་དུ་སྒྲིག",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "བཟོ་བཅོས་གཅིག་གིས་གྲུབ། “{name}” ཡི་དུམ་བུ་{count}ཡི་ཡི་གེར་ཆེ་ཆུང་གསར་པ་ཡོད། ད་དུང་ཉར་ཚགས་བྱས་མེད། ཟིན་བྲིས་སྒེའུ་ཁུང་གི་ཉར་ཚགས་ཀྱིས་ཉར་ཐུབ། བཟོ་བཅོས་འདི་ཕྱིར་ལོག་གིས་སྔར་བཞིན་བཟོ་ཐུབ།",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "བཟོ་བཅོས་གཅིག་གིས་གྲུབ། “{name}” ཡི་དུམ་བུ་{count}ཡི་ཡི་གེར་བཟོ་ལྟ་གསར་པ་ཡོད། ད་དུང་ཉར་ཚགས་བྱས་མེད། ཟིན་བྲིས་སྒེའུ་ཁུང་གི་ཉར་ཚགས་ཀྱིས་ཉར་ཐུབ། བཟོ་བཅོས་འདི་ཕྱིར་ལོག་གིས་སྔར་བཞིན་བཟོ་ཐུབ།"
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "བཟོ་བཅོས་གཅིག་གིས་གྲུབ། “{name}” ཡི་དུམ་བུ་{count}ཡི་ཡི་གེར་བཟོ་ལྟ་གསར་པ་ཡོད། ད་དུང་ཉར་ཚགས་བྱས་མེད། ཟིན་བྲིས་སྒེའུ་ཁུང་གི་ཉར་ཚགས་ཀྱིས་ཉར་ཐུབ། བཟོ་བཅོས་འདི་ཕྱིར་ལོག་གིས་སྔར་བཞིན་བཟོ་ཐུབ།",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” བསྒྱུར་ཟིན། འོན་ཀྱང་རོགས་པས་ཅི་བྱས་པ་མ་བཤད་གོང་མཚམས་བཞག་སོང་། འགྱུར་བ་འདི་ཕྱིར་ལྡོག་གིས་སྔར་བཞིན་བཟོ་ཐུབ།"
 }

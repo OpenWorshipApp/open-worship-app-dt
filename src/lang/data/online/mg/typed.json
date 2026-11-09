@@ -3,9 +3,17 @@
         "name": "Malagasy",
         "nativeName": "Malagasy",
         "script": "Latin",
-        "words": "ny sy na fa dia ary amin ho tsy aho izaho ianao izy isika izahay ianareo ahoana inona aiza nahoana rahoviana iza ity io eto ao mety te tiako azafady tena koa misaotra",
+        "words": "ny sy na fa dia ary amin ho tsy aho izaho ianao izy isika izahay ianareo ahoana inona aiza nahoana rahoviana iza ity io eto ao mety te tiako azafady tena koa misaotra ampio eo amin' iray farany ataovy esory ovay soraty",
         "yes": ["eny", "eny, azafady"],
         "no": ["tsia", "tsia, misaotra"],
-        "order": 32
+        "order": 32,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ataovy\\s+lehibe\\s+kokoa\\s+ny\\s+soratra|hataovy\\s+lehibe\\s+ny\\s+soratra|alehibeazo\\s+ny\\s+soratra|halehibeazo\\s+ny\\s+soratra)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:ataovy\\s+matevina\\s+ny\\s+soratra\\s+rehetra)$"]
+        }
     }
 }

@@ -152,8 +152,9 @@ export function toQuestionTranslationAsk(
         `${text.trim()}\n\n(Translate the message above from ` +
         `${language.name} into English. It is a church volunteer's question ` +
         'to the help assistant of Open Worship, a church presentation app. ' +
-        'Keep links, numbers, Bible references, key names (F5, Ctrl+B) and ' +
-        'anything in quotes exactly as written.' +
+        'Keep links, numbers, Bible references, key names (F5, Ctrl+B), ' +
+        'anything in quotes, and words they want WRITTEN somewhere (a line ' +
+        'to add, a title to give) exactly as written, in their language.' +
         toTermsText(
             listUsedTerms(text, language, 'language'),
             'These words mean:',
@@ -292,13 +293,62 @@ export function readQuestionTranslation(answerText: string): string | null {
  * English handed back, or -- for a language with a script of its own -- not
  * a letter of that script in it.
  */
+// A "translation" that is the English handed back with a word or two changed
+// (2026-11-09, BN-48, the 87-language run: a Catalan answer was shown in
+// English with no note -- for a language in Latin letters anything that
+// differed from the English had been taken). Most of its words are the
+// English it was given; a real one shares the button names and little else,
+// so the bar is high.
+const ENGLISH_ECHO_SHARE = 0.6;
+const ENGLISH_ECHO_MIN_WORDS = 6;
+
+function toLetterWords(text: string) {
+    return text.toLowerCase().match(/\p{L}+/gu) ?? [];
+}
+
+/** Whether a translation is the English it was given, near enough. */
+export function checkIsEnglishEcho(translated: string, english: string) {
+    const words = toLetterWords(translated);
+    if (words.length < ENGLISH_ECHO_MIN_WORDS) {
+        return false;
+    }
+    const englishWordSet = new Set(toLetterWords(english));
+    const shared = words.filter((word) => {
+        return englishWordSet.has(word);
+    }).length;
+    return shared / words.length > ENGLISH_ECHO_SHARE;
+}
+
+/**
+ * An answer that came back in English when another language was asked for
+ * (BN-48: a Gemma 4, handed the person's language, answered a Xhosa ask in
+ * English). A few words are no evidence either way.
+ */
+export function checkIsEnglishAnswer(text: string, replyLang: string) {
+    if (
+        replyLang === DEFAULT_CHAT_LANG_CODE ||
+        replyLang === OTHER_CHAT_LANG_CODE ||
+        toLetterWords(text).length < ENGLISH_ECHO_MIN_WORDS
+    ) {
+        return false;
+    }
+    return (
+        detectTypedLanguage(text, DEFAULT_CHAT_LANG_CODE) ===
+        DEFAULT_CHAT_LANG_CODE
+    );
+}
+
 export function readAnswerTranslation(
     answerText: string,
     english: string,
     language: AssistantLanguageType,
 ): string | null {
     const translated = stripWrapping(answerText);
-    if (translated.length === 0 || translated === english.trim()) {
+    if (
+        translated.length === 0 ||
+        translated === english.trim() ||
+        checkIsEnglishEcho(translated, english)
+    ) {
         return null;
     }
     if (!language.isLatinScript && !language.scriptPattern.test(translated)) {
@@ -402,6 +452,29 @@ export function genAskTranslation({
             ).then(readQuestionTranslation);
             const english = await englishAsk;
             return english === null ? null : { language, translator, english };
+        },
+        /**
+         * The language and translator to put an answer that came back in
+         * English into theirs after the fact, whoever answered -- a model
+         * handed their own language (a Gemma 4, never translated for) that
+         * answered in English (BN-48) -- or null.
+         */
+        async planForEnglishAnswer(): Promise<{
+            language: AssistantLanguageType;
+            translator: TranslatorType;
+        } | null> {
+            if (
+                replyLang === DEFAULT_CHAT_LANG_CODE ||
+                replyLang === OTHER_CHAT_LANG_CODE
+            ) {
+                return null;
+            }
+            const language = getAssistantLanguage(replyLang);
+            if (language.code !== replyLang) {
+                return null;
+            }
+            const translator = await getTranslator();
+            return translator === null ? null : { language, translator };
         },
         /** The answer in their language, or null to show it as it came. */
         async translateAnswer(

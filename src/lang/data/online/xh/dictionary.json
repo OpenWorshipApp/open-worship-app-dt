@@ -4109,5 +4109,6 @@
     "Summarize this note": "Shwankathela eli nqaku",
     "Tidy it into headings and lists": "Lilungise libe zizihloko noluhlu",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kwenziwe ngotshintsho olunye: amagama eebhloko ezi-{count} ze-“{name}” anobukhulu obutsha. Akukagcinwa: Gcina kwifestile yenqaku kuyakugcina, kwaye Rhoxisa olu tshintsho kuyakubuyisela.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kwenziwe ngotshintsho olunye: amagama eebhloko ezi-{count} ze-“{name}” anesimbo esitsha. Akukagcinwa: Gcina kwifestile yenqaku kuyakugcina, kwaye Rhoxisa olu tshintsho kuyakubuyisela."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kwenziwe ngotshintsho olunye: amagama eebhloko ezi-{count} ze-“{name}” anesimbo esitsha. Akukagcinwa: Gcina kwifestile yenqaku kuyakugcina, kwaye Rhoxisa olu tshintsho kuyakubuyisela.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” itshintshiwe, kodwa umncedisi wema ngaphambi kokuba athi wenze ntoni. Rhoxisa olu tshintsho iyayibuyisela."
 }

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-09T01:09:20.714Z
+  modified: 2026-11-09T03:14:47.323Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -157,6 +157,62 @@ What is not obvious from the code:
   what waits in the box and `noteWindowBySession` ([[dev-hmr-stale-state-qa]]),
   so test reuse with no edit between the presses; and the editor redraws its
   text on a double-click, so a `take_snapshot` uid is good for ONE select.
+
+- **Every language** (2026-11-08, the user's goal _work great for all
+  languages_; BN-23..BN-27). What English never showed: a word of a script
+  with no spaces matched ANYWHERE (Khmer ព្រះ inside ព្រះជាម្ចាស់) until the
+  browser's word segmenter gave the edges -- Electron's ICU and Node's
+  agree on Khmer, Thai, Chinese and Burmese for these cases but not
+  always (Node keeps ព្រះគម្ពីរ whole, Electron splits it), so a test must
+  pick words both cut alike; a new verse came from the Lookup's Bible in
+  any language, now from a Bible of the language asked in; a note named in
+  the window's language was offered a translation into that language. A
+  multi-language live run needs each language PACKED and installed on the
+  scratch profile and a Bible of each (copy the person's
+  `bibles-data/<key>.xml`, or the Bible import's `check` / `import` from the
+  catalog -- Chinese and Arabic book names from a Wordproject index page
+  with `names`, none found for Thai). And keep source edits out of the run:
+  the first two Khmer asks went to the guide only because an edit had
+  reloaded the scratch help window and dropped the waiting note (BN-19).
+  Later the same night (BN-16, BN-28..BN-30): to PROVE a window shortcut
+  ran with no model, point the tab at a stand-in model (a local server
+  the scratch copy's `OWA_LLM_REGISTRY_URL` names, serving the real
+  registry plus itself) and count its requests -- 0. A note window driven
+  over CDP keeps the focus, so it waits 1 s + 3 s before showing a head
+  another window wrote: an undo then an ask raced it (fixed: `flush`
+  applies it). Free's Nemotron writes `Choices:` for `OPTIONS:`, answers
+  in broken Khmer when told Khmer words are "for them", swaps one Khmer
+  subscript for its look-alike in a note's name, and copies a typed line
+  only when the translated question still carries it as typed.
+  **Every installed language at once** (BN-31..BN-36): two scratch copies,
+  42 languages each, ran the window's shortcuts and a model's bold in all
+  84. What it found is the lesson for any multi-language run: (1) the
+  DETECTOR named short lines another language -- French's half-evidence in
+  every app, a script tie to the first listed, lists missing their
+  commonest words -- so judge the answer's language by the language, not
+  its script (a Bulgarian line answered in Russian passed a script check);
+  (2) the ASK WORDING is half the result: my word for bold was the word for
+  black in eight languages, the model made the line black, and the window's
+  own bold shortcut had the same words -- a shortcut must never be a colour
+  or a size; (3) on Free, a quarter of the asks CHANGED the note and then
+  failed to answer, which hid the change until the failure answer learned
+  to carry it with Undo. A model that changes then goes quiet is shown live
+  with a stand-in that answers its first round with an `owa_note_edit`
+  call and every later round with nothing. And the round trip on the dev
+  data folder went red on a note the editor wrote (a space inside bold, a
+  comment mark, a highlighted code block): a block given its own words
+  keeps its nodes now. The next day (BN-37..BN-40): a free-tier re-run found
+  the undo of a change named with forward slashes never reached the note's
+  open window (one path key for both slashes now -- run a harness with the
+  app's own path form, or it tests something else); and a second reader,
+  told no reason, back-translated every language's shortcut words and
+  found 31 more that could ask for something else -- worth doing whenever
+  shortcut words are written without native speakers.
+
+2026-11-09, the 87-language run (BN-44, BN-46): an add repeating a block's
+words is refused (meant as a change to it) unless it says `again: true` --
+refused twice with no way out, a model told the person the line was added.
+And **Undo this change** had been inside the firewall's removal ration (10 per 5 minutes): a harness pressing it every 15-20 s had 27 of 75 refused while counting them done. Fixed the same day (BN-46): an undo of the session's own non-removing change is no removal (`genOwnChangeMemory`), and 176 undos of the next run all held. Grade an undo by the note or the backups' `Undid` entries, never by a new line in the chat.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

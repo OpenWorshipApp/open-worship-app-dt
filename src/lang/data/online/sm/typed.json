@@ -3,9 +3,20 @@
         "name": "Samoan",
         "nativeName": "Gagana Samoa",
         "script": "Latin",
-        "words": "le o e i ma ua na ai ou oe ia matou tatou latou outou faapefea fa'apefea fea aisea anafea lenei lena mafai fia faamolemole fa'amolemole tele foi fa'afetai",
+        "words": "le o e i ma ua na ai ou oe ia matou tatou latou outou faapefea fa'apefea fea aisea anafea lenei lena mafai fia faamolemole fa'amolemole tele foi fa'afetai uma fa' se lea atu",
         "yes": ["ioe"],
         "no": ["leai"],
-        "order": 44
+        "order": 44,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:fa['’]atele\\s+le\\s+tusitusiga|fa['’]alapo['’]a\\s+le\\s+tusitusiga)$"
+            ],
+            "smaller": [
+                "^(?:fa['’]aitiiti\\s+le\\s+tusitusiga|fa['’]alaiti\\s+le\\s+tusitusiga)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:fa['’]amafiafia\\s+uma\\s+le\\s+tusitusiga)$"]
+        }
     }
 }

@@ -3,7 +3,7 @@ id: W-15
 title: "Créer et modifier des diapositives / paroles / arrière-plans web"
 section: "Créer et modifier du contenu"
 lang: fr
-translatedFrom: bf4855fbd501c659
+translatedFrom: 44e49f71dbb3eee0
 ---
 # W-15 — Créer et modifier des diapositives / paroles / arrière-plans web
 
@@ -37,6 +37,6 @@ translatedFrom: bf4855fbd501c659
 
 **HTML et texte brut :** le HTML importé garde sa mise en forme, mais les scripts, les gestionnaires d'événements et les pages intégrées sont retirés dans l'éditeur, les aperçus, l'affichage à l'écran et l'impression. Utilisez **[en:tran:Insert Website]** ou **[en:tran:Insert YouTube]** pour intégrer une page ou une vidéo. Une zone **Texte** affiche le balisage tel quel et garde les retours à la ligne ; utilisez une zone HTML pour une mise en forme riche. Les fichiers existants sont conservés tels qu'ils ont été enregistrés.
 
-**Paroles :** clic droit sur un chant dans la liste Documents → **[en:tran:Edit]** — l'Éditeur de paroles s'ouvre dans sa propre fenêtre ; modifiez le texte et les accords, puis enregistrez avec **Ctrl+S**. 📸
+**Paroles :** clic droit sur un chant dans la liste Documents → **[en:tran:Edit]** — l'Éditeur de paroles s'ouvre dans sa propre fenêtre ; modifiez le texte et les accords, puis enregistrez avec **Ctrl+S**. 📸 Une fois qu'un chant a été modifié, le Présentateur affiche aussi **[en:tran:Undo]**, **[en:tran:Redo]**, **[en:tran:Discard changed]** et **[en:tran:Save]** dans une rangée sous l'en-tête **[en:tran:Stage Previewer]** du chant — la même rangée que celle d'un document de diapositives, au-dessus de ses diapositives. **[en:tran:Undo]** fait reculer toutes les scènes ensemble ; **[en:tran:Save]** s'allume tant qu'une modification n'est pas encore enregistrée (un **\*** rouge à côté du nom du chant), et **Ctrl+S** enregistre le chant depuis n'importe quel endroit du Présentateur.
 
 **Arrière-plans web :** panneau **[en:tran:Background]** → onglet **[en:tran:Webs]**, puis le bouton **⋮ [en:tran:More Options]** à droite de la barre du chemin du dossier (ou clic droit dans une partie vide de la liste). **[en:tran:Add URL]** demande une adresse web et l'enregistre comme nouvelle vignette dans l'onglet. **[en:tran:New File]** demande un nom et crée une page `.html` dans le dossier ; clic droit sur cette page → **[en:tran:Edit]** pour ouvrir l'Éditeur de page web dans sa propre fenêtre, son code à côté d'un aperçu. L'Éditeur de page web s'enregistre de lui-même pendant que vous tapez, donc il n'y a aucun bouton Enregistrer sur lequel appuyer.

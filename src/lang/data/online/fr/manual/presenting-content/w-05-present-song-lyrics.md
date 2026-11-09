@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 62ddc243312625e8
+translatedFrom: 336da6d7a2755efc
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -15,13 +15,15 @@ translatedFrom: 62ddc243312625e8
    liste est mis en surbrillance à la fois, donc choisir un chant libère ce qui était sélectionné avant.
    Ces deux vues montrent à quoi ressemblera le chant à l'écran ; rien n'arrive à l'écran
    tant que vous ne cliquez pas sur un couplet. 📸
-2. **Cliquez** sur un couplet pour l'envoyer à l'écran.
+2. **Cliquez** sur un couplet pour l'envoyer à l'écran. Après le dernier couplet du chant vient une
+   diapositive **None** vide, comme celle qui suit son titre : cliquez dessus quand le chant se termine,
+   et les paroles quittent l'écran.
 3. Appuyez sur **F8** / le bouton d'effacement pour le retirer.
 4. Pour joindre des liens à un chant — des adresses web, ou des fichiers de cet ordinateur écrits
    `file:///C:/…` — ouvrez-le dans l'**Éditeur de paroles** (clic droit sur le chant →
    **[en:tran:Edit]**) et ajoutez un champ **`- Attachments:`** à son bloc `ol:Config`, un lien
    par ligne. Chaque lien devient aussi **sa propre diapositive à la fin** de l'Aperçu des scènes,
-   nommée d'après le lien. Un lien YouTube devient une vidéo que l'on peut lire, un lien d'image / de
+   placée après cette diapositive vide finale et nommée d'après le lien. Un lien YouTube devient une vidéo que l'on peut lire, un lien d'image / de
    vidéo / d'audio devient ce média, et toute autre adresse web devient la page elle-même ;
    chacun remplit toute la diapositive. Présentez-en un de la même façon qu'un couplet. Un lien vers
    un fichier de cet ordinateur fonctionne aussi (écrit `file:///C:/…`), et c'est ainsi qu'une grille
@@ -48,7 +50,10 @@ translatedFrom: 62ddc243312625e8
    paroles ; en dessous, **[en:tran:Position]** est un pavé de neuf points pour l'endroit où se place cette
    boîte : **[en:tran:Middle center]**, allumé au départ, répartit la marge également ; tout autre point
    déplace la même boîte jusqu'à ce qu'elle touche les bords qu'il nomme — **[en:tran:Bottom center]** avec
-   ↕ à 77 met les paroles dans une bande sur le quart inférieur de l'écran. Puis
+   ↕ à 77 met les paroles dans une bande sur le quart inférieur de l'écran. Un couplet — ou la diapositive
+   de titre du chant — qui a besoin de plus de place que cette boîte n'est **jamais coupé** : sa boîte
+   s'agrandit dans la marge, vers le haut pour une boîte en bas, vers le bas pour une boîte en haut, dans
+   les deux sens pour une boîte au milieu, jusqu'au bord de l'écran. Puis
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, un thème **[en:tran:Light]/[en:tran:Dark]**, et une
    zone **[en:tran:Custom CSS]** pour tout le reste — vide, elle montre en gris le CSS que la scène utilise
    déjà, et le ✎ à côté de son nom (**[en:tran:Edit a copy of the stage's CSS]**) en met une copie dans la

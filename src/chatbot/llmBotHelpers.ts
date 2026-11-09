@@ -82,6 +82,7 @@ import {
     getAppLangCode,
     getAssistantLanguage,
     listAssistantLanguages,
+    listLookAlikePairs,
     pickReplyLanguage,
     SENTENCE_END_MARKS,
     toAsciiDigits,
@@ -180,11 +181,14 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_MAX_TOOL_ROUNDS,
     NOTE_SYSTEM_PROMPT,
+    checkAddsNoteVerse,
     readCreatedNote,
     resolveNoteEditTarget,
+    restoreNoteTypedWords,
     type CreatedNoteType,
     type NoteAskFileType,
 } from './noteChatHelpers';
+import { pickBibleInLanguage } from './verseAskLanguageHelpers';
 import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
 import {
     BIBLE_READER_ASK_KIND,
@@ -2155,6 +2159,18 @@ type ToolWatchType = {
      */
     noteFiles: NoteAskFileType[] | null;
     /**
+     * The language a note question was asked in, when not English: a NEW
+     * verse with no Bible named comes from an installed Bible in it when
+     * the Bible Lookup's is not one (BN-26) -- `noteVerseBible`, looked up
+     * at the first edit that adds a verse and kept for the ask (`null`: the
+     * Lookup's stands).
+     */
+    noteVerseLang: string | null;
+    // What the person TYPED in a note ask, the words a model writes into the
+    // note are put back to where only look-alike letters differ (BN-37).
+    noteTyped: string | null;
+    noteVerseBible?: string | null;
+    /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
      */
@@ -2377,6 +2393,8 @@ export function genToolWatch(): ToolWatchType {
         slideFiles: null,
         flowFiles: null,
         noteFiles: null,
+        noteVerseLang: null,
+        noteTyped: null,
         editedLyric: null,
         bibleImportCheck: null,
         pageTitles: {},
@@ -2919,6 +2937,43 @@ function readCreatedFile(text: string) {
 }
 
 /**
+ * A change the tools MADE before the assistant failed -- it wrote no answer,
+ * or the service failed on its next round -- said, with the press that puts
+ * it back and the row it is on, in place of the failure; null when nothing
+ * was changed. Measured 2026-11-08 (BN-36) on Free's Nemotron adding a
+ * typed line to a note in six languages, twice each: three of twelve added
+ * it (once with a stray "Test line" of the model's own) and then ended in
+ * "Free could not answer", no button to take the change back and not a
+ * word of it. Auto hands no such ask on (a round came back), so the change
+ * is never made twice.
+ */
+export function genChangedWithoutAnswer(
+    edited: EditedLyricType | null,
+): BotAnswerType | null {
+    if (edited === null) {
+        return null;
+    }
+    const undoAction = genLyricUndoAction(edited);
+    return {
+        text: fillWords(
+            tran(
+                '“{name}” was changed, but the assistant stopped before ' +
+                    'saying what it did. Undo this change puts it back.',
+            ),
+            { name: edited.name },
+        ),
+        actions: undoAction === null ? [] : [undoAction],
+        shows: [
+            {
+                kind: 'control',
+                value: toEditedDocumentListValue(edited),
+                name: 'Show it in the list',
+            },
+        ],
+    };
+}
+
+/**
  * What goes under an answer that MADE a Bible note: **Undo this change**
  * (the add's own backup -- the person's press, never the model's) and
  * **Show it in the list**, ringing its row in the Bible Notes panel. The
@@ -3243,6 +3298,44 @@ export const NOTE_ASK_BIBLE_NOTE_REFUSAL =
     'attached note with owa_note_edit action "edit", which keeps its ' +
     'headings, lists and verses.';
 
+/**
+ * The Bible a NEW verse in a note comes from when the question was asked in
+ * another language than English and the call names none: an installed
+ * Bible in that language, when the Bible Lookup's is not one -- the rule a
+ * Lookup record's verses already follow (`pickBibleInLanguage`). Asked of
+ * the app once an ask, at the first edit that adds a verse; null leaves the
+ * Lookup's.
+ */
+async function findNoteVerseBible(
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (watch.noteVerseLang === null) {
+        return null;
+    }
+    if (watch.noteVerseBible === undefined) {
+        try {
+            const listed = JSON.parse(
+                await callTool(
+                    VERSE_FIND_TOOL_NAME,
+                    {},
+                    signal,
+                    watch.windowAim,
+                ),
+            );
+            watch.noteVerseBible = pickBibleInLanguage(
+                listed,
+                typeof listed?.bible === 'string' ? listed.bible : null,
+                watch.noteVerseLang,
+            );
+        } catch (_error) {
+            // No list: the Lookup's Bible, as before.
+            watch.noteVerseBible = null;
+        }
+    }
+    return watch.noteVerseBible;
+}
+
 async function runMcpToolCall(
     name: string,
     args: any,
@@ -3367,6 +3460,24 @@ async function runMcpToolCall(
             return `Tool refused: ${resolved.reason}`;
         }
         lyricEditArgs = { ...(args ?? {}), ...resolved };
+        // Words they typed to be written go in as they typed them, where a
+        // model wrote a look-alike letter (BN-37).
+        if (watch.noteTyped !== null) {
+            lyricEditArgs = restoreNoteTypedWords(
+                lyricEditArgs,
+                watch.noteTyped,
+                listLookAlikePairs(),
+            );
+        }
+        // A verse asked for in their language is read from a Bible in it
+        // (BN-26, 2026-11-08: asked in Khmer under a Khmer note, John 1:1
+        // came from the KJV the Lookup was on, Khmer Bibles installed).
+        if (args?.bible === undefined && checkAddsNoteVerse(args)) {
+            const verseBible = await findNoteVerseBible(watch, signal);
+            if (verseBible !== null) {
+                lyricEditArgs = { ...lyricEditArgs, bible: verseBible };
+            }
+        }
     }
     // In a note conversation, how the note EDITOR works is its own guide's,
     // whose pages answer only a search aimed at the Bible Note window.
@@ -3778,6 +3889,11 @@ export type AskExtraType = {
      */
     note?: {
         files: NoteAskFileType[];
+        // The language the question was asked in, when not English
+        // (`ToolWatchType.noteVerseLang`).
+        verseLang?: string;
+        // What they typed, as typed (`ToolWatchType.noteTyped`).
+        typed?: string;
     };
 };
 
@@ -6169,6 +6285,8 @@ async function askLlmBotAsWritten(
         seeded.slideFiles = extra?.slide?.files ?? null;
         seeded.flowFiles = extra?.flow?.files ?? null;
         seeded.noteFiles = extra?.note?.files ?? null;
+        seeded.noteVerseLang = extra?.note?.verseLang ?? null;
+        seeded.noteTyped = extra?.note?.typed ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -6577,6 +6695,12 @@ async function askLlmBotAsWritten(
         // and the window reads the class to draw the button that lifts it.
         if (checkIsSpendLimitError(error)) {
             throw error;
+        }
+        // A change the tools already made stays made: said, and offered
+        // back, instead of a failure that hides it (BN-36).
+        const changed = genChangedWithoutAnswer(watch.editedLyric);
+        if (changed !== null) {
+            return changed;
         }
         // Re-thrown as one readable line; the caller shows it beside the
         // answer it fell back to.

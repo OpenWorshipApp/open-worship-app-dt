@@ -861,7 +861,56 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   for the WHOLE note in a short English line is the window's, like the
   size (`readNoteStyleAsk`, `genNoteStyleChanges`,
   `genNoteStyleDoneText`), and the ¶'s answer (`view`) carries **Undo
-  this change** as an edit's does.
+  this change** as an edit's does. **In every language** (2026-11-08, the
+  user's goal _work great for all languages_; five languages run live on
+  a scratch profile, each with a Bible of its own): a note ask put into
+  English for an assistant that is not a Gemma 4 carries the TYPED words
+  beside their English (`toNoteOwnWordsHint`, put on the ask by the
+  window's `withLyric` on the English path) -- a word of the note, or words to
+  write in, do not survive a translation, and _make the word … red_ had
+  come to the model as an English word the note does not hold; the window
+  hands `verseLang` (the language asked in, when not English) on
+  `AskExtraType.note`, and the loop fills a NEW verse's `bible` with an
+  installed Bible of that language when the Lookup's is not one, looked up
+  once an ask (`owa_find_verse` with no arguments) and only for an edit
+  that adds a verse (`checkAddsNoteVerse`, `findNoteVerseBible`; BN-26:
+  asked in Khmer, John 1:1 had come from the KJV the Lookup was on). The
+  hint says the words put INTO THE NOTE are theirs and the ANSWER stays
+  English (BN-29: told "words you write for them" were Khmer, Free's
+  Nemotron answered in broken Khmer, which skipped the translation back),
+  and the question's translator keeps words they want WRITTEN somewhere as
+  written (`toQuestionTranslationAsk`, every translated ask: with the hint
+  alone the model still wrote its own Khmer for a typed line, 3 of 4 runs;
+  with the translator keeping it, the typed line exactly, 2 of 2; with
+  neither, English, 2 of 2). A note named a letter out -- a Khmer subscript
+  written with its look-alike -- is the ONE attached note
+  (`resolveNoteEditTarget`, BN-30). Words they TYPED to go into the note
+  go in letter for letter: the window hands the typed words with the ask
+  (`AskExtraType.note.typed`), and each `owa_note_edit` change's `text`
+  and a new `title` are put back to them where only a pair of look-alike
+  letters a language names differs (`restoreTypedWords`,
+  `listLookAlikePairs`; BN-37: Free's Nemotron wrote a typed Khmer line
+  with TA's subscript for DA's -- the same on screen, not to a search). The size and whole-note style
+  shortcuts above read Khmer and French too, from each language's
+  `assistant.json` (`textSizeAsks`, `noteStyleAsks`, `colorWords`;
+  `languageEditAskHelpers.ts`, BN-16), and every other installed language's
+  `typed.json` carries the size (larger, smaller) and bold for the whole
+  note (BN-31, 85 languages) -- what it does not say goes to the model.
+  **A change made and THEN a failure is answered with the change**
+  (2026-11-08, BN-36, `genChangedWithoutAnswer` in `askLlmBot`'s catch):
+  on Free's Nemotron, three typed lines of twelve went into the note --
+  once with a stray _Test line_ of the model's own -- and the model then
+  wrote nothing or the service failed, and the window said only _Free could
+  not answer_, no word of the change and no button to take it back. Any
+  ask whose tools changed a song, slide document, run sheet or note
+  (`watch.editedLyric`) now answers such a failure _"<name>" was changed,
+  but the assistant stopped before saying what it did. Undo this change
+  puts it back._ with **Undo this change** and **Show it in the list**,
+  as a finished change has; a Stop and the spend guard's pause are thrown
+  as before. Auto never hands such an ask on (a round came back), so no
+  second assistant makes the change again. Seen live with a stand-in
+  model that changes the note and then answers nothing: the sentence, the
+  two buttons, and Undo putting the note back.
 
 - **A NEW note, from any conversation that teaches** (2026-11-08, the
   user, with a Bible Reader chat that answered _make a bible note for me_

@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: ce464bc863832a9a
+translatedFrom: 76f5161c7821a8bf
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -128,7 +128,12 @@ votre lecture de la Bible.
     Un passage que vous lisez s’ouvre de la même façon : le robot au bout de la barre d’outils d’une
     vue de la Bible (la rangée qui apparaît quand la souris est sur son titre), ou faites un clic droit
     sur le texte et choisissez **[en:tran:Ask the Assistant About This Verse]** pour le verset sous la
-    souris, ou **[en:tran:Ask the Assistant About This Passage]** pour tout le passage.
+    souris, ou **[en:tran:Ask the Assistant About This Passage]** pour tout le passage. Ou sélectionnez
+    quelques mots d’un verset : la barre qui apparaît au-dessus d’eux (W-40) se termine par un
+    robot, **[en:tran:Ask the assistant about this]**, qui ouvre la conversation de ce verset — celle
+    déjà ouverte sur lui, s’il y en a une — et place les mots dans la zone de saisie : _Selected text_,
+    le verset et leur premier et leur dernier caractère dans celui-ci, puis le verset entier avec les
+    mots sélectionnés entre deux astérisques. Le curseur attend votre question sur la ligne d’en dessous.
     **Ou ouvrez-le depuis le menu d’un passage.** Partout où un passage a **[en:tran:Open]** dans son menu — une ligne de votre liste de Bibles, une entrée de
     l’historique de recherche en haut, un résultat de la recherche biblique, une référence croisée ou
     un passage cité par un titre — **[en:tran:Open in Chatbot]** se trouve juste en dessous et ouvre la

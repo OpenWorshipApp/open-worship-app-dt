@@ -3,10 +3,21 @@
         "name": "Kinyarwanda",
         "nativeName": "Ikinyarwanda",
         "script": "Latin",
-        "words": "na cyangwa ariko si nta ni ari njye jye wowe we twe mwe bo gute iki iyihe he kubera ryari nde uyu uwo aha hano cyane kandi nshobora ndashaka nkeneye murakoze kuri muri ese",
+        "words": "na cyangwa ariko si nta ni ari njye jye wowe we twe mwe bo gute iki iyihe he kubera ryari nde uyu uwo aha hano cyane kandi nshobora ndashaka nkeneye murakoze kuri muri ese wa mu ya y' z' w' cy' by' rw' ry' bw' tw' k' n' shyira yose zose byose cyose ongeraho ku iherezo",
         "family": "rwanda-rundi",
         "yes": ["yego"],
         "no": ["oya"],
-        "order": 30
+        "order": 30,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ongera\\s+ubunini\\s+bw['’]inyuguti|ongera\\s+ubunini\\s+bw['’]inyandiko)$"
+            ],
+            "smaller": [
+                "^(?:gabanya\\s+ubunini\\s+bw['’]inyuguti|gabanya\\s+ubunini\\s+bw['’]inyandiko)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:shyira\\s+inyandiko\\s+yose\\s+muri\\s+bold)$"]
+        }
     }
 }

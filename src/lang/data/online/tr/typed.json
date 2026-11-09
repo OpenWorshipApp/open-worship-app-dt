@@ -3,10 +3,23 @@
         "name": "Turkish",
         "nativeName": "Türkçe",
         "script": "Latin",
-        "words": "ve veya ama fakat değil yok var bir bu şu o ben sen biz siz onlar benim senin onun bizim nasıl ne neden niye nerede nereye zaman kim hangi mi mı mu mü ile için gibi kadar daha çok en de da ki ise olarak olan yapabilir yapmak istiyorum lütfen teşekkürler",
+        "words": "ve veya ama fakat değil yok var bir bu şu o ben sen biz siz onlar benim senin onun bizim nasıl ne neden niye nerede nereye zaman kim hangi mi mı mu mü ile için gibi kadar daha çok en de da ki ise olarak olan yapabilir yapmak istiyorum lütfen teşekkürler ekle sona yap göster",
         "letters": "çğıöşü",
         "yes": ["evet", "evet, lütfen"],
         "no": ["hayır", "hayır, teşekkürler"],
-        "order": 22
+        "order": 22,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:yazıyı\\s+büyüt|yazıyı\\s+buyut|metni\\s+büyüt|metni\\s+buyut|yazıları\\s+büyüt|yazıları\\s+buyut|harfleri\\s+büyüt|harfleri\\s+buyut|yazı\\s+boyutunu\\s+büyüt|yazı\\s+boyutunu\\s+buyut|metni\\s+daha\\s+büyük\\s+yap|metni\\s+daha\\s+buyuk\\s+yap)$"
+            ],
+            "smaller": [
+                "^(?:yazıyı\\s+küçült|yazıyı\\s+kucult|metni\\s+küçült|metni\\s+kucult|yazıları\\s+küçült|yazıları\\s+kucult|harfleri\\s+küçült|harfleri\\s+kucult|yazı\\s+boyutunu\\s+küçült|yazı\\s+boyutunu\\s+kucult|metni\\s+daha\\s+küçük\\s+yap|metni\\s+daha\\s+kucuk\\s+yap)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:tüm\\s+metni\\s+kalın\\s+yap|tum\\s+metni\\s+kalın\\s+yap|bütün\\s+yazıyı\\s+kalın\\s+yap|butun\\s+yazıyı\\s+kalın\\s+yap|hepsini\\s+kalın\\s+yap)$"
+            ]
+        }
     }
 }

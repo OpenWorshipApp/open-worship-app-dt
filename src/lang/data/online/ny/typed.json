@@ -3,9 +3,16 @@
         "name": "Chichewa",
         "nativeName": "Chichewa",
         "script": "Latin",
-        "words": "ndi kapena koma ine iwe iye ife inu iwo bwanji chiyani kuti chifukwa liti ndani uyu uyo pano kwambiri komanso ndikufuna chonde zikomo",
+        "words": "ndi kapena koma ine iwe iye ife inu iwo bwanji chiyani kuti chifukwa liti ndani uyu uyo pano kwambiri komanso ndikufuna chonde zikomo onjezani onjeza kumapeto ndiye ikani lembani chotsani sinthani",
         "yes": ["inde"],
         "no": ["ayi"],
-        "order": 39
+        "order": 39,
+        "textSizeAsks": {
+            "larger": ["^(?:kulitsani\\s+zilembo|kulitsa\\s+zilembo)$"],
+            "smaller": ["^(?:chepetsani\\s+zilembo|chepetsa\\s+zilembo)$"]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:pangani\\s+zilembo\\s+zonse\\s+kukhala\\s+bold)$"]
+        }
     }
 }

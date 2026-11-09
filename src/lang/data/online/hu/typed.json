@@ -7,6 +7,19 @@
         "letters": "őűáéíóöúü",
         "yes": ["igen", "igen, kérem"],
         "no": ["nem", "nem, köszönöm"],
-        "order": 13
+        "order": 13,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:nagyítsd\\s+a\\s+szöveget|nagyitsd\\s+a\\s+szoveget|nagyítsd\\s+meg\\s+a\\s+szöveget|nagyitsd\\s+meg\\s+a\\s+szoveget|növeld\\s+a\\s+betűméretet|noveld\\s+a\\s+betumeretet|legyen\\s+nagyobb\\s+a\\s+szöveg|legyen\\s+nagyobb\\s+a\\s+szoveg|nagyobb\\s+betűk|nagyobb\\s+betuk|nagyobb\\s+szöveg|nagyobb\\s+szoveg)$"
+            ],
+            "smaller": [
+                "^(?:kicsinyítsd\\s+a\\s+szöveget|kicsinyitsd\\s+a\\s+szoveget|kicsinyítsd\\s+le\\s+a\\s+szöveget|kicsinyitsd\\s+le\\s+a\\s+szoveget|csökkentsd\\s+a\\s+betűméretet|csokkentsd\\s+a\\s+betumeretet|legyen\\s+kisebb\\s+a\\s+szöveg|legyen\\s+kisebb\\s+a\\s+szoveg|kisebb\\s+betűk|kisebb\\s+betuk|kisebb\\s+szöveg|kisebb\\s+szoveg)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:legyen\\s+az\\s+egész\\s+szöveg\\s+félkövér|legyen\\s+az\\s+egesz\\s+szoveg\\s+felkover|tedd\\s+félkövérré\\s+az\\s+egész\\s+szöveget|tedd\\s+felkoverre\\s+az\\s+egesz\\s+szoveget)$"
+            ]
+        }
     }
 }

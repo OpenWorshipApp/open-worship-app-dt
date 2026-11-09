@@ -3,10 +3,23 @@
         "name": "Italian",
         "nativeName": "Italiano",
         "script": "Latin",
-        "words": "il lo la i gli le un uno una di del dello della dei degli delle da dal dalla in nel nella su sul sulla con per tra e ed o a che chi cosa come dove quando perché quale quali è sono sta sto ho hai ha non mi ti si ci mio mia tuo tua suo sua questo questa quello quella qui posso può puoi voglio devo fare vedere molto più ma anche già ancora niente tutto aiuto aiutami grazie",
+        "words": "il lo la i gli le un uno una di del dello della dei degli delle da dal dalla in nel nella su sul sulla con per tra e ed o a che chi cosa come dove quando perché quale quali è sono sta sto ho hai ha non mi ti si ci mio mia tuo tua suo sua questo questa quello quella qui posso può puoi voglio devo fare vedere molto più ma anche già ancora niente tutto aiuto aiutami grazie metti mettere fai rendi mostra mostrami aggiungi trova tutti tutte",
         "letters": "àèéìòù",
         "yes": ["sì", "si", "certo", "va bene"],
         "no": ["no", "no, grazie"],
-        "order": 2
+        "order": 2,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ingrandisci\\s+il\\s+testo|rendi\\s+il\\s+testo\\s+più\\s+grande|rendi\\s+il\\s+testo\\s+piu\\s+grande|testo\\s+più\\s+grande|testo\\s+piu\\s+grande|aumenta\\s+la\\s+dimensione\\s+del\\s+testo|caratteri\\s+più\\s+grandi|caratteri\\s+piu\\s+grandi|ingrandisci\\s+la\\s+scritta|aumenta\\s+il\\s+carattere)$"
+            ],
+            "smaller": [
+                "^(?:rimpicciolisci\\s+il\\s+testo|rendi\\s+il\\s+testo\\s+più\\s+piccolo|rendi\\s+il\\s+testo\\s+piu\\s+piccolo|testo\\s+più\\s+piccolo|testo\\s+piu\\s+piccolo|riduci\\s+la\\s+dimensione\\s+del\\s+testo|caratteri\\s+più\\s+piccoli|caratteri\\s+piu\\s+piccoli|rimpicciolisci\\s+la\\s+scritta|riduci\\s+il\\s+carattere)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:metti\\s+tutto\\s+il\\s+testo\\s+in\\s+grassetto|metti\\s+tutto\\s+in\\s+grassetto)$"
+            ]
+        }
     }
 }

@@ -3,11 +3,24 @@
         "name": "Slovak",
         "nativeName": "Slovenčina",
         "script": "Latin",
-        "words": "a i v vo z zo na do od po o u za pre bez sa si je sú bol bola to že ako čo kde prečo kedy kto ktorý ktorá ktoré či môj moja tvoj jeho jej náš ja ty on ona my vy oni môžem môže chcem musím tiež už ešte veľmi viac ten tá tento táto tu prosím ďakujem",
+        "words": "a i v vo z zo na do od po o u za pre bez sa si je sú bol bola to že ako čo kde prečo kedy kto ktorý ktorá ktoré či môj moja tvoj jeho jej náš ja ty on ona my vy oni môžem môže chcem musím tiež už ešte veľmi viac ten tá tento táto tu prosím ďakujem pridaj koniec riadok urob",
         "letters": "äôľĺŕščžýáíéúďťň",
         "family": "czech-slovak",
         "yes": ["áno", "áno, prosím"],
         "no": ["nie", "nie, ďakujem"],
-        "order": 10
+        "order": 10,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:zväčši\\s+text|zvacsi\\s+text|zväčšiť\\s+text|zvacsit\\s+text|urob\\s+text\\s+väčší|urob\\s+text\\s+vacsi|väčšie\\s+písmo|vacsie\\s+pismo|zväčši\\s+písmo|zvacsi\\s+pismo)$"
+            ],
+            "smaller": [
+                "^(?:zmenši\\s+text|zmensi\\s+text|zmenšiť\\s+text|zmensit\\s+text|urob\\s+text\\s+menší|urob\\s+text\\s+mensi|menšie\\s+písmo|mensie\\s+pismo|zmenši\\s+písmo|zmensi\\s+pismo)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:urob\\s+celý\\s+text\\s+tučným|urob\\s+cely\\s+text\\s+tucnym|daj\\s+celý\\s+text\\s+tučne|daj\\s+cely\\s+text\\s+tucne)$"
+            ]
+        }
     }
 }

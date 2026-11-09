@@ -575,6 +575,61 @@ export function genUidLabelMemory({ limit = 200 } = {}) {
     };
 }
 
+/**
+ * A per-session memory of the changes this session MADE with a tool that
+ * takes nothing away: the `undoId` each such answer carries. An `owa_undo`
+ * naming one of them puts back the session's own change, which takes nothing
+ * of the user's away, so it is not charged to the removal budget (it is
+ * still an acting call). BN-46, 2026-11-09: the help window's own **Undo
+ * this change** goes through this door too, and pressed after ten others in
+ * five minutes it was refused with the change left in place -- after a
+ * model had removed ten things, the person could not put them back for five
+ * minutes. An undo of a removal, an undo naming no id and a redo (an undo's
+ * own id, never remembered: `owa_undo` is a removing call) stay counted.
+ * Bounded, and forgotten after half an hour.
+ */
+export function genOwnChangeMemory({
+    limit = 200,
+    keepMilliseconds = 30 * 60 * 1000,
+} = {}) {
+    const atMap = new Map();
+    return {
+        /** Harvest an answer's `undoId`s. Cheap when it carries none. */
+        remember(text, now = Date.now()) {
+            if (typeof text !== 'string' || !text.includes('undoId')) {
+                return;
+            }
+            for (const match of text.matchAll(
+                /"undoId"\s*:\s*"([^"\\]{1,100})"/g,
+            )) {
+                atMap.delete(match[1]);
+                atMap.set(match[1], now);
+                if (atMap.size > limit) {
+                    atMap.delete(atMap.keys().next().value);
+                }
+            }
+        },
+        has(undoId, now = Date.now()) {
+            const at = atMap.get(undoId);
+            return at !== undefined && now - at <= keepMilliseconds;
+        },
+        get size() {
+            return atMap.size;
+        },
+    };
+}
+
+/** An `owa_undo` putting back, by its own id, a change this session made. */
+export function checkIsOwnChangeUndo(name, args, checkIsOwnChange) {
+    return (
+        name === 'owa_undo' &&
+        args?.action === 'undo' &&
+        typeof args?.id === 'string' &&
+        typeof checkIsOwnChange === 'function' &&
+        checkIsOwnChange(args.id) === true
+    );
+}
+
 // Which argument of which tool is a uid. `upload_file` takes one too and is
 // denied outright above, so it is not here.
 const UID_ARG_MAP = {
@@ -782,7 +837,7 @@ export function recordPressRefusal(name, refusal) {
 export function checkToolCall(
     name,
     args,
-    { now = Date.now(), lookupUidLabel = null } = {},
+    { now = Date.now(), lookupUidLabel = null, checkIsOwnChange = null } = {},
 ) {
     if (readFirewallMode() === 'off') {
         return ALLOWED;
@@ -834,7 +889,11 @@ export function checkToolCall(
     // Both budgets are looked at before either is spent, so a call refused
     // by one does not use up a slot of the other.
     const isActing = checkIsActingCall(name, args);
-    const isRemoving = checkIsRemovingCall(name, args);
+    // Putting back this session's own change takes nothing of the user's
+    // away (`genOwnChangeMemory`): an acting call, not a removal.
+    const isRemoving =
+        checkIsRemovingCall(name, args) &&
+        !checkIsOwnChangeUndo(name, args, checkIsOwnChange);
     if (isActing && !checkHasRoom('acting', now)) {
         return refuse(
             'rate-limit',
@@ -1097,6 +1156,14 @@ export function guardToolCalls(
     const lookupUidLabel = (uid) => {
         return uidMemory.lookup(uid);
     };
+    // The changes this session made (`genOwnChangeMemory`), and the request
+    // ids of the calls whose answers may name one -- per transport too: an
+    // undo id is this session's own only.
+    const ownChangeMemory = genOwnChangeMemory();
+    const checkIsOwnChange = (undoId) => {
+        return ownChangeMemory.has(undoId);
+    };
+    const changeCallIdSet = new Set();
     // Request id -> the file a `take_snapshot` was told to write, read back
     // when its result goes out (see `defaultReadSnapshotFile`).
     const snapshotFileMap = new Map();
@@ -1120,6 +1187,7 @@ export function guardToolCalls(
                 const name = message.params?.name;
                 const verdict = checkToolCall(name, message.params?.arguments, {
                     lookupUidLabel,
+                    checkIsOwnChange,
                 });
                 if (!verdict.isAllowed) {
                     pendingMethodMap.delete(id);
@@ -1154,6 +1222,20 @@ export function guardToolCalls(
                 // the CALL, not the tool: the song drafter and the Bible
                 // importer go out only when they carry a url.
                 const args = message.params?.arguments;
+                // A change that takes nothing away: its answer's `undoId`
+                // is remembered on the way out.
+                if (
+                    id !== undefined &&
+                    checkIsActingCall(name, args) &&
+                    !checkIsRemovingCall(name, args)
+                ) {
+                    if (changeCallIdSet.size >= PENDING_LIMIT) {
+                        changeCallIdSet.delete(
+                            changeCallIdSet.values().next().value,
+                        );
+                    }
+                    changeCallIdSet.add(id);
+                }
                 const urlEntry = checkIsNetworkCall(name, args)
                     ? { url: args?.url }
                     : null;
@@ -1211,6 +1293,16 @@ export function guardToolCalls(
                             message.result.tools,
                         );
                     } else if (asked === 'tools/call' && message.result) {
+                        if (changeCallIdSet.delete(message.id)) {
+                            if (
+                                message.result.isError !== true &&
+                                Array.isArray(message.result.content)
+                            ) {
+                                for (const part of message.result.content) {
+                                    ownChangeMemory.remember(part?.text);
+                                }
+                            }
+                        }
                         message.result.content = redactContentList(
                             message.result.content,
                             uidMemory,

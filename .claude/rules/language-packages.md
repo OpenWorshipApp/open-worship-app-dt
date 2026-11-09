@@ -78,7 +78,23 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     (`tests/chatbot/any-language-asks.json`).
   - `typed.json` — how a question TYPED in the language is told apart
     (name, Unicode script, little words, letters, a family, yes/no; read by
-    `src/chatbot/chatLangHelpers.ts`); `bibleSource.json` — what studying a
+    `src/chatbot/chatLangHelpers.ts` -- its little words must hold the
+    language's COMMONEST ones, shared or not: a list without them names a
+    short line in it another installed language, BN-33), and since
+    2026-11-08 (BN-31) how it
+    says the work the help window does with no model -- `textSizeAsks`
+    (larger, smaller) and `noteStyleAsks` (bold for the whole note), the
+    fields an `assistant.json` carries, read by `languageEditAskHelpers.ts`
+    and held one sample a language by `src/lang/data/tests/chatbot/
+    typedEditAsks.json` -- a bold never said with a word that also means a
+    colour or a size (BN-34), a size never said with a phrase that also asks
+    for more or fewer WORDS, a summary or capitals (name the size: BN-40, an
+    independent read of all 87 that found 31 such), the okina read as the
+    apostrophe (BN-39); a language no reader can confirm keeps only the phrases a BLIND reading gives back as their job, a size said in so many words (BN-41: nine trimmed, Oromo left with none); its little words hold what an ASK is made of -- add, at the end, make -- and a word two neighbours share goes into both lists (BN-42: Finnish's _tee_ named Estonian's lines Finnish until Estonian had it);
+    and, in either file, `lookAlikes` -- pairs of letters drawn the same
+    that keyboards and models swap, two sequences of one length, the first
+    kept (Khmer's: the subscripts of DA and TA), by which words a model
+    writes into a note are put back to the typed ones (BN-37); `bibleSource.json` — what studying a
     Bible in it needs (Hebrew's chant and joiner marks, a grammar hint, which
     letters say a word is in it; `wordStudyHelpers.ts`); `world.json` —
     what the Bible import and the lyric tools know of it in its own words
@@ -193,7 +209,7 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   is reached by deleting the installed copy and installing again). A
   window loads the INSTALLED plugin, not the source folder: an unpacked edit
   is invisible to a live check, and a key the installed copy lacks throws in
-  dev as if it were missing. Memory `language-data-change-bumps-version`.
+  dev as if it were missing. The help window reads a language's small files once, at load, and loads again by itself when the installed languages change while it is open (BN-45). Memory `language-data-change-bumps-version`.
 - **A language brings its own locale and direction**: `meta.json`'s
   `locale` and `direction`. The app's table of the world's locales is
   English's DATA, `en/locales.json` (`locales`, tag -> language code, and

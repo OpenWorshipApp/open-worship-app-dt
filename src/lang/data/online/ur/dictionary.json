@@ -4109,5 +4109,6 @@
     "Summarize this note": "اس نوٹ کا خلاصہ کرو",
     "Tidy it into headings and lists": "اسے سرخیوں اور فہرستوں میں ترتیب دو",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا سائز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا انداز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔"
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا انداز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” بدل دیا گیا، لیکن معاون یہ بتانے سے پہلے رک گیا کہ اس نے کیا کیا۔ یہ تبدیلی واپس لیں اسے پہلے جیسا کر دیتا ہے۔"
 }

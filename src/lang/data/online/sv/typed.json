@@ -7,6 +7,19 @@
         "letters": "åäö",
         "yes": ["ja", "ja, tack"],
         "no": ["nej", "nej, tack"],
-        "order": 14
+        "order": 14,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:gör\\s+texten\\s+större|gor\\s+texten\\s+storre|större\\s+text|storre\\s+text|förstora\\s+texten|forstora\\s+texten|gör\\s+bokstäverna\\s+större|gor\\s+bokstaverna\\s+storre)$"
+            ],
+            "smaller": [
+                "^(?:gör\\s+texten\\s+mindre|gor\\s+texten\\s+mindre|mindre\\s+text|förminska\\s+texten|forminska\\s+texten|gör\\s+bokstäverna\\s+mindre|gor\\s+bokstaverna\\s+mindre)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:gör\\s+all\\s+text\\s+fet|gor\\s+all\\s+text\\s+fet|gör\\s+hela\\s+texten\\s+fet|gor\\s+hela\\s+texten\\s+fet)$"
+            ]
+        }
     }
 }

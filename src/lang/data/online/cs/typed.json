@@ -8,6 +8,19 @@
         "family": "czech-slovak",
         "yes": ["ano", "ano, prosím"],
         "no": ["ne", "ne, děkuji"],
-        "order": 9
+        "order": 9,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:zvětši\\s+text|zvetsi\\s+text|zvětšit\\s+text|zvetsit\\s+text|udělej\\s+text\\s+větší|udelej\\s+text\\s+vetsi|zvětši\\s+písmo|zvetsi\\s+pismo|větší\\s+písmo|vetsi\\s+pismo|větší\\s+text|vetsi\\s+text)$"
+            ],
+            "smaller": [
+                "^(?:zmenši\\s+text|zmensi\\s+text|zmenšit\\s+text|zmensit\\s+text|udělej\\s+text\\s+menší|udelej\\s+text\\s+mensi|zmenši\\s+písmo|zmensi\\s+pismo|menší\\s+písmo|mensi\\s+pismo|menší\\s+text|mensi\\s+text)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:udělej\\s+celý\\s+text\\s+tučně|udelej\\s+cely\\s+text\\s+tucne|dej\\s+celý\\s+text\\s+tučně|dej\\s+cely\\s+text\\s+tucne|celý\\s+text\\s+tučně|cely\\s+text\\s+tucne)$"
+            ]
+        }
     }
 }

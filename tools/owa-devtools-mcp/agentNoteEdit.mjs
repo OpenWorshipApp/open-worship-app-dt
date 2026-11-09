@@ -398,6 +398,9 @@ const NOTE_CHANGE_SCHEMA = z.object({
     text: z.string().max(20000).optional(),
     checked: z.boolean().optional(),
     remove: z.boolean().optional(),
+    // An add whose words another block has: on purpose (BN-44). Taught by
+    // the refusal that names the twin, not by the description.
+    again: z.boolean().optional(),
     ref: z.string().max(200).optional(),
     size: z
         .union([z.number().min(8).max(72), z.enum(['larger', 'smaller'])])

@@ -7,6 +7,19 @@
         "letters": "äöüß",
         "yes": ["ja", "ja, bitte", "gerne"],
         "no": ["nein", "nein, danke"],
-        "order": 3
+        "order": 3,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:mach\\s+den\\s+text\\s+größer|mach\\s+den\\s+text\\s+großer|mache\\s+den\\s+text\\s+größer|mache\\s+den\\s+text\\s+großer|text\\s+vergrößern|text\\s+vergroßern|vergrößere\\s+den\\s+text|vergroßere\\s+den\\s+text|vergrößer\\s+den\\s+text|vergroßer\\s+den\\s+text|schrift\\s+vergrößern|schrift\\s+vergroßern|größere\\s+schrift|großere\\s+schrift|mach\\s+die\\s+schrift\\s+größer|mach\\s+die\\s+schrift\\s+großer|mache\\s+die\\s+schrift\\s+größer|mache\\s+die\\s+schrift\\s+großer)$"
+            ],
+            "smaller": [
+                "^(?:mach\\s+den\\s+text\\s+kleiner|mache\\s+den\\s+text\\s+kleiner|text\\s+verkleinern|verkleinere\\s+den\\s+text|verkleiner\\s+den\\s+text|schrift\\s+verkleinern|kleinere\\s+schrift|mach\\s+die\\s+schrift\\s+kleiner|mache\\s+die\\s+schrift\\s+kleiner)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:mach\\s+den\\s+ganzen\\s+text\\s+fett|mache\\s+den\\s+ganzen\\s+text\\s+fett|alles\\s+fett)$"
+            ]
+        }
     }
 }

@@ -3,10 +3,19 @@
         "name": "Kirundi",
         "nativeName": "Ikirundi",
         "script": "Latin",
-        "words": "na canke ariko si nta ni ari jewe wewe we twebwe mwebwe bo gute iki iyihe hehe kubera ryari nde uyu uwo aha hano cane kandi nshobora ndashaka nkeneye murakoze kuri muri",
+        "words": "na canke ariko si nta ni ari jewe wewe we twebwe mwebwe bo gute iki iyihe hehe kubera ryari nde uyu uwo aha hano cane kandi nshobora ndashaka nkeneye murakoze kuri muri wa mu ya y' z' w' c' vy' rw' ry' bw' tw' k' n' shira zose vyose cose ongerako iherezo kw'",
         "family": "rwanda-rundi",
         "yes": ["ego"],
         "no": ["oya"],
-        "order": 31
+        "order": 31,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ongereza\\s+ubunini\\s+bw['’]inyuguti|ongera\\s+ubunini\\s+bw['’]inyuguti)$"
+            ],
+            "smaller": ["^(?:gabanya\\s+ubunini\\s+bw['’]inyuguti)$"]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:shira\\s+inyuguti\\s+zose\\s+muri\\s+bold)$"]
+        }
     }
 }

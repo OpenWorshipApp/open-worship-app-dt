@@ -45,7 +45,9 @@ export function toResourceFileName(
     const fileKey = rules.toCompareKey(filePath);
     for (let index = 0; index < dirPaths.length; index++) {
         const dirPath = dirPaths[index].replace(/[\\/]+$/, '');
-        const dirKey = rules.toCompareKey(dirPath) + rules.separator;
+        // The separator through the key too: on Windows a forward slash is
+        // the backslash (BN-38).
+        const dirKey = rules.toCompareKey(dirPath + rules.separator);
         if (fileKey.startsWith(dirKey)) {
             const inner = filePath
                 .slice(dirPath.length)

@@ -4109,5 +4109,6 @@
     "Summarize this note": "ဤမှတ်စုကို အကျဉ်းချုပ်ပါ",
     "Tidy it into headings and lists": "ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ပါ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ အရွယ်အစားအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ ပုံစံအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။"
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ ပုံစံအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ကို ပြောင်းလိုက်ပြီ၊ သို့သော် အကူအညီပေးသူသည် ဘာလုပ်ခဲ့သည်ကို မပြောမီ ရပ်သွားသည်။ ဤပြောင်းလဲမှုကို ပြန်ဖျက်ပါ က ၎င်းကို ပြန်ထားပေးသည်။"
 }

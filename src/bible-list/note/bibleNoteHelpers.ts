@@ -563,6 +563,60 @@ export async function initBibleNote({
         // toggle cannot be flipped back from inside the window.
         lockBibleNoteReadOnly(bibleNote);
     }
+
+    // per-note: a module-level shared timer would drop note A's reload when
+    // note B changes within the debounce window
+    const attemptTimeout = genTimeoutAttempt(1_000);
+    const abortController = new AbortController();
+    // A head another window wrote and this one has not shown yet: it waits
+    // for the debounce and, in a focused window, for typing to settle --
+    // seconds in which the help window's next read found the state before
+    // an undo and its edit was refused as stale (BN-28, 2026-11-08). A read
+    // or change asked of this window takes it at once (`flush`): asked from
+    // the help window, nobody is typing here.
+    let isHeadChangePending = false;
+    const reloadNote = async (isHeadChange: boolean, isAsked = false) => {
+        // The wait protects typing in progress from being overwritten; a
+        // preview has none, and following the file as it changes is the
+        // point of keeping one open.
+        if (
+            !isAsked &&
+            !isReadOnly &&
+            (bibleNote.getIsFocusing() || document.hasFocus())
+        ) {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 3_000);
+            });
+        }
+        if (isHeadChange) {
+            isHeadChangePending = false;
+        }
+        // The EDITING head, not the file: an item added or a verse marked
+        // from the list rebases that head onto the new file, so what comes
+        // back here still carries this window's own unsaved text instead of
+        // wiping it.
+        await (isReadOnly ? note.reload() : note.reloadEditing());
+        const newNoteItem = note.getItemById(noteItem.id);
+        if (newNoteItem === null) {
+            return;
+        }
+        // Same normalisation the file is read through: the editor throws on a
+        // childless root here too.
+        const newContent = toStoredContent(newNoteItem.content);
+        if (newContent === noteItem.content) {
+            return;
+        }
+        if (isReadOnly || isHeadChange) {
+            // Nothing else moves it on in a preview -- `saveData` is what does
+            // that in an editable window -- so a file edited back to what it
+            // was would otherwise never be shown again. And a head another
+            // window wrote is already in the history: written straight out
+            // again as a new entry, it would throw the Redo away.
+            noteItem.content = newContent;
+        }
+        bibleNote.content = toEditorContent(newContent);
+    };
+
     // The help window's note conversation reads and changes THIS note
     // through this editor -- what the person sees, unsaved typing and all --
     // never the file behind their back (`noteWindowControllerHelpers.ts`).
@@ -605,47 +659,16 @@ export async function initBibleNote({
             await writeEditingHistory();
             return isSaved || noteItem.content !== contentBefore;
         },
-        flush: writeEditingHistory,
+        // A head another window wrote is shown first (BN-28), then what was
+        // typed and not kept yet is kept.
+        flush: async () => {
+            if (isHeadChangePending) {
+                await reloadNote(true, true);
+            }
+            await writeEditingHistory();
+        },
     });
 
-    // per-note: a module-level shared timer would drop note A's reload when
-    // note B changes within the debounce window
-    const attemptTimeout = genTimeoutAttempt(1_000);
-    const abortController = new AbortController();
-    const reloadNote = async (isHeadChange: boolean) => {
-        // The wait protects typing in progress from being overwritten; a
-        // preview has none, and following the file as it changes is the
-        // point of keeping one open.
-        if (!isReadOnly && (bibleNote.getIsFocusing() || document.hasFocus())) {
-            await new Promise((resolve) => {
-                setTimeout(resolve, 3_000);
-            });
-        }
-        // The EDITING head, not the file: an item added or a verse marked
-        // from the list rebases that head onto the new file, so what comes
-        // back here still carries this window's own unsaved text instead of
-        // wiping it.
-        await (isReadOnly ? note.reload() : note.reloadEditing());
-        const newNoteItem = note.getItemById(noteItem.id);
-        if (newNoteItem === null) {
-            return;
-        }
-        // Same normalisation the file is read through: the editor throws on a
-        // childless root here too.
-        const newContent = toStoredContent(newNoteItem.content);
-        if (newContent === noteItem.content) {
-            return;
-        }
-        if (isReadOnly || isHeadChange) {
-            // Nothing else moves it on in a preview -- `saveData` is what does
-            // that in an editable window -- so a file edited back to what it
-            // was would otherwise never be shown again. And a head another
-            // window wrote is already in the history: written straight out
-            // again as a new entry, it would throw the Redo away.
-            noteItem.content = newContent;
-        }
-        bibleNote.content = toEditorContent(newContent);
-    };
     try {
         appProvider.fileUtils.watch(
             note.filePath,
@@ -684,6 +707,7 @@ export async function initBibleNote({
                 });
                 return;
             }
+            isHeadChangePending = true;
             attemptTimeout(() => {
                 return reloadNote(true);
             });

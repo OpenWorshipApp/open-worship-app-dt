@@ -4109,5 +4109,6 @@
     "Summarize this note": "Vakalekalekataka na ivola qo",
     "Tidy it into headings and lists": "Tuvanaka me ulutaga kei na lisi",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena levu na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena irairai na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena irairai na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Sa veisau na “{name}”, ia a cegu na dauveivuke ni bera ni tukuna na ka a cakava. Na Vakalesuya na veisau oqo e vakalesuya tale."
 }

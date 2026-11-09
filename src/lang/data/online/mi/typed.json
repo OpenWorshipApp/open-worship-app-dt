@@ -7,6 +7,19 @@
         "letters": "āēīōū",
         "yes": ["āe"],
         "no": ["kāore"],
-        "order": 43
+        "order": 43,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:whakanuia\\s+ake\\s+te\\s+tuhinga|kia\\s+rahi\\s+ake\\s+te\\s+tuhinga)$"
+            ],
+            "smaller": [
+                "^(?:whakaitia\\s+iho\\s+te\\s+tuhinga|kia\\s+iti\\s+iho\\s+te\\s+tuhinga)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:kia\\s+mātotoru\\s+te\\s+tuhinga\\s+katoa|kia\\s+matotoru\\s+te\\s+tuhinga\\s+katoa)$"
+            ]
+        }
     }
 }

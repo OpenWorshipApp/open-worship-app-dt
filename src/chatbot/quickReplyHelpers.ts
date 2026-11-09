@@ -81,14 +81,21 @@ export const MAX_REPLY_LENGTH = 40;
 function escapeRegExp(text: string) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-function genFrameMarker(word: string) {
-    const nameList = [word, ...listFrameAliases(word).map(escapeRegExp)];
+function genFrameMarker(word: string, englishAliasList: string[] = []) {
+    const nameList = [
+        word,
+        ...englishAliasList,
+        ...listFrameAliases(word).map(escapeRegExp),
+    ];
     return new RegExp(
         `(^|[\\s>*_(.!?${toCharClassSource(SENTENCE_END_MARKS)}-])(?:${nameList.join('|')})[:\\uFF1A${toCharClassSource(COLON_MARKS)}][ \\t]*`,
         'iu',
     );
 }
-const OPTIONS_MARKER = genFrameMarker('OPTIONS');
+// A model writes its options under another English word now and then
+// (2026-11-08, BN-29: Free's Nemotron ended a note answer with "Choices: Undo
+// this change", which stayed in the answer as words, half put into Khmer).
+const OPTIONS_MARKER = genFrameMarker('OPTIONS', ['CHOICES']);
 // How far back the marker may sit. The model puts it last; two lines of slack
 // covers a stray blank or a closing sentence typed after it. Further back than
 // that and it is something else -- a quoted example, a step in a recipe.
@@ -228,9 +235,105 @@ function cutTrailingFrame(text: string, marker: RegExp) {
     return { text: String(text ?? ''), tail: null };
 }
 
+// The options a model LISTED under a bare marker, one a line, to the end of
+// the answer (2026-11-08, BN-27: a Chinese note answer ended `OPTIONS:` and
+// three lines, and all four were drawn as words -- the marker sat further
+// back than the lookback, and one listed option would have stayed in the
+// text with no button).
+const MAX_LISTED_OPTION_COUNT = 5;
+const MAX_LISTED_OPTION_LENGTH = 80;
+const LISTED_OPTION_MARK_PATTERN = /^\s*(?:[-*•·]|\d{1,2}[.)])\s+/u;
+
+function cutListedFrame(text: string, marker: RegExp) {
+    const lines = String(text ?? '').split('\n');
+    const listed: string[] = [];
+    for (let index = lines.length - 1; index >= 0; index--) {
+        const line = lines[index];
+        if (line.trim().length === 0) {
+            continue;
+        }
+        const matched = marker.exec(line);
+        if (matched !== null) {
+            const tail = line.slice(matched.index + matched[0].length);
+            if (tail.trim().length > 0 || listed.length === 0) {
+                return null;
+            }
+            const head = line
+                .slice(0, matched.index + matched[1].length)
+                .replace(/[ \t>*_-]+$/, '')
+                .trimEnd();
+            const kept = lines.slice(0, index);
+            if (head.length > 0) {
+                kept.push(head);
+            }
+            return {
+                text: kept.join('\n').trimEnd(),
+                tail: listed.reverse().join(' | '),
+            };
+        }
+        const option = line.replace(LISTED_OPTION_MARK_PATTERN, '').trim();
+        if (
+            listed.length >= MAX_LISTED_OPTION_COUNT ||
+            option.length > MAX_LISTED_OPTION_LENGTH ||
+            option.includes('|')
+        ) {
+            return null;
+        }
+        listed.push(option);
+    }
+    return null;
+}
+
+// A marker in the person's OWN language (2026-11-09, BN-47, the 87-language
+// run: a Polish answer ended with its options under Polish's own word for
+// "options", drawn as words with no buttons -- the model, or the translator
+// that put its answer into Polish, had translated OPTIONS). A language that is not
+// one of the help window's own has no word for it here, so such a line is read
+// by its SHAPE: the last line of the answer, one to three words and a colon,
+// then two to five short items between `|`. Never a list one a line: a
+// heading word over a list is how an answer writes steps.
+const UNNAMED_OPTIONS_PATTERN = new RegExp(
+    `(^|[.!?…${toCharClassSource(SENTENCE_END_MARKS)}][ \\t]+)` +
+        `[\\p{L}\\p{M}]{2,24}(?:[ \\u00A0][\\p{L}\\p{M}]{1,24}){0,2}[ \\t]*` +
+        `[:\\uFF1A${toCharClassSource(COLON_MARKS)}][ \\t]*` +
+        `((?:[^|\\n]{1,80}\\|){1,4}[^|\\n]{1,80})$`,
+    'u',
+);
+
+// The lines the guide and the report write for the window, never options.
+const OTHER_FRAME_LEAD_PATTERN = /^\s*(?:DO|REPORT)\s*[:：]/i;
+
+function cutUnnamedFrame(text: string) {
+    const lines = String(text ?? '').split('\n');
+    for (let index = lines.length - 1; index >= 0; index--) {
+        const line = lines[index].trimEnd();
+        if (line.trim().length === 0) {
+            continue;
+        }
+        const matched = UNNAMED_OPTIONS_PATTERN.exec(line);
+        // Another frame of the window's own, with a list of its own
+        // (`SHOWS: Clear All | Font Size`), is that frame's.
+        if (
+            matched === null ||
+            SHOWS_MARKER.test(line) ||
+            NEEDS_MARKER.test(line) ||
+            OTHER_FRAME_LEAD_PATTERN.test(line)
+        ) {
+            return null;
+        }
+        const head = line.slice(0, matched.index + matched[1].length).trimEnd();
+        const kept = lines.slice(0, index);
+        if (head.length > 0) {
+            kept.push(head);
+        }
+        return { text: kept.join('\n').trimEnd(), tail: matched[2] };
+    }
+    return null;
+}
+
 /**
  * The answer as the user should see it, and the options the model attached to
- * it.
+ * it -- on the marker's own line, or listed one a line under a bare marker.
  *
  * The line is taken off the text WHETHER OR NOT it parsed into anything usable.
  * A bubble reading `OPTIONS: |` at a volunteer is the one failure this design
@@ -241,7 +344,11 @@ export function parseAnswerOptions(text: string): {
     text: string;
     options: string[];
 } {
-    const cut = cutTrailingFrame(text, OPTIONS_MARKER);
+    const marked =
+        cutListedFrame(text, OPTIONS_MARKER) ??
+        cutTrailingFrame(text, OPTIONS_MARKER);
+    const cut =
+        marked.tail === null ? (cutUnnamedFrame(text) ?? marked) : marked;
     return {
         text: cut.text,
         options: cut.tail === null ? [] : toReplyList(cut.tail, cut.text),

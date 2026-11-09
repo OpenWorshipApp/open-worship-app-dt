@@ -7,6 +7,19 @@
         "letters": "ðþæ",
         "yes": ["já", "já takk"],
         "no": ["nei", "nei takk"],
-        "order": 47
+        "order": 47,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:stækkaðu\\s+textann|gerðu\\s+textann\\s+stærri|stærri\\s+texti|stækka\\s+letrið)$"
+            ],
+            "smaller": [
+                "^(?:minnkaðu\\s+textann|gerðu\\s+textann\\s+minni|minni\\s+texti|minnka\\s+letrið)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:feitletraðu\\s+allan\\s+textann|gerðu\\s+allan\\s+textann\\s+feitletraðan)$"
+            ]
+        }
     }
 }

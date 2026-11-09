@@ -4109,5 +4109,6 @@
     "Summarize this note": "ଏହି ଟିପ୍ପଣୀର ସାରାଂଶ ଦିଅ",
     "Tidy it into headings and lists": "ଶୀର୍ଷକ ଓ ତାଲିକାରେ ସଜାଅ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ଗୋଟିଏ ପରିବର୍ତ୍ତନରେ ହୋଇଗଲା: “{name}”ର {count}ଟି ଭାଗର ଶବ୍ଦର ନୂଆ ଆକାର ହୋଇଛି। ଏହା ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ହୋଇନାହିଁ: ଟିପ୍ପଣୀ ୱିଣ୍ଡୋର ସଞ୍ଚୟ କରନ୍ତୁ ଏହାକୁ ରଖେ, ଏବଂ ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ଫେରାଇ ଆଣେ।",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ଗୋଟିଏ ପରିବର୍ତ୍ତନରେ ହୋଇଗଲା: “{name}”ର {count}ଟି ଭାଗର ଶବ୍ଦର ନୂଆ ଶୈଳୀ ହୋଇଛି। ଏହା ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ହୋଇନାହିଁ: ଟିପ୍ପଣୀ ୱିଣ୍ଡୋର ସଞ୍ଚୟ କରନ୍ତୁ ଏହାକୁ ରଖେ, ଏବଂ ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ଫେରାଇ ଆଣେ।"
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ଗୋଟିଏ ପରିବର୍ତ୍ତନରେ ହୋଇଗଲା: “{name}”ର {count}ଟି ଭାଗର ଶବ୍ଦର ନୂଆ ଶୈଳୀ ହୋଇଛି। ଏହା ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ହୋଇନାହିଁ: ଟିପ୍ପଣୀ ୱିଣ୍ଡୋର ସଞ୍ଚୟ କରନ୍ତୁ ଏହାକୁ ରଖେ, ଏବଂ ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ଫେରାଇ ଆଣେ।",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ବଦଳାଯାଇଛି, କିନ୍ତୁ ସହାୟକ କ’ଣ କଲା କହିବା ପୂର୍ବରୁ ଅଟକିଗଲା। ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ପୂର୍ବପରି କରିଦିଏ।"
 }

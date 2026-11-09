@@ -3,10 +3,21 @@
         "name": "Finnish",
         "nativeName": "Suomi",
         "script": "Latin",
-        "words": "ja tai mutta ei en et emme on ovat oli olen olet minä sinä hän me te he minun sinun hänen meidän miten mitä mikä missä mihin miksi milloin kuka ketä kenen kanssa voi voin voit voinko haluan pitää myös vielä jo hyvin paljon enemmän tämä tuo nämä täällä siellä kiitos",
+        "words": "ja tai mutta ei en et emme on ovat oli olen olet minä sinä hän me te he minun sinun hänen meidän miten mitä mikä missä mihin miksi milloin kuka ketä kenen kanssa voi voin voit voinko haluan pitää myös vielä jo hyvin paljon enemmän tämä tuo nämä täällä siellä kiitos lisää loppuun tee näytä poista",
         "letters": "äö",
         "yes": ["kyllä", "joo"],
         "no": ["ei", "ei kiitos"],
-        "order": 17
+        "order": 17,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:suurenna\\s+tekstiä|suurenna\\s+tekstia|tee\\s+tekstistä\\s+isompi|tee\\s+tekstista\\s+isompi|isompi\\s+teksti|suurenna\\s+fonttia|tee\\s+teksti\\s+isommaksi)$"
+            ],
+            "smaller": [
+                "^(?:pienennä\\s+tekstiä|pienenna\\s+tekstia|tee\\s+tekstistä\\s+pienempi|tee\\s+tekstista\\s+pienempi|pienempi\\s+teksti|pienennä\\s+fonttia|pienenna\\s+fonttia|tee\\s+teksti\\s+pienemmäksi|tee\\s+teksti\\s+pienemmaksi)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:lihavoi\\s+koko\\s+teksti|lihavoi\\s+kaikki)$"]
+        }
     }
 }

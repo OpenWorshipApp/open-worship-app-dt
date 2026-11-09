@@ -4109,5 +4109,6 @@
     "Summarize this note": "Ringkas catatan ini",
     "Tidy it into headings and lists": "Rapikan menjadi judul dan daftar",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: kata-kata di {count} blok “{name}” punya ukuran baru. Ini belum disimpan: Simpan di jendela catatan menyimpannya, dan Urungkan perubahan ini mengembalikannya.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: kata-kata di {count} blok “{name}” punya gaya baru. Ini belum disimpan: Simpan di jendela catatan menyimpannya, dan Urungkan perubahan ini mengembalikannya."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: kata-kata di {count} blok “{name}” punya gaya baru. Ini belum disimpan: Simpan di jendela catatan menyimpannya, dan Urungkan perubahan ini mengembalikannya.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” telah diubah, tetapi asisten berhenti sebelum mengatakan apa yang dilakukannya. Batalkan perubahan ini mengembalikannya."
 }

@@ -3,10 +3,21 @@
         "name": "Xhosa",
         "nativeName": "isiXhosa",
         "script": "Latin",
-        "words": "kwaye kodwa okanye ukuba ndi ndiya ndicela enkosi u si ba ka nga ku njani yintoni phi kutheni nini ngubani eyiphi mna wena yena thina nina bona oku oko apha kakhulu",
+        "words": "kwaye kodwa okanye ukuba ndi ndiya ndicela enkosi u si ba ka nga ku njani yintoni phi kutheni nini ngubani eyiphi mna wena yena thina nina bona oku oko apha kakhulu yongeza ekugqibeleni faka susa tshintsha bhala",
         "family": "nguni",
         "yes": ["ewe"],
         "no": ["hayi"],
-        "order": 37
+        "order": 37,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:yandisa\\s+umbhalo|khulisa\\s+umbhalo|yenza\\s+umbhalo\\s+ube\\s+mkhulu)$"
+            ],
+            "smaller": [
+                "^(?:nciphisa\\s+umbhalo|yenza\\s+umbhalo\\s+ube\\s+mncinci)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:yenza\\s+wonke\\s+umbhalo\\s+ube\\s+bold)$"]
+        }
     }
 }

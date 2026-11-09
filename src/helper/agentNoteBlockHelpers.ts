@@ -152,6 +152,9 @@ export type NoteEditChangeType = {
     text?: string;
     checked?: boolean;
     remove?: boolean;
+    // An added block whose words another block has already, added on
+    // purpose -- a refrain, a closing "Amen" (BN-44).
+    again?: boolean;
     ref?: string;
     // The block's text size: px, or "larger" / "smaller" -- each run of
     // words scaled from its own size, so a heading stays above its lines.
@@ -1663,16 +1666,40 @@ function checkIsBlockNumber(value: unknown, count: number) {
     );
 }
 
-// The words of a block worth keeping: three letters or more, any script.
+/**
+ * A word worth counting: three letters or more ("a", "of" are in any text),
+ * or two in a script with no capitals, whose words are short -- two
+ * characters are a word of their own in Chinese.
+ */
+function checkIsCountedWord(word: string) {
+    const size = [...word].length;
+    return size >= 3 || (size === 2 && !/\p{Cased}/u.test(word));
+}
+
+/**
+ * The words of a block worth keeping, any script: cut by the segmenter, so
+ * a script written with no spaces is words too (2026-11-08: split at the
+ * spaces, a Khmer or Chinese paragraph was one or two "words", and the
+ * guard below never held a heading off it); split at what is not a letter
+ * where there is no segmenter.
+ */
 function toWordSet(text: string) {
-    return new Set(
-        text
-            .toLowerCase()
-            .split(/[^\p{L}\p{M}\p{N}]+/u)
-            .filter((word) => {
-                return word.length >= 3;
-            }),
-    );
+    const lower = text.toLowerCase();
+    const words =
+        typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+            ? [
+                  ...new Intl.Segmenter(undefined, {
+                      granularity: 'word',
+                  }).segment(lower),
+              ]
+                  .filter((one) => {
+                      return one.isWordLike === true;
+                  })
+                  .map((one) => {
+                      return one.segment;
+                  })
+            : lower.split(/[^\p{L}\p{M}\p{N}]+/u);
+    return new Set(words.filter(checkIsCountedWord));
 }
 
 /**
@@ -1959,12 +1986,13 @@ const MAX_DONE_TEXT_CHARS = 600;
 function describeDoneChange(
     change: NoteEditChangeType,
     style: ChangeStyleType,
+    isOwnWords: boolean,
 ) {
     const done: string[] = [];
     if (change.block === undefined) {
         done.push(`added ${change.kind ?? 'paragraph'}`);
     } else {
-        if (change.text !== undefined) {
+        if (change.text !== undefined && !isOwnWords) {
             done.push('new words');
         }
         if (change.kind !== undefined) {
@@ -2169,6 +2197,13 @@ export function applyNoteEdit({
     const moves: NoteEditChangeType[] = [];
     const adds: NoteEditChangeType[] = [];
     const styleMap = new Map<NoteEditChangeType, ChangeStyleType>();
+    // Changes giving a block its OWN words back, as read: its nodes are kept.
+    // The light mark-up cannot say a space inside a bold run, a comment's
+    // mark or a code block's colouring, and rebuilding from it had moved the
+    // space out of the bold, dropped the comment and flattened the code
+    // (2026-11-08, BN-35, three blocks of a note in the dev data folder) --
+    // a model sends a block's words back with a style or a kind all the time.
+    const ownWordsChangeSet = new Set<NoteEditChangeType>();
     for (const askedChange of changes) {
         if (!checkIsNode(askedChange)) {
             return toReason('Each change is an object.');
@@ -2320,6 +2355,15 @@ export function applyNoteEdit({
                     'another kind.',
             );
         }
+        if (change.text !== undefined && !ref.isFixed) {
+            const ownText = toBlockText(ref);
+            if (
+                change.text === ownText ||
+                toRealLineBreaks(change.text) === ownText
+            ) {
+                ownWordsChangeSet.add(change);
+            }
+        }
         if (
             change.text !== undefined &&
             toBlockText(ref).length > MAX_SHOWN_BLOCK_CHARS
@@ -2404,9 +2448,14 @@ export function applyNoteEdit({
     }
 
     // A model "adding" a block that is already there, untouched by this
-    // change: the words were meant as a change to that block.
+    // change: the words were meant as a change to that block -- unless it
+    // says `again`. BN-44 (2026-11-09): _add a line at the end saying
+    // Fitiavana Andriamanitra_ to a note that had that line already was
+    // refused twice with no way to add it, and the model then told the
+    // person, in Malagasy, that the line was added.
     for (const change of adds) {
         if (
+            change.again === true ||
             change.kind === 'passage' ||
             change.kind === 'rule' ||
             (NOTE_INSERT_KIND_LIST as readonly string[]).includes(
@@ -2426,8 +2475,8 @@ export function applyNoteEdit({
         if (twin >= 0) {
             return toReason(
                 `Those are block ${twin + 1}'s words already. To change ` +
-                    `block ${twin + 1}, give \`block: ${twin + 1}\`; a change ` +
-                    'without `block` adds a new one.',
+                    `block ${twin + 1}, give \`block: ${twin + 1}\`; to add ` +
+                    'the same words again as a new block, give `again: true`.',
             );
         }
     }
@@ -2472,9 +2521,11 @@ export function applyNoteEdit({
         const node = nodeOf.get(blockNumber)!;
         const kind = kindOfChange(change) as NoteEditableKindType;
         const style = findFirstStyle(node);
+        const hasNewWords =
+            change.text !== undefined && !ownWordsChangeSet.has(change);
         let children: NodeType[];
-        if (change.text !== undefined) {
-            const text = toRealLineBreaks(change.text);
+        if (hasNewWords) {
+            const text = toRealLineBreaks(change.text as string);
             if (kind === 'code') {
                 children = text.split('\n').flatMap((line, index) => {
                     const lineNodes =
@@ -2509,11 +2560,7 @@ export function applyNoteEdit({
         } else {
             children = childrenOf(node);
         }
-        if (
-            checkIsQuoteOfParagraphs(node) &&
-            kind === 'quote' &&
-            change.text !== undefined
-        ) {
+        if (checkIsQuoteOfParagraphs(node) && kind === 'quote' && hasNewWords) {
             // Written back the way this quote holds its words: a paragraph a
             // line.
             const firstParagraph = childrenOf(node)[0];
@@ -2584,7 +2631,7 @@ export function applyNoteEdit({
             nodeOf.set(blockNumber, item);
             continue;
         }
-        if (kind === ref.kind && change.text !== undefined) {
+        if (kind === ref.kind && hasNewWords) {
             node.children = children;
             continue;
         }
@@ -2875,7 +2922,11 @@ export function applyNoteEdit({
     // never more (a model had said a word was made red with no colour sent).
     const doneText = [...updates, ...adds]
         .map((change) => {
-            return describeDoneChange(change, styleMap.get(change)!);
+            return describeDoneChange(
+                change,
+                styleMap.get(change)!,
+                ownWordsChangeSet.has(change),
+            );
         })
         .join('; ');
     const summary =

@@ -7,6 +7,19 @@
         "letters": "çàèéíïòóúü·",
         "yes": ["sí", "si, si us plau"],
         "no": ["no", "no, gràcies"],
-        "order": 6
+        "order": 6,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:fes\\s+el\\s+text\\s+més\\s+gran|fes\\s+el\\s+text\\s+mes\\s+gran|fes\\s+la\\s+lletra\\s+més\\s+gran|fes\\s+la\\s+lletra\\s+mes\\s+gran|augmenta\\s+la\\s+mida\\s+del\\s+text|text\\s+més\\s+gran|text\\s+mes\\s+gran|lletra\\s+més\\s+gran|lletra\\s+mes\\s+gran)$"
+            ],
+            "smaller": [
+                "^(?:fes\\s+el\\s+text\\s+més\\s+petit|fes\\s+el\\s+text\\s+mes\\s+petit|fes\\s+la\\s+lletra\\s+més\\s+petita|fes\\s+la\\s+lletra\\s+mes\\s+petita|redueix\\s+la\\s+mida\\s+del\\s+text|text\\s+més\\s+petit|text\\s+mes\\s+petit|lletra\\s+més\\s+petita|lletra\\s+mes\\s+petita)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:posa\\s+tot\\s+el\\s+text\\s+en\\s+negreta|fes\\s+tot\\s+el\\s+text\\s+en\\s+negreta)$"
+            ]
+        }
     }
 }

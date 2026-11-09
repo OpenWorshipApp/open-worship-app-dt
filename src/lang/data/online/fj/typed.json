@@ -3,9 +3,20 @@
         "name": "Fijian",
         "nativeName": "Na Vosa Vakaviti",
         "script": "Latin",
-        "words": "na ka e kei ki vei au iko koya keimami keda ira vakacava cava evei baleta naica cei qo qori sega rawa via kerekere sara talega vinaka",
+        "words": "na ka e kei ki vei au iko koya keimami keda ira vakacava cava evei baleta naica cei qo qori sega rawa via kerekere sara talega vinaka i ni ena mai kece o ko me cakava",
         "yes": ["io", "io, kerekere"],
         "no": ["sega"],
-        "order": 46
+        "order": 46,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:vakalevutaka\\s+na\\s+volavola|vakalevutaka\\s+na\\s+matanivola)$"
+            ],
+            "smaller": [
+                "^(?:vakalailaitaka\\s+na\\s+volavola|vakalailaitaka\\s+na\\s+matanivola)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:cakava\\s+me\\s+bold\\s+na\\s+volavola\\s+kece)$"]
+        }
     }
 }

@@ -7,6 +7,16 @@
         "letters": "ịọụṅ",
         "yes": ["ee", "ee, biko"],
         "no": ["mba"],
-        "order": 34
+        "order": 34,
+        "textSizeAsks": {
+            "smaller": [
+                "^(?:mee\\s+ka\\s+mkpụrụedemede\\s+dị\\s+obere|mee\\s+ka\\s+mkpuruedemede\\s+di\\s+obere)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:mee\\s+ka\\s+ederede\\s+niile\\s+bụrụ\\s+bold|mee\\s+ka\\s+ederede\\s+niile\\s+buru\\s+bold)$"
+            ]
+        }
     }
 }

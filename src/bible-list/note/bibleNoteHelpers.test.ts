@@ -701,6 +701,29 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect(note.updateNoteItem).not.toHaveBeenCalled();
         });
 
+        // BN-28 (2026-11-08): after Undo this change, the window waited out
+        // its debounce and, focused, a pause for typing -- seconds in which
+        // the help window's next read found the undone state and its edit
+        // was refused as stale. A read asked of the window shows it first.
+        test('a head change still waiting is shown before the help window reads', async () => {
+            h.headChangedListeners.length = 0;
+            // The debounce has not run yet.
+            h.genTimeoutAttemptMock.mockReturnValue(() => {});
+            const { note, bibleNote, noteItem } = await setupInit();
+            const controller = getNoteWindowController()!;
+            note.getItemById.mockReturnValue({ id: 7, content: 'undone' });
+            h.headChangedListeners[0]('/notes/a.note');
+            await flush();
+            expect(note.reloadEditing).not.toHaveBeenCalled();
+            await controller.flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            expect(noteItem.content).toBe('undone');
+            expect(bibleNote.content).toBe('undone');
+            // Nothing waits any more: the next read reloads nothing.
+            await controller.flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+        });
+
         test('a read-only preview does not listen for heads', async () => {
             h.headChangedListeners.length = 0;
             await setupInit(genNoteItem(), true);

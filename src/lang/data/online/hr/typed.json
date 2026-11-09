@@ -3,11 +3,24 @@
         "name": "Croatian",
         "nativeName": "Hrvatski",
         "script": "Latin",
-        "words": "i u na s sa za od do o po iz kod bez je su sam si smo bio bila da ne kako što šta gdje zašto kada kad tko ko koji koja koje moj moja tvoj njegov njezin naš ja ti on ona mi vi oni mogu može možeš želim trebam također već još jako više ovaj ova ovo taj to ovdje molim hvala",
+        "words": "i u na s sa za od do o po iz kod bez je su sam si smo bio bila da ne kako što šta gdje zašto kada kad tko ko koji koja koje moj moja tvoj njegov njezin naš ja ti on ona mi vi oni mogu može možeš želim trebam također već još jako više ovaj ova ovo taj to ovdje molim hvala dodaj kraj redak napravi",
         "letters": "čćđšž",
         "family": "south-slavic",
         "yes": ["da", "da, molim"],
         "no": ["ne", "ne, hvala"],
-        "order": 11
+        "order": 11,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:povećaj\\s+tekst|povecaj\\s+tekst|povećaj\\s+slova|povecaj\\s+slova|uvećaj\\s+tekst|uvecaj\\s+tekst|veći\\s+tekst|veci\\s+tekst|povećaj\\s+font|povecaj\\s+font)$"
+            ],
+            "smaller": [
+                "^(?:smanji\\s+tekst|smanji\\s+slova|manji\\s+tekst|smanji\\s+font)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:podebljaj\\s+sav\\s+tekst|podebljaj\\s+cijeli\\s+tekst)$"
+            ]
+        }
     }
 }

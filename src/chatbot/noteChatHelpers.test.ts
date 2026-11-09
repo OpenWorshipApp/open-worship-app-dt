@@ -5,6 +5,7 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_SYSTEM_PROMPT,
     NOTE_WORDLESS_HINT,
+    checkAddsNoteVerse,
     checkIsNoteAttachment,
     checkIsNoteOpenedLast,
     findNoteAskFiles,
@@ -19,8 +20,11 @@ import {
     genNoteSizeChanges,
     genNoteSizeDoneText,
     resolveNoteEditTarget,
+    restoreNoteTypedWords,
+    restoreTypedWords,
     toNoteAsk,
     toNoteDocumentText,
+    toNoteOwnWordsHint,
 } from './noteChatHelpers';
 import { readSlideSizeAsk } from './slideChatHelpers';
 
@@ -153,6 +157,38 @@ describe('the note a call names', () => {
         ).toContain('"Sunday", "Mercy"');
     });
 
+    // BN-30 (2026-11-08, seen live): a model named a Khmer note with one of
+    // two look-alike letters in place of the other, and the edit was
+    // refused for good.
+    it('a name a letter out is the ONE note attached, never one of two', () => {
+        const longFiles = findNoteAskFiles([
+            noteAttachment('Sunday sermon on grace', 4),
+        ]);
+        expect(
+            resolveNoteEditTarget(
+                { note: 'Sunday sermon on grase' },
+                longFiles,
+            ),
+        ).toMatchObject({ id: 4, note: 'Sunday sermon on grace' });
+        expect(resolveNoteEditTarget({ note: 'Sundae' }, files)).toMatchObject({
+            id: 3,
+            note: 'Sunday',
+        });
+        // Further off is another note.
+        expect(
+            'reason' in
+                resolveNoteEditTarget({ note: 'Monday notes' }, longFiles),
+        ).toBe(true);
+        // With two attached, a near name is a guess: refused.
+        expect(
+            'reason' in
+                resolveNoteEditTarget(
+                    { note: 'Sundae' },
+                    findNoteAskFiles([SUNDAY, MERCY]),
+                ),
+        ).toBe(true);
+    });
+
     // 2026-11-08: notes are titled by the day, and the model names a note --
     // two attached of one name, the first had been the one changed.
     it('two attached notes of one name are told apart, never guessed between', () => {
@@ -235,6 +271,86 @@ describe('the note as the model reads it', () => {
         expect(toNoteAsk('fix it', [{ name: 'x', text: null }])).toContain(
             'could not be read just now',
         );
+    });
+
+    it('an edit that puts a new verse in with no Bible named', () => {
+        const edit = (changes: unknown[]) => {
+            return { action: 'edit', changes };
+        };
+        expect(
+            checkAddsNoteVerse(
+                edit([{ after: 1, kind: 'passage', ref: 'John 1:1' }]),
+            ),
+        ).toBe(true);
+        expect(
+            checkAddsNoteVerse(
+                edit([{ block: 2, text: 'As [^John 3:16] says' }]),
+            ),
+        ).toBe(true);
+        // A token that names its Bible is read from that one.
+        expect(
+            checkAddsNoteVerse(
+                edit([{ block: 2, text: 'As [^(KJV) John 3:16] says' }]),
+            ),
+        ).toBe(false);
+        expect(
+            checkAddsNoteVerse(
+                edit([{ block: 2, words: 'love', color: 'red' }]),
+            ),
+        ).toBe(false);
+        expect(
+            checkAddsNoteVerse({
+                action: 'read',
+                changes: [{ ref: 'John 1:1' }],
+            }),
+        ).toBe(false);
+        expect(checkAddsNoteVerse(null)).toBe(false);
+        expect(checkAddsNoteVerse(edit([null, 'x']))).toBe(false);
+    });
+
+    // BN-23 (2026-11-08): a model working in English is handed the English
+    // of what was typed, and a word of the note it named was gone with it.
+    it('the English of what they typed carries their own words beside it', () => {
+        const ownWords = { language: 'Testish', text: 'make "zorb" red' };
+        const ask = toNoteAsk(
+            'Make the word grace red',
+            [{ name: 'Sunday', text: 'Blocks: 1' }],
+            null,
+            false,
+            ownWords,
+        );
+        expect(ask).toContain(toNoteOwnWordsHint(ownWords));
+        expect(ask).toContain('They wrote it in Testish');
+        // Quoted as JSON, so their own quote marks cannot end it.
+        expect(ask).toContain(JSON.stringify(ownWords.text));
+        expect(ask).toContain('never the English of it');
+        // The words put into the note are theirs; the answer stays English
+        // for the window to put into their language (BN-29).
+        expect(ask).toContain('INTO THE NOTE for them are in Testish');
+        expect(ask).toContain('Your answer to them stays in English');
+        // Under their question, above the note.
+        expect(ask.indexOf('Make the word grace red')).toBeLessThan(
+            ask.indexOf('They wrote it in'),
+        );
+        expect(ask.indexOf('They wrote it in')).toBeLessThan(
+            ask.indexOf('Blocks: 1'),
+        );
+        expect(
+            toNoteAsk('Make the word grace red', [
+                { name: 'Sunday', text: 'Blocks: 1' },
+            ]),
+        ).not.toContain('They wrote it in');
+        // A translate button pressed in the window's words: its English no
+        // longer reads as the button, its own words still do.
+        expect(
+            toNoteAsk(
+                'Put it under every line',
+                [{ name: 'Sunday', text: 'Blocks: 1' }],
+                'under',
+                false,
+                { language: 'Xx', text: 'Add Testish under each line' },
+            ),
+        ).toContain('The language is Testish');
     });
 
     it('the prompt keeps verse words the Bible\u2019s and points at the guide', () => {
@@ -469,5 +585,60 @@ describe('the tab already on a note', () => {
         expect(
             findSessionHoldingNote(sessions, {}, 'box', 'C:\\other.own', 3),
         ).toBeNull();
+    });
+});
+
+// BN-37 (2026-11-08): a model wrote a typed line into a note with one
+// letter swapped for its look-alike. Here "1" stands for a look-alike of
+// "l" -- a language's own pairs are in its package.
+describe('words a model wrote, put back to the typed ones', () => {
+    const PAIRS: [string, string][] = [['l', '1']];
+    const TYPED = 'add a line at the end saying all is well';
+
+    it('takes the typed letters where only a look-alike differs', () => {
+        expect(restoreTypedWords('a11 is we11', TYPED, PAIRS)).toBe(
+            'all is well',
+        );
+        expect(restoreTypedWords('**a11** is we11', TYPED, PAIRS)).toBe(
+            '**all** is well',
+        );
+    });
+
+    it('keeps the person’s own letters, whichever of the two they typed', () => {
+        expect(
+            restoreTypedWords('all is well', 'saying a11 is we11', PAIRS),
+        ).toBe('a11 is we11');
+    });
+
+    it('leaves words they did not type, and words already as typed', () => {
+        expect(restoreTypedWords('a11 is good', TYPED, PAIRS)).toBe(
+            'all is good',
+        );
+        expect(restoreTypedWords('goo1', TYPED, PAIRS)).toBe('goo1');
+        expect(restoreTypedWords('all is well', TYPED, PAIRS)).toBe(
+            'all is well',
+        );
+        expect(restoreTypedWords('a11', TYPED, [])).toBe('a11');
+    });
+
+    it('puts back each change’s words and a new title, nothing else', () => {
+        const args = {
+            action: 'edit',
+            file: 'C:\\notes\\Default.own',
+            changes: [
+                { after: 2, text: 'a11 is we11' },
+                { block: 1, color: 'red', words: 'we11' },
+            ],
+            title: 'A11 is we11',
+        };
+        expect(restoreNoteTypedWords(args, TYPED, PAIRS)).toEqual({
+            ...args,
+            changes: [
+                { after: 2, text: 'all is well' },
+                { block: 1, color: 'red', words: 'we11' },
+            ],
+            title: 'A11 is well',
+        });
+        expect(restoreNoteTypedWords(args, '', PAIRS)).toBe(args);
     });
 });

@@ -7,6 +7,19 @@
         "letters": "ĳ",
         "yes": ["ja", "ja, graag", "graag"],
         "no": ["nee", "nee, dank je"],
-        "order": 4
+        "order": 4,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:maak\\s+de\\s+tekst\\s+groter|tekst\\s+groter|vergroot\\s+de\\s+tekst|grotere\\s+letters|maak\\s+de\\s+letters\\s+groter)$"
+            ],
+            "smaller": [
+                "^(?:maak\\s+de\\s+tekst\\s+kleiner|tekst\\s+kleiner|verklein\\s+de\\s+tekst|kleinere\\s+letters|maak\\s+de\\s+letters\\s+kleiner)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:maak\\s+alle\\s+tekst\\s+vet|maak\\s+de\\s+hele\\s+tekst\\s+vet|alles\\s+vet)$"
+            ]
+        }
     }
 }

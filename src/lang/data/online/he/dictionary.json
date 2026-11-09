@@ -4109,5 +4109,6 @@
     "Summarize this note": "סכם את ההערה הזו",
     "Tidy it into headings and lists": "סדר אותה בכותרות וברשימות",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש גודל חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש סגנון חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש סגנון חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ שונה, אבל העוזר נעצר לפני שאמר מה עשה. ביטול השינוי הזה מחזיר אותו."
 }

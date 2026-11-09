@@ -7,6 +7,11 @@
         "letters": "ʻ",
         "yes": ["ʻio"],
         "no": ["ʻikai"],
-        "order": 45
+        "order": 45,
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:ngaohi\\s+ke\\s+bold\\s+['’]a\\s+e\\s+tohi\\s+kotoa)$"
+            ]
+        }
     }
 }

@@ -3,10 +3,21 @@
         "name": "Hausa",
         "nativeName": "Hausa",
         "script": "Latin",
-        "words": "da a na ta ya su mu ku ni kai ita shi wannan wancan yaya me ina yasa yaushe wa wane wace ba zan iya so kuma sosai don allah nagode",
+        "words": "da a na ta ya su mu ku ni kai ita shi wannan wancan yaya me ina yasa yaushe wa wane wace ba zan iya so kuma sosai don allah nagode mai duk dukan daga zuwa cikin kan akan domin saboda amma ko idan sai har yanzu nan",
         "letters": "ɓɗƙƴ",
         "yes": ["na'am"],
         "no": ["a'a"],
-        "order": 35
+        "order": 35,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:ƙara\\s+girman\\s+rubutu|ka\\s+ƙara\\s+girman\\s+rubutu|ƙara\\s+girman\\s+haruffa|kara\\s+girman\\s+rubutu)$"
+            ],
+            "smaller": [
+                "^(?:rage\\s+girman\\s+rubutu|ka\\s+rage\\s+girman\\s+rubutu|rage\\s+girman\\s+haruffa)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:mai\\s+da\\s+dukan\\s+rubutu\\s+mai\\s+kauri)$"]
+        }
     }
 }

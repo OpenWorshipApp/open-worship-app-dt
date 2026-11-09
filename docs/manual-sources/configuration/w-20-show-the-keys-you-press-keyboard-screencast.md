@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-09"
 ---
 # W-20 — Show the keys you press (Keyboard Screencast)
 

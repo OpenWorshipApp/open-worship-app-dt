@@ -27,6 +27,8 @@
  * Pure, like `agentNoteBlockHelpers.ts`, which applies these.
  */
 
+import { checkEndsWithInvisibleStacker } from './scriptClusterHelpers';
+
 type NodeType = Record<string, any>;
 
 export const NOTE_STYLE_NAME_LIST = [
@@ -450,29 +452,116 @@ export function collectBlockRuns(block: NodeType): NodeType[] {
 const WORD_CHAR_PATTERN = /[\p{L}\p{M}\p{N}]/u;
 
 /**
+ * The offsets where the `granularity` segments of `text` start, and its end:
+ * for `word`, the words of a script written with no spaces too, found by the
+ * dictionaries the browser's own segmenter carries (2026-11-08: four such
+ * scripts measured in the app's Electron, each cut into its words as Node
+ * cuts them); for `grapheme`, every letter with its marks, a letter set
+ * under the one before it (after an invisible stacker) counted with it --
+ * one cluster on the page. Null where there is no segmenter.
+ */
+function findSegmentEdges(text: string, granularity: 'word' | 'grapheme') {
+    if (typeof Intl === 'undefined' || typeof Intl.Segmenter !== 'function') {
+        return null;
+    }
+    const edges = new Set<number>([0, text.length]);
+    let last = '';
+    for (const { index, segment } of new Intl.Segmenter(undefined, {
+        granularity,
+    }).segment(text)) {
+        if (granularity === 'word' || !checkEndsWithInvisibleStacker(last)) {
+            edges.add(index);
+        }
+        last = segment;
+    }
+    return edges;
+}
+
+/**
+ * `ranges` widened to whole letter clusters: a mark left in a run of its
+ * own, apart from its letter, is drawn on a dotted circle once the two runs
+ * differ in face or weight -- so a piece of a cluster takes the cluster.
+ * Ranges that come to touch the same cluster are one.
+ */
+function toClusterRanges(text: string, ranges: [number, number][]) {
+    const edges = findSegmentEdges(text, 'grapheme');
+    if (edges === null) {
+        return ranges;
+    }
+    const widened: [number, number][] = [];
+    for (const [start, end] of ranges) {
+        let from = start;
+        while (from > 0 && !edges.has(from)) {
+            from--;
+        }
+        let to = end;
+        while (to < text.length && !edges.has(to)) {
+            to++;
+        }
+        const last = widened.at(-1);
+        if (last !== undefined && from <= last[1]) {
+            last[1] = Math.max(last[1], to);
+        } else {
+            widened.push([from, to]);
+        }
+    }
+    return widened;
+}
+
+/**
+ * `text` in lower case letter for letter, at the same offsets: a letter
+ * whose lower case is longer (a dotted capital I is two) stays as it is, or
+ * every range found after it would point one letter off.
+ */
+function toLowerKeepingOffsets(text: string) {
+    const lower = text.toLowerCase();
+    if (lower.length === text.length) {
+        return lower;
+    }
+    let kept = '';
+    for (const letter of text) {
+        const one = letter.toLowerCase();
+        kept += one.length === letter.length ? one : letter;
+    }
+    return kept;
+}
+
+/**
  * Where the words are: as whole words first -- "fas" is not the middle of
  * "tasdfasd" (seen live 2026-11-08: a word made red took a piece of another
- * with it) -- then anywhere, for a script written with no spaces; the exact
- * words before the same words in another case.
+ * with it) -- a word of a script written with no spaces being whole where
+ * the segmenter puts its edges, so a word is not painted inside every longer
+ * word holding it; then anywhere, a piece of a letter cluster taking the
+ * whole cluster; the exact words before the same words in another case.
  */
 export function findWordRanges(text: string, words: string) {
+    let wordEdges: Set<number> | null | undefined;
+    const checkIsWholeWord = (haystack: string, index: number, end: number) => {
+        if (
+            !WORD_CHAR_PATTERN.test(haystack[index - 1] ?? '') &&
+            !WORD_CHAR_PATTERN.test(haystack[end] ?? '')
+        ) {
+            return true;
+        }
+        if (wordEdges === undefined) {
+            wordEdges = findSegmentEdges(text, 'word');
+        }
+        return wordEdges !== null && wordEdges.has(index) && wordEdges.has(end);
+    };
     const search = (haystack: string, needle: string, isWhole: boolean) => {
         const ranges: [number, number][] = [];
         let index = haystack.indexOf(needle);
         while (index >= 0 && needle !== '') {
             const end = index + needle.length;
-            const isWholeWord =
-                !WORD_CHAR_PATTERN.test(haystack[index - 1] ?? '') &&
-                !WORD_CHAR_PATTERN.test(haystack[end] ?? '');
-            if (!isWhole || isWholeWord) {
+            if (!isWhole || checkIsWholeWord(haystack, index, end)) {
                 ranges.push([index, end]);
             }
             index = haystack.indexOf(needle, end);
         }
         return ranges;
     };
-    const lowerText = text.toLowerCase();
-    const lowerWords = words.toLowerCase();
+    const lowerText = toLowerKeepingOffsets(text);
+    const lowerWords = toLowerKeepingOffsets(words);
     for (const isWhole of [true, false]) {
         for (const [haystack, needle] of [
             [text, words],
@@ -480,7 +569,7 @@ export function findWordRanges(text: string, words: string) {
         ]) {
             const ranges = search(haystack, needle, isWhole);
             if (ranges.length > 0) {
-                return ranges;
+                return isWhole ? ranges : toClusterRanges(text, ranges);
             }
         }
     }

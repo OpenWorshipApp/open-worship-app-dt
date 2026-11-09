@@ -134,6 +134,7 @@ import {
     genSlideOpeningAnswer,
     genSlideSizeChanges,
     genSlideSizeDoneText,
+    findWindowDoneCardAsk,
     readSlideSizeAsk,
     toSlideAsk,
     toSlideDocumentText,
@@ -155,6 +156,7 @@ import {
     toNoteAsk,
     toNoteDocumentText,
     type CreatedNoteType,
+    type NoteOwnWordsType,
 } from './noteChatHelpers';
 import {
     SELECTION_STEP_TOOL_NAME,
@@ -338,6 +340,15 @@ import {
     type ChatSessionType,
 } from './chatSessionHelpers';
 import { checkIsOpenableLink, toShownLinkText } from './chatLinkHelpers';
+import {
+    checkIsLangReloadDue,
+    LANG_RELOAD_DELAY_MILLISECONDS,
+    toEnabledLangKey,
+} from './chatLangReloadHelpers';
+import {
+    getEnabledLangPlugins,
+    onLangPluginsChanged,
+} from '../lang/langPluginRegistry';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import {
     loadAskHistory,
@@ -629,6 +640,7 @@ const WARNING_SENTENCE_END_PATTERN = new RegExp(
     'u',
 );
 import {
+    checkIsEnglishAnswer,
     findPageLanguage,
     genAskTranslation,
     TRANSLATION_MODEL_PATTERN,
@@ -5535,6 +5547,64 @@ export default function ChatbotAppComp() {
     // file the assistant drafted. One entry per hold, so two at once in the
     // same tab release one at a time.
     const busyHoldListRef = useRef<string[]>([]);
+    // BN-45: a language installed, updated or turned on or off while this
+    // window is open -- its own offer installs one -- is read here only when
+    // the window loads (`chatLangReloadHelpers.ts`), so it loads again once
+    // nothing is on its way, as Settings > Languages reloads every window.
+    // The conversations are saved first (and again as it unloads).
+    const langReloadRef = useRef<{
+        loadedKey: string;
+        isDue: boolean;
+    } | null>(null);
+    const reloadForLanguagesWhenIdle = useCallback(() => {
+        const state = langReloadRef.current;
+        if (state === null || !state.isDue) {
+            return;
+        }
+        const countPending = () => {
+            return (
+                pendingAskListRef.current.length +
+                busyHoldListRef.current.length
+            );
+        };
+        const currentKey = toEnabledLangKey(getEnabledLangPlugins());
+        if (currentKey === state.loadedKey) {
+            state.isDue = false;
+            return;
+        }
+        if (
+            !checkIsLangReloadDue({
+                loadedKey: state.loadedKey,
+                currentKey,
+                pendingCount: countPending(),
+            })
+        ) {
+            return;
+        }
+        state.isDue = false;
+        setTimeout(() => {
+            // An ask started meanwhile keeps the window until it ends.
+            if (countPending() > 0) {
+                state.isDue = true;
+                return;
+            }
+            saveChatSessions(sessionStateRef.current);
+            window.location.reload();
+        }, LANG_RELOAD_DELAY_MILLISECONDS);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    useAppEffect(() => {
+        langReloadRef.current = {
+            loadedKey: toEnabledLangKey(getEnabledLangPlugins()),
+            isDue: false,
+        };
+        return onLangPluginsChanged(() => {
+            if (langReloadRef.current !== null) {
+                langReloadRef.current.isDue = true;
+                reloadForLanguagesWhenIdle();
+            }
+        });
+    }, [reloadForLanguagesWhenIdle]);
     // The busy TABS, worked out from what is still on its way. Set only on a
     // change: this component is the whole window.
     const syncBusy = useCallback(() => {
@@ -5568,8 +5638,9 @@ export default function ChatbotAppComp() {
             if (!checkIsSessionPending(sessionId)) {
                 clearProgressSteps(sessionId);
             }
+            reloadForLanguagesWhenIdle();
         },
-        [syncBusy, checkIsSessionPending],
+        [syncBusy, checkIsSessionPending, reloadForLanguagesWhenIdle],
     );
     const genPendingAsk = useCallback(
         (
@@ -9237,13 +9308,20 @@ export default function ChatbotAppComp() {
                               );
                           })
                         : modelAttachments;
-                const withLyric = (text: string) => {
+                // `ownWords`: `text` is the English of what they typed in
+                // another language, and a note ask keeps their words beside
+                // it (BN-23).
+                const withLyric = (
+                    text: string,
+                    ownWords: NoteOwnWordsType | null = null,
+                ) => {
                     if (isNoteDocAsk) {
                         return toNoteAsk(
                             text,
                             noteDocs,
                             readLyricTranslateMode(trimmedAsked),
                             trimmedAsked.length === 0,
+                            ownWords,
                         );
                     }
                     if (isFlowDocAsk) {
@@ -9993,6 +10071,10 @@ export default function ChatbotAppComp() {
                                                   toAttachedPage,
                                               ),
                                           ),
+                                          {
+                                              language: plan.language.name,
+                                              text: trimmedAsked,
+                                          },
                                       )
                                     : toGeneralQuestionAsk(
                                           toAskedOfModel(
@@ -10090,7 +10172,21 @@ export default function ChatbotAppComp() {
                                     ? { flow: { files: flowAskFiles } }
                                     : {}),
                                 ...(isNoteDocAsk
-                                    ? { note: { files: noteAskFiles } }
+                                    ? {
+                                          note: {
+                                              files: noteAskFiles,
+                                              // A new verse comes from a
+                                              // Bible in their language
+                                              // (BN-26).
+                                              ...(replyLang ===
+                                              DEFAULT_CHAT_LANG_CODE
+                                                  ? {}
+                                                  : { verseLang: replyLang }),
+                                              // Words to write go in as
+                                              // typed (BN-37).
+                                              typed: trimmedAsked,
+                                          },
+                                      }
                                     : {}),
                                 ...(verseFindBible === null
                                     ? {}
@@ -10153,7 +10249,16 @@ export default function ChatbotAppComp() {
                                 onUsage,
                             },
                         );
-                        if (plan === null || askTranslation === null) {
+                        // BN-48: a model handed their own language (a Gemma
+                        // 4, never translated for) that answered in English
+                        // is put into it after the fact, by the translator.
+                        const answerPlan =
+                            plan ??
+                            (askTranslation !== null &&
+                            checkIsEnglishAnswer(modelAnswer.text, replyLang)
+                                ? await askTranslation.planForEnglishAnswer()
+                                : null);
+                        if (answerPlan === null || askTranslation === null) {
                             return modelAnswer;
                         }
                         throwIfCancelled(signal);
@@ -10165,14 +10270,14 @@ export default function ChatbotAppComp() {
                         const [shown, translatedReplies] = await Promise.all([
                             askTranslation.translateAnswer(
                                 modelAnswer.text,
-                                plan.language,
-                                plan.translator,
+                                answerPlan.language,
+                                answerPlan.translator,
                                 tranLabel,
                             ),
                             askTranslation.translateReplies(
                                 modelAnswer.replies ?? [],
-                                plan.language,
-                                plan.translator,
+                                answerPlan.language,
+                                answerPlan.translator,
                                 tranLabel,
                             ),
                         ]);
@@ -10181,7 +10286,7 @@ export default function ChatbotAppComp() {
                                 tran(
                                     'I could not put this answer into {language}, so it is in English.',
                                 ),
-                                { language: plan.language.nativeName },
+                                { language: answerPlan.language.nativeName },
                             );
                             return modelAnswer;
                         }
@@ -10194,7 +10299,7 @@ export default function ChatbotAppComp() {
                         const toShown = (text: string) => {
                             return toAnswerShownInLanguage(
                                 text,
-                                plan.language.code,
+                                answerPlan.language.code,
                                 tranLabel,
                                 answerKeep,
                                 screenLang,
@@ -10208,7 +10313,7 @@ export default function ChatbotAppComp() {
                             frames.options.length > 0
                                 ? frames.options
                                 : (translatedReplies ?? []),
-                            plan.language.code,
+                            answerPlan.language.code,
                             tranLabel,
                             answerKeep,
                             screenLang,
@@ -11217,8 +11322,13 @@ export default function ChatbotAppComp() {
                       return one.author === 'bot';
                   })?.text
                 : undefined;
-            handleAskingRef.current(reply, false, {
+            // A card button the window does by itself, pressed in the
+            // window's language, is asked in its English -- which the
+            // window's own readers read (BN-16) -- and shown as pressed.
+            const windowDoneAsk = findWindowDoneCardAsk(reply);
+            handleAskingRef.current(windowDoneAsk ?? reply, false, {
                 isPressed: true,
+                ...(windowDoneAsk === null ? {} : { echoText: reply }),
                 ...(isResourcesRange
                     ? {
                           askHint: RESOURCES_RANGE_HINT,

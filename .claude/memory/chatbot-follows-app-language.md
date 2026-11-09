@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: cceb2542-65df-4852-b7d7-51e364f85d02
-  modified: 2026-11-04T00:01:25.900Z
+  modified: 2026-11-08T12:00:00.000Z
 ---
 
 Since 2026-10-16 the help window speaks the language the app is SHOWN in, at the
@@ -44,10 +44,24 @@ stays English-only" rule.
   every list empty, so the reply line, the Gemma 4 translation, the cleaner and
   the chips work for it with no code naming it. Detection is script first
   (a Hangul or Han letter weighs three Latin ones), then little words and
-  letters each weighed by 1/(languages sharing it); a packaged language needs
-  half the evidence (`PACKAGED_PRIOR` — French lines of shared words read as
-  nothing otherwise), a tie inside a `family` goes to the first listed, any
-  other tie to the app language. Before, Spanish read as FRENCH (`la`, `de`,
+  letters each weighed by 1/(languages sharing it); English and the language
+  the app is SHOWN in need half the evidence (`SHOWN_LANGUAGE_PRIOR`; French
+  lines of shared words read as nothing otherwise), a Latin tie inside a
+  `family` goes to the first listed, any other Latin tie to the app language;
+  languages sharing another script tie to the app's language, then one
+  family, else `other` (answered in the language it was written in).
+  **Until 2026-11-08 (BN-33)** the half went to every PACKAGED language --
+  French in every app -- and a script tie to the first listed: with every
+  language installed, Dutch, Italian, Haitian and Samoan lines in an English
+  app were named French on one shared word ("de", "il", "la", "le"),
+  Ukrainian and Bulgarian ones Russian, Nepali Hindi, Mongolian Kazakh; and
+  thin word lists named Hausa Romanian ("mai"), Kinyarwanda Hausa ("wa",
+  "mu"), Fijian Swedish -- answered in those. Each language's commonest words
+  went into its list (13 packages), the okina (U+02BB) reads as the
+  apostrophe, and `typedEditAsks.test.ts` holds 86 languages' four lines to
+  their own language or nothing, in an English app and in their own: wrong
+  48 of 351 before, 0 after. A language's list is the fix for a line it
+  loses; never weigh a language by name. Before, Spanish read as FRENCH (`la`, `de`,
   `un`) and was answered in French; Portuguese in a Khmer app in Khmer.
   **The ratchet is the corpus**: all 469 questions in en/km/fr must keep
   their language (`anyLanguage.test.ts`), and a language added to the file
@@ -116,6 +130,15 @@ stays English-only" rule.
   `src/chatbot/autoAssistantHelpers.ts`, defaulted from `getAppLangCode()`
   in `autoAssistantSourceHelpers.withLanguageRank`. Gemma 4 supports Khmer
   well; setbacks/busy/an unloaded LM Studio still outrank a tier.
+
+2026-11-09 (BN-41, BN-42, BN-45): a language's `typed.json` holds what an
+ASK is made of (add, at the end, make) and a word two neighbours share goes
+into both lists; a language no reader can confirm keeps only the shortcut
+phrases a blind read gives back as their job; and the help window reads
+the languages' small files once, at load, so it loads again by itself when
+the installed languages change while it is open (`chatLangReloadHelpers.ts`).
+
+And (BN-47, BN-48): options under a marker word of the person's language are read by their shape; a translation that echoes the English is a failed one, and an English answer to another language is translated after the fact.
 
 **Why:** an English sentence is a dead end for the person this app is for.
 

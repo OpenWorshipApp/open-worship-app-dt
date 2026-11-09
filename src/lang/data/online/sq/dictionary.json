@@ -4109,5 +4109,6 @@
     "Summarize this note": "Përmblidhe këtë shënim",
     "Tidy it into headings and lists": "Rregulloje në tituj dhe lista",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "U bë me një ndryshim: fjalët e {count} blloqeve të “{name}” kanë madhësi të re. Ende nuk është ruajtur: Ruaj në dritaren e shënimit e mban, dhe Zhbëje këtë ndryshim e kthen mbrapsht.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "U bë me një ndryshim: fjalët e {count} blloqeve të “{name}” kanë stil të ri. Ende nuk është ruajtur: Ruaj në dritaren e shënimit e mban, dhe Zhbëje këtë ndryshim e kthen mbrapsht."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "U bë me një ndryshim: fjalët e {count} blloqeve të “{name}” kanë stil të ri. Ende nuk është ruajtur: Ruaj në dritaren e shënimit e mban, dhe Zhbëje këtë ndryshim e kthen mbrapsht.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” u ndryshua, por asistenti ndaloi para se të thoshte çfarë bëri. Zhbëje këtë ndryshim e kthen siç ishte."
 }

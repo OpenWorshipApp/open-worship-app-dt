@@ -3,10 +3,21 @@
         "name": "Zulu",
         "nativeName": "isiZulu",
         "script": "Latin",
-        "words": "na futhi kodwa noma ukuthi ngi ngiya ngicela ngiyabonga u si ba ka nga ku kanjani yini kuphi kungani nini ubani yiphi mina wena yena thina nina bona lokhu lokho lapha kakhulu",
+        "words": "na futhi kodwa noma ukuthi ngi ngiya ngicela ngiyabonga u si ba ka nga ku kanjani yini kuphi kungani nini ubani yiphi mina wena yena thina nina bona lokhu lokho lapha kakhulu engeza ekugcineni faka susa shintsha bhala",
         "family": "nguni",
         "yes": ["yebo"],
         "no": ["cha"],
-        "order": 36
+        "order": 36,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:khulisa\\s+umbhalo|yenza\\s+umbhalo\\s+ube\\s+mkhulu|yandisa\\s+umbhalo)$"
+            ],
+            "smaller": [
+                "^(?:nciphisa\\s+umbhalo|yenza\\s+umbhalo\\s+ube\\s+mncane)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:yenza\\s+wonke\\s+umbhalo\\s+ube\\s+bold)$"]
+        }
     }
 }

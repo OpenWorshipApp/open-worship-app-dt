@@ -3,7 +3,7 @@ id: W-53
 title: "Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 0dbc5dffe48e8943
+translatedFrom: 26fdcc983b90ebb2
 ---
 # W-53 — Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)
 
@@ -60,6 +60,33 @@ plus besoin se suppriment depuis le menu de leur onglet.
    n'importe où sur une carte pour l'amener au milieu. Le premier bouton de cette
    rangée, **[en:tran:View as Text Cards]**, les transforme en petits boutons
    ne portant que le nom de la partie, et inversement ; la carte se souvient du choix.
+
+   Une ligne n'est jamais amenée d'un coup : elle glisse jusqu'à sa place, vite d'abord puis en
+   ralentissant, si bien qu'une assemblée qui lit en même temps ne s'y perd pas — le verset
+   sélectionné d'un passage biblique se déplace de la même façon.
+
+   **Chaque ligne du texte sur sa propre ligne à l'écran.** Appuyez sur **[en:tran:Atom Mode]**, à côté
+   du livre et de l'engrenage en haut du panneau, et chaque LIGNE d'une partie a sa propre carte, son
+   propre bouton et sa propre ligne à l'écran, numérotés à la suite sur tout le chant : un couplet de
+   quatre lignes va de `1 Verse 1` à `4 Verse 1`, et le refrain qui le suit commence à `5 Chorus`. Une
+   ligne vide dans un texte tapé est gardée comme une ligne vide à l'écran. Les boutons, la lumière et
+   les touches avancent alors ligne par ligne. Toutes les langues doivent découper chaque partie en un
+   même nombre de lignes ; sinon, le panneau indique quelle partie diffère et **[en:tran:Show Long Text]**
+   reste désactivé. Si vous appuyez sur **[en:tran:Atom Mode]** pendant que le texte est affiché,
+   celui-ci est aussitôt réaffiché sur les mêmes écrans, au même endroit. La session s'en souvient ;
+   appuyez de nouveau dessus pour revenir à une ligne par partie.
+
+   **Toutes les langues dans la même ligne.** Appuyez sur **[en:tran:Stack]** et les langues ne sont
+   plus côte à côte : chaque ligne contient toutes les langues, l'une sous l'autre dans l'ordre des
+   cartes, comme le Lecteur biblique affiche plusieurs versions ensemble. Le numéro de la ligne occupe
+   une ligne à lui seul, au-dessus d'elles, dans les chiffres de chaque langue (`4, ៤`), et l'unique
+   en-tête indique `EN | KM` avec les titres `Still | Still`. Chaque langue garde sa propre police et
+   sa propre taille. **[en:tran:Stack]** attend une deuxième langue : avec une seule carte, il est
+   grisé, et il revient tel que vous l'aviez laissé quand vous en ajoutez une autre. Appuyez sur le
+   bouton **[en:tran:Hide Number]** pour afficher les lignes sans leur numéro et l'en-tête sans ses
+   codes de langue (`EN`, `EN | KM`), que les langues soient côte à côte ou empilées ; les titres
+   restent, et les cartes du panneau gardent leur numéro. L'un comme l'autre réaffiche aussitôt le
+   texte sur un écran qui le montre, avec la même ligne marquée.
 
    **Avancez avec les touches.** Une fois que vous avez appuyé sur une partie, son bouton prend les
    touches, comme le font les diapositives : **Space**, **→**, **↓** ou **Page Down**

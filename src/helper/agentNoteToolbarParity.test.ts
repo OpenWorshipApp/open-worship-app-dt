@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 import { applyNoteEdit, readNoteBlocks } from './agentNoteBlockHelpers';
+import { findWordRanges } from './agentNoteStyleHelpers';
 
 const INVENTORY_PATH = join(
     process.cwd(),
@@ -766,6 +767,40 @@ describe('the note toolbar through owa_note_edit', () => {
             ['fas', 'color: red;'],
             [' dfasd', ''],
         ]);
+    });
+
+    // BN-24 (2026-11-08): the words of a script written with no spaces are
+    // found by the segmenter (each language's own cases are in its package's
+    // `tests/helper/agentNoteBlockHelpers.test.ts`); here, what holds for
+    // any script.
+    test('a piece of a letter cluster takes the whole cluster', () => {
+        // A letter with a combining mark after it: the mark is drawn apart,
+        // on a dotted circle, once it is a run of its own.
+        expect(findWordRanges('ab́c', 'b')).toEqual([[1, 3]]);
+        expect(findWordRanges('ab́c ab́c', 'b')).toEqual([
+            [1, 3],
+            [6, 8],
+        ]);
+        // A whole word is found as it was.
+        expect(findWordRanges('tasdfasd fas dfasd', 'fas')).toEqual([[9, 12]]);
+        expect(findWordRanges('Grace and grace', 'GRACE')).toEqual([
+            [0, 5],
+            [10, 15],
+        ]);
+    });
+
+    test('with no segmenter, words are found whole by the letters around them', () => {
+        const segmenter = Intl.Segmenter;
+        try {
+            (Intl as any).Segmenter = undefined;
+            expect(findWordRanges('tasdfasd fas dfasd', 'fas')).toEqual([
+                [9, 12],
+            ]);
+            expect(findWordRanges('tasdfasd', 'fas')).toEqual([[4, 7]]);
+            expect(findWordRanges('ab́c', 'b')).toEqual([[1, 2]]);
+        } finally {
+            (Intl as any).Segmenter = segmenter;
+        }
     });
 
     test('HTML a model writes round the words is the words and their style', () => {

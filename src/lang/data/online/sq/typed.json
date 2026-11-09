@@ -7,6 +7,19 @@
         "letters": "ëç",
         "yes": ["po", "po, ju lutem"],
         "no": ["jo", "jo, faleminderit"],
-        "order": 21
+        "order": 21,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:zmadho\\s+tekstin|bëje\\s+tekstin\\s+më\\s+të\\s+madh|beje\\s+tekstin\\s+me\\s+te\\s+madh|tekst\\s+më\\s+i\\s+madh|tekst\\s+me\\s+i\\s+madh|zmadho\\s+shkronjat)$"
+            ],
+            "smaller": [
+                "^(?:zvogëlo\\s+tekstin|zvogelo\\s+tekstin|bëje\\s+tekstin\\s+më\\s+të\\s+vogël|beje\\s+tekstin\\s+me\\s+te\\s+vogel|tekst\\s+më\\s+i\\s+vogël|tekst\\s+me\\s+i\\s+vogel|zvogëlo\\s+shkronjat|zvogelo\\s+shkronjat)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:bëje\\s+gjithë\\s+tekstin\\s+të\\s+trashë|beje\\s+gjithe\\s+tekstin\\s+te\\s+trashe)$"
+            ]
+        }
     }
 }

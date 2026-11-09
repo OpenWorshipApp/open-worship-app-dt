@@ -4109,5 +4109,6 @@
     "Summarize this note": "Võta see märge kokku",
     "Tidy it into headings and lists": "Korrasta see pealkirjadeks ja loenditeks",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehtud ühe muudatusega: märkme „{name}“ {count} ploki sõnadel on uus suurus. See pole veel salvestatud: märkme akna Salvesta jätab selle alles ja Võta see muudatus tagasi paneb selle tagasi.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehtud ühe muudatusega: märkme „{name}“ {count} ploki sõnadel on uus stiil. See pole veel salvestatud: märkme akna Salvesta jätab selle alles ja Võta see muudatus tagasi paneb selle tagasi."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Tehtud ühe muudatusega: märkme „{name}“ {count} ploki sõnadel on uus stiil. See pole veel salvestatud: märkme akna Salvesta jätab selle alles ja Võta see muudatus tagasi paneb selle tagasi.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ muudeti, kuid assistent peatus enne, kui ütles, mida ta tegi. Võta see muudatus tagasi taastab selle."
 }

@@ -7,6 +7,19 @@
         "family": "malay",
         "yes": ["ya", "iya", "ya, tolong"],
         "no": ["tidak", "tidak, terima kasih"],
-        "order": 25
+        "order": 25,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:perbesar\\s+teks|besarkan\\s+teks|buat\\s+teks\\s+lebih\\s+besar|perbesar\\s+tulisan|perbesar\\s+huruf|besarkan\\s+tulisan)$"
+            ],
+            "smaller": [
+                "^(?:perkecil\\s+teks|kecilkan\\s+teks|buat\\s+teks\\s+lebih\\s+kecil|perkecil\\s+tulisan|perkecil\\s+huruf|kecilkan\\s+tulisan)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:tebalkan\\s+semua\\s+teks|buat\\s+semua\\s+teks\\s+tebal)$"
+            ]
+        }
     }
 }

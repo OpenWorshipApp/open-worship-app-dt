@@ -111,8 +111,11 @@ function toInnerName(folder: ResourceFolderType, filePath: string) {
 function checkIsInside(dirPath: string, filePath: string) {
     const dirKey = toPathCompareKey(pathResolve(dirPath));
     const fileKey = toPathCompareKey(pathResolve(filePath));
+    // The separator as the keys write it (BN-38: a forward slash is the
+    // backslash on Windows).
+    const separatorKey = toPathCompareKey(pathSeparator);
     return fileKey.startsWith(
-        dirKey.endsWith(pathSeparator) ? dirKey : dirKey + pathSeparator,
+        dirKey.endsWith(separatorKey) ? dirKey : dirKey + separatorKey,
     );
 }
 

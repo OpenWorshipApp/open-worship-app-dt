@@ -6,6 +6,19 @@
         "words": "ang sa mga ug nga si ni ko mo niya namo nato ninyo nila ako ikaw ka siya kami kita kamo sila unsaon unsa asa ngano kinsa hain kini kana kadto dinhi didto dili wala adunay naa pwede gusto kinahanglan usab lang po salamat",
         "yes": ["oo"],
         "no": ["dili", "dili, salamat"],
-        "order": 28
+        "order": 28,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:padakoa\\s+ang\\s+teksto|padakoa\\s+ang\\s+mga\\s+letra|padak-a\\s+ang\\s+teksto|padakoa\\s+ang\\s+sulat)$"
+            ],
+            "smaller": [
+                "^(?:pagamya\\s+ang\\s+teksto|pagamya\\s+ang\\s+mga\\s+letra|gamaya\\s+ang\\s+teksto|pagamya\\s+ang\\s+sulat)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:himoa\\s+nga\\s+bold\\s+ang\\s+tanan\\s+nga\\s+teksto)$"
+            ]
+        }
     }
 }

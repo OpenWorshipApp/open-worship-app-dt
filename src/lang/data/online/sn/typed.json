@@ -3,9 +3,13 @@
         "name": "Shona",
         "nativeName": "chiShona",
         "script": "Latin",
-        "words": "uye kana asi ini iwe iye isu imi ivo sei chii kupi nei rini ani ndeupi ichi icho pano zvakanyanya zvakare ndinoda ndapota ndatenda",
+        "words": "uye kana asi ini iwe iye isu imi ivo sei chii kupi nei rini ani ndeupi ichi icho pano zvakanyanya zvakare ndinoda ndapota ndatenda ita kuti here zvino zvese ese uyu izvi izvo chete wedzera pakupedzisira isa bvisa chinja nyora saizi",
         "yes": ["hongu", "ehe"],
         "no": ["kwete"],
-        "order": 38
+        "order": 38,
+        "textSizeAsks": {
+            "larger": ["^(?:wedzera\\s+saizi\\s+yemavara)$"],
+            "smaller": ["^(?:deredza\\s+saizi\\s+yemavara)$"]
+        }
     }
 }

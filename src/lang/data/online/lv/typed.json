@@ -7,6 +7,17 @@
         "letters": "āčēģīķļņšūž",
         "yes": ["jā", "jā, lūdzu"],
         "no": ["nē", "nē, paldies"],
-        "order": 20
+        "order": 20,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:palielini\\s+tekstu|palielināt\\s+tekstu|palielinat\\s+tekstu|lielāks\\s+teksts|lielaks\\s+teksts|palielini\\s+burtus)$"
+            ],
+            "smaller": [
+                "^(?:samazini\\s+tekstu|samazināt\\s+tekstu|samazinat\\s+tekstu|mazāks\\s+teksts|mazaks\\s+teksts|samazini\\s+burtus)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:padari\\s+visu\\s+tekstu\\s+treknu)$"]
+        }
     }
 }

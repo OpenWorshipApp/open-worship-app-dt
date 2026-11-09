@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PU-01, PU-05, PU-07, PU-21, PU-22]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-09"
 ---
 # W-17 — Find text anywhere (Find bar) & About
 
@@ -37,5 +37,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PU-01` · `PU-05` · `PU-07` · `PU-21` · `PU-22`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
 :::

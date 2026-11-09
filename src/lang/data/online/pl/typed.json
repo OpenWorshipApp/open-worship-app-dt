@@ -7,6 +7,17 @@
         "letters": "ąćęłńśźżó",
         "yes": ["tak", "tak, proszę"],
         "no": ["nie", "nie, dziękuję"],
-        "order": 8
+        "order": 8,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:powiększ\\s+tekst|powieksz\\s+tekst|zwiększ\\s+tekst|zwieksz\\s+tekst|większy\\s+tekst|wiekszy\\s+tekst|powiększ\\s+czcionkę|powieksz\\s+czcionke|zwiększ\\s+czcionkę|zwieksz\\s+czcionke|powiększ\\s+litery|powieksz\\s+litery)$"
+            ],
+            "smaller": [
+                "^(?:pomniejsz\\s+tekst|zmniejsz\\s+tekst|mniejszy\\s+tekst|pomniejsz\\s+czcionkę|pomniejsz\\s+czcionke|zmniejsz\\s+czcionkę|zmniejsz\\s+czcionke|zmniejsz\\s+litery)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": ["^(?:pogrub\\s+cały\\s+tekst|pogrub\\s+wszystko)$"]
+        }
     }
 }

@@ -4109,5 +4109,6 @@
     "Summarize this note": "Opsummér denne note",
     "Tidy it into headings and lists": "Ordn den i overskrifter og lister",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i én ændring: ordene i {count} blokke af “{name}” har en ny størrelse. Det er ikke gemt endnu: Gem i notevinduet beholder det, og Fortryd denne ændring sætter det tilbage.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i én ændring: ordene i {count} blokke af “{name}” har en ny stil. Det er ikke gemt endnu: Gem i notevinduet beholder det, og Fortryd denne ændring sætter det tilbage."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i én ændring: ordene i {count} blokke af “{name}” har en ny stil. Det er ikke gemt endnu: Gem i notevinduet beholder det, og Fortryd denne ændring sætter det tilbage.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” blev ændret, men assistenten stoppede, før den sagde, hvad den gjorde. Fortryd denne ændring sætter det tilbage."
 }

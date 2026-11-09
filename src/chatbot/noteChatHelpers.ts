@@ -29,6 +29,7 @@ import {
     type AssistantLanguageType,
 } from './chatLangHelpers';
 import { fillWords, tran } from './chatTranHelpers';
+import { readLanguageNoteStyleAsk } from './languageEditAskHelpers';
 import {
     type LyricTranslateModeType,
     genLyricTranslateReplies,
@@ -328,7 +329,16 @@ export function resolveNoteEditTarget(
             reason: `More than one attached note is called "${text}": ${names}. Name one of them exactly.`,
         };
     }
-    const attached = matched[0];
+    // A name written a letter out is the ONE note attached (2026-11-08,
+    // BN-30, seen live): Free's Nemotron named a Khmer note with one of two
+    // subscript letters that look alike in place of the other -- a swap
+    // keyboards and models make -- was refused, and gave up after 75k
+    // tokens. Never a guess between two notes.
+    const attached =
+        matched[0] ??
+        (files.length === 1 && checkIsNearName(files[0].name, text)
+            ? files[0]
+            : undefined);
     if (attached === undefined) {
         return {
             reason:
@@ -341,6 +351,38 @@ export function resolveNoteEditTarget(
         id: attached.noteId,
         note: attached.name,
     };
+}
+
+/**
+ * Whether a name is the other one with a letter or two out -- one edit for a
+ * short name, one a ten letters for a longer one -- compared letter by
+ * letter (code points), any script.
+ */
+function checkIsNearName(name: string, written: string) {
+    const left = [...toComparableName(name)];
+    const right = [...toComparableName(written)];
+    const allowed = Math.max(1, Math.floor(left.length / 10));
+    if (Math.abs(left.length - right.length) > allowed) {
+        return false;
+    }
+    let previousRow = Array.from({ length: right.length + 1 }, (_, index) => {
+        return index;
+    });
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
+        const row = [leftIndex];
+        for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
+            row.push(
+                Math.min(
+                    previousRow[rightIndex] + 1,
+                    row[rightIndex - 1] + 1,
+                    previousRow[rightIndex - 1] +
+                        (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+                ),
+            );
+        }
+        previousRow = row;
+    }
+    return previousRow[right.length] <= allowed;
 }
 
 function toBlockLine(block: any) {
@@ -423,18 +465,165 @@ export const NOTE_WORDLESS_HINT =
     '(They sent this with no words of their own: say in a sentence what you ' +
     'can do with this note and end with OPTIONS.)';
 
+// What a model's words are cut at to be compared piece by piece with the
+// person's: white space and the mark-up's own signs, which no language's
+// look-alike pair holds.
+const TYPED_WORDS_CUT_PATTERN = /([\s*_~`[\]()^@#|]+)/;
+
+/**
+ * Words a model WROTE, put back to the person's own TYPED ones where the
+ * only difference is a pair of look-alike letters a language names
+ * (`lookAlikes`, `listLookAlikePairs`): each piece of the words is folded
+ * with the typed line by the pairs, and a piece found in it that way is
+ * that place of the typed line. A pair is two sequences of one length, so
+ * a place in the folded line is the same place in the line. Words the
+ * person did not type, and words already as typed, are left alone.
+ * 2026-11-08, BN-37: on Free's Nemotron a typed Khmer line went into a note
+ * with one subscript written as its look-alike -- the same on screen, not
+ * to a search.
+ */
+export function restoreTypedWords(
+    written: string,
+    typed: string,
+    pairs: readonly (readonly [string, string])[],
+): string {
+    if (pairs.length === 0 || written === '' || typed.includes(written)) {
+        return written;
+    }
+    const fold = (text: string) => {
+        return pairs.reduce((folded, [kept, other]) => {
+            return folded.replaceAll(other, kept);
+        }, text.normalize('NFC'));
+    };
+    const typedText = typed.normalize('NFC');
+    const foldedTyped = fold(typedText);
+    if (foldedTyped.length !== typedText.length) {
+        return written;
+    }
+    const restore = (piece: string) => {
+        if (piece === '' || typedText.includes(piece)) {
+            return piece;
+        }
+        const foldedPiece = fold(piece);
+        const at = foldedTyped.indexOf(foldedPiece);
+        return at < 0 || foldedPiece.length !== piece.normalize('NFC').length
+            ? piece
+            : typedText.slice(at, at + foldedPiece.length);
+    };
+    const whole = restore(written);
+    if (whole !== written) {
+        return whole;
+    }
+    return written
+        .split(TYPED_WORDS_CUT_PATTERN)
+        .map((piece, index) => {
+            // The odd pieces are what the words were cut at.
+            return index % 2 === 1 ? piece : restore(piece);
+        })
+        .join('');
+}
+
+/**
+ * An `owa_note_edit` edit's words put back to the person's typed ones
+ * (`restoreTypedWords`) -- each change's `text` and the new `title`.
+ */
+export function restoreNoteTypedWords<T extends Record<string, any>>(
+    args: T,
+    typed: string,
+    pairs: readonly (readonly [string, string])[],
+): T {
+    if (pairs.length === 0 || typed.trim() === '') {
+        return args;
+    }
+    const changes = Array.isArray(args.changes)
+        ? args.changes.map((change: any) => {
+              return typeof change?.text === 'string'
+                  ? {
+                        ...change,
+                        text: restoreTypedWords(change.text, typed, pairs),
+                    }
+                  : change;
+          })
+        : args.changes;
+    return {
+        ...args,
+        ...(changes === undefined ? {} : { changes }),
+        ...(typeof args.title === 'string'
+            ? { title: restoreTypedWords(args.title, typed, pairs) }
+            : {}),
+    };
+}
+
+/**
+ * Whether an `owa_note_edit` edit puts a NEW verse in with no Bible named --
+ * a `passage` block's `ref`, or a verse token written without its Bible
+ * (`[^John 1:1]`, never `[^(KJV) John 1:1]`). A kept token written without
+ * its Bible counts too: the Bible looked up for it is never used for one.
+ */
+export function checkAddsNoteVerse(args: unknown) {
+    const call = args as { action?: unknown; changes?: unknown } | null;
+    if (call?.action !== 'edit' || !Array.isArray(call.changes)) {
+        return false;
+    }
+    return call.changes.some((change) => {
+        if (change === null || typeof change !== 'object') {
+            return false;
+        }
+        const { ref, text } = change as { ref?: unknown; text?: unknown };
+        return (
+            (typeof ref === 'string' && ref.trim() !== '') ||
+            (typeof text === 'string' && /\[\^(?!\s*\()/.test(text))
+        );
+    });
+}
+
+/** What they typed, when the model is asked its English. */
+export type NoteOwnWordsType = {
+    // The language's English name.
+    language: string;
+    text: string;
+};
+
+/**
+ * Said under the English of a question typed in another language
+ * (2026-11-08, BN-23): a word of the note they name, or a line they want
+ * written in, does not survive being put into English -- _make the word
+ * <a word of the note> red_ became "make the word grace red" over a note
+ * that holds no "grace", and the words of a line to add came back English.
+ */
+export function toNoteOwnWordsHint({ language, text }: NoteOwnWordsType) {
+    return (
+        `(They wrote it in ${language}, the line above being its English: ` +
+        `${JSON.stringify(text)}. A word or line of the note it names, and ` +
+        'words they give to be written in, are taken from THIS, exactly as ' +
+        'they wrote it -- never the English of it; words you put INTO THE ' +
+        `NOTE for them are in ${language} unless they name another ` +
+        'language. Your answer to them stays in English: the window puts ' +
+        'it into their language.)'
+    );
+}
+
 /**
  * The question as the model is asked it: what they typed, then each attached
- * note as it reads now, named as `note` takes it.
+ * note as it reads now, named as `note` takes it. `ownWords` when `asked` is
+ * the English of what they typed in another language.
  */
 export function toNoteAsk(
     asked: string,
     notes: readonly { name: string; text: string | null }[],
     translateMode: LyricTranslateModeType | null = null,
     isWordless = false,
+    ownWords: NoteOwnWordsType | null = null,
 ) {
+    // A button pressed in the window's language is read off its own words:
+    // the English of them no longer matches the button.
     const language =
-        translateMode === null ? null : readTranslateLanguageName(asked);
+        translateMode === null
+            ? null
+            : (readTranslateLanguageName(asked) ??
+              (ownWords === null
+                  ? null
+                  : readTranslateLanguageName(ownWords.text)));
     const shown = notes.map((note) => {
         return (
             `(The Bible note "${note.name}" is attached. Change it with ` +
@@ -446,6 +635,7 @@ export function toNoteAsk(
     return [
         ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
         asked,
+        ...(ownWords === null ? [] : [toNoteOwnWordsHint(ownWords)]),
         ...(translateMode === null
             ? []
             : [NOTE_TRANSLATE_HINT_MAP[translateMode]]),
@@ -745,7 +935,11 @@ const ALIGN_WORD_MAP: Record<string, string> = {
     justify: 'justify',
 };
 
-/** A whole-note style asked in a short English line, or null. */
+/**
+ * A whole-note style asked in a short line, or null: English in code, any
+ * other language in its own words (`readLanguageNoteStyleAsk`, its
+ * `assistant.json`; BN-16).
+ */
 export function readNoteStyleAsk(text: string): NoteStyleAskType | null {
     const words = text
         .trim()
@@ -753,7 +947,7 @@ export function readNoteStyleAsk(text: string): NoteStyleAskType | null {
         .replace(/[.!]+$/, '')
         .replace(/^please\s+/, '');
     if (words.length > 80) {
-        return null;
+        return readLanguageNoteStyleAsk(text);
     }
     const make = new RegExp(
         `^(?:make|turn|put|set)\\s+${WHOLE_NOTE_PATTERN}\\s+(?:in\\s+|to\\s+)?(.+)$`,
@@ -787,7 +981,7 @@ export function readNoteStyleAsk(text: string): NoteStyleAskType | null {
     ) {
         return { clear: true };
     }
-    return null;
+    return readLanguageNoteStyleAsk(text);
 }
 
 /**

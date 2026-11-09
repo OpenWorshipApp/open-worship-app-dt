@@ -4109,5 +4109,6 @@
     "Summarize this note": "Кратко перескажи эту заметку",
     "Tidy it into headings and lists": "Упорядочь её в заголовки и списки",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Сделано одним изменением: слова {count} блоков заметки «{name}» теперь нового размера. Это ещё не сохранено: «Сохранить» в окне заметки сохранит это, а «Отменить это изменение» вернёт как было.",
-    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Сделано одним изменением: слова {count} блоков заметки «{name}» теперь нового стиля. Это ещё не сохранено: «Сохранить» в окне заметки сохранит это, а «Отменить это изменение» вернёт как было."
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Сделано одним изменением: слова {count} блоков заметки «{name}» теперь нового стиля. Это ещё не сохранено: «Сохранить» в окне заметки сохранит это, а «Отменить это изменение» вернёт как было.",
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» изменён, но помощник остановился, не сказав, что сделал. Отменить это изменение возвращает всё как было."
 }

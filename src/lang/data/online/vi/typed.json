@@ -7,6 +7,19 @@
         "letters": "ăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ",
         "yes": ["có", "vâng", "dạ", "dạ vâng", "được"],
         "no": ["không", "không, cảm ơn"],
-        "order": 24
+        "order": 24,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:phóng\\s+to\\s+chữ|phong\\s+to\\s+chu|làm\\s+chữ\\s+to\\s+hơn|lam\\s+chu\\s+to\\s+hon|chữ\\s+to\\s+hơn|chu\\s+to\\s+hon|tăng\\s+cỡ\\s+chữ|tang\\s+co\\s+chu|phóng\\s+to\\s+văn\\s+bản|phong\\s+to\\s+van\\s+ban|chữ\\s+lớn\\s+hơn|chu\\s+lon\\s+hon|làm\\s+chữ\\s+lớn\\s+hơn|lam\\s+chu\\s+lon\\s+hon)$"
+            ],
+            "smaller": [
+                "^(?:thu\\s+nhỏ\\s+chữ|thu\\s+nho\\s+chu|làm\\s+chữ\\s+nhỏ\\s+hơn|lam\\s+chu\\s+nho\\s+hon|chữ\\s+nhỏ\\s+hơn|chu\\s+nho\\s+hon|giảm\\s+cỡ\\s+chữ|giam\\s+co\\s+chu|thu\\s+nhỏ\\s+văn\\s+bản|thu\\s+nho\\s+van\\s+ban|làm\\s+chữ\\s+bé\\s+hơn|lam\\s+chu\\s+be\\s+hon)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:in\\s+đậm\\s+tất\\s+cả\\s+chữ|in\\s+đam\\s+tat\\s+ca\\s+chu|in\\s+đậm\\s+toàn\\s+bộ\\s+văn\\s+bản|in\\s+đam\\s+toan\\s+bo\\s+van\\s+ban)$"
+            ]
+        }
     }
 }

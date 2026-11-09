@@ -7,6 +7,19 @@
         "letters": "ăâîșțşţ",
         "yes": ["da", "da, te rog"],
         "no": ["nu", "nu, mulțumesc"],
-        "order": 7
+        "order": 7,
+        "textSizeAsks": {
+            "larger": [
+                "^(?:mărește\\s+textul|mareste\\s+textul|măreşte\\s+textul|fă\\s+textul\\s+mai\\s+mare|fa\\s+textul\\s+mai\\s+mare|text\\s+mai\\s+mare|mărește\\s+scrisul|mareste\\s+scrisul|litere\\s+mai\\s+mari)$"
+            ],
+            "smaller": [
+                "^(?:micșorează\\s+textul|micsoreaza\\s+textul|micşorează\\s+textul|fă\\s+textul\\s+mai\\s+mic|fa\\s+textul\\s+mai\\s+mic|text\\s+mai\\s+mic|micșorează\\s+scrisul|micsoreaza\\s+scrisul|litere\\s+mai\\s+mici)$"
+            ]
+        },
+        "noteStyleAsks": {
+            "bold": [
+                "^(?:fă\\s+tot\\s+textul\\s+îngroșat|fa\\s+tot\\s+textul\\s+ingrosat|îngroașă\\s+tot\\s+textul|ingroasa\\s+tot\\s+textul)$"
+            ]
+        }
     }
 }
