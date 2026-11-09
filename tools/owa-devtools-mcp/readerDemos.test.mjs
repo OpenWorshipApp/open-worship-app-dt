@@ -8,7 +8,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('keeps the existing ids while expanding to 106 Reader lessons', () => {
+  it('keeps the existing ids while expanding to 109 Reader lessons', () => {
     expect(READER_DEMO_IDS).toEqual(
       expect.arrayContaining([
         'reader-font-larger',
@@ -77,7 +77,7 @@ describe('Reader demos', () => {
       ]),
     );
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(106);
+    expect(READER_DEMO_LIST).toHaveLength(109);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
@@ -129,18 +129,18 @@ describe('Reader demos', () => {
   });
 
   it('localizes panel scopes separately from the control name', () => {
-    const labels = { 'Bible Notes': 'NOTES', 'More Options': 'OPTIONS' };
+    const labels = { 'Bible Notes': 'NOTES', 'Filter by name': 'FILTER' };
     const demo = getReaderDemo(
-      'reader-notes-new-file',
+      'reader-filter-notes',
       (value) => labels[value] ?? value,
     );
     // The panel's own name stays English on the page (data-widget-name), so
     // the variant that can land in a translated window keeps it English, and
     // comes last because the renderer's inline fallback takes the last find.
     expect(demo.steps[0].finds).toEqual([
-      'Bible Notes > More Options',
-      'NOTES > OPTIONS',
-      'Bible Notes > OPTIONS',
+      'Bible Notes > Filter by name',
+      'NOTES > FILTER',
+      'Bible Notes > FILTER',
     ]);
   });
 
@@ -192,19 +192,17 @@ describe('Reader demos', () => {
   });
 
   it('leaves file writes, graph choices and destructive steps to the person', () => {
+    // A panel header's More Options shares its name with every list file's,
+    // so the card refuses it as a twin: the opener is words (TP-12).
     for (const id of [
       'reader-bibles-new-list',
+      'reader-bibles-share',
       'reader-notes-new-file',
       'reader-notes-share',
     ]) {
       const demo = getReaderDemo(id);
-      expect(
-        demo.steps.filter((step) => step.find).map((step) => step.find),
-      ).toEqual([
-        id.startsWith('reader-bibles-')
-          ? 'Bibles > More Options'
-          : 'Bible Notes > More Options',
-      ]);
+      expect(demo.steps.every((step) => !step.find && !step.press)).toBe(true);
+      expect(demo.steps[0].text).toContain('More Options');
     }
     for (const id of [
       'reader-graph-presets',

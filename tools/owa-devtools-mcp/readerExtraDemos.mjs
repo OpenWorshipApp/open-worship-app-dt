@@ -53,10 +53,31 @@ export const READER_EXTRA_DEMO_LIST = [
     ],
   ),
   lesson(
+    'ask-more',
+    research,
+    'Ask about a name, words or a saved passage',
+    'Select words for Ask the assistant about this, open a record for Ask the Assistant About This Person, or right-click a saved passage for Open in Chatbot.',
+    [
+      'Select words in the passage; the small bar above them offers Ask the assistant about this.',
+      'In a person or place record, use Ask the Assistant About This Person (or This Place). A saved passage, a history chip and a Find result offer Open in Chatbot on right-click.',
+      'Review any AI caution yourself; the assistant opens with what you chose, and its answer is yours to check.',
+    ],
+  ),
+  lesson(
+    'floating-passage',
+    reading,
+    'Read a passage in a floating panel',
+    'Right-click a passage and choose Floating to read it over the other panes; close the floating panel when done.',
+    [
+      'Right-click the passage text you are reading and choose Floating.',
+      'The passage opens in a floating panel over the others. Use its toolbar for Full view, collapse it, or close it when you are done.',
+    ],
+  ),
+  lesson(
     'practice-tips',
     'Reader shortcuts',
     'Find and replay Reader demos',
-    'Use Help > All tips, search a task, then choose Show it to practise one step at a time.',
+    'Use Help > All tips, search a task, then choose Show it to practise one step at a time; Hide for 30 days rests the daily tip.',
     [
       'Open Help > All tips in the Reader. Search for a control such as Copy Text, New File, Resources, or Find Connection.',
       'Choose a tip and press Show it. Do it performs one named action; Next explains a step you do yourself. Back revisits a step and the close button ends the lesson.',
@@ -220,10 +241,9 @@ export const READER_EXTRA_DEMO_LIST = [
     'Create a saved Bible list',
     'Open Bibles > More Options > New File to keep passages for a study in their own list.',
     [
-      click(
-        'Bibles > More Options',
-        'Open More Options in the Bibles panel header.',
-      ),
+      // Words, not a press: every list file's dots are also More Options,
+      // so the card refuses the header's as a twin (TP-12).
+      'Open More Options at the right of the Bibles panel header, or right-click the empty space under the lists.',
       'Choose New File, enter your list name, and confirm it yourself. Save bible item above a passage lets you choose the list to receive it.',
     ],
   ),
@@ -253,10 +273,8 @@ export const READER_EXTRA_DEMO_LIST = [
     'Import or export a Bible list',
     'Export from a list file menu; Import or Import From URL from the Bibles panel menu.',
     [
-      click(
-        'Bibles > More Options',
-        'Open the Bibles panel menu to find Import and Import From URL.',
-      ),
+      // Words, not a press: see bibles-new-list (TP-12).
+      'Open More Options at the right of the Bibles panel header to find Import and Import From URL.',
       'Choose an archive file or its address yourself, or drop an exported Bible archive onto Bibles. To share a list, use Export on that list file, then choose the archive options.',
       'The list file menu also offers Copy All Items and Export to MS Word when it has passages. Choose the format that suits your study notes.',
     ],
@@ -292,10 +310,8 @@ export const READER_EXTRA_DEMO_LIST = [
     'Create a Bible Notes file',
     'Use Bible Notes > More Options > New File to group notes for a topic or study.',
     [
-      click(
-        'Bible Notes > More Options',
-        'Open More Options in the Bible Notes panel header.',
-      ),
+      // Words, not a press: see bibles-new-list (TP-12).
+      'Open More Options at the right of the Bible Notes panel header, or right-click the empty space under the note files.',
       'Choose New File, enter a name, and confirm it yourself. Expand the new file to start collecting note items.',
     ],
   ),
@@ -325,10 +341,8 @@ export const READER_EXTRA_DEMO_LIST = [
     'Import and export Bible notes',
     'Import note files from the panel menu, import an item into a file, or Export the file or item you need.',
     [
-      click(
-        'Bible Notes > More Options',
-        'Open the Bible Notes panel menu to find the note-file import choices.',
-      ),
+      // Words, not a press: see bibles-new-list (TP-12).
+      'Open More Options at the right of the Bible Notes panel header to find the note-file import choices.',
       'Import in the panel menu brings in a note-file archive. Import on a particular note file brings an exported note item into that file.',
       'Use Export on a note file or note item to share that scope. Select the destination and archive options yourself.',
     ],
@@ -341,6 +355,16 @@ export const READER_EXTRA_DEMO_LIST = [
     [
       'Right-click the note file heading, or use its More Options, to rename, duplicate, reveal the file with Reveal in File Explorer, or copy its path.',
       'Copy All Items copies the file contents; Move All Items To chooses a different note file. Empty and Move to Trash are destructive choices that you make yourself.',
+    ],
+  ),
+  lesson(
+    'list-sessions',
+    notes,
+    'Switch between list folders with sessions',
+    'In Bibles or Bible Notes, Add Session keeps lists in another folder; right-click a session for Rename Session or Remove Session.',
+    [
+      'Under the Bibles or Bible Notes header, the session chips start with Default. Press Add Session (the plus) and name the new one yourself.',
+      'Each session has its own folder; click a chip to switch lists. Right-click a chip for Rename Session, or Remove Session to take it off the strip; that choice and its confirmation are yours.',
     ],
   ),
   lesson(
@@ -502,10 +526,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'divider-menu',
     reading,
     'Resize or close one Reader panel',
-    'Drag a panel divider, or right-click it for Reset Size, Close First Widget and Close Second Widget.',
+    'Drag a panel divider, or right-click it for Reset Size, Close First Widget and Close Second Widget; Enable Bible Notes on a closed strip reopens it.',
     [
       'Drag the divider between Bibles and Bible Notes, or between the left sidebar and Bible Lookup, to give a panel more room.',
-      'Right-click that divider for Reset Size, Close First Widget, and Close Second Widget. View > Widgets reopens a panel you closed.',
+      'Right-click that divider for Reset Size, Close First Widget, and Close Second Widget. A closed panel leaves a thin strip: click its Enable Bible Notes (or Enable Bibles) to open it again, or use View > Widgets.',
     ],
   ),
   lesson(

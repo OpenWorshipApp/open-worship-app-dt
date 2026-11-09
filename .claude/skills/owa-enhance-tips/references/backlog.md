@@ -1,5 +1,23 @@
 # Tips backlog — `TP-xx`
 
+## TP-12 · A list panel's header More Options shares its name with every list file's — `open` · S2 · reader, presenter
+
+**Evidence (2026-11-09).** `reader-bibles-new-list`, `reader-bibles-share`,
+`reader-notes-new-file` and `reader-notes-share` pressed `Bibles > More
+Options` / `Bible Notes > More Options`; live, the card refused each with
+_16 controls are called "More Options" (in Bibles) and the step does not say
+which_ — every list file row's dots carry the same title. The header button is
+`ListMenuButtonComp` in `src/others/FileListHandlerComp.tsx` (`aria-label` and
+`title` `tran('More Options')`), shared by every file list, so the Presenter's
+Documents, Lyrics and Background lists very likely refuse the same press (the
+Mini Screen's dots got **Mini Screen Options** for this reason). The four steps
+are words now, which cost ACTED two items (`bibles-more`, `notes-more`).
+**Change.** Its own title, e.g. **List Options**, in every language — an app
+change, so `owa-enhance`'s to apply; then the four openers press again.
+Related: `TP-08` (Resources' header). **Proof on apply.** The four Do it
+steps press the header's menu in English and Khmer; ACTED gains the two
+items back. Found in run `2026-11-09`.
+
 ## TP-11 · The note window's Bible Lookup panel is taught only in the Reader — `idea` · S3 · bibleNote
 
 **Evidence (2026-11-09).** The Bible Note inventory keeps the jobs the panel
@@ -29,6 +47,13 @@ ACTED stays 41/122, with 21 existing not-searchable warnings.
 recording the operator's passage, then improve localized search and safe actions
 under TP-07. Both changed tips passed All tips search and Show it in English
 and Khmer; they are self-guided.
+**2026-11-09: the state walk is done** — 36 live passes over the panels,
+menus, study views, names lookup, records, sessions and the tips card; the
+inventory grew to 186 items (10 new, e.g. More…, Floating, the session strip,
+the assistant doors), every name link and record row is ignored by pattern, not
+by the operator's own words, and leads read 0 · 0, so the English figure is
+final. Still open: the Khmer and French search gaps of details this run did not
+reword.
 
 What `/owa-enhance-tips` runs found and did not fix in the run, under stable
 ids, so a later run starts from the truth. A finding owned by another skill is

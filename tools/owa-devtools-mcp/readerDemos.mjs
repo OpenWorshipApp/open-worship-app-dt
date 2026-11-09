@@ -216,14 +216,24 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-copy-passage',
     label: 'Choose how to copy a passage',
-    detail: 'Open the Copy menu for the passage you are reading.',
+    detail:
+      'Open the Copy menu for the passage you are reading; More… lists every way to copy the title and text.',
     title: 'Choose how to copy a passage',
     steps: [
       {
-        text: 'Open Copy above the passage and choose the format you want.',
+        text: 'Open Copy above the passage.',
         find: 'Lookup > Copy',
         translateFind: true,
         action: 'click',
+      },
+      {
+        text: 'Choose More… to see every way to copy the title and text.',
+        find: 'More…',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Pick a format such as Title (Version) or Text without Numbers; the passage goes on the clipboard, ready to paste.',
       },
     ],
   },

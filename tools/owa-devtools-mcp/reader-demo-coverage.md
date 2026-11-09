@@ -3,9 +3,9 @@
 Scope: `html/reader.html` → `src/reader.tsx`, including its study sidebar,
 floating record/graph panels, saved passages, notes, header and native menus.
 The separate note editor, Settings, Presenter and AI Chat contents are outside
-this catalog. Updated 2026-10-22: **106 lessons**, **52 with actions**, **54
+this catalog. Updated 2026-11-09: **109 lessons**, **48 with actions**, **61
 self-guided**. The assistant's featured shelf remains 30 small starter lessons;
-**Help → All tips** exposes all 106 without a model call. How many of the
+**Help → All tips** exposes all 109 without a model call. How many of the
 Reader's controls they reach is `/owa-enhance-tips`'s measure, against the
 inventory in `.claude/skills/owa-enhance-tips/references/inventory/reader.json`.
 
@@ -34,6 +34,16 @@ were found by the control's words and opened through Show it in English and
 Khmer on 2026-10-22. Their explanation steps remain English by the convention
 above; neither lesson has a Do it action.
 
+2026-11-09: `ask-more` adds the selected-words, person-record and **Open in
+Chatbot** assistant doors; `floating-passage` the passage menu's **Floating**;
+`list-sessions` the Bibles and Bible Notes session strip (**Add Session**,
+**Rename Session**, **Remove Session**) — all three self-guided.
+`copy-passage` now presses **Copy** then **More…** and stops on the full
+format list. `bibles-new-list`, `bibles-share`, `notes-new-file` and
+`notes-share` lost their **More Options** press: every list file's dots carry
+the same name, so the card refused the header's as a twin (`TP-12`); the step
+is words until the header button has its own title.
+
 All ids below have the `reader-` prefix. Combined lessons cover related controls;
 this table records the entry points rather than promising that a fixed script
 can choose a person's files, translation, text selection or records.
@@ -45,9 +55,10 @@ can choose a person's files, translation, text selection or records.
 | Bible versions and metadata               | `version-info`, `bible-information`, `bible-not-installed`, `add-bible`, `remove-extra-version`, `split-translation`                                                                                                                                                                      |
 | Reading layout                            | `font-larger`, `font-smaller`, `full-view`, `split-side-by-side`, `split-stacked`, `edit-arrange-passages`, `verse-numbers`, `switch-split-pane` (Ctrl+Shift+Arrow between panes), `sync-panes`, `divider-menu`                                                                     |
 | Formatting and scrolling                  | `bible-line-breaks`, `model-line-breaks`, `model-info`, `auto-scroll`, `scroll-top`, `scroll-speed`                                                                                                                                                                |
-| Passage copying                           | `copy-passage`, `copy-title`, `copy-text`, `copy-all`, `copy-verse-key`, `copy-chapter-key`                                                                                                                                                                        |
+| Passage copying                           | `copy-passage` (More… and every format), `copy-title`, `copy-text`, `copy-all`, `copy-verse-key`, `copy-chapter-key`, `floating-passage`                                                                                                                           |
+| Assistant doors                           | `ask-about-reading` (passage, verse, Resources file), `ask-more` (selected words, a record, Open in Chatbot)                                                                                                                                                       |
 | Passage export, dictionary, audio, output | `extra-passage-actions`, `ai-audio`, `save-passage`, `present-passage`; audience output and export remain personal actions                                                                                                                                         |
-| Saved Bibles library                      | `bibles-folder`, `bibles-find-list`, `bibles-new-list`, `bibles-open-saved`, `bibles-organize`, `bibles-share`, `bibles-file-actions` (folder, create/open, colors/version, reorder/duplicate/move/delete, archives/URL/drop, Word/copy-all, filter/sort, rename/empty/reveal/trash)               |
+| Saved Bibles library                      | `bibles-folder`, `bibles-find-list`, `bibles-new-list`, `bibles-open-saved`, `bibles-organize`, `bibles-share`, `bibles-file-actions`, `list-sessions` (folder, sessions, create/open, colors/version, reorder/duplicate/move/delete, archives/URL/drop, Word/copy-all, filter/sort, rename/empty/reveal/trash)               |
 | Notes and verse annotations               | `filter-notes`, `sort-notes`, `verse-marks`, `note-actions`, `notes-folder`, `notes-new-file`, `notes-new-item`, `notes-organize`, `notes-share`, `notes-file-actions` (file versus item import/export, marks/comments, move/reorder, editor doorway)              |
 | Bible Find                                | `find-text`, `filter-books`, `find-results`, `search-selection` (version, search/suggestions, books, result pages, open/save, selected words), `find-verse-assistant` (the robot beside All Books)                                                                                                                      |
 | Cross references                          | `cross-references`, `cross-reference-verse` (select source verse and follow related passages)                                                                                                                                                                      |

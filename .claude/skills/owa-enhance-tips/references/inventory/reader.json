@@ -1,7 +1,7 @@
 {
   "page": "reader",
   "window": "reader.html",
-  "updated": "2026-10-22",
+  "updated": "2026-11-09",
   "scope": "html/reader.html -> src/reader.tsx: the reference picker and passage history, the passage views and their footers, the Bibles and Bible Notes panels, the study sidebar (Find, cross references, names and locations, resources), the floating record and graph panels, the header and the native menus as the Reader shows them. The note editor window, Settings, the Presenter and the AI windows are other windows' inventories. A menu row shared by several lists (New File, Rename, Reload...) is one item: the app draws it from one component and it does the same job in each list.",
   "sourceDirs": [
     "src/bible-reader",
@@ -111,7 +111,19 @@
     { "file": "src/bible-list/BibleSlidesPopupComp.tsx", "reason": "the Generate Slides popup, opened only from the Presenter" },
     { "file": "src/bible-list/note/NoteItemEditorPopupComp.tsx", "reason": "the note editor window (bibleNote.html), another window's inventory" },
     { "file": "src/bible-list/note/bibleNoteHelpers1.tsx", "reason": "the note editor window's header (bibleNote.html)" },
-    { "file": "src/bible-list/note/BibleNoteEditingMenuComp.tsx", "reason": "the note editor window's undo menu (bibleNote.html)" }
+    { "file": "src/bible-list/note/BibleNoteEditingMenuComp.tsx", "reason": "the note editor window's undo menu (bibleNote.html)" },
+    { "label": "Title and Text", "reason": "a section heading inside the copy-format menu (bibleItemCopyFormatHelpers), not a row" },
+    { "label": "Title Only", "reason": "a section heading inside the copy-format menu (bibleItemCopyFormatHelpers), not a row" },
+    { "label": "Text Only", "reason": "a section heading inside the copy-format menu (bibleItemCopyFormatHelpers), not a row" },
+    { "label": "Create Lyric", "reason": "a saved-passage menu row drawn only on the Presenter (BibleItemRenderComp: appProvider.isPagePresenter)" },
+    { "file": "src/bible-list/BibleLyricPopupComp.tsx", "reason": "the Create Lyric popup, opened only from the Presenter" },
+    { "label": "Cancel", "reason": "drawn in the Reader's source only by the Presenter's Create Lyric and Generate Slides popups (both ignored by file)" },
+    { "label": "No tips found", "reason": "the All tips list's empty state" },
+    { "label": "Abba", "reason": "a name link inside the passage text: the passage's own words (passage-name-link)" },
+    { "pattern": "^\\p{Ll}+$", "reason": "one lower-case word: a Bible Find word suggestion or a note file the person named (sunday, youtube); every Reader control is capitalised or several words" },
+    { "pattern": "^[^\\p{Script=Latin}(]+\\([A-Z][^)]*\\)", "reason": "a names-lookup record row in the lookup's own language with its KJV name in brackets: the dataset's words" },
+    { "pattern": "^[A-Z0-9]{3}\\.\\d+\\.[a-z]+", "reason": "a Resources file named BOOK.CHAPTER.ext with its heading run on (ROM.0.pdfIntroduction): the person's files" },
+    { "pattern": "^\\d{1,3}\\p{Lu}\\p{Ll}+ .{20,}", "reason": "an All tips list row (its number, title, category and detail run together): the tips themselves" }
   ],
   "items": [
     {"id":"ask-passage","surface":"Passage view","labels":["Ask the Assistant About This Passage"],"personOnly":"opens an AI conversation about the chosen passage"},
@@ -153,11 +165,16 @@
     { "id": "report-problem", "surface": "Reader header", "labels": ["Report a Problem"] },
 
     { "id": "passage-copy-menu", "surface": "Passage view", "labels": ["Lookup > Copy"], "search": ["copy"] },
-    { "id": "split-side-by-side", "surface": "Passage view", "labels": ["Split Horizontal"], "search": ["side by side"] },
-    { "id": "split-stacked", "surface": "Passage view", "labels": ["Split Vertical"], "search": ["top and bottom"] },
+    { "id": "copy-formats", "surface": "Passage view", "labels": ["More…"], "aliases": ["Every way to copy the title and text", "More… Every way to copy the title and text", "(Version) Title", "Title (Version)", "Title without Version", "(1): Text", "1: Text", "Text without Numbers"], "search": ["Every way to copy", "format"] },
+    { "id": "split-side-by-side", "surface": "Passage view", "labels": ["Split Horizontal"], "press": ["Ctrl+Shift+S"], "aliases": ["Ctrl+Shift+S"], "search": ["side by side"] },
+    { "id": "split-stacked", "surface": "Passage view", "labels": ["Split Vertical"], "press": ["Ctrl+Shift+V"], "aliases": ["Ctrl+Shift+V"], "search": ["top and bottom"] },
     { "id": "split-to-translation", "surface": "Passage view", "labels": ["Split Horizontal to", "Split Vertical to"] },
-    { "id": "save-passage", "surface": "Passage view", "labels": ["Save bible item"], "search": ["save"] },
-    { "id": "passage-close", "surface": "Passage view", "labels": ["Bible View > Close"], "strict": true, "tips": ["reader-edit-arrange-passages"] },
+    { "id": "save-passage", "surface": "Passage view", "labels": ["Save bible item"], "press": ["Ctrl+Enter"], "aliases": ["Ctrl+Enter"], "search": ["save"] },
+    { "id": "passage-close", "surface": "Passage view", "labels": ["Bible View > Close"], "press": ["Ctrl+W"], "aliases": ["Ctrl+W"], "strict": true, "tips": ["reader-edit-arrange-passages"] },
+    { "id": "passage-floating", "surface": "Passage menu", "labels": ["Floating"], "search": ["floating"] },
+    { "id": "open-in-chatbot", "surface": "Passage menu", "labels": ["Open in Chatbot"], "personOnly": "opens an AI conversation about the row the person chose" },
+    { "id": "ask-selection", "surface": "Verse marks", "labels": ["Ask the assistant about this"], "personOnly": "opens an AI conversation about the words the person selected" },
+    { "id": "ask-record", "surface": "Names and places", "labels": ["Ask the Assistant About This Person"], "aliases": ["Ask the Assistant About This Place"], "personOnly": "opens an AI conversation about the record the person opened" },
     { "id": "passage-edit", "surface": "Passage view", "labels": ["Click to edit this section"], "aliases": ["Edit", "Double click on header to edit", "Hit \"Escape\" to jump back to editing input"], "search": ["edit"] },
     { "id": "full-view", "surface": "Passage view", "labels": ["Full", "Toggle Widget Full View"], "aliases": ["Exit Full"], "search": ["full"] },
     { "id": "add-extra-bible", "surface": "Passage view", "labels": ["Add Extra Bible"], "search": ["version"] },
@@ -194,6 +211,9 @@
     { "id": "delete-comment", "surface": "Verse marks", "labels": ["Delete Comment"] },
 
     { "id": "divider-menu", "surface": "Reading layout", "labels": ["Reset Size", "Close First Widget", "Close Second Widget"], "aliases": ["Divider"], "search": ["divider", "resize"] },
+    { "id": "panel-strip", "surface": "Reading layout", "labels": ["Enable Bible Notes"], "aliases": ["Enable Bibles", "Enable Bible and Notes", "Enable Advance Lookup"], "search": ["reopen"] },
+    { "id": "tips-card", "surface": "Tips card", "labels": ["Search tips", "Show it", "Next tip", "Back to tip"], "aliases": ["This tip closes by itself"], "search": ["tips"] },
+    { "id": "tips-hide", "surface": "Tips card", "labels": ["Hide for 30 days"], "personOnly": "puts the automatic tips away for 30 days; the person decides" },
     { "id": "switch-split-pane", "surface": "Reading layout", "labels": ["Ctrl+Shift+Arrow"], "press": ["Ctrl+Shift+Left", "Ctrl+Shift+Right"], "search": ["keyboard"] },
     { "id": "floating-panel", "surface": "Reading layout", "labels": ["Close floating widget", "Collapse floating widget", "Full view", "Drag to resize"], "search": ["floating panel"] },
 
@@ -207,7 +227,7 @@
     { "id": "find-pages", "surface": "Study sidebar", "labels": ["Go to results"], "aliases": ["Load more results", "Find"], "search": ["page"], "tips": ["reader-find-results"] },
     { "id": "open-passage", "surface": "Study sidebar", "labels": ["Open"], "strict": true, "search": ["open"], "tips": ["reader-find-results", "reader-history-chips"] },
     { "id": "open-beside", "surface": "Study sidebar", "labels": ["Open beside the current verse"], "search": ["beside"] },
-    { "id": "cross-ref-card", "surface": "Study sidebar", "labels": ["AI Cross References"], "aliases": ["Cross References"], "search": ["cross reference"], "tips": ["reader-cross-references"] },
+    { "id": "cross-ref-card", "surface": "Study sidebar", "labels": ["AI Cross References"], "aliases": ["Cross References", "Custom OpenAI", "Custom Anthropic"], "search": ["cross reference"], "tips": ["reader-cross-references"] },
     { "id": "cross-ref-append", "surface": "Study sidebar", "labels": ["shift + click to append"], "search": ["shift"], "tips": ["reader-cross-reference-verse"] },
 
     { "id": "resources-search", "surface": "Resources", "labels": ["Search file name"] },
@@ -278,6 +298,8 @@
     { "id": "file-trash", "surface": "List files", "labels": ["Move to Trash"] },
     { "id": "file-copy-path", "surface": "List files", "labels": ["Copy Path to Clipboard"] },
     { "id": "file-reveal", "surface": "List files", "labels": ["Reveal in File Explorer", "Reveal Original"], "search": ["file location"] },
+    { "id": "list-sessions", "surface": "List files", "labels": ["Add Session", "Rename Session"], "aliases": ["Session", "Default Session"], "search": ["session"], "personOnly": "adds or names a folder session that only Remove Session takes back" },
+    { "id": "list-session-remove", "surface": "List files", "labels": ["Remove Session"] },
 
     { "id": "menu-print", "surface": "Native menus", "labels": ["File > Print", "File > Print Without Preview"], "personOnly": "native menu" },
     { "id": "menu-export-data", "surface": "Native menus", "labels": ["File > Export Data"], "personOnly": "native menu" },

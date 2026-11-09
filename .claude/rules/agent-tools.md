@@ -319,7 +319,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 106
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 109
   Reader-only lessons through the same guarded card. Thirty are featured
   in the Reader assistant's zero-model practice shelf: the original font
   larger/smaller, localized John 3:16 and Bible Find demos; passage history,
@@ -327,7 +327,8 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   scrolling, line layout, advanced study views and book filtering; and direct
   practice for typing a complete reference, removing one reference part,
   automatic Bible audio, filtering and sorting notes, Settings and Help.
-  Fifty-two of the 106 Reader tips begin with a safe deterministic action;
+  Forty-eight of the 109 Reader tips begin with a safe deterministic action
+  (2026-11-09: four list-menu openers became words, `TP-12`);
   Reader additions cover copying formats, saved list and note file management,
   Resources, names and graphs with practical searchable tips. Mixed steps use
   `look` after the safe action, and scoped labels translate each part. **A
