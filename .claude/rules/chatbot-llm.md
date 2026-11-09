@@ -985,3 +985,30 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   scratch profile, gemma4:cloud: a Reader summary, a second note from that
   note's chat, a Reader word lesson and a passage chat's explanation, each
   one call, each opened and attached.
+
+- **And one for a foreground session** (2026-11-09, the user: _chatbot can
+  help modify any foreground component_, then _sessions of opening
+  foreground component should be able to attached to the chatbot for the
+  chat context_; W-61, `agent-tools.md`). `owa_foreground_edit` goes to a
+  `foreground` ask -- a question while a foreground session is open in the
+  tab (`chatbot-files-report.md`), or a TYPED line naming a component
+  (`readForegroundComponentAsk`: the launcher's labels through the window's
+  `tran`, English and a few English words -- timer, ticker, scrolling text;
+  Messages and Time by a phrase only), about its active session -- under
+  `FOREGROUND_SYSTEM_PROMPT` (`src/chatbot/foregroundChatHelpers.ts`), eight
+  rounds, the session read fresh into the user turn (`toForegroundAsk`), on
+  a custom server's lean list, with `owa_list_screens`, `owa_click`,
+  `owa_help_search` and `owa_find_verse` shared to it. A known corpus row
+  still wins (`findKnownQuestion`). The WINDOW turns a session NAME the
+  model writes into its id (`resolveForegroundSession`; Default by its strip
+  name too), and outside a foreground ask the tool is refused. A change
+  (`changed`, `shown`, `hidden`, `timer`, `created`) is acted on, and
+  `readEditedForeground` gives the answer **[en:tran:Undo this change]** for
+  either tool. ~780 tokens to that ask alone. **The ordinary list DID move**:
+  `owa_foreground` learned the thirteen components, `ref`, `version`,
+  `file`, `camera` and `source`, ~491 → ~581 a round, and
+  `MODEL_TOKEN_CEILING` was raised 8 350 → 8 480 on purpose (measured
+  8 478, `audit-mcp-tools.mjs --stdio --ratchet`; history in
+  `owa-enhance-mcp/references/tool-budget.md`) -- the user's choice of _any
+  chat_ over a foreground ask alone. Not yet asked live through the window
+  with a model: the AI caution is a person's press.

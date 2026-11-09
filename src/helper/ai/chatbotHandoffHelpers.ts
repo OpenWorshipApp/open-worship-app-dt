@@ -23,10 +23,12 @@ import { openChatbotPage } from '../domHelpers';
 import {
     requestChatbotAsk,
     requestChatbotFile,
+    requestChatbotForeground,
     requestChatbotLookup,
     requestChatbotReport,
     type SelectionMentionType,
 } from './chatbotHandoffStoreHelpers';
+import type { ForegroundAskType } from './foregroundAskHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
 import type { ResourceReadingType } from './resourceReadingAskHelpers';
 
@@ -105,6 +107,21 @@ export async function openChatbotWithLookup(
         return false;
     }
     requestChatbotLookup(ask, mention);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant on ONE session of a foreground component -- a chip's
+ * **Open in Chatbot** or a panel header's 🤖: a tab of its own with the
+ * session attached as its context, ready to be asked to change it. The same
+ * two questions first.
+ */
+export async function openChatbotWithForeground(ask: ForegroundAskType) {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotForeground(ask);
     openChatbotPage();
     return true;
 }

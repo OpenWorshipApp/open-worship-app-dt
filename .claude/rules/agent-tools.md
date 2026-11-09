@@ -573,6 +573,50 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `EC-169` (_Put Blessed Assurance on the screen_ turns the screen on to the
   wordless **First** slide) and `EC-170` (the W-08 demo's step 2 clicks
   **Colors**; no card can double-click a video).
+  **Every component, the PANEL's way, and a session as chat context**
+  (2026-11-09, the user: _chatbot can help modify any foreground component_
+  -- a 5-minute countdown, a top marquee, _a quick-text for a given bible
+  verse_ -- then, the strip `Default · Session 2 · +` circled: _sessions of
+  opening foreground component should be able to attached to the chatbot for
+  the chat context_; W-61). The tool had written the SCREEN with
+  `extraStyle: {}` and no session, so an overlay ignored its panel's look and
+  the panel never showed what was done. Now all thirteen components
+  (`FOREGROUND_COMPONENT_LIST`, a leaf, held to `FOREGROUND_WIDGET_LIST` by a
+  test; `clock` still answers for `time`, `all` for a stop) go through ONE
+  model: `foregroundComponentRules.ts` (per key its sessions target, the
+  Properties prefix, the props flags, its own setting names -- what the
+  panels read, so the two cannot style a widget apart) and the panels' own
+  show paths (`agentForegroundComponentHelpers.ts`: the datum built with
+  `withForegroundLayer` and `toTransitionPart`, a NEW object every time,
+  timers through `to{Started,Paused,Reset}*Data` in place). **Words go into a
+  NEW session named after them** (`5:00`, `→ 10:30`, the marquee's words,
+  `(KJV) John 3:16`; `toForegroundSessionName`), the active session's look
+  copied in (`genLookCopyWrites`, only keys that exist), the panel opened on
+  it -- unless the active session already holds the same (unset keys compared
+  at the PANEL's defaults, `checkIsSameContent`: a fresh profile's Default is
+  already 5:00) or one is already named so; nothing typed is overwritten. A
+  verse `ref` is read from the installed Bible (`readForegroundVerse`), never
+  the model's words, and a new verse quick text gets the Bible Verse preset.
+  **Changing** is `owa_foreground_edit` (`agentForegroundEdit.mjs`), offered
+  to a FOREGROUND ask only (`MODEL_ON_ASK_TOOL_MAP`, with `owa_list_screens`,
+  `owa_click`, `owa_help_search`, `owa_find_verse` shared to it): `read`
+  (`open: true` the panels open in the Presenter, from
+  `foreground-open-panels`, and their sessions), `set` (fields and/or a
+  `look` in words, `agentForegroundLookRules.ts`, pure: size larger / smaller
+  / px, colours, place, width, scale, opacity, round, blur, font, bold, the
+  ONE Effects JSON key merged whole, layer, blend, transition, a marquee's
+  speed -- a field the component lacks refused naming what it takes), `show`
+  / `hide`, `timer`, `session`. What a session has on a screen is restyled
+  the panel's way (`restyleOnScreen`), its words re-shown. **Every write is
+  backed up** as an `app-setting` restore (`agentBackupPlanHelpers.ts`, every
+  key of the session) and the answer carries `undoId`; an undo notifies the
+  panel and restyles the wall (`refreshForegroundAfterUndo`). **An open panel
+  follows**: its fields read settings once at mount, so
+  `useForegroundPanelRevision` keys the panel and `notifyForegroundPanel`
+  remounts it (mounted listeners only, no file watch). Banner: _changed the
+  <component> "<session>"_; a read is quiet. Seen live on a scratch profile
+  through a fresh stdio server (the token cost and the window's side are in
+  `chatbot-llm.md` / `chatbot-files-report.md`).
 - **A panel divider is a named control, and the card right-clicks it where it
   is** (2026-09-09, `FlexResizeActorComp.stampAccessibleName`, `domMatch.mjs`
   `tierOf` / `openContextMenu`, `guide.mjs`). Reported with a screenshot: the

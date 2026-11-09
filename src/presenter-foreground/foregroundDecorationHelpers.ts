@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 
 import { getSetting } from '../helper/settingHelpers';
 import type { AppColorType } from '../others/color/colorHelpers';
+import { genDecorationSettingName } from './foregroundStyleSettingNames';
 
 /**
  * How an overlay is DRESSED -- its frame, its shadow, the space around its
@@ -101,9 +102,7 @@ export const MAX_FOREGROUND_LINE_HEIGHT = 3;
 export const MIN_FOREGROUND_LETTER_SPACING = -0.1;
 export const MAX_FOREGROUND_LETTER_SPACING = 0.5;
 
-export function genDecorationSettingName(prefix: string) {
-    return `${prefix}-setting-show-widget-decoration`;
-}
+export { genDecorationSettingName };
 
 /**
  * The dressing a widget starts with.

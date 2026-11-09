@@ -307,6 +307,11 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // The window names the attached file in `file` itself
   // (`src/chatbot/flowChatHelpers.ts`).
   owa_presenting_flow_edit: 'flow',
+  // A conversation about a FOREGROUND component (2026-11-09, a session of
+  // an open panel attached to the chat, a panel's own 🤖, or a question
+  // naming a component): its words and look changed, live on the wall,
+  // through its own panel. The ordinary question keeps owa_foreground.
+  owa_foreground_edit: 'foreground',
 };
 
 /**
@@ -361,6 +366,15 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
     'owa_help_page',
     'owa_find_verse',
     'owa_bible_note',
+  ],
+  // A foreground conversation (2026-11-09): the screens read and their show
+  // button pressed when asked, how a panel works from the guide, and a
+  // verse found by its words before it is put into a quick text by `ref`.
+  foreground: [
+    'owa_list_screens',
+    'owa_click',
+    'owa_help_search',
+    'owa_find_verse',
   ],
 };
 

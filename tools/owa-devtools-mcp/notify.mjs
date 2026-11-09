@@ -124,6 +124,10 @@ const ACTING_TOOLS = {
     // One run sheet the help window has open, changed many lines at a time:
     // the same news, the sheet named below. `lines` is quiet.
     owa_presenting_flow_edit: 'changed a run sheet',
+    // A foreground component changed through its own panel (a session's
+    // words or look); the component and the session are named below, and
+    // a `read` is quiet.
+    owa_foreground_edit: 'changed a foreground extra',
     // The Background tabs' files; each action names the file below.
     owa_media_file: 'changed a media file',
 };
@@ -343,6 +347,13 @@ const FOREGROUND_BANNER_NOUN_MAP = {
     'marquee-top': 'the scrolling message',
     'marquee-bottom': 'the scrolling message',
     'quick-text': 'the line of text',
+    message: 'the message',
+    'long-text': 'the long text',
+    video: 'the video',
+    image: 'the picture',
+    camera: 'the camera',
+    screen: 'the picture of another screen',
+    web: 'the web page',
     all: 'every foreground extra',
 };
 
@@ -355,7 +366,18 @@ const FOREGROUND_LAUNCHER_LABEL_MAP = {
     'marquee-top': 'Marquee Top',
     'marquee-bottom': 'Marquee Bottom',
     'quick-text': 'Quick Text',
+    message: 'Messages',
+    'long-text': 'Long Text Show',
+    video: 'Video Show',
+    image: 'Image Show',
+    camera: 'Camera Show',
+    screen: 'Screen Show',
+    web: 'Web Show',
 };
+
+// A component with no phrase of its own below is named by its launcher row
+// after this one.
+const FOREGROUND_PUT_UP_KEY = 'put a foreground extra on the screen';
 
 const FOREGROUND_STARTED_KEY_MAP = {
     countdown: 'started a countdown on the screen',
@@ -407,9 +429,44 @@ function describeForegroundNotice(args) {
             );
         }
     }
-    return startedKey === undefined
-        ? toNotice(ACTING_TOOLS.owa_foreground)
-        : toNotice(startedKey);
+    if (startedKey === undefined) {
+        const label = FOREGROUND_LAUNCHER_LABEL_MAP[widget];
+        return label === undefined
+            ? toNotice(ACTING_TOOLS.owa_foreground)
+            : toNotice(
+                  `put ${noun ?? 'a foreground extra'} on the screen`,
+                  FOREGROUND_PUT_UP_KEY,
+                  [{ key: label }],
+              );
+    }
+    return toNotice(startedKey);
+}
+
+// `owa_foreground_edit`: the component and the session it changed, named;
+// a `read` is quiet. `show` and `hide` say what the plain door says.
+function describeForegroundEditNotice(args) {
+    if (args?.action === undefined) {
+        return toNotice(ACTING_TOOLS.owa_foreground_edit);
+    }
+    if (args.action === 'read') {
+        return null;
+    }
+    const widget = typeof args?.widget === 'string' ? args.widget : '';
+    if (args.action === 'show') {
+        return describeForegroundNotice({ ...args, action: 'start' });
+    }
+    if (args.action === 'hide') {
+        return describeForegroundNotice({ ...args, action: 'stop' });
+    }
+    const label = FOREGROUND_LAUNCHER_LABEL_MAP[widget];
+    const session = toQuotedName(args?.session, '');
+    return label === undefined
+        ? toNotice(ACTING_TOOLS.owa_foreground_edit)
+        : toNotice(
+              `changed the ${label} ${session}`.trim(),
+              ACTING_TOOLS.owa_foreground_edit,
+              [{ key: label }, session],
+          );
 }
 
 // The Bible importer's news, by action, with the Bible and the site taken
@@ -515,11 +572,9 @@ export function describeToolNotice(name, args) {
                   : '',
             'a note',
         );
-        return toNotice(
-            `changed the Bible note ${where}`,
-            ACTING_TOOLS[name],
-            [where],
-        );
+        return toNotice(`changed the Bible note ${where}`, ACTING_TOOLS[name], [
+            where,
+        ]);
     }
     if (name === 'owa_slide_edit') {
         // No action is a probe asking whether the tool announces itself.
@@ -698,6 +753,9 @@ export function describeToolNotice(name, args) {
     if (name === 'owa_foreground') {
         return describeForegroundNotice(args);
     }
+    if (name === 'owa_foreground_edit') {
+        return describeForegroundEditNotice(args);
+    }
     if (name === 'owa_bible_xml') {
         return describeBibleXmlNotice(args);
     }
@@ -784,6 +842,7 @@ export function listNoticeTranKeys() {
         ...Object.values(BIBLE_XML_KEY_MAP),
         FOREGROUND_STOP_KEY,
         FOREGROUND_STOP_ALL_KEY,
+        FOREGROUND_PUT_UP_KEY,
         'Minutes',
     ]);
     for (const phrase of Object.values(AGENT_FILE_PHRASE_MAP)) {

@@ -76,6 +76,18 @@ export type AgentRestoreType =
           key: string;
           text: string | null;
           filePath: string;
+      }
+    | {
+          // One of the app's own settings -- a foreground component's
+          // session, its words and its look (2026-11-09, the help window
+          // changing a foreground component). `null` when the key was not
+          // there, so an undo takes off a key the change made. `foreground`
+          // names the component: its open panel is told to read its
+          // settings again, and what of it is on a screen is dressed again.
+          type: 'app-setting';
+          key: string;
+          text: string | null;
+          foreground?: string;
       };
 
 /** The small half of a backup: what a list of changes reads. */
@@ -161,6 +173,7 @@ const RESTORE_PRIORITY_MAP: Record<AgentRestoreType['type'], number> = {
     blob: 1,
     editing: 2,
     'home-setting': 3,
+    'app-setting': 3,
 };
 
 /**
@@ -193,6 +206,10 @@ export function listRestoreFilePaths(restores: AgentRestoreType[]) {
         if (restore.type === 'rename') {
             filePathSet.add(restore.from);
             filePathSet.add(restore.to);
+        } else if (restore.type === 'app-setting') {
+            // No file: the key, so a later change to the same setting is
+            // named as going back with an undo of this one.
+            filePathSet.add(`setting:${restore.key}`);
         } else {
             filePathSet.add(restore.filePath);
         }

@@ -6,6 +6,7 @@ import {
 } from '../helper/settingHelpers';
 import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
 import { toValidTransitionEffect } from '../_screen/transitionOverrideHelpers';
+import { genForegroundSessionTransitionSettingName } from './foregroundStyleSettingNames';
 
 /**
  * A foreground overlay's transition, most specific first: its SESSION's own
@@ -24,9 +25,7 @@ export const FOREGROUND_TRANSITION_CHANGED_EVENT =
     'foreground-transition-changed';
 
 /** The session level: one key under the session's Properties prefix. */
-export function genForegroundSessionTransitionSettingName(prefix: string) {
-    return `${prefix}-setting-show-widget-transition`;
-}
+export { genForegroundSessionTransitionSettingName };
 
 /**
  * The component level, keyed by the widget (`countdown`, `marquee-top`).

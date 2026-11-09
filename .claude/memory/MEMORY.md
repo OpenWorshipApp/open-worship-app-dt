@@ -90,7 +90,7 @@
 - [Discovery file holds the token](discovery-file-holds-the-token.md) — never print the file · [No user-entered references in notes](no-user-specific-references-in-notes.md)
 - Grading: [panic in both screen states](chatbot-grade-panic-in-both-states.md) · [window's own default](chatbot-grade-on-the-window-default.md)
 - [What the user is in the middle of](chatbot-in-the-middle-of.md) · [Wrong-window route](chatbot-wrong-window-route-is-a-page-fact.md)
-- [A verse by its reference](chatbot-verse-by-reference.md) · [Foreground extras by their words](chatbot-foreground-door.md)
+- [A verse by its reference](chatbot-verse-by-reference.md) · [Foreground extras by their words](chatbot-foreground-door.md) · [Any foreground component, the panel's way](chatbot-foreground-component-edit.md) — a new session per content, an attached one changed in place; a write from outside notifies the panel
 - [AI Chat window](aichat-window.md) — sandboxed `<webview>` · [Guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md)
 - [Chat windows honor the app font](chat-windows-honor-app-font.md) · [A confirm needs a popup host](confirm-needs-a-popup-host.md) · [Popup deep link](popup-deep-link-by-setting.md)
 - [CRLF breaks line regexes](crlf-checkout-line-regex.md) — split on `/\r?\n/` · [Prettier reindents `.mjs` outside `src/`](prettier-reindents-mjs-outside-src.md)

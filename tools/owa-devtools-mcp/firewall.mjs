@@ -294,6 +294,10 @@ const READING_ACTION_MAP = {
     // And for an attached presenting flow (`owa_presenting_flow_edit`):
     // `lines` is read before every question about it.
     owa_presenting_flow_edit: ['lines'],
+    // And for a foreground component (`owa_foreground_edit`): `read` is
+    // asked before every question about an attached session; every other
+    // action changes a session or a screen (backed up).
+    owa_foreground_edit: ['read'],
 };
 
 /** Does THIS call change the app (the tool, or the action it was given)? */

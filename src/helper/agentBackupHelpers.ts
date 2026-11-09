@@ -706,6 +706,17 @@ export async function listAgentBackups(limit = 20) {
 }
 
 async function applyRestore(restore: AgentRestoreType) {
+    if (restore.type === 'app-setting') {
+        // The panel and the wall are told once the whole undo is in -- see
+        // `refreshRestoredForeground` -- not once per key.
+        const { removeSetting, setSetting } = await import('./settingHelpers');
+        if (restore.text === null) {
+            removeSetting(restore.key);
+        } else {
+            setSetting(restore.key, restore.text);
+        }
+        return;
+    }
     if (restore.type === 'home-setting') {
         const { appHomeStorage } = await import('../server/appHomeStorage');
         if (restore.text === null) {
@@ -828,6 +839,10 @@ async function applyRestore(restore: AgentRestoreType) {
 }
 
 async function snapshotBeforeRestore(restore: AgentRestoreType) {
+    if (restore.type === 'app-setting') {
+        const { getSetting } = await import('./settingHelpers');
+        return [{ ...restore, text: getSetting(restore.key) }];
+    }
     if (restore.type === 'home-setting') {
         const { appHomeStorage } = await import('../server/appHomeStorage');
         return [{ ...restore, text: appHomeStorage.getItem(restore.key) }];
@@ -892,6 +907,33 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
         }
     }
     return restoreList;
+}
+
+/**
+ * A foreground component's settings put back: its open panel reads them
+ * again and what of it is on a screen is dressed as it was -- ONCE per
+ * component, however many of its keys went back. Only a notice: one that
+ * cannot be given leaves the undo done.
+ */
+async function refreshRestoredForeground(restores: AgentRestoreType[]) {
+    const widgetSet = new Set<string>();
+    for (const restore of restores) {
+        if (restore.type === 'app-setting' && restore.foreground) {
+            widgetSet.add(restore.foreground);
+        }
+    }
+    if (widgetSet.size === 0) {
+        return;
+    }
+    try {
+        const { refreshForegroundAfterUndo } =
+            await import('./agentForegroundHelpers');
+        for (const widget of widgetSet) {
+            await refreshForegroundAfterUndo(widget);
+        }
+    } catch (error) {
+        handleError(error);
+    }
 }
 
 export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
@@ -960,6 +1002,7 @@ export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
         undoneAt: new Date().toISOString(),
         undoneBy: undoMeta.id,
     });
+    await refreshRestoredForeground(orderedList);
     const laterList = findLaterOverlappingChanges(metaList, target);
     return {
         undone: target.summary,

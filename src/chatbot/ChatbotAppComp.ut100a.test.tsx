@@ -426,7 +426,7 @@ describe('ChatbotAppComp: handed-over documents, selections and buttons', () => 
                 expect.arrayContaining([
                     'Check the spelling',
                     'Summarize this note',
-                    'Tidy it into headings and lists',
+                    'Format it so it is neat and easy to read',
                 ]),
             );
             expect(boxChipNames()).toEqual(['Sunday Lesson']);

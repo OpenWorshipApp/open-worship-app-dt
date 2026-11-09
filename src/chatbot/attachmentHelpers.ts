@@ -19,6 +19,7 @@
 import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
 import { tran } from './chatTranHelpers';
 import type { AttachmentWindowType } from './windowAimHelpers';
+import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
 
 /**
  * The four things that can be attached, and they are not alike. A `file` is
@@ -29,7 +30,14 @@ import type { AttachmentWindowType } from './windowAimHelpers';
  * itself along for the people who can open it (2026-10-13: _and accept files
  * like markdown pdf_) -- read off the disk at the press that sends it.
  */
-export type ChatAttachmentKindType = 'image' | 'text' | 'element' | 'file';
+export type ChatAttachmentKindType =
+    | 'image'
+    | 'text'
+    | 'element'
+    | 'file'
+    // A SESSION of a foreground component (2026-11-09): which one, never its
+    // words -- the window reads them before every question.
+    | 'foreground';
 
 /**
  * What is stored ON the message, and so written to disk. No bytes, ever -- see
@@ -74,6 +82,9 @@ export type ChatAttachmentType = {
     // (2026-11-07, a note row's Open in Chatbot): a file holds many, and the
     // conversation is about one. Its `name` is then the note's title.
     noteId?: number;
+    // `foreground` -- WHICH session of which component (2026-11-09, a
+    // session chip's Open in Chatbot, a panel's 🤖, the attach row).
+    foreground?: ForegroundAskType;
 };
 
 /**
@@ -734,6 +745,7 @@ export function toReusableAttachments(
     return (attachments ?? []).filter((attachment) => {
         return (
             attachment.filePath !== undefined ||
+            attachment.kind === 'foreground' ||
             checkHasAttachmentData(attachment)
         );
     });
@@ -830,6 +842,8 @@ export function toAttachmentLegend(
             }
         } else if (attachment.kind === 'element') {
             what = `the control "${attachment.name}" they pointed at`;
+        } else if (attachment.kind === 'foreground') {
+            what = `the foreground session "${attachment.name}"`;
         } else {
             what = `the file "${attachment.name}"`;
             // A PDF's pages are pictures among the others, and counted with
@@ -942,7 +956,9 @@ export function toAttachmentNote(attachments: ChatAttachmentType[]) {
                     ? 'picture'
                     : attachment.kind === 'element'
                       ? `the "${attachment.name}" control`
-                      : `the file "${attachment.name}"`;
+                      : attachment.kind === 'foreground'
+                        ? `the foreground session "${attachment.name}"`
+                        : `the file "${attachment.name}"`;
             return (
                 (attachment.number === undefined
                     ? what
@@ -968,7 +984,9 @@ export function toAttachmentNote(attachments: ChatAttachmentType[]) {
         parts.push(
             attachment.kind === 'element'
                 ? `the "${attachment.name}" control`
-                : `the file "${attachment.name}"`,
+                : attachment.kind === 'foreground'
+                  ? `the foreground session "${attachment.name}"`
+                  : `the file "${attachment.name}"`,
         );
     }
     return parts.length === 0 ? '' : `(with ${parts.join(' and ')} attached)`;

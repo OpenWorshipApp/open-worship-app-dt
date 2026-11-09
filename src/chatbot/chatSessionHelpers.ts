@@ -39,6 +39,7 @@ import {
 import { toValidUsage, type ChatUsageType } from './usageHelpers';
 // Value imports with no imports of their own, like the two above.
 import { toOpenableLinks } from './chatLinkHelpers';
+import { toValidForegroundAsk } from '../helper/ai/foregroundAskHelpers';
 import { fillWords, tran } from './chatTranHelpers';
 // A leaf too: its validator and the request's own, nothing else.
 import {
@@ -209,6 +210,9 @@ export type ChatSessionType = {
     // The record the tab was asking about was put away (its × on the
     // **Still asking about** line) at this message (`findOpenLookupSubject`).
     lookupClosedAt?: number;
+    // The foreground sessions the tab was asking about were put away at this
+    // message (`findOpenForegroundAttachments`).
+    foregroundClosedAt?: number;
 };
 
 export type ChatSessionStateType = {
@@ -466,7 +470,9 @@ function toValidAttachments(raw: any) {
                 (one.kind === 'image' ||
                     one.kind === 'text' ||
                     one.kind === 'element' ||
-                    one.kind === 'file')
+                    one.kind === 'file' ||
+                    (one.kind === 'foreground' &&
+                        toValidForegroundAsk(one.foreground) !== null))
             );
         })
         .slice(0, MAX_ATTACHMENT_COUNT)
@@ -510,6 +516,10 @@ function toValidAttachments(raw: any) {
                 Number.isSafeInteger(one.noteId) &&
                 one.noteId >= 0
                     ? { noteId: one.noteId }
+                    : {}),
+                // Which foreground session it is, checked field by field.
+                ...(one.kind === 'foreground'
+                    ? { foreground: toValidForegroundAsk(one.foreground)! }
                     : {}),
             };
         });
@@ -776,6 +786,9 @@ function toValidSession(raw: any): ChatSessionType | null {
             : {}),
         ...(Number.isInteger(raw.lookupClosedAt)
             ? { lookupClosedAt: raw.lookupClosedAt }
+            : {}),
+        ...(Number.isInteger(raw.foregroundClosedAt)
+            ? { foregroundClosedAt: raw.foregroundClosedAt }
             : {}),
     };
 }

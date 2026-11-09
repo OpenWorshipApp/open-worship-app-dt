@@ -87,7 +87,9 @@ describe('sortRestoresForUndo', () => {
             sortRestoresForUndo(restoreList).map((one) => {
                 return one.type === 'rename'
                     ? 'rename'
-                    : `${one.type}:${one.filePath}`;
+                    : one.type === 'app-setting'
+                      ? `${one.type}:${one.key}`
+                      : `${one.type}:${one.filePath}`;
             }),
         ).toEqual([
             'rename',

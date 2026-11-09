@@ -1,11 +1,17 @@
 import {
     type ChangeEvent,
+    type MouseEvent,
     useCallback,
     useMemo,
+    useState,
     type CSSProperties,
 } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
+import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     useStateSettingNumber,
@@ -32,20 +38,86 @@ import { renderMarkdown } from '../lyric-list/markdownHelpers';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import {
     checkIsSessionData,
     toSessionShowingList,
     useForegroundSessions,
 } from './foregroundSessionHelpers';
+import {
+    QUICK_TEXT_PRESET_LIST,
+    QUICK_TEXT_WIDGET_KEY,
+    type QuickTextPresetIdType,
+    applyQuickTextPreset,
+    toQuickTextPrefix,
+    toQuickTextPresetLabel,
+    toQuickTextSettingName,
+    toQuickTextTimeDelaySettingName,
+    toQuickTextTimeToLiveSettingName,
+} from './quickTextPresetHelpers';
 
 /** The keys ONE session of this panel owns beyond its Properties. */
 function genOwnSettingNames(suffix: string) {
     return [
-        `foreground-quick-text-setting${suffix}`,
-        `foreground-quick-text-time-delay${suffix}`,
-        `foreground-quick-text-time-to-live${suffix}`,
+        toQuickTextSettingName(suffix),
+        toQuickTextTimeDelaySettingName(suffix),
+        toQuickTextTimeToLiveSettingName(suffix),
     ];
+}
+
+// A link in the preview is something to read, not to follow: a press would
+// take the whole Presenter window to it.
+function handlePreviewLinkClick(event: MouseEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest('a') !== null) {
+        event.preventDefault();
+    }
+}
+
+/**
+ * The markdown as it will read on the screen -- headings, bold, lists --
+ * drawn through the same renderer and the same sanitizer as the screen. It is
+ * mounted only while Preview is chosen, so the rendered copy is dropped the
+ * moment the operator goes back to Edit.
+ */
+function QuickTextMarkdownPreviewComp({
+    markdownText,
+    fontFamily,
+    fontWeight,
+}: Readonly<{
+    markdownText: string;
+    fontFamily: string;
+    fontWeight: string;
+}>) {
+    const [html, setHtml] = useState('');
+    useAppEffect(() => {
+        let isStale = false;
+        renderMarkdown(markdownText)
+            .then((data) => {
+                if (!isStale) {
+                    setHtml(sanitizeHtml(data.html));
+                }
+            })
+            .catch((error) => {
+                handleError(error);
+            });
+        return () => {
+            isStale = true;
+        };
+    }, [markdownText]);
+    return (
+        <div
+            className="fg-text-editor fg-markdown-preview"
+            data-placeholder={tran('Leave a markdown text here')}
+            style={{
+                fontFamily: fontFamily || undefined,
+                fontWeight: fontWeight || undefined,
+                height: '120px',
+            }}
+            onClick={handlePreviewLinkClick}
+            onAuxClick={handlePreviewLinkClick}
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
 }
 
 function refreshAllQuickText(
@@ -83,12 +155,20 @@ function QuickTextBodyComp({
     suffix,
     prefix,
     showingScreenIdDataList,
+    isPreviewing,
+    setIsPreviewing,
+    onPresetApplied,
 }: Readonly<{
     sessionId: string;
     suffix: string;
     prefix: string;
     /** THIS session's quick texts only -- see `toSessionShowingList`. */
     showingScreenIdDataList: [number, ForegroundQuickTextDataType][];
+    /** Held by the wrapper, so applying a preset does not drop it. */
+    isPreviewing: boolean;
+    setIsPreviewing: (isPreviewing: boolean) => void;
+    /** A preset rewrote this session's keys: remount to read them. */
+    onPresetApplied: () => void;
 }>) {
     // No screen subscription of its own: the wrapper below holds one and this
     // is its child, so a second would cost a listener for the same redraw.
@@ -97,15 +177,15 @@ function QuickTextBodyComp({
         return genTimeoutAttempt(500);
     }, []);
     const [markdownText, setMarkdownText] = useStateSettingString<string>(
-        `foreground-quick-text-setting${suffix}`,
+        toQuickTextSettingName(suffix),
         '## This is Title\n\ntext **bold** and *italic*.',
     );
     const [timeSecondDelay, setTimeSecondDelay] = useStateSettingNumber(
-        `foreground-quick-text-time-delay${suffix}`,
+        toQuickTextTimeDelaySettingName(suffix),
         0,
     );
     const [timeSecondToLive, setTimeSecondToLive] = useStateSettingNumber(
-        `foreground-quick-text-time-to-live${suffix}`,
+        toQuickTextTimeToLiveSettingName(suffix),
         3,
     );
 
@@ -119,7 +199,7 @@ function QuickTextBodyComp({
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
-        widgetKey: 'quick-text',
+        widgetKey: QUICK_TEXT_WIDGET_KEY,
         onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllQuickText(showingRef.current, extraStyle, isBehind);
@@ -245,6 +325,31 @@ function QuickTextBodyComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handlePresetApplying = (presetId: QuickTextPresetIdType) => {
+        if (!applyQuickTextPreset(suffix, presetId)) {
+            return;
+        }
+        // What is up on a screen takes the new look at once, as it does
+        // after any Properties change; `genStyle` reads the keys just written.
+        refreshAllQuickText(showingRef.current, genStyle(), getIsBehind());
+        onPresetApplied();
+    };
+    const handlePresetApplyingRef = useAppCurrentRef(handlePresetApplying);
+    const handlePresetsOpening = useCallback((event: any) => {
+        showAppContextMenu(
+            event,
+            QUICK_TEXT_PRESET_LIST.map((preset) => {
+                return {
+                    childBefore: genContextMenuItemIcon(preset.iconName),
+                    menuElement: toQuickTextPresetLabel(preset.id),
+                    onSelect: () => {
+                        handlePresetApplyingRef.current(preset.id);
+                    },
+                };
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
@@ -300,7 +405,46 @@ function QuickTextBodyComp({
                         <span className="fg-unit-static">s</span>
                     </PropRowComp>
                 </div>
-                <div className="d-flex">
+                <div className="d-flex align-items-center flex-wrap gap-2">
+                    {/*
+                     * Edit or Preview: one box at a time, the way a comment
+                     * box on the web does it -- the panel is too narrow for
+                     * the two side by side.
+                     */}
+                    <span className="fg-chips fg-md-mode" role="group">
+                        <button
+                            type="button"
+                            className={isPreviewing ? undefined : 'fg-chip-on'}
+                            aria-pressed={!isPreviewing}
+                            onClick={() => {
+                                setIsPreviewing(false);
+                            }}
+                        >
+                            <i className="bi bi-pencil" aria-hidden="true" />{' '}
+                            {tran('Edit')}
+                        </button>
+                        <button
+                            type="button"
+                            className={isPreviewing ? 'fg-chip-on' : undefined}
+                            aria-pressed={isPreviewing}
+                            onClick={() => {
+                                setIsPreviewing(true);
+                            }}
+                        >
+                            <i className="bi bi-eye" aria-hidden="true" />{' '}
+                            {tran('Preview')}
+                        </button>
+                    </span>
+                    <button
+                        type="button"
+                        className="fg-props-toggle fg-presets-toggle"
+                        title={tran('Presets')}
+                        onClick={handlePresetsOpening}
+                    >
+                        <i className="bi bi-palette" aria-hidden="true" />
+                        <span>{tran('Presets')}</span>
+                        <i className="bi bi-chevron-down" aria-hidden="true" />
+                    </button>
                     <div className="ms-auto d-flex gap-2">
                         <SavedTextSessionButtonsComp
                             settingName="foreground-quick-text-saved-sessions"
@@ -310,19 +454,27 @@ function QuickTextBodyComp({
                         />
                     </div>
                 </div>
-                <textarea
-                    id="quick-text-textarea"
-                    className="fg-text-editor"
-                    aria-label={tran('Markdown')}
-                    value={markdownText}
-                    onChange={handleMarkdownTextChange}
-                    placeholder={tran('Leave a markdown text here')}
-                    style={{
-                        fontFamily: fontFamily || undefined,
-                        fontWeight: fontWeight || undefined,
-                        height: '120px',
-                    }}
-                />
+                {isPreviewing ? (
+                    <QuickTextMarkdownPreviewComp
+                        markdownText={markdownText}
+                        fontFamily={fontFamily}
+                        fontWeight={fontWeight}
+                    />
+                ) : (
+                    <textarea
+                        id="quick-text-textarea"
+                        className="fg-text-editor"
+                        aria-label={tran('Markdown')}
+                        value={markdownText}
+                        onChange={handleMarkdownTextChange}
+                        placeholder={tran('Leave a markdown text here')}
+                        style={{
+                            fontFamily: fontFamily || undefined,
+                            fontWeight: fontWeight || undefined,
+                            height: '120px',
+                        }}
+                    />
+                )}
                 <div className="fg-actions">
                     <button
                         className="btn btn-primary"
@@ -366,6 +518,12 @@ export default function ForegroundQuickTextComp() {
             return item !== null;
         });
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
+    // Up here, not in the body: a preset remounts the body (below), and the
+    // operator who was previewing should still be.
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    // Bumped by a preset. The body and its Properties read their settings
+    // when they mount, so this is what makes them show the preset's values.
+    const [lookVersion, setLookVersion] = useState(0);
     // One session is one notice ready to go -- this week's announcement in
     // one, the standing 'phones off' in another, each with its own delay,
     // its own seconds on screen and its own look.
@@ -376,10 +534,8 @@ export default function ForegroundQuickTextComp() {
         prefix,
         element: sessionsElement,
     } = useForegroundSessions({
-        widgetKey: 'quick-text',
-        toPrefix: (sessionSuffix) => {
-            return `quick-text${sessionSuffix}`;
-        },
+        widgetKey: QUICK_TEXT_WIDGET_KEY,
+        toPrefix: toQuickTextPrefix,
         toOwnSettingNames: genOwnSettingNames,
         checkIsOnScreen: (sessionId, _sessionSuffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
@@ -398,7 +554,7 @@ export default function ForegroundQuickTextComp() {
         <ForegroundLayoutComp target="quick-text">
             {sessionsElement}
             <QuickTextBodyComp
-                key={activeId}
+                key={`${activeId}:${lookVersion}`}
                 sessionId={activeId}
                 suffix={suffix}
                 prefix={prefix}
@@ -407,6 +563,13 @@ export default function ForegroundQuickTextComp() {
                     activeId,
                     sessionIds,
                 )}
+                isPreviewing={isPreviewing}
+                setIsPreviewing={setIsPreviewing}
+                onPresetApplied={() => {
+                    setLookVersion((version) => {
+                        return version + 1;
+                    });
+                }}
             />
         </ForegroundLayoutComp>
     );

@@ -156,8 +156,9 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 `owa_help_page`, `owa_list_questions`, `owa_tran`, `owa_guide_start` / `_step`
 / `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
 `owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
-`owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
-`owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`, `owa_resource_file`,
+`owa_present_bible`, `owa_foreground` / `_edit`, `owa_bible_item` / `_note` /
+`_xml`, `owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`,
+`owa_resource_file`,
 `owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
 chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
 `owa_media_file`, `owa_language` (the help window's own offer to install a

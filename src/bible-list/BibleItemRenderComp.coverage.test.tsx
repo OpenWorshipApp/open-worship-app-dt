@@ -21,6 +21,8 @@ const h = vi.hoisted(() => ({
     isOnScreen: false,
     showBibleLookupPopup: null as null | (() => void),
     viewController: null as any,
+    openBibleItemInQuickText: vi.fn(),
+    handleError: vi.fn(),
 }));
 
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
@@ -150,6 +152,10 @@ vi.mock('../others/AppSuspenseComp', async () => {
 vi.mock('../helper/ai/bibleItemChatbotMenuHelpers', () => ({
     genOpenInChatbotContextMenu: () => [],
 }));
+vi.mock('../presenter-foreground/foregroundQuickTextOpenHelpers', () => ({
+    openBibleItemInQuickText: h.openBibleItemInQuickText,
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
 vi.mock('./BibleSlidesPopupComp', () => ({
     default: ({
         bibleItem,
@@ -376,6 +382,7 @@ describe('a saved passage row', () => {
             'Open',
             'Generate Slides',
             'Create Lyric',
+            'Create Quick Text',
         ]);
         await act(async () => menuItems[1].onSelect());
         await vi.waitFor(() => {
@@ -418,6 +425,29 @@ describe('a saved passage row', () => {
         )!;
         await act(async () => close.click());
         expect(host.querySelector('.lyric-popup')).toBeNull();
+    });
+
+    test('in the Presenter its menu sends a copy of the passage to Quick Text', async () => {
+        h.appProvider.isPagePresenter = true;
+        h.openBibleItemInQuickText.mockReset();
+        h.handleError.mockReset();
+        await renderRow();
+        const [, , , , menuItems] = await openMenu();
+        const createQuickText = menuItems.find(
+            (menuItem: any) => menuItem.menuElement === 'Create Quick Text',
+        );
+        await act(async () => createQuickText.onSelect());
+        expect(h.openBibleItemInQuickText).toHaveBeenCalledTimes(1);
+        // A copy: the saved row is never handed to the panel.
+        const sent = h.openBibleItemInQuickText.mock.calls[0][0];
+        expect(sent).not.toBe(bibleItem);
+        expect(sent.id).toBe(101);
+        expect(h.handleError).not.toHaveBeenCalled();
+
+        const failure = new Error('No verse');
+        h.openBibleItemInQuickText.mockRejectedValueOnce(failure);
+        await act(async () => createQuickText.onSelect());
+        expect(h.handleError).toHaveBeenCalledWith(failure);
     });
 
     test('changing its Bible saves the item into its list', async () => {

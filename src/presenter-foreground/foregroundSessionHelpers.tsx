@@ -9,6 +9,9 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { genPropsSettingNames } from './propertiesSettingHelpers';
 import { genCommonStyleSettingNames } from './ForegroundCommonPropertiesSettingComp';
 import { genDecorationSettingName } from './foregroundDecorationHelpers';
+import { toForegroundSessionsTarget } from './foregroundComponentRules';
+import { genForegroundOpenInChatbotContextMenu } from '../helper/ai/foregroundChatbotMenuHelpers';
+import type { ForegroundComponentKeyType } from './foregroundComponentKeys';
 
 /**
  * A foreground component's **sessions** -- the strip the media widgets and the
@@ -84,9 +87,7 @@ export type ForegroundSessionsPropsType = {
 };
 
 /** The sessions strip of a foreground component (see `widgetKey`). */
-export function toForegroundSessionsTarget(widgetKey: string) {
-    return `foreground-${widgetKey}`;
-}
+export { toForegroundSessionsTarget };
 
 export function useForegroundSessions(props: ForegroundSessionsPropsType) {
     const target = toForegroundSessionsTarget(props.widgetKey);
@@ -155,6 +156,15 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
                         // and a marquee are one item that stays up.
                         isAutoPlaying: false,
                     };
+                }}
+                // The chip's own Open in Chatbot: this session attached to
+                // the help window as the conversation's context.
+                genExtraMenuItems={(session) => {
+                    return genForegroundOpenInChatbotContextMenu({
+                        widget: props.widgetKey as ForegroundComponentKeyType,
+                        sessionId: session.id,
+                        sessionName: session.name,
+                    });
                 }}
             />
         ),

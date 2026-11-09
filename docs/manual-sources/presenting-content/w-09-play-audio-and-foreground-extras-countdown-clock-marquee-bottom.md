@@ -34,6 +34,15 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
+  The message is markdown (`## Title`, `**bold**`, `*italic*`): press
+  **[en:tran:Preview]** above the box to read it as the screen will draw it,
+  and **[en:tran:Edit]** to type again. **[en:tran:Presets]** beside them
+  dresses the session for one job in a press — **[en:tran:Bible Verse]**,
+  **[en:tran:Speaker]**, **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** or **[en:tran:Announcement]**: where it sits, its
+  size, colours, frame and how many seconds it stays. Your words, the delay
+  and the font are kept, and _Properties_ shows the new values to adjust.
+  Something of that session already on a screen takes the new look at once.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24

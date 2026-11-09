@@ -5,6 +5,7 @@ import {
     readSessions,
     toSessionSuffix,
 } from '../media-sessions/MediaSessionsComp';
+import { toUniqueSessionName } from '../media-sessions/mediaSessionData';
 import { getFileName, pathBasename } from '../server/fileHelpers';
 import {
     LONG_TEXT_WIDGET_KEY,
@@ -19,22 +20,8 @@ import {
     toOpenedPanelKeys,
 } from './foregroundWidgetHelpers';
 
-/**
- * `name`, or `name (2)`, `name (3)`... -- whichever no session has yet. Each
- * press of a song's Long Text Show adds a session named after the song, and
- * three of them read `Still · Still · Still`: chips nobody could tell apart.
- */
-export function toUniqueSessionName(name: string, takenNameList: string[]) {
-    const takenNameSet = new Set(takenNameList);
-    if (!takenNameSet.has(name)) {
-        return name;
-    }
-    let index = 2;
-    while (takenNameSet.has(`${name} (${index})`)) {
-        index++;
-    }
-    return `${name} (${index})`;
-}
+// Moved to the dependency-light session data module; kept here for callers.
+export { toUniqueSessionName };
 
 /**
  * A lyric of the Documents list straight into Long Text Show: a NEW session,

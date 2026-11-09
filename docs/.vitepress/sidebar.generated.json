@@ -108,6 +108,10 @@
       {
         "text": "W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)",
         "link": "/creating-editing-content/w-60-change-a-bible-note-with-the-assistant-translate-it-tidy-it-add-verses-ask-about-the-note-editor"
+      },
+      {
+        "text": "W-61 — Change a foreground component with the assistant (a countdown, a marquee, a quick text for a verse)",
+        "link": "/creating-editing-content/w-61-change-a-foreground-component-with-the-assistant-a-countdown-a-marquee-a-quick-text-for-a-verse"
       }
     ]
   },

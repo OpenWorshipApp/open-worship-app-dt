@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-11-07",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "orientation",
@@ -2010,7 +2010,11 @@
                         "type message",
                         "one line",
                         "announcement",
-                        "note on screen"
+                        "note on screen",
+                        "preview markdown",
+                        "quick text preset",
+                        "speaker name",
+                        "verse lower third"
                     ],
                     "resources": {
                         "recipe": "W-09",
@@ -2091,6 +2095,39 @@
                         "shortcut": "F10",
                         "guide": true,
                         "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "foreground-change-with-assistant",
+                    "text": "Can the assistant change a countdown or a marquee for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open in chatbot",
+                        "make the countdown bigger",
+                        "move it to the top",
+                        "change the colour",
+                        "quick text from a verse",
+                        "change foreground with the assistant"
+                    ],
+                    "resources": {
+                        "recipe": "W-61",
+                        "related": ["W-09"],
+                        "find": "Open in Chatbot"
+                    }
+                },
+                {
+                    "id": "foreground-attach-session",
+                    "text": "How do I give the assistant a foreground session to work on?",
+                    "kind": "howto",
+                    "keywords": [
+                        "attach a foreground session",
+                        "session chip",
+                        "still asking about",
+                        "attach countdown to chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-61",
+                        "find": "Open in Chatbot"
                     }
                 },
                 {

@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-09e** (**W-42 — reply to an answer; W-29 — a note asked for under a passage.** The user, with **Copy** circled under three answers: _right next to the copy icon add reply icon, click reply to mention it in input text_, _as a user I want to be able to follow up a section_. Step 8: a reply arrow right of **[en:tran:Copy]** writes the answer into the box under _Replying to your answer:_, or, with words of it selected first, only those words under _Replying to this part of your answer:_, for a question typed under it; nothing is sent until **[en:tran:Send]**. And the user, _save to a bible note_ answered with **[en:tran:Save to my Bibles list]**: _bible note referring to bible-note document_. W-29: asked to keep something that is not the passage -- a note, a file, the lesson -- the passage chat names no button and makes a new Bible note. Seen live 2026-11-09 on the dev app's help window, English app, a Khmer chat on ម៉ាថាយ ៣:១-១៧: the arrow under every answer; the lesson quoted; one double-clicked word quoted alone; _save to a bible note_ made the note _មេរៀនពី ម៉ាថាយ ៣:១-១៧_, opened in its own window. A question typed under a quote was not sent live. CB-171, CB-154.)
+**workflowsVersion: 2026-11-09g** (**New W-61 — change a foreground component with the assistant.** The user: _chatbot can help modify any foreground component_ -- _start a countdown for 5 minutes_, _show top marquee for a given message_, _make a quick-text for a given bible verse_ -- then, with a panel's `Default · Session 2 · +` strip circled: _sessions of opening foreground component should be able to attached to the chatbot for the chat context_. Typed in any chat, a countdown, a marquee, a quick text, a message or a clock goes into a NEW session named after it (or one already holding it), its panel opened on it and put up the panel's own way on the ticked screens; a verse is read from the installed Bible. A session is attached to a chat from its button's menu (**[en:tran:Open in Chatbot]**), the robot in its panel's header, or **[en:tran:Attach a foreground session]** under the box, and then changed in place: words, time, size, colours, place, frame, layer, speed, the timer. Seen live 2026-11-09 on a scratch development profile through a fresh owa-devtools server: a 5-minute countdown started on the Default session that already held 5:00; _Welcome to our service_ on the top marquee as a session of that name; John 3:16 as the quick text session `(KJV) John 3:16` with the Bible Verse preset, its panel opened with the robot in its header; the quick text made larger, gold and top right on the wall and in its panel; the countdown paused (the panel read Resume); a marquee asked to move refused with what it takes; and the undo putting the look back on the wall and in the panel; a right-click on a marquee session opening its menu with **[en:tran:Open in Chatbot]** (not pressed). The help window's own parts -- the attach row's list, the card and a question typed under a chip -- are unit-tested and not yet seen live (the AI caution in front of the window is a person's press). PM-174, CB-172.)
+
+Previous: **workflowsVersion: 2026-11-09f** (**W-09 — Quick Text's Preview and Presets; W-06 step 12 — Create Quick Text from a saved passage.** The user, with the Quick Text panel's markdown box: _update to allow previewing the markdown_; then, with a Bibles-list row's menu and a Quick Text band on the mini screen: _add `Create QuickText` to make a foreground quicktext for the bible verse_; then _add quick text properties preset for me for the use cases like bible verse, speaker, song title, event session, ..._. **[en:tran:Preview]** / **[en:tran:Edit]** above the box; **[en:tran:Presets]** beside them with six looks; the row menu's **[en:tran:Create Quick Text]** under **[en:tran:Create Lyric]**. Seen live 2026-11-09 on the dev Presenter: the sample drawn as a heading, bold and italic; ពគប Proverbs 17:22-28 made the session `(ពគប) សុភាសិត ១៧:២២-២៨`, Live 20, Properties bottom centre, 90%, 44px; **[en:tran:Speaker]** then moved it bottom left, 40%, 40px, blue, Live 10. Not put on a screen live. PM-172, PM-173, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09e** (**W-42 — reply to an answer; W-29 — a note asked for under a passage.** The user, with **Copy** circled under three answers: _right next to the copy icon add reply icon, click reply to mention it in input text_, _as a user I want to be able to follow up a section_. Step 8: a reply arrow right of **[en:tran:Copy]** writes the answer into the box under _Replying to your answer:_, or, with words of it selected first, only those words under _Replying to this part of your answer:_, for a question typed under it; nothing is sent until **[en:tran:Send]**. And the user, _save to a bible note_ answered with **[en:tran:Save to my Bibles list]**: _bible note referring to bible-note document_. W-29: asked to keep something that is not the passage -- a note, a file, the lesson -- the passage chat names no button and makes a new Bible note. Seen live 2026-11-09 on the dev app's help window, English app, a Khmer chat on ម៉ាថាយ ៣:១-១៧: the arrow under every answer; the lesson quoted; one double-clicked word quoted alone; _save to a bible note_ made the note _មេរៀនពី ម៉ាថាយ ៣:១-១៧_, opened in its own window. A question typed under a quote was not sent live. CB-171, CB-154.)
 
 Previous: **workflowsVersion: 2026-11-09d** (**W-60 — formatting a messy note, drawing, and a lesson prepared by asking.** The card a note opens with offers **[en:tran:Format it so it is neat and easy to read]**: a messy note -- parts written as plain lines, questions run together on one line, a reference written in words, lines in capitals, one long paragraph -- is made a tidy one in one change, its words kept. A drawing (Insert → **Excalidraw**) is described in words and can be laid out across, round a circle or round one box, made bigger, its boxes coloured and drawn again with a box added; asked for a picture of a thing, the assistant says it cannot draw one. A lesson on another subject goes into a new note, never over this one; a hello or a question changes nothing; a worry right after a change is put back with Undo. Seen live 2026-11-09 on scratch development profiles: 600 things an elderly, non-technical church member types while preparing a lesson, 593 of 599 graded done as asked; three messy lessons each formatted in one change. CB-169.)
 
@@ -2138,8 +2142,19 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
     medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
+12. To put the passage up as a short notice over whatever is on the screen,
+    choose **[en:tran:Create Quick Text]** from the same menu, right under
+    **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
+    **[en:tran:Quick Text]** opens on a NEW session named after the passage,
+    for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
+    words. The box holds the reference in bold and the verses after it (one
+    verse without its number, several with `(22): …`), and the session is
+    already dressed by the **[en:tran:Bible Verse]** preset: a dark band
+    across the bottom, 20 seconds on screen. Press **[en:tran:Preview]** to
+    read it as it will look, then **[en:tran:Show Quick Text]** when it is
+    time. Nothing goes on a screen before that. 📸
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102._
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103._
 
 ### W-07 — Style the on-screen Bible text
 
@@ -2288,6 +2303,15 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
+  The message is markdown (`## Title`, `**bold**`, `*italic*`): press
+  **[en:tran:Preview]** above the box to read it as the screen will draw it,
+  and **[en:tran:Edit]** to type again. **[en:tran:Presets]** beside them
+  dresses the session for one job in a press — **[en:tran:Bible Verse]**,
+  **[en:tran:Speaker]**, **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** or **[en:tran:Announcement]**: where it sits, its
+  size, colours, frame and how many seconds it stays. Your words, the delay
+  and the font are kept, and _Properties_ shows the new values to adjust.
+  Something of that session already on a screen takes the new look at once.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
@@ -3325,6 +3349,61 @@ and comments, nor on a note that could not be read — and only while AI is on
 assistant can answer, the chat says so and offers **Open AI settings**.
 
 _Verify: PL-110, CB-169._
+
+---
+
+### W-61 — Change a foreground component with the assistant (a countdown, a marquee, a quick text for a verse)
+
+**Goal:** have the help window set up and change the **[en:tran:Foreground]** extras (W-09)
+for you: start a countdown for so many minutes, put a message scrolling along the top, make
+a quick text of a Bible verse, and change how one looks or where it sits on the screen.
+
+1. In any chat, type what you want: _Start a countdown for 5 minutes_, _Show the top
+   marquee saying Welcome to our service_, _Make a quick text for John 3:16_. The assistant
+   writes it into a NEW session of that panel, named after what it holds (`5:00`,
+   `Welcome to our service`, `(KJV) John 3:16`). It opens the panel on that session and
+   does what the panel's own Show or Start button does on the ticked screens, with the
+   panel's own look. A session that already holds the same, or already has that name, is
+   used again; what you typed in another session is never written over. A verse is read
+   from the Bible the Bible Lookup is on, never from the assistant's memory. A new verse
+   quick text gets the **[en:tran:Bible Verse]** preset (W-09). When the screen is off,
+   the answer says so and offers its show button. The assistant never turns a screen on
+   by itself.
+2. To talk about ONE session of a panel, attach it to the chat:
+   - right-click a session's button on the panel's strip (**[en:tran:Default]**,
+     **Session 2**, **＋**), or press the **⋮** on the one you are on, and choose
+     **[en:tran:Open in Chatbot]**; 📸
+   - or press the robot in the panel's own header, beside its transition button: it
+     attaches the session you are on (**[en:tran:Camera Show]** and
+     **[en:tran:Screen Show]** have no sessions, so their robot attaches the panel);
+   - or, in the help window, press the layers button under the box,
+     **[en:tran:Attach a foreground session]**. It lists the panels open in the Presenter
+     with their sessions. Pick one, or several one after another. When no panel is
+     open, it says to open one from the **[en:tran:Foreground]** tab.
+3. The session is attached under the box as _Quick Text › Session 2_. A card says what the
+   assistant can change, with four buttons: **[en:tran:Show it on the screen]**,
+   **[en:tran:Make the words larger]**, **[en:tran:Move it to the top]** and
+   **[en:tran:Take it off the screen]**. The session goes with every question in that
+   chat until you press the **×** on its **[en:tran:Still asking about]** line. Pressing
+   the chip outlines its session button in the Presenter.
+4. Press a button, or type what you want: _make it red_, _move it to the bottom left_,
+   _make the words smaller_, _put a frame round it_, _put it behind the slide_, _make the
+   marquee slower_, _pause the countdown_, _make it 10 minutes_, _change it to Psalm 23:1_.
+   An attached session is changed in place. What it has on a screen changes at once, and
+   its panel shows the new values. A change the component cannot take is refused in a
+   sentence naming what it can. For example, a marquee always runs along its edge, so it
+   cannot be moved.
+5. The answer says what changed. **[en:tran:Undo this change]** under it puts the panel's
+   words and look back, and the look on the screen too. Words already put up come off
+   with the panel's Hide button, or by asking _take it off the screen_.
+
+**Not there?** **[en:tran:Open in Chatbot]** and the robots are there only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). The panels
+belong to the Presenter, so the assistant works on them while the main window is on the
+Presenter. A video, picture or web page is named by a file in that panel's own folder,
+and a camera by its name; the assistant never picks a file from elsewhere on the computer.
+
+_Verify: PM-174, CB-172._
 
 ---
 

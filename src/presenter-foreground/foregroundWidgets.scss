@@ -225,6 +225,51 @@
   }
 }
 
+// Quick Text's markdown as it will read: the same box as the editor it
+// replaces, scrolling instead of growing, and headings kept in proportion to
+// the panel's own small type -- Bootstrap's would be the size of the panel.
+.fg-markdown-preview {
+  overflow: auto;
+  overflow-wrap: anywhere;
+
+  &:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.5;
+  }
+
+  :is(p, ul, ol, blockquote, pre, table, h1, h2, h3, h4, h5, h6) {
+    margin: 0 0 0.4em;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  h1 {
+    font-size: 1.5em;
+  }
+
+  h2 {
+    font-size: 1.35em;
+  }
+
+  h3 {
+    font-size: 1.2em;
+  }
+
+  :is(h4, h5, h6) {
+    font-size: 1.05em;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}
+
+.fg-md-mode > button {
+  white-space: nowrap;
+}
+
 // A long text's part that is MARKED on a screen, lit on its own button: the
 // one just pressed to bring it to the middle, or one clicked on the text
 // itself. A tint and a line, not Bootstrap's `active` fill -- as a text card

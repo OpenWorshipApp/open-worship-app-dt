@@ -9,20 +9,15 @@ import {
     HEX_COLOR_WHITE,
 } from '../others/color/colorHelpers';
 import PropRowComp, { PropSwatchComp } from './ForegroundPropRowComp';
+import { genCommonStyleSettingNames } from './foregroundStyleSettingNames';
 
 export const DEFAULT_TEXT_COLOR = HEX_COLOR_WHITE;
 export const DEFAULT_BACKGROUND_COLOR: AppColorType = '#000080AA';
 export const DEFAULT_BACKDROP_FILTER = 5;
 
-export function genCommonStyleSettingNames(prefix: string) {
-    return {
-        fontFamily: `${prefix}-common-font-family`,
-        fontWeight: `${prefix}-common-font-weight`,
-        color: `${prefix}-common-color`,
-        backgroundColor: `${prefix}-common-background-color`,
-        backdropFilter: `${prefix}-common-backdrop-filter`,
-    };
-}
+// The key names live in a module of their own, free of this one's pickers;
+// re-exported here for the callers that always found them here.
+export { genCommonStyleSettingNames };
 
 export function getForegroundCommonProperties(prefix: string) {
     const names = genCommonStyleSettingNames(prefix);

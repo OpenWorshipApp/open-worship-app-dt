@@ -404,9 +404,24 @@ import {
 import {
     takeChatbotAsk,
     takeChatbotFileRequest,
+    takeChatbotForegroundRequest,
     takeChatbotLookupRequest,
     takeChatbotReport,
 } from '../helper/ai/chatbotHandoffStoreHelpers';
+import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
+import { toForegroundComponentLabel } from '../presenter-foreground/foregroundComponentKeys';
+import {
+    FOREGROUND_EDIT_TOOL_NAME,
+    checkIsForegroundAttachment,
+    findOpenForegroundAttachments,
+    genForegroundAttachment,
+    genForegroundOpeningAnswer,
+    readForegroundComponentAsk,
+    toForegroundAsk,
+    toForegroundAskList,
+    toForegroundReadText,
+    toShownForegroundChipName,
+} from './foregroundChatHelpers';
 import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers';
 import {
     toLookupCardArgs,
@@ -902,6 +917,9 @@ function toShownWindowLabel(label: string) {
 // English words; their chips say so in the app's language.
 function toShownAttachmentName(attachment: ChatAttachmentType) {
     const { name } = attachment;
+    if (attachment.kind === 'foreground' && attachment.foreground) {
+        return toShownForegroundChipName(attachment.foreground);
+    }
     if (
         attachment.mimeType === 'application/x-owa-show' &&
         attachment.filePath === undefined
@@ -2562,6 +2580,7 @@ function toChipTitle(
     // when none could be built -- by its words (`handleShowingAttachment`).
     if (
         attachment.selector !== undefined ||
+        attachment.kind === 'foreground' ||
         (attachment.kind === 'element' && attachment.name.length > 0)
     ) {
         return fillWords(tran('{name} — press to ring it in the app'), {
@@ -2586,6 +2605,131 @@ function toChipTitle(
     // Every asset opens now, and the folder is one press further on, beside
     // Download.
     return fillWords(tran('{name} — press to open it'), { name });
+}
+
+/**
+ * What the attach row's **Attach a foreground session** found: the panels
+ * open in the Presenter and their sessions, read at the press
+ * (`owa_foreground_edit read open`), never kept.
+ */
+type ForegroundPickType =
+    | { status: 'loading' }
+    | { status: 'failed'; reason: string }
+    | {
+          status: 'ready';
+          rows: { ask: ForegroundAskType; isOnScreen: boolean }[];
+      };
+
+/** The open panels' sessions as rows to attach, one press each. */
+export function toForegroundPickRows(
+    result: any,
+): { ask: ForegroundAskType; isOnScreen: boolean }[] {
+    const panels = Array.isArray(result?.panels) ? result.panels : [];
+    const rows: { ask: ForegroundAskType; isOnScreen: boolean }[] = [];
+    for (const panel of panels) {
+        const widget = panel?.widget;
+        if (typeof widget !== 'string') {
+            continue;
+        }
+        const sessions = Array.isArray(panel.sessions) ? panel.sessions : [];
+        if (sessions.length === 0) {
+            rows.push({
+                ask: { widget, sessionId: '', sessionName: '' } as any,
+                isOnScreen: panel.isOnScreen === true,
+            });
+            continue;
+        }
+        for (const session of sessions) {
+            if (typeof session?.id !== 'string') {
+                continue;
+            }
+            rows.push({
+                ask: {
+                    widget,
+                    sessionId: session.id,
+                    sessionName:
+                        typeof session.name === 'string' ? session.name : '',
+                } as ForegroundAskType,
+                isOnScreen:
+                    Array.isArray(session.onScreens) &&
+                    session.onScreens.length > 0,
+            });
+        }
+    }
+    return rows;
+}
+
+function RenderForegroundPickComp({
+    pick,
+    onPick,
+    onClose,
+}: Readonly<{
+    pick: ForegroundPickType;
+    onPick: (ask: ForegroundAskType) => void;
+    onClose: () => void;
+}>) {
+    return (
+        <div
+            className="chat-open-files"
+            role="group"
+            aria-label={tran('Attach a foreground session')}
+        >
+            <span className="chat-open-files-label">
+                {tran('Attach a foreground session')}
+            </span>
+            {pick.status === 'loading' ? (
+                <span>{tran('Looking at the open panels…')}</span>
+            ) : pick.status === 'failed' ? (
+                <span>{pick.reason}</span>
+            ) : pick.rows.length === 0 ? (
+                <span>
+                    {tran(
+                        'No foreground panel is open. Open one from the ' +
+                            'Foreground tab in the Presenter.',
+                    )}
+                </span>
+            ) : (
+                <div className="chat-clips">
+                    {pick.rows.map((row) => {
+                        const name = toShownForegroundChipName(row.ask);
+                        return (
+                            <button
+                                key={`${row.ask.widget}:${row.ask.sessionId}`}
+                                type="button"
+                                className="chat-clip chat-clip-showable"
+                                title={
+                                    row.isOnScreen
+                                        ? `${name} — ${tran('On Screen')}`
+                                        : name
+                                }
+                                onClick={() => {
+                                    onPick(row.ask);
+                                }}
+                            >
+                                <i className="bi bi-layers" />
+                                <span
+                                    className={
+                                        'chat-clip-name' +
+                                        (row.isOnScreen ? ' app-on-screen' : '')
+                                    }
+                                >
+                                    {name}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+            <button
+                type="button"
+                className="chat-clip-x"
+                aria-label={tran('Close')}
+                onClick={onClose}
+            >
+                ×
+            </button>
+        </div>
+    );
 }
 
 function RenderAttachmentChipsComp({
@@ -2624,6 +2768,7 @@ function RenderAttachmentChipsComp({
                 const canShow =
                     onShow !== undefined &&
                     (attachment.selector !== undefined ||
+                        attachment.kind === 'foreground' ||
                         attachment.filePath !== undefined ||
                         !isGone);
                 return (
@@ -2660,17 +2805,19 @@ function RenderAttachmentChipsComp({
                                     'bi ' +
                                     (attachment.kind === 'element'
                                         ? 'bi-bullseye'
-                                        : attachment.kind === 'image' ||
-                                            checkIsImageName(attachment.name)
-                                          ? // A saved picture arrives as a
-                                            // file, and reads as one on its
-                                            // chip unless the NAME is asked.
-                                            'bi-image'
-                                          : checkIsCarriedFileName(
-                                                  attachment.name,
-                                              )
-                                            ? 'bi-file-earmark-pdf'
-                                            : 'bi-file-earmark-text')
+                                        : attachment.kind === 'foreground'
+                                          ? 'bi-layers'
+                                          : attachment.kind === 'image' ||
+                                              checkIsImageName(attachment.name)
+                                            ? // A saved picture arrives as a
+                                              // file, and reads as one on its
+                                              // chip unless the NAME is asked.
+                                              'bi-image'
+                                            : checkIsCarriedFileName(
+                                                    attachment.name,
+                                                )
+                                              ? 'bi-file-earmark-pdf'
+                                              : 'bi-file-earmark-text')
                                 }
                             />
                         ) : (
@@ -4971,6 +5118,25 @@ export default function ChatbotAppComp() {
             return { ...session, lookupClosedAt: lastId };
         });
     }, [updateActiveSession]);
+    // The foreground sessions the tab is still asking about
+    // (`findOpenForegroundAttachments`), drawn above the box with a × that
+    // puts them away. None while one waits in the box: that one takes over.
+    const openForegroundAttachments = draftAttachments.some(
+        checkIsForegroundAttachment,
+    )
+        ? []
+        : findOpenForegroundAttachments(
+              messages,
+              activeSession.foregroundClosedAt,
+          );
+    const handleClosingForeground = useCallback(() => {
+        updateActiveSession((session) => {
+            const lastId = session.messages.reduce((most, message) => {
+                return Math.max(most, message.id);
+            }, 0);
+            return { ...session, foregroundClosedAt: lastId };
+        });
+    }, [updateActiveSession]);
     const handleClosingOpenFiles = useCallback(() => {
         updateActiveSession((session) => {
             const lastId = session.messages.reduce((most, message) => {
@@ -5019,6 +5185,54 @@ export default function ChatbotAppComp() {
             });
         },
         [activeSessionId, sessionStateRef],
+    );
+    // The attach row's **Attach a foreground session**: the open panels'
+    // sessions, read at the press, one press to attach one.
+    const [foregroundPick, setForegroundPick] =
+        useState<ForegroundPickType | null>(null);
+    const handleOpeningForegroundPick = useCallback(async () => {
+        setAttachError(null);
+        setForegroundPick({ status: 'loading' });
+        try {
+            const result = parseToolJson(
+                await callTool(FOREGROUND_EDIT_TOOL_NAME, {
+                    action: 'read',
+                    open: true,
+                }),
+            );
+            if (result === null || result?.isError === true) {
+                setForegroundPick({
+                    status: 'failed',
+                    reason: tran(
+                        'The Presenter could not be read. Switch the main ' +
+                            'window to the Presenter, then try again.',
+                    ),
+                });
+                return;
+            }
+            setForegroundPick({
+                status: 'ready',
+                rows: toForegroundPickRows(result),
+            });
+        } catch (error: any) {
+            setForegroundPick({
+                status: 'failed',
+                reason: describeAttachError(error, FOREGROUND_EDIT_TOOL_NAME),
+            });
+        }
+    }, []);
+    const handleClosingForegroundPick = useCallback(() => {
+        setForegroundPick(null);
+    }, []);
+    const addAttachmentsRef = useAppCurrentRef(addAttachments);
+    const handlePickingForeground = useCallback(
+        (ask: ForegroundAskType) => {
+            addAttachmentsRef.current([genForegroundAttachment(ask)]);
+            setForegroundPick(null);
+            inputRef.current?.focus();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleRemovingAttachment = useCallback(
         (id: string) => {
@@ -5232,6 +5446,37 @@ export default function ChatbotAppComp() {
     const handleShowingAttachment = useCallback(
         async (attachment: ChatAttachmentType) => {
             setAttachError(null);
+            // A foreground session is rung where it lives: its chip on its
+            // panel's sessions strip (`Quick Text > Session 2`), the panel
+            // itself for Camera Show and Screen Show, which have none.
+            if (attachment.kind === 'foreground' && attachment.foreground) {
+                const ask = attachment.foreground;
+                const label = toForegroundComponentLabel(ask.widget);
+                const find =
+                    ask.itemId === undefined
+                        ? `${label} > ${ask.sessionName || 'Default'}`
+                        : label;
+                try {
+                    const result = parseToolJson(
+                        await callTool('owa_find_ui', {
+                            text: find,
+                            highlight: true,
+                            page: 'presenter.html',
+                        }),
+                    );
+                    if (!result?.shownCount) {
+                        setAttachError(
+                            tran(
+                                'Its panel is not open. Open it from the ' +
+                                    'Foreground tab in the Presenter.',
+                            ),
+                        );
+                    }
+                } catch (error: any) {
+                    setAttachError(describeAttachError(error, 'owa_find_ui'));
+                }
+                return;
+            }
             if (attachment.selector !== undefined) {
                 // Rung in the window it was POINTED at in, whichever window
                 // the tab works with now; a chip from before windows were
@@ -6597,6 +6842,49 @@ export default function ChatbotAppComp() {
     // window -- where the names dataset is already held -- and kept on the
     // card, which is what every question typed under it is asked with. No
     // model: a card that says it is ready, and three questions to press.
+    // A foreground session handed over (a session chip's Open in Chatbot,
+    // a panel header's robot): its chip in the box, the tab asking about the
+    // Presenter, and the card of what can be done -- written with no model.
+    const attachHandedForegroundRef = useAppCurrentRef(
+        (sessionId: string, ask: ForegroundAskType) => {
+            setAttachError(null);
+            const session = sessionStateRef.current.sessions.find((one) => {
+                return one.id === sessionId;
+            });
+            setDraftAttachmentMap((previous) => {
+                const existing = previous[sessionId] ?? [];
+                const [attachment] = numberAttachments(
+                    [genForegroundAttachment(ask)],
+                    [
+                        ...(session?.messages ?? []).flatMap((message) => {
+                            return message.attachments ?? [];
+                        }),
+                        ...existing,
+                    ],
+                );
+                return {
+                    ...previous,
+                    [sessionId]: [...existing, attachment].slice(
+                        -MAX_ATTACHMENT_COUNT,
+                    ),
+                };
+            });
+            updateSession(sessionId, (oldSession) => {
+                return {
+                    ...oldSession,
+                    focus: 'presenter',
+                    isFocusChosen: true,
+                };
+            });
+            const opening = genForegroundOpeningAnswer(ask);
+            addMessage(sessionId, {
+                author: 'bot',
+                text: opening.text,
+                replies: opening.replies,
+            });
+            inputRef.current?.focus();
+        },
+    );
     const openHandedLookupRef = useAppCurrentRef(
         async (sessionId: string, ask: LookupAskType): Promise<boolean> => {
             const pending = genPendingAsk(sessionId, undefined, false);
@@ -7501,6 +7789,15 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // A foreground session: a chip's Open in Chatbot, a panel's 🤖.
+            const handedForeground = takeChatbotForegroundRequest();
+            if (handedForeground !== null) {
+                attachHandedForegroundRef.current(
+                    openHandoffSession(),
+                    handedForeground,
+                );
+                return;
+            }
             // The Resources panel's 🤖: a file to ask about, and the passage
             // the Reader is on for it.
             const handedFile = takeChatbotFileRequest();
@@ -8261,6 +8558,44 @@ export default function ChatbotAppComp() {
             // Any one: a question about changing a document of theirs.
             const isDocumentAsk =
                 isFlowAsk || isLyricAsk || isSlideAsk || isNoteAsk;
+            // A FOREGROUND session attached now or still open in this tab,
+            // or a typed line naming a foreground component, makes it a
+            // question about the foreground (`foregroundChatHelpers.ts`):
+            // changed through its own panel by `owa_foreground_edit`. A
+            // session in the box takes over from one opened earlier; a
+            // supported question asked as it stands is still the guide's.
+            const boxForegroundAsks = toForegroundAskList(
+                attachments.filter(checkIsForegroundAttachment),
+            );
+            const openForegroundAsks =
+                boxForegroundAsks.length > 0
+                    ? boxForegroundAsks
+                    : toForegroundAskList(
+                          findOpenForegroundAttachments(
+                              lookupTab?.messages ?? [],
+                              lookupTab?.foregroundClosedAt,
+                          ),
+                      );
+            const isForegroundRoutable =
+                !isDocumentAsk &&
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0;
+            const namedForegroundWidget =
+                isForegroundRoutable && openForegroundAsks.length === 0
+                    ? readForegroundComponentAsk(trimmedAsked)
+                    : null;
+            const isForegroundAsk =
+                isForegroundRoutable &&
+                (openForegroundAsks.length > 0 ||
+                    namedForegroundWidget !== null) &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
             // "List me more options" under a document's card: the card again,
             // its sentence and its buttons, written by the window with no
             // model (2026-11-07, the user, a slide document open: _I just
@@ -8486,7 +8821,8 @@ export default function ChatbotAppComp() {
                 generalQuestion === null &&
                 lookupSubject === null &&
                 attachments.length === 0 &&
-                !isNoteAsk;
+                !isNoteAsk &&
+                !isForegroundAsk;
             // In English or in the person's own language
             // (`verseAskLanguageHelpers.ts`).
             const oneLineVerse = isVerseAskable
@@ -8571,6 +8907,7 @@ export default function ChatbotAppComp() {
                 lookupSubject === null &&
                 resourceFileNames.length === 0 &&
                 !isDocumentAsk &&
+                !isForegroundAsk &&
                 verseFindBible === null &&
                 trimmedAsked.length > 0
                     ? (readBibleReaderAsk(trimmedAsked) ??
@@ -8602,7 +8939,8 @@ export default function ChatbotAppComp() {
                 (lookupSubject === null || isLookupAppAsk) &&
                 resourceFileNames.length === 0 &&
                 bibleReaderAsk === null &&
-                !isDocumentAsk;
+                !isDocumentAsk &&
+                !isForegroundAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -9385,6 +9723,81 @@ export default function ChatbotAppComp() {
                           }),
                       )
                     : [];
+                // A foreground session the same way (`owa_foreground_edit
+                // read`): its words, its look and the screens holding it as
+                // they are NOW. A component named with none attached is read
+                // as its panel's current session, which is then the one the
+                // question is about.
+                const isForegroundDocAsk =
+                    isForegroundAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const foregroundReadList: {
+                    ask: ForegroundAskType;
+                    text: string | null;
+                }[] = [];
+                if (isForegroundDocAsk) {
+                    const readAskList: (ForegroundAskType | null)[] =
+                        openForegroundAsks.length > 0
+                            ? openForegroundAsks
+                            : [null];
+                    for (const readAsk of readAskList) {
+                        const widget = readAsk?.widget ?? namedForegroundWidget;
+                        try {
+                            const result = parseToolJson(
+                                await callTool(
+                                    FOREGROUND_EDIT_TOOL_NAME,
+                                    {
+                                        action: 'read',
+                                        widget:
+                                            widget === 'time'
+                                                ? 'clock'
+                                                : widget,
+                                        ...(readAsk === null
+                                            ? {}
+                                            : readAsk.widget === 'camera'
+                                              ? {
+                                                    camera:
+                                                        readAsk.itemLabel ??
+                                                        readAsk.itemId,
+                                                }
+                                              : readAsk.widget === 'screen'
+                                                ? {
+                                                      source: Number(
+                                                          readAsk.itemId,
+                                                      ),
+                                                  }
+                                                : {
+                                                      session:
+                                                          readAsk.sessionId ||
+                                                          readAsk.sessionName ||
+                                                          'Default',
+                                                  }),
+                                    },
+                                    signal,
+                                ),
+                            );
+                            const readSession = result?.session as
+                                { id?: string; name?: string } | undefined;
+                            foregroundReadList.push({
+                                ask: readAsk ?? {
+                                    widget: widget as ForegroundAskType['widget'],
+                                    sessionId: readSession?.id ?? '',
+                                    sessionName: readSession?.name ?? '',
+                                },
+                                text: toForegroundReadText(result),
+                            });
+                        } catch (_error) {
+                            throwIfCancelled(signal);
+                            if (readAsk !== null) {
+                                foregroundReadList.push({
+                                    ask: readAsk,
+                                    text: null,
+                                });
+                            }
+                        }
+                    }
+                }
                 throwIfCancelled(signal);
                 // The song's words go to the model as read above, never also
                 // as the attachment's notation -- a model shown notation
@@ -9431,6 +9844,13 @@ export default function ChatbotAppComp() {
                         return toFlowAsk(
                             text,
                             flowDocs,
+                            trimmedAsked.length === 0,
+                        );
+                    }
+                    if (isForegroundDocAsk) {
+                        return toForegroundAsk(
+                            text,
+                            foregroundReadList,
                             trimmedAsked.length === 0,
                         );
                     }
@@ -9902,6 +10322,7 @@ export default function ChatbotAppComp() {
                     // Nor a slide document's.
                     if (
                         isFlowDocAsk ||
+                        isForegroundDocAsk ||
                         isSongAsk ||
                         isSlideDocAsk ||
                         isNoteDocAsk
@@ -10273,6 +10694,17 @@ export default function ChatbotAppComp() {
                                     : {}),
                                 ...(isFlowDocAsk
                                     ? { flow: { files: flowAskFiles } }
+                                    : {}),
+                                ...(isForegroundDocAsk
+                                    ? {
+                                          foreground: {
+                                              asks: foregroundReadList.map(
+                                                  (one) => {
+                                                      return one.ask;
+                                                  },
+                                              ),
+                                          },
+                                      }
                                     : {}),
                                 ...(isNoteDocAsk
                                     ? {
@@ -13624,6 +14056,32 @@ export default function ChatbotAppComp() {
                         />
                     </div>
                 )}
+                {openForegroundAttachments.length === 0 ? null : (
+                    <div
+                        className="chat-open-files"
+                        title={tran(
+                            'This foreground session goes with every ' +
+                                'question in this tab. Press × when you are ' +
+                                'done with it.',
+                        )}
+                    >
+                        <span className="chat-open-files-label">
+                            {tran('Still asking about')}
+                        </span>
+                        <RenderAttachmentChipsComp
+                            attachments={openForegroundAttachments}
+                            onRemove={handleClosingForeground}
+                            onShow={handleShowingAttachment}
+                        />
+                    </div>
+                )}
+                {foregroundPick === null ? null : (
+                    <RenderForegroundPickComp
+                        pick={foregroundPick}
+                        onPick={handlePickingForeground}
+                        onClose={handleClosingForegroundPick}
+                    />
+                )}
                 {!isResourcesPdfOpen || isCautionHidden ? null : (
                     <p className="chat-caution" role="note">
                         <span className="chat-caution-mark" aria-hidden="true">
@@ -13774,6 +14232,18 @@ export default function ChatbotAppComp() {
                         onClick={handlePicking}
                     >
                         <i className="bi bi-bullseye" />
+                    </button>
+                    <button
+                        type="button"
+                        className="chat-attach"
+                        aria-label={tran('Attach a foreground session')}
+                        title={tran(
+                            'Attach a session of a foreground panel that is ' +
+                                'open in the Presenter',
+                        )}
+                        onClick={handleOpeningForegroundPick}
+                    >
+                        <i className="bi bi-layers" />
                     </button>
                     {/*
                      * Last in the row, beside the box it writes into: it puts

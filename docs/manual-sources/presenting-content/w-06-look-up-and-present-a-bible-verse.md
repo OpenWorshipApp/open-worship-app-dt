@@ -2,8 +2,8 @@
 id: W-06
 title: "Look up and present a Bible verse"
 section: "Presenting content"
-verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102]
-screenshots: 6
+verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103]
+screenshots: 7
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-09"
 ---
@@ -108,11 +108,22 @@ workflowsVersion: "2026-11-09"
     medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
+12. To put the passage up as a short notice over whatever is on the screen,
+    choose **[en:tran:Create Quick Text]** from the same menu, right under
+    **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
+    **[en:tran:Quick Text]** opens on a NEW session named after the passage,
+    for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
+    words. The box holds the reference in bold and the verses after it (one
+    verse without its number, several with `(22): …`), and the session is
+    already dressed by the **[en:tran:Bible Verse]** preset: a dark band
+    across the bottom, 20 seconds on screen. Press **[en:tran:Preview]** to
+    read it as it will look, then **[en:tran:Show Quick Text]** when it is
+    time. Nothing goes on a screen before that. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102`
+`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102` · `CM-103`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
 :::

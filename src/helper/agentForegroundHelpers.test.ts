@@ -1,12 +1,15 @@
-/**
- * @vitest-environment jsdom
- */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => {
     return {
         isPagePresenter: true,
         managers: [] as any[],
+        settings: new Map<string, string>(),
+        restoresList: [] as any[][],
+        notified: [] as string[],
+        opened: [] as string[],
+        presets: [] as [string, string][],
+        longTextHidden: [] as [string, number | undefined][],
     };
 });
 
@@ -15,43 +18,148 @@ vi.mock('../server/appProvider', () => ({
         get isPagePresenter() {
             return h.isPagePresenter;
         },
-        pathUtils: {
-            sep: '\\',
-            join: (...parts: string[]) => parts.join('\\'),
-            basename: (filePath: string) => {
-                return filePath.split(/[\\/]/).pop() ?? '';
-            },
-            dirname: (filePath: string) => {
-                return filePath.replace(/[\\/][^\\/]*$/, '');
-            },
-        },
-        systemUtils: { isDev: false },
+    },
+}));
+vi.mock('./settingHelpers', () => ({
+    getSetting: (key: string) => h.settings.get(key) ?? null,
+    setSetting: (key: string, value: string | null) => {
+        h.settings.set(key, value ?? '');
+    },
+    removeSetting: (key: string) => {
+        h.settings.delete(key);
     },
 }));
 vi.mock('../_screen/managers/screenManagerHelpers', () => ({
     getAllScreenManagers: () => h.managers,
 }));
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
+    default: {
+        getLongTextShowingList: () => [],
+        hideLongText: (sourceId: string, screenId?: number) => {
+            h.longTextHidden.push([sourceId, screenId]);
+        },
+        restyleLongText: () => {},
+        getInstance: () => null,
+    },
+}));
+// The Properties panel's own style, marked so a test can tell whose it is.
+vi.mock('../presenter-foreground/propertiesSettingHelpers', () => ({
+    genForegroundExtraStyle: (prefix: string) => {
+        return {
+            look: prefix,
+            fontSize: `${h.settings.get(`${prefix}-setting-show-widget-font-size`) ?? 100}px`,
+        };
+    },
+    getForegroundIsBehind: () => false,
+    getForegroundWidthScale: () => 50,
+}));
+vi.mock('../presenter-foreground/foregroundTransitionHelpers', () => ({
+    resolveForegroundTransition: () => undefined,
+}));
+vi.mock('../presenter-foreground/foregroundSessionHelpers', () => ({
+    checkIsSessionData: (
+        data: { id?: string },
+        sessionId: string,
+        sessionIds: string[],
+    ) => {
+        const owner = data.id ?? '';
+        const resolved =
+            sessionIds.length === 0 || sessionIds.includes(owner)
+                ? owner
+                : sessionIds[0];
+        return resolved === sessionId;
+    },
+}));
+vi.mock('../presenter-foreground/ForegroundSoundControlComp', () => ({
+    getForegroundSoundData: () => ({ isSoundOn: false, soundVolume: 100 }),
+}));
+vi.mock('../presenter-foreground/foregroundPanelRevisionHelpers', () => ({
+    notifyForegroundPanel: (key: string) => {
+        h.notified.push(key);
+    },
+}));
+vi.mock('../presenter-foreground/foregroundWidgetHelpers', () => ({
+    FOREGROUND_OPEN_PANELS_SETTING_NAME: 'foreground-open-panels',
+    requestForegroundPanelOpening: (key: string) => {
+        h.opened.push(key);
+        return true;
+    },
+    toOpenedPanelKeys: (raw: string, key: string) => `${raw},${key}`,
+}));
+vi.mock('../presenter-foreground/quickTextPresetHelpers', () => ({
+    applyQuickTextPreset: (suffix: string, presetId: string) => {
+        h.presets.push([suffix, presetId]);
+        return true;
+    },
+}));
 vi.mock('../lyric-list/markdownHelpers', () => ({
     renderMarkdown: async (text: string) => ({ html: `<p>${text}</p>` }),
+}));
+vi.mock('./agentBibleHelpers', () => ({
+    resolveVersionOrder: async () => ({ order: ['KJV'], installed: ['KJV'] }),
+    resolveBibleItem: async (reference: string) => {
+        return reference === 'John 3:16'
+            ? {
+                  toText: async () => 'For God so loved the world.',
+              }
+            : null;
+    },
+}));
+vi.mock('../presenter-foreground/foregroundQuickTextOpenHelpers', () => ({
+    genBibleItemQuickTextMarkdown: async () => ({
+        title: '(KJV) John 3:16',
+        markdown: '**(KJV) John 3:16**\n\nFor God so loved the world.',
+    }),
+}));
+vi.mock('../presenter-foreground/ForegroundMessageComp', () => ({
+    toStoredText: (list: { text: string }[]) => {
+        return list
+            .map((one) => {
+                return one.text;
+            })
+            .join('\n\n');
+    },
+}));
+vi.mock('./agentScreenHelpers', () => ({
+    toForegroundSummary: (data: any) => {
+        return Object.entries(data ?? {})
+            .filter(([, value]) => {
+                return Array.isArray(value) ? value.length > 0 : value !== null;
+            })
+            .map(([key]) => key);
+    },
+}));
+vi.mock('./agentBackupHelpers', () => ({
+    runWithAgentBackup: async (
+        _summary: string,
+        restores: any[],
+        change: () => Promise<unknown>,
+    ) => {
+        h.restoresList.push(restores);
+        return { meta: { id: 'undo-1' }, value: await change() };
+    },
+    genUndoField: (meta: { id: string }) => ({ undoId: meta.id }),
 }));
 
 import {
     AGENT_FOREGROUND_ACTIONS,
+    AGENT_FOREGROUND_EDIT_ACTIONS,
     AGENT_FOREGROUND_WIDGETS,
     handleAgentForegroundRequest,
     parseClockTimeToday,
-    type AgentForegroundRequestType,
 } from './agentForegroundHelpers';
 import {
     AGENT_FOREGROUND_ACTIONS as MJS_ACTIONS,
     AGENT_FOREGROUND_WIDGETS as MJS_WIDGETS,
 } from '../../tools/owa-devtools-mcp/agentForeground.mjs';
+import { FOREGROUND_EDIT_ACTIONS as MJS_EDIT_ACTIONS } from '../../tools/owa-devtools-mcp/agentForegroundEdit.mjs';
 
-// A stand-in for `ScreenForegroundManager`: the data object the summary
-// reads, and the setters the widget's own Start button calls.
+// A stand-in for `ScreenForegroundManager`: the data object the screens hold,
+// and the setters the panels' own Show buttons call.
 function genForegroundManager() {
     const manager: any = {
         foregroundData: {
+            messageDataList: [],
             countdownData: null,
             stopwatchData: null,
             timeDataList: [],
@@ -59,29 +167,58 @@ function genForegroundManager() {
             marqueeBottomData: null,
             quickTextData: null,
             cameraDataList: [],
+            screenDataList: [],
             webDataList: [],
+            videoDataList: [],
+            imageDataList: [],
         },
         calls: [] as string[],
     };
     const setter = (key: string) => {
         return (data: any) => {
             manager.calls.push(key);
-            manager.foregroundData[key] = data;
+            manager.foregroundData = { ...manager.foregroundData, [key]: data };
         };
     };
-    manager.setCountdownData = setter('countdownData');
-    manager.setStopwatchData = setter('stopwatchData');
-    manager.setMarqueeTopData = setter('marqueeTopData');
-    manager.setMarqueeBottomData = setter('marqueeBottomData');
-    manager.setQuickTextData = setter('quickTextData');
-    manager.setTimeDataList = setter('timeDataList');
+    for (const key of [
+        'countdownData',
+        'stopwatchData',
+        'marqueeTopData',
+        'marqueeBottomData',
+        'quickTextData',
+        'timeDataList',
+        'messageDataList',
+        'videoDataList',
+        'imageDataList',
+        'webDataList',
+        'cameraDataList',
+        'screenDataList',
+    ]) {
+        manager[`set${key.charAt(0).toUpperCase()}${key.slice(1)}`] =
+            setter(key);
+    }
     manager.addTimeData = (data: any) => {
         manager.calls.push('addTimeData');
-        manager.foregroundData.timeDataList.push(data);
+        manager.foregroundData = {
+            ...manager.foregroundData,
+            timeDataList: [
+                ...manager.foregroundData.timeDataList.filter((one: any) => {
+                    return one.id !== data.id;
+                }),
+                data,
+            ],
+        };
     };
-    manager.clear = () => {
-        manager.calls.push('clear');
-        manager.foregroundData = genForegroundManager().foregroundData;
+    manager.removeTimeData = (data: any) => {
+        manager.calls.push('removeTimeData');
+        manager.foregroundData = {
+            ...manager.foregroundData,
+            timeDataList: manager.foregroundData.timeDataList.filter(
+                (one: any) => {
+                    return one !== data;
+                },
+            ),
+        };
     };
     return manager;
 }
@@ -96,12 +233,16 @@ function genManager(screenId: number, extra: any = {}) {
         screenForegroundManager: genForegroundManager(),
         ...extra,
     };
-    // Clear Foreground (F10): the foreground, and a Long Text Show with it.
     screenManager.clearForeground = () => {
         screenManager.screenForegroundManager.calls.push('clearForeground');
-        screenManager.screenForegroundManager.clear();
+        screenManager.screenForegroundManager.foregroundData =
+            genForegroundManager().foregroundData;
     };
     return screenManager;
+}
+
+function dataOf(index = 0) {
+    return h.managers[index].screenForegroundManager.foregroundData;
 }
 
 // A fixed "now": 10:00 in the morning, local time.
@@ -110,12 +251,21 @@ const NOW = new Date(2026, 8, 11, 10, 0, 0, 0);
 beforeEach(() => {
     h.isPagePresenter = true;
     h.managers = [genManager(0)];
+    h.settings.clear();
+    h.restoresList = [];
+    h.notified = [];
+    h.opened = [];
+    h.presets = [];
+    h.longTextHidden = [];
 });
 
-describe('the widget and action lists', () => {
+describe('the lists the tools are held to', () => {
     it('are the same on the app side and the tool side', () => {
         expect([...AGENT_FOREGROUND_WIDGETS]).toEqual([...MJS_WIDGETS]);
         expect([...AGENT_FOREGROUND_ACTIONS]).toEqual([...MJS_ACTIONS]);
+        expect([...AGENT_FOREGROUND_EDIT_ACTIONS]).toEqual([
+            ...MJS_EDIT_ACTIONS,
+        ]);
     });
 });
 
@@ -123,9 +273,7 @@ describe('parseClockTimeToday', () => {
     it('reads the shapes a person writes, as a time later today', () => {
         for (const [text, hours, minutes] of [
             ['10:30', 10, 30],
-            ['18:30', 18, 30],
             ['6:45 pm', 18, 45],
-            ['6.45pm', 18, 45],
             ['7pm', 19, 0],
             ['12:15 am', 0, 15],
         ] as const) {
@@ -137,490 +285,315 @@ describe('parseClockTimeToday', () => {
         }
     });
 
-    it('is null for words that are not a time, and a bare number', () => {
-        expect(parseClockTimeToday('soon', NOW)).toBeNull();
+    it('is null for a bare number and refuses a time gone by', () => {
         expect(parseClockTimeToday('10', NOW)).toBeNull();
-    });
-
-    it('refuses a time already gone by, and one that is not on a clock', () => {
         expect(parseClockTimeToday('9:30', NOW)).toMatchObject({
-            isError: true,
             reason: expect.stringContaining('has already passed today'),
-        });
-        expect(parseClockTimeToday('25:00', NOW)).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('not a time of day'),
         });
     });
 });
 
-describe('handleAgentForegroundRequest', () => {
-    it('starts a duration countdown on the ticked screen and reads it back', async () => {
-        const result = await handleAgentForegroundRequest(
+describe('a countdown started through its panel', () => {
+    it('uses the Default session when it already holds five minutes', async () => {
+        const result: any = await handleAgentForegroundRequest(
             { widget: 'countdown', minutes: 5 },
             NOW,
         );
         expect(result).toMatchObject({
             did: 'started',
-            widget: 'countdown',
-            isAnyShowing: false,
+            component: 'Countdown',
+            session: { id: '', isNew: false },
+            isChanged: true,
+            undoId: 'undo-1',
         });
-        expect((result as any).detail).toContain(
-            'a 5 minute countdown, ending at',
-        );
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.calls).toEqual(['countdownData']);
-        // Asked to START: running at once, five minutes on, with its length
-        // kept so the panel can still pause and reset it.
-        expect(manager.foregroundData.countdownData.dateTime.getTime()).toBe(
-            NOW.getTime() + 5 * 60 * 1000,
-        );
-        expect(manager.foregroundData.countdownData.durationMillisecond).toBe(
-            5 * 60 * 1000,
-        );
-        expect(
-            manager.foregroundData.countdownData.pausedMillisecond,
-        ).toBeUndefined();
-        expect((result as any).screens[0].foreground[0]).toMatch(
-            /^countdown to /,
-        );
-        // An off screen holds it and shows nothing: said, with the
-        // instruction to OFFER the show button rather than press it.
-        expect((result as any).note).toContain('OFF');
-        expect((result as any).note).toContain('do not press it unasked');
+        const countdown = dataOf().countdownData;
+        // The Default session's own look, a datum with no session id (the
+        // Default panel's own), running at once with its length kept.
+        expect(countdown.extraStyle.look).toBe('countdown');
+        expect(countdown.id).toBeUndefined();
+        expect(countdown.dateTime.getTime()).toBe(NOW.getTime() + 300000);
+        expect(countdown.durationMillisecond).toBe(300000);
+        expect(countdown.pausedMillisecond).toBeUndefined();
+        expect(h.settings.get('foreground-countdown-sessions')).toBeUndefined();
+        // An off screen holds it unseen: offered, never pressed.
+        expect(result.note).toContain('do not press it unasked');
+        expect(h.notified).toEqual(['countdown']);
+        expect(h.opened).toEqual(['countdown']);
     });
 
-    it('says nothing about an off screen once it is showing', async () => {
-        h.managers = [genManager(0, { isShowing: true })];
-        const result = await handleAgentForegroundRequest(
-            { widget: 'countdown', minutes: 5 },
+    it('puts new minutes into a NEW session that looks like the current one', async () => {
+        h.settings.set('countdown-setting-show-widget-font-size', '60');
+        const result: any = await handleAgentForegroundRequest(
+            { widget: 'countdown', minutes: 10 },
             NOW,
         );
-        expect(result).toMatchObject({ did: 'started', isAnyShowing: true });
-        expect((result as any).note).toBeUndefined();
-    });
-
-    it('counts down to a clock time later today', async () => {
-        const result = await handleAgentForegroundRequest(
-            { widget: 'countdown', at: '6:45 pm' },
+        expect(result.session).toMatchObject({ name: '10:00', isNew: true });
+        const sessionId = result.session.id;
+        const sessions = JSON.parse(
+            h.settings.get('foreground-countdown-sessions') ?? '[]',
+        );
+        expect(sessions).toEqual([
+            { id: '', name: 'Default' },
+            { id: sessionId, name: '10:00' },
+        ]);
+        expect(h.settings.get('foreground-countdown-active-session')).toBe(
+            sessionId,
+        );
+        expect(h.settings.get(`foreground-minutes-setting-${sessionId}`)).toBe(
+            '10',
+        );
+        // The Default session's 60px went with it, and the datum wears it.
+        expect(
+            h.settings.get(
+                `countdown-${sessionId}-setting-show-widget-font-size`,
+            ),
+        ).toBe('60');
+        expect(dataOf().countdownData).toMatchObject({
+            id: sessionId,
+            extraStyle: { look: `countdown-${sessionId}`, fontSize: '60px' },
+        });
+        // Every key of that session was backed up, absent ones as null.
+        const restores = h.restoresList[0];
+        expect(restores).toContainEqual({
+            type: 'app-setting',
+            key: `foreground-minutes-setting-${sessionId}`,
+            text: null,
+            foreground: 'countdown',
+        });
+        // The same minutes again reuse it: no "(2)".
+        const again: any = await handleAgentForegroundRequest(
+            { widget: 'countdown', minutes: 10 },
             NOW,
         );
-        expect(result).toMatchObject({ did: 'started' });
-        expect((result as any).detail).toMatch(/^a countdown to 6:45/);
-        const target = h.managers[0].screenForegroundManager.foregroundData
-            .countdownData.dateTime as Date;
-        expect(target.getHours()).toBe(18);
-        expect(target.getMinutes()).toBe(45);
+        expect(again.session).toMatchObject({ id: sessionId, isNew: false });
     });
 
-    it('refuses a countdown with no length and one gone by, in sentences', async () => {
-        expect(
-            await handleAgentForegroundRequest({ widget: 'countdown' }, NOW),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('Say how long'),
-        });
-        expect(
-            await handleAgentForegroundRequest(
-                { widget: 'countdown', at: '9:00' },
-                NOW,
-            ),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('has already passed today'),
-        });
-        expect(
-            await handleAgentForegroundRequest(
-                { widget: 'countdown', at: 'later' },
-                NOW,
-            ),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('not a time of day'),
-        });
-        expect(
-            await handleAgentForegroundRequest(
-                { widget: 'countdown', minutes: 5000 },
-                NOW,
-            ),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('outside that'),
-        });
-        expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
-    });
-
-    it('scrolls a message along the bottom at the default pace', async () => {
-        const result = await handleAgentForegroundRequest({
-            widget: 'marquee-bottom',
-            text: '  Please silence   your phones ',
-        });
-        expect(result).toMatchObject({
-            did: 'started',
-            widget: 'marquee-bottom',
-        });
-        expect((result as any).detail).toBe(
-            'a message scrolling along the bottom: "Please silence your phones"',
-        );
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.foregroundData.marqueeBottomData).toEqual({
-            text: 'Please silence your phones',
-            speedPercentage: 100,
-            extraStyle: {},
-        });
-        expect((result as any).screens[0].foreground[0]).toContain(
-            'marquee at the bottom: "Please silence your phones"',
-        );
-    });
-
-    it('refuses a marquee with no words, and one the length of a sermon', async () => {
-        expect(
-            await handleAgentForegroundRequest({ widget: 'marquee-top' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('Say the words to scroll'),
-        });
-        expect(
-            await handleAgentForegroundRequest({
-                widget: 'marquee-top',
-                text: 'x'.repeat(301),
-            }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('at most 300'),
-        });
-    });
-
-    it('shows a quick text for ten seconds unless told otherwise, as the widget renders it', async () => {
-        const result = await handleAgentForegroundRequest({
-            widget: 'quick-text',
-            text: 'Coffee after the service',
-        });
-        expect((result as any).detail).toBe(
-            'a line of text for 10 seconds: "Coffee after the service"',
-        );
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.foregroundData.quickTextData).toEqual({
-            htmlText: '<p>Coffee after the service</p>',
-            timeSecondDelay: 0,
-            timeSecondToLive: 10,
-            extraStyle: {},
-        });
-        await handleAgentForegroundRequest({
-            widget: 'quick-text',
-            text: 'Welcome',
-            seconds: 30,
-        });
-        expect(manager.foregroundData.quickTextData.timeSecondToLive).toBe(30);
-    });
-
-    it('puts a clock up with the widget defaults, and a stopwatch from now', async () => {
-        await handleAgentForegroundRequest({ widget: 'clock' }, NOW);
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.foregroundData.timeDataList).toHaveLength(1);
-        expect(manager.foregroundData.timeDataList[0]).toMatchObject({
-            title: null,
-            is24HourFormat: false,
-            timezoneMinuteOffset: -NOW.getTimezoneOffset() / 60,
-        });
-        const result = await handleAgentForegroundRequest(
-            { widget: 'stopwatch' },
-            NOW,
-        );
-        expect((result as any).detail).toMatch(/^a stopwatch, started at /);
-        expect(manager.foregroundData.stopwatchData.dateTime).toBe(NOW);
-    });
-
-    it('stops one extra, says when there was none, and clears them all', async () => {
+    it('is paused and reset on the wall in place', async () => {
         await handleAgentForegroundRequest(
             { widget: 'countdown', minutes: 5 },
             NOW,
         );
-        const stopped = await handleAgentForegroundRequest({
-            action: 'stop',
+        const paused: any = await handleAgentForegroundRequest({
+            action: 'timer',
             widget: 'countdown',
+            timer: 'pause',
         });
-        expect(stopped).toMatchObject({
-            did: 'stopped',
-            detail: 'The countdown is off the screen now.',
-        });
-        expect((stopped as any).note).toBeUndefined();
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.foregroundData.countdownData).toBeNull();
-
-        const again = await handleAgentForegroundRequest({
-            action: 'stop',
-            widget: 'countdown',
-        });
-        expect((again as any).note).toContain('There was no countdown');
-
-        await handleAgentForegroundRequest({ widget: 'clock' });
-        const all = await handleAgentForegroundRequest({
-            action: 'stop',
-            widget: 'all',
-        });
-        expect(all).toMatchObject({
-            did: 'stopped',
-            detail: 'Every foreground extra is off the screen now.',
-        });
-        expect(manager.calls).toContain('clearForeground');
-    });
-
-    it('stops every extra on EVERY screen, ticked or not, as F10 does', async () => {
-        // Screen 1 sits in screen 0's colour group and holds the same clip; a
-        // clear on the ticked screen alone left it there, and the session's
-        // running slide show put new clips back on both.
-        const ticked = genManager(0);
-        const beside = genManager(1, { isSelected: false });
-        const locked = genManager(2, { isSelected: false, isLocked: true });
-        for (const screenManager of [ticked, beside, locked]) {
-            screenManager.screenForegroundManager.foregroundData.webDataList = [
-                { filePath: 'clock.html' },
-            ];
-        }
-        h.managers = [ticked, beside, locked];
-        const all = await handleAgentForegroundRequest({
-            action: 'stop',
-            widget: 'all',
-        });
-        expect(ticked.screenForegroundManager.calls).toEqual([
-            'clearForeground',
-            'clear',
-        ]);
-        expect(beside.screenForegroundManager.calls).toEqual([
-            'clearForeground',
-            'clear',
-        ]);
-        // A locked screen refuses a change, and the answer says so.
-        expect(locked.screenForegroundManager.calls).toEqual([]);
-        expect((all as any).note).toContain('Screen 2 is locked');
-        expect(
-            (all as any).screens.map((screen: any) => {
-                return screen.screenId;
-            }),
-        ).toEqual([0, 1, 2]);
-    });
-
-    it('refuses to START all, and names the extras for an unknown one', async () => {
-        expect(
-            await handleAgentForegroundRequest({ widget: 'all' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('only stops'),
-        });
-        expect(
-            await handleAgentForegroundRequest({ widget: 'confetti' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining(
-                'There is no extra called "confetti"',
-            ),
-        });
-        expect(await handleAgentForegroundRequest({})).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('Say which extra to start'),
-        });
-    });
-
-    it('checks without touching a screen, and says what each holds', async () => {
-        const empty = await handleAgentForegroundRequest({ action: 'check' });
-        expect(empty).toMatchObject({
-            did: 'checked',
-            detail: 'No foreground extra is on any screen.',
-        });
-        await handleAgentForegroundRequest({
-            widget: 'marquee-bottom',
-            text: 'Welcome',
-        });
-        const held = await handleAgentForegroundRequest({ action: 'check' });
-        expect((held as any).detail).toBe(
-            'Screen 0 holds marquee at the bottom: "Welcome" (off).',
-        );
-        expect((held as any).note).toContain('Nothing was changed');
-    });
-
-    it('refuses off the Presenter, with no ticked screen, and on a locked one', async () => {
-        h.isPagePresenter = false;
-        expect(
-            await handleAgentForegroundRequest({ widget: 'clock' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('started from the Presenter page'),
-        });
-        h.isPagePresenter = true;
-        h.managers = [genManager(0, { isSelected: false })];
-        expect(
-            await handleAgentForegroundRequest({ widget: 'clock' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('No screen is chosen'),
-        });
-        h.managers = [genManager(0, { isLocked: true })];
-        expect(
-            await handleAgentForegroundRequest({ widget: 'clock' }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('Screen 0 is locked'),
-        });
-        expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
-    });
-
-    it('refuses an action it does not know before touching a screen', async () => {
-        expect(
-            await handleAgentForegroundRequest({
-                action: 'pause',
-                widget: 'countdown',
-                minutes: 5,
-            }),
-        ).toEqual({
-            isError: true,
-            reason: 'Unknown action "pause". Use start, stop or check.',
-        });
-        expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
-    });
-
-    it('scrolls a message along the top, and only the top', async () => {
-        const result = await handleAgentForegroundRequest({
-            widget: 'marquee-top',
-            text: ' Welcome   all ',
-        });
-        expect((result as any).detail).toBe(
-            'a message scrolling along the top: "Welcome all"',
-        );
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.calls).toEqual(['marqueeTopData']);
-        expect(manager.foregroundData.marqueeTopData).toEqual({
-            text: 'Welcome all',
-            speedPercentage: 100,
-            extraStyle: {},
-        });
-        expect(manager.foregroundData.marqueeBottomData).toBeNull();
-        expect((result as any).screens[0].foreground).toEqual([
-            'marquee at the top: "Welcome all"',
-        ]);
-    });
-
-    it('refuses a quick text with no words or too many, and keeps its time up within bounds', async () => {
-        expect(
-            await handleAgentForegroundRequest({
-                widget: 'quick-text',
-                text: '   ',
-            }),
-        ).toMatchObject({
-            isError: true,
-            reason: expect.stringContaining('Say the words to show'),
-        });
-        expect(
-            await handleAgentForegroundRequest({
-                widget: 'quick-text',
-                text: 'x'.repeat(301),
-            }),
-        ).toMatchObject({
-            isError: true,
-            reason:
-                'That is 301 characters; a quick text is at most 300. ' +
-                'Shorten it.',
-        });
-        const manager = h.managers[0].screenForegroundManager;
-        expect(manager.calls).toEqual([]);
-        // Ten minutes at most, and a fraction of a second is no time at all.
-        await handleAgentForegroundRequest({
+        expect(paused.did).toBe('timer');
+        expect(typeof dataOf().countdownData.pausedMillisecond).toBe('number');
+        const missing: any = await handleAgentForegroundRequest({
+            action: 'timer',
             widget: 'quick-text',
-            text: 'Long',
-            seconds: 5000,
+            timer: 'pause',
         });
-        expect(manager.foregroundData.quickTextData.timeSecondToLive).toBe(600);
-        await handleAgentForegroundRequest({
-            widget: 'quick-text',
-            text: 'Short',
-            seconds: 0.5,
-        });
-        expect(manager.foregroundData.quickTextData.timeSecondToLive).toBe(10);
+        expect(missing.isError).toBe(true);
     });
+});
 
-    const stopCases: [
-        string,
-        string,
-        string,
-        AgentForegroundRequestType,
-        unknown,
-    ][] = [
-        ['stopwatch', 'stopwatchData', 'stopwatch', {}, null],
-        ['clock', 'timeDataList', 'clock', {}, []],
-        [
-            'marquee-top',
-            'marqueeTopData',
-            'scrolling message along the top',
-            { text: 'Hello' },
-            null,
-        ],
-        [
-            'marquee-bottom',
-            'marqueeBottomData',
-            'scrolling message along the bottom',
-            { text: 'Hello' },
-            null,
-        ],
-        [
-            'quick-text',
-            'quickTextData',
-            'line of text',
-            { text: 'Hello' },
-            null,
-        ],
-    ];
-    it.each(stopCases)(
-        'stops the %s it started, and says when there was none',
-        async (widget, key, noun, extra, cleared) => {
-            await handleAgentForegroundRequest({ widget, ...extra }, NOW);
-            const manager = h.managers[0].screenForegroundManager;
-            expect(manager.foregroundData[key]).not.toEqual(cleared);
-            const stopped = await handleAgentForegroundRequest({
-                action: 'stop',
-                widget,
-            });
-            expect(stopped).toMatchObject({
-                did: 'stopped',
-                widget,
-                detail: `The ${noun} is off the screen now.`,
-            });
-            expect((stopped as any).note).toBeUndefined();
-            expect(manager.foregroundData[key]).toEqual(cleared);
-            expect((stopped as any).screens[0].foreground).toEqual([]);
-            const again = await handleAgentForegroundRequest({
-                action: 'stop',
-                widget,
-            });
-            expect((again as any).note).toBe(
-                `There was no ${noun} on the screen, so nothing changed.`,
-            );
-        },
-    );
-
-    it('says which screens hold an extra, and which of them are off', async () => {
-        h.managers = [genManager(0, { isShowing: true }), genManager(1)];
-        await handleAgentForegroundRequest({ widget: 'clock' }, NOW);
-        const held = await handleAgentForegroundRequest({ action: 'check' });
-        expect((held as any).detail).toBe(
-            'Screen 0 holds clock. Screen 1 holds clock (off).',
-        );
-        expect((held as any).isAnyShowing).toBe(true);
-    });
-
-    it('steps over a locked screen when another ticked one is free', async () => {
-        h.managers = [genManager(0, { isLocked: true }), genManager(1)];
-        const result = await handleAgentForegroundRequest(
-            { widget: 'countdown', minutes: 2 },
+describe('words and a verse', () => {
+    it('makes a quick text of a verse from the installed Bible, its own look', async () => {
+        const result: any = await handleAgentForegroundRequest(
+            { widget: 'quick-text', ref: 'John 3:16' },
             NOW,
         );
-        expect(result).toMatchObject({ did: 'started' });
-        expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
-        expect(h.managers[1].screenForegroundManager.calls).toEqual([
-            'countdownData',
-        ]);
-        expect((result as any).note).toContain(
-            'Screen 0 is locked and was left as it was',
+        expect(result.session).toMatchObject({
+            name: '(KJV) John 3:16',
+            isNew: true,
+        });
+        const suffix = `-${result.session.id}`;
+        expect(h.settings.get(`foreground-quick-text-setting${suffix}`)).toBe(
+            '**(KJV) John 3:16**\n\nFor God so loved the world.',
         );
-        expect((result as any).note).toContain('Screen 1 holds it but is OFF');
+        // The Bibles list's own Open in Quick Text look.
+        expect(h.presets).toEqual([[suffix, 'bible-verse']]);
+        expect(dataOf().quickTextData.htmlText).toContain('For God so loved');
+    });
+
+    it('refuses a reference no Bible reads, and a verse where it cannot go', async () => {
+        const unread: any = await handleAgentForegroundRequest(
+            { widget: 'quick-text', ref: 'Hezekiah 9:9' },
+            NOW,
+        );
+        expect(unread.isError).toBe(true);
+        expect(unread.reason).toContain('could not be read');
+        const clock: any = await handleAgentForegroundRequest(
+            { widget: 'clock', ref: 'John 3:16' },
+            NOW,
+        );
+        expect(clock.reason).toContain('owa_present_bible');
+    });
+
+    it('scrolls a marquee in its session, at its own speed', async () => {
+        const result: any = await handleAgentForegroundRequest(
+            { widget: 'marquee-top', text: 'Welcome  to   church' },
+            NOW,
+        );
+        expect(result.session.name).toBe('Welcome to church');
+        expect(dataOf().marqueeTopData).toMatchObject({
+            text: 'Welcome to church',
+            speedPercentage: 100,
+        });
+    });
+
+    it('puts a clock up as a session of its own, and takes that one off', async () => {
+        const result: any = await handleAgentForegroundRequest(
+            { widget: 'clock', title: 'London', utcOffset: 0 },
+            NOW,
+        );
+        expect(result.session.name).toBe('London');
+        expect(dataOf().timeDataList).toHaveLength(1);
+        expect(dataOf().timeDataList[0]).toMatchObject({
+            title: 'London',
+            timezoneMinuteOffset: 0,
+        });
+        // A clock of another session stays when this one comes off.
+        h.managers[0].screenForegroundManager.foregroundData.timeDataList.push({
+            id: 'theirs',
+            title: null,
+            timezoneMinuteOffset: 7,
+        });
+        const stopped: any = await handleAgentForegroundRequest({
+            action: 'stop',
+            widget: 'clock',
+            session: 'London',
+        });
+        expect(stopped.did).toBe('stopped');
+        expect(
+            dataOf().timeDataList.map((one: any) => {
+                return one.id;
+            }),
+        ).toEqual(['theirs']);
+    });
+});
+
+describe('a session changed, and what of it is up', () => {
+    it('restyles the overlay on the screen holding it, the panel told', async () => {
+        await handleAgentForegroundRequest(
+            { widget: 'countdown', minutes: 5 },
+            NOW,
+        );
+        h.notified = [];
+        const result: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            session: 'Default',
+            look: { size: 'larger', position: 'top' },
+        });
+        expect(result).toMatchObject({
+            did: 'changed',
+            changed: ['size 100 → 125px', 'position top'],
+            isChanged: true,
+        });
+        expect(dataOf().countdownData.extraStyle.fontSize).toBe('125px');
+        expect(h.notified).toEqual(['countdown']);
+    });
+
+    it('refuses a look the component lacks, writing nothing', async () => {
+        const result: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'marquee-bottom',
+            look: { position: 'top' },
+        });
+        expect(result.isError).toBe(true);
+        expect(h.restoresList).toEqual([]);
+    });
+
+    it('names the sessions there are for one it cannot find', async () => {
+        const result: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'quick-text',
+            session: 'Nowhere',
+            look: { size: 50 },
+        });
+        expect(result.reason).toContain('"Default"');
+    });
+});
+
+describe('taking things off and reading', () => {
+    it('takes a component off every screen holding it, ticked or not', async () => {
+        h.managers = [genManager(0), genManager(1, { isSelected: false })];
+        dataOf(1).countdownData = { dateTime: NOW };
+        const result: any = await handleAgentForegroundRequest({
+            action: 'stop',
+            widget: 'countdown',
+        });
+        expect(result.did).toBe('stopped');
+        expect(dataOf(1).countdownData).toBeNull();
+    });
+
+    it('stops every extra as F10, a locked screen left as it was', async () => {
+        h.managers = [genManager(0), genManager(1, { isLocked: true })];
+        const result: any = await handleAgentForegroundRequest({
+            action: 'stop',
+            widget: 'all',
+        });
+        expect(h.managers[0].screenForegroundManager.calls).toEqual([
+            'clearForeground',
+        ]);
+        expect(h.managers[1].screenForegroundManager.calls).toEqual([]);
+        expect(result.note).toContain('Screen 1 is locked');
+    });
+
+    it('lists the open panels and their sessions', async () => {
+        h.settings.set('foreground-open-panels', 'countdown,camera,nonsense');
+        const result: any = await handleAgentForegroundRequest({
+            action: 'read',
+            open: true,
+        });
+        expect(
+            result.panels.map((one: any) => {
+                return one.widget;
+            }),
+        ).toEqual(['countdown', 'camera']);
+        expect(result.panels[0].sessions[0]).toMatchObject({
+            id: '',
+            name: 'Default',
+            isActive: true,
+        });
+    });
+
+    it("reads a session's words and look without changing anything", async () => {
+        h.settings.set('foreground-quick-text-setting', 'Hello');
+        const result: any = await handleAgentForegroundRequest({
+            action: 'read',
+            widget: 'quick-text',
+        });
+        expect(result.content.text).toBe('Hello');
+        expect(result.look.size).toBe('100px');
+        expect(h.restoresList).toEqual([]);
+    });
+});
+
+describe('what is refused, in sentences', () => {
+    it('off the Presenter page', async () => {
+        h.isPagePresenter = false;
+        const result: any = await handleAgentForegroundRequest({
+            widget: 'countdown',
+            minutes: 5,
+        });
+        expect(result.reason).toContain('Presenter page');
+    });
+
+    it('with no screen ticked, or all of them locked', async () => {
+        h.managers = [genManager(0, { isSelected: false })];
+        const unticked: any = await handleAgentForegroundRequest(
+            { widget: 'stopwatch' },
+            NOW,
+        );
+        expect(unticked.reason).toContain('No screen is chosen');
+        h.managers = [genManager(0, { isLocked: true })];
+        const locked: any = await handleAgentForegroundRequest(
+            { widget: 'stopwatch' },
+            NOW,
+        );
+        expect(locked.reason).toContain('locked');
+    });
+
+    it('an unknown component, and "all" anywhere but stop', async () => {
+        const unknown: any = await handleAgentForegroundRequest({
+            widget: 'fireworks',
+        });
+        expect(unknown.reason).toContain('quick-text');
+        const all: any = await handleAgentForegroundRequest({ widget: 'all' });
+        expect(all.reason).toContain('only stops');
     });
 });

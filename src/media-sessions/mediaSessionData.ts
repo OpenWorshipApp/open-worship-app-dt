@@ -142,6 +142,24 @@ export function notifyMediaSessionStrips(target: string) {
 }
 
 /**
+ * `name`, or `name (2)`, `name (3)`... -- whichever no session has yet. Each
+ * press of a song's Long Text Show adds a session named after the song, and
+ * three of them read `Still · Still · Still`: chips nobody could tell apart.
+ * A Bible passage's Create Quick Text names its session the same way.
+ */
+export function toUniqueSessionName(name: string, takenNameList: string[]) {
+    const takenNameSet = new Set(takenNameList);
+    if (!takenNameSet.has(name)) {
+        return name;
+    }
+    let index = 2;
+    while (takenNameSet.has(`${name} (${index})`)) {
+        index++;
+    }
+    return `${name} (${index})`;
+}
+
+/**
  * Adds a session to a strip and makes it the active one, whether the strip is
  * mounted or not: a mounted one is told, any other reads it when it mounts.
  * Whatever the session's own settings are to hold is written BEFORE this: the

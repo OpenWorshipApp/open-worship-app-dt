@@ -1108,6 +1108,14 @@
             "en": "How do I clear the countdown or the message off the screen?",
             "text": "Comment retirer le compte à rebours ou le message de l'écran ?"
         },
+        "presenter.foreground.foreground-change-with-assistant": {
+            "en": "Can the assistant change a countdown or a marquee for me?",
+            "text": "L'assistant peut-il modifier un compte à rebours ou un bandeau défilant pour moi ?"
+        },
+        "presenter.foreground.foreground-attach-session": {
+            "en": "How do I give the assistant a foreground session to work on?",
+            "text": "Comment confier une session de premier plan à l'assistant pour qu'il s'en occupe ?"
+        },
         "presenter.foreground.foreground-two-overlays": {
             "en": "Can I show two pictures over the slide at the same time?",
             "text": "Puis-je afficher deux images par-dessus la diapositive en même temps ?"

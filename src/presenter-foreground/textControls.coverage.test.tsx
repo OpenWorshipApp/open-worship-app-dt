@@ -666,6 +666,130 @@ describe('foreground text panels', () => {
         ]);
     });
 
+    test('quick text previews its markdown sanitized, keeps links from navigating, and edits again', async () => {
+        mocks.markdown.mockImplementation(async (text: string) => ({
+            html:
+                `<h2>${text}</h2><a href="https://example.com/">site</a>` +
+                '<img src="x" onerror="alert(1)">',
+        }));
+        await render(<ForegroundQuickTextComp />);
+        await change('Markdown', 'Notice');
+        expect(container.querySelector('.fg-markdown-preview')).toBeNull();
+        await click('Preview');
+        const preview = container.querySelector(
+            '.fg-markdown-preview',
+        ) as HTMLDivElement;
+        expect(preview).not.toBeNull();
+        expect(container.querySelector('textarea')).toBeNull();
+        expect(mocks.markdown).toHaveBeenLastCalledWith('Notice');
+        expect(preview.querySelector('h2')?.textContent).toBe('Notice');
+        // The screen's sanitizer runs here too: no handler survives.
+        expect(
+            preview.querySelector('img')?.getAttribute('onerror'),
+        ).toBeNull();
+        expect(preview.style.fontFamily).toBe('serif');
+        const link = preview.querySelector('a')!;
+        const linkClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => link.dispatchEvent(linkClick));
+        expect(linkClick.defaultPrevented).toBe(true);
+        const textClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () =>
+            preview.querySelector('h2')!.dispatchEvent(textClick),
+        );
+        expect(textClick.defaultPrevented).toBe(false);
+        await click('Edit');
+        expect(container.querySelector('.fg-markdown-preview')).toBeNull();
+        expect(
+            (container.querySelector('textarea') as HTMLTextAreaElement).value,
+        ).toBe('Notice');
+    });
+
+    test('an empty quick text previews as its placeholder', async () => {
+        // As `renderMarkdown` answers no text: no html at all.
+        mocks.markdown.mockImplementation(async (text: string) => ({
+            html: text ? `<p>${text}</p>` : '',
+        }));
+        await render(<ForegroundQuickTextComp />);
+        await change('Markdown', '');
+        await click('Preview');
+        const preview = container.querySelector('.fg-markdown-preview')!;
+        expect(preview.innerHTML).toBe('');
+        expect(preview.getAttribute('data-placeholder')).toBe(
+            'Leave a markdown text here',
+        );
+    });
+
+    test('a quick text preset dresses the session, restyles what is showing and stays in preview', async () => {
+        const shown = { id: 'session-a', htmlText: 'old' };
+        state.screens = [[3, { quickTextData: shown }]];
+        await render(<ForegroundQuickTextComp />);
+        await change('Markdown', 'Kept words');
+        await change('Seconds to wait before showing the text', '2');
+        await click('Preview');
+        await click('Presets');
+        const items = mocks.menu.mock.calls.at(-1)![1];
+        // Every label resolves in every language package (tran throws here).
+        expect(items.map((item: any) => item.menuElement)).toEqual([
+            'Bible Verse',
+            'Speaker',
+            'Song Title',
+            'Sermon Title',
+            'Event Session',
+            'Announcement',
+        ]);
+        mocks.setQuick.mockClear();
+        await act(async () => items[0].onSelect());
+        const prefix = 'quick-text-session-a';
+        expect(
+            state.settings.get(`${prefix}-setting-show-widget-font-size`),
+        ).toBe('44');
+        expect(
+            JSON.parse(
+                state.settings.get(
+                    `${prefix}-setting-show-widget-alignment-data`,
+                ),
+            ),
+        ).toEqual({ horizontalAlignment: 'center', verticalAlignment: 'end' });
+        expect(state.settings.get(`${prefix}-common-background-color`)).toBe(
+            '#000000B3',
+        );
+        expect(
+            JSON.parse(
+                state.settings.get(`${prefix}-setting-show-widget-decoration`),
+            ),
+        ).toMatchObject({ textAlign: 'center', padding: 0.6 });
+        expect(
+            state.settings.get('foreground-quick-text-time-to-live-session-a'),
+        ).toBe('20');
+        // Its words and delay are the operator's, never the preset's.
+        expect(
+            state.settings.get('foreground-quick-text-setting-session-a'),
+        ).toBe('Kept words');
+        expect(
+            state.settings.get('foreground-quick-text-time-delay-session-a'),
+        ).toBe(2);
+        expect(mocks.setQuick.mock.calls).toEqual([
+            [null],
+            [expect.objectContaining({ htmlText: 'old' })],
+        ]);
+        // Remounted on the new values, still previewing.
+        expect(container.querySelector('.fg-markdown-preview')).not.toBeNull();
+        await click('Edit');
+        expect(
+            (
+                container.querySelector(
+                    '[aria-label="Seconds the text stays on screen"]',
+                ) as HTMLInputElement
+            ).value,
+        ).toBe('20');
+    });
+
     test('session callbacks hide only their own quick text', async () => {
         state.screens = [
             [1, { quickTextData: { id: 'session-a' } }],

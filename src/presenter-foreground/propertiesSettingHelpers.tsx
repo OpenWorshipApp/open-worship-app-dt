@@ -36,10 +36,8 @@ import {
     genForegroundDecorationStyle,
     getForegroundDecoration,
 } from './foregroundDecorationHelpers';
-import {
-    genForegroundSessionTransitionSettingName,
-    resolveForegroundTransition,
-} from './foregroundTransitionHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { genPropsSettingNames } from './foregroundStyleSettingNames';
 import { ForegroundTransitionPropComp } from './ForegroundTransitionControlsComp';
 
 const DEFAULT_FONT_SIZE = 100;
@@ -76,24 +74,9 @@ export function getForegroundWidthScale(prefix: string) {
     return getWidgetWidthScale(genPropsSettingNames(prefix).widthPercentage);
 }
 
-export function genPropsSettingNames(prefix: string) {
-    return {
-        roundPercentage: `${prefix}-setting-show-widget-round-percentage`,
-        widthPercentage: `${prefix}-setting-show-widget-width-percentage`,
-        scale: `${prefix}-setting-show-widget-scale`,
-        opacityPercentage: `${prefix}-setting-show-widget-opacity-percentage`,
-        alignment: `${prefix}-setting-show-widget-alignment-data`,
-        offsetX: `${prefix}-setting-show-widget-offset-x`,
-        offsetY: `${prefix}-setting-show-widget-offset-y`,
-        fontSize: `${prefix}-setting-show-widget-font-size`,
-        roundSizePixel: `${prefix}-setting-show-widget-round-size-px`,
-        blendMode: `${prefix}-setting-show-widget-blend-mode`,
-        isAlwaysOnTop: `${prefix}-setting-show-widget-always-on-top`,
-        zIndex: `${prefix}-setting-show-widget-z-index`,
-        transitionEffect: genForegroundSessionTransitionSettingName(prefix),
-        isBehind: `${prefix}-setting-show-widget-is-behind`,
-    };
-}
+// The key names live in a module of their own, free of this one's React and
+// styles; re-exported here for the callers that always found them here.
+export { genPropsSettingNames };
 
 /**
  * Whether this session's overlay goes BEHIND the slide and the Bible text.

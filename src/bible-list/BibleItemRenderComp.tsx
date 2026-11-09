@@ -45,6 +45,7 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { genOpenInChatbotContextMenu } from '../helper/ai/bibleItemChatbotMenuHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 const BibleSlidesPopupComp = lazy(() => import('./BibleSlidesPopupComp'));
 const BibleLyricPopupComp = lazy(() => import('./BibleLyricPopupComp'));
@@ -161,6 +162,24 @@ export default function BibleItemRenderComp({
                     menuElement: tran('Create Lyric'),
                     onSelect: () => {
                         setCreatingLyricBibleItem(bibleItemRef.current.clone());
+                    },
+                });
+                menuItems.push({
+                    // The passage in a new Quick Text session, dressed as a
+                    // verse and ready to show. Its code is fetched when this
+                    // is pressed: a Bible row needs none of the panel's.
+                    childBefore: genContextMenuItemIcon('chat-square-text'),
+                    menuElement: tran('Create Quick Text'),
+                    onSelect: async () => {
+                        try {
+                            const { openBibleItemInQuickText } =
+                                await import('../presenter-foreground/foregroundQuickTextOpenHelpers');
+                            await openBibleItemInQuickText(
+                                bibleItemRef.current.clone(),
+                            );
+                        } catch (error) {
+                            handleError(error);
+                        }
                     },
                 });
             }

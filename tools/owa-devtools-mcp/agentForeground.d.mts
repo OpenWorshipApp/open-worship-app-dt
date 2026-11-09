@@ -10,15 +10,24 @@ export type AgentForegroundScreenRefType = {
 
 export type AgentForegroundResultRefType =
     | { isError: true; reason: string }
-    | {
+    | ({
           isError?: false;
-          did: 'started' | 'stopped' | 'checked';
+          did:
+              | 'started'
+              | 'stopped'
+              | 'checked'
+              | 'read'
+              | 'changed'
+              | 'shown'
+              | 'hidden'
+              | 'timer'
+              | 'created';
           widget: string | null;
           detail: string;
-          screens: AgentForegroundScreenRefType[];
-          isAnyShowing: boolean;
+          screens?: AgentForegroundScreenRefType[];
+          isAnyShowing?: boolean;
           note?: string;
-      };
+      } & Record<string, unknown>);
 
 export declare const AGENT_FOREGROUND_WIDGETS: readonly [
     'countdown',
@@ -27,6 +36,13 @@ export declare const AGENT_FOREGROUND_WIDGETS: readonly [
     'marquee-top',
     'marquee-bottom',
     'quick-text',
+    'message',
+    'long-text',
+    'video',
+    'image',
+    'camera',
+    'screen',
+    'web',
     'all',
 ];
 export declare const AGENT_FOREGROUND_ACTIONS: readonly [
@@ -35,14 +51,9 @@ export declare const AGENT_FOREGROUND_ACTIONS: readonly [
     'check',
 ];
 export declare function toForegroundWidgetNoun(widget: unknown): string;
-export declare function genForegroundExpression(request: {
-    action?: string;
-    widget?: string;
-    minutes?: number;
-    at?: string;
-    text?: string;
-    seconds?: number;
-}): string;
+export declare function genForegroundExpression(
+    request: Record<string, unknown>,
+): string;
 export declare function formatForegroundResult(result: unknown): {
     isError: boolean;
     text: string;

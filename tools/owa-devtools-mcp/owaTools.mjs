@@ -128,6 +128,7 @@ import { registerLyricEditTool } from './agentLyricEdit.mjs';
 import { registerSlideEditTool } from './agentSlideEdit.mjs';
 import { registerNoteEditTool } from './agentNoteEdit.mjs';
 import { registerPresentingFlowEditTool } from './agentPresentingFlowEdit.mjs';
+import { registerForegroundEditTool } from './agentForegroundEdit.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -1108,23 +1109,24 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_foreground',
     {
       description:
-        'Start or stop a foreground extra on the projector -- a ' +
-        'countdown, stopwatch, clock, a scrolling marquee (top or ' +
-        'bottom) or a quick line of text -- and answer with what ' +
-        'each screen holds now. Use it whenever the user asks for ' +
-        'one to go UP or come off ("start a 5 minute countdown", ' +
-        '"count down to 10:30"): never the Foreground tab, whose ' +
-        'boxes are a form for a person and whose tab closes when ' +
-        'pressed twice. A countdown takes `minutes` OR `at` (a clock ' +
-        'time today); a marquee or quick text takes `text`. `stop` ' +
-        'takes one off (`widget: "all"` is every extra, as F10); ' +
-        '`check` only reads. The answer is read BACK off the ' +
-        'screens: `did`, `detail`, each ticked screen with ' +
-        '`isShowing` and its `foreground` -- an off screen holds the ' +
-        'extra unseen until its show button is pressed, which is ' +
-        'offered, never done unasked. Starting one changes what the ' +
-        'congregation sees: do it when they asked for it, offer it ' +
-        'when they only asked how.',
+        'Start or stop any foreground extra on the projector -- ' +
+        'countdown, stopwatch, clock, marquee (top/bottom), quick ' +
+        'text, message, long text, video/image/web show, camera, ' +
+        'another screen -- through its own Foreground panel: the ' +
+        'words go into a session of that panel and it goes up in the ' +
+        "session's own look. Use it whenever the user asks for one to " +
+        'go UP or come off ("start a 5 minute countdown", "a quick ' +
+        'text of John 3:16"): never the Foreground tab, a form for a ' +
+        'person. A countdown takes `minutes` OR `at` (a clock time ' +
+        'today); a marquee, quick text or message takes `text` or ' +
+        '`ref` (a verse, read from the installed Bible -- never write ' +
+        "a verse's words yourself). `stop` takes one off (`all` is " +
+        'every extra, as F10); `check` only reads. The answer is read ' +
+        'BACK off the screens: `did`, `detail`, each screen with ' +
+        '`isShowing` and its `foreground` -- an off screen holds it ' +
+        'unseen until its show button is pressed, which is offered, ' +
+        'never done unasked. It changes what the congregation sees: ' +
+        'do it when asked, offer it when they only asked how.',
       inputSchema: {
         widget: z
           .enum(AGENT_FOREGROUND_WIDGETS)
@@ -1142,23 +1144,41 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         at: z
           .string()
           .optional()
-          .describe(
-            'Countdown target as a clock time today: "10:30", ' +
-              '"18:30", "6:45 pm".',
-          ),
-        text: z
-          .string()
-          .optional()
-          .describe('The words of a marquee or a quick text.'),
+          .describe('Countdown to a clock time today: "10:30", "6:45 pm".'),
+        text: z.string().optional().describe('The words to show.'),
+        ref: z.string().optional().describe('A verse: "John 3:16".'),
+        version: z.string().optional().describe('Bible version of `ref`.'),
         seconds: z
           .number()
           .int()
           .positive()
           .optional()
-          .describe('How long a quick text stays (default 10).'),
+          .describe('How long a quick text stays.'),
+        file: z
+          .string()
+          .optional()
+          .describe('Video/image/web show: the file by name.'),
+        camera: z.string().optional().describe('Camera show: its name.'),
+        source: z
+          .number()
+          .int()
+          .optional()
+          .describe('Screen show: the screen number to show.'),
       },
     },
-    async ({ widget, action, minutes, at, text, seconds }) => {
+    async ({
+      widget,
+      action,
+      minutes,
+      at,
+      text,
+      ref,
+      version,
+      seconds,
+      file,
+      camera,
+      source,
+    }) => {
       try {
         // The presenter page's alone, aimed the way the passage is:
         // with it open, whatever window is in front; without it the
@@ -1175,7 +1195,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
             minutes,
             at,
             text,
+            ref,
+            version,
             seconds,
+            file,
+            camera,
+            source,
           }),
           { port, match: hasPresenter ? 'presenter.html' : undefined },
         );
@@ -1636,6 +1661,11 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // (`agentPresentingFlowEdit.mjs`). Offered to the chatbot's model only in
   // a conversation about an attached presenting flow.
   registerPresentingFlowEditTool(server);
+
+  // Any foreground component changed through its own panel: a session's
+  // words and look, live on the wall (`agentForegroundEdit.mjs`). Offered to
+  // the chatbot's model only in a foreground conversation.
+  registerForegroundEditTool(server);
 
   // The saved passages and the notes. A list or file name reaches the disk,
   // so it is checked here first with the document tools' own rule -- and
@@ -2182,7 +2212,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_language',
     {
       description:
-        'The app languages. `list`: the installed ones and the catalog\'s ' +
+        "The app languages. `list`: the installed ones and the catalog's " +
         'others. `check` the `language` some words name (English name, ' +
         'own name, code or locale): `state` english, installed, ' +
         'turned-off, missing (with `size` in bytes), unavailable or ' +
@@ -2805,12 +2835,24 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // folder dropped on Resources was lost that way. A second
           // dragover after a pause is what a hand's own movement gives it.
           await runInTarget(target, [
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragEnter', ...at } },
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragEnter', ...at },
+            },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragOver', ...at },
+            },
             { waitMs: 500 },
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragOver', ...at },
+            },
             { waitMs: 300 },
-            { method: 'Input.dispatchDragEvent', params: { type: 'drop', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'drop', ...at },
+            },
           ]);
           const read = await evaluateInTarget(target, genDropReadExpression());
           return {

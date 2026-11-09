@@ -188,6 +188,15 @@ import {
     type CreatedNoteType,
     type NoteAskFileType,
 } from './noteChatHelpers';
+import {
+    FOREGROUND_ASK_KIND,
+    FOREGROUND_EDIT_TOOL_NAME,
+    FOREGROUND_MAX_TOOL_ROUNDS,
+    FOREGROUND_SYSTEM_PROMPT,
+    readEditedForeground,
+    resolveForegroundSession,
+} from './foregroundChatHelpers';
+import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
 import { pickBibleInLanguage } from './verseAskLanguageHelpers';
 import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
 import {
@@ -2152,6 +2161,13 @@ type ToolWatchType = {
      */
     flowFiles: FlowAskFileType[] | null;
     /**
+     * The foreground sessions attached to the tab, when this is a question
+     * about the foreground -- what a `session` the model gives
+     * `owa_foreground_edit` is turned into (`resolveForegroundSession`).
+     * Null outside such a question, where that tool is not the model's.
+     */
+    foregroundAsks: ForegroundAskType[] | null;
+    /**
      * The Bible notes attached to the tab, when this is a question about
      * them -- what a `note` the model gives `owa_note_edit` is turned into
      * (`resolveNoteEditTarget`). Null outside such a question, where
@@ -2394,6 +2410,7 @@ export function genToolWatch(): ToolWatchType {
         lyricFiles: null,
         slideFiles: null,
         flowFiles: null,
+        foregroundAsks: null,
         noteFiles: null,
         noteVerseLang: null,
         noteTyped: null,
@@ -3168,6 +3185,21 @@ export function applyToolWatch(
     ) {
         watch.isActedOn = true;
     }
+    if (
+        name === FOREGROUND_EDIT_TOOL_NAME &&
+        /"did":\s*"(changed|shown|hidden|timer|created)"/.test(text)
+    ) {
+        watch.isActedOn = true;
+    }
+    // A foreground session changed by either door carries `undoId`: the
+    // answer gets **Undo this change** and **Show it in the list**, which
+    // rings the session's chip in its own panel.
+    if (name === 'owa_foreground' || name === FOREGROUND_EDIT_TOOL_NAME) {
+        const edited = readEditedForeground(text);
+        if (edited !== null) {
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
+        }
+    }
     learnPageTitles(watch.pageTitles, name, args, text);
     if (name === 'owa_lyric_validate') {
         // Last one wins, like `readId`: a model that drafts twice has been
@@ -3472,6 +3504,30 @@ async function runMcpToolCall(
         lyricEditArgs = {
             ...(args ?? {}),
             file: 'filePath' in resolved ? resolved.filePath : resolved.name,
+        };
+    }
+    // A foreground session the same way: changed only in a foreground
+    // conversation, an attached session named by its name -- the window puts
+    // its id in (`resolveForegroundSession`).
+    if (name === FOREGROUND_EDIT_TOOL_NAME) {
+        if (watch.foregroundAsks === null) {
+            return (
+                `Tool refused: ${FOREGROUND_EDIT_TOOL_NAME} changes a ` +
+                'foreground component in a conversation about one. Use ' +
+                'owa_foreground to start or stop one.'
+            );
+        }
+        lyricEditArgs = {
+            ...(args ?? {}),
+            ...(args?.session === undefined
+                ? {}
+                : {
+                      session: resolveForegroundSession(
+                          args.widget,
+                          args.session,
+                          watch.foregroundAsks,
+                      ),
+                  }),
         };
     }
     // A slide document the same way: changed only in a conversation about
@@ -3933,6 +3989,17 @@ export type AskExtraType = {
         files: FlowAskFileType[];
     };
     /**
+     * A question about the FOREGROUND (`foregroundChatHelpers.ts`): a
+     * session of a component attached to the tab, or a typed question naming
+     * a component. The ask carries each attached session as it reads now,
+     * and it goes out under `FOREGROUND_SYSTEM_PROMPT` with
+     * `owa_foreground_edit` -- offered to no other question. `asks`: what
+     * a `session` the model names is turned into.
+     */
+    foreground?: {
+        asks: ForegroundAskType[];
+    };
+    /**
      * A question about a BIBLE NOTE attached to the tab
      * (`noteChatHelpers.ts`): the ask carries each note as it reads now, as
      * numbered blocks, and it goes out under `NOTE_SYSTEM_PROMPT` with
@@ -4163,6 +4230,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     }
     if (extra?.flow !== undefined) {
         return FLOW_SYSTEM_PROMPT;
+    }
+    if (extra?.foreground !== undefined) {
+        return FOREGROUND_SYSTEM_PROMPT;
     }
     if (extra?.note !== undefined) {
         return NOTE_SYSTEM_PROMPT;
@@ -4442,11 +4512,13 @@ async function askAnthropicCompatible(
                       ? LYRIC_MAX_TOOL_ROUNDS
                       : extra?.flow !== undefined
                         ? FLOW_MAX_TOOL_ROUNDS
-                        : extra?.slide !== undefined
-                          ? SLIDE_MAX_TOOL_ROUNDS
-                          : extra?.note !== undefined
-                            ? NOTE_MAX_TOOL_ROUNDS
-                            : MAX_TOOL_ROUNDS;
+                        : extra?.foreground !== undefined
+                          ? FOREGROUND_MAX_TOOL_ROUNDS
+                          : extra?.slide !== undefined
+                            ? SLIDE_MAX_TOOL_ROUNDS
+                            : extra?.note !== undefined
+                              ? NOTE_MAX_TOOL_ROUNDS
+                              : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4831,11 +4903,13 @@ async function askOpenAiCompatible(
                               ? LYRIC_MAX_TOOL_ROUNDS
                               : extra?.flow !== undefined
                                 ? FLOW_MAX_TOOL_ROUNDS
-                                : extra?.slide !== undefined
-                                  ? SLIDE_MAX_TOOL_ROUNDS
-                                  : extra?.note !== undefined
-                                    ? NOTE_MAX_TOOL_ROUNDS
-                                    : MAX_TOOL_ROUNDS,
+                                : extra?.foreground !== undefined
+                                  ? FOREGROUND_MAX_TOOL_ROUNDS
+                                  : extra?.slide !== undefined
+                                    ? SLIDE_MAX_TOOL_ROUNDS
+                                    : extra?.note !== undefined
+                                      ? NOTE_MAX_TOOL_ROUNDS
+                                      : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -5428,6 +5502,8 @@ const LOCAL_TOOL_NAME_LIST = [
     SLIDE_EDIT_TOOL_NAME,
     // ...and about a presenting flow attached to the tab.
     FLOW_EDIT_TOOL_NAME,
+    // ...and about a foreground session.
+    FOREGROUND_EDIT_TOOL_NAME,
     // ...and about a Bible note attached to the tab.
     NOTE_EDIT_TOOL_NAME,
 ];
@@ -6271,6 +6347,7 @@ async function askLlmBotAsWritten(
         extra?.bibleReader !== undefined ||
         extra?.lyric !== undefined ||
         extra?.flow !== undefined ||
+        extra?.foreground !== undefined ||
         extra?.slide !== undefined ||
         extra?.note !== undefined
             ? null
@@ -6317,6 +6394,7 @@ async function askLlmBotAsWritten(
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
             extra?.flow === undefined &&
+            extra?.foreground === undefined &&
             extra?.slide === undefined &&
             extra?.note === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
@@ -6330,6 +6408,7 @@ async function askLlmBotAsWritten(
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
             extra?.flow === undefined &&
+            extra?.foreground === undefined &&
             extra?.slide === undefined &&
             extra?.note === undefined &&
             extra?.isGeneral !== true &&
@@ -6337,6 +6416,7 @@ async function askLlmBotAsWritten(
         seeded.lyricFiles = extra?.lyric?.files ?? null;
         seeded.slideFiles = extra?.slide?.files ?? null;
         seeded.flowFiles = extra?.flow?.files ?? null;
+        seeded.foregroundAsks = extra?.foreground?.asks ?? null;
         seeded.noteFiles = extra?.note?.files ?? null;
         seeded.noteVerseLang = extra?.note?.verseLang ?? null;
         seeded.noteTyped = extra?.note?.typed ?? null;
@@ -6401,11 +6481,13 @@ async function askLlmBotAsWritten(
                     ? pickAskToolList(tools, LYRIC_ASK_KIND)
                     : extra?.flow !== undefined
                       ? pickAskToolList(tools, FLOW_ASK_KIND)
-                      : extra?.slide !== undefined
-                        ? pickAskToolList(tools, SLIDE_ASK_KIND)
-                        : extra?.note !== undefined
-                          ? pickAskToolList(tools, NOTE_ASK_KIND)
-                          : filterModelToolList(tools);
+                      : extra?.foreground !== undefined
+                        ? pickAskToolList(tools, FOREGROUND_ASK_KIND)
+                        : extra?.slide !== undefined
+                          ? pickAskToolList(tools, SLIDE_ASK_KIND)
+                          : extra?.note !== undefined
+                            ? pickAskToolList(tools, NOTE_ASK_KIND)
+                            : filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one

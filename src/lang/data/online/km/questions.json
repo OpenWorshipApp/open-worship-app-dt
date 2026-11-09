@@ -1108,6 +1108,14 @@
             "en": "How do I clear the countdown or the message off the screen?",
             "text": "តើខ្ញុំលុបការរាប់ថយក្រោយ ឬសារចេញពីអេក្រង់ដោយរបៀបណា?"
         },
+        "presenter.foreground.foreground-change-with-assistant": {
+            "en": "Can the assistant change a countdown or a marquee for me?",
+            "text": "តើជំនួយការអាចកែការរាប់ថយក្រោយ ឬអក្សររត់ជូនខ្ញុំបានទេ?"
+        },
+        "presenter.foreground.foreground-attach-session": {
+            "en": "How do I give the assistant a foreground session to work on?",
+            "text": "តើខ្ញុំផ្ដល់វគ្គផ្ទៃខាងមុខមួយឲ្យជំនួយការធ្វើការលើវាដោយរបៀបណា?"
+        },
         "presenter.foreground.foreground-two-overlays": {
             "en": "Can I show two pictures over the slide at the same time?",
             "text": "តើខ្ញុំអាចបង្ហាញរូបភាពពីរនៅពីលើស្លាយក្នុងពេលតែមួយបានទេ?"

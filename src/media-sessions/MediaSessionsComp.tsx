@@ -10,7 +10,10 @@ import {
     removeSetting,
     useStateSettingString,
 } from '../helper/settingHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    type ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     showAppConfirm,
@@ -188,6 +191,7 @@ export default function MediaSessionsComp({
     onRemove,
     genRemovedSettingNames,
     genSessionState,
+    genExtraMenuItems,
 }: Readonly<{
     target: string;
     sessions: MediaSessionType[];
@@ -204,10 +208,17 @@ export default function MediaSessionsComp({
      * still running behind the session in front -- leaves no mark at all.
      */
     genSessionState: (id: string) => MediaSessionStateType;
+    /**
+     * Rows of a strip's own at the end of a chip's menu -- a foreground
+     * session's **Open in Chatbot**. Left out by the Background tabs and the
+     * file lists, whose sessions are folders.
+     */
+    genExtraMenuItems?: (session: MediaSessionType) => ContextMenuItemType[];
 }>) {
     const onRenameRef = useAppCurrentRef(onRename);
     const onRemoveRef = useAppCurrentRef(onRemove);
     const genRemovedSettingNamesRef = useAppCurrentRef(genRemovedSettingNames);
+    const genExtraMenuItemsRef = useAppCurrentRef(genExtraMenuItems);
     const sessionsRef = useAppCurrentRef(sessions);
     const handleMenuOpening = useCallback(
         (event: any, session: MediaSessionType) => {
@@ -261,6 +272,7 @@ export default function MediaSessionsComp({
                               },
                           },
                       ]),
+                ...(genExtraMenuItemsRef.current?.(session) ?? []),
             ]);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps

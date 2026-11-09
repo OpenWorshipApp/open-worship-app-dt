@@ -6,6 +6,7 @@ paths:
   - 'src/chatbot/attachErrorHelpers.ts'
   - 'src/chatbot/noteFileTextHelpers.ts'
   - 'src/chatbot/resourcesChatHelpers.ts'
+  - 'src/chatbot/foregroundChatHelpers.ts'
   - 'src/chatbot/reportHelpers.ts'
   - 'src/chatbot/reportMarks.ts'
   - 'src/helper/errorReportOfferHelpers.ts'
@@ -452,3 +453,37 @@ window as a whole — tabs, pickers, its language, the caution — is in
   window, its card -- in the tab it was asked in (`chatbot-llm.md`, a NEW
   note). Like a row's, the chip waits in the box until a question carries
   it, and a reload of the help window drops it (BN-19).
+
+- **A foreground SESSION is attached by its ids and read afresh**
+  (2026-11-09, the user, the strip `Default · Session 2 · +` circled:
+  _sessions of opening foreground component should be able to attached to
+  the chatbot for the chat context_; W-61). Kind `'foreground'`, field
+  `foreground` (`ForegroundAskType` in `src/helper/ai/foregroundAskHelpers.ts`:
+  `widget`, `sessionId`, `sessionName`, optional `itemId` / `itemLabel`),
+  copied field by field by `toValidAttachments` through
+  `toValidForegroundAsk` -- a widget of the thirteen keys, an id `''` or
+  `s<base36>` -- and NOTHING else stored: its words, look and screens are
+  read again before every question (`owa_foreground_edit read`, the way a
+  flow's lines are) and ride the ask, never the transcript. The chip is
+  `<component> › <session>` (`toForegroundChipName`, `bi-layers`), numbered
+  like every chip; pressing it rings the session button in the Presenter
+  (`owa_find_ui "Quick Text > Session 2"`). **Three ways in**, each only
+  while AI is on: the session button's menu -- `MediaSessionsComp`'s
+  optional `genExtraMenuItems`, which only the FOREGROUND strips pass (the
+  Background tabs and the file lists are untouched) -- and the panel
+  header's robot (`ForegroundChatbotButtonComp`, the session in front; a
+  sessionless panel sends `sessionId ''`) both leave a 30-second
+  `chatbot-handoff-foreground` request (`requestChatbotForeground`,
+  `openChatbotWithForeground`), which the window takes in a tab of its own
+  (`attachHandedForegroundRef`: the chip in the box, the tab asking about
+  the Presenter, `genForegroundOpeningAnswer`'s card with four pressed
+  questions, no model); and the attach row's fourth button, **Attach a
+  foreground session**, reads `owa_foreground_edit read {open: true}` at the
+  press and lists the open panels' sessions (`RenderForegroundPickComp`), a
+  pick adding the chip to the box; no panel open, or the Presenter not
+  readable, is a line saying where to go. **It stays open in the tab**
+  (`findOpenForegroundAttachments`, `ChatSessionType.foregroundClosedAt`)
+  past later questions and pictures until the **Still asking about** ×;
+  several sessions may be open at once, each named by its number. **Ask
+  again** keeps it (`toReusableAttachments`). A question with one open is a
+  `foreground` ask (`chatbot-llm.md`).

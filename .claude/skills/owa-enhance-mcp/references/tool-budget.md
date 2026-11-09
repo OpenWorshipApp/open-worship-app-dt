@@ -51,6 +51,7 @@ that matters for a question is the model's. The audit reports both.
 | 2026-09-18, `MC-07` — the descriptions cut, two contradictions out | 53 (27 owa) / ~12 863 | 24 / **~7 253** | ~72 530 |
 | 2026-10-09, baseline before `MC-50` (`owa_bible_xml` and drift since) | 54 (28 owa) / ~13 399 | 25 / ~7 789 | ~77 890 |
 | 2026-10-10, `MC-50` — `owa_presenting_flow`, `owa_click` `button`/`clicks`; `owa_press_key`, `owa_drag`, `owa_menu` withheld | 60 (34 owa) / ~15 243 | 26 / **~8 316** | ~83 160 |
+| 2026-11-09, `owa_foreground` learns every component, the panel's own look and a verse `ref` (+136); `owa_foreground_edit` (~780) to a foreground ask alone | — | 26 / **~8 478** | ~84 780 |
 
 Each of those last two rows is what one deliberate addition costs, paid by
 every volunteer whether or not they ever ask about a web page or a song:
