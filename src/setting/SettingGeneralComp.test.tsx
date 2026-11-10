@@ -348,7 +348,9 @@ describe('SettingLanguagePickerComp', () => {
             resolveLangs = resolve;
         });
         await act(async () => root.render(<SettingLanguagePickerComp />));
-        expect(container.querySelector('img[alt="Loading..."]')).not.toBeNull();
+        expect(
+            container.querySelector('[role="img"][aria-label="Loading..."]'),
+        ).not.toBeNull();
 
         await act(async () => resolveLangs([]));
         expect(container.textContent).toContain('No languages available.');

@@ -233,7 +233,10 @@ function findButton(text: string, scope: ParentNode = container) {
 }
 
 function checkIsLoading() {
-    return container.querySelector('img[alt="Loading..."]') !== null;
+    return (
+        container.querySelector('[role="img"][aria-label="Loading..."]') !==
+        null
+    );
 }
 
 function getLastEditorProps() {

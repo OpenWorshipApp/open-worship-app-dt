@@ -377,7 +377,7 @@ origin driven is not a prod report.
    counts: `Bible Lookup` on `presenter.html` / `appDocumentEditor.html` (the pages with
    `#app-header`), `Go Back to Presenter` on `reader.html`, `Apply Settings` on
    `setting.html`. Then `owa_app_state` says which page and language are live. A page still
-   showing only its loading gif when `wait_for` times out is itself a bug — record it.
+   showing only its boot spinner when `wait_for` times out is itself a bug — record it.
    `wait_for` answers with the whole snapshot, so call it once rather than in a loop. (This
    step used to be an `evaluate_script` probe of `#root`; that tool is refused now.)
 
@@ -1246,7 +1246,8 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   disk-backed in `<file>.histories/<n>-head` — KB §12.2b); the live `screen.html` of an
   already-presented slide is the one deliberate exception. Name the broken hop (KB §12.2).
 - **Visual**: clipped/overflowing text, overlapping elements, invisible or low-contrast
-  text, broken/blank images, layout shift, a `loading.gif` that never disappears.
+  text, broken/blank images, layout shift, a boot spinner (`.app-boot-loading`) that
+  never disappears.
 - **Accessibility**: icon-only buttons with no accessible name, controls missing roles
   or labels, focus traps. (`take_snapshot` exposes the a11y tree — flag unnamed nodes.)
 - **Performance** (optional): use `mcp__owa-devtools__performance_start_trace` /

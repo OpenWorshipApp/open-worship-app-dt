@@ -172,7 +172,9 @@ function findItem(text: string) {
 }
 
 function checkIsLoading(scope: ParentNode = container) {
-    return scope.querySelector('img[alt="Loading..."]') !== null;
+    return (
+        scope.querySelector('[role="img"][aria-label="Loading..."]') !== null
+    );
 }
 
 async function flush() {

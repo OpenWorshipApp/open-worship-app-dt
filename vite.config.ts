@@ -5,6 +5,7 @@ import { defineConfig, normalizePath, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
+import { bootLoadingPlugin } from './vite-plugin-boot-loading';
 import { compNameAttributePlugin } from './vite-plugin-comp-name';
 import { gzBundlePlugin } from './vite-plugin-gz-bundle';
 
@@ -128,6 +129,7 @@ export default defineConfig({
         compNameAttributePlugin(),
         react(),
         htmlPlugin(),
+        bootLoadingPlugin(resolve(__dirname, 'src/others/LoadingComp.css')),
         basicSsl({
             name: 'localhost',
             domains: ['localhost'],

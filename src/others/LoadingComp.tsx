@@ -1,6 +1,7 @@
+import './LoadingComp.css';
+
 import type { CSSProperties } from 'react';
 
-import loading from '../assets/loading.gif';
 import { tran } from '../lang/langHelpers';
 
 export default function LoadingComp({
@@ -15,13 +16,10 @@ export default function LoadingComp({
             className="d-flex flex-wrap w-100 h-100 justify-content-center align-items-center"
             style={style}
         >
-            <img
-                height={20}
-                src={loading}
-                alt={`${tran('Loading')}...`}
-                style={{
-                    maxWidth: '30px',
-                }}
+            <span
+                className="app-loading-spinner"
+                role="img"
+                aria-label={`${tran('Loading')}...`}
             />
             {message ? (
                 <div

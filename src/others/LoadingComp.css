@@ -1,0 +1,87 @@
+/*
+ * The app's loading indicator: eight segments round a ring, the light
+ * stepping round them once a second, in the theme's accent (`--app-accent` --
+ * the on-air magenta is reserved for content live on a screen).
+ *
+ * ONE source for two places. `LoadingComp` imports this file, and the boot
+ * loader every page's `#root` starts with is this same file inlined by the
+ * Vite HTML transform (`vite-plugin-boot-loading.ts`). No script has run at
+ * boot, so there the colour comes from `prefers-color-scheme`, which
+ * Electron's `nativeTheme.themeSource` keeps on the app's own theme. Plain
+ * CSS rather than SCSS, so the transform can inline it as it is.
+ *
+ * Cost is the brief (CLAUDE.md: low-spec machines). Measured 2026-11-10 in
+ * Chromium with software compositing -- what a machine whose GPU is
+ * blocklisted gets: a smooth turn makes the compositor draw 60 frames a
+ * second, and those frames are the bill, not the ring (a masked ring, a
+ * border ring and an SVG image cost the same). So the turn is `steps(8)`: 8
+ * frames a second, each landing a segment exactly where the last one stood,
+ * so it reads as the light moving round rather than a jerky turn. Only
+ * `transform` is animated, which the compositor runs with no main-thread
+ * work, and the ring is rasterised once. The GIF this replaced drew 10 frames
+ * a second and re-rasterised every one. `src/test-setup/bootLoading.test.ts`
+ * holds both rules.
+ */
+.app-loading-spinner {
+  --app-loading-color: var(--app-accent, #0f766e);
+  --app-loading-size: 20px;
+  --app-loading-thickness: max(2px, calc(var(--app-loading-size) * 0.14));
+  display: inline-block;
+  flex: none;
+  width: var(--app-loading-size);
+  height: var(--app-loading-size);
+  /* The outer edge of the ring; the mask below cuts only the hole. */
+  border-radius: 50%;
+  /* One shade per segment, faint to full; every hard stop falls in a gap. */
+  background: conic-gradient(
+    color-mix(in srgb, var(--app-loading-color) 14%, transparent) 0 45deg,
+    color-mix(in srgb, var(--app-loading-color) 22%, transparent) 0 90deg,
+    color-mix(in srgb, var(--app-loading-color) 31%, transparent) 0 135deg,
+    color-mix(in srgb, var(--app-loading-color) 42%, transparent) 0 180deg,
+    color-mix(in srgb, var(--app-loading-color) 54%, transparent) 0 225deg,
+    color-mix(in srgb, var(--app-loading-color) 68%, transparent) 0 270deg,
+    color-mix(in srgb, var(--app-loading-color) 84%, transparent) 0 315deg,
+    var(--app-loading-color) 0
+  );
+  /* A ring, cut in eight; the 1deg and 1px ramps anti-alias the cuts. */
+  mask:
+    repeating-conic-gradient(
+      transparent 0,
+      #000 1deg 33deg,
+      transparent 34deg 45deg
+    ),
+    radial-gradient(
+      farthest-side,
+      transparent calc(100% - var(--app-loading-thickness) - 1px),
+      #000 calc(100% - var(--app-loading-thickness))
+    );
+  mask-composite: intersect;
+  animation: app-loading-spin 1s steps(8) infinite;
+}
+
+/* Before any script: centred in the window, larger. */
+.app-loading-spinner.app-boot-loading {
+  --app-loading-size: 44px;
+  position: fixed;
+  inset: 0;
+  margin: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-loading-spinner {
+    --app-loading-color: var(--app-accent, #5eead4);
+  }
+}
+
+/* Slower still, never stopped: a still ring would read as a hung app. */
+@media (prefers-reduced-motion: reduce) {
+  .app-loading-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes app-loading-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
