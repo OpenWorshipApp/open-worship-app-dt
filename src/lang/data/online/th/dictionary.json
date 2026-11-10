@@ -4218,5 +4218,7 @@
     "Picture in Picture": "ภาพซ้อนภาพ",
     "Markdown Lesson": "บทเรียน Markdown",
     "Heading": "หัวเรื่อง",
-    "Quote": "คำพูดอ้างอิง"
+    "Quote": "คำพูดอ้างอิง",
+    "Infinite": "ไม่จำกัด",
+    "Keep the text on screen until it is hidden": "แสดงข้อความบนหน้าจอไว้จนกว่าจะถูกซ่อน"
 }

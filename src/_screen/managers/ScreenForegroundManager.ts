@@ -49,6 +49,7 @@ import type {
 } from '../screenTypeHelpers';
 import {
     DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+    toQuickTextInfinitePart,
     withForegroundLayer,
 } from '../screenTypeHelpers';
 import {
@@ -1257,7 +1258,10 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     setQuickTextData(data: ForegroundQuickTextDataType, isNoSyncGroup = false) {
         this.putSessionData('quickTextDataList', data, isNoSyncGroup);
     }
-    /** `sessionId` and `isBehind` -- see `setCountdown`. */
+    /**
+     * `sessionId` and `isBehind` -- see `setCountdown`. `isInfinite` keeps it
+     * up until a person hides it.
+     */
     static async setQuickText(
         event: MouseEvent,
         htmlText: string | null,
@@ -1268,6 +1272,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         sessionId?: string,
         isBehind = false,
         transitionEffect?: TransitionEffectType,
+        isInfinite = false,
     ) {
         this.setData(
             event,
@@ -1282,6 +1287,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                                   htmlText,
                                   timeSecondDelay,
                                   timeSecondToLive,
+                                  ...toQuickTextInfinitePart(isInfinite),
                                   extraStyle,
                               },
                               isBehind,

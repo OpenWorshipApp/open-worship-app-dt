@@ -61,6 +61,15 @@ button:
   instead of covering the slide. Every word you typed is kept; pressing a
   preset twice changes nothing more. The band sits flush on the bottom edge;
   **Y** in _Properties_ lifts it.
+- **How long a quick text stays is each session's own.** Above the box,
+  **[en:tran:Delay]** is the seconds it waits before it shows (0 to start)
+  and **[en:tran:Live]** the seconds it stays on the screen (5 to start; a
+  preset sets its own, two minutes for **[en:tran:Bible Verse]**). Switch on
+  **[en:tran:Infinite]** under them and that session's text stays up until
+  you take it down with its **[en:tran:Hide Quick Text]** row or a Clear;
+  the Live box greys and keeps its number for when you switch it off again.
+  Each session keeps its own three, so a verse can stay up while a speaker's
+  name in another session leaves after a few seconds.
 - In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
   another size: it keeps its place until you type a number, and shows the
   size in force again if you leave it empty. 0 px is a square corner.

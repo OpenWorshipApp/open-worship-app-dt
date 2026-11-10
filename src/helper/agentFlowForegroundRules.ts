@@ -14,6 +14,10 @@
  * Pure: no store, no file, no `tran`. Every rule a test.
  */
 import { COUNTDOWN_LEAD_SECOND } from '../presenter-foreground/foregroundDragHelpers';
+import {
+    QUICK_TEXT_DEFAULT_DELAY_SECOND,
+    QUICK_TEXT_DEFAULT_LIVE_SECOND,
+} from '../presenter-foreground/foregroundComponentRules';
 
 export const AGENT_FLOW_FOREGROUND_WIDGETS = [
     'countdown',
@@ -318,15 +322,17 @@ export function genAgentForegroundData(
         }
         data.timeSecondDelay = fields.delaySecond;
     } else if (isNew) {
-        data.timeSecondDelay = 0;
+        data.timeSecondDelay = QUICK_TEXT_DEFAULT_DELAY_SECOND;
     }
     if (fields.liveSecond !== undefined) {
         if (!checkIsPositiveNumber(fields.liveSecond)) {
             return fail('`liveSecond` is how many seconds it stays up.');
         }
         data.timeSecondToLive = fields.liveSecond;
+        // Seconds asked for are how long it stays: no longer until hidden.
+        delete data.isInfinite;
     } else if (isNew) {
-        data.timeSecondToLive = 3;
+        data.timeSecondToLive = QUICK_TEXT_DEFAULT_LIVE_SECOND;
     }
     return { data };
 }

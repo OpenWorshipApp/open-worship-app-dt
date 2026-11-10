@@ -14,7 +14,11 @@
  */
 import { getSetting } from './settingHelpers';
 import type { ForegroundComponentKeyType } from '../presenter-foreground/foregroundComponentKeys';
-import { genClockOwnSettingNames } from '../presenter-foreground/foregroundComponentRules';
+import {
+    QUICK_TEXT_DEFAULT_DELAY_SECOND,
+    QUICK_TEXT_DEFAULT_LIVE_SECOND,
+    genClockOwnSettingNames,
+} from '../presenter-foreground/foregroundComponentRules';
 import type { ForegroundSettingWriteType } from './agentForegroundLookRules';
 import type { AgentForegroundReasonType } from './agentForegroundComponentHelpers';
 import {
@@ -641,8 +645,15 @@ const PANEL_DEFAULT_LIST: [RegExp, string][] = [
     [/^foreground-seconds-setting(?:-|$)/, '0'],
     [/^foreground-countdown-auto-start-setting(?:-|$)/, 'false'],
     [/^foreground-stopwatch-auto-start-setting(?:-|$)/, 'false'],
-    [/^foreground-quick-text-time-delay(?:-|$)/, '0'],
-    [/^foreground-quick-text-time-to-live(?:-|$)/, '3'],
+    [
+        /^foreground-quick-text-time-delay(?:-|$)/,
+        `${QUICK_TEXT_DEFAULT_DELAY_SECOND}`,
+    ],
+    [
+        /^foreground-quick-text-time-to-live(?:-|$)/,
+        `${QUICK_TEXT_DEFAULT_LIVE_SECOND}`,
+    ],
+    [/^foreground-quick-text-is-infinite(?:-|$)/, 'false'],
     [/^foreground-message-is-rotating(?:-|$)/, 'false'],
     [/^foreground-message-interval(?:-|$)/, '8'],
 ];
@@ -698,11 +709,17 @@ export function readForegroundContent(
             return {
                 text: read(`foreground-quick-text-setting${suffix}`) ?? '',
                 delay: Number(
-                    read(`foreground-quick-text-time-delay${suffix}`) ?? 0,
+                    read(`foreground-quick-text-time-delay${suffix}`) ??
+                        QUICK_TEXT_DEFAULT_DELAY_SECOND,
                 ),
                 seconds: Number(
-                    read(`foreground-quick-text-time-to-live${suffix}`) ?? 3,
+                    read(`foreground-quick-text-time-to-live${suffix}`) ??
+                        QUICK_TEXT_DEFAULT_LIVE_SECOND,
                 ),
+                // Stays up until hidden; `seconds` is then not used.
+                infinite:
+                    read(`foreground-quick-text-is-infinite${suffix}`) ===
+                    'true',
             };
         case 'message': {
             const stored = read(`foreground-message-setting${suffix}`) ?? '';

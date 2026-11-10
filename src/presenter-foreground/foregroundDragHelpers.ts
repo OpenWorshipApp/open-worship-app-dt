@@ -1,7 +1,10 @@
 import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
-import { withForegroundLayer } from '../_screen/screenTypeHelpers';
+import {
+    toQuickTextInfinitePart,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import {
     genCountdownTiming,
     genStopwatchTiming,
@@ -301,6 +304,7 @@ export async function applyForegroundDragData(
                     htmlText: html,
                     timeSecondDelay: data.timeSecondDelay,
                     timeSecondToLive: data.timeSecondToLive,
+                    ...toQuickTextInfinitePart(data.isInfinite),
                     extraStyle,
                     rowKey,
                 },

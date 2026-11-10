@@ -220,6 +220,7 @@ export function genHtmlForegroundQuickText(
         htmlText,
         timeSecondDelay,
         timeSecondToLive,
+        isInfinite,
         extraStyle = {},
     }: ForegroundQuickTextDataType,
     animData: StyleAnimType,
@@ -249,6 +250,11 @@ export function genHtmlForegroundQuickText(
                 setTimeout(resolve, timeSecondDelay * 1000);
             });
             await animData.animIn(element, parentContainer);
+            if (isInfinite) {
+                // No timer at all: it stays until a Hide, a Clear or a newer
+                // entry of its session takes it down.
+                return;
+            }
             await new Promise<void>((resolve) => {
                 setTimeout(resolve, timeSecondToLive * 1000);
             });

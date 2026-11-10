@@ -12,6 +12,7 @@ import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import {
+    useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
 } from '../helper/settingHelpers';
@@ -28,6 +29,7 @@ import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import PropRowComp from './ForegroundPropRowComp';
 import {
     type ForegroundQuickTextDataType,
+    toQuickTextInfinitePart,
     withForegroundLayer,
 } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
@@ -48,7 +50,12 @@ import {
     toQuickTextSettingName,
     toQuickTextTimeDelaySettingName,
     toQuickTextTimeToLiveSettingName,
+    toQuickTextIsInfiniteSettingName,
 } from './quickTextPresetHelpers';
+import {
+    QUICK_TEXT_DEFAULT_DELAY_SECOND,
+    QUICK_TEXT_DEFAULT_LIVE_SECOND,
+} from './foregroundComponentRules';
 import { QUICK_TEXT_DEFAULT_MARKDOWN } from './quickTextFormatHelpers';
 import QuickTextMarkdownLessonComp from './QuickTextMarkdownLessonComp';
 
@@ -58,6 +65,7 @@ function genOwnSettingNames(suffix: string) {
         toQuickTextSettingName(suffix),
         toQuickTextTimeDelaySettingName(suffix),
         toQuickTextTimeToLiveSettingName(suffix),
+        toQuickTextIsInfiniteSettingName(suffix),
     ];
 }
 
@@ -183,13 +191,19 @@ function QuickTextBodyComp({
         toQuickTextSettingName(suffix),
         QUICK_TEXT_DEFAULT_MARKDOWN,
     );
+    // The timing is the SESSION's, like its words: the verse in one stays
+    // up until it is hidden, the speaker's name in another for 5 seconds.
     const [timeSecondDelay, setTimeSecondDelay] = useStateSettingNumber(
         toQuickTextTimeDelaySettingName(suffix),
-        0,
+        QUICK_TEXT_DEFAULT_DELAY_SECOND,
     );
     const [timeSecondToLive, setTimeSecondToLive] = useStateSettingNumber(
         toQuickTextTimeToLiveSettingName(suffix),
-        3,
+        QUICK_TEXT_DEFAULT_LIVE_SECOND,
+    );
+    const [isInfinite, setIsInfinite] = useStateSettingBoolean(
+        toQuickTextIsInfiniteSettingName(suffix),
+        false,
     );
 
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
@@ -228,12 +242,14 @@ function QuickTextBodyComp({
                 sessionId,
                 getIsBehind(),
                 getTransition(),
+                isInfinite,
             );
         },
         [
             getRenderedHtml,
             timeSecondDelay,
             timeSecondToLive,
+            isInfinite,
             genStyle,
             getIsBehind,
             getTransition,
@@ -262,6 +278,7 @@ function QuickTextBodyComp({
                         htmlText: await getRenderedHtml(),
                         timeSecondDelay,
                         timeSecondToLive,
+                        ...toQuickTextInfinitePart(isInfinite),
                         extraStyle: genStyle(),
                     },
                     getIsBehind(),
@@ -272,6 +289,7 @@ function QuickTextBodyComp({
             getRenderedHtml,
             timeSecondDelay,
             timeSecondToLive,
+            isInfinite,
             genStyle,
             getIsBehind,
             getTransition,
@@ -294,6 +312,14 @@ function QuickTextBodyComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    const setIsInfiniteRef = useAppCurrentRef(setIsInfinite);
+    const handleIsInfiniteChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setIsInfiniteRef.current(event.target.checked);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const setMarkdownTextRef = useAppCurrentRef(setMarkdownText);
     const handleMarkdownTextChange = useCallback(
         (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -306,6 +332,7 @@ function QuickTextBodyComp({
     const markdownTextRef = useAppCurrentRef(markdownText);
     const timeSecondDelayRef = useAppCurrentRef(timeSecondDelay);
     const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
+    const isInfiniteRef = useAppCurrentRef(isInfinite);
     const genStyleRef = useAppCurrentRef(genStyle);
     const getIsBehindRef = useAppCurrentRef(getIsBehind);
     const getTransitionRef = useAppCurrentRef(getTransition);
@@ -322,6 +349,7 @@ function QuickTextBodyComp({
                         markdownText: markdownTextRef.current,
                         timeSecondDelay: timeSecondDelayRef.current,
                         timeSecondToLive: timeSecondToLiveRef.current,
+                        ...toQuickTextInfinitePart(isInfiniteRef.current),
                         extraStyle: genStyleRef.current(),
                     },
                     getIsBehindRef.current(),
@@ -380,9 +408,31 @@ function QuickTextBodyComp({
                                 'Seconds the text stays on screen',
                             )}
                             value={timeSecondToLive}
+                            // Kept, greyed, while Infinite is on: switched
+                            // back off, the session's own length is there.
+                            disabled={isInfinite}
                             onChange={handleTimeSecondToLiveChange}
                         />
                         <span className="fg-unit-static">s</span>
+                    </PropRowComp>
+                    <PropRowComp
+                        iconClassName="bi bi-infinity"
+                        label={tran('Infinite')}
+                        title={tran(
+                            'Keep the text on screen until it is hidden',
+                        )}
+                        isEngaged={isInfinite}
+                    >
+                        <input
+                            className="form-check-input app-caught-hover-pointer mt-0"
+                            type="checkbox"
+                            role="switch"
+                            aria-label={tran(
+                                'Keep the text on screen until it is hidden',
+                            )}
+                            checked={isInfinite}
+                            onChange={handleIsInfiniteChange}
+                        />
                     </PropRowComp>
                 </div>
                 <div className="d-flex align-items-center flex-wrap gap-2">

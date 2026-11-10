@@ -307,8 +307,21 @@ export type ForegroundQuickTextDataType = ForegroundLayerDataType & {
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
+    /**
+     * Stays up until a person hides it; `timeSecondToLive` is then not read.
+     * Written only when true (`toQuickTextInfinitePart`), so an entry saved
+     * before it compares the same.
+     */
+    isInfinite?: boolean;
     extraStyle?: CSSProperties;
 };
+
+/** `isInfinite` for a quick text datum: the key only when it is true. */
+export function toQuickTextInfinitePart(
+    isInfinite: boolean | undefined,
+): Pick<ForegroundQuickTextDataType, 'isInfinite'> {
+    return isInfinite === true ? { isInfinite: true } : {};
+}
 export type ForegroundCameraDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the

@@ -627,6 +627,7 @@ describe('foreground text panels', () => {
             'session-a',
             true,
             'fade',
+            false,
         );
         await click('Show on Screens');
         expect(mocks.showQuick.mock.calls.at(-1)?.[5]).toBe(true);
@@ -636,6 +637,62 @@ describe('foreground text panels', () => {
             { id: 'session-a', htmlText: 'old' },
         );
         expect(mocks.setQuick).not.toHaveBeenCalled();
+    });
+
+    // The user, 2026-11-09: each session its own timing, Live 5 seconds and
+    // Infinite off until asked; Infinite keeps it up until it is hidden.
+    test('quick text starts at 5 seconds, and Infinite keeps the session up until hidden', async () => {
+        await render(<ForegroundQuickTextComp />);
+        const live = container.querySelector(
+            '[aria-label="Seconds the text stays on screen"]',
+        ) as HTMLInputElement;
+        const delay = container.querySelector(
+            '[aria-label="Seconds to wait before showing the text"]',
+        ) as HTMLInputElement;
+        const infinite = container.querySelector(
+            '[aria-label="Keep the text on screen until it is hidden"]',
+        ) as HTMLInputElement;
+        expect(live.value).toBe('5');
+        expect(delay.value).toBe('0');
+        expect(infinite.checked).toBe(false);
+        expect(live.disabled).toBe(false);
+        await act(async () => infinite.click());
+        expect(infinite.checked).toBe(true);
+        // Greyed, not lost: switched back off, the length is still there.
+        expect(live.disabled).toBe(true);
+        expect(live.value).toBe('5');
+        // Kept under THIS session's own key.
+        expect(mocks.persist).toHaveBeenCalledWith(
+            'foreground-quick-text-is-infinite-session-a',
+            true,
+        );
+        await click('Show Quick Text');
+        expect(mocks.showQuick.mock.calls.at(-1)?.[9]).toBe(true);
+        const button = container.querySelector('[title="Show Quick Text"]')!;
+        await act(async () =>
+            button.dispatchEvent(new Event('dragstart', { bubbles: true })),
+        );
+        expect(mocks.drag.mock.calls.at(-1)?.[1].getData()).toMatchObject({
+            timeSecondToLive: 5,
+            isInfinite: true,
+        });
+        state.dropManager = { setQuickTextData: mocks.setQuick };
+        await act(async () => state.dragStore.onDropped({}));
+        expect(mocks.setQuick).toHaveBeenLastCalledWith(
+            expect.objectContaining({ isInfinite: true }),
+        );
+        await act(async () => infinite.click());
+        expect(live.disabled).toBe(false);
+        await click('Show Quick Text');
+        expect(mocks.showQuick.mock.calls.at(-1)?.[9]).toBe(false);
+        await act(async () =>
+            button.dispatchEvent(new Event('dragstart', { bubbles: true })),
+        );
+        await act(async () => state.dragStore.onDropped({}));
+        // Off, the datum carries no `isInfinite` key at all.
+        expect(mocks.setQuick.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+            'isInfinite',
+        );
     });
 
     test('quick-text drag carries markdown source, renders only on a valid drop and refreshes the shown style', async () => {
@@ -822,6 +879,7 @@ describe('foreground text panels', () => {
             'foreground-quick-text-setting-b',
             'foreground-quick-text-time-delay-b',
             'foreground-quick-text-time-to-live-b',
+            'foreground-quick-text-is-infinite-b',
         ]);
     });
 

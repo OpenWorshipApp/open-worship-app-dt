@@ -1,4 +1,5 @@
 import type { ForegroundColorModeType } from './foregroundContrastHelpers';
+import { genQuickTextOwnSettingNames } from './foregroundComponentRules';
 import {
     type ForegroundColorPairType,
     type ForegroundPresetFlagsType,
@@ -16,13 +17,17 @@ export function toQuickTextPrefix(suffix: string) {
     return `${QUICK_TEXT_WIDGET_KEY}${suffix}`;
 }
 export function toQuickTextSettingName(suffix: string) {
-    return `foreground-quick-text-setting${suffix}`;
+    return genQuickTextOwnSettingNames(suffix).text;
 }
 export function toQuickTextTimeDelaySettingName(suffix: string) {
-    return `foreground-quick-text-time-delay${suffix}`;
+    return genQuickTextOwnSettingNames(suffix).delay;
 }
 export function toQuickTextTimeToLiveSettingName(suffix: string) {
-    return `foreground-quick-text-time-to-live${suffix}`;
+    return genQuickTextOwnSettingNames(suffix).live;
+}
+/** Whether the session's quick text stays up until a person hides it. */
+export function toQuickTextIsInfiniteSettingName(suffix: string) {
+    return genQuickTextOwnSettingNames(suffix).isInfinite;
 }
 
 /** The Quick Text panel's Properties rows (`ForegroundQuickTextComp`). */

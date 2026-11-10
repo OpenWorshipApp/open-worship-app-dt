@@ -790,6 +790,31 @@ describe('taking things off and reading', () => {
         });
     });
 
+    it("shows a session's quick text until hidden when its Infinite is on", async () => {
+        h.settings.set('foreground-quick-text-setting', 'Hello');
+        h.settings.set('foreground-quick-text-is-infinite', 'true');
+        const read: any = await handleAgentForegroundRequest({
+            action: 'read',
+            widget: 'quick-text',
+        });
+        expect(read.content).toMatchObject({
+            text: 'Hello',
+            delay: 0,
+            seconds: 5,
+            infinite: true,
+        });
+        const shown: any = await handleAgentForegroundRequest(
+            { widget: 'quick-text', text: 'Hello' },
+            NOW,
+        );
+        expect(JSON.stringify(shown)).toContain('until it is hidden');
+        expect(dataOf().quickTextDataList).toHaveLength(1);
+        expect(dataOf().quickTextDataList[0]).toMatchObject({
+            timeSecondToLive: 5,
+            isInfinite: true,
+        });
+    });
+
     it("reads a session's words and look without changing anything", async () => {
         h.settings.set('foreground-quick-text-setting', 'Hello');
         const result: any = await handleAgentForegroundRequest({

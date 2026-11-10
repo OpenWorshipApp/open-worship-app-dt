@@ -36,6 +36,7 @@ import {
     type ForegroundTimeDataType,
     type ForegroundVideoDataType,
     type ForegroundWebDataType,
+    toQuickTextInfinitePart,
     withForegroundLayer,
 } from '../_screen/screenTypeHelpers';
 import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
@@ -52,7 +53,10 @@ import {
 import type { ForegroundComponentKeyType } from '../presenter-foreground/foregroundComponentKeys';
 import {
     FOREGROUND_COMPONENT_RULE_MAP,
+    QUICK_TEXT_DEFAULT_DELAY_SECOND,
+    QUICK_TEXT_DEFAULT_LIVE_SECOND,
     genClockOwnSettingNames,
+    genQuickTextOwnSettingNames,
 } from '../presenter-foreground/foregroundComponentRules';
 import {
     genForegroundExtraStyle,
@@ -632,20 +636,16 @@ export async function planShow(
             const { renderMarkdown } =
                 await import('../lyric-list/markdownHelpers');
             const { html } = await renderMarkdown(markdown);
+            const names = genQuickTextOwnSettingNames(suffix);
             const delay = Math.max(
                 0,
-                readNumberSetting(
-                    `foreground-quick-text-time-delay${suffix}`,
-                    0,
-                ),
+                readNumberSetting(names.delay, QUICK_TEXT_DEFAULT_DELAY_SECOND),
             );
             const live = Math.max(
                 1,
-                readNumberSetting(
-                    `foreground-quick-text-time-to-live${suffix}`,
-                    3,
-                ),
+                readNumberSetting(names.live, QUICK_TEXT_DEFAULT_LIVE_SECOND),
             );
+            const isInfinite = getSetting(names.isInfinite) === 'true';
             const data: ForegroundQuickTextDataType = withForegroundLayer(
                 {
                     ...toSessionIdPart(sessionId),
@@ -653,6 +653,7 @@ export async function planShow(
                     htmlText: html,
                     timeSecondDelay: delay,
                     timeSecondToLive: live,
+                    ...toQuickTextInfinitePart(isInfinite),
                     extraStyle: genStyle(widget, prefix),
                 },
                 isBehind,
@@ -668,7 +669,9 @@ export async function planShow(
                     }) ?? '';
             return {
                 detail:
-                    `a line of text for ${live} seconds` +
+                    (isInfinite
+                        ? 'a line of text until it is hidden'
+                        : `a line of text for ${live} seconds`) +
                     (delay > 0 ? ` after ${delay} seconds` : '') +
                     `: "${firstLine}"`,
                 apply: (screenManager) => {

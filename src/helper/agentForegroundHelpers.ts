@@ -1320,7 +1320,7 @@ function pickCountdownMode(
         : 'duration';
 }
 
-// The panel's own Live is 3 seconds, too short to read an announcement out:
+// The panel's own Live is 5 seconds, too short to read an announcement out:
 // the assistant's quick text stayed 10 from the first day, and still does
 // when the session it is made beside has never been given one.
 const DEFAULT_NEW_QUICK_TEXT_SECONDS = 10;
@@ -1354,6 +1354,17 @@ function genQuickTextTimingWrites(
             key: liveKey,
             value: live || `${DEFAULT_NEW_QUICK_TEXT_SECONDS}`,
         });
+        // Until hidden goes with the length it replaces; seconds the ask
+        // said are how long it stays.
+        if (
+            getSetting(`foreground-quick-text-is-infinite${fromSuffix}`) ===
+            'true'
+        ) {
+            writes.push({
+                key: `foreground-quick-text-is-infinite${toSuffix}`,
+                value: 'true',
+            });
+        }
     }
     return writes;
 }

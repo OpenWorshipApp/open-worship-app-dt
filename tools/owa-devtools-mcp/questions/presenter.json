@@ -2018,7 +2018,11 @@
                         "markdown cheat sheet",
                         "quick text preset",
                         "speaker name",
-                        "verse lower third"
+                        "verse lower third",
+                        "how long quick text stays",
+                        "quick text delay",
+                        "keep text on screen until hidden",
+                        "infinite quick text"
                     ],
                     "resources": {
                         "recipe": "W-09",

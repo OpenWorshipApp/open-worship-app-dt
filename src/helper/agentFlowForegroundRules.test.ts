@@ -116,7 +116,7 @@ describe('a new foreground line, from words', () => {
         ).toHaveProperty('reason');
     });
 
-    test('a quick text stays three seconds unless told', () => {
+    test('a quick text stays five seconds unless told', () => {
         expect(
             genAgentForegroundData(
                 'quick-text',
@@ -128,7 +128,31 @@ describe('a new foreground line, from words', () => {
             data: {
                 markdownText: '**Pray**',
                 timeSecondDelay: 0,
-                timeSecondToLive: 3,
+                timeSecondToLive: 5,
+            },
+        });
+    });
+
+    test('seconds asked for take an until-hidden quick text off infinite', () => {
+        expect(
+            genAgentForegroundData(
+                'quick-text',
+                { liveSecond: 8 },
+                {
+                    existing: {
+                        markdownText: 'Pray',
+                        timeSecondDelay: 0,
+                        timeSecondToLive: 5,
+                        isInfinite: true,
+                    },
+                },
+                genId,
+            ),
+        ).toEqual({
+            data: {
+                markdownText: 'Pray',
+                timeSecondDelay: 0,
+                timeSecondToLive: 8,
             },
         });
     });

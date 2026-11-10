@@ -845,6 +845,28 @@ describe('screen render helpers', () => {
         expect(parent.innerHTML).toContain('<b>Safe</b>');
         expect(parent.innerHTML).not.toContain('<script');
 
+        // Infinite: up after its delay, and no timer ever takes it down.
+        const removeInfinite = vi.fn();
+        const infiniteText = genHtmlForegroundQuickText(
+            {
+                htmlText: '<p>Until hidden</p>',
+                timeSecondDelay: 1,
+                timeSecondToLive: 2,
+                isInfinite: true,
+                extraStyle: {},
+            },
+            animData,
+            removeInfinite,
+        );
+        const infiniteParent = document.createElement('div');
+        const infiniteAdding = infiniteText.handleAdding(infiniteParent);
+        await vi.advanceTimersByTimeAsync(1000);
+        await infiniteAdding;
+        expect(infiniteParent.innerHTML).toContain('Until hidden');
+        await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+        expect(removeInfinite).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+
         vi.useRealTimers();
     });
 

@@ -108,6 +108,26 @@ function genMarqueeOwnSettingNames(target: string, suffix: string) {
     ];
 }
 
+/**
+ * A quick text's timing, per SESSION: how long it waits, how long it stays,
+ * and whether it stays until a person hides it (2026-11-09, the user: _time
+ * control should be per session, and has an option for infinite … default
+ * timeout 5 seconds delay 0 and infinite false_). Read by the panel, the
+ * assistant and a run-sheet row alike, so a session never shows one length
+ * in the panel and goes up for another.
+ */
+export const QUICK_TEXT_DEFAULT_DELAY_SECOND = 0;
+export const QUICK_TEXT_DEFAULT_LIVE_SECOND = 5;
+
+export function genQuickTextOwnSettingNames(suffix: string) {
+    return {
+        text: `foreground-quick-text-setting${suffix}`,
+        delay: `foreground-quick-text-time-delay${suffix}`,
+        live: `foreground-quick-text-time-to-live${suffix}`,
+        isInfinite: `foreground-quick-text-is-infinite${suffix}`,
+    };
+}
+
 function genMediaRule(
     kind: 'video' | 'image' | 'web',
     dirSettingName: string,
@@ -169,11 +189,7 @@ export const FOREGROUND_COMPONENT_RULE_MAP: Record<
         },
         flags: { ...TEXT_FLAGS, isMargin: true },
         toOwnSettingNames: (suffix) => {
-            return [
-                `foreground-quick-text-setting${suffix}`,
-                `foreground-quick-text-time-delay${suffix}`,
-                `foreground-quick-text-time-to-live${suffix}`,
-            ];
+            return Object.values(genQuickTextOwnSettingNames(suffix));
         },
     },
     'long-text': {
