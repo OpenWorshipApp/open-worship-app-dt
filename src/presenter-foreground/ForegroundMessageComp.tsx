@@ -1083,6 +1083,8 @@ function MessageBodyComp({
                         ) : null}
                     </PropRowComp>
                 </div>
+            </div>
+            <div className="fg-actions-dock">
                 <div className="fg-actions">
                     <button
                         className="btn btn-primary"

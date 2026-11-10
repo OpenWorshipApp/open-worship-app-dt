@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-11-05T18:12:01.528Z
+  modified: 2026-11-09T22:21:19.941Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -130,6 +130,17 @@ with `<scratch>\setting.json` seeded
   a used data folder, so switching to it reloads straight in with no question (2026-10-04). A state the UI cannot reach without a destructive
   press (a missing bible key) can be set in the scratch `data/local-storage/<setting>` file and
   read back after **Apply Settings**, which reloads only the scratch instance's windows.
+- **A Khmer (or any language) pass needs no person either** (2026-11-09):
+  before the launch, extract the packed `extra-work/lang/<code>-<v>.tar.gz`
+  into `<scratch>\data\lang\<code>@<v>\` and put `"language-locale":
+  "km-KH"` in the seeded `clientSetting`; copy the user's
+  `bibles-data\KJV.xml` into `<scratch>\data\bibles-data\` so the Reader's
+  _Create the KJV Bible?_ confirm (the person's, refused) never comes; and
+  a list folder is `local-storage\select-dir-bible-presenter` holding
+  `$DATA_DIR_PATH\bibles` (a hand-written `.owb` there is listed). Write
+  every Windows path from node with `path.win32.join` or
+  `String.fromCharCode(92)`: Git Bash halves `\\` even in a quoted
+  `node -e` ([[bash-heredoc-halves-backslashes]]).
 - Stop it by its own pid (`taskkill //PID <pid>` from Git Bash exits it cleanly), then delete the
   scratch folder — after `cd`-ing out of it: a shell whose cwd is inside makes the delete EBUSY.
 

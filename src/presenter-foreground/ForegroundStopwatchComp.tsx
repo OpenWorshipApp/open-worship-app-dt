@@ -10,7 +10,7 @@ import { getCurrentLocale, tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
-    getForegroundShowingScreenIdDataList,
+    getForegroundSessionShowingList,
     getScreenForegroundManagerByDropped,
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
@@ -74,7 +74,11 @@ function refreshAllStopwatches(
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
-                screenForegroundManager.setStopwatchData(null);
+                // Only THIS session's overlay is drawn afresh.
+                screenForegroundManager.removeSessionData(
+                    'stopwatchDataList',
+                    data,
+                );
                 screenForegroundManager.setStopwatchData(
                     withForegroundLayer({ ...data, extraStyle }, isBehind),
                 );
@@ -83,9 +87,10 @@ function refreshAllStopwatches(
     }
 }
 
-function handleHiding(screenId: number) {
+/** Takes THIS overlay's session off the screen; other sessions' stay up. */
+function handleHiding(screenId: number, data: ForegroundStopwatchDataType) {
     getScreenForegroundManagerInstances(screenId, (screenForegroundManager) => {
-        screenForegroundManager.setStopwatchData(null);
+        screenForegroundManager.removeSessionData('stopwatchDataList', data);
     });
 }
 
@@ -119,6 +124,8 @@ function StopwatchShowingComp({
     sessionId,
     suffix,
     children,
+    header,
+    after,
 }: Readonly<{
     genStyle: () => CSSProperties;
     getIsBehind: () => boolean;
@@ -127,6 +134,10 @@ function StopwatchShowingComp({
     sessionId: string;
     suffix: string;
     children: ReactNode;
+    /** The body's caption, above this session's fields. */
+    header?: ReactNode;
+    /** What follows the fields in the body (the timer controls). */
+    after?: ReactNode;
 }>) {
     // Off by default: the stopwatch goes up on zero and waits for Start.
     const [isAutoStart, setIsAutoStart] = useStateSettingBoolean(
@@ -202,33 +213,42 @@ function StopwatchShowingComp({
     const showingLabel = isAutoStart
         ? tran('Start Stopwatch')
         : tran('Show Stopwatch');
+    // The body, then the Show row as a SIBLING of it: a sticky box cannot
+    // leave its parent, and the body starts below the Properties, so docked
+    // inside it the row scrolled away with them.
     return (
         <>
-            <div className="fg-fields">
-                <ForegroundAutoStartSwitchComp
-                    isAutoStart={isAutoStart}
-                    setIsAutoStart={setIsAutoStart}
-                />
+            <div className="fg-body">
+                {header}
+                <div className="fg-fields">
+                    <ForegroundAutoStartSwitchComp
+                        isAutoStart={isAutoStart}
+                        setIsAutoStart={setIsAutoStart}
+                    />
+                </div>
+                {after}
             </div>
-            <div className="fg-actions">
-                <button
-                    className="btn btn-primary"
-                    title={showingLabel}
-                    onClick={handleShowing}
-                    onContextMenu={handleContextMenuOpening}
-                    draggable
-                    onDragStart={handleDraggingStart}
-                >
-                    <i
-                        className={`bi ${isAutoStart ? 'bi-play-fill' : 'bi-display'}`}
-                    />{' '}
-                    {showingLabel}
-                </button>
-                <ContextMenuDotsButtonComp
-                    label={tran('Show on Screens')}
-                    onOpening={handleContextMenuOpening}
-                />
-                {children}
+            <div className="fg-actions-dock">
+                <div className="fg-actions">
+                    <button
+                        className="btn btn-primary"
+                        title={showingLabel}
+                        onClick={handleShowing}
+                        onContextMenu={handleContextMenuOpening}
+                        draggable
+                        onDragStart={handleDraggingStart}
+                    >
+                        <i
+                            className={`bi ${isAutoStart ? 'bi-play-fill' : 'bi-display'}`}
+                        />{' '}
+                        {showingLabel}
+                    </button>
+                    <ContextMenuDotsButtonComp
+                        label={tran('Show on Screens')}
+                        onOpening={handleContextMenuOpening}
+                    />
+                    {children}
+                </div>
             </div>
         </>
     );
@@ -385,23 +405,9 @@ export default function ForegroundStopwatchComp() {
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return data.stopwatchData !== null;
-        },
-    )
-        .map(
-            ([screenId, data]):
-                [number, ForegroundStopwatchDataType] | null => {
-                if (data.stopwatchData === null) {
-                    return null;
-                }
-                return [screenId, data.stopwatchData];
-            },
-        )
-        .filter((item) => {
-            return item !== null;
-        });
+    // One row per SESSION's overlay: every session owns its own on a screen.
+    const showingScreenIdDataList =
+        getForegroundSessionShowingList('stopwatchDataList');
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     // A stopwatch is ONE thing on the screen, so a session here is a saved
     // LOOK -- its own size, place and colours -- for the one a service
@@ -427,7 +433,7 @@ export default function ForegroundStopwatchComp() {
         hideSession: (sessionId, _suffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
                 if (checkIsSessionData(data, sessionId, idList)) {
-                    handleHiding(screenId);
+                    handleHiding(screenId, data);
                 }
             }
         },
@@ -477,32 +483,32 @@ export default function ForegroundStopwatchComp() {
         <ForegroundLayoutComp target="stopwatch">
             {sessionsElement}
             {propsSetting}
-            <div className="fg-body">
-                {/*
-                 * The caption stays, the card around it goes: this panel has
-                 * exactly one thing to say and one button to press, and a
-                 * border inside a bordered panel said neither.
-                 */}
-                <span className="fg-group-name">
-                    <i className="bi bi-stopwatch" />
-                    <span>{tran('Count up from zero')}</span>
-                </span>
-                <StopwatchShowingComp
-                    key={activeId}
-                    genStyle={genStyle}
-                    getIsBehind={getIsBehind}
-                    getTransition={getTransition}
-                    sessionId={activeId}
-                    suffix={suffix}
-                >
-                    {genHidingElement(false)}
-                </StopwatchShowingComp>
-                <StopwatchTimerComp
-                    key={`timer-${activeId}`}
-                    suffix={suffix}
-                    sessionShowingList={sessionShowingList}
-                />
-            </div>
+            <StopwatchShowingComp
+                key={activeId}
+                genStyle={genStyle}
+                getIsBehind={getIsBehind}
+                getTransition={getTransition}
+                sessionId={activeId}
+                suffix={suffix}
+                header={
+                    // The caption stays, the card around it goes: this panel
+                    // has exactly one thing to say and one button to press,
+                    // and a border inside a bordered panel said neither.
+                    <span className="fg-group-name">
+                        <i className="bi bi-stopwatch" />
+                        <span>{tran('Count up from zero')}</span>
+                    </span>
+                }
+                after={
+                    <StopwatchTimerComp
+                        key={`timer-${activeId}`}
+                        suffix={suffix}
+                        sessionShowingList={sessionShowingList}
+                    />
+                }
+            >
+                {genHidingElement(false)}
+            </StopwatchShowingComp>
         </ForegroundLayoutComp>
     );
 }

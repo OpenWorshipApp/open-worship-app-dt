@@ -747,15 +747,17 @@ describe('every refusal says why and changes nothing', () => {
         ).toBe(
             'Block 1 is removed in this change: move block 4 after another one.',
         );
-        expect(
-            reasonOf(CONTENT, [
-                { block: 1, remove: true },
-                { after: 1, text: 'Peace' },
-            ]),
-        ).toBe(
-            'Block 1 is removed in this change: put the new block after ' +
-                'another one.',
-        );
+        // A NEW block after the one removed is no longer refused: since
+        // BN-58 a rewrite's new blocks take the removed block's place
+        // (`chainRewriteAdds`) -- seven refused calls had left a model with
+        // no answer. It lands where block 1 was, and block 1 is gone.
+        const { result } = edit(CONTENT, [
+            { block: 1, remove: true },
+            { after: 1, text: 'Peace' },
+        ]);
+        const blocks = readOf(result.content);
+        expect(blocks[0]).toEqual(['paragraph', 'Peace']);
+        expect(blocks).not.toContainEqual(readOf(CONTENT)[0]);
         expect(
             reasonOf(CONTENT, [
                 { block: 4, remove: true },

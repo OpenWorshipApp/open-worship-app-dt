@@ -267,7 +267,7 @@ describe('screenHelpers extra coverage', () => {
                 });
             }
             if (key === screenManagerSettingNames.FOREGROUND) {
-                return JSON.stringify({ 1: { marqueeTopData: null } });
+                return JSON.stringify({ 1: { marqueeTopDataList: [] } });
             }
             return undefined;
         });
@@ -366,7 +366,7 @@ describe('screenHelpers extra coverage', () => {
         getSettingMock.mockImplementation((key: string) => {
             if (key === screenManagerSettingNames.FOREGROUND) {
                 return JSON.stringify({
-                    1: { marqueeTopData: { text: 'not checked' } },
+                    1: { marqueeTopDataList: [{ text: 'not checked' }] },
                 });
             }
             return undefined;

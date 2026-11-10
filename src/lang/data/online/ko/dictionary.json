@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "발표 페이지의 성경 탭에서 조회 버튼은 저장된 구절을 성경 조회 창에 엽니다. 구절에는 메모를 열려면 두 번 클릭, 댓글 편집 기능이 있고, 그 구절을 성경 목록으로 끌어다 놓을 수도 있습니다.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF, Word 파일 표시하기",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF, DOCX 파일을 마우스 오른쪽 버튼으로 클릭하면 PPTX 열기, PDF 미리 보기, DOCX 열기 항목이 있고, PPTX 슬라이드 새로 고침, PDF 이미지 새로 고침, DOCX 페이지 새로 고침 항목으로 파일을 다시 읽습니다.",
-    "Find and replay Presenter tips": "발표 팁 찾기 및 다시 재생"
+    "Find and replay Presenter tips": "발표 팁 찾기 및 다시 재생",
+    "Center": "가운데",
+    "Top Banner": "상단 배너",
+    "Bottom Banner": "하단 배너",
+    "Urgent Alert": "긴급 알림",
+    "Picture in Picture": "화면 속 화면",
+    "Markdown Lesson": "Markdown 레슨",
+    "Heading": "제목",
+    "Quote": "인용"
 }

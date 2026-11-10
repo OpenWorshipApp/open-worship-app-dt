@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "«Үзүүлэгч» хуудасны «Библиуд» табанд «Лавлах» товч хадгалсан хэсгийг «Библи лавлах» цонхонд нээнэ; ишлэл дээр «Тэмдэглэлийг нээхийн тулд давхар дарна уу», «Сэтгэгдэл засах» ашиглах эсвэл тэр ишлэлийг Библийн жагсаалт руу чирнэ үү.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF эсвэл Word файл харуулах",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF эсвэл DOCX дээр баруун товч дарж «PPTX нээх», «PDF урьдчилан харах» эсвэл «DOCX нээх» сонгоно; «PPTX слайдуудыг сэргээх», «PDF зургуудыг сэргээх» эсвэл «DOCX хуудсуудыг сэргээх» нь түүнийг дахин уншина.",
-    "Find and replay Presenter tips": "Үзүүлэгчийн зөвлөмжүүдийг олж дахин тоглуулах"
+    "Find and replay Presenter tips": "Үзүүлэгчийн зөвлөмжүүдийг олж дахин тоглуулах",
+    "Center": "Төв",
+    "Top Banner": "Дээд туг",
+    "Bottom Banner": "Доод туг",
+    "Urgent Alert": "Яаралтай сэрэмжлүүлэг",
+    "Picture in Picture": "Зураг дотор зураг",
+    "Markdown Lesson": "Markdown хичээл",
+    "Heading": "Гарчиг",
+    "Quote": "Ишлэл"
 }

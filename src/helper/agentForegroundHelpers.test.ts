@@ -109,7 +109,11 @@ vi.mock('../presenter-foreground/foregroundQuickTextOpenHelpers', () => ({
     genBibleItemQuickTextMarkdown: async () => ({
         title: '(KJV) John 3:16',
         markdown: '**(KJV) John 3:16**\n\nFor God so loved the world.',
+        fontFamily: 'app-Sample Serif',
     }),
+    applyBibleVerseFont: (suffix: string, fontFamily: string) => {
+        h.settings.set(`quick-text${suffix}-common-font-family`, fontFamily);
+    },
 }));
 vi.mock('../presenter-foreground/ForegroundMessageComp', () => ({
     toStoredText: (list: { text: string }[]) => {
@@ -160,12 +164,12 @@ function genForegroundManager() {
     const manager: any = {
         foregroundData: {
             messageDataList: [],
-            countdownData: null,
-            stopwatchData: null,
+            countdownDataList: [],
+            stopwatchDataList: [],
             timeDataList: [],
-            marqueeTopData: null,
-            marqueeBottomData: null,
-            quickTextData: null,
+            marqueeTopDataList: [],
+            marqueeBottomDataList: [],
+            quickTextDataList: [],
             cameraDataList: [],
             screenDataList: [],
             webDataList: [],
@@ -180,12 +184,52 @@ function genForegroundManager() {
             manager.foregroundData = { ...manager.foregroundData, [key]: data };
         };
     };
+    // The per-session lists: a session's entry is put or taken off by its
+    // `id` (none for Default), every other session's left as it was -- the
+    // real manager's `putSessionData` / `removeSessionData`.
+    const toSessionKey = (data: any) => {
+        return typeof data?.id === 'string' ? data.id : '';
+    };
+    manager.putSessionData = (key: string, data: any) => {
+        manager.calls.push(`put:${key}`);
+        const dataList: any[] = manager.foregroundData[key];
+        const index = dataList.findIndex((one) => {
+            return toSessionKey(one) === toSessionKey(data);
+        });
+        manager.foregroundData = {
+            ...manager.foregroundData,
+            [key]:
+                index === -1
+                    ? [...dataList, data]
+                    : dataList.map((one, oneIndex) => {
+                          return oneIndex === index ? data : one;
+                      }),
+        };
+    };
+    manager.removeSessionData = (key: string, data: any) => {
+        manager.calls.push(`remove:${key}`);
+        manager.foregroundData = {
+            ...manager.foregroundData,
+            [key]:
+                data === null
+                    ? []
+                    : manager.foregroundData[key].filter((one: any) => {
+                          return toSessionKey(one) !== toSessionKey(data);
+                      }),
+        };
+    };
+    for (const [name, key] of [
+        ['setCountdownData', 'countdownDataList'],
+        ['setStopwatchData', 'stopwatchDataList'],
+        ['setMarqueeTopData', 'marqueeTopDataList'],
+        ['setMarqueeBottomData', 'marqueeBottomDataList'],
+        ['setQuickTextData', 'quickTextDataList'],
+    ]) {
+        manager[name] = (data: any) => {
+            manager.putSessionData(key, data);
+        };
+    }
     for (const key of [
-        'countdownData',
-        'stopwatchData',
-        'marqueeTopData',
-        'marqueeBottomData',
-        'quickTextData',
         'timeDataList',
         'messageDataList',
         'videoDataList',
@@ -306,7 +350,8 @@ describe('a countdown started through its panel', () => {
             isChanged: true,
             undoId: 'undo-1',
         });
-        const countdown = dataOf().countdownData;
+        expect(dataOf().countdownDataList).toHaveLength(1);
+        const countdown = dataOf().countdownDataList[0];
         // The Default session's own look, a datum with no session id (the
         // Default panel's own), running at once with its length kept.
         expect(countdown.extraStyle.look).toBe('countdown');
@@ -348,7 +393,8 @@ describe('a countdown started through its panel', () => {
                 `countdown-${sessionId}-setting-show-widget-font-size`,
             ),
         ).toBe('60');
-        expect(dataOf().countdownData).toMatchObject({
+        expect(dataOf().countdownDataList).toHaveLength(1);
+        expect(dataOf().countdownDataList[0]).toMatchObject({
             id: sessionId,
             extraStyle: { look: `countdown-${sessionId}`, fontSize: '60px' },
         });
@@ -379,7 +425,11 @@ describe('a countdown started through its panel', () => {
             timer: 'pause',
         });
         expect(paused.did).toBe('timer');
-        expect(typeof dataOf().countdownData.pausedMillisecond).toBe('number');
+        // Paused in place: still the one entry of the Default session.
+        expect(dataOf().countdownDataList).toHaveLength(1);
+        expect(typeof dataOf().countdownDataList[0].pausedMillisecond).toBe(
+            'number',
+        );
         const missing: any = await handleAgentForegroundRequest({
             action: 'timer',
             widget: 'quick-text',
@@ -403,9 +453,15 @@ describe('words and a verse', () => {
         expect(h.settings.get(`foreground-quick-text-setting${suffix}`)).toBe(
             '**(KJV) John 3:16**\n\nFor God so loved the world.',
         );
-        // The Bibles list's own Open in Quick Text look.
+        // The Bibles list's own Open in Quick Text look, in the Bible's font.
         expect(h.presets).toEqual([[suffix, 'bible-verse']]);
-        expect(dataOf().quickTextData.htmlText).toContain('For God so loved');
+        expect(h.settings.get(`quick-text${suffix}-common-font-family`)).toBe(
+            'app-Sample Serif',
+        );
+        expect(dataOf().quickTextDataList).toHaveLength(1);
+        expect(dataOf().quickTextDataList[0].htmlText).toContain(
+            'For God so loved',
+        );
     });
 
     it('refuses a reference no Bible reads, and a verse where it cannot go', async () => {
@@ -428,7 +484,8 @@ describe('words and a verse', () => {
             NOW,
         );
         expect(result.session.name).toBe('Welcome to church');
-        expect(dataOf().marqueeTopData).toMatchObject({
+        expect(dataOf().marqueeTopDataList).toHaveLength(1);
+        expect(dataOf().marqueeTopDataList[0]).toMatchObject({
             text: 'Welcome to church',
             speedPercentage: 100,
         });
@@ -483,7 +540,9 @@ describe('a session changed, and what of it is up', () => {
             changed: ['size 100 → 125px', 'position top'],
             isChanged: true,
         });
-        expect(dataOf().countdownData.extraStyle.fontSize).toBe('125px');
+        // Restyled: the session's old entry replaced, not joined by a twin.
+        expect(dataOf().countdownDataList).toHaveLength(1);
+        expect(dataOf().countdownDataList[0].extraStyle.fontSize).toBe('125px');
         expect(h.notified).toEqual(['countdown']);
     });
 
@@ -494,6 +553,141 @@ describe('a session changed, and what of it is up', () => {
             look: { position: 'top' },
         });
         expect(result.isError).toBe(true);
+        expect(h.restoresList).toEqual([]);
+    });
+
+    it('dresses any component with one of its own presets, what is up restyled', async () => {
+        await handleAgentForegroundRequest(
+            { widget: 'countdown', minutes: 5 },
+            NOW,
+        );
+        h.notified = [];
+        const result: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            session: 'Default',
+            preset: 'center',
+        });
+        expect(result.isError).toBeUndefined();
+        expect(h.settings.get('countdown-setting-show-widget-scale')).toBe('1');
+        expect(
+            JSON.parse(
+                h.settings.get('countdown-setting-show-widget-alignment-data')!,
+            ),
+        ).toEqual({
+            horizontalAlignment: 'center',
+            verticalAlignment: 'center',
+        });
+        // The countdown on screen 0 was restyled from the keys just written.
+        expect(result.detail).toContain('Screen 0 shows the change now');
+        expect(result.changed).toEqual(['the center look']);
+        expect(h.notified).toEqual(['countdown']);
+        // A Quick Text preset still goes through Quick Text's own door.
+        expect(h.presets).toEqual([]);
+    });
+
+    it('puts a preset on its light side, and turns a session by a side alone', async () => {
+        await handleAgentForegroundRequest(
+            { widget: 'countdown', minutes: 5 },
+            NOW,
+        );
+        const lit: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            session: 'Default',
+            preset: 'center light',
+        });
+        expect(lit.isError).toBeUndefined();
+        expect(lit.changed).toEqual(['the center look, light']);
+        expect(h.settings.get('countdown-setting-show-widget-scale')).toBe('1');
+        expect(h.settings.get('countdown-common-color')).toBe('#000000');
+        expect(h.settings.get('countdown-common-background-color')).toBe(
+            '#D5DDF0CC',
+        );
+        const read: any = await handleAgentForegroundRequest({
+            action: 'read',
+            widget: 'countdown',
+            session: 'Default',
+        });
+        expect(read.presetSide).toBe('light');
+        const dark: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            session: 'Default',
+            preset: 'dark',
+        });
+        expect(dark.changed).toEqual(['its words and box turned dark']);
+        expect(h.settings.get('countdown-common-color')).toBe('#FFFFFF');
+        expect(h.settings.get('countdown-common-background-color')).toBe(
+            '#0F172ACC',
+        );
+        // A picture has no words or box to turn.
+        const video: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'video',
+            preset: 'light',
+        });
+        expect(video.isError).toBe(true);
+        expect(video.reason).toContain('no words or box');
+    });
+
+    it('puts on a look somebody saved, by its name', async () => {
+        h.settings.set(
+            'foreground-countdown-saved-presets',
+            JSON.stringify([
+                {
+                    id: 'y1',
+                    name: 'Youth Night',
+                    values: {
+                        'props.scale': '3',
+                        'common.color': '#FACC15',
+                    },
+                },
+            ]),
+        );
+        h.settings.set('countdown-setting-show-widget-offset-x', '60');
+        const result: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            session: 'Default',
+            preset: 'youth night',
+        });
+        expect(result.isError).toBeUndefined();
+        expect(result.changed).toEqual(['the saved look "Youth Night"']);
+        expect(h.settings.get('countdown-setting-show-widget-scale')).toBe('3');
+        expect(h.settings.get('countdown-common-color')).toBe('#FACC15');
+        expect(h.settings.has('countdown-setting-show-widget-offset-x')).toBe(
+            false,
+        );
+        const read: any = await handleAgentForegroundRequest({
+            action: 'read',
+            widget: 'countdown',
+        });
+        expect(read.savedPresets).toEqual(['Youth Night']);
+        const wrong: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            preset: 'Old Night',
+        });
+        expect(wrong.reason).toContain('"Youth Night"');
+    });
+
+    it('refuses a preset the component does not have, naming its own', async () => {
+        const wrong: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'countdown',
+            preset: 'bible-verse',
+        });
+        expect(wrong.isError).toBe(true);
+        expect(wrong.reason).toContain(
+            'top-right, bottom-right, center, bottom-banner',
+        );
+        const none: any = await handleAgentForegroundRequest({
+            action: 'set',
+            widget: 'long-text',
+            preset: 'center',
+        });
+        expect(none.reason).toContain('has no presets');
         expect(h.restoresList).toEqual([]);
     });
 
@@ -511,13 +705,58 @@ describe('a session changed, and what of it is up', () => {
 describe('taking things off and reading', () => {
     it('takes a component off every screen holding it, ticked or not', async () => {
         h.managers = [genManager(0), genManager(1, { isSelected: false })];
-        dataOf(1).countdownData = { dateTime: NOW };
+        // Two sessions' countdowns: a stop of the whole kind takes both.
+        dataOf(1).countdownDataList = [
+            { dateTime: NOW },
+            { id: 'other', dateTime: NOW },
+        ];
         const result: any = await handleAgentForegroundRequest({
             action: 'stop',
             widget: 'countdown',
         });
         expect(result.did).toBe('stopped');
-        expect(dataOf(1).countdownData).toBeNull();
+        expect(dataOf(1).countdownDataList).toEqual([]);
+    });
+
+    // Each session owns its own overlay: a second session's words go up
+    // BESIDE the first one's, and a stop that names a session takes that
+    // one's down alone.
+    it("puts a second session's marquee up beside the first, and stops only the one named", async () => {
+        // Both asks in ONE millisecond: a new session's id is the clock's,
+        // and two made at once must still be two sessions
+        // (`genMediaSessionId`), or the second Show replaces the first.
+        const dateNowSpy = vi
+            .spyOn(Date, 'now')
+            .mockReturnValue(NOW.getTime() + 10_000_000_000);
+        const first: any = await handleAgentForegroundRequest(
+            { widget: 'marquee-bottom', text: 'Welcome' },
+            NOW,
+        );
+        const second: any = await handleAgentForegroundRequest(
+            { widget: 'marquee-bottom', text: 'Parking full' },
+            NOW,
+        );
+        dateNowSpy.mockRestore();
+        expect(first.session.id).not.toBe(second.session.id);
+        expect(
+            dataOf().marqueeBottomDataList.map((one: any) => {
+                return [one.id, one.text];
+            }),
+        ).toEqual([
+            [first.session.id, 'Welcome'],
+            [second.session.id, 'Parking full'],
+        ]);
+        const stopped: any = await handleAgentForegroundRequest({
+            action: 'stop',
+            widget: 'marquee-bottom',
+            session: 'Welcome',
+        });
+        expect(stopped.did).toBe('stopped');
+        expect(
+            dataOf().marqueeBottomDataList.map((one: any) => {
+                return one.text;
+            }),
+        ).toEqual(['Parking full']);
     });
 
     it('stops every extra as F10, a locked screen left as it was', async () => {

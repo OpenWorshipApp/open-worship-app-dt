@@ -3,7 +3,7 @@ id: W-09
 title: "Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 67921ac30475819b
+translatedFrom: 1f75592ee7b0d921
 ---
 # W-09 — Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)
 
@@ -32,6 +32,36 @@ Afficher/Démarrer :
   l'allure par défaut, plus haut va plus vite, plus bas va plus lentement. La modifier pendant qu'un bandeau est
   affiché change son allure sans avoir à recliquer sur Afficher.
 - **[en:tran:Quick Text] :** tapez un court message, cliquez sur **[en:tran:Show Quick Text]**.
+  Le message est en markdown (`## Title`, `**bold**`, `*italic*`) : appuyez sur
+  **[en:tran:Preview]** au-dessus de la zone pour le lire tel que l'écran le dessinera,
+  et sur **[en:tran:Edit]** pour taper de nouveau. Ses **[en:tran:Presets]** (première rangée
+  des _Propriétés_, plus bas) sont **[en:tran:Bible Verse]**, **[en:tran:Speaker]**,
+  **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** et **[en:tran:Announcement]**, et chacun règle aussi
+  combien de secondes le texte reste et la mise en forme de son markdown : la première ligne
+  devient le titre — en **gras** pour un chant, un titre pour un verset, un orateur,
+  une prédication, une session ou une annonce — et les lignes d'un chant ou d'une prédication
+  en dessous passent en *italique* (et redeviennent droites avec tout autre préréglage). Sans
+  rien de tapé (la zone vide, ou encore son exemple), un préréglage met un
+  exemple à remplacer : **[en:tran:Bible Verse]** met (KJV) John 3:16.
+  **[en:tran:Bible Verse]** est un bandeau sombre sur toute la largeur du bas, les
+  mots à 45px alignés à gauche, deux minutes à l'écran ; au-delà d'environ trois versets il
+  rapetisse les mots, jusqu'à 28px, pour qu'un long passage reste un bandeau
+  au lieu de couvrir la diapositive. Chaque mot que vous avez tapé est gardé ; appuyer deux
+  fois sur un préréglage ne change rien de plus. Le bandeau est collé au bord inférieur ;
+  **Y** dans les _Propriétés_ le relève.
+- Dans les _Propriétés_, la case px de la rangée **[en:tran:Round]** peut être vidée pour
+  taper une autre taille : elle garde sa place jusqu'à ce que vous tapiez un nombre, et
+  affiche de nouveau la taille en vigueur si vous la laissez vide. 0 px est un coin carré.
+- Les _Propriétés_ du texte rapide ont **[en:tran:Horizontal Margin (%)]** et
+  **[en:tran:Vertical Margin (%)]** à la place d'une largeur, comme la _Slide Margin_ d'une
+  scène de chant : la marge latérale est gardée de chaque côté, la verticale au-dessus ou
+  au-dessous de la zone (selon le bord où elle est placée), et le lien à gauche du curseur
+  vertical déplace les deux ensemble.
+- Dans chaque composant, la rangée Afficher / Démarrer est le pied du panneau : elle reste
+  en bas du panneau pendant que les _Propriétés_ et le reste défilent dessous,
+  et ses boutons sont petits. Les cases de décalage **X** et **Y** sont sur une seule ligne
+  sous la grille de position.
 - **[en:tran:Countdown] :** deux modes. _Jusqu'à une date/heure_ : réglez la date et l'heure et appuyez sur
   **[en:tran:Start Countdown to DateTime]** — il démarre aussitôt et compte toujours jusqu'à cette
   heure. _Pour une durée_ : remplissez les cases **h**, **m** et **s** (plus de 24
@@ -126,8 +156,15 @@ Afficher/Démarrer :
   (plusieurs éditeurs de message, plusieurs horloges), si bien que deux sessions peuvent chacune avoir quelque chose
   d'affiché en même temps, chacun listé sur la rangée Masquer de sa propre session. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** et les deux bandeaux défilants mettent **une seule**
-  chose sur un écran, donc afficher depuis une autre session remplace ce qui s'y trouvait et le
-  point « à l'écran » passe à la session qui le possède désormais. **[en:tran:Image Show]**,
+  chose sur un écran **par session** : afficher depuis une autre session met la sienne
+  **à côté** de ce qui s'y trouve déjà (un bandeau de verset d'une session de texte rapide
+  et le nom d'un orateur d'une autre, tous deux au mur), et afficher de nouveau une session
+  ne remplace que ce que cette session avait affiché. Le point de chaque session reste allumé
+  tant que le sien est affiché, ses **[en:tran:Start counting]** / **[en:tran:Pause]** ne font
+  tourner que sa propre horloge, et sa rangée Masquer ne retire que le sien. Deux sessions
+  laissées au même endroit se couvrent, donnez donc à chacune sa place dans les _Propriétés_ (le
+  préréglage **[en:tran:Top Right]** d'un compte à rebours, le bandeau **[en:tran:Bible Verse]**
+  d'un texte rapide). **[en:tran:Clear Foreground]** les retire toujours tous. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** et **[en:tran:Web Show]** gardent un fichier par session : cliquer une autre
   vignette le remplace. Deux images à la fois — un habillage et un logo — sont deux sessions :
   ajoutez-en une avec **＋** et affichez une image depuis chacune.
@@ -135,6 +172,21 @@ Afficher/Démarrer :
   chaque élément que cette session affiche — position, largeur, échelle, opacité, coin et fusion.
   Toute cette rangée — sessions, _Propriétés_, le diaporama et les boutons d'écran qui
   retirent l'élément — **reste en place pendant que la liste de fichiers défile**.
+- **[en:tran:Presets]** — la première rangée des _Propriétés_ de chaque composant de premier
+  plan sauf [en:tran:Long Text Show] (qui a ses propres styles) — habille la session d'une
+  seule pression pour une tâche : [en:tran:Messages] a
+  **[en:tran:Announcement]**, **[en:tran:Event Session]**,
+  **[en:tran:Top Banner]** et **[en:tran:Bottom Banner]** ; les bandeaux défilants
+  **[en:tran:Dark]**, **[en:tran:Light]** et **[en:tran:Urgent Alert]** (avec aussi un
+  défilement plus rapide) ; [en:tran:Countdown] et [en:tran:Stopwatch]
+  **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (deux fois
+  la taille) et **[en:tran:Bottom Banner]** ; [en:tran:Time] les coins et
+  **[en:tran:Center]** ; les affichages d'image, de caméra, d'écran et de web
+  **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** et un petit coin.
+  Un préréglage règle la place, la taille, les couleurs, le cadre et les Effets dont dispose
+  le composant, jamais la police de ses mots, sa transition ni sa couche ; les _Propriétés_
+  montrent les nouvelles valeurs aussitôt, prêtes à être ajustées, et ce que cette session a
+  sur un écran prend le nouveau style tout de suite.
 - **[en:tran:Always on Top]** (chaque composant de premier plan sauf [en:tran:Long Text Show], pas seulement ceux-ci — sous
   _[en:tran:Properties]_ dans son propre panneau) garde un
   widget au-dessus des autres, quel que soit l'ordre dans lequel ils ont été affichés — un logo au-dessus de la neige

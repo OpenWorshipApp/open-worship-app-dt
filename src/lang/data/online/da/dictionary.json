@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "På fanen Bibler i Præsentation åbner Opslag en gemt passage i Bibelopslag; Dobbeltklik for at åbne noten, Rediger kommentar på et vers, eller træk verset til bibellisten.",
     "Show a PowerPoint, PDF or Word file": "Vis en PowerPoint-, PDF- eller Word-fil",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Højreklik på en PPTX, PDF eller DOCX for Åbn PPTX, Vis PDF i forhåndsvisning eller Åbn DOCX; Opdater PPTX-slides, Opdater PDF-billeder eller Opdater DOCX-sider læser den igen.",
-    "Find and replay Presenter tips": "Find og genafspil tips til præsentation"
+    "Find and replay Presenter tips": "Find og genafspil tips til præsentation",
+    "Center": "Midte",
+    "Top Banner": "Topbanner",
+    "Bottom Banner": "Bundbanner",
+    "Urgent Alert": "Akut advarsel",
+    "Picture in Picture": "Billede-i-billede",
+    "Markdown Lesson": "Markdown-lektion",
+    "Heading": "Overskrift",
+    "Quote": "Citat"
 }

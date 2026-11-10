@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "ಪ್ರಸ್ತುತಿ ಪುಟದ ‘ಬೈಬಲ್‌ಗಳು’ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ‘ಹುಡುಕು’ ಉಳಿಸಿದ ವಚನಭಾಗವನ್ನು ವಚನ ತೆರೆ ಫಲಕದಲ್ಲಿ ತೆರೆಯುತ್ತದೆ; ‘ಟಿಪ್ಪಣಿ ತೆರೆಯಲು ಡಬಲ್ ಕ್ಲಿಕ್ ಮಾಡಿ’, ವಚನದ ಮೇಲೆ ‘ಕಾಮೆಂಟ್ ಸಂಪಾದಿಸು’ ಆರಿಸಿ, ಅಥವಾ ಆ ವಚನವನ್ನು ಬೈಬಲ್ ಪಟ್ಟಿಗೆ ಎಳೆಯಿರಿ.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF ಅಥವಾ Word ಫೈಲ್ ತೋರಿಸಿ",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF ಅಥವಾ DOCX ಫೈಲ್ ಮೇಲೆ ಬಲ-ಕ್ಲಿಕ್ ಮಾಡಿದರೆ: ‘PPTX ತೆರೆ’, ‘PDF ಪೂರ್ವವೀಕ್ಷಣೆ’ ಅಥವಾ ‘DOCX ತೆರೆ’; ‘PPTX ಸ್ಲೈಡ್‌ಗಳನ್ನು ರಿಫ್ರೆಶ್ ಮಾಡು’, ‘PDF ಚಿತ್ರಗಳನ್ನು ರಿಫ್ರೆಶ್ ಮಾಡು’ ಅಥವಾ ‘DOCX ಪುಟಗಳನ್ನು ರಿಫ್ರೆಶ್ ಮಾಡು’ ಅದನ್ನು ಮತ್ತೆ ಓದುತ್ತದೆ.",
-    "Find and replay Presenter tips": "ಪ್ರಸ್ತುತಿ ಸಲಹೆಗಳನ್ನು ಹುಡುಕಿ ಮತ್ತು ಮತ್ತೆ ಪ್ಲೇ ಮಾಡಿ"
+    "Find and replay Presenter tips": "ಪ್ರಸ್ತುತಿ ಸಲಹೆಗಳನ್ನು ಹುಡುಕಿ ಮತ್ತು ಮತ್ತೆ ಪ್ಲೇ ಮಾಡಿ",
+    "Center": "ಮಧ್ಯ",
+    "Top Banner": "ಮೇಲಿನ ಬ್ಯಾನರ್",
+    "Bottom Banner": "ಕೆಳಗಿನ ಬ್ಯಾನರ್",
+    "Urgent Alert": "ತುರ್ತು ಎಚ್ಚರಿಕೆ",
+    "Picture in Picture": "ಚಿತ್ರದೊಳಗೆ ಚಿತ್ರ",
+    "Markdown Lesson": "Markdown ಪಾಠ",
+    "Heading": "ಶೀರ್ಷಿಕೆ",
+    "Quote": "ಉಲ್ಲೇಖ"
 }

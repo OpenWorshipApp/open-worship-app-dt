@@ -1,5 +1,9 @@
 import { OpenLyric } from 'open-lyric';
-import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
+import type {
+    OpenLyricFontFaceList,
+    OpenLyricTheme,
+    OpenLyricPreviewSetting,
+} from 'open-lyric';
 
 import Lyric from './Lyric';
 import LyricAppDocumentStage0 from './LyricAppDocumentStage0';
@@ -9,6 +13,7 @@ import LyricAppDocumentStage3 from './LyricAppDocumentStage3';
 import LyricAppDocumentStage4 from './LyricAppDocumentStage4';
 import LyricAppDocumentStage5 from './LyricAppDocumentStage5';
 import { genOpenLyricFontFaces, initAllLangCss } from '../lang/langHelpers';
+import { genLangOpenLyricFontFaces } from '../lang/langFontListHelpers';
 import SettingManager from '../helper/SettingManager';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
@@ -122,6 +127,11 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
                 genOpenLyricFontFaces,
             });
         }
+        // Every enabled package's fonts, on top of the list.
+        openLyricPreviewer.fontFaces = genLangOpenLyricFontFaces(
+            openLyricPreviewer.fontFaces,
+            langDataList,
+        ) as OpenLyricFontFaceList;
     }
     return openLyricPreviewer;
 }

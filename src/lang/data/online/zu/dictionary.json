@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Kuthebhu ethi AmaBhayibheli yekhasi elithi Umethuli, inkinobho ethi Bheka ivula isiqephu esigciniwe ewindini elithi Ukubheka iBhayibheli; Chofoza kabili ukuze uvule inothi, Hlela Amazwana evesini, noma uhudule lelo vesi uliyise ohlwini lwamaBhayibheli.",
     "Show a PowerPoint, PDF or Word file": "Bonisa ifayela le-PowerPoint, le-PDF noma le-Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Chofoza kwesokudla i-PPTX, i-PDF noma i-DOCX ukuze uthole Vula i-PPTX, Buka Kuqala i-PDF noma Vula i-DOCX; Vuselela Izilayidi ze-PPTX, Vuselela Izithombe ze-PDF noma Vuselela Amakhasi e-DOCX kuyalifunda futhi.",
-    "Find and replay Presenter tips": "Thola futhi uphinde udlale amacebiso kaMethuli"
+    "Find and replay Presenter tips": "Thola futhi uphinde udlale amacebiso kaMethuli",
+    "Center": "Phakathi",
+    "Top Banner": "Isibhengezo Esiphezulu",
+    "Bottom Banner": "Isibhengezo Esingezansi",
+    "Urgent Alert": "Isexwayiso Esiphuthumayo",
+    "Picture in Picture": "Isithombe Esithombeni",
+    "Markdown Lesson": "Isifundo se-Markdown",
+    "Heading": "Isihloko",
+    "Quote": "Ingcaphuno"
 }

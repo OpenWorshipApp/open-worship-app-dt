@@ -78,6 +78,25 @@ function checkIsBackgroundOnScreen(presentingFlowItem: PresentingFlowItem) {
 }
 
 /**
+ * One per-session list of a SAVED screen entry, read as it lies on disk --
+ * never parsed: this runs per row per screen event. An entry an older app
+ * saved holds the one datum of its kind (`quickTextData` …) until that screen
+ * is next written, and it counts as the list's only item.
+ */
+function readSavedSessionList(
+    foregroundData: any,
+    listKey: string,
+    singleKey: string,
+): any[] {
+    const dataList = foregroundData?.[listKey];
+    if (Array.isArray(dataList)) {
+        return dataList;
+    }
+    const single = foregroundData?.[singleKey] ?? null;
+    return single === null ? [] : [single];
+}
+
+/**
  * Foreground presets have no id of their own, so they are matched on whatever
  * identifies them cheaply: the marquee text, the time/camera id, the web file.
  * A countdown, stopwatch or quick text carries nothing of the row on the
@@ -116,26 +135,52 @@ const foregroundOnScreenMatcherMap: Record<
             );
         });
     },
+    // Each session owns its own entry on a screen, so a row is live while
+    // ANY entry of its kind is the one it put up.
     countdown: (foregroundData, data) => {
-        return (
-            foregroundData.countdownData?.rowKey === toForegroundRowKey(data)
-        );
+        return readSavedSessionList(
+            foregroundData,
+            'countdownDataList',
+            'countdownData',
+        ).some((item: any) => {
+            return item.rowKey === toForegroundRowKey(data);
+        });
     },
     stopwatch: (foregroundData, data) => {
-        return (
-            foregroundData.stopwatchData?.rowKey === toForegroundRowKey(data)
-        );
+        return readSavedSessionList(
+            foregroundData,
+            'stopwatchDataList',
+            'stopwatchData',
+        ).some((item: any) => {
+            return item.rowKey === toForegroundRowKey(data);
+        });
     },
     'quick-text': (foregroundData, data) => {
-        return (
-            foregroundData.quickTextData?.rowKey === toForegroundRowKey(data)
-        );
+        return readSavedSessionList(
+            foregroundData,
+            'quickTextDataList',
+            'quickTextData',
+        ).some((item: any) => {
+            return item.rowKey === toForegroundRowKey(data);
+        });
     },
     'marquee-top': (foregroundData, data) => {
-        return foregroundData.marqueeTopData?.text === data?.text;
+        return readSavedSessionList(
+            foregroundData,
+            'marqueeTopDataList',
+            'marqueeTopData',
+        ).some((item: any) => {
+            return item.text === data?.text;
+        });
     },
     'marquee-bottom': (foregroundData, data) => {
-        return foregroundData.marqueeBottomData?.text === data?.text;
+        return readSavedSessionList(
+            foregroundData,
+            'marqueeBottomDataList',
+            'marqueeBottomData',
+        ).some((item: any) => {
+            return item.text === data?.text;
+        });
     },
     time: (foregroundData, data) => {
         return (foregroundData.timeDataList ?? []).some((item: any) => {

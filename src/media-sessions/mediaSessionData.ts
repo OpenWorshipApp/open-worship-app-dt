@@ -100,12 +100,20 @@ export function resolveActiveSessionId(target: string) {
     return pickActiveSession(readSessions(target), activeId).id;
 }
 
+let lastSessionTime = 0;
 /**
  * A new session's id. Ids are never reused: every setting a removed session
  * wrote is keyed by its id, and a recycled one would inherit them.
+ *
+ * Never at or below the last one this window made: two sessions made in one
+ * millisecond -- the assistant putting up two marquees at once -- were the
+ * same id, and since each session owns its own overlay on a screen
+ * (`ForegroundDataType`) the second one's Show took the first one down. A
+ * clock set back must not hand out an id again either.
  */
 export function genMediaSessionId() {
-    return `s${Date.now().toString(36)}`;
+    lastSessionTime = Math.max(Date.now(), lastSessionTime + 1);
+    return `s${lastSessionTime.toString(36)}`;
 }
 
 // The mounted strips of each target in this window, so a change made by one

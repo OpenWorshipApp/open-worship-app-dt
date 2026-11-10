@@ -2,7 +2,10 @@
 name: foreground-sync-shared-refs
 description: Sync-grouped screens share the SAME foreground-data object references in-process; never key a module-global map by those objects.
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 48f87cdb-a654-4ed3-ba60-fe8d9c0afea3
+  modified: 2026-11-10T00:06:05.435Z
 ---
 
 In the presenter process, sync-grouped screen managers end up holding the
@@ -19,7 +22,9 @@ walk).
 rendered LAST evicted the other screen's DOM container — symptom: one screen's
 `#foreground` div had 0 children while `marqueeTopData` was set and `isShowing`
 was true. This was the "no top marquee on screen #0" bug (fixed 2026-07-15 by
-making `containerMapper` a per-instance field).
+making `containerMapper` a per-instance field). Since 2026-11-09 the slot is a
+per-session list (`marqueeTopDataList`) and the shared references are its
+entries -- [[foreground-session-owns-overlay]].
 
 **How to apply:** Any registry that maps a foreground/overlay data object to a
 per-screen DOM node MUST be scoped per manager instance, never module-global.

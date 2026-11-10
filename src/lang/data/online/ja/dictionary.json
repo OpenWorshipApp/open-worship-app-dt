@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "「発表者」の「聖書」タブでは、保存した箇所の「聖句を開く」ボタンで、その箇所を「聖句を開く」ウィンドウに開きます。節では「ダブルクリックでメモを開く」や「コメントを編集」が使え、その節を聖書リストへドラッグすることもできます。",
     "Show a PowerPoint, PDF or Word file": "PowerPoint、PDF、Word ファイルを表示する",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX、PDF、DOCX を右クリックすると「PPTX を開く」、「PDF をプレビュー」、「DOCX を開く」があり、「PPTX スライドを再読み込み」、「PDF 画像を再読み込み」、「DOCX ページを再読み込み」で読み直します。",
-    "Find and replay Presenter tips": "発表者のヒントを探して再生する"
+    "Find and replay Presenter tips": "発表者のヒントを探して再生する",
+    "Center": "中央",
+    "Top Banner": "上部バナー",
+    "Bottom Banner": "下部バナー",
+    "Urgent Alert": "緊急のお知らせ",
+    "Picture in Picture": "ピクチャー・イン・ピクチャー",
+    "Markdown Lesson": "Markdown レッスン",
+    "Heading": "見出し",
+    "Quote": "引用"
 }

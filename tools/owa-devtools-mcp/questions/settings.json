@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-11-05",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "general",
@@ -147,7 +147,10 @@
                         "typeface",
                         "missing font",
                         "text style",
-                        "letters"
+                        "letters",
+                        "Google Sans",
+                        "language font",
+                        "app-Google-Sans"
                     ],
                     "resources": {
                         "recipe": "W-16",

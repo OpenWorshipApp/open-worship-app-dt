@@ -19,6 +19,7 @@
 import type { CSSProperties } from 'react';
 
 import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
+import type { ForegroundSessionListKeyType } from '../_screen/managers/ScreenForegroundManager';
 import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import type ScreenManager from '../_screen/managers/ScreenManager';
 import {
@@ -151,47 +152,46 @@ function genLayerPart(widget: ForegroundComponentKeyType, prefix: string) {
 
 // --- what a session has on one screen -----------------------------------
 
-function pickSingle(
+// The widgets each SESSION of which owns its own entry on a screen.
+const SESSION_LIST_KEY_MAP: Partial<
+    Record<ForegroundComponentKeyType, ForegroundSessionListKeyType>
+> = {
+    countdown: 'countdownDataList',
+    stopwatch: 'stopwatchDataList',
+    'marquee-top': 'marqueeTopDataList',
+    'marquee-bottom': 'marqueeBottomDataList',
+    'quick-text': 'quickTextDataList',
+};
+
+function pickSessionList(
     widget: ForegroundComponentKeyType,
     data: ForegroundDataType,
-) {
-    switch (widget) {
-        case 'countdown':
-            return data.countdownData;
-        case 'stopwatch':
-            return data.stopwatchData;
-        case 'marquee-top':
-            return data.marqueeTopData;
-        case 'marquee-bottom':
-            return data.marqueeBottomData;
-        case 'quick-text':
-            return data.quickTextData;
-        default:
-            return null;
-    }
+): any[] {
+    const key = SESSION_LIST_KEY_MAP[widget];
+    return key === undefined ? [] : (data[key] ?? []);
 }
 
+/** Puts this session's entry up, replacing only its own (`putSessionData`). */
 function setSingle(
     widget: ForegroundComponentKeyType,
     manager: ScreenForegroundManager,
     data: any,
 ) {
-    switch (widget) {
-        case 'countdown':
-            manager.setCountdownData(data);
-            break;
-        case 'stopwatch':
-            manager.setStopwatchData(data);
-            break;
-        case 'marquee-top':
-            manager.setMarqueeTopData(data);
-            break;
-        case 'marquee-bottom':
-            manager.setMarqueeBottomData(data);
-            break;
-        case 'quick-text':
-            manager.setQuickTextData(data);
-            break;
+    const key = SESSION_LIST_KEY_MAP[widget];
+    if (key !== undefined) {
+        manager.putSessionData(key, data);
+    }
+}
+
+/** Takes this session's entry, and only it, off the screen. */
+function removeSingle(
+    widget: ForegroundComponentKeyType,
+    manager: ScreenForegroundManager,
+    data: { id?: unknown },
+) {
+    const key = SESSION_LIST_KEY_MAP[widget];
+    if (key !== undefined) {
+        manager.removeSessionData(key, data);
     }
 }
 
@@ -232,8 +232,7 @@ export function listOwnedData(
         case 'marquee-top':
         case 'marquee-bottom':
         case 'quick-text': {
-            const single = pickSingle(widget, data);
-            return single !== null && isOwned(single) ? [single] : [];
+            return pickSessionList(widget, data).filter(isOwned);
         }
         case 'message':
             return (data.messageDataList ?? []).filter((item) => {
@@ -881,7 +880,9 @@ export function hideOnScreen(
         case 'marquee-top':
         case 'marquee-bottom':
         case 'quick-text':
-            setSingle(widget, manager, null);
+            for (const data of ownedList) {
+                removeSingle(widget, manager, data);
+            }
             break;
         case 'message': {
             const ownedSet = new Set(ownedList);
@@ -995,8 +996,8 @@ export async function restyleOnScreen(
         case 'quick-text': {
             const prefix = toLookPrefix(context) ?? '';
             const old = ownedList[0];
-            // The panel sets null first, so the overlay is drawn afresh.
-            setSingle(widget, manager, null);
+            // The panel takes it off first, so the overlay is drawn afresh.
+            removeSingle(widget, manager, old);
             setSingle(
                 widget,
                 manager,

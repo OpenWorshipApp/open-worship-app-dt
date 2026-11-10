@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Kwithebhu ethi IiBhayibhile yephepha elithi Umbonisi, iqhosha elithi Ukhangelo livula isicatshulwa esigciniweyo kwifestile ethi Ukhangelo lweBhayibhile; Cofa kabini ukuze uvule inqaku, Hlela Igqabaza kwindinyana, okanye utsale loo ndinyana uyise kuluhlu lweeBhayibhile.",
     "Show a PowerPoint, PDF or Word file": "Bonisa ifayile ye-PowerPoint, ye-PDF okanye ye-Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Cofa ngasekunene i-PPTX, i-PDF okanye i-DOCX ukuze ufumane Vula i-PPTX, Jonga kuqala i-PDF okanye Vula i-DOCX; Vuselela Izilayidi ze-PPTX, Vuselela Imifanekiso ye-PDF okanye Vuselela Amaphepha e-DOCX iyayifunda kwakhona.",
-    "Find and replay Presenter tips": "Fumana uze uphinde udlale iingcebiso zoMbonisi"
+    "Find and replay Presenter tips": "Fumana uze uphinde udlale iingcebiso zoMbonisi",
+    "Center": "Embindini",
+    "Top Banner": "Ibhena ePhezulu",
+    "Bottom Banner": "Ibhena eZantsi",
+    "Urgent Alert": "Isilumkiso esingxamisekileyo",
+    "Picture in Picture": "Umfanekiso kuMfanekiso",
+    "Markdown Lesson": "Isifundo seMarkdown",
+    "Heading": "Isihloko",
+    "Quote": "Isicatshulwa"
 }

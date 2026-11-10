@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "வழங்குபவர் பக்கத்தின் ‘வேதாகமங்கள்’ தாவலில் ‘தேடல்’ சேமித்த பகுதியை வேத வசனம் தேடல் பலகத்தில் திறக்கும்; ‘குறிப்பைத் திறக்க இருமுறை கிளிக் செய்யவும்’, ஒரு வசனத்தில் ‘கருத்தைத் திருத்து’ என்பதைத் தேர்வுசெய்யவும், அல்லது அந்த வசனத்தை வேதாகமப் பட்டியலுக்கு இழுக்கவும்.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF அல்லது Word கோப்பைக் காட்டு",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF அல்லது DOCX கோப்பில் வலது-கிளிக் செய்தால்: ‘PPTX-ஐத் திற’, ‘PDF-ஐ முன்னோட்டம் பார்’ அல்லது ‘DOCX-ஐத் திற’; ‘PPTX ஸ்லைடுகளை மீண்டும் ஏற்று’, ‘PDF படங்களை மீண்டும் ஏற்று’ அல்லது ‘DOCX பக்கங்களை மீண்டும் ஏற்று’ அதை மீண்டும் படிக்கும்.",
-    "Find and replay Presenter tips": "வழங்குநர் குறிப்புரைகளைக் கண்டறிந்து மீண்டும் இயக்கு"
+    "Find and replay Presenter tips": "வழங்குநர் குறிப்புரைகளைக் கண்டறிந்து மீண்டும் இயக்கு",
+    "Center": "மையம்",
+    "Top Banner": "மேல் பதாகை",
+    "Bottom Banner": "கீழ் பதாகை",
+    "Urgent Alert": "அவசர எச்சரிக்கை",
+    "Picture in Picture": "படத்தினுள் படம்",
+    "Markdown Lesson": "Markdown பாடம்",
+    "Heading": "தலைப்பு",
+    "Quote": "மேற்கோள்"
 }

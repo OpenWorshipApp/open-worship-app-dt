@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "בלשונית כתבי הקודש בחלון מציג, הכפתור איתור פותח קטע שמור בחלון איתור מקרא; לחצו פעמיים כדי לפתוח את ההערה, עריכת תגובה על פסוק, או גררו את הפסוק לרשימת המקרא.",
     "Show a PowerPoint, PDF or Word file": "הצגת קובץ PowerPoint, PDF או Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "לחיצה ימנית על PPTX, PDF או DOCX: פתיחת PPTX, תצוגה מקדימה של PDF או פתיחת DOCX; רענון שקופיות PPTX, רענון תמונות PDF או רענון עמודי DOCX קוראים אותו שוב.",
-    "Find and replay Presenter tips": "מציאת טיפים למציג והפעלתם מחדש"
+    "Find and replay Presenter tips": "מציאת טיפים למציג והפעלתם מחדש",
+    "Center": "מרכז",
+    "Top Banner": "פס עליון",
+    "Bottom Banner": "פס תחתון",
+    "Urgent Alert": "התראה דחופה",
+    "Picture in Picture": "תמונה בתוך תמונה",
+    "Markdown Lesson": "שיעור Markdown",
+    "Heading": "כותרת",
+    "Quote": "ציטוט"
 }

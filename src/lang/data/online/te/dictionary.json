@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "ప్రదర్శన పేజీలోని ‘బైబిళ్లు’ ట్యాబ్‌లో ‘వెతుకు’ సేవ్ చేసిన భాగాన్ని వచనం వెతుకు ప్యానెల్‌లో తెరుస్తుంది; ‘గమనికను తెరవడానికి డబుల్-క్లిక్ చేయండి’, ఒక వచనంపై ‘వ్యాఖ్య సవరించు’ ఎంచుకోండి, లేదా ఆ వచనాన్ని బైబిల్ జాబితాకు లాగండి.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF లేదా Word ఫైల్‌ను చూపించండి",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF లేదా DOCX ఫైల్‌పై కుడి-క్లిక్ చేస్తే: ‘PPTX తెరువు’, ‘PDF ప్రివ్యూ’ లేదా ‘DOCX తెరువు’; ‘PPTX స్లైడ్‌లను రిఫ్రెష్ చేయి’, ‘PDF చిత్రాలను రిఫ్రెష్ చేయి’ లేదా ‘DOCX పేజీలను రిఫ్రెష్ చేయి’ దాన్ని మళ్లీ చదువుతుంది.",
-    "Find and replay Presenter tips": "ప్రెజెంటర్ చిట్కాలను కనుగొని మళ్లీ ప్లే చేయండి"
+    "Find and replay Presenter tips": "ప్రెజెంటర్ చిట్కాలను కనుగొని మళ్లీ ప్లే చేయండి",
+    "Center": "మధ్యలో",
+    "Top Banner": "పై బ్యానర్",
+    "Bottom Banner": "కింది బ్యానర్",
+    "Urgent Alert": "అత్యవసర హెచ్చరిక",
+    "Picture in Picture": "చిత్రంలో చిత్రం",
+    "Markdown Lesson": "Markdown పాఠం",
+    "Heading": "శీర్షిక",
+    "Quote": "ఉల్లేఖనం"
 }

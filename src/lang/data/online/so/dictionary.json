@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Tabka Kitaabada Quduuska ah ee Bandhigaha, Eegid wuxuu qayb la kaydiyay ku furaa Eegidda Kitaabka; Laba-guji si aad u furto xusuus-qorka, Wax ka beddel Faallada aayad, ama u jiid aayaddaas liiska Kitaabka.",
     "Show a PowerPoint, PDF or Word file": "Tus fayl PowerPoint, PDF ama Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Midig-guji PPTX, PDF ama DOCX si aad u hesho Fur PPTX, Horudhac PDF ama Fur DOCX; Dib u cusboonaysii Silaydyada PPTX, Dib u cusboonaysii Sawirrada PDF ama Dib u cusboonaysii Bogagga DOCX ayaa dib u akhriya.",
-    "Find and replay Presenter tips": "Hel oo dib u daawo talooyinka Bandhigaha"
+    "Find and replay Presenter tips": "Hel oo dib u daawo talooyinka Bandhigaha",
+    "Center": "Bartamaha",
+    "Top Banner": "Calanka Sare",
+    "Bottom Banner": "Calanka Hoose",
+    "Urgent Alert": "Digniin Degdeg ah",
+    "Picture in Picture": "Sawir Sawir ku Dhex jira",
+    "Markdown Lesson": "Casharka Markdown",
+    "Heading": "Cinwaan",
+    "Quote": "Xigasho"
 }

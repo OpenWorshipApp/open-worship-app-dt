@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "“Təqdimatçı” səhifəsinin “İncillər” bölməsində “Axtarış” düyməsi saxlanmış parçanı “İncil axtarışı” pəncərəsində açır; ayədə “Qeydi açmaq üçün iki dəfə klikləyin”, “Şərhi redaktə et” istifadə edin və ya həmin ayəni İncil siyahısına sürükləyin.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF və ya Word faylını göstər",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF və ya DOCX faylına sağ klikləyib “PPTX-i aç”, “PDF önbaxışı” və ya “DOCX-i aç” seçin; “PPTX slaydlarını yenilə”, “PDF şəkillərini yenilə” və ya “DOCX səhifələrini yenilə” onu yenidən oxuyur.",
-    "Find and replay Presenter tips": "Təqdimatçı məsləhətlərini tap və yenidən oxut"
+    "Find and replay Presenter tips": "Təqdimatçı məsləhətlərini tap və yenidən oxut",
+    "Center": "Mərkəz",
+    "Top Banner": "Yuxarı banner",
+    "Bottom Banner": "Aşağı banner",
+    "Urgent Alert": "Təcili xəbərdarlıq",
+    "Picture in Picture": "Şəkil içində şəkil",
+    "Markdown Lesson": "Markdown dərsi",
+    "Heading": "Başlıq",
+    "Quote": "Sitat"
 }

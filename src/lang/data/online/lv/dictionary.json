@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Loga Prezentētājs cilnē Bībeles poga Meklēšana atver saglabātu fragmentu logā Bībeles meklēšana; Veiciet dubultklikšķi, lai atvērtu piezīmi, Rediģēt komentāru pie panta vai velciet šo pantu uz Bībeles sarakstu.",
     "Show a PowerPoint, PDF or Word file": "Rādīt PowerPoint, PDF vai Word failu",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Ar peles labo pogu noklikšķiniet uz PPTX, PDF vai DOCX faila: Atvērt PPTX, Priekšskatīt PDF vai Atvērt DOCX; Atsvaidzināt PPTX slaidus, Atsvaidzināt PDF attēlus vai Atsvaidzināt DOCX lapas to nolasa vēlreiz.",
-    "Find and replay Presenter tips": "Atrast un atkārtot Prezentētāja padomus"
+    "Find and replay Presenter tips": "Atrast un atkārtot Prezentētāja padomus",
+    "Center": "Centrs",
+    "Top Banner": "Augšējā josla",
+    "Bottom Banner": "Apakšējā josla",
+    "Urgent Alert": "Steidzams brīdinājums",
+    "Picture in Picture": "Attēls attēlā",
+    "Markdown Lesson": "Markdown nodarbība",
+    "Heading": "Virsraksts",
+    "Quote": "Citāts"
 }

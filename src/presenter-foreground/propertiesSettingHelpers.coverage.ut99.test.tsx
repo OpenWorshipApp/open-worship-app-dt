@@ -464,15 +464,26 @@ describe('the foreground Properties panel', () => {
         // Pressing px again keeps the size it already has.
         await press('Round px');
         expect(getByLabel<HTMLInputElement>('Round px').value).toBe('9');
-        // Nothing usable typed is 0, which is the percentage again.
+        // Emptied to type another number: nothing is written, and the box
+        // stays -- it used to flip to the % slider and vanish mid-typing.
         await setValue('Round px', '');
         expect(
             state.settings.get('video-setting-show-widget-round-size-px'),
-        ).toBe('0');
-        expect(getUnitButton('Round %').getAttribute('aria-pressed')).toBe(
+        ).toBe('9');
+        expect(getUnitButton('Round px').getAttribute('aria-pressed')).toBe(
             'true',
         );
-        expect(query('[aria-label="Round px"]')).toBeNull();
+        expect(getByLabel<HTMLInputElement>('Round px').value).toBe('');
+        await setValue('Round px', '14');
+        expect(lastChange().style).toMatchObject({ borderRadius: '14px' });
+        // Left empty, it shows the size still in force.
+        await setValue('Round px', '');
+        await act(async () => {
+            getByLabel<HTMLInputElement>('Round px').dispatchEvent(
+                new FocusEvent('focusout', { bubbles: true }),
+            );
+        });
+        expect(getByLabel<HTMLInputElement>('Round px').value).toBe('14');
     });
 
     test('font size and blend mode are only there when the widget asks', async () => {

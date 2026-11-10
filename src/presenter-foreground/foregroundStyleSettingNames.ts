@@ -1,3 +1,8 @@
+import {
+    type AppColorType,
+    HEX_COLOR_WHITE,
+} from '../others/color/colorValueHelpers';
+
 /**
  * A session's own transition: one key under its Properties prefix. Here, in
  * the leaf, so the help window's look rules can name it without the
@@ -40,8 +45,17 @@ export function genPropsSettingNames(prefix: string) {
         zIndex: `${prefix}-setting-show-widget-z-index`,
         transitionEffect: genForegroundSessionTransitionSettingName(prefix),
         isBehind: `${prefix}-setting-show-widget-is-behind`,
+        // Quick Text's Margin row (`isMargin`): the space kept above or
+        // below the box, in % of the screen's height, and whether the two
+        // margins move together. Its side margins ARE the width.
+        marginVerticalPercentage: `${prefix}-setting-show-widget-margin-vertical-percentage`,
+        isMarginLinked: `${prefix}-setting-show-widget-margin-linked`,
     };
 }
+
+/** What the words and their box are drawn in until somebody picks. */
+export const DEFAULT_TEXT_COLOR: AppColorType = HEX_COLOR_WHITE;
+export const DEFAULT_BACKGROUND_COLOR: AppColorType = '#000080AA';
 
 export function genCommonStyleSettingNames(prefix: string) {
     return {

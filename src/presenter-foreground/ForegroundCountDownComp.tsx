@@ -10,7 +10,7 @@ import {
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
-    getForegroundShowingScreenIdDataList,
+    getForegroundSessionShowingList,
     getScreenForegroundManagerByDropped,
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
@@ -523,7 +523,11 @@ function refreshAllCountdowns(
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
-                screenForegroundManager.setCountdownData(null);
+                // Only THIS session's overlay is drawn afresh.
+                screenForegroundManager.removeSessionData(
+                    'countdownDataList',
+                    data,
+                );
                 screenForegroundManager.setCountdownData(
                     withForegroundLayer({ ...data, extraStyle }, isBehind),
                 );
@@ -532,9 +536,13 @@ function refreshAllCountdowns(
     }
 }
 
-function handleCountdownHiding(screenId: number) {
+/** Takes THIS overlay's session off the screen; other sessions' stay up. */
+function handleCountdownHiding(
+    screenId: number,
+    data: ForegroundCountdownDataType,
+) {
     getScreenForegroundManagerInstances(screenId, (screenForegroundManager) => {
-        screenForegroundManager.setCountdownData(null);
+        screenForegroundManager.removeSessionData('countdownDataList', data);
     });
 }
 
@@ -567,23 +575,9 @@ export default function ForegroundCountDownComp() {
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return data.countdownData !== null;
-        },
-    )
-        .map(
-            ([screenId, data]):
-                [number, ForegroundCountdownDataType] | null => {
-                if (data.countdownData === null) {
-                    return null;
-                }
-                return [screenId, data.countdownData];
-            },
-        )
-        .filter((item) => {
-            return item !== null;
-        });
+    // One row per SESSION's overlay: every session owns its own on a screen.
+    const showingScreenIdDataList =
+        getForegroundSessionShowingList('countdownDataList');
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     // One session is one countdown SET UP AND READY: the 5-minute one that
     // starts the service, the one counting to a date on the wall at the back.
@@ -608,7 +602,7 @@ export default function ForegroundCountDownComp() {
         hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
                 if (checkIsSessionData(data, sessionId, idList)) {
-                    handleCountdownHiding(screenId);
+                    handleCountdownHiding(screenId, data);
                 }
             }
         },
@@ -699,24 +693,36 @@ export default function ForegroundCountDownComp() {
                     sessionId={activeId}
                     suffix={suffix}
                 />
-                {/*
-                 * One report of what is on a screen for BOTH ways of starting
-                 * a countdown -- there is only ever one countdown up, and two
-                 * bordered boxes saying so was the panel repeating itself.
-                 */}
-                {controlState !== 'fixed' ? (
-                    <ForegroundTimerControlsComp
-                        state={controlState}
-                        resetTitle={tran('Reset to the full duration')}
-                        onStart={handleTimerStarting}
-                        onPause={handleTimerPausing}
-                        onReset={handleTimerResetting}
-                    />
-                ) : null}
-                {sessionShowingList.length > 0 ? (
-                    <div className="fg-actions">{genHidingElement(false)}</div>
-                ) : null}
             </div>
+            {/*
+             * One report of what is on a screen for BOTH ways of starting
+             * a countdown -- there is only ever one countdown up, and two
+             * bordered boxes saying so was the panel repeating itself.
+             *
+             * The panel's footer, docked to its bottom like every other
+             * component's: Start / Pause and the Hide row stay in reach while
+             * the two modes and the Properties scroll under them. A child of
+             * the panel's root, not of the body: a sticky box cannot leave
+             * its parent, and the body starts below the Properties.
+             */}
+            {controlState !== 'fixed' || sessionShowingList.length > 0 ? (
+                <div className="fg-actions-dock">
+                    {controlState !== 'fixed' ? (
+                        <ForegroundTimerControlsComp
+                            state={controlState}
+                            resetTitle={tran('Reset to the full duration')}
+                            onStart={handleTimerStarting}
+                            onPause={handleTimerPausing}
+                            onReset={handleTimerResetting}
+                        />
+                    ) : null}
+                    {sessionShowingList.length > 0 ? (
+                        <div className="fg-actions">
+                            {genHidingElement(false)}
+                        </div>
+                    ) : null}
+                </div>
+            ) : null}
         </ForegroundLayoutComp>
     );
 }

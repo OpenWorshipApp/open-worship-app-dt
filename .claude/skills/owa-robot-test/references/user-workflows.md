@@ -21,7 +21,23 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-09g** (**New W-61 — change a foreground component with the assistant.** The user: _chatbot can help modify any foreground component_ -- _start a countdown for 5 minutes_, _show top marquee for a given message_, _make a quick-text for a given bible verse_ -- then, with a panel's `Default · Session 2 · +` strip circled: _sessions of opening foreground component should be able to attached to the chatbot for the chat context_. Typed in any chat, a countdown, a marquee, a quick text, a message or a clock goes into a NEW session named after it (or one already holding it), its panel opened on it and put up the panel's own way on the ticked screens; a verse is read from the installed Bible. A session is attached to a chat from its button's menu (**[en:tran:Open in Chatbot]**), the robot in its panel's header, or **[en:tran:Attach a foreground session]** under the box, and then changed in place: words, time, size, colours, place, frame, layer, speed, the timer. Seen live 2026-11-09 on a scratch development profile through a fresh owa-devtools server: a 5-minute countdown started on the Default session that already held 5:00; _Welcome to our service_ on the top marquee as a session of that name; John 3:16 as the quick text session `(KJV) John 3:16` with the Bible Verse preset, its panel opened with the robot in its header; the quick text made larger, gold and top right on the wall and in its panel; the countdown paused (the panel read Resume); a marquee asked to move refused with what it takes; and the undo putting the look back on the wall and in the panel; a right-click on a marquee session opening its menu with **[en:tran:Open in Chatbot]** (not pressed). The help window's own parts -- the attach row's list, the card and a question typed under a chip -- are unit-tested and not yet seen live (the AI caution in front of the window is a person's press). PM-174, CB-172.)
+**workflowsVersion: 2026-11-09o** (**W-09 — Quick Text's Markdown Lesson.** The user: _for quick text, add button somewhere to open markdown lesson_, then _provide opening link as well `https://www.markdownguide.org/cheat-sheet/`_. **[en:tran:Markdown Lesson]** beside Edit / Preview opens the marks beside what the screen draws, above the box, with the cheat sheet one press away in the browser. Seen live 2026-11-09 on the dev Presenter in English: the lesson open over the user's own Khmer session, the link row on top, the editor below it; the link not pressed live (it opens the system browser; unit-tested). PM-172.)
+
+Previous: **workflowsVersion: 2026-11-09n** (**W-09 — every foreground preset in Dark or Light; presets of your own; every preset sized.** The user: _all foreground properties preset should support dark/light mode_, then _dark/light just do calculation to make current text and background color contrast_, _do not change background color but make it darker/lighter_, _make text color lighter/darker_, _and apply to the preset_; _foreground properties: allow saving the setting to a new preset_; with a picture of the Time's Bottom Right, its digits past the box: _the preset set shorter width, make sure all preset define well styling_; and _make the properties dark/light same with app theme (if not set by user)_. **Save as Preset** keeps a session's whole Properties under a name, per component (`foregroundSavedPresetHelpers.ts`), with Rename / Replace with Current Look / Remove on its right-click; every preset with words now sets its font size (a corner clock or timer 40px, Center 120px at scale 1 -- it had been scale 2 over the 100px default), the timers' and the clock's box is never narrower than its digits (`min-width: max-content`), and a session nobody has coloured follows the app's theme (read off the page root's `data-bs-theme`). The Presets row of every component with words and a box carries **Dark** / **Light** at its right, the side read off the words' colour; a press keeps each colour's hue and transparency and moves only its lightness, the box one way and the words the other, until the words read at 4.5 : 1 (`foregroundContrastHelpers.ts`), and a preset pressed afterwards goes on in that side. The marquees' own Dark and Light presets became that switch; their presets are Announcement, Bible Verse (slower) and Urgent Alert. Seen live 2026-11-09 on the dev Presenter: Quick Text's Presets row with the switch and each preset's icon in its colours; **Light** turning the session's white words on `#000000B3` into `#000000` on `#FFFFFFB3`, the Colors swatches following, and the assistant's read saying `presetSide: light`. Seen live later the same evening, while the person drove the window: the Time panel's row with Dark / Light and **Save as Preset**, and the clock's box holding `09:10:45 PM` in the mini screen. Not driven live by the agent (the person was pressing in the same panels throughout; each is unit-tested): a preset pressed on the Light side, a preset saved, pressed back, renamed, replaced and removed, the marquees' new presets, the theme default in a light window, and a picture show without the switch. PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09m** (**W-16, W-07 step 7 — the app's own faces (`app-Google-Sans`, `app-Battambang`) at the top of every font list, the Lyric Editor's and the Bible Note editor's too; W-06 step 12 — Create Quick Text sets the Bible's font.** The user: _add all language packages' font-family to all font-family list_, _app's font-family should be on top_, _why I don't see `app-Battambang`_, _it should list all enabled language packages'_, and, with Create Quick Text circled and the new session's Font reading `--`: _then the create Quick Text should set the bible's font-family_ -- _because all related bible text have to use its language font-family_. The `app-…` face a language draws its Bible text in had been left out of the lists; every list now opens on each enabled language's `app-…` face, then the families the languages ship, then the computer's; the Lyric Editor's list has a section per language above the computer's, and the Bible Note editor's two boxes list every package font (its main box sorts by name, which puts the `app-` faces first); a language installed or turned on reaches a window's lists without a reload. Seen live 2026-11-09 on the dev app (English, Khmer installed): Quick Text's _Properties_ Font list reading `--`, `app-Google-Sans`, `app-Battambang`, Google Sans, km-font-Fasthand, Battambang, then Agency FB; **Create Quick Text** on `(ពគប) ម៉ាថាយ ៣:៣-៥` opening the new session `(ពគប) ម៉ាថាយ ៣:៣-៥ (2)` with Font `app-Battambang`. Not opened live: the Lyric Editor's and the Bible Note editor's lists (unit-tested). PM-176, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09l** (**W-09 — every session's overlay is its own on the screen; W-07 step 7, W-16 — the languages' fonts in every font list.** The user: _each session of all foreground components should own it's screen render, e.g. for quick-text, when I show `(ពគប) ម៉ាថាយ ៣:៣-` then `Session 6` it should render both not override the showing one_, and _app's font-family (from language packages) should be available in everywhere of selecting font-family_. Countdown, Stopwatch, Quick Text and the two marquees held one overlay per screen, so a second session's Show took the first one down; each session now has its own up beside the others, its own Hide, its own Start and Pause. And every font list starts with the fonts the app's languages ship (Google Sans, Khmer's Battambang and its sticky-note hand), with the weights each ships. Seen live 2026-11-09 on a scratch English profile with Khmer installed: two Quick Text sessions on screen 0's preview at once, Session 2's Hide taking only its own off; two sessions' countdowns, Session 2 started and moved to the top right by its own preset while Default's waited at 5:00, both back after a reload; and Quick Text's _Properties_ Font list opening on Google Sans, km-font-Fasthand and Battambang, Battambang's weights 100 to 900. PM-175, PM-176.)
+
+Previous: **workflowsVersion: 2026-11-09k** (**W-09 — Quick Text margins in place of width; every component's Show row a docked footer with small buttons; X and Y on one line.** The user: _for quick text only I want to replace the width with margin like in lyric setting_, _move the link icon to the left_, _make the button showing button for every foreground item smaller … and make the footer area sticky footer_, and of the X / Y boxes _this should be inline_. Seen live 2026-11-09 on a scratch English profile: Quick Text's _Properties_ with the two margin rows and the link left of the vertical slider, an emptied box given the Bible Verse example (`### (KJV) John 3:16`, 45px, full width, flush, 120 s), the Round px box kept while emptied, the Show Quick Text and Show Stopwatch rows docked at the panel's bottom with _Properties_ open, and the assistant's `preset: center` on a Countdown. PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09j** (**W-09 / W-06 step 12 — the Bible Verse look is the user's own; an empty box gets an example; the Round px box stays while it is emptied.** The user, pointing at their own Matthew 3:3-5 Quick Text session: _use current setting of ... for default bible preset_, then _bible preset: text 45px, align left with full_ and _title with `### `_ -- the band now full width and, at _remove the vertical gap_, flush on the bottom edge (Y 0), 45px, set left, the reference a `### ` heading, two minutes on screen, smaller only past about three verses. _when the input is empty and preset clicked then use example, e.g. (kjv) john 3:16 for bible example_ -- every Quick Text preset has one. And, with the Round row circled: _not font-size but input value for rounding, when all removed then no input number anymore_ -- emptying the px box had written 0, which is the percentage, and the box vanished; it stays now. Unit-tested; the Round box and the example not pressed live (the user was working in the panel). PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09i** (**W-09 — a Bible Verse look fits a long passage; an upright preset takes italics back; W-61 — the assistant gives any component its own presets.** Seen on the real screen window 2026-11-09 (screen 1 on for 15 s, at the user's word): ពគប Proverbs 17:22-28, seven verses, came up as a band at the bottom at 28px with its reference bold and centred; the verse lines had kept the italics an earlier Sermon Title gave them, which a Bible Verse now takes back. And the user, with the Mini Screen's Matthew 3:3-5 band circled: _check why there a margin at bottom_ -- the Bible Verse look's **Y** of 40px, which reads as a margin once the band is widened to 100%; W-09 says so. The assistant's `preset` now takes every component's own (`read` lists them). PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09h** (**W-09 — Presets in every foreground component's _Properties_; a Quick Text preset sets the markdown too.** The user: _add preset to all properties in all foreground components_, _preset should be part of properties block_, then _for quick-text should have should have the markdown format preset as well_. The Quick Text's own Presets button beside Edit / Preview is gone: **[en:tran:Presets]** is the first row of _Properties_ in every component but Long Text Show, each component with looks of its own; a Quick Text preset also sets its seconds and its markdown (the first line a title, every word kept). Seen live 2026-11-09 on the dev Presenter: Quick Text's six in its _Properties_, **[en:tran:Sermon Title]** setting centre, 75%, 64px, Live 10 and `## ` before the first line; Countdown's four listed. And on a scratch profile in Khmer: the Bible row's **[en:tran:Create Quick Text]**, the six Quick Text presets and Countdown's four in Khmer, **[en:tran:Speaker]** turning the reference into a heading in **[en:tran:Preview]**, Countdown's **[en:tran:Center]** writing scale 2. PM-173 amended.)
+
+Previous: **workflowsVersion: 2026-11-09g** (**New W-61 — change a foreground component with the assistant.** The user: _chatbot can help modify any foreground component_ -- _start a countdown for 5 minutes_, _show top marquee for a given message_, _make a quick-text for a given bible verse_ -- then, with a panel's `Default · Session 2 · +` strip circled: _sessions of opening foreground component should be able to attached to the chatbot for the chat context_. Typed in any chat, a countdown, a marquee, a quick text, a message or a clock goes into a NEW session named after it (or one already holding it), its panel opened on it and put up the panel's own way on the ticked screens; a verse is read from the installed Bible. A session is attached to a chat from its button's menu (**[en:tran:Open in Chatbot]**), the robot in its panel's header, or **[en:tran:Attach a foreground session]** under the box, and then changed in place: words, time, size, colours, place, frame, layer, speed, the timer. Seen live 2026-11-09 on a scratch development profile through a fresh owa-devtools server: a 5-minute countdown started on the Default session that already held 5:00; _Welcome to our service_ on the top marquee as a session of that name; John 3:16 as the quick text session `(KJV) John 3:16` with the Bible Verse preset, its panel opened with the robot in its header; the quick text made larger, gold and top right on the wall and in its panel; the countdown paused (the panel read Resume); a marquee asked to move refused with what it takes; and the undo putting the look back on the wall and in the panel; a right-click on a marquee session opening its menu with **[en:tran:Open in Chatbot]** (not pressed). The help window's own parts -- the attach row's list, the card and a question typed under a chip -- are unit-tested and not yet seen live (the AI caution in front of the window is a person's press). PM-174, CB-172.)
 
 Previous: **workflowsVersion: 2026-11-09f** (**W-09 — Quick Text's Preview and Presets; W-06 step 12 — Create Quick Text from a saved passage.** The user, with the Quick Text panel's markdown box: _update to allow previewing the markdown_; then, with a Bibles-list row's menu and a Quick Text band on the mini screen: _add `Create QuickText` to make a foreground quicktext for the bible verse_; then _add quick text properties preset for me for the use cases like bible verse, speaker, song title, event session, ..._. **[en:tran:Preview]** / **[en:tran:Edit]** above the box; **[en:tran:Presets]** beside them with six looks; the row menu's **[en:tran:Create Quick Text]** under **[en:tran:Create Lyric]**. Seen live 2026-11-09 on the dev Presenter: the sample drawn as a heading, bold and italic; ពគប Proverbs 17:22-28 made the session `(ពគប) សុភាសិត ១៧:២២-២៨`, Live 20, Properties bottom centre, 90%, 44px; **[en:tran:Speaker]** then moved it bottom left, 40%, 40px, blue, Live 10. Not put on a screen live. PM-172, PM-173, CM-103.)
 
@@ -2147,10 +2163,13 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
     **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
     **[en:tran:Quick Text]** opens on a NEW session named after the passage,
     for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
-    words. The box holds the reference in bold and the verses after it (one
-    verse without its number, several with `(22): …`), and the session is
-    already dressed by the **[en:tran:Bible Verse]** preset: a dark band
-    across the bottom, 20 seconds on screen. Press **[en:tran:Preview]** to
+    words. The box holds the reference as a `### ` heading and the verses after
+    it (one verse without its number, several with `(22): …`), and the session
+    is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
+    full width of the bottom, words at 45px set left, two minutes on screen,
+    in the Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    reads `app-Battambang` for a Khmer Bible.
+    Press **[en:tran:Preview]** to
     read it as it will look, then **[en:tran:Show Quick Text]** when it is
     time. Nothing goes on a screen before that. 📸
 
@@ -2198,7 +2217,12 @@ the edge or shadow that keeps them readable over a picture. A
    opacity low (the band lies under every line of what is selected); the arrow
    beside it puts that side back to its default.
 7. **Change how the words are set.** **[en:tran:Font Family]** is a list of
-   the fonts on this computer: pick one and every verse is drawn in it; pick
+   the app's own fonts and then the fonts on this computer. At the top is each
+   enabled language's own face (`app-Google-Sans`, `app-Battambang` — the
+   face a Bible in that language is drawn in), then the fonts the languages
+   ship under their own names (Google Sans, Battambang, a sticky-note hand).
+   Pick one
+   and every verse is drawn in it; pick
    the first line of the list, `--`, to go back to each Bible's own font. Letters
    the font you picked does not have — Khmer under an English font — stay in
    the Bible's own. **[en:tran:Text Style]** has
@@ -2305,13 +2329,43 @@ button:
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
   The message is markdown (`## Title`, `**bold**`, `*italic*`): press
   **[en:tran:Preview]** above the box to read it as the screen will draw it,
-  and **[en:tran:Edit]** to type again. **[en:tran:Presets]** beside them
-  dresses the session for one job in a press — **[en:tran:Bible Verse]**,
-  **[en:tran:Speaker]**, **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
-  **[en:tran:Event Session]** or **[en:tran:Announcement]**: where it sits, its
-  size, colours, frame and how many seconds it stays. Your words, the delay
-  and the font are kept, and _Properties_ shows the new values to adjust.
-  Something of that session already on a screen takes the new look at once.
+  and **[en:tran:Edit]** to type again. **[en:tran:Markdown Lesson]** beside
+  them opens a short lesson above the box: each mark as you type it next to
+  how the screen draws it — headings, bold, italic, struck-through words,
+  lists, a quote and a dividing line. Three rows show the thing most often
+  missed: one Enter does not start a new line on the screen; end the line
+  with `\` to break it, or leave an empty line for a new paragraph.
+  **[en:tran:Open Link in Browser]** at the top of the lesson opens the full
+  cheat sheet (markdownguide.org) in the computer's browser; press
+  **[en:tran:Markdown Lesson]** again to close it. Its **[en:tran:Presets]** (first row
+  of _Properties_, below) are **[en:tran:Bible Verse]**, **[en:tran:Speaker]**,
+  **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** and **[en:tran:Announcement]**, and each also sets
+  how many seconds the text stays and how its markdown is set: the first line
+  becomes the title — **bold** for a song, a heading for a verse, a speaker,
+  a sermon, a session or an announcement — and a song's or a sermon's lines
+  under it turn *italic* (and upright again with any other preset). With
+  nothing typed yet (the box empty, or still its sample) a preset fills in an
+  example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
+  **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
+  white under black words on the **[en:tran:Light]** side), the
+  words at 45px set left, two minutes on screen; past about three verses it
+  sets the words smaller, down to 28px, so a long passage stays a band
+  instead of covering the slide. Every word you typed is kept; pressing a
+  preset twice changes nothing more. The band sits flush on the bottom edge;
+  **Y** in _Properties_ lifts it.
+- In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
+  another size: it keeps its place until you type a number, and shows the
+  size in force again if you leave it empty. 0 px is a square corner.
+- Quick Text's _Properties_ has **[en:tran:Horizontal Margin (%)]** and
+  **[en:tran:Vertical Margin (%)]** in place of a width, as a Lyric stage's
+  _Slide Margin_ has them: the side margin is kept on each side, the vertical
+  one above or below the box (whichever edge it is set to), and the link left
+  of the vertical slider moves both together.
+- In every component the Show / Start row is the panel's footer: it stays at
+  the bottom of the panel while the _Properties_ and the rest scroll under it,
+  and its buttons are small. The **X** and **Y** nudge boxes sit on one line
+  under the position pad.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
@@ -2408,8 +2462,15 @@ button:
   (several message editors, several clocks), so two sessions can each have something
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
-  thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  thing on a screen **per session**: showing from another session puts its own up
+  **beside** what is already there (a Bible verse band from one Quick Text session
+  and a speaker's name from another, both on the wall), and showing a session again
+  replaces only what that session had up. Each session's dot stays lit while its own
+  is up, its **[en:tran:Start counting]** / **[en:tran:Pause]** run only its own
+  clock, and its Hide row takes only its own down. Two sessions left at the same
+  place cover one another, so give each its own place in _Properties_ (a Countdown's
+  **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
+  **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
   another tile replaces it. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
@@ -2417,6 +2478,42 @@ button:
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
+- **[en:tran:Presets]** — the first row of _Properties_ in every foreground
+  component but [en:tran:Long Text Show] (which has its own looks) — dresses
+  the session in one press for a job: [en:tran:Messages] has
+  **[en:tran:Announcement]**, **[en:tran:Event Session]**,
+  **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**; the marquees
+  **[en:tran:Announcement]**, **[en:tran:Bible Verse]** (a slower scroll) and
+  **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
+  **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (twice
+  the size) and **[en:tran:Bottom Banner]**; [en:tran:Time] the corners and
+  **[en:tran:Center]**; the picture, camera, screen and web shows
+  **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and a small corner.
+  At the right of the _Presets_ name, in every component with words and a box
+  (all but the picture, camera, screen and web shows), is **[en:tran:Dark]** /
+  **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
+  on a light box for a light one. The side lit is read off the words' colour.
+  Pressing the other one keeps both colours and only makes them lighter or
+  darker — the box darker and the words lighter for **[en:tran:Dark]**, the
+  reverse for **[en:tran:Light]** — until the words stand out clearly from the
+  box; a blue box stays blue, only lighter or darker. A preset pressed then goes
+  on in that side, and each preset's icon shows its colours on it. Until you
+  pick a colour yourself, a session's words and box follow the app's theme:
+  their **[en:tran:Light]** side in a light window.
+  Every preset with words sets its own font size too (a clock or timer in a
+  corner 40px, **[en:tran:Center]** 120px), and a clock's, a countdown's or a
+  stopwatch's box is never drawn narrower than its digits, whatever its width.
+  **[en:tran:Save as Preset]**, at the end of the row, keeps the session's whole
+  _Properties_ as a preset of your own under a name you type — place, size,
+  colours, font, Effects, layer and transition (and a marquee's size and speed).
+  It is a button after the app's own in that component's row, on every session;
+  pressing it puts that look back exactly. Right-click it for
+  **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and
+  **[en:tran:Remove Preset]** (asked first). Thirty a component at most.
+  One of the app's presets sets the place, size, colours, frame and Effects the component has,
+  never its words' font, its transition or its layer; _Properties_ shows the
+  new values at once, ready to adjust, and what that session has on a screen
+  takes the new look straight away.
 - **[en:tran:Always on Top]** (every foreground component but [en:tran:Long Text Show], not just these — under
   _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
@@ -3366,7 +3463,9 @@ a quick text of a Bible verse, and change how one looks or where it sits on the 
    panel's own look. A session that already holds the same, or already has that name, is
    used again; what you typed in another session is never written over. A verse is read
    from the Bible the Bible Lookup is on, never from the assistant's memory. A new verse
-   quick text gets the **[en:tran:Bible Verse]** preset (W-09). When the screen is off,
+   quick text gets the **[en:tran:Bible Verse]** preset (W-09), and any component can be
+   given one of its own presets by name — _Make the countdown big in the center_, _Use the
+   Speaker look_ (W-09 lists each component's). When the screen is off,
    the answer says so and offers its show button. The assistant never turns a screen on
    by itself.
 2. To talk about ONE session of a panel, attach it to the chat:
@@ -3421,8 +3520,15 @@ _Verify: PM-174, CB-172._
 2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
    tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
-   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
-     configured but not installed on this computer. When the chosen font comes in more
+   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. The list starts
+     with the app's own fonts, which no computer has installed: each enabled language's own face first (`app-Google-Sans`,
+     `app-Battambang` -- the face that language's Bible text is drawn in), then the fonts the languages ship under their own
+     names (Google Sans, Battambang, a sticky-note hand), then the computer's fonts. Every font list in the app starts the same
+     way: the Slide Editor's, the foreground **[en:tran:Properties]**, **[en:tran:Bible/LongText Properties]**, the Lyric
+     Editor's (a section per language, above the computer's) and the Bible Note editor's two font boxes (its main box sorts
+     its fonts by name, which puts the `app-` faces first). A language installed or turned on is in every list the next time
+     a list is opened. A font marked `(Missing)` is
+     configured but neither installed on this computer nor shipped by an installed language. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
    - **Reset button** (`Clear All Settings`):

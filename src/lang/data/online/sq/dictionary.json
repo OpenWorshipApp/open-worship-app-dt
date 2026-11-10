@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Te Prezantuesi, në skedën Biblat, Kërkim hap një pjesë të ruajtur te Kërkimi në Bibël; Klikoni dy herë për të hapur shënimin, Redakto komentin te një varg, ose tërhiqeni atë varg te lista e Biblave.",
     "Show a PowerPoint, PDF or Word file": "Shfaq një skedar PowerPoint, PDF ose Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Klikoni me të djathtën mbi një PPTX, PDF ose DOCX për Hap PPTX, Paraparje e PDF ose Hap DOCX; Rifresko diapozitivët PPTX, Rifresko imazhet PDF ose Rifresko faqet DOCX e lexon sërish.",
-    "Find and replay Presenter tips": "Gjej dhe riluaj këshillat e Prezantuesit"
+    "Find and replay Presenter tips": "Gjej dhe riluaj këshillat e Prezantuesit",
+    "Center": "Qendër",
+    "Top Banner": "Banderolë sipër",
+    "Bottom Banner": "Banderolë poshtë",
+    "Urgent Alert": "Paralajmërim urgjent",
+    "Picture in Picture": "Figurë në figurë",
+    "Markdown Lesson": "Mësim Markdown",
+    "Heading": "Titull",
+    "Quote": "Citim"
 }

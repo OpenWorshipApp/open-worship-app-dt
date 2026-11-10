@@ -3,7 +3,7 @@ id: W-16
 title: "Paramètres : langue, thème, polices, dossiers"
 section: "Configuration"
 lang: fr
-translatedFrom: bdab4da55d553cf8
+translatedFrom: b332d7c78fc14191
 ---
 # W-16 — Paramètres : langue, thème, polices, dossiers
 
@@ -12,7 +12,7 @@ translatedFrom: bdab4da55d553cf8
 1. Cliquez sur l'**engrenage** ([en:tran:Setting]) dans l'en-tête — les Paramètres s'ouvrent dans leur propre fenêtre, sur **[en:tran:Path Settings]** la première fois, puis sur le dernier onglet que vous avez utilisé. **[en:tran:App Assistant]** au-dessus de **[en:tran:Apply Settings]** en bas à gauche ouvre la fenêtre d'aide, pour poser une question sur n'importe quel réglage. 📸
 2. **[en:tran:General]** (onglet ; la langue se choisit dans l'onglet **[en:tran:Languages]**, étape 4a) :
    - **[en:tran:Theme] :** système / clair / sombre.
-   - **[en:tran:Font Family] :** la police dans laquelle sont dessinées les fenêtres de l'application elle-même — pas le texte de l'écran de l'assemblée. Une police marquée `(Missing)` est configurée mais n'est pas installée sur cet ordinateur. Quand la police choisie existe en plusieurs graisses, une deuxième liste à côté permet d'en choisir une (`400 Regular`, `700 Bold`…) ; **[en:tran:Default]** garde la graisse propre à la police.
+   - **[en:tran:Font Family] :** la police dans laquelle sont dessinées les fenêtres de l'application elle-même — pas le texte de l'écran de l'assemblée. La liste commence par les polices que livrent les langues de l'application — Google Sans et celle de chaque langue installée —, qu'aucun ordinateur n'a installées, puis les polices de l'ordinateur ; toutes les listes de polices de l'application sont celle-ci. Une police marquée `(Missing)` est configurée mais n'est ni installée sur cet ordinateur ni livrée par une langue installée. Quand la police choisie existe en plusieurs graisses, une deuxième liste à côté permet d'en choisir une (`400 Regular`, `700 Bold`…) ; **[en:tran:Default]** garde la graisse propre à la police.
    - **Bouton de réinitialisation** (`Clear All Settings`) :
      **ce bouton efface la configuration ; à utiliser avec prudence.** Il demande d'abord une confirmation.
    - **Help → Factory Reset** dans la barre de menus est le recours lorsqu'un paramètre a tellement cassé l'application que les Paramètres ne s'ouvrent plus du tout : il fonctionne même si toutes les pages sont vides. Il demande d'abord une confirmation en nommant le dossier de données utilisé, puis ferme l'application et la rouvre avec tous les paramètres comme après une nouvelle installation — la langue, le dossier de données choisi, la position des fenêtres, les écrans, les clés d'IA et les connexions compris — et cela ne peut pas être annulé. Les documents, chants, Bibles et langues installées ne sont pas supprimés : l'application s'ouvre sur **[en:tran:No Parent Directory Selected]**, et choisir à nouveau le même dossier sous **[en:tran:Path Settings]** les ramène.

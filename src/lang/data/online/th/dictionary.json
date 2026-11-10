@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "ในแท็บ “พระคัมภีร์” ของหน้า “นำเสนอ” ปุ่ม “ค้นหา” จะเปิดตอนที่บันทึกไว้ใน “ค้นหาข้อพระคัมภีร์” ส่วนบนข้อพระคัมภีร์ใช้ “ดับเบิลคลิกเพื่อเปิดบันทึก” “แก้ไขความคิดเห็น” หรือลากข้อนั้นไปยังรายการพระคัมภีร์",
     "Show a PowerPoint, PDF or Word file": "แสดงไฟล์ PowerPoint, PDF หรือ Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "คลิกขวาที่ PPTX, PDF หรือ DOCX เพื่อใช้ “เปิด PPTX” “ดูตัวอย่าง PDF” หรือ “เปิด DOCX” ส่วน “รีเฟรชสไลด์ PPTX” “รีเฟรชรูปภาพ PDF” หรือ “รีเฟรชหน้า DOCX” จะอ่านไฟล์อีกครั้ง",
-    "Find and replay Presenter tips": "ค้นหาและเล่นซ้ำเคล็ดลับผู้นำเสนอ"
+    "Find and replay Presenter tips": "ค้นหาและเล่นซ้ำเคล็ดลับผู้นำเสนอ",
+    "Center": "กึ่งกลาง",
+    "Top Banner": "แบนเนอร์ด้านบน",
+    "Bottom Banner": "แบนเนอร์ด้านล่าง",
+    "Urgent Alert": "แจ้งเตือนด่วน",
+    "Picture in Picture": "ภาพซ้อนภาพ",
+    "Markdown Lesson": "บทเรียน Markdown",
+    "Heading": "หัวเรื่อง",
+    "Quote": "คำพูดอ้างอิง"
 }

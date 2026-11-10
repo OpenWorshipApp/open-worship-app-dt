@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "在演示页面的圣经标签中，查找会在经文查找中打开已保存的经文；可双击打开笔记，对某节编辑评论，或把该节拖到圣经列表中。",
     "Show a PowerPoint, PDF or Word file": "显示 PowerPoint、PDF 或 Word 文件",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "右键单击 PPTX、PDF 或 DOCX 可使用打开 PPTX、预览 PDF或打开 DOCX；刷新 PPTX 幻灯片、刷新 PDF 图片或刷新 DOCX 页面会重新读取它。",
-    "Find and replay Presenter tips": "查找并重播演示台提示"
+    "Find and replay Presenter tips": "查找并重播演示台提示",
+    "Center": "居中",
+    "Top Banner": "顶部横幅",
+    "Bottom Banner": "底部横幅",
+    "Urgent Alert": "紧急警报",
+    "Picture in Picture": "画中画",
+    "Markdown Lesson": "Markdown 教程",
+    "Heading": "标题",
+    "Quote": "引用"
 }

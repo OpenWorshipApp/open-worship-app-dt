@@ -36,13 +36,43 @@ button:
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
   The message is markdown (`## Title`, `**bold**`, `*italic*`): press
   **[en:tran:Preview]** above the box to read it as the screen will draw it,
-  and **[en:tran:Edit]** to type again. **[en:tran:Presets]** beside them
-  dresses the session for one job in a press — **[en:tran:Bible Verse]**,
-  **[en:tran:Speaker]**, **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
-  **[en:tran:Event Session]** or **[en:tran:Announcement]**: where it sits, its
-  size, colours, frame and how many seconds it stays. Your words, the delay
-  and the font are kept, and _Properties_ shows the new values to adjust.
-  Something of that session already on a screen takes the new look at once.
+  and **[en:tran:Edit]** to type again. **[en:tran:Markdown Lesson]** beside
+  them opens a short lesson above the box: each mark as you type it next to
+  how the screen draws it — headings, bold, italic, struck-through words,
+  lists, a quote and a dividing line. Three rows show the thing most often
+  missed: one Enter does not start a new line on the screen; end the line
+  with `\` to break it, or leave an empty line for a new paragraph.
+  **[en:tran:Open Link in Browser]** at the top of the lesson opens the full
+  cheat sheet (markdownguide.org) in the computer's browser; press
+  **[en:tran:Markdown Lesson]** again to close it. Its **[en:tran:Presets]** (first row
+  of _Properties_, below) are **[en:tran:Bible Verse]**, **[en:tran:Speaker]**,
+  **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** and **[en:tran:Announcement]**, and each also sets
+  how many seconds the text stays and how its markdown is set: the first line
+  becomes the title — **bold** for a song, a heading for a verse, a speaker,
+  a sermon, a session or an announcement — and a song's or a sermon's lines
+  under it turn *italic* (and upright again with any other preset). With
+  nothing typed yet (the box empty, or still its sample) a preset fills in an
+  example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
+  **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
+  white under black words on the **[en:tran:Light]** side), the
+  words at 45px set left, two minutes on screen; past about three verses it
+  sets the words smaller, down to 28px, so a long passage stays a band
+  instead of covering the slide. Every word you typed is kept; pressing a
+  preset twice changes nothing more. The band sits flush on the bottom edge;
+  **Y** in _Properties_ lifts it.
+- In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
+  another size: it keeps its place until you type a number, and shows the
+  size in force again if you leave it empty. 0 px is a square corner.
+- Quick Text's _Properties_ has **[en:tran:Horizontal Margin (%)]** and
+  **[en:tran:Vertical Margin (%)]** in place of a width, as a Lyric stage's
+  _Slide Margin_ has them: the side margin is kept on each side, the vertical
+  one above or below the box (whichever edge it is set to), and the link left
+  of the vertical slider moves both together.
+- In every component the Show / Start row is the panel's footer: it stays at
+  the bottom of the panel while the _Properties_ and the rest scroll under it,
+  and its buttons are small. The **X** and **Y** nudge boxes sit on one line
+  under the position pad.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
@@ -139,8 +169,15 @@ button:
   (several message editors, several clocks), so two sessions can each have something
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
-  thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  thing on a screen **per session**: showing from another session puts its own up
+  **beside** what is already there (a Bible verse band from one Quick Text session
+  and a speaker's name from another, both on the wall), and showing a session again
+  replaces only what that session had up. Each session's dot stays lit while its own
+  is up, its **[en:tran:Start counting]** / **[en:tran:Pause]** run only its own
+  clock, and its Hide row takes only its own down. Two sessions left at the same
+  place cover one another, so give each its own place in _Properties_ (a Countdown's
+  **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
+  **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
   another tile replaces it. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
@@ -148,6 +185,42 @@ button:
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
+- **[en:tran:Presets]** — the first row of _Properties_ in every foreground
+  component but [en:tran:Long Text Show] (which has its own looks) — dresses
+  the session in one press for a job: [en:tran:Messages] has
+  **[en:tran:Announcement]**, **[en:tran:Event Session]**,
+  **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**; the marquees
+  **[en:tran:Announcement]**, **[en:tran:Bible Verse]** (a slower scroll) and
+  **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
+  **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (twice
+  the size) and **[en:tran:Bottom Banner]**; [en:tran:Time] the corners and
+  **[en:tran:Center]**; the picture, camera, screen and web shows
+  **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and a small corner.
+  At the right of the _Presets_ name, in every component with words and a box
+  (all but the picture, camera, screen and web shows), is **[en:tran:Dark]** /
+  **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
+  on a light box for a light one. The side lit is read off the words' colour.
+  Pressing the other one keeps both colours and only makes them lighter or
+  darker — the box darker and the words lighter for **[en:tran:Dark]**, the
+  reverse for **[en:tran:Light]** — until the words stand out clearly from the
+  box; a blue box stays blue, only lighter or darker. A preset pressed then goes
+  on in that side, and each preset's icon shows its colours on it. Until you
+  pick a colour yourself, a session's words and box follow the app's theme:
+  their **[en:tran:Light]** side in a light window.
+  Every preset with words sets its own font size too (a clock or timer in a
+  corner 40px, **[en:tran:Center]** 120px), and a clock's, a countdown's or a
+  stopwatch's box is never drawn narrower than its digits, whatever its width.
+  **[en:tran:Save as Preset]**, at the end of the row, keeps the session's whole
+  _Properties_ as a preset of your own under a name you type — place, size,
+  colours, font, Effects, layer and transition (and a marquee's size and speed).
+  It is a button after the app's own in that component's row, on every session;
+  pressing it puts that look back exactly. Right-click it for
+  **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and
+  **[en:tran:Remove Preset]** (asked first). Thirty a component at most.
+  One of the app's presets sets the place, size, colours, frame and Effects the component has,
+  never its words' font, its transition or its layer; _Properties_ shows the
+  new values at once, ready to adjust, and what that session has on a screen
+  takes the new look straight away.
 - **[en:tran:Always on Top]** (every foreground component but [en:tran:Long Text Show], not just these — under
   _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling

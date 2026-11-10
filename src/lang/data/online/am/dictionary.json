@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "ማቅረቢያ ውስጥ ባለው መጽሐፍ ቅዱሶች ትር ላይ፣ ፈልግ የሚለው ቁልፍ የተቀመጠ ምንባብን የጥቅስ መፈለጊያ ውስጥ ይከፍታል፤ ማስታወሻውን ለመክፈት ሁለቴ ጠቅ ያድርጉ፣ በቁጥር ላይ አስተያየት አርትዕ፣ ወይም ያንን ቁጥር ወደ መጽሐፍ ቅዱስ ዝርዝሩ ይጎትቱ።",
     "Show a PowerPoint, PDF or Word file": "PowerPoint፣ PDF ወይም Word ፋይል አሳይ",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX፣ PDF ወይም DOCX ላይ በቀኝ ጠቅ ያድርጉ፦ PPTX ክፈት፣ PDF ቅድመ እይታ ወይም DOCX ክፈት፤ የPPTX ስላይዶችን አድስ፣ የPDF ምስሎችን አድስ ወይም የDOCX ገጾችን አድስ ፋይሉን እንደገና ያነባል።",
-    "Find and replay Presenter tips": "የማቅረቢያ ጠቃሚ ምክሮችን ፈልግ እና እንደገና አጫውት"
+    "Find and replay Presenter tips": "የማቅረቢያ ጠቃሚ ምክሮችን ፈልግ እና እንደገና አጫውት",
+    "Center": "መሃል",
+    "Top Banner": "የላይ ባነር",
+    "Bottom Banner": "የታች ባነር",
+    "Urgent Alert": "አስቸኳይ ማስጠንቀቂያ",
+    "Picture in Picture": "ምስል በምስል ውስጥ",
+    "Markdown Lesson": "የMarkdown ትምህርት",
+    "Heading": "ርዕስ",
+    "Quote": "ጥቅስ"
 }

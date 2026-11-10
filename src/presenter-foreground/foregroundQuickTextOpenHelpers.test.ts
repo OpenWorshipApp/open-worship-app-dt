@@ -7,7 +7,14 @@ const { state, mocks } = vi.hoisted(() => ({
     },
     mocks: {
         requestForegroundPanelOpening: vi.fn(),
+        getBibleFontFamily: vi.fn(async (_bibleKey: string): Promise<any> => {
+            return 'app-Sample Serif';
+        }),
     },
+}));
+
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
+    getBibleFontFamily: mocks.getBibleFontFamily,
 }));
 
 vi.mock('../helper/settingHelpers', () => ({
@@ -44,6 +51,7 @@ function genBibleItem(
     title = '(KJV) John 3:16',
 ) {
     return {
+        bibleKey: 'KJV',
         target: { bookKey: 'JHN', chapter: 3, ...target },
         toTitleWithBibleKey: vi.fn(async () => title),
         toText: vi.fn(async () => text),
@@ -85,9 +93,28 @@ describe('a Bible passage as Quick Text markdown', () => {
         );
         expect(await genBibleItemQuickTextMarkdown(bibleItem)).toEqual({
             title: '(KJV) John 3:16',
-            markdown: '**(KJV) John 3:16**\n\nFor God so loved the world',
+            markdown: '### (KJV) John 3:16\n\nFor God so loved the world',
+            fontFamily: 'app-Sample Serif',
         });
         expect(bibleItem.toText).toHaveBeenCalledWith(undefined, 'none');
+        expect(mocks.getBibleFontFamily).toHaveBeenCalledWith('KJV');
+    });
+
+    test('a Bible with no font of its own, or one that fails, names none', async () => {
+        const bibleItem = genBibleItem({ verseStart: 1, verseEnd: 1 }, 'Text');
+        mocks.getBibleFontFamily.mockResolvedValueOnce(undefined);
+        expect(
+            (await genBibleItemQuickTextMarkdown(bibleItem)).fontFamily,
+        ).toBe('');
+        const errorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        mocks.getBibleFontFamily.mockRejectedValueOnce(new Error('no Bible'));
+        expect(
+            (await genBibleItemQuickTextMarkdown(bibleItem)).fontFamily,
+        ).toBe('');
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        errorSpy.mockRestore();
     });
 
     test('a range keeps its numbers, and each chapter is a paragraph', async () => {
@@ -105,7 +132,7 @@ describe('a Bible passage as Quick Text markdown', () => {
         const { markdown } = await genBibleItemQuickTextMarkdown(crossing);
         expect(crossing.toText).toHaveBeenCalledWith(undefined, 'parenthesis');
         expect(markdown.split('\n\n')).toEqual([
-            '**(KJV) John 3:36-4:2**',
+            '### (KJV) John 3:36-4:2',
             'John 3:36',
             '(36): He that',
             'John 4:1-2',
@@ -129,22 +156,32 @@ describe("a Bible passage's Create Quick Text", () => {
         );
         const sessionId = `s${Date.now().toString(36)}`;
         const suffix = `-${sessionId}`;
+        const orderOf = (key: string) => {
+            return state.order.indexOf(key);
+        };
         expect(
             state.settings.get(`foreground-quick-text-setting${suffix}`),
         ).toBe(
-            String.raw`**(KJV) John 3:16**
+            String.raw`### (KJV) John 3:16
 
 For God \*so\*`,
         );
         // Dressed by the Bible Verse preset, with time to read it.
         expect(
             state.settings.get(`foreground-quick-text-time-to-live${suffix}`),
-        ).toBe('20');
+        ).toBe('120');
         expect(
             state.settings.get(
                 `quick-text${suffix}-setting-show-widget-font-size`,
             ),
-        ).toBe('44');
+        ).toBe('45');
+        // ...in the Bible's own font, which its Font box shows.
+        expect(
+            state.settings.get(`quick-text${suffix}-common-font-family`),
+        ).toBe('app-Sample Serif');
+        expect(orderOf(`quick-text${suffix}-common-font-family`)).toBeLessThan(
+            orderOf('foreground-quick-text-active-session'),
+        );
         expect(
             JSON.parse(state.settings.get('foreground-quick-text-sessions')!),
         ).toEqual([
@@ -178,5 +215,17 @@ For God \*so\*`,
         expect(state.settings.get('foreground-open-panels')).toBe(
             'countdown,quick-text',
         );
+    });
+
+    test("a Bible naming no font leaves the session's Font box at its default", async () => {
+        mocks.requestForegroundPanelOpening.mockReturnValue(true);
+        mocks.getBibleFontFamily.mockResolvedValueOnce(undefined);
+        await openBibleItemInQuickText(
+            genBibleItem({ verseStart: 1, verseEnd: 1 }, 'In the beginning'),
+        );
+        const fontKeys = [...state.settings.keys()].filter((key) => {
+            return key.endsWith('-common-font-family');
+        });
+        expect(fontKeys).toEqual([]);
     });
 });

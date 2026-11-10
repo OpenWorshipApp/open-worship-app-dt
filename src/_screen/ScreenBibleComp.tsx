@@ -245,13 +245,17 @@ export default function ScreenBibleComp() {
             screenLongTextManager.releaseDiv(element);
         };
     }, [screenLongTextManager, div.current]);
-    const marqueeTopData =
-        screenForegroundManager.foregroundData.marqueeTopData;
     const containerStyle = screenLongTextManager.containerStyle;
-    const topInset =
-        marqueeTopData === null
-            ? 0
-            : getMarqueeBandHeight(marqueeTopData, screenManager.height);
+    // Each session's top marquee is its own band: the passage clears the
+    // tallest of them.
+    const topInset = Math.max(
+        0,
+        ...(
+            screenForegroundManager.foregroundData.marqueeTopDataList ?? []
+        ).map((marqueeTopData) => {
+            return getMarqueeBandHeight(marqueeTopData, screenManager.height);
+        }),
+    );
     return (
         <>
             <style>

@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Nan onglè Bib yo nan Prezantatè, Rechèch louvri yon pasaj ki anrejistre nan Rechèch Bib; Klike de fwa pou louvri nòt la, Modifye Kòmantè sou yon vèsè, oswa trennen vèsè sa a nan lis Bib la.",
     "Show a PowerPoint, PDF or Word file": "Montre yon fichye PowerPoint, PDF oswa Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Klike adwat sou yon PPTX, PDF oswa DOCX pou Louvri PPTX, Apèsi PDF oswa Louvri DOCX; Rafrechi Dyapozitiv PPTX, Rafrechi Imaj PDF oswa Rafrechi Paj DOCX li l ankò.",
-    "Find and replay Presenter tips": "Jwenn epi rejwe konsèy Prezantatè yo"
+    "Find and replay Presenter tips": "Jwenn epi rejwe konsèy Prezantatè yo",
+    "Center": "Mitan",
+    "Top Banner": "Banyè Anlè",
+    "Bottom Banner": "Banyè Anba",
+    "Urgent Alert": "Alèt Ijan",
+    "Picture in Picture": "Imaj nan Imaj",
+    "Markdown Lesson": "Leson Markdown",
+    "Heading": "Tit",
+    "Quote": "Sitasyon"
 }

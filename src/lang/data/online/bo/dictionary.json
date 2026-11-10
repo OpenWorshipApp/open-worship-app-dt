@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "“འགྲེམས་སྟོན་ཆས” གི་ “གསུང་རབ་རྣམས” ཤོག་བྱང་ནང་ “འཚོལ་ཞིབ” གིས་ཉར་ཟིན་པའི་ལུང་ཚན་ཞིག་ “གསུང་རབ་འཚོལ་ཞིབ” ནང་ཁ་འབྱེད། ཚིགས་བཅད་སྟེང་ “ཟིན་བྲིས་ཁ་ཕྱེ་བར་ཐེངས་གཉིས་མནན” “མཆན་རྩོམ་སྒྲིག” བེད་སྤྱོད་པའམ། ཚིགས་བཅད་དེ་གསུང་རབ་ཐོ་ལ་འདྲུད།",
     "Show a PowerPoint, PDF or Word file": "PowerPoint དང་ PDF ཡང་ན་ Word ཡིག་ཆ་སྟོན",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX དང་ PDF ཡང་ན་ DOCX ལ་གཡས་མནན་བྱས་ན་ “PPTX ཁ་ཕྱེ” “PDF སྔོན་ལྟ” ཡང་ན་ “DOCX ཁ་ཕྱེ” ཐོན། “PPTX བརྙན་ཤོག་གསར་འདོན” “PDF པར་རིས་གསར་འདོན” ཡང་ན་ “DOCX ཤོག་ངོས་གསར་འདོན” གིས་དེ་བསྐྱར་དུ་ཀློག",
-    "Find and replay Presenter tips": "འགྲེམས་སྟོན་ཆས་ཀྱི་བསླབ་བྱ་འཚོལ་ནས་བསྐྱར་གཏོང"
+    "Find and replay Presenter tips": "འགྲེམས་སྟོན་ཆས་ཀྱི་བསླབ་བྱ་འཚོལ་ནས་བསྐྱར་གཏོང",
+    "Center": "དཀྱིལ",
+    "Top Banner": "སྟེང་གི་དར་ཆ",
+    "Bottom Banner": "འོག་གི་དར་ཆ",
+    "Urgent Alert": "ཛ་དྲག་ཉེན་བརྡ",
+    "Picture in Picture": "པར་ནང་གི་པར",
+    "Markdown Lesson": "Markdown སློབ་ཚན།",
+    "Heading": "ཁ་བྱང་།",
+    "Quote": "ལུང་འདྲེན།"
 }

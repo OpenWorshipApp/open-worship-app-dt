@@ -113,10 +113,13 @@ workflowsVersion: "2026-11-09"
     **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
     **[en:tran:Quick Text]** opens on a NEW session named after the passage,
     for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
-    words. The box holds the reference in bold and the verses after it (one
-    verse without its number, several with `(22): …`), and the session is
-    already dressed by the **[en:tran:Bible Verse]** preset: a dark band
-    across the bottom, 20 seconds on screen. Press **[en:tran:Preview]** to
+    words. The box holds the reference as a `### ` heading and the verses after
+    it (one verse without its number, several with `(22): …`), and the session
+    is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
+    full width of the bottom, words at 45px set left, two minutes on screen,
+    in the Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    reads `app-Battambang` for a Khmer Bible.
+    Press **[en:tran:Preview]** to
     read it as it will look, then **[en:tran:Show Quick Text]** when it is
     time. Nothing goes on a screen before that. 📸
 

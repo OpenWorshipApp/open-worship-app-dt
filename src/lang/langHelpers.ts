@@ -455,14 +455,27 @@ export async function getAllLangsAsync() {
 // ONE registration per window, shared by every caller: open-lyric awaits this
 // before each song it builds, and rewriting a `<style>` of `@font-face` rules
 // re-creates those faces for the whole window. A failed attempt is forgotten,
-// so the next caller tries again.
+// so the next caller tries again. A language installed, turned on or off
+// since is read again: the answer is kept for the plugin list it was read
+// from, and every font list in the window lists the ENABLED packages.
 let allLangCssPromise: ReturnType<typeof getAllLangsAsync> | null = null;
+let allLangCssPluginList: ReturnType<typeof getLoadedLangPlugins> | undefined;
 export function initAllLangCss() {
+    if (
+        allLangCssPromise !== null &&
+        allLangCssPluginList !== undefined &&
+        allLangCssPluginList !== getLoadedLangPlugins()
+    ) {
+        // Undefined while the new read runs, so callers meanwhile share it.
+        allLangCssPromise = null;
+        allLangCssPluginList = undefined;
+    }
     allLangCssPromise ??= getAllLangsAsync()
         .then((allLangData) => {
             for (const langData of allLangData) {
                 initLangCss(langData);
             }
+            allLangCssPluginList = getLoadedLangPlugins();
             return allLangData;
         })
         .catch((error) => {

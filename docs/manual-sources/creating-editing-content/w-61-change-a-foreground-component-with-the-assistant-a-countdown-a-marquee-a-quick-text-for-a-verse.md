@@ -21,7 +21,9 @@ a quick text of a Bible verse, and change how one looks or where it sits on the 
    panel's own look. A session that already holds the same, or already has that name, is
    used again; what you typed in another session is never written over. A verse is read
    from the Bible the Bible Lookup is on, never from the assistant's memory. A new verse
-   quick text gets the **[en:tran:Bible Verse]** preset (W-09). When the screen is off,
+   quick text gets the **[en:tran:Bible Verse]** preset (W-09), and any component can be
+   given one of its own presets by name — _Make the countdown big in the center_, _Use the
+   Speaker look_ (W-09 lists each component's). When the screen is off,
    the answer says so and offers its show button. The assistant never turns a screen on
    by itself.
 2. To talk about ONE session of a panel, attach it to the chat:

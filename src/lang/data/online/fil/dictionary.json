@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Sa tab na Mga Bibliya ng Pagtatanghal, binubuksan ng Paghahanap ang naka-save na sipi sa Hanapin ang Sipi; I-double-click para buksan ang tala, I-edit ang Komento sa isang talata, o i-drag ang talatang iyon sa listahan ng Bibliya.",
     "Show a PowerPoint, PDF or Word file": "Ipakita ang isang file na PowerPoint, PDF o Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "I-right-click ang isang PPTX, PDF o DOCX para sa Buksan ang PPTX, I-preview ang PDF o Buksan ang DOCX; binabasa itong muli ng I-refresh ang Mga Slide ng PPTX, I-refresh ang Mga Larawan ng PDF o I-refresh ang Mga Page ng DOCX.",
-    "Find and replay Presenter tips": "Hanapin at ulitin ang mga tip ng Pagtatanghal"
+    "Find and replay Presenter tips": "Hanapin at ulitin ang mga tip ng Pagtatanghal",
+    "Center": "Gitna",
+    "Top Banner": "Banner sa Itaas",
+    "Bottom Banner": "Banner sa Ibaba",
+    "Urgent Alert": "Agarang Babala",
+    "Picture in Picture": "Larawan sa Larawan",
+    "Markdown Lesson": "Aralin sa Markdown",
+    "Heading": "Pamagat",
+    "Quote": "Sipi"
 }

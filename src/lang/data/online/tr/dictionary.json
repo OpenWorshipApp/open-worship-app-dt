@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "“Sunum” sayfasının “Kutsal Kitaplar” sekmesinde “Bul” düğmesi kayıtlı bir pasajı “Kutsal Kitap'ta Bul” penceresinde açar; bir ayette “Notu açmak için çift tıklayın”, “Yorumu Düzenle” kullanın ya da o ayeti Kutsal Kitap listesine sürükleyin.",
     "Show a PowerPoint, PDF or Word file": "Bir PowerPoint, PDF veya Word dosyası gösterin",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Bir PPTX, PDF veya DOCX dosyasına sağ tıklayıp “PPTX'i Aç”, “PDF'yi Önizle” veya “DOCX'i Aç” seçin; “PPTX Slaytlarını Yenile”, “PDF Görsellerini Yenile” veya “DOCX Sayfalarını Yenile” onu yeniden okur.",
-    "Find and replay Presenter tips": "Sunucu ipuçlarını bulun ve yeniden oynatın"
+    "Find and replay Presenter tips": "Sunucu ipuçlarını bulun ve yeniden oynatın",
+    "Center": "Orta",
+    "Top Banner": "Üst Şerit",
+    "Bottom Banner": "Alt Şerit",
+    "Urgent Alert": "Acil Uyarı",
+    "Picture in Picture": "Resim İçinde Resim",
+    "Markdown Lesson": "Markdown dersi",
+    "Heading": "Başlık",
+    "Quote": "Alıntı"
 }

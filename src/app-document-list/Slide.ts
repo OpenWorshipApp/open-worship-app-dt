@@ -210,7 +210,22 @@ export default class Slide
                 unavailableFonts.push(fontFamily);
             }
         }
-        return unavailableFonts;
+        if (unavailableFonts.length === 0) {
+            return unavailableFonts;
+        }
+        // A language package's font, picked from any font list (2026-11-09):
+        // on no computer, and in this window only once something registered
+        // its package. Asked only for a font nothing else has, and reading the
+        // packages registers their faces here -- so the preview draws it too.
+        const { getLangFontList } = await import('../lang/langFontListHelpers');
+        const langFamilySet = new Set(
+            Object.keys(await getLangFontList()).map((family) => {
+                return family.trim().toLowerCase();
+            }),
+        );
+        return unavailableFonts.filter((fontFamily) => {
+            return !langFamilySet.has(fontFamily.trim().toLowerCase());
+        });
     }
 
     static getDefaultDim() {

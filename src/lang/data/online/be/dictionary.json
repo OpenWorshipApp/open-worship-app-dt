@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "На ўкладцы «Бібліі» акна «Дэманстрацыя» кнопка «Пераход» адкрывае захаваны ўрывак у акне «Пераход да ўрыўка»; «Двойчы націсніце, каб адкрыць нататку», у верша ёсць «Змяніць каментарый», а сам верш можна перацягнуць у спіс Біблій.",
     "Show a PowerPoint, PDF or Word file": "Паказаць файл PowerPoint, PDF або Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Пстрыкніце правай кнопкай PPTX, PDF або DOCX: «Адкрыць PPTX», «Папярэдні прагляд PDF» або «Адкрыць DOCX»; «Абнавіць слайды PPTX», «Абнавіць відарысы PDF» або «Абнавіць старонкі DOCX» зноў чытае файл.",
-    "Find and replay Presenter tips": "Знайсці і паўтарыць парады для акна «Дэманстрацыя»"
+    "Find and replay Presenter tips": "Знайсці і паўтарыць парады для акна «Дэманстрацыя»",
+    "Center": "Цэнтр",
+    "Top Banner": "Верхні банер",
+    "Bottom Banner": "Ніжні банер",
+    "Urgent Alert": "Тэрміновае папярэджанне",
+    "Picture in Picture": "Карцінка ў карцінцы",
+    "Markdown Lesson": "Урок Markdown",
+    "Heading": "Загаловак",
+    "Quote": "Цытата"
 }

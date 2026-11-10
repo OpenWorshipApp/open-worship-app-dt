@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "A Vetítés oldal Bibliák lapján az Igehely gomb megnyit egy mentett igeszakaszt az Igehely megnyitása ablakban; Kattintson duplán a jegyzet megnyitásához, egy versen Megjegyzés szerkesztése, vagy húzza a verset a Biblia-listára.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint-, PDF- vagy Word-fájl megjelenítése",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Kattintson jobb gombbal egy PPTX-, PDF- vagy DOCX-fájlra: PPTX megnyitása, PDF előnézete vagy DOCX megnyitása; a PPTX-diák frissítése, a PDF-képek frissítése vagy a DOCX-oldalak frissítése újraolvassa.",
-    "Find and replay Presenter tips": "A Vetítés tippjeinek keresése és újrajátszása"
+    "Find and replay Presenter tips": "A Vetítés tippjeinek keresése és újrajátszása",
+    "Center": "Középen",
+    "Top Banner": "Felső sáv",
+    "Bottom Banner": "Alsó sáv",
+    "Urgent Alert": "Sürgős figyelmeztetés",
+    "Picture in Picture": "Kép a képben",
+    "Markdown Lesson": "Markdown-lecke",
+    "Heading": "Címsor",
+    "Quote": "Idézet"
 }

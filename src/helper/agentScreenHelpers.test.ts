@@ -80,12 +80,12 @@ function genManager(overrides: Record<string, any> = {}) {
         screenLongTextManager: { screenViewData: null },
         screenForegroundManager: {
             foregroundData: {
-                countdownData: null,
-                stopwatchData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
                 timeDataList: [],
-                marqueeTopData: null,
-                marqueeBottomData: null,
-                quickTextData: null,
+                marqueeTopDataList: [],
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [],
             },
@@ -313,8 +313,8 @@ describe('toForegroundSummary', () => {
     it('names each widget and what it is showing', () => {
         const items = toForegroundSummary({
             messageDataList: [],
-            countdownData: null,
-            stopwatchData: { dateTime: new Date(Date.now() - 65_000) },
+            countdownDataList: [],
+            stopwatchDataList: [{ dateTime: new Date(Date.now() - 65_000) }],
             timeDataList: [
                 {
                     id: 'a',
@@ -322,9 +322,9 @@ describe('toForegroundSummary', () => {
                     title: 'Phnom Penh',
                 },
             ],
-            marqueeTopData: { text: 'Welcome <b>everyone</b>' },
-            marqueeBottomData: null,
-            quickTextData: null,
+            marqueeTopDataList: [{ text: 'Welcome <b>everyone</b>' }],
+            marqueeBottomDataList: [],
+            quickTextDataList: [],
             cameraDataList: [],
             screenDataList: [{ id: 2 }],
             webDataList: [],
@@ -348,12 +348,12 @@ describe('toForegroundSummary', () => {
         const genData = (messageDataList: any[]) => {
             return {
                 messageDataList,
-                countdownData: null,
-                stopwatchData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
                 timeDataList: [],
-                marqueeTopData: null,
-                marqueeBottomData: null,
-                quickTextData: null,
+                marqueeTopDataList: [],
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [],
                 screenDataList: [],
                 webDataList: [],
@@ -393,14 +393,16 @@ describe('toForegroundSummary', () => {
     it('reads a quick text for its words, not its markup', () => {
         const items = toForegroundSummary({
             messageDataList: [],
-            countdownData: null,
-            stopwatchData: null,
+            countdownDataList: [],
+            stopwatchDataList: [],
             timeDataList: [],
-            marqueeTopData: null,
-            marqueeBottomData: null,
-            quickTextData: {
-                htmlText: '<p>zz robot <b>test</b></p><p>second line</p>',
-            },
+            marqueeTopDataList: [],
+            marqueeBottomDataList: [],
+            quickTextDataList: [
+                {
+                    htmlText: '<p>zz robot <b>test</b></p><p>second line</p>',
+                },
+            ],
             cameraDataList: [],
             webDataList: [],
             videoDataList: [],
@@ -409,16 +411,47 @@ describe('toForegroundSummary', () => {
         expect(items).toEqual(['quick text: "zz robot test second line"']);
     });
 
+    // Each session owns its own overlay on a screen: two sessions' quick
+    // texts up at once are two things on the wall, and naming only the
+    // first told the model one was up.
+    it("names every session's overlay of one kind, one line each", () => {
+        const items = toForegroundSummary({
+            messageDataList: [],
+            countdownDataList: [],
+            stopwatchDataList: [],
+            timeDataList: [],
+            marqueeTopDataList: [],
+            marqueeBottomDataList: [
+                { id: 'a', text: 'Welcome' },
+                { text: 'Parking full' },
+            ],
+            quickTextDataList: [
+                { id: 'a', htmlText: '<p>Matthew</p>' },
+                { id: 'b', htmlText: '<p>Session 6</p>' },
+            ],
+            cameraDataList: [],
+            webDataList: [],
+            videoDataList: [],
+            imageDataList: [],
+        } as any);
+        expect(items).toEqual([
+            'marquee at the bottom: "Welcome"',
+            'marquee at the bottom: "Parking full"',
+            'quick text: "Matthew"',
+            'quick text: "Session 6"',
+        ]);
+    });
+
     it('says a countdown past its target is counting the time over', () => {
         const genCountdownData = (dateTime: Date) => {
             return {
                 messageDataList: [],
-                countdownData: { dateTime },
-                stopwatchData: null,
+                countdownDataList: [{ dateTime }],
+                stopwatchDataList: [],
                 timeDataList: [],
-                marqueeTopData: null,
-                marqueeBottomData: null,
-                quickTextData: null,
+                marqueeTopDataList: [],
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [],
                 videoDataList: [],
@@ -441,11 +474,11 @@ describe('toForegroundSummary', () => {
         expect(toForegroundSummary(undefined)).toEqual([]);
         expect(
             toForegroundSummary({
-                countdownData: null,
-                stopwatchData: null,
-                marqueeTopData: null,
-                marqueeBottomData: null,
-                quickTextData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
+                marqueeTopDataList: [],
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [{ id: 'front' }, { id: 'back' }],
             } as any),
         ).toEqual(['camera', 'camera']);

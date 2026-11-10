@@ -29,6 +29,7 @@ vi.mock('../_screen/managers/screenManagerHelpers', () => ({
 }));
 
 import {
+    getForegroundSessionShowingList,
     getForegroundShowingScreenIdDataList,
     getIsAnyForegroundShowing,
     getScreenForegroundManagerByDropped,
@@ -57,6 +58,38 @@ describe('foreground helpers', () => {
 
         expect(mocks.parse).toHaveBeenCalledTimes(2);
         expect(result).toEqual([[3, { parsed: { message: 'Welcome' } }]]);
+    });
+
+    // Each session owns its own overlay on a screen: two sessions up on one
+    // screen are two rows, each marked on its own tab and hidden by its own
+    // Hide.
+    test('lists one row per session entry of a kind, screen by screen', () => {
+        // As the real parse: every list there, empty when the entry has none.
+        mocks.parse.mockImplementation((value) => ({
+            quickTextDataList: [],
+            countdownDataList: [],
+            marqueeTopDataList: [],
+            ...value,
+        }));
+        const matthew = { id: 'a', htmlText: 'Matthew' };
+        const session6 = { id: 'b', htmlText: 'Session 6' };
+        const fallback = { htmlText: 'Default' };
+        state.foregroundData = {
+            3: { quickTextDataList: [matthew, session6] },
+            5: { quickTextDataList: [] },
+            9: { quickTextDataList: [fallback], countdownDataList: [{}] },
+        };
+        expect(getForegroundSessionShowingList('quickTextDataList')).toEqual([
+            [3, matthew],
+            [3, session6],
+            [9, fallback],
+        ]);
+        expect(getForegroundSessionShowingList('countdownDataList')).toEqual([
+            [9, {}],
+        ]);
+        expect(getForegroundSessionShowingList('marqueeTopDataList')).toEqual(
+            [],
+        );
     });
 
     test('reports a missing screen manager and otherwise passes its foreground manager through', () => {

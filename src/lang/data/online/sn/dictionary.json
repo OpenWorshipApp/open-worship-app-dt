@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Papeji inonzi Muratidzi, mutebhu inonzi Mabhaibheri, Kutarisa inovhura rugwaro rwakachengetedzwa muhwindo rinonzi Kutarisa Bhaibheri; Dzvanyai kaviri kuti muvhure chinyorwa, Gadzirisa Tsinhiro pandima, kana kukweva ndima iyoyo kurondedzero yeMabhaibheri.",
     "Show a PowerPoint, PDF or Word file": "Ratidza faira rePowerPoint, rePDF kana reWord",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Dzvanyai kurudyi paPPTX, PDF kana DOCX kuti muwane Vhura PPTX, Ona PDF Pamberi kana Vhura DOCX; Zorodza Masiraidhi ePPTX, Zorodza Mifananidzo yePDF kana Zorodza Mapeji eDOCX inoriverenga zvakare.",
-    "Find and replay Presenter tips": "Tsvaga uye dzokorora mazano eMuratidzi"
+    "Find and replay Presenter tips": "Tsvaga uye dzokorora mazano eMuratidzi",
+    "Center": "Pakati",
+    "Top Banner": "Mureza Wekumusoro",
+    "Bottom Banner": "Mureza Wepasi",
+    "Urgent Alert": "Yambiro Rinokurumidza",
+    "Picture in Picture": "Mufananidzo muMufananidzo",
+    "Markdown Lesson": "Chidzidzo cheMarkdown",
+    "Heading": "Musoro",
+    "Quote": "Mazwi akatorwa"
 }

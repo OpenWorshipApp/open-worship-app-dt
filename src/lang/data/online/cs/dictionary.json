@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Na kartě „Bible“ okna „Prezentace“ tlačítko „Vyhledat“ otevře uloženou pasáž v okně „Vyhledání odkazu“; „Poznámku otevřete dvojitým kliknutím“, u verše je „Upravit komentář“ a ten verš můžete přetáhnout do seznamu Biblí.",
     "Show a PowerPoint, PDF or Word file": "Zobrazit soubor PowerPoint, PDF nebo Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Klikněte pravým tlačítkem na PPTX, PDF nebo DOCX pro „Otevřít PPTX“, „Náhled PDF“ nebo „Otevřít DOCX“; „Obnovit snímky PPTX“, „Obnovit obrázky PDF“ nebo „Obnovit stránky DOCX“ ho načte znovu.",
-    "Find and replay Presenter tips": "Najít a znovu přehrát tipy pro „Prezentace“"
+    "Find and replay Presenter tips": "Najít a znovu přehrát tipy pro „Prezentace“",
+    "Center": "Střed",
+    "Top Banner": "Horní pruh",
+    "Bottom Banner": "Dolní pruh",
+    "Urgent Alert": "Naléhavé upozornění",
+    "Picture in Picture": "Obraz v obraze",
+    "Markdown Lesson": "Lekce Markdownu",
+    "Heading": "Nadpis",
+    "Quote": "Citace"
 }

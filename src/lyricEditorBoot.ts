@@ -5,6 +5,7 @@ import {
     OpenLyricDashboard,
     EditorOpenLyricPlugin,
 } from 'open-lyric';
+import type { OpenLyricFontFaceList } from 'open-lyric';
 import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
 // Already in this module's graph (the player plugin imports it); handed to the
 // language plugins so they register into this registry.
@@ -29,6 +30,7 @@ import {
     getAllLangsAsync,
     initLangCss,
 } from './lang/langHelpers.ts';
+import { genLangOpenLyricFontFaces } from './lang/langFontListHelpers.ts';
 import { applyOpenLyricTheme } from './lyric-list/lyricHelpers.ts';
 import { installOpenLyricPrintPopupHandler } from './lyric-list/lyricPrintHelpers.ts';
 import { checkIsDarkMode, THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
@@ -102,6 +104,15 @@ export function getDashboardInstance() {
             });
             initLangCss(langData);
         }
+        // Every enabled package's fonts, on top of the list.
+        openLyric.fontFaces = genLangOpenLyricFontFaces(
+            openLyric.fontFaces,
+            langDataList,
+        ) as OpenLyricFontFaceList;
+        openLyricMarkdownManager.fontFaces = genLangOpenLyricFontFaces(
+            openLyricMarkdownManager.fontFaces,
+            langDataList,
+        ) as OpenLyricFontFaceList;
     });
 
     applyOpenLyricTheme(dashboard);

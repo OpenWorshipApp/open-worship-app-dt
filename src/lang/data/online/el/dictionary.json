@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Στην Παρουσίαση, στην καρτέλα Αγίες Γραφές, η Αναζήτηση αναφοράς ανοίγει ένα αποθηκευμένο απόσπασμα στην Αναζήτηση αναφοράς· Κάντε διπλό κλικ για να ανοίξετε τη σημείωση, Επεξεργασία σχολίου σε έναν στίχο ή σύρετε αυτόν τον στίχο στη λίστα των Αγίων Γραφών.",
     "Show a PowerPoint, PDF or Word file": "Εμφάνιση αρχείου PowerPoint, PDF ή Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Κάντε δεξί κλικ σε ένα PPTX, PDF ή DOCX για Άνοιγμα PPTX, Προεπισκόπηση PDF ή Άνοιγμα DOCX· η Ανανέωση διαφανειών PPTX, η Ανανέωση εικόνων PDF ή η Ανανέωση σελίδων DOCX το διαβάζει ξανά.",
-    "Find and replay Presenter tips": "Εύρεση και επανάληψη των συμβουλών της Παρουσίασης"
+    "Find and replay Presenter tips": "Εύρεση και επανάληψη των συμβουλών της Παρουσίασης",
+    "Center": "Κέντρο",
+    "Top Banner": "Επάνω λωρίδα",
+    "Bottom Banner": "Κάτω λωρίδα",
+    "Urgent Alert": "Επείγουσα ειδοποίηση",
+    "Picture in Picture": "Εικόνα σε εικόνα",
+    "Markdown Lesson": "Μάθημα Markdown",
+    "Heading": "Επικεφαλίδα",
+    "Quote": "Παράθεση"
 }

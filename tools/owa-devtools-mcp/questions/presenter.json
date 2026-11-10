@@ -1482,7 +1482,8 @@
                         "verse font",
                         "font of the verse",
                         "scripture font",
-                        "khmer font for the bible"
+                        "khmer font for the bible",
+                        "app-Battambang"
                     ],
                     "resources": {
                         "recipe": "W-07",
@@ -2012,6 +2013,9 @@
                         "announcement",
                         "note on screen",
                         "preview markdown",
+                        "markdown lesson",
+                        "learn markdown",
+                        "markdown cheat sheet",
                         "quick text preset",
                         "speaker name",
                         "verse lower third"
@@ -2161,7 +2165,10 @@
                         "save this look",
                         "second marquee",
                         "switch between set-ups",
-                        "without retyping"
+                        "without retyping",
+                        "two quick texts at once",
+                        "both on the screen",
+                        "show another session beside"
                     ],
                     "resources": {
                         "recipe": "W-09",

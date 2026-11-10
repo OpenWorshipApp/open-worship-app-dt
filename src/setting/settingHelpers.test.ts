@@ -7,6 +7,7 @@ const {
     removeSettingMock,
     setSettingMock,
     getFontFamilyMapByNodeFontMock,
+    initAllLangCssMock,
     appProviderMock,
     registeredListeners,
 } = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const {
     removeSettingMock: vi.fn(),
     setSettingMock: vi.fn(),
     getFontFamilyMapByNodeFontMock: vi.fn(),
+    initAllLangCssMock: vi.fn(),
     appProviderMock: {
         settingHomePage: '/setting.html',
         messageUtils: {
@@ -53,6 +55,10 @@ vi.mock('../server/appProvider', () => ({
     default: appProviderMock,
 }));
 
+vi.mock('../lang/langHelpers', () => ({
+    initAllLangCss: initAllLangCssMock,
+}));
+
 async function loadSettingHelpers() {
     return await import('./settingHelpers');
 }
@@ -65,6 +71,7 @@ describe('setting settingHelpers', () => {
         getSettingMock.mockReturnValue(null);
         getSettingForceMock.mockReturnValue(null);
         getFontFamilyMapByNodeFontMock.mockResolvedValue({});
+        initAllLangCssMock.mockResolvedValue([]);
     });
 
     test('opens the setting popup and switches between path, bible and ai tabs', async () => {
@@ -260,6 +267,47 @@ describe('setting settingHelpers', () => {
         });
 
         expect(await module.getAppFontFamily()).toBeNull();
+        expect(await module.getAppFontWeight()).toBeNull();
+    });
+
+    test("a language package's font is a valid app font, read only when the computer lacks the family", async () => {
+        const module = await loadSettingHelpers();
+        const { genFontsData } =
+            await import('../lang/data/online/langFontFaces');
+        const { css } = genFontsData(
+            {
+                uiFamily: 'app-Sample Serif',
+                family: 'Sample Serif',
+                faces: [
+                    { file: 'regular.ttf', weight: 'normal' },
+                    { file: 'bold.ttf', weight: 'bold' },
+                ],
+            },
+            { 'regular.ttf': 'blob:regular', 'bold.ttf': 'blob:bold' },
+        );
+        initAllLangCssMock.mockResolvedValue([{ genCss: () => css }]);
+        getFontFamilyMapByNodeFontMock.mockResolvedValue({ Inter: ['400'] });
+        const chosen = { family: 'Inter', weight: '400' };
+        getSettingMock.mockImplementation((key: string) => {
+            if (key === module.APP_FONT_FAMILY_SETTING_NAME) {
+                return chosen.family;
+            }
+            if (key === module.APP_FONT_WEIGHT_SETTING_NAME) {
+                return chosen.weight;
+            }
+            return null;
+        });
+
+        // A family on the computer never loads a language.
+        expect(await module.getAppFontFamily()).toBe('Inter');
+        expect(initAllLangCssMock).not.toHaveBeenCalled();
+
+        chosen.family = 'Sample Serif';
+        chosen.weight = '700';
+        expect(await module.getAppFontFamily()).toBe('Sample Serif');
+        expect(await module.getAppFontWeight()).toBe('700');
+
+        chosen.weight = '300';
         expect(await module.getAppFontWeight()).toBeNull();
     });
 });

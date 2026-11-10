@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "នៅក្នុងផ្ទាំង ព្រះគម្ពីរ នៃទំព័រ ធ្វើបទបង្ហាញ ប៊ូតុង រកមើល បើកបទគម្ពីរដែលបានរក្សាទុកក្នុង ស្វែងរកព្រះគម្ពីរ។ ចុចពីរដងដើម្បីបើកកំណត់ត្រា ប្រើ កែមតិយោបល់ លើខគម្ពីរ ឬអូសខនោះទៅបញ្ជីព្រះគម្ពីរ។",
     "Show a PowerPoint, PDF or Word file": "បង្ហាញឯកសារ PowerPoint PDF ឬ Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "ចុចស្តាំលើឯកសារ PPTX PDF ឬ DOCX សម្រាប់ បើក PPTX មើល PDF ឬ បើក DOCX ហើយ ផ្ទុកស្លាយ PPTX ជាថ្មី ផ្ទុករូបភាព PDF ជាថ្មី ឬ ផ្ទុកទំព័រ DOCX ជាថ្មី អានឯកសារនោះឡើងវិញ។",
-    "Find and replay Presenter tips": "ស្វែងរក និងអនុវត្តគន្លឹះសម្រាប់អ្នកបង្ហាញឡើងវិញ"
+    "Find and replay Presenter tips": "ស្វែងរក និងអនុវត្តគន្លឹះសម្រាប់អ្នកបង្ហាញឡើងវិញ",
+    "Center": "កណ្ដាល",
+    "Top Banner": "បដាខាងលើ",
+    "Bottom Banner": "បដាខាងក្រោម",
+    "Urgent Alert": "ការជូនដំណឹងបន្ទាន់",
+    "Picture in Picture": "រូបភាពក្នុងរូបភាព",
+    "Markdown Lesson": "មេរៀន Markdown",
+    "Heading": "ចំណងជើង",
+    "Quote": "សម្រង់"
 }

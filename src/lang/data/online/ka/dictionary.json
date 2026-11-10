@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "„პრეზენტაცია“ გვერდის „ბიბლიები“ ჩანართში „გახსნა“ შენახულ მონაკვეთს „მუხლის გახსნა“ ფანჯარაში ხსნის; „შენიშვნის გასახსნელად ორჯერ დააწკაპუნეთ“, მუხლზე — „კომენტარის რედაქტირება“, ან გადაიტანეთ ეს მუხლი ბიბლიების სიაში.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF ან Word ფაილის ჩვენება",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "დააწკაპუნეთ მარჯვენა ღილაკით PPTX, PDF ან DOCX ფაილზე: „PPTX-ის გახსნა“, „PDF-ის გადახედვა“ ან „DOCX-ის გახსნა“; „PPTX სლაიდების განახლება“, „PDF სურათების განახლება“ ან „DOCX გვერდების განახლება“ მას ხელახლა კითხულობს.",
-    "Find and replay Presenter tips": "პრეზენტაციის რჩევების პოვნა და ხელახლა ჩვენება"
+    "Find and replay Presenter tips": "პრეზენტაციის რჩევების პოვნა და ხელახლა ჩვენება",
+    "Center": "ცენტრი",
+    "Top Banner": "ზედა ბანერი",
+    "Bottom Banner": "ქვედა ბანერი",
+    "Urgent Alert": "სასწრაფო გაფრთხილება",
+    "Picture in Picture": "სურათი სურათში",
+    "Markdown Lesson": "Markdown-ის გაკვეთილი",
+    "Heading": "სათაური",
+    "Quote": "ციტატა"
 }

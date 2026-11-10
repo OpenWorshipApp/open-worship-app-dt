@@ -16,7 +16,7 @@ import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import {
     getScreenForegroundManagerInstances,
-    getForegroundShowingScreenIdDataList,
+    getForegroundSessionShowingList,
     getScreenForegroundManagerByDropped,
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
@@ -28,7 +28,6 @@ import {
 import PropRowComp, { PropChipsComp } from './ForegroundPropRowComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import type {
-    ForegroundDataType,
     ForegroundMarqueeDataType,
     MarqueePositionType,
 } from '../_screen/screenTypeHelpers';
@@ -69,10 +68,11 @@ type MarqueeConfigType = {
     speedSettingName: string;
     savedSessionListSettingName: string;
     defaultText: string;
-    getData: (data: ForegroundDataType) => ForegroundMarqueeDataType | null;
+    /** The list each session's scroll of this position is kept in. */
+    listKey: 'marqueeTopDataList' | 'marqueeBottomDataList';
     setData: (
         screenForegroundManager: ScreenForegroundManager,
-        data: ForegroundMarqueeDataType | null,
+        data: ForegroundMarqueeDataType,
     ) => void;
     show: (
         event: any,
@@ -105,7 +105,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         defaultText:
             'This is a testing marquee top text. It has to be long enough to ' +
             'test the marquee top scrolling effect properly.',
-        getData: (data) => data.marqueeTopData,
+        listKey: 'marqueeTopDataList',
         setData: (screenForegroundManager, data) => {
             screenForegroundManager.setMarqueeTopData(data);
         },
@@ -149,7 +149,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         defaultText:
             'This is a testing marquee bottom text. It has to be long enough ' +
             'to test the marquee bottom scrolling effect properly.',
-        getData: (data) => data.marqueeBottomData,
+        listKey: 'marqueeBottomDataList',
         setData: (screenForegroundManager, data) => {
             screenForegroundManager.setMarqueeBottomData(data);
         },
@@ -439,12 +439,16 @@ function MarqueeBodyComp({
             sessionId,
         ],
     );
+    // THIS overlay's session off the screen; other sessions' stay up.
     const handleHiding = useCallback(
-        (screenId: number) => {
+        (screenId: number, data: ForegroundMarqueeDataType) => {
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
-                    config.setData(screenForegroundManager, null);
+                    screenForegroundManager.removeSessionData(
+                        config.listKey,
+                        data,
+                    );
                 },
             );
         },
@@ -551,6 +555,8 @@ function MarqueeBodyComp({
                  * right beside it rather than in a bordered box below -- what
                  * it already put on a screen.
                  */}
+            </div>
+            <div className="fg-actions-dock">
                 <div className="fg-actions">
                     <button
                         className="btn btn-primary"
@@ -581,21 +587,10 @@ export default function ForegroundMarqueeComp({
 }>) {
     const config = CONFIG_MAP[position];
     useScreenForegroundManagerEvents(['update']);
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return config.getData(data) !== null;
-        },
-    )
-        .map(([screenId, data]): [number, ForegroundMarqueeDataType] | null => {
-            const marqueeData = config.getData(data);
-            if (marqueeData === null) {
-                return null;
-            }
-            return [screenId, marqueeData];
-        })
-        .filter((item) => {
-            return item !== null;
-        });
+    // One row per SESSION's scroll: every session owns its own on a screen.
+    const showingScreenIdDataList = getForegroundSessionShowingList(
+        config.listKey,
+    );
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     // One session is one scroll ready to go -- the standing welcome in one,
     // this morning's car-park notice in another -- each with its own words,
@@ -625,7 +620,10 @@ export default function ForegroundMarqueeComp({
                 getScreenForegroundManagerInstances(
                     screenId,
                     (screenForegroundManager) => {
-                        config.setData(screenForegroundManager, null);
+                        screenForegroundManager.removeSessionData(
+                            config.listKey,
+                            data,
+                        );
                     },
                 );
             }

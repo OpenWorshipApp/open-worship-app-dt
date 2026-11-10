@@ -113,6 +113,8 @@ function RenderMarginRowComp({
 }>) {
     const isLinked = style.isMarginLinked;
     const linkTitle = tran('Link horizontal and vertical margin');
+    // The link at the LEFT of the two sliders, centred between the rows it
+    // ties, as the Quick Text panel's Margin has it (the user, 2026-11-09).
     return (
         <div className="d-flex align-items-center app-border-white-round m-1 px-2 gap-1">
             <div className="d-flex flex-column">
@@ -120,39 +122,49 @@ function RenderMarginRowComp({
                     <i className="bi bi-arrows-angle-contract" />
                     <small>{tran('Slide Margin (%)')}</small>
                 </span>
-                <div className="d-flex align-items-center gap-1 ps-1">
-                    <i className="bi bi-arrows" />
-                    <AppRangeComp
-                        value={style.marginHorizontalPercentage}
-                        title={tran('Horizontal Margin (%)')}
-                        setValue={onHorizontalChange}
-                        defaultSize={MARGIN_HORIZONTAL_RANGE}
-                        isShowValue
-                    />
-                </div>
-                <div className="d-flex align-items-center gap-1 ps-1">
-                    <i className="bi bi-arrows-vertical" />
-                    <AppRangeComp
-                        value={style.marginVerticalPercentage}
-                        title={tran('Vertical Margin (%)')}
-                        setValue={onVerticalChange}
-                        defaultSize={MARGIN_VERTICAL_RANGE}
-                        isShowValue
-                    />
+                <div className="d-flex align-items-center gap-1">
+                    <button
+                        type="button"
+                        className={
+                            'btn btn-sm btn' +
+                            (isLinked ? '' : '-outline') +
+                            '-info'
+                        }
+                        title={linkTitle}
+                        aria-label={linkTitle}
+                        aria-pressed={isLinked}
+                        onClick={onLinkToggle}
+                    >
+                        <i
+                            className={
+                                'bi bi-link' + (isLinked ? '-45deg' : '')
+                            }
+                        />
+                    </button>
+                    <div className="d-flex flex-column">
+                        <div className="d-flex align-items-center gap-1 ps-1">
+                            <i className="bi bi-arrows" />
+                            <AppRangeComp
+                                value={style.marginHorizontalPercentage}
+                                title={tran('Horizontal Margin (%)')}
+                                setValue={onHorizontalChange}
+                                defaultSize={MARGIN_HORIZONTAL_RANGE}
+                                isShowValue
+                            />
+                        </div>
+                        <div className="d-flex align-items-center gap-1 ps-1">
+                            <i className="bi bi-arrows-vertical" />
+                            <AppRangeComp
+                                value={style.marginVerticalPercentage}
+                                title={tran('Vertical Margin (%)')}
+                                setValue={onVerticalChange}
+                                defaultSize={MARGIN_VERTICAL_RANGE}
+                                isShowValue
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
-            <button
-                type="button"
-                className={
-                    'btn btn-sm btn' + (isLinked ? '' : '-outline') + '-info'
-                }
-                title={linkTitle}
-                aria-label={linkTitle}
-                aria-pressed={isLinked}
-                onClick={onLinkToggle}
-            >
-                <i className={'bi bi-link' + (isLinked ? '-45deg' : '')} />
-            </button>
         </div>
     );
 }

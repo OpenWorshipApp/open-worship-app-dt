@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "ໃນແຖບ “ພຣະຄຳພີ” ຂອງໜ້າ “ນຳສະເໜີ” ປຸ່ມ “ເປີດຂໍ້” ຈະເປີດຂໍ້ພຣະຄຳພີທີ່ບັນທຶກໄວ້ໃນ “ເປີດຂໍ້ພຣະຄຳພີ” ສ່ວນເທິງຂໍ້ໃຊ້ “ກົດສອງຄັ້ງເພື່ອເປີດໝາຍເຫດ” “ແກ້ໄຂຄຳເຫັນ” ຫຼື ລາກຂໍ້ນັ້ນໄປໃສ່ລາຍການພຣະຄຳພີ",
     "Show a PowerPoint, PDF or Word file": "ສະແດງໄຟລ໌ PowerPoint, PDF ຫຼື Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "ຄລິກຂວາທີ່ PPTX, PDF ຫຼື DOCX ເພື່ອໃຊ້ “ເປີດ PPTX” “ເບິ່ງຕົວຢ່າງ PDF” ຫຼື “ເປີດ DOCX” ສ່ວນ “ໂຫຼດສະໄລ້ PPTX ຄືນໃໝ່” “ໂຫຼດຮູບ PDF ຄືນໃໝ່” ຫຼື “ໂຫຼດໜ້າ DOCX ຄືນໃໝ່” ຈະອ່ານໄຟລ໌ຄືນໃໝ່",
-    "Find and replay Presenter tips": "ຊອກຫາ ແລະ ຫຼິ້ນຄຳແນະນຳການນຳສະເໜີຄືນ"
+    "Find and replay Presenter tips": "ຊອກຫາ ແລະ ຫຼິ້ນຄຳແນະນຳການນຳສະເໜີຄືນ",
+    "Center": "ກາງ",
+    "Top Banner": "ປ້າຍດ້ານເທິງ",
+    "Bottom Banner": "ປ້າຍດ້ານລຸ່ມ",
+    "Urgent Alert": "ແຈ້ງເຕືອນດ່ວນ",
+    "Picture in Picture": "ຮູບໃນຮູບ",
+    "Markdown Lesson": "ບົດຮຽນ Markdown",
+    "Heading": "ຫົວຂໍ້",
+    "Quote": "ຄຳອ້າງອີງ"
 }

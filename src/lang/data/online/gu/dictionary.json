@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "પ્રસ્તુતકર્તા પાનાના ‘બાઇબલ’ ટૅબમાં ‘સંદર્ભ શોધ’ સાચવેલો ભાગ સંદર્ભ શોધ પૅનલમાં ખોલે છે; ‘નોંધ ખોલવા ડબલ-ક્લિક કરો’, કલમ પર ‘ટિપ્પણી સંપાદિત કરો’ પસંદ કરો, અથવા તે કલમને બાઇબલ યાદીમાં ખેંચો.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF અથવા Word ફાઇલ બતાવો",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF અથવા DOCX પર રાઇટ-ક્લિક કરો: ‘PPTX ખોલો’, ‘PDF નું પૂર્વાવલોકન કરો’ અથવા ‘DOCX ખોલો’; ‘PPTX સ્લાઇડ રિફ્રેશ કરો’, ‘PDF છબીઓ રિફ્રેશ કરો’ અથવા ‘DOCX પેજ રિફ્રેશ કરો’ તેને ફરી વાંચે છે.",
-    "Find and replay Presenter tips": "પ્રસ્તુતકર્તાની ટિપ શોધો અને ફરી ચલાવો"
+    "Find and replay Presenter tips": "પ્રસ્તુતકર્તાની ટિપ શોધો અને ફરી ચલાવો",
+    "Center": "મધ્યમાં",
+    "Top Banner": "ઉપરનું બેનર",
+    "Bottom Banner": "નીચેનું બેનર",
+    "Urgent Alert": "તાત્કાલિક ચેતવણી",
+    "Picture in Picture": "ચિત્રમાં ચિત્ર",
+    "Markdown Lesson": "Markdown પાઠ",
+    "Heading": "મથાળું",
+    "Quote": "અવતરણ"
 }

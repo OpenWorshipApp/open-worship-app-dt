@@ -8,8 +8,6 @@ import {
 } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
@@ -20,7 +18,7 @@ import {
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
-    getForegroundShowingScreenIdDataList,
+    getForegroundSessionShowingList,
     getScreenForegroundManagerByDropped,
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
@@ -45,16 +43,14 @@ import {
     useForegroundSessions,
 } from './foregroundSessionHelpers';
 import {
-    QUICK_TEXT_PRESET_LIST,
     QUICK_TEXT_WIDGET_KEY,
-    type QuickTextPresetIdType,
-    applyQuickTextPreset,
     toQuickTextPrefix,
-    toQuickTextPresetLabel,
     toQuickTextSettingName,
     toQuickTextTimeDelaySettingName,
     toQuickTextTimeToLiveSettingName,
 } from './quickTextPresetHelpers';
+import { QUICK_TEXT_DEFAULT_MARKDOWN } from './quickTextFormatHelpers';
+import QuickTextMarkdownLessonComp from './QuickTextMarkdownLessonComp';
 
 /** The keys ONE session of this panel owns beyond its Properties. */
 function genOwnSettingNames(suffix: string) {
@@ -129,7 +125,11 @@ function refreshAllQuickText(
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
-                screenForegroundManager.setQuickTextData(null);
+                // Only THIS session's overlay is drawn afresh.
+                screenForegroundManager.removeSessionData(
+                    'quickTextDataList',
+                    data,
+                );
                 screenForegroundManager.setQuickTextData(
                     withForegroundLayer({ ...data, extraStyle }, isBehind),
                 );
@@ -138,9 +138,10 @@ function refreshAllQuickText(
     }
 }
 
-function handleHiding(screenId: number) {
+/** Takes THIS overlay's session off the screen; other sessions' stay up. */
+function handleHiding(screenId: number, data: ForegroundQuickTextDataType) {
     getScreenForegroundManagerInstances(screenId, (screenForegroundManager) => {
-        screenForegroundManager.setQuickTextData(null);
+        screenForegroundManager.removeSessionData('quickTextDataList', data);
     });
 }
 
@@ -157,18 +158,20 @@ function QuickTextBodyComp({
     showingScreenIdDataList,
     isPreviewing,
     setIsPreviewing,
-    onPresetApplied,
+    isLessonOpen,
+    setIsLessonOpen,
 }: Readonly<{
     sessionId: string;
     suffix: string;
     prefix: string;
     /** THIS session's quick texts only -- see `toSessionShowingList`. */
     showingScreenIdDataList: [number, ForegroundQuickTextDataType][];
-    /** Held by the wrapper, so applying a preset does not drop it. */
+    /** Held by the wrapper, so switching session keeps the choice. */
     isPreviewing: boolean;
     setIsPreviewing: (isPreviewing: boolean) => void;
-    /** A preset rewrote this session's keys: remount to read them. */
-    onPresetApplied: () => void;
+    /** Held by the wrapper too, for the same reason. */
+    isLessonOpen: boolean;
+    setIsLessonOpen: (isLessonOpen: boolean) => void;
 }>) {
     // No screen subscription of its own: the wrapper below holds one and this
     // is its child, so a second would cost a listener for the same redraw.
@@ -178,7 +181,7 @@ function QuickTextBodyComp({
     }, []);
     const [markdownText, setMarkdownText] = useStateSettingString<string>(
         toQuickTextSettingName(suffix),
-        '## This is Title\n\ntext **bold** and *italic*.',
+        QUICK_TEXT_DEFAULT_MARKDOWN,
     );
     const [timeSecondDelay, setTimeSecondDelay] = useStateSettingNumber(
         toQuickTextTimeDelaySettingName(suffix),
@@ -206,6 +209,8 @@ function QuickTextBodyComp({
             });
         },
         isFontSize: true,
+        // Margins in place of Width, as the Lyric stage style has them.
+        isMargin: true,
     });
     const getRenderedHtml = useCallback(async () => {
         const { html } = await renderMarkdown(markdownText);
@@ -325,31 +330,6 @@ function QuickTextBodyComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handlePresetApplying = (presetId: QuickTextPresetIdType) => {
-        if (!applyQuickTextPreset(suffix, presetId)) {
-            return;
-        }
-        // What is up on a screen takes the new look at once, as it does
-        // after any Properties change; `genStyle` reads the keys just written.
-        refreshAllQuickText(showingRef.current, genStyle(), getIsBehind());
-        onPresetApplied();
-    };
-    const handlePresetApplyingRef = useAppCurrentRef(handlePresetApplying);
-    const handlePresetsOpening = useCallback((event: any) => {
-        showAppContextMenu(
-            event,
-            QUICK_TEXT_PRESET_LIST.map((preset) => {
-                return {
-                    childBefore: genContextMenuItemIcon(preset.iconName),
-                    menuElement: toQuickTextPresetLabel(preset.id),
-                    onSelect: () => {
-                        handlePresetApplyingRef.current(preset.id);
-                    },
-                };
-            }),
-        );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
@@ -435,15 +415,22 @@ function QuickTextBodyComp({
                             {tran('Preview')}
                         </button>
                     </span>
+                    {/*
+                     * Beside Edit and Preview, not among them: the lesson
+                     * opens WITH the box, above it, so the marks can be
+                     * copied while typing.
+                     */}
                     <button
                         type="button"
-                        className="fg-props-toggle fg-presets-toggle"
-                        title={tran('Presets')}
-                        onClick={handlePresetsOpening}
+                        className="fg-quiet-btn fg-md-lesson-toggle"
+                        aria-pressed={isLessonOpen}
+                        title={tran('Markdown Lesson')}
+                        onClick={() => {
+                            setIsLessonOpen(!isLessonOpen);
+                        }}
                     >
-                        <i className="bi bi-palette" aria-hidden="true" />
-                        <span>{tran('Presets')}</span>
-                        <i className="bi bi-chevron-down" aria-hidden="true" />
+                        <i className="bi bi-mortarboard" aria-hidden="true" />
+                        <span>{tran('Markdown Lesson')}</span>
                     </button>
                     <div className="ms-auto d-flex gap-2">
                         <SavedTextSessionButtonsComp
@@ -454,6 +441,12 @@ function QuickTextBodyComp({
                         />
                     </div>
                 </div>
+                {isLessonOpen ? (
+                    <QuickTextMarkdownLessonComp
+                        fontFamily={fontFamily}
+                        fontWeight={fontWeight}
+                    />
+                ) : null}
                 {isPreviewing ? (
                     <QuickTextMarkdownPreviewComp
                         markdownText={markdownText}
@@ -475,6 +468,8 @@ function QuickTextBodyComp({
                         }}
                     />
                 )}
+            </div>
+            <div className="fg-actions-dock">
                 <div className="fg-actions">
                     <button
                         className="btn btn-primary"
@@ -500,30 +495,14 @@ function QuickTextBodyComp({
 
 export default function ForegroundQuickTextComp() {
     useScreenForegroundManagerEvents(['update']);
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return data.quickTextData !== null;
-        },
-    )
-        .map(
-            ([screenId, data]):
-                [number, ForegroundQuickTextDataType] | null => {
-                if (data.quickTextData === null) {
-                    return null;
-                }
-                return [screenId, data.quickTextData];
-            },
-        )
-        .filter((item) => {
-            return item !== null;
-        });
+    // One row per SESSION's overlay: every session owns its own on a screen.
+    const showingScreenIdDataList =
+        getForegroundSessionShowingList('quickTextDataList');
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
-    // Up here, not in the body: a preset remounts the body (below), and the
-    // operator who was previewing should still be.
+    // Up here, not in the body: the body is keyed by the session, and an
+    // operator previewing one notice is previewing the next one too.
     const [isPreviewing, setIsPreviewing] = useState(false);
-    // Bumped by a preset. The body and its Properties read their settings
-    // when they mount, so this is what makes them show the preset's values.
-    const [lookVersion, setLookVersion] = useState(0);
+    const [isLessonOpen, setIsLessonOpen] = useState(false);
     // One session is one notice ready to go -- this week's announcement in
     // one, the standing 'phones off' in another, each with its own delay,
     // its own seconds on screen and its own look.
@@ -545,7 +524,7 @@ export default function ForegroundQuickTextComp() {
         hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
                 if (checkIsSessionData(data, sessionId, idList)) {
-                    handleHiding(screenId);
+                    handleHiding(screenId, data);
                 }
             }
         },
@@ -554,7 +533,7 @@ export default function ForegroundQuickTextComp() {
         <ForegroundLayoutComp target="quick-text">
             {sessionsElement}
             <QuickTextBodyComp
-                key={`${activeId}:${lookVersion}`}
+                key={activeId}
                 sessionId={activeId}
                 suffix={suffix}
                 prefix={prefix}
@@ -565,11 +544,8 @@ export default function ForegroundQuickTextComp() {
                 )}
                 isPreviewing={isPreviewing}
                 setIsPreviewing={setIsPreviewing}
-                onPresetApplied={() => {
-                    setLookVersion((version) => {
-                        return version + 1;
-                    });
-                }}
+                isLessonOpen={isLessonOpen}
+                setIsLessonOpen={setIsLessonOpen}
             />
         </ForegroundLayoutComp>
     );

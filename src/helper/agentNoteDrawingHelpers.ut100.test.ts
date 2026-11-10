@@ -72,7 +72,10 @@ describe('a box that points at itself', () => {
                 ]);
             }
         }
-        expect(toNoteDrawingText(result.node)).toBe('2 shapes: Grace | Peace');
+        // A drawing reads back as the lines that draw it (BN-51), so a
+        // model can change one by sending them again: the self-pointing
+        // arrow is gone, the two boxes stay.
+        expect(toNoteDrawingText(result.node)).toBe('Grace\nPeace');
     });
 });
 

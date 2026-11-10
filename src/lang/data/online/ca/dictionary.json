@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "A la pestanya Bíblies del Presentador, Cerca obre un passatge desat a la Cerca de passatges; Feu doble clic per obrir la nota, Edita el comentari en un versicle, o arrossegueu aquest versicle a la llista de Bíblia.",
     "Show a PowerPoint, PDF or Word file": "Mostra un fitxer de PowerPoint, PDF o Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Feu clic amb el botó dret en un PPTX, PDF o DOCX per a Obre el PPTX, Previsualitza el PDF o Obre el DOCX; Actualitza les diapositives PPTX, Actualitza les imatges del PDF o Actualitza les pàgines DOCX el torna a llegir.",
-    "Find and replay Presenter tips": "Troba i repeteix els consells del Presentador"
+    "Find and replay Presenter tips": "Troba i repeteix els consells del Presentador",
+    "Center": "Centre",
+    "Top Banner": "Bàner superior",
+    "Bottom Banner": "Bàner inferior",
+    "Urgent Alert": "Alerta urgent",
+    "Picture in Picture": "Imatge en imatge",
+    "Markdown Lesson": "Lliçó de Markdown",
+    "Heading": "Encapçalament",
+    "Quote": "Cita"
 }

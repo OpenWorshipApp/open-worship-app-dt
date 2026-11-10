@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Na karcie „Biblie” okna „Prezentacja” przycisk „Wyszukaj” otwiera zapisany fragment w oknie „Otwórz fragment”; „Kliknij dwukrotnie, aby otworzyć notatkę”, przy wersecie jest „Edytuj komentarz”, a sam werset możesz przeciągnąć na listę Biblii.",
     "Show a PowerPoint, PDF or Word file": "Pokaż plik PowerPoint, PDF lub Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Kliknij prawym przyciskiem PPTX, PDF lub DOCX, aby wybrać „Otwórz PPTX”, „Podgląd PDF” lub „Otwórz DOCX”; „Odśwież slajdy PPTX”, „Odśwież obrazy PDF” lub „Odśwież strony DOCX” odczytuje plik ponownie.",
-    "Find and replay Presenter tips": "Znajdź i powtórz wskazówki dla okna „Prezentacja”"
+    "Find and replay Presenter tips": "Znajdź i powtórz wskazówki dla okna „Prezentacja”",
+    "Center": "Środek",
+    "Top Banner": "Górny pasek",
+    "Bottom Banner": "Dolny pasek",
+    "Urgent Alert": "Pilne ostrzeżenie",
+    "Picture in Picture": "Obraz w obrazie",
+    "Markdown Lesson": "Lekcja Markdown",
+    "Heading": "Nagłówek",
+    "Quote": "Cytat"
 }

@@ -39,6 +39,10 @@ import {
     initAllLangCss,
     tran,
 } from '../../lang/langHelpers';
+import {
+    genLangEditorFontFamilies,
+    genLangStickyNoteFontFamilies,
+} from '../../lang/langFontListHelpers';
 import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
 import { registerNoteHeadChangedListener } from './noteHeadChangeHelpers';
 import { setNoteWindowController } from './noteWindowControllerHelpers';
@@ -437,22 +441,13 @@ export async function initBibleNote({
 }>) {
     void initAllLangCss();
     const langDataList = await getAllLangsAsync();
-    const stickyNoteExtraFontFamilies = langDataList
-        .filter((langData) => {
-            return langData.stickyNoteFontFamily !== undefined;
-        })
-        .map((langData) => langData.stickyNoteFontFamily!);
+    // Every font the language packages ship, in both of the editor's font
+    // pickers -- each package's `@font-face` rules are registered above, so
+    // a family picked here is drawn at once.
+    const stickyNoteExtraFontFamilies =
+        genLangStickyNoteFontFamilies(langDataList);
     const editorExtraFontFamilies: ReadonlyArray<[string, string]> =
-        langDataList
-            .filter((langData) => {
-                return langData.fontFamily !== undefined;
-            })
-            .map((langData) => {
-                return [langData.fontFamily!, langData.langCode] as [
-                    string,
-                    string,
-                ];
-            });
+        genLangEditorFontFamilies(langDataList);
 
     const getLangCode = (text: string) => {
         const currentLangData = langDataList.find((langData) => {

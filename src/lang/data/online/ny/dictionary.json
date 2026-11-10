@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Mu tabu ya Mabaibulo ya Wowonetsa, Kalozera imatsegula ndime yosungidwa mu Kalozera wa Baibulo; Dinani kawiri kuti mutsegule cholemba, Konzani Ndemanga pa vesi, kapena kokerani vesilo ku mndandanda wa Mabaibulo.",
     "Show a PowerPoint, PDF or Word file": "Onetsani fayilo ya PowerPoint, PDF kapena Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Dinani kumanja PPTX, PDF kapena DOCX kuti mupeze Tsegulani PPTX, Onaniratu PDF kapena Tsegulani DOCX; Tsitsimutsani Masilaidi a PPTX, Tsitsimutsani Zithunzi za PDF kapena Tsitsimutsani Masamba a DOCX imaiwerenganso.",
-    "Find and replay Presenter tips": "Pezani ndi kubwereza malangizo a Wowonetsa"
+    "Find and replay Presenter tips": "Pezani ndi kubwereza malangizo a Wowonetsa",
+    "Center": "Pakati",
+    "Top Banner": "Chikwangwani Chapamwamba",
+    "Bottom Banner": "Chikwangwani Chapansi",
+    "Urgent Alert": "Chenjezo Lachangu",
+    "Picture in Picture": "Chithunzi M'chithunzi",
+    "Markdown Lesson": "Phunziro la Markdown",
+    "Heading": "Mutu",
+    "Quote": "Mawu ogwidwa"
 }

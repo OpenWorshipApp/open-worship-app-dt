@@ -19,8 +19,15 @@ workflowsVersion: "2026-11-09"
 2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
    tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
-   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
-     configured but not installed on this computer. When the chosen font comes in more
+   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. The list starts
+     with the app's own fonts, which no computer has installed: each enabled language's own face first (`app-Google-Sans`,
+     `app-Battambang` -- the face that language's Bible text is drawn in), then the fonts the languages ship under their own
+     names (Google Sans, Battambang, a sticky-note hand), then the computer's fonts. Every font list in the app starts the same
+     way: the Slide Editor's, the foreground **[en:tran:Properties]**, **[en:tran:Bible/LongText Properties]**, the Lyric
+     Editor's (a section per language, above the computer's) and the Bible Note editor's two font boxes (its main box sorts
+     its fonts by name, which puts the `app-` faces first). A language installed or turned on is in every list the next time
+     a list is opened. A font marked `(Missing)` is
+     configured but neither installed on this computer nor shipped by an installed language. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
    - **Reset button** (`Clear All Settings`):

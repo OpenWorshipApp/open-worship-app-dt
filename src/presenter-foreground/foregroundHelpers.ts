@@ -1,4 +1,6 @@
-import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
+import ScreenForegroundManager, {
+    type ForegroundSessionListKeyType,
+} from '../_screen/managers/ScreenForegroundManager';
 import { getForegroundDataListOnScreenSetting } from '../_screen/screenHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
@@ -29,6 +31,25 @@ export function getForegroundShowingScreenIdDataList(
             return filterFunc(data, allForegroundDataList);
         });
     return showingScreenIdDataList;
+}
+
+/**
+ * Every overlay of one per-session kind on the screens, one `[screenId, item]`
+ * row per SESSION's overlay: two sessions up on one screen are two rows, each
+ * marked on its own tab and taken down by its own Hide.
+ */
+export function getForegroundSessionShowingList<
+    K extends ForegroundSessionListKeyType,
+>(key: K): [number, ForegroundDataType[K][number]][] {
+    return getForegroundShowingScreenIdDataList((data) => {
+        return data[key].length > 0;
+    }).flatMap(([screenId, data]) => {
+        return data[key].map(
+            (item): [number, ForegroundDataType[K][number]] => {
+                return [screenId, item];
+            },
+        );
+    });
 }
 
 export function getScreenForegroundManagerInstances(

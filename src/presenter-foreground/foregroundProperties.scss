@@ -19,6 +19,122 @@
   padding: 6px 8px;
 }
 
+// Presets: the first group of the block, a whole look a press. Words on the
+// buttons, not swatches -- what a preset is FOR (a speaker, a countdown in
+// the corner) is the question, and a colour does not say it. Spans the
+// block, wraps, and is the one group with a line under it: everything below
+// is what the press just set.
+.fg-presets {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+// The group's name, and at the other end the Dark / Light switch: which side
+// of the slide the words and their box are for.
+.fg-presets-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fg-presets-mode {
+  display: inline-flex;
+  padding: 1px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+
+  > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--bs-info);
+      outline-offset: 1px;
+    }
+  }
+
+  > button.fg-presets-mode-on {
+    background: rgba(var(--bs-info-rgb), 0.22);
+    opacity: 1;
+  }
+}
+
+.fg-presets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.fg-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+
+  > i {
+    opacity: 0.75;
+  }
+
+  // The icon in the preset's own words and box, on the side the switch is
+  // on: what the switch changes is seen on every button before a press.
+  > i.fg-preset-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35em;
+    height: 1.35em;
+    font-size: 0.85em;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px var(--app-line);
+    opacity: 1;
+  }
+
+  &:hover {
+    background: rgba(var(--bs-info-rgb), 0.16);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+// The button that keeps the session's look as a preset of its own: dashed,
+// as a place for one rather than one.
+.fg-preset-add {
+  background: none;
+  border-style: dashed;
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
 // The slider column. `auto-fit` is what makes the panel worth resizing: one
 // column at 440px, two by ~700px, four in full view -- the same controls, the
 // height falling as the width grows.
@@ -426,17 +542,19 @@
 }
 
 // The nudge lives with the pad because an offset IS the position, measured
-// from the cell that is lit. One axis per row: side by side under the 84px
-// pad each box was ~30px, and an offset of "40" read "4|".
+// from the cell that is lit. X and Y on ONE line (2026-11-09, the user: _this
+// should be inline_). Squeezed into the 84px pad's width each box had been
+// ~30px and an offset of "40" read "4|", so each box keeps its own width and
+// the column grows by the little that takes.
 .fg-pad-offset {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 84px;
+  flex-direction: row;
+  gap: 6px;
 }
 
 .fg-pad-offset-axis {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 3px;
   min-width: 0;
@@ -445,7 +563,7 @@
   opacity: 0.72;
 
   > input {
-    width: 100%;
+    width: 46px;
     min-width: 0;
     padding: 0 3px;
     font-size: 0.74rem;
@@ -526,4 +644,27 @@
   .fg-props-toggle > i {
     transition: none;
   }
+}
+
+// Quick Text's two margin rows with their link at the left, centred between
+// them: linked, one slider moves both margins. One cell of the rows grid.
+.fg-margin-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fg-margin-rows {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fg-margin-link {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  line-height: 1.5;
 }

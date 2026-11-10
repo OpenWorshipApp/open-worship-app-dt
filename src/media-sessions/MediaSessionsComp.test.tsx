@@ -144,8 +144,13 @@ describe('media sessions', () => {
     });
 
     it('draws a session added from outside on every mounted strip of its target only', async () => {
-        vi.spyOn(Date, 'now').mockReturnValue(12345);
-        expect(genMediaSessionId()).toBe('s9ix');
+        // Later than any id an earlier test made: ids never go back in time.
+        const now = 4_102_444_800_000;
+        vi.spyOn(Date, 'now').mockReturnValue(now);
+        expect(genMediaSessionId()).toBe(`s${now.toString(36)}`);
+        // Two in one millisecond -- the assistant making two sessions at
+        // once -- are two sessions, each owning its own overlay.
+        expect(genMediaSessionId()).toBe(`s${(now + 1).toString(36)}`);
         let first!: ReturnType<typeof useMediaSessions>;
         let second!: ReturnType<typeof useMediaSessions>;
         let other!: ReturnType<typeof useMediaSessions>;

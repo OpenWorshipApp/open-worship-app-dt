@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Ao amin'ny takelaka Baiboly an'ny Mpampiseho, ny Fitadiavana dia manokatra andinin-teny voatahiry ao amin'ny Fitadiavana Baiboly; Tsindrio indroa mba hanokafana ny fanamarihana, Ovay ny fanehoan-kevitra amin'ny andininy iray, na tariho ho any amin'ny lisitry ny Baiboly io andininy io.",
     "Show a PowerPoint, PDF or Word file": "Asehoy ny rakitra PowerPoint, PDF na Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Tsindrio havanana ny PPTX, PDF na DOCX mba hahitana Sokafy ny PPTX, Topazo maso ny PDF na Sokafy ny DOCX; ny Havaozy ny silaida PPTX, Havaozy ny sary PDF na Havaozy ny pejy DOCX dia mamaky azy indray.",
-    "Find and replay Presenter tips": "Tadiavo sy avereno ny torohevitra ao amin'ny Mpampiseho"
+    "Find and replay Presenter tips": "Tadiavo sy avereno ny torohevitra ao amin'ny Mpampiseho",
+    "Center": "Afovoany",
+    "Top Banner": "Sora-baventy ambony",
+    "Bottom Banner": "Sora-baventy ambany",
+    "Urgent Alert": "Fampitandremana maika",
+    "Picture in Picture": "Sary anaty sary",
+    "Markdown Lesson": "Lesona Markdown",
+    "Heading": "Lohateny",
+    "Quote": "Teny notsongaina"
 }

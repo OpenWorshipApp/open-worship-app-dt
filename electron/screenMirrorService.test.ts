@@ -1392,7 +1392,8 @@ test('a running clock reaches a guest with its start time', async () => {
     answerBootstraps(service, [
         {
             type: 'foreground',
-            data: { stopwatchData: { dateTime: startedAt } },
+            // Each session's stopwatch is an item of the list.
+            data: { stopwatchDataList: [{ dateTime: startedAt }] },
         },
     ]);
     await service.prepareOutput(0, service.displays()[0].id);
@@ -1402,7 +1403,7 @@ test('a running clock reaches a guest with its start time', async () => {
         ),
     );
     const { dateTime } = client.packets.find((packet) => packet.type === 'show')
-        .context.messages[0].data.stopwatchData;
+        .context.messages[0].data.stopwatchDataList[0];
     expect(new Date(dateTime).getTime()).toBe(startedAt.getTime());
 });
 

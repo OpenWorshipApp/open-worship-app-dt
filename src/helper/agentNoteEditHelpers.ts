@@ -160,18 +160,21 @@ const NAME_SEARCH_LIMIT = 8;
 const MAX_ECHO_STEPS = 3;
 
 /**
- * What the editor's font box lists: its six fonts and each installed
- * language's own face (`editorExtraFontFamilies` in `bibleNoteHelpers.ts`),
- * in the box's order. The languages are the ones this window already loaded.
+ * What the editor's font box lists: its six fonts and every font the
+ * language packages ship (`editorExtraFontFamilies` in `bibleNoteHelpers.ts`,
+ * built by the same `genLangEditorFontFamilies`), in the box's order. The
+ * languages are the ones this window already loaded.
  */
 async function loadNoteFontList() {
     const fontSet = new Set(NOTE_STANDARD_FONT_LIST);
     try {
         const { initAllLangCss } = await import('../lang/langHelpers');
-        for (const langData of (await initAllLangCss()) ?? []) {
-            if (typeof langData?.fontFamily === 'string') {
-                fontSet.add(langData.fontFamily);
-            }
+        const { genLangEditorFontFamilies } =
+            await import('../lang/langFontListHelpers');
+        for (const [family] of genLangEditorFontFamilies(
+            (await initAllLangCss()) ?? [],
+        )) {
+            fontSet.add(family);
         }
     } catch (error) {
         handleError(error);

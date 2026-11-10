@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Akna Esitaja vahekaardil Piiblid avab Otsing salvestatud lõigu aknas Piibliotsing; Märkme avamiseks tee topeltklõps, Muuda kommentaari salmil või lohista see salm Piibli loendisse.",
     "Show a PowerPoint, PDF or Word file": "Näita PowerPointi, PDF- või Wordi faili",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Paremklõpsa PPTX-, PDF- või DOCX-failil: Ava PPTX, Eelvaata PDF-i või Ava DOCX; Värskenda PPTX-slaide, Värskenda PDF-pilte või Värskenda DOCX-lehti loeb selle uuesti.",
-    "Find and replay Presenter tips": "Leia ja korda Esitaja näpunäiteid"
+    "Find and replay Presenter tips": "Leia ja korda Esitaja näpunäiteid",
+    "Center": "Keskel",
+    "Top Banner": "Ülemine riba",
+    "Bottom Banner": "Alumine riba",
+    "Urgent Alert": "Kiire hoiatus",
+    "Picture in Picture": "Pilt pildis",
+    "Markdown Lesson": "Markdowni õppetund",
+    "Heading": "Pealkiri",
+    "Quote": "Tsitaat"
 }

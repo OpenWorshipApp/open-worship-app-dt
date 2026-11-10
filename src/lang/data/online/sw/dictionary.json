@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Katika kichupo cha Biblia cha Uwasilishaji, kitufe Fungua andiko hufungua kifungu kilichohifadhiwa katika dirisha la Fungua andiko; Bofya mara mbili kufungua dokezo, Hariri maoni kwenye mstari, au buruta mstari huo kwenye orodha ya Biblia.",
     "Show a PowerPoint, PDF or Word file": "Onyesha faili ya PowerPoint, PDF au Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Bofya kulia PPTX, PDF au DOCX ili kupata Fungua PPTX, Hakiki PDF au Fungua DOCX; Onyesha upya slaidi za PPTX, Onyesha upya picha za PDF au Onyesha upya kurasa za DOCX huisoma tena.",
-    "Find and replay Presenter tips": "Tafuta na ucheze tena vidokezo vya Uwasilishaji"
+    "Find and replay Presenter tips": "Tafuta na ucheze tena vidokezo vya Uwasilishaji",
+    "Center": "Katikati",
+    "Top Banner": "Bango la Juu",
+    "Bottom Banner": "Bango la Chini",
+    "Urgent Alert": "Tahadhari ya Dharura",
+    "Picture in Picture": "Picha ndani ya Picha",
+    "Markdown Lesson": "Somo la Markdown",
+    "Heading": "Kichwa",
+    "Quote": "Nukuu"
 }

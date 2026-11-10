@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Esitys-ikkunan Raamatut-välilehdellä Haku viitteellä avaa tallennetun kohdan Raamatun haku viitteellä -näkymässä; Avaa muistiinpano kaksoisnapsauttamalla, Muokkaa kommenttia jakeessa, tai vedä se jae Raamattu-luetteloon.",
     "Show a PowerPoint, PDF or Word file": "Näytä PowerPoint-, PDF- tai Word-tiedosto",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Napsauta PPTX-, PDF- tai DOCX-tiedostoa hiiren oikealla: Avaa PPTX, Esikatsele PDF tai Avaa DOCX; Päivitä PPTX-diat, Päivitä PDF-kuvat tai Päivitä DOCX-sivut lukee sen uudelleen.",
-    "Find and replay Presenter tips": "Etsi ja toista Esityksen vinkit uudelleen"
+    "Find and replay Presenter tips": "Etsi ja toista Esityksen vinkit uudelleen",
+    "Center": "Keskellä",
+    "Top Banner": "Yläpalkki",
+    "Bottom Banner": "Alapalkki",
+    "Urgent Alert": "Kiireellinen hälytys",
+    "Picture in Picture": "Kuva kuvassa",
+    "Markdown Lesson": "Markdown-oppitunti",
+    "Heading": "Otsikko",
+    "Quote": "Lainaus"
 }

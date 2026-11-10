@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Na taabụ Baịbụl nke Onye Ngosi, Nleba na-emepe akụkụ echekwara na Nleba Baịbụl; Pịa ugboro abụọ iji mepee ndetu, Dezie Nkọwa na amaokwu, ma ọ bụ dọrọ amaokwu ahụ gaa na ndepụta Baịbụl.",
     "Show a PowerPoint, PDF or Word file": "Gosi faịlụ PowerPoint, PDF ma ọ bụ Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Pịa PPTX, PDF ma ọ bụ DOCX aka nri maka Mepee PPTX, Nlele PDF ma ọ bụ Mepee DOCX; Mee Slaịdị PPTX Ọhụrụ, Mee Onyonyo PDF Ọhụrụ ma ọ bụ Mee Peeji DOCX Ọhụrụ na-agụ ya ọzọ.",
-    "Find and replay Presenter tips": "Chọta ma kpọghachi ndụmọdụ Onye Ngosi"
+    "Find and replay Presenter tips": "Chọta ma kpọghachi ndụmọdụ Onye Ngosi",
+    "Center": "Etiti",
+    "Top Banner": "Ọkọlọtọ Elu",
+    "Bottom Banner": "Ọkọlọtọ Ala",
+    "Urgent Alert": "Ịdọ Aka na Ntị Ngwa Ngwa",
+    "Picture in Picture": "Foto n'ime Foto",
+    "Markdown Lesson": "Ihe ọmụmụ Markdown",
+    "Heading": "Isiokwu",
+    "Quote": "Nhota"
 }

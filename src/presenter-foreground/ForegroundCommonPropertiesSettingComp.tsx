@@ -4,31 +4,42 @@ import { tran } from '../lang/langHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import { getSetting } from '../helper/settingHelpers';
 import ColorPickerComp from '../others/color/ColorPicker';
-import {
-    type AppColorType,
-    HEX_COLOR_WHITE,
-} from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 import PropRowComp, { PropSwatchComp } from './ForegroundPropRowComp';
-import { genCommonStyleSettingNames } from './foregroundStyleSettingNames';
+import { getForegroundDefaultColors } from './foregroundThemeColorHelpers';
+import {
+    DEFAULT_BACKGROUND_COLOR,
+    DEFAULT_TEXT_COLOR,
+    genCommonStyleSettingNames,
+} from './foregroundStyleSettingNames';
 
-export const DEFAULT_TEXT_COLOR = HEX_COLOR_WHITE;
-export const DEFAULT_BACKGROUND_COLOR: AppColorType = '#000080AA';
 export const DEFAULT_BACKDROP_FILTER = 5;
 
-// The key names live in a module of their own, free of this one's pickers;
-// re-exported here for the callers that always found them here.
-export { genCommonStyleSettingNames };
+// The key names and the two colours' defaults live in a module of their
+// own, free of this one's pickers; re-exported here for the callers that
+// always found them here.
+export {
+    DEFAULT_BACKGROUND_COLOR,
+    DEFAULT_TEXT_COLOR,
+    genCommonStyleSettingNames,
+};
 
 export function getForegroundCommonProperties(prefix: string) {
     const names = genCommonStyleSettingNames(prefix);
     const backdropFilterSetting =
         getSetting(names.backdropFilter) ?? DEFAULT_BACKDROP_FILTER;
+    const color = getSetting(names.color);
+    const backgroundColor = getSetting(names.backgroundColor);
+    // An unset colour is drawn on the app theme's side; read only then.
+    const defaultColors =
+        color === null || backgroundColor === null
+            ? getForegroundDefaultColors()
+            : null;
     return {
         fontFamily: getSetting(names.fontFamily) ?? '',
         fontWeight: getSetting(names.fontWeight) ?? '',
-        color: getSetting(names.color) ?? DEFAULT_TEXT_COLOR,
-        backgroundColor:
-            getSetting(names.backgroundColor) ?? DEFAULT_BACKGROUND_COLOR,
+        color: color ?? defaultColors!.color,
+        backgroundColor: backgroundColor ?? defaultColors!.backgroundColor,
         backdropFilter: `blur(${backdropFilterSetting}px)`,
     };
 }
@@ -91,6 +102,11 @@ export default function CommonStyleControlsComp({
     const textColorLabel = tran('Text Color');
     const backgroundColorLabel = tran('Background Color');
     const blurLabel = tran('Blur');
+    // The app theme's side of the defaults: what "no colour" puts back.
+    const defaultColors = getForegroundDefaultColors();
+    const defaultTextColor = defaultColors.color as AppColorType;
+    const defaultBackgroundColor =
+        defaultColors.backgroundColor as AppColorType;
     return (
         <>
             <PropRowComp
@@ -127,8 +143,8 @@ export default function CommonStyleControlsComp({
                 iconClassName="bi bi-palette"
                 label={tran('Colors')}
                 isEngaged={
-                    color !== DEFAULT_TEXT_COLOR ||
-                    backgroundColor !== DEFAULT_BACKGROUND_COLOR
+                    color !== defaultTextColor ||
+                    backgroundColor !== defaultBackgroundColor
                 }
             >
                 <PropSwatchComp
@@ -161,18 +177,18 @@ export default function CommonStyleControlsComp({
                     {openedColor === 'text' ? (
                         <ColorPickerComp
                             color={color}
-                            defaultColor={DEFAULT_TEXT_COLOR}
+                            defaultColor={defaultTextColor}
                             onNoColor={() => {
-                                setColor(DEFAULT_TEXT_COLOR);
+                                setColor(defaultTextColor);
                             }}
                             onColorChange={setColor}
                         />
                     ) : (
                         <ColorPickerComp
                             color={backgroundColor}
-                            defaultColor={DEFAULT_BACKGROUND_COLOR}
+                            defaultColor={defaultBackgroundColor}
                             onNoColor={() => {
-                                setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
+                                setBackgroundColor(defaultBackgroundColor);
                             }}
                             onColorChange={setBackgroundColor}
                         />

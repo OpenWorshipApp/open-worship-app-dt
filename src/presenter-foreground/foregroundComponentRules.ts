@@ -29,6 +29,11 @@ export type ForegroundPropsFlagsType = {
     isCommonStyle: boolean;
     /** The blend-mode picker (the widgets that put up a picture). */
     isBlendMode: boolean;
+    /**
+     * Margins in place of Width (Quick Text): the side margins are the
+     * width, and a top or bottom margin in % of the screen's height.
+     */
+    isMargin?: boolean;
 };
 
 export type ForegroundComponentRuleType = {
@@ -67,9 +72,11 @@ const MARQUEE_FLAGS: ForegroundPropsFlagsType = {
     isBlendMode: false,
 };
 
-// A clock has no Font Size row: its size is the Scale and the Width.
+// A clock's Font Size row is its own panel's (`ForegroundTimeComp` has had
+// it from the start); this said it had none, so the assistant and the
+// presets left a clock at the 100px default, wider than its box.
 const CLOCK_FLAGS: ForegroundPropsFlagsType = {
-    isFontSize: false,
+    isFontSize: true,
     isGeometry: true,
     isCommonStyle: true,
     isBlendMode: false,
@@ -160,7 +167,7 @@ export const FOREGROUND_COMPONENT_RULE_MAP: Record<
         toSessionPrefix: (suffix) => {
             return `quick-text${suffix}`;
         },
-        flags: TEXT_FLAGS,
+        flags: { ...TEXT_FLAGS, isMargin: true },
         toOwnSettingNames: (suffix) => {
             return [
                 `foreground-quick-text-setting${suffix}`,

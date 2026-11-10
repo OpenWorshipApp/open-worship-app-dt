@@ -51,6 +51,8 @@ export type AgentForegroundContentPlanType = {
     countdownMode?: 'duration' | 'date';
     /** A verse: its title, and the Bible Verse look for a new session. */
     verseTitle?: string;
+    /** That verse's Bible's font, for a new session's Font box. */
+    verseFontFamily?: string;
     /** A Time session's clock the change is on (a new one when absent). */
     clockId?: string;
     newClockIdList?: string[];
@@ -193,6 +195,8 @@ export type AgentForegroundVerseType = {
     title: string;
     text: string;
     markdown: string;
+    /** The family the Bible's text is drawn in; '' when none is named. */
+    fontFamily?: string;
 };
 
 /**
@@ -225,11 +229,12 @@ export async function readForegroundVerse(
     }
     const { genBibleItemQuickTextMarkdown } =
         await import('../presenter-foreground/foregroundQuickTextOpenHelpers');
-    const { title, markdown } = await genBibleItemQuickTextMarkdown(bibleItem);
+    const { title, markdown, fontFamily } =
+        await genBibleItemQuickTextMarkdown(bibleItem);
     const text = (await bibleItem.toText(undefined, 'parenthesis'))
         .replace(/\s+/g, ' ')
         .trim();
-    return { title, text, markdown };
+    return { title, text, markdown, fontFamily };
 }
 
 function genTooLongReason(what: string, length: number, max: number) {
@@ -380,6 +385,7 @@ export async function planForegroundContent(
             let said = '';
             let name = '';
             let verseTitle: string | undefined;
+            let verseFontFamily: string | undefined;
             if (ref !== '') {
                 const verse = request.verse;
                 if (verse === undefined) {
@@ -399,6 +405,7 @@ export async function planForegroundContent(
                 said = `${verse.title}: "${verse.text}"`;
                 name = verse.title;
                 verseTitle = verse.title;
+                verseFontFamily = verse.fontFamily;
             } else {
                 const text =
                     typeof request.text === 'string' ? request.text.trim() : '';
@@ -450,6 +457,7 @@ export async function planForegroundContent(
                 said,
                 name,
                 ...(verseTitle ? { verseTitle } : {}),
+                ...(verseFontFamily ? { verseFontFamily } : {}),
             };
         }
         case 'message': {

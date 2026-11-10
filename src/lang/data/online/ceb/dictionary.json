@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Sa tab nga Mga Biblia sa Pagpresentar, ang Pangita moabli sa natipig nga tudling sa Pangita sa Biblia; I-double-click aron maablihan ang nota, I-edit ang Komento sa usa ka bersikulo, o guyora ang maong bersikulo ngadto sa lista sa Biblia.",
     "Show a PowerPoint, PDF or Word file": "Ipakita ang usa ka file sa PowerPoint, PDF o Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "I-right-click ang PPTX, PDF o DOCX alang sa Ablihi ang PPTX, Tan-awa daan ang PDF o Ablihi ang DOCX; ang I-refresh ang mga Slide sa PPTX, I-refresh ang mga Hulagway sa PDF o I-refresh ang mga Panid sa DOCX mobasa niini pag-usab.",
-    "Find and replay Presenter tips": "Pangitaa ug balika ang mga tambag sa Pagpresentar"
+    "Find and replay Presenter tips": "Pangitaa ug balika ang mga tambag sa Pagpresentar",
+    "Center": "Tunga",
+    "Top Banner": "Banner sa Ibabaw",
+    "Bottom Banner": "Banner sa Ubos",
+    "Urgent Alert": "Dinaliang Pasidaan",
+    "Picture in Picture": "Litrato sulod sa Litrato",
+    "Markdown Lesson": "Leksiyon sa Markdown",
+    "Heading": "Ulohan",
+    "Quote": "Kinutlo"
 }

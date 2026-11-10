@@ -7,6 +7,7 @@ const {
     fileSourceGetInstanceMock,
     fileSourceGetInstanceBySrcMock,
     pathJoinMock,
+    getLangFontListMock,
 } = vi.hoisted(() => ({
     getDefaultScreenDisplayMock: vi.fn(),
     getFontFamiliesMock: vi.fn(),
@@ -14,6 +15,9 @@ const {
     fileSourceGetInstanceMock: vi.fn(),
     fileSourceGetInstanceBySrcMock: vi.fn(),
     pathJoinMock: vi.fn(),
+    getLangFontListMock: vi.fn(async (): Promise<Record<string, string[]>> => {
+        return {};
+    }),
 }));
 
 vi.mock('../_screen/managers/screenHelpers', () => ({
@@ -41,6 +45,11 @@ vi.mock('../helper/FileSource', () => ({
 
 vi.mock('../server/fileHelpers', () => ({
     pathJoin: pathJoinMock,
+}));
+
+// The installed language packages' fonts, which the app draws itself.
+vi.mock('../lang/langFontListHelpers', () => ({
+    getLangFontList: getLangFontListMock,
 }));
 
 import { DragTypeEnum } from '../helper/DragInf';
@@ -107,6 +116,30 @@ describe('slide models', () => {
             'Missing Font',
             'Failed Font',
         ]);
+    });
+    test("a language package's font is never reported missing", async () => {
+        getFontFamiliesMock.mockResolvedValue(['arial']);
+        getLangFontListMock.mockResolvedValueOnce({ 'Sample Serif': ['400'] });
+        vi.stubGlobal('document', { fonts: new Set() });
+        const slide = new Slide('/docs/song.ows', {
+            ...createSlideJson(0),
+            canvasItems: ['Arial', 'sample serif', 'Missing Font'].map(
+                (fontFamily) => ({ type: 'text', fontFamily }) as any,
+            ),
+        });
+        expect(await slide.getUnavailableFontFamilies()).toEqual([
+            'Missing Font',
+        ]);
+        expect(getLangFontListMock).toHaveBeenCalledOnce();
+
+        // Every font on the computer: no language is read at all.
+        getLangFontListMock.mockClear();
+        const onComputer = new Slide('/docs/song.ows', {
+            ...createSlideJson(1),
+            canvasItems: [{ type: 'text', fontFamily: 'Arial' } as any],
+        });
+        expect(await onComputer.getUnavailableFontFamilies()).toEqual([]);
+        expect(getLangFontListMock).not.toHaveBeenCalled();
     });
     beforeEach(() => {
         vi.clearAllMocks();

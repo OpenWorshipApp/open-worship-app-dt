@@ -42,7 +42,15 @@ export function useFontList() {
                 return;
             }
             const fonts = await getFontFamilyMapByNodeFont();
-            contextMethods.setFontList(fonts);
+            // The language packages' fonts too, first: they are not on the
+            // computer, so the system list never had them. Imported here, at
+            // a picker, so a window's start-up (which reads the system list
+            // for the app font) never loads every installed language.
+            const { getLangFontList, mergeLangFontList } =
+                await import('../lang/langFontListHelpers');
+            contextMethods.setFontList(
+                mergeLangFontList(await getLangFontList(), fonts),
+            );
         },
         [fontList],
         { setFontList },

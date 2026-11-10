@@ -210,6 +210,7 @@ type HostPropsType = {
     isGeometry?: boolean;
     isCommonStyle?: boolean;
     isBlendMode?: boolean;
+    isMargin?: boolean;
     extraControls?: ReactNode;
     onResult?: (result: HookResultType) => void;
 };
@@ -413,6 +414,66 @@ describe('geometry rows', () => {
     });
 });
 
+describe('Margin in place of Width (Quick Text)', () => {
+    test('the side margin IS the width; the bottom margin is a share of the height', async () => {
+        state.settings.set(
+            'video-setting-show-widget-alignment-data',
+            JSON.stringify({
+                horizontalAlignment: 'left',
+                verticalAlignment: 'end',
+            }),
+        );
+        await openPanel({ isMargin: true });
+        expect(query('input[aria-label="Width (%)"]')).toBeNull();
+        // The default width of 50 is a margin of 25 on each side.
+        expect(
+            query<HTMLInputElement>(
+                'input[aria-label="Horizontal Margin (%)"]',
+            )!.value,
+        ).toBe('25');
+        await typeInto('Horizontal Margin (%)', '5');
+        expect(
+            state.settings.get('video-setting-show-widget-width-percentage'),
+        ).toBe('90');
+        await typeInto('Vertical Margin (%)', '10');
+        expect(
+            state.settings.get(
+                'video-setting-show-widget-margin-vertical-percentage',
+            ),
+        ).toBe('10');
+        const { style } = lastChange();
+        expect(style.width).toBe('90%');
+        expect(style.left).toBe('calc(5% + 0px)');
+        expect(style.bottom).toBe('calc(10% + 0px)');
+    });
+
+    test('linked, one slider moves both margins', async () => {
+        await openPanel({ isMargin: true });
+        const link = query<HTMLButtonElement>(
+            'button[aria-label="Link horizontal and vertical margin"]',
+        )!;
+        expect(link.getAttribute('aria-pressed')).toBe('false');
+        await click(link);
+        expect(link.getAttribute('aria-pressed')).toBe('true');
+        await typeInto('Horizontal Margin (%)', '8');
+        expect(
+            state.settings.get(
+                'video-setting-show-widget-margin-vertical-percentage',
+            ),
+        ).toBe('8');
+        await typeInto('Vertical Margin (%)', '12');
+        expect(
+            state.settings.get('video-setting-show-widget-width-percentage'),
+        ).toBe('76');
+    });
+
+    test('a panel without margins keeps its Width row and plain offsets', async () => {
+        await openPanel();
+        expect(query('input[aria-label="Width (%)"]')).not.toBeNull();
+        expect(query('input[aria-label="Vertical Margin (%)"]')).toBeNull();
+    });
+});
+
 describe('the Round control', () => {
     test('a geometry widget starts in pixels at 5 and is not lit for it', async () => {
         await openPanel();
@@ -473,8 +534,13 @@ describe('the Round control', () => {
         expect(
             state.settings.get('video-setting-show-widget-round-size-px'),
         ).toBe('0');
-        // ...which is the percentage mode again.
-        expect(query('input[aria-label="Round %"]')).not.toBeNull();
+        // 0 px is a square corner: the percentage goes to 0 with it, and the
+        // px box stays where it is typed in.
+        expect(
+            state.settings.get('video-setting-show-widget-round-percentage'),
+        ).toBe('0');
+        expect(lastChange().style.borderRadius).toBe('0%');
+        expect(query('input[aria-label="Round px"]')).not.toBeNull();
     });
 
     test('a widget without geometry starts square, in percent', async () => {

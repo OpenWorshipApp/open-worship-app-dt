@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "در زبانه کتاب‌های مقدس در ارائه، دکمه یافتن مرجع یک قسمت ذخیره‌شده را در پنجره یافتن مرجع باز می‌کند؛ برای باز کردن یادداشت دوبار کلیک کنید، ویرایش توضیح روی یک آیه، یا آن آیه را به فهرست کتاب مقدس بکشید.",
     "Show a PowerPoint, PDF or Word file": "نمایش یک فایل PowerPoint، PDF یا Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "روی یک فایل PPTX، PDF یا DOCX راست‌کلیک کنید برای باز کردن PPTX، پیش‌نمایش PDF یا باز کردن DOCX؛ تازه‌سازی اسلایدهای PPTX، تازه‌سازی تصاویر PDF یا تازه‌سازی صفحه‌های DOCX آن را دوباره می‌خواند.",
-    "Find and replay Presenter tips": "یافتن و پخش دوباره نکته‌های ارائه"
+    "Find and replay Presenter tips": "یافتن و پخش دوباره نکته‌های ارائه",
+    "Center": "وسط",
+    "Top Banner": "نوار بالا",
+    "Bottom Banner": "نوار پایین",
+    "Urgent Alert": "هشدار فوری",
+    "Picture in Picture": "تصویر در تصویر",
+    "Markdown Lesson": "درس Markdown",
+    "Heading": "سرعنوان",
+    "Quote": "نقل‌قول"
 }

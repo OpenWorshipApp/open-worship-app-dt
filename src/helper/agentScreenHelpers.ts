@@ -337,31 +337,31 @@ export function toForegroundSummary(
     }
     // What each clock READS -- paused, not started, counting the time over --
     // because "a countdown" alone describes a wall the room is not looking at.
-    if (foregroundData.countdownData) {
-        items.push(describeCountdown(foregroundData.countdownData));
+    for (const countdown of foregroundData.countdownDataList ?? []) {
+        items.push(describeCountdown(countdown));
     }
-    if (foregroundData.stopwatchData) {
-        items.push(describeStopwatch(foregroundData.stopwatchData));
+    for (const stopwatch of foregroundData.stopwatchDataList ?? []) {
+        items.push(describeStopwatch(stopwatch));
     }
     for (const time of foregroundData.timeDataList ?? []) {
         items.push(time.title ? `clock "${time.title}"` : 'clock');
     }
-    if (foregroundData.marqueeTopData) {
+    for (const marquee of foregroundData.marqueeTopDataList ?? []) {
         items.push(
-            `marquee at the top: "${cutText(toPlainText(foregroundData.marqueeTopData.text ?? ''))}"`,
+            `marquee at the top: "${cutText(toPlainText(marquee.text ?? ''))}"`,
         );
     }
-    if (foregroundData.marqueeBottomData) {
+    for (const marquee of foregroundData.marqueeBottomDataList ?? []) {
         items.push(
-            `marquee at the bottom: "${cutText(toPlainText(foregroundData.marqueeBottomData.text ?? ''))}"`,
+            `marquee at the bottom: "${cutText(toPlainText(marquee.text ?? ''))}"`,
         );
     }
     // A quick text is MARKUP (its editor writes `<p>…</p>`), unlike a message
     // or a marquee, so it is read for its words -- it was handed to the model
     // as `quick text: "<p>zz robot test</p>"`.
-    if (foregroundData.quickTextData) {
+    for (const quickText of foregroundData.quickTextDataList ?? []) {
         items.push(
-            `quick text: "${cutText(toSungText(foregroundData.quickTextData.htmlText ?? ''))}"`,
+            `quick text: "${cutText(toSungText(quickText.htmlText ?? ''))}"`,
         );
     }
     for (const _camera of foregroundData.cameraDataList ?? []) {

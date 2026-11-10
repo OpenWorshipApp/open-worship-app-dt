@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "«Көрсетуші» бетіндегі «Киелі кітаптар» қойындысында «Іздеу» батырмасы сақталған үзіндіні «Киелі кітаптан іздеу» терезесінде ашады; аятта «Жазбаны ашу үшін екі рет басыңыз», «Пікірді өзгерту» қолданыңыз немесе сол аятты Киелі кітап тізіміне сүйреңіз.",
     "Show a PowerPoint, PDF or Word file": "PowerPoint, PDF немесе Word файлын көрсету",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX, PDF немесе DOCX файлын тінтуірдің оң жақ батырмасымен басып, «PPTX ашу», «PDF алдын ала қарау» немесе «DOCX ашу» таңдаңыз; «PPTX слайдтарын жаңарту», «PDF суреттерін жаңарту» немесе «DOCX беттерін жаңарту» оны қайта оқиды.",
-    "Find and replay Presenter tips": "Көрсетуші кеңестерін табу және қайталау"
+    "Find and replay Presenter tips": "Көрсетуші кеңестерін табу және қайталау",
+    "Center": "Ортасы",
+    "Top Banner": "Жоғарғы баннер",
+    "Bottom Banner": "Төменгі баннер",
+    "Urgent Alert": "Шұғыл ескерту",
+    "Picture in Picture": "Сурет ішінде сурет",
+    "Markdown Lesson": "Markdown сабағы",
+    "Heading": "Тақырып",
+    "Quote": "Дәйексөз"
 }

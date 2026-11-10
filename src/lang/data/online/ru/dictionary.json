@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "На вкладке «Библии» окна «Показ» кнопка «Переход» открывает сохранённый отрывок в окне «Переход к отрывку»; «Дважды щёлкните, чтобы открыть заметку», у стиха есть «Изменить комментарий», а сам стих можно перетащить в список Библий.",
     "Show a PowerPoint, PDF or Word file": "Показать файл PowerPoint, PDF или Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Щёлкните правой кнопкой PPTX, PDF или DOCX: «Открыть PPTX», «Предпросмотр PDF» или «Открыть DOCX»; «Обновить слайды PPTX», «Обновить изображения PDF» или «Обновить страницы DOCX» читает файл заново.",
-    "Find and replay Presenter tips": "Найти и повторить советы для окна «Показ»"
+    "Find and replay Presenter tips": "Найти и повторить советы для окна «Показ»",
+    "Center": "По центру",
+    "Top Banner": "Верхний баннер",
+    "Bottom Banner": "Нижний баннер",
+    "Urgent Alert": "Срочное оповещение",
+    "Picture in Picture": "Картинка в картинке",
+    "Markdown Lesson": "Урок Markdown",
+    "Heading": "Заголовок",
+    "Quote": "Цитата"
 }

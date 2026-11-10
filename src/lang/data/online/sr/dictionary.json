@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "На картици „Библије“ прозора „Презентер“, „Претрага“ отвара сачувани одломак у „Претрага Библије“; „Двапут кликните да отворите белешку“, на стиху је „Уреди коментар“, а тај стих можете превући у листу Библија.",
     "Show a PowerPoint, PDF or Word file": "Прикажите PowerPoint, PDF или Word датотеку",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Десним кликом на PPTX, PDF или DOCX добијате „Отвори PPTX“, „Прегледај PDF“ или „Отвори DOCX“; „Освежи PPTX слајдове“, „Освежи слике PDF-а“ или „Освежи DOCX странице“ га поново чита.",
-    "Find and replay Presenter tips": "Пронађите и поново пустите савете за „Презентер“"
+    "Find and replay Presenter tips": "Пронађите и поново пустите савете за „Презентер“",
+    "Center": "Центар",
+    "Top Banner": "Горња трака",
+    "Bottom Banner": "Доња трака",
+    "Urgent Alert": "Хитно упозорење",
+    "Picture in Picture": "Слика у слици",
+    "Markdown Lesson": "Лекција о Markdown-у",
+    "Heading": "Наслов",
+    "Quote": "Цитат"
 }

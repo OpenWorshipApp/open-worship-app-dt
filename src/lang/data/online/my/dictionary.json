@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "“တင်ဆက်မှု” စာမျက်နှာ၏ “သမ္မာကျမ်းစာများ” တက်ဘ်တွင် “ရှာဖွေကြည့်ရှုရန်” က သိမ်းထားသော ကျမ်းစာအပိုင်းကို “ကျမ်းစာ ရှာဖွေရန်” တွင် ဖွင့်သည်။ ကျမ်းပိုဒ်တစ်ခုတွင် “မှတ်စုကို ဖွင့်ရန် နှစ်ချက်နှိပ်ပါ”၊ “မှတ်ချက် တည်းဖြတ်ရန်” ကို သုံးပါ၊ သို့မဟုတ် ထိုကျမ်းပိုဒ်ကို ကျမ်းစာ စာရင်းသို့ ဆွဲထည့်ပါ။",
     "Show a PowerPoint, PDF or Word file": "PowerPoint၊ PDF သို့မဟုတ် Word ဖိုင်ကို ပြရန်",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "PPTX၊ PDF သို့မဟုတ် DOCX ကို ညာကလစ်နှိပ်၍ “PPTX ဖွင့်ရန်”၊ “PDF အစမ်းကြည့်ရန်” သို့မဟုတ် “DOCX ဖွင့်ရန်” ကို သုံးပါ။ “PPTX ဆလိုက်များ ပြန်လည်ဆန်းသစ်ရန်”၊ “PDF ပုံများ ပြန်လည်ဆန်းသစ်ရန်” သို့မဟုတ် “DOCX စာမျက်နှာများ ပြန်လည်ဆန်းသစ်ရန်” က ၎င်းကို ပြန်ဖတ်သည်။",
-    "Find and replay Presenter tips": "တင်ဆက်မှု အကြံပြုချက်များကို ရှာ၍ ပြန်ကြည့်ရန်"
+    "Find and replay Presenter tips": "တင်ဆက်မှု အကြံပြုချက်များကို ရှာ၍ ပြန်ကြည့်ရန်",
+    "Center": "အလယ်",
+    "Top Banner": "အပေါ် နဖူးစည်း",
+    "Bottom Banner": "အောက် နဖူးစည်း",
+    "Urgent Alert": "အရေးပေါ် သတိပေးချက်",
+    "Picture in Picture": "ပုံထဲမှ ပုံ",
+    "Markdown Lesson": "Markdown သင်ခန်းစာ",
+    "Heading": "ခေါင်းစဉ်",
+    "Quote": "ကိုးကားချက်"
 }

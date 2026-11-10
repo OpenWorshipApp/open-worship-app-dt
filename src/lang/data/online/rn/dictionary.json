@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "Mu gice ca Bibiliya muri Umwerekanyi, Irondera yugurura igisomwa cabitswe mu idirisha rya Irondera rya Bibiliya; Kanda kabiri kugira wugurure icandiko, Hindura iciyumviro ku murongo, canke mukwegere uwo murongo ku rutonde rwa Bibiliya.",
     "Show a PowerPoint, PDF or Word file": "Erekana idosiye ya PowerPoint, PDF canke Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Mukande iburyo kuri PPTX, PDF canke DOCX mubone Ugurura PPTX, Raba imbere PDF canke Ugurura DOCX; Garura bushasha amasilayidi ya PPTX, Garura bushasha amasanamu ya PDF canke Garura bushasha impapuro za DOCX birasubira kuyisoma.",
-    "Find and replay Presenter tips": "Rondera kandi usubiremwo impanuro z'Umwerekanyi"
+    "Find and replay Presenter tips": "Rondera kandi usubiremwo impanuro z'Umwerekanyi",
+    "Center": "Hagati",
+    "Top Banner": "Icapa co Hejuru",
+    "Bottom Banner": "Icapa co Hasi",
+    "Urgent Alert": "Iburira ryihutirwa",
+    "Picture in Picture": "Ishusho mu yindi",
+    "Markdown Lesson": "Icigwa ca Markdown",
+    "Heading": "Umutwe",
+    "Quote": "Amajambo asubiwemwo"
 }

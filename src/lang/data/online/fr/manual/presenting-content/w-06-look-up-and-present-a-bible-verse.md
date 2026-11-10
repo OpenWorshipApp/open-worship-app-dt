@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 45c5ea9804e88c2c
+translatedFrom: f6b9a1cf5fd1cb68
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -102,3 +102,13 @@ translatedFrom: 45c5ea9804e88c2c
     numéro du verset en premier — `22: A cheerful heart is good medicine …` — dans les chiffres de
     cette version. Modifiez-le comme tout autre chant (W-05) ; avec **[en:tran:Atom Mode]** activé,
     la ligne de chaque version est une diapositive à elle seule. 📸
+12. Pour afficher le passage comme une courte annonce par-dessus ce qui est à l'écran, choisissez
+    **[en:tran:Create Quick Text]** dans le même menu, juste sous **[en:tran:Create Lyric]**. Le
+    **[en:tran:Quick Text]** du panneau **[en:tran:Foreground]** s'ouvre sur une NOUVELLE session
+    nommée d'après le passage, par exemple `(ពគប) សុភាសិត ១៧:២២-២៨` — la session que vous aviez
+    ouverte garde ses mots. La zone contient la référence en titre `### ` et les versets ensuite
+    (un seul verset sans son numéro, plusieurs avec `(22): …`), et la session est déjà habillée
+    par le préréglage **[en:tran:Bible Verse]** : un bandeau sombre sur toute la largeur du bas,
+    des mots de 45px alignés à gauche, deux minutes à l'écran. Appuyez sur **[en:tran:Preview]**
+    pour le lire tel qu'il apparaîtra, puis sur **[en:tran:Show Quick Text]** le moment venu.
+    Rien ne va à l'écran avant cela. 📸

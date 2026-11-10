@@ -159,42 +159,40 @@ describe('the foreground components', () => {
     });
 
     test.each([
-        ['message', 'messageDataList', 'list'],
-        ['marquee-top', 'marqueeTopData', 'slot'],
-        ['marquee-bottom', 'marqueeBottomData', 'slot'],
-        ['quick-text', 'quickTextData', 'slot'],
-        ['countdown', 'countdownData', 'slot'],
-        ['stopwatch', 'stopwatchData', 'slot'],
-        ['time', 'timeDataList', 'list'],
-        ['video', 'videoDataList', 'list'],
-        ['image', 'imageDataList', 'list'],
-        ['camera', 'cameraDataList', 'list'],
-        ['screen', 'screenDataList', 'list'],
-        ['web', 'webDataList', 'list'],
+        ['message', 'messageDataList'],
+        ['marquee-top', 'marqueeTopDataList'],
+        ['marquee-bottom', 'marqueeBottomDataList'],
+        ['quick-text', 'quickTextDataList'],
+        ['countdown', 'countdownDataList'],
+        ['stopwatch', 'stopwatchDataList'],
+        ['time', 'timeDataList'],
+        ['video', 'videoDataList'],
+        ['image', 'imageDataList'],
+        ['camera', 'cameraDataList'],
+        ['screen', 'screenDataList'],
+        ['web', 'webDataList'],
     ] as const)(
         '%s is on a screen exactly when its %s holds something',
-        (key, field, kind) => {
+        (key, field) => {
             const { checkIsOnScreen } = getWidget(key);
-            // Another component's slot being full is not this one on screen.
+            // Another component's list being full is not this one on screen.
             const otherField =
-                field === 'marqueeTopData'
-                    ? 'marqueeBottomData'
-                    : 'marqueeTopData';
-            if (kind === 'slot') {
-                expect(
-                    checkIsOnScreen({ [field]: null, [otherField]: {} } as any),
-                ).toBe(false);
-                expect(checkIsOnScreen({ [field]: { id: 'a' } } as any)).toBe(
-                    true,
-                );
-                return;
-            }
+                field === 'marqueeTopDataList'
+                    ? 'marqueeBottomDataList'
+                    : 'marqueeTopDataList';
+            expect(
+                checkIsOnScreen({ [field]: [], [otherField]: [{}] } as any),
+            ).toBe(false);
             // A list the data was saved without counts as empty.
             expect(checkIsOnScreen({} as any)).toBe(false);
             expect(checkIsOnScreen({ [field]: [] } as any)).toBe(false);
             expect(checkIsOnScreen({ [field]: [{ id: 'a' }] } as any)).toBe(
                 true,
             );
+            // Two sessions' overlays of the kind are still one on screen.
+            expect(
+                checkIsOnScreen({ [field]: [{ id: 'a' }, { id: 'b' }] } as any),
+            ).toBe(true);
         },
     );
 

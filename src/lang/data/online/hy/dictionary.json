@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "«Ներկայացում» էջի «Աստվածաշնչեր» ներդիրում «Որոնում» կոճակը բացում է պահված հատվածը «Համարի որոնում» պատուհանում։ «Կրկնակի սեղմեք՝ նշումը բացելու համար», համարի վրա՝ «Խմբագրել մեկնաբանությունը», կամ քաշեք այդ համարը Աստվածաշնչերի ցանկ։",
     "Show a PowerPoint, PDF or Word file": "Ցուցադրել PowerPoint, PDF կամ Word ֆայլ",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "Աջ սեղմեք PPTX, PDF կամ DOCX ֆայլի վրա՝ «Բացել PPTX-ը», «Նախադիտել PDF-ը» կամ «Բացել DOCX-ը»։ «Թարմացնել PPTX սլայդները», «Թարմացնել PDF պատկերները» կամ «Թարմացնել DOCX էջերը» կոճակը նորից կարդում է այն։",
-    "Find and replay Presenter tips": "Գտնել և նորից դիտել Ներկայացման խորհուրդները"
+    "Find and replay Presenter tips": "Գտնել և նորից դիտել Ներկայացման խորհուրդները",
+    "Center": "Կենտրոն",
+    "Top Banner": "Վերին պաստառ",
+    "Bottom Banner": "Ստորին պաստառ",
+    "Urgent Alert": "Շտապ ազդանշան",
+    "Picture in Picture": "Նկար նկարի մեջ",
+    "Markdown Lesson": "Markdown-ի դաս",
+    "Heading": "Վերնագիր",
+    "Quote": "Մեջբերում"
 }

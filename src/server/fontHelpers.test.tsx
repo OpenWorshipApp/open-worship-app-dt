@@ -4,14 +4,24 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { openExternalURLMock, electronSendAsyncMock, unlockingMock } =
-    vi.hoisted(() => ({
-        openExternalURLMock: vi.fn(),
-        electronSendAsyncMock: vi.fn(),
-        unlockingMock: vi.fn(async (_key: string, callback: () => unknown) => {
-            return await callback();
-        }),
-    }));
+const {
+    openExternalURLMock,
+    electronSendAsyncMock,
+    unlockingMock,
+    initAllLangCssMock,
+} = vi.hoisted(() => ({
+    openExternalURLMock: vi.fn(),
+    electronSendAsyncMock: vi.fn(),
+    unlockingMock: vi.fn(async (_key: string, callback: () => unknown) => {
+        return await callback();
+    }),
+    initAllLangCssMock: vi.fn(async (): Promise<unknown[]> => []),
+}));
+
+// The installed languages, whose fonts every picker lists too.
+vi.mock('../lang/langHelpers', () => ({
+    initAllLangCss: initAllLangCssMock,
+}));
 
 vi.mock('./appProvider', () => ({
     default: {
@@ -138,6 +148,20 @@ describe('fontHelpers', () => {
 
     test('useFontList populates hook state from the async font loader', async () => {
         electronSendAsyncMock.mockResolvedValue({ Arial: 'Arial' });
+        const { genFontsData } =
+            await import('../lang/data/online/langFontFaces');
+        const { css } = genFontsData(
+            {
+                uiFamily: 'app-Sample Serif',
+                family: 'Sample Serif',
+                faces: [
+                    { file: 'regular.ttf', weight: 'normal' },
+                    { file: 'bold.ttf', weight: 'bold' },
+                ],
+            },
+            { 'regular.ttf': 'blob:regular', 'bold.ttf': 'blob:bold' },
+        );
+        initAllLangCssMock.mockResolvedValue([{ genCss: () => css }]);
         const module = await loadModule();
 
         function Harness() {
@@ -155,10 +179,24 @@ describe('fontHelpers', () => {
         await act(async () => {
             root?.render(<Harness />);
         });
-        await act(async () => {
-            await Promise.resolve();
+        // The packages' fonts are a dynamic import away: wait for the list.
+        await vi.waitFor(async () => {
+            await act(async () => {
+                await new Promise((resolve) => setTimeout(resolve, 5));
+            });
+            expect(container?.textContent).not.toBe('loading');
         });
 
+        // A language package's fonts, with the weights they ship, ahead of
+        // the computer's -- its `app-…` face on top (Bible text is drawn in
+        // it) -- they are on no computer, yet the app draws them.
+        const fontList = JSON.parse(container?.textContent ?? '{}');
+        expect(Object.keys(fontList).slice(0, 2)).toEqual([
+            'app-Sample Serif',
+            'Sample Serif',
+        ]);
+        expect(fontList['app-Sample Serif']).toEqual(['400', '700']);
+        expect(fontList['Sample Serif']).toEqual(['400', '700']);
         expect(container?.textContent).toContain('Arial');
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
     });

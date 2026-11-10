@@ -121,6 +121,7 @@ import {
     toLocaleNum,
     type LocaleType,
 } from './langHelpers';
+import { reloadLangPlugins } from './langPluginRegistry';
 
 const UNKNOWN = 'made-up' as LocaleType;
 
@@ -211,6 +212,15 @@ describe('initAllLangCss', () => {
         }
         // Shared from now on: no second rewrite of the font faces.
         expect(initAllLangCss()).toBe(retry);
+        // ...until the languages are read again (one installed, turned on
+        // or off): the font lists must hold every ENABLED package. Read
+        // once, the callers meanwhile sharing it.
+        await reloadLangPlugins();
+        const again = initAllLangCss();
+        expect(again).not.toBe(retry);
+        expect(initAllLangCss()).toBe(again);
+        await again;
+        expect(initAllLangCss()).toBe(again);
         // Every package there is is loaded: past the 10 s default while the
         // whole suite holds every core.
     }, 60_000);

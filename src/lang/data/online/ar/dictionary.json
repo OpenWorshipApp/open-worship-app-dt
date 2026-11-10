@@ -4210,5 +4210,13 @@
     "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.": "في علامة تبويب الكتب المقدسة في العرض، يفتح الزر بحث مقطعًا محفوظًا في نافذة البحث عن آية؛ انقر مرتين لفتح الملاحظة، أو تحرير التعليق على آية، أو اسحب تلك الآية إلى قائمة الكتاب المقدس.",
     "Show a PowerPoint, PDF or Word file": "عرض ملف PowerPoint أو PDF أو Word",
     "Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.": "انقر بزر الفأرة الأيمن على ملف PPTX أو PDF أو DOCX لـ: فتح PPTX أو معاينة PDF أو فتح DOCX؛ ويعيد تحديث شرائح PPTX أو تحديث صور PDF أو تحديث صفحات DOCX قراءته.",
-    "Find and replay Presenter tips": "العثور على نصائح العرض وإعادة تشغيلها"
+    "Find and replay Presenter tips": "العثور على نصائح العرض وإعادة تشغيلها",
+    "Center": "الوسط",
+    "Top Banner": "شريط علوي",
+    "Bottom Banner": "شريط سفلي",
+    "Urgent Alert": "تنبيه عاجل",
+    "Picture in Picture": "صورة داخل صورة",
+    "Markdown Lesson": "درس Markdown",
+    "Heading": "عنوان",
+    "Quote": "اقتباس"
 }

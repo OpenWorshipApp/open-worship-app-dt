@@ -738,17 +738,21 @@ describe('non-Bible manager coverage', () => {
     test('covers ScreenForegroundManager parsing, diffing, rendering, wrapper methods, and sync clearing', async () => {
         mocks.getForegroundDataListOnScreenSetting.mockReturnValue({
             41: {
-                countdownData: {
-                    dateTime: '2026-04-13T10:00:00.000Z',
-                    extraStyle: {},
-                },
-                stopwatchData: {
-                    dateTime: '2026-04-13T11:00:00.000Z',
-                    extraStyle: {},
-                },
+                countdownDataList: [
+                    {
+                        dateTime: '2026-04-13T10:00:00.000Z',
+                        extraStyle: {},
+                    },
+                ],
+                stopwatchDataList: [
+                    {
+                        dateTime: '2026-04-13T11:00:00.000Z',
+                        extraStyle: {},
+                    },
+                ],
                 timeDataList: [],
-                marqueeBottomData: null,
-                quickTextData: null,
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [],
             },
@@ -760,12 +764,12 @@ describe('non-Bible manager coverage', () => {
         const host = document.createElement('div');
         manager.rootContainer = host;
 
-        expect(manager.foregroundData.countdownData?.dateTime).toBeInstanceOf(
-            Date,
-        );
-        expect(manager.foregroundData.stopwatchData?.dateTime).toBeInstanceOf(
-            Date,
-        );
+        expect(
+            manager.foregroundData.countdownDataList[0]?.dateTime,
+        ).toBeInstanceOf(Date);
+        expect(
+            manager.foregroundData.stopwatchDataList[0]?.dateTime,
+        ).toBeInstanceOf(Date);
         expect(manager.isShowing).toBe(true);
         expect(manager.containerStyle).toEqual({
             pointerEvents: 'none',
@@ -942,19 +946,21 @@ describe('non-Bible manager coverage', () => {
             screenId: 41,
             type: 'foreground',
             data: {
-                countdownData: null,
-                stopwatchData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
                 timeDataList: [timeB],
-                marqueeBottomData: { text: 'Synced', extraStyle: {} },
-                quickTextData: null,
+                marqueeBottomDataList: [{ text: 'Synced', extraStyle: {} }],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [webData],
             },
         } as any);
-        expect(manager.foregroundData.marqueeBottomData).toEqual({
-            text: 'Synced',
-            extraStyle: {},
-        });
+        expect(manager.foregroundData.marqueeBottomDataList).toEqual([
+            {
+                text: 'Synced',
+                extraStyle: {},
+            },
+        ]);
         expect(manager.foregroundData.timeDataList).toEqual([timeB]);
 
         manager.clear();
@@ -966,11 +972,11 @@ describe('non-Bible manager coverage', () => {
             screenId: 41,
             type: 'foreground',
             data: {
-                countdownData: null,
-                stopwatchData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
                 timeDataList: [],
-                marqueeBottomData: null,
-                quickTextData: null,
+                marqueeBottomDataList: [],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [],
             },
@@ -985,24 +991,26 @@ describe('non-Bible manager coverage', () => {
         const startedAt = new Date('2026-10-07T20:00:00.000Z');
         const viaJson = JSON.parse(
             JSON.stringify({
-                countdownData: {
-                    dateTime: startedAt,
-                    durationMillisecond: 60000,
-                },
-                stopwatchData: { dateTime: startedAt },
+                countdownDataList: [
+                    {
+                        dateTime: startedAt,
+                        durationMillisecond: 60000,
+                    },
+                ],
+                stopwatchDataList: [{ dateTime: startedAt }],
                 timeDataList: [],
             }),
         );
         const revived = ScreenForegroundManager.reviveTimerDates(viaJson);
-        expect(revived.countdownData?.dateTime).toBeInstanceOf(Date);
-        expect(revived.countdownData?.durationMillisecond).toBe(60000);
-        expect(revived.stopwatchData?.dateTime.getTime()).toBe(
+        expect(revived.countdownDataList[0]?.dateTime).toBeInstanceOf(Date);
+        expect(revived.countdownDataList[0]?.durationMillisecond).toBe(60000);
+        expect(revived.stopwatchDataList[0]?.dateTime.getTime()).toBe(
             startedAt.getTime(),
         );
         // Untouched when nothing was lost: the same object comes back.
         const native = {
-            countdownData: null,
-            stopwatchData: { dateTime: startedAt },
+            countdownDataList: [],
+            stopwatchDataList: [{ dateTime: startedAt }],
         } as any;
         expect(ScreenForegroundManager.reviveTimerDates(native)).toBe(native);
     });
@@ -1089,12 +1097,26 @@ describe('non-Bible manager coverage', () => {
             }).screenDataList,
         ).toEqual([{ id: 1 }, { id: 0 }]);
 
+        // An entry an older app saved holds ONE countdown: it is the list's
+        // only item, its clock a Date again, the saved entry left as it was.
         const saved = {
             countdownData: { dateTime: '2026-10-07T20:00:00.000Z' },
         };
         const restored = ScreenForegroundManager.parseAllForegroundData(saved);
         expect(saved.countdownData.dateTime).toBe('2026-10-07T20:00:00.000Z');
-        expect(restored.countdownData?.dateTime).toBeInstanceOf(Date);
+        expect(restored.countdownDataList).toHaveLength(1);
+        expect(restored.countdownDataList[0]?.dateTime).toBeInstanceOf(Date);
+        const savedList = {
+            countdownDataList: [{ dateTime: '2026-10-07T20:00:00.000Z' }],
+        };
+        const restoredList =
+            ScreenForegroundManager.parseAllForegroundData(savedList);
+        expect(savedList.countdownDataList[0].dateTime).toBe(
+            '2026-10-07T20:00:00.000Z',
+        );
+        expect(restoredList.countdownDataList[0]?.dateTime).toBeInstanceOf(
+            Date,
+        );
     });
 
     test('mounted roots release only their own foreground containers', async () => {
@@ -2619,10 +2641,11 @@ describe('non-Bible manager coverage', () => {
         expect(mocks.genCountdown).toHaveBeenCalledOnce();
         expect(handleRemoving).not.toHaveBeenCalled();
         expect(root.firstElementChild).toBe(container);
-        expect(manager.foregroundData.countdownData).toBe(paused);
+        expect(manager.foregroundData.countdownDataList).toHaveLength(1);
+        expect(manager.foregroundData.countdownDataList[0]).toBe(paused);
 
         // Hidden later, it is that same widget that comes down.
-        manager.setCountdownData(null);
+        manager.removeSessionData('countdownDataList', paused);
         await flushVarySlideData();
         expect(handleRemoving).toHaveBeenCalledOnce();
         expect(root.children).toHaveLength(0);
@@ -2633,7 +2656,7 @@ describe('non-Bible manager coverage', () => {
         mocks.appProvider.isPagePresenter = true;
         const keptMarquee = { text: 'kept', extraStyle: {} };
         mocks.getForegroundDataListOnScreenSetting.mockReturnValue({
-            602: { marqueeTopData: keptMarquee },
+            602: { marqueeTopDataList: [keptMarquee] },
         });
         const kept = new ScreenForegroundManager(
             createScreenManagerBase(602),
@@ -2663,11 +2686,13 @@ describe('non-Bible manager coverage', () => {
             .filter(([name]) => name === 'screen-foreground-manager')
             .at(-1)!;
         const written = JSON.parse(json as string);
-        expect(written['602'].marqueeTopData).toEqual(keptMarquee);
-        expect(written['603'].marqueeTopData).toEqual({
-            text: 'new',
-            extraStyle: {},
-        });
+        expect(written['602'].marqueeTopDataList).toEqual([keptMarquee]);
+        expect(written['603'].marqueeTopDataList).toEqual([
+            {
+                text: 'new',
+                extraStyle: {},
+            },
+        ]);
         kept.delete();
         changing.delete();
     });
@@ -2746,7 +2771,7 @@ describe('non-Bible manager coverage', () => {
 
         call[2]();
 
-        expect(manager.foregroundData.quickTextData).toBeNull();
+        expect(manager.foregroundData.quickTextDataList).toEqual([]);
         expect(handleRemoving).toHaveBeenCalledOnce();
         manager.delete();
     });
@@ -2832,7 +2857,7 @@ describe('non-Bible manager coverage', () => {
 
         manager.setMarqueeTopData({ text: 'refused', extraStyle: {} } as any);
 
-        expect(manager.foregroundData.marqueeTopData).toBeNull();
+        expect(manager.foregroundData.marqueeTopDataList).toEqual([]);
         expect(base.sendScreenMessage).not.toHaveBeenCalled();
         expect(mocks.setSetting).not.toHaveBeenCalled();
         manager.delete();

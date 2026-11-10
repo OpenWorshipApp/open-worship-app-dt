@@ -53,6 +53,24 @@ import appProvider from '../server/appProvider';
 import { toForegroundSummary } from './agentScreenHelpers';
 import { getSetting } from './settingHelpers';
 import {
+    applyForegroundColorMode,
+    applyForegroundPreset,
+    getForegroundPresetList,
+    readForegroundPresetAsk,
+    readForegroundSessionColors,
+} from '../presenter-foreground/foregroundPresetHelpers';
+import {
+    type ForegroundColorModeType,
+    toForegroundColorMode,
+} from '../presenter-foreground/foregroundContrastHelpers';
+import { getForegroundDefaultColors } from '../presenter-foreground/foregroundThemeColorHelpers';
+import {
+    type ForegroundSavedPresetType,
+    applyForegroundSavedPreset,
+    findForegroundSavedPreset,
+    getForegroundSavedPresets,
+} from '../presenter-foreground/foregroundSavedPresetHelpers';
+import {
     FOREGROUND_COMPONENT_LIST,
     type ForegroundComponentKeyType,
     checkIsForegroundComponentKey,
@@ -1034,15 +1052,15 @@ function hideWholeComponent(
             // A single-slot widget: whatever session put it up.
             hideOnScreen({ ...context, sessionIds: [] }, screenManager);
             if (widget === 'countdown') {
-                manager.setCountdownData(null);
+                manager.removeSessionData('countdownDataList', null);
             } else if (widget === 'stopwatch') {
-                manager.setStopwatchData(null);
+                manager.removeSessionData('stopwatchDataList', null);
             } else if (widget === 'marquee-top') {
-                manager.setMarqueeTopData(null);
+                manager.removeSessionData('marqueeTopDataList', null);
             } else if (widget === 'marquee-bottom') {
-                manager.setMarqueeBottomData(null);
+                manager.removeSessionData('marqueeBottomDataList', null);
             } else if (widget === 'quick-text') {
-                manager.setQuickTextData(null);
+                manager.removeSessionData('quickTextDataList', null);
             }
     }
 }
@@ -1073,17 +1091,17 @@ function checkHasComponent(
     const data = screenManager.screenForegroundManager.foregroundData;
     switch (widget) {
         case 'countdown':
-            return data.countdownData !== null;
+            return (data.countdownDataList ?? []).length > 0;
         case 'stopwatch':
-            return data.stopwatchData !== null;
+            return (data.stopwatchDataList ?? []).length > 0;
         case 'time':
             return (data.timeDataList ?? []).length > 0;
         case 'marquee-top':
-            return data.marqueeTopData !== null;
+            return (data.marqueeTopDataList ?? []).length > 0;
         case 'marquee-bottom':
-            return data.marqueeBottomData !== null;
+            return (data.marqueeBottomDataList ?? []).length > 0;
         case 'quick-text':
-            return data.quickTextData !== null;
+            return (data.quickTextDataList ?? []).length > 0;
         case 'message':
             return (data.messageDataList ?? []).length > 0;
         case 'video':
@@ -1370,19 +1388,50 @@ async function writeTarget(
     writes.push(...extraWrites);
     applySettingWrites(writes);
     // A verse in a NEW quick text wears the look the Bibles list's own Open
-    // in Quick Text gives one; a preset asked for, on any session.
+    // in Quick Text gives one; a preset asked for, on any session, on the
+    // side asked for (`checkPreset` has read the words already).
+    const presetText =
+        typeof request.preset === 'string' ? request.preset.trim() : '';
+    const ask =
+        presetText === '' ? null : readForegroundPresetAsk(widget, presetText);
+    // Not one of the app's: one somebody saved, by its name.
+    const savedPreset =
+        presetText !== '' && ask === null
+            ? findForegroundSavedPreset(widget, presetText)
+            : null;
     const presetId =
-        typeof request.preset === 'string' && request.preset.trim() !== ''
-            ? request.preset.trim()
-            : widget === 'quick-text' &&
-                target.isNewSession &&
-                plan?.verseTitle !== undefined
-              ? 'bible-verse'
-              : null;
-    if (presetId !== null) {
+        ask?.preset?.id ??
+        (presetText === '' &&
+        widget === 'quick-text' &&
+        target.isNewSession &&
+        plan?.verseTitle !== undefined
+            ? 'bible-verse'
+            : null);
+    const mode = ask?.mode ?? undefined;
+    if (savedPreset !== null) {
+        applyPresetToTarget(target, null, undefined, savedPreset);
+    } else if (presetId !== null && widget === 'quick-text') {
         const { applyQuickTextPreset } =
             await import('../presenter-foreground/quickTextPresetHelpers');
-        applyQuickTextPreset(target.context.suffix, presetId as any);
+        applyQuickTextPreset(
+            target.context.suffix,
+            presetId as any,
+            mode,
+            getForegroundDefaultColors(),
+        );
+    } else if (presetId !== null || mode !== undefined) {
+        applyPresetToTarget(target, presetId, mode);
+    }
+    // ...and the Bible's own font, as that menu item sets it: Bible text is
+    // drawn in its language's face.
+    if (
+        widget === 'quick-text' &&
+        target.isNewSession &&
+        plan?.verseFontFamily !== undefined
+    ) {
+        const { applyBibleVerseFont } =
+            await import('../presenter-foreground/foregroundQuickTextOpenHelpers');
+        applyBibleVerseFont(target.context.suffix, plan.verseFontFamily);
     }
     if (target.session !== null) {
         if (target.isNewSession) {
@@ -1508,6 +1557,12 @@ async function handleStart(
     };
 }
 
+/**
+ * A preset is the panel's own (`foregroundPresetHelpers`): every component
+ * with Properties has its looks, and each answers by the ids of ITS list --
+ * with its Dark / Light side where the component has words and a box
+ * (`speaker light`), or a side alone to turn the session's colours to it.
+ */
 function checkPreset(
     widget: ForegroundComponentKeyType,
     request: AgentForegroundRequestType,
@@ -1515,21 +1570,114 @@ function checkPreset(
     if (request.preset === undefined || request.preset === '') {
         return null;
     }
-    const presetIdList = [
-        'bible-verse',
-        'speaker',
-        'song-title',
-        'sermon-title',
-        'event-session',
-        'announcement',
-    ];
-    if (widget !== 'quick-text') {
-        return toReason('Only Quick Text has presets.');
+    const presetIdList = getForegroundPresetList(widget).map((preset) => {
+        return preset.id as string;
+    });
+    if (presetIdList.length === 0) {
+        return toReason(`The ${widget} has no presets.`);
     }
-    if (!presetIdList.includes(String(request.preset))) {
-        return toReason(`preset is one of: ${presetIdList.join(', ')}.`);
+    const hasColors =
+        FOREGROUND_COMPONENT_RULE_MAP[widget].flags?.isCommonStyle === true;
+    const ask = readForegroundPresetAsk(widget, String(request.preset));
+    if (
+        ask === null &&
+        findForegroundSavedPreset(widget, String(request.preset)) === null
+    ) {
+        const savedNameList = getForegroundSavedPresets(widget).map(
+            (preset) => {
+                return `"${preset.name}"`;
+            },
+        );
+        return toReason(
+            `preset is one of: ${presetIdList.join(', ')}.` +
+                (savedNameList.length > 0
+                    ? ` Or one saved here, by its name: ${savedNameList.join(', ')}.`
+                    : '') +
+                (hasColors
+                    ? ' Each goes on dark or light with the word after it ' +
+                      `("${presetIdList[0]} light"); "dark" or "light" ` +
+                      "alone turns the session's own colours."
+                    : ''),
+        );
+    }
+    if (ask !== null && ask.mode !== null && !hasColors) {
+        return toReason(
+            `The ${widget} has no words or box to turn dark or light: ` +
+                `preset is one of: ${presetIdList.join(', ')}.`,
+        );
     }
     return null;
+}
+
+/** What a `preset` did, said as the answer's `changed` says it. */
+function toPresetChangeWords(widget: ForegroundComponentKeyType, text: string) {
+    const ask = readForegroundPresetAsk(widget, text);
+    if (ask?.preset === null || ask?.preset === undefined) {
+        if (ask?.mode) {
+            return `its words and box turned ${ask.mode}`;
+        }
+        const saved = findForegroundSavedPreset(widget, text);
+        return saved === null
+            ? `the ${text} look`
+            : `the saved look "${saved.name}"`;
+    }
+    return ask.mode === null
+        ? `the ${ask.preset.id} look`
+        : `the ${ask.preset.id} look, ${ask.mode}`;
+}
+
+/**
+ * A component's preset onto every prefix a `look` would dress -- the
+ * session's, or each clock of a Time session -- written as the panel's own
+ * Presets row writes it, with the flags that component's panel has; or, a
+ * side alone, the Dark / Light switch pressed on each.
+ */
+function applyPresetToTarget(
+    target: TargetType,
+    presetId: string | null,
+    mode: ForegroundColorModeType | undefined,
+    savedPreset: ForegroundSavedPresetType | null = null,
+) {
+    const { widget, suffix, itemId } = target.context;
+    const flags = FOREGROUND_COMPONENT_RULE_MAP[widget].flags;
+    const preset =
+        presetId === null
+            ? null
+            : getForegroundPresetList(widget).find((one) => {
+                  return one.id === presetId;
+              });
+    if (flags === undefined || preset === undefined) {
+        return;
+    }
+    // An unset colour is the app theme's side, as the panel reads it.
+    const defaultColors = getForegroundDefaultColors();
+    let prefixList: string[];
+    if (widget === 'time') {
+        prefixList = (
+            itemId === undefined ? readClockIdList(suffix) : [itemId]
+        ).map((clockId) => {
+            return `time-${clockId}`;
+        });
+    } else {
+        const prefix = toLookPrefix(target.context);
+        prefixList = prefix === null ? [] : [prefix];
+    }
+    for (const prefix of prefixList) {
+        if (savedPreset !== null) {
+            applyForegroundSavedPreset(widget, prefix, savedPreset);
+        } else if (preset !== null) {
+            applyForegroundPreset({
+                widgetKey: widget,
+                prefix,
+                flags,
+                preset,
+                mode,
+                defaultColors,
+            });
+        } else if (mode !== undefined && flags.isCommonStyle) {
+            applyForegroundColorMode(prefix, mode, defaultColors);
+        }
+    }
 }
 
 async function readVerseFor(
@@ -1656,7 +1804,9 @@ async function handleSet(
     const changed = [
         ...(plan?.said ? [plan.said] : []),
         ...(lookPlan?.said ?? []),
-        ...(request.preset ? [`the ${String(request.preset)} look`] : []),
+        ...(request.preset
+            ? [toPresetChangeWords(widget, String(request.preset))]
+            : []),
     ];
     return {
         did: 'changed',
@@ -1880,6 +2030,37 @@ async function handleRead(
         }),
         content: readForegroundContent(widget, wanted.suffix),
         look: readLookWords(target),
+        // The looks `set` takes as `preset`, by id: each component's own --
+        // and, with words and a box, the side they are on now (`preset`
+        // "light" / "dark" turns it, "speaker light" puts one on that side).
+        ...(getForegroundPresetList(widget).length > 0
+            ? {
+                  presets: getForegroundPresetList(widget).map((preset) => {
+                      return preset.id;
+                  }),
+              }
+            : {}),
+        // And the looks saved from this component's Properties, by name.
+        ...(getForegroundSavedPresets(widget).length > 0
+            ? {
+                  savedPresets: getForegroundSavedPresets(widget).map(
+                      (preset) => {
+                          return preset.name;
+                      },
+                  ),
+              }
+            : {}),
+        ...(FOREGROUND_COMPONENT_RULE_MAP[widget].flags?.isCommonStyle &&
+        toLookPrefix(target.context) !== null
+            ? {
+                  presetSide: toForegroundColorMode(
+                      readForegroundSessionColors(
+                          toLookPrefix(target.context)!,
+                          getForegroundDefaultColors(),
+                      ).color,
+                  ),
+              }
+            : {}),
         onScreens: managers
             .filter((screenManager) => {
                 return checkIsOnScreen(target.context, screenManager);

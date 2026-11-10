@@ -107,6 +107,45 @@ function toSessionIdPart(sessionId?: string) {
 }
 
 /**
+ * The lists in which every SESSION of a widget owns one entry per screen
+ * (`ForegroundDataType`): a session's Show replaces its own entry and leaves
+ * the other sessions' up beside it.
+ */
+export type ForegroundSessionListKeyType =
+    | 'countdownDataList'
+    | 'stopwatchDataList'
+    | 'marqueeTopDataList'
+    | 'marqueeBottomDataList'
+    | 'quickTextDataList';
+
+type SessionListItemType<K extends ForegroundSessionListKeyType> =
+    ForegroundDataType[K][number];
+
+/** The session an entry of those lists belongs to: its id, '' for Default. */
+export function toSessionDataKey(data: { id?: unknown }) {
+    return typeof data.id === 'string' ? data.id : '';
+}
+
+/**
+ * One of those lists, read out of a saved foreground entry. An entry saved
+ * while the widget held ONE datum per screen (`countdownData` …) keeps what it
+ * was showing as the list's only item -- dropped, it would be an overlay the
+ * operator left up and could not find to take down.
+ */
+function toSessionDataList(
+    foregroundData: any,
+    listKey: ForegroundSessionListKeyType,
+    singleKey: string,
+): any[] {
+    const dataList = foregroundData[listKey];
+    if (Array.isArray(dataList)) {
+        return dataList;
+    }
+    const single = foregroundData[singleKey] ?? null;
+    return single === null ? [] : [single];
+}
+
+/**
  * The messages on a screen, read out of a saved foreground entry.
  *
  * It also folds in everything this slot has been. `Alert` and `Announcements`
@@ -252,15 +291,18 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         };
         this.rendererMap = new Map<string, (data: any) => void>([
             ['messageDataList', whenMounted(this.renderMessage.bind(this))],
-            ['countdownData', whenMounted(this.renderCountdown.bind(this))],
-            ['stopwatchData', whenMounted(this.renderStopwatch.bind(this))],
+            ['countdownDataList', whenMounted(this.renderCountdown.bind(this))],
+            ['stopwatchDataList', whenMounted(this.renderStopwatch.bind(this))],
             ['timeDataList', whenMounted(this.renderTime.bind(this))],
-            ['marqueeTopData', whenMounted(this.renderMarqueeTop.bind(this))],
             [
-                'marqueeBottomData',
+                'marqueeTopDataList',
+                whenMounted(this.renderMarqueeTop.bind(this)),
+            ],
+            [
+                'marqueeBottomDataList',
                 whenMounted(this.renderMarqueeBottom.bind(this)),
             ],
-            ['quickTextData', whenMounted(this.renderQuickText.bind(this))],
+            ['quickTextDataList', whenMounted(this.renderQuickText.bind(this))],
             ['cameraDataList', whenMounted(this.renderCamera.bind(this))],
             ['screenDataList', whenMounted(this.renderScreen.bind(this))],
             ['webDataList', whenMounted(this.renderWeb.bind(this))],
@@ -272,12 +314,27 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             (data: any, isNoSyncGroup?: boolean) => void
         >([
             ['messageDataList', this.setMessageDataList.bind(this)],
-            ['countdownData', this.setCountdownData.bind(this)],
-            ['stopwatchData', this.setStopwatchData.bind(this)],
+            [
+                'countdownDataList',
+                this.genSessionListSetter('countdownDataList'),
+            ],
+            [
+                'stopwatchDataList',
+                this.genSessionListSetter('stopwatchDataList'),
+            ],
             ['timeDataList', this.setTimeDataList.bind(this)],
-            ['marqueeTopData', this.setMarqueeTopData.bind(this)],
-            ['marqueeBottomData', this.setMarqueeBottomData.bind(this)],
-            ['quickTextData', this.setQuickTextData.bind(this)],
+            [
+                'marqueeTopDataList',
+                this.genSessionListSetter('marqueeTopDataList'),
+            ],
+            [
+                'marqueeBottomDataList',
+                this.genSessionListSetter('marqueeBottomDataList'),
+            ],
+            [
+                'quickTextDataList',
+                this.genSessionListSetter('quickTextDataList'),
+            ],
             ['cameraDataList', this.setCameraDataList.bind(this)],
             ['screenDataList', this.setScreenDataList.bind(this)],
             ['webDataList', this.setWebDataList.bind(this)],
@@ -308,22 +365,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         // onto the argument. The argument is an entry of the on-screen
         // foreground map, which is memoized and shared — mutating it in place
         // turned the stored ISO string into a `Date` for every later reader.
-        const rawCountdownData = foregroundData['countdownData'] ?? null;
-        const countdownData =
-            rawCountdownData === null
-                ? null
-                : {
-                      ...rawCountdownData,
-                      dateTime: new Date(rawCountdownData.dateTime),
-                  };
-        const rawStopwatchData = foregroundData['stopwatchData'] ?? null;
-        const stopwatchData =
-            rawStopwatchData === null
-                ? null
-                : {
-                      ...rawStopwatchData,
-                      dateTime: new Date(rawStopwatchData.dateTime),
-                  };
+        const reviveDateTime = (data: any) => {
+            return { ...data, dateTime: new Date(data.dateTime) };
+        };
         const newForegroundData = {
             // Defaulted to `null` like every other slot, and that is
             // load-bearing rather than tidiness: `isShowing` asks
@@ -331,12 +375,32 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             // older saved entry would report the foreground as showing for
             // ever -- lighting the Clear Foreground button on an empty screen.
             messageDataList: toMessageDataList(foregroundData),
-            countdownData,
-            stopwatchData,
+            countdownDataList: toSessionDataList(
+                foregroundData,
+                'countdownDataList',
+                'countdownData',
+            ).map(reviveDateTime),
+            stopwatchDataList: toSessionDataList(
+                foregroundData,
+                'stopwatchDataList',
+                'stopwatchData',
+            ).map(reviveDateTime),
             timeDataList: foregroundData['timeDataList'] ?? [],
-            marqueeTopData: foregroundData['marqueeTopData'] ?? null,
-            marqueeBottomData: foregroundData['marqueeBottomData'] ?? null,
-            quickTextData: foregroundData['quickTextData'] ?? null,
+            marqueeTopDataList: toSessionDataList(
+                foregroundData,
+                'marqueeTopDataList',
+                'marqueeTopData',
+            ),
+            marqueeBottomDataList: toSessionDataList(
+                foregroundData,
+                'marqueeBottomDataList',
+                'marqueeBottomData',
+            ),
+            quickTextDataList: toSessionDataList(
+                foregroundData,
+                'quickTextDataList',
+                'quickTextData',
+            ),
             cameraDataList: foregroundData['cameraDataList'] ?? [],
             screenDataList: toScreenDataList(foregroundData['screenDataList']),
             webDataList: foregroundData['webDataList'] ?? [],
@@ -522,12 +586,56 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.containerMapper.set(newData, entry);
         return true;
     }
+    /**
+     * `updateInPlace` for the items of a list: a session's countdown or
+     * stopwatch started, paused or reset among the other sessions' timers. The
+     * new datum is paired with the item the SAME session has up, and when that
+     * widget takes it in place, it stands in the old list in that item's
+     * place -- so the diff after it finds nothing to remount. Null when no
+     * item was updated.
+     */
+    private updateListInPlace(oldList: any[], newList: any[]) {
+        let updatedList: any[] | null = null;
+        for (const newItem of newList) {
+            if (
+                typeof newItem !== 'object' ||
+                newItem === null ||
+                checkIsItemInArray(newItem, oldList)
+            ) {
+                continue;
+            }
+            const oldItem = oldList.find((item) => {
+                return (
+                    typeof item === 'object' &&
+                    item !== null &&
+                    this.containerMapper.get(item)?.updateHandler !==
+                        undefined &&
+                    toSessionDataKey(item) === toSessionDataKey(newItem) &&
+                    !checkIsItemInArray(item, newList)
+                );
+            });
+            if (
+                oldItem === undefined ||
+                !this.updateInPlace(oldItem, newItem)
+            ) {
+                continue;
+            }
+            updatedList ??= [...oldList];
+            updatedList[updatedList.indexOf(oldItem)] = newItem;
+        }
+        return updatedList;
+    }
     compareAndRender(oldData: any, newData: any, render: (data: any) => void) {
         if (this.updateInPlace(oldData, newData)) {
             return newData;
         }
+        const updatedList =
+            Array.isArray(oldData) && Array.isArray(newData)
+                ? this.updateListInPlace(oldData, newData)
+                : null;
+        const baseData = updatedList ?? oldData;
         const { toRemoveDataList, toRenderDataList } = this._getDiff(
-            oldData,
+            baseData,
             newData,
         );
         for (const data of toRemoveDataList) {
@@ -536,8 +644,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         for (const data of toRenderDataList) {
             render(data);
         }
-        if (toRemoveDataList.length + toRenderDataList.length > 0) {
-            return this.keepRenderedItems(oldData, newData);
+        if (
+            updatedList !== null ||
+            toRemoveDataList.length + toRenderDataList.length > 0
+        ) {
+            return this.keepRenderedItems(baseData, newData);
         }
         return oldData;
     }
@@ -756,6 +867,74 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
+    /** `setterMap`'s setter (a screen's sync) for one per-session list. */
+    private genSessionListSetter(key: ForegroundSessionListKeyType) {
+        return (dataList: any[] | null, isNoSyncGroup = false) => {
+            this.setSessionDataList(key, dataList ?? [], isNoSyncGroup);
+        };
+    }
+    setSessionDataList<K extends ForegroundSessionListKeyType>(
+        key: K,
+        dataList: SessionListItemType<K>[],
+        isNoSyncGroup = false,
+    ) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                [key]: dataList,
+            },
+            isNoSyncGroup,
+        );
+    }
+    /**
+     * Put ONE session's overlay up, replacing only what that same session had
+     * on this screen -- every other session's stays up beside it.
+     */
+    putSessionData<K extends ForegroundSessionListKeyType>(
+        key: K,
+        data: SessionListItemType<K>,
+        isNoSyncGroup = false,
+    ) {
+        const sessionKey = toSessionDataKey(data);
+        const dataList = this.foregroundData[key] as SessionListItemType<K>[];
+        const index = dataList.findIndex((item) => {
+            return toSessionDataKey(item) === sessionKey;
+        });
+        this.setSessionDataList(
+            key,
+            index === -1
+                ? [...dataList, data]
+                : dataList.map((item, itemIndex) => {
+                      return itemIndex === index ? data : item;
+                  }),
+            isNoSyncGroup,
+        );
+    }
+    /**
+     * Take one session's overlay of this kind off the screen -- the session
+     * `sessionData` names (its `id`, none for Default) -- or, given `null`,
+     * every session's: a Clear of the whole kind.
+     */
+    removeSessionData(
+        key: ForegroundSessionListKeyType,
+        sessionData: { id?: unknown } | null,
+        isNoSyncGroup = false,
+    ) {
+        const dataList = this.foregroundData[key] as { id?: unknown }[];
+        this.setSessionDataList(
+            key,
+            sessionData === null
+                ? []
+                : (dataList.filter((item) => {
+                      return (
+                          toSessionDataKey(item) !==
+                          toSessionDataKey(sessionData)
+                      );
+                  }) as any[]),
+            isNoSyncGroup,
+        );
+    }
+
     renderCountdown(data: ForegroundCountdownDataType) {
         const { handleAdding, handleRemoving, handleUpdating } =
             genHtmlForegroundCountdown(data, this.styleAnimFor(data));
@@ -766,17 +945,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
         handleAdding(divContainer!);
     }
-    setCountdownData(
-        data: ForegroundCountdownDataType | null,
-        isNoSyncGroup = false,
-    ) {
-        this.applyForegroundDataWithSyncGroup(
-            {
-                ...this.foregroundData,
-                countdownData: data,
-            },
-            isNoSyncGroup,
-        );
+    /** This session's countdown up, or changed -- see `putSessionData`. */
+    setCountdownData(data: ForegroundCountdownDataType, isNoSyncGroup = false) {
+        this.putSessionData('countdownDataList', data, isNoSyncGroup);
     }
     /**
      * `sessionId` rides LAST and optional on purpose: the panel passes which of
@@ -815,7 +986,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                           isBehind,
                       )
                     : null;
-                screenForegroundManager.setCountdownData(data);
+                if (data === null) {
+                    screenForegroundManager.removeSessionData(
+                        'countdownDataList',
+                        toSessionIdPart(sessionId),
+                    );
+                } else {
+                    screenForegroundManager.setCountdownData(data);
+                }
             },
             isForceChoosing,
         );
@@ -831,17 +1009,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
         handleAdding(divContainer!);
     }
-    setStopwatchData(
-        data: ForegroundStopwatchDataType | null,
-        isNoSyncGroup = false,
-    ) {
-        this.applyForegroundDataWithSyncGroup(
-            {
-                ...this.foregroundData,
-                stopwatchData: data,
-            },
-            isNoSyncGroup,
-        );
+    /** This session's stopwatch up, or changed -- see `putSessionData`. */
+    setStopwatchData(data: ForegroundStopwatchDataType, isNoSyncGroup = false) {
+        this.putSessionData('stopwatchDataList', data, isNoSyncGroup);
     }
     /** `sessionId`, `isBehind` and `timing` -- see `setCountdown`. */
     static async setStopwatch(
@@ -870,7 +1040,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                               },
                               isBehind,
                           );
-                screenForegroundManager.setStopwatchData(stopwatchData);
+                if (stopwatchData === null) {
+                    screenForegroundManager.removeSessionData(
+                        'stopwatchDataList',
+                        toSessionIdPart(sessionId),
+                    );
+                } else {
+                    screenForegroundManager.setStopwatchData(stopwatchData);
+                }
             },
             isForceChoosing,
         );
@@ -962,29 +1139,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderMarqueeBottom(data: ForegroundMarqueeDataType) {
         this.renderMarquee(data, 'bottom');
     }
-    setMarqueeTopData(
-        data: ForegroundMarqueeDataType | null,
-        isNoSyncGroup = false,
-    ) {
-        this.applyForegroundDataWithSyncGroup(
-            {
-                ...this.foregroundData,
-                marqueeTopData: data,
-            },
-            isNoSyncGroup,
-        );
+    /** This session's top marquee up, or changed -- see `putSessionData`. */
+    setMarqueeTopData(data: ForegroundMarqueeDataType, isNoSyncGroup = false) {
+        this.putSessionData('marqueeTopDataList', data, isNoSyncGroup);
     }
+    /** This session's bottom marquee up, or changed -- see `putSessionData`. */
     setMarqueeBottomData(
-        data: ForegroundMarqueeDataType | null,
+        data: ForegroundMarqueeDataType,
         isNoSyncGroup = false,
     ) {
-        this.applyForegroundDataWithSyncGroup(
-            {
-                ...this.foregroundData,
-                marqueeBottomData: data,
-            },
-            isNoSyncGroup,
-        );
+        this.putSessionData('marqueeBottomDataList', data, isNoSyncGroup);
     }
     /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setMarqueeTop(
@@ -1013,7 +1177,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                               },
                               isBehind,
                           );
-                screenForegroundManager.setMarqueeTopData(marqueeTopData);
+                if (marqueeTopData === null) {
+                    screenForegroundManager.removeSessionData(
+                        'marqueeTopDataList',
+                        toSessionIdPart(sessionId),
+                    );
+                } else {
+                    screenForegroundManager.setMarqueeTopData(marqueeTopData);
+                }
             },
             isForceChoosing,
         );
@@ -1045,7 +1216,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                               },
                               isBehind,
                           );
-                screenForegroundManager.setMarqueeBottomData(marqueeBottomData);
+                if (marqueeBottomData === null) {
+                    screenForegroundManager.removeSessionData(
+                        'marqueeBottomDataList',
+                        toSessionIdPart(sessionId),
+                    );
+                } else {
+                    screenForegroundManager.setMarqueeBottomData(
+                        marqueeBottomData,
+                    );
+                }
             },
             isForceChoosing,
         );
@@ -1056,23 +1236,26 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             data,
             this.styleAnimFor(data),
             () => {
-                this.setQuickTextData(null);
+                // Its time is up: THIS entry goes, and only while it is still
+                // the one up. Shown again or restyled meanwhile, the session
+                // has a newer entry, which keeps its own time.
+                const dataList = this.foregroundData.quickTextDataList;
+                if (dataList.includes(data)) {
+                    this.setSessionDataList(
+                        'quickTextDataList',
+                        dataList.filter((item) => {
+                            return item !== data;
+                        }),
+                    );
+                }
             },
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
-    setQuickTextData(
-        data: ForegroundQuickTextDataType | null,
-        isNoSyncGroup = false,
-    ) {
-        this.applyForegroundDataWithSyncGroup(
-            {
-                ...this.foregroundData,
-                quickTextData: data,
-            },
-            isNoSyncGroup,
-        );
+    /** This session's quick text up, or changed -- see `putSessionData`. */
+    setQuickTextData(data: ForegroundQuickTextDataType, isNoSyncGroup = false) {
+        this.putSessionData('quickTextDataList', data, isNoSyncGroup);
     }
     /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setQuickText(
@@ -1103,7 +1286,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                               },
                               isBehind,
                           );
-                screenForegroundManager.setQuickTextData(quickTextData);
+                if (quickTextData === null) {
+                    screenForegroundManager.removeSessionData(
+                        'quickTextDataList',
+                        toSessionIdPart(sessionId),
+                    );
+                } else {
+                    screenForegroundManager.setQuickTextData(quickTextData);
+                }
             },
             isForceChoosing,
         );
@@ -1620,17 +1810,33 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * never ticks. A Date already there is left as it is, object and all.
      */
     static reviveTimerDates(data: ForegroundDataType): ForegroundDataType {
-        const revive = <T extends { dateTime: Date }>(timer: T | null) => {
-            return !timer || timer.dateTime instanceof Date
-                ? timer
-                : { ...timer, dateTime: new Date(timer.dateTime) };
+        const reviveList = <T extends { dateTime: Date }>(
+            timerList: T[] | null | undefined,
+        ) => {
+            if (
+                !Array.isArray(timerList) ||
+                timerList.every((timer) => {
+                    return timer.dateTime instanceof Date;
+                })
+            ) {
+                return timerList;
+            }
+            return timerList.map((timer) => {
+                return timer.dateTime instanceof Date
+                    ? timer
+                    : { ...timer, dateTime: new Date(timer.dateTime) };
+            });
         };
-        const countdownData = revive(data.countdownData);
-        const stopwatchData = revive(data.stopwatchData);
-        return countdownData === data.countdownData &&
-            stopwatchData === data.stopwatchData
+        const countdownDataList = reviveList(data.countdownDataList);
+        const stopwatchDataList = reviveList(data.stopwatchDataList);
+        return countdownDataList === data.countdownDataList &&
+            stopwatchDataList === data.stopwatchDataList
             ? data
-            : { ...data, countdownData, stopwatchData };
+            : {
+                  ...data,
+                  countdownDataList: countdownDataList ?? [],
+                  stopwatchDataList: stopwatchDataList ?? [],
+              };
     }
 
     receiveSyncScreen(message: ScreenMessageType) {

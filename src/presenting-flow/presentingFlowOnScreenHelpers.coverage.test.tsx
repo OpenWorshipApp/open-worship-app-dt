@@ -204,11 +204,11 @@ describe('presenting-flow on-screen matching', () => {
     test('matches every foreground family by its stable data', async () => {
         const foregroundData = {
             messageDataList: [{ textList: ['a', 'b'] }],
-            countdownData: { rowKey: toForegroundRowKey({}) },
-            stopwatchData: { rowKey: toForegroundRowKey({}) },
-            quickTextData: { rowKey: toForegroundRowKey({}) },
-            marqueeTopData: { text: 'top' },
-            marqueeBottomData: { text: 'bottom' },
+            countdownDataList: [{ rowKey: toForegroundRowKey({}) }],
+            stopwatchDataList: [{ rowKey: toForegroundRowKey({}) }],
+            quickTextDataList: [{ rowKey: toForegroundRowKey({}) }],
+            marqueeTopDataList: [{ text: 'top' }],
+            marqueeBottomDataList: [{ text: 'bottom' }],
             timeDataList: [{ id: 1 }],
             cameraDataList: [{ id: 2 }],
             screenDataList: [{ id: 3 }],
@@ -273,13 +273,17 @@ describe('presenting-flow on-screen matching', () => {
             });
         };
         // Started from the panel: no row put it there.
-        state.foregrounds = { one: { countdownData: { dateTime: 'x' } } };
+        state.foregrounds = {
+            one: { countdownDataList: [{ dateTime: 'x' }] },
+        };
         expect(
             await checkIsPresentingFlowItemOnScreen(countdownRow(fiveMinutes)),
         ).toBe(false);
         state.foregrounds = {
             one: {
-                countdownData: { rowKey: toForegroundRowKey(fiveMinutes) },
+                countdownDataList: [
+                    { rowKey: toForegroundRowKey(fiveMinutes) },
+                ],
             },
         };
         expect(
@@ -287,6 +291,131 @@ describe('presenting-flow on-screen matching', () => {
         ).toBe(true);
         expect(
             await checkIsPresentingFlowItemOnScreen(countdownRow(tenMinutes)),
+        ).toBe(false);
+    });
+
+    test('a quick-text row is live when ANY entry of the list is its replay', async () => {
+        const notice = { markdownText: 'Notice' };
+        const other = { markdownText: 'Other' };
+        const quickTextRow = (data: unknown) => {
+            return item({
+                isForeground: true,
+                data: { target: 'quick-text', data },
+            });
+        };
+        state.foregrounds = {
+            one: {
+                quickTextDataList: [
+                    { id: 'a', rowKey: toForegroundRowKey(other) },
+                    { id: 'b', rowKey: toForegroundRowKey(notice) },
+                ],
+            },
+        };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(quickTextRow(notice)),
+        ).toBe(true);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                quickTextRow({ markdownText: 'Not up' }),
+            ),
+        ).toBe(false);
+        // An empty list is nothing up, whatever an old slot beside it says.
+        state.foregrounds = {
+            one: {
+                quickTextDataList: [],
+                quickTextData: { rowKey: toForegroundRowKey(notice) },
+            },
+        };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(quickTextRow(notice)),
+        ).toBe(false);
+    });
+
+    // The saved map is read raw, never parsed: an entry an older app saved
+    // still holds its ONE datum of a kind until that screen is next written.
+    test("an older saved entry's single slot still marks its row live", async () => {
+        const notice = { markdownText: 'Notice' };
+        const fiveMinutes = { durationSecond: 300 };
+        const row = (target: string, data: unknown) => {
+            return item({ isForeground: true, data: { target, data } });
+        };
+        state.foregrounds = {
+            one: {
+                quickTextData: { rowKey: toForegroundRowKey(notice) },
+                countdownData: { rowKey: toForegroundRowKey(fiveMinutes) },
+                stopwatchData: { rowKey: toForegroundRowKey({}) },
+                marqueeTopData: { text: 'top' },
+                marqueeBottomData: { text: 'bottom' },
+            },
+        };
+        for (const [target, data] of [
+            ['quick-text', notice],
+            ['countdown', fiveMinutes],
+            ['stopwatch', {}],
+            ['marquee-top', { text: 'top' }],
+            ['marquee-bottom', { text: 'bottom' }],
+        ] as const) {
+            expect(
+                await checkIsPresentingFlowItemOnScreen(row(target, data)),
+                target,
+            ).toBe(true);
+        }
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('quick-text', { markdownText: 'Not up' }),
+            ),
+        ).toBe(false);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('marquee-top', { text: 'bottom' }),
+            ),
+        ).toBe(false);
+        // A slot an older app saved empty is nothing up.
+        state.foregrounds = { one: { quickTextData: null } };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(row('quick-text', notice)),
+        ).toBe(false);
+    });
+
+    test('a slot row is live while ANY session of its kind holds its replay', async () => {
+        const fiveMinutes = { durationSecond: 300 };
+        const tenMinutes = { durationSecond: 600 };
+        const row = (target: string, data: unknown) => {
+            return item({ isForeground: true, data: { target, data } });
+        };
+        // Session A's countdown from the panel, session B's from this row:
+        // the row is up although it is not the first entry.
+        state.foregrounds = {
+            one: {
+                countdownDataList: [
+                    { id: 'a', dateTime: 'x' },
+                    { id: 'b', rowKey: toForegroundRowKey(fiveMinutes) },
+                ],
+                marqueeBottomDataList: [
+                    { id: 'a', text: 'first' },
+                    { id: 'b', text: 'second' },
+                ],
+            },
+        };
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('countdown', fiveMinutes),
+            ),
+        ).toBe(true);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('countdown', tenMinutes),
+            ),
+        ).toBe(false);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('marquee-bottom', { text: 'second' }),
+            ),
+        ).toBe(true);
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                row('marquee-bottom', { text: 'third' }),
+            ),
         ).toBe(false);
     });
 
