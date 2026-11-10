@@ -207,11 +207,15 @@ describe('what the worker has to read first: refusals', () => {
         [[{ line: 1, park: true }, null], 'Change 2 is not an object.'],
         [
             [{ line: 1, park: true, after: 9 }],
-            'Change 1: `after` is a line number as the sheet reads now, 1 to 3.',
+            'Change 1: `after` is a line number as the sheet reads now, 1 to ' +
+                '3. A line added in this call has no number yet: adds with ' +
+                'the same `after` go in the order given.',
         ],
         [
             [{ add: { actionId: 'clear-all' }, after: -1 }],
-            'Change 1: `after` is a line number as the sheet reads now, 1 to 3.',
+            'Change 1: `after` is a line number as the sheet reads now, 1 to ' +
+                '3. A line added in this call has no number yet: adds with ' +
+                'the same `after` go in the order given.',
         ],
         [[{ add: 5 }], 'Change 1: `add` is an object.'],
         [[{ add: null }], 'Change 1: `add` is an object.'],
@@ -308,13 +312,66 @@ describe('adding a line', () => {
         );
     });
 
+    test('an `after` on an empty sheet says to leave it out (EC-469)', () => {
+        expectReason(
+            readAgentFlowChangeNeeds(
+                [
+                    { add: { actionId: 'clear-all' }, after: 0 },
+                    { add: { actionId: 'clear-all' }, after: 1 },
+                ],
+                0,
+            ),
+            'Change 2: the sheet has no lines yet -- leave `after` out and ' +
+                'the adds go in the order given.',
+        );
+    });
+
     test('a foreground that is not {widget, …} is refused, naming the widgets', () => {
         expectReason(
-            applyOne(genSheet(), { add: { foreground: 'countdown' } }),
+            applyOne(genSheet(), { add: { foreground: 5 } }),
             'Change 1: `foreground` is {widget, …} -- widget one of ' +
                 'countdown, stopwatch, time, message, marquee-top, ' +
                 'marquee-bottom, quick-text.',
         );
+    });
+
+    // EC-469: the three shapes a model wrote for one countdown, eleven
+    // refusals in a row, each now read as the countdown it meant.
+    test.each([
+        [{ add: { foreground: { widget: 'countdown' }, seconds: 300 } }],
+        [{ add: { foreground: { countdown: { seconds: 300 } } } }],
+        [{ add: { foreground: { countdown: 300 } } }],
+        [{ add: { foreground: 'countdown', seconds: 300 } }],
+    ])('a countdown written as %j is added', (change) => {
+        const sheet = genSheet();
+        const result = applyOne(sheet, change);
+        expect(result).not.toHaveProperty('reason');
+        expect(sheet.at(-1)).toMatchObject({
+            type: 'foreground',
+            data: {
+                target: 'countdown',
+                data: { durationSecond: 301, isAutoStart: true },
+            },
+        });
+    });
+
+    test('a countdown with no length says where `seconds` goes', () => {
+        expectReason(
+            applyOne(genSheet(), { add: { foreground: 'countdown' } }),
+            'Change 1: Say how long the countdown runs, INSIDE ' +
+                '`foreground`: {widget: "countdown", seconds: 300} is five ' +
+                'minutes; or the time it counts to, as `dateTime`.',
+        );
+    });
+
+    test('a message written as {message: words} is added with them', () => {
+        const sheet = genSheet();
+        const result = applyOne(sheet, {
+            add: { foreground: { message: 'Potluck after the service' } },
+        });
+        expect(result).toEqual({
+            changed: ['added "Messages: Potluck after the service" at the end'],
+        });
     });
 
     test('a message is added with the title a drag would give it', () => {

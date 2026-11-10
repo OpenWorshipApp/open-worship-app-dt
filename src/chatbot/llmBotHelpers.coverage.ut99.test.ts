@@ -219,6 +219,7 @@ import {
     GENERAL_ASK_LABEL,
     GENERAL_ASK_TOOL_NAME,
     RECORD_TURN_ACK,
+    RUNNING_ORDER_SCREEN_REFUSAL,
     WORDLESS_ANSWER_NUDGE,
     addQuoteSource,
     applyToolWatch,
@@ -1019,6 +1020,75 @@ describe('the Anthropic loop', () => {
         expect(results[2].content).toContain(
             'Tool refused: Only ONE thing may be removed in one answer',
         );
+    });
+
+    test('a running order asked for puts nothing on a screen (EC-475)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":false,"reference":"Psalm 23"}',
+        };
+        const { calls } = useAnthropic(
+            genAnthropicTools(
+                ['t1', 'owa_foreground', { action: 'start', minutes: 5 }],
+                ['t2', 'owa_present_bible', { reference: 'Psalm 23' }],
+                [
+                    't3',
+                    'owa_present_bible',
+                    { action: 'check', reference: 'Psalm 23' },
+                ],
+            ),
+            genAnthropicText('Add them in the Presenting Flows list.'),
+        );
+        const asked =
+            'Make a new running order for Sunday: a welcome countdown, ' +
+            'Psalm 23';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        // Only the check reached the app.
+        expect(fake.toolCallList).toEqual(['owa_present_bible']);
+        const results = calls[1].request.messages.at(-1).content;
+        expect(results[0].content).toBe(
+            `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`,
+        );
+        expect(results[1].content).toBe(
+            `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`,
+        );
+        expect(results[2].content).toContain('Psalm 23');
+    });
+
+    test('a verse asked for on its own still goes up (EC-475)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":true,"reference":"Psalm 23"}',
+        };
+        useAnthropic(
+            genAnthropicTools([
+                't1',
+                'owa_present_bible',
+                { reference: 'Psalm 23' },
+            ]),
+            genAnthropicText('Psalm 23 is up.'),
+        );
+        const asked = 'Put Psalm 23 on the screen';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        expect(fake.toolCallList).toEqual(['owa_present_bible']);
     });
 
     test("a tool's failure goes back to the model as a sentence", async () => {

@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
-    "updated": "2026-11-08",
+    "updated": "2026-11-10",
     "sections": [
         {
             "id": "building",

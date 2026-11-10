@@ -90,6 +90,26 @@ describe('a typed question that names a component', () => {
         expect(readForegroundComponentAsk('/countdown 5')).toBeNull();
     });
 
+    it('never in a line about the running order (EC-467)', () => {
+        expect(
+            readForegroundComponentAsk(
+                'Make a new running order for Sunday: a welcome countdown ' +
+                    '5 minutes, Doxology, Psalm 23',
+            ),
+        ).toBeNull();
+        expect(
+            readForegroundComponentAsk(
+                'Add a countdown to the start of my presenting flow',
+            ),
+        ).toBeNull();
+        // The app's own name for one, in the window's language.
+        expect(
+            readForegroundComponentAsk('a Zflowz with a countdown', (key) => {
+                return key === 'Presenting Flow' ? 'Zflowz' : key;
+            }),
+        ).toBeNull();
+    });
+
     it("reads the window's own language through its dictionary", () => {
         // A made-up translation: no other language may live in a test.
         expect(

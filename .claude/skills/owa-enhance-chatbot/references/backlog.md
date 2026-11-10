@@ -10918,3 +10918,155 @@ _save it as a study file_, the model writes a whole study again into
 gives a different study from the one they read. The window holds the
 answer's words, so a draft built from the answer above would cost one short
 call: the passage and title from the model, the body from the answer.
+
+### EC-467 — a pressed question naming a widget went to the foreground ask — `done`
+
+Found 2026-11-10 asking the 24 supported presenting-flow questions on Auto
+(OWA Shared · gemma4:cloud), each in its own tab. _How do I make a line
+start at a set time on the clock?_ is a corpus row (W-22d), but the word
+_clock_ named the Time widget, so `readForegroundComponentAsk` made it a
+foreground ask before the known-question check. The model called
+`owa_foreground_edit`, then searched the guide four times, and answered
+_I looked several things up but could not settle on an answer_. 14 of the
+487 rows name a widget in passing (_countdown_, _clock_, _message_). The
+same route took a typed _make a new running order … with a 5 minute
+countdown_.
+
+Now (`ChatbotAppComp.tsx`, the `isForegroundAsk` test):
+- a widget named in a line is a foreground ask only when that line is not a
+  known question;
+- with a foreground session open in the tab, only a press, an empty line or
+  a line that is not a known question goes to it;
+- a line about the running order is never a foreground ask
+  (`checkIsRunningOrderLine` in `foregroundChatHelpers.ts`: _running order_,
+  _presenting flow_, _run sheet_, _order of service_, _service plan_ and the
+  window's own word for Presenting Flow).
+
+Tests: `ChatbotAppComp.asking5.test.tsx` (_a foreground widget named in
+passing_) and `foregroundChatHelpers.test.ts`. Re-asked live after the fix:
+flow-auto-next-time, transition-per-overlay and countdown-show-not-started
+were each answered from their own page in about 3 s, in one round
+(`corpus-2026-11-10-flow-after.jsonl`).
+
+### EC-468 — Auto's default server cannot build a running order from an ordinary chat — `open`
+
+Seen 2026-11-10: on Auto the pick is the shared registry server, and a
+custom server gets the lean tool list (`LOCAL_TOOL_NAME_LIST`). That list
+has no `owa_presenting_flow`, and the ask has 6 rounds. _Make a new running
+order for Sunday with …_ typed in an ordinary tab got a walkthrough, and
+the walkthrough was partly wrong: a _Clear Screen_ action, and dragging
+_Start Countdown_. The flow conversation (Open in Chatbot on a flow row)
+can build the order. An ordinary tab cannot, and nothing sends the person
+there.
+
+Three ways out:
+1. **(a)** Give a registry server the full list. This costs that server
+   ~4k tokens a round more.
+2. **(b)** Add `owa_presenting_flow` and `owa_undo` to the lean list. That
+   is ~600 tokens.
+3. **(c)** Have the window turn a running-order ask into a flow ask: attach
+   the named flow, or offer to make one.
+
+Recommended: (c). It reuses the flow conversation's tool and prompt, which
+already work, and it moves no list or ratchet. (b) is the fallback.
+
+### EC-469 — a foreground line written the way models write it was refused or lost its words — `done`
+
+Seen 2026-11-10 in the flow conversation on a scratch flow,
+`zz-chatbot-research`. _Add a 5 minute countdown at the top_ ran 33.4k
+tokens and added nothing. The model wrote the countdown as
+`{foreground: {countdown: {seconds: 300}}}`, then as
+`{foreground: "countdown", seconds: 300}`, and each was refused with a
+sentence that did not show the shape. Its `after` named a line the same call
+was adding.
+
+The same day a message line arrived without its words. The MCP schema's
+strict `add` object removed a `text` written beside `foreground`
+(`agentPresentingFlowEdit.mjs`).
+
+Now:
+- `readAgentForegroundSpec` (`agentFlowForegroundRules.ts`) reads every
+  shape a model writes:
+  - `{widget, …}`;
+  - the widget as the key;
+  - a number or words as the widget's main field;
+  - the widget's name alone;
+  - its fields written beside `foreground`.
+- The refusals show the shape `{widget: "countdown", seconds: 300}`.
+- An `after` the sheet cannot have says that adds with the same `after` go
+  in the order given, and that an empty sheet takes no `after`.
+- `add` is a `z.looseObject`.
+
+Tests: `agentFlowEditRules.ut100.test.ts`, `agentFlowForegroundRules.test.ts`
+and `agentPresentingFlowEdit.test.mjs`. Seen live:
+- the countdown ask went from 33.4k tokens and nothing added to 5.9k tokens,
+  with the countdown added;
+- through a fresh stdio server, a message line kept its words.
+
+The in-app host loads the new schema at its next launch. Until then the
+help window's own build still loses a message's `text`. A build in a fresh
+flow tab added only the message.
+
+### EC-470 — the flow card's option chips show tool and action names — `open`
+
+Seen 2026-11-10 under flow conversation answers: the chips _update-lines_
+and _owaundo_. A tool's own words reached a button. The options cleaner
+(`toReplyList`) could drop a chip that is a tool or action name. Where the
+model wrote them is not measured.
+
+### EC-471 — the flow-add answer says "I cannot do this for you here" over Do it for me — `open`
+
+Seen 2026-11-10: _How do I add a song or a verse to a presenting flow?_
+ended _I cannot do this for you here._ above **Show me step by step** and
+**Do it for me**. Either the sentence is wrong or the button is. W-22's
+first steps are drags, which no card presses. The fix decides which of the
+two to keep.
+
+### EC-472 — the scrub leaves "attaches:)" in a quoted page — `open`, low
+
+Seen 2026-11-10 in the flow-build and flow-add answers: _dropping onto a
+line does something else — it attaches:)_. A label the cleaner took out of
+the sentence left its colon and bracket. Polish only.
+
+### EC-473 — "Move on by itself" also arms passage lines — `open`, low
+
+Seen 2026-11-10 pressing the flow card's **Move on by itself** on a scratch
+flow: the hint arms every document line, and the model armed the Bible
+passage lines too. Whether a passage should move on by itself is the
+person's call. The hint could name songs and slides only, or ask which.
+
+### EC-474 — the running-order check read a CC element as a jump — `done` in part
+
+Seen 2026-11-10 pressing the flow card's **Check my running order**. The
+model read _CC: Next: Timeout (6) follows line 9_ as "skip to line 9", and
+called that line redundant. Now:
+- a CC is said as _its element is line N, run with this line -- not a jump
+  to line N_ (`toCcText`);
+- the check's hint names a lone Next: Timeout that no CC names, and says a
+  CC's element is never a problem, a duplicate or a jump.
+
+Asked again, the check flagged only that the element line is the flow's
+last line. That is debatable, not wrong. Tests: `flowChatHelpers.test.ts`
+and `flowChatHelpers.ut100.test.ts`.
+
+### EC-475 — an ordinary chat about a running order put a countdown and a verse on a screen — `done`
+
+The worst find of the run (2026-11-10). In an ordinary tab, Auto (OWA
+Shared · gemma4:cloud) was asked _Make a new running order for Sunday:
+Psalm 23, a 5 minute countdown, …_. It had no flow tool, so it called
+`owa_foreground start` (a countdown) and `owa_present_bible` (Psalm 23) on
+screen 0. Nobody had asked to put anything up. The screen was hidden and
+nothing reached a wall. It was put back with `owa_undo` and Clear Long
+Text, Clear Background and Clear Foreground.
+
+Now a question whose typed words are about a running order
+(`checkIsRunningOrderLine` on `askedText`, kept on the tool watch as
+`isRunningOrderAsk`) is refused `owa_present_bible` and `owa_foreground` in
+`runMcpToolCall`, except their `check`. The refusal says the songs, verses
+and countdowns are lines to add, and to put one up only if asked
+(`RUNNING_ORDER_SCREEN_REFUSAL`).
+
+Tests (`llmBotHelpers.coverage.ut99.test.ts`): a running order asked for
+lets only the check reach the app, and a verse asked for on its own still
+goes up. Re-asked live after the fix, the model called only the help tools,
+so the refusal itself was not reached live.

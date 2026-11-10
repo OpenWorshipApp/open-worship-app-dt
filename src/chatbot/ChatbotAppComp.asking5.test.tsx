@@ -965,3 +965,61 @@ describe('more of the model road', () => {
         expect(botCues().map((cue) => saidOf(cue))).toEqual([STOPPED_TEXT]);
     });
 });
+
+describe('a foreground widget named in passing (EC-467)', () => {
+    const isForegroundRead = () => {
+        return h.callTool.mock.calls.some((call) => {
+            return call[0] === 'owa_foreground_edit';
+        });
+    };
+
+    test("a supported question pressed under an answer is the guide's, though it names the clock", async () => {
+        const pressed =
+            'How do I make a line start at a set time on the clock?';
+        seedSessions([
+            {
+                id: 'pressed-known',
+                messages: [
+                    {
+                        id: 1,
+                        author: 'you',
+                        text: 'What is a presenting flow?',
+                    },
+                    {
+                        id: 2,
+                        author: 'bot',
+                        text: 'A presenting flow is the running order.',
+                        replies: [pressed],
+                    },
+                ],
+            },
+        ]);
+        h.askLlmBot.mockImplementation(answerWith('Use Next: Timeout.'));
+        await renderWindow();
+        await press(pressed, lastBot()!);
+        await waitFor(() => {
+            return botCues().length === 2 && isIdle();
+        }, 'the answer');
+        expect(h.askLlmBot).toHaveBeenCalledTimes(1);
+        expect(isForegroundRead()).toBe(false);
+    });
+
+    test('a typed running order with a countdown in it is no countdown ask', async () => {
+        seedSessions([{ id: 'typed-flow' }]);
+        h.askLlmBot.mockImplementation(answerWith('Open Presenting Flow.'));
+        await renderWindow();
+        await askAndSettle(
+            'Make a new running order for Sunday: a welcome countdown, ' +
+                'Doxology, Psalm 23',
+        );
+        expect(isForegroundRead()).toBe(false);
+    });
+
+    test("a typed line about the countdown itself is still the countdown's", async () => {
+        seedSessions([{ id: 'typed-countdown' }]);
+        h.askLlmBot.mockImplementation(answerWith('It is red now.'));
+        await renderWindow();
+        await askAndSettle('Make the countdown red and a little bigger');
+        expect(isForegroundRead()).toBe(true);
+    });
+});

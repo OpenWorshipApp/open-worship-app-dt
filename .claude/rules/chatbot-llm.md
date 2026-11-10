@@ -1012,6 +1012,28 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `owa-enhance-mcp/references/tool-budget.md`) -- the user's choice of _any
   chat_ over a foreground ask alone. Not yet asked live through the window
   with a model: the AI caution is a person's press.
+  **A widget named IN PASSING is no foreground ask** (2026-11-10, `EC-467`).
+  With no foreground session open in the tab, a typed line naming a widget
+  goes to the foreground ask only when it is not a known question. With a
+  session open, only a press, an empty line or a line that is not a known
+  question goes there. A line about the running order never does
+  (`checkIsRunningOrderLine`: _running order_, _presenting flow_, _run
+  sheet_, _order of service_, _service plan_, or the window's word for
+  Presenting Flow). Before this, the pressed corpus row _How do I make a
+  line start at a set time on the clock?_ (W-22d) was read as about the Time
+  widget. It ended in _could not settle on an answer_ after five tool calls;
+  14 of the 487 rows name a widget so.
+- **A running order asked for in an ordinary chat puts nothing on a screen**
+  (2026-11-10, `EC-475`). On Auto, the shared server's lean list has no flow
+  tool. Asked to _make a new running order … Psalm 23, a 5 minute
+  countdown_, the model put the countdown and the verse on screen 0 instead.
+  `askLlmBot` now marks such an ask from its typed words
+  (`ToolWatchType.isRunningOrderAsk`, `checkIsRunningOrderLine` on
+  `askedText`). `runMcpToolCall` refuses it `owa_present_bible` and
+  `owa_foreground`, except `check`, with `RUNNING_ORDER_SCREEN_REFUSAL`: they
+  are lines to add, and one goes up only when asked for. Building the order
+  from an ordinary tab is still open (`EC-468`). The flow conversation
+  (**Open in Chatbot** on the flow's row) can build it.
 
 - **A study file, asked for from ANY tab** (2026-11-09, `EC-464`; the
   user: _open chatbot then ask chatbot to make a resource study content for

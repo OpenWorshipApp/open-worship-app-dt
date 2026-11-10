@@ -193,6 +193,7 @@ import {
     FOREGROUND_EDIT_TOOL_NAME,
     FOREGROUND_MAX_TOOL_ROUNDS,
     FOREGROUND_SYSTEM_PROMPT,
+    checkIsRunningOrderLine,
     readEditedForeground,
     resolveForegroundSession,
 } from './foregroundChatHelpers';
@@ -2307,6 +2308,12 @@ type ToolWatchType = {
     partControls: string[];
     isWhatAsk: boolean;
     /**
+     * What the person typed is about the running order (EC-475): its items
+     * are lines to add, and nothing is put on a screen while it is answered
+     * -- `owa_present_bible` and `owa_foreground` may only check.
+     */
+    isRunningOrderAsk: boolean;
+    /**
      * A tool answered that the question needs the main window on the
      * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
      * what the projector holds and what is selected are that page's alone),
@@ -2465,6 +2472,7 @@ export function genToolWatch(): ToolWatchType {
         completenessKept: null,
         partControls: [],
         isWhatAsk: false,
+        isRunningOrderAsk: false,
         needsPage: null,
         needsPageBy: null,
         verifiedControlNames: new Set<string>(),
@@ -3419,6 +3427,11 @@ export const NOTE_REMOVAL_MODEL_REFUSAL =
     "Removing a Bible note or a notes file is the person's to do, never " +
     "yours. Remove nothing: tell them to open the note's menu (its three " +
     'dots) in the Bible Notes panel and choose Delete there.';
+export const RUNNING_ORDER_SCREEN_REFUSAL =
+    'They asked about a running order (a presenting flow): its songs, ' +
+    'verses and countdowns are LINES to add to it, not things to put on ' +
+    'the screen now. Put nothing up. Say how to add them to the running ' +
+    'order, and offer to put one up only if they ask for it.';
 export const NOTE_ASK_BIBLE_NOTE_REFUSAL =
     'Here owa_bible_note only makes a NEW note (action "add"). Change the ' +
     'attached note with owa_note_edit action "edit", which keeps its ' +
@@ -3604,6 +3617,17 @@ async function runMcpToolCall(
     }
     if (name === 'owa_bible_note' && checkIsModelRemoval(args)) {
         return `Tool refused: ${NOTE_REMOVAL_MODEL_REFUSAL}`;
+    }
+    // A running order's items are lines to add, never things to put up now
+    // (2026-11-10, EC-475: "Make a new running order for Sunday: a welcome
+    // countdown, Doxology, Psalm 23" started the countdown and put Psalm 23
+    // on screen 0, then answered with the steps to build the order).
+    if (
+        watch.isRunningOrderAsk &&
+        (name === 'owa_present_bible' || name === 'owa_foreground') &&
+        args?.action !== 'check'
+    ) {
+        return `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`;
     }
     // In a conversation about an attached note, owa_bible_note only MAKES a
     // new one: its `update` writes a note back as plain paragraphs, losing
@@ -6580,6 +6604,9 @@ async function askLlmBotAsWritten(
             extra?.study === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
+        seeded.isRunningOrderAsk = checkIsRunningOrderLine(
+            extra?.askedText ?? '',
+        );
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =

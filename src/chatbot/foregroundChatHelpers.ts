@@ -182,6 +182,21 @@ const PHRASE_ONLY_KEY_SET = new Set<ForegroundComponentKeyType>([
     'time',
 ]);
 
+// A line about the RUNNING ORDER names a countdown or a message as one of
+// its lines, never the panel (2026-11-10, EC-467: "Make a new running order
+// for Sunday: a welcome countdown, Doxology, Psalm 23 …" was handed the
+// Countdown panel, put its countdown up unasked and said running orders were
+// beyond it). English words, and the app's own name for one through the
+// window's dictionary.
+const RUNNING_ORDER_WORD_LIST = [
+    'running order',
+    'presenting flow',
+    'run sheet',
+    'order of service',
+    'service order',
+    'service plan',
+];
+
 function toWordPattern(word: string) {
     const escaped = word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // A Latin word is matched whole; a script with no spaces, anywhere.
@@ -191,6 +206,27 @@ function toWordPattern(word: string) {
               'iu',
           )
         : new RegExp(escaped, 'iu');
+}
+
+/**
+ * Whether a typed line is about the running order -- a presenting flow by
+ * any of its names, English or the window's. Such a line names its items,
+ * never a thing to put on the screen now: it is no foreground ask, and the
+ * assistant puts nothing up while answering it (EC-475).
+ */
+export function checkIsRunningOrderLine(
+    text: string,
+    translate: (key: string) => string = tran,
+) {
+    const line = String(text ?? '').trim();
+    if (line === '') {
+        return false;
+    }
+    return [...RUNNING_ORDER_WORD_LIST, translate('Presenting Flow')].some(
+        (word) => {
+            return word.trim().length >= 3 && toWordPattern(word).test(line);
+        },
+    );
 }
 
 /**
@@ -204,6 +240,9 @@ export function readForegroundComponentAsk(
 ): ForegroundComponentKeyType | null {
     const line = String(text ?? '').trim();
     if (line === '' || line.startsWith('/')) {
+        return null;
+    }
+    if (checkIsRunningOrderLine(line, translate)) {
         return null;
     }
     const candidates: { key: ForegroundComponentKeyType; word: string }[] = [];

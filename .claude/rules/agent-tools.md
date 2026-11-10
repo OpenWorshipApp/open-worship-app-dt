@@ -1779,7 +1779,24 @@ false` and searches only a dataset a lookup panel already holds
   on by itself_ had given a song two clocks. After them every card button
   did its job in one change, and _Build it from my order of service_ typed
   with the order under it carried the button's hint (`readFlowButtonHint`
-  takes a message the button's words LEAD).
+  takes a message the button's words LEAD). **A foreground line takes the
+  shapes a model writes** (2026-11-10, `EC-469`). `readAgentForegroundSpec`
+  (`agentFlowForegroundRules.ts`) reads all of these the same way:
+  - `{foreground: {widget, …}}`;
+  - `{foreground: {countdown: {seconds}}}` (the widget as the key);
+  - `{foreground: {countdown: 300}}` or `{message: "words"}`;
+  - `"countdown"` alone;
+  - the widget's own fields written BESIDE `foreground` (a field inside
+    wins). Only the fields that widget has are read (`WIDGET_FIELD_KEY_MAP`).
+  On the MCP side, `add` is a `z.looseObject`: the strict object had dropped
+  a message's `text` on the way in. A countdown without its time is refused
+  with the shape to write. An `after` naming a line the same call adds is
+  refused with the rule it needs: adds with the same `after` go in the
+  order given, and an empty sheet takes none. A countdown asked for had cost
+  33.4k tokens and added nothing; afterwards it took 5.9k and one change.
+  The ask also reads a CC as _its element is line N, run with this line --
+  not a jump to line N_ (`toCcText`, `EC-474`). **Check my running order**
+  had called a CC's element a jump to skip, then redundant.
 
 - **ONE Bible note changed by the assistant is `owa_note_edit`**
   (2026-11-07, the user, with a note row's menu open: _add `Open in

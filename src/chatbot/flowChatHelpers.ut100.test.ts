@@ -100,7 +100,7 @@ describe('the sheet as the model reads it', () => {
         );
         expect(lines).toContain(
             '  Slide 2 CC: 1. "Slide: Media Control" (its element is line 4, ' +
-                'media {"mode":"play","volume":80}); 2. "a line that is gone" ' +
+                'run with this line -- not a jump to line 4, media {"mode":"play","volume":80}); 2. "a line that is gone" ' +
                 '(its element is a line that is gone)',
         );
         expect(lines).toContain('  Slide list: 1: Title | 2 | 3: End');
@@ -151,7 +151,7 @@ describe('the sheet as the model reads it', () => {
         );
         expect(text).toContain(
             '  CC (shown with this line): 1. "Clear All" (its element is ' +
-                'line 3, screen 0, at 07:30, media stop)',
+                'line 3, run with this line -- not a jump to line 3, screen 0, at 07:30, media stop)',
         );
         expect(text).toContain(
             'Line 3: "Jump to" (action:jump-to; goes to line 1)',

@@ -8642,14 +8642,21 @@ export default function ChatbotAppComp() {
                 isForegroundRoutable && openForegroundAsks.length === 0
                     ? readForegroundComponentAsk(trimmedAsked)
                     : null;
+            // A press answers in an OPEN session only: a supported question
+            // pressed from the list that happens to name a widget is still
+            // the guide's (2026-11-10, EC-467: "How do I make it move on by
+            // itself at a set time?" names a timer, went to the Countdown
+            // panel and came back with no answer).
             const isForegroundAsk =
                 isForegroundRoutable &&
-                (openForegroundAsks.length > 0 ||
-                    namedForegroundWidget !== null) &&
-                (options?.isPressed === true ||
-                    trimmedAsked.length === 0 ||
-                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
-                        null);
+                (openForegroundAsks.length > 0
+                    ? options?.isPressed === true ||
+                      trimmedAsked.length === 0 ||
+                      (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                          null
+                    : namedForegroundWidget !== null &&
+                      (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                          null);
             // "List me more options" under a document's card: the card again,
             // its sentence and its buttons, written by the window with no
             // model (2026-11-07, the user, a slide document open: _I just

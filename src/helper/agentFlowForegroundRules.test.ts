@@ -8,6 +8,7 @@ import {
     checkIsPickedForegroundWidget,
     genAgentForegroundData,
     pickForegroundLook,
+    readAgentForegroundSpec,
 } from './agentFlowForegroundRules';
 
 const genId = () => 'clock-id';
@@ -216,5 +217,52 @@ describe('the look', () => {
                 extraStyle: { fontSize: 40 },
             },
         });
+    });
+});
+
+describe('the shapes a foreground line is written in (EC-469)', () => {
+    test('a field inside wins over the same field beside it', () => {
+        expect(
+            readAgentForegroundSpec(
+                { widget: 'countdown', seconds: 600 },
+                { seconds: 300 },
+            ),
+        ).toEqual({ widget: 'countdown', fields: { seconds: 600 } });
+    });
+
+    test('only the widget own fields are taken from beside it', () => {
+        expect(
+            readAgentForegroundSpec(
+                { widget: 'countdown' },
+                { seconds: 300, color: 'red', text: 'Welcome', after: 2 },
+            ),
+        ).toEqual({ widget: 'countdown', fields: { seconds: 300 } });
+    });
+
+    test('the widget as the key takes its object, words or length', () => {
+        expect(
+            readAgentForegroundSpec({ 'quick-text': { text: 'Hi' } }),
+        ).toEqual({ widget: 'quick-text', fields: { text: 'Hi' } });
+        expect(readAgentForegroundSpec({ 'marquee-top': 'Hi' })).toEqual({
+            widget: 'marquee-top',
+            fields: { text: 'Hi' },
+        });
+        expect(readAgentForegroundSpec({ countdown: 90 })).toEqual({
+            widget: 'countdown',
+            fields: { seconds: 90 },
+        });
+        expect(readAgentForegroundSpec({ stopwatch: 'Hi' })).toEqual({
+            widget: 'stopwatch',
+            fields: {},
+        });
+    });
+
+    test('a key that is no widget is left for the widget refusal', () => {
+        expect(readAgentForegroundSpec({ seconds: 300 })).toEqual({
+            widget: undefined,
+            fields: { seconds: 300 },
+        });
+        expect(readAgentForegroundSpec(null)).toBeNull();
+        expect(readAgentForegroundSpec(7)).toBeNull();
     });
 });
