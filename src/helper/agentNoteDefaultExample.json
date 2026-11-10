@@ -8,7 +8,7 @@
                     "format": 0,
                     "mode": "normal",
                     "style": "",
-                    "text": "Khmer BibleNote Study: Genesis 1",
+                    "text": "BibleNote Study: Genesis 1",
                     "type": "text",
                     "version": 1
                 }
@@ -320,7 +320,7 @@
                     "format": 0,
                     "mode": "normal",
                     "style": "",
-                    "text": " before adding the Khmer translation note.",
+                    "text": " before adding the translation note.",
                     "type": "text",
                     "version": 1
                 }
@@ -420,7 +420,7 @@
                     "format": 0,
                     "mode": "normal",
                     "style": "",
-                    "text": " while drafting local Khmer notes.",
+                    "text": " while drafting notes in your own language.",
                     "type": "text",
                     "version": 1
                 }
@@ -617,7 +617,7 @@
                             "format": 0,
                             "mode": "normal",
                             "style": "",
-                            "text": "Read the passage aloud in KJV and Khmer.",
+                            "text": "Read the passage aloud in KJV and in your own language.",
                             "type": "text",
                             "version": 1
                         }
@@ -706,7 +706,7 @@
                             "format": 0,
                             "mode": "normal",
                             "style": "",
-                            "text": "Khmer translation note added",
+                            "text": "Translation note added",
                             "type": "text",
                             "version": 1
                         }
@@ -975,7 +975,7 @@
                                             "format": 0,
                                             "mode": "normal",
                                             "style": "",
-                                            "text": "Compare Khmer wording",
+                                            "text": "Compare the translations' wording",
                                             "type": "text",
                                             "version": 1
                                         }

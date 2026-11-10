@@ -1,14 +1,15 @@
 // The person's language behind the scenes (2026-10-17, the user's ask: _for
-// khmer, behind the scene it should translate all khmer to english to work
-// with llm or post directly to llm if it is gemma 4 family, then translate
-// to khmer to show to user … for translation recommend using gemma 4
+// <a language>, behind the scene it should translate all <of it> to english
+// to work with llm or post directly to llm if it is gemma 4 family, then
+// translate back to show to user … for translation recommend using gemma 4
 // models. make sure to make it generic, this will be the template for all
 // supporting language_, and _use gemma 4 as sub assistant (if gemma 4 models
 // available) to help translation_).
 //
 // - **A Gemma 4 model is asked in their language and answers in it**: that
 //   family reads and writes the languages the app is shown in well enough to
-//   be handed them directly (Khmer measured on gemma-4-12b, 2026-10-16).
+//   be handed them directly (a non-Latin script measured on gemma-4-12b,
+//   2026-10-16).
 // - **Any other model works in ENGLISH**, which every model here reads and
 //   writes best and which the guide and the tools are written in: what they
 //   typed is put into English first, the assistant is asked in English under
@@ -69,11 +70,11 @@ export function findTranslatedLanguage(
  * `replyLang` as it stands (no translation behind the scenes), or null for
  * the English page: English, a script no language here claims, a language
  * with no data, and a language only TYPED -- the manual is translated into
- * the languages the app is shown in alone. A model asked to write Khmer from
- * the English page copied its sentences into the answer as they stood
- * (2026-10-17, gemma4:cloud); the page in Khmer has every button, message and
- * step in the words the Khmer app shows (`W-31@km`, and the English page
- * where none is current).
+ * the languages the app is shown in alone. A model asked to write another
+ * language from the English page copied its sentences into the answer as
+ * they stood (2026-10-17, gemma4:cloud); the translated page has every
+ * button, message and step in the words the app shows in that language
+ * (`W-31@<code>`, and the English page where none is current).
  */
 export function findPageLanguage(replyLang: string | null | undefined) {
     if (
@@ -123,8 +124,8 @@ export function listUsedTerms(
             });
     }
     // Longest first, each taken out of the text once found: in a script
-    // written without spaces a short word sits inside a longer one (Khmer
-    // "God" inside "Bible" and "Jesus"), and must not be read there.
+    // written without spaces a short word sits inside a longer one (one
+    // language's "God" inside its "Bible" and "Jesus"), and must not be read there.
     let rest = text;
     const used: string[] = [];
     for (const [english, word] of [...entries].sort((one, other) => {
@@ -258,7 +259,7 @@ const LEAD_LABEL_PATTERN =
 
 // What a local model's template leaks into its words now and then: a
 // control token like `<audio|>` or `<|im_end|>`, once seen in the middle of
-// a Khmer word (gemma-4-12b, 2026-10-17). Never the words of an answer.
+// a translated word (gemma-4-12b, 2026-10-17). Never the words of an answer.
 const MODEL_TOKEN_PATTERN =
     /<\|[^<>|\s]{1,40}\|?>|<[a-z_]{1,30}\|>|<\/?(?:start|end)_of_turn>/gi;
 

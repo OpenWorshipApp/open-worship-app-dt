@@ -221,13 +221,13 @@ describe('files a page may ask for', () => {
     });
 
     test('a route names a language and a path, and nothing else', () => {
-        expect(parseLangPluginRoute('/@lang/km/assets/a%20b.ttf')).toEqual({
-            langCode: 'km',
+        expect(parseLangPluginRoute('/@lang/xx/assets/a%20b.ttf')).toEqual({
+            langCode: 'xx',
             relativePath: 'assets/a b.ttf',
         });
-        expect(parseLangPluginRoute('/@lang/KM/x.js')).toBeNull();
+        expect(parseLangPluginRoute('/@lang/XX/x.js')).toBeNull();
         expect(parseLangPluginRoute('/assets/x.js')).toBeNull();
-        expect(parseLangPluginRoute('/@lang/km/%E0%A4%A')).toBeNull();
+        expect(parseLangPluginRoute('/@lang/xx/%E0%A4%A')).toBeNull();
     });
 
     test('the registry answers from the language in use, and forgets on a change', () => {

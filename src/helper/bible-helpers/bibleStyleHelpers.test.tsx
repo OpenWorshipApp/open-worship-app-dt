@@ -90,14 +90,14 @@ describe('bibleStyleHelpers', () => {
         vi.resetModules();
         mocks.reset();
 
-        mocks.getBibleInfoMock.mockResolvedValue({ locale: 'km-KH' });
+        mocks.getBibleInfoMock.mockResolvedValue({ locale: 'xx-XX' });
         mocks.getFontFamilyByLocaleMock.mockImplementation(
             (locale: string) => `font:${locale}`,
         );
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
-                if (locale === 'km-KH') {
-                    return { fontFamily: 'Khmer Font' };
+                if (locale === 'xx-XX') {
+                    return { fontFamily: 'Xx Font' };
                 }
                 if (locale === 'en-US') {
                     return { fontFamily: 'English Font' };
@@ -127,14 +127,14 @@ describe('bibleStyleHelpers', () => {
         mocks.getBibleInfoMock.mockResolvedValueOnce(null);
         // The fallback is a LocaleType, not a lang code — `DEFAULT_LOCALE`.
         expect(await module.getBibleLocale('missing')).toBe('en-US');
-        expect(await module.getBibleLocale('KJV')).toBe('km-KH');
+        expect(await module.getBibleLocale('KJV')).toBe('xx-XX');
     });
 
     test('falls back to the default locale language data', async () => {
         const module = await loadModule();
 
         expect(await module.getLangDataFromBibleKey('KJV')).toEqual({
-            fontFamily: 'Khmer Font',
+            fontFamily: 'Xx Font',
         });
 
         mocks.getLangDataAsyncMock
@@ -151,8 +151,8 @@ describe('bibleStyleHelpers', () => {
         expect(await module.getBibleFontFamily('')).toBe('font:en-US');
         expect(mocks.globalCacheManager10Seconds.set).not.toHaveBeenCalled();
 
-        expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
-        expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
+        expect(await module.getBibleFontFamily('KJV')).toBe('font:xx-XX');
+        expect(await module.getBibleFontFamily('KJV')).toBe('font:xx-XX');
         expect(mocks.getFontFamilyByLocaleMock).toHaveBeenCalledTimes(2);
         expect(mocks.globalCacheManager10Seconds.set).toHaveBeenCalledTimes(1);
     });
@@ -183,6 +183,6 @@ describe('bibleStyleHelpers', () => {
         });
 
         expect(updates.at(0)).toBeUndefined();
-        expect(updates.at(-1)).toBe('font:km-KH');
+        expect(updates.at(-1)).toBe('font:xx-XX');
     });
 });

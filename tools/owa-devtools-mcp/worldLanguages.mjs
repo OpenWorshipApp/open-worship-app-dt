@@ -32,6 +32,7 @@ const OBJECT_KEY_LIST = [
   'latinStopWords',
   'ownScriptLanguages',
   'localeNameAliases',
+  'catalogLanguageCodes',
 ];
 const LIST_KEY_LIST = ['languageWordPrefixes', 'bookNumberWords'];
 
@@ -82,6 +83,7 @@ function mergeWorldLanguages(partList) {
   const scriptRowList = [];
   const cyrillicRowList = [];
   const cyrillicDefaultRowList = [];
+  const scriptMarkRowList = [];
   for (const part of [englishWorld, ...partList]) {
     if (part === null || typeof part !== 'object') {
       continue;
@@ -97,6 +99,7 @@ function mergeWorldLanguages(partList) {
     scriptRowList.push(...toRowList(part.scriptLocales));
     cyrillicRowList.push(...toRowList(part.cyrillicLetterLocales));
     cyrillicDefaultRowList.push(...toRowList(part.cyrillicDefaultLocales));
+    scriptMarkRowList.push(...toRowList(part.scriptMarkLocales));
     if (typeof part.colonMarks === 'string') {
       world.colonMarks += part.colonMarks;
     }
@@ -122,6 +125,16 @@ function mergeWorldLanguages(partList) {
     .map((row) => {
       return row.locale;
     });
+  // A text mostly in one script that a language tells apart by letters of
+  // another beside it (a language's own `scriptMarkLocales`: Han with kana
+  // beside it), in the order they were written.
+  world.scriptMarkLocales = sortRows(scriptMarkRowList).filter((row) => {
+    return (
+      typeof row.script === 'string' &&
+      Array.isArray(row.marks) &&
+      Array.isArray(row.locales)
+    );
+  });
   return world;
 }
 

@@ -108,13 +108,13 @@ describe('a language column’s own font and size', () => {
     });
 
     test('a font or a size that is set lights its row', async () => {
-        await render({ fontFamily: 'Khmer OS', fontSizeScale: 1.5 });
+        await render({ fontFamily: 'Made Up Sans', fontSizeScale: 1.5 });
         expect(
             ['Font', 'Text Size (%)'].map((label) =>
                 getRow(label).className.includes('fg-prop-engaged'),
             ),
         ).toEqual([true, true]);
-        expect(state.fontProps).toMatchObject({ fontFamily: 'Khmer OS' });
+        expect(state.fontProps).toMatchObject({ fontFamily: 'Made Up Sans' });
         expect(
             query('button[title="Text Size (%): 150"]')!.getAttribute(
                 'aria-pressed',
@@ -124,12 +124,12 @@ describe('a language column’s own font and size', () => {
 
     test('a family is stored, and `--` gives the screen’s back', async () => {
         await render({ fontSizeScale: 0.8 });
-        await act(async () => state.fontProps.setFontFamily('Battambang'));
+        await act(async () => state.fontProps.setFontFamily('Made Up Serif'));
         expect(onChange).toHaveBeenLastCalledWith({
-            fontFamily: 'Battambang',
+            fontFamily: 'Made Up Serif',
             fontSizeScale: 0.8,
         });
-        await render({ fontFamily: 'Battambang' });
+        await render({ fontFamily: 'Made Up Serif' });
         await act(async () => state.fontProps.setFontFamily(''));
         // The family key is gone, not stored empty: no style at all.
         expect(onChange).toHaveBeenLastCalledWith(undefined);

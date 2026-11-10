@@ -90,7 +90,7 @@ vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
 }));
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: async (key: string) =>
-        key === 'KH54' ? 'app-Battambang' : '',
+        key === 'XX54' ? 'app-Xx-Face' : '',
 }));
 vi.mock('../server/fileHelpers', () => ({
     getAvailableFileName: h.getAvailableFileName,

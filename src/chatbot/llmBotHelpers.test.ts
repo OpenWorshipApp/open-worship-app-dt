@@ -150,8 +150,7 @@ vi.mock('./mcpClient', () => ({
     },
 }));
 
-import { listAssistantLanguages } from './chatLangHelpers';
-import { checkHasLangPackage } from '../test-setup/langPackageDirs';
+import { listAssistantLanguages, listTypedLanguages } from './chatLangHelpers';
 import { AskCancelledError } from './cancelHelpers';
 import { CustomServerError } from '../../electron/customLlmProtocol';
 import {
@@ -1928,7 +1927,7 @@ describe('the request is cache-shaped', () => {
         });
         useFakeAnthropic(createMock);
         const typed =
-            'My Khmer Bible will not take John 3:16. Use the book buttons.';
+            'My Bible in another language will not take John 3:16. Use the book buttons.';
 
         const answer = await askLlmBot(
             `${typed}\n\n(This is one of the app's supported questions.)`,
@@ -2147,9 +2146,9 @@ describe('steps written without opening the page', () => {
     const STEPS =
         'Not from here.\n\n1. In the **Documents** list, pick it.\n2. Click **Slide Editor**.';
 
-    // The whole list asked in Khmer (EC-325): told to call owa_foreground
-    // for "Can you start a 5 minute countdown?", gemma4:cloud wrote that it
-    // had started one having called nothing.
+    // The whole list asked in another language (EC-325): told to call
+    // owa_foreground for "Can you start a 5 minute countdown?", gemma4:cloud
+    // wrote that it had started one having called nothing.
     test('an ask to do something that ends without its tool goes back once', () => {
         const watch = genToolWatch();
         expect(checkIsDoneWithoutTool(watch)).toBe(false);
@@ -2220,8 +2219,9 @@ describe('steps written without opening the page', () => {
         expect(checkIsStepsWithoutPage(STEPS, watch)).toBe(false);
     });
 
-    // The Khmer stress run on gemma4:cloud (2026-10-17): under a pasted
-    // story and down a ten-turn chat it wrote every list with no tool called.
+    // A stress run in another language on gemma4:cloud (2026-10-17): under
+    // a pasted story and down a ten-turn chat it wrote every list with no
+    // tool called.
     test('steps written with nothing looked up at all are caught too', () => {
         const memory = genToolWatch();
         memory.canSearchGuide = true;
@@ -3403,8 +3403,9 @@ describe('the custom servers', () => {
         expect(bare.actions).toBeUndefined();
     });
 
-    // Passes 6-8 of the whole list asked in Khmer of gemma4:cloud (EC-330):
-    // ~30 answers stopped before the job's last step with that step quoted.
+    // Passes 6-8 of the whole list asked in another language of
+    // gemma4:cloud (EC-330): ~30 answers stopped before the job's last step
+    // with that step quoted.
     test('an answer to a named part is checked once for the steps that finish the job', async () => {
         const first = '1. Open **View**.';
         const replies = [first, 'KEEP'];
@@ -3750,18 +3751,18 @@ describe('the custom servers', () => {
     // tries to install it itself is refused before the tool is called.
     test('a Bible the model downloaded is agreed to by the person, never installed by it', async () => {
         const link =
-            'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml';
+            'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/SampleBible.xml';
         fake.toolList = [{ name: 'owa_bible_xml' }];
         fake.toolResultMap = {
             owa_bible_xml: JSON.stringify({
                 kind: 'xml',
                 draftId: 'he10paxbbz64',
-                title: 'Khmer Standard Version 1954',
+                title: 'Sample Standard Version 1954',
                 source: link,
                 books: 66,
                 chapters: 1189,
                 verses: 31102,
-                keys: ['KSV'],
+                keys: ['TQVS'],
                 takenKeys: [],
                 locales: [],
                 nameLists: [],
@@ -3780,14 +3781,14 @@ describe('the custom servers', () => {
                 return genCallResponse('owa_bible_xml', {
                     action: 'import',
                     draftId: 'he10paxbbz64',
-                    key: 'KSV',
+                    key: 'TQVS',
                 });
             }
             return genTextResponse();
         });
         fake.custom = { chat: { completions: { create } } };
         const answer = await askLlmBot(
-            'Install the Khmer Bible from ' + link,
+            'Install the Bible from ' + link,
             'presenter',
             'custom',
             PHI_MODEL,
@@ -4550,8 +4551,8 @@ describe('askLlmBot, guarding the bill', () => {
     });
 });
 
-// The app is shown in Khmer for many of the people this window is for, and
-// they read only that. The prompt is built per APP language (a cached prefix:
+// The app is shown in a language other than English for many of the people
+// this window is for, and they read only that. The prompt is built per APP language (a cached prefix:
 // the language changes only when the window reloads), and the language of a
 // QUESTION rides at the end of the ask.
 describe('the answer is in their language', () => {
@@ -4621,9 +4622,10 @@ describe('the answer is in their language', () => {
     });
 });
 
-// The whole corpus asked in Khmer of gemma-4-12b on the user's LM Studio
-// (2026-10-17): every question thought its budget away and was asked again
-// with thinking off, and one step read a Khmer letter, then _<audio|> View_.
+// The whole corpus asked in another language of gemma-4-12b on the user's
+// LM Studio (2026-10-17): every question thought its budget away and was
+// asked again with thinking off, and one step read a letter of that
+// language's script, then _<audio|> View_.
 describe('a local Gemma 4, round by round', () => {
     test('a model that thought its budget away starts with thinking off, for a while', () => {
         const now = 1_000_000;
@@ -4694,32 +4696,30 @@ describe('genReplyLanguageLine', () => {
     });
 
     // Any language a person may type is named (2026-11-03): a Spanish line
-    // had been told "They wrote in French" and answered in French, its
-    // Font Size slider renamed in French on an English screen.
-    // A language is named from its package (`typed.json`), so each case runs
-    // while that package is on disk.
-    test.runIf(checkHasLangPackage('es'))(
-        'a language only typed is named, its buttons as the screen shows',
-        () => {
-            const spanish = genReplyLanguageLine('es', 'en');
-            expect(spanish).toContain(
-                'They wrote in Spanish: answer in Spanish',
-            );
-            expect(spanish).toContain(
+    // had been told it was written in another Latin-script language and
+    // answered in that one, its Font Size slider renamed in it on an
+    // English screen. A language is named from its package (`typed.json`,
+    // one code a row -- a script of a language, `zh-Hant`, a row of its
+    // own), so every language on disk is held to its own name, none picked
+    // out, and none when only English is there.
+    test('a language only typed is named, its buttons as the screen shows', () => {
+        for (const { code, name } of listTypedLanguages()) {
+            if (code === 'en') {
+                continue;
+            }
+            const line = genReplyLanguageLine(code, 'en');
+            expect([code, line]).toEqual([
+                code,
+                expect.stringContaining(
+                    `They wrote in ${name}: answer in ${name}`,
+                ),
+            ]);
+            expect(line).toContain(
                 'exactly as the tools and the guide give it',
             );
-            expect(spanish).toContain('write what follows them in Spanish');
-        },
-    );
-
-    test.runIf(checkHasLangPackage('zh'))(
-        'a script of a typed language is named by it',
-        () => {
-            expect(genReplyLanguageLine('zh-Hant', 'en')).toContain(
-                'answer in Chinese (Traditional)',
-            );
-        },
-    );
+            expect(line).toContain(`write what follows them in ${name}`);
+        }
+    });
 });
 
 // One removal an answer (2026-10-17, EC-299): the free model moved ten of
@@ -4856,7 +4856,7 @@ describe('a note change claimed and never made', () => {
 
 // EC-460, 2026-11-04: an answer that holds not one letter of the script it
 // was asked in is in the wrong language; a Latin-script language is never
-// checked (English and French share it), and a short line never is.
+// checked (English shares it with many), and a short line never is.
 describe('the wrong-language check', () => {
     const LONG_ENGLISH =
         'Click the small dots at the bottom left, then drag the slider.';

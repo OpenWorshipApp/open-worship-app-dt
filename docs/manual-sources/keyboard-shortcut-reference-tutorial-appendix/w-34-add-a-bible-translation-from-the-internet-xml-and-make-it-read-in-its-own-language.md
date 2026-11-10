@@ -35,7 +35,7 @@ an XML file already on your computer.
    wanted the KJV, that is done: the language question that follows needs no answer.) Press
    **[en:tran:Import another Bible anyway]** to go on without it.
    The assistant then asks **Which language do you want the Bible in?** Press
-   **[en:tran:Khmer]**, **[en:tran:English]** or **[en:tran:French]**, or type the language — in English
+   the language the app is shown in, **[en:tran:English]** or another language you installed, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **[en:tran:A file on this computer]** opens the form below instead. A word it cannot find
    (`kmer`) is passed to the assistant to work out the language you meant; with no

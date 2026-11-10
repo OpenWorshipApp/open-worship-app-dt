@@ -12,6 +12,42 @@ import {
   normalizeBibleLocale,
   toCompleteBibleBookList,
 } from '../../../../../../../../tools/owa-devtools-mcp/bibleBookNames.mjs';
+import { readPackageWorldParts } from '../../../../../../../../extra-work/language-packages.mjs';
+import { configureWorldLanguageParts } from '../../../../../../../../tools/owa-devtools-mcp/worldLanguages.mjs';
+
+// The catalog's code for Khmer is Khmer's own data (`catalogLanguageCodes`
+// in its `world.json`): every package of the checkout is installed here.
+configureWorldLanguageParts(readPackageWorldParts);
+
+describe('Khmer by its names and the catalog code it gives', () => {
+  test('its English name, its own code and the catalog code read as Khmer', () => {
+    expect(normalizeBibleLocale('Khmer').locale).toBe('km');
+    expect(normalizeBibleLocale('khm')).toEqual({
+      locale: 'km',
+      language: 'km',
+      catalogCode: 'khm',
+    });
+    expect(normalizeBibleLocale('km-KH').catalogCode).toBe('khm');
+    expect(guessBibleLocale('https://github.com/a/KhmerBible.xml')).toBe(
+      'km-KH',
+    );
+    expect(guessBibleLocale('km.xml')).toBe('km-KH');
+    expect(guessBibleLocale('khm.xml')).toBe('km-KH');
+  });
+  test('the catalog is asked by the catalog code, Wordproject by its own', async () => {
+    const readList = [];
+    await findBibleBookNames('km-KH', {
+      readPage: async (url) => {
+        readList.push(url);
+        throw new Error('not served');
+      },
+    });
+    expect(readList).toEqual([
+      'https://www.bible.com/languages/khm',
+      'https://www.wordproject.org/bibles/km/index.htm',
+    ]);
+  });
+});
 
 describe('Bible import mapping choices', () => {
   test('offers Khmer digits first, ASCII second, with zero in its correct slot', () => {
@@ -19,7 +55,6 @@ describe('Bible import mapping choices', () => {
       ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
       ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
     ]);
-    expect(getBibleNumberChoices('fr-FR')).toHaveLength(1);
   });
   test('extracts book headings and edition links, never chapter numbers or off-site links', () => {
     const saved = globalThis.location;

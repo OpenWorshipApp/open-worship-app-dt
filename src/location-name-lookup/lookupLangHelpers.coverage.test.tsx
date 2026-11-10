@@ -30,7 +30,7 @@ vi.mock('../helper/settingHelpers', () => ({
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     checkIsValidLangCode: (langCode: string) => {
-        return ['en', 'km'].includes(langCode);
+        return ['en', 'xx'].includes(langCode);
     },
     getAllLangsAsync: async () => [],
     getLangDataByCodeAsync: async (langCode: string) => {
@@ -81,7 +81,7 @@ describe('useLookupLangPresentation', () => {
         h.askedLangCodeList = [];
         h.langDataByCode = {
             en: { langCode: 'en' },
-            km: { langCode: 'km', fontFamily: 'Khmer OS' },
+            xx: { langCode: 'xx', fontFamily: 'Made Up Sans' },
         };
         presentationList = [];
         container = document.createElement('div');
@@ -99,14 +99,14 @@ describe('useLookupLangPresentation', () => {
     });
 
     test('writes in the app font until the package resolves, then in its own', async () => {
-        setSelectedLookupLangCode('km');
+        setSelectedLookupLangCode('xx');
         act(() => {
             root.render(<PresentationHostComp revision={1} />);
         });
         expect(container.textContent).toBe('app font|People');
         await flush();
-        expect(h.askedLangCodeList).toEqual(['km']);
-        expect(container.textContent).toBe('Khmer OS|km:People');
+        expect(h.askedLangCodeList).toEqual(['xx']);
+        expect(container.textContent).toBe('Made Up Sans|xx:People');
     });
 
     test('a package naming no font keeps the app font but still translates', async () => {
@@ -121,15 +121,15 @@ describe('useLookupLangPresentation', () => {
     test('a pinned panel language wins over the setting', async () => {
         act(() => {
             root.render(
-                <LookupLangContext value="km">
+                <LookupLangContext value="xx">
                     <PresentationHostComp revision={1} />
                 </LookupLangContext>,
             );
         });
         await flush();
         expect(getSelectedLookupLangCode()).toBe('en');
-        expect(h.askedLangCodeList).toEqual(['km']);
-        expect(container.textContent).toBe('Khmer OS|km:People');
+        expect(h.askedLangCodeList).toEqual(['xx']);
+        expect(container.textContent).toBe('Made Up Sans|xx:People');
     });
 
     test('the same package hands out the same presentation across renders', async () => {
@@ -146,11 +146,11 @@ describe('useLookupLangPresentation', () => {
 
         // A language switch re-reads and hands out a new one.
         act(() => {
-            setSelectedLookupLangCode('km');
+            setSelectedLookupLangCode('xx');
         });
         await flush();
-        expect(h.askedLangCodeList).toEqual(['en', 'km']);
+        expect(h.askedLangCodeList).toEqual(['en', 'xx']);
         expect(presentationList.at(-1)).not.toBe(loaded);
-        expect(container.textContent).toBe('Khmer OS|km:People');
+        expect(container.textContent).toBe('Made Up Sans|xx:People');
     });
 });

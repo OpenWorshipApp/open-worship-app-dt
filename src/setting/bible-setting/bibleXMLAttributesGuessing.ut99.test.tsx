@@ -18,7 +18,7 @@ const { state, mocks } = vi.hoisted(() => ({
 
 vi.mock('../../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
-    getLangCode: (locale: string) => (locale === 'km-KH' ? 'km' : null),
+    getLangCode: (locale: string) => (locale === 'yy-YY' ? 'yy' : null),
     getLangDataAsync: mocks.getLangDataAsync,
     toLocaleNum: mocks.toLocaleNum,
     tran: (text: string) => text,
@@ -157,12 +157,12 @@ describe('the numbers map input', () => {
     test('splits the typed digits and asks for exactly ten', async () => {
         const onChange = vi.fn();
         await render(
-            genBibleNumbersMapXMLInput(['0', '1'], 'km-KH' as any, onChange),
+            genBibleNumbersMapXMLInput(['0', '1'], 'yy-YY' as any, onChange),
         );
         const input = container.querySelector('input')!;
         const group = container.querySelector('.input-group')!;
         expect(input.value).toBe('0 1');
-        expect(container.textContent).toContain('Define numbers map for km');
+        expect(container.textContent).toContain('Define numbers map for yy');
 
         await typeInto(input, '0 1 2');
         expect(onChange).toHaveBeenLastCalledWith(['0', '1', '2']);
@@ -187,13 +187,13 @@ describe('the numbers map input', () => {
     });
 
     test('links to a translation of the ten digits in the locale language', async () => {
-        await render(genBibleNumbersMapXMLInput([], 'km-KH' as any, vi.fn()));
+        await render(genBibleNumbersMapXMLInput([], 'yy-YY' as any, vi.fn()));
         const link = container.querySelector('a')!;
         expect(link.getAttribute('href')).toBe(
-            'https://translate.google.com/?sl=en&tl=km&' +
+            'https://translate.google.com/?sl=en&tl=yy&' +
                 'text=0%201%202%203%204%205%206%207%208%209&op=translate',
         );
-        expect(link.textContent).toBe('Translate (km)');
+        expect(link.textContent).toBe('Translate (yy)');
     });
 
     test('an unknown locale falls back to the default language code', async () => {
@@ -217,7 +217,7 @@ describe('the numbers map input', () => {
             '９',
         ];
         const onChange = vi.fn();
-        await render(genBibleNumbersMapXMLInput([], 'km-KH' as any, onChange));
+        await render(genBibleNumbersMapXMLInput([], 'yy-YY' as any, onChange));
         const useButton = getButtons()[0];
         expect(useButton.textContent).toBe('Use １ ２ ３');
 
@@ -229,12 +229,12 @@ describe('the numbers map input', () => {
         expect(
             container.querySelector('.input-group')!.getAttribute('title'),
         ).toBe('');
-        expect(mocks.toLocaleNum).toHaveBeenCalledWith('km-KH', 9);
+        expect(mocks.toLocaleNum).toHaveBeenCalledWith('yy-YY', 9);
     });
 
     test('a press does nothing once the locale data has gone', async () => {
         const onChange = vi.fn();
-        await render(genBibleNumbersMapXMLInput([], 'km-KH' as any, onChange));
+        await render(genBibleNumbersMapXMLInput([], 'yy-YY' as any, onChange));
         state.langData = null;
         await click(getButtons()[0]);
         expect(onChange).not.toHaveBeenCalled();
@@ -243,7 +243,7 @@ describe('the numbers map input', () => {
 
     test('no digit button for a locale with no language data', async () => {
         state.langData = null;
-        await render(genBibleNumbersMapXMLInput([], 'km-KH' as any, vi.fn()));
+        await render(genBibleNumbersMapXMLInput([], 'yy-YY' as any, vi.fn()));
         expect(getButtons()).toHaveLength(0);
         expect(mocks.toLocaleNum).not.toHaveBeenCalled();
     });

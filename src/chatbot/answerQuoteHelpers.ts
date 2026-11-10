@@ -24,7 +24,7 @@ export const MAX_ANSWER_QUOTE_CHARS = 800;
 
 const ELLIPSIS = '…';
 
-// Cut at a whole letter (a Khmer letter with its marks and subscripts is one
+// Cut at a whole letter (a letter with its marks and subscripts is one
 // cluster), and back to the last space when one is near the end, so a word
 // is not broken in two.
 function cutWords(text: string, maxChars: number) {
@@ -45,8 +45,8 @@ function cutWords(text: string, maxChars: number) {
 }
 
 // The words, not their mark-up: an answer's own `# heading` marks and
-// `**bold**` stars were noise in the box (seen live 2026-11-09 on a Khmer
-// preaching lesson). A `- ` list mark stays: it is how the lines read.
+// `**bold**` stars were noise in the box (seen live 2026-11-09 on a
+// translated preaching lesson). A `- ` list mark stays: it is how the lines read.
 function toPlainLine(line: string) {
     return line
         .trim()

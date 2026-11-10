@@ -152,23 +152,10 @@ describe('the corpus in other languages', () => {
       ),
     ).toBe('Save រ៉ូម ៨:២៨ to my Bibles list');
     expect(toEnglishTemplateAsk('តើប៊ូតុងសម្រាប់ នៅឯណា?', rows)).toBeNull();
-    // An example of the reader's own: "French" in the French row.
-    const frenchRows = flattenQuestions(
-      applyQuestionOverlay(
-        PAGES,
-        loadQuestionOverlays().find((one) => {
-          return one.lang === 'fr';
-        }),
-      ),
-    );
+    // The quoted example of a language row is the reader's own words.
     expect(
-      frenchRows.find((row) => {
-        return row.id === 'settings.bible-settings.import-bible-language';
-      })?.text,
-    ).toBe('Importer une Bible en "French"');
-    expect(
-      toEnglishTemplateAsk('Importer une Bible en "Spanish"', frenchRows),
-    ).toBe('Import a Bible in "Spanish"');
+      toEnglishTemplateAsk('នាំចូលព្រះគម្ពីរជា "ភាសាថៃ"', rows),
+    ).toBe('Import a Bible in "ភាសាថៃ"');
     expect(toEnglishTemplateAsk('សួស្ដី', rows)).toBeNull();
   });
 });

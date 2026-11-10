@@ -14,7 +14,7 @@ export function resolveCssUrls(cssText: string, baseUrl?: string) {
     );
 }
 
-// App-provided fonts (e.g. bible language fonts like `app-Battambang`) exist
+// App-provided fonts (e.g. bible language fonts like `app-<Family>`) exist
 // only as @font-face rules injected into this window, so the print window
 // needs a copy of every rule the printed HTML references, with the font URLs
 // absolutized for it. System fonts resolve there by name and need nothing.

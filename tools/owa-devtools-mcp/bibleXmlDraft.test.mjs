@@ -70,27 +70,27 @@ async function expectProblem(promise, problem) {
 describe('downloading what a link points at', () => {
   test('an XML file is saved as a draft, following a redirect', async () => {
     const { fetchImpl, calledList } = genFetch({
-      'https://github.com/a/b/raw/main/KhmerBible.xml': () => {
+      'https://github.com/a/b/raw/main/XxlangBible.xml': () => {
         return new Response(null, {
           status: 302,
           headers: {
             location:
-              'https://raw.githubusercontent.com/a/b/main/KhmerBible.xml',
+              'https://raw.githubusercontent.com/a/b/main/XxlangBible.xml',
           },
         });
       },
-      'https://raw.githubusercontent.com/a/b/main/KhmerBible.xml': () => {
+      'https://raw.githubusercontent.com/a/b/main/XxlangBible.xml': () => {
         return new Response(BIBLE_XML, { status: 200 });
       },
     });
     const result = await downloadBibleXml({
-      url: 'https://github.com/a/b/raw/main/KhmerBible.xml',
+      url: 'https://github.com/a/b/raw/main/XxlangBible.xml',
       fetchImpl,
       dirPath,
     });
     expect(result.kind).toBe('xml');
     expect(result.draftId).toMatch(/^[a-z0-9]{12}$/);
-    expect(result.fileName).toBe('KhmerBible.xml');
+    expect(result.fileName).toBe('XxlangBible.xml');
     expect(calledList).toHaveLength(2);
     expect(await readFile(result.xmlPath, 'utf8')).toBe(BIBLE_XML);
     expect(await readdir(dirPath)).toEqual([`${result.draftId}.xml`]);
@@ -161,7 +161,7 @@ describe('downloading what a link points at', () => {
         return new Response(
           '<!DOCTYPE html><html><body>' +
             '<a href="/x/EnglishKJV.xml">KJV</a>' +
-            '<a href="/x/KhmerBible.xml">Khmer</a></body></html>',
+            '<a href="/x/XxlangBible.xml">Xxlang</a></body></html>',
           { status: 200 },
         );
       },
@@ -173,14 +173,14 @@ describe('downloading what a link points at', () => {
     });
     const result = await downloadBibleXml({
       url: 'https://bibles.example/downloads',
-      find: 'the khmer one',
+      find: 'the xxlang one',
       fetchImpl,
       dirPath,
     });
     expect(result.kind).toBe('page');
     expect(result.files[0]).toEqual({
-      name: 'KhmerBible.xml',
-      url: 'https://bibles.example/x/KhmerBible.xml',
+      name: 'XxlangBible.xml',
+      url: 'https://bibles.example/x/XxlangBible.xml',
     });
     expect(result.matched).toBe(1);
     expect(result.suggestions).toBeUndefined();
@@ -188,14 +188,14 @@ describe('downloading what a link points at', () => {
     // in the answer and in the note the model reads.
     const slipped = await downloadBibleXml({
       url: 'https://bibles.example/downloads',
-      find: 'kmer',
+      find: 'xxlng',
       fetchImpl,
       dirPath,
     });
     expect(slipped.matched).toBe(0);
     expect(slipped.files).toEqual([]);
-    expect(slipped.suggestions).toEqual(['Khmer']);
-    expect(slipped.note).toContain('closest languages it has: Khmer');
+    expect(slipped.suggestions).toEqual(['Xxlang']);
+    expect(slipped.note).toContain('closest languages it has: Xxlang');
     await expectProblem(
       downloadBibleXml({
         url: 'https://bibles.example/empty',
@@ -249,7 +249,7 @@ describe('downloading what a link points at', () => {
   });
 
   // Measured 2026-10-10: every look at the catalog was a 0.9 MB listing out
-  // of sixty unsigned reads an hour, and narrowing "Khmer" to "2016" is two.
+  // of sixty unsigned reads an hour, and narrowing a language to "2016" is two.
   test('a listing is read once for ten minutes of choosing, titles too', async () => {
     const listingUrl =
       'https://api.github.com/repos/Beblia/Holy-Bible-XML-Format/contents/';
@@ -261,7 +261,7 @@ describe('downloading what a link points at', () => {
         return new Response(
           JSON.stringify([
             { download_url: rawUrl('ThaiBible.xml') },
-            { download_url: rawUrl('KhmerBible.xml') },
+            { download_url: rawUrl('XxlangBible.xml') },
           ]),
           { status: 200 },
         );
@@ -271,8 +271,8 @@ describe('downloading what a link points at', () => {
           status: 206,
         });
       },
-      [rawUrl('KhmerBible.xml')]: () => {
-        return new Response('<bible translation="Khmer Standard">', {
+      [rawUrl('XxlangBible.xml')]: () => {
+        return new Response('<bible translation="Xxlang Standard">', {
           status: 206,
         });
       },
@@ -290,12 +290,12 @@ describe('downloading what a link points at', () => {
     expect((await ask('thai', startedAt)).files[0].title).toBe('Thai Standard');
     expect(calledList).toEqual([listingUrl, rawUrl('ThaiBible.xml')]);
     // Another language a minute on: the listing is not asked for again...
-    const khmer = await ask('khmer', startedAt + 60 * 1000);
-    expect(khmer.files[0].title).toBe('Khmer Standard');
+    const xxlang = await ask('xxlang', startedAt + 60 * 1000);
+    expect(xxlang.files[0].title).toBe('Xxlang Standard');
     expect(calledList).toEqual([
       listingUrl,
       rawUrl('ThaiBible.xml'),
-      rawUrl('KhmerBible.xml'),
+      rawUrl('XxlangBible.xml'),
     ]);
     // ...nor a title already read.
     await ask('thai', startedAt + 2 * 60 * 1000);

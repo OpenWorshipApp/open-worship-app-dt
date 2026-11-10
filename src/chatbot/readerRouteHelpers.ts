@@ -55,7 +55,7 @@ function checkHasRouteWord(words: string, kind: ReaderRouteWordKindType) {
 
 export const READER_ROUTE_COMMAND = '/goto reader';
 // Stored English on the button and translated where it is drawn
-// (`chatTranLabels.test.ts` holds it to its Khmer and French).
+// (`chatTranLabels.test.ts` holds it to every language package).
 export const READER_ROUTE_LABEL = 'Go to the Bible Reader';
 export const READER_ROUTE_TEXT =
     'Only want to read the Bible? The Bible Reader page is made for that. ' +
@@ -120,9 +120,9 @@ const toPlainWords = (text: string) => {
  * which is what an elderly reader's "how can I open bible" is.
  */
 // Read in either of the row's wordings: it SHOWS the window's language, and a
-// pressed chip asks its English (`textEn`) -- in a Khmer window four of the
-// corpus's Bible-source and Bible-audio rows still drew the line (pass 6 of
-// the whole list asked in Khmer, 2026-10-17, EC-321).
+// pressed chip asks its English (`textEn`) -- in a non-English window four
+// of the corpus's Bible-source and Bible-audio rows still drew the line
+// (pass 6 of the whole list asked in that language, 2026-10-17, EC-321).
 function checkIsOtherPageRow(asked: string, knownRow: KnownRowType | null) {
     // A `common` row belongs to every window, the Reader's too: _I only want
     // to read the Bible — how do I get back to the Bible Reader?_ is one, and

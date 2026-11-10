@@ -886,8 +886,8 @@ function toShownBibleImportAsk(asked: string) {
 /**
  * An action's words as drawn. A found verse's button reads the reference the
  * way the Bible writes it in a window not in English (`toShownVerseRef`):
- * the Khmer "open", the Bible's own "Matthew 5:44" and the rest of the
- * label in Khmer, not `… HEBREWS 5:14 …`.
+ * the translated "open", the Bible's own "Matthew 5:44" and the rest of the
+ * label translated, not `… HEBREWS 5:14 …`.
  */
 function toShownActionLabel(action: BotActionType): string {
     const verseRef = /^Open (.+) in Bible Lookup$/.exec(action.label)?.[1];
@@ -1300,7 +1300,7 @@ function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
  * every installed Bible's language, so the window asks its own reference aid
  * -- the same `owa_bible_suggest` the box completes with -- about the
  * shortest run of words first, and hands the reader a matcher for the run
- * that answered (2026-10-19: asked in Khmer to summarize Matthew 18, the
+ * that answered (2026-10-19: asked in a non-English language to summarize Matthew 18, the
  * assistant summarized from memory, and asked for John 3's Resources it gave the
  * steps for opening the panel).
  */
@@ -1335,9 +1335,9 @@ async function readBibleReaderAskWithBook(asked: string) {
             // The next run of words, or no route at all.
         }
     }
-    // A book named in a language other than the open Bible's: a French
-    // "summarize" with the French name of Matthew and a chapter, typed in a
-    // French window with the KJV open, went to the ordinary assistant, which
+    // A book named in a language other than the open Bible's: a translated
+    // "summarize" with that language's name of Matthew and a chapter, typed
+    // in a window in that language with the KJV open, went to the ordinary assistant, which
     // said to type /btw (2026-11-04, EC-461). Every language package names
     // the books too (`data/<code>/bibleBooks.json`).
     try {
@@ -1577,7 +1577,7 @@ function RenderSuggestionsComp({
 // is replaced by a tick, because "-" is punctuation the model typed, not
 // something the reader needs to see.
 const BULLET_PATTERN = /^\s*[-*•]\s+/;
-// Any script's digits too: a step a model numbers in Khmer digits is a step
+// Any script's digits too: a step a model numbers in a language's own digits is a step
 // all the same.
 const NUMBERED_PATTERN = /^\s*(\p{Nd}{1,2}[.)])\s+/u;
 
@@ -1987,8 +1987,8 @@ const NO_PROVIDER_VALUE = '';
 const OFFLINE_ENGINE_LABEL = 'app guide · offline';
 
 // The button that adds words to an answer being written reads **Add**, as the
-// manual names it. The dictionary's `Add` is the blend mode's (in Khmer the
-// word for a sum), so another language says the longer key's words instead.
+// manual names it. The dictionary's `Add` is the blend mode's (in some
+// languages the word for a sum), so another language says the longer key's words instead.
 const ADD_BUTTON_KEY = 'Add more';
 function toAddButtonLabel() {
     const shown = tran(ADD_BUTTON_KEY);
@@ -6369,7 +6369,7 @@ export default function ChatbotAppComp() {
         ],
     );
     const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
-    // A language asked for in so many words ("install the French language"),
+    // A language asked for in so many words ("install the Spanish language"),
     // offered and installed by buttons, with no model
     // (`langInstallChatHelpers.ts`): the press goes into the transcript as
     // the person's own words and the next answer comes back.
@@ -7168,7 +7168,7 @@ export default function ChatbotAppComp() {
                     ? place.facts.bible
                     : (state.ask.bibleKey ?? null);
             // The language the lesson is shown in, as `handleAsking` will
-            // pick it: a Khmer verse in a Khmer window needs no way to say it.
+            // pick it: a verse in the window's own language needs no way to say it.
             const answerLanguage = getAssistantLanguage(
                 pickReplyLanguage(typed ?? '', { isPressed: typed === null }),
             );
@@ -8135,7 +8135,7 @@ export default function ChatbotAppComp() {
             // a general question, asked with no tools and no lookup in the
             // app (`readGeneralQuestion`). It takes the ordinary road below
             // with the frame on the ask; the transcript keeps what was typed.
-            // And a plain follow-up under one stays general -- "in Khmer
+            // And a plain follow-up under one stays general -- "in my language
             // please" under "/btw what is the Bible?" is about the Bible --
             // read off the tab's last question (`readInheritedGeneralQuestion`).
             const generalQuestion =
@@ -8259,9 +8259,9 @@ export default function ChatbotAppComp() {
             }
             // The card's own wording and buttons, answered by the window
             // with no model (2026-10-19). Measured on gemma4:cloud under a
-            // Khmer passage: "show this in Khmer" came back as an invented
-            // Khmer translation of the KJV -- one round, no tool call --
-            // while the installed Khmer Bible's words were in the record;
+            // non-English passage: "show this in <language>" came back as an
+            // invented translation of the KJV -- one round, no tool call --
+            // while the installed Bible's words in it were in the record;
             // and "how do I save this?" was refused with the card's **Save
             // to my Bibles list** button right above the answer.
             if (typedLookupSubject !== null) {
@@ -8419,7 +8419,7 @@ export default function ChatbotAppComp() {
                 return;
             }
             // A "how many" question the record's own lists answer is
-            // counted by the window (2026-10-19, EC-371): asked in Khmer
+            // counted by the window (2026-10-19, EC-371): asked in a non-English language
             // how many children he had, gemma4:cloud said "20" over a list of nineteen
             // names. The card already holds the list, so no round is spent.
             if (typedLookupSubject !== null) {
@@ -8934,9 +8934,9 @@ export default function ChatbotAppComp() {
                 isVerseAskable &&
                 !trimmedAsked.startsWith('/')
             ) {
-                // A Khmer "which verse says …" too: in a Khmer window every
-                // one went to an assistant with no Bible search, which
-                // quoted a Khmer text of its own making (2026-10-17). And
+                // A translated "which verse says …" too: in a window of that
+                // language every one went to an assistant with no Bible
+                // search, which quoted a text of its own making (2026-10-17). And
                 // the verse finder's own sentence with words and no Bible
                 // ("help me find a verse: love your enemies") is searched
                 // the same way: it used to ask "which Bible?" and drop the
@@ -9119,7 +9119,7 @@ export default function ChatbotAppComp() {
                 }
                 return;
             }
-            // A language asked for in so many words ("install the French
+            // A language asked for in so many words ("install the Spanish
             // language"), or a typed "yes" / "no" under the window's own
             // offer of one: offered and installed by buttons, with no model
             // (`langInstallChatHelpers`). A model is never offered the tool.
@@ -9644,7 +9644,7 @@ export default function ChatbotAppComp() {
                 }
                 // A quoted passage from the Bible the person reads: the
                 // installed list is read once, and the one in their language
-                // is named on the ask (`toBibleReaderAsk`), so a Khmer reader
+                // is named on the ask (`toBibleReaderAsk`), so a non-English reader
                 // is not quoted the KJV. One tool call, no model.
                 let bibleReaderBible: string | null = null;
                 if (
@@ -9967,7 +9967,7 @@ export default function ChatbotAppComp() {
                 // The Bible the Reader was in when the file was handed over:
                 // the passage is quoted in the reader's own words. Asked of
                 // the lookup the tab aims at, `15-17` came back in the
-                // Presenter's KJV to a reader of Khmer (2026-10-22).
+                // Presenter's KJV to a reader of another language (2026-10-22).
                 const resourceReading = isResourcesAsk
                     ? findResourceReading(
                           sessionStateRef.current.sessions.find((session) => {
@@ -10074,9 +10074,9 @@ export default function ChatbotAppComp() {
                 }
                 // A person's or a place's verses come from a Bible in the
                 // answer's language when the record's is not one
-                // (2026-10-29): with the Reader on the KJV, a French question
-                // under Noah's card was answered with Genesis 6:15 in
-                // English, the Louis Segond installed. A passage keeps the
+                // (2026-10-29): with the Reader on the KJV, a non-English
+                // question under Noah's card was answered with Genesis 6:15
+                // in English, a Bible of that language installed. A passage keeps the
                 // Bible it was opened in -- that is what they are reading.
                 let lookupQuoteBible: string | null = null;
                 if (
@@ -10119,7 +10119,7 @@ export default function ChatbotAppComp() {
                         : null;
                 // What an answer about a passage keeps in a language other
                 // than its own: the passage's letters, which the cleaner
-                // had taken out of a Khmer answer about the Greek Bible
+                // had taken out of a non-Latin-script answer about the Greek Bible
                 // letter by letter (2026-10-23).
                 const answerKeep =
                     lookupSubject === null || isLookupAppAsk
@@ -10257,7 +10257,7 @@ export default function ChatbotAppComp() {
                 // when nobody translates for it (`findPageLanguage`), read
                 // once per language and only when such an assistant is
                 // asked: handed the English page, gemma4:cloud answering in
-                // Khmer copied its sentences into the answer (2026-10-17).
+                // another language copied its sentences into the answer (2026-10-17).
                 const localPageMap = new Map<string, Promise<string | null>>();
                 const readLocalKnownPage = (pageLang: string | null) => {
                     if (
@@ -14661,7 +14661,7 @@ export default function ChatbotAppComp() {
                     onKeyDown={(event) => {
                         if (event.key === 'Enter') {
                             // An IME still composing owns its own Enter: in
-                            // Khmer that press is choosing the syllable, and
+                            // many scripts that press is choosing the syllable, and
                             // taking it would ask half a word.
                             if (event.nativeEvent.isComposing) {
                                 return;

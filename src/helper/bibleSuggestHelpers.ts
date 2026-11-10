@@ -9,7 +9,8 @@
  * module reads the draft and matches names, so every rule is testable with no
  * app. The window's own routing is `bibleInputSuggestHelpers.ts`.
  *
- * Pure. Zero-width spaces (Khmer keyboards) are taken out first.
+ * Pure. Zero-width spaces (keyboards of scripts written without spaces)
+ * are taken out first.
  */
 
 import { getLangFilesVersion, listLangFiles } from '../lang/langFileStore';

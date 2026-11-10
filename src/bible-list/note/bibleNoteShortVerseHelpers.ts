@@ -224,7 +224,8 @@ function toShortVerseNoteRefs(scanMap: Record<string, NoteFileScanType>) {
  *
  * Keyed by the FULL `bibleVersesKey` (`(KJV) GEN 22:1`) rather than by the
  * translation-independent short verse: a mark is a character range in one
- * translation's text, so a KJV mark must never be painted over a Khmer verse.
+ * translation's text, so a KJV mark must never be painted over another
+ * translation's verse.
  */
 function toVerseAnnotationsMap(scanMap: Record<string, NoteFileScanType>) {
     const verseAnnotationsMap: VerseAnnotationsMapType = {};

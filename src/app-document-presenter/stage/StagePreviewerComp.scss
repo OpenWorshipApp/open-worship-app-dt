@@ -6,7 +6,7 @@
     align-items: center;
     gap: 4px;
     // Never let the card column squeeze the header below its own line box -
-    // Khmer glyphs are taller than the Latin ones, so a shrunk header clips
+    // some scripts' glyphs are taller than Latin ones, so a shrunk header clips
     // them even on a single line.
     flex-shrink: 0;
     // Keep everything on one line and let the label - not the stage controls -

@@ -775,7 +775,7 @@ describe('NoteItemEditorPopupComp — footer controls and the lookup popup', () 
 
     test('an editable window gets Save, the editor links, the lookup, on-top and the key', async () => {
         h.getAllLangs.mockResolvedValue([
-            { langCode: 'km', editorLink: 'https://km.example/editor' },
+            { langCode: 'xx', editorLink: 'https://xx.example/editor' },
             { langCode: 'en' },
         ]);
         const bibleNote = genBibleNote();
@@ -784,7 +784,7 @@ describe('NoteItemEditorPopupComp — footer controls and the lookup popup', () 
         expect(new Set(registeredIds(bibleNote))).toEqual(
             new Set([
                 'editing-history',
-                'lang-markdown-editor km',
+                'lang-markdown-editor xx',
                 'bible-lookup',
                 'toggle-on-top',
                 'bible-key',
@@ -800,13 +800,13 @@ describe('NoteItemEditorPopupComp — footer controls and the lookup popup', () 
         expect(menu.type).toBe(BibleNoteEditingMenuComp);
         expect(menu.props).toEqual({ note, noteItem, bibleNote });
 
-        const editorLink = bibleNote.buttons.get('lang-markdown-editor km');
-        expect(editorLink.description).toBe('Open in Markdown Editor (km)');
+        const editorLink = bibleNote.buttons.get('lang-markdown-editor xx');
+        expect(editorLink.description).toBe('Open in Markdown Editor (xx)');
         expect(editorLink.shortcutKey).toBe('Ctrl+Shift+Alt+K');
         const footer = await mountFooterChildren(editorLink.children);
-        await press(findButton('Open in Markdown Editor (km)', footer));
+        await press(findButton('Open in Markdown Editor (xx)', footer));
         expect(h.openExternalURL).toHaveBeenCalledWith(
-            'https://km.example/editor',
+            'https://xx.example/editor',
         );
         expect(bibleNote.buttons.has('lang-markdown-editor en')).toBe(false);
         expect(bibleNote.buttons.get('bible-lookup').shortcutKey).toBe(
@@ -817,7 +817,7 @@ describe('NoteItemEditorPopupComp — footer controls and the lookup popup', () 
     test('a read-only preview gets neither Save nor the lookup', async () => {
         h.theme = 'light';
         h.getAllLangs.mockResolvedValue([
-            { langCode: 'km', editorLink: 'https://km.example/editor' },
+            { langCode: 'xx', editorLink: 'https://xx.example/editor' },
         ]);
         const bibleNote = genBibleNote();
         await renderPopup(bibleNote, true);
@@ -826,7 +826,7 @@ describe('NoteItemEditorPopupComp — footer controls and the lookup popup', () 
         expect(ids).not.toContain('bible-lookup');
         expect(ids).toEqual(
             expect.arrayContaining([
-                'lang-markdown-editor km',
+                'lang-markdown-editor xx',
                 'toggle-on-top',
                 'bible-key',
             ]),

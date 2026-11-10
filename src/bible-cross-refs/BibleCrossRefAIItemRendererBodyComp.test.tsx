@@ -62,7 +62,7 @@ async function render() {
             <BibleCrossRefAIItemRendererBodyComp
                 ref={ref}
                 aiType="anthropic"
-                bibleKey="KHM"
+                bibleKey="TQAM"
                 bookKey="JHN"
                 chapter={3}
                 verse={16}
@@ -77,7 +77,7 @@ describe('BibleCrossRefAIItemRendererBodyComp', () => {
         await render();
         expect(h.useGettingBibleCrossRefAI).toHaveBeenCalledWith(
             'anthropic',
-            'KHM',
+            'TQAM',
             'JHN',
             3,
             16,

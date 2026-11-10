@@ -91,10 +91,10 @@ describe('what a Lookup Detail panel hands the assistant', () => {
                 kind: 'location',
                 target: 'eden',
                 title: 'Eden',
-                langCode: 'km',
+                langCode: 'xx',
                 bibleKey: 'KJV',
             }),
-        ).toEqual({ kind: 'location', id: 'eden', lang: 'km', bible: 'KJV' });
+        ).toEqual({ kind: 'location', id: 'eden', lang: 'xx', bible: 'KJV' });
     });
 });
 
@@ -131,7 +131,7 @@ describe('what a card reads its record with', () => {
             kind: 'location' as const,
             target: 'place-1',
             title: 'Eden',
-            langCode: 'km',
+            langCode: 'xx',
         };
         expect(toLookupCardArgs(ask)).toEqual(toLookupToolArgs(ask));
         expect(toLookupCardArgs(ask)).not.toHaveProperty('related');

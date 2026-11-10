@@ -3,14 +3,15 @@
  * types -- the books, chapters and verses of the Bible being read, and the
  * people and places of the names lookup (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held a Khmer digit one and
+ * Asked for with a picture of a lookup conversation whose box held a digit one of
+ * a script's own and
  * offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The window asks on a debounce (`bibleInputSuggestHelpers.ts`
  * decides WHEN); this reads what the app holds.
  *
  * - A reference is completed in the Bible the READER is on: the lookup's
- *   language's Bible, so a Khmer reader is offered John 3:16 in its own
+ *   language's Bible, so a reader in another language is offered John 3:16 in its own
  *   digits and name. Books come from that Bible's `keyBookMap`, chapters from
  *   the model's chapter count, verses from the chapter itself.
  * - A name or a place comes from the names lookup, taken through
@@ -112,8 +113,8 @@ async function resolveSuggestBible() {
     });
     // The lookup's own Bible is the one the Reader draws, so its names are
     // the ones on screen. Preferring "the first Bible in their language"
-    // picked a DIFFERENT Khmer edition whose book list did not include
-    // Genesis or Psalms: typing Genesis in Khmer offered nothing while
+    // picked a DIFFERENT edition in that language whose book list did not
+    // include Genesis or Psalms: typing Genesis in it offered nothing while
     // Matthew offered chapters (seen live 2026-10-19). `own` stays as the
     // fallback for a lookup Bible in another language.
     const chosen = looked ?? own ?? infoList[0];

@@ -50,9 +50,9 @@ describe('openChatbotWithBibleItem', () => {
         vi.stubGlobal('location', {
             href: 'https://localhost:3000/reader.html',
         });
-        await openChatbotWithBibleItem(genBibleItem('KHM'));
+        await openChatbotWithBibleItem(genBibleItem('TQAM'));
         expect(h.openChatbotWithLookup.mock.calls[0][0]).toMatchObject({
-            bibleKey: 'KHM',
+            bibleKey: 'TQAM',
             page: 'https://localhost:3000/reader.html',
         });
     });

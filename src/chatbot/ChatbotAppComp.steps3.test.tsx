@@ -125,6 +125,10 @@ vi.mock('./llmBotHelpers', async (importOriginal) => {
 });
 
 import ChatbotAppComp from './ChatbotAppComp';
+import {
+    listLanguageChoiceNames,
+    tranBibleImportLabel,
+} from './bibleImportChatHelpers';
 import { suggestQuestions } from './questionHelpers';
 import { REPORT_FIXED_TOOL_NAME, REPORT_STILL_TOOL_NAME } from './reportMarks';
 import { VERSE_FIND_STEP_TOOL_NAME } from './verseFindChatHelpers';
@@ -132,12 +136,14 @@ import { VERSE_FIND_STEP_TOOL_NAME } from './verseFindChatHelpers';
 const BIBLE_TOOL = 'owa_bible_xml';
 const FIND_TOOL = 'owa_find_verse';
 const LANGUAGE_QUESTION = 'Which language do you want the Bible in?';
-const LANGUAGE_BUTTONS = [
-    'Khmer',
-    'English',
-    'French',
-    'A file on this computer',
-];
+// The app's language first -- English in these tabs -- then the other
+// installed languages as the window draws them, then a file.
+function genLanguageButtons() {
+    return [
+        ...listLanguageChoiceNames().map(tranBibleImportLabel),
+        'A file on this computer',
+    ];
+}
 const BIBLE_QUESTION = 'Which Bible should I search?';
 
 function seedTab(
@@ -395,7 +401,7 @@ describe('Bible import and the questions the window waits on', () => {
             expect(callsOf(BIBLE_TOOL)).toEqual([{ action: 'list' }]);
             const question = lastBot();
             expect(question.textContent).toContain(LANGUAGE_QUESTION);
-            expect(labelsIn(question)).toEqual(LANGUAGE_BUTTONS);
+            expect(labelsIn(question)).toEqual(genLanguageButtons());
             expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
         });
 
@@ -448,23 +454,24 @@ describe('Bible import and the questions the window waits on', () => {
             const answer = lastBot();
             expect(noteOf(answer)).toBe('Which language does she read?');
             expect(answer.textContent).toContain(LANGUAGE_QUESTION);
-            expect(labelsIn(answer)).toEqual(LANGUAGE_BUTTONS);
+            expect(labelsIn(answer)).toEqual(genLanguageButtons());
         });
 
         test('a choice the assistant read in the words runs that step', async () => {
             hoisted.model.waiting = () => {
-                return { text: '{"kind":"choice","choice":2}' };
+                return { text: '{"kind":"choice","choice":1}' };
             };
             await render();
             await send('Import bible');
-            await send('the second one would be good, please');
-            // The second button's step: the collection searched for English.
+            await send('the first one would be good, please');
+            // The first button's step -- the app's language, English here:
+            // the collection searched for English.
             expect(callsOf(BIBLE_TOOL).at(-1)).toMatchObject({
                 action: 'check',
                 find: 'English',
             });
             expect(youTexts().at(-1)).toBe(
-                'the second one would be good, please',
+                'the first one would be good, please',
             );
             const answer = lastBot();
             expect(noteOf(answer)).toBeNull();
@@ -484,7 +491,7 @@ describe('Bible import and the questions the window waits on', () => {
             expect(noteOf(answer)).toBe(
                 'I could not understand that choice. Choose an option below, or say it another way.',
             );
-            expect(labelsIn(answer)).toEqual(LANGUAGE_BUTTONS);
+            expect(labelsIn(answer)).toEqual(genLanguageButtons());
         });
 
         test('an assistant that fails keeps the question and says what went wrong', async () => {

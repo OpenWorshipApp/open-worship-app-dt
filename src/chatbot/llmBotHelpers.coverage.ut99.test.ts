@@ -440,7 +440,7 @@ describe('model lists and labels', () => {
                         model: 'gemma4:31b',
                         name: 'Gemma 4 31B',
                         canSeeImages: true,
-                        note: { en: 'best for Khmer' },
+                        note: { en: 'best for long answers' },
                     },
                 ],
             },
@@ -460,7 +460,7 @@ describe('model lists and labels', () => {
             id: 'registry-box/gemma',
             label: 'Gemma 4 31B',
             note: 'Shared Box, shared by openworship.app · free · can see pictures',
-            notice: 'slow, but it saves us the cost of usage best for Khmer',
+            notice: 'slow, but it saves us the cost of usage best for long answers',
             wireId: 'gemma4:31b',
         });
         expect(paidRow).toMatchObject({
@@ -472,10 +472,10 @@ describe('model lists and labels', () => {
         expect(genLlmModelTitle(freeRow)).toBe(
             'gemma4:31b\n' +
                 'Shared Box, shared by openworship.app · free · can see pictures\n' +
-                'slow, but it saves us the cost of usage best for Khmer',
+                'slow, but it saves us the cost of usage best for long answers',
         );
         expect(getLlmModelNotice('custom', 'registry-box/gemma')).toBe(
-            'slow, but it saves us the cost of usage best for Khmer',
+            'slow, but it saves us the cost of usage best for long answers',
         );
         expect(getLlmModelNotice('custom', 'registry-paid/qwen')).toBe('');
         expect(getLlmModelNotice('custom', 'registry-gone/none')).toBe('');
@@ -825,8 +825,8 @@ describe('the walkthrough rescue, the remaining shapes', () => {
     test('a run with no spaces is never cut inside a letter', () => {
         // 'a' then 'a' + a combining acute over and over: the cut at 240
         // falls before the mark, which belongs to the letter in front of it.
-        // (Any script's marks are read alike, `\p{M}`; a Khmer run is in the
-        // Khmer package's own tests.)
+        // (Any script's marks are read alike, `\p{M}`; a run in a
+        // language's own script is in that language's package tests.)
         const said = toGuideRescueAnswer(`a${'á'.repeat(150)}`);
 
         expect(said).toBe(`a${'á'.repeat(119)}…`);

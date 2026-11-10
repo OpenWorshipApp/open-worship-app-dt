@@ -1,6 +1,6 @@
 ---
 name: knowledge-label-i18n-templates
-description: Docs name app controls as `[en:tran:Clear Long Text]`, resolved to the app's live UI language when a tool serves them — never write an English label with a Khmer twin beside it
+description: Docs name app controls as `[en:tran:Clear Long Text]`, resolved to the app's live UI language when a tool serves them — never write an English label with a hand-written translation beside it
 metadata:
   type: project
 ---
@@ -33,12 +33,13 @@ to `សៀវភៅទាំងអស់`, and six labels were wrong when this l
   `[en:tran:Clear Long Text]` does. Never a hand-written twin — a reviewer cannot see
   the drift, and neither can a test that only reads English.
 - The key must EXIST. An unknown key falls back to its own English text, so it
-  looks perfect in English and silently hands a Khmer volunteer a label they
+  looks perfect in English and silently hands a volunteer in any other language a label they
   cannot find. `tools/owa-devtools-mcp/tran.test.mjs` walks the manual,
   `.claude/memory`, `.claude/skills`, `.claude/rules` and `CLAUDE.md` and fails
   on that, and on a twin coming back.
-- Khmer that is CONTENT — a bible's name, a Khmer book title, a translation key
-  like `ពគប`, or a name to type into the lookup — stays verbatim. Only labels
+- A language's words that are CONTENT — a bible's name, a book title in that
+  language, a translation key like `ពគប`, or a name to type into the lookup —
+  stay verbatim. Only labels
   are templated.
 - The dictionary travels in each language's plugin as `tran.json`, lifted
   out of `src/lang/data/online/<code>/index.ts` (or its `dictionary.json`) by

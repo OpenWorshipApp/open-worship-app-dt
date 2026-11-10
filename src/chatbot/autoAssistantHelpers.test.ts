@@ -347,9 +347,9 @@ describe('rankAutoCandidates', () => {
     });
 
     // The user's order for an app shown in a language other than English
-    // (2026-10-20, the app's own is Khmer): gemma4:cloud from any assistant,
-    // then Free's Nemotron Super VL, then gemma4:31b, gemma4:12b, then any
-    // free model -- Gemma 4 supports a language like Khmer well.
+    // (2026-10-20): gemma4:cloud from any assistant, then Free's Nemotron
+    // Super VL, then gemma4:31b, gemma4:12b, then any free model -- Gemma 4
+    // supports languages with a script of their own well.
     describe('languageModelsFirst', () => {
         const option = { languageModelsFirst: true };
         const gemmaCloud = genServerCandidate('super-mac', 'gemma4:cloud');

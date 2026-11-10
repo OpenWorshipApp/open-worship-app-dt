@@ -330,7 +330,7 @@ export function resolveNoteEditTarget(
         };
     }
     // A name written a letter out is the ONE note attached (2026-11-08,
-    // BN-30, seen live): Free's Nemotron named a Khmer note with one of two
+    // BN-30, seen live): Free's Nemotron named a non-Latin note with one of two
     // subscript letters that look alike in place of the other -- a swap
     // keyboards and models make -- was refused, and gave up after 75k
     // tokens. Never a guess between two notes.
@@ -478,7 +478,7 @@ const TYPED_WORDS_CUT_PATTERN = /([\s*_~`[\]()^@#|]+)/;
  * that place of the typed line. A pair is two sequences of one length, so
  * a place in the folded line is the same place in the line. Words the
  * person did not type, and words already as typed, are left alone.
- * 2026-11-08, BN-37: on Free's Nemotron a typed Khmer line went into a note
+ * 2026-11-08, BN-37: on Free's Nemotron a typed non-Latin line went into a note
  * with one subscript written as its look-alike -- the same on screen, not
  * to a search.
  */

@@ -111,7 +111,7 @@ describe('mirror wire validation', () => {
                 'bible-font-family': 'Serif',
                 // Never a presentation setting: secrets and switches stay home.
                 'ai-enabled': 'true',
-                'language-locale': 'km-KH',
+                'language-locale': 'xx-YY',
                 // Neither a string nor null: ignored.
                 'pdf-full-width': 1,
             },

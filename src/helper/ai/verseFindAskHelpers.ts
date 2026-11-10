@@ -42,7 +42,8 @@ const MAX_WORDS_LENGTH = 200;
 /**
  * The sentence that asks for help finding a verse in the Bible `bibleKey`
  * -- with, after a colon, the words typed in Find (2026-10-22, the user's
- * picture of `shepherd` typed in Find over the Khmer Bible, _no data_, and
+ * picture of `shepherd` typed in Find over a Bible in another language,
+ * _no data_, and
  * the 🤖 beside it circled: the press had opened the chat on "which Bible?"
  * with the words left behind).
  */

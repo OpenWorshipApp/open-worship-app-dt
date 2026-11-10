@@ -9,6 +9,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    NON_ENGLISH_CODE_PATTERN,
     listScannedFiles,
     scanLanguageConfinement,
 } from '../../extra-work/language-confinement.mjs';
@@ -29,9 +30,11 @@ describe('every language but English lives in src/lang/data', () => {
         expect(fileList).toContain('src/lang/langHelpers.ts');
         expect(fileList).toContain('tools/owa-devtools-mcp/server.mjs');
         expect(fileList).toContain('electron/index.ts');
-        expect(fileList).not.toContain(
-            'src/lang/data/online/km/dictionary.json',
-        );
+        expect(
+            fileList.filter((filePath) => {
+                return filePath.startsWith('src/lang/data/');
+            }),
+        ).toEqual([]);
     });
 
     test('no letter of another language outside it', () => {
@@ -40,5 +43,31 @@ describe('every language but English lives in src/lang/data', () => {
 
     test('no code names a non-English package', () => {
         expect(codes, describeFound(codes)).toEqual([]);
+    });
+});
+
+// The rule names no language: every one but English is held to it alike,
+// whether or not its package is in the checkout (2026-11-09, the user: _all
+// languages development, except english, should be treated the same way_).
+// Made-up codes, so this test names none either.
+describe('the code rule holds every language but English alike', () => {
+    test.each([
+        "const tag = 'xx-YY';",
+        'const tag = "xxx_ZZ";',
+        "read('src/lang/data/online/xx/meta.json');",
+        "if (langCode === 'xx') {",
+        "if ('yy' !== appLocale) {",
+    ])('names one: %s', (line) => {
+        expect(NON_ENGLISH_CODE_PATTERN.test(line)).toBe(true);
+    });
+
+    test.each([
+        "const tag = 'en-US';",
+        "if (langCode === 'en') {",
+        "const field = 'id';",
+        "read('src/lang/data/en/locales.json');",
+        "const word = 'to';",
+    ])('names none: %s', (line) => {
+        expect(NON_ENGLISH_CODE_PATTERN.test(line)).toBe(false);
     });
 });

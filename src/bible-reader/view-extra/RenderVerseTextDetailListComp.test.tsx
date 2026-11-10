@@ -166,15 +166,15 @@ describe('one view per compared bible', () => {
         h.isAudioEnabled = true;
         const { refreshAudio } = await render({
             extraVerseInfoList: [
-                genVerseInfo({ bibleKey: 'KHM' }),
-                genVerseInfo({ bibleKey: 'FRE' }),
+                genVerseInfo({ bibleKey: 'TQAM' }),
+                genVerseInfo({ bibleKey: 'TQFE' }),
             ],
         });
         expect(
             Array.from(host.querySelectorAll('.test-view')).map((element) => {
                 return element.getAttribute('data-bible-key');
             }),
-        ).toEqual(['KJV', 'KHM', 'FRE']);
+        ).toEqual(['KJV', 'TQAM', 'TQFE']);
         expect(h.useIsAudioAIEnabled).toHaveBeenCalledWith(BIBLE_ITEM);
         for (const props of h.viewPropsList.slice(-3)) {
             expect(props.isAudioEnabled).toBe(true);

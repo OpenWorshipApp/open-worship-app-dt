@@ -95,7 +95,7 @@ beforeEach(() => {
         audio: { speech: { create: h.createSpeech } },
     });
     h.ensureDataDirectory.mockResolvedValue('/data/ai-openai-data');
-    h.getBibleInfo.mockResolvedValue({ locale: 'km' });
+    h.getBibleInfo.mockResolvedValue({ locale: 'xx' });
     h.getLangDataFromBibleKey.mockResolvedValue({ bibleAudioAvailable: true });
     h.checkIsAvailable.mockReturnValue(true);
     h.useAvailable.mockReturnValue(true);
@@ -144,7 +144,7 @@ describe('textToSpeech', () => {
 describe('bibleTextToSpeech', () => {
     const VERSE = {
         text: '[xx] Jesus wept.',
-        bibleKey: 'KHOV',
+        bibleKey: 'XXOV',
         bookKey: 'JHN',
         chapter: 11,
         verse: 35,
@@ -161,7 +161,7 @@ describe('bibleTextToSpeech', () => {
         expect(await bibleTextToSpeech(VERSE)).toBeNull();
         expect(h.showSimpleToast).toHaveBeenCalledWith(
             'Bible Text to Speech',
-            'Fail to get Bible info for bible key "KHOV".',
+            'Fail to get Bible info for bible key "XXOV".',
         );
         expect(h.createSpeech).not.toHaveBeenCalled();
     });
@@ -180,13 +180,13 @@ describe('bibleTextToSpeech', () => {
         h.fsCheckDirExist.mockResolvedValue(false);
         const filePath = await bibleTextToSpeech(VERSE);
 
-        const chapterDir = '/data/ai-openai-data/bible-audio/KHOV/JHN/11';
+        const chapterDir = '/data/ai-openai-data/bible-audio/XXOV/JHN/11';
         expect(h.fsMkDirSync).toHaveBeenCalledWith(chapterDir);
         expect(filePath).toBe(`${chapterDir}/35.mp3`);
         expect(h.createSpeech).toHaveBeenCalledWith(
             expect.objectContaining({
                 input: VERSE.text,
-                instructions: expect.stringContaining('Use km accent.'),
+                instructions: expect.stringContaining('Use xx accent.'),
             }),
         );
         expect(h.fsWriteFile).toHaveBeenCalledWith(

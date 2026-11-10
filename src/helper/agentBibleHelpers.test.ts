@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => {
     return {
         isPagePresenter: true,
-        installed: [{ key: 'KJV' }, { key: 'KHM' }] as any[],
+        installed: [{ key: 'KJV' }, { key: 'XXV' }] as any[],
         lookupKey: 'KJV' as string | null,
         // What each version can read: bibleKey -> reference -> item.
         parseMap: {} as Record<string, Record<string, any>>,
@@ -135,7 +135,7 @@ const JOHN = genItem(
 
 beforeEach(() => {
     h.isPagePresenter = true;
-    h.installed = [{ key: 'KJV' }, { key: 'KHM' }];
+    h.installed = [{ key: 'KJV' }, { key: 'XXV' }];
     h.lookupKey = 'KJV';
     h.parseMap = { KJV: { 'John 3:16': JOHN } };
     h.managers = [genManager(0)];
@@ -242,11 +242,11 @@ describe('handleAgentBibleRequest', () => {
     });
 
     it('reads the reference under the lookup version first', async () => {
-        h.lookupKey = 'KHM';
+        h.lookupKey = 'XXV';
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: {
-                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            XXV: {
+                'John 3:16': genItem('XXV', '[xx] John 3:16', 'other words'),
             },
         };
         const result = await handleAgentBibleRequest({
@@ -254,15 +254,16 @@ describe('handleAgentBibleRequest', () => {
             action: 'check',
         });
         expect(result).toMatchObject({
-            version: 'KHM',
+            version: 'XXV',
             reference: '[xx] John 3:16',
         });
     });
 
-    // "John 3:16" does not parse under a Khmer version's book names, and a
-    // volunteer who typed it in English wants the verse, not a refusal.
+    // "John 3:16" does not parse under the book names of a version in
+    // another language, and a volunteer who typed it in English wants the
+    // verse, not a refusal.
     it('falls through to another installed version when the lookup one cannot read it', async () => {
-        h.lookupKey = 'KHM';
+        h.lookupKey = 'XXV';
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
             action: 'check',
@@ -276,23 +277,23 @@ describe('handleAgentBibleRequest', () => {
     it('uses the version asked for and only that one', async () => {
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: {
-                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            XXV: {
+                'John 3:16': genItem('XXV', '[xx] John 3:16', 'other words'),
             },
         };
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
-            version: 'khm',
+            version: 'xxv',
             action: 'check',
         });
-        expect(result).toMatchObject({ version: 'KHM' });
+        expect(result).toMatchObject({ version: 'XXV' });
         const missing = await handleAgentBibleRequest({
             reference: 'John 3:16',
             version: 'NIV',
         });
         expect(missing).toMatchObject({
             isError: true,
-            versions: ['KJV', 'KHM'],
+            versions: ['KJV', 'XXV'],
         });
         expect((missing as any).reason).toContain(
             'No Bible version called "NIV"',
@@ -306,7 +307,7 @@ describe('handleAgentBibleRequest', () => {
         });
         expect(result).toMatchObject({
             isError: true,
-            versions: ['KJV', 'KHM'],
+            versions: ['KJV', 'XXV'],
         });
         expect((result as any).reason).toContain(
             '"Jhn 99:99" could not be read as a passage',
@@ -456,17 +457,17 @@ describe('handleAgentBibleRequest', () => {
 
     it('reads in the installed order when the Bible Lookup cannot be read', async () => {
         h.lookupKey = null;
-        h.installed = [{ key: 'KHM' }, { key: 'KJV' }];
+        h.installed = [{ key: 'XXV' }, { key: 'KJV' }];
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: { 'John 3:16': genItem('KHM', '✝ 3:16', 'its own words') },
+            XXV: { 'John 3:16': genItem('XXV', '✝ 3:16', 'its own words') },
         };
         await expect(
             handleAgentBibleRequest({
                 reference: 'John 3:16',
                 action: 'check',
             }),
-        ).resolves.toMatchObject({ version: 'KHM' });
+        ).resolves.toMatchObject({ version: 'XXV' });
     });
 
     it('leaves out a screen that was removed while the verse went up', async () => {

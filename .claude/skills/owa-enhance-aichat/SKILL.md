@@ -263,8 +263,8 @@ looking at (`AC-13`). A second exception is the user's call, not a run's.
   every field in it is bounded (8 tabs, a 60-character page title, a
   2 000-character address).
 - The host page loads bootstrap and its own sheet, no app tokens, no
-  webfonts but the language pack's own face (`--chat-lang-font`, Battambang
-  for Khmer) — the chatbot's rules, for the same back-room reasons.
+  webfonts but the language pack's own face (`--chat-lang-font`, the face its
+  `fonts.json` names) — the chatbot's rules, for the same back-room reasons.
 
 ### C. The sites — where the real bugs live
 
@@ -308,8 +308,8 @@ bot-detection page (the probe reads the same signals):
   Chat** (`AppAssistantComp`, every window). None is gated on the AI switch.
 - Strings inside the window are in the app's language, like the chatbot's
   (2026-10-17): the chatbot's own `tran` (`src/chatbot/chatTranHelpers.ts`),
-  with Khmer and French; the one label the app windows draw (`AI Chat`) goes
-  through the app's `tran()` and has its Khmer key.
+  in every language; the one label the app windows draw (`AI Chat`) goes
+  through the app's `tran()` and has its key in every dictionary.
 
 ## What counts as an improvement
 

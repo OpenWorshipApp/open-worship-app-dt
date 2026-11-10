@@ -290,11 +290,11 @@ describe('Bible lookup container', () => {
 
     it('updates Bible selection and releases controller callbacks on unmount', async () => {
         await render();
-        await act(async () => h.controller.setBibleKey('fr'));
-        expect(h.getBibleInfo).toHaveBeenLastCalledWith('fr');
+        await act(async () => h.controller.setBibleKey('XXV'));
+        expect(h.getBibleInfo).toHaveBeenLastCalledWith('XXV');
         expect(
             h.contexts.map((item: { value: unknown }) => item.value)[0],
-        ).toBe('fr');
+        ).toBe('XXV');
         const liveSetInputText = h.controller.setInputText;
         const liveReload = h.controller.reloadEditingResult;
         const liveSetBibleKey = h.controller.setBibleKey;

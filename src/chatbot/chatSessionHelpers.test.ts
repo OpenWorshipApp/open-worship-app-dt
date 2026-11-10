@@ -928,7 +928,7 @@ describe('attachments on a message', () => {
             loadOneMessage({
                 id: 1,
                 author: 'you',
-                text: 'in khmer please',
+                text: 'in another language please',
                 isGeneral: true,
             }).isGeneral,
         ).toBe(true);

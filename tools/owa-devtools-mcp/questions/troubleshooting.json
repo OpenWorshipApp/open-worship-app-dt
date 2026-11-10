@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-11-05",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "screen",
@@ -83,7 +83,7 @@
                     "keywords": [
                         "wrong language",
                         "cannot read",
-                        "khmer",
+                        "foreign language",
                         "mis-click",
                         "back to english",
                         "stuck"
@@ -160,7 +160,7 @@
                     "keywords": [
                         "language",
                         "translation",
-                        "khmer",
+                        "my language",
                         "english names",
                         "brackets",
                         "not translated"

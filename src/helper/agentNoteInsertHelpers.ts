@@ -110,7 +110,7 @@ const AUDIO_EXTENSION_LIST = [
 export type NoteInsertContextType = {
     // A line of words in the block mark-up, as nodes.
     genInline: (text: string) => NodeType[];
-    // The style new words get (a Khmer note's font).
+    // The style new words get (a note's language font).
     style: string;
     // The note's root: a new sticky note goes over the ones there.
     root: NodeType;

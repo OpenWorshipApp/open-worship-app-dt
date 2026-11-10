@@ -13,9 +13,9 @@
 // - Only where no app says -- a unit test, a script, the stdio door with no
 //   app up or one too old to publish its languages -- the checkout's source
 //   packages that the assistant is written for: `src/lang/data/online/<code>/`
-//   holding an `assistant.json` (today Khmer and French, as before they
-//   moved there). Not all fifty: nothing says they are installed, and the
-//   destructive-label rule built over every one of them was ~98 KB carried by
+//   holding an `assistant.json` (the same packages the assistant was
+//   written for before they moved there). Not all fifty: nothing says they
+//   are installed, and the destructive-label rule built over every one of them was ~98 KB carried by
 //   each press and ~4 s to build (2026-11-04), against ~4 KB and 0.4 s for
 //   the two.
 //

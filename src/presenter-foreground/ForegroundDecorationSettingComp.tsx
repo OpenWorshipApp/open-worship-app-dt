@@ -32,7 +32,7 @@ import {
 /**
  * What the words and the number on each preset button say, written as literals
  * so `tranKeyCoverage.test.ts` can read them. A dynamic `tran(someVariable)`
- * is invisible to that gate and a missing Khmer key THROWS in dev.
+ * is invisible to that gate and a key missing from a language THROWS in dev.
  */
 const BORDER_STYLE_LABEL_MAP: Record<ForegroundBorderStyleType, string> = {
     none: 'None',
@@ -482,7 +482,7 @@ export default function DecorationControlsComp({
                                         // No icon set ships one, and `AA` is
                                         // the thing itself rather than a word
                                         // about it -- which is what this row
-                                        // needs in a Khmer window.
+                                        // needs in a translated window.
                                         text: 'AA',
                                         isOn: decoration.isUppercase,
                                         onToggle: () => {

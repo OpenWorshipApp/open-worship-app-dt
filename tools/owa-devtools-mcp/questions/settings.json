@@ -41,7 +41,7 @@
                     "kind": "howto",
                     "keywords": [
                         "english",
-                        "khmer",
+                        "my language",
                         "translate",
                         "locale",
                         "language"
@@ -534,13 +534,13 @@
                 },
                 {
                     "id": "import-xml-url",
-                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
                     "kind": "howto",
                     "keywords": [
                         "import",
                         "xml",
                         "url",
-                        "Khmer",
+                        "my language",
                         "locale",
                         "number mapping",
                         "book names",
@@ -559,7 +559,7 @@
                 },
                 {
                     "id": "import-bible-language",
-                    "text": "Import a Bible in \"Khmer\"",
+                    "text": "Import a Bible in \"your language\"",
                     "kind": "howto",
                     "template": true,
                     "keywords": [
@@ -567,8 +567,8 @@
                         "download",
                         "language",
                         "country",
-                        "khmer",
-                        "cambodia",
+                        "my language",
+                        "my country",
                         "translation",
                         "add bible",
                         "want a bible"

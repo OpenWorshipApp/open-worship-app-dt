@@ -2,6 +2,7 @@
 // The other names a language goes by are that language's data, there when
 // it is installed (`localeNameAliases` in its `world.json`,
 // `worldLanguages.mjs`).
+import languageNameMap from '../../src/lang/data/en/language-names.json' with { type: 'json' };
 import { readWorldLanguages } from './worldLanguages.mjs';
 
 export const BIBLE_BOOK_KEYS = (
@@ -11,57 +12,61 @@ export const BIBLE_BOOK_KEYS = (
   'EPH PHP COL 1TH 2TH 1TI 2TI TIT PHM HEB JAS 1PE 2PE 1JN 2JN 3JN JUD REV'
 ).split(' ');
 
-const LANGUAGE_CODES = {
-  km: 'khm',
-  en: 'eng',
-  fr: 'fra',
-  es: 'spa',
-  de: 'deu',
-  pt: 'por',
-  it: 'ita',
-  ru: 'rus',
-  uk: 'ukr',
-  zh: 'cmn',
-  ja: 'jpn',
-  ko: 'kor',
-  th: 'tha',
-  vi: 'vie',
-  lo: 'lao',
-  my: 'mya',
-  ar: 'arb',
-  hi: 'hin',
-  id: 'ind',
-  ms: 'zlm',
-  nl: 'nld',
-  pl: 'pol',
-  he: 'heb',
-  el: 'ell',
-};
+// A language by any of its English names, every language the same way:
+// English's own table of names (`src/lang/data/en/language-names.json`,
+// which writes "Spanish, Castilian"), longest first, so "Malayalam" is not
+// read as "Malay".
+const ENGLISH_NAME_ROW_LIST = Object.entries(languageNameMap)
+  .flatMap(([code, name]) => {
+    return String(name)
+      .split(/[,;]/)
+      .map((part) => {
+        return [code, part.split('(')[0].trim().toLowerCase()];
+      })
+      .filter(([, part]) => {
+        return part.length > 0;
+      });
+  })
+  .sort((one, other) => {
+    return other[1].length - one[1].length;
+  });
+
+// The code a Bible catalog files a language under
+// (`bible.com/languages/<code>`, often three letters) is the LANGUAGE's own
+// data, in its `world.json` (`catalogLanguageCodes`), there once it is
+// installed; any other is asked for by its own code.
+function readCatalogLanguageCodes() {
+  return readWorldLanguages().catalogLanguageCodes ?? {};
+}
 
 export function normalizeBibleLocale(input) {
   let text = String(input ?? '')
     .trim()
     .replaceAll('_', '-');
-  const names = new Intl.DisplayNames(['en'], { type: 'language' });
-  for (const [code, iso] of Object.entries(LANGUAGE_CODES)) {
-    if (
-      [
-        iso,
-        names.of(code)?.toLowerCase(),
-        ...(readWorldLanguages().localeNameAliases?.[code] ?? []),
-      ].includes(text.toLowerCase())
-    )
-      text = code;
+  const said = text.toLowerCase();
+  const catalogCodeMap = readCatalogLanguageCodes();
+  const aliasMap = readWorldLanguages().localeNameAliases ?? {};
+  const namedCode =
+    ENGLISH_NAME_ROW_LIST.find(([, name]) => {
+      return name === said;
+    })?.[0] ??
+    Object.keys({ ...catalogCodeMap, ...aliasMap }).find((code) => {
+      return (
+        catalogCodeMap[code] === said || (aliasMap[code] ?? []).includes(said)
+      );
+    });
+  if (namedCode !== undefined) {
+    text = namedCode;
   }
   try {
     const locale = new Intl.Locale(text);
     return {
       locale: locale.toString(),
       language: locale.language,
-      catalogCode: LANGUAGE_CODES[locale.language] ?? locale.language,
+      catalogCode: catalogCodeMap[locale.language] ?? locale.language,
     };
   } catch {
-    throw new Error('Choose a language code such as km-KH, fr-FR or en-US.');
+    throw new Error('Choose a language-region code such as en-US.');
   }
 }
 
@@ -84,12 +89,12 @@ export function guessBibleLocale(fileName) {
   } catch {
     return null;
   }
-  const names = new Intl.DisplayNames(['en'], { type: 'language' });
-  for (const code of Object.keys(LANGUAGE_CODES)) {
-    const language = names.of(code);
-    if (language && name.toLowerCase().startsWith(language.toLowerCase())) {
-      return toRegionLocale(code);
-    }
+  const lowerName = name.toLowerCase();
+  const named = ENGLISH_NAME_ROW_LIST.find(([, language]) => {
+    return language.length >= 3 && lowerName.startsWith(language);
+  });
+  if (named !== undefined) {
+    return toRegionLocale(named[0]);
   }
   const match = name.match(/^([a-z]{2,3}(?:[-_][A-Z]{2})?)[-_.]/);
   if (!match) return null;
@@ -100,12 +105,26 @@ export function guessBibleLocale(fileName) {
   }
 }
 
+// A locale's own digits, every language the same way: the digits its locale
+// writes by default when they are not Western, else the digits of the script
+// it is written in when Unicode has a set of ten for it. Undefined for one
+// written in Western digits.
+function findOwnNumberingSystem(locale) {
+  const own = new Intl.NumberFormat(locale).resolvedOptions().numberingSystem;
+  if (own !== 'latn') {
+    return own;
+  }
+  const script = new Intl.Locale(locale).maximize().script?.toLowerCase();
+  return script !== undefined &&
+    Intl.supportedValuesOf('numberingSystem').includes(script)
+    ? script
+    : undefined;
+}
+
 export function getBibleNumberChoices(locale) {
   try {
-    const { language } = normalizeBibleLocale(locale);
-    const numberingSystem = { km: 'khmr', th: 'thai', lo: 'laoo', my: 'mymr' }[
-      language
-    ];
+    normalizeBibleLocale(locale);
+    const numberingSystem = findOwnNumberingSystem(locale);
     const formatter = new Intl.NumberFormat(locale, {
       useGrouping: false,
       numberingSystem,

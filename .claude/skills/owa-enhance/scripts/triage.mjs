@@ -51,7 +51,7 @@ const AREA_ALIAS_MAP = {
     ux: 'ui',
     a11y: 'ui',
     i18n: 'ui',
-    khmer: 'ui',
+    language: 'ui',
     design: 'ui',
     dx: 'dev-flow',
     tooling: 'dev-flow',
@@ -66,13 +66,34 @@ const AREA_ALIAS_MAP = {
     manual: 'docs',
     notes: 'docs',
 };
+// Any language asked for by its English name (`--area=<name>`) is the ui
+// area's -- its labels, its script, its fonts -- whichever language it is:
+// English's own table of names, read only when an area is asked for.
+function checkIsLanguageName(word) {
+    try {
+        const nameMap = JSON.parse(
+            readFileSync(
+                path.join(REPO_ROOT, 'src/lang/data/en/language-names.json'),
+                'utf-8',
+            ),
+        );
+        return Object.values(nameMap).some((name) => {
+            return String(name).toLowerCase() === word.toLowerCase();
+        });
+    } catch {
+        return false;
+    }
+}
 
 const argList = process.argv.slice(2);
 const isJson = argList.includes('--json');
 const areaArg = argList
     .find((arg) => arg.startsWith('--area='))
     ?.slice('--area='.length);
-const focusArea = areaArg ? (AREA_ALIAS_MAP[areaArg] ?? areaArg) : null;
+const focusArea = areaArg
+    ? (AREA_ALIAS_MAP[areaArg] ??
+      (checkIsLanguageName(areaArg) ? 'ui' : areaArg))
+    : null;
 if (focusArea !== null && !AREA_LIST.includes(focusArea)) {
     console.error(`Unknown area "${areaArg}". Areas: ${AREA_LIST.join(', ')}.`);
     process.exit(2);

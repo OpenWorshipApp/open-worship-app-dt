@@ -107,7 +107,7 @@ feature works.
    its own words go through the chatbot's own `tran` in
    `src/chatbot/chatTranHelpers.ts`, never `langHelpers`'. The 🤖 button and
    the Tools menu item live OUTSIDE it and go through the app's `tran()` — a
-   missing Khmer key there throws and blanks the page.
+   missing key there throws in any non-English language and blanks the page.
 5. **Performance outranks elegance** (CLAUDE.md). Nothing is cached between
    questions; the knowledge corpus is read one file at a time. Do not introduce a
    long-lived map, a preloaded corpus, or a per-keystroke tool call.
@@ -515,7 +515,7 @@ knows the app's internals.
   every chip -- ask it on Auto and on a model that is not a Gemma 4, which
   is asked in English behind the scenes. Resumable. Read its
   header before running it: the rules there are the ones its first run
-  broke, in a dev app another session was using. **`--lang=km` asks every
+  broke, in a dev app another session was using. **`--lang=<code>` asks every
   row in the app's own language** (2026-10-17): the row's words from
   `src/lang/data/online/<code>/questions.json`, pressed in the list as that window draws it,
   the pickers found by what they hold (their labels are translated), and a
@@ -537,8 +537,9 @@ knows the app's internals.
   load half: K tabs of its own asking supported Presenter questions at the
   same moment, wave after wave, each read until it answered — every tab
   answered, by a model, to ITS own question, and how the wait grows with K.
-  Its abuse half is `elder-run.mjs` with
-  [src/lang/data/online/km/chatbot-asks/stress-asks.json](../../../src/lang/data/online/km/chatbot-asks/stress-asks.json):
+  Its abuse half is `elder-run.mjs` with a language's
+  `src/lang/data/online/<code>/chatbot-asks/stress-asks.json` (`ls
+  src/lang/data/online/*/chatbot-asks/` shows which packages carry each set):
   a 2 500-character paste, emoji, one letter, typos, an injection that says
   to delete everything, markup, Stop then Ask again, words added mid-answer,
   ten turns, the same question three times, another script, a rant. Give a
@@ -559,7 +560,7 @@ knows the app's internals.
   before and after touching `passageMatch.mjs`, `help.mjs` or the manual.
 - [scripts/elder-run.mjs](./scripts/elder-run.mjs) — CONVERSATIONS in the
   app's own language as an elderly volunteer has them
-  ([src/lang/data/online/km/chatbot-asks/elder-asks.json](../../../src/lang/data/online/km/chatbot-asks/elder-asks.json):
+  (a package's `chatbot-asks/elder-asks.json`:
   verses half-remembered, panic, nonsense, "delete everything", interrupt,
   Stop, Ask again, a thumb down), several assistants interleaved, every
   answer, button, tool and page error recorded; `elder-digest.mjs` prints
@@ -569,16 +570,16 @@ knows the app's internals.
 - [scripts/lookup-run.mjs](./scripts/lookup-run.mjs) — the names-lookup
   conversation as a person opens it: the Reader's Names and Places row
   **Open in Chatbot** (the same handoff), then a scenario's questions typed
-  in that tab ([src/lang/data/online/km/chatbot-asks/lookup-asks.json](../../../src/lang/data/online/km/chatbot-asks/lookup-asks.json):
+  in that tab (a package's `chatbot-asks/lookup-asks.json`:
   Noah, Ararat, Bethlehem, each question with its right answer), one JSON
   line an answer. Aimed at ONE instance by `--pid`; it writes into that
   instance's data folder, so run it on a scratch profile
   (2026-10-22: 11 / 5 / 9 → 22 / 3 / 0 right / partly / wrong). A scenario
   may be a PASSAGE too — `record: {kind: "verse", target, title, bibleKey}`,
   handed over as a Bible view's 🤖 does
-  ([src/lang/data/online/km/chatbot-asks/passage-asks.json](../../../src/lang/data/online/km/chatbot-asks/passage-asks.json),
+  (a package's `chatbot-asks/passage-asks.json`,
   2026-10-23: 4 / 4 / 7 → 15 / 0 / 0, then 14 / 0 / 0 on 14 more). An ask may be PRESSED (`press`: the newest
   answer's button by its words) -- the word lessons
-  ([src/lang/data/online/km/chatbot-asks/word-study-asks.json](../../../src/lang/data/online/km/chatbot-asks/word-study-asks.json),
+  (a package's `chatbot-asks/word-study-asks.json`,
   2026-10-23: 4 / 10 / 2 → 12 / 4 / 0 on 16 lessons).
 - `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-163`.

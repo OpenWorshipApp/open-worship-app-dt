@@ -44,16 +44,4 @@ describe('which language the verses are in', () => {
       ).locales[0],
     ).toBe('fr-FR');
   });
-  test('Cyrillic and Japanese are read by their own letters', () => {
-    expect(
-      guessBibleLocalesFromText(
-        'В начале сотворил Бог небо и землю. Земля же была безвидна и пуста.',
-      ).locales[0],
-    ).toBe('ru-RU');
-    expect(
-      guessBibleLocalesFromText(
-        'はじめに神は天と地とを創造された。地は形なく、むなしく、やみが淵のおもてにあった。',
-      ).locales,
-    ).toEqual(['ja-JP']);
-  });
 });

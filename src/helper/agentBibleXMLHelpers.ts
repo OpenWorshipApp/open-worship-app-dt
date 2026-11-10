@@ -209,7 +209,7 @@ function genLocaleChoices({
     );
     const choices: LocaleChoiceType[] = [];
     // Every reason a locale was suggested, not only the first: "the verses
-    // are in Khmer script and the file name says so" is what makes a person
+    // are in this script and the file name says so" is what makes a person
     // trust the suggestion.
     const add = (locale: string | null, why: string) => {
         const appLocale = locale === null ? null : toAppLocale(locale);
@@ -241,7 +241,7 @@ function genLocaleChoices({
             ? 'the words of the verses read like this language'
             : `the verses are written in ${fromText.script} script`;
     // What the file SAYS comes first only when the words agree with it: a
-    // `locale="en"` left on a Khmer Bible by whoever made the file is the
+    // `locale="en"` left on a Bible in another script by whoever made the file is the
     // commonest wrong answer there is.
     if (agrees(attribute)) add(attribute, 'the file says so');
     if (agrees(fromName)) add(fromName, 'the file name says so');
@@ -548,7 +548,7 @@ async function handleImport(request: BibleXMLRequestType) {
     if (locale === null) {
         return fail(
             `"${toText(request.locale)}" is not a language this app knows. ` +
-                'Use a code such as km-KH, en-US or fr-FR.',
+                'Use a language-region code such as en-US.',
         );
     }
     const numbersMap = readNumbers(request.numbers);
@@ -794,7 +794,7 @@ async function handleUpdate(request: BibleXMLRequestType) {
         if (locale === null) {
             return fail(
                 `"${toText(request.locale)}" is not a language this app ` +
-                    'knows. Use a code such as km-KH, en-US or fr-FR.',
+                    'knows. Use a language-region code such as en-US.',
             );
         }
         if (locale !== info.locale) {

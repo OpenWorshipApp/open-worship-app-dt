@@ -296,15 +296,15 @@ describe('getDashboardInstance', () => {
     });
 
     test('hands every language its Open Lyric plugins and its CSS', async () => {
-        const khmer = { locale: 'km-KH', initOpenLyricPlugins: vi.fn() };
+        const otherLang = { locale: 'xx-XX', initOpenLyricPlugins: vi.fn() };
         const english = { locale: 'en-US' };
-        h.getAllLangsAsync.mockResolvedValue([khmer, english]);
+        h.getAllLangsAsync.mockResolvedValue([otherLang, english]);
 
         const { editor, openLyric, openLyricMarkdownManager } =
             getDashboardInstance();
         await flush();
 
-        expect(khmer.initOpenLyricPlugins).toHaveBeenCalledExactlyOnceWith({
+        expect(otherLang.initOpenLyricPlugins).toHaveBeenCalledExactlyOnceWith({
             editor,
             openLyric,
             openLyricMarkdownManager,
@@ -313,7 +313,7 @@ describe('getDashboardInstance', () => {
             openLyricInternal: expect.anything(),
             genOpenLyricFontFaces: h.genOpenLyricFontFaces,
         });
-        expect(h.initLangCss.mock.calls).toEqual([[khmer], [english]]);
+        expect(h.initLangCss.mock.calls).toEqual([[otherLang], [english]]);
     });
 
     test('refuses a page that has no app container', () => {

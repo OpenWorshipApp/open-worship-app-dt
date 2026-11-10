@@ -6,9 +6,9 @@ import {
 } from '../../lang/langHelpers';
 import type { LangCatalogEntryType } from '../../lang/langPluginInstallHelpers';
 
-// A Bible asks for its language (2026-11-05, the user: _the bible should ask
-// for language package installed, e.g. BDS is fr (french) should ask for
-// French language package installed to have fully language data_). Only
+// A Bible asks for its language (2026-11-05: the user asked that a Bible ask
+// for its language's package to be installed, to have that language's full
+// data). Only
 // English ships; a Bible in any other language gets its book names, digits,
 // fonts and search words from that language's plugin, so a row of Settings >
 // Bible whose language is missing or turned off says so and offers it.

@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 test('recognizes the sample and leaves unrelated, credential-bearing and ambiguous requests alone', () => {
     const url =
-        'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml';
+        'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/MadeUpBible.xml';
     expect(readBibleImportAsk(`Import bible from xml url ${url}`)).toBe(url);
     expect(readBibleImportAsk('What is a Bible XML file?')).toBeNull();
     expect(

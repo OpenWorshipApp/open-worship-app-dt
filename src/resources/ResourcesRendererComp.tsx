@@ -334,7 +334,6 @@ export default function ResourcesRendererComp({
         return () => {
             window.removeEventListener(RESOURCES_CHANGED_EVENT, listener);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleContextMenuOpening = useCallback((event: any) => {
         const menuItems: ContextMenuItemType[] = [

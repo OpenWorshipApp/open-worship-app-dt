@@ -120,6 +120,7 @@ vi.mock('./bibleXMLJsonDataHelpers', () => ({
     getAllXMLFileKeys: h.getAllXMLFileKeysMock,
 }));
 
+import type { LocaleType } from '../../lang/langHelpers';
 import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import SettingBibleJsonComp from './SettingBibleJsonComp';
 import SettingDownloadedBibleComp from './SettingDownloadedBibleComp';
@@ -132,10 +133,10 @@ const KJV: BibleMinimalInfoType = {
     locale: 'en-US',
     version: 1,
 };
-const KSV: BibleMinimalInfoType = {
-    key: 'KSV',
-    title: 'Khmer Standard',
-    locale: 'km-KH',
+const TQVS: BibleMinimalInfoType = {
+    key: 'TQVS',
+    title: 'Made Up Standard',
+    locale: 'xx-XX' as LocaleType,
     version: 2,
 };
 const ONLINE_KJV: BibleMinimalInfoType = {
@@ -143,7 +144,7 @@ const ONLINE_KJV: BibleMinimalInfoType = {
     version: 2,
     filePath: 'KJV.zip',
 };
-const ONLINE_KSV: BibleMinimalInfoType = { ...KSV, filePath: 'KSV.zip' };
+const ONLINE_KSV: BibleMinimalInfoType = { ...TQVS, filePath: 'TQVS.zip' };
 const ONLINE_NO_FILE: BibleMinimalInfoType = {
     key: 'ABC',
     title: 'Unpublished',
@@ -192,7 +193,7 @@ beforeEach(() => {
     ]);
     h.getAllXMLFileKeysMock.mockResolvedValue({});
     h.clearBibleDatabaseDataMock.mockResolvedValue(undefined);
-    h.getBibleInfoMock.mockResolvedValue({ locale: 'km-KH' });
+    h.getBibleInfoMock.mockResolvedValue({ locale: 'xx-XX' });
     h.getLangDataAsyncMock.mockResolvedValue({});
     h.extractDownloadedBibleMock.mockResolvedValue(true);
     h.showAppConfirmMock.mockResolvedValue(true);
@@ -226,11 +227,11 @@ describe('SettingBibleJsonComp', () => {
                 return item.textContent;
             },
         );
-        // KJV once, as downloaded; KSV offered for download; the online
+        // KJV once, as downloaded; TQVS offered for download; the online
         // entry with no file to download is not offered at all.
         expect(items).toEqual([
             expect.stringContaining('(KJV) King James'),
-            expect.stringContaining('Khmer Standard (KSV)'),
+            expect.stringContaining('Made Up Standard (TQVS)'),
         ]);
         // A newer KJV is online, so the downloaded one can be updated.
         expect(findButton('Update', findItem('(KJV)')!)).not.toBeNull();
@@ -253,7 +254,7 @@ describe('SettingBibleJsonComp', () => {
     test('Refresh on the downloaded list reads it again', async () => {
         await act(async () => root.render(<SettingBibleJsonComp />));
         await flush();
-        h.getDownloadedBibleInfoListMock.mockResolvedValue([KJV, KSV]);
+        h.getDownloadedBibleInfoListMock.mockResolvedValue([KJV, TQVS]);
 
         const downloadedSection = container.querySelector('.w-100')!;
         await act(async () =>
@@ -262,7 +263,7 @@ describe('SettingBibleJsonComp', () => {
         await flush();
 
         expect(h.getDownloadedBibleInfoListMock).toHaveBeenCalledTimes(2);
-        expect(findItem('(KSV) Khmer Standard')).not.toBeNull();
+        expect(findItem('(TQVS) Made Up Standard')).not.toBeNull();
     });
 
     test('Refresh on the online list reads it and the XML keys again', async () => {
@@ -312,8 +313,8 @@ describe('SettingDownloadedBibleComp', () => {
         await act(async () =>
             root.render(
                 <SettingDownloadedBibleComp
-                    onlineBibleInfoList={[{ ...KSV, version: 1 }]}
-                    downloadedBibleInfoList={[KSV]}
+                    onlineBibleInfoList={[{ ...TQVS, version: 1 }]}
+                    downloadedBibleInfoList={[TQVS]}
                     setDownloadedBibleInfoList={vi.fn()}
                 />,
             ),
@@ -323,7 +324,7 @@ describe('SettingDownloadedBibleComp', () => {
             root.render(
                 <SettingDownloadedBibleComp
                     onlineBibleInfoList={undefined}
-                    downloadedBibleInfoList={[KSV]}
+                    downloadedBibleInfoList={[TQVS]}
                     setDownloadedBibleInfoList={vi.fn()}
                 />,
             ),
@@ -508,7 +509,7 @@ describe('SettingOnlineBibleComp', () => {
     });
 
     test('a Bible already kept as XML cannot be downloaded again', async () => {
-        h.xmlKeys.bibleKeysMap = { KSV: '/bibles/KSV.xml' };
+        h.xmlKeys.bibleKeysMap = { TQVS: '/bibles/TQVS.xml' };
         await act(async () =>
             root.render(
                 <SettingOnlineBibleComp
@@ -519,7 +520,7 @@ describe('SettingOnlineBibleComp', () => {
                 />,
             ),
         );
-        const item = findItem('Khmer Standard (KSV)')!;
+        const item = findItem('Made Up Standard (TQVS)')!;
         expect(item.querySelector('div')!.title).toBe('Already in XML');
         expect(findButton('Download', item)!.disabled).toBe(true);
     });
@@ -555,7 +556,7 @@ describe('OnlineBibleItemComp download', () => {
 
         expect(bibleInfo).toEqual(ONLINE_KSV);
         // The stale database goes first.
-        expect(h.clearBibleDatabaseDataMock).toHaveBeenCalledWith('KSV');
+        expect(h.clearBibleDatabaseDataMock).toHaveBeenCalledWith('TQVS');
         expect(findButton('Download')).toBeNull();
         const progressBar = container.querySelector(
             '[role="progressbar"]',
@@ -565,20 +566,20 @@ describe('OnlineBibleItemComp download', () => {
         options.onStart(12.6789);
         expect(h.showSimpleToastMock).toHaveBeenCalledWith(
             'Bible Download',
-            'Start downloading "KSV". File size 12mb',
+            'Start downloading "TQVS". File size 12mb',
         );
         await act(async () => options.onProgress(0.5));
         expect(progressBar.style.width).toBe('50%');
         expect(progressBar.getAttribute('aria-valuenow')).toBe('50');
 
-        await act(async () => options.onDone(null, '/tmp/KSV.zip'));
+        await act(async () => options.onDone(null, '/tmp/TQVS.zip'));
         await flush();
 
         expect(h.extractDownloadedBibleMock).toHaveBeenCalledWith(
-            '/tmp/KSV.zip',
+            '/tmp/TQVS.zip',
         );
-        expect(h.getBibleInfoMock).toHaveBeenCalledWith('KSV', true);
-        expect(h.getLangDataAsyncMock).toHaveBeenCalledWith('km-KH');
+        expect(h.getBibleInfoMock).toHaveBeenCalledWith('TQVS', true);
+        expect(h.getLangDataAsyncMock).toHaveBeenCalledWith('xx-XX');
         expect(setDownloadedList).toHaveBeenCalledWith(null);
         expect(h.handleErrorMock).not.toHaveBeenCalled();
         // Done: the button is back.
@@ -606,7 +607,7 @@ describe('OnlineBibleItemComp download', () => {
         await renderOnline(setDownloadedList);
         const { options } = await startDownload();
 
-        await act(async () => options.onDone(null, '/tmp/KSV.zip'));
+        await act(async () => options.onDone(null, '/tmp/TQVS.zip'));
         await flush();
 
         expect(h.showSimpleToastMock).toHaveBeenCalledWith(
@@ -623,7 +624,7 @@ describe('OnlineBibleItemComp download', () => {
         const { options } = await startDownload();
         h.getBibleInfoMock.mockResolvedValue(null);
 
-        await act(async () => options.onDone(null, '/tmp/KSV.zip'));
+        await act(async () => options.onDone(null, '/tmp/TQVS.zip'));
         await flush();
 
         expect(h.showSimpleToastMock).toHaveBeenCalledWith(
@@ -642,7 +643,7 @@ describe('OnlineBibleItemComp download', () => {
     });
 
     test('a Bible that turned up as XML meanwhile is not downloaded', async () => {
-        h.getAllXMLFileKeysMock.mockResolvedValue({ KSV: '/bibles/KSV.xml' });
+        h.getAllXMLFileKeysMock.mockResolvedValue({ TQVS: '/bibles/TQVS.xml' });
         const setOnline = await renderOnline();
 
         await act(async () => findButton('Download')!.click());
@@ -657,7 +658,7 @@ describe('OnlineBibleItemComp download', () => {
     });
 
     test('without a refresher, a Bible already in XML is only reported', async () => {
-        h.getAllXMLFileKeysMock.mockResolvedValue({ KSV: '/bibles/KSV.xml' });
+        h.getAllXMLFileKeysMock.mockResolvedValue({ TQVS: '/bibles/TQVS.xml' });
         await act(async () =>
             root.render(
                 <OnlineBibleItemComp

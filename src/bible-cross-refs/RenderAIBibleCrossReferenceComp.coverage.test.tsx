@@ -11,7 +11,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('../helper/ai/bibleCrossRefHelpers', () => ({
-    useBibleKeyContext: () => 'KHM',
+    useBibleKeyContext: () => 'TQAM',
 }));
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     useBibleFontFamily: (bibleKey: string) => `${bibleKey} Font`,
@@ -79,7 +79,7 @@ describe('RenderAIBibleCrossReferenceComp', () => {
         const heading = host.querySelector<HTMLHeadingElement>('h4')!;
         // Html in the title is kept, cleaned, in the bible's face.
         expect(heading.querySelector('b')!.textContent).toBe('Love');
-        expect(heading.style.fontFamily).toBe('KHM Font');
+        expect(heading.style.fontFamily).toBe('TQAM Font');
     });
 
     test('the translation note opens the page about it, and nothing else', async () => {

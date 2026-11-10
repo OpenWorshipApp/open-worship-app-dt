@@ -111,7 +111,11 @@ vi.mock('./assetPreviewHelpers', async (importOriginal) => ({
 
 import ChatbotAppComp from './ChatbotAppComp';
 import { dropAttachmentData, putAttachmentData } from './attachmentHelpers';
-import { BIBLE_IMPORT_STEP_TOOL_NAME } from './bibleImportChatHelpers';
+import {
+    BIBLE_IMPORT_STEP_TOOL_NAME,
+    listLanguageChoiceNames,
+    tranBibleImportLabel,
+} from './bibleImportChatHelpers';
 import { VERSE_FIND_STEP_TOOL_NAME } from './verseFindChatHelpers';
 import {
     REPORT_FIXED_TOOL_NAME,
@@ -206,12 +210,12 @@ const LANGUAGE_QUESTION = {
     text: '**Which language do you want the Bible in?** Press one, or type its name.',
     actions: [
         {
-            label: 'Khmer',
+            label: 'Sample',
             toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
             args: {
                 step: 'check',
                 url: CATALOG_URL,
-                find: 'Khmer',
+                find: 'Sample',
                 kjvChecked: true,
                 awaits: 'find',
                 pageUrl: CATALOG_URL,
@@ -235,9 +239,9 @@ const LANGUAGE_QUESTION = {
         },
     ],
 };
-const LANGUAGE_LABELS = ['Khmer', 'Klingon', 'Cancel'];
+const LANGUAGE_LABELS = ['Sample', 'Klingon', 'Cancel'];
 
-// What the collection holds: nothing called Klingon, two Khmer Bibles.
+// What the collection holds: nothing called Klingon, two Sample Bibles.
 function routeCatalog() {
     routes.owa_bible_xml = (args) => {
         if (args.action !== 'check') {
@@ -256,17 +260,17 @@ function routeCatalog() {
             kind: 'page',
             matched: 2,
             total: 1000,
-            searchedFor: ['khmer'],
+            searchedFor: ['sample'],
             files: [
                 {
-                    name: 'KhmerBible.xml',
-                    url: `${CATALOG_URL}/blob/master/KhmerBible.xml`,
-                    title: 'Khmer Standard Version',
+                    name: 'SampleBible.xml',
+                    url: `${CATALOG_URL}/blob/master/SampleBible.xml`,
+                    title: 'Sample Standard Version',
                 },
                 {
-                    name: 'Khmer2019Bible.xml',
-                    url: `${CATALOG_URL}/blob/master/Khmer2019Bible.xml`,
-                    title: 'Khmer 2019',
+                    name: 'Sample2019Bible.xml',
+                    url: `${CATALOG_URL}/blob/master/Sample2019Bible.xml`,
+                    title: 'Sample 2019',
                 },
             ],
         });
@@ -277,7 +281,7 @@ const BIBLE_LIST = {
     bible: 'KJV',
     bibles: [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KHSV', title: 'Khmer Standard Version' },
+        { key: 'SMSV', title: 'Sample Standard Version' },
     ],
 };
 
@@ -297,19 +301,19 @@ const BIBLE_QUESTION = {
             },
         },
         {
-            label: 'KHSV — Khmer Standard Version',
+            label: 'SMSV — Sample Standard Version',
             toolName: VERSE_FIND_STEP_TOOL_NAME,
             args: {
                 step: 'remember',
-                bible: 'KHSV',
-                title: 'Khmer Standard Version',
+                bible: 'SMSV',
+                title: 'Sample Standard Version',
             },
         },
     ],
 };
 const BIBLE_LABELS = [
     'KJV — King James Version',
-    'KHSV — Khmer Standard Version',
+    'SMSV — Sample Standard Version',
 ];
 
 describe('ChatbotAppComp steps', () => {
@@ -826,7 +830,7 @@ describe('ChatbotAppComp steps', () => {
             seedSessions([genSession('one', [LANGUAGE_QUESTION])]);
             await renderWindow();
             expect(stopButton()).toBeNull();
-            await press('Khmer');
+            await press('Sample');
             expect(
                 container.querySelector('.chat-progress')?.textContent,
             ).toContain('Downloading the Bible file and reading it…');
@@ -845,7 +849,7 @@ describe('ChatbotAppComp steps', () => {
                         kind: 'page',
                         matched: 0,
                         total: 1,
-                        searchedFor: ['khmer'],
+                        searchedFor: ['sample'],
                         files: [],
                     }),
                 );
@@ -864,7 +868,7 @@ describe('ChatbotAppComp steps', () => {
             seedSessions([genSession('one', [LANGUAGE_QUESTION])]);
             await renderWindow();
             const question = cues()[0];
-            await press('Khmer', question);
+            await press('Sample', question);
             await press('Klingon', question);
             expect(stopButton()).not.toBeNull();
             await act(async () => {
@@ -917,7 +921,7 @@ describe('ChatbotAppComp steps', () => {
             (document.activeElement as HTMLElement | null)?.blur();
             pressKey('Escape');
             expect(cues()).toHaveLength(2);
-            await press('Khmer');
+            await press('Sample');
             expect(cues()).toHaveLength(3);
             inputBox().focus();
             pressKey('Escape');
@@ -1009,10 +1013,12 @@ describe('ChatbotAppComp steps', () => {
             expect(bodyOf(cues()[2])).toContain(
                 'Which language do you want the Bible in?',
             );
+            // The app's language first (English here), then the other
+            // languages installed, as the window draws their names.
+            const languageList = listLanguageChoiceNames();
+            expect(languageList[0]).toBe('English');
             expect(actionLabels(lastCue())).toEqual([
-                'Khmer',
-                'English',
-                'French',
+                ...languageList.map(tranBibleImportLabel),
                 'A file on this computer',
             ]);
             expect(toolCalls('owa_bible_xml').map((call) => call[1])).toEqual([
@@ -1024,7 +1030,7 @@ describe('ChatbotAppComp steps', () => {
         test('a language the collection lacks is put into one by the assistant and searched again', async () => {
             routeCatalog();
             mocks.askLlmBot.mockImplementationOnce(
-                genWaitingReply({ kind: 'value', value: 'Khmer' }),
+                genWaitingReply({ kind: 'value', value: 'Sample' }),
             );
             seedSessions([genSession('one', [LANGUAGE_QUESTION])]);
             await renderWindow();
@@ -1032,7 +1038,7 @@ describe('ChatbotAppComp steps', () => {
             await waitFor(() => cues().length === 3, 'the searched list');
             expect(toolCalls('owa_bible_xml').map((call) => call[1])).toEqual([
                 { action: 'check', url: CATALOG_URL, find: 'Klingon' },
-                { action: 'check', url: CATALOG_URL, find: 'Khmer' },
+                { action: 'check', url: CATALOG_URL, find: 'Sample' },
             ]);
             const [prompt, , provider, model, turns, signal, extra] =
                 mocks.askLlmBot.mock.calls[0];
@@ -1057,10 +1063,10 @@ describe('ChatbotAppComp steps', () => {
             ]);
             const answer = lastCue();
             expect(bodyOf(answer)).toContain(
-                'Of its 1,000 Bibles, 2 have “khmer” in the name.',
+                'Of its 1,000 Bibles, 2 have “sample” in the name.',
             );
             expect(actionLabels(answer).join(' | ')).toContain(
-                'Khmer Standard Version',
+                'Sample Standard Version',
             );
             expect(answer.querySelector('.cue-cost')?.textContent).toContain(
                 'tokens',
@@ -1073,7 +1079,7 @@ describe('ChatbotAppComp steps', () => {
             mocks.askLlmBot.mockImplementationOnce(
                 genWaitingReply({
                     kind: 'help',
-                    reply: 'Klingon is not in the collection. Try Khmer.',
+                    reply: 'Klingon is not in the collection. Try Sample.',
                 }),
             );
             seedSessions([genSession('one', [LANGUAGE_QUESTION])]);
@@ -1082,7 +1088,7 @@ describe('ChatbotAppComp steps', () => {
             await waitFor(() => cues().length === 3, 'the kept question');
             const kept = lastCue();
             expect(noteOf(kept)).toBe(
-                'Klingon is not in the collection. Try Khmer.',
+                'Klingon is not in the collection. Try Sample.',
             );
             expect(bodyOf(kept)).toContain('Which language do you want');
             expect(actionLabels(kept)).toEqual(LANGUAGE_LABELS);
@@ -1091,7 +1097,7 @@ describe('ChatbotAppComp steps', () => {
 
         test('a reply that cannot be read asks for the choice again', async () => {
             routeCatalog();
-            mocks.askLlmBot.mockResolvedValueOnce({ text: 'Sure, Khmer!' });
+            mocks.askLlmBot.mockResolvedValueOnce({ text: 'Sure, Sample!' });
             seedSessions([genSession('one', [LANGUAGE_QUESTION])]);
             await renderWindow();
             await press('Klingon');
@@ -1148,14 +1154,14 @@ describe('ChatbotAppComp steps', () => {
             await waitFor(() => cues().length === 3, 'the chosen step');
             expect(bodyOf(cues()[1])).toContain('the first one please');
             expect(toolCalls('owa_bible_xml').map((call) => call[1])).toEqual([
-                { action: 'check', url: CATALOG_URL, find: 'Khmer' },
+                { action: 'check', url: CATALOG_URL, find: 'Sample' },
             ]);
             expect(readWaitingAsk().choices).toEqual([
-                { id: 1, label: 'Khmer', requiresPress: false },
+                { id: 1, label: 'Sample', requiresPress: false },
                 { id: 2, label: 'Klingon', requiresPress: false },
                 { id: 3, label: 'Cancel', requiresPress: true },
             ]);
-            expect(bodyOf(lastCue())).toContain('2 have “khmer” in the name');
+            expect(bodyOf(lastCue())).toContain('2 have “sample” in the name');
             expect(inputBox().value).toBe('');
         });
 
@@ -1188,13 +1194,13 @@ describe('ChatbotAppComp steps', () => {
         test('a pressed Bible asks what they remember', async () => {
             seedSessions([genSession('one', [BIBLE_QUESTION])]);
             await renderWindow();
-            await press('KHSV — Khmer Standard Version');
+            await press('SMSV — Sample Standard Version');
             await waitFor(() => cues().length === 3, 'the memory question');
             expect(bodyOf(cues()[1])).toContain(
-                'KHSV — Khmer Standard Version',
+                'SMSV — Sample Standard Version',
             );
             expect(bodyOf(lastCue())).toContain(
-                'I will search KHSV — Khmer Standard Version.',
+                'I will search SMSV — Sample Standard Version.',
             );
             expect(bodyOf(lastCue())).toContain(
                 'What do you remember about the verse?',
@@ -1210,7 +1216,7 @@ describe('ChatbotAppComp steps', () => {
             await send('2');
             await waitFor(() => cues().length === 3, 'the memory question');
             expect(bodyOf(cues()[1])).toContain('2');
-            expect(bodyOf(lastCue())).toContain('I will search KHSV');
+            expect(bodyOf(lastCue())).toContain('I will search SMSV');
             expect(mocks.askLlmBot).not.toHaveBeenCalled();
         });
 
@@ -1220,7 +1226,7 @@ describe('ChatbotAppComp steps', () => {
             );
             seedSessions([genSession('one', [BIBLE_QUESTION])]);
             await renderWindow();
-            await send('the Khmer one please');
+            await send('the sample one please');
             await waitFor(() => cues().length === 3, 'the memory question');
             expect(
                 cues().filter((cue) => cue.classList.contains('cue-you')),
@@ -1231,10 +1237,10 @@ describe('ChatbotAppComp steps', () => {
                     { id: 1, label: BIBLE_LABELS[0] },
                     { id: 2, label: BIBLE_LABELS[1] },
                 ],
-                typed: 'the Khmer one please',
+                typed: 'the sample one please',
             });
             const answer = lastCue();
-            expect(bodyOf(answer)).toContain('I will search KHSV');
+            expect(bodyOf(answer)).toContain('I will search SMSV');
             expect(answer.querySelector('.cue-cost')?.textContent).toContain(
                 'tokens',
             );
@@ -1245,7 +1251,7 @@ describe('ChatbotAppComp steps', () => {
                 .mockImplementationOnce(
                     genWaitingReply({
                         kind: 'help',
-                        reply: 'KJV is in English, KHSV in Khmer.',
+                        reply: 'KJV is in English, SMSV in another language.',
                     }),
                 )
                 .mockResolvedValueOnce({ text: 'hmm' })
@@ -1254,7 +1260,9 @@ describe('ChatbotAppComp steps', () => {
             await renderWindow();
             await send('which one is which?');
             await waitFor(() => cues().length === 3, 'the help reply');
-            expect(noteOf(lastCue())).toBe('KJV is in English, KHSV in Khmer.');
+            expect(noteOf(lastCue())).toBe(
+                'KJV is in English, SMSV in another language.',
+            );
             expect(actionLabels(lastCue())).toEqual(BIBLE_LABELS);
             await send('not sure at all');
             await waitFor(() => cues().length === 5, 'the unread reply');
@@ -1273,7 +1281,7 @@ describe('ChatbotAppComp steps', () => {
             mocks.askLlmBot.mockImplementationOnce(() => reply.promise);
             seedSessions([genSession('one', [BIBLE_QUESTION])]);
             await renderWindow();
-            await send('the Khmer one please');
+            await send('the sample one please');
             await click(stopButton());
             expect(noteOf(lastCue())).toBe(STOPPED_TEXT);
             expect(actionLabels(lastCue())).toEqual(BIBLE_LABELS);
@@ -1334,7 +1342,7 @@ describe('ChatbotAppComp steps', () => {
             );
             expect(actionLabels(lastCue())).toEqual([
                 'KJV — King James Version',
-                'KHSV — Khmer Standard Version',
+                'SMSV — Sample Standard Version',
             ]);
         });
 
@@ -1354,12 +1362,12 @@ describe('ChatbotAppComp steps', () => {
                         text: '**Which Bible should I show the verse in?**',
                         actions: [
                             {
-                                label: 'KHSV — Khmer Standard Version',
+                                label: 'SMSV — Sample Standard Version',
                                 toolName: VERSE_FIND_STEP_TOOL_NAME,
                                 args: {
                                     step: 'remember',
-                                    bible: 'KHSV',
-                                    title: 'Khmer Standard Version',
+                                    bible: 'SMSV',
+                                    title: 'Sample Standard Version',
                                     words: 'love your enemies',
                                 },
                             },
@@ -1370,7 +1378,7 @@ describe('ChatbotAppComp steps', () => {
                 ]),
             ]);
             await renderWindow();
-            await press('KHSV — Khmer Standard Version', cues()[1]);
+            await press('SMSV — Sample Standard Version', cues()[1]);
             await waitFor(
                 () => mocks.askLlmBot.mock.calls.length > 0,
                 'the search',
@@ -1378,7 +1386,7 @@ describe('ChatbotAppComp steps', () => {
             await waitFor(() => cues().length === 6, 'the answer');
             // The press is what the transcript shows, not the sentence.
             expect(bodyOf(cues()[4])).toContain(
-                'KHSV — Khmer Standard Version',
+                'SMSV — Sample Standard Version',
             );
             expect(bodyOf(cues()[4])).not.toContain('love your enemies');
             expect(mocks.askLlmBot).toHaveBeenCalledTimes(1);
@@ -1386,7 +1394,7 @@ describe('ChatbotAppComp steps', () => {
                 'love your enemies',
             );
             expect(mocks.askLlmBot.mock.calls[0][6]?.verseFind).toMatchObject({
-                bible: 'KHSV',
+                bible: 'SMSV',
                 words: 'love your enemies',
             });
             expect(bodyOf(lastCue())).toContain(
@@ -1409,12 +1417,12 @@ describe('ChatbotAppComp steps', () => {
                         text: '**Which Bible should I search?** Pick one below.',
                         actions: [
                             {
-                                label: 'KHSV — Khmer Standard Version',
+                                label: 'SMSV — Sample Standard Version',
                                 toolName: VERSE_FIND_STEP_TOOL_NAME,
                                 args: {
                                     step: 'remember',
-                                    bible: 'KHSV',
-                                    title: 'Khmer Standard Version',
+                                    bible: 'SMSV',
+                                    title: 'Sample Standard Version',
                                     words: 'love your enemies',
                                 },
                             },
@@ -1423,7 +1431,7 @@ describe('ChatbotAppComp steps', () => {
                 ]),
             ]);
             await renderWindow();
-            await send('the Khmer one');
+            await send('the sample one');
             await waitFor(
                 () => mocks.askLlmBot.mock.calls.length === 2,
                 'the search',
@@ -1432,9 +1440,9 @@ describe('ChatbotAppComp steps', () => {
             expect(
                 cues().filter((cue) => cue.classList.contains('cue-you')),
             ).toHaveLength(1);
-            expect(bodyOf(cues()[1])).toContain('the Khmer one');
+            expect(bodyOf(cues()[1])).toContain('the sample one');
             expect(mocks.askLlmBot.mock.calls[1][6]?.verseFind).toMatchObject({
-                bible: 'KHSV',
+                bible: 'SMSV',
             });
         });
     });
@@ -1483,15 +1491,15 @@ describe('ChatbotAppComp steps', () => {
             await waitFor(
                 () =>
                     toolCalls('owa_find_verse').some((call) => {
-                        return call[1]?.bible === 'KHSV';
+                        return call[1]?.bible === 'SMSV';
                     }),
-                'the search in KHSV',
+                'the search in SMSV',
             );
             expect(
                 toolCalls('owa_find_verse').find((call) => {
-                    return call[1]?.bible === 'KHSV';
+                    return call[1]?.bible === 'SMSV';
                 })?.[1],
-            ).toMatchObject({ bible: 'KHSV', words: 'love your enemies' });
+            ).toMatchObject({ bible: 'SMSV', words: 'love your enemies' });
             // The press is never read as a pick by the list's interpreter.
             expect(
                 mocks.askLlmBot.mock.calls.some((call) => {
@@ -1742,7 +1750,7 @@ describe('ChatbotAppComp steps', () => {
             );
             expect(actionLabels(lastCue())).toEqual([
                 'KJV — King James Version (the one in Find)',
-                'KHSV — Khmer Standard Version',
+                'SMSV — Sample Standard Version',
             ]);
             expect(document.activeElement).toBe(inputBox());
         });
@@ -1786,11 +1794,11 @@ describe('ChatbotAppComp steps', () => {
 
         test('Settings hands over an import, run in a tab of its own', async () => {
             routeCatalog();
-            handOver('ask', { text: 'Import bible for Khmer' });
+            handOver('ask', { text: 'Import bible for Sample' });
             await renderWindow();
             await waitFor(() => cues().length === 2, 'the list');
-            expect(bodyOf(cues()[0])).toContain('Import bible for Khmer');
-            expect(bodyOf(lastCue())).toContain('2 have “khmer” in the name');
+            expect(bodyOf(cues()[0])).toContain('Import bible for Sample');
+            expect(bodyOf(lastCue())).toContain('2 have “sample” in the name');
         });
 
         test('an import the collection cannot read and an assistant that fails', async () => {

@@ -144,7 +144,8 @@ window as a whole — tabs, pickers, its language, the caution — is in
   how-do-I is what the PERSON does (`bibleReaderWords.howToAsks`: French
   `comment` before a lower-case infinitive, Khmer `ខ្ញុំ` with a how-word),
   never any "how". `src/chatbot/chatLanguageParity.test.ts` asks 63
-  questions alike in English, Khmer and French and holds every one to one
+  questions alike in English and in every language whose package carries
+  them (`tests/chatbot/chatLanguageParity.json`) and holds every one to one
   route, and every translated supported question out of the Bible readers;
   a word added to one language that moves a row fails there. **A
   person's or a place's verses come from a Bible in the answer's language**

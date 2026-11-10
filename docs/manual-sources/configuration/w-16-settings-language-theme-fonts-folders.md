@@ -111,7 +111,7 @@ workflowsVersion: "2026-11-09"
    custom servers — see **W-42**.
 4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
     this computer, turned on or off, and the ones to install (those two — see **W-55**).
-   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+   - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in

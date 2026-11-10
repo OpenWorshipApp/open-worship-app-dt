@@ -184,7 +184,7 @@ describe('CanvasItem models', () => {
             getSrcData: vi.fn(async () => 'data:media'),
         });
         getSrcDataFromBlobMock.mockResolvedValue('data:blob');
-        getBibleFontFamilyMock.mockResolvedValue('Battambang');
+        getBibleFontFamilyMock.mockResolvedValue('Made Up Sans');
     });
 
     test('builds and validates text canvas items', () => {
@@ -249,7 +249,7 @@ describe('CanvasItem models', () => {
         expect(() =>
             CanvasItemText.validate({
                 ...textJson,
-                fontFamily: 'Battambang',
+                fontFamily: 'Made Up Sans',
                 fontWeight: '700',
             }),
         ).not.toThrow();
@@ -754,7 +754,7 @@ describe('CanvasItem models', () => {
                     },
                 ],
                 fontSize: 45,
-                fontFamily: 'Battambang',
+                fontFamily: 'Made Up Sans',
                 textHorizontalAlignment: 'left',
                 textVerticalAlignment: 'start',
             }),
@@ -886,7 +886,7 @@ describe('CanvasItem models', () => {
 
     test('draws a chapter divider before each chapter of a cross-chapter passage', async () => {
         const crossItem = {
-            bibleKey: 'KHM',
+            bibleKey: 'TQAM',
             target: {
                 bookKey: 'JHN',
                 chapter: 1,
@@ -894,7 +894,7 @@ describe('CanvasItem models', () => {
                 verseEnd: 1,
                 chapterEnd: 2,
             },
-            toTitleWithBibleKey: async () => '(KHM) John 1:51-2:1',
+            toTitleWithBibleKey: async () => '(TQAM) John 1:51-2:1',
             toText: async () => 'John 1:51\n(51): a\nJohn 2:1\n(1): b',
             toVerseTextList: async () => [
                 {

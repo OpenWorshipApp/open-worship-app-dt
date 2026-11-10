@@ -6,8 +6,9 @@
 // bundle that ships to operators, and a song belongs to whoever wrote it. What
 // is under test is the SHAPE of a page, and nonsense has the same shape.
 //
-// The two Khmer words used below are ordinary vocabulary chosen to exercise a
-// script that writes no spaces between words. They are not a lyric.
+// A case about a script of its own -- one that writes no spaces between
+// words, digits of its own -- is that language package's
+// (`src/lang/data/online/<code>/tests/`).
 //
 // Plain node, no jsdom, no network -- same as the rest of this package.
 
@@ -102,7 +103,8 @@ describe('a chord glued to the words', () => {
         });
         // A bar is not a word in any language, so this one is safe.
         expect(splitLeadingChords('|A brand new day').marks).toBe('|[A]');
-        // And so is a chord in front of words written in another script.
+        // So is a chord in front of words written in another script: that
+        // script's language package holds the case.
     });
 
     test('takes a bare chord once the page has shown it glues them', () => {
@@ -116,18 +118,25 @@ describe('a chord glued to the words', () => {
     test('joins a whole glued row into one line', () => {
         // The bug the user reported: eleven fragments, eleven lines, and the
         // chord left sitting in the words as literal text.
+        // A script of its own is its language package's case.
         const rows = rejoinChordSheet([
+            '|D a lan',
+            '|D tern on',
+            '|A the wa',
+            'nobody rows',
+            '|Bm it home',
         ]);
         expect(rows.map((one) => one.text)).toEqual([
+            '|[D]a lan|[D]tern on|[A]the wa',
+            'nobody rows|[Bm]it home',
         ]);
     });
 
     test('writes the chords glued INSIDE a row where they land', () => {
         // A page that hands over the whole row at once: only the first chord
         // was bracketed, and every later `|D` rode into the song as a word.
-        expect(
-        // A bare chord mid-row is safe in another script -- and the `|D`
-        // three words on must not make the rest of the row read as Latin.
+        expect(writeInlineChords('|D a lantern |D on the |D water |A home')).toBe(
+            '|[D]a lantern |[D]on the |[D]water |[A]home',
         );
         // A word that is also a chord stays a word; a bar on its own stays.
         expect(writeInlineChords('sing A loud |D now | more')).toBe(
@@ -140,8 +149,12 @@ describe('a chord glued to the words', () => {
         expect(writeInlineChords('|D |A |Bm word')).toBe('word');
         expect(
             rejoinChordSheet([
+                '|D a lantern |D on the |A water',
+                'nobody |D rows it |D home',
             ]).map((one) => one.text),
         ).toEqual([
+            '|[D]a lantern |[D]on the |[A]water',
+            'nobody |[D]rows it |[D]home',
         ]);
     });
 
@@ -486,7 +499,7 @@ describe('what is not the song', () => {
         // A toolbar is a line of words per button, and a page that draws no
         // strumming diagram between it and the first chord has no wall to
         // end it on: nine buttons were drafted as Verse 1 (2026-09-09, a
-        // Khmer hymnal's chord page) and the real verses became 2 and 3.
+        // non-English hymnal's chord page) and the real verses became 2 and 3.
         // The strip the page prints over its chord sheet is the boundary.
         const page = [
             'Blue Lantern',

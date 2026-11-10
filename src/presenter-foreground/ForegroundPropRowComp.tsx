@@ -172,7 +172,7 @@ export function PropOptionsComp<T extends string>({
  * Three checkboxes with three names would be three rows for three questions a
  * volunteer answers by looking at the result, not by reading a label. Each
  * button shows what it does to the letters it is drawn with, so the strip is
- * legible in a Khmer window where none of the three words is.
+ * legible in a window in another language, where none of the three words is.
  */
 export function PropTogglesComp({
     label,
@@ -255,8 +255,8 @@ export function PropSwatchComp({
             {isText ? (
                 // One shows a glyph, the other shows a fill, so the two are
                 // told apart without reading either tooltip. A glyph rather
-                // than a letter: this strip is drawn in Khmer as often as in
-                // English, and an `A` is a word in neither.
+                // than a letter: this strip is drawn in other languages as
+                // often as in English, and an `A` is a word in none of them.
                 <i
                     className="bi bi-fonts fg-swatch-glyph"
                     style={{ color }}

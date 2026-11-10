@@ -81,7 +81,7 @@ const h = vi.hoisted(() => {
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
 vi.mock('../lang/langHelpers', () => ({
     tran: (key: string) => h.state.tranPrefix + key,
-    checkIsValidLocale: (locale: string) => ['km', 'en'].includes(locale),
+    checkIsValidLocale: (locale: string) => ['yy', 'en'].includes(locale),
     getFontFamilyByLocale: (locale: string) =>
         h.mocks.getFontFamilyByLocale(locale),
 }));
@@ -1542,11 +1542,11 @@ describe('getReactRoot', () => {
 describe('applyFontFamily', () => {
     beforeEach(() => {
         h.mocks.getBibleLocale.mockImplementation(async (bibleKey: string) => {
-            return ({ KJV: 'en', KHSV: 'km' } as any)[bibleKey];
+            return ({ KJV: 'en', YYV: 'yy' } as any)[bibleKey];
         });
         h.mocks.getFontFamilyByLocale.mockImplementation(
             async (locale: string) => {
-                return locale === 'km' ? 'Battambang' : undefined;
+                return locale === 'yy' ? 'Made Up Sans' : undefined;
             },
         );
     });
@@ -1564,16 +1564,16 @@ describe('applyFontFamily', () => {
     });
 
     test('applies the font of the named locale, or of the bible locale', async () => {
-        const localeElement = genElement({ localeFf: 'km' });
+        const localeElement = genElement({ localeFf: 'yy' });
         await applyFontFamily(localeElement, 'attr-modified');
-        expect(h.mocks.getFontFamilyByLocale).toHaveBeenCalledWith('km');
+        expect(h.mocks.getFontFamilyByLocale).toHaveBeenCalledWith('yy');
         expect(h.mocks.getBibleLocale).not.toHaveBeenCalled();
-        expect(localeElement.style.fontFamily).toBe('Battambang');
+        expect(localeElement.style.fontFamily).toBe('Made Up Sans');
 
-        const bibleElement = genElement({ bibleKeyFf: 'KHSV' });
+        const bibleElement = genElement({ bibleKeyFf: 'YYV' });
         await applyFontFamily(bibleElement, 'attr-modified');
-        expect(h.mocks.getBibleLocale).toHaveBeenCalledWith('KHSV');
-        expect(bibleElement.style.fontFamily).toBe('Battambang');
+        expect(h.mocks.getBibleLocale).toHaveBeenCalledWith('YYV');
+        expect(bibleElement.style.fontFamily).toBe('Made Up Sans');
 
         // A locale with no font of its own leaves the element alone.
         const englishElement = genElement({ bibleKeyFf: 'KJV' });
@@ -1590,8 +1590,8 @@ describe('applyFontFamily', () => {
 
     test('walks the children of an added subtree only', async () => {
         const parent = genElement();
-        const child = genElement({ localeFf: 'km' });
-        const grandChild = genElement({ bibleKeyFf: 'KHSV' });
+        const child = genElement({ localeFf: 'yy' });
+        const grandChild = genElement({ bibleKeyFf: 'YYV' });
         child.appendChild(grandChild);
         parent.appendChild(child);
         await applyFontFamily(parent, 'removed');
@@ -1599,8 +1599,8 @@ describe('applyFontFamily', () => {
         expect(child.style.fontFamily).toBe('');
         await applyFontFamily(parent, 'added');
         await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(child.style.fontFamily).toBe('Battambang');
-        expect(grandChild.style.fontFamily).toBe('Battambang');
+        expect(child.style.fontFamily).toBe('Made Up Sans');
+        expect(grandChild.style.fontFamily).toBe('Made Up Sans');
         expect(parent.style.fontFamily).toBe('');
     });
 });

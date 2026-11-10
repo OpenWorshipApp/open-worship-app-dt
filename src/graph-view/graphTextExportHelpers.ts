@@ -89,7 +89,7 @@ export type GraphDiagramFormatDefType = {
  * diagram languages outside it.
  *
  * Adding a format is adding a row here plus a branch in `buildGraphDiagram`
- * and a Khmer key for the label; nothing else knows the list's length.
+ * and a dictionary key for the label in every language; nothing else knows the list's length.
  */
 export const GRAPH_DIAGRAM_FORMAT_LIST: readonly GraphDiagramFormatDefType[] = [
     {

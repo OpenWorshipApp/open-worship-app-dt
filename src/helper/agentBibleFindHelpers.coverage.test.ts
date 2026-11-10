@@ -12,7 +12,7 @@ const { state, mocks } = vi.hoisted(() => ({
         textByBible: {} as Record<string, string>,
         titleByBible: {} as Record<string, string>,
         noTermsLocales: [] as string[],
-        pickedBibleKey: 'KH',
+        pickedBibleKey: 'YY',
         pickCalls: [] as unknown[],
         liveLookup: null as any,
         popupOpener: null as null | (() => void),
@@ -294,18 +294,18 @@ beforeEach(() => {
     vi.clearAllMocks();
     state.bibleList = [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KH', title: 'Khmer Bible' },
+        { key: 'YY', title: 'Yy Bible' },
     ];
-    state.locales = { KJV: 'en', KH: 'km' };
+    state.locales = { KJV: 'en', YY: 'yy' };
     state.bookMaps = {
         KJV: { GEN: 'Genesis', MAT: 'Matthew', JHN: 'John' },
-        KH: { GEN: 'Genesis KH', MAT: 'Matthew KH', JHN: 'John KH' },
+        YY: { GEN: 'Genesis YY', MAT: 'Matthew YY', JHN: 'John YY' },
     };
-    state.verseCounts = { 'KJV:MAT:3': 36, 'KH:MAT:3': 36 };
-    state.textByBible = { KJV: 'KJV verse text', KH: 'Khmer verse text' };
-    state.titleByBible = { KH: 'John 3:16 in Khmer' };
+    state.verseCounts = { 'KJV:MAT:3': 36, 'YY:MAT:3': 36 };
+    state.textByBible = { KJV: 'KJV verse text', YY: 'Yy verse text' };
+    state.titleByBible = { YY: 'John 3:16 in Yy' };
     state.noTermsLocales = [];
-    state.pickedBibleKey = 'KH';
+    state.pickedBibleKey = 'YY';
     state.pickCalls = [];
     state.liveLookup = null;
     state.popupOpener = null;
@@ -326,7 +326,7 @@ beforeEach(() => {
             },
             onlineFindHandler: null,
         },
-        KH: {
+        YY: {
             databaseFindHandler: { database: makeDatabase({}) },
             onlineFindHandler: null,
         },
@@ -374,7 +374,7 @@ test('refuses when no Bible is installed or an asked Bible is missing', async ()
         reason: expect.stringContaining('No Bible is installed'),
     });
 
-    state.bibleList = [{ key: 'KH', title: 'Khmer Bible' }];
+    state.bibleList = [{ key: 'YY', title: 'Yy Bible' }];
     await expect(
         handleAgentBibleFindRequest({ bible: 'KJV', refs: 'John 3:16' }),
     ).resolves.toMatchObject({
@@ -388,7 +388,7 @@ test('a request with no query lists installed Bibles and their locales', async (
         bible: 'KJV',
         bibles: [
             { key: 'KJV', title: 'King James Version', locale: 'en' },
-            { key: 'KH', title: 'Khmer Bible', locale: 'km' },
+            { key: 'YY', title: 'Yy Bible', locale: 'yy' },
         ],
         note: expect.stringContaining('Give words to search'),
     });
@@ -477,7 +477,7 @@ test('local Bible search reports matched and absent terms with ranked verse hits
 });
 
 test('words in another script are searched in English and quoted from the chosen Bible', async () => {
-    state.noTermsLocales = ['km'];
+    state.noTermsLocales = ['yy'];
     state.controllers.KJV.databaseFindHandler.database = makeDatabase({
         termCounts: { love: 8 },
         candidates: [{ text: 'JHN|3|16|For God so loved', hits: 1, r: 0 }],
@@ -485,33 +485,33 @@ test('words in another script are searched in English and quoted from the chosen
     });
 
     const result = await handleAgentBibleFindRequest({
-        bible: 'KH',
+        bible: 'YY',
         words: 'love',
     });
 
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
         searchedIn: 'KJV',
         verses: [
             {
                 key: 'JHN 3:16',
                 ref: 'John 3:16',
-                text: 'Khmer verse text',
-                title: 'John 3:16 in Khmer',
+                text: 'Yy verse text',
+                title: 'John 3:16 in Yy',
             },
         ],
     });
 });
 
 test('a written reference chooses the Bible whose book names it and reports an invalid verse', async () => {
-    state.verseCounts['KH:MAT:3'] = 24;
+    state.verseCounts['YY:MAT:3'] = 24;
 
     const result = await handleAgentBibleFindRequest({
         refs: 'Matthew 3:203',
     });
 
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
         verses: [],
         unread: ['Matthew 3:203'],
         notFound: [
@@ -583,11 +583,11 @@ test('opening from a window without a live Lookup needs its popup opener', async
 
 test('with no Bible asked the Lookup’s Bible is searched, and the first installed one when the Lookup cannot be read', async () => {
     state.liveLookup = {
-        selectedBibleItem: { bibleKey: 'KH' },
+        selectedBibleItem: { bibleKey: 'YY' },
         applyTargetOrBibleKey: mocks.applyTarget,
     };
     await expect(handleAgentBibleFindRequest({})).resolves.toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
     });
 
     mocks.getCurrentLookup.mockImplementation(() => {
@@ -607,20 +607,20 @@ test('pickBibleForRefs keeps the chosen Bible with nothing to read, and one unre
     expect(state.pickCalls).toEqual([]);
 
     mocks.getBibleInfo.mockImplementation(async (key: string) => {
-        if (key === 'KH') {
+        if (key === 'YY') {
             throw new Error('unreadable Bible');
         }
         return { keyBookMap: state.bookMaps[key] };
     });
     await expect(
         pickBibleForRefs('KJV', 'John 3:16; Genesis 1:1'),
-    ).resolves.toBe('KH');
+    ).resolves.toBe('YY');
     expect(state.pickCalls).toEqual([
         {
             book: 'John',
             infoList: [
                 { key: 'KJV', keyBookMap: state.bookMaps.KJV },
-                { key: 'KH', keyBookMap: undefined },
+                { key: 'YY', keyBookMap: undefined },
             ],
             preferredKey: 'KJV',
         },
@@ -630,14 +630,14 @@ test('pickBibleForRefs keeps the chosen Bible with nothing to read, and one unre
 test('a book named the way a third installed Bible names it is read even when another Bible cannot be opened', async () => {
     state.bibleList = [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KH', title: 'Khmer Bible' },
+        { key: 'YY', title: 'Yy Bible' },
         { key: 'XX', title: 'A Third Bible' },
     ];
     state.locales.XX = 'xx';
     // A made-up name only that Bible gives the book.
     state.bookMaps.XX = { JHN: 'Xohn' };
     mocks.getBibleInfo.mockImplementation(async (key: string) => {
-        if (key === 'KH') {
+        if (key === 'YY') {
             throw new Error('unreadable Bible');
         }
         return { keyBookMap: state.bookMaps[key] ?? {} };
@@ -664,19 +664,19 @@ test('a run of letters in an unspaced Bible is cut into its own words, and the E
             { text: 'jesus asked' },
         ],
     });
-    state.controllers.KH.databaseFindHandler.database = database;
-    state.titleByBible.KH = '✝ ５:４４';
+    state.controllers.YY.databaseFindHandler.database = database;
+    state.titleByBible.YY = '✝ ５:４４';
     mocks.getStopWord.mockImplementation((locale: string, word: string) => {
-        return locale === 'km' && word === 'your';
+        return locale === 'yy' && word === 'your';
     });
 
     const result = await handleAgentBibleFindRequest({
-        bible: 'KH',
+        bible: 'YY',
         words: 'loveyourenemies jesusasked',
     });
 
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
         // `jesusasked` is a word of the vocabulary, kept whole; `your` is a
         // stop word of the language.
         words: ['love', 'enemies', 'jesusasked'],
@@ -702,7 +702,7 @@ test('a run of letters in an unspaced Bible is cut into its own words, and the E
     // A short word is searched as typed: the vocabulary is not read for it.
     database.getAll.mockClear();
     await expect(
-        handleAgentBibleFindRequest({ bible: 'KH', words: 'love' }),
+        handleAgentBibleFindRequest({ bible: 'YY', words: 'love' }),
     ).resolves.toMatchObject({ words: ['love'] });
     expect(database.getAll).not.toHaveBeenCalledWith('SELECT text FROM spell;');
 });
@@ -891,7 +891,7 @@ test('verses where the words gather rank first, with the passage, every book and
 });
 
 test('an unspaced Bible names the passages and books a search gathers in its own words and digits', async () => {
-    state.controllers.KH.databaseFindHandler.database = makeDatabase({
+    state.controllers.YY.databaseFindHandler.database = makeDatabase({
         termCounts: { noe: 4, dove: 3 },
         candidates: [
             { text: 'GEN|8|11|dove noe', hits: 2, r: 1 },
@@ -906,7 +906,7 @@ test('an unspaced Bible names the passages and books a search gathers in its own
     });
     mocks.getBibleInfo.mockImplementation(async (key: string) => ({
         keyBookMap: state.bookMaps[key] ?? {},
-        ...(key === 'KH'
+        ...(key === 'YY'
             ? { numbersMap: { '1': '１', '7': '７', '8': '８' } }
             : {}),
     }));
@@ -927,16 +927,16 @@ test('an unspaced Bible names the passages and books a search gathers in its own
             return item;
         },
     );
-    state.titleByBible.KH = '✝ ８:１１';
+    state.titleByBible.YY = '✝ ８:１１';
 
     const result: any = await handleAgentBibleFindRequest({
-        bible: 'KH',
+        bible: 'YY',
         words: 'noe dove',
         limit: 3,
     });
 
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
         total: 8,
         next: 3,
         englishBible: 'KJV',
@@ -946,14 +946,14 @@ test('an unspaced Bible names the passages and books a search gathers in its own
             ref: 'Genesis 7-8',
             key: 'GEN 8',
             verses: 5,
-            title: 'Genesis KH ７-８',
-            keyTitle: 'Genesis KH ８',
+            title: 'Genesis YY ７-８',
+            keyTitle: 'Genesis YY ８',
         },
         // A book this Bible has no name for keeps the English one.
         { ref: 'DAN 6', key: 'DAN 6', verses: 3 },
     ]);
     expect(result.byBook).toEqual([
-        { book: 'Genesis', key: 'GEN', verses: 5, title: 'Genesis KH' },
+        { book: 'Genesis', key: 'GEN', verses: 5, title: 'Genesis YY' },
         { book: 'DAN', key: 'DAN', verses: 3 },
     ]);
     // A verse the Bible cannot title, or cannot read, is listed untitled.
@@ -971,7 +971,7 @@ test('an unspaced Bible names the passages and books a search gathers in its own
 });
 
 test('passages keep their English names when the Bible’s own names cannot be read back', async () => {
-    state.controllers.KH.databaseFindHandler.database = makeDatabase({
+    state.controllers.YY.databaseFindHandler.database = makeDatabase({
         termCounts: { noe: 4 },
         candidates: [{ text: 'GEN|8|11|noe', hits: 1, r: 0 }],
         chapters: [
@@ -979,17 +979,17 @@ test('passages keep their English names when the Bible’s own names cannot be r
             { c: 'MAT.24', count: 1, rareVerses: 0, rareScore: 0 },
         ],
     });
-    let khReads = 0;
+    let yyReads = 0;
     mocks.getBibleInfo.mockImplementation(async (key: string) => {
         // Read for the search; gone by the time the passages are named.
-        if (key === 'KH' && ++khReads > 1) {
+        if (key === 'YY' && ++yyReads > 1) {
             throw new Error('the Bible was removed meanwhile');
         }
         return { keyBookMap: state.bookMaps[key] ?? {} };
     });
 
     const result: any = await handleAgentBibleFindRequest({
-        bible: 'KH',
+        bible: 'YY',
         words: 'noe',
         limit: 1,
     });
@@ -1007,7 +1007,7 @@ test('passages keep their English names when the Bible’s own names cannot be r
             ref: 'Genesis 8:11',
             text: 'noe',
             hits: 1,
-            title: 'John 3:16 in Khmer',
+            title: 'John 3:16 in Yy',
         },
     ]);
 });
@@ -1065,13 +1065,13 @@ test('a search refuses a Bible it cannot open, a book that is no book, a Bible w
 
 test('words not in the asked Bible’s language go to the KJV first, then another English Bible, before any other', async () => {
     state.bibleList = [
-        { key: 'KH', title: 'Khmer Bible' },
+        { key: 'YY', title: 'Yy Bible' },
         { key: 'XX', title: 'Another Bible' },
         { key: 'WEB', title: 'World English Bible' },
         { key: 'KJV', title: 'King James Version' },
     ];
-    state.locales = { KH: 'km', XX: 'xx', WEB: 'en-US', KJV: 'en' };
-    state.noTermsLocales = ['km'];
+    state.locales = { YY: 'yy', XX: 'xx', WEB: 'en-US', KJV: 'en' };
+    state.noTermsLocales = ['yy'];
     // The KJV is tried and cannot be opened; the next English one answers.
     state.controllers.KJV = undefined;
     state.controllers.WEB = {
@@ -1097,25 +1097,25 @@ test('words not in the asked Bible’s language go to the KJV first, then anothe
     };
 
     const result = await handleAgentBibleFindRequest({
-        bible: 'KH',
+        bible: 'YY',
         words: 'love',
     });
 
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'YY',
         searchedIn: 'WEB',
-        verses: [{ key: 'JHN 3:16', text: 'Khmer verse text' }],
+        verses: [{ key: 'JHN 3:16', text: 'Yy verse text' }],
         note: expect.stringContaining('searched in WEB'),
     });
     expect(
         mocks.getInstant.mock.calls.map(([key]) => {
             return key;
         }),
-    ).toEqual(['KH', 'KJV', 'WEB']);
+    ).toEqual(['YY', 'KJV', 'WEB']);
 });
 
 test('words no installed Bible’s language reads are refused with the asked Bible’s language, no other index built', async () => {
-    state.noTermsLocales = ['en', 'km'];
+    state.noTermsLocales = ['en', 'yy'];
 
     await expect(
         handleAgentBibleFindRequest({ bible: 'KJV', words: '✝✝' }),
@@ -1143,7 +1143,7 @@ test('a phrase of nothing but asking words leaves no word to search in any Bible
         mocks.getInstant.mock.calls.map(([key]) => {
             return key;
         }),
-    ).toEqual(['KJV', 'KH']);
+    ).toEqual(['KJV', 'YY']);
 });
 
 test('references read a chapter that cannot be counted and a book written the Bible’s own way, and leave out what reads as nothing', async () => {

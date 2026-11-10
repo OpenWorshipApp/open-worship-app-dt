@@ -226,7 +226,7 @@ export const READER_EXTRA_DEMO_LIST = [
     'Use Show path editor in Bibles to see the folder; Choose a folder picks another, and right-click the path to Copy to Clipboard.',
     [
       // No translateFind: PathSelectorComp draws this title untranslated, so
-      // it has no km/fr key and tran() throws on it (TP-01).
+      // no language package has its key and tran() throws on it (TP-01).
       {
         find: 'Bibles > Show path editor',
         text: 'Toggle Show path editor in the Bibles panel.',

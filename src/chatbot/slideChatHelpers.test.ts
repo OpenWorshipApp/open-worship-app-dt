@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import languageNameMap from '../lang/data/en/language-names.json';
 import type { ChatAttachmentType } from './attachmentHelpers';
 import { setChatTranslator } from './chatTranHelpers';
 import {
@@ -334,7 +335,8 @@ describe('the prompt', () => {
         expect(SLIDE_SYSTEM_PROMPT).toContain('ONE add-slides call');
         expect(SLIDE_SYSTEM_PROMPT).toContain('A PICTURE of slides');
         // A translation is words taken from the slides: done, not asked for
-        // (2026-11-07, "add above the khmer text" answered with a question).
+        // (2026-11-07, an ask to add English above the other language's text
+        // was answered with a question).
         expect(SLIDE_SYSTEM_PROMPT).toContain('never ask them for the words');
         expect(SLIDE_SYSTEM_PROMPT).toContain('NEEDS: file');
     });
@@ -386,7 +388,7 @@ describe('asking for the buttons again', () => {
         }
         for (const asked of [
             'more options for the colors',
-            'add above the khmer text',
+            'add above the other text',
             'make the words larger',
             'help me translate slide 2',
             '',
@@ -399,27 +401,43 @@ describe('asking for the buttons again', () => {
 describe('where a typed translation puts its lines', () => {
     it('reads under or above, only beside a translation', () => {
         expect(
-            readSlidePlacement(
-                'Add the English under the Khmer line on slide 3',
-            ),
+            readSlidePlacement('Add the English under each line on slide 3'),
         ).toBe('under');
-        expect(readSlidePlacement('Put English above each Khmer line')).toBe(
-            'above',
-        );
+        expect(readSlidePlacement('Put English above each line')).toBe('above');
         expect(
             readSlidePlacement('translate it and put it below the words'),
         ).toBe('under');
         // Not a translation, or both ways at once: nothing said.
         expect(readSlidePlacement('Put a box under the title')).toBe(null);
         expect(
-            readSlidePlacement('English above and Khmer under, swap them'),
+            readSlidePlacement('English above and the rest under, swap them'),
         ).toBe(null);
+    });
+
+    // 2026-11-07: "add above the <language> text", the language the slides
+    // are in named alone, was read as no translation. Any language English's
+    // table names is one, every one found the same way.
+    it('takes any language named by its English name as a translation', () => {
+        const nameList = Object.values(
+            languageNameMap as Record<string, string>,
+        ).map((name) => {
+            return name.split(/[,;(]/)[0].trim();
+        });
+        expect(nameList.length).toBeGreaterThan(100);
+        for (const name of nameList) {
+            expect([
+                name,
+                readSlidePlacement(`add above the ${name} text`),
+                readSlidePlacement(`Put it under each ${name} line`),
+                readSlidePlacement(`${name} above and the rest under`),
+            ]).toEqual([name, 'above', 'under', null]);
+        }
     });
 
     it('rides beside a typed ask, and never beside a pressed button', () => {
         const docs = [{ name: 'Talk', text: 'Slides: 1' }];
         expect(
-            toSlideAsk('Add the English under the Khmer line on slide 3', docs),
+            toSlideAsk('Add the English under each line on slide 3', docs),
         ).toContain(SLIDE_PLACEMENT_HINT_MAP.under);
         expect(
             toSlideAsk('Add Spanish under each line', docs, 'under'),

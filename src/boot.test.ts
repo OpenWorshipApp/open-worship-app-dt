@@ -11,8 +11,8 @@ const state = vi.hoisted(() => ({
     provider: { sessionData: {} as Record<string, unknown> },
     fontFamily: null as string | null,
     fontWeight: null as number | null,
-    locale: 'km-KH',
-    langCode: 'km' as string | null,
+    locale: 'xx-XX',
+    langCode: 'xx' as string | null,
     isRtl: false,
     handleError: vi.fn(),
     renameMigration: vi.fn(),
@@ -74,8 +74,8 @@ const KEY_PATH_SETTING = 'setting-key-path-migration';
 // default (`data/en/fonts.json`).
 const LANG_FONT_FAMILY_MAP: Record<string, string | undefined> = {
     'en-US': 'app-Google-Sans',
-    'km-KH': 'app-Battambang',
-    'he-IL': undefined,
+    'xx-XX': 'app-Xx-Face',
+    'yy-YY': undefined,
 };
 const NOTE_CLOSE_SETTING = 'previewer-note-close-migration';
 
@@ -96,8 +96,8 @@ beforeEach(() => {
     state.provider.sessionData = {};
     state.fontFamily = null;
     state.fontWeight = null;
-    state.locale = 'km-KH';
-    state.langCode = 'km';
+    state.locale = 'xx-XX';
+    state.langCode = 'xx';
     state.isRtl = false;
     state.renameMigration.mockImplementation(async () => {
         state.calls.push('run:rename');
@@ -139,16 +139,16 @@ describe('window boot', () => {
             'run:key-path',
             `claim:${NOTE_CLOSE_SETTING}`,
             'run:note-close',
-            'lang-data:km-KH',
-            // English too, for the app's default face behind Khmer's.
+            'lang-data:xx-XX',
+            // English too, for the app's default face behind the language's own.
             'lang-data:en-US',
             'callback',
         ]);
         expect(state.provider.sessionData.defaultStorageDirPath).toBe(
             '/data/owa',
         );
-        expect(state.getLangDataAsync).toHaveBeenCalledWith('km-KH');
-        expect(document.documentElement.lang).toBe('km');
+        expect(state.getLangDataAsync).toHaveBeenCalledWith('xx-XX');
+        expect(document.documentElement.lang).toBe('xx');
         // No pending move was asked for, so its module is never loaded.
         expect(state.pendingMove).not.toHaveBeenCalled();
     });
@@ -179,7 +179,7 @@ describe('window boot', () => {
         expect(state.renameMigration).not.toHaveBeenCalled();
         expect(state.keyPathMigration).not.toHaveBeenCalled();
         expect(state.noteCloseMigration).not.toHaveBeenCalled();
-        expect(state.calls).toEqual(['lang-data:km-KH', 'lang-data:en-US']);
+        expect(state.calls).toEqual(['lang-data:xx-XX', 'lang-data:en-US']);
     });
 
     test('reports a failed migration and still finishes booting with the marker kept', async () => {
@@ -233,8 +233,8 @@ describe('window boot', () => {
 
     test('a right-to-left language reads each text its own way without mirroring the window', async () => {
         state.isRtl = true;
-        state.locale = 'he-IL';
-        state.langCode = 'he';
+        state.locale = 'yy-YY';
+        state.langCode = 'yy';
 
         await init();
 
@@ -263,7 +263,7 @@ describe('window boot', () => {
             document.documentElement.style.getPropertyValue(
                 '--app-font-family',
             ),
-        ).toBe('app-Battambang, app-Google-Sans');
+        ).toBe('app-Xx-Face, app-Google-Sans');
         expect(document.body.style.fontFamily).toBe(
             'var(--app-font-family), var(--bs-body-font-family, system-ui, sans-serif)',
         );
@@ -284,8 +284,8 @@ describe('window boot', () => {
     });
 
     test("a language with no face of its own is drawn in English's", async () => {
-        state.locale = 'he-IL';
-        state.langCode = 'he';
+        state.locale = 'yy-YY';
+        state.langCode = 'yy';
 
         await init();
 
@@ -297,14 +297,14 @@ describe('window boot', () => {
     });
 
     test('writes the chosen font family and weight with CSS-breaking characters removed', async () => {
-        state.fontFamily = "Battambang'; } body { color: red";
+        state.fontFamily = "Made Up Sans'; } body { color: red";
         state.fontWeight = 600;
 
         await init();
         await flushStyle();
 
         const css = customStyle().innerHTML;
-        expect(css).toContain("font-family: 'Battambang  body  color: red'");
+        expect(css).toContain("font-family: 'Made Up Sans  body  color: red'");
         // One rule per setting: the name could not close a rule of its own.
         expect(css.match(/}/g)).toHaveLength(2);
         expect(css).toContain('font-weight: 600;');

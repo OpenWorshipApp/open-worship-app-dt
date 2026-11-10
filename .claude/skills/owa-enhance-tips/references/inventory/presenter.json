@@ -46,8 +46,8 @@
             "reason": "words of a passage in a script that is not Latin (a name link in the text): data"
         },
         {
-            "pattern": "^[^\\p{Script=Latin}\\p{Script=Common}\\p{Script=Inherited}]+ Khmer BFBS",
-            "reason": "the Khmer Bible installed here, on its version chip: data"
+            "pattern": "^[^\\p{Script=Latin}\\p{Script=Common}\\p{Script=Inherited}]+ \\p{Script=Latin}",
+            "reason": "any installed Bible's version chip, its key in its own script before its title: data"
         },
         {
             "pattern": "\\(\\p{Nd}+\\):",
@@ -2473,10 +2473,11 @@
             "personOnly": "native menu"
         },
         {
-            "id": "menu-khmer-tools",
+            "id": "menu-language-tools",
             "surface": "Native menus",
-            "labels": ["Tools > Khmer Tools"],
-            "personOnly": "native menu"
+            "labels": ["Tools > <an installed language's own menu>"],
+            "personOnly": "native menu",
+            "exclude": "a menu an installed language adds (its package's appMenus.json), not the app's own"
         },
         {
             "id": "menu-start-controlling",

@@ -91,7 +91,10 @@ export default class TimingController {
         return this.toTimeString(this.hours % 12 || 12);
     }
 
-    /** In the app's language: a Khmer congregation used to read a Latin `PM`. */
+    /**
+     * In the app's language: a congregation reading another script used to
+     * read a Latin `PM`.
+     */
     get periodStr() {
         return this.toPeriodText(this.hours >= 12 ? 'PM' : 'AM');
     }

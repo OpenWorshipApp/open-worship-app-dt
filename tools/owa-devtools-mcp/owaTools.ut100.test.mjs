@@ -71,21 +71,21 @@ beforeEach(() => {
 describe('owa_language', () => {
   it('checks a language in the main window, waiting a minute for the catalog', async () => {
     app.evaluateInApp.mockResolvedValue({
-      value: { state: 'missing', code: 'fr', size: 13000000 },
+      value: { state: 'missing', code: 'xx', size: 13000000 },
     });
     const result = await handlers.get('owa_language')({
       action: 'check',
-      language: 'French',
+      language: 'Xxlang',
     });
     expect(textOf(result)).toEqual({
       state: 'missing',
-      code: 'fr',
+      code: 'xx',
       size: 13000000,
     });
     const [[expression, options]] = app.evaluateInApp.mock.calls;
     expect(requestOf(expression)).toEqual({
       action: 'check',
-      language: 'French',
+      language: 'Xxlang',
       domain: 'language',
     });
     expect(pageWaitOf(expression)).toBe(60000);
@@ -94,11 +94,11 @@ describe('owa_language', () => {
   });
 
   it('gives an install ten minutes: a pack is tens of megabytes on a church line', async () => {
-    await handlers.get('owa_language')({ action: 'install', language: 'km' });
+    await handlers.get('owa_language')({ action: 'install', language: 'xx' });
     const [[expression, options]] = app.evaluateInApp.mock.calls;
     expect(requestOf(expression)).toEqual({
       action: 'install',
-      language: 'km',
+      language: 'xx',
       domain: 'language',
     });
     expect(pageWaitOf(expression)).toBe(600000);

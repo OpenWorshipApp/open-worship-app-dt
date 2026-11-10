@@ -2,7 +2,7 @@
 // `Invisible_Stacker` in its `IndicSyllabicCategory.txt`): a sign that sets
 // the NEXT consonant under the one before it, so the two are one cluster on
 // the page while `Intl.Segmenter` -- which has no conjunct rule for these
-// scripts -- hands them out as two graphemes. Khmer's subscript sign is one.
+// scripts -- hands them out as two graphemes. A script's subscript sign is one.
 // They are a property of scripts, not words of any language, so they are
 // listed here by code point; a cluster that ends in one belongs with what
 // follows it.

@@ -141,7 +141,7 @@ async function getLookupVersion(): Promise<string | null> {
 /**
  * The version to read the reference in, in order: the one asked for (which
  * must be installed), the one the lookup is on, then every other installed
- * one -- because "John 3:16" does not parse under a Khmer version's book
+ * one -- because "John 3:16" does not parse under another language's version's book
  * names, and a volunteer who typed it in English wants the verse, not a
  * refusal. The answer names the version it settled on.
  */

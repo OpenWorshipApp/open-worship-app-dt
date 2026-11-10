@@ -2209,12 +2209,12 @@
             "text": "Mets John 3:16 à l’écran"
         },
         "settings.bible-settings.import-xml-url": {
-            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
-            "text": "Importer une Bible depuis l’adresse xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
+            "text": "Importer une Bible depuis l’adresse xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml"
         },
         "settings.bible-settings.import-bible-language": {
-            "en": "Import a Bible in \"Khmer\"",
-            "text": "Importer une Bible en \"French\""
+            "en": "Import a Bible in \"your language\"",
+            "text": "Importer une Bible dans \"votre langue\""
         }
     }
 }

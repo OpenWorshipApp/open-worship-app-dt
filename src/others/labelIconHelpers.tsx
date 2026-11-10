@@ -4,7 +4,7 @@ import { tran } from '../lang/langHelpers';
 
 // Bootstrap-icon name for every user-visible title, keyed by the ENGLISH label
 // key -- the very same key that is handed to `tran`, never the translated text
-// (the Khmer text differs per locale). Keying by the English label is what
+// (it differs per locale). Keying by the English label is what
 // makes one label always get the same icon wherever it is rendered: a tab bar,
 // a collapsed resizable-widget title, a file-list card header, or the top nav.
 // Never bake the `bi bi-*` markup into a `tran` key -- such a key is not in the
@@ -115,7 +115,7 @@ export function toWidgetLabel(labelKey: string): {
     return {
         widgetName: tran(labelKey),
         // The SAME pane, said in English. `widgetName` is translated, and a
-        // panel that only answers to its Khmer name is a panel the help
+        // panel that only answers to its translated name is a panel the help
         // chatbot cannot point at once the app is switched over -- while its
         // English key never moves.
         widgetKey: labelKey,

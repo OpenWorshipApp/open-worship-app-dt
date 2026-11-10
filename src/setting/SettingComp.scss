@@ -23,7 +23,7 @@
       text-align: start;
       border-radius: var(--bs-border-radius);
       margin-bottom: 4px;
-      // Five tabs in a 132px sidebar: at 1rem the Khmer labels wrapped to two
+      // Five tabs in a 132px sidebar: at 1rem translated labels wrapped to two
       // lines each and the strip stopped reading as tabs.
       font-size: 0.85rem;
       padding-left: 6px;
@@ -47,7 +47,7 @@
       width: 100%;
       margin-left: 0 !important;
       margin-right: 0 !important;
-      // Khmer labels are wider than the 132px sidebar.
+      // Translated labels can be wider than the 132px sidebar.
       white-space: normal;
       line-height: 1.2;
     }
@@ -194,7 +194,7 @@
   }
 
   // The one piece of type on this tab set as instrument labelling rather than
-  // prose. No letter-spacing: this is a Khmer-first app and spacing a Khmer
+  // prose. No letter-spacing: the app is read in scripts where spacing a
   // cluster splits its subscripts.
   .app-setting-others-state {
     display: inline-flex;

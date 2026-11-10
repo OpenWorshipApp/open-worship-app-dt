@@ -47,7 +47,7 @@ function readFontFaces(css: string) {
     return faces;
 }
 
-/** The app's own face of a language (`app-Google-Sans`, `app-Battambang`). */
+/** The app's own face of a language (`app-Google-Sans`, `app-<Family>`). */
 export function checkIsAppFontFamily(family: string) {
     return family.startsWith('app-');
 }

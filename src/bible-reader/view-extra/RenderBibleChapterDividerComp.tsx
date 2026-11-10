@@ -13,7 +13,7 @@ export default function RenderBibleChapterDividerComp({
     localeChapter,
     style,
 }: Readonly<{
-    // The number as the bible writes it (Khmer digits for a Khmer bible).
+    // The number as the bible writes it (in its language's own digits).
     localeChapter: string;
     style?: CSSProperties;
 }>) {

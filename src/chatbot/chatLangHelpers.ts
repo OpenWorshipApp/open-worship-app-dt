@@ -15,8 +15,9 @@
 // says how it is told apart -- a name, the script, the little words and
 // letters that tell it from its neighbours, its words for yes and no -- in its
 // own `typed.json` (`src/lang/data/online/<code>/typed.json`), so a Spanish
-// question is answered in Spanish rather than in the French whose `la` and
-// `de` it shares, and a Thai one keeps the buttons written in Thai under it.
+// question is answered in Spanish rather than in another Latin-script
+// language whose little words it shares, and a Thai one keeps the buttons
+// written in Thai under it.
 // That file is LANGUAGE DATA and comes with the installed language like the
 // rest (2026-11-04, the user: _everything related to a language have to be
 // loaded from the language data (from language installation catalog), must
@@ -28,7 +29,9 @@
 //
 // No app imports: the window's entry, the provider loop and node-environment
 // tests all read it.
+import unicodeScriptFile from '../lang/data/en/unicode-scripts.json';
 import { listLangFiles } from '../lang/langFileStore';
+import { tranLabel } from './chatTranHelpers';
 
 type AssistantLanguageFileType = {
     name: string;
@@ -126,7 +129,7 @@ type AssistantLanguageFileType = {
         resources?: string[];
         names?: string[];
         // A how-do-I -- what the PERSON does, never "how did God…" --
-        // as words, and as patterns for what words cannot say (a French
+        // as words, and as patterns for what words cannot say (a language's
         // "how" before an infinitive). Read case as written.
         howTo?: string[];
         howToAsks?: string[];
@@ -228,8 +231,9 @@ export type AssistantLanguageType = {
     // be SHOWN in, its manual translated and every list below its own. A
     // language only typed has its name, script and yes and no, the rest empty.
     isPackaged: boolean;
-    // A letter of this language's own script. Latin for English and French,
-    // which tell each other apart by `functionWordSet` instead.
+    // A letter of this language's own script. Latin for English and every
+    // Latin-script language, which tell each other apart by
+    // `functionWordSet` instead.
     scriptPattern: RegExp;
     isLatinScript: boolean;
     nativeDigits: string | null;
@@ -349,7 +353,7 @@ export type AssistantLanguageType = {
 // line must not take the help window down with it (a test holds every file
 // to patterns that compile). A verse ask is read whatever its case (a
 // question that starts with a capital or not); a how-to pattern reads case
-// as written, because a French infinitive after its "how" is lower case and
+// as written, because an infinitive after a language's "how" is lower case and
 // a name is not (the same "how" before Peter's name asks about Peter).
 function toPatternList(
     sourceList: string[] | undefined,
@@ -497,57 +501,11 @@ function toLanguage(
 }
 
 // Unicode's scripts this window tells apart (`\p{Script=…}`): every one a
-// language here is written in, and others a person or a Bible may write in.
-// A letter of none of them is a script nobody here names (`other`).
-const SCRIPT_NAME_LIST = [
-    'Latin',
-    'Cyrillic',
-    'Greek',
-    'Armenian',
-    'Georgian',
-    'Hebrew',
-    'Arabic',
-    'Syriac',
-    'Thaana',
-    'Devanagari',
-    'Bengali',
-    'Gurmukhi',
-    'Gujarati',
-    'Oriya',
-    'Tamil',
-    'Telugu',
-    'Kannada',
-    'Malayalam',
-    'Sinhala',
-    'Thai',
-    'Lao',
-    'Tibetan',
-    'Myanmar',
-    'Khmer',
-    'Mongolian',
-    'Hangul',
-    'Hiragana',
-    'Katakana',
-    'Han',
-    'Bopomofo',
-    'Yi',
-    'Ethiopic',
-    'Cherokee',
-    'Canadian_Aboriginal',
-    'Tifinagh',
-    'Vai',
-    'Nko',
-    'Adlam',
-    'Ol_Chiki',
-    'Javanese',
-    'Balinese',
-    'Sundanese',
-    'Coptic',
-    'Tai_Viet',
-    'Tai_Tham',
-    'New_Tai_Lue',
-    'Cham',
-];
+// language here is written in, and others a person or a Bible may write in
+// -- a table of the world, English's data (`en/unicode-scripts.json`), so
+// no language is named in code. A letter of none of them is a script
+// nobody here names (`other`).
+const SCRIPT_NAME_LIST: string[] = unicodeScriptFile.scripts;
 
 // A script whose one letter is a syllable or a word: three Hangul letters say
 // as much as a short English word does, so they are weighed against Latin
@@ -746,7 +704,7 @@ const WORD_CHARACTER_PATTERN = /[\p{L}\p{M}\p{N}]/u;
 /**
  * Whether the text holds one of the words: as a whole word in a language
  * written with spaces between words (Latin), anywhere in one written
- * without them -- a Khmer word sits inside a run of letters.
+ * without them -- a word of such a script sits inside a run of letters.
  */
 export function checkHasLanguageWord(
     text: string,
@@ -848,8 +806,8 @@ const IDENTITY_LIST: LanguageIdentityType[] = [
 ];
 
 // How much a little word or a letter says: one only one language uses says
-// all of it, one five languages share a fifth -- `la` is French, Spanish,
-// Italian and Catalan, Spanish's accented "what" is Spanish alone.
+// all of it, one five languages share a fifth -- `la` is in four Latin-script
+// languages' lists, Spanish's accented "what" is Spanish alone.
 function genWeightMap(listOf: (identity: LanguageIdentityType) => string[]) {
     const countMap = new Map<string, number>();
     for (const identity of IDENTITY_LIST) {
@@ -911,6 +869,41 @@ export function getAppLanguage(): AssistantLanguageType {
     return getAssistantLanguage(getAppLangCode());
 }
 
+/**
+ * A language's name as this window shows it, every language but English the
+ * same way (2026-11-09, the user: _all languages development, except
+ * english, should be treated the same way_): the app's own language in its
+ * own words, any other by the name the window's locale gives it
+ * (`Intl.DisplayNames`), else its English name. English, the one built in,
+ * keeps its dictionary key. Until then two languages had a key of their own
+ * and every other was drawn in English.
+ */
+export function toShownLanguageName(code: string, englishName: string) {
+    if (code === DEFAULT_CHAT_LANG_CODE) {
+        return tranLabel(englishName);
+    }
+    const appCode = getAppLangCode();
+    const language = getAssistantLanguage(code);
+    if (
+        code === appCode &&
+        language.code === code &&
+        language.nativeName.length > 0
+    ) {
+        return language.nativeName;
+    }
+    if (appCode === DEFAULT_CHAT_LANG_CODE) {
+        return englishName;
+    }
+    try {
+        const shown = new Intl.DisplayNames([appCode], {
+            type: 'language',
+        }).of(code);
+        return shown !== undefined && shown !== code ? shown : englishName;
+    } catch (_error) {
+        return englishName;
+    }
+}
+
 /** Whether the text carries a letter of this language's own script. */
 export function checkIsInLanguageScript(
     text: string,
@@ -958,7 +951,7 @@ function findScriptName(character: string): string | null {
 
 /**
  * The patterns of the scripts other than Latin a text is written in -- the
- * letters a Greek passage, a Thai answer, a Khmer button name are made of --
+ * letters a Greek passage, a Thai answer, a translated button name are made of --
  * each found once.
  */
 export function listTextScriptPatterns(text: string | undefined): RegExp[] {
@@ -992,9 +985,10 @@ function countScriptLetters(text: string) {
 
 // What a language's little words and letters say a text is in, each weighed
 // by how few languages share it (`WORD_WEIGHT_MAP`). An elided little word is
-// the front of a token (a French article or pronoun cut short before a
-// vowel): the language lists it with its apostrophe (2026-10-29, a French
-// line about God making man in his image had read as no language at all).
+// the front of a token (a Latin-script language's article or pronoun cut
+// short before a vowel): the language lists it with its apostrophe
+// (2026-10-29, a line in such a language about God making man in his image
+// had read as no language at all).
 function scoreEvidence(
     identity: LanguageIdentityType,
     wordList: string[],
@@ -1026,13 +1020,13 @@ const SCORE_TIE = 1e-9;
 
 // The language the app is SHOWN in is the one its people write most often,
 // and English is every reader's other one, so those two are believed on half
-// the evidence another language needs: _Que dit Jean 3:16 ?_ is made of
-// little words French shares with Spanish, Italian and Catalan, and had read
-// as no language at all (2026-11-03, the parity rows). Until 2026-11-08
-// (BN-33) the half went to the languages with an `assistant.json` -- French
-// in every app -- and with every language installed a Dutch, Italian,
-// Haitian or Samoan line in an English app was named French on one little
-// word they share ("de", "il", "la", "le") and answered in French.
+// the evidence another language needs: a short "what does John 3:16 say"
+// in a Latin-script language is made of little words it shares with three
+// others, and had read as no language at all (2026-11-03, the parity rows).
+// Until 2026-11-08 (BN-33) the half went to the languages with an
+// `assistant.json` -- one of them in every app -- and with every language
+// installed a Dutch, Italian, Haitian or Samoan line in an English app was
+// named that language on one little word they share and answered in it.
 const SHOWN_LANGUAGE_PRIOR = 2;
 
 function toLanguagePrior(identity: LanguageIdentityType, appLangCode: string) {
@@ -1072,8 +1066,9 @@ function pickTiedScriptLanguage(
 /**
  * The language a question was WRITTEN in, or null when its words cannot say:
  * "ok", "F5", "John 3:16", two English words, a line whose little words two
- * unrelated languages share alike. Script first -- a Khmer sentence is Khmer
- * whatever a button name in it reads, Japanese is the Han letters WITH kana
+ * unrelated languages share alike. Script first -- a sentence in a script
+ * one language owns is that language whatever a button name in it reads,
+ * Japanese is the Han letters WITH kana
  * -- then, among the languages that share a script (Latin, Cyrillic, Arabic,
  * Devanagari), whichever one's little words and letters it uses most, a word
  * five languages share counting a fifth. `other` is a script none of the
@@ -1093,15 +1088,16 @@ export function detectTypedLanguage(
     }
     const scriptCountMap = countScriptLetters(clean);
     const latinCount = scriptCountMap.get('Latin') ?? 0;
-    // A curly apostrophe is the straight one, so an elided French article
+    // A curly apostrophe is the straight one, so an elided article
     // reads as typed on any keyboard (`APOSTROPHE_PATTERN`). A word keeps
     // its vowel signs: a Hindi word is one word.
     const lowerText = clean.toLowerCase().replace(APOSTROPHE_PATTERN, "'");
     // A word in capitals in a line that has small letters is a label or an
-    // acronym -- "Chat IA", "KJV" -- never one of a language's little words:
-    // French's "IA" is Indonesian's "ia", and with only the INSTALLED
-    // languages weighed (2026-11-04) it had tied a French line with
-    // Indonesian. A line typed all in capitals keeps every word.
+    // acronym -- a translated "AI Chat", "KJV" -- never one of a language's
+    // little words: one language's acronym "IA" is Indonesian's "ia", and
+    // with only the INSTALLED languages weighed (2026-11-04) it had tied a
+    // line in that language with Indonesian. A line typed all in capitals
+    // keeps every word.
     const hasSmallLetter = /\p{Ll}/u.test(clean);
     const wordList = (
         clean.replace(APOSTROPHE_PATTERN, "'").match(/[\p{L}\p{M}']+/gu) ?? []
@@ -1228,9 +1224,10 @@ export function pickReplyLanguage(
     }
     const typedLangCode = detectTypedLanguage(typed, appLangCode);
     // A question that carries the app's own script is written by somebody
-    // who reads it, whatever English it quotes: a Khmer question about
-    // where the verse "all things work together for good" is had more Latin
-    // letters than Khmer and was answered in English, to a person who reads
+    // who reads it, whatever English it quotes: a question in the app's
+    // script about where the verse "all things work together for good" is
+    // had more Latin letters than its own and was answered in English, to a
+    // person who reads
     // none
     // (2026-10-17, the elder-persona run).
     if (
@@ -1292,7 +1289,7 @@ export function checkIsRemovalReply(reply: string) {
     });
 }
 
-/** The language's own digits written as 0-9, so a Khmer two is the 2 it means. */
+/** The language's own digits written as 0-9, so its own two is the 2 it means. */
 export function toAsciiDigits(text: string) {
     let result = text;
     for (const language of LANGUAGE_LIST) {
@@ -1307,8 +1304,8 @@ export function toAsciiDigits(text: string) {
 }
 
 /**
- * 0-9 written as the app language's own digits -- `74` in Khmer digits in a
- * Khmer window -- for a count the window writes beside references the Bible
+ * 0-9 written as the app language's own digits -- `74` in that language's
+ * digits in its window -- for a count the window writes beside references the Bible
  * already writes in them (2026-10-22: a count in 0-9 had stood beside
  * references written in the Bible's own digits).
  */
@@ -1371,7 +1368,7 @@ export function listFrameAliases(marker: string): string[] {
  * language on its own (measured on the free tier: a Chinese "please confirm
  * this button is shown" under an
  * English answer). By SCRIPT, not by a list of languages: a Thai answer's
- * Thai chips are as chosen as a Khmer answer's Khmer ones -- every answer in
+ * Thai chips are as chosen as a packaged language's own ones -- every answer in
  * Chinese, Thai, Korean, Russian and Arabic had lost its chips while only a
  * package's script counted (2026-11-03).
  */
@@ -1415,8 +1412,8 @@ function toQuestionWords(question: string) {
 
 /**
  * The yes and no buttons for a question asked in one of the languages here,
- * read by how that language starts (French, with its "do you want") or
- * ends (Khmer, with its question particle) a yes-or-no question. Null for
+ * read by how that language starts (one with its "do you want") or ends
+ * (another with its question particle) a yes-or-no question. Null for
  * one it cannot tell -- English is
  * read by its own lead-ins in `quickReplyHelpers`.
  */

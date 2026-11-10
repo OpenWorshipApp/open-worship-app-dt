@@ -152,13 +152,13 @@ const ENGLISH = {
     nativeName: 'English',
     flagSVG: '<svg data-flag="en"></svg>',
 };
-const KHMER = {
-    locale: 'km-KH',
-    name: 'Khmer',
+const XX_LANG = {
+    locale: 'xx-XX',
+    name: 'Xxish',
     nativeName: '✝✝',
-    flagSVG: '<svg data-flag="km"></svg>',
+    flagSVG: '<svg data-flag="xx"></svg>',
 };
-const FRENCH = { locale: 'fr-FR', name: 'French', flagSVG: '' };
+const YY_LANG = { locale: 'yy-YY', name: 'Yyish', flagSVG: '' };
 
 let container: HTMLDivElement;
 let root: Root;
@@ -201,7 +201,7 @@ async function renderGeneral() {
 
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
-    h.allLangsPromise = Promise.resolve([ENGLISH, KHMER, FRENCH]);
+    h.allLangsPromise = Promise.resolve([ENGLISH, XX_LANG, YY_LANG]);
     h.currentLocale = 'en-US';
     h.isOnOwnFolder = false;
     h.themeSource = 'system';
@@ -265,13 +265,13 @@ describe('SettingLanguagePickerComp', () => {
             }),
         ).toEqual([
             ['English', 'English', 'true'],
-            ['✝✝', 'Khmer', 'false'],
+            ['✝✝', 'Xxish', 'false'],
             // No native name: the English one stands in.
-            ['French', 'French', 'false'],
+            ['Yyish', 'Yyish', 'false'],
         ]);
         expect(buttons[0].className).toContain('btn-info');
         expect(buttons[1].className).toContain('btn-outline-info');
-        expect(buttons[1].querySelector('svg[data-flag="km"]')).not.toBeNull();
+        expect(buttons[1].querySelector('svg[data-flag="xx"]')).not.toBeNull();
     });
 
     test('choosing a language loads it, marks it and reloads every window at once', async () => {
@@ -280,8 +280,8 @@ describe('SettingLanguagePickerComp', () => {
 
         await act(async () => findButton('✝✝')!.click());
 
-        expect(h.setCurrentLocaleMock).toHaveBeenCalledWith('km-KH');
-        expect(h.getLangDataAsyncMock).toHaveBeenCalledWith('km-KH');
+        expect(h.setCurrentLocaleMock).toHaveBeenCalledWith('xx-XX');
+        expect(h.getLangDataAsyncMock).toHaveBeenCalledWith('xx-XX');
         // Loaded before it is stored: `tran` throws in dev on a language this
         // window has not loaded.
         expect(h.getLangDataAsyncMock.mock.invocationCallOrder[0]).toBeLessThan(
@@ -309,7 +309,7 @@ describe('SettingLanguagePickerComp', () => {
     });
 
     test('a language installed or turned off below is offered, or not, with no reload', async () => {
-        h.currentLocale = 'fr-FR';
+        h.currentLocale = 'yy-YY';
         await renderPicker();
         const readButtons = () => {
             return Array.from(
@@ -322,18 +322,18 @@ describe('SettingLanguagePickerComp', () => {
         };
         expect(readButtons()).toEqual([
             ['English', 'false'],
-            ['Khmer', 'false'],
-            ['French', 'true'],
+            ['Xxish', 'false'],
+            ['Yyish', 'true'],
         ]);
 
-        // French turned off while the app is in it: the stored choice went
+        // The language in force turned off: the stored choice went
         // back to English, and the list no longer has it.
-        h.allLangsPromise = Promise.resolve([ENGLISH, KHMER]);
+        h.allLangsPromise = Promise.resolve([ENGLISH, XX_LANG]);
         h.currentLocale = 'en-US';
         await act(async () => h.pluginsChangedListener!());
         expect(readButtons()).toEqual([
             ['English', 'true'],
-            ['Khmer', 'false'],
+            ['Xxish', 'false'],
         ]);
 
         // Unmounted, it listens no more.
@@ -403,18 +403,18 @@ describe('SettingGeneralFontFamilyComp', () => {
         });
 
         await act(async () =>
-            h.fontFamilyControlProps.setFontFamily('Noto Sans Khmer'),
+            h.fontFamilyControlProps.setFontFamily('Made Up Sans'),
         );
 
         expect(h.setSettingMock).toHaveBeenCalledWith(
             'app-font-family',
-            'Noto Sans Khmer',
+            'Made Up Sans',
         );
         expect(getApplyButton().className).toContain('btn-outline-warning');
         expect(
             container.querySelector('[data-testid="font-family-control"]')!
                 .textContent,
-        ).toBe('Noto Sans Khmer|400');
+        ).toBe('Made Up Sans|400');
 
         await act(async () => h.fontFamilyControlProps.setFontWeight('700'));
 

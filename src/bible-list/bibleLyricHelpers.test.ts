@@ -78,13 +78,13 @@ const VERSES: Record<string, Record<number, Record<string, string>>> = {
             '18': 'He that believeth',
         },
     },
-    KH: {
+    TQAH: {
         1: genChapter('H1', 51),
         2: { '1': 'H2:1', '2': 'H2:2', '3': 'H2:3' },
         3: { '16': 'Kh 16', '17': 'Kh 17', '18': 'Kh 18' },
     },
 };
-const DIGITS: Record<string, string> = { KH: 'kh-' };
+const DIGITS: Record<string, string> = { TQAH: 'kh-' };
 
 function passage(
     target: Partial<BibleItem['target']> = {},
@@ -141,13 +141,13 @@ beforeEach(() => {
 describe('createBibleItemLyric', () => {
     test('titled by its own version, the others its subtitle, one numbered line per version in each Verse part', async () => {
         const source = passage();
-        const file = await createBibleItemLyric(source, ['KH']);
+        const file = await createBibleItemLyric(source, ['TQAH']);
         expect(file).toEqual({
-            filePath: '/documents/(KJV) John 3 16-17, (KH) John 3 16-17.owl',
+            filePath: '/documents/(KJV) John 3 16-17, (TQAH) John 3 16-17.owl',
         });
         const content = getCreatedContent();
         expect(content).toContain(
-            '- Title: (KJV) John 3:16-17\n- Subtitle: (KH) John 3:16-17\n',
+            '- Title: (KJV) John 3:16-17\n- Subtitle: (TQAH) John 3:16-17\n',
         );
         expect(content).toContain('- Structure: V16V17\n');
         expect(content).toContain(
@@ -158,7 +158,7 @@ describe('createBibleItemLyric', () => {
         );
         expect(h.getAvailableFileName).toHaveBeenCalledWith(
             '/documents',
-            '(KJV) John 3 16-17, (KH) John 3 16-17',
+            '(KJV) John 3 16-17, (TQAH) John 3 16-17',
             '.owl',
         );
         expect(h.unlockKeys).toEqual(['create-bible-lyric']);
@@ -174,10 +174,10 @@ describe('createBibleItemLyric', () => {
     });
 
     test("the passage's own version leads, and is never listed twice", async () => {
-        await createBibleItemLyric(passage({}, 'KH'), ['KJV', 'KH', 'KJV']);
+        await createBibleItemLyric(passage({}, 'TQAH'), ['KJV', 'TQAH', 'KJV']);
         const content = getCreatedContent();
         expect(content).toContain(
-            '- Title: (KH) John 3:16-17\n- Subtitle: (KJV) John 3:16-17\n',
+            '- Title: (TQAH) John 3:16-17\n- Subtitle: (KJV) John 3:16-17\n',
         );
         expect(content).toContain(
             '```ol:Verse 16\nkh-16: Kh 16\n16: For God so loved the world\n```',
@@ -199,7 +199,7 @@ describe('createBibleItemLyric', () => {
     test('across chapters each line says its chapter too', async () => {
         await createBibleItemLyric(
             passage({ chapter: 1, verseStart: 51, chapterEnd: 2, verseEnd: 2 }),
-            ['KH'],
+            ['TQAH'],
         );
         const content = getCreatedContent();
         expect(content).toContain('- Structure: V51V1V2\n');
@@ -214,13 +214,13 @@ describe('createBibleItemLyric', () => {
     test('a verse missing in one version names it and creates nothing', async () => {
         h.getVerses.mockImplementation(
             async (bibleKey: string, _bookKey: string, chapter: number) =>
-                bibleKey === 'KH' ? { '16': 'Kh 16' } : VERSES.KJV[chapter],
+                bibleKey === 'TQAH' ? { '16': 'Kh 16' } : VERSES.KJV[chapter],
         );
-        const file = await createBibleItemLyric(passage(), ['KH']);
+        const file = await createBibleItemLyric(passage(), ['TQAH']);
         expect(file).toBeNull();
         expect(h.toast).toHaveBeenCalledExactlyOnceWith(
             'Create Lyric',
-            'Bible passage is unavailable in: KH',
+            'Bible passage is unavailable in: TQAH',
         );
         expect(h.createWithContent).not.toHaveBeenCalled();
         expect(h.directory.fireRefreshEvent).not.toHaveBeenCalled();

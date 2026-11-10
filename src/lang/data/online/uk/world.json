@@ -18,5 +18,8 @@
     ],
     "languageAliases": {
         "ukraine": "ukrainian"
+    },
+    "catalogLanguageCodes": {
+        "uk": "ukr"
     }
 }

@@ -170,7 +170,7 @@ const BIBLE_FIND_TIMEOUT = 120 * 1000;
 const LOOKUP_RECORD_TIMEOUT = 60 * 1000;
 // A Resources PDF is drawn page by page in a child process of main.
 const RESOURCE_FILE_TIMEOUT = 60 * 1000;
-// `owa_language` `install`: a language pack is up to ~30 MB (Khmer, with its
+// `owa_language` `install`: a language pack is up to ~30 MB (one with its own
 // fonts and Bible data), checked and extracted on a cheap machine over a
 // church hall's internet.
 const LANGUAGE_INSTALL_TIMEOUT = 10 * 60 * 1000;
@@ -243,8 +243,8 @@ function withTranslations(labels, langCode) {
 
 // "Panel > Control" is two labels, and each is translated on its own: the
 // whole string is no dictionary key, so a scope written in English was handed
-// to a Khmer window untranslated in both halves -- and a scope now matches the
-// name the window SHOWS for a panel (its header, in that language) as well as
+// to a translated window untranslated in both halves -- and a scope now
+// matches the name the window SHOWS for a panel (its header, in that language) as well as
 // its stamped English one (`scopePathOf`, 2026-10-16, T2).
 const SCOPE_SEPARATOR_PATTERN = /\s*(?:>|»)\s*/;
 function tranLabel(label, langCode, bundle) {
@@ -295,8 +295,8 @@ function genGuideCardWords(langCode) {
   };
 }
 
-// A step's controls, the window's words FIRST: in a Khmer window the English
-// label rings nothing, and the matcher takes the first candidate on screen.
+// A step's controls, the window's words FIRST: in a translated window the
+// English label rings nothing, and the matcher takes the first candidate on screen.
 // A scoped label also keeps its panel's English name beside the translated
 // control, because a panel answers to its `data-widget-name` in every
 // language. The English ones stay last.
@@ -327,10 +327,10 @@ function localizeFinds(finds, langCode, bundle) {
 // picks, drops and orders them reads the recipe's own words) and the two are
 // the same steps in the same order, read off the same lines; when they are
 // not, the English text stands.
-// The page's own translation is read first when it is current (`W-11@km`,
+// The page's own translation is read first when it is current (`W-11@<code>`,
 // `src/lang/data/online/<code>/manual/`): the whole step in the window's language, not the
-// English step with its button names translated -- which is what a Khmer
-// window had shown, an English sentence round a Khmer word (2026-10-17).
+// English step with its button names translated -- which is what a translated
+// window had shown, an English sentence round a translated word (2026-10-17).
 function readLocalStepPage(manualId, langCode) {
   const translated = readHelpPage(`${manualId}@${langCode}`, null, 'whole', {
     keepTemplates: true,
@@ -797,7 +797,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_tran',
     {
       // MC-07: never called in 358 recorded chatbot asks, so it pays
-      // for its seat in words only. The Khmer example cost ~40 tokens a
+      // for its seat in words only. A named-language example cost ~40 tokens a
       // round to say what "another language" already says.
       description:
         'What a button is CALLED on this user’s screen when the app ' +
@@ -1426,7 +1426,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         if (address !== '') {
           // The page is read by THIS tool, and the model never gets
           // a turn between the reading and the drafting. Measured
-          // 2026-09-09 on a Khmer hymnal's chord page: told twice
+          // 2026-09-09 on a non-English hymnal's chord page: told twice
           // to hand the page over whole, the model read it with
           // `owa_read_website`, retyped the words itself -- every
           // fragment rejoined correctly, and not one chord kept --
@@ -3181,7 +3181,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // Read in ENGLISH, the language every rule below reads a recipe
           // in (the window a step goes to, the step a topic names, the
           // known question's own control). Read in the window's language,
-          // a Khmer page lost its button names to `toEnglishOnly` and the
+          // a translated page lost its button names to `toEnglishOnly` and the
           // capital-letter test before a ring was ever drawn; the window's
           // words go in at the very end, in `prepareSteps`.
           const manualPage = readHelpPage(manualId, 'en', 'whole');

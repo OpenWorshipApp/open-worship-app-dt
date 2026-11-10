@@ -101,7 +101,7 @@ let prepareListener: LangPluginsPrepareType | null = null;
  * missing at boot, the window read as English and loaded English alone, and
  * taking the list first switched `getCurrentLocale` to a language this window
  * had not loaded -- `tran` threw in dev, in the error handler too, and every
- * open window looped (Khmer installed from Settings, 2026-11-05). The listener
+ * open window looped (a language installed from Settings, 2026-11-05). The listener
  * must not await `ensureLangPlugins`: it runs inside that very promise.
  */
 export function setLangPluginsPrepare(listener: LangPluginsPrepareType) {

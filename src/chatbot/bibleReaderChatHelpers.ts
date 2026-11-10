@@ -106,10 +106,11 @@ const ENGLISH_NAMES_PATTERN =
     /\b(?:names?|people|persons?|places?|characters?|who)\b/i;
 const ENGLISH_CHAPTER_PATTERN = /\bchapters?\s+\d{1,3}\b/i;
 
-// A Latin word has word boundaries; Khmer and its neighbours are written
-// without spaces, so their words match inside a run (a chapter word inside a
+// A Latin word has word boundaries; some scripts are written without
+// spaces, so their words match inside a run (a chapter word inside a
 // sentence).
-// Without this, an English "commentary" was excluded as French "comment".
+// Without this, an English "commentary" was excluded as another language's
+// "comment" (its "how").
 const LATIN_WORD_PATTERN =
     /^[\p{Script=Latin}][\p{Script=Latin}\p{M}0-9'’ -]*$/u;
 
@@ -265,11 +266,11 @@ function findReferenceAt(
 }
 
 // A reference needs a book in front of it: "chapter 3" alone, or "3:16"
-// alone, says nothing a tool could read. Two LETTER CLUSTERS, so a Khmer
-// book name counts: its vowel and subscript marks sit between the letters
-// (Khmer's name for John has no two adjacent `\p{L}`), which a bare
-// `\p{L}{2,}` missed and let a Khmer "where do I type John 3:16" fall
-// through (found 2026-10-18).
+// alone, says nothing a tool could read. Two LETTER CLUSTERS, so a book
+// name in a script with vowel and subscript marks counts: they sit between
+// the letters (one language's name for John has no two adjacent `\p{L}`),
+// which a bare `\p{L}{2,}` missed and let a translated "where do I type
+// John 3:16" fall through (found 2026-10-18).
 function checkHasBookBefore(text: string, at: number) {
     return /(?:\p{L}[\p{M}]*){2,}/u.test(text.slice(Math.max(0, at - 40), at));
 }
@@ -317,9 +318,9 @@ function checkIsLanguageHowTo(text: string, language: AssistantLanguageType) {
  * with the passage conversation, which hands such a line to the ordinary
  * assistant rather than answering it under the Bible prompt (2026-10-19).
  *
- * What the PERSON does, never any "how" (2026-10-29): French's and Khmer's
- * words for "how" are every "how" there is, and _How did Jesus save Peter
- * in Matthew 14:30?_ asked in French was no Bible question in a Reader
+ * What the PERSON does, never any "how" (2026-10-29): many languages' words
+ * for "how" are every "how" there is, and _How did Jesus save Peter
+ * in Matthew 14:30?_ asked in one of them was no Bible question in a Reader
  * tab while the same words in English were one.
  */
 export function checkIsHowTo(text: string) {
@@ -339,10 +340,10 @@ export function checkIsHowTo(text: string) {
  *
  * A word the language's Bibles use too counts in a how-do-I only
  * (2026-10-29, the user's pictures of Noah's card: _what is the size of noah
- * ark_ answered from the record in English and Khmer, and the same asked in
- * French sent to the app's guide, which said to type `/btw` -- the French
- * word for "size" is the font's size and Rachel's stature both, 36 verses
- * of the Louis Segond).
+ * ark_ answered from the record in English and another language, and the
+ * same asked in a third sent to the app's guide, which said to type `/btw`
+ * -- that language's word for "size" is the font's size and Rachel's
+ * stature both, 36 verses of a Bible in it).
  */
 export function checkIsAppWork(text: string) {
     if (
@@ -406,7 +407,7 @@ export function readBibleReaderAsk(
  * decides and a reference in it is an example, not a Bible question. _Where
  * do I type John 3:16?_ is the Reader's own how-to (W-11): routed as a
  * Bible-Reader ask it had the verse opened and never said where to type it
- * (found in round 23's Khmer pass, 2026-10-18). Only a free-typed question
+ * (found in round 23's non-English pass, 2026-10-18). Only a free-typed question
  * with no row gets the verse tools.
  */
 export function keepBibleReaderAskUnlessKnown(
@@ -459,7 +460,7 @@ export function toBibleReaderAsk(
     ask: BibleReaderAskType,
     // The Bible a quoted verse should come from, when the window could read
     // the installed list (`pickVerseFindBible`): the person's own language
-    // first, so a Khmer reader is quoted the Khmer Bible.
+    // first, so a reader is quoted a Bible in their own language.
     bible: string | null = null,
 ) {
     const line =

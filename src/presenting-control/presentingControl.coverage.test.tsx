@@ -61,9 +61,10 @@ vi.mock('../helper/appHooks', async () => {
         },
     };
 });
-// English labels stay easy to query, but every key is checked against BOTH
-// real dictionaries: a missing Khmer or French string throws here as it does
-// in dev, instead of being hidden behind an identity stub.
+// English labels stay easy to query, but every key is checked against EVERY
+// language package's real dictionary on disk: a missing translated string
+// throws here as it does in dev, instead of being hidden behind an identity
+// stub.
 vi.mock('../lang/langHelpers', () => ({
     tran: (key: string) => {
         for (const dictionary of state.dictionaries) {

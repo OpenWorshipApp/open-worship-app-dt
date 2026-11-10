@@ -236,16 +236,16 @@ describe('the labels sidecar per lookup language', () => {
         const first = await importFresh();
         await first.loadLookupRecordLabelsFile();
 
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         expect(
             (await second.loadLookupRecordLabelsFile())?.labels,
-        ).toStrictEqual(['label-km-46']);
+        ).toStrictEqual(['label-xx-46']);
 
-        expect(mocked.builtLabelsLangCodes).toStrictEqual(['en', 'km']);
+        expect(mocked.builtLabelsLangCodes).toStrictEqual(['en', 'xx']);
         expect([...mocked.fileMap.keys()].sort()).toStrictEqual([
             '/data/lookup-data/verse-record-labels-en.json',
-            '/data/lookup-data/verse-record-labels-km.json',
+            '/data/lookup-data/verse-record-labels-xx.json',
             '/data/lookup-data/verse-text-index.json',
         ]);
     });
@@ -255,7 +255,7 @@ describe('the labels sidecar per lookup language', () => {
     test('reuses a sidecar already written for a language', async () => {
         const first = await importFresh();
         await first.loadLookupRecordLabelsFile();
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         await second.loadLookupRecordLabelsFile();
         expect(mocked.buildCount).toBe(2);
@@ -275,7 +275,7 @@ describe('the labels sidecar per lookup language', () => {
         await first.loadLookupTextIndexFile();
         expect(mocked.buildCount).toBe(1);
 
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         await second.loadLookupTextIndexFile();
 

@@ -19,7 +19,7 @@ const REAL_NOTE_CONTENT = JSON.stringify({
                         format: 0,
                         mode: 'normal',
                         style: '',
-                        text: 'Khmer BibleNote Study: Genesis 1',
+                        text: 'BibleNote Study: Genesis 1',
                         type: 'text',
                         version: 1,
                     },
@@ -133,7 +133,7 @@ describe('readLexicalText', () => {
     it("reads a real note's words, a mention by its name", () => {
         expect(readLexicalText(REAL_NOTE_CONTENT)).toBe(
             [
-                'Khmer BibleNote Study: Genesis 1',
+                'BibleNote Study: Genesis 1',
                 '(KJV) Genesis 1:1-3',
                 'In the beginning God created the heaven',
             ].join('\n'),

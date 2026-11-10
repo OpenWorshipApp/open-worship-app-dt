@@ -952,7 +952,7 @@ describe('applyAgentSlideAction edges', () => {
                     id: 2,
                     valign: 'center',
                     fontWeight: '',
-                    fontFamily: 'Khmer OS',
+                    fontFamily: 'Made Up Sans',
                     backgroundColor: '#00000080',
                     rotate: 15,
                 },
@@ -968,7 +968,7 @@ describe('applyAgentSlideAction edges', () => {
         expect(second).toMatchObject({
             textVerticalAlignment: 'center',
             fontWeight: null,
-            fontFamily: 'Khmer OS',
+            fontFamily: 'Made Up Sans',
             backgroundColor: '#00000080',
             rotate: 15,
         });

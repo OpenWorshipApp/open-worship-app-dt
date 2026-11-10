@@ -74,7 +74,7 @@ export function getNameTypeIconClass(type: string | null | undefined): string {
  * A name record's raw `type` as a readable label, ready for translation.
  *
  * The datasets keep this field in English whatever language the records
- * themselves are in (`"gender": "male"` sits beside a Khmer name), so it is a
+ * themselves are in (`"gender": "male"` sits beside a translated name), so it is a
  * key, not text to show. An empty type has nothing to label and stays empty
  * rather than becoming "Person" out of nowhere.
  */
@@ -182,7 +182,7 @@ export const AGE_PATTERN_LIST: ReadonlyArray<[RegExp, string]> = [
 ];
 
 /**
- * A name record's `age` in the lookup language — a Khmer record read
+ * A name record's `age` in the lookup language — a translated record read
  * `175 years` beside its translated type and gender chips.
  *
  * Dropped as `unknown` on the English value, like the enums. A phrase none of

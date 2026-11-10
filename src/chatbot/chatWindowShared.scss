@@ -16,8 +16,8 @@
 // everything, and boot.ts's `*` rule could never reach past these class
 // rules. Then the app's own (`--app-font-family`, set by `boot.ts` on every
 // page, 2026-11-06, the user: _all pages should embed and set
-// app-Google-Sans_): the language's face first where it has one (Battambang
-// for Khmer), then English's Google Sans; the window's signage faces are
+// app-Google-Sans_): the language's face first where it has one (the face
+// its package ships), then English's Google Sans; the window's signage faces are
 // what is left when neither is there. The monospace stack keeps its own
 // faces first, with the app's behind them for the letters they lack. And
 // `--chat-lang-font` (`chatWindowLanguage.ts`: a language's own face,

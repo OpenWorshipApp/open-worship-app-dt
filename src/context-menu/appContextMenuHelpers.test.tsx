@@ -224,7 +224,7 @@ describe('markOverflowingMenuLabels', () => {
     test('a label too long gets the scrolling line; one that fits does not', () => {
         const menu = document.createElement('div');
         const long = genLabel(
-            '<span data-locale-ff="km">(AMP)  English\n Amplified</span>',
+            '<span data-locale-ff="yy">(AMP)  English\n Amplified</span>',
             420,
         );
         const short = genLabel('Open', 180);
@@ -249,7 +249,7 @@ describe('markOverflowingMenuLabels', () => {
                 '--app-context-menu-marquee-indent',
             ),
         ).toBe('10px');
-        expect(long.label.dataset.localeFf).toBe('km');
+        expect(long.label.dataset.localeFf).toBe('yy');
         expect(short.label.dataset.marqueeText).toBeUndefined();
         expect(short.label.getAttribute('style')).toBeNull();
 

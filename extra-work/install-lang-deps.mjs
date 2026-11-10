@@ -2,8 +2,8 @@
 // one dependency a language may have -- is declared by the LANGUAGE, in a
 // `package.json` of its own (`src/lang/data/online/<code>/package.json`,
 // with its `package-lock.json` and an `.npmrc`), and installed into that
-// folder's `node_modules`. 2026-11-05, the user: _for khmer plugin it have to
-// ship with khmer language bundle_ -- the app's own manifest names no
+// folder's `node_modules`. 2026-11-05, the user: a language's song plugin has
+// to ship with that language's bundle -- the app's own manifest names no
 // language's package, and `extra-work/build-lang-plugins.mjs` bundles only
 // what lies inside the language's folder.
 //

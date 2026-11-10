@@ -157,10 +157,10 @@ function getSections() {
 describe('the verse header', () => {
     test('another bible is a copy of the passage in that bible', async () => {
         const { bibleItem, setBibleItem } = await render();
-        h.headerProps!.onBibleKeyChange('KHM');
+        h.headerProps!.onBibleKeyChange('TQAM');
         const [newBibleItem] = setBibleItem.mock.calls[0];
         expect(newBibleItem).not.toBe(bibleItem);
-        expect(newBibleItem.bibleKey).toBe('KHM');
+        expect(newBibleItem.bibleKey).toBe('TQAM');
         expect(newBibleItem.target).toEqual(TARGET);
         expect(bibleItem.bibleKey).toBe('KJV');
     });

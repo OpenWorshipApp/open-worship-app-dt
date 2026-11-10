@@ -54,7 +54,7 @@ describe('which writes go to the screens', () => {
     test('anything else stays on this computer', async () => {
         const { genScreenSettingPatch } = await loadHelpers();
         expect(genScreenSettingPatch('ai-enabled', 'true')).toBeNull();
-        expect(genScreenSettingPatch('language-locale', 'km-KH')).toBeNull();
+        expect(genScreenSettingPatch('language-locale', 'xx-XX')).toBeNull();
     });
 
     test("a layer's own state does not: it travels as that layer's message", async () => {

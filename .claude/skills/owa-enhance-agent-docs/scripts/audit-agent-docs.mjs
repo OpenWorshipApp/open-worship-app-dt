@@ -363,7 +363,7 @@ function readText(relPath, maxBytes = MAX_READ_BYTES) {
 // (`language-packages.md`). A path inside the package of a real language
 // (one English's `language-names.json` names) whose folder is not here
 // belongs to a language not installed, not to a file that is gone. A code no
-// language has (`online/kmm/`) is still held to the disk.
+// language has (`online/xx/`) is still held to the disk.
 const ONLINE_LANG_PATH_PATTERN = /^src\/lang\/data\/online\/([^/]+)(?:\/|$)/;
 let languageNameMap = null;
 function checkIsAbsentLangPackagePath(relPath) {
@@ -2099,7 +2099,7 @@ function stampNotesReview(pathArg, docList, claimList) {
     }
     const reviewMap = readNotesReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
-    const reviewed = new Date().toLocaleDateString('sv-SE');
+    const reviewed = new Date().toLocaleDateString('en-CA');
     for (const relPath of wantedList) {
         const { text, files, code } = readNoteState(
             relPath,
@@ -2601,7 +2601,8 @@ function runManualCheck() {
 // The manual in the app's other languages (`src/lang/data/online/<code>/manual/`). A
 // page made from an older English is shown in English, so a corrected recipe
 // left its translations behind every run until 2026-10-29 (`AD-24`): 46 of 65
-// pages in Khmer and in French that day, the old words still in them. Never
+// pages in each of the two languages translated that day, the old words still
+// in them. Never
 // a failing gate -- `manual-i18n-status.mjs` decided a manual edit must not
 // wait for a translation -- but a run of this skill is not done while one lags.
 function readTranslationLagList() {
@@ -2680,7 +2681,7 @@ function stampManualReview(idArg, deadItemList) {
     }
     const reviewMap = readManualReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
-    const reviewed = new Date().toLocaleDateString('sv-SE');
+    const reviewed = new Date().toLocaleDateString('en-CA');
     for (const recipe of recipeList) {
         if (idList.includes(recipe.id)) {
             const { text, code } = readRecipeState(recipe, sourceMap);

@@ -14,7 +14,7 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 
 ## 0. TL;DR — the five things that bite you
 
-1. **Locale is dynamic.** The UI may be **Khmer**, **English** or **French** (user setting). Never target
+1. **Locale is dynamic.** The UI may be English or any installed language (user setting). Never target
    by hard-coded visible text — target by role/structure/CSS class, or map labels (§1).
 2. **Settings/About/editors are POPUP windows, not main-window routes.** Do **NOT**
    `navigate_page` the main window to `setting.html` — it traps the window (§2). Open them via
@@ -33,9 +33,9 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 
 ## 1. Localization is dynamic — target by structure, not text
 
-- The app renders in **Khmer (`km-KH`)**, **English (`en-US`)** or **French (`fr-FR`)**, switchable in
-  Settings → Language (one button per language, labelled in its OWN script — `ខ្មែរ` / `English` /
-  `Français` — with the English name as its `title`).
+- The app renders in **English (`en-US`)** or any INSTALLED language (each a plugin, memory
+  `language-plugins-runtime`), switchable in Settings → **Languages** → Language (one button per
+  installed language, labelled in its OWN script, with the English name as its `title`).
 - ⚠️ **Do NOT trust `window.localStorage['language-locale']`** — it is a stale leftover key
   (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
   through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
@@ -49,20 +49,20 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
   locale each time an app window (re)loads, and `owa_app_state` reports it as `language` (on
   2026-07-26 it read `"en"` under a Khmer presenter; that Low a11y finding is fixed). In Settings →
   Language the active button is the solid (non-`outline`) one, `aria-pressed="true"`.
-- **Consequence:** the same button reads `ស្វែងរកព្រះគម្ពីរ` or `Bible Lookup` depending on
+- **Consequence:** the same button reads `Bible Lookup` or its translation depending on
   locale. Snapshot `uid`s and text both shift.
 - **Do:** click by `button.nav-link` + CSS state (`.active`, `.app-on-screen`), by icon class
   (`bi-*`), by `role`/accessible name, or by position. Read state with `evaluate_script` on
-  classes. **Don't:** match literal Khmer/English strings unless you first read the current
-  locale.
+  classes. **Don't:** match literal English or translated strings unless you first read the
+  current locale.
 - If the locale changes during your run and you didn't change it, **assume the user did** and
   confirm before reporting.
 
-### 1.1 A missing Khmer key THROWS in dev — so every run must switch locale
+### 1.1 A missing key THROWS in dev in every non-English language — so every run must switch locale
 
 `tran()` (`src/lang/langHelpers.ts`) returns the input string immediately when the locale
-is `en-US` (`DEFAULT_LOCALE`) — **it never looks anything up**. In `km-KH` the same call
-`throw`s `Translation for text "…" not found in locale km-KH` when the key is missing,
+is `en-US` (`DEFAULT_LOCALE`) — **it never looks anything up**. In any other locale the same
+call `throw`s `Translation for text "…" not found in locale <locale>` when the key is missing,
 and because only the slide editor sits in an error boundary (`AppErrorBoundaryComp`), **the
 whole subtree renders blank** everywhere else.
 
@@ -72,7 +72,8 @@ Consequences for a run:
   locale switch (`LT-01..02`, SKILL.md §6d / test-plan §S15) is part of the mandatory
   core, not an optional spot-check.
 - `npm run lint` now fails on a missing STATIC key (`src/lang/tranKeyCoverage.test.ts`), but stays
-  **fully green** for a dynamic `tran(variable)` one. Only running the app in Khmer finds that.
+  **fully green** for a dynamic `tran(variable)` one. Only running the app in a non-English
+  language finds that.
 - **Verified 2026-07-26:** `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`) called
   `tran(name)` with `name="X:"`; selecting a canvas item blanked the entire slide-editor
   tools panel. Fixed by not translating axis abbreviations.
@@ -85,7 +86,7 @@ Consequences for a run:
   Lyrics tab, the **entire Presenter came up blank** (`#root` 0 children, body 80 chars).
   Fixed by moving the ellipsis outside `tran()`.
 - Distinguish from **hardcoded** English (a string that never calls `tran()` at all). Those merely stay
-  English in Khmer mode: **Low/Info**, not Critical, and not a throw.
+  English in a translated window: **Low/Info**, not Critical, and not a throw.
 
 In production the same missing key silently falls back to English, so this is a
 dev-visible-only failure — which is exactly why the robot run has to catch it.
@@ -110,9 +111,10 @@ const sanitize = (k) => k.trim().toLowerCase();
 // sanitized dictionary keys taken from BEFORE `function sanitizeTranKey`
 ```
 
-#### ⚠️ Half the dictionary keys are UNQUOTED identifiers — match them too
+#### ⚠️ Half the dictionary keys were UNQUOTED identifiers — history
 
-Verified 2026-08-07 (this trap nearly produced two false **Critical** findings). The km
+Every dictionary is a `dictionary.json` now, every key quoted; this held while the km
+dictionary was a `.ts` module. Verified 2026-08-07 (this trap nearly produced two false **Critical** findings). The km
 dictionary is a plain object literal, so any key that is a valid JS identifier is written
 **without quotes**:
 
@@ -132,37 +134,26 @@ const re = /^\s*(?:'([^']*)'|([A-Za-z_$][\w$]*))\s*:/gm;
 ```
 
 **Never file a missing-key Critical from a static sweep alone.** Confirm it live: switch the
-app to Khmer, reach the component, and look for the actual
-`Translation for text "…" not found in locale km-KH` in the console. A key that renders (e.g.
-the mini-screen footer showing `ស្ទែជ 0`) is present, whatever a grep says.
+app to an installed non-English language, reach the component, and look for the actual
+`Translation for text "…" not found in locale <locale>` in the console. A key that renders (e.g.
+the mini-screen footer's `Stage 0` in that language) is present, whatever a grep says.
 
 Both sweeps only cover **literal** keys; dynamic `tran(someVariable)` sites (e.g.
 `SettingCardHeaderComp` doing `tran(title)`) stay invisible to any static sweep and remain
 the residual risk.
 
-Also beware: clicking the `Khmer`/`English` button re-renders **some** components
-immediately, before `Apply Settings` reloads the windows. A screenshot taken in that gap
-shows a believable mix of both languages — that is a **partial re-render, not an
-untranslated-string bug**. Always judge translation coverage *after* `Apply Settings`.
+Also beware: clicking a language button re-renders **some** components immediately, before
+the windows reload (the press reloads them itself since 2026-11-05; `Apply Settings` did
+before). A screenshot taken in that gap shows a believable mix of both languages — that is
+a **partial re-render, not an untranslated-string bug**. Always judge translation coverage
+*after* the reload.
 
-### Khmer ↔ English label map (verified)
-| English | Khmer | Where |
-|---|---|---|
-| Slide Editor | កែសម្រួលស្លាយ | header tab |
-| Bible Reader | អានព្រះគម្ពីរ | header tab |
-| (dev)Experiment | (dev)ការសាកល្បង | header tab (dev) |
-| Bible Lookup | ស្វែងរកព្រះគម្ពីរ | header button (Ctrl+B) |
-| Setting | ការកំណត់ | header gear |
-| Documents | ឯកសារ | list + presenter tab |
-| Lyrics | អក្សរភ្លេង | list + presenter tab |
-| Bibles | ព្រះគម្ពីរ | presenter/right tab |
-| Foreground | ផ្ទៃខាងមុខ | presenter tab |
-| Presenting Flows | តារាងកម្មវិធី | left list |
-| Bible Notes | កំណត់ត្រាព្រះគម្ពីរ | right tab |
-| Colors / Images / Videos / Cameras / Web(s) / Audios | ពណ៌ / រូបភាព / វីដេអូ / កាមេរ៉ា / វេបសាយ / សំលេង | background tabs |
-| Clear all/bg/slide/bible/fg (F6–F10) | លុបទាំងអស់ / លុបផ្ទៃខាងក្រោយ / លុបស្លាយ / លុបព្រះគម្ពីរ / លុបផ្ទៃខាងមុខ | mini-screen footer |
-| Close (Ctrl+Q) | បិទ | modal close |
-| Save (Ctrl+S) | រក្សាទុក | editors |
+### Reading a label in the window's language
+
+`owa_tran` answers what an English label reads as in the language the app is showing, and
+`src/lang/data/online/<code>/dictionary.json` holds every key (English label → translation,
+sanitized as above). The dictionary is the map for every language alike; a hand-kept table
+for one language (a Khmer one stood here until 2026-11-09) goes stale.
 
 ---
 
@@ -465,7 +456,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   for `km-KH`, `toLocaleDateString` answers in ENGLISH without a word. Node (vitest)
   has full ICU, so a test passes where the app does not — the stopwatch history's
   dates first shipped that way. Khmer dates are numbers only now (`04/10 07:57`); see
-  memory `electron-icu-has-no-khmer`.
+  memory `electron-icu-trimmed-locales`.
 - **A divider takes the keyboard** (2026-10-06): Tab reaches it (an info-blue
   outline), the `ContextMenu` key / Shift+F10 opens its Reset Size / Close First /
   Close Second Widget menu, and ←→ (↑↓ on a top/bottom divider) move it 20 px (Shift
@@ -1211,7 +1202,7 @@ an old file, not a new bug.
 ### 14.8 Failure surfaces that are easy to miss
 
 - A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the presenting flow must still render, and the bad entry must survive a later write of the file (PL-51). The toast and the log line come ONCE per entry per minute (`checkShouldNoticeInvalidItem`), not on every re-read and once per surface: a re-read after a write, or the run player opening, says nothing new. The log names the file and prints the entry as JSON text. A second toast for the same entry within the minute is a regression (it was thirteen in run 20261002-1644).
-- `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
+- `tran()` throws in dev on a missing key in any non-English language and blanks the page, so the locale pass
   (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
   `No items in this presenting flow`, `No slides`, `Not Supported Item Type`, `Preview Presenting Flow`,
   `Open Preview`, `Remove from Presenting Flow`, `Choose Color`, `Move up`, `Move down`,
@@ -1225,7 +1216,7 @@ an old file, not a new bug.
   `This element does not accept CC element`, `The set time is already due`,
   `This shortcut is already used in this presenting flow`,
   `Attach the elements to show as CC elements`,
-  `Open the presenting flow preview to use this action`). A menu that renders BLANK in Khmer is
+  `Open the presenting flow preview to use this action`). A menu that renders BLANK in a translated window is
   this throw, not a styling bug — read the console for the key name.
 - **The action rows are the ones to re-check after any new label**: their text is built as
   `tran(label)` + the arming value appended AFTER translation, so a new action ships a new
@@ -1473,9 +1464,10 @@ Everything in this section was driven live on 2026-08-10 against the canonical l
 `https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`,
 importing it a second time under a scratch key and then deleting it.
 
-**Use a NON-ENGLISH bible.** An English XML hides every bug in this area, because the
-defaults an import falls back to are the English ones. The canonical link is Khmer on
-purpose.
+**Use a NON-ENGLISH bible**, in a language with a script and digits of its own, its package
+installed. An English XML hides every bug in this area, because the defaults an import falls
+back to are the English ones. The record below was taken with a Khmer file; any such
+language shows the same signals in its own words.
 
 ### 15.1 The import is two questions, not one
 
@@ -1704,7 +1696,7 @@ packaged run — confirm them the first time and drop the mark.
 | `isDev` branch | Dev | Packaged | QA consequence |
 |---|---|---|---|
 | AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | ON — only an explicit `ai-enabled: "false"` closes the doors | Nothing is BLOCKED by default; `prod-app.mjs ai-status` (exit 2) says whether that userData was switched off (`prod-app.mjs enable-ai`, app closed, restores afterwards). |
-| `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a Khmer screen = Low); the Critical throw class is invisible in prod and the report must say so. |
+| `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a translated screen = Low); the Critical throw class is invisible in prod and the report must say so. |
 | `data-react-comp-name` / `-fp` stamps (`vite-plugin-comp-name.ts`, `apply: 'serve'`) | present | absent | `owa_find_ui` reports no component; findings name the control's label / `data-widget-name`. |
 | `window.testSimpleToasts()` (`src/toast/toastHelpers.ts`) | defined | absent *(source)* | GL-10 toast stacking needs two real refusal toasts, or `PARTIAL`. |
 | Extra Binaries install (`extraBinInstallHelpers.ts`) | copies the local `bin-<ver>.tar.gz` | **downloads the published pack** *(source)* | MD-05 needs network and is the only real exercise of that path; a missing local pack is irrelevant. |

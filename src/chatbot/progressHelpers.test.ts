@@ -118,15 +118,15 @@ describe('describeToolStep', () => {
         expect(
             describeToolStep('owa_lyric_edit', {
                 action: 'read',
-                file: 'Still khmer',
+                file: 'Still yours',
             }),
-        ).toBe('Reading one of your song: “Still khmer”');
+        ).toBe('Reading one of your song: “Still yours”');
         expect(
             describeToolStep('owa_lyric_edit', {
                 action: 'add-translation',
-                file: 'C:\\docs\\Still khmer.owl',
+                file: 'C:\\docs\\Still yours.owl',
             }),
-        ).toBe('Editing a song: “Still khmer”');
+        ).toBe('Editing a song: “Still yours”');
         expect(describeToolStep('owa_lyric_edit', {})).toBe('Editing a song');
     });
 });

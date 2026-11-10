@@ -74,5 +74,8 @@
         "cambodia": "khmer",
         "cambodian": "khmer",
         "kampuchea": "khmer"
+    },
+    "catalogLanguageCodes": {
+        "km": "khm"
     }
 }

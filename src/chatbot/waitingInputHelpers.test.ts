@@ -12,7 +12,7 @@ const question: WaitingInputContextType = {
     question: 'Which language?',
     valueKind: 'language',
     choices: [
-        { id: 1, label: 'Khmer' },
+        { id: 1, label: 'Sample' },
         { id: 2, label: 'Install it', requiresPress: true },
     ],
 };
@@ -52,10 +52,9 @@ describe('interpreting a waiting reply without executing model-written actions',
     });
     test.each([
         ['Thai?', 'th'],
-        ['km-KH', 'km-KH'],
         ['sv', 'sv'],
         ['vi-VN', 'vi-VN'],
-        ['maybe Thai or French', null],
+        ['maybe Thai or Swahili', null],
         ['what languages can I use?', null],
         ['help', null],
     ])('recognizes only an explicit language: %s', (text, expected) => {
@@ -64,7 +63,7 @@ describe('interpreting a waiting reply without executing model-written actions',
     test('the helper receives bounded recent conversation and semantic settings, not raw state', () => {
         const context = {
             ...question,
-            facts: [{ label: 'Selected language', value: 'km-KH' }],
+            facts: [{ label: 'Selected language', value: 'xx-XX' }],
             conversation: Array.from({ length: 12 }, (_, index) => ({
                 author: 'you' as const,
                 text: `${index} ${'x'.repeat(2000)}`,
@@ -74,7 +73,7 @@ describe('interpreting a waiting reply without executing model-written actions',
         const prompt = genWaitingInputAsk(
             context,
             'use the website I sent',
-            'Khmer',
+            'Sample',
         );
         const data = JSON.parse(prompt.split('\n').at(-1)!);
         expect(data.facts).toEqual(context.facts);
@@ -185,7 +184,7 @@ describe('interpreting a waiting reply without executing model-written actions',
             await resolveWaitingInput(
                 question,
                 'Thai?',
-                'Khmer',
+                'Sample',
                 ask,
                 new AbortController().signal,
             ),
@@ -296,7 +295,7 @@ describe('untrusted replies and supplied links', () => {
     });
 });
 
-test.each(['maybe Thai or French', 'Thai or Khmer'])(
+test.each(['maybe Thai or Swahili', 'Thai or Swahili'])(
     'an uncertain reply never advances even if the model guesses: %s',
     (typed) => {
         expect(

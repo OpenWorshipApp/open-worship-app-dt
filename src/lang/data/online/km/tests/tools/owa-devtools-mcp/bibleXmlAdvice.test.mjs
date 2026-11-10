@@ -34,8 +34,6 @@ describe('a language typed by name', () => {
     // Electron's ICU has no Khmer display names: the table must answer.
     expect(toCatalogLanguageWord('ខ្មែរ')).toBe('khmer');
     expect(toCatalogLanguageWord('ភាសាខ្មែរ')).toBe('khmer');
-    expect(toCatalogLanguageWord('Deutsch')).toBe('german');
-    expect(toBibleSearchWords('install a ไทย bible')).toEqual(['thai']);
   });
   // Another language named in Khmer: what a Khmer reader types to install
   // it, or to ask for its Bible (2026-11-05; Electron's ICU has none).
@@ -49,6 +47,8 @@ describe('a language typed by name', () => {
     expect(checkIsBibleLanguageWord('Khmer')).toBe(true);
     expect(checkIsBibleLanguageWord('ខ្មែរ')).toBe(true);
     expect(checkIsBibleLanguageWord('cambodia')).toBe(true);
+    // Its country, Khmer's own alias (`languageAliases` in its world.json).
+    expect(toBibleSearchWords('Import a Bible in Cambodia')).toEqual(['khmer']);
     expect(checkIsBibleLanguageWord('verse')).toBe(false);
     expect(checkIsBibleLanguageWord('commentary')).toBe(false);
   });

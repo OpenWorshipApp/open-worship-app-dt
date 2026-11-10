@@ -274,7 +274,7 @@ const SHADOW_MAP: Record<
 /**
  * ...and these in `em`, because a text shadow belongs to the LETTERFORM. An
  * outline two pixels thick disappears under 200px type and swallows the
- * strokes of a Khmer glyph at 30px.
+ * strokes of a glyph with stacked marks at 30px.
  */
 const TEXT_SHADOW_MAP: Record<
     ForegroundTextShadowType,

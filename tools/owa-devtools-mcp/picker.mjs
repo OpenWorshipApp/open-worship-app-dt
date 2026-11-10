@@ -82,7 +82,8 @@ export const PICKER_RUNTIME = `
         nameSpan.className = 'name';
         hintLine.append(before, nameSpan, after);
         // The app's own lettering for a script the system face lacks (the
-        // Battambang a Khmer window is set in), after the system face.
+        // language's own face a translated window is set in), after the
+        // system face.
         const pageFont = getComputedStyle(document.body).fontFamily;
         if (pageFont) {
             host.style.setProperty('--owa-picker-page-font', pageFont);

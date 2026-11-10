@@ -1,9 +1,10 @@
-// The elder-persona run (2026-10-17, the user's asks: _test with complex as
-// much as possible in Khmer setting language_; _imagine user is an elderly
-// (non-technical) and ask a lot of non-sense questions and do a lot of crazy
-// interactive_; _find chatbot best assistant model_). Where `corpus-run.mjs`
-// asks the supported questions one by one in English, this one drives
-// CONVERSATIONS in the app's own language (`../references/elder-khmer-asks.json`):
+// The elder-persona run (2026-10-17, the user's asks: a test as complex as
+// possible with the app set to its non-English language; _imagine user is an
+// elderly (non-technical) and ask a lot of non-sense questions and do a lot
+// of crazy interactive_; _find chatbot best assistant model_). Where
+// `corpus-run.mjs` asks the supported questions one by one in English, this
+// one drives CONVERSATIONS in the app's own language (the language's
+// `chatbot-asks/elder-asks.json`, below):
 // a verse half-remembered, a panic, nonsense, "delete everything", a story
 // that rambles, a question interrupted, stopped, asked again, a thumb down.
 // Language-blind: the head row's pickers are found by their options, never

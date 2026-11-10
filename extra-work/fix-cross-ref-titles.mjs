@@ -1,9 +1,10 @@
 // Fix the theme titles of a language's cross-reference bundle
 // (`src/lang/data/online/<code>/bb-cr.gz.bundle`, the data the Reader's Cross
 // References panel and the 🤖's passage chat read) where the translation went
-// wrong (2026-10-23, EC-417). Measured on the Khmer bundle: of 231 890 themes,
-// 7 241 left English words in the Khmer (a mountain's or a god's English
-// name after the Khmer word for it), 7 291 held a letter that is not Khmer,
+// wrong (2026-10-23, EC-417). Measured on the first bundle fixed, a language
+// with a script of its own: of 231 890 themes, 7 241 left English words in
+// its titles (a mountain's or a god's English name after the language's word
+// for it), 7 291 held a letter not of its script,
 // 90 read "patient" as a sick person and ~150 gave a word its modern sense
 // (the language's `cross-ref-title-rules.json`) -- a reader of no English
 // sees them, in the panel and in **Related
@@ -60,8 +61,8 @@ const LATIN_RUN = /[A-Za-z]{2,}/;
 // A translation is taken only with no Latin letter at all: a stray one is a
 // typo the model left, not a name. In a language with a script of its own
 // (its `assistant.json` `scriptPattern`), no letter of another script either
-// (Han or Arabic letters inside a Khmer title came back) and no HTML entity
-// (an `&#39;s`) -- 62 of the first 4 984 Khmer translations held one.
+// (Han or Arabic letters inside such a title came back) and no HTML entity
+// (an `&#39;s`) -- 62 of the first 4 984 translations held one.
 const ANY_LATIN = /[A-Za-z]/;
 const LANG_FACTS = JSON.parse(
   fs.readFileSync(path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'assistant.json'), 'utf8'),
@@ -93,7 +94,8 @@ const FALSE_FRIEND_LIST = (
     badUnless: rule.badUnless ? new RegExp(rule.badUnless, 'i') : null,
   };
 });
-// Some languages separate words with zero-width spaces (Khmer titles do):
+// Some languages separate words with zero-width spaces (titles in a script
+// written without spaces may):
 // every check reads the title without them.
 const toPlainTitle = (text) => String(text ?? '').replace(/[\u200B-\u200D\uFEFF]/g, '');
 

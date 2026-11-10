@@ -319,8 +319,8 @@ describe('readHelpPage', () => {
   // A question in a language with a page of its own, asked in a window
   // shown in another, rode with that page -- and its button names in the
   // PAGE's language, a control no screen of that window is called
-  // (2026-11-04, the robot run: a Khmer question in an English window was
-  // answered with the slider by its Khmer name).
+  // (2026-11-04, the robot run: a question in another language asked in an
+  // English window was answered with the slider by its translated name).
   it('names the buttons of a translated page as the window shows them', () => {
     const inEnglishWindow = readHelpPage('W-10@xx', 'en');
     expect(inEnglishWindow.title).toBe('[xx] Control what the audience sees');
@@ -377,8 +377,8 @@ describe('toPageParts', () => {
 });
 
 // Two bolds side by side are two bolds. Only a pair left EMPTY (a label that
-// was Khmer and nothing else) goes: W-53 read `**Take it down.Hide Long
-// Text**` in every language.
+// was another script and nothing else) goes: W-53 read `**Take it
+// down.Hide Long Text**` in every language.
 describe('toEnglishOnly and neighbouring bolds', () => {
   it('keeps two bolds apart', () => {
     const text = '**Take it down.** **Hide Long Text** clears it.';
@@ -386,7 +386,7 @@ describe('toEnglishOnly and neighbouring bolds', () => {
   });
 });
 
-describe('the Khmer twin the manual writes beside every label', () => {
+describe('the twin in another script the manual writes beside every label', () => {
   it('leaves a bracket that is all English alone', () => {
     const text = 'Click **Add URL** (or right-click the empty list).';
     expect(toEnglishOnly(text)).toBe(text);

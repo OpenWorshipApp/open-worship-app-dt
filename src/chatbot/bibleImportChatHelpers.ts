@@ -19,7 +19,7 @@
  *
  * And nothing is ASKED about a downloaded Bible until the person has read
  * where it came from and agreed (`genSourceNoticeStep`) -- the user's ask,
- * 2026-10-16, over the list of seven Khmer Bibles: say it was found on the
+ * 2026-10-16, over a list of seven Bibles of one language: say it was found on the
  * internet and where, that Open Worship did not provide it, and that its
  * publisher's rights are theirs to answer for; go on only when they agree.
  *
@@ -68,8 +68,10 @@ import { callTool, parseToolJson } from './mcpClient';
 import {
     checkIsLanguageWord,
     DEFAULT_CHAT_LANG_CODE,
+    getAppLangCode,
     listAssistantLanguages,
     listTypedLanguages,
+    toShownLanguageName,
     SENTENCE_END_MARKS,
     toAsciiDigits,
     toCharClassSource,
@@ -116,6 +118,57 @@ export function genLanguageExampleWords() {
         nativeName: first?.nativeName ?? 'Spanish',
         otherNativeName: other?.nativeName ?? first?.nativeName ?? 'Spanish',
     };
+}
+
+// The languages the language question offers as buttons: the one the app is
+// shown in, English, then the other languages installed, in the order the
+// packages list them -- every language found the same way, none named here.
+// One not installed is typed, and the catalog offers it.
+const LANGUAGE_CHOICE_LIMIT = 4;
+
+function listInstalledLanguages() {
+    return [...listAssistantLanguages(), ...listTypedLanguages()].filter(
+        (language) => {
+            return language.name.length > 0;
+        },
+    );
+}
+
+export function listLanguageChoiceNames(): string[] {
+    const nameByCode = new Map<string, string>([
+        [DEFAULT_CHAT_LANG_CODE, 'English'],
+    ]);
+    for (const language of listInstalledLanguages()) {
+        if (!nameByCode.has(language.code)) {
+            nameByCode.set(language.code, language.name);
+        }
+    }
+    return [
+        ...new Set([
+            getAppLangCode(),
+            DEFAULT_CHAT_LANG_CODE,
+            ...nameByCode.keys(),
+        ]),
+    ]
+        .flatMap((code) => {
+            const name = nameByCode.get(code);
+            return name === undefined ? [] : [name];
+        })
+        .slice(0, LANGUAGE_CHOICE_LIMIT);
+}
+
+/**
+ * A language button's English name as the window shows it
+ * (`toShownLanguageName`, every language the same way). Null for a label
+ * that names no installed language.
+ */
+function toShownLanguageLabel(label: string): string | null {
+    const language = listInstalledLanguages().find((item) => {
+        return item.name === label;
+    });
+    return language === undefined
+        ? null
+        : toShownLanguageName(language.code, language.name);
 }
 
 // The guide page about adding a Bible from XML. Its own "easy way" is this
@@ -453,8 +506,8 @@ function toLangDoneState(
 /**
  * The language a Bible import settles on, offered FIRST when it is not
  * installed or is turned off and the catalog has it (2026-11-05, the user:
- * _user input for french so chatbot should take a moment to help user
- * install french first before proceed further step_) -- its book names,
+ * _user input for <a language> so chatbot should take a moment to help user
+ * install <it> first before proceed further step_) -- its book names,
  * digits and search words come from its plugin. Null when there is nothing
  * to offer (English, installed, no package of it, a check that could not be
  * made): the import goes on as it was. Asked once per language per import
@@ -572,7 +625,7 @@ const LINK_IMPORT_WORD_PATTERN =
 const IMPORT_WORD_PATTERN = /\b(?:import|install|download)\b/i;
 // ...or in weaker ones. A Bible "added" or "wanted" is as often a verse added
 // to a list or the Reader wanted open, so these count only beside a language
-// the collection has ("I want a Khmer bible") or with nothing else said at
+// the collection has ("I want a Thai bible") or with nothing else said at
 // all ("add a bible").
 const ACQUIRE_WORD_PATTERN = /\b(?:add|get|load|want|need|give)\b/i;
 // "Is there a Korean bible?" is how an elderly person asks for one. A
@@ -593,8 +646,8 @@ const OTHER_TOPIC_PATTERN =
 
 /**
  * A message asking for a Bible from ONE address: "Import bible from xml url
- * https://…", "please add the Khmer bible from https://github.com/…". The
- * words around the address are kept: "Khmer" picks the file off a repository
+ * https://…", "please add the Thai bible from https://github.com/…". The
+ * words around the address are kept: "Thai" picks the file off a repository
  * page with a thousand on it. A song, a second address or a long paste is
  * left for everything else this window does.
  */
@@ -642,7 +695,7 @@ function readPastedLink(typed: string) {
 /**
  * The button a typed reply stands for, or null. Somebody who types rather
  * than presses types what the answer in front of them SAYS: the words on a
- * button ("Khmer", "cancel"), the number of a choice ("2", "list 2"), or
+ * button ("Thai", "cancel"), the number of a choice ("2", "list 2"), or
  * "yes" to what was suggested. Measured before this: "2" under a list of
  * seven Bibles searched the collection again and drew the same seven, and
  * "yes" under step 1 named the Bible "yes".
@@ -803,8 +856,8 @@ export function readBibleImportTypedReply(
     if (state.awaits === 'locale') {
         return carry(state, { step: 'locale-typed', typed });
     }
-    // Narrows the search already made: "2019" after "the Khmer bible"
-    // means the Khmer one from 2019, not every Bible from 2019.
+    // Narrows the search already made: "2019" after "the Thai bible"
+    // means the Thai one from 2019, not every Bible from 2019.
     return carry(state, {
         step: 'check',
         find: [state.pageFind ?? '', typed].join(' ').trim(),
@@ -1128,10 +1181,11 @@ function genKeyChoices(
 
 /**
  * The short names a person can press at step 1. The options are the names
- * the BIBLE'S OWN LANGUAGE knows a Bible by -- the Khmer Bibles' own short
- * names and `GKHB`, `KCB` for Khmer, `KJV`, `NKJV`, `NIV` … for English, `LSG` for
- * French -- read from that language's `bibleKeyMap.json`, not the invented
- * ones a downloaded file carries (`KM2023`, `KHMER2019` …). The one the
+ * the BIBLE'S OWN LANGUAGE knows a Bible by -- `KJV`, `NKJV`, `NIV` … for
+ * English, and each other language's own short names in its own letters or
+ * in capitals -- read from that language's `bibleKeyMap.json`, not the
+ * invented ones a downloaded file carries (a language code or name and a
+ * year …). The one the
  * file's own TITLE matches comes first, then the rest as the language lists
  * them.
  *
@@ -1213,9 +1267,9 @@ function genKeyStep(
         ].join('\n\n'),
         actions: [
             ...keyList.map((key, index) => {
-                // A key such as `KJV` (or a Khmer Bible's own) is the button's words; the
+                // A key such as `KJV` (or another language's Bible's own) is the button's words; the
                 // name it stands for (`King James Version`, the pack's own
-                // Khmer name) is only as wide as a hover. A key the language
+                // name in its language) is only as wide as a hover. A key the language
                 // names nowhere -- an imported file's own invention -- gets
                 // no title rather than one that says nothing.
                 return toAction(
@@ -1248,7 +1302,7 @@ function genLocaleStep(state: BibleImportStateType): BotAnswerType {
                   tran(
                       '**Step 2 of {total} — the language.** I could not ' +
                           'tell which language this Bible is in. Type its ' +
-                          'name, for example Khmer, Thai or French.',
+                          'name — in English or in its own words.',
                   ),
                   { total: countSteps(state) },
               )
@@ -1318,7 +1372,7 @@ function genDigitsStep(state: BibleImportStateType): BotAnswerType {
                     'show in {language} digits, or as 0 to 9?',
             ),
             {
-                // "Khmer digits", not "Khmer (Cambodia)'s own digits".
+                // "<Language> digits", not "<Language> (<Region>)'s own digits".
                 language: (state.localeName ?? tran('its own')).replace(
                     /\s*\(.*\)$/,
                     '',
@@ -1577,7 +1631,7 @@ function genProblemAnswer(
 }
 
 /**
- * A file name as words: "Khmer2005Bible.xml" reads "Khmer 2005 Bible".
+ * A file name as words: "MyChurch2005Bible.xml" reads "My Church 2005 Bible".
  * The address stays in the button's args; this is only what is pressed.
  */
 export function toFileLabel(fileName: string) {
@@ -1692,7 +1746,7 @@ function genPageAnswer(
         return { text: lines.join('\n\n'), actions };
     }
     // Every one, with the title its own file gives -- a file name says
-    // "Khmer2019Bible", the file says which Bible it is.
+    // "Thai2019Bible", the file says which Bible it is.
     lines.push(
         files
             .map((file, index) => {
@@ -2189,7 +2243,7 @@ async function runTypedLocale(state: BibleImportStateType) {
                     note: fillWords(
                         tran(
                             'I do not know the language “{language}”. Try ' +
-                                'its English name or its code, like km-KH.',
+                                'its English name or its code, like en-US.',
                         ),
                         { language: String(state.typed) },
                     ),
@@ -2507,8 +2561,8 @@ async function runSettings(
  *
  * `unknownLanguage`: the catalog could not read the typed language. The
  * step is still the language question, and the WINDOW asks the assistant
- * before it is shown, because the exact match failed (2026-10-18: the Khmer
- * for "the Thai language" was answered with _I do not know the language_
+ * before it is shown, because the exact match failed (2026-10-18: a
+ * translated "the Thai language" was answered with _I do not know the language_
  * instead of asking one).
  */
 export type BibleImportStepAnswerType = BotAnswerType & {
@@ -2674,7 +2728,7 @@ export function tranBibleImportLabel(label: string): string {
     if (list !== null) {
         return fillWords(tran('List {number}'), { number: list[1] });
     }
-    return tranLabel(label);
+    return toShownLanguageLabel(label) ?? tranLabel(label);
 }
 
 /**
@@ -2694,7 +2748,7 @@ export function findBibleImportState(
         isNoteAsk?: boolean;
     },
 ): BibleImportStateType | null {
-    // A NEW request first: "import bible for khmer" typed while step 1 waits
+    // A NEW request first: "import bible for thai" typed while step 1 waits
     // for a short name is not a short name.
     if (options?.isNoteAsk !== true) {
         const linkAsk = readBibleImportLinkAsk(text);
@@ -2722,7 +2776,7 @@ const LOCAL_FILE_PATTERN =
     /\b(?:my computer|this computer|computer|pc|laptop|usb|flash drive|disk|folder|local file|downloads)\b/i;
 
 /**
- * A Bible asked for with NO link -- "Import bible for khmer", "install a
+ * A Bible asked for with NO link -- "Import bible for german", "install a
  * Thai Bible", "Import bible": looked for in the catalog by its language,
  * or the language asked for first. One from this computer goes to the
  * Settings form, which is where a file is chosen. One asked for BY NAME --
@@ -2805,9 +2859,7 @@ function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
         });
     };
     const actions = [
-        toCatalog('Khmer'),
-        toCatalog('English'),
-        toCatalog('French'),
+        ...listLanguageChoiceNames().map(toCatalog),
         toAction('A file on this computer', { step: 'local-file' }),
     ];
     // A typed language searches the catalog, the way a pressed one does.

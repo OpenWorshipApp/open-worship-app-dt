@@ -441,9 +441,9 @@ describe('BibleXMLListComp', () => {
 
     test('lists the Bibles by key with their files, KJV offer on top when lost', async () => {
         await renderList({
-            ksv: '/bibles/ksv.xml',
+            tqvs: '/bibles/tqvs.xml',
             ABC: '/bibles/ABC.xml',
-            KM: '/bibles/KM.xml',
+            KQ: '/bibles/KQ.xml',
         });
         expect(container.querySelector('h3')!.textContent).toContain(
             'Bibles XML',
@@ -455,8 +455,8 @@ describe('BibleXMLListComp', () => {
         });
         expect(infoRows).toEqual([
             ['ABC', '/bibles/ABC.xml'],
-            ['KM', '/bibles/KM.xml'],
-            ['ksv', '/bibles/ksv.xml'],
+            ['KQ', '/bibles/KQ.xml'],
+            ['tqvs', '/bibles/tqvs.xml'],
         ]);
     });
 
@@ -559,10 +559,10 @@ describe('BibleXMLDataPreviewComp', () => {
 
     test('Download hands the Bible key to the JSON download', async () => {
         await act(async () =>
-            root.render(<BibleXMLDataPreviewComp bibleKey="KSV" />),
+            root.render(<BibleXMLDataPreviewComp bibleKey="TQVS" />),
         );
         await act(async () => findButton('Download')!.click());
-        expect(h.downloadBibleJSONMock).toHaveBeenCalledWith('KSV');
+        expect(h.downloadBibleJSONMock).toHaveBeenCalledWith('TQVS');
     });
 });
 
@@ -654,14 +654,14 @@ describe('BibleXMLInfoEditorComp', () => {
         expect(store).toBe(editorStore);
         expect(getBibleInfo()).toEqual({ key: 'KJV', locale: 'en-US' });
 
-        setPartialBibleInfo({ locale: 'km-KH' });
+        setPartialBibleInfo({ locale: 'xx-XX' });
         expect(editorStore.replaceValue).toHaveBeenCalledWith(
-            JSON.stringify({ key: 'KJV', locale: 'km-KH' }, null, 4),
+            JSON.stringify({ key: 'KJV', locale: 'xx-XX' }, null, 4),
         );
 
         // An editor holding `null` has nothing to patch.
         text = 'null';
-        setPartialBibleInfo({ locale: 'fr-FR' });
+        setPartialBibleInfo({ locale: 'yy-YY' });
         expect(editorStore.replaceValue).toHaveBeenCalledOnce();
     });
 });
@@ -759,11 +759,11 @@ describe('BibleXMLExtraEditorComp', () => {
         await flush();
 
         await act(async () =>
-            getLastEditorProps().save({ bibleKey: 'KSV', newLines: [] }),
+            getLastEditorProps().save({ bibleKey: 'TQVS', newLines: [] }),
         );
         expect(h.showSimpleToastMock).toHaveBeenCalledWith(
             'Saving Bible Data',
-            'Invalid Bible Key KSV',
+            'Invalid Bible Key TQVS',
         );
         expect(h.saveJsonDataToXMLfileMock).not.toHaveBeenCalled();
 

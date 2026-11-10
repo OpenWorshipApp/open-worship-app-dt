@@ -94,9 +94,10 @@ async function runBibleWorker(request, timeout = SHORT_WORK_MS) {
   return value;
 }
 
-// "French" arrives as its bare two-letter code; a Bible is installed under a
-// whole locale, and the app's list picks the FIRST French one it knows for a
-// bare language, which is not the one anybody means.
+// A language named alone arrives as its bare two-letter code; a Bible is
+// installed under a whole locale, and the app's list picks the FIRST locale
+// of that language it knows for a bare one, which is not the one anybody
+// means.
 function toFullLocale(locale) {
   try {
     const parsed = new Intl.Locale(locale);
@@ -263,10 +264,10 @@ function toTitleKey(title) {
 
 /**
  * The Bibles already installed, by title. A person choosing among seven
- * Khmer Bibles has five of them already and no way to tell which: measured
- * 2026-10-10, the list said nothing and a second copy was three presses
- * away. Best effort -- the answer about a link must not fail because the
- * installed list could not be read.
+ * Bibles of their language has five of them already and no way to tell
+ * which: measured 2026-10-10, the list said nothing and a second copy was
+ * three presses away. Best effort -- the answer about a link must not fail
+ * because the installed list could not be read.
  */
 async function readInstalledSummary() {
   const titleMap = new Map();
@@ -275,10 +276,7 @@ async function readInstalledSummary() {
   let hasKjv = null;
   try {
     const result = await runBibleWorker({ action: 'list' });
-    const installed = [
-      ...(result.bibles ?? []),
-      ...(result.downloaded ?? []),
-    ];
+    const installed = [...(result.bibles ?? []), ...(result.downloaded ?? [])];
     hasKjv = installed.some((bible) => {
       return String(bible.key ?? '').toLowerCase() === 'kjv';
     });
@@ -409,7 +407,7 @@ async function handleCheck({ url, find }) {
 
 async function handleNames({ locale, draftId, key, offset, url }) {
   if (!locale) {
-    throw new Error('Give the locale to find book names for, e.g. km-KH.');
+    throw new Error('Give the locale to find book names for, e.g. en-US.');
   }
   const result = await searchNameLists({ locale, offset, url });
   if (!draftId && !key) {

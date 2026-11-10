@@ -64,34 +64,36 @@ describe('collectFontFaceCss', () => {
 
     test('copies only the font rules the printed page names, urls made absolute', () => {
         addStyle(
-            '@font-face { font-family: "app-Battambang"; ' +
-                'src: url(fonts/battambang-400.woff2); font-weight: 400; }' +
-                '@font-face { font-family: "app-Battambang"; ' +
-                'src: url(fonts/battambang-700.woff2); font-weight: 700; }' +
+            '@font-face { font-family: "app-Xx-Face"; ' +
+                'src: url(fonts/xx-face-400.woff2); font-weight: 400; }' +
+                '@font-face { font-family: "app-Xx-Face"; ' +
+                'src: url(fonts/xx-face-700.woff2); font-weight: 700; }' +
                 '@font-face { font-family: "app-Unused"; src: url(u.woff2); }' +
-                '.verse { font-family: "app-Battambang"; }',
+                '.verse { font-family: "app-Xx-Face"; }',
         );
         const css = collectFontFaceCss(
-            '<p style="font-family: app-Battambang">✝</p>',
+            '<p style="font-family: app-Xx-Face">✝</p>',
         );
         const rules = css.split('\n');
         expect(rules).toHaveLength(2);
         for (const rule of rules) {
             expect(rule).toMatch(/^@font-face/);
-            expect(rule).toContain('app-Battambang');
+            expect(rule).toContain('app-Xx-Face');
         }
         expect(css).toContain(
-            new URL('fonts/battambang-400.woff2', document.baseURI).href,
+            new URL('fonts/xx-face-400.woff2', document.baseURI).href,
         );
         expect(css).toContain(
-            new URL('fonts/battambang-700.woff2', document.baseURI).href,
+            new URL('fonts/xx-face-700.woff2', document.baseURI).href,
         );
         expect(css).not.toContain('app-Unused');
         expect(css).not.toContain('.verse');
     });
 
     test('a page that names no app font needs no rules', () => {
-        addStyle('@font-face { font-family: "app-Khmer"; src: url(k.woff2); }');
+        addStyle(
+            '@font-face { font-family: "app-Yy-Face"; src: url(yy-face.woff2); }',
+        );
         expect(collectFontFaceCss('<p>Hello</p>')).toBe('');
     });
 
@@ -102,7 +104,7 @@ describe('collectFontFaceCss', () => {
 
     test('a sheet that cannot be read is skipped, and a linked sheet resolves against its own address', () => {
         const parsed = addStyle(
-            '@font-face { font-family: "app-Kantumruy"; src: url(kantumruy.woff2); }',
+            '@font-face { font-family: "app-Zz-Face"; src: url(zz-face.woff2); }',
         ).sheet as CSSStyleSheet;
         const unreadableSheet = {
             href: 'https://other.example/locked.css',
@@ -120,8 +122,8 @@ describe('collectFontFaceCss', () => {
         });
         expect(
             collectFontFaceCss(
-                '<span style="font-family: app-Kantumruy">x</span>',
+                '<span style="font-family: app-Zz-Face">x</span>',
             ),
-        ).toContain('url(https://cdn.example/css/kantumruy.woff2)');
+        ).toContain('url(https://cdn.example/css/zz-face.woff2)');
     });
 });

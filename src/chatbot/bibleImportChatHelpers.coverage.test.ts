@@ -41,7 +41,7 @@ import {
     type BibleImportStateType,
 } from './bibleImportChatHelpers';
 
-const URL_A = 'https://example.org/bibles/khmer.xml';
+const URL_A = 'https://example.org/bibles/sample.xml';
 const FIND_RIGHT_LINK_TEXT =
     'To get the right link: open the page in your web browser, find the ' +
     'Bible file (its name ends in .xml), and copy the address of THAT file ' +
@@ -53,20 +53,20 @@ function genDownloaded(extra: Record<string, unknown> = {}) {
     return {
         kind: 'xml',
         draftId: 'draft-1',
-        title: 'Khmer Test Bible',
+        title: 'Sample Test Bible',
         books: 66,
         chapters: 1189,
         verses: 31102,
         keys: ['KTB'],
         takenKeys: [],
-        locales: [{ locale: 'km-KH', name: 'Khmer (Cambodia)' }],
+        locales: [{ locale: 'xx-XX', name: 'Sample (Nowhere)' }],
         // Symbols stand in for the file's own digits and book names: no
         // case here reads them.
         digits: { local: '０ １ ２', ascii: '0 1 2' },
         nameLists: [
             {
                 id: 'n1',
-                label: 'Khmer names',
+                label: 'Sample names',
                 first: ['☩', '✠'],
                 matches: 40,
             },
@@ -264,7 +264,7 @@ describe('a downloaded Bible with books missing', () => {
         const whole = textOf([]);
         expect(whole).not.toContain('missing');
         expect(whole).not.toContain('Testament only');
-        expect(whole).toContain('I downloaded **Khmer Test Bible**');
+        expect(whole).toContain('I downloaded **Sample Test Bible**');
     });
 });
 
@@ -378,7 +378,7 @@ describe('the steps', () => {
         const answer = await runBibleImportStep({
             step: 'more-names',
             kjvChecked: true,
-            locale: 'km-KH',
+            locale: 'xx-XX',
             draftId: 'draft-1',
             nameLists: [{ id: 'n1', label: 'Mine', first: ['C'], matches: 5 }],
         });
@@ -392,7 +392,7 @@ describe('the steps', () => {
         expect(answer.text).not.toContain('Again');
         expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
             action: 'names',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             draftId: 'draft-1',
         });
     });
@@ -407,7 +407,7 @@ describe('the steps', () => {
             url: URL_A,
             draftId: 'draft-1',
             key: 'KTB',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             digits: 'local',
         };
         const gone = await runBibleImportStep(state);
@@ -510,7 +510,7 @@ describe('the provided KJV', () => {
             'bible import cancel after KJV',
         );
         // The import started again from its first step: the source notice.
-        expect(answer.text).toContain('I downloaded **Khmer Test Bible**');
+        expect(answer.text).toContain('I downloaded **Sample Test Bible**');
         expect(labelsOf(answer)).toContain('I agree');
     });
 
@@ -538,7 +538,7 @@ describe('the buttons under a MODEL’s own check', () => {
         const result = {
             kind: 'page',
             hasKjv: false,
-            files: [{ name: 'KhmerBible.xml', url: URL_A }],
+            files: [{ name: 'SampleBible.xml', url: URL_A }],
             matched: 1,
         };
         const under = genBibleImportUnderAnswer(result, URL_A);

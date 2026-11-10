@@ -29,6 +29,16 @@ others, make sure the structure is easy to follow_): every language is a
 folder of DATA, made by one factory, and the layout is written down in
 `src/lang/data/online/README.md` — read it before adding or changing a
 language.
+Then (2026-11-09, the user: _French and Khmer should not be special than any
+other online languages … everything related to khmer should be located in
+lang online km folder, french too_, and _all languages development, except
+english, should be treated the same way_): no code, test, script, dev
+procedure or doc instruction outside a package gives one language a role the
+others lack — no template language, no default pass language. The gate
+(below) holds every language alike and names none. Code finds a language by
+name through English's tables (`en/language-names.json`, `en/locales.json`);
+a language's own facts — its Bible catalog code (`catalogLanguageCodes`), a
+script-mark rule (`scriptMarkLocales`) — live in its own `world.json`.
 
 - **A package is a folder** — `src/lang/data/en/` (the default, always
   there, built in, the one package with an `index.ts`; since 2026-11-06 it
@@ -39,8 +49,8 @@ language.
   `src/lang/data/online/<code>/` for every other language, ALL made the
   same way (below). Required: `meta.json`, `dictionary.json` (what MARKS
   a folder as a package), `flag.svg`; the rest optional, each changing one
-  thing when present. Khmer (every file there is) and French (Latin
-  letters, its own Bible names and assistant) are the templates:
+  thing when present (`ls src/lang/data/online/*/<file>` shows which
+  packages carry one):
   - `meta.json` — the manifest, `{locale, order, name, nativeName,
 version, description}` plus `direction: "rtl"` and `editorLink` where
     they apply: the little the app needs BEFORE the package loads
@@ -64,7 +74,7 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     `src/others/langScriptHelpers.ts`); `words.json` — the little words a
     Bible search uses (stop words, book markers, asking words);
     `bibleReference.json`, `bibleBooks.json`, `bibleKeyMap.json`,
-    `fonts.json` + `fonts/`, `appMenus.json` (Khmer's **Khmer Tools**), the
+    `fonts.json` + `fonts/`, `appMenus.json` (items it adds to the app's menus), the
     cross-ref bundle and the names datasets; `openLyricPlugin.ts` +
     `package.json`, its song plugin, the ONE file of code (below).
   - `chatbot-asks/` — the language's eval sets for the skill scripts;
@@ -93,7 +103,7 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     apostrophe (BN-39); a language no reader can confirm keeps only the phrases a BLIND reading gives back as their job, a size said in so many words (BN-41: nine trimmed, Oromo left with none); its little words hold what an ASK is made of -- add, at the end, make -- and a word two neighbours share goes into both lists (BN-42: Finnish's _tee_ named Estonian's lines Finnish until Estonian had it);
     and, in either file, `lookAlikes` -- pairs of letters drawn the same
     that keyboards and models swap, two sequences of one length, the first
-    kept (Khmer's: the subscripts of DA and TA), by which words a model
+    kept (two subscripts a script draws alike, say), by which words a model
     writes into a note are put back to the typed ones (BN-37); `bibleSource.json` — what studying a
     Bible in it needs (Hebrew's chant and joiner marks, a grammar hint, which
     letters say a word is in it; `wordStudyHelpers.ts`); `world.json` —
@@ -149,7 +159,9 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `language-plugins-runtime`). `extra-work/build-lang-plugins.mjs` builds a
   package into a folder (`meta.json` + a factory `<plugin>/index.js` + assets +
   the side JSON files + `tran.json`, the dictionary for the MCP server, +
-  `manual/` with its search index `manual/index.json`) and packs it for the
+  `langFacts.json`, its fonts and lookup flag for windows that only DRAW it
+  (memory `language-fonts-without-loading`, EN-59) + `manual/` with its
+  search index `manual/index.json`) and packs it for the
   catalog; the Languages tab installs it into `<data folder>/lang/<code>@<v>/`.
   `electron-build/lang/` — the read-only home a plugin could ship in — is
   still scanned and gets nothing (`electron:build` no longer runs the
@@ -160,11 +172,11 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   more, then Burmese and (the user: _add all missing translation language_)
   the 36 data-only folders, Azerbaijani to Zulu (2026-11-05) — 87 in all. **In dev nothing is there
   until installed**:
-  `npm run lang:pack -- --pack=km,fr` packs the named languages into the dev
+  `npm run lang:pack -- --pack=<code>[,<code>]` packs the named languages into the dev
   catalog `extra-work/lang/` (bare `npm run lang:pack` packs every one; the
   script is `node extra-work/build-lang-plugins.mjs --pack`, so its flags
   pass after `--`: `-- --bump=he`), then Settings → **Languages** →
-  **Install** — a Khmer pass of a live check starts there.
+  **Install** — a non-English pass of a live check starts there.
   A package's `meta.json` is its manifest:
   `{locale, order, name, nativeName, version, description}`.
 - **Every language is made by ONE factory, `online/onlineLangPackage.ts`**
@@ -254,8 +266,8 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `publishAiEndpoints` and again by `republishAiLangDirs` whenever a language
   is installed, deleted or turned on or off). Only where no app says — a unit
   test, a script, an app too old to publish `langDirs` — are the checkout's
-  source packages read, and only those the assistant is written for (an
-  `assistant.json`: Khmer and French): over all fifty the destructive-label
+  source packages read, and only those the assistant is written for (the
+  ones with an `assistant.json`): over all fifty the destructive-label
   rule was ~98 KB on every press and ~4 s to build, against ~4 KB and 0.1 s. The knowledge bundle (`build-knowledge.mjs`) is
   ENGLISH ONLY: `tran.json` with English's facts, English Bible names, and a
   `hash` on each English manual page, which a translation's `translatedFrom`
@@ -269,9 +281,12 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `extra-work/language-confinement.mjs` fails on (1) any letter, mark, digit
   or sign of a script but Latin/Common/Inherited/Braille, or a Latin letter
   past ASCII, outside `src/lang/data` — in code, data, tests and comments,
-  and a non-Latin SCRIPT written as a `\u` escape too; (2) production code
-  quoting `km` / `fr` / their locales or a `data/km/` path (no exception
-  since the locale table became `en/locales.json`). `*.md`, `.claude` notes and
+  and a non-Latin SCRIPT written as a `\u` escape too; (2) non-test code
+  (comments excluded) naming ANY non-English language, every one alike and
+  none named by the rule (2026-11-09; until then it held `km` / `fr` alone):
+  a quoted non-English locale tag (`'xx-YY'`), a path into a package folder
+  (`data/online/xx/`, or the old `data/xx/`), or a code compared with a
+  lang/locale/code variable (`lang === 'xx'`). `*.md`, `.claude` notes and
   `docs/` are prose and exempt; the skills' scripts and JSON data sets are
   not. `node extra-work/language-confinement.mjs <path>` lists what is left.
   It cannot see ASCII words of another language (`chapitre`) or a font
@@ -304,17 +319,17 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
 - **Adding a language** is a folder in `src/lang/data/online/` with its
   `meta.json` (the next free `order`), `dictionary.json` carrying every key
   (`tranKeyCoverage.test.ts` holds every package to the others) and
-  `flag.svg` — copy `online/fr/` for a language in Latin letters,
-  `online/km/` for one with a script of its own (`README.md` there lists
-  every file) — then `script.json` when its script is not Latin, and
+  `flag.svg` — `README.md` there lists every file, and
+  `ls src/lang/data/online/*/<file>` shows which packages carry one to
+  start from — then `script.json` when its script is not Latin, and
   `assistant.json`, `questions.json` and `manual/` as it grows. Nothing
   outside the folder changes; an Open Lyric plugin is the one dependency,
   bundled into the language's plugin with `open-lyric/internal` left to the
   window (live bindings). **That dependency is the LANGUAGE's** (2026-11-05,
   the user: _for khmer plugin it have to ship with khmer language bundle_):
   declared in the package's own `package.json` (a locale-named
-  `open-lyric-plugin-<code>-<region>`, Khmer's is
-  `open-lyric-plugin-km-kh`), with its `package-lock.json` and an `.npmrc`
+  `open-lyric-plugin-<code>-<region>`;
+  `ls src/lang/data/online/*/package.json` lists the packages with one), with its `package-lock.json` and an `.npmrc`
   of `legacy-peer-deps=true` (the plugin's peer `open-lyric` is the app's
   copy and on no registry), installed into the package's own `node_modules`
   (gitignored) by `extra-work/install-lang-deps.mjs` -- run by the app's

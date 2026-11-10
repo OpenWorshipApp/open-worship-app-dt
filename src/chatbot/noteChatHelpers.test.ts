@@ -163,9 +163,9 @@ describe('the note a call names', () => {
         ).toContain('"Sunday", "Mercy"');
     });
 
-    // BN-30 (2026-11-08, seen live): a model named a Khmer note with one of
-    // two look-alike letters in place of the other, and the edit was
-    // refused for good.
+    // BN-30 (2026-11-08, seen live): a model named a note in a language
+    // with a script of its own with one of two look-alike letters in place
+    // of the other, and the edit was refused for good.
     it('a name a letter out is the ONE note attached, never one of two', () => {
         const longFiles = findNoteAskFiles([
             noteAttachment('Sunday sermon on grace', 4),

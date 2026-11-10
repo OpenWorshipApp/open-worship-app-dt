@@ -13,7 +13,7 @@ export function genContextMenuItemIcon(name: string, style?: CSSProperties) {
                 marginRight: '2px',
                 // A fixed-width, centered slot keeps every label starting at the
                 // same x no matter how wide the glyph is. Labels are translated
-                // (and Khmer runs much longer than English), so the icon column
+                // (and often run much longer than English), so the icon column
                 // is what makes an item recognizable at a glance.
                 display: 'inline-block',
                 flexShrink: 0,

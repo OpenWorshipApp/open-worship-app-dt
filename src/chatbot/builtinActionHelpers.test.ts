@@ -56,7 +56,7 @@ import {
     resetSpendGuardForTests,
 } from './spendGuardHelpers';
 import { setCurrentWindowAim } from './windowAimHelpers';
-import { listAssistantLanguages } from './chatLangHelpers';
+import { listAssistantLanguages, listTypedLanguages } from './chatLangHelpers';
 
 beforeEach(() => {
     callTool.mockReset();
@@ -1839,7 +1839,17 @@ describe('the commands when the app answers otherwise', () => {
             isSeparateWindow: true,
         });
         try {
-            for (const language of listAssistantLanguages()) {
+            // Every installed language is named alike, with an
+            // `assistant.json` or not.
+            const seenCodes = new Set<string>();
+            for (const language of [
+                ...listAssistantLanguages(),
+                ...listTypedLanguages(),
+            ]) {
+                if (seenCodes.has(language.code)) {
+                    continue;
+                }
+                seenCodes.add(language.code);
                 callTool.mockResolvedValue(
                     JSON.stringify({
                         mainWindow: {
@@ -1863,13 +1873,14 @@ describe('the commands when the app answers otherwise', () => {
 
             callTool.mockResolvedValue(
                 JSON.stringify({
-                    mainWindow: { page: 'setting.html', language: 'de' },
+                    mainWindow: { page: 'setting.html', language: 'xx' },
                 }),
             );
+            // A code no installed language has is said as the code.
             const unknown = await runBuiltinCommand('/here', 'presenter');
             expect(unknown.text).toBe(
                 '**This tab works with the Settings, a window of its own** ' +
-                    'in de.',
+                    'in xx.',
             );
 
             callTool.mockResolvedValue(

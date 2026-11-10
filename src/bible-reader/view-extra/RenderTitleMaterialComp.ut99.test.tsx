@@ -323,7 +323,7 @@ describe('RenderTitleMaterialComp', () => {
     });
 
     test('each extra bible is a chip that removes it, by mouse or keyboard', async () => {
-        const bibleItem = genBibleItem(['NIV', 'KHM']);
+        const bibleItem = genBibleItem(['NIV', 'TQAM']);
         await renderInView(<RenderTitleMaterialComp bibleItem={bibleItem} />);
         const chipList = Array.from(
             host.querySelectorAll<HTMLElement>('.bible-extra-key'),
@@ -347,18 +347,18 @@ describe('RenderTitleMaterialComp', () => {
                 'Font NIV',
             ],
             [
-                'KHM',
-                'Click to remove extra Bible KHM',
+                'TQAM',
+                'Click to remove extra Bible TQAM',
                 'button',
                 '0',
-                'Font KHM',
+                'Font TQAM',
             ],
         ]);
 
         await press(chipList[0]);
         expect(h.viewController.applyTargetOrBibleKey).toHaveBeenCalledWith(
             bibleItem,
-            { extraBibleKeys: ['KHM'] },
+            { extraBibleKeys: ['TQAM'] },
         );
 
         await act(async () => {

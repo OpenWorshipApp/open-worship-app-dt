@@ -671,7 +671,7 @@ describe('the model road of the help window', () => {
             ),
         ).toEqual(['Tell me more']);
 
-        await askAndSettle('in khmer please');
+        await askAndSettle('in another language please');
         expect(h.askLlmBot).toHaveBeenCalledTimes(2);
         expect(h.askLlmBot.mock.calls[1][6].isGeneral).toBe(true);
     });
@@ -1123,14 +1123,10 @@ describe('a typed line under the Bible import', () => {
         const buttons = [
             ...lastBot()!.querySelectorAll('.cue-actions button'),
         ].map((button) => button.textContent);
-        expect(buttons).toEqual(
-            expect.arrayContaining([
-                'Khmer',
-                'English',
-                'French',
-                'A file on this computer',
-            ]),
-        );
+        // The app's language first -- English here -- then the other
+        // installed ones, then a file.
+        expect(buttons[0]).toBe('English');
+        expect(buttons.at(-1)).toBe('A file on this computer');
     });
 
     test('a line the waiting question cannot read is interpreted, and an unrelated one goes to the assistant', async () => {
@@ -1145,9 +1141,9 @@ describe('a typed line under the Bible import', () => {
                         text: 'Which language is the Bible in?',
                         actions: [
                             {
-                                label: 'Khmer',
+                                label: 'Sample',
                                 toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-                                args: { step: 'language', locale: 'km' },
+                                args: { step: 'language', locale: 'xx' },
                             },
                         ],
                     },

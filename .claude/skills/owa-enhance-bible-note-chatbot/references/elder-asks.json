@@ -7054,7 +7054,7 @@
   {
     "id": "9-2",
     "category": 9,
-    "text": "translate the prayer into Khmer please, it is for my friend Sophea",
+    "text": "translate the prayer into Tagalog please, it is for my friend Maria",
     "expect": {
       "do": "either",
       "any": [
@@ -7071,7 +7071,7 @@
   {
     "id": "9-3",
     "category": 9,
-    "text": "i want this in french",
+    "text": "i want this in spanish",
     "expect": {
       "do": "either",
       "any": [
@@ -7148,7 +7148,7 @@
   {
     "id": "9-8",
     "category": 9,
-    "text": "I speak Khmer better than english, you can talk to me in Khmer?",
+    "text": "I speak Vietnamese better than english, you can talk to me in Vietnamese?",
     "expect": {
       "do": "answer",
       "why": "asks to be spoken to in another language"
@@ -7225,7 +7225,7 @@
   {
     "id": "9-13",
     "category": 9,
-    "text": "put psalm 23 from the Khmer bible",
+    "text": "put psalm 23 from the Thai bible",
     "expect": {
       "do": "either",
       "any": [
@@ -7239,7 +7239,7 @@
   {
     "id": "9-14",
     "category": 9,
-    "text": "can the whole note be in french but the bible verse stay english",
+    "text": "can the whole note be in portuguese but the bible verse stay english",
     "expect": {
       "do": "either",
       "any": [
@@ -7334,7 +7334,7 @@
   {
     "id": "9-20",
     "category": 9,
-    "text": "is this right in khmer? I want check my translation of first point",
+    "text": "is this right in tagalog? I want check my translation of first point",
     "expect": {
       "do": "answer",
       "why": "the first point is in English in the note"

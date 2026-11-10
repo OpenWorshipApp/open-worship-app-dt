@@ -329,7 +329,7 @@ export async function readBibleXmlTitles(
 
 // --- the listing of a repository, kept for a few minutes ---------------------
 
-// Choosing a Bible is several looks at ONE listing -- "Khmer", then "2016",
+// Choosing a Bible is several looks at ONE listing -- a language, then "2016",
 // then another language after a Cancel -- and the catalog's is 0.9 MB out of
 // an allowance of sixty unsigned reads an hour for the whole network the
 // computer is on (measured 2026-10-10). So the file names of the LAST listing
@@ -383,7 +383,7 @@ async function genPageAnswer({
     );
   }
   // Every file in the language asked for, not a sample: a person choosing
-  // between seven Khmer Bibles has to see all seven.
+  // between seven Bibles of their language has to see all seven.
   const ranked = rankBibleXmlLinks(links, find, PAGE_FILE_LIMIT);
   return {
     kind: 'page',

@@ -961,7 +961,7 @@ describe('BibleSlidesPopupComp — Generate Slides', () => {
     const BIBLE_INFO_LIST = [
         { key: 'KJV', title: 'King James', locale: 'en' },
         { key: 'NIV', title: 'New International', locale: 'en' },
-        { key: 'KHSV', title: 'Khmer Standard', locale: 'km' },
+        { key: 'XXSV', title: 'Made Up Standard', locale: 'xx' },
     ];
 
     function genPassage() {
@@ -1060,7 +1060,7 @@ describe('BibleSlidesPopupComp — Generate Slides', () => {
             .map((label) => [label.textContent, label.dataset.localeFf]);
         expect(labels).toEqual([
             ['NIV — New International', 'en'],
-            ['KHSV — Khmer Standard', 'km'],
+            ['XXSV — Made Up Standard', 'xx'],
         ]);
         expect(getVersionBox('NIV').checked).toBe(false);
     });
@@ -1094,9 +1094,9 @@ describe('BibleSlidesPopupComp — Generate Slides', () => {
         await chooseTheme('light');
         expect(getThemeSelect().value).toBe('light');
         await run(() => getVersionBox('NIV').click());
-        await run(() => getVersionBox('KHSV').click());
-        await run(() => getVersionBox('KHSV').click());
-        expect(getVersionBox('KHSV').checked).toBe(false);
+        await run(() => getVersionBox('XXSV').click());
+        await run(() => getVersionBox('XXSV').click());
+        expect(getVersionBox('XXSV').checked).toBe(false);
         await run(() => getSubmitButton().click());
 
         expect(h.generateSlides).toHaveBeenCalledWith(

@@ -15,7 +15,7 @@
 - [`build` kills the dev app](build-kills-running-dev-app.md) · [Scratch dev instance](scratch-dev-instance-beside-user-app.md) · [Pack from a snapshot](pack-release-from-snapshot.md)
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
 - Bible notes: [popup CDP](bible-note-floating-toolbar-width.md) · [editor writes a history](bible-note-editing-history.md) · [verse marks are note items](verse-marks-note-items.md) · [Open in Chatbot on a note](bible-note-chatbot.md)
-- [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — blanks the page · [Confirm labels are auto-tran'd](confirm-popup-labels-auto-tran.md)
+- [A missing key throws in dev](tran-missing-key-throws-in-dev.md) — blanks the page · [Confirm labels are auto-tran'd](confirm-popup-labels-auto-tran.md)
 - Tests: [env-leak flakes](vitest-env-leak-flakes.md) · [`document` at module scope](appprovider-mock-node-env.md) · [vi.mock survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` failure](monaco-css-test-failure-local-open-lyric.md) · [Coverage = loaded files](coverage-number-is-loaded-files-only.md) · [Parallel test agents](parallel-test-agent-coverage-run.md) · [Flakes only under the coverage run](coverage-run-load-flakes.md) · [jsdom + `node:sqlite` on Node 22](jsdom-node-sqlite-import.md) · [Stale node_modules, empty package folders](stale-node-modules-blocks-coverage.md)
 - Toolchain: [npm 12 gotchas](npm-12-install-gotchas.md) · [open-lyric dep](open-lyric-subtree-branch-dep.md) · [TypeScript 7](typescript-7-side-by-side.md) · Vite: [504 → touch config](vite-dep-optimizer-504-restart.md) · [cached failed import](vite-caches-failed-import-resolution.md)
 - [Blob downloads pop Save As](blob-download-pops-save-dialog.md) — orphans a .tmp
@@ -23,7 +23,7 @@
 - [A data folder is required](data-folder-required.md) — none in use gates every window but Settings
 - [Data-folder live test](data-folder-live-test-recipe.md) — Win32 folder picker, `subst` sticks, the real home for the Desktop… · [A scoped robot test stays in scope](robot-test-stays-in-the-asked-scope.md) — no screen/media/export blocks unless asked
 - [Settings: computer vs data folder](settings-global-vs-data-dir.md) — `dataDirSettingProtocol.ts` · [Language is a computer setting](language-is-a-computer-setting.md)
-- [Languages are runtime plugins](language-plugins-runtime.md) — only English ships
+- [Languages are runtime plugins](language-plugins-runtime.md) — only English ships · [Fonts without loading the language](language-fonts-without-loading.md) — `langFacts.json`, EN-59
 - [Changed language data raises its version](language-data-change-bumps-version.md) — `meta.json` version up AND `npm run lang:pack` + Update to in the…
 - [Update signs are a trail](attention-sign-trail.md) — amber dot on the gear → the Settings tab → the item
 - Lyrics: [architecture](lyric-subsystem-architecture.md) · [in the Documents list](lyric-in-documents-list.md) · [helpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) · [passes the AppDocument check](lyric-passes-appdocument-typecheck.md)
@@ -105,6 +105,6 @@
 - [Message editors hold local text](message-editor-text-is-local-state.md) · [Mini screen "No rendering"](mini-screen-no-rendering-keeps-slide-layer.md)
 - Screen Mirror: [two machines](screen-mirror-cross-machine-test.md) · [internet & hosts](screen-mirror-internet-multi-host.md) · [Virtual displays](virtual-displays.md) · [Intercom & cameras](connection-intercom-and-viewer-camera.md)
 - [Cast to a TV](cast-to-tv.md) — catch up by rate, never SEEK · [Cloudflare quick tunnel](cloudflare-quick-tunnel.md) — counts as the internet
-- [Khmer text spacing traps](khmer-text-spacing-traps.md) · [Electron has no Khmer dates](electron-icu-has-no-khmer.md)
+- [Unspaced-script text traps](unspaced-script-text-traps.md) · [Electron's ICU is trimmed](electron-icu-trimmed-locales.md)
 - [Twin tab close loses the chat](twin-tab-close-loses-conversation.md) — close by uid · [Hidden popup not shown by reopen](hidden-popup-not-shown-by-reopen.md)
 - [Tunnel check races the 502](llm-tunnel-check-races-502.md) · [fill skips React state](fill-skips-react-state.md) — use owa_type

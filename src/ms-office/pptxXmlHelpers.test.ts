@@ -44,7 +44,7 @@ function parseXml(xml: string) {
 function genRun(text: string, extra: Partial<PptxRunType> = {}): PptxRunType {
     return {
         text,
-        fontFamily: 'Battambang',
+        fontFamily: 'Made Up Sans',
         fontSize: 105,
         color: { hex: 'FFFFFF', alpha: 1 },
         isBold: false,
@@ -53,7 +53,7 @@ function genRun(text: string, extra: Partial<PptxRunType> = {}): PptxRunType {
         isStrike: false,
         letterSpacing: 0,
         baselineShift: 0,
-        lang: 'km-KH',
+        lang: 'xx-XX',
         ...extra,
     };
 }

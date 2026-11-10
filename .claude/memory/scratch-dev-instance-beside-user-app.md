@@ -130,10 +130,10 @@ with `<scratch>\setting.json` seeded
   a used data folder, so switching to it reloads straight in with no question (2026-10-04). A state the UI cannot reach without a destructive
   press (a missing bible key) can be set in the scratch `data/local-storage/<setting>` file and
   read back after **Apply Settings**, which reloads only the scratch instance's windows.
-- **A Khmer (or any language) pass needs no person either** (2026-11-09):
+- **A non-English pass needs no person either** (2026-11-09):
   before the launch, extract the packed `extra-work/lang/<code>-<v>.tar.gz`
-  into `<scratch>\data\lang\<code>@<v>\` and put `"language-locale":
-  "km-KH"` in the seeded `clientSetting`; copy the user's
+  into `<scratch>\data\lang\<code>@<v>\` and put `"language-locale"`
+  (that language's locale, as its `meta.json` says) in the seeded `clientSetting`; copy the user's
   `bibles-data\KJV.xml` into `<scratch>\data\bibles-data\` so the Reader's
   _Create the KJV Bible?_ confirm (the person's, refused) never comes; and
   a list folder is `local-storage\select-dir-bible-presenter` holding

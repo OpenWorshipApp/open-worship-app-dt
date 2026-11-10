@@ -129,7 +129,7 @@ const MAX_TEXT_CHARS = 1200;
  * record so a question about it can be answered (the user, 2026-10-18:
  * _chatbot should know the location/name is from KJV, in case want to
  * know_). The English dataset was drawn from the King James Version; a
- * translated one (Khmer, French) is that dataset put into its language, its
+ * translated one (a language package's own) is that dataset put into its language, its
  * `kjvName` the KJV's own spelling, and the verse keys the KJV's numbering.
  */
 export const LOOKUP_SOURCE_TEXT =

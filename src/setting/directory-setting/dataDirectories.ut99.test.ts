@@ -91,10 +91,10 @@ describe('the app-managed folders', () => {
             `/stick/data/${appManagedDataDirNames.BIBLE_DATA}`,
         );
         expect(
-            ['KJV.xml', 'Khmer.XML', 'kjv.db', 'KJV.xml.bak'].filter((name) =>
+            ['KJV.xml', 'MadeUp.XML', 'kjv.db', 'KJV.xml.bak'].filter((name) =>
                 bibles.fileNamePattern!.test(name),
             ),
-        ).toEqual(['KJV.xml', 'Khmer.XML']);
+        ).toEqual(['KJV.xml', 'MadeUp.XML']);
         expect(bibles.afterImport).toBeUndefined();
     });
 

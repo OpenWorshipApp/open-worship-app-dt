@@ -9,15 +9,15 @@
  * the panel lists (`getResourcesFolderList`): a name is resolved under its
  * folder and refused when it lands anywhere else.
  *
- * A PDF is answered with its pages as PICTURES -- a Khmer PDF set in a
- * legacy font has nonsense for a text layer -- drawn by MuPDF in a child
+ * A PDF is answered with its pages as PICTURES -- a PDF in a script of its
+ * own set in a legacy font has nonsense for a text layer -- drawn by MuPDF in a child
  * process of main (`main:app:pdf-to-chat-pages`). An MCP read returns up to
  * eight pages unless its caller deliberately supplies a smaller `pages`
  * count; a longer file says `nextPage`, so the model reads on rather than
  * putting a whole commentary into one request. The renderer may retain the
  * PDF's own text layer in its disposable cache, but the tool never sends
  * that layer to the model: a legacy font can
- * make unrelated Latin characters look like valid Khmer evidence. Pagination
+ * make unrelated Latin characters look like valid evidence in another script. Pagination
  * says whether every
  * page has been returned, so a long file is never silently cut. A
  * Bible note is its notes' words (`toNoteFileText`), a text file its words
@@ -137,7 +137,7 @@ function toWholeNumber(value: unknown) {
 
 /**
  * A book's key from its code, its English name, or its name in any installed
- * Bible's own language (the Khmer Bible's own name for John). The English and code halves are pure and
+ * Bible's own language (a Bible's own name for John in its language). The English and code halves are pure and
  * tried first; only a name in another language reads the installed Bibles'
  * book maps, so the ordinary call does no I/O (2026-10-18).
  */

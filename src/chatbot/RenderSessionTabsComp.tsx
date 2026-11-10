@@ -114,7 +114,7 @@ function genFullNotice(count: number, isAllLocked: boolean) {
                   'This window holds {count} chats at most. Close one to ' +
                       'start a new chat.',
               ),
-        // In the language's own digits: `12` in a Khmer sentence reads as
+        // In the language's own digits: `12` in a sentence of another script reads as
         // a stray piece of English.
         { count: toShownDigits(count) },
     );

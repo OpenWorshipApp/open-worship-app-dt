@@ -93,7 +93,7 @@ The ✨ window — a company's chat site in a sandboxed `<webview>`, owned by th
     chatbot and ai chat must have translation and have font-family apply_):
     `src/aichat.tsx` draws from `init`'s callback and plugs in the
     chatbot's translator (`plugChatWindowLanguage`), so every label here is
-    a chatbot `tran` key with Khmer and French, and the language's face
+    a chatbot `tran` key in every language's dictionary, and the language's face
     rides `--chat-lang-font` in the shared font stacks. **Inside the site
     too** (the same day, the user's picture of Claude's Khmer in the OS's
     serif fallback: _make font-family effect page body as well_;

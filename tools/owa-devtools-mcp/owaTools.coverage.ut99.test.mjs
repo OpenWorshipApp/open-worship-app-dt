@@ -3,12 +3,12 @@
 // failures, the picker and the page switch on fake timers, a press the PAGE
 // refuses (logged beside the firewall's own), the real-file drop, and the
 // walkthrough card built from a built-in demo or a manual recipe, in English
-// and in Khmer.
+// and in another language (a made-up one, `xx`).
 //
 // The translations are a fixture. `tran.mjs` prefers a built
 // `electron-build/knowledge/tran.json` over the source packs, so a suite that
 // read the real dictionary would answer differently on a machine with a stale
-// build. Every key below translates to `km:<key>`; `Skip`, a button of the
+// build. Every key below translates to `xx:<key>`; `Skip`, a button of the
 // card, is left out on purpose -- a word the dictionary lacks stays English.
 
 import fs from 'node:fs';
@@ -82,9 +82,9 @@ import { PICKER_HINT_TEMPLATE } from './picker.mjs';
 import { getPresenterDemo } from './presenterDemos.mjs';
 import { WEBSITE_READ_EVALUATE_TIMEOUT } from './website.mjs';
 
-const km = (key) => `km:${key}`;
+const xx = (key) => `xx:${key}`;
 
-const KM_KEYS = [
+const XX_KEYS = [
   'Bible Lookup',
   'Bible Reference',
   'Documents',
@@ -98,12 +98,12 @@ const KM_KEYS = [
 app.bundle = {
   languages: [
     { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'km', name: 'Khmer', nativeName: 'Khmer' },
+    { code: 'xx', name: 'Xxlang', nativeName: 'Xxlang' },
   ],
   dictionaries: {
     en: {},
-    km: Object.fromEntries(
-      KM_KEYS.map((key) => [key.trim().toLowerCase(), km(key)]),
+    xx: Object.fromEntries(
+      XX_KEYS.map((key) => [key.trim().toLowerCase(), xx(key)]),
     ),
   },
 };
@@ -259,7 +259,7 @@ describe('the window language a label is offered in', () => {
   });
 
   it("offers a whole label in the window's words right after the English", async () => {
-    routeApp('km', () => ({ clicked: true, didChange: true }));
+    routeApp('xx', () => ({ clicked: true, didChange: true }));
     await call('owa_click', {
       find: ['More Options', 'Not In The Dictionary', 'Unknown > Scope'],
     });
@@ -268,7 +268,7 @@ describe('the window language a label is offered in', () => {
     // once and as written -- never twice, never blank.
     expect(clickFindsOf(expression)).toEqual([
       'More Options',
-      km('More Options'),
+      xx('More Options'),
       'Not In The Dictionary',
       'Unknown > Scope',
     ]);
@@ -278,7 +278,7 @@ describe('the window language a label is offered in', () => {
     routeApp('');
     expect(jsonOf(await call('owa_tran', { text: 'More Options' }))).toEqual({
       lang: 'en',
-      languages: ['en', 'km'],
+      languages: ['en', 'xx'],
       labels: [{ english: 'More Options', onScreen: 'More Options' }],
     });
   });
@@ -969,7 +969,7 @@ describe('owa_pick_element', () => {
   });
 
   it("says nothing was pointed at on a cancel, its line in the window's words", async () => {
-    routeApp('km', (expression) => {
+    routeApp('xx', (expression) => {
       return isRead(expression) ? { phase: 'cancelled' } : { phase: 'idle' };
     });
     expect(jsonOf(await call('owa_pick_element', {}))).toEqual({
@@ -978,7 +978,7 @@ describe('owa_pick_element', () => {
     });
     const [start] = callsOf((one) => one.includes('return picker.start('));
     expect(start[0]).toContain(
-      `picker.start(${JSON.stringify(km(PICKER_HINT_TEMPLATE))})`,
+      `picker.start(${JSON.stringify(xx(PICKER_HINT_TEMPLATE))})`,
     );
     expect(callsOf(isStop)).toHaveLength(1);
   });
@@ -1060,9 +1060,9 @@ describe('owa_goto_page', () => {
 
 describe('owa_find_ui', () => {
   it("retries a miss in the window's words and says what the control is called there", async () => {
-    routeApp('km', (expression) => {
-      return needleOf(expression) === km('More Options')
-        ? { matches: [{ label: km('More Options'), inPanel: 'Document List' }] }
+    routeApp('xx', (expression) => {
+      return needleOf(expression) === xx('More Options')
+        ? { matches: [{ label: xx('More Options'), inPanel: 'Document List' }] }
         : { matches: [], nearMisses: ['Documents'] };
     });
     expect(
@@ -1073,9 +1073,9 @@ describe('owa_find_ui', () => {
         }),
       ),
     ).toEqual({
-      matches: [{ label: km('More Options'), inPanel: 'Document List' }],
-      foundAs: km('More Options'),
-      note: `On their screen this control reads "${km('More Options')}" -- call it that.`,
+      matches: [{ label: xx('More Options'), inPanel: 'Document List' }],
+      foundAs: xx('More Options'),
+      note: `On their screen this control reads "${xx('More Options')}" -- call it that.`,
     });
     expect(
       callsOf(isFindUi).map(([expression, options]) => [
@@ -1084,12 +1084,12 @@ describe('owa_find_ui', () => {
       ]),
     ).toEqual([
       ['More Options', { match: 'presenter.html' }],
-      [km('More Options'), { match: 'presenter.html' }],
+      [xx('More Options'), { match: 'presenter.html' }],
     ]);
   });
 
   it('keeps the first answer when the translation misses too', async () => {
-    routeApp('km', () => ({ matches: [], nearMisses: ['Documents'] }));
+    routeApp('xx', () => ({ matches: [], nearMisses: ['Documents'] }));
     expect(jsonOf(await call('owa_find_ui', { text: 'More Options' }))).toEqual(
       { matches: [], nearMisses: ['Documents'] },
     );
@@ -1103,7 +1103,7 @@ describe('owa_find_ui', () => {
   });
 
   it('does not ask again for a label the dictionary lacks', async () => {
-    routeApp('km', () => ({ matches: [] }));
+    routeApp('xx', () => ({ matches: [] }));
     await call('owa_find_ui', { text: 'Not In The Dictionary' });
     expect(callsOf(isFindUi)).toHaveLength(1);
   });
@@ -1134,7 +1134,7 @@ describe('owa_find_ui', () => {
 
 describe("every label-aimed tool offers the window's words", () => {
   it('owa_scroll scrolls the biggest list without asking the language', async () => {
-    routeApp('km', () => ({ isAtBottom: false, inView: ['Song 12'] }));
+    routeApp('xx', () => ({ isAtBottom: false, inView: ['Song 12'] }));
     expect(jsonOf(await call('owa_scroll', { to: 'down' }))).toEqual({
       isAtBottom: false,
       inView: ['Song 12'],
@@ -1143,19 +1143,19 @@ describe("every label-aimed tool offers the window's words", () => {
     expect(app.evaluateInApp.mock.calls[0][0]).toContain('const finds = [];');
   });
 
-  it('owa_scroll, owa_press_key and owa_drag offer each label in Khmer after the English', async () => {
-    routeApp('km', () => ({ didChange: true }));
+  it("owa_scroll, owa_press_key and owa_drag offer each label in the window's language after the English", async () => {
+    routeApp('xx', () => ({ didChange: true }));
     await call('owa_scroll', { find: ['Documents'], to: 'top' });
     await call('owa_press_key', { keys: 'Space', find: ['Documents'] });
     await call('owa_drag', { from: ['Bible Lookup'], to: ['Documents'] });
     const [scroll, press, drag] = callsOf((one) => {
       return one !== LANGUAGE_EXPRESSION;
     }).map(([expression]) => expression);
-    const documents = JSON.stringify(['Documents', km('Documents')]);
+    const documents = JSON.stringify(['Documents', xx('Documents')]);
     expect(scroll).toContain(`const finds = ${documents};`);
     expect(press).toContain(`const finds = ${documents};`);
     expect(drag).toContain(
-      `const fromFinds = ${JSON.stringify(['Bible Lookup', km('Bible Lookup')])};`,
+      `const fromFinds = ${JSON.stringify(['Bible Lookup', xx('Bible Lookup')])};`,
     );
     expect(drag).toContain(`const toFinds = ${documents};`);
     // One window, one read: the rest come from the cache.
@@ -1496,40 +1496,40 @@ describe('owa_guide_start', () => {
     expect(card.steps[0].finds).toEqual(['Bible Lookup']);
   });
 
-  it('looks for the open control in both languages and speaks the card in Khmer', async () => {
-    routeCard('km', (expression) => {
+  it("looks for the open control in both languages and speaks the card in the window's language", async () => {
+    routeCard('xx', (expression) => {
       if (!isFindUi(expression)) {
         return undefined;
       }
       return {
         matches: [
-          { isVisible: needleOf(expression) === km('Bible Reference') },
+          { isVisible: needleOf(expression) === xx('Bible Reference') },
         ],
       };
     });
     await call('owa_guide_start', { demoId: DEMO_ID });
     expect(
       callsOf(isFindUi).map(([expression]) => needleOf(expression)),
-    ).toEqual(['Bible Reference', km('Bible Reference')]);
+    ).toEqual(['Bible Reference', xx('Bible Reference')]);
     const [{ card }] = cardsStarted();
     expect(card.steps).toHaveLength(demoSource.steps.length - 1);
     // Only the words the dictionary has: Skip stays the card's own English.
     expect(card.labels).toEqual({
-      next: km('Next'),
-      back: km('Back'),
-      done: km('Done'),
-      step: km('Walkthrough step'),
-      act: km('Do it'),
+      next: xx('Next'),
+      back: xx('Back'),
+      done: xx('Done'),
+      step: xx('Walkthrough step'),
+      act: xx('Do it'),
     });
     expect(card.words).toEqual({
-      [GUIDE_CARD_HINT_TEMPLATE_LIST[0]]: km(GUIDE_CARD_HINT_TEMPLATE_LIST[0]),
+      [GUIDE_CARD_HINT_TEMPLATE_LIST[0]]: xx(GUIDE_CARD_HINT_TEMPLATE_LIST[0]),
     });
   });
 
   it("turns a custom step's shortcut into the keys it presses, under the card's own title", async () => {
     // The path read answers nothing: a window that cannot say where it is
     // keeps every step, the trip to it included.
-    routeApp('km', (expression) => {
+    routeApp('xx', (expression) => {
       return isCard(expression) ? { currentStep: 1 } : undefined;
     });
     await call('owa_guide_start', {
@@ -1552,7 +1552,7 @@ describe('owa_guide_start', () => {
     expect(card.steps[1].keys).toEqual(toKeystroke('Ctrl+S'));
     expect(card.steps[1].keys.ctrlKey).toBe(true);
     expect(card.steps[2].keys).toBeNull();
-    expect(card.title).toBe(km(GUIDE_CARD_TITLE_KEY));
+    expect(card.title).toBe(xx(GUIDE_CARD_TITLE_KEY));
     expect(card.mode).toBe('demo');
   });
 
@@ -1597,10 +1597,10 @@ describe('owa_guide_start', () => {
     'More Options',
   ];
   // The page's translation, in the stand-in language: its words are signs,
-  // its button names the stand-in dictionary's (`km:<key>`).
+  // its button names the stand-in dictionary's (`xx:<key>`).
   const W90_LOCAL = {
     title: '✎',
-    lang: 'km',
+    lang: 'xx',
     body: [
       '# W-90 — ✎',
       '',
@@ -1613,10 +1613,10 @@ describe('owa_guide_start', () => {
 
   // `readHelpPage(id, lang, 'whole', options)`: the English page as the
   // card's rules read it, the same page with its templates kept, and the
-  // page's translation (`W-90@km`).
+  // page's translation (`W-90@xx`).
   function servePages({ english, withTemplates = english, local = null }) {
     app.readHelpPage.mockImplementation((id, _lang, _part, options) => {
-      if (id.endsWith('@km')) {
+      if (id.endsWith('@xx')) {
         return local;
       }
       return options?.keepTemplates === true ? withTemplates : english;
@@ -1650,28 +1650,28 @@ describe('owa_guide_start', () => {
 
   it("puts a recipe card into the window's language: its translation, the window's controls first", async () => {
     servePages({ english: W90, local: W90_LOCAL });
-    routeCard('km');
+    routeCard('xx');
     await call('owa_guide_start', { manualId: 'W-90' });
     const [{ card, options }] = cardsStarted();
     expect(options).toEqual({ match: 'setting.html' });
     expect(card.title).toBe('✎');
-    expect(card.labels.next).toBe(km('Next'));
+    expect(card.labels.next).toBe(xx('Next'));
     expect(card.steps.map(({ text, finds }) => ({ text, finds }))).toEqual([
       {
-        text: `➜ ${km('Bible Lookup')} ✓`,
-        finds: [km('Bible Lookup'), 'Bible Lookup'],
+        text: `➜ ${xx('Bible Lookup')} ✓`,
+        finds: [xx('Bible Lookup'), 'Bible Lookup'],
       },
       {
-        text: `▤ ${km('Documents')} ➜ ${km('More Options')} ✓`,
+        text: `▤ ${xx('Documents')} ➜ ${xx('More Options')} ✓`,
         finds: [
-          `${km('Documents')} > ${km('More Options')}`,
+          `${xx('Documents')} > ${xx('More Options')}`,
           // The panel's English name, which it answers to in every language.
-          `Documents > ${km('More Options')}`,
+          `Documents > ${xx('More Options')}`,
           'Documents > More Options',
           'Documents panel',
-          km('Documents'),
+          xx('Documents'),
           'Documents',
-          km('More Options'),
+          xx('More Options'),
           'More Options',
         ],
       },
@@ -1689,23 +1689,23 @@ describe('owa_guide_start', () => {
       withTemplates,
       local: { ...W90_LOCAL, lang: 'en' },
     });
-    routeCard('km');
+    routeCard('xx');
     await call('owa_guide_start', { manualId: 'W-90' });
     const [{ card }] = cardsStarted();
     expect(card.title).toBe('Practice');
     expect(card.steps[0].text).toBe(
-      `Click ${km('Bible Lookup')} to open the lookup.`,
+      `Click ${xx('Bible Lookup')} to open the lookup.`,
     );
   });
 
   it('keeps the English steps when no copy of the page lines up with them', async () => {
     servePages({ english: W90, withTemplates: null });
-    routeCard('km');
+    routeCard('xx');
     await call('owa_guide_start', { manualId: 'W-90' });
     const [{ card }] = cardsStarted();
     expect(card.steps[0]).toMatchObject({
       text: 'Click Bible Lookup to open the lookup.',
-      finds: [km('Bible Lookup'), 'Bible Lookup'],
+      finds: [xx('Bible Lookup'), 'Bible Lookup'],
     });
   });
 

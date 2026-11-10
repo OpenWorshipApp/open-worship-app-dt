@@ -102,7 +102,7 @@ vi.mock('./lookupManagersContext', () => ({
         },
     }),
 }));
-vi.mock('./lookupLangHelpers', () => ({ useLookupLangCode: () => 'km' }));
+vi.mock('./lookupLangHelpers', () => ({ useLookupLangCode: () => 'xx' }));
 vi.mock('./lookupPresentationHelpers', () => ({
     REFERENCE_TOKEN_SCHEME_LIST: [
         'name-id',
@@ -196,9 +196,9 @@ describe('lookup detail parts', () => {
         press('E.');
         press('1:1');
         expect(h.opened).toEqual([
-            { kind: 'name', target: 'n1', name: 'Moses', langCode: 'km' },
-            { kind: 'location', target: 'l1', name: 'Egypt', langCode: 'km' },
-            { kind: 'verse', target: 'GEN 1:1', name: '1:1', langCode: 'km' },
+            { kind: 'name', target: 'n1', name: 'Moses', langCode: 'xx' },
+            { kind: 'location', target: 'l1', name: 'Egypt', langCode: 'xx' },
+            { kind: 'verse', target: 'GEN 1:1', name: '1:1', langCode: 'xx' },
         ]);
         act(() =>
             host
@@ -213,7 +213,7 @@ describe('lookup detail parts', () => {
     test('localizes Bible tokens when the selected Bible is not KJV', async () => {
         await render(
             <ReferenceTextComp
-                bibleKey="KM"
+                bibleKey="XXV"
                 value="[Gen](book-key://GEN) [one](verse-key://GEN 1:1)"
             />,
         );
@@ -295,8 +295,8 @@ describe('lookup detail parts', () => {
         press('Moses(Moses KJV)');
         press('Egypt(Egypt KJV)');
         expect(h.opened).toEqual([
-            { kind: 'name', target: 'n1', name: 'Moses', langCode: 'km' },
-            { kind: 'location', target: 'l1', name: 'Egypt', langCode: 'km' },
+            { kind: 'name', target: 'n1', name: 'Moses', langCode: 'xx' },
+            { kind: 'location', target: 'l1', name: 'Egypt', langCode: 'xx' },
         ]);
         act(() =>
             host
@@ -316,7 +316,7 @@ describe('lookup detail parts', () => {
         const resolved = vi.fn();
         await render(
             <OptionalVerseListRowComp
-                bibleKey="KM"
+                bibleKey="XXV"
                 values={values}
                 onResolved={resolved}
             />,
@@ -366,7 +366,7 @@ describe('lookup detail parts with missing or unreadable data', () => {
     test('a token with no target, an id that is gone and an unreadable reference', async () => {
         await render(
             <ReferenceTextComp
-                bibleKey="KM"
+                bibleKey="XXV"
                 value={
                     '[Nobody](name-id://  ) met [Gone](name-id://n9) at ' +
                     '[Old](location-id://l9) in [Bad](verse-key://XXX 1:1) ' +
@@ -386,9 +386,9 @@ describe('lookup detail parts with missing or unreadable data', () => {
         press('Old');
         press('Bad');
         expect(h.opened).toEqual([
-            { kind: 'name', target: 'n9', name: 'Gone', langCode: 'km' },
-            { kind: 'location', target: 'l9', name: 'Old', langCode: 'km' },
-            { kind: 'verse', target: 'XXX 1:1', name: 'Bad', langCode: 'km' },
+            { kind: 'name', target: 'n9', name: 'Gone', langCode: 'xx' },
+            { kind: 'location', target: 'l9', name: 'Old', langCode: 'xx' },
+            { kind: 'verse', target: 'XXX 1:1', name: 'Bad', langCode: 'xx' },
         ]);
     });
 
@@ -401,7 +401,7 @@ describe('lookup detail parts with missing or unreadable data', () => {
                 <OptionalNameListRowComp label="People" ids={[]} />
                 <OptionalLocationListRowComp label="Places" values={[]} />
                 <OptionalVerseListRowComp
-                    bibleKey="KM"
+                    bibleKey="XXV"
                     values={[]}
                     onResolved={resolved}
                 />
@@ -448,7 +448,7 @@ describe('lookup detail parts with missing or unreadable data', () => {
         const resolved = vi.fn();
         await render(
             <OptionalVerseListRowComp
-                bibleKey="KM"
+                bibleKey="XXV"
                 values={values}
                 onResolved={resolved}
             />,

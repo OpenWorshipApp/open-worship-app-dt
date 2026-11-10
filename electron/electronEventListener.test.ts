@@ -481,7 +481,7 @@ describe('electronEventListener', () => {
                             label: 'Editor',
                             clickData: {
                                 openExternalUrl:
-                                    'https://editor-km.openworship.app',
+                                    'https://editor-xx.example.org',
                             },
                         },
                     ],
@@ -499,7 +499,7 @@ describe('electronEventListener', () => {
 
         expect(ownerWin.webContents.send).toHaveBeenCalledWith(
             'app:main:menu-item-clicked',
-            { openExternalUrl: 'https://editor-km.openworship.app' },
+            { openExternalUrl: 'https://editor-xx.example.org' },
         );
         expect(otherWin.webContents.send).not.toHaveBeenCalled();
 

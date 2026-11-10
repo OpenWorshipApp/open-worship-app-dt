@@ -251,7 +251,7 @@ describe('toBibleSummary', () => {
                     renderedList: [
                         { bibleKey: 'KJV', title: 'John 3:16', verses: [] },
                         {
-                            bibleKey: 'KHSV',
+                            bibleKey: 'TQSV',
                             title: '[xx] John 3:16',
                             verses: [],
                         },
@@ -272,7 +272,7 @@ describe('toBibleSummary', () => {
         ).toEqual({
             reference: 'John 3:16',
             version: 'KJV',
-            versions: ['KJV', 'KHSV'],
+            versions: ['KJV', 'TQSV'],
         });
     });
     it('spells the reference from the target before anything is rendered', () => {
@@ -540,15 +540,15 @@ describe('describeScreensForAgent', () => {
         h.isPagePresenter = true;
         const screenViewData: any = {
             type: 'long-text',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             scroll: 0,
             selectedKJVVerseKey: null,
             longTextData: {
                 sourceId: 'long-text',
                 renderedList: [
                     {
-                        locale: 'km-KH',
-                        code: 'KM',
+                        locale: 'xx-XX',
+                        code: 'XX',
                         title: '[xx] Grace',
                         sections: [],
                     },
@@ -567,11 +567,11 @@ describe('describeScreensForAgent', () => {
                 screenLongTextManager: { screenViewData },
             }),
         ];
-        // `KM` is a language here, not a Bible version to report.
+        // `XX` is a language here, not a Bible version to report.
         expect(toBibleSummary(screenViewData)).toBeNull();
         const [screen] = describeScreensForAgent().screens;
         expect(screen.bible).toBeNull();
-        expect(screen.foreground).toEqual(['long text "[xx] Grace" in KM, EN']);
+        expect(screen.foreground).toEqual(['long text "[xx] Grace" in XX, EN']);
         expect(screen.isBlank).toBe(false);
     });
     it('answers a screen with no display information in this window as displayId null', () => {

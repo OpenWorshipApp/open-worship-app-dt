@@ -65,7 +65,7 @@ import {
   genPickerStartExpression,
   genPickerStopExpression,
 } from './picker.mjs';
-import { resolveTranTemplates, tranText } from './tran.mjs';
+import { loadTranBundle, resolveTranTemplates, tranText } from './tran.mjs';
 import { WEBSITE_READ_EVALUATE_TIMEOUT } from './website.mjs';
 
 const handlers = new Map();
@@ -181,7 +181,6 @@ afterEach(() => {
 });
 
 describe('labels in the window language', () => {
-
   it('keeps English labels when no window can be asked its language', async () => {
     state.isLanguageDown = true;
     state.answer = () => ({ value: { clicked: true } });
@@ -193,7 +192,6 @@ describe('labels in the window language', () => {
 });
 
 describe('owa_find_ui', () => {
-
   it('does not search twice in an English window', async () => {
     state.answer = () => ({ value: { matches: [] } });
     answer(await call('owa_find_ui', { text: 'Zoom In' }));
@@ -661,8 +659,8 @@ describe('the Bible reading tools', () => {
       ],
       [
         'owa_lookup_record',
-        { kind: 'name', name: 'Noah', lang: 'km' },
-        { kind: 'name', name: 'Noah', lang: 'km', domain: 'lookup' },
+        { kind: 'name', name: 'Noah', lang: 'xx' },
+        { kind: 'name', name: 'Noah', lang: 'xx', domain: 'lookup' },
         60000,
         { match: undefined, timeout: 65000 },
       ],
@@ -1269,15 +1267,26 @@ describe('owa_guide_start with a built-in lesson', () => {
 });
 
 it('the walkthrough card title defaults to the window language', async () => {
-  state.lang = 'km';
+  // A language of the checkout whose dictionary has the title, found by its
+  // folder; with English alone there, a made-up one, which keeps the English.
+  const bundle = loadTranBundle();
+  const langCode =
+    bundle.languages
+      .map(({ code }) => code)
+      .find((code) => {
+        return (
+          tranText(GUIDE_CARD_TITLE_KEY, code, bundle) !== GUIDE_CARD_TITLE_KEY
+        );
+      }) ?? 'xx';
+  state.lang = langCode;
   fakeGuideWindow();
   answer(
     await call('owa_guide_start', {
       steps: [{ text: 'Press Next.', find: 'Next' }],
-      page: 'km-g3.html',
+      page: 'lang-g3.html',
     }),
   );
   expect(startCalls()[0].payload.title).toBe(
-    tranText(GUIDE_CARD_TITLE_KEY, 'km'),
+    tranText(GUIDE_CARD_TITLE_KEY, langCode, bundle),
   );
 });

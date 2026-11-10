@@ -170,9 +170,9 @@ describe('compared bibles', () => {
             if (bibleKey === 'KJV') {
                 return [genVerse('KJV', 4, 2), genVerse('KJV', 4, 3)];
             }
-            if (bibleKey === 'KHM') {
+            if (bibleKey === 'TQAM') {
                 // Numbered differently: it has no verse 2 in this chapter.
-                return [genVerse('KHM', 4, 3)];
+                return [genVerse('TQAM', 4, 3)];
             }
             // A bible lacking the chapter altogether.
             return null;
@@ -183,18 +183,18 @@ describe('compared bibles', () => {
             verseStart: 2,
             verseEnd: 3,
         };
-        await render(genItem(target, ['KHM', 'FRE']));
-        expect(h.verseTextList).toHaveBeenCalledWith('KHM', target, false, {
+        await render(genItem(target, ['TQAM', 'TQFE']));
+        expect(h.verseTextList).toHaveBeenCalledWith('TQAM', target, false, {
             start: 0,
             count: 1,
         });
-        expect(h.verseTextList).toHaveBeenCalledWith('FRE', target, false, {
+        expect(h.verseTextList).toHaveBeenCalledWith('TQFE', target, false, {
             start: 0,
             count: 1,
         });
         expect(readVerses()).toEqual([
             ['KJV 4:2', ''],
-            ['KJV 4:3', 'KHM 4:3'],
+            ['KJV 4:3', 'TQAM 4:3'],
         ]);
         const container =
             host.querySelector<HTMLDivElement>('.bible-view-text')!;
@@ -296,11 +296,11 @@ describe('reading one more chapter', () => {
                 });
             },
         );
-        await render(genItem(target, ['KHM']));
+        await render(genItem(target, ['TQAM']));
         expect(readVerses()).toEqual([
-            ['KJV 4:1', 'KHM 4:1'],
-            ['KJV 5:1', 'KHM 5:1'],
-            ['KJV 6:1', 'KHM 6:1'],
+            ['KJV 4:1', 'TQAM 4:1'],
+            ['KJV 5:1', 'TQAM 5:1'],
+            ['KJV 6:1', 'TQAM 6:1'],
         ]);
         const more = host.querySelector<HTMLButtonElement>('.more')!;
         // Two presses, each its own event, the second while the first reads.
@@ -314,10 +314,13 @@ describe('reading one more chapter', () => {
             return range.start === 3;
         });
         // One read per bible, not two.
-        expect(nextReads.map(([bibleKey]) => bibleKey)).toEqual(['KJV', 'KHM']);
+        expect(nextReads.map(([bibleKey]) => bibleKey)).toEqual([
+            'KJV',
+            'TQAM',
+        ]);
         releaseNext();
         await flush();
-        expect(readVerses().at(-1)).toEqual(['KJV 7:1', 'KHM 7:1']);
+        expect(readVerses().at(-1)).toEqual(['KJV 7:1', 'TQAM 7:1']);
     });
 
     test('a chapter that fails to read is reported, and can be pressed again', async () => {

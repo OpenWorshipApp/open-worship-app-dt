@@ -46,8 +46,8 @@ const DISAMBIGUATOR_PATTERN =
 const TRANSLATED_DISAMBIGUATOR_PATTERN =
     /^(.*?)(?:\s*\(|,\s|\s+(?:of|in|at|the)\s+)/i;
 
-// Zero-width and soft-breaking characters. Khmer marks its word boundaries with
-// U+200B and joins clusters with U+200C, and a NAME carries them as readily as
+// Zero-width and soft-breaking characters. A script written without spaces
+// marks its word boundaries with U+200B and joins clusters with U+200C, and a NAME carries them as readily as
 // the scripture around it does — so a needle is stripped of them here and the
 // matcher skips them in the text it reads (see `verseTextTranslatedHelpers`),
 // which is what lets the one spelling match the other. Deliberately NOT applied
@@ -320,7 +320,7 @@ export async function buildLookupTextIndex(
  *
  * Two things differ from the English derivation above, both because the matcher
  * that consumes these reads a script with no word boundaries and no case:
- * nothing is lower-cased (there is no case to fold in Khmer, and folding it
+ * nothing is lower-cased (there is no case to fold in such a script, and folding it
  * would put the needle out of step with the text the matcher compares it
  * against character by character), and the zero-width marks a translated name
  * carries are taken out so one spelling of a name matches the other.

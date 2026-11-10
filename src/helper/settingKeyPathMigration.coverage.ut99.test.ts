@@ -108,7 +108,7 @@ describe('migrateSettingKeyPaths', () => {
             'old',
         );
         state.storage.set('widget-size-b-@data_lyrics_hymn_owl', 'newer');
-        state.storage.set('language', 'km');
+        state.storage.set('language', 'xx');
 
         await migrateSettingKeyPaths();
 
@@ -118,7 +118,7 @@ describe('migrateSettingKeyPaths', () => {
         expect(Object.fromEntries(state.storage)).toEqual({
             'widget-size-a-@data_documents_song_ows': '200',
             'widget-size-b-@data_lyrics_hymn_owl': 'newer',
-            language: 'km',
+            language: 'xx',
         });
         expect(mocks.setItem).toHaveBeenCalledTimes(1);
         expect(mocks.removeItem).toHaveBeenCalledTimes(2);

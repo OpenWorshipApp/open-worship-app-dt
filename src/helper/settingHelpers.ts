@@ -49,7 +49,7 @@ export function toAbsoluteFilePathSettingKey(...parts: string[]) {
 
 // Under every file system's 255-byte name limit with room for any prefix a
 // caller puts in front: two paths in one key, under a `/media/<user>/<label>`
-// mount, with Khmer names at three bytes a character, went past it.
+// mount, with names in a script at three bytes a character, went past it.
 const MAX_SETTING_KEY_BYTES = 150;
 const HASH_LENGTH = 8;
 

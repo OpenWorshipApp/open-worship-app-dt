@@ -146,10 +146,16 @@ describe('words, not letters that meet across a space', () => {
         expect(toEnglishStem('his')).toBe('his');
     });
 
-    it('reads Khmer and its neighbours run together', () => {
+    // Written without spaces is a property of the SCRIPT, whatever the
+    // language: a made-up language in a script that has no spaces reads run
+    // together, in a Latin one apart. A language's own case is its
+    // package's test.
+    it('reads a script written without spaces run together', () => {
         expect(checkIsSpacedLocale('en-US')).toBe(true);
-        expect(checkIsSpacedLocale('fr')).toBe(true);
-        expect(checkIsSpacedLocale('km-KH')).toBe(false);
+        expect(checkIsSpacedLocale('xx-Latn')).toBe(true);
+        expect(checkIsSpacedLocale('xx')).toBe(true);
+        expect(checkIsSpacedLocale('xx-Thai')).toBe(false);
+        expect(checkIsSpacedLocale('xx_Hans')).toBe(false);
         expect(checkIsSpacedLocale('th')).toBe(false);
     });
 });

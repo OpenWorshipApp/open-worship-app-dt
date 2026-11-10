@@ -35,9 +35,9 @@ test.each(['', '../escape', 'CON', 'a/b'])(
     },
 );
 test('refuses an installed key ignoring case, and a colliding file even if its key is absent', async () => {
-    mocks.keys = { khmer: '/existing.xml' };
+    mocks.keys = { madeup: '/existing.xml' };
     await expect(
-        saveNewBibleImport({ info: { key: 'KHMER' } } as any),
+        saveNewBibleImport({ info: { key: 'MADEUP' } } as any),
     ).rejects.toThrow('already taken');
     mocks.keys = {};
     mocks.exists = true;

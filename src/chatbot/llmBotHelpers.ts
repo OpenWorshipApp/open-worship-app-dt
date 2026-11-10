@@ -609,8 +609,9 @@ export function getLlmModelNotice(
 }
 // A help answer is a paragraph and a couple of steps, not an essay.
 const MAX_TOKENS = 2000;
-// A whole answer put into Khmer is several times the English's tokens: a
-// 300-word answer is ~400 tokens in English and well over 1 500 in Khmer, so
+// A whole answer put into a script of its own is several times the English's
+// tokens: a 300-word answer is ~400 tokens in English and well over 1 500 in
+// such a script, so
 // the translator's round on a server of the user's own gets twice the room.
 const TRANSLATION_MAX_TOKENS = 4000;
 // ...but Claude THINKS out of the same budget. Sonnet 5 and Opus 5 run
@@ -2286,7 +2287,7 @@ type ToolWatchType = {
      * and whether an answer that skipped it went back once. Told to call
      * `owa_foreground` for _Can you start a 5 minute countdown?_,
      * gemma4:cloud wrote "I have started a 5-minute countdown on the screen"
-     * having called nothing (the whole list asked in Khmer, 2026-10-17,
+     * having called nothing (the whole list asked in a non-English language, 2026-10-17,
      * EC-325) -- a thing said done that is not.
      */
     doTool: string | null;
@@ -2297,7 +2298,7 @@ type ToolWatchType = {
      * is read once more by the model against that part: the steps it took
      * for granted and the ones that finish the job, added -- or KEEP, and
      * the first answer stands (`genCompletenessNudge`). Over passes 6-8 of
-     * the whole list asked in Khmer of gemma4:cloud, ~30 answers stopped
+     * the whole list asked in a non-English language of gemma4:cloud, ~30 answers stopped
      * before the job's last step with that step quoted in front of them,
      * whatever the hint said (EC-330). No-cost assistants only: a round
      * more on a paid key is a bill nobody chose.
@@ -2363,10 +2364,10 @@ type ToolWatchType = {
      */
     windowAim: WindowAimType | null;
     /**
-     * The language a guide page the model opens is read in (`W-31@km`), or
-     * null for the English page: the language this answer is written in when
-     * no translator stands between (`findPageLanguage`). Handed the English
-     * page, a model writing Khmer put its English sentences into the answer
+     * The language a guide page the model opens is read in (`W-31@<code>`),
+     * or null for the English page: the language this answer is written in
+     * when no translator stands between (`findPageLanguage`). Handed the
+     * English page, a model writing another language put its English sentences into the answer
      * (`runMcpToolCall`).
      */
     pageLang: string | null;
@@ -2508,7 +2509,7 @@ export function genToolWatch(): ToolWatchType {
  * number.
  *
  * **And steps written with NOTHING looked up at all** (2026-10-17, the
- * Khmer stress run on gemma4:cloud): under a pasted story and down a
+ * non-English stress run on gemma4:cloud): under a pasted story and down a
  * ten-turn chat about a song it wrote every list from memory with no tool
  * called -- _the show button with an eye on it_, _it saves by itself when you
  * press Apply_ -- because this rule waited for a search that never came.
@@ -2673,15 +2674,15 @@ export function cutRunawayAnswer(text: string) {
     return match === null ? text : text.slice(0, match.index).trimEnd();
 }
 
-// A model's own control tokens printed as words: a Khmer letter, then
-// _<audio|> View_, in the middle of a Khmer step (gemma-4-12b on LM Studio,
+// A model's own control tokens printed as words: a letter of the answer's
+// script, then _<audio|> View_, in the middle of a translated step (gemma-4-12b on LM Studio,
 // 2026-10-17). A `<` or a
 // `>` with a pipe against it is no word of any language and no markdown.
 const MODEL_TOKEN_PATTERN =
     /<\|?[A-Za-z_][\w-]{0,30}\|>|<\|[A-Za-z_][\w-]{0,30}>|<(?:start_of_turn|end_of_turn|eos|bos)>/g;
 
-// And a LaTeX arrow where a menu path's arrow belongs: the Khmer for Tools,
-// then _$\rightarrow$ …_ (gemma4:cloud, twice in the Khmer corpus run).
+// And a LaTeX arrow where a menu path's arrow belongs: the translated Tools,
+// then _$\rightarrow$ …_ (gemma4:cloud, twice in a non-English corpus run).
 // Nothing here draws math.
 const LATEX_ARROW_PATTERN =
     /\$\s*\\(?:rightarrow|Rightarrow|longrightarrow|to)\s*\$|\\(?:rightarrow|Rightarrow)\b/g;
@@ -2711,14 +2712,14 @@ export const RUNAWAY_ANSWER_NUDGE =
  * again (`isShapeNudged`), the way `checkIsStepsWithoutPage` hands back steps
  * written off an excerpt -- with what it is told and the part of the reply
  * worth keeping in the conversation. Both measured 2026-10-17, the whole
- * corpus asked in Khmer of gemma4:cloud:
+ * corpus asked in a non-English language of gemma4:cloud:
  *
  * - **Only its frames** (`OPTIONS:`, `SHOWS:`): _Can you start a 5 minute
  *   countdown on the screen?_ started one on two screens that were OFF and
  *   came back as two chips under no words at all -- not that it had started,
  *   not that nobody could see it.
  * - **Ran away**: _Does the help still work with no internet?_ became
- *   the Khmer for "service" and then one Khmer letter nineteen hundred
+ *   the translated "service" and then one letter of it nineteen hundred
  *   times, until the round's 2 000
  *   tokens were spent. Kept up to where it broke, so the broken run is not
  *   what the model reads back.
@@ -2793,8 +2794,8 @@ const MIN_WRONG_SCRIPT_LETTERS = 30;
  * Whether an answer that must be in a language with a script of its own
  * holds not one letter of it, and is long enough to be an answer: written in
  * another language altogether (2026-11-04, `EC-460`: a Thai question in a
- * Khmer window, the language line saying _answer in Thai_, came back wholly
- * in Khmer once of twice). A button named as the screen shows it is a few
+ * window of another script, the language line saying _answer in Thai_, came
+ * back wholly in the window's language once of twice). A button named as the screen shows it is a few
  * letters inside the language's own, never the whole answer.
  */
 export function checkIsWrongScriptAnswer(words: string, scriptPattern: RegExp) {
@@ -2849,9 +2850,9 @@ function toNamedVerseRef(match: RegExpMatchArray) {
 /**
  * The verses a verse-search answer QUOTES that no search or read of this ask
  * returned, handed back once to be read first (2026-10-22, `EC-391`). Seen
- * live through Bible Find's 🤖 with `shepherd` over the Khmer Bible: the
+ * live through Bible Find's 🤖 with `shepherd` over a non-English Bible: the
  * answer quoted John 10:11 in one round with no tool call -- "I am the good
- * shepherd … gives his own life" in Khmer of its own, where the Khmer Bible
+ * shepherd … gives his own life" in a wording of its own, where that Bible
  * words it otherwise -- shown as scripture, with no button.
  * The prompt had forbidden it since the first day; a small model reads a
  * sentence, and this reads the answer. Never on the last round.
@@ -2885,7 +2886,7 @@ export function findUnreadVerseNudge(text: string, watch: ToolWatchType) {
 }
 
 // What is compared of a quote and of what was read: the letters and their
-// marks alone -- a model drops the Khmer Bible's zero-width spaces, a
+// marks alone -- a model drops a Bible's zero-width spaces, a
 // verse's "(4):" in the Bible's own digits, a quote mark, and joins two
 // verses into one.
 export function toQuoteKey(text: string) {
@@ -2917,7 +2918,7 @@ export function addQuoteSource(watch: ToolWatchType, text: string) {
  * nothing it was given holds -- not the record, not a verse it read --
  * handed back once to read the verse and quote it as it came back, or to
  * leave the quote out (2026-10-22). Asked under Noah's card _where did the
- * ark come to rest?_, gemma4:cloud answered Genesis 8:4 with Khmer words
+ * ark come to rest?_, gemma4:cloud answered Genesis 8:4 with translated words
  * of its own and the wrong month, twice in two passes, the record holding
  * neither the verse nor its words. The prompt forbade it from the first
  * day; a small model reads a sentence, and this reads the answer. A quote
@@ -2969,7 +2970,7 @@ export function findMisquoteNudge(text: string, watch: ToolWatchType) {
  * gives the day the flood began, and the record's own cross references
  * named it. Said with a read behind it, it stands. The words are DATA per
  * language (`lookupWords.notStated`), read in every language: a model
- * working in English for a Khmer reader writes English.
+ * working in English for a non-English reader writes English.
  */
 export function findNotStatedNudge(text: string, watch: ToolWatchType) {
     if (
@@ -3756,8 +3757,9 @@ async function runMcpToolCall(
             );
         }
         // A verse asked for in their language is read from a Bible in it
-        // (BN-26, 2026-11-08: asked in Khmer under a Khmer note, John 1:1
-        // came from the KJV the Lookup was on, Khmer Bibles installed).
+        // (BN-26, 2026-11-08: asked in a non-English language under a note
+        // in it, John 1:1 came from the KJV the Lookup was on, Bibles of
+        // that language installed).
         if (args?.bible === undefined && checkAddsNoteVerse(args)) {
             const verseBible = await findNoteVerseBible(watch, signal);
             if (verseBible !== null) {
@@ -4031,7 +4033,7 @@ export type AskExtraType = {
     // line at the end of the ask. Given by a caller that knows what the
     // person said; otherwise read off `askedText`, and with neither the ask
     // is left as it is -- a question the window composed itself (a verse put
-    // into English) must not be told to come back in Khmer.
+    // into English) must not be told to come back in another language.
     replyLang?: string;
     /**
      * Told what each model round USED, the moment its response lands --
@@ -4103,7 +4105,7 @@ export type AskExtraType = {
     // verse and needs nothing looked up -- ONE round, the tools withheld
     // (2026-10-23: three lessons in fifteen read the verse again anyway,
     // three rounds and ~16k tokens where one round is ~5k, and two of them
-    // quoted the tool's English reference into a Khmer answer).
+    // quoted the tool's English reference into a translated answer).
     lookup?: {
         page: string | null;
         record?: string;
@@ -4454,8 +4456,9 @@ function genKeepMarkersText(languageName: string) {
 const SEARCH_IN_ENGLISH_TEXT =
     'The guide is in English: search it with English words.';
 // The screen is in the APP's language, whatever they wrote in: told to answer
-// a Spanish question in French, a model renamed the Font Size slider in
-// French, a name nothing on that English screen carries (2026-11-03).
+// a Spanish question in another Latin-script language, a model renamed the
+// Font Size slider in it, a name nothing on that English screen carries
+// (2026-11-03).
 const BUTTON_NAMES_TEXT =
     'Name every button and menu exactly as the tools and the guide give ' +
     'it: that is how their screen shows it.';
@@ -4969,7 +4972,7 @@ async function askAnthropicCompatible(
  * (EC-211), by provider and model, with when that stops being assumed. Every
  * one of them is then asked with thinking off from its FIRST round, for half
  * an hour: measured 2026-10-17 on the user's LM Studio, the whole corpus
- * asked in Khmer of gemma-4-12b ran out of budget thinking on every question
+ * asked in a non-English language of gemma-4-12b ran out of budget thinking on every question
  * and was asked again with it off -- two rounds of ~12 000 tokens and ~95 s
  * a question for the one answer the second round wrote. Half an hour, then
  * the model is trusted to think again; a handful of entries at most, the
@@ -6366,7 +6369,7 @@ export function genGeneralAskAction(
  * The language an answer is SHOWN in, for `toAnswerShownInLanguage`: the one
  * the ask was told to answer in (`toAskWithLanguage`), and null where nobody
  * reads it as it stands -- a translator's round (its English is a question
- * for another model, its Khmer is cleaned where it is drawn) and an ask told
+ * for another model, its translation is cleaned where it is drawn) and an ask told
  * no language at all.
  */
 function toShownAnswerLanguage(extra: AskExtraType | undefined) {
@@ -6386,7 +6389,7 @@ function toShownAnswerLanguage(extra: AskExtraType | undefined) {
 
 /**
  * The script an answer in `langCode` must be written in, when the language
- * has one of its own (never Latin: French and English share it, and a button
+ * has one of its own (never Latin: many languages share it with English, and a button
  * named in English inside an answer is right), for the wrong-language check
  * of `findAnswerShapeNudge`.
  */
@@ -6405,7 +6408,7 @@ export function toAnswerScript(langCode: string | null) {
  * record names no Bible, and so goes to the record's (`quoteBible`): with
  * none named, the reader picks one by the reference's language, and `MAT
  * 18:18-35` -- a code -- was read from the KJV and quoted in English inside
- * a Khmer answer under a passage of a Khmer Bible (2026-10-23).
+ * a translated answer under a passage of a Bible in that language (2026-10-23).
  */
 export function checkReadsInRecordBible(
     watch: { quoteSources: string[] | null; quoteBible: string | null },
@@ -6528,13 +6531,13 @@ async function askLlmBotAsWritten(
     const isGeneral = extra?.isGeneral === true;
     // This one has a complete local solution and exact live-safe controls.
     // Letting a small model improvise it was measured asking a senior to read
-    // and type back the Khmer button label -- precisely the task they could
+    // and type back the translated button label -- precisely the task they could
     // not do. It needs neither the network nor a model round. Not for a
     // general question, which is about nothing in this app.
     //
     // Read off the words the person TYPED, never the ask: a supported
     // question carries its guide page under it, and three of the Reader's
-    // pages say "non-English" or "Khmer" beside a reference of their own.
+    // pages say "non-English" or name a language beside a reference of their own.
     // Measured 2026-10-12 over the whole corpus: seventeen of the Reader's
     // seventy-one supported questions -- "The words are too small", "What
     // are verse marks?", "How do I put two Bible versions side by side?" --
@@ -6649,7 +6652,7 @@ async function askLlmBotAsWritten(
                 null;
             // Read by the window for this question: nothing to send back.
             // G3 under Genesis 8 had its people named from the names
-            // lookup and called Noah's family, in Khmer, "people whose names
+            // lookup and called Noah's family, in a non-English answer, "people whose names
             // are not stated"; the nudge took that
             // for "the Bible does not say", and the model, handed a note
             // instead of a question, asked what the question was

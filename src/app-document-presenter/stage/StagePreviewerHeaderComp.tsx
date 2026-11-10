@@ -216,8 +216,8 @@ export default function StagePreviewerHeaderComp({
     return (
         // This header is a flex item of the card column and was being shrunk
         // below its own content box, so a label that wrapped to a second line
-        // got clipped mid-glyph - which is what the Khmer translation does,
-        // being about twice the width of the English one. The scss keeps it
+        // got clipped mid-glyph - which is what a translation about twice the
+        // width of the English one does. The scss keeps it
         // on a single unshrinkable line: the label truncates with an
         // ellipsis FIRST, then Add Stage folds to its `+`, so the chips --
         // the only sign of which panes are up -- stay visible.

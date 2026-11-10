@@ -247,8 +247,8 @@ server. What makes it good for them:
   and — through what the model then says — a volunteer about to be acted upon.
 - **Labels are i18n templates.** The knowledge is English, the buttons are not:
   `[en:tran:Clear Long Text]` is filled in with what that key reads as in the
-  language the app is DISPLAYING, so a `find` matches the DOM in a Khmer
-  window. `owa_tran` answers the same question for a label the model wrote.
+  language the app is DISPLAYING, so a `find` matches the DOM in a
+  translated window. `owa_tran` answers the same question for a label the model wrote.
 - **`questions/*.json` changes in the SAME commit as any recipe or UI it
   describes** (memory: `question-corpus-maintenance`).
 - **Drive what you changed.** Two of this skill's own findings — a policy that

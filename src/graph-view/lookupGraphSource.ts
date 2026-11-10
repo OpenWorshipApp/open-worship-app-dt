@@ -145,7 +145,7 @@ const NAME_RELATION_FIELD_LIST = [
  * as a spouse reads `wife`.
  *
  * The datasets keep `gender` in English in EVERY language — `"gender": "male"`
- * sits beside a Khmer name — exactly like `type`, so what arrives is a KEY,
+ * sits beside a translated name — exactly like `type`, so what arrives is a KEY,
  * not text to show. Bare English literals for the same reason `NAME_TYPE_LABEL`
  * is: a `tran` at module scope runs before the language data is ready.
  */

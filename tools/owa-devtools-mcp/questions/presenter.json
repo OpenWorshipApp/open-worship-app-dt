@@ -1166,7 +1166,7 @@
                         "generate slides",
                         "bible slides",
                         "multiple translations",
-                        "English and Khmer",
+                        "English and my language",
                         "next verse",
                         "upcoming verse",
                         "Bible slide font size",
@@ -1482,8 +1482,8 @@
                         "verse font",
                         "font of the verse",
                         "scripture font",
-                        "khmer font for the bible",
-                        "app-Battambang"
+                        "my language's font for the bible",
+                        "language font in the font list"
                     ],
                     "resources": {
                         "recipe": "W-07",
@@ -2359,7 +2359,7 @@
                     "keywords": [
                         "bilingual",
                         "translation beside it",
-                        "khmer and english",
+                        "my language and english",
                         "sing along",
                         "long text",
                         "lyrics that scroll"

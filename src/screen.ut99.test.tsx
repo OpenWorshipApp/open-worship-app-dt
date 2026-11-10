@@ -143,7 +143,7 @@ describe('screen.tsx', () => {
     });
 
     test('adds the font CSS the screen window was opened with', async () => {
-        const fontCss = '@font-face { font-family: "app-Battambang"; }';
+        const fontCss = '@font-face { font-family: "app-Xx-Face"; }';
         h.screenUtils = { getContext: () => ({ fontCss }) };
         await loadScreen();
 

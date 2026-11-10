@@ -209,7 +209,7 @@ const BIBLE_LIST = {
     bible: 'KJV',
     bibles: [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KHSV', title: 'Khmer Standard Version' },
+        { key: 'SMSV', title: 'Sample Standard Version' },
     ],
 };
 
@@ -1393,7 +1393,7 @@ describe('ChatbotAppComp lookup steps', () => {
             await send('read it in another version');
             await waitFor(() => cues().length === 3, 'the Bible list');
             expect(actionLabels(lastCue())).toEqual([
-                'KHSV — Khmer Standard Version',
+                'SMSV — Sample Standard Version',
             ]);
         });
 

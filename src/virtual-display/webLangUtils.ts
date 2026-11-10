@@ -127,5 +127,8 @@ export function genWebLangUtils() {
         getLangData,
         readLangPluginJson,
         getLangPluginsDirPath: () => null,
+        getLangAssetBaseUrl: (langCode: string) => {
+            return toLangPluginBaseUrl(getOrigin(), langCode);
+        },
     };
 }

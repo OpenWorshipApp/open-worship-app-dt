@@ -142,9 +142,9 @@ export function checkIsCloudModel(name: string): boolean {
  * user with a picture of the Auto picker (2026-10-20): _mode ranking to pick:
  * `gemma4:cloud` (from any assistant) -> `Nemotron Super VL` (from Free) ->
  * `gemma4:31b` -> `gemma4:12b` -> any model in `Free`_, _apply the ranking for
- * non-english app language setting only_, _e.g. my app using Khmer then Gemma4
- * should be prefered_ -- and the reason given: _gemma4 … support well for
- * language like Khmer_. A matched pattern is read off the model's id AND its
+ * non-english app language setting only_, _e.g. my app using <a language>
+ * then Gemma4 should be prefered_ -- and the reason given: _gemma4 … support
+ * well for <such> language_. A matched pattern is read off the model's id AND its
  * shown name; `provider` narrows a tier to the keyless service.
  */
 export const LANGUAGE_TIER_LIST: readonly {
@@ -254,7 +254,7 @@ export type AutoRankOptionsType = {
     // the size order, in the list's own order (2026-10-20).
     languageModelsFirst?: boolean;
     // Models to ask FIRST among those that can answer, read off the model's
-    // name -- size and setbacks aside. A verse remembered in Khmer has to be
+    // name -- size and setbacks aside. A verse remembered in another script has to be
     // put into English to be found in the KJV, and the user's word was _for
     // any translation attempt please prefer Gemma 4 models_ (2026-10-16).
     preferModelPattern?: RegExp;

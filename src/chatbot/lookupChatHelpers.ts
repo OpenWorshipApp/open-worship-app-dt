@@ -21,7 +21,7 @@
  */
 import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { toValidLookupAsk } from '../helper/ai/lookupAskHelpers';
-import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 import {
     checkHasWord,
     checkIsAppWork,
@@ -30,6 +30,8 @@ import {
 import {
     checkIsInLanguageScript,
     listAssistantLanguages,
+    listTypedLanguages,
+    toShownLanguageName,
     toAsciiDigits,
     toShownDigits,
     type AssistantLanguageType,
@@ -172,7 +174,7 @@ export function withLookupStudyFiles(factsText: string, listed: any) {
  *
  * The record's verse list is a curated few, and it is the KJV's: Ararat's
  * lists Genesis 8:4 and Jeremiah 51:27, where the KJV says "Armenia" in 2
- * Kings 19:37 and Isaiah 37:38 and the Khmer Bible says Ararat -- so
+ * Kings 19:37 and Isaiah 37:38 and another language's Bible says Ararat -- so
  * _who fled to Ararat?_ was answered from the record's vague description
  * and named nobody. The Bible being read, searched for the name, finds all
  * four, and Noah's 47 verses where the record lists 36.
@@ -364,8 +366,8 @@ export function readLookupThread(
  * because the answer is marked as one (`isLookupAnswer`).
  *
  * The app's WORK decides, never a how-word alone (2026-10-22): under
- * Noah's card _what does the name Noah mean?_, asked in Khmer, holds
- * Khmer's word for "how", and went to the app's guide, which said
+ * Noah's card _what does the name Noah mean?_, asked in another language,
+ * holds that language's word for "how", and went to the app's guide, which said
  * to type `/btw` -- with Genesis 5:29, the answer, quoted in the record.
  * _How did Noah build the ark?_ is about the record too. A how-to about
  * the app names what it is about: the screen, saving, a setting.
@@ -400,8 +402,8 @@ export function checkIsLookupMapAsk(text: string, ask: LookupSubjectType) {
  * (2026-10-19).
  *
  * The model was measured answering these from memory: "show this passage in
- * Khmer" came back as an invented Khmer translation of the KJV (one round, no
- * tool call) while the installed Khmer Bible's words were in the record, and
+ * <language>" came back as an invented translation of the KJV (one round, no
+ * tool call) while the installed Bible's words in it were in the record, and
  * "how do I save this?" was refused while the card carried **Save to my
  * Bibles list**. The window answers these itself now, from the record and
  * the card's own buttons, with no model.
@@ -421,14 +423,17 @@ export type LookupVerseAskType =
 
 /**
  * The language a question names, if any, in the app's own words: any
- * language with a package here, by its own name, its English name or the
- * window's word for it.
+ * installed language, with an `assistant.json` or not, by its own name, its
+ * English name or the window's word for it -- every one the same way.
  */
 function readNamedLanguage(text: string) {
-    for (const language of listAssistantLanguages()) {
-        // Lenient: a language pack that never translated the name must not
-        // take the window down with a missing-key throw.
-        const localName = tranLabel(language.name);
+    for (const language of [
+        ...listAssistantLanguages(),
+        ...listTypedLanguages(),
+    ]) {
+        // The window's word for it, every language the same way -- never a
+        // dictionary key, which no language but English has for a name.
+        const localName = toShownLanguageName(language.code, language.name);
         if (
             checkHasWord(text, [language.nativeName, language.name, localName])
         ) {
@@ -684,7 +689,7 @@ export function genLookupLineageAnswer(
     bibleKey: string | null,
 ) {
     // As the Bible writes it: "Luke 3:23-38" had stood in English in a
-    // Khmer sentence (2026-10-22).
+    // translated sentence (2026-10-22).
     const shownRef = passage.title ?? passage.ref;
     const heading =
         bibleKey === null
@@ -740,7 +745,7 @@ const COUNT_FIELD_KEY_MAP = {
  * (2026-10-19, EC-371).
  *
  * Measured on gemma4:cloud under David's record: _how many children did he
- * have?_, asked in Khmer, answered "20" over a list of nineteen names -- the record's
+ * have?_, asked in another language, answered "20" over a list of nineteen names -- the record's
  * own `children` list is nineteen long. A model counting words is a model
  * making an arithmetic mistake, so the window counts the list itself.
  *
@@ -1030,9 +1035,10 @@ export function readLookupRecordBible(subject: LookupSubjectType) {
 /**
  * The line that sends a person's or a place's verses to a Bible in the
  * answer's language (`pickBibleInLanguage`, 2026-10-29): the record is the
- * Bible being read, and with the Reader on the KJV, a French question about
- * the ark under Noah's card was answered with Genesis 6:15 in English and
- * a translation of the model's own in brackets, the Louis Segond installed.
+ * Bible being read, and with the Reader on the KJV, a non-English question
+ * about the ark under Noah's card was answered with Genesis 6:15 in English
+ * and a translation of the model's own in brackets, a Bible of that
+ * language installed.
  * Under the question, never in the record turn, which a server keeps.
  */
 function genQuoteBibleLine(
@@ -1054,9 +1060,9 @@ function genQuoteBibleLine(
 
 // What every ask about a passage says about the wording: the record IS that
 // Bible's words, and a model may not improvise a verse (2026-10-19: asked
-// "show this passage in Khmer", gemma4:cloud wrote its own Khmer translation
-// of the KJV -- one round, no tool call -- instead of the installed Khmer
-// Bible's words, and leaked an English "le" into it).
+// "show this passage in <language>", gemma4:cloud wrote its own translation
+// of the KJV -- one round, no tool call -- instead of the installed Bible's
+// words in it, and leaked a stray Latin-script word into it).
 function genVerseWordingRule(bible: string | null) {
     if (bible === null) {
         return (
@@ -1137,7 +1143,7 @@ export function readLookupAskContext(
             for (const word of language.lookupWords.verseNumber) {
                 // A Latin word stands alone ("verse 22", never "Gev 1"); a
                 // word of a script without spaces is read where it is
-                // (a Khmer question's "verse 21" is written with no space
+                // (such a question's "verse 21" is written with no space
                 // after a particle).
                 const lead = language.isLatinScript ? '(?<!\\p{L})' : '';
                 const pattern = new RegExp(
@@ -1176,7 +1182,7 @@ export function readLookupAskContext(
 /**
  * A line under a PASSAGE card that asks to study its words (2026-10-23):
  * "teach me the vocabulary", _explain each word in verse 1_ (asked in
- * Khmer). The card's own **Study the words**, with no model -- or, with
+ * another language). The card's own **Study the words**, with no model -- or, with
  * a verse of the passage named by number, that verse's every word taught at
  * once (`verseKey`). The words are DATA (`lookupWords.vocabulary`); a
  * question about ONE word is the assistant's as it is.

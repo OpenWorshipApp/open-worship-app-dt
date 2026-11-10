@@ -66,8 +66,9 @@ scope) with its string in EVERY language's `dictionary.json`
 in dev.
 `src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key a package
 lacks, and on any difference between the packages' key sets — write keys as
-literals so it can read them (EN-20). A dynamic `tran(prop)` still needs the
-live Khmer pass (memory `tran-missing-key-throws-in-dev`).
+literals so it can read them (EN-20). A dynamic `tran(prop)` still needs a
+live pass in an installed non-English language — any of them throws on a
+missing key (memory `tran-missing-key-throws-in-dev`).
 
 ## Every non-English language is a package in `src/lang/data/online/<code>/`
 
@@ -78,16 +79,29 @@ language is its folder — dictionary, `meta.json`, `assistant.json`, corpus
 and code finds packages by folder, naming none. No letter, digit or sign of
 another script (escapes included), no accented Latin, and no non-English
 word lives outside `src/lang/data`, in code, tests or comments; code names no
-`km`/`fr` code or locale. `src/lang/languageConfinement.test.ts` holds it
+non-English language's code, locale or package path.
+`src/lang/languageConfinement.test.ts` holds it
 (`node extra-work/language-confinement.mjs <path>` lists what is left), and
 the suite must pass with every non-English package deleted. Prose (`*.md`,
 `.claude` notes, `docs/`) may quote a language. Layout, loaders, the
 packaged-app path and how to add a language: `.claude/rules/language-packages.md`.
 
+**Every language but English is developed the same way** (2026-11-09, the
+user: _French and Khmer should not be special than any other online
+languages … everything related to khmer should be located in lang online km
+folder, french too_, then _all languages development, except english, should
+be treated the same way_). No code, test, script, dev procedure or doc
+instruction outside a package gives one language a role the others lack. The
+gate holds every language alike, naming none: a quoted non-English locale tag,
+a path into a package, a code compared with a lang/locale/code variable
+(non-test code, comments excluded). Code finds a language by name through
+English's `en/language-names.json` and `en/locales.json`; a language's own
+facts (`catalogLanguageCodes`, `scriptMarkLocales`) live in its `world.json`.
+
 **At runtime only English is built in, and nothing else ships** (2026-11-04,
 the user: _everything related to a language have to be loaded from the
 language data (from language installation catalog), must not ship in the app,
-except english_): every other language — Khmer and French included, all in
+except english_): every other language — all 87, in
 `src/lang/data/online/` — is a PLUGIN packed by
 `extra-work/build-lang-plugins.mjs` and installed from Settings →
 **Languages** into `<data folder>/lang` — one format, one scanner, loaded
@@ -95,8 +109,8 @@ through `appProvider.langUtils`. Its dictionary, corpus, manual and Bible
 names travel IN the plugin: the knowledge bundle is English only and both MCP
 doors read a language from its installed folder (`langPacks.mjs`). App code
 never globs `src/lang/data/*/` (the build check fails on a non-English
-package in `dist/`). **A dev app starts English-only**: for a Khmer pass,
-`npm run lang:pack -- --pack=km` (bare `npm run lang:pack` packs all 87), then
+package in `dist/`). **A dev app starts English-only**: for a non-English
+pass, `npm run lang:pack -- --pack=<code>` (bare `npm run lang:pack` packs all 87), then
 Settings → **Languages** → **Install**. Memory `language-plugins-runtime`.
 
 **Changed language data raises its version, then is packed again** (2026-11-04,
@@ -489,7 +503,7 @@ all of them are in `.claude/rules/project-skills.md`.
   walkthrough each starts), one window at a time, e.g. `reader.html 99%`:
   coverage of the window's control inventory from `scripts/tip-coverage.mjs`
   (a tip counts when the search finds it by the button's own words), every
-  tip run live in English and Khmer; `TP-xx`.
+  tip run live in English and in an installed non-English language; `TP-xx`.
 - **`owa-enhance-bible-note-chatbot`** — the chatbot on ONE Bible note (W-60):
   `owa_note_edit`, the note conversation, the editor's own guide. Toolbar
   parity is a figure from `scripts/toolbar-coverage.mjs` against an inventory

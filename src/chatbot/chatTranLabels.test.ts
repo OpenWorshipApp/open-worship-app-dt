@@ -33,9 +33,9 @@ import { CHAT_TIP_LIST } from './tipHelpers';
 // Words the help window translates through a VARIABLE -- a tip handed to the
 // window as `tran(tip.text)`, a stored English label drawn with `tranLabel`
 // -- which `src/lang/tranKeyCoverage.test.ts` cannot read, since it sees only
-// literal keys. A tip missing from the Khmer pack throws in a dev window and
-// shows English in a packaged one; a label missing stays English unnoticed.
-// So each one is held to its Khmer AND its French here.
+// literal keys. A tip missing from a language's pack throws in a dev window
+// and shows English in a packaged one; a label missing stays English
+// unnoticed. So each one is held to every language package on disk here.
 
 function readPack(langCode: string) {
     return readLangPackageDictionary(langCode);
@@ -60,7 +60,7 @@ describe('words translated through a variable', () => {
         }
     });
 
-    test('every tip has its Khmer and French', () => {
+    test('every tip has its words in every language', () => {
         const tipTextList = CHAT_TIP_LIST.map((tip) => {
             return tip.text;
         });
@@ -69,7 +69,7 @@ describe('words translated through a variable', () => {
         }
     });
 
-    test('every stored label drawn translated has its Khmer and French', () => {
+    test('every stored label drawn translated has its words in every language', () => {
         const labelList = [
             ...DISLIKE_REPLY_LIST,
             SPEND_ALLOW_LABEL,
@@ -88,7 +88,7 @@ describe('words translated through a variable', () => {
     // Button labels code matches on (`WALKTHROUGH_ACTION_PATTERN`,
     // `DRAFT_ACTION_PATTERN`, a typed reply matched to a button): stored in
     // English and drawn with `tranLabel`.
-    test('every English-stored action label has its Khmer and French', () => {
+    test('every English-stored action label has its words in every language', () => {
         const labelList = [
             'Show me step by step',
             'Do it for me',
@@ -142,7 +142,7 @@ describe('words translated through a variable', () => {
 
     // Read off the source, not imported: the commands module pulls the
     // whole tool client in, which a node test cannot load.
-    test('every command hint has its Khmer and French', () => {
+    test('every command hint has its words in every language', () => {
         const source = readFileSync(
             path.join(
                 path.dirname(fileURLToPath(import.meta.url)),

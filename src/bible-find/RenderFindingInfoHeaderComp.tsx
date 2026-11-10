@@ -222,7 +222,7 @@ export default function RenderFindingInfoHeaderComp({
     // remember of the verse (`src/chatbot/verseFindChatHelpers.ts`). The
     // Bible this panel is on rides in the request, so it is offered first;
     // words typed in Find ride too, and are searched at once (2026-10-22:
-    // `shepherd` under the Khmer Bible found nothing here, and the press
+    // `shepherd` under a Bible in another language found nothing here, and the press
     // had left the word behind). The press asks the 🤖's own two questions
     // first: whether AI is on, then the caution.
     const handleAskingAssistant = useCallback(() => {

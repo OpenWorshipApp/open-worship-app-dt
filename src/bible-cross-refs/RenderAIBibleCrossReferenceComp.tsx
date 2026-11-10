@@ -49,7 +49,8 @@ export default function RenderAIBibleCrossReferenceComp({
               by everything inside it, so every translated theme was announced
               with the whole caution after its title -- and a heading holding a
               control drops out of the tools that list headings (the robot
-              test found a heading in English and plain text in Khmer).
+              test found a heading in English and plain text in another
+              language).
             */}
             <div className="app-xref-theme-head">
                 <h4

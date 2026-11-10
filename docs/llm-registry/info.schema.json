@@ -99,7 +99,7 @@
             }
         },
         "note": {
-            "description": "Shown to the person choosing the server or model: under the help window's pickers, on the model's hover, in Auto's waiting line and in Settings -> Others -> Shared servers. A string, or an object of language code to string ({\"en\": \"...\", \"km\": \"...\"}): the app shows its own language's, then the plain string, then English. Up to 300 characters each, 12 languages. The server's host is taken out of it before any window sees it.",
+            "description": "Shown to the person choosing the server or model: under the help window's pickers, on the model's hover, in Auto's waiting line and in Settings -> Others -> Shared servers. A string, or an object of language code to string ({\"en\": \"...\", \"es\": \"...\"}): the app shows its own language's, then the plain string, then English. Up to 300 characters each, 12 languages. The server's host is taken out of it before any window sees it.",
             "oneOf": [
                 { "type": "string", "maxLength": 300 },
                 {

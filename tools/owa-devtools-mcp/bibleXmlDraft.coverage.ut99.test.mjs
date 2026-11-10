@@ -321,7 +321,7 @@ describe('downloading what a link points at', () => {
       'https://bibles.example/downloads': () => {
         return genChunkedResponse([
           `<!DOCTYPE html><html><body><p>${'x'.repeat(2100)}</p>`,
-          '<a href="/x/KhmerBible.xml">Khmer</a>',
+          '<a href="/x/XxlangBible.xml">Xxlang</a>',
           '</body></html>',
         ]);
       },
@@ -335,8 +335,8 @@ describe('downloading what a link points at', () => {
     // The only link is in the SECOND piece.
     expect(result.files).toEqual([
       {
-        name: 'KhmerBible.xml',
-        url: 'https://bibles.example/x/KhmerBible.xml',
+        name: 'XxlangBible.xml',
+        url: 'https://bibles.example/x/XxlangBible.xml',
       },
     ]);
     expect(await readdir(dirPath)).toEqual([]);

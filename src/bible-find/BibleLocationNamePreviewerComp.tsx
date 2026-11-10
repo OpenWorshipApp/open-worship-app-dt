@@ -189,7 +189,7 @@ export default function BibleLocationNamePreviewerComp() {
                 // language, otherwise the pane's OWN bible, so the heading reads
                 // in the same script as the rows under it. Per pane: the
                 // reader's selected bible used to title every section, so a
-                // Khmer Bible's pane reading was headed `(NIV) Genesis 3:20`.
+                // pane on a Bible in another language read headed `(NIV) Genesis 3:20`.
                 const groupBibleKey = toLookupVerseBibleKey(bibleItem.bibleKey);
                 // One section per chapter: a one-chapter passage is one, itself.
                 const sliceList = toTargetChapterSliceList(

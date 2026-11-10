@@ -89,7 +89,7 @@ export function findNoteProblem(note) {
     }
     for (const [langCode, text] of entries) {
         if (!NOTE_LANG_PATTERN.test(langCode)) {
-            return `"${langCode}" is not a language code (km, fr, pt-BR)`;
+            return `"${langCode}" is not a language code (en, es, pt-BR)`;
         }
         if (typeof text !== 'string' || text.trim().length === 0) {
             return `"${langCode}" must be text`;

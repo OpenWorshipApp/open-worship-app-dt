@@ -122,9 +122,9 @@ async function renderMini(
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.infoList.mockReset().mockResolvedValue([
-        { key: 'km', title: 'Khmer', locale: 'km-KH' },
+        { key: 'yy', title: 'Yy Bible', locale: 'yy-YY' },
         { key: 'en', title: 'English', locale: 'en-US' },
-        { key: 'fr', title: 'French', locale: 'fr-FR' },
+        { key: 'xx', title: 'Xx Bible', locale: 'xx-XX' },
     ]);
     h.getBibleInfo.mockReset().mockResolvedValue({ title: 'English' });
     h.menu.mockClear();
@@ -148,11 +148,11 @@ describe('Bible-key selection', () => {
         const items = (await genContextMenuBibleKeys(onSelect, ['en']))!;
         expect(
             items.filter((item) => item.title).map((item) => item.title),
-        ).toEqual(['fr-FR', '(fr) French', 'km-KH', '(km) Khmer']);
-        const french = items.find((item) => item.title === '(fr) French')!;
+        ).toEqual(['xx-XX', '(xx) Xx Bible', 'yy-YY', '(yy) Yy Bible']);
+        const xxBible = items.find((item) => item.title === '(xx) Xx Bible')!;
         const event = new MouseEvent('click');
-        french.onSelect!(event as any);
-        expect(onSelect).toHaveBeenCalledWith(event, 'fr');
+        xxBible.onSelect!(event as any);
+        expect(onSelect).toHaveBeenCalledWith(event, 'xx');
     });
 
     // GL-14: the real helper never resolves null -- a failure REJECTS -- so
@@ -185,9 +185,11 @@ describe('Bible-key selection', () => {
             menuElement: 'Choose a Bible',
             isSectionHeader: true,
         });
-        const french = items.find((item: any) => item.title === '(fr) French')!;
-        french.onSelect(event);
-        expect(onSelect).toHaveBeenCalledWith('fr', event);
+        const xxBible = items.find(
+            (item: any) => item.title === '(xx) Xx Bible',
+        )!;
+        xxBible.onSelect(event);
+        expect(onSelect).toHaveBeenCalledWith('xx', event);
         items.at(-1).onSelect();
         expect(h.openSettings).toHaveBeenCalledTimes(1);
     });
@@ -209,9 +211,11 @@ describe('Bible-key selection', () => {
         expect(items.some((item: any) => item.title === '(en) English')).toBe(
             false,
         );
-        const french = items.find((item: any) => item.title === '(fr) French');
-        await act(async () => french.onSelect(new MouseEvent('click')));
-        expect(onChange).toHaveBeenCalledWith('en', 'fr');
+        const xxBible = items.find(
+            (item: any) => item.title === '(xx) Xx Bible',
+        );
+        await act(async () => xxBible.onSelect(new MouseEvent('click')));
+        expect(onChange).toHaveBeenCalledWith('en', 'xx');
     });
 
     it('separates replace and compare menus and supports keyboard activation', async () => {
@@ -230,10 +234,10 @@ describe('Bible-key selection', () => {
         let items = h.menu.mock.calls.at(-1)![1];
         await act(async () =>
             items
-                .find((item: any) => item.title === '(fr) French')
+                .find((item: any) => item.title === '(xx) Xx Bible')
                 .onSelect(new MouseEvent('click')),
         );
-        expect(onChange).toHaveBeenCalledWith(false, 'en', 'fr');
+        expect(onChange).toHaveBeenCalledWith(false, 'en', 'xx');
         await act(async () =>
             container
                 .querySelector<HTMLButtonElement>(
@@ -245,9 +249,9 @@ describe('Bible-key selection', () => {
         expect(items[0].menuElement).toBe('Add comparison Bible');
         await act(async () =>
             items
-                .find((item: any) => item.title === '(km) Khmer')
+                .find((item: any) => item.title === '(yy) Yy Bible')
                 .onSelect(new MouseEvent('click')),
         );
-        expect(onChange).toHaveBeenCalledWith(true, 'en', 'km');
+        expect(onChange).toHaveBeenCalledWith(true, 'en', 'yy');
     });
 });

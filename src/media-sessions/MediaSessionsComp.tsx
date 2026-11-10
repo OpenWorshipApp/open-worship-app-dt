@@ -66,8 +66,9 @@ export {
 } from './mediaSessionData';
 
 // What a session is called on screen. The built-in one is read through
-// `tran()` while it still carries the name the app gave it, so a Khmer window
-// does not show "Default"; a name the user typed is shown as typed.
+// `tran()` while it still carries the name the app gave it, so a window in
+// another language does not show "Default"; a name the user typed is shown
+// as typed.
 export function toSessionLabel(session: MediaSessionType) {
     if (
         session.id === DEFAULT_SESSION_ID &&

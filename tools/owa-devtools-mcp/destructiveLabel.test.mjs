@@ -39,7 +39,7 @@ const REAL_RULE = genDestructiveLabelRule({
 });
 const ENGLISH_RULE = genDestructiveLabelRule({ dictionaries: {} });
 // Every language package's dictionary but English's -- none in an
-// English-only tree; the Khmer facts are the Khmer package's own tests.
+// English-only tree; a language's own facts are its package's tests.
 const OTHER_DICTIONARY_LIST = RULE_CASE_LIST.map(({ dictionary }) => {
     return dictionary;
 });
@@ -100,8 +100,8 @@ describe('checkIsDestructiveLabelText, in English', () => {
 });
 
 describe('the rule, derived from the app dictionary', () => {
-    // The finding that started this: 41 destructive labels had Khmer
-    // translations and not one was refused.
+    // The finding that started this: 41 destructive labels had translations
+    // in an installed language and not one was refused.
     it('refuses the translation of every destructive label', () => {
         for (const { code, dictionary, rule } of RULE_CASE_LIST) {
             // Once, not per entry: a translation the dictionary also gives an
@@ -158,11 +158,11 @@ describe('the rule, derived from the app dictionary', () => {
     // longer one -- "Undelete" is the English case of the same mistake.
     it('never finds a word inside a longer word of a spaced script', () => {
         const rule = genDestructiveLabelRule({
-            dictionaries: { fr: { delete: 'Supprimer', ok: 'Valider' } },
+            dictionaries: { xx: { delete: 'Zorbat', ok: 'Fine' } },
         });
-        expect(checkIsDestructiveLabelText('Supprimer', rule)).toBe(true);
-        expect(checkIsDestructiveLabelText('Supprimer (3)', rule)).toBe(true);
-        expect(checkIsDestructiveLabelText('Supprimerai', rule)).toBe(false);
+        expect(checkIsDestructiveLabelText('Zorbat', rule)).toBe(true);
+        expect(checkIsDestructiveLabelText('Zorbat (3)', rule)).toBe(true);
+        expect(checkIsDestructiveLabelText('Zorbatika', rule)).toBe(false);
     });
 
     // A longer phrase the shorter one already refuses is not carried -- and
@@ -211,8 +211,8 @@ describe('the rule, derived from the app dictionary', () => {
     });
 
     // 4 000 until 2026-10-16, when the help window's own words joined the
-    // dictionary in Khmer and French (its "Moving your song to the trash"
-    // lines, "Clear all chats…"): 3 915 to 4 665. Still a few kilobytes of
+    // dictionary in the languages then translated (its "Moving your song to
+    // the trash" lines, "Clear all chats…"): 3 915 to 4 665. Still a few kilobytes of
     // JSON a press carries to the page, read by no model. Per language since
     // 2026-11-04: an app carries the rule of the languages it has installed.
     it('stays small enough to ride every press', () => {

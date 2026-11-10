@@ -378,7 +378,7 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             '/@id/__x00__vite/dynamic-import-helper.js',
             '/assets/transparency-cursor.svg',
             `${fs}/src/screen.tsx?t=1791402796655`,
-            `${fs}/src/lang/data/online/km/location-name-map-data/namesMap.json?import&url`,
+            `${fs}/src/lang/data/online/xx/location-name-map-data/namesMap.json?import&url`,
             `${fs}/node_modules/.vite/deps/react.js?v=1a2b3c4d`,
             `${fs}/node_modules/open-lyric/dist/index.js`,
             `${fs}/tools/owa-devtools-mcp/agentFileName.mjs`,

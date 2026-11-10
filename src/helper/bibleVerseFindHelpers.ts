@@ -148,7 +148,7 @@ export function genVerseFindSql({
 }
 
 // A word typed in a script with no spaces that is this long is likely a
-// phrase: the Khmer for "Jesus asked Peter many times" is one run of
+// phrase: "Jesus asked Peter many times" in such a script is one run of
 // letters, and found as one it matches nothing.
 export const LONG_UNSPACED_TERM_LENGTH = 7;
 const COMBINING_MARK_PATTERN = /^\p{M}$/u;
@@ -179,8 +179,8 @@ export function segmentByVocabulary(
         }
         if (matched === '') {
             // A vowel sign or a mark is the end of the word before it, not
-            // the start of one: the first letters of Jesus' name in Khmer
-            // and the vowel signs after them are one piece, which the
+            // the start of one: the first letters of Jesus' name in such a
+            // script and the vowel signs after them are one piece, which the
             // Bible's own spelling of the name holds.
             if (
                 unknown === '' &&
@@ -214,6 +214,9 @@ export function segmentByVocabulary(
 // have to be loaded from the language data … must not ship in the app,
 // except english_): a locale's script is the runtime's own likely-subtags,
 // `Intl.Locale#maximize` -- answered in Electron's trimmed ICU as in Node.
+// Every package whose `script.json` says `isUnspaced` is held to this set
+// (`src/lang/data/tests/unspacedScripts.test.ts`): until 2026-11-09 Tibetan
+// said it and was searched as a spaced language.
 const UNSPACED_SCRIPT_SET: ReadonlySet<string> = new Set([
     'Hans',
     'Hant',
@@ -222,6 +225,7 @@ const UNSPACED_SCRIPT_SET: ReadonlySet<string> = new Set([
     'Laoo',
     'Mymr',
     'Thai',
+    'Tibt',
 ]);
 
 export function checkIsSpacedLocale(locale: string) {
@@ -447,12 +451,12 @@ export function splitRefList(refs: string): string[] {
 
 /**
  * A script's own digits as ASCII (John 3:16 written in
- * Khmer digits -> the same with `3:16`), so a
+ * a script's own digits -> the same with `3:16`), so a
  * reference written the way the reader's Bible writes it parses. Unicode's
  * decimal digits are contiguous runs of ten, so a digit's value is its
  * offset from the start of its own run; `\p{Nd}` alone is not enough
- * (`Number` of a Khmer digit is NaN). Needed by `owa_resource_file`'s `ref`, where a
- * model writing what the person said gave `"<Matthew 18 in Khmer>" is not a book
+ * (`Number` of such a digit is NaN). Needed by `owa_resource_file`'s `ref`, where a
+ * model writing what the person said gave `"<Matthew 18 in its own digits>" is not a book
  * and chapter` (seen live 2026-10-19).
  */
 export function toAsciiDigitText(text: string) {
@@ -533,7 +537,7 @@ export function genVerseRangeReason(
 
 /**
  * Two words at most one letter apart -- one added, dropped or changed:
- * Genesis in Khmer with a vowel sign left out (the user's own, 2026-10-22), `Genisis` for `Genesis`.
+ * Genesis in another script with a vowel sign left out (the user's own, 2026-10-22), `Genisis` for `Genesis`.
  */
 export function checkIsOneEditApart(one: string, other: string) {
     if (one === other) {
@@ -554,7 +558,8 @@ export function checkIsOneEditApart(one: string, other: string) {
 }
 
 // A book's name this long may be one letter off and still be read as it;
-// shorter ones are too near other words (`Job`, `Amos`, and Job in Khmer).
+// shorter ones are too near other words (`Job`, `Amos`, and Job in other
+// scripts).
 const MIN_NEAR_BOOK_NAME_LENGTH = 6;
 
 export type NamedBookType = {
@@ -613,7 +618,7 @@ function findMarkerBefore(text: string, at: number, markerWords: string[]) {
 
 /**
  * The books a person NAMED among the words they remember -- "in Genesis,
- * the rainbow", or the Khmer typed as one run for "search in the book of
+ * the rainbow", or an unspaced script typed as one run for "search in the book of
  * Genesis, Noah released the dove" -- found where they are in `text`
  * (the words as the Bible's language sanitizes them). A name is read whole
  * (several words: "Song of Solomon", "1 John"), or one letter off when it
@@ -1051,7 +1056,7 @@ function toWordStartLikeTerm(term: string) {
  * and how strongly -- the total, the books and the passages at once, where
  * the total alone was its own scan before. `weights` go with `terms`. A
  * verse holding several rare words counts the more for each (their weight
- * times how many): Goliath's two scraps of a Khmer name, together in 1
+ * times how many): Goliath's two scraps of a translated name, together in 1
  * Samuel 17, outweigh one of them in a list of towns in Joshua 15.
  */
 export function genChapterCountSql({
@@ -1108,7 +1113,8 @@ export function genChapterCountSql({
 
 /**
  * The installed Bible that NAMES the book the way it was written -- so a
- * Khmer reference is quoted from the Khmer Bible, not from the KJV the
+ * reference in another language is quoted from that language's Bible, not
+ * from the KJV the
  * lookup happened to be on. The preferred Bible wins when it has the name;
  * entries without a `keyBookMap` are skipped. Falls back to the preferred
  * key.

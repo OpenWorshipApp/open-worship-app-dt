@@ -319,7 +319,7 @@ describe('checkIsSameRunStyle', () => {
     });
 
     test.each([
-        ['fontFamily', 'Moul'],
+        ['fontFamily', 'Made Up Sans'],
         ['fontSize', 41],
         ['color', { hex: 'FFFFFE', alpha: 1 }],
         ['color', { hex: 'FFFFFF', alpha: 0.5 }],
@@ -329,7 +329,7 @@ describe('checkIsSameRunStyle', () => {
         ['isStrike', true],
         ['letterSpacing', 1],
         ['baselineShift', 33],
-        ['lang', 'km-KH'],
+        ['lang', 'xx-XX'],
     ])('a different %s is a different style', (key, value) => {
         expect(checkIsSameRunStyle(run, { ...run, [key]: value })).toBe(false);
     });

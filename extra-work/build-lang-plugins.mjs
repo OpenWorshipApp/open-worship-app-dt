@@ -1,6 +1,6 @@
-// Every non-English language is a runtime PLUGIN (2026-11-04, the user:
-// _Khmer and French are modular, only English is built in_, then the same day
-// _everything related to a language have to be loaded from the language data
+// Every non-English language is a runtime PLUGIN (2026-11-04, the user: the
+// two languages then built in are modular, only English is built in, then the
+// same day _everything related to a language have to be loaded from the language data
 // (from language installation catalog), must not ship in the app, except
 // english_). This script turns a language package's source folder
 // (`src/lang/data/online/<code>/`) into a plugin folder the app loads at
@@ -24,6 +24,12 @@
 //   <plugin>/tran.json      the dictionary, sanitized, for the MCP server
 //                           (`tools/owa-devtools-mcp/langPacks.mjs`), which
 //                           reads a language's labels without loading it
+//   <plugin>/langFacts.json {fonts, fontFiles, hasLookupData}: its `fonts.json`
+//                           (or null) with where each font file was built to,
+//                           carried inline in the plugin list, so a window that
+//                           only DRAWS the language -- every screen, a song
+//                           previewer, a font list -- registers its faces
+//                           without loading it (`genLangFacts`, EN-59)
 //   <plugin>/manual/...     the translated manual and its search index
 //                           (`manual/index.json`, `genManualIndexEntries`)
 //
@@ -60,11 +66,11 @@
 // folder's files and what each means: `src/lang/data/online/README.md`.
 // English (`src/lang/data/en/`) is the app's own and is no plugin.
 //
-// A language's ONE dependency, its Open Lyric song plugin (Khmer's keyboard,
+// A language's ONE dependency, its Open Lyric song plugin (a keyboard,
 // spellcheck and fonts), is the LANGUAGE's: declared in its own
 // `package.json` and installed into its own `node_modules` by
-// `extra-work/install-lang-deps.mjs` (2026-11-05, the user: _for khmer plugin
-// it have to ship with khmer language bundle_). The app's manifest names
+// `extra-work/install-lang-deps.mjs` (2026-11-05, the user: a language's song
+// plugin has to ship with that language's bundle). The app's manifest names
 // none, and a plugin may bundle nothing from outside its own folder.
 //
 // Node only. Builds are cached in node_modules/.cache/owa-lang/<code>, keyed
@@ -367,8 +373,8 @@ function envelopePlugin(code) {
             // `owa://local/@lang/...`, which only a window on `owa://local`
             // may start a worker from (the same-origin rule, and the pages'
             // `worker-src 'self' blob:`). A dev window gets it as a `blob:`.
-            // The Khmer song plugin's spellcheck worker died that way when the
-            // plugin left the app's bundle (2026-11-05).
+            // A language's song plugin's spellcheck worker died that way when
+            // the plugin left the app's bundle (2026-11-05).
             body = body.replace(
                 /\bnew\s+Worker\s*\(/g,
                 `${LANG_PLUGIN_HOST_NAME}.createWorker(`,
@@ -420,6 +426,79 @@ const LANG_ENTRY_JSON_FILES = [
 ];
 const LANG_ENTRY_FILE_NAME = '__owa_lang_entry__.js';
 const LOOKUP_DATA_DIR_NAME = 'location-name-map-data';
+// `electron/langPluginProtocol.ts`'s `LANG_PLUGIN_FACTS_FILE_NAME`: carried
+// inline in the plugin list (`LANG_PLUGIN_INLINE_FILE_NAMES`).
+export const LANG_PLUGIN_FACTS_FILE_NAME = 'langFacts.json';
+
+function checkHasLookupData(srcDir) {
+    return (
+        existsSync(path.join(srcDir, LOOKUP_DATA_DIR_NAME, 'namesMap.json')) &&
+        existsSync(path.join(srcDir, LOOKUP_DATA_DIR_NAME, 'locationsMap.json'))
+    );
+}
+
+/** Every font file a `fonts.json` names, each once, as the factory lists them. */
+function listFontFileNames(fonts) {
+    const fileNames = [
+        ...(fonts.faces ?? []).map((face) => {
+            return face.file;
+        }),
+        ...(fonts.stickyNote?.file ? [fonts.stickyNote.file] : []),
+    ];
+    return [...new Set(fileNames)];
+}
+
+function toSourceKey(filePath) {
+    const normalized = normalizePath(path.resolve(filePath));
+    return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+/** Records, for each asset the build emits, the source file(s) it came from. */
+export function assetSourcePlugin(assetMap) {
+    return {
+        name: 'owa-lang-asset-sources',
+        generateBundle(_options, bundle) {
+            for (const output of Object.values(bundle)) {
+                if (output.type !== 'asset') {
+                    continue;
+                }
+                for (const original of output.originalFileNames ?? []) {
+                    assetMap.set(toSourceKey(original), output.fileName);
+                }
+            }
+        },
+    };
+}
+
+/**
+ * `langFacts.json`: what a window needs to DRAW the language without
+ * loading it (EN-59) -- its `fonts.json`, or null, with each file it names
+ * mapped to the asset the build wrote it as, and whether it ships a
+ * names-lookup dataset. `assetMap` is `assetSourcePlugin`'s, from the build
+ * of the same folder; a font it did not emit fails the build.
+ */
+export function genLangFacts({ code, srcDir, assetMap }) {
+    const hasLookupData = checkHasLookupData(srcDir);
+    const fontsFilePath = path.join(srcDir, 'fonts.json');
+    if (!existsSync(fontsFilePath)) {
+        return { fonts: null, hasLookupData };
+    }
+    const fonts = readJson(fontsFilePath, {});
+    const fontFiles = {};
+    for (const fileName of listFontFileNames(fonts)) {
+        const assetFileName = assetMap.get(
+            toSourceKey(path.join(srcDir, fileName)),
+        );
+        if (assetFileName === undefined) {
+            throw new Error(
+                `${code}: fonts.json names ${fileName}, which the build ` +
+                    'did not write.',
+            );
+        }
+        fontFiles[fileName] = assetFileName;
+    }
+    return { fonts, fontFiles, hasLookupData };
+}
 
 export function genLangEntrySource({ code, srcDir }) {
     const checkHas = (relPath) => {
@@ -452,10 +531,7 @@ export function genLangEntrySource({ code, srcDir }) {
         importList.push("import crossRefBundle from './bb-cr.gz.bundle';");
         fieldList.push('crossRefBundle');
     }
-    if (
-        checkHas(`${LOOKUP_DATA_DIR_NAME}/namesMap.json`) &&
-        checkHas(`${LOOKUP_DATA_DIR_NAME}/locationsMap.json`)
-    ) {
+    if (checkHasLookupData(srcDir)) {
         importList.push(
             `import namesMap from './${LOOKUP_DATA_DIR_NAME}/namesMap.json?url';`,
             `import locationsMap from './${LOOKUP_DATA_DIR_NAME}/locationsMap.json?url';`,
@@ -464,13 +540,7 @@ export function genLangEntrySource({ code, srcDir }) {
     }
     if (checkHas('fonts.json')) {
         const fonts = readJson(path.join(srcDir, 'fonts.json'), {});
-        const fileList = [
-            ...(fonts.faces ?? []).map((face) => {
-                return face.file;
-            }),
-            ...(fonts.stickyNote?.file ? [fonts.stickyNote.file] : []),
-        ];
-        const urlEntryList = fileList.map((fileName, i) => {
+        const urlEntryList = listFontFileNames(fonts).map((fileName, i) => {
             if (!checkHas(fileName)) {
                 throw new Error(`${code}: fonts.json names ${fileName}.`);
             }
@@ -510,6 +580,7 @@ async function viteBuildEntry({
     entryFilePath,
     entrySource,
     outDir,
+    assetMap,
 }) {
     await build({
         configFile: false,
@@ -523,6 +594,7 @@ async function viteBuildEntry({
             openLyricInternalPlugin(),
             moduleContainmentPlugin(srcDir),
             envelopePlugin(code),
+            assetSourcePlugin(assetMap),
         ],
         experimental: {
             renderBuiltUrl(fileName, { hostType }) {
@@ -635,13 +707,19 @@ async function buildLangPluginFresh(source, outDir) {
     }
     // What the package's own `package.json` names, in its own folder.
     ensureLangPackageDeps(srcDir);
+    const assetMap = new Map();
     await viteBuildEntry({
         code,
         srcDir,
         entryFilePath: path.join(srcDir, LANG_ENTRY_FILE_NAME),
         entrySource: genLangEntrySource({ code, srcDir }),
         outDir,
+        assetMap,
     });
+    writeFileSync(
+        path.join(outDir, LANG_PLUGIN_FACTS_FILE_NAME),
+        JSON.stringify(genLangFacts({ code, srcDir, assetMap })),
+    );
     for (const fileName of LANG_PLUGIN_SIDE_FILE_NAMES) {
         const filePath = path.join(srcDir, fileName);
         if (existsSync(filePath)) {

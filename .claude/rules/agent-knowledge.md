@@ -111,11 +111,11 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   package's notes for developers, is not shipped.
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Long Text]`, never as an English
-  label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
+  label with a hand-written translation beside it, and `tran.mjs` fills it in
   with what that key reads as in the language the app is DISPLAYING — so
   `owa_help_search`, `owa_help_page` and a guide card built from a recipe all
   come back already in the user's own language, and a guide's `find` matches the
-  DOM instead of missing every control in a Khmer window. `owa_tran` answers the
+  DOM instead of missing every control in a non-English window. `owa_tran` answers the
   same question for a label the model wrote itself, and `owa_find_ui` /
   `owa_click` / `owa_type` try the translation when the English label matches
   nothing. The key must be a real `tran()` key: an unknown one silently falls

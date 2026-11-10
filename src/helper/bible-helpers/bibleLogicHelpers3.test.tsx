@@ -207,9 +207,9 @@ describe('bibleLogicHelpers3', () => {
         vi.resetModules();
         mocks.reset();
 
-        mocks.getBibleLocaleMock.mockResolvedValue('km-KH');
+        mocks.getBibleLocaleMock.mockResolvedValue('xx-XX');
         mocks.getLangDataFromBibleKeyMock.mockResolvedValue({
-            fontFamily: 'Khmer Font',
+            fontFamily: 'Xx Font',
         });
         mocks.bibleRenderTitleMock.mockResolvedValue('Genesis 1:1-2:3');
         mocks.getChapterDataMock.mockResolvedValue(null);
@@ -262,8 +262,8 @@ describe('bibleLogicHelpers3', () => {
         ];
 
         const html = await module.genNewLineTitlesHtmlText('KJV', titles);
-        expect(html).toContain('data-dict-locale="km-KH"');
-        expect(html).toContain('font-family: Khmer Font');
+        expect(html).toContain('data-dict-locale="xx-XX"');
+        expect(html).toContain('font-family: Xx Font');
         expect(html).toContain('app-caught-hover-pointer');
         // Only the reference is named while compiling: no verse is read for
         // a hover that may never come.
@@ -424,8 +424,8 @@ describe('bibleLogicHelpers3', () => {
         expect(mocks.openBibleItemDetailPanelMock).not.toHaveBeenCalled();
     });
 
-    // John 18.33-19.16 in a Khmer Bible's name and digits, in a heading: the WHOLE passage, both chapters, as
-    // one item -- where it used to be two halves in a menu.
+    // John 18.33-19.16 in a Bible's own book name and digits, in a heading:
+    // the WHOLE passage, both chapters, as one item -- where it used to be two halves in a menu.
     test('a cited range across chapters opens whole', async () => {
         const module = await loadModule();
         const { parent, child } = genTitleSpan('GEN 1:1-2:3');

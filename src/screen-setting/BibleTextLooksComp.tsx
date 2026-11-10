@@ -11,8 +11,8 @@ import {
 } from './bibleTextLookHelpers';
 
 // Literal keys, one call each, so `tranKeyCoverage.test.ts` can read them: a
-// name looked up through a map is invisible to that gate, and a missing Khmer
-// string THROWS in dev the moment the panel opens.
+// name looked up through a map is invisible to that gate, and a string a
+// language lacks THROWS in dev the moment the panel opens.
 function genLookLabelMap(): Record<BibleTextLookIdType, string> {
     return {
         normal: tran('Normal'),

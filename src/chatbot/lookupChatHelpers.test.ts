@@ -79,7 +79,7 @@ describe('what the card itself can do', () => {
             'copy the passage into my notes',
             'put the next chapter in a note',
             'save your answer',
-            'show the explanation in French',
+            'show the explanation in another language',
         ]) {
             expect(readLookupVerseAsk(line, VERSE_EN)).toBeNull();
         }

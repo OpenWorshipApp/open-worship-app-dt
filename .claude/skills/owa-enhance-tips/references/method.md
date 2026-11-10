@@ -23,8 +23,8 @@ the steps. A lesson whose detail names the button is found by the button; one
 that names it only in step 3 is not, and a volunteer who types the words on
 the button gets _No tips found_.
 
-**The same search in Khmer and French** repeats that with the window's
-dictionary: the control's words as that window shows them (`tran()`'s lookup,
+**The same search in every non-English package** repeats that with the
+window's dictionary: the control's words as that window shows them (`tran()`'s lookup,
 English when there is no entry) against the tip's title, detail and category
 as that window shows them. Measured on the first run: _Make the words larger_
 teaches **Font Size**, and its Khmer detail says ទំហំអក្សរ where the button
@@ -83,7 +83,7 @@ knowledge bundle, which takes `.md` only). `--init` writes the skeleton.
 | `tips` | tip ids credited by hand; a credit to a missing tip is an error |
 | `personOnly` | why only the person may press it (file choice, projector, native menu, a choice of their record) — leaves the ACTED denominator |
 | `exclude` | a real control deliberately not taught, with why — leaves every denominator and is listed in every report |
-| `untranslated` | why the window draws this control in English in every language (the bible-note package has no translator): the Khmer and French search then types its `labels` as they read, English, and only its `search` words are translated |
+| `untranslated` | why the window draws this control in English in every language (the bible-note package has no translator): the non-English searches then type its `labels` as they read, English, and only its `search` words are translated |
 
 **Ignore is "not a control"; exclude is "a control we will not teach".**
 Data (references, file names, Bible keys the person installed), statuses and
@@ -234,8 +234,8 @@ says how many.
 
 **Strings** — every new `label`, `detail` and `category`, and every
 `translateFind` / `translateValue` key, in every
-`src/lang/data/online/<code>/dictionary.json` (Khmer's and French's by hand
-first; `tranKeyCoverage.test.ts` holds the rest to the same keys). Reuse the
+`src/lang/data/online/<code>/dictionary.json`, every language alike
+(`tranKeyCoverage.test.ts` holds them all to the same keys). Reuse the
 dictionary's existing translation of each control name inside the translated
 detail. A reworded string's old entry comes out of every file.
 

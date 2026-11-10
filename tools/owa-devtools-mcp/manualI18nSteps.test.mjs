@@ -16,7 +16,8 @@ import { toManualPageBody } from './manualPage.mjs';
 // words off the page's translation (`withLocalStepText` in `owaTools.mjs`):
 // a translation whose steps do not line up shows its card in English
 // sentences round translated button names. Every current translation is
-// held to lining up -- 61 of 64 Khmer pages did on the day this was written,
+// held to lining up -- 61 of 64 pages of the one translation then did on the
+// day this was written,
 // and the other three were made to (2026-10-17).
 describe('a translated manual page lines up with its English steps', () => {
   const englishPageMap = listEnglishManualPages();

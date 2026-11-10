@@ -72,10 +72,10 @@ export async function genBibleItemQuickTextMarkdown(bibleItem: BibleItem) {
 }
 
 /**
- * The family the Bible's text is drawn in -- its language's own face,
- * `app-Battambang` for a Khmer Bible (2026-11-09, the user: _all related
- * bible text have to use its language font-family_). '' when no installed
- * language names one: the session then keeps the panel's default.
+ * The family the Bible's text is drawn in -- its language's own face, an
+ * `app-<family>` from that language's package (2026-11-09, the user: _all
+ * related bible text have to use its language font-family_). '' when no
+ * installed language names one: the session then keeps the panel's default.
  */
 async function readBibleFontFamily(bibleKey: string) {
     try {

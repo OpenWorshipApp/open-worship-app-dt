@@ -223,15 +223,15 @@ function createScreenViewData(renderedKeys: string[] = ['KJV', 'NIV']) {
 
 function createLongTextData(sourceId: string) {
     return {
-        locale: 'km-KH',
+        locale: 'xx-XX',
         type: 'long-text',
         scroll: 0,
         selectedKJVVerseKey: null,
         longTextData: {
             sourceId,
-            renderedList: ['KM', 'EN'].map((code) => {
+            renderedList: ['XX', 'EN'].map((code) => {
                 return {
-                    locale: code === 'KM' ? 'km-KH' : 'en-US',
+                    locale: code === 'XX' ? 'xx-XX' : 'en-US',
                     code,
                     title: `${code} song`,
                     sections: [1, 2].map((num) => {
@@ -684,7 +684,7 @@ describe('ScreenLongTextManager coverage', () => {
         expect(mocks.applyAttachBackground).not.toHaveBeenCalled();
         expect(mocks.bibleItemJsonToScreenViewData).not.toHaveBeenCalled();
         // Its columns are languages: a Bible presented next must not carry
-        // `KM` over as a version to look for.
+        // `XX` over as a version to look for.
         expect(managerA.getRenderedBibleKeys()).toEqual([]);
 
         managerA.screenViewData = null;
@@ -855,7 +855,7 @@ describe('ScreenLongTextManager coverage', () => {
         // The row as it is drawn: one table row, a cell per language.
         const host = document.createElement('div');
         const row = document.createElement('tr');
-        const cells = ['KM', 'EN'].map(() => {
+        const cells = ['XX', 'EN'].map(() => {
             const cell = document.createElement('span');
             cell.dataset.kjvVerseKey = 'lt-2';
             row.appendChild(cell);

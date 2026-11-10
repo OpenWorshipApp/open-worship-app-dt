@@ -42,8 +42,9 @@ export default function RenderHiddenWidgetTitleComp({
             tabIndex={0}
             // The same name the OPEN pane carries, so "the Background panel"
             // means one thing to a reader of this window whichever state it
-            // is in -- and still means it once the app is in Khmer, where
-            // the text below is the only other name and is translated.
+            // is in -- and still means it once the app is in another
+            // language, where the text below is the only other name and is
+            // translated.
             data-widget-name={widgetKey ?? widgetName}
             title={`${tran('Enable')} ${widgetName}`}
             className={

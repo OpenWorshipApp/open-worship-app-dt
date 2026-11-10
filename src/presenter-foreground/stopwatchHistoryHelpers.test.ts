@@ -104,42 +104,43 @@ describe('stopwatch history', () => {
         expect(yesterday.length).toBeGreaterThan(yesterdayTime.length + 2);
     });
 
-    // In the app's language, not the system's: a Khmer panel read
-    // "Oct 4, 7:57 AM" on an English Windows (2026-10-06).
+    // In the app's language, not the system's: a translated panel read
+    // "Oct 4, 7:57 AM" on an English Windows (2026-10-06). Two English
+    // locales that Intl writes differently show the one given is the one used.
     test('is written in the locale it is given', () => {
         const when = NOW - 86_400_000;
         const options = { hour: 'numeric', minute: '2-digit' } as const;
-        const french = toStopwatchHistoryWhenText(when, NOW, 'fr-FR');
-        expect(french).toBe(
-            `${new Date(when).toLocaleDateString('fr-FR', {
+        const british = toStopwatchHistoryWhenText(when, NOW, 'en-GB');
+        expect(british).toBe(
+            `${new Date(when).toLocaleDateString('en-GB', {
                 month: 'short',
                 day: 'numeric',
-            })}, ${new Date(when).toLocaleTimeString('fr-FR', options)}`,
+            })}, ${new Date(when).toLocaleTimeString('en-GB', options)}`,
         );
         const english = toStopwatchHistoryWhenText(when, NOW, 'en-US');
         expect(english).toBe(
             `Oct 3, ${new Date(when).toLocaleTimeString('en-US', options)}`,
         );
-        expect(french).not.toBe(english);
+        expect(british).not.toBe(english);
     });
 
-    // Electron's ICU has no Khmer, and `Intl` answers a `km-KH` request in
-    // English without a word -- which is how the fix above first shipped
-    // still reading "Oct 4, 7:57 AM" in the app while this file passed under
-    // Node. Mocked here to be Electron.
+    // Electron's ICU lacks some of the app's languages, and `Intl` answers a
+    // request in one of them in English without a word -- which is how the
+    // fix above first shipped still reading "Oct 4, 7:57 AM" in the app while
+    // this file passed under Node. Mocked here to be Electron.
     test('falls back to numbers for a locale Intl cannot format', () => {
         const spy = vi
             .spyOn(Intl.DateTimeFormat, 'supportedLocalesOf')
             .mockReturnValue([]);
         try {
-            expect(toStopwatchHistoryWhenText(NOW - 60_000, NOW, 'km-KH')).toBe(
+            expect(toStopwatchHistoryWhenText(NOW - 60_000, NOW, 'xx-XX')).toBe(
                 '10:41',
             );
             expect(
                 toStopwatchHistoryWhenText(
                     NOW - 86_400_000 + 7_200_000,
                     NOW,
-                    'km-KH',
+                    'xx-XX',
                 ),
             ).toBe('03/10 12:42');
         } finally {

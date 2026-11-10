@@ -30,6 +30,7 @@ import {
     type AssistantLanguageType,
 } from './chatLangHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { checkHasLanguageName } from './languageNameWordHelpers';
 import {
     readLanguageSizeAsk,
     type LanguageSizeAskType,
@@ -413,13 +414,20 @@ export const SLIDE_WORDLESS_HINT =
 
 // A typed translation that says WHERE the new lines go. The card's button
 // says "under each line" and its hint says it again; typed, _Add the
-// English under the Khmer line on slide 3_ was put ABOVE the Khmer by
+// English under the <other language> line on slide 3_ was put ABOVE it by
 // gemma4:cloud (seen live 2026-11-07, a copy of a real sermon document),
 // the prompt's own rule notwithstanding. Said once more, plainly, beside
 // the ask. English words only; a translation word must be in the line, or
-// "a box under the title" would be read as a placement of lines.
-const SLIDE_TRANSLATE_WORD_PATTERN =
-    /translat|language|\b(?:english|khmer|french|spanish|chinese|korean|thai|german|portuguese|vietnamese|japanese|tagalog)\b/i;
+// "a box under the title" would be read as a placement of lines. A language
+// is any of English's table of names (`checkHasLanguageName`), every one
+// found the same way.
+const SLIDE_TRANSLATE_WORD_PATTERN = /translat|language/i;
+
+function checkHasTranslateWord(text: string) {
+    return (
+        SLIDE_TRANSLATE_WORD_PATTERN.test(text) || checkHasLanguageName(text)
+    );
+}
 const SLIDE_UNDER_WORD_PATTERN = /\b(?:under|below|beneath|underneath)\b/i;
 const SLIDE_ABOVE_WORD_PATTERN = /\b(?:above|over|on top of)\b/i;
 
@@ -438,7 +446,7 @@ export function readSlidePlacement(
     asked: string,
 ): keyof typeof SLIDE_PLACEMENT_HINT_MAP | null {
     const text = String(asked ?? '');
-    if (!SLIDE_TRANSLATE_WORD_PATTERN.test(text)) {
+    if (!checkHasTranslateWord(text)) {
         return null;
     }
     const isUnder = SLIDE_UNDER_WORD_PATTERN.test(text);
@@ -508,8 +516,9 @@ export const SLIDE_SYSTEM_PROMPT =
     'is wrong and say what you fixed. Words you can take from the slides ' +
     "are not new words: a translation of a box's words, those words fixed, " +
     'shortened or split, a title made from them. So "add English above the ' +
-    'Khmer" means: translate that Khmer into English yourself and write ' +
-    'each English line on the line above its Khmer line, in the same box -- ' +
+    'other language" means: translate those words into English yourself ' +
+    'and write each English line on the line above the line it translates, ' +
+    'in the same box -- ' +
     'do it, never ask them for the words. When a request has one sensible ' +
     'reading, do it rather than ask: every change can be undone. ' +
     'TRANSLATING has two ways and the person chooses: REPLACE the words ' +
@@ -637,8 +646,8 @@ const WINDOW_DONE_CARD_KEY_LIST = [
  * The English of a card button pressed in the window's language, when the
  * window does that button's work itself, or null (2026-11-08, BN-16: a card
  * keeps its buttons as the window shows them, so **Make the words larger**
- * pressed in a Khmer window had reached the assistant, its Khmer words no
- * reader here knew).
+ * pressed in a non-English window had reached the assistant, its translated
+ * words no reader here knew).
  */
 export function findWindowDoneCardAsk(pressed: string): string | null {
     const text = String(pressed ?? '').trim();

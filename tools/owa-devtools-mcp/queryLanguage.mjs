@@ -2,25 +2,27 @@
 // English words the guide is searched by.
 //
 // The manual is English, and the help search counts English words in it
-// (`help.mjs`). A question typed in Khmer used to be cut into fragments at
+// (`help.mjs`). A question typed in a script with vowel signs used to be cut
+// into fragments at
 // every vowel sign -- the words for "Bible Lookup" became two broken scraps,
 // which no page contains -- and came back with nothing. But the app already knows what
 // most of its words mean: its own `tran()` dictionary maps every English label
-// to the words on the Khmer button. Read backwards, that is a phrase book for
-// exactly the vocabulary a question about this app uses ("Bible Lookup",
+// to the words on the translated button. Read backwards, that is a phrase
+// book for exactly the vocabulary a question about this app uses ("Bible Lookup",
 // "Clear Long Text", "Background"), and a short glossary of question words
 // in each language's `assistant.json` (how, where, show, song...) covers the
-// rest. A Khmer button name found in a question becomes its English key, which
-// is also what the manual writes it as (`[en:tran:Clear Long Text]`).
+// rest. A translated button name found in a question becomes its English
+// key, which is also what the manual writes it as (`[en:tran:Clear Long Text]`).
 //
-// Khmer is written without spaces between words, so a run of the script is
+// A script written without spaces between words is read as a run of the
+// script,
 // read longest phrase first, and a phrase may only end where a letter ends --
 // never before a vowel sign or after the subscript mark, or a one-letter word
 // would be found inside the first letter of a longer one. Deliberately NOT `Intl.Segmenter`:
-// Electron's ICU splits Khmer words differently from Node's (measured: the
+// Electron's ICU splits such words differently from Node's (measured: the
 // word for "screen" cut in two), and the search runs in both. What matches
-// nothing is dropped -- an unmatched Khmer fragment is no evidence about any
-// English page, and as a search term it would only pull every page down.
+// nothing is dropped -- an unmatched fragment of the script is no evidence
+// about any English page, and as a search term it would only pull every page down.
 //
 // Pure: no `node:fs`. The phrase book is built per call from the dictionary
 // the caller already read (the help search reads the bundle once a search);
@@ -48,8 +50,9 @@ function toLanguagePattern(facts) {
 
 /**
  * The language a question is written in when its SCRIPT says so, with that
- * language's facts -- or null for Latin letters (English and French share
- * them, and the guide reads both), or a script no language claims.
+ * language's facts -- or null for Latin letters (English shares them with
+ * many languages, and the guide reads them all), or a script no language
+ * claims.
  */
 export function findQuestionLanguage(query, languages) {
     for (const language of languages ?? []) {
@@ -203,7 +206,7 @@ export function toEnglishSearchWords(query, dictionary, facts) {
     const joiningMarkSet = toJoiningMarkSet(facts);
     const groups = [];
     // A run of the script, across the single spaces some writers put between
-    // phrases -- a label may have one inside it (the Khmer "No, thanks").
+    // phrases -- a label may have one inside it (one language's "No, thanks").
     const source = facts.scriptPattern;
     const runPattern = new RegExp(
         `(?:${source})(?:(?:${source})| (?=(?:${source})))*`,

@@ -1201,9 +1201,9 @@ describe('the Anthropic loop', () => {
         });
     });
 
-    // BN-26 (2026-11-08, seen live): asked in Khmer under a Khmer note,
-    // "add John 1:1 under the first line" read the verse from the KJV the
-    // Lookup was on, a Khmer Bible installed.
+    // BN-26 (2026-11-08, seen live): asked in another language under a
+    // note in it, "add John 1:1 under the first line" read the verse from
+    // the KJV the Lookup was on, a Bible in that language installed.
     test('a new verse in a note asked in another language comes from a Bible in it', async () => {
         fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
         fake.toolResultMap.owa_find_verse = JSON.stringify({

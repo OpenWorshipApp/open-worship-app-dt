@@ -19,6 +19,7 @@ import {
     redactSecrets,
     resetFirewallState,
 } from './firewall.mjs';
+import { loadTranBundle } from './tran.mjs';
 
 // A real fragment of the presenter's snapshot, kept verbatim: the format is
 // chrome-devtools', not ours, so a made-up one would stop proving anything the
@@ -153,24 +154,44 @@ describe('checkToolCall', () => {
 // Measured 2026-09-14: the label list was English, and every tool that names a
 // control to the model names it in the language the window shows.
 describe('a press that cannot be undone, in the words the window shows', () => {
-    it('refuses it in Khmer', () => {
-        for (const find of [
-        ]) {
-            expect(checkToolCall('owa_click', { find }).rule, find).toBe(
-                'destructive-label',
-            );
+    // Every language this server can read (`tran.mjs`), each in its own
+    // words; a language's own phrasings are its package's tests.
+    const translationsOf = (keyList) => {
+        const { dictionaries } = loadTranBundle();
+        return Object.entries(dictionaries).flatMap(([langCode, words]) => {
+            return keyList
+                .map((key) => words[key])
+                .filter((find) => typeof find === 'string' && find !== '')
+                .map((find) => [langCode, find]);
+        });
+    };
+
+    it('refuses it in every language the app can be shown in', () => {
+        for (const [langCode, find] of translationsOf([
+            'move to trash',
+            'clear all',
+            'discard changed',
+        ])) {
+            expect(
+                checkToolCall('owa_click', { find }).rule,
+                `${langCode}: ${find}`,
+            ).toBe('destructive-label');
         }
     });
 
-    // Clear Background's Khmer is ALSO Remove Background's. The window cannot
-    // tell them apart, so the ordinary move stays pressable and the app's
-    // confirm stands behind the other.
-    it('still presses the ordinary Khmer controls', () => {
-        for (const find of [
-        ]) {
-            expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
-                true,
-            );
+    // A translation may share its words with a destructive one (a "clear"
+    // that is also a "remove"), so only controls with nothing to undo are
+    // held here; the app's confirm stands behind the rest.
+    it('still presses the ordinary controls in every language', () => {
+        for (const [langCode, find] of translationsOf([
+            'bible lookup',
+            'settings',
+            'next',
+        ])) {
+            expect(
+                checkToolCall('owa_click', { find }).isAllowed,
+                `${langCode}: ${find}`,
+            ).toBe(true);
         }
     });
 

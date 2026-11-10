@@ -70,8 +70,8 @@ beforeEach(() => {
 });
 
 // The card sits in the app window and speaks its language: every word it
-// asks the dictionary for must be there in Khmer AND French, read straight
-// from the packages (a stale built bundle would hide a new key).
+// asks the dictionary for must be there in every language package, read
+// straight from the packages (a stale built bundle would hide a new key).
 describe('the card’s own words', () => {
   it('has every one in every language', () => {
     // Every language package there is but English's: a folder of
@@ -98,7 +98,9 @@ describe('the card’s own words', () => {
         code,
       ).toEqual([]);
     }
-  });
+    // Every package's dictionary is read (~150 ms each under a busy suite,
+    // eighty-odd of them): more than the 10 s default.
+  }, 60_000);
 
   // The list the server translates and the sentences the card says are two
   // copies; one drifting from the other is a sentence left in English.
@@ -898,10 +900,10 @@ describe('the guide runtime', () => {
   });
 
   it('refuses a match that only mentions the word in passing', () => {
-    // The Resources panel listing a "khmer-study-bible-pdf" folder is
+    // The Resources panel listing a "study-bible-pdf" folder is
     // not the Bible Reader tab, and a row of PDF notes is not "Book".
     document.body.innerHTML = [
-      '<button title="...\khmer-study-bible-pdf\data-s3">',
+      '<button title="...\study-bible-pdf\data-s3">',
       'GEN.0.pdf Introduction</button>',
     ].join('');
     const status = startGuide({

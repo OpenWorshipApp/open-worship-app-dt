@@ -13,6 +13,7 @@ import languageNameFileMap from './data/en/language-names.json';
 import localesFile from './data/en/locales.json';
 import englishMetaFile from './data/en/meta.json';
 import type { LangPluginType } from '../../electron/langPluginProtocol';
+import { genLangFontData, type LangFontDataType } from './langFontDataHelpers';
 import {
     ensureLangPlugins,
     getEnabledLangPlugins,
@@ -27,8 +28,8 @@ export const DEFAULT_LANG_CODE = 'en';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
 
 // English is the app's own, the default and the fallback. Every other language
-// is a PLUGIN (2026-11-04, the user: _Khmer and French are modular, only
-// English is built in_; `electron/langPluginProtocol.ts`): found at runtime in
+// is a PLUGIN (2026-11-04, the user: _… are modular, only English is built
+// in_; `electron/langPluginProtocol.ts`): found at runtime in
 // `electron-build/lang` or `<data folder>/lang` through `appProvider.langUtils`
 // (`langPluginRegistry.ts`), its code loaded only when that language is asked
 // for, and never named here -- nothing outside `src/lang/data` carries a word
@@ -324,7 +325,9 @@ export function getLangData(langCodeOrLocale: string) {
     return langCache.get(langCodeOrLocale) ?? null;
 }
 
-export function initLangCss(langData: LanguageDataType) {
+export function initLangCss(
+    langData: Pick<LanguageDataType, 'langCode' | 'genCss'>,
+) {
     const elementId = `lang-${langData.langCode}`;
     let styleElement = document.querySelector(`style#${elementId}`);
     if (styleElement === null) {
@@ -445,12 +448,19 @@ export async function getAllLangsAsync() {
 
 // The renderers that call this render CONTENT in a language other than their
 // own UI locale (lyric slides, bible notes), and that content asks for the
-// language's font by name — e.g. the `app-Battambang` frozen into open-lyric's
+// language's font by name — e.g. the `app-<Family>` frozen into open-lyric's
 // generated markup. So the `@font-face` rules have to be registered here too,
 // not only for the locale the window's UI happens to use: the screen window
 // loads no locale of its own, and a missing face silently falls back to a
 // system font with other metrics, which reflows and clips the whole slide.
-// The modules are already loaded at this point, so this costs nothing extra.
+//
+// What it registers is each language's FONTS, read off the plugin list
+// (`langFacts.json`, `langFontDataHelpers.ts`) -- no plugin is loaded for it
+// (EN-59): a screen window, the Presenter's first song and every font list
+// had each loaded every enabled language whole, dictionary and all, and kept
+// it, for about 2 KB of CSS a language. A language this window has already
+// loaded for real is used as it is; a plugin built before the facts file
+// existed is loaded, as it always was.
 //
 // ONE registration per window, shared by every caller: open-lyric awaits this
 // before each song it builds, and rewriting a `<style>` of `@font-face` rules
@@ -458,7 +468,43 @@ export async function getAllLangsAsync() {
 // so the next caller tries again. A language installed, turned on or off
 // since is read again: the answer is kept for the plugin list it was read
 // from, and every font list in the window lists the ENABLED packages.
-let allLangCssPromise: ReturnType<typeof getAllLangsAsync> | null = null;
+async function fetchLangFontData(
+    langCode: string,
+): Promise<LangFontDataType | null> {
+    const loadedLangData = langCache.get(langCode);
+    if (langCode === DEFAULT_LANG_CODE || loadedLangData !== undefined) {
+        return loadedLangData ?? fetchLangData(langCode);
+    }
+    const plugin = getEnabledLangPlugins().find((item) => {
+        return item.langCode === langCode;
+    });
+    const assetBaseUrl = appProvider.langUtils?.getLangAssetBaseUrl?.(langCode);
+    if (plugin !== undefined && assetBaseUrl !== undefined) {
+        try {
+            const fontData = genLangFontData(plugin, assetBaseUrl);
+            if (fontData !== null) {
+                return fontData;
+            }
+        } catch (error) {
+            console.error(`The "${langCode}" language's fonts:`, error);
+        }
+    }
+    return fetchLangData(langCode);
+}
+
+async function getAllLangFontDataAsync() {
+    await ensureLangPlugins();
+    const allFontData = await Promise.all(
+        getSupportedLangCodes().map((langCode) => {
+            return fetchLangFontData(langCode);
+        }),
+    );
+    return allFontData.filter((data) => {
+        return data !== null;
+    });
+}
+
+let allLangCssPromise: Promise<LangFontDataType[]> | null = null;
 let allLangCssPluginList: ReturnType<typeof getLoadedLangPlugins> | undefined;
 export function initAllLangCss() {
     if (
@@ -470,7 +516,7 @@ export function initAllLangCss() {
         allLangCssPromise = null;
         allLangCssPluginList = undefined;
     }
-    allLangCssPromise ??= getAllLangsAsync()
+    allLangCssPromise ??= getAllLangFontDataAsync()
         .then((allLangData) => {
             for (const langData of allLangData) {
                 initLangCss(langData);
@@ -585,7 +631,7 @@ export function tran(...args: any[]): string {
  *
  * For text that describes CONTENT the user chose a language for separately from
  * the UI — the names-and-locations lookup is the case this exists for: its
- * records may be Khmer while the menus around them are English, and a record's
+ * records may be in one language while the menus around them are English, and a record's
  * category then has to read in the language of the record, not of the menu.
  *
  * Unlike `tran` it does NOT throw on a missing key in dev. The interface locale
@@ -918,8 +964,8 @@ export function registerLangAppMenuClicked() {
 
 // A language's menu items are its plugin's `appMenus.json` (copied from
 // `online/<code>/appMenus.json`), NOT in its package: this runs on every page of
-// the main window, and the packages are hundreds of KB each (Khmer's also
-// brings the open-lyric plugin). The plugin list carries the file inline.
+// the main window, and the packages are hundreds of KB each (one with an
+// `openLyricPlugin.ts` also brings the open-lyric plugin). The plugin list carries the file inline.
 export async function initLangAppMenu() {
     await ensureLangPlugins();
     const enabledLangCodes = getSupportedLangCodes();

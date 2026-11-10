@@ -728,10 +728,10 @@ describe('an answer as it is drawn', () => {
                         args: { provider: 'anthropic', page: 'billing' },
                     },
                     {
-                        label: 'GKHB',
+                        label: 'SMPB',
                         toolName: 'owa-bible-import-step',
                         isData: true,
-                        title: 'Khmer Bible',
+                        title: 'Sample Bible',
                     },
                     {
                         label: 'List 2',
@@ -766,9 +766,9 @@ describe('an answer as it is drawn', () => {
             'Opens https://platform.claude.com/settings/billing in your browser',
         );
         expect(page.querySelector('.bi-box-arrow-up-right')).not.toBeNull();
-        const data = button('GKHB');
+        const data = button('SMPB');
         expect(data.className).toBe('cue-act cue-act-data');
-        expect(data.title).toBe('Khmer Bible');
+        expect(data.title).toBe('Sample Bible');
         expect(button('List 2')).toBeDefined();
         expect(button('Put Amazing Grace on the screen')).toBeDefined();
         expect(button('Open John 3:16 in Bible Lookup')).toBeDefined();

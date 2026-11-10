@@ -258,7 +258,7 @@ export async function handleImporting(archiveFilePath?: string) {
                 },
             );
             // Through `tran` with its numbers filled in: it was the one line
-            // of the import a Khmer or French window showed in English.
+            // of the import a translated window showed in English.
             showSimpleToast(
                 tran(IMPORT_TITLE),
                 tran('Imported {copied} file(s); {reused} already up to date')

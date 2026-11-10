@@ -399,8 +399,9 @@ export function checkIsMixedSafe(lines) {
  * Three things a lyrics page writes that a person typing does not:
  *
  *   - the number in the script the song is printed in, which is why every
- *     numeral goes through `toAsciiDigits` first. A Khmer hymnal numbers its
- *     verses in Khmer digits, and unread they are not labels, so the whole
+ *     numeral goes through `toAsciiDigits` first. A hymnal in a script with
+ *     digits of its own numbers its verses in them, and unread they are not
+ *     labels, so the whole
  *     song arrives as one undivided verse.
  *   - how many times to sing it, in a trailing `(2x)`. That is the Structure,
  *     not the name, and it is thrown away by anything that only reads names.

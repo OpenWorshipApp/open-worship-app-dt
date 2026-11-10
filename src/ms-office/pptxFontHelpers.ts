@@ -1,8 +1,8 @@
 // Fonts for "Export to PPTX": which installed font a slide's text is really
 // drawn in, per glyph. A browser silently falls back to another font for a
-// glyph the requested one does not have (the Latin "(DOXOLOGY #2)" set in the
-// Khmer-only Moul), while PowerPoint draws empty boxes instead — or nothing at
-// all. So the exporter asks the browser, with the same canvas text engine the
+// glyph the requested one does not have (the Latin "(DOXOLOGY #2)" set in a
+// face made for one script alone), while PowerPoint draws empty boxes
+// instead — or nothing at all. So the exporter asks the browser, with the same canvas text engine the
 // slide was laid out with, which font each stretch of text actually came from,
 // and names THAT font in the PPTX.
 //
@@ -124,7 +124,7 @@ function getPlatformFonts(): PlatformFontsType {
     };
 }
 
-// `font-family` exactly as computed — `Moul`, `"Khmer OS", serif`,
+// `font-family` exactly as computed — `Arial`, `"Times New Roman", serif`,
 // `system-ui, -apple-system, "Segoe UI"` — as a plain list of names.
 export function parseFontFamilyList(fontFamily: string) {
     const familyList: string[] = [];
@@ -190,7 +190,7 @@ const graphemeSegmenter = new Intl.Segmenter(undefined, {
 });
 
 // Grapheme clusters, with one repair: Unicode's cluster rules have no conjunct
-// rule for some scripts (Khmer's), so a syllable with a subscript consonant
+// rule for some scripts, so a syllable with a subscript consonant
 // segments in two -- the sign that turns the next consonant into a subscript
 // (an invisible stacker, `scriptClusterHelpers.ts`) is kept with what
 // follows it, or the syllable would be measured, and could be re-fonted, in
@@ -441,13 +441,13 @@ export class PptxFontResolver {
 
 // Where PowerPoint puts the first baseline of a paragraph set to an EXACT line
 // spacing, measured from the top of its text area. Measured against PowerPoint
-// 16 on Windows (2026-09-21) with Arial, Segoe UI, Times New Roman,
-// Battambang, Moul, Khmer OS and Khmer OS Battambang, 37-150px, at the 1.35
-// line height every text item uses:
+// 16 on Windows (2026-09-21) with Arial, Segoe UI, Times New Roman and four
+// faces of one script with stacked subscripts, 37-150px, at the 1.35 line
+// height every text item uses:
 // - a font whose ascent + descent fits the line sits at 75% of the line,
 //   whatever its own metrics (Arial, Segoe UI and Times all land on 101px of a
 //   135px line);
-// - a font taller than its line (every Khmer font above) is centered the way a
+// - a font taller than its line (each of those four) is centered the way a
 //   browser centers it, then lifted by 3% of the font size.
 // Both agree with PowerPoint to within a pixel at 1.35; other line heights are
 // an approximation (PowerPoint changes its rule near its own single spacing).

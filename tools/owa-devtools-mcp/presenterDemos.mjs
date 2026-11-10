@@ -514,9 +514,9 @@ export const PRESENTER_DEMO_LIST = [
         // Scoped to the panel by name: every open foreground panel has a
         // Properties button, and they all read the same word. The plain word
         // is kept behind it because a scope matches the panel's ENGLISH
-        // `data-widget-name` while the button itself is translated, so a Khmer
-        // window falls back to opening some panel's Properties rather than
-        // refusing the step outright.
+        // `data-widget-name` while the button itself is translated, so a
+        // translated window falls back to opening some panel's Properties
+        // rather than refusing the step outright.
         text: 'Open Properties inside the Quick Text panel.',
         find: 'Quick Text > Properties',
         finds: ['Quick Text > Properties', 'Properties'],
@@ -2244,7 +2244,7 @@ export function getPresenterDemo(id, translate = (value) => value) {
         const translated = translate(step.find);
         if (translated !== step.find) {
           if (step.find.includes(' > ') && step.finds === undefined) {
-            // A scoped control has one exact localized name. In a Khmer
+            // A scoped control has one exact localized name. In a translated
             // window the English "Images" can match the folder path button
             // instead of the Images tab; do not try that stale name first.
             finds.splice(0, finds.length, translated);

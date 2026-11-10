@@ -34,8 +34,8 @@ import {
  *
  * A preset writes the settings the Properties block itself writes -- where
  * the box sits, its size, colours, frame and dressing -- and nothing the
- * operator chose for themselves: never the words, never the font (a Khmer or
- * Chinese face picked for the language stays), never the transition or the
+ * operator chose for themselves: never the words, never the font (a face
+ * picked for the language's script stays), never the transition or the
  * layer. Only the rows the component HAS are written (`flags`, exactly what
  * the panel hands `useForegroundPropsSetting`), so a marquee is never given a
  * place on the screen it does not take, nor a picture a text colour.

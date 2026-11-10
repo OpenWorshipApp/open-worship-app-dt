@@ -64,7 +64,7 @@ describe('textSelectionHelpers', () => {
 
     test('builds copy, search and dictionary menus for selected text', () => {
         document.body.innerHTML =
-            '<div data-dict-locale="en-US"><span id="word" data-dict-locale="km-KH">Grace</span></div>';
+            '<div data-dict-locale="en-US"><span id="word" data-dict-locale="xx-XX">Grace</span></div>';
         const container = document.querySelector('[data-dict-locale="en-US"]');
         if (!container) {
             throw new Error('Expected selected text container');
@@ -102,7 +102,7 @@ describe('textSelectionHelpers', () => {
             'https://en.wiktionary.org/wiki/Grace',
         );
         expect(openExternalURLMock).toHaveBeenCalledWith(
-            'https://km.wiktionary.org/wiki/Grace',
+            'https://xx.wiktionary.org/wiki/Grace',
         );
     });
 

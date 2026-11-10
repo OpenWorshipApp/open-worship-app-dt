@@ -1,6 +1,6 @@
 ---
 name: review-stagged-change
-description: 'Exhaustively review ONLY what is currently staged in git (the index — `git diff --cached`), and report every room to improve. Use when asked to "review my staged changes", "review the staged diff", "review what I''m about to commit", "check the index before commit", or to run a pre-commit quality gate. Reviews the INDEX version of each file (`git show :path`), never the working-tree version, so unstaged edits and untracked files are deliberately excluded and partially-staged files are called out. Sweeps eight dimensions in priority order — performance/memory (this app targets very low-spec machines, so it outranks elegance), correctness, reuse & duplication, simplification, project conventions (Comp naming, useAppCurrentRef, debounced event hooks, tran() keys that THROW on a missing Khmer string), tests, security/IPC, and docs/memory drift — then adversarially verifies each candidate finding against the full file before reporting it. Findings come back ranked by severity with file:line links, a concrete failure scenario, and a suggested fix; pass "fix" to apply the accepted ones to the working tree afterwards.'
+description: 'Exhaustively review ONLY what is currently staged in git (the index — `git diff --cached`), and report every room to improve. Use when asked to "review my staged changes", "review the staged diff", "review what I''m about to commit", "check the index before commit", or to run a pre-commit quality gate. Reviews the INDEX version of each file (`git show :path`), never the working-tree version, so unstaged edits and untracked files are deliberately excluded and partially-staged files are called out. Sweeps eight dimensions in priority order — performance/memory (this app targets very low-spec machines, so it outranks elegance), correctness, reuse & duplication, simplification, project conventions (Comp naming, useAppCurrentRef, debounced event hooks, tran() keys that THROW on a missing string in any non-English language), tests, security/IPC, and docs/memory drift — then adversarially verifies each candidate finding against the full file before reporting it. Findings come back ranked by severity with file:line links, a concrete failure scenario, and a suggested fix; pass "fix" to apply the accepted ones to the working tree afterwards.'
 argument-hint: '[optional: path/glob to narrow the review, "perf"/"correctness"/"conventions" to weight a dimension, or "fix" to apply findings after reporting]'
 ---
 
@@ -84,8 +84,9 @@ entirely — the ask is to find *all* rooms to improve.
    nothing, over-deep nesting, a flag parameter that should be two functions.
 5. **Project conventions.** `Comp` suffix on every React function component,
    `useAppCurrentRef` usage (and the ~63 sites deliberately NOT converted — do not
-   "finish" them), `tran()` keys — **a missing Khmer key throws and blanks the page**,
-   so any new user-facing string is a finding unless its key exists in both locales,
+   "finish" them), `tran()` keys — **a missing key throws in any non-English language
+   and blanks the page**, so any new user-facing string is a finding unless its key
+   exists in every language's `dictionary.json`,
    `ConfirmPopupComp` labels are auto-`tran()`'d so pass raw English keys.
    Full list: [references/checklist.md](./references/checklist.md) §3.
 6. **Tests.** New behavior with no test; a changed behavior whose existing test still

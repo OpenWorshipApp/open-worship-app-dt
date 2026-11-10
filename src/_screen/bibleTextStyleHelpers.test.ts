@@ -221,19 +221,19 @@ describe('genBibleTextStyleCss', () => {
 
     test('a chosen family reaches the row and a verse with a font of its own', () => {
         const lines = genBibleTextStyleCss({
-            fontFamily: 'Khmer OS Battambang',
+            fontFamily: 'Made Up Sans',
             textAlign: 'center',
         }).split('\n');
         // The declaration for the row, the screen's own stack behind it for a
         // machine that does not have the font.
         expect(lines).toContainEqual(
             expect.stringMatching(
-                /^font-family: "Khmer OS Battambang", app-Google-Sans, system-ui, .*;$/,
+                /^font-family: "Made Up Sans", app-Google-Sans, system-ui, .*;$/,
             ),
         );
-        // The variable a Khmer verse reads ahead of its inline Battambang.
+        // The variable a verse reads ahead of its language's own inline font.
         expect(lines).toContain(
-            `${BIBLE_TEXT_FONT_FAMILY_VAR}: "Khmer OS Battambang";`,
+            `${BIBLE_TEXT_FONT_FAMILY_VAR}: "Made Up Sans";`,
         );
         // The cell rules stay last.
         expect(lines.at(-1)).toBe('& td { text-align: center !important; }');
@@ -325,7 +325,7 @@ describe('genBibleTextStylePatch', () => {
 
     test('a look that is set is written as it is', () => {
         const view: BibleTextStyleViewType = {
-            fontFamily: 'Khmer OS Battambang',
+            fontFamily: 'Made Up Sans',
             fontSize: 80,
             color: '#ffff00',
             textShadow: '1px 1px 0 #000000',

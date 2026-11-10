@@ -6,7 +6,7 @@
 // The tool used to answer the window's page, language, theme and tabs, and
 // `owa_list_screens` what the projector held; nothing said what the user had
 // SELECTED. Measured 2026-09-09 on Claude Sonnet 5 with "Amazing Grace"
-// highlighted and the projector still holding a Khmer hymn: *which song is
+// highlighted and the projector still holding another hymn: *which song is
 // selected right now?* was answered with the hymn (the only document any tool
 // had named), and *show the next slide* ran to the ten-round cap, dumped 200
 // controls into the context looking for a slide card (~35 000 tokens: the

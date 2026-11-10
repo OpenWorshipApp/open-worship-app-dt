@@ -108,7 +108,7 @@ vi.mock('./agentSlideHelpers', () => ({
 
 import { handleAgentFileRequest, toAgentContentHash } from './agentFileHelpers';
 
-const SONG_PATH = 'C:\\data\\elsewhere\\Still khmer.owl';
+const SONG_PATH = 'C:\\data\\elsewhere\\Still here.owl';
 
 beforeEach(() => {
     h.head = 'song as it is now';
@@ -192,7 +192,7 @@ describe('a song named by its path', () => {
                 filePath: SONG_PATH,
             }),
         ).toEqual({
-            name: 'Still khmer',
+            name: 'Still here',
             filePath: SONG_PATH,
             hasUnsavedChanges: true,
             characters: 'song as it is now'.length,

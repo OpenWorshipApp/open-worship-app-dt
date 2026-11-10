@@ -13,7 +13,8 @@ import { describe, expect, test } from 'vitest';
 // English in a packaged window of that language, while
 // the typecheck, eslint and every other test stay green (memory
 // `tran-missing-key-throws-in-dev`). Before this test, five keys on failure
-// paths had no Khmer string at all (EN-20), and nothing could have noticed.
+// paths had no string in a translated language at all (EN-20), and nothing
+// could have noticed.
 //
 // The dictionary is read as a file, never through the package: a package
 // pulls in font files, a `.gz.bundle` and its own open-lyric plugin.
@@ -232,7 +233,7 @@ describe.each(
     // `toForegroundDragLabel` translates through a LOOKUP
     // (`tran(targetLabelMap[target])`), so the sweep above cannot see those
     // keys at all. They are the labels on every foreground row of a presenting
-    // flow, and a missing one throws in a Khmer window while every other check
+    // flow, and a missing one throws in a translated window while every other check
     // stays green -- exactly the hole this file exists to close.
     test('every foreground widget label has a string in it', () => {
         if (isNone) {
@@ -271,8 +272,8 @@ describe.each(
 
     // The Foreground launcher has the same hole: its rows, each panel's
     // title and the panel's name are `tran(widget.labelKey)` over a list.
-    // A component added without its Khmer name passed every check and
-    // threw in a Khmer window the moment the Foreground tab was pressed.
+    // A component added without its translated name passed every check and
+    // threw in a translated window the moment the Foreground tab was pressed.
     test('every foreground launcher label has a string in it', () => {
         if (isNone) {
             return;
@@ -315,7 +316,7 @@ describe.each(
     // The blend-mode picker has the same hole for the same reason: it draws
     // its options with `tran(mode.labelKey)` over a list, which no static
     // sweep can read. A missing one blanks the Foreground panel -- and now a
-    // slide's canvas-item properties -- in a Khmer window the moment somebody
+    // slide's canvas-item properties -- in a translated window the moment somebody
     // opens Properties.
     test('every blend-mode label has a string in it', () => {
         if (isNone) {
@@ -355,7 +356,7 @@ describe.each(
     // The position pad names its nine cells through the same dynamic
     // `tran(cell.labelKey)` that no static sweep can read, and it is the
     // control the panel OPENS on -- a missing one blanks Properties (and the
-    // Stage Style panel) in a Khmer window before anything else is touched.
+    // Stage Style panel) in a translated window before anything else is touched.
     test('every position-pad cell has a string in it', () => {
         if (isNone) {
             return;
@@ -463,7 +464,7 @@ describe.each(
     // in every package, and the lookup panels translate them through maps
     // with `tranByLangData`, which falls back to English instead of throwing:
     // a missing key is never an error anywhere, just an English word on a
-    // Khmer record (`175 years`, 2026-10-29).
+    // record in another language (`175 years`, 2026-10-29).
     test('every lookup record label has a string in it', async () => {
         if (isNone) {
             return;
@@ -525,8 +526,9 @@ describe('every language package carries the same keys', () => {
 
 describe('translation call sweep', () => {
     // These translate their own text, so a caller that translates it first
-    // hands `tran()` a Khmer string, which is not a key -- it threw in dev and
-    // the Khmer note-item export never opened its password dialog. The key
+    // hands `tran()` a translated string, which is not a key -- it threw in dev
+    // and a translated window's note-item export never opened its password
+    // dialog. The key
     // check above cannot see this: the key exists; the bug is the second call.
     test('nothing hands a self-translating helper a translation', () => {
         const selfTranslatingCallPattern =

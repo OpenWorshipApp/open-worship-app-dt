@@ -91,14 +91,14 @@ describe('migrateSettingKeyPaths', () => {
             '0.4',
         );
         h.store.set(`${PREFIX}E__Church_owa-data_lyrics_hymn_owl`, '0.6');
-        h.store.set('language', 'km');
+        h.store.set('language', 'xx');
         await migrateSettingKeyPaths();
 
         expect(h.listDirectories).toHaveBeenCalledWith(DATA_DIR);
         expect(Object.fromEntries(h.store)).toEqual({
             [`${PREFIX}@data_documents_song_ows`]: '0.4',
             [`${PREFIX}@data_lyrics_hymn_owl`]: '0.6',
-            language: 'km',
+            language: 'xx',
         });
     });
 

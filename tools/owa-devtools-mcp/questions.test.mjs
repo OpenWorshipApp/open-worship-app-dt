@@ -548,7 +548,8 @@ describe('outlineQuestions', () => {
 
 // The corpus in the app's other languages (`src/lang/data/online/<code>/questions.json`): a
 // translation is a row's words in that language, kept beside the English it
-// was made from. A volunteer reading Khmer is offered Khmer chips, and a
+// was made from. A volunteer reading another language is offered chips in
+// it, and a
 // reworded row shows its new English until its translation is redone.
 describe('the corpus in other languages', () => {
   const overlayList = loadQuestionOverlays();
@@ -628,8 +629,8 @@ describe('the corpus in other languages', () => {
 
   // A ratchet, at nothing missing: a question added to the corpus is added
   // with its words in every language that has a file, the way a label is
-  // added with its Khmer and French (`tranKeyCoverage.test.ts`). Fill-in
-  // rows too, since 2026-10-17: they were the last English in a Khmer
+  // added in every language (`tranKeyCoverage.test.ts`). Fill-in
+  // rows too, since 2026-10-17: they were the last English in a translated
   // window's question list, and are asked in English once finished.
   const MAX_UNTRANSLATED_ROWS = 0;
   it('carries every row, fill-in rows too', () => {

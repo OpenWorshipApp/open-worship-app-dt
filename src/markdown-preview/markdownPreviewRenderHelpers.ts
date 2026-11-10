@@ -52,7 +52,8 @@ export function toHeadingElementId(slug: string) {
 /**
  * GitHub's rule, which is what people writing `[see](#getting-started)` expect:
  * lower case, punctuation dropped, whitespace to hyphens. Letters, digits and
- * combining marks are kept in every script, so a Khmer heading keeps its words.
+ * combining marks are kept in every script, so a heading in any script keeps
+ * its words.
  */
 export function toHeadingSlug(text: string) {
     return text

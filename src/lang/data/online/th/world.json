@@ -15,5 +15,8 @@
     },
     "languageAliases": {
         "thailand": "thai"
+    },
+    "catalogLanguageCodes": {
+        "th": "tha"
     }
 }

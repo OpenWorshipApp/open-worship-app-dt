@@ -1063,8 +1063,8 @@ describe('a job another window handed over', () => {
     });
 
     test('a Bible for a language is shown as it was asked', async () => {
-        expect(await echoOfHandOver('Import bible for Khmer')).toContain(
-            'Import bible for Khmer',
+        expect(await echoOfHandOver('Import bible for Swahili')).toContain(
+            'Import bible for Swahili',
         );
     });
 });

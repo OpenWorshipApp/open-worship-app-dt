@@ -119,8 +119,8 @@ window as a whole — tabs, pickers, its language, the caution — is in
   fresh import at the language question, carrying nothing of the one just
   installed (no draft, no short name, no wanted key), and goes through the
   KJV-first check like any other import. The label is stored in English and
-  drawn with `tranBibleImportLabel`; `chatTranLabels.test.ts` holds its
-  Khmer and French. Seen live 2026-10-19 on the dev chatbot in Khmer: an
+  drawn with `tranBibleImportLabel`; `chatTranLabels.test.ts` holds it in
+  every language. Seen live 2026-10-19 on the dev chatbot in Khmer: an
   English ASV import answered with the two buttons, the new one reading
   **បន្ថែមព្រះគម្ពីរមួយទៀត**, pressed to the language question, then
   **ត្រឡប់ក្រោយ** returning the test Bible to the trash.

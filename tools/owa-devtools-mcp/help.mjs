@@ -363,16 +363,16 @@ export function listTranslatedEntries(
     });
 }
 
-// A page asked for IN a language: `W-06@km`. Only the window asks this way
-// (a person's "Read the whole thing" in a Khmer window), so the tool's schema
-// carries no extra field for it.
+// A page asked for IN a language: `W-06@<code>`. Only the window asks this way
+// (a person's "Read the whole thing" in a translated window), so the tool's
+// schema carries no extra field for it.
 const LANGUAGE_PAGE_ID_PATTERN = /^(.+)@([a-z]{2})$/;
 
 // Counted on word boundaries, not as substrings: "up" used to match "group",
 // "setup" and "coverage-expansion", which is how a robot-test note about
 // keyboard shortcuts came back as the answer to "How do I look up a verse?".
-// Khmer is written without spaces, so a non-ASCII term falls back to a plain
-// substring count.
+// Some scripts are written without spaces, so a non-ASCII term falls back to
+// a plain substring count.
 function countTerm(text, term) {
   if (!/^[a-z0-9]+$/.test(term)) {
     return text.split(term).length - 1;
@@ -524,7 +524,7 @@ function scoreCounts(entry, counts, inverseFrequencies) {
 }
 
 // The help window is English-only, and the manual writes app labels with their
-// twin in another script (a Khmer one after "Bible Lookup / "). Passing that on
+// twin in another script (one after "Bible Lookup / "). Passing that on
 // gives a reader who cannot read it a label they cannot match to their screen.
 // Read by SCRIPT, not by language: a character of any script but Latin (and
 // the Common and Inherited signs every script shares) is the twin's.
@@ -552,15 +552,15 @@ export function toEnglishOnly(text) {
       // punctuation reads as a typo: "Bible Lookup / in the header",
       // "(Clear Bible —)".
       // Any bracket holding another script at all, not only one holding
-      // NOTHING else: a bracket of Khmer words and "URL" is the twin of
-      // "Download From URL", and stripping just its Khmer left a card
+      // NOTHING else: a bracket of another script's words and "URL" is the
+      // twin of "Download From URL", and stripping just that script left a card
       // reading "...choose Download From URL (URL)".
       .replace(OTHER_SCRIPT_BRACKET_PATTERN, '')
       .replace(OTHER_SCRIPT_TWIN_END_PATTERN, '')
       .replace(OTHER_SCRIPT_TWIN_PATTERN, ' ')
       .replace(OTHER_SCRIPT_RUN_PATTERN, '')
       .replace(/\(\s*\)/g, '')
-      // A label that was Khmer and nothing else leaves its markers behind --
+      // A label in another script and nothing else leaves its markers behind --
       // an EMPTY pair, standing alone. Not the closing and opening markers of
       // two bolds side by side: `**Take it down.** **Hide Long Text**` came
       // out as one bold reading `Take it down.Hide Long Text` (W-53 and nine
@@ -722,7 +722,7 @@ const STOP_WORDS = new Set([
 ]);
 
 function toTerms(query) {
-  // Marks are part of a word: Khmer vowel signs and its subscript mark are
+  // Marks are part of a word: a script's vowel signs and subscript mark are
   // `\p{M}`, and splitting on them cut the word for "search" into pieces
   // no page holds.
   const terms = query
@@ -746,7 +746,7 @@ function toTerms(query) {
 
 /**
  * The terms a question is searched by. A question in a script the guide is
- * not written in (Khmer) is read as the English words it names
+ * not written in (any but Latin) is read as the English words it names
  * (`queryLanguage.mjs`): each label or question word one group of
  * alternatives, the way `TERM_ALIASES` widens an English word. Whatever was
  * in Latin letters beside it (a key name, an English word) is read as
@@ -814,7 +814,7 @@ function toSearchTerms(query, bundle) {
  * two times in five. A paraphrase never matches here and is ranked as
  * before -- this is a lookup, not a second ranker.
  */
-// Letters of every script: a Khmer chip's words were an empty key.
+// Letters of every script: a chip's words in another script were an empty key.
 function toQuestionKey(text) {
   return String(text ?? '')
     .toLowerCase()
@@ -843,7 +843,7 @@ export function findKnownQuestionRow(query) {
   }
   // A chip pressed in another language is that row in its words
   // (`src/lang/data/online/<code>/questions.json`), read only for a question that is not in Latin
-  // letters -- the chip a Khmer window shows.
+  // letters -- the chip a window in such a language shows.
   if (!/(?=\p{L})\P{Script=Latin}/u.test(String(query ?? ''))) {
     return null;
   }
@@ -879,7 +879,8 @@ export function searchHelp(
   langCode = null,
 ) {
   // One read of the label dictionary for the whole search: the question's
-  // own words (a Khmer question is read through it) and every excerpt.
+  // own words (a question in another script is read through it) and every
+  // excerpt.
   const tranBundle = loadTranBundle();
   const terms = toSearchTerms(query, tranBundle);
   if (terms.length === 0) {
@@ -1099,11 +1100,12 @@ export function readHelpPage(
   { keepTemplates = false } = {},
 ) {
   let wantedId = id.trim().toLowerCase();
-  // `W-06@km`: the page in that language when its translation is current,
+  // `W-06@<code>`: the page in that language when its translation is current,
   // and the English page when it is not. Its buttons are named as the
   // WINDOW shows them when the caller says which language that is
-  // (2026-11-04): a Khmer question in an English window rode with the Khmer
-  // page's own Khmer button names, and was answered with a slider called
+  // (2026-11-04): a question in another language asked in an English window
+  // rode with that page's own translated button names, and was answered with
+  // a slider called
   // what no control on that screen is called -- a Spanish one, which has no
   // page of its own, said Font Size. With no window named, the page's
   // language names them.

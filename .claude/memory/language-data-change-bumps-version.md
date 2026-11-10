@@ -37,7 +37,7 @@ update, and every installed copy keeps the old data.
   (`<data folder>/lang/<code>@<v>/`), never `src/lang/data/online/`, so an
   edit nobody packed is invisible to a live check -- and a key added to the
   source but not to the installed copy throws in dev exactly like a missing
-  one, a false failure in the Khmer pass. Order matters: **Update to** is
+  one, a false failure in the non-English pass. Order matters: **Update to** is
   offered only for a strictly higher version (`checkIsLangUpdateAvailable`),
   so raise, THEN pack; a second edit in the same change, packed under the
   number already installed, is reached by deleting the installed copy (its

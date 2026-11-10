@@ -197,7 +197,7 @@ describe('Presenter demos', () => {
           ? ['Quick Text > Properties', 'Quick Text > Effects']
           : [],
       );
-      // A bare localized "Messages" also matches "Documents" in Khmer.
+      // A bare localized "Messages" can also match "Documents" in a language.
       // Both prerequisites must test the actual foreground panel instead.
       expect(actions[0].skipIfVisible).toBe(`${actions[1].find} > Properties`);
       expect(actions[1].skipIfVisible).toBe(actions[0].skipIfVisible);

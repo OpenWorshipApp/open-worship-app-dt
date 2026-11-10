@@ -153,7 +153,7 @@ describe('toSlideAccessibleName', () => {
         expect(toSlideAccessibleName(3, '')).toBe('Slide 3');
         expect(toSlideAccessibleName(3, undefined)).toBe('Slide 3');
     });
-    it('follows the interface language, so a Khmer window answers to it', () => {
+    it('follows the interface language, so a window in another language answers to it', () => {
         h.locale = 'xx';
         try {
             expect(toSlideAccessibleName(1, 'First')).toBe(

@@ -210,7 +210,7 @@ describe('canvas item preview', () => {
             'https://youtu.be/example',
         ],
         ['website', { url: 'https://example.org' }, 'https://example.org'],
-        ['bible', { bibleKeys: ['en', 'fr'] }, 'en, fr'],
+        ['bible', { bibleKeys: ['KJV', 'XXV'] }, 'KJV, XXV'],
         ['text', { text: 'Welcome' }, 'Welcome'],
         ['html', { html: '<b>Words</b>' }, '<b>Words</b>'],
     ])(

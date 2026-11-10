@@ -20,7 +20,7 @@ Pair it with:
 > Every React component in this app is named `…Comp` (project convention). Source files
 > are linked so you can confirm current behavior before reporting a "bug".
 >
-> **Targeting rules (from the knowledge base):** locale is dynamic (Khmer/English) — target
+> **Targeting rules (from the knowledge base):** locale is dynamic (English or any installed language) — target
 > by **role / CSS class / icon (`bi-*`) / position**, not literal text. Click the actual
 > `button`, not its wrapping `<li>`/`StaticText`. Slide & lyric previews live inside
 > **shadow roots** (not reachable from document-level `querySelectorAll`).
@@ -353,5 +353,5 @@ has no `#root` (see the exception note under the Pages table).
 - **Presenter:** header tabs 🖱️ · `Ctrl+B`/`Ctrl+Q` modal · doc/lyric row 🖱️ select, slide 🖱️ present · expand Background 🖱️ then tab-switch · color swatch (+contrast confirm) · foreground drag⇕drop onto mini-screen · **screen block (mandatory): present → `F5` show → drive `screen.html` target → `F6`–`F10` clears → hide** · lock/display/transition/stage controls on the previewer card · zoom/size 🎚️.
 - **Reader:** incremental lookup ⌨️✎ + `Tab`/`Escape` · full ref resolves to verse.
 - **Slide Editor:** select doc first · box 🖱️/⇕/resize · `Ctrl+Enter` focus · tools drag⇕drop · background tabs.
-- **Settings (popup):** tab 🖱️ · Language `English`/`Khmer`/`French` · `Apply Settings` · destructive resets (confirm).
+- **Settings (popup):** tab 🖱️ · **Languages** tab: one Language button per installed language (the press reloads every window) · `Apply Settings` · destructive resets (confirm).
 - **Screen (while showing = CDP target):** screenshot layers · `Ctrl/Alt+Arrows` change bible · ❌ `#close` hides; hidden → logs via `all:app:log`.

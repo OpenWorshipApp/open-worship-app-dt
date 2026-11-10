@@ -169,7 +169,7 @@ beforeEach(() => {
     );
     mocks.resolveVersionOrder.mockImplementation(
         async (version: string | null) => {
-            return { order: [version ?? 'KJV'], installed: ['KJV', 'KH'] };
+            return { order: [version ?? 'KJV'], installed: ['KJV', 'TQAH'] };
         },
     );
     mocks.resolveBibleItem.mockImplementation(
@@ -354,7 +354,7 @@ describe('add', () => {
         mocks.resolveVersionOrder.mockResolvedValueOnce({
             isError: true,
             reason: 'No Bible version called "NIV" is installed.',
-            versions: ['KJV', 'KH'],
+            versions: ['KJV', 'TQAH'],
         });
         await expect(
             handleAgentBibleListRequest({
@@ -366,7 +366,7 @@ describe('add', () => {
             isError: true,
             reason:
                 'No Bible version called "NIV" is installed. ' +
-                'Installed versions: KJV, KH.',
+                'Installed versions: KJV, TQAH.',
         });
         mocks.resolveVersionOrder.mockResolvedValueOnce({
             isError: true,
@@ -393,17 +393,17 @@ describe('add', () => {
             }),
         ).resolves.toMatchObject({
             reason: expect.stringMatching(
-                /^"Hezekiah 3:16" could not be read as a passage in any installed version\. .*Installed versions: KJV, KH\.$/,
+                /^"Hezekiah 3:16" could not be read as a passage in any installed version\. .*Installed versions: KJV, TQAH\.$/,
             ),
         });
         await expect(
             handleAgentBibleListRequest({
                 action: 'add',
                 reference: 'Hezekiah 3:16',
-                version: 'KH',
+                version: 'TQAH',
             }),
         ).resolves.toMatchObject({
-            reason: expect.stringContaining('as a passage in KH. Write'),
+            reason: expect.stringContaining('as a passage in TQAH. Write'),
         });
         expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
     });
@@ -532,7 +532,7 @@ describe('update', () => {
                 action: 'update',
                 id: 1,
                 list: 'Easter',
-                version: 'KH',
+                version: 'TQAH',
             }),
         ).resolves.toMatchObject({
             reason: expect.stringContaining('no Bibles list called "Easter"'),
@@ -552,7 +552,7 @@ describe('update', () => {
             handleAgentBibleListRequest({
                 action: 'update',
                 id: 9,
-                version: 'KH',
+                version: 'TQAH',
             }),
         ).resolves.toEqual({
             isError: true,
@@ -565,7 +565,7 @@ describe('update', () => {
             handleAgentBibleListRequest({
                 action: 'update',
                 id: -1,
-                version: 'KH',
+                version: 'TQAH',
             }),
         ).resolves.toMatchObject({
             reason: expect.stringContaining('no passage with the id -1'),
@@ -587,27 +587,27 @@ describe('update', () => {
         mocks.fromFilePath.mockResolvedValue(bible);
         // The other version's own title (symbols, full-width digits): the
         // worker carries it through as it is.
-        const otherVersion = genPassage('KH', 'KH ✝ ３:１６');
+        const otherVersion = genPassage('TQAH', 'TQAH ✝ ３:１６');
         mocks.fromVerseKey.mockResolvedValue(otherVersion);
         const result = await handleAgentBibleListRequest({
             action: 'update',
             id: 2,
-            version: 'KH',
+            version: 'TQAH',
         });
         expect(result).toEqual({
             where: 'Presenter',
-            updated: 'KH ✝ ３:１６',
+            updated: 'TQAH ✝ ３:１６',
             was: 'KJV John 3:16',
             list: 'Default',
             id: 2,
             undoId: 'undo-1',
         });
-        expect(mocks.resolveVersionOrder).toHaveBeenCalledWith('KH');
-        expect(mocks.fromVerseKey).toHaveBeenCalledWith('KH', 'JHN 3:16');
+        expect(mocks.resolveVersionOrder).toHaveBeenCalledWith('TQAH');
+        expect(mocks.fromVerseKey).toHaveBeenCalledWith('TQAH', 'JHN 3:16');
         expect(mocks.resolveBibleItem).not.toHaveBeenCalled();
         expect(bible.setItemById).toHaveBeenCalledWith(
             2,
-            expect.objectContaining({ id: 2, bibleKey: 'KH' }),
+            expect.objectContaining({ id: 2, bibleKey: 'TQAH' }),
         );
         expect(mocks.snapshotAgentFile).toHaveBeenCalledWith(DEFAULT_PATH);
     });
@@ -620,11 +620,11 @@ describe('update', () => {
             handleAgentBibleListRequest({
                 action: 'update',
                 id: 2,
-                version: 'KH',
+                version: 'TQAH',
             }),
         ).resolves.toEqual({
             isError: true,
-            reason: 'KJV John 3:16 could not be read in KH, so it was not changed.',
+            reason: 'KJV John 3:16 could not be read in TQAH, so it was not changed.',
         });
         mocks.resolveVersionOrder.mockResolvedValueOnce({
             isError: true,
@@ -648,7 +648,7 @@ describe('update', () => {
     });
 
     test('a new reference is read first in the version the passage has', async () => {
-        const bible = genBible([genItem(2, 'KH John 3:16', 'KH')]);
+        const bible = genBible([genItem(2, 'TQAH John 3:16', 'TQAH')]);
         mocks.fromFilePath.mockResolvedValue(bible);
         await handleAgentBibleListRequest({
             action: 'update',
@@ -657,7 +657,7 @@ describe('update', () => {
         });
         expect(mocks.resolveVersionOrder).toHaveBeenCalledWith(null);
         expect(mocks.resolveBibleItem).toHaveBeenCalledWith('John 3:17', [
-            'KH',
+            'TQAH',
             'KJV',
         ]);
         // A version the machine no longer has is not tried first.

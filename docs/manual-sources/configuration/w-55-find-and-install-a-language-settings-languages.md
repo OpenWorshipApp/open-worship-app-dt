@@ -11,7 +11,7 @@ workflowsVersion: "2026-11-09"
 
 **Goal:** show the app in your own language, or stop offering one you never use.
 
-English is part of the app. Every other language — Khmer and French included — is a
+English is part of the app. Every other language is a
 separate package, installed from the list Open Worship publishes online. An installed
 language is kept in your data folder, under `lang`.
 

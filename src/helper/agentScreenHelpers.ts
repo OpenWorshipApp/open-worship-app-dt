@@ -8,7 +8,7 @@
  * IPC from the main process, and nothing about the content -- and a model
  * handed "showing: true" for a screen with a verse on it and nothing else
  * INFERS the rest. Measured 2026-09-09 on the standing corpus, with the
- * projector showing a Khmer verse: asked *the words no come out big screen*
+ * projector showing a verse in another language: asked *the words no come out big screen*
  * the assistant took nine rounds and 36 seconds to conclude, confidently,
  * that "nothing has actually been sent to it yet: turning the screen on just
  * gives you a blank canvas" -- to a volunteer standing in front of a
@@ -130,7 +130,7 @@ const BLOCK_TAG_PATTERN = /<(div|p|br|li|h[1-6]|section|tr|td|th)\b/gi;
 
 /**
  * The words in a slide's markup, as sung. A song slide from open-lyric
- * renders its chords INTO the words -- a chord box landing between a Khmer
+ * renders its chords INTO the words -- a chord box landing between a
  * letter and its vowel sign, mid-word as chords do -- which is right on a projector and noise in a
  * sentence about what is on it. The chord boxes (every one is marked
  * aria-hidden, and carries the segment-chord class) come out of the tree
@@ -243,7 +243,7 @@ export function toBibleSummary(
 ): AgentScreenBibleSummaryType | null {
     // A long text sits in the same layer and is no passage: it is said
     // among the foreground extras (`toLongTextSummary`), where its panel
-    // is, so nothing reads `KM` as a Bible version.
+    // is, so nothing reads a language's code (`XX`) as a Bible version.
     if (
         viewData === null ||
         typeof viewData !== 'object' ||

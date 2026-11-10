@@ -4,7 +4,7 @@
 // The tool used to answer `isAnyShowing`, the showing ids and the display
 // list, all read over IPC, and a model handed "showing: true" for a screen
 // with a verse on it inferred the rest. Measured 2026-09-09 on the standing
-// corpus with the projector showing a Khmer verse: *the words no come out
+// corpus with the projector showing a translated verse: *the words no come out
 // big screen* took nine rounds and 36 seconds to conclude, confidently, that
 // "nothing has actually been sent to it yet" -- and *is anything showing on
 // the projector* answered "yes, the screen is on" with not a word about what

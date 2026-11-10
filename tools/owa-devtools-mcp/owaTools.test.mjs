@@ -503,14 +503,14 @@ describe('registered app tools', () => {
   // offered translated -- the whole string was no dictionary key.
   it('offers a scoped label with each half translated', async () => {
     app.evaluateInApp
-      .mockResolvedValueOnce({ value: 'km' })
+      .mockResolvedValueOnce({ value: 'xx' })
       .mockResolvedValueOnce({
         value: { clicked: true, didChange: true },
       });
     answer(
       await call('owa_click', {
         find: 'Documents > More Options',
-        page: 'km-scope.html',
+        page: 'xx-scope.html',
       }),
     );
     const [expression] = app.evaluateInApp.mock.calls[1];

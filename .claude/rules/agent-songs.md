@@ -117,7 +117,8 @@ paths:
   words are unaffected. `lyricDraftReportHelpers.ts` translates the built-in
   answer's summary and extraction notes using the window dictionary; titles,
   authors, section names and quoted page boundaries remain data. Tests use
-  real drafter reports and both Khmer/French dictionaries. The server's report
+  real drafter reports and the dictionary of every package with an
+  `assistant.json`. The server's report
   stays English, with no extra tool or schema.
 - **Checking a song**: `owa_lyric_validate`
   (`tools/owa-devtools-mcp/openLyric.mjs`) takes song text and answers with

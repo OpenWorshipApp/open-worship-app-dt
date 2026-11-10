@@ -46,9 +46,9 @@ const STATUS_MESSAGE_MAP: Record<
 
 /**
  * The fonts of every language the app ships, after the UI's own: a markdown
- * file from a Khmer congregation's shared folder is as likely to be Khmer as
- * English, whatever language the app itself is shown in, and a system font
- * with no Khmer glyphs would draw it as boxes.
+ * file from a congregation's shared folder is as likely to be in its own
+ * language as in English, whatever language the app itself is shown in, and a
+ * system font with no glyphs for that script would draw it as boxes.
  */
 function useLangFontFamilies() {
     const [langFontFamilies, setLangFontFamilies] = useState('');

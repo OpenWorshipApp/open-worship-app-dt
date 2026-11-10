@@ -60,7 +60,7 @@ export function useFontList() {
 
 // The typographic names of the standard weights. They are not run through
 // `tran()`: like a font's own name they are what the font calls itself, and the
-// Khmer dictionary's `Light` already means the light THEME.
+// dictionaries' `Light` already means the light THEME.
 const FONT_WEIGHT_NAME_MAP = new Map<string, string>([
     ['100', 'Thin'],
     ['200', 'Extra Light'],

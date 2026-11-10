@@ -74,9 +74,9 @@ const { state, mocks, EN_BOOKS } = vi.hoisted(() => ({
 
 // The second installed Bible: a language other than English, by its key and
 // locale. Its own words are the language package's tests
-// (`src/lang/data/online/km/tests/helper/agentBibleFindHelpers.test.ts`); here it
+// (`src/lang/data/online/<code>/tests/helper/agentBibleFindHelpers.test.ts`); here it
 // is only another Bible, so its names and digits are stand-ins.
-const KH_BOOKS: Record<string, string> = {
+const XX_BOOKS: Record<string, string> = {
     GEN: 'Xgen',
     EXO: 'Xexo',
     LEV: 'Xlev',
@@ -84,7 +84,7 @@ const KH_BOOKS: Record<string, string> = {
     MAT: 'Xmat',
     JHN: 'Xjhn',
 };
-const KH_DIGITS: Record<string, string> = Object.fromEntries(
+const XX_DIGITS: Record<string, string> = Object.fromEntries(
     '0123456789'.split('').map((digit, index) => [String(index), digit]),
 );
 
@@ -190,7 +190,7 @@ const KJV_VERSES: Record<string, string> = {
     'JHN 10:14':
         'I am the good shepherd, and know my sheep, and am known of mine.',
 };
-const KH_VERSES: Record<string, string> = {};
+const XX_VERSES: Record<string, string> = {};
 
 /** Bible Find's table, built the way `initSearchingDatabase` builds it. */
 function genSearchDatabase(
@@ -234,7 +234,7 @@ function genSearchDatabase(
 }
 
 let kjvDatabase: DatabaseSync;
-let khDatabase: DatabaseSync;
+let xxDatabase: DatabaseSync;
 
 function genController(database: DatabaseSync) {
     return {
@@ -248,7 +248,7 @@ function genController(database: DatabaseSync) {
 }
 
 function toOwnDigits(value: number | string) {
-    return String(value).replaceAll(/\d/g, (digit) => KH_DIGITS[digit]);
+    return String(value).replaceAll(/\d/g, (digit) => XX_DIGITS[digit]);
 }
 
 function genBibleItem(bibleKey: string, target: any) {
@@ -276,15 +276,15 @@ function genBibleItem(bibleKey: string, target: any) {
                 throw new Error('no title');
             }
             const book =
-                bibleKey === 'KH'
-                    ? KH_BOOKS[target.bookKey]
+                bibleKey === 'XX'
+                    ? XX_BOOKS[target.bookKey]
                     : EN_BOOKS[target.bookKey];
             const end =
                 target.verseEnd > target.verseStart
                     ? `-${target.verseEnd}`
                     : '';
             const title = `${book} ${target.chapter}:${target.verseStart}${end}`;
-            return bibleKey === 'KH' ? toOwnDigits(title) : title;
+            return bibleKey === 'XX' ? toOwnDigits(title) : title;
         },
     };
 }
@@ -299,31 +299,31 @@ beforeAll(() => {
         KJV_VERSES,
         'These are the statutes and judgments.',
     );
-    khDatabase = genSearchDatabase('km', KH_VERSES, 'filler');
+    xxDatabase = genSearchDatabase('xx', XX_VERSES, 'filler');
 });
 
 afterAll(() => {
     kjvDatabase.close();
-    khDatabase.close();
+    xxDatabase.close();
 });
 
 beforeEach(() => {
     state.bibles = [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KH', title: 'Khmer Bible' },
+        { key: 'XX', title: 'Xx Bible' },
     ];
-    state.locales = { KJV: 'en', KH: 'km', WEB: 'en-US' };
+    state.locales = { KJV: 'en', XX: 'xx', WEB: 'en-US' };
     state.infos = {
         KJV: { keyBookMap: EN_BOOKS },
         WEB: { keyBookMap: EN_BOOKS },
-        KH: { keyBookMap: KH_BOOKS, numbersMap: KH_DIGITS },
+        XX: { keyBookMap: XX_BOOKS, numbersMap: XX_DIGITS },
     };
     state.failingInfos = new Set();
     state.controllers = {
         KJV: genController(kjvDatabase),
-        KH: genController(khDatabase),
+        XX: genController(xxDatabase),
     };
-    state.verseTexts = { KJV: KJV_VERSES, KH: KH_VERSES, WEB: KJV_VERSES };
+    state.verseTexts = { KJV: KJV_VERSES, XX: XX_VERSES, WEB: KJV_VERSES };
     state.verseCounts = {
         'KJV:GEN 3': 24,
         'KJV:GEN 7': 24,
@@ -744,28 +744,28 @@ describe('reading references', () => {
     });
 
     test('a reference that names no book stays in the lookup’s Bible', async () => {
-        state.newLookupBibleKey = 'KH';
+        state.newLookupBibleKey = 'XX';
         const semicolons: any = await handleAgentBibleFindRequest({
             refs: ' ; ',
         });
-        expect(semicolons).toEqual({ bible: 'KH', verses: [] });
+        expect(semicolons).toEqual({ bible: 'XX', verses: [] });
         const words: any = await handleAgentBibleFindRequest({
             refs: 'hello there',
         });
-        expect(words).toMatchObject({ bible: 'KH', unread: ['hello there'] });
+        expect(words).toMatchObject({ bible: 'XX', unread: ['hello there'] });
     });
 
     test('with no lookup to ask, the first installed Bible is used', async () => {
         state.isLookupBroken = true;
         state.bibles = [
-            { key: 'KH', title: 'Khmer Bible' },
+            { key: 'XX', title: 'Xx Bible' },
             { key: 'KJV', title: 'King James Version' },
         ];
         const result: any = await handleAgentBibleFindRequest({});
         expect(result).toEqual({
-            bible: 'KH',
+            bible: 'XX',
             bibles: [
-                { key: 'KH', title: 'Khmer Bible', locale: 'km' },
+                { key: 'XX', title: 'Xx Bible', locale: 'xx' },
                 { key: 'KJV', title: 'King James Version', locale: 'en' },
             ],
             note: 'Give words to search for, or refs to read.',
@@ -777,18 +777,18 @@ describe('reading references', () => {
     // one that does not say, say nothing.
     test('a Bible that holds some books only says how many', async () => {
         state.isLookupBroken = true;
-        state.locales = { ...state.locales, NT: 'km' };
+        state.locales = { ...state.locales, NT: 'xx' };
         state.bibles = [
             {
                 key: 'NT',
-                title: 'Khmer New Testament',
+                title: 'Xx New Testament',
                 booksAvailable: Array.from({ length: 27 }, (_, index) => {
                     return `B${index}`;
                 }),
             },
             {
-                key: 'KH',
-                title: 'Khmer Bible',
+                key: 'XX',
+                title: 'Xx Bible',
                 booksAvailable: Array.from({ length: 66 }, (_, index) => {
                     return `B${index}`;
                 }),
@@ -799,11 +799,11 @@ describe('reading references', () => {
         expect(result.bibles).toEqual([
             {
                 key: 'NT',
-                title: 'Khmer New Testament',
-                locale: 'km',
+                title: 'Xx New Testament',
+                locale: 'xx',
                 books: 27,
             },
-            { key: 'KH', title: 'Khmer Bible', locale: 'km' },
+            { key: 'XX', title: 'Xx Bible', locale: 'xx' },
             { key: 'KJV', title: 'King James Version', locale: 'en' },
         ]);
     });

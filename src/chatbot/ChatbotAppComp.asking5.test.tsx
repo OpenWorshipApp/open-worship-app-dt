@@ -659,9 +659,9 @@ describe('the edges of the model road', () => {
     test('a reply the Bible import’s question cannot read, nor its interpreter, keeps the question', async () => {
         seedButtons([
             {
-                label: 'Khmer',
+                label: 'Sample',
                 toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-                args: { step: 'language', locale: 'km' },
+                args: { step: 'language', locale: 'xx' },
             },
         ]);
         h.askLlmBot.mockImplementation(async () => {

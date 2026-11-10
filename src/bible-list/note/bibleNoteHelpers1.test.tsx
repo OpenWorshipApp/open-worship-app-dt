@@ -142,7 +142,7 @@ beforeEach(() => {
         return true;
     });
     h.getAllLangsAsync.mockResolvedValue([
-        { langCode: 'km', editorLink: 'https://km.example/editor' },
+        { langCode: 'xx', editorLink: 'https://xx.example/editor' },
         { langCode: 'en', editorLink: '' },
     ]);
     buttons = new Map();
@@ -178,7 +178,7 @@ describe('the note editor footer', () => {
                 'bible-key',
                 'bible-lookup',
                 'editing-history',
-                'lang-markdown-editor km',
+                'lang-markdown-editor xx',
                 'open-in-chatbot',
                 'toggle-on-top',
             ].sort(),
@@ -242,22 +242,22 @@ describe('the note editor footer', () => {
         expect(buttons.has('bible-lookup')).toBe(false);
         expect(buttons.has('open-in-chatbot')).toBe(false);
         expect(floatingButtons.size).toBe(0);
-        expect(buttons.has('lang-markdown-editor km')).toBe(true);
+        expect(buttons.has('lang-markdown-editor xx')).toBe(true);
         expect(buttons.has('toggle-on-top')).toBe(true);
         expect(buttons.has('bible-key')).toBe(true);
     });
 
     test('a language with a markdown editor opens it in the browser', async () => {
         await renderProbe();
-        const editor = getButton('lang-markdown-editor km');
-        expect(editor.description).toBe('Open in Markdown Editor (km)');
+        const editor = getButton('lang-markdown-editor xx');
+        expect(editor.description).toBe('Open in Markdown Editor (xx)');
         expect(editor.shortcutKey).toBe('Ctrl+Shift+Alt+K');
         expect(editor.children.props['aria-label']).toBe(
-            'Open in Markdown Editor (km)',
+            'Open in Markdown Editor (xx)',
         );
         editor.children.props.onClick();
         expect(h.openExternalURL).toHaveBeenCalledWith(
-            'https://km.example/editor',
+            'https://xx.example/editor',
         );
     });
 

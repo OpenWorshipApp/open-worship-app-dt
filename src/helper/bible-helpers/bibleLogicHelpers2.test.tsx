@@ -272,7 +272,7 @@ describe('bibleLogicHelpers2', () => {
                 JHN: 'John',
                 JUD: 'Jude',
             },
-            locale: 'km-KH',
+            locale: 'xx-XX',
             numList: [
                 '０',
                 '１',
@@ -326,9 +326,9 @@ describe('bibleLogicHelpers2', () => {
         );
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
-                if (locale === 'km-KH') {
+                if (locale === 'xx-XX') {
                     return {
-                        fontFamily: 'Khmer Font',
+                        fontFamily: 'Xx Font',
                         sanitizeText: (text: string) =>
                             text.replaceAll('.', ':'),
                         transformBibleBookName: (text: string) => [text],
@@ -512,23 +512,24 @@ describe('bibleLogicHelpers2', () => {
         expect(await module.fromLocaleNumBible('TK', '③①')).toBe(31);
         expect(mocks.toLocaleNumMock).not.toHaveBeenCalled();
 
-        // It outranks the language's digits too: a Khmer Bible mapped to Thai.
+        // It outranks the language's digits too: a Bible whose own map says
+        // otherwise.
         mocks.getBibleInfoMock.mockResolvedValue({
             ...ownMapInfo,
-            locale: 'km-KH',
+            locale: 'xx-XX',
         });
-        expect(await module.toLocaleNumBible('KH-TH', 12)).toBe('①②');
+        expect(await module.toLocaleNumBible('XX-OWN', 12)).toBe('①②');
 
         // The default 0→0 map an import writes is "not set": the language's.
         const plainMap = Object.fromEntries(
             Array.from({ length: 10 }, (_, i) => [`${i}`, `${i}`]),
         );
         mocks.getBibleInfoMock.mockResolvedValue({
-            locale: 'km-KH',
+            locale: 'xx-XX',
             numbersMap: plainMap,
         });
-        expect(await module.toLocaleNumBible('KH', 7)).toBe('km-KH:7');
-        expect(mocks.toLocaleNumMock).toHaveBeenCalledWith('km-KH', 7);
+        expect(await module.toLocaleNumBible('XXV', 7)).toBe('xx-XX:7');
+        expect(mocks.toLocaleNumMock).toHaveBeenCalledWith('xx-XX', 7);
     });
 
     test('reads a Bible number list from either data shape', async () => {
@@ -651,9 +652,9 @@ describe('bibleLogicHelpers2', () => {
 
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
-                if (locale === 'km-KH') {
+                if (locale === 'xx-XX') {
                     return {
-                        fontFamily: 'Khmer Font',
+                        fontFamily: 'Xx Font',
                         sanitizeText: (text: string) => text,
                         transformBibleBookName: (text: string) => [
                             text,

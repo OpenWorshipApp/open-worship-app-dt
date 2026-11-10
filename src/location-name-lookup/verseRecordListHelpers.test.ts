@@ -77,9 +77,10 @@ function genRecordLabels(): LookupRecordLabelsType {
             'Ituraea',
         ],
         types: ['person', 'person', 'person', '', '', 'person', 'person', ''],
-        // A Khmer sidecar: the English name is kept beside the translated
-        // label. `Jordan` stands for a record the translation does not cover,
-        // whose label stayed English and so has nothing to add.
+        // A translated language's sidecar: the English name is kept beside
+        // the translated label. `Jordan` stands for a record the translation
+        // does not cover, whose label stayed English and so has nothing to
+        // add.
         kjvNames: [
             'Tiberius Caesar',
             'Pontius Pilate',

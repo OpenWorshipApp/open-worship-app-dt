@@ -47,7 +47,7 @@ function RenderGraphBodyComp({ graph }: Readonly<{ graph: GraphViewType }>) {
 /**
  * The panel's title is the ROOT RECORD's name, so it is written in the source
  * dataset's language — but it renders in the widget CHROME, outside the body
- * that carries that font. Set here or a Khmer name falls back to whatever the
+ * that carries that font. Set here or a name in another script falls back to whatever the
  * chrome happens to use.
  *
  * Resolved per source, mirroring the body switch below: the font a record is

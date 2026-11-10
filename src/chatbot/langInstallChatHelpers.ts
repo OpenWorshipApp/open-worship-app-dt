@@ -1,10 +1,11 @@
 /**
  * A language the conversation is about, installed first -- with the person's
- * say-so (2026-11-05, the user, over a Bible import in a Khmer window where
- * "French" had been pressed and the French Bibles listed at once: _chatbot
- * must ask user permission to install any language package that related to
- * chatting session, e.g. user input for french so chatbot should take a
- * moment to help user install french first before proceed further step_).
+ * say-so (2026-11-05, the user, over a Bible import in a non-English window
+ * where another language had been pressed and its Bibles listed at once:
+ * _chatbot must ask user permission to install any language package that
+ * related to chatting session, e.g. user input for <a language> so chatbot
+ * should take a moment to help user install <it> first before proceed
+ * further step_).
  *
  * Only English ships; every other language is a plugin
  * (`language-plugins-runtime`), and a Bible in it gets its book names,
@@ -200,7 +201,7 @@ export type LangInstallStateType = {
     isTurnOn?: boolean;
 };
 
-// "Install the French language", "can you add Spanish language pack for
+// "Install the German language", "can you add Spanish language pack for
 // me?", "download the language Thai". A question about HOW is the guide's
 // (W-55), and a Bible in a language is the Bible import's.
 const INSTALL_WORD_PATTERN =
@@ -219,7 +220,7 @@ const FILLER_PATTERN =
  * words ahead of any model -- the window offers the install with its own
  * buttons, which no model could: English's words here, and every installed
  * language's own (`langInstallAsks` in its `assistant.json`, group
- * `language`). Asked in Khmer, it had gone to a model that wrote the steps
+ * `language`). Asked in another language, it had gone to a model that wrote the steps
  * out with nothing to press (2026-11-05).
  */
 export function readLangInstallAsk(text: string): LangInstallStateType | null {

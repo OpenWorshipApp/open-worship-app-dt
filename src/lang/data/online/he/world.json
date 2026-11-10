@@ -11,5 +11,8 @@
     ],
     "languageAliases": {
         "israel": "hebrew"
+    },
+    "catalogLanguageCodes": {
+        "he": "heb"
     }
 }

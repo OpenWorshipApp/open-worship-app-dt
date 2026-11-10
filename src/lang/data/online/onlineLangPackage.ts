@@ -5,7 +5,11 @@ import type {
 } from '../../langHelpers';
 
 import englishBibleBooks from '../en/bibleBooks.json';
-import { genFontsData, type LangFontsFileType } from './langFontFaces';
+import {
+    applyLangOpenLyricFontFaces,
+    genFontsData,
+    type LangFontsFileType,
+} from './langFontFaces';
 
 export type { LangFontsFileType } from './langFontFaces';
 
@@ -295,23 +299,12 @@ export function genLangData(folder: LangFolderType): LanguageDataType {
             if (fonts === undefined) {
                 return;
             }
-            const option = {
-                title: meta.name,
-                fontFaces: [fonts.uiFamily],
-                indexRange: fonts.songOrder ?? 0,
-            };
-            if (openLyric !== undefined) {
-                openLyric.fontFaces = genOpenLyricFontFaces(
-                    (openLyric.fontFaces as any) ?? [],
-                    { ...option },
-                );
-            }
-            if (openLyricMarkdownManager !== undefined) {
-                openLyricMarkdownManager.fontFaces = genOpenLyricFontFaces(
-                    (openLyricMarkdownManager.fontFaces as any) ?? [],
-                    { ...option },
-                );
-            }
+            applyLangOpenLyricFontFaces(fonts, meta.name, {
+                openLyric: openLyric as { fontFaces: any } | undefined,
+                openLyricMarkdownManager: openLyricMarkdownManager as
+                    { fontFaces: any } | undefined,
+                genOpenLyricFontFaces,
+            });
         };
     }
     return langData;

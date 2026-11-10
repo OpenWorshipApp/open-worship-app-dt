@@ -202,7 +202,7 @@ function toKind(
         return 'workspace';
     }
     // 2026-10-17: LM Studio's 400 for a model that did not fit beside the
-    // one already loaded told the person, in Khmer, that the account had run
+    // one already loaded told the person, in their language, that the account had run
     // out of money -- a server on their own computer has no account.
     if (MODEL_LOAD_FAILURE_PATTERN.test(message)) {
         return 'modelLoad';

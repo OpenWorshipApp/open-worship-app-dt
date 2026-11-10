@@ -1,6 +1,6 @@
 ---
 name: chatbot-follows-app-language
-description: "The 🤖 answers in the app's language (Khmer first) or in ANY language typed; every language is data in src/lang/data/online/<code>/assistant.json, a language only typed in its own src/lang/data/online/<code>/typed.json, read once it is installed; the prompt is per APP language, the question's language rides in the user turn"
+description: "The 🤖 answers in the app's language (any installed one) or in ANY language typed; every language is data in src/lang/data/online/<code>/assistant.json, a language only typed in its own src/lang/data/online/<code>/typed.json, read once it is installed; the prompt is per APP language, the question's language rides in the user turn"
 metadata:
   node_type: memory
   type: project
@@ -63,8 +63,8 @@ stays English-only" rule.
   48 of 351 before, 0 after. A language's list is the fix for a line it
   loses; never weigh a language by name. Before, Spanish read as FRENCH (`la`, `de`,
   `un`) and was answered in French; Portuguese in a Khmer app in Khmer.
-  **The ratchet is the corpus**: all 469 questions in en/km/fr must keep
-  their language (`anyLanguage.test.ts`), and a language added to the file
+  **The ratchet is the corpus**: all 469 questions in English and in every package with a
+  `questions.json` must keep their language (`anyLanguage.test.ts`), and a language added to the file
   needs a sample line there. A page is translated only for a package
   (`findPageLanguage` checks `isPackaged`): a typed language reads the English
   page. **The cleaner reads the SCREEN's language** (`screenLangCode`, the
@@ -78,7 +78,7 @@ stays English-only" rule.
   search words through the app's own dictionary reversed plus the glossary
   (`tools/owa-devtools-mcp/queryLanguage.mjs`), longest phrase first, a phrase
   ending only where a letter ends. NOT `Intl.Segmenter` — Electron's ICU cuts
-  Khmer words differently from Node's ([[electron-icu-has-no-khmer]]).
+  Khmer words differently from Node's ([[electron-icu-trimmed-locales]]).
 - **The walkthrough card** is built from the ENGLISH page (every step rule
   reads English) and put into the window's language at `prepareSteps`: the
   step text from the same page read with its templates intact, controls tried
@@ -143,5 +143,5 @@ And (BN-47, BN-48): options under a marker word of the person's language are rea
 **Why:** an English sentence is a dead end for the person this app is for.
 
 **How to apply:** a new user-facing string in the chatbot goes through `tran()`
-with Khmer AND French; a new language-specific rule goes into `assistant.json`,
+with its key in every language's dictionary; a new language-specific rule goes into `assistant.json`,
 not into code; never put a per-question line into the system prompt.

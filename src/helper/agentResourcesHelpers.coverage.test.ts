@@ -484,8 +484,8 @@ test('a picture is normalized before it is returned as an image', async () => {
 });
 
 test('a book named in another installed Bible’s language is found past a Bible that cannot be read', async () => {
-    state.bibleList = [{ key: 'KJV' }, { key: 'FR' }];
-    state.bibleMaps = { FR: { JHN: 'Jean' } };
+    state.bibleList = [{ key: 'KJV' }, { key: 'XXV' }];
+    state.bibleMaps = { XXV: { JHN: 'Xjhn' } };
     mocks.getBibleInfo.mockImplementation(async (key: string) => {
         if (key === 'KJV') {
             throw new Error('unreadable Bible');
@@ -495,12 +495,12 @@ test('a book named in another installed Bible’s language is found past a Bible
     state.scanResults['/resources'] = { filePaths: ['/resources/JHN.3.pdf'] };
 
     await expect(
-        handleAgentResourcesRequest({ action: 'list', book: 'Jean' }),
+        handleAgentResourcesRequest({ action: 'list', book: 'Xjhn' }),
     ).resolves.toMatchObject({
         files: [{ file: 'resources/JHN.3.pdf', kind: 'pdf' }],
     });
     expect(mocks.scan).toHaveBeenCalledWith('/resources', [], 'JHN.');
-    expect(mocks.getBibleInfo).toHaveBeenCalledWith('FR');
+    expect(mocks.getBibleInfo).toHaveBeenCalledWith('XXV');
 });
 
 test('an overview passes over a folder it cannot open, and says a shelf too big to walk was cut', async () => {

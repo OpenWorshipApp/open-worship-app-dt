@@ -89,8 +89,8 @@ const TEMPLATE_SAMPLE_PATTERN_LIST = [
  * row's translation (`src/lang/data/online/<code>/questions.json`) carries an example of
  * the same KIND -- the dots, an address, a quoted name, a reference -- so
  * the two can be told apart around it; a quoted name may be the reader's
- * own (`"French"` in a French window, the user's ask 2026-10-17: _question
- * should change to French if in french language_).
+ * own (a language's name in a window shown in that language, the user's
+ * ask 2026-10-17: the question should follow the window's language).
  */
 export function findTemplateSample(text) {
     for (const [kind, pattern] of TEMPLATE_SAMPLE_PATTERN_LIST.entries()) {
@@ -108,8 +108,8 @@ export function findTemplateSample(text) {
  * that (and shows what was typed): every reader of the words -- a song's
  * link, a Bible to import, a button asked for, the known-question hint --
  * reads the corpus's English, and the part they filled in is theirs either
- * way (2026-10-17: the fill-in rows were the last English left in a Khmer
- * window's question list, kept so because code reads their gap).
+ * way (2026-10-17: the fill-in rows were the last English left in a
+ * translated window's question list, kept so because code reads their gap).
  */
 export function toEnglishTemplateAsk(typed, rows) {
     const said = String(typed ?? '').trim();
@@ -202,8 +202,8 @@ const QUERY_ALIASES = {
     stuck: ['fix'],
 };
 
-// Letters of every alphabet, not `[a-z]` alone: a French row read in French
-// (an accented e) must keep its words whole.
+// Letters of every alphabet, not `[a-z]` alone: a row read in a language
+// with accented letters must keep its words whole.
 function normalize(text) {
     return String(text ?? '')
         .toLowerCase()
@@ -211,8 +211,8 @@ function normalize(text) {
         .trim();
 }
 
-// A letter of a script that is not Latin: a question typed in Khmer, which is
-// written with no spaces between its words.
+// A letter of a script that is not Latin: a question typed in such a script,
+// which may be written with no spaces between its words.
 const NON_LATIN_LETTER_PATTERN = /(?=\p{L})\P{Script=Latin}/u;
 
 function toCompact(text) {
@@ -233,8 +233,8 @@ function toBigramCounts(text) {
 
 // How much of one text's letter pairs the other shares, 0 to 1 (Dice). Words
 // cannot be told apart in a script without spaces, but pairs of letters can
-// be counted in any script, so a half-typed Khmer question still finds the
-// row it is the start of, and one typed in other words the row it is like.
+// be counted in any script, so a half-typed question in such a script still
+// finds the row it is the start of, and one typed in other words the row it is like.
 function toPairOverlap(left, right) {
     const leftCounts = toBigramCounts(left);
     const rightCounts = toBigramCounts(right);
@@ -473,7 +473,7 @@ export function matchQuestions(
     return rows
         .map((row) => {
             // A translated row answers to its own words and to its English
-            // ones: English typed in a Khmer window still finds it.
+            // ones: English typed in a translated window still finds it.
             const score =
                 row.textEn === undefined || row.textEn === row.text
                     ? scoreRow(row, groups)

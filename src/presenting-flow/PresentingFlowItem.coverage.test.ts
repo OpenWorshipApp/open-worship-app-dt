@@ -9,7 +9,7 @@ const { mocks } = vi.hoisted(() => ({
         deserialize: vi.fn(),
         foregroundIcon: vi.fn((target) => `fg-${target}`),
         foregroundLabel: vi.fn((data) => `Foreground ${data?.target ?? data}`),
-        getBibleFontFamily: vi.fn(async () => 'Khmer Font'),
+        getBibleFontFamily: vi.fn(async () => 'Made Up Font'),
         getDocument: vi.fn(),
         getLyricStage: vi.fn(),
         handleError: vi.fn(),
@@ -561,7 +561,7 @@ describe('PresentingFlowItem data model', () => {
         );
         expect(bible).toMatchObject({
             title: '(KJV) John 3:16',
-            extraStyle: { fontFamily: 'Khmer Font' },
+            extraStyle: { fontFamily: 'Made Up Font' },
         });
         // Without a bible to title it, the reference is spelled from the key.
         for (const [target, expectedTitle] of [
@@ -844,7 +844,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
         expect(built).toMatchObject({
             type: DragTypeEnum.BIBLE_ITEM,
             title: 'Bible Item',
-            extraStyle: { fontFamily: 'Khmer Font' },
+            extraStyle: { fontFamily: 'Made Up Font' },
         });
         expect(mocks.bibleTitle).not.toHaveBeenCalled();
         expect(mocks.getBibleFontFamily).toHaveBeenCalledWith('KJV');

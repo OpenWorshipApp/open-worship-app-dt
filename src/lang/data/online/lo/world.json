@@ -16,5 +16,8 @@
     "languageAliases": {
         "laos": "lao",
         "laotian": "lao"
+    },
+    "catalogLanguageCodes": {
+        "lo": "lao"
     }
 }

@@ -39,7 +39,7 @@ vi.mock('../../server/appProvider', () => ({
     },
 }));
 vi.mock('../../lang/langHelpers', () => ({
-    getCurrentLocale: () => 'km-KH',
+    getCurrentLocale: () => 'xx-XX',
     getLangData: () => {
         return mocks.numList === null ? null : { numList: mocks.numList };
     },
@@ -272,7 +272,7 @@ describe('remindOldDataDirCopy', () => {
         expect(renderAskedBody()).toContain('Moved on:');
         // The date in the app's language and digits, not the browser's.
         const html = renderAskedBody();
-        // Year first, 24-hour, whatever the browser would make of km-KH.
+        // Year first, 24-hour, whatever the browser would make of the locale.
         expect(html).toMatch(/２０２６-１０-[０-９]{2} [０-９]{2}:[０-９]{2}/);
         expect(html).not.toMatch(/2026|PM|AM/);
         expect(mocks.showExplorer).toHaveBeenCalledExactlyOnceWith(DESKTOP_DIR);

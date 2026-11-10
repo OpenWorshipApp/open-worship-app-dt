@@ -14,7 +14,7 @@ import {
 import { loadTranBundle } from './tran.mjs';
 
 // What a press carries with the firewall on: the rule off the app's own
-// dictionary, so the Khmer cases below are the real translations.
+// dictionary, so every installed language's translations are the real ones.
 const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
 
 // The runtime is a string evaluated in the app page, so it is exercised the
@@ -394,7 +394,7 @@ describe('the shared DOM matcher', () => {
 
   it('refuses a label that only mentions the word inside another', () => {
     document.body.innerHTML =
-      '<button title="...\\khmer-study-bible-pdf">GEN.0.pdf</button>';
+      '<button title="...\\old-study-bible-pdf">GEN.0.pdf</button>';
     const dm = install();
     expect(dm.findBest(['bible-pdf-data'])).toBe(null);
   });
@@ -1394,7 +1394,7 @@ describe('selectorOf', () => {
     document.body.innerHTML = `
             <div>
                 <div data-widget-name="Bible View"><span>KJV</span></div>
-                <div data-widget-name="Bible View"><span>Khmer</span></div>
+                <div data-widget-name="Bible View"><span>NIV</span></div>
             </div>`;
     const dm = install();
     const panes = document.querySelectorAll('[data-widget-name]');

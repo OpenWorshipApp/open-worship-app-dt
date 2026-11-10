@@ -141,9 +141,9 @@ function getLookupBibleKey(): string | null {
 const WHOLE_BIBLE_BOOK_COUNT = 66;
 
 // A Bible that holds only some books says how many (`books`), so the one
-// chosen to quote from can be a whole one (2026-10-29): the first Khmer
-// Bible here is the 2019 New Testament, and a question under Noah's card
-// asked in Khmer read Genesis 6:15 from it, found nothing and ran out of
+// chosen to quote from can be a whole one (2026-10-29): the first Bible
+// here in one language was a 2019 New Testament, and a question under Noah's
+// card asked in that language read Genesis 6:15 from it, found nothing and ran out of
 // rounds. A whole Bible says nothing, so the list grows by a word or two.
 async function listInstalledBibles() {
     const infoList = (await getAllLocalBibleInfoList()) ?? [];
@@ -195,7 +195,7 @@ async function toNameMapList(bibleKey: string) {
         englishBookNameMap,
     ];
     // A reference written in another installed Bible's language (Genesis
-    // 4:1 in the Khmer Bible's book name, with the KJV chosen) names the same book: its key is read here
+    // 4:1 in another language's Bible's book name, with the KJV chosen) names the same book: its key is read here
     // and the verse is quoted from the chosen Bible (2026-10-18).
     try {
         const infoList = (await getAllLocalBibleInfoList()) ?? [];
@@ -218,8 +218,8 @@ async function toNameMapList(bibleKey: string) {
 
 /**
  * The installed Bible that names the book the way it was written, for a
- * reference with no `bible` asked: a Khmer reference is quoted from the
- * Khmer Bible, not from the KJV the lookup happened to be on (2026-10-18).
+ * reference with no `bible` asked: a reference in another language is
+ * quoted from that language's Bible, not from the KJV the lookup happened to be on (2026-10-18).
  * Exported for `owa_lookup_record`'s passage reader.
  */
 export async function pickBibleForRefs(bibleKey: string, refs: string) {
@@ -246,10 +246,10 @@ export async function pickBibleForRefs(bibleKey: string, refs: string) {
 const NO_TERMS = { noTerms: true } as const;
 
 /**
- * Khmer, Thai and their neighbours are typed with no space between words,
+ * Scripts written without spaces are typed with no space between words,
  * so a remembered phrase arrives as one run of letters and matches nothing
- * (seen 2026-10-16, the user's own Khmer for "Jesus asked Peter many
- * times", typed as one run). It is cut
+ * (seen 2026-10-16, the user's own words for "Jesus asked Peter many
+ * times" in such a script, typed as one run). It is cut
  * into the Bible's OWN words -- the vocabulary Bible Find keeps for its
  * suggestions -- read for this one search and let go after it.
  */
@@ -322,7 +322,7 @@ function countVersesHolding(database: SQLiteDatabaseType, word: string) {
 
 /**
  * A book NAMED in what they remember (2026-10-22, the user's own:
- * Khmer typed as one run for "search in the book of Genesis,
+ * a script without spaces, typed as one run for "search in the book of Genesis,
  * Noah released the dove" --
  * misspelt, Noah released the dove -- whose search was "search", "in",
  * "book" and two scraps of the misspelt name, and found Isaiah 34:16's
@@ -708,7 +708,7 @@ async function findVerses(
             : isSpaced
               ? {}
               : {
-                    // Seen live 2026-10-16 in the Khmer Bible: the word for
+                    // Seen live 2026-10-16 in an unspaced Bible: the word for
                     // eagle found Hebrews 5:14 by the word for senses,
                     // which starts with the same letters.
                     note:
@@ -769,8 +769,8 @@ async function findEnglishBible(bibleKey: string) {
  * user's ask: _if user input local text (non-english) then try translate to
  * english … then lookup in KJV, plus try in the input language as well. to
  * make maximum result_). Words in another script than this Bible's --
- * English under the Khmer Bible, Khmer under the KJV -- are searched in an
- * installed Bible whose language reads them, and every verse found is then
+ * English under a Bible in another script, that script under the KJV --
+ * are searched in an installed Bible whose language reads them, and every verse found is then
  * quoted from THIS one, so the person reads it in the Bible they chose.
  * Translating is the model's half: a result from a Bible not in English
  * names the English one installed, to search the words put into English.
@@ -841,8 +841,8 @@ async function findVersesAcross(
                 'search again for more.',
         };
     }
-    // Seen live 2026-10-16: English words asked of the Khmer Bible, round
-    // after round, by a model that never thought to translate.
+    // Seen live 2026-10-16: English words asked of a Bible in another
+    // script, round after round, by a model that never thought to translate.
     return toReason(
         `${NOT_IN_LANGUAGE_REASON} ${bibleKey} is written in ` +
             `"${await getBibleLocale(bibleKey)}": put the words they ` +
@@ -1078,7 +1078,7 @@ async function openInLookup(bibleKey: string, key: string) {
 }
 
 // The reference as the Bible itself writes it -- its book's own name and its
-// own digits, Matthew 5:44 as a Khmer Bible prints it -- for a Bible not in English (2026-10-17): the
+// own digits, Matthew 5:44 as a Bible in another language prints it -- for a Bible not in English (2026-10-17): the
 // help window draws a found verse's button and lines with it for a person
 // who reads no English, and the model names the verse by it. `ref` stays
 // English, the one every tool reads. Null for an English Bible (the two
@@ -1201,8 +1201,8 @@ export async function handleAgentBibleFindRequest(
         return bible;
     }
     // No Bible asked: read the reference in the one that NAMES the book the
-    // way it was written, so a Khmer reference is quoted from the Khmer
-    // Bible rather than from the KJV the lookup happened to be on.
+    // way it was written, so a reference in another language is quoted
+    // from that language's Bible rather than from the KJV the lookup happened to be on.
     if (askedBible.length === 0 && (open.length > 0 || refs.length > 0)) {
         try {
             const pickedKey = await pickBibleForRefs(

@@ -352,23 +352,23 @@ describe('bounded file reads and key lookup', () => {
     test('a root tag carrying a long note still answers from the head', async () => {
         head(
             `<bible title="Noted" note="${'x'.repeat(2000)}" ` +
-                `booksAvailable="${'GEN,'.repeat(66)}" key="NOTED" locale="km-KH">`,
+                `booksAvailable="${'GEN,'.repeat(66)}" key="NOTED" locale="xx-XX">`,
         );
         expect(await getBibleHeadInfoFromFile('/bibles/noted.xml')).toEqual({
             bibleKey: 'NOTED',
             title: 'Noted',
-            locale: 'km-KH',
+            locale: 'xx-XX',
         });
         expect(mocks.readFile).not.toHaveBeenCalled();
     });
 
     test('falls back only for the key when the head cannot provide it', async () => {
-        head('<bible title="Partial" locale="fr-FR">');
+        head('<bible title="Partial" locale="yy-YY">');
         mocks.readFile.mockResolvedValue('<bible key="FULL" title="Full"/>');
         expect(await getBibleHeadInfoFromFile('/bibles/partial.xml')).toEqual({
             bibleKey: 'FULL',
             title: 'Partial',
-            locale: 'fr-FR',
+            locale: 'yy-YY',
         });
         expect(mocks.readFile).toHaveBeenCalledWith('/bibles/partial.xml');
         expect(mocks.input).not.toHaveBeenCalled();

@@ -45,9 +45,9 @@ const OPENERS: [
 ][] = [
     [
         'asking',
-        () => openChatbotAsking('Import a Bible in Khmer'),
+        () => openChatbotAsking('Import a Bible in Xxish'),
         h.requestChatbotAsk,
-        ['Import a Bible in Khmer'],
+        ['Import a Bible in Xxish'],
     ],
     [
         'reporting',

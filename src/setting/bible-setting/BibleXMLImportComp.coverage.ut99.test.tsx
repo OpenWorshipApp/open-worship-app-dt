@@ -113,7 +113,7 @@ beforeEach(async () => {
     state.reviewProps = null;
     mocks.readFromFile.mockResolvedValue('<bible>✝</bible>');
     mocks.readFromUrl.mockResolvedValue('<bible/>');
-    mocks.toJson.mockResolvedValue({ info: { key: 'KM' }, books: {} });
+    mocks.toJson.mockResolvedValue({ info: { key: 'XX' }, books: {} });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -142,7 +142,7 @@ describe('importing a chosen file', () => {
                 sourceName: 'Symbols.xml',
             }),
         );
-        expect(container.textContent).toBe('review KM');
+        expect(container.textContent).toBe('review XX');
         expect(state.reviewProps.origin).toEqual({
             by: 'settings',
             fileName: 'Symbols.xml',
@@ -153,12 +153,12 @@ describe('importing a chosen file', () => {
 
     test('the key choices the parser found reach the review', async () => {
         mocks.toJson.mockImplementation(async (_text: string, options: any) => {
-            options.onKeyChoices(['KM1954', 'KHSV']);
-            return { info: { key: 'KM' }, books: {} };
+            options.onKeyChoices(['XX1954', 'XXSV']);
+            return { info: { key: 'XX' }, books: {} };
         });
         await chooseFile('Symbols.xml');
         await submit();
-        expect(state.reviewProps.keyChoices).toEqual(['KM1954', 'KHSV']);
+        expect(state.reviewProps.keyChoices).toEqual(['XX1954', 'XXSV']);
     });
 
     test('nothing read says there was no data', async () => {

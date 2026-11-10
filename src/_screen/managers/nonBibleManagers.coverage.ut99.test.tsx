@@ -1016,7 +1016,7 @@ describe('non-Bible manager coverage', () => {
     });
 
     test('a clock period asks for its locale once and retries after a failed load', async () => {
-        mocks.getCurrentLocale.mockReturnValue('km');
+        mocks.getCurrentLocale.mockReturnValue('xx');
         mocks.getLangData.mockReturnValue(null);
         mocks.getLangDataAsync.mockRejectedValue(new Error('offline'));
         const manager = new ScreenForegroundManager(
@@ -1031,7 +1031,7 @@ describe('non-Bible manager coverage', () => {
         ) => string;
 
         expect(toPeriodText('AM')).toBe('AM');
-        expect(mocks.getLangDataAsync).toHaveBeenCalledExactlyOnceWith('km');
+        expect(mocks.getLangDataAsync).toHaveBeenCalledExactlyOnceWith('xx');
         await Promise.resolve();
         expect(toPeriodText('PM')).toBe('PM');
         expect(mocks.getLangDataAsync).toHaveBeenCalledTimes(2);

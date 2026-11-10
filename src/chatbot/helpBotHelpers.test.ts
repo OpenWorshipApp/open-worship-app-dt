@@ -33,6 +33,7 @@ import {
     runBotAction,
 } from './helpBotHelpers';
 import { genQuickReplies } from './quickReplyHelpers';
+import languageNameMap from '../lang/data/en/language-names.json';
 
 beforeEach(() => {
     callTool.mockClear();
@@ -212,14 +213,14 @@ describe('walkthrough actions', () => {
             { id: 'W-11' },
             'reader',
             true,
-            'Use the Khmer book and chapter buttons.',
+            'Use the book and chapter buttons of my Bible.',
         )[1];
         const result = await runBotAction(action);
         expect(callTool).toHaveBeenCalledWith('owa_guide_start', {
             manualId: 'W-11',
             page: 'reader.html',
             mode: 'show',
-            topic: 'Use the Khmer book and chapter buttons.',
+            topic: 'Use the book and chapter buttons of my Bible.',
         });
         expect(result.isNeedingModel).toBe(true);
         expect(result.text).toContain('prepare the safe **Do it** step');
@@ -271,7 +272,7 @@ describe('pressing Highlight again', () => {
 describe('localized Bible button lookup', () => {
     test('turns an English reference into exact book, chapter, and verse buttons', () => {
         const answer = genReaderButtonReferenceAnswer(
-            'I use a Khmer Bible. Typing John 3:16 does not work. Use the book and chapter buttons.',
+            'My Bible is in another language. Typing John 3:16 does not work. Use the book and chapter buttons.',
             'reader',
         );
         expect(answer?.text).toContain('do not need to type');
@@ -290,6 +291,54 @@ describe('localized Bible button lookup', () => {
                 { find: 'Verse 16', action: 'click' },
             ],
         });
+    });
+
+    // A Bible named by its language alone is the same ask, whichever
+    // language English's table names: none is picked out.
+    test('takes a Bible named by any language', () => {
+        const nameList = Object.values(
+            languageNameMap as Record<string, string>,
+        ).map((name) => {
+            return name.split(/[,;(]/)[0].trim();
+        });
+        expect(nameList.length).toBeGreaterThan(100);
+        for (const name of nameList) {
+            const answer = genReaderButtonReferenceAnswer(
+                `I use a ${name} Bible. Typing John 3:16 does not work.`,
+                'reader',
+            );
+            const stepList = (answer?.actions?.[1].args.steps ?? []) as {
+                find: string;
+                action: string;
+            }[];
+            expect([
+                name,
+                stepList.map(({ find, action }) => {
+                    return { find, action };
+                }),
+            ]).toEqual([
+                name,
+                [
+                    { find: 'Clear input', action: 'click' },
+                    { find: 'John', action: 'click' },
+                    { find: 'Chapter 3', action: 'click' },
+                    { find: 'Verse 16', action: 'click' },
+                ],
+            ]);
+        }
+        // Nor in another window, nor with no language and no buttons named.
+        expect(
+            genReaderButtonReferenceAnswer(
+                'I use a Swahili Bible. Typing John 3:16 does not work.',
+                'presenter',
+            ),
+        ).toBeNull();
+        expect(
+            genReaderButtonReferenceAnswer(
+                'I use a big Bible. Typing John 3:16 does not work.',
+                'reader',
+            ),
+        ).toBeNull();
     });
 
     test('does not take over an ordinary Reader question', () => {

@@ -8,5 +8,8 @@
             "locales": ["ko-KR"],
             "order": 400
         }
-    ]
+    ],
+    "catalogLanguageCodes": {
+        "ko": "kor"
+    }
 }

@@ -9,9 +9,9 @@
 // opens on a line of THREE, and an answer saying so -- "a line of three
 // backticks (```)" -- was drawn with a code span from the third to the next
 // group's first, the backticks gone and the words between in code (the whole
-// list asked in Khmer, 2026-10-18). Markdown's way to show backticks in code,
-// two of them and a space on each side (`` ``` ``), is read too: the Khmer
-// manual writes the fence so, and an answer copies it.
+// list asked in a non-English language, 2026-10-18). Markdown's way to show
+// backticks in code, two of them and a space on each side (`` ``` ``), is
+// read too: a translated manual writes the fence so, and an answer copies it.
 const RICH_TEXT_PART_PATTERN =
     /(\*\*[^*]+\*\*|(?<!`)`` [^\n]+? ``(?!`)|(?<!`)`[^`]+`(?!`)|(?<![\w/.-])_[^_\s][^_]*_(?![\w/.-]))/g;
 

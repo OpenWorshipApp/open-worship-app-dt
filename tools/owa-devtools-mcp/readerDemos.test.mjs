@@ -162,7 +162,7 @@ describe('Reader demos', () => {
   it('leaves the untranslated path editor title untranslated (TP-01)', () => {
     const translate = (value) => {
       if (value === 'Show path editor') {
-        throw new Error('no km key');
+        throw new Error('no key in that language');
       }
       return value;
     };

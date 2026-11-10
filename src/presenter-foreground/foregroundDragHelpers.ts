@@ -47,7 +47,7 @@ export type ForegroundDragDataType = {
  * (`PresentingFlowItem`), so a row added in one language still reads in the
  * one the app is shown in. Every value here has to exist in the dictionaries —
  * the lookup below is dynamic, so `tranKeyCoverage.test.ts` cannot see it and
- * a missing one would only show as a throw in a Khmer window.
+ * a missing one would only show as a throw in a translated window.
  */
 const targetLabelMap: Record<ForegroundDragTargetType, string> = {
     message: 'Messages',
@@ -154,8 +154,8 @@ export function toForegroundDragLabel(
 ) {
     // A `target` the map does not know can only come from a hand-edited or
     // future presenting flow file; it is not a dictionary key, so it is shown
-    // as it is rather than translated, which would throw in a Khmer window
-    // over a file the user cannot see into.
+    // as it is rather than translated, which would throw in a window in
+    // another language over a file the user cannot see into.
     const labelKey = targetLabelMap[target];
     const label = labelKey === undefined ? target : translate(labelKey);
     if (target === 'marquee-top' || target === 'marquee-bottom') {

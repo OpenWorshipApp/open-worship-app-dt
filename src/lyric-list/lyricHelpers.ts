@@ -86,10 +86,11 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     const lyric = Lyric.getInstance(filePath);
     // `initAllLangCss`, not just the language list: open-lyric freezes every
     // line of a slide into pixel boxes measured in whatever faces the window
-    // has REGISTERED at that moment. A song set in `app-Battambang`, built
-    // before any other panel had registered the Khmer faces, was measured in
-    // the browser's fallback (Times New Roman) and then drawn in Battambang,
-    // whose Latin letters run ~19% wider — the long lines wrapped inside their
+    // has REGISTERED at that moment. A song set in a language's own face
+    // (`app-<family>`), built before any other panel had registered that
+    // language's faces, was measured in the browser's fallback (Times New
+    // Roman) and then drawn in its own face, whose Latin letters run ~19%
+    // wider — the long lines wrapped inside their
     // frozen boxes and printed over the next line, in the Stage Previewer and
     // on the projector alike, until a reload happened to win the race.
     // Registered first, open-lyric's own `document.fonts` wait loads the face

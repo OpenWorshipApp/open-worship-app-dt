@@ -128,7 +128,7 @@ vi.mock('../location-name-lookup/bibleVerseHelpers', () => ({
         'verse-key': 'verse',
     },
     getLookupVerseBibleKey: (langCode: string) => {
-        return langCode === 'km' ? 'KH' : 'KJV';
+        return langCode === 'xx' ? 'XXV' : 'KJV';
     },
     shortToReferenceTitle: (...args: any[]) => mocks.referenceTitle(...args),
     shortToVerseCopyData: (...args: any[]) => mocks.copy(...args),
@@ -138,7 +138,7 @@ vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
     ensureLangPlugins: async () => [],
-    getSupportedLocales: () => ['en-US', 'km-KH', 'fr-FR'],
+    getSupportedLocales: () => ['en-US', 'xx-XX', 'yy-YY'],
     getLocalBibleCrossRef: (...args: any[]) => mocks.crossRef(...args),
 }));
 vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
@@ -146,7 +146,7 @@ vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
     releaseLookupData: (langCode: string) => mocks.release(langCode),
 }));
 vi.mock('../location-name-lookup/lookupLangHelpers', () => ({
-    getLookupLangCodeListAsync: async () => ['en', 'km'],
+    getLookupLangCodeListAsync: async () => ['en', 'xx'],
     getSelectedLookupLangCode: () => state.selectedLang,
 }));
 vi.mock('../location-name-lookup/lookupRecordHelpers', () => ({
@@ -279,7 +279,7 @@ function genThemeMap(themeMap: Record<string, unknown>) {
 }
 
 beforeEach(() => {
-    state.infoList = [{ key: 'KJV' }, { key: 'KH' }];
+    state.infoList = [{ key: 'KJV' }, { key: 'XXV' }];
     state.selectedLang = 'en';
     state.verseCounts = {};
     state.failedChapters = new Set();
@@ -306,7 +306,7 @@ beforeEach(() => {
             });
         }
         return {
-            title: bibleKey === 'KH' ? `KH ${key}` : model.toEnglish(key),
+            title: bibleKey === 'XXV' ? `XXV ${key}` : model.toEnglish(key),
             text: sections
                 .map((section) => {
                     return section.text;
@@ -320,7 +320,7 @@ beforeEach(() => {
             if (state.untitledKeys.has(key)) {
                 throw new Error('no title');
             }
-            return bibleKey === 'KH' ? `KH ${key}` : model.toEnglish(key);
+            return bibleKey === 'XXV' ? `XXV ${key}` : model.toEnglish(key);
         },
     );
     mocks.referenceTitle.mockResolvedValue(null);
@@ -330,7 +330,7 @@ beforeEach(() => {
         return (
             {
                 KJV: { locale: 'en-US' },
-                KH: { locale: 'km-KH' },
+                XXV: { locale: 'xx-XX' },
                 LUT: { locale: 'de-DE' },
             } as Record<string, { locale: string }>
         )[bibleKey];

@@ -110,8 +110,9 @@ row's own **[en:tran:Delete]**.
      takes a language (_make it Python_) and a colour theme. A style for the whole note
      in a short line -- _make all the text bold_, _centre everything_, _use Georgia for
      the whole note_, _clear the formatting_ -- the help window does by itself, with no
-     AI key and no internet, as it does the size: all of them in English, Khmer and
-     French, and _make all the text bold_ in every other installed language -- said
+     AI key and no internet, as it does the size: all of them in English and in a language whose
+     package carries the assistant's words for them, and _make all the text bold_ in every
+     other installed language -- said
      with the word _bold_ where the language's own word for it also means black or
      big. The rest, in those languages, the assistant does.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its

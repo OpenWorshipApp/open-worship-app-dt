@@ -19,7 +19,8 @@ import { evaluateInApp, listTargets, requireLivePort } from './cdp.mjs';
 import { DEFAULT_LANG_CODE, loadTranBundle } from './tran.mjs';
 
 // A banner is said in the language the app is DISPLAYING, which is not always
-// English (2026-10-06: a Khmer window put up "Assistant clicked something").
+// English (2026-10-06: a translated window put up "Assistant clicked
+// something").
 // So every banner is three things: `text`, the English sentence, unchanged;
 // `key`, the same news with no names in it, which is a `tran()` key in the
 // app's own dictionary; and `detail`, the names the sentence carried (a site,
@@ -27,7 +28,7 @@ import { DEFAULT_LANG_CODE, loadTranBundle } from './tran.mjs';
 // every language or `{ key }` for a word the dictionary has too. A language
 // whose dictionary lacks `key` gets the English sentence WHOLE, never half of
 // one: a phrase missing from the dictionary is a phrase not yet translated,
-// and a banner part Khmer, part English reads worse than one in English.
+// and a banner part translated, part English reads worse than one in English.
 
 // What each tool does, said the way a volunteer would say it. A tool that is
 // not in here reads the app rather than acting on it, and stays quiet. Each
@@ -55,7 +56,7 @@ const ACTING_TOOLS = {
     owa_click: 'clicked something',
     owa_type: 'typed something',
     // The label-aimed twins of `press_key` and `drag`: the same news, the
-    // same dictionary keys, so a Khmer window reads them already.
+    // same dictionary keys, so a translated window reads them already.
     owa_press_key: 'pressed a key',
     owa_drag: 'dragged something',
     // Files dropped from the disk: a drag as far as the window can tell.
@@ -249,7 +250,7 @@ const AGENT_DATA_PHRASE_MAP = {
     },
     // The run sheets. "Run sheet" rather than "presenting flow" in the
     // English: it is what the operator calls it, and the dictionary keys
-    // below are what a Khmer or French window reads instead.
+    // below are what a window in another language reads instead.
     owa_presenting_flow: {
         create: {
             say: (_args, sheet) => `made the run sheet ${sheet}`,
@@ -928,7 +929,7 @@ function readNoticeDictionaries(now = Date.now()) {
 
 /**
  * The banner's words in every language the app can be shown in, as
- * `{ en: { who, what }, km: {...}, ... }`. The page picks one off its own
+ * `{ en: { who, what }, <code>: {...}, ... }`. The page picks one off its own
  * `<html lang>` -- the attribute `owa_app_state` reports as the language --
  * so no round trip is spent asking which. A language is left out, and the
  * page falls back to English, when its dictionary lacks the phrase.
@@ -1004,7 +1005,8 @@ const NOTICE_RUNTIME = `
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483645;' +
         'pointer-events:none';
     // The app's own lettering for a script the system face lacks (the
-    // Battambang a Khmer window is set in), after the system face.
+    // language's own face a translated window is set in), after the system
+    // face.
     const pageFont = getComputedStyle(document.body).fontFamily;
     if (pageFont) {
         host.style.setProperty('--owa-notice-page-font', pageFont);

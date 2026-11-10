@@ -4,5 +4,8 @@
     },
     "languageAliases": {
         "poland": "polish"
+    },
+    "catalogLanguageCodes": {
+        "pl": "pol"
     }
 }

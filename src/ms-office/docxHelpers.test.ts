@@ -103,7 +103,11 @@ async function readZipFiles(zipBytes: Uint8Array<ArrayBuffer>) {
 }
 
 const SAMPLE_DATA = [
-    { title: 'Genesis 1:1', body: 'In the beginning', fontFamily: 'Khmer OS' },
+    {
+        title: 'Genesis 1:1',
+        body: 'In the beginning',
+        fontFamily: 'Made Up Sans',
+    },
     { title: 'John 3:16', body: 'For God so loved', fontFamily: null },
 ];
 
@@ -164,8 +168,8 @@ describe('generateBibleMSWordBytes', () => {
     test('applies the font family to both runs, and only when given', async () => {
         const documentXML = await readDocumentXML();
         const fontXML =
-            '<w:rFonts w:ascii="Khmer OS" w:hAnsi="Khmer OS" ' +
-            'w:eastAsia="Khmer OS" w:cs="Khmer OS"/>';
+            '<w:rFonts w:ascii="Made Up Sans" w:hAnsi="Made Up Sans" ' +
+            'w:eastAsia="Made Up Sans" w:cs="Made Up Sans"/>';
         // once for the title run, once for the body run of the first entry
         expect(documentXML.split(fontXML).length - 1).toBe(2);
         // the second entry has a null font family, so no other rFonts element

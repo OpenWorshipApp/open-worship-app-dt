@@ -74,7 +74,7 @@ import { BibleXmlProblem } from './bibleXmlDraft.mjs';
 import { registerBibleXmlTool } from './agentBibleXml.mjs';
 
 const DRAFT_ID = 'abcdefghijkl';
-const BIBLE_URL = 'https://example.test/KhmerBible.xml';
+const BIBLE_URL = 'https://example.test/XxlangBible.xml';
 const ASCII_DIGITS = '0 1 2 3 4 5 6 7 8 9';
 
 function value(result) {
@@ -92,17 +92,17 @@ async function call(args) {
 
 function analysis() {
   return {
-    title: 'Khmer Test Bible',
+    title: 'Xxlang Test Bible',
     books: 66,
     chapters: 1189,
     verses: 31102,
     missingBooks: [],
-    keys: ['KHM'],
+    keys: ['XXL'],
     takenKeys: [],
-    locales: [{ locale: 'km-KH', why: 'the verses are Khmer' }],
-    recommendedLocale: 'km-KH',
+    locales: [{ locale: 'xx-XX', why: 'the verses are Xxlang' }],
+    recommendedLocale: 'xx-XX',
     nameLists: [
-      { label: 'Khmer names', source: 'built in', names: ['A', 'B'] },
+      { label: 'Xxlang names', source: 'built in', names: ['A', 'B'] },
       { label: 'The names in the file', source: 'file', names: ['C', 'D'] },
     ],
   };
@@ -117,7 +117,7 @@ function genNamesResult(locale) {
     ],
     sources: [
       { label: 'English', url: null },
-      { label: 'Khmer', url: 'https://names.example/km' },
+      { label: 'Xxlang', url: 'https://names.example/xx' },
     ],
     warnings: [],
     moreAvailable: false,
@@ -145,19 +145,19 @@ beforeEach(() => {
   state.requests = [];
   state.lists.clear();
   state.installed = [];
-  state.names = genNamesResult('km-KH');
+  state.names = genNamesResult('xx-XX');
   state.downloaded = {
     kind: 'xml',
     draftId: DRAFT_ID,
     xmlPath: `/drafts/${DRAFT_ID}.xml`,
-    fileName: 'KhmerBible.xml',
+    fileName: 'XxlangBible.xml',
     source: BIBLE_URL,
     finalUrl: BIBLE_URL,
     bytes: 1048576,
   };
   state.meta = {
-    fileName: 'KhmerBible.xml',
-    recommended: { locale: 'km-KH', digits: 'local', bookNames: 'n0' },
+    fileName: 'XxlangBible.xml',
+    recommended: { locale: 'xx-XX', digits: 'local', bookNames: 'n0' },
     fileListId: 'n1',
   };
   state.worker = genWorker();
@@ -193,18 +193,18 @@ beforeEach(() => {
 describe('finding book names', () => {
   test('each page the search reads is charged to the network budget first', async () => {
     mocks.findNames.mockImplementation(async (_locale, { readPage }) => {
-      state.read = await readPage('https://www.bible.com/languages/khm');
+      state.read = await readPage('https://www.bible.com/languages/xxx');
       return state.names;
     });
-    await call({ action: 'names', locale: 'km-KH' });
+    await call({ action: 'names', locale: 'xx-XX' });
     expect(mocks.firewall).toHaveBeenCalledWith('owa_read_website', {
-      url: 'https://www.bible.com/languages/khm',
+      url: 'https://www.bible.com/languages/xxx',
     });
     expect(mocks.evaluate).toHaveBeenCalledWith('true', { match: undefined });
     expect(mocks.evaluateTarget).toHaveBeenCalledWith(
       { id: 'page' },
       JSON.stringify({
-        url: 'https://www.bible.com/languages/khm',
+        url: 'https://www.bible.com/languages/xxx',
         bibleCatalog: true,
         maxChars: 200,
       }),
@@ -219,10 +219,10 @@ describe('finding book names', () => {
       reason: 'Ten pages were read in five minutes; wait before reading more.',
     });
     mocks.findNames.mockImplementation(async (_locale, { readPage }) => {
-      await readPage('https://www.bible.com/languages/khm');
+      await readPage('https://www.bible.com/languages/xxx');
       return state.names;
     });
-    expect(await call({ action: 'names', locale: 'km-KH' })).toEqual(
+    expect(await call({ action: 'names', locale: 'xx-XX' })).toEqual(
       toError('Ten pages were read in five minutes; wait before reading more.'),
     );
     expect(mocks.evaluateTarget).not.toHaveBeenCalled();
@@ -233,7 +233,7 @@ describe('finding book names', () => {
   test('with a key and no draft, the lists keep their order and the locale is said in full', async () => {
     state.names = genNamesResult('en');
     const result = value(
-      await call({ action: 'names', locale: 'en', key: 'KHM' }),
+      await call({ action: 'names', locale: 'en', key: 'XXL' }),
     );
     expect(result.locale).toBe('en-US');
     expect(result.digits).toStrictEqual({ ascii: ASCII_DIGITS });
@@ -243,7 +243,7 @@ describe('finding book names', () => {
       }),
     ).toEqual([
       ['English', undefined],
-      ['Khmer', undefined],
+      ['Xxlang', undefined],
     ]);
     // Nothing to score against, so the app was not asked.
     expect(state.requests).toEqual([]);
@@ -252,33 +252,33 @@ describe('finding book names', () => {
   test('a locale with no region to give it, or none at all, is kept as written', async () => {
     state.names = genNamesResult('zz');
     expect(
-      value(await call({ action: 'names', locale: 'km', key: 'K' })).locale,
+      value(await call({ action: 'names', locale: 'xx', key: 'K' })).locale,
     ).toBe('zz');
     state.names = genNamesResult('');
     expect(
-      value(await call({ action: 'names', locale: 'km', key: 'K' })).locale,
+      value(await call({ action: 'names', locale: 'xx', key: 'K' })).locale,
     ).toBe('');
   });
 
   test('ranking against a draft falls back to the order given when the app cannot score', async () => {
     state.worker = genWorker({ score: () => ({}) });
     const unscored = value(
-      await call({ action: 'names', locale: 'km-KH', draftId: DRAFT_ID }),
+      await call({ action: 'names', locale: 'xx-XX', draftId: DRAFT_ID }),
     );
     expect(unscored.nameLists.map((one) => one.label)).toEqual([
       'English',
-      'Khmer',
+      'Xxlang',
     ]);
     expect(unscored.nameLists.some((one) => 'matches' in one)).toBe(false);
     mocks.evaluate.mockImplementation(async () => {
       throw new Error('The app did not answer.');
     });
     const failed = value(
-      await call({ action: 'names', locale: 'km-KH', draftId: DRAFT_ID }),
+      await call({ action: 'names', locale: 'xx-XX', draftId: DRAFT_ID }),
     );
     expect(failed.nameLists.map((one) => one.label)).toEqual([
       'English',
-      'Khmer',
+      'Xxlang',
     ]);
   });
 });
@@ -320,7 +320,7 @@ describe('checking a link', () => {
       {
         action: 'analyze',
         xmlPath: `/drafts/${DRAFT_ID}.xml`,
-        sourceName: 'KhmerBible.xml',
+        sourceName: 'XxlangBible.xml',
         timeout: 185000,
       },
     ]);
@@ -336,7 +336,7 @@ describe('checking a link', () => {
     expect('hasKjv' in unknown).toBe(false);
     expect(unknown.note).not.toContain(KJV_NOTE);
     state.worker = genWorker();
-    state.installed = [{ key: 'KHM-OLD', title: 'Another Bible' }];
+    state.installed = [{ key: 'XXL-OLD', title: 'Another Bible' }];
     const missing = value(await call({ action: 'check', url: BIBLE_URL }));
     expect(missing.hasKjv).toBe(false);
     expect(missing.note).toContain(KJV_NOTE);
@@ -353,14 +353,14 @@ describe('importing a draft', () => {
       new BibleXmlProblem('draft-gone', 'That download is no longer there.'),
     );
     expect(
-      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'KHM' })),
+      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'XXL' })),
     ).toEqual({
       problem: 'draft-gone',
       message: 'That download is no longer there.',
     });
     mocks.readMeta.mockRejectedValueOnce(new Error('EBUSY: resource busy'));
     expect(
-      await call({ action: 'import', draftId: DRAFT_ID, key: 'KHM' }),
+      await call({ action: 'import', draftId: DRAFT_ID, key: 'XXL' }),
     ).toEqual(toError('EBUSY: resource busy'));
     expect(state.requests).toEqual([]);
   });
@@ -371,7 +371,7 @@ describe('importing a draft', () => {
       recommended: { ...state.meta.recommended, locale: null },
     };
     expect(
-      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'KHM' })),
+      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'XXL' })),
     ).toEqual({
       problem: 'locale',
       message:
@@ -387,17 +387,17 @@ describe('importing a draft', () => {
       import: () => ({
         isError: true,
         problem: 'key',
-        reason: 'KHM is already a Bible here.',
+        reason: 'XXL is already a Bible here.',
       }),
     });
     expect(
-      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'KHM' })),
-    ).toEqual({ problem: 'key', message: 'KHM is already a Bible here.' });
+      value(await call({ action: 'import', draftId: DRAFT_ID, key: 'XXL' })),
+    ).toEqual({ problem: 'key', message: 'XXL is already a Bible here.' });
     state.worker = genWorker({
       import: () => ({ isError: true, reason: 'Could not write the Bible.' }),
     });
     expect(
-      await call({ action: 'import', draftId: DRAFT_ID, key: 'KHM' }),
+      await call({ action: 'import', draftId: DRAFT_ID, key: 'XXL' }),
     ).toEqual(toError('Could not write the Bible.'));
     expect(mocks.remove).not.toHaveBeenCalled();
   });
@@ -407,12 +407,12 @@ describe('changing an installed Bible', () => {
   test('a blank book-name list id changes no book names', async () => {
     await call({
       action: 'update',
-      key: 'KHM',
+      key: 'XXL',
       title: 'A new title',
       bookNames: '   ',
     });
     expect(state.requests).toEqual([
-      { action: 'update', key: 'KHM', title: 'A new title' },
+      { action: 'update', key: 'XXL', title: 'A new title' },
     ]);
     expect(mocks.findList).not.toHaveBeenCalled();
   });

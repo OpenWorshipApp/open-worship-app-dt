@@ -78,7 +78,7 @@ describe('foreground presets', () => {
             'foreground-quick-text-setting-s1',
             'Pastor John\n\nSenior Pastor',
         );
-        state.settings.set('quick-text-s1-common-font-family', 'Battambang');
+        state.settings.set('quick-text-s1-common-font-family', 'Made Up Sans');
         apply('quick-text', 'quick-text-s1', TEXT, 'speaker');
         const get = (key: string) => state.settings.get(key);
         expect(get('quick-text-s1-setting-show-widget-font-size')).toBe('40');
@@ -99,7 +99,7 @@ describe('foreground presets', () => {
             '### Pastor John\n\nSenior Pastor',
         );
         // The font the operator chose for the language is theirs.
-        expect(get('quick-text-s1-common-font-family')).toBe('Battambang');
+        expect(get('quick-text-s1-common-font-family')).toBe('Made Up Sans');
     });
 
     test('a box with nothing of the person in it gets the preset example', () => {

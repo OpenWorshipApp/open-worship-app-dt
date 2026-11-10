@@ -10,7 +10,7 @@ import { describeAnswerError } from './answerErrorHelpers';
 
 describe('describeAnswerError', () => {
     // 2026-10-17: "I could not answer that: DO_ON_ASK_TOOL_SET is not
-    // defined" under 26 Khmer answers (EC-324).
+    // defined" under 26 answers in the app's language (EC-324).
     test('a bug in the code is said as what to do, and logged', () => {
         const error = new ReferenceError('DO_ON_ASK_TOOL_SET is not defined');
         const text = describeAnswerError(error);

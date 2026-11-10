@@ -218,8 +218,8 @@ describe('toStudyAsk', () => {
         expect(toStudyAsk('make a study', null)).toBe(
             'make a study\n\n(They ask for a study file.)',
         );
-        expect(toStudyAsk('make a study', 'Khmer')).toContain(
-            'every word of it -- in Khmer.)',
+        expect(toStudyAsk('make a study', 'Xxlang')).toContain(
+            'every word of it -- in Xxlang.)',
         );
     });
 });

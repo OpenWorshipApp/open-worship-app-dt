@@ -14,7 +14,7 @@ export async function prepareFindQuery(
     findData: BibleFindForType,
 ) {
     // TODO: use dictionary to break text text to words.
-    // e.g: Khmer language has no space between words so we need to break it to words
+    // e.g: a script written without spaces between words needs breaking into words
     const { text } = findData;
     if (!text) {
         return null;

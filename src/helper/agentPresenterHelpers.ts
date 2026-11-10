@@ -8,7 +8,7 @@
  * `owa_list_screens` says what is ON the projector; nothing said what the
  * user had picked to put there next. Measured 2026-09-09 on Claude Sonnet 5
  * with "Amazing Grace" highlighted in the Documents list and the projector
- * still holding a Khmer hymn: asked *which song is selected right now?* the
+ * still holding a hymn in another language: asked *which song is selected right now?* the
  * assistant answered with the hymn -- the only document any tool had ever
  * named -- and asked to *show the next slide* it spent ten rounds and 54
  * seconds hunting the slide cards through `owa_list_ui` (which never listed

@@ -208,7 +208,7 @@ export function readSmarterAsk(
 // pressing one has the guide page's newest copy read before the model is
 // asked again. A test holds the two together. Stored English for that
 // reason, and translated where the reply is drawn (`chatTranLabels.test.ts`
-// holds each to its Khmer and French).
+// holds each to its string in every language package).
 export const DISLIKE_REPLY_LIST = [
     'A button it names is not there',
     'The steps did not work',

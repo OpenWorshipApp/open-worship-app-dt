@@ -8,13 +8,15 @@ import {
     toPlainThemeTitle,
 } from './agentCrossRefHelpers';
 
-// 2026-10-23: the French bundle writes an apostrophe as an entity, and the
-// help window draws text.
+// 2026-10-23: a bundle in another language writes an apostrophe as an
+// entity, and the help window draws text.
 describe('a theme title as text', () => {
     it('reads entities and drops tags', () => {
         expect(
-            toPlainThemeTitle('Profanation du corps et de l&#39;armure'),
-        ).toBe('Profanation du corps et de l’armure');
+            toPlainThemeTitle(
+                'The defiling of the body and of the Lord&#39;s armour',
+            ),
+        ).toBe('The defiling of the body and of the Lord’s armour');
         expect(toPlainThemeTitle('A &amp; B &lt;C&gt; &#x41;')).toBe(
             'A & B <C> A',
         );

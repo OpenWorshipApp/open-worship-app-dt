@@ -3,13 +3,13 @@ id: W-55
 title: "Trouver et installer une langue (Paramètres → Langues)"
 section: "Configuration"
 lang: fr
-translatedFrom: b01565822c649a48
+translatedFrom: "798611802833a01c"
 ---
 # W-55 — Trouver et installer une langue (Paramètres → Langues)
 
 **Objectif :** afficher l'application dans votre langue, ou ne plus proposer une langue que vous n'utilisez jamais.
 
-L'anglais fait partie de l'application. Chaque autre langue — le khmer et le français compris — est un paquet à part, installé depuis la liste qu'Open Worship publie en ligne. Une langue installée est conservée dans votre dossier de données, sous `lang`.
+L'anglais fait partie de l'application. Chaque autre langue est un paquet à part, installé depuis la liste qu'Open Worship publie en ligne. Une langue installée est conservée dans votre dossier de données, sous `lang`.
 
 1. Ouvrez les Paramètres (l'**engrenage**, W-16) et choisissez l'onglet **[en:tran:Languages]**. Sa première section, **[en:tran:Language]**, contient les boutons qui choisissent la langue dans laquelle l'application s'affiche (W-16, étape 4a). 📸
 2. **[en:tran:Installed Languages]** liste chaque langue de cet ordinateur, chacune sous son propre nom avec son nom anglais à côté, sa version, et **[en:tran:Installed]** (vous l'avez installée). L'anglais est en premier, affiche **[en:tran:Built in]** et est toujours activé. Pour voir où une langue est conservée, appuyez sur l'icône de dossier (**[en:tran:Reveal Folder]**) sur sa ligne : votre gestionnaire de fichiers s'ouvre sur son dossier, et rien ne change dans l'application.

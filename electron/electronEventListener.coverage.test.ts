@@ -70,7 +70,7 @@ const {
     republishAiLangDirs: vi.fn(),
     getSystemFontListMap: vi.fn(async () => ({
         Arial: ['400', '700'],
-        'Khmer OS': ['400'],
+        'Example Script': ['400'],
     })),
     getPagesCount: vi.fn(),
     getPptxSlidesCount: vi.fn(),
@@ -310,7 +310,7 @@ describe('electronEventListener handlers', () => {
         screenInstance.isMoving = false;
         getSystemFontListMap.mockResolvedValue({
             Arial: ['400', '700'],
-            'Khmer OS': ['400'],
+            'Example Script': ['400'],
         });
         finderOverlayPairs.clear();
         getVirtualDisplays.mockReturnValue(null);
@@ -1050,7 +1050,7 @@ describe('electronEventListener handlers', () => {
 
         expect(sender.send).toHaveBeenCalledWith('reply:fonts', {
             Arial: ['400', '700'],
-            'Khmer OS': ['400'],
+            'Example Script': ['400'],
         });
 
         // enumerating fonts spawns a shell helper, so the map is built once for

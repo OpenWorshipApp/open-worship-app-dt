@@ -110,11 +110,11 @@ describe('installOpenLyricPrintPopupHandler', () => {
 
     test('app font faces are copied into the print document', async () => {
         h.collectFontFaceCssMock.mockReturnValueOnce(
-            '@font-face{font-family:app-Battambang;src:url(a.woff)}',
+            '@font-face{font-family:app-Xx-Face;src:url(a.woff)}',
         );
         writeToPrintPopup('<html><body><p>lyric</p></body></html>');
         const htmlText = await getSentHtml();
-        expect(htmlText).toContain('app-Battambang');
+        expect(htmlText).toContain('app-Xx-Face');
     });
 
     test('nothing is printed when no document was written', async () => {

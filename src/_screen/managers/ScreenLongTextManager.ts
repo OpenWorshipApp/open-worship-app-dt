@@ -339,7 +339,8 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
 
     // The versions on the screen, carried over to the next passage. None
     // while it holds a long text: its columns are languages, and a Bible
-    // presented after it must not go looking for a version named `KM`.
+    // presented after it must not go looking for a version named by a
+    // language code.
     getRenderedBibleKeys() {
         return (getBibleItemData(this._screenViewData)?.renderedList ?? []).map(
             ({ bibleKey }) => bibleKey,

@@ -20,14 +20,14 @@ describe('MultiContextRenderComp', () => {
         const markup = renderToStaticMarkup(
             <MultiContextRenderComp
                 contexts={[
-                    { context: LanguageContext, value: 'km' },
+                    { context: LanguageContext, value: 'xx' },
                     { context: ThemeContext, value: 'dark' },
                 ]}
             >
                 <ProbeComp />
             </MultiContextRenderComp>,
         );
-        expect(markup).toBe('<i>km-dark</i>');
+        expect(markup).toBe('<i>xx-dark</i>');
     });
 
     test('with one context listed twice the first entry wins: it wraps innermost', () => {

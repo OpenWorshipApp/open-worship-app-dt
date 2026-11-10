@@ -20,7 +20,7 @@ area reads that first.
 | "it is slow", "the laptop freezes", "startup takes ages", "the installer is huge" | `performance` |
 | "the screen went blank", "I lost my song", "it crashed when I imported" | `reliability` |
 | "is it safe to open a file somebody sent me", "what can a website do" | `security` |
-| "volunteers cannot find X", "it looks wrong in Khmer", "the error made no sense" | `ui` |
+| "volunteers cannot find X", "it looks wrong in my language", "the error made no sense" | `ui` |
 | "the lint takes forever", "tests are flaky", "setting up the repo is painful" | `dev-flow` |
 | "this file is a mess", "we keep breaking X", "our dependencies are old" | `code-health` |
 | "the manual is wrong", "the assistant said a button that is not there", "notes are out of date" | `docs` |
@@ -224,14 +224,15 @@ two renderers.
 
 ## ui
 
-**Who it protects:** a non-technical volunteer — often reading Khmer, often
+**Who it protects:** a non-technical volunteer — often reading the app in a
+language other than English, often
 minutes before a service — on a small laptop screen beside a projector.
 
 **Scope:** every window a volunteer touches — `presenter`, `reader`,
 `appDocumentEditor`, `lyricEditor`, `bibleNote`, `setting`, the popups; the
 `--app-*` tokens (memory `console-design-system-tokens`) under light and dark
-`data-bs-theme`; `src/lang/` and `tran()` — a missing Khmer key THROWS in dev
-and blanks the page, and shows English in a packaged Khmer window;
+`data-bs-theme`; `src/lang/` and `tran()` — a missing key THROWS in dev in any
+non-English language and blanks the page, and shows English in a packaged one;
 accessibility (names, roles, keyboard, focus, contrast); controls painted only
 under the mouse (memory `hover-hidden-controls`); empty, loading and error
 states; what effects cost to paint (blur, glass, animation — `performance`
@@ -243,7 +244,7 @@ their own `tran` in the app's language — memory
 in-app tips and their coverage → `/owa-enhance-tips` (`TP-xx`).
 
 **Leads:** literal English `title`, `aria-label`, `placeholder` and `alt`
-text outside `tran()` — each shows English in a Khmer window and is a label the
+text outside `tran()` — each shows English in a translated window and is a label the
 app's own tools cannot match there; hard-coded colours outside the tokens;
 the robot run's findings.
 
@@ -251,14 +252,16 @@ the robot run's findings.
 
 1. **Look.** `take_screenshot` of each window as it stands. For the theme and
    language NOT showing, use the newest robot run's screenshots
-   (`r*-km.png` under `test-results/robot-test/`) — switching either is a
+   (the locale pass's `r*-<code>.png` under `test-results/robot-test/`) — switching either is a
    settings change and waits for an OK.
 2. **Names and keyboard.** `take_snapshot` for controls with no name
    (`button ""`); Tab through a window — can every control be reached, and is
    the focus visible? `lighthouse_audit` with `mode: "snapshot"` on a window
    that is not presenting.
-3. **Khmer.** Clipped or overflowing labels, fallback fonts, English left in a
-   Khmer window — the literal-attribute leads, checked on screen.
+3. **Non-English languages.** Clipped or overflowing labels, fallback fonts,
+   English left in a translated window — the literal-attribute leads, checked
+   on screen in an installed language (one whose script has no spaces or
+   taller glyphs shows clipping first).
 4. **Discoverability.** `owa_list_ui` marks `showsOnHover`: which of those must
    a first-time volunteer find to do a core task?
 5. **The words a volunteer reads when something fails** — `showSimpleToast`
@@ -273,8 +276,8 @@ hover-only toolbars are deliberate — finding them is fair game, hiding more is
 not; memory `app-ellipsis-left-reverses-names`,
 `confirm-popup-labels-auto-tran`, `qa-intentional-not-bugs`.
 
-**Proof on apply:** before and after screenshots of the same window; the Khmer
-window too when a label changed, with its key added; the keyboard path walked;
+**Proof on apply:** before and after screenshots of the same window; a
+translated window too when a label changed, with its key added in every language; the keyboard path walked;
 for any behaviour change, `user-workflows.md` and `coverage-matrix.md` updated
 with their dates bumped — and no manual step published that was not watched
 working.

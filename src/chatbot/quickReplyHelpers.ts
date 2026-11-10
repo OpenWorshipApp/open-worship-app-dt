@@ -94,7 +94,7 @@ function genFrameMarker(word: string, englishAliasList: string[] = []) {
 }
 // A model writes its options under another English word now and then
 // (2026-11-08, BN-29: Free's Nemotron ended a note answer with "Choices: Undo
-// this change", which stayed in the answer as words, half put into Khmer).
+// this change", which stayed in the answer as words, half translated).
 const OPTIONS_MARKER = genFrameMarker('OPTIONS', ['CHOICES']);
 // How far back the marker may sit. The model puts it last; two lines of slack
 // covers a stray blank or a closing sentence typed after it. Further back than
@@ -139,10 +139,10 @@ function toCleanReply(raw: string) {
  * this button is shown".
  *
  * So an option is kept when it has a Latin letter (a button name in another
- * language inside an English option, "Show me" and a Khmer button's name, is still
+ * language inside an English option, "Show me" and a translated button's name, is still
  * English) or when it is written in a language somebody CHOSE: the answer's
- * own, or the one the app is shown in (`checkIsChosenScript`) -- a Khmer
- * answer's Khmer options. A script neither of them uses is the model changing
+ * own, or the one the app is shown in (`checkIsChosenScript`) -- a translated
+ * answer's own options. A script neither of them uses is the model changing
  * language on its own.
  *
  * Enforced here rather than asked for in the prompt, which is this window's
@@ -153,7 +153,7 @@ function checkIsReadableReply(reply: string, answerText: string) {
 }
 
 // A reply's length as it is SEEN: a vowel sign or a subscript mark adds a
-// code unit to a Khmer word and nothing to its width.
+// code unit to a word and nothing to its width.
 function toShownLength(reply: string) {
     return reply.replace(/\p{M}/gu, '').length;
 }
@@ -703,7 +703,7 @@ export function genQuickReplies(text: string): string[] {
     return YES_NO_LEAD.test(question) ? [YES_REPLY, NO_REPLY] : [];
 }
 
-// Letters of every script: keyed on `[a-z0-9]` alone, a Khmer option had an
+// Letters of every script: keyed on `[a-z0-9]` alone, a non-Latin option had an
 // empty key and was dropped as a duplicate of nothing.
 function toMatchKey(text: string) {
     return text
@@ -757,7 +757,7 @@ export function checkIsDraftEcho(reply: string) {
 // An action's label is stored in English and translated where it is drawn
 // (`tranLabel`), while a model answering in the window's language writes its
 // options in it -- so both shapes of the label are taken. Seen live in a
-// Khmer window: the import offer's button and the model's chip with the same
+// non-English window: the import offer's button and the model's chip with the same
 // words, side by side under one answer.
 function dropDuplicates(replies: string[], actionLabels: string[]) {
     const taken = new Set(

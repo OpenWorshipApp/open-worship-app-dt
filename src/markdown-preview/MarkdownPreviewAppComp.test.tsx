@@ -20,8 +20,8 @@ const h = vi.hoisted(() => ({
     openFile: vi.fn(),
     reveal: vi.fn(),
     initAllLangCss: vi.fn(async () => [
-        { fontFamily: 'Khmer' },
-        { fontFamily: 'French' },
+        { fontFamily: 'app-Xx-Face' },
+        { fontFamily: 'app-Yy-Face' },
     ]),
 }));
 
@@ -214,7 +214,7 @@ describe('Markdown Preview window', () => {
             container
                 .querySelector<HTMLElement>('.app-markdown-body')
                 ?.style.getPropertyValue('--app-markdown-lang-font-families'),
-        ).toBe('Khmer, French');
+        ).toBe('app-Xx-Face, app-Yy-Face');
         expect(h.mermaid).toHaveBeenCalledWith(
             expect.any(HTMLDivElement),
             [],

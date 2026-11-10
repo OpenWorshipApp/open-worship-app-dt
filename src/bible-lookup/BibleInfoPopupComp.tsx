@@ -89,7 +89,7 @@ function RenderInfoRowComp({
 }: Readonly<{ row: InfoRowType; fontFamily?: string }>) {
     // Two grid cells rather than a flex row: the labels then share one column
     // width, so the values stay aligned whatever the UI language makes the
-    // longest label (the Khmer ones are far wider than the English).
+    // longest label (a translation's can be far wider than the English).
     return (
         <>
             <div className="text-muted">{tran(row.label)}</div>

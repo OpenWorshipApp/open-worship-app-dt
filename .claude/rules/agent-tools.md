@@ -229,8 +229,8 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `genGuideCardWords` hands `start` the window language's words as `words`.
   A phrase stitched from pieces cannot be translated, which is why none is
   left. `guide.test.mjs` holds the list to the runtime's own source (a
-  sentence said but not listed stays English in silence) and to having its
-  Khmer and French. What a press REFUSES with (`toTwinWords`, a refusal's
+  sentence said but not listed stays English in silence) and to having it in
+  every language. What a press REFUSES with (`toTwinWords`, a refusal's
   `reason`) still goes back to a model, and stays English. **And its
   lettering** (2026-10-17, the user's picture of the card with its Khmer in
   the OS's fallback face: _there's no font-family apply on guiding panel_):
@@ -271,7 +271,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `isFindTranslated: false`): the Bible Note editor is the bible-note
   package, which has no translator, so its toolbar reads _Formatting options
   for font family_ in every language -- a translated find would match nothing
-  in a Khmer window, and `tran()` throws on a key no dictionary has. Its 19
+  in a non-English window, and `tran()` throws on a key no dictionary has. Its 19
   lessons each open one menu or panel and name what is inside it, since a
   page lesson is one step. `DailyTipComp` listens for the Help menu in every supported window; only the main window
   owns the shared menu registration. **One press opens every open page's
@@ -1644,7 +1644,7 @@ false` and searches only a dataset a lookup panel already holds
   `findWindowDoneCardAsk` maps it back), _make the words smaller_ and
   _make every box 110 px_ -- a short English line and nothing else in it,
   or the same in a language whose `assistant.json` says it
-  (`textSizeAsks`, `languageEditAskHelpers.ts`: Khmer and French);
+  (`textSizeAsks`, `languageEditAskHelpers.ts`);
   a slide named, a box chosen or a look asked for stays the model's. The
   window reads the document (`slides`), scales every unlocked text box
   (×1.25 / ×0.8, so a 90 title over a 70 subtitle stays above it --

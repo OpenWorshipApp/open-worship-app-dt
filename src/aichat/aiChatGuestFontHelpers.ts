@@ -1,7 +1,7 @@
 // The app language's letters drawn in its own face INSIDE an AI Chat site
-// (2026-10-17, the user's picture of Claude's page with its Khmer in the
-// operating system's fallback face: _ai chat, make font-family effect page
-// body as well_).
+// (2026-10-17, the user's picture of Claude's page with the app language's
+// words in the operating system's fallback face: _ai chat, make font-family
+// effect page body as well_).
 //
 // The site is a stranger's page in a guest (`aichat.md`), so nothing of the
 // app is fetched by it and nothing of it reaches back: the window reads the
@@ -11,7 +11,7 @@
 // only the language's letters (`unicode-range`, from the language's
 // `scriptPattern`), and is added under the font names the site already
 // draws its text in, so its Latin text and its icon fonts are exactly as
-// they were and a Khmer letter in that text takes this face instead of
+// they were and the language's letters in that text take this face instead of
 // whatever the OS falls back to. A site drawing its text in system fonts
 // gets one rule more, on its body: the face's own name in front of the
 // site's own list.
@@ -31,10 +31,11 @@
 // face of that name (the user's same-day report: _ai chat font-family not
 // effect the website_). Chromium picks ONE group of faces per name by those
 // three, and only inside a group does `unicode-range` share the letters
-// out: a Khmer face at weight 400 beside claude.ai's `anthropic-sans` at
+// out: a language face at weight 400 beside claude.ai's `anthropic-sans` at
 // `300 800` won the group for regular text, and its Latin fell through to
-// Segoe UI. The cost: in a site face covering every weight, bold Khmer is
-// drawn in the regular file, since one group holds one face per letter.
+// Segoe UI. The cost: in a site face covering every weight, the language's
+// bold is drawn in the regular file, since one group holds one face per
+// letter.
 //
 // Which names: the site faces the browser has LOADED -- it loads a web font
 // only for text drawn in it -- and every one it loads later (`loadingdone`),
@@ -45,7 +46,7 @@
 import type { AiChatGuestElementType } from './webviewTypes';
 
 export type LanguageFontType = {
-    // The name the app's own pages know the face by (`app-Battambang`).
+    // The name the app's own pages know the face by (`app-<family>`).
     family: string;
     // The language pack's @font-face sheet (`genCss`), read for its files.
     css: string;
@@ -160,8 +161,8 @@ async function toBase64(url: string) {
 // Set on the page's window by the script below; read first, so the second
 // load event of a page sends no font over again.
 const GUEST_FONT_MARK = '__owaLanguageFont';
-// The letter blocks the world's writing systems live in, Khmer's included
-// (U+1780 and U+19E0 are both under this). Everything ABOVE it -- the
+// The letter blocks the world's writing systems live in, the scripts of
+// South and Southeast Asia included (U+0900 to U+19FF are all under this). Everything ABOVE it -- the
 // Private Use Area an icon font's letters live in, the symbol planes, the
 // emoji -- stays the site's own face under a name we borrow, or an answer
 // full of ✓ and arrows would empty out the moment a custom font is picked.
@@ -178,9 +179,9 @@ export const GUEST_TEXT_UNICODE_RANGE = 'U+0-2FFF';
  * the rule that names it outright. Sets the page's font mark itself, for a
  * language with no face of its own.
  *
- * The `local()` name traps, measured on the user's Battambang: unlike a
+ * The `local()` name traps, measured on the user's installed face: unlike a
  * bare CSS `font-family` name, `local()` wants the face's FULL name
- * (`Battambang Regular`) or its PostScript name (`Battambang-Regular`) --
+ * (`<Family> Regular`) or its PostScript name (`<Family>-Regular`) --
  * the bare family name loads nothing and the face ends in `error` status
  * ("A network error occurred", on the host page as much as in a guest), so
  * each borrow tries all three spellings (regular AND bold, picked by the

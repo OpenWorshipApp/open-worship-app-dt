@@ -464,7 +464,7 @@ describe('presenting-flow archives', () => {
                     target: { ...cross, chapterEnd: undefined },
                 },
                 { id: 2, bibleKey: 'KJV', target: { ...cross, chapterEnd: 2 } },
-                { id: 3, bibleKey: 'LSG', target: { ...cross } },
+                { id: 3, bibleKey: 'TQLS', target: { ...cross } },
                 { id: 4, bibleKey: 'KJV', target: { ...cross } },
             ],
             filePath: '/default',

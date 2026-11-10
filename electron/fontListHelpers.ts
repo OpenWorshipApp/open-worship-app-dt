@@ -14,10 +14,11 @@ import path from 'node:path';
  *   weight and says whether that face is one WPF would SIMULATE rather than one
  *   the family ships. The research in `extra-work/font/find-font-files.ps1` loaded every
  *   font FILE and guessed the style from its name: ~11 s, and it called
- *   `segoeuib.ttf` and `Battambang-Bold.ttf` Regular. This takes ~2 s with
- *   PowerShell's own start-up. The per-user font folder that research found is
- *   read too: a double-clicked install lands there, which is where a Khmer
- *   font usually is, and a system list that leaves it out loses that font.
+ *   `segoeuib.ttf` and a script font's own `-Bold.ttf` Regular. This takes
+ *   ~2 s with PowerShell's own start-up. The per-user font folder that
+ *   research found is read too: a double-clicked install lands there, which is
+ *   where a font for a language's own script usually is, and a system list
+ *   that leaves it out loses that font.
  * - macOS: `NSFontManager` through JXA, a face's weight read off its style
  *   name and then AppKit's 0-15 scale; `system_profiler` if that fails.
  * - Linux: `fc-list`, fontconfig's weight scale mapped onto CSS.
@@ -47,8 +48,8 @@ const WIN32_FONT_SCRIPT = [
     // NOT `FamilyTypefaces`: that lists the faces WPF would SIMULATE as well as
     // the ones the family ships, so every single-weight family came back
     // `400,700` -- 113 of the 240 families on the dev machine, Jokerman and
-    // Algerian among them, and the Khmer `Moul` and `Khmer OS Battambang` a
-    // church actually presents in. Picking that bold got Chromium's synthetic
+    // Algerian among them, and the one-weight faces of a language's own script
+    // a church actually presents in. Picking that bold got Chromium's synthetic
     // one, and the weight picker never hid itself for a one-weight family
     // (9 such families by that list against 122 real ones). `GetTypefaces()`
     // carries `IsBoldSimulated`; the weight read off the face is the same.

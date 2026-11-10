@@ -14,8 +14,8 @@ const AT = new Date('2026-10-15T07:03:42.123Z');
 function genNote(overrides: Partial<Parameters<typeof genBibleImportNote>[0]>) {
     return genBibleImportNote({
         origin: { by: 'chatbot' },
-        fileInfo: { key: 'KHM', title: 'Khmer Bible' },
-        chosen: { key: 'KHM', title: 'Khmer Bible', locale: 'km-KH' },
+        fileInfo: { key: 'XXV', title: 'Made Up Bible' },
+        chosen: { key: 'XXV', title: 'Made Up Bible', locale: 'xx-XX' },
         at: AT,
         ...overrides,
     });
@@ -26,23 +26,23 @@ describe('the note an imported Bible keeps', () => {
         const note = genNote({
             origin: {
                 by: 'chatbot',
-                url: 'https://github.com/Beblia/Holy-Bible-XML-Format/blob/master/KhmerBible.xml',
+                url: 'https://github.com/Beblia/Holy-Bible-XML-Format/blob/master/MadeUpBible.xml',
                 downloadUrl:
-                    'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/KhmerBible.xml',
+                    'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/MadeUpBible.xml',
                 finalUrl:
-                    'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/KhmerBible.xml',
-                fileName: 'KhmerBible.xml',
+                    'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/MadeUpBible.xml',
+                fileName: 'MadeUpBible.xml',
                 bytes: 4718592,
                 bookNames: {
-                    label: 'Khmer names (KSV)',
+                    label: 'Made Up names (TQVS)',
                     source: 'https://www.bible.com/versions/1270',
                 },
             },
-            fileInfo: { key: '', title: 'Khmer Bible' },
+            fileInfo: { key: '', title: 'Made Up Bible' },
             chosen: {
-                key: 'KSV',
-                title: 'Khmer Standard Version',
-                locale: 'km-KH',
+                key: 'TQVS',
+                title: 'Made Up Standard Version',
+                locale: 'xx-XX',
                 digits: [
                     '０',
                     '１',
@@ -61,12 +61,12 @@ describe('the note an imported Bible keeps', () => {
         });
         expect(note.split('\n')).toEqual([
             'Imported on 2026-10-15 07:03 UTC by the assistant (Chatbot) in Open Worship app 2026.10.15.',
-            'Downloaded from: https://github.com/Beblia/Holy-Bible-XML-Format/blob/master/KhmerBible.xml',
-            'File link used: https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/KhmerBible.xml',
-            'File: KhmerBible.xml, 4.5 MB',
+            'Downloaded from: https://github.com/Beblia/Holy-Bible-XML-Format/blob/master/MadeUpBible.xml',
+            'File link used: https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/MadeUpBible.xml',
+            'File: MadeUpBible.xml, 4.5 MB',
             'Contents: 66 books, 1189 chapters, 31102 verses.',
-            'Title in the file: Khmer Bible',
-            'Chosen: key KSV, language km-KH, digits ０ １ ２ ３ ４ ５ ６ ７ ８ ９, book names "Khmer names (KSV)" (https://www.bible.com/versions/1270).',
+            'Title in the file: Made Up Bible',
+            'Chosen: key TQVS, language xx-XX, digits ０ １ ２ ３ ４ ５ ６ ７ ８ ９, book names "Made Up names (TQVS)" (https://www.bible.com/versions/1270).',
         ]);
     });
 
@@ -87,7 +87,7 @@ describe('the note an imported Bible keeps', () => {
         expect(
             genNote({
                 origin: { by: 'settings', fileName: 'my.xml', bytes: 2000 },
-                fileInfo: { key: 'OLD', title: 'Khmer Bible' },
+                fileInfo: { key: 'OLD', title: 'Made Up Bible' },
             }),
         ).toContain('From the file: my.xml, 2 KB');
         const fromChatbot = genNote({
@@ -96,7 +96,7 @@ describe('the note an imported Bible keeps', () => {
                 isLinkFromChatbot: true,
                 url: 'https://example.org/k.xml',
             },
-            fileInfo: { key: 'OLD', title: 'Khmer Bible' },
+            fileInfo: { key: 'OLD', title: 'Made Up Bible' },
         });
         expect(fromChatbot).toContain(
             'by Settings > Bible > Import XML File, with the link from the assistant (Chatbot).',

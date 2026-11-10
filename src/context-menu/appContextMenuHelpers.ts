@@ -118,8 +118,8 @@ export function markOverflowingMenuLabels(menu: HTMLElement) {
         label.style.setProperty(MARQUEE_INDENT_VAR, `${measured.indent}px`);
         // The pseudo-element takes its font from this wrapper, not from the
         // label's own `<span data-locale-ff>`; handing the wrapper the same
-        // marker lets `applyFontFamily` give it the label's font, or a Khmer
-        // Bible title would scroll in the OS fallback face.
+        // marker lets `applyFontFamily` give it the label's font, or a Bible
+        // title in its own script would scroll in the OS fallback face.
         for (const key of FONT_DATA_KEYS) {
             const value = measured.fontHolder?.dataset[key];
             if (value !== undefined && label.dataset[key] !== value) {

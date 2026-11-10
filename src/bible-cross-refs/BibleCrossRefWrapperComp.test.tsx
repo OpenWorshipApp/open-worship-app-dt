@@ -51,7 +51,7 @@ vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: (name: string) => `icon:${name}`,
 }));
 vi.mock('../helper/ai/bibleCrossRefHelpers', () => ({
-    useBibleKeyContext: () => 'KHM',
+    useBibleKeyContext: () => 'TQAM',
 }));
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     useBibleFontFamily: (bibleKey: string) => `${bibleKey} Font`,
@@ -122,8 +122,8 @@ describe('BibleCrossRefWrapperComp', () => {
         );
         const bibleKey =
             host.querySelector<HTMLSpanElement>('.app-xref-card-key')!;
-        expect(bibleKey.textContent).toBe('KHM');
-        expect(bibleKey.style.fontFamily).toBe('KHM Font');
+        expect(bibleKey.textContent).toBe('TQAM');
+        expect(bibleKey.style.fontFamily).toBe('TQAM Font');
         // A control inside the collapse button could not be pressed.
         const note = host.querySelector('.test-note')!;
         expect(toggle.contains(note)).toBe(false);

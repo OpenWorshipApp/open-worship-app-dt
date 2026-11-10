@@ -10,7 +10,7 @@ import PptxSlide from '../../app-document-list/PptxSlide';
  * A card is `margin: 2px` inside a 1px border (`VarySlideComp.scss`), so it
  * takes its thumbnail width plus 6, and its header is a fixed 35 high. Both
  * figures are only a FIRST GUESS: the grid measures a real row and corrects
- * itself, which is what keeps the header's line box right in Khmer and French.
+ * itself, which is what keeps the header's line box right in every language.
  */
 export const THUMBNAIL_EXTRA_WIDTH = 6;
 export const THUMBNAIL_EXTRA_HEIGHT = 41;

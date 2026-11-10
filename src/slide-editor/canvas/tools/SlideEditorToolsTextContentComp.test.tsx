@@ -49,7 +49,7 @@ beforeEach(() => {
     h.setProps.mockReset();
     h.props = {
         text: 'Amazing grace',
-        fontFamily: 'Battambang',
+        fontFamily: 'Made Up Sans',
         fontWeight: '700',
     };
     container = document.createElement('div');
@@ -70,7 +70,7 @@ describe('SlideEditorToolsTextContentComp', () => {
         expect(container.querySelector('section')?.dataset.title).toBe('Text');
         expect(textarea.value).toBe('Amazing grace');
         expect(textarea.placeholder).toBe('Type the slide text here');
-        expect(textarea.style.fontFamily).toBe('Battambang');
+        expect(textarea.style.fontFamily).toBe('Made Up Sans');
         expect(textarea.style.fontWeight).toBe('700');
     });
 

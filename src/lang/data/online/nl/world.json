@@ -6,5 +6,8 @@
     },
     "latinStopWords": {
         "nl-NL": "en de het van die in een niet zij hij te dat met"
+    },
+    "catalogLanguageCodes": {
+        "nl": "nld"
     }
 }

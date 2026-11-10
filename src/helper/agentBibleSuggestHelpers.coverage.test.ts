@@ -4,8 +4,8 @@ import { beforeEach, expect, test, vi } from 'vitest';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
-        lang: 'km',
-        lookupBible: 'KH2',
+        lang: 'xx',
+        lookupBible: 'XX2',
         bibleList: [] as { key: string; locale: string }[],
         bibleInfo: {} as Record<
             string,
@@ -64,11 +64,11 @@ import { handleAgentBibleSuggestRequest } from './agentBibleSuggestHelpers';
 
 const DIGITS = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
 
-function toKhmerDigits(value: number) {
+function toOwnDigits(value: number) {
     return String(value).replace(/\d/g, (digit) => DIGITS[Number(digit)]);
 }
 
-function fromKhmerDigits(value: string) {
+function fromOwnDigits(value: string) {
     return Number(
         Array.from(value, (digit) => {
             const index = DIGITS.indexOf(digit);
@@ -78,19 +78,19 @@ function fromKhmerDigits(value: string) {
 }
 
 beforeEach(() => {
-    state.lang = 'km';
-    state.lookupBible = 'KH2';
+    state.lang = 'xx';
+    state.lookupBible = 'XX2';
     state.bibleList = [
-        { key: 'KH1', locale: 'km' },
+        { key: 'XX1', locale: 'xx' },
         { key: 'KJV', locale: 'en' },
-        { key: 'KH2', locale: 'km-KH' },
+        { key: 'XX2', locale: 'xx-XX' },
     ];
     state.bibleInfo = {
-        KH1: {
+        XX1: {
             keyBookMap: { GEN: 'First Genesis', JHN: 'First John' },
             booksAvailable: ['GEN', 'JHN'],
         },
-        KH2: {
+        XX2: {
             keyBookMap: { GEN: 'Genesis', JHN: 'John', JOB: 'Job' },
             booksAvailable: ['GEN', 'JHN', 'JOB'],
         },
@@ -121,11 +121,11 @@ beforeEach(() => {
                 : 0,
     );
     mocks.fromLocaleNumber.mockImplementation(
-        async (_bibleKey: string, value: string) => fromKhmerDigits(value),
+        async (_bibleKey: string, value: string) => fromOwnDigits(value),
     );
     mocks.toLocaleNumber.mockImplementation(
         async (_bibleKey: string, value: number) =>
-            state.localizedNumbers ? toKhmerDigits(value) : String(value),
+            state.localizedNumbers ? toOwnDigits(value) : String(value),
     );
     mocks.getHeldLookupData.mockImplementation(() => state.held);
     mocks.acquire.mockImplementation(async () => state.acquired);
@@ -134,7 +134,7 @@ beforeEach(() => {
 test('book suggestions use the Bible selected in the lookup, then list its matching names', async () => {
     const result = await handleAgentBibleSuggestRequest({ prefix: 'jo' });
 
-    expect(mocks.getBibleInfo).toHaveBeenCalledWith('KH2');
+    expect(mocks.getBibleInfo).toHaveBeenCalledWith('XX2');
     expect(result).toEqual({
         kind: 'reference',
         suggestions: [
@@ -150,7 +150,7 @@ test('unavailable Bibles, books, chapters, and verse counts produce no suggestio
         handleAgentBibleSuggestRequest({ prefix: 'John' }),
     ).resolves.toEqual({ kind: 'reference', suggestions: [] });
 
-    state.bibleList = [{ key: 'KH2', locale: 'km' }];
+    state.bibleList = [{ key: 'XX2', locale: 'xx' }];
     await expect(
         handleAgentBibleSuggestRequest({ prefix: 'Unknown 1' }),
     ).resolves.toEqual({ kind: 'reference', suggestions: [] });
@@ -218,8 +218,8 @@ test('name suggestions combine people and places and release a newly acquired da
         'Mo',
         { limit: 3 },
     );
-    expect(mocks.acquire).toHaveBeenCalledWith('km');
-    expect(mocks.release).toHaveBeenCalledWith('km');
+    expect(mocks.acquire).toHaveBeenCalledWith('xx');
+    expect(mocks.release).toHaveBeenCalledWith('xx');
 });
 
 test('a held lookup dataset is reused and not released by the suggestion request', async () => {
@@ -264,7 +264,7 @@ test('digits the Bible cannot read back narrow nothing, and chapter zero has no 
             if (value === '９' || value === '４') {
                 throw new Error('not a digit of this Bible');
             }
-            return fromKhmerDigits(value);
+            return fromOwnDigits(value);
         },
     );
 
@@ -303,7 +303,7 @@ test('a chapter whose verses cannot be counted offers no verse', async () => {
     await expect(
         handleAgentBibleSuggestRequest({ prefix: 'John ３:' }),
     ).resolves.toEqual({ kind: 'reference', suggestions: [] });
-    expect(mocks.getVersesCount).toHaveBeenCalledWith('KH2', 'JHN', 3);
+    expect(mocks.getVersesCount).toHaveBeenCalledWith('XX2', 'JHN', 3);
 });
 
 test('a names dataset that fails to load offers no name and is not released', async () => {
@@ -316,7 +316,7 @@ test('a names dataset that fails to load offers no name and is not released', as
             allowLoad: true,
         }),
     ).resolves.toEqual({ kind: 'name', suggestions: [] });
-    expect(mocks.acquire).toHaveBeenCalledWith('km');
+    expect(mocks.acquire).toHaveBeenCalledWith('xx');
     expect(mocks.release).not.toHaveBeenCalled();
 });
 
@@ -337,5 +337,5 @@ test('an acquired lookup dataset is released when a names search throws', async 
             allowLoad: true,
         }),
     ).rejects.toThrow('lookup failed');
-    expect(mocks.release).toHaveBeenCalledWith('km');
+    expect(mocks.release).toHaveBeenCalledWith('xx');
 });

@@ -15,8 +15,8 @@
 // - 📎 opens the operating system's file dialog, which nothing here can
 //   drive, so the run sets the files on that same input over CDP
 //   (`DOM.setFileInputFiles`) -- exactly what choosing them does -- and the
-//   window's own reading of them runs: a Khmer text file, a picture of the
-//   main window, a PDF.
+//   window's own reading of them runs: a text file in the run's language, a
+//   picture of the main window, a PDF.
 // Nothing is typed into anything but the help window's own box, nothing is
 // put on a screen, and the tab is closed only once shown to be this run's.
 import fs from 'node:fs';

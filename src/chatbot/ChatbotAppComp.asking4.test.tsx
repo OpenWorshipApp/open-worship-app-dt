@@ -729,18 +729,18 @@ describe('the buttons no model can press', () => {
                 args: { step: 'bible' },
             },
             {
-                label: 'Khmer',
+                label: 'Sample',
                 toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-                args: { step: 'language', locale: 'km' },
+                args: { step: 'language', locale: 'xx' },
             },
         ]);
         await renderWindow();
         await press('Search another Bible');
         await waitFor(() => botCues().length === 2 && isIdle(), 'the step');
         expect(saidOf(youCues().at(-1))).toBe('Search another Bible');
-        await press('Khmer', botCues()[0]);
+        await press('Sample', botCues()[0]);
         await waitFor(() => botCues().length === 3 && isIdle(), 'the import');
-        expect(saidOf(youCues().at(-1))).toBe('Khmer');
+        expect(saidOf(youCues().at(-1))).toBe('Sample');
         expect(h.askLlmBot).not.toHaveBeenCalled();
     });
 

@@ -23,7 +23,7 @@ import {
  * which mounts far more often than anyone opens this menu.
  *
  * Given the locale of the bible being read, the code is green while it names
- * that bible's language and red while it does not — a Khmer bible beside `en`
+ * that bible's language and red while it does not — a bible in another language beside `en`
  * records is easy to miss. Without a bible it stays grey.
  */
 function toColorClass(bibleLangCode: string | null, langCode: string) {

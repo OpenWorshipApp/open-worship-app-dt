@@ -17,7 +17,9 @@
 // `worldLanguages.mjs` (English's own in `src/lang/data/en/world.json`), as a JSON
 // module so the renderer and the server still get the same thing with no I/O.
 
+import catalogWordFile from '../../src/lang/data/en/bible-catalog-words.json' with { type: 'json' };
 import { readWorldLanguages } from './worldLanguages.mjs';
+import { toAsciiDigits } from './asciiDigits.mjs';
 
 export const BIBLE_XML_ACTIONS = [
   'check',
@@ -32,9 +34,10 @@ export const BIBLE_XML_ACTIONS = [
 ];
 
 // Where a Bible is looked for when the person names a LANGUAGE and no link
-// ("import bible for khmer"): about a thousand translations as one XML file
-// each, named in English (`KhmerBible.xml`, `Khmer2019Bible.xml`), in the
-// same format as everything else here. Chosen by the user, 2026-10-06.
+// ("import bible for <language>"): about a thousand translations as one XML
+// file each, named in English (`<Language>Bible.xml`,
+// `<Language>2019Bible.xml`), in the same format as everything else here.
+// Chosen by the user, 2026-10-06.
 export const BIBLE_XML_CATALOG_URL =
   'https://github.com/Beblia/Holy-Bible-XML-Format';
 
@@ -47,7 +50,7 @@ export const BIBLE_DRAFT_ID_PATTERN = /^[a-z0-9]{12}$/;
 // found twice (bundled, and again on a website) is one choice, not two.
 export const BIBLE_NAME_LIST_ID_PATTERN = /^n[0-9a-f]{8}$/;
 
-// Inside a file name, not between word boundaries: `KhmerBible.xml`.
+// Inside a file name, not between word boundaries: `EnglishKJBible.xml`.
 const BIBLE_FILE_WORDS = /holy|bible|biblia|bibel|bijbel/gi;
 
 function toUrl(text) {
@@ -207,9 +210,9 @@ export function extractBibleXmlLinks(text, baseUrl) {
   return Array.from(found.values());
 }
 
-// Marks too: a Khmer word is letters AND the marks between them, and
-// splitting the language's own name for itself at its signs left nothing
-// that names a language.
+// Marks too: in a script written with vowel signs and subscripts a word is
+// letters AND the marks between them, and splitting a language's own name
+// for itself at its signs left nothing that names a language.
 function toPlainSearchWords(text) {
   return (
     String(text ?? '')
@@ -229,8 +232,8 @@ function readNativeLanguageMap() {
 }
 
 // A country, its people, or another name the language goes by, to the word
-// the catalog's files are named with. A person asks for the Bible "in
-// Cambodia" as readily as "in Khmer" -- measured 2026-10-10 against the
+// the catalog's files are named with. A person asks for the Bible in a
+// COUNTRY as readily as in a language -- measured 2026-10-10 against the
 // catalog's 998 file names: "cambodia", "china", "france", "laos", "germany",
 // "myanmar" and "espanol" each found nothing. Only names that are not
 // already the START of the catalog's own word: "korea" finds `Korean…` by
@@ -251,42 +254,12 @@ const VERSION_ALIAS_MAP = {
 };
 
 // The word each of the catalog's files is named for, as read off its 998
-// file names on 2026-10-10 (`Khmer2005Bible.xml` -> "khmer"). Only a HINT
+// file names on 2026-10-10 (`EnglishKJBible.xml` -> "english"). Only a HINT
 // for reading a request -- "add" or "want" beside one of these is somebody
 // asking for a Bible, beside anything else it is not -- and never what is
 // searched: the search reads the live file names. Spelt as the catalog
 // spells them ("tibetian", "galacian").
-const CATALOG_LANGUAGE_WORDS = new Set(
-  (
-    'aceh adilabad afrikaans ahirani albanian amharic arabic aramaic ' +
-    'armenian assamese avar awadhi aymara azerbaijan bagri balinese ' +
-    'balochi baoule bashkir basque bavarian belarusian bemba bengali ' +
-    'berber bhilali bodo bosnian braj bugis bulgarian bundeli burmese ' +
-    'catalan cebuano chechen chewa chhattisgarhi chibemba chin chinese ' +
-    'chuvash coptic croatian czech dagbani danish dinka dogri dutch dyula ' +
-    'edo english esperanto estonian ewe finnish fon french fulfulde ' +
-    'gaelic galacian garhwali georgian german ghomala greek guarani ' +
-    'gujarati gussi hadiyya haitian haryanvi hausa hebrew hindi hmong ' +
-    'hungarian iban ibibio icelandic igbo ika ilokano ilonggo indonesian ' +
-    'irish italian iu jamaican japanese javanese kabardian kabyle kachin ' +
-    'kalenjin kamba kangri kannada karakalpak kazakhstan kenya khmer ' +
-    'kiche kikuyu kikwango kimbundu kimiiru kinyarwanda kirundi kituba ' +
-    'konkani korean koya krio kumaoni kurdish kurukh kyrgyz lahu lambadi ' +
-    'lango lao latin latvian liberian lingala lithuanian lomwe luganda ' +
-    'lugbara luguru luo maasai macedonian madurese maithili makhuwa ' +
-    'makonde malagasy malayalam malaysian maori marathi marwari ' +
-    'mazanderani meitei mende mewari mizo moba moldovian mongolian ' +
-    'morisyen mossi munda nahuatl ndau ndebele nepali nigerian norwegian ' +
-    'nuer nyankole odia original oromo pampanga papua pashto persian ' +
-    'polish portuguese pular punjabi qeqchi quechuan romani romanian ' +
-    'russian sadri sanskrit santali sasak sena seraiki serbian shan ' +
-    'shekhawati shilluk shona sidamo sindhi sinhala siswati slovakian ' +
-    'slovenian soga somalian songe sotho spanish sukuma sundanese swahili ' +
-    'swedish sylheti tagalog tajik tamasheq tamil tarifit tashelhayt ' +
-    'tatar telugu teso thado thai tibetian tiv tshiluba tshivenda tsonga ' +
-    'tswana tulu turkana turkish turkmen twi ukrainian'
-  ).split(' '),
-);
+const CATALOG_LANGUAGE_WORDS = new Set(catalogWordFile.words);
 
 const ENGLISH_LANGUAGE_NAMES = new Intl.DisplayNames(['en'], {
   type: 'language',
@@ -323,9 +296,9 @@ function genBookNumberEndPattern() {
 
 /**
  * A language as the catalog spells it -- in English, the way its files are
- * named (`KhmerBible.xml`) -- for one a person typed in their own language
- * (Khmer or French in its own words) or as a code. A code only when it is the
- * WHOLE answer: "so", "no" and "am" are codes too, and are words first.
+ * named (`EnglishKJBible.xml`) -- for one a person typed in its own words or
+ * as a code. A code only when it is the WHOLE answer: "so", "no" and "am"
+ * are codes too, and are words first.
  */
 export function toCatalogLanguageWord(word, canBeCode = false) {
   const text = String(word ?? '')
@@ -339,10 +312,11 @@ export function toCatalogLanguageWord(word, canBeCode = false) {
     }
   }
   // Written out, not asked of `Intl`: Electron's own copy of the language
-  // data has no Khmer at all -- asked for Khmer's own name for itself it
-  // answers "Khmer", where Node answers in Khmer -- and Khmer is who this
-  // app is for. The word for "language" a person types in front of the name
-  // (`languageWordPrefixes`) comes off first.
+  // data lacks some languages entirely -- asked for such a language's own
+  // name for itself it answers in English, where Node answers in that
+  // language -- so an installed language's own words (`nativeLanguageNames`)
+  // answer first, every language alike. The word for "language" a person
+  // types in front of the name (`languageWordPrefixes`) comes off first.
   const languageWordPrefixPattern = genLanguageWordPrefixPattern();
   const bare =
     languageWordPrefixPattern === null
@@ -391,7 +365,7 @@ export function toBibleSearchWords(text) {
 /**
  * Whether a word of a request names a language the catalog has Bibles in --
  * as the catalog spells it, in its own script, or by its country. What tells
- * "I want a Khmer bible" (a Bible to fetch) from "I want to add a bible
+ * "I want a <language> bible" (a Bible to fetch) from "I want to add a bible
  * verse" (nothing of the kind). Three table reads and no more: the words it
  * is asked about come out of `toBibleSearchWords`, which has already turned
  * any other language's own name into the catalog's word, and asking `Intl`
@@ -441,7 +415,7 @@ function scoreBibleXmlLinks(links, wordList) {
   });
 }
 
-// The language a file is named for: `Khmer2005Bible.xml` -> "Khmer".
+// The language a file is named for: `EnglishKJBible.xml` -> "English".
 function toFileLanguage(name) {
   return /^\p{Lu}\p{Ll}+/u.exec(String(name ?? ''))?.[0] ?? null;
 }
@@ -533,7 +507,7 @@ export function suggestBibleLanguages(links, words, limit = 4) {
 }
 
 /**
- * The files worth offering, best first. A word the user said ("Khmer",
+ * The files worth offering, best first. A word the user said (a language,
  * "1954") must be in the file name; with no word, the first few by name and
  * the total, so the answer can ask which language. `words` are the ones the
  * files were matched on; `suggestions`, when nothing matched, the languages
@@ -542,11 +516,11 @@ export function suggestBibleLanguages(links, words, limit = 4) {
 export function rankBibleXmlLinks(links, words, limit = 6) {
   let wanted = toSearchWords(words);
   let all = scoreBibleXmlLinks(links, wanted);
-  // Every word if any file has them all -- "Khmer 2019" is ONE file, not
-  // every Khmer Bible and every Bible from 2019 -- else any of them.
+  // Every word if any file has them all -- "<language> 2019" is ONE file, not
+  // every Bible in that language and every Bible from 2019 -- else any of them.
   let isAllFound = wanted.length > 1 && all.some((one) => one.isAll);
   if (wanted.length > 1 && !isAllFound) {
-    // A year no file of that language has ("Khmer 1999") only narrows: the
+    // A year no file of that language has ("<language> 1999") only narrows: the
     // words that NAME the Bible decide, or the answer fills up with every
     // other language's Bible from that year (measured: "16" out of a verse
     // reference offered Chewa, Polish and Turkmen).
@@ -587,9 +561,9 @@ export function rankBibleXmlLinks(links, words, limit = 6) {
 
 /**
  * A Bible's own title off the first bytes of its file -- the root tag's
- * `translation`, `title` or `name`. A file NAME says "Khmer2019Bible"; the
- * file itself says "Khmer 2023" and the Bible's own name in its own script,
- * which is what a person recognises from the cover of their own Bible.
+ * `translation`, `title` or `name`. A file NAME says "<Language>2019Bible";
+ * the file itself says "<Language> 2023" and the Bible's own name in its own
+ * script, which is what a person recognises from the cover of their own Bible.
  */
 export function readBibleXmlTitle(head) {
   const rootTag = /<bible\b[^>]*>/i.exec(String(head ?? ''))?.[0] ?? '';
@@ -631,7 +605,7 @@ function readScriptLocales() {
 
 // The commonest little words of each language written in Latin letters -- an
 // installed language's own (`latinStopWords`), English the app's. A verse is
-// long enough that these alone tell English from French reliably.
+// long enough that these alone tell one such language from another reliably.
 function guessCyrillic(text) {
   const lowerText = text.toLowerCase();
   const world = readWorldLanguages();
@@ -681,11 +655,16 @@ export function guessBibleLocalesFromText(sample) {
   if (best.script === 'Latin') {
     return { script: best.script, locales: guessLatin(text) };
   }
-  if (
-    best.script === 'Han' &&
-    /\p{Script=Hiragana}|\p{Script=Katakana}/u.test(text)
-  ) {
-    return { script: 'Japanese', locales: ['ja-JP'] };
+  const marked = readWorldLanguages().scriptMarkLocales.find((row) => {
+    return (
+      row.script === best.script &&
+      row.marks.some((mark) => {
+        return new RegExp(`\\p{Script=${mark}}`, 'u').test(text);
+      })
+    );
+  });
+  if (marked !== undefined) {
+    return { script: marked.name ?? best.script, locales: marked.locales };
   }
   return { script: best.script, locales: best.locales };
 }
@@ -698,22 +677,8 @@ const KEY_SKIP_WORDS = new Set(
   ),
 );
 
-// The zero of each script whose digits a Bible title is written in -- Khmer,
-// Thai, Lao, Myanmar, Arabic-Indic, Persian, Devanagari, Bengali. A year
-// written in Khmer digits after a Khmer Bible's name is 1954 all the same.
-const DIGIT_ZERO_LIST = [
-  0x17e0, 0x0e50, 0x0ed0, 0x1040, 0x0660, 0x06f0, 0x0966, 0x09e6,
-];
-
-function toAsciiDigits(text) {
-  return text.replace(/\p{Nd}/gu, (digit) => {
-    const point = digit.codePointAt(0);
-    const zero = DIGIT_ZERO_LIST.find((one) => {
-      return point >= one && point <= one + 9;
-    });
-    return zero === undefined ? digit : String(point - zero);
-  });
-}
+// A year written in a script's own digits after a Bible's name is the same
+// year (`asciiDigits.mjs`: every script's digits the same way).
 
 function toKeyText(text) {
   return String(text ?? '')
@@ -797,7 +762,7 @@ export function genBibleKeyChoices({
 /**
  * How many of each list's book names appear in the Bible's own words.
  *
- * Editions spell the same books differently -- a 1954 Khmer Bible names
+ * Editions spell the same books differently -- a 1954 edition names
  * Genesis one way and a modern one another -- and the names of Isaiah, John
  * and Paul are all over the verses of the Bible they belong to. So the list
  * whose names the text USES is the one that matches it. Names every list

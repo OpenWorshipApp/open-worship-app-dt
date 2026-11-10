@@ -697,14 +697,14 @@ describe('the optional rows', () => {
         await act(async () => state.commonProps.setBackdropFilter(9));
         expect(lastChange().style.backdropFilter).toBe('blur(9px)');
         await act(async () => state.commonProps.setFontWeight('700'));
-        await act(async () => state.commonProps.setFontFamily('Khmer OS'));
+        await act(async () => state.commonProps.setFontFamily('Made Up Sans'));
         expect(lastChange().style).toMatchObject({
-            fontFamily: 'Khmer OS',
+            fontFamily: 'Made Up Sans',
             fontWeight: '700',
         });
         // The two values the marquee and quick text draw their own preview
         // with come back out of the hook itself.
-        expect(result!.fontFamily).toBe('Khmer OS');
+        expect(result!.fontFamily).toBe('Made Up Sans');
         expect(result!.fontWeight).toBe('700');
     });
 

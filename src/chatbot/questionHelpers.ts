@@ -328,8 +328,8 @@ export async function getAllQuestions(
     return [...groupMap.values()];
 }
 
-// Letters of every script: keyed on `[a-z0-9]` alone, a question in Khmer
-// was an empty key and matched nothing.
+// Letters of every script: keyed on `[a-z0-9]` alone, a question in a script
+// of its own was an empty key and matched nothing.
 function toFollowUpKey(text: string) {
     return text
         .toLowerCase()
@@ -697,7 +697,7 @@ export type KnownPageRowType = Pick<
  * filed under the page at all. The first 6 000 characters of W-51 never
  * reach step 8, Cast to a TV: measured 2026-10-10 on the laptop's 0.6B
  * model, the cast question got steps 1-2 and stopped, which was all it had
- * been shown. A `find` the page does not carry (a Khmer page under an
+ * been shown. A `find` the page does not carry (a translated page under an
  * English `find`) leaves the opening alone.
  *
  * And when no control settles it, the passages that match the QUESTION
@@ -749,8 +749,8 @@ export function clipKnownPageParts(
     const passage = row?.resources?.passage;
     const hasPassage = typeof passage === 'string' && passage.trim().length > 0;
     // The page comes in the window's language and the row's control is
-    // written in English: in a Khmer window the button is found by its Khmer
-    // words.
+    // written in English: in a translated window the button is found by its
+    // translated words.
     const at =
         wanted.length === 0 || hasPassage
             ? -1
@@ -826,7 +826,7 @@ export function clipKnownPage(
  * A page's blocks in its own order -- a numbered step with what hangs under
  * it, or a paragraph -- with the note the page tool writes at its foot left
  * off. A translation is written block for block: measured 2026-10-17, each of
- * the 64 Khmer pages splits into exactly as many blocks as its English page,
+ * the 64 pages of one translated manual splits into exactly as many blocks as its English page,
  * which is what lets a cut made of the English page be made of the
  * translation (`toLocalizedCut`).
  */
@@ -853,7 +853,7 @@ export function splitPageBlocks(pageText: string): string[] {
         // them, and pointed at by the step's start the commands never rode.
         // And a bullet: W-09's foreground list -- sessions, blend mode,
         // Effects -- was ONE block opening on the volume paragraph, so the
-        // Effects passage was quoted in Khmer as that paragraph, cut before
+        // Effects passage was quoted translated as that paragraph, cut before
         // it reached Effects (pass 7, EC-328).
         if (
             /^\s*\d+\.\s/.test(line) ||
@@ -890,8 +890,9 @@ function splitSentences(text: string) {
 }
 // How much longer than the English cut its translation may run: whole blocks
 // ride where the English cut took the start of one (the help window's
-// commands, 5 800 Khmer characters under one lead), though the translation
-// itself is no longer (W-42: 63 693 Khmer characters to 68 719 English).
+// commands, 5 800 translated characters under one lead), though the
+// translation itself is no longer (W-42: 63 693 translated characters to
+// 68 719 English).
 const LOCAL_PAGE_ALLOWANCE = 1.5;
 
 // A line as a cut writes it: `toPassages` joins a paragraph's lines with a
@@ -944,7 +945,7 @@ function listAlignedBlocks(englishPage: string, localPage: string) {
 // A line deep in a block says the block rides only when it is long enough to
 // be that line's own words: "Wordproject." ends a line of W-34's step 8 and a
 // sentence of its step 6, and a cut of step 6 carried step 8 in with it
-// (2026-10-18, gemma4:cloud in Khmer answered with both).
+// (2026-10-18, gemma4:cloud in a non-English language answered with both).
 const INNER_LINE_LEAD_LENGTH = 30;
 
 function checkIsBlockInCut(block: string, flatCut: string) {
@@ -963,14 +964,14 @@ function checkIsBlockInCut(block: string, flatCut: string) {
  * English cut's blocks stand, in order, with … where some were left out. The
  * cut is CHOSEN in English, because the row's control, passage and keywords
  * are English words, and READ in their language -- handed the English cut,
- * gemma4:cloud answering in Khmer copied its sentences as they stood, a
- * Khmer "open" before _View on the top menu bar again and click_
+ * gemma4:cloud answering in a non-English language copied its sentences as
+ * they stood, a translated "open" before _View on the top menu bar again and click_
  * (2026-10-17). Null when the two
  * pages do not line up block for block, or no block of the cut was found.
  *
  * Whole blocks ride, so a cut that took the start of a long one takes all of
- * it in the translation -- the help window's commands block is 5 800 Khmer
- * characters -- and the cut has a ceiling of its own: the English one's and
+ * it in the translation -- the help window's commands block is 5 800
+ * translated characters -- and the cut has a ceiling of its own: the English one's and
  * half again (`LOCAL_PAGE_ALLOWANCE`), the block that crosses it cut at a
  * line.
  */
@@ -1059,7 +1060,8 @@ export function findLocalizedPassageLead(
     // block's first words, _How do I cast the virtual display to a TV from
     // my phone?_ was answered with the app's own cast button, the step's
     // first sentence, where the passage is its fourth -- the phone's page
-    // (gemma4:cloud, the whole corpus asked in Khmer, 2026-10-17, EC-317).
+    // (gemma4:cloud, the whole corpus asked in a non-English language,
+    // 2026-10-17, EC-317).
     const englishSentences = splitSentences(
         toLeadText(aligned.englishBlocks[index]),
     );
@@ -1077,7 +1079,7 @@ export function findLocalizedPassageLead(
     // Inside a block whose sentences do not line up, no words of it are the
     // passage's: its first ones had pointed four report questions at the
     // paragraph's opening, the way the Report button is reached, where each
-    // asks about sending, keeping or email (Khmer W-42 split one sentence
+    // asks about sending, keeping or email (a translated W-42 split one sentence
     // more, at "Report: ", 2026-10-18). The part is then the one quoted.
     if (
         sentenceIndex > 0 &&
@@ -1092,7 +1094,7 @@ export function findLocalizedPassageLead(
     if (lead.length <= PASSAGE_LEAD_LENGTH) {
         return lead;
     }
-    // At a space: a cut inside a Khmer cluster leaves a vowel sign with no
+    // At a space: a cut inside a letter cluster leaves a vowel sign with no
     // letter to sit on.
     const spaceAt = lead.lastIndexOf(' ', PASSAGE_LEAD_LENGTH);
     // Never ending on the dash of the bullet that comes next.
@@ -1206,7 +1208,7 @@ const NAME_END_PATTERN = new RegExp(
  * The controls the page part a known question is filed with names -- its
  * bold labels, as the window it rides in shows them -- for the completeness
  * check to hold an answer against (`genCompletenessNudge`). Passes 9-10 of
- * the whole list asked in Khmer: the answers still short left out a control
+ * the whole list asked in a non-English language: the answers still short left out a control
  * that part named -- **Send report**, the Base URL box, the **Properties**
  * fold, **Show it** -- and "is a step missing?" did not find it (EC-333).
  */
@@ -1349,7 +1351,7 @@ const NAMED_PASSAGE_CHAR_LIMIT = 1500;
  * last line that does, and a … that says it goes on. Cut at the character,
  * the help window's command list ended mid-word, and the model copied it to
  * the same syllable three passes running -- an answer that stopped in the
- * middle of a sentence (2026-10-18, gemma4:cloud in Khmer).
+ * middle of a sentence (2026-10-18, gemma4:cloud in a non-English language).
  */
 function clipNamedPart(text: string) {
     if (text.length <= NAMED_PASSAGE_CHAR_LIMIT) {
@@ -1407,7 +1409,7 @@ const POINTED_BACK_PATTERN =
  * by pointing back at that one: _The two small arrows at the end of THAT
  * line walk them in order_, quoted by itself, does not say which line, and
  * _How do I see the other tips above the box?_ was answered with the `/`
- * command list (gemma4:cloud, the whole corpus asked in Khmer, 2026-10-17,
+ * command list (gemma4:cloud, the whole corpus asked in a non-English language, 2026-10-17,
  * EC-317) -- the line is the 💡 one, in the part before it.
  */
 function withPointedBackPart(pageText: string, partText: string) {
@@ -1434,8 +1436,8 @@ const INTRODUCED_KIND_LIST = [/^\d+\.\s/, /^[-*+]\s/, /^```/];
  * The part named to answer a question, with what it introduces when it ends
  * on a colon -- the steps, the bullets or the example after it, of one kind,
  * as many as fit: _Write it as a list of entries, each with a title to read
- * and a url to open:_ was quoted without the example under it, and the Khmer
- * answer described the file with no example (2026-10-18).
+ * and a url to open:_ was quoted without the example under it, and the
+ * translated answer described the file with no example (2026-10-18).
  */
 function withIntroducedPart(pageText: string, partText: string) {
     if (!/:$/.test(partText.trimEnd())) {
@@ -1469,7 +1471,7 @@ export function genKnownQuestionHint(
         focus?: BotFocusType;
         pageText?: string | null;
         // The same page in the language the model is asked in, when that is
-        // not English (`W-31@km`): what rides is cut from `pageText` and
+        // not English (`W-31@<code>`): what rides is cut from `pageText` and
         // quoted from this (`toLocalizedCut`), and the controls and menu
         // items are named as that language's app shows them.
         localPageText?: string | null;
@@ -1516,9 +1518,9 @@ export function genKnownQuestionHint(
         // every time).
         // A row that asks the assistant to put something UP, with the one
         // tool the prompt lets it do that with when asked: _Can you start a
-        // 5 minute countdown on the screen?_ asked in Khmer was answered
-        // "I can -- shall I do it now, or would you like the steps?" (the
-        // whole list asked in Khmer of gemma4:cloud, 2026-10-17, EC-323).
+        // 5 minute countdown on the screen?_ asked in a non-English language
+        // was answered "I can -- shall I do it now, or would you like the
+        // steps?" (the whole list asked so of gemma4:cloud, 2026-10-17, EC-323).
         const doTool = findDoAskTool(row);
         const isDoAsk = doTool !== null && tools.includes(doTool);
         parts.push(
@@ -1553,14 +1555,14 @@ export function genKnownQuestionHint(
             `this assistant has NOT been given ${missingTools.join(', ')} ` +
                 `-- the tool${missingTools.length > 1 ? 's' : ''} that ` +
                 // Said without a phrase to copy: "from this assistant" came
-                // back as it stood inside a Khmer answer (pass 6, EC-321).
+                // back as it stood inside a translated answer (pass 6, EC-321).
                 'would do it in the app -- so say plainly, in your own ' +
                 'words, that you cannot do that for them here, never write ' +
                 'as though it were done, and lead with the way the guide gives ' +
                 // "By hand" was read as "no command": _Can you write the
                 // notation for words I paste in?_ was answered without the
                 // `/lyric` its part names, pass after pass (gemma4:cloud,
-                // the whole list in Khmer, 2026-10-18).
+                // the whole list in a non-English language, 2026-10-18).
                 'to do it without them -- by hand, or a / command it names, ' +
                 'written out with what to type after it -- when it has one',
         );
@@ -1604,8 +1606,8 @@ export function genKnownQuestionHint(
     // Asked in another language, a menu item is named as that app shows it:
     // the menu bar's own names (View, Help) are English in every language,
     // the items a window adds under them are translated (`[en:tran:Reset
-    // Widgets Size]` in every page of the Khmer manual). Told "View → Reset
-    // Widgets Size, as written here", a model writing Khmer wrote it in
+    // Widgets Size]` in every page of a translated manual). Told "View → Reset
+    // Widgets Size, as written here", a model writing another language wrote it in
     // English. The menus' own items are English too (Help → AI Chat, Edit →
     // Find: `NATIVE_MENU_ITEM_MAP`).
     const toShownMenu = (path: string) => {
@@ -1677,7 +1679,7 @@ export function genKnownQuestionHint(
     // A step that ends "and send it" is written from habit as "press
     // Enter", and in this box Enter starts a new line: two help-window
     // answers in pass 13 left the person typing a second line (gemma4:cloud,
-    // the whole list in Khmer, 2026-10-18). The page says it; the hint says
+    // the whole list in a non-English language, 2026-10-18). The page says it; the hint says
     // it where every help-window answer sees it.
     const sendText =
         recipe === HELP_WINDOW_MANUAL_ID
@@ -1791,8 +1793,8 @@ export function genKnownQuestionHint(
                 clipNamedPart(namedShown);
         }
         // Pointed at by its own words in the language it rides in: the
-        // English words of the row were copied, as they stood, into a Khmer
-        // answer.
+        // English words of the row were copied, as they stood, into a
+        // translated answer.
         const pointer =
             localClipped === null
                 ? passage.trim()
@@ -1811,7 +1813,7 @@ export function genKnownQuestionHint(
                 : `the one with the words "${pointer}"` +
                   (namedFirst.length > 0 ? ', quoted first below' : '');
         // "Take from the others only what it leaves out" was read as "that
-        // part only": the whole corpus asked in Khmer of gemma4:cloud
+        // part only": the whole corpus asked in a non-English language of gemma4:cloud
         // (2026-10-17, EC-310) answered _How do I turn the AI features on or
         // off?_ with the part about turning them off "in the same settings
         // section", never naming which, and 27 of 84 answers graded short
@@ -1839,7 +1841,7 @@ export function genKnownQuestionHint(
                 'after it that finish the job.';
             // An example to write is the answer, not decoration: W-37's link
             // list rode first with its example under it, and four passes in
-            // a row the Khmer answer described the file and left the example
+            // a row the translated answer described the file and left the example
             // out -- inline in the sentence too (2026-10-18, EC-349).
             if (namedFirst.includes('```')) {
                 focusText +=

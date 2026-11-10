@@ -918,7 +918,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   letters a language names differs (`restoreTypedWords`,
   `listLookAlikePairs`; BN-37: Free's Nemotron wrote a typed Khmer line
   with TA's subscript for DA's -- the same on screen, not to a search). The size and whole-note style
-  shortcuts above read Khmer and French too, from each language's
+  shortcuts above read any language too, from its
   `assistant.json` (`textSizeAsks`, `noteStyleAsks`, `colorWords`;
   `languageEditAskHelpers.ts`, BN-16), and every other installed language's
   `typed.json` carries the size (larger, smaller) and bold for the whole

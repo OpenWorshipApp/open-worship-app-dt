@@ -266,10 +266,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
                     checkIsThisLang: () => false,
                 },
                 {
-                    locale: 'km',
-                    langCode: 'km',
-                    fontFamily: 'KhmerFont',
-                    stickyNoteFontFamily: 'KhmerSticky',
+                    locale: 'xx',
+                    langCode: 'xx',
+                    fontFamily: 'MadeUpFont',
+                    stickyNoteFontFamily: 'MadeUpSticky',
                     checkIsThisLang: (t: string) => t.includes('x'),
                 },
             ]);
@@ -301,10 +301,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             // every locale's css is injected in one go, not per non-current one
             expect(h.initAllLangCssMock).toHaveBeenCalledTimes(1);
             expect(capturedConfig.editorExtraFontFamilies).toEqual([
-                ['KhmerFont', 'km'],
+                ['MadeUpFont', 'xx'],
             ]);
             expect(capturedConfig.stickyNoteExtraFontFamilies).toEqual([
-                'KhmerSticky',
+                'MadeUpSticky',
             ]);
         });
 
@@ -447,7 +447,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
 
         test('getLangCode detects language or defaults to en', async () => {
             await setupInit();
-            expect(capturedConfig.getLangCode('has x here')).toBe('km');
+            expect(capturedConfig.getLangCode('has x here')).toBe('xx');
             expect(capturedConfig.getLangCode('plain')).toBe('en');
         });
 

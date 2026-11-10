@@ -24,9 +24,9 @@ const { state, mocks } = vi.hoisted(() => ({
     },
 }));
 
-// English labels to query by, while BOTH real dictionaries are checked: a
-// label missing its Khmer or French string throws here exactly as it would in
-// a dev window.
+// English labels to query by, while every installed package's real
+// dictionary is checked: a label missing its string in any of them throws
+// here exactly as it would in a dev window.
 vi.mock('../lang/langHelpers', () => ({
     tran: (key: string) => {
         for (const dictionary of state.dictionaries) {
@@ -113,7 +113,7 @@ vi.mock('../others/FontFamilyControlComp', () => ({
             <button
                 type="button"
                 onClick={() => {
-                    setFontFamily('Khmer OS');
+                    setFontFamily('Made Up Sans');
                 }}
             >
                 Pick font
@@ -544,11 +544,13 @@ describe('the foreground Properties panel', () => {
             false,
         );
         await press('Pick font');
-        expect(state.settings.get(names.fontFamily)).toBe('Khmer OS');
+        expect(state.settings.get(names.fontFamily)).toBe('Made Up Sans');
         // The family stays in the HOOK, so the widget's own preview follows.
-        expect(state.result.fontFamily).toBe('Khmer OS');
+        expect(state.result.fontFamily).toBe('Made Up Sans');
         expect(getRow('Font').classList.contains('fg-prop-engaged')).toBe(true);
-        expect(lastChange().style).toMatchObject({ fontFamily: 'Khmer OS' });
+        expect(lastChange().style).toMatchObject({
+            fontFamily: 'Made Up Sans',
+        });
         await press('Pick weight');
         expect(state.result.fontWeight).toBe('700');
         expect(lastChange().style).toMatchObject({ fontWeight: '700' });

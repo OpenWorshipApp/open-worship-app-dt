@@ -1,10 +1,10 @@
 // What a reader of a language other than English is SHOWN, checked answer by
-// answer (2026-10-17, the user's goal: _gemma4:cloud 100% work for Khmer
-// language_). Reads a `corpus-run.mjs --lang=<code>` file and, per answer,
-// every Latin-script run its words and buttons show that is NOT a real label
-// a reader of that language meets in the app:
+// answer (2026-10-17, the user's goal: gemma4:cloud working 100% in the
+// app's non-English language). Reads a `corpus-run.mjs --lang=<code>` file
+// and, per answer, every Latin-script run its words and buttons show that is
+// NOT a real label a reader of that language meets in the app:
 //
-// - a value of the language's own dictionary (`src/lang/data/online/<code>/index.ts`
+// - a value of the language's own dictionary (`src/lang/data/online/<code>/dictionary.json`
 //   -- the Reset Widgets Size button keeps "Widgets" in English in its
 //   translation),
 // - the language's own manual (`src/lang/data/online/<code>/manual/`, whose code spans
@@ -16,7 +16,7 @@
 // Beside it: no answer, an error, a timeout, a page that reloaded, an
 // internal name (a tool, a recipe id, a path) or an error sentence shown.
 //
-//   node lang-check.mjs <corpus.jsonl> [--lang=km] [--json] [--keys=a,b]
+//   node lang-check.mjs <corpus.jsonl> [--lang=<code>] [--json] [--keys=a,b]
 //        [--show=flagged|all|<n>]
 //
 // Model-free and read-only: whether an answer is RIGHT is graded against the

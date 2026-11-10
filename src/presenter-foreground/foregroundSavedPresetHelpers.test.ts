@@ -36,7 +36,7 @@ describe('saved foreground presets', () => {
     test("a session's look is saved whole and put back exactly on another", () => {
         state.settings.set('quick-text-s1-setting-show-widget-font-size', '52');
         state.settings.set('quick-text-s1-common-color', '#111827');
-        state.settings.set('quick-text-s1-common-font-family', 'Battambang');
+        state.settings.set('quick-text-s1-common-font-family', 'Made Up Sans');
         state.settings.set(
             'quick-text-s1-setting-show-widget-decoration',
             '{"padding":1}',
@@ -47,7 +47,7 @@ describe('saved foreground presets', () => {
         expect(values).toEqual({
             'props.fontSize': '52',
             'common.color': '#111827',
-            'common.fontFamily': 'Battambang',
+            'common.fontFamily': 'Made Up Sans',
             decoration: '{"padding":1}',
         });
         const presets = addForegroundSavedPreset([], '  Youth Night ', values)!;

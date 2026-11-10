@@ -102,13 +102,13 @@ describe('slide models', () => {
         getFontFamiliesMock.mockResolvedValue([]);
         vi.stubGlobal('document', {
             fonts: new Set([
-                { family: '"app-Battambang"', status: 'loaded' },
+                { family: '"app-Xx-Face"', status: 'loaded' },
                 { family: 'Failed Font', status: 'error' },
             ]),
         });
         const slide = new Slide('/docs/bible.ows', {
             ...createSlideJson(0),
-            canvasItems: ['app-Battambang', 'Missing Font', 'Failed Font'].map(
+            canvasItems: ['app-Xx-Face', 'Missing Font', 'Failed Font'].map(
                 (fontFamily) => ({ type: 'text', fontFamily }) as any,
             ),
         });
@@ -515,14 +515,14 @@ describe('slide models', () => {
         const slide = new Slide('/docs/verses.ows', {
             ...createSlideJson(5),
             canvasItems: [
-                { type: 'bible', bibleKeys: ['KJV', 'KHM'] },
+                { type: 'bible', bibleKeys: ['KJV', 'TQAM'] },
                 // Only a verse box names a Bible.
                 { type: 'text', bibleKeys: ['NIV'] },
                 { type: 'bible', bibleKeys: ['KJV'] },
                 { type: 'bible' },
             ] as any,
         });
-        expect([...slide.getBibleKeys()]).toEqual(['KJV', 'KHM']);
+        expect([...slide.getBibleKeys()]).toEqual(['KJV', 'TQAM']);
         expect(
             new Slide('/docs/plain.ows', createSlideJson(6)).getBibleKeys()
                 .size,

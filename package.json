@@ -79,6 +79,8 @@
             "!tools/owa-devtools-mcp/**/*.test.mjs",
             "!tools/owa-devtools-mcp/probe-mcp.mjs",
             "src/lang/data/en/world.json",
+            "src/lang/data/en/language-names.json",
+            "src/lang/data/en/bible-catalog-words.json",
             "src/lang/data/en/open-lyric-locales.json",
             "package.json"
         ],
@@ -87,6 +89,8 @@
             "dist/**/*.gz.bundle",
             "tools/owa-devtools-mcp/**/*",
             "src/lang/data/en/world.json",
+            "src/lang/data/en/language-names.json",
+            "src/lang/data/en/bible-catalog-words.json",
             "src/lang/data/en/open-lyric-locales.json",
             "node_modules/chrome-devtools-mcp/**/*",
             "node_modules/ws/**/*"

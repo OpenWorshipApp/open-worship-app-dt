@@ -2209,12 +2209,12 @@
             "text": "ដាក់ យ៉ូហាន ៣:១៦ លើអេក្រង់"
         },
         "settings.bible-settings.import-xml-url": {
-            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
-            "text": "នាំចូលព្រះគម្ពីរពីអាសយដ្ឋាន xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
+            "text": "នាំចូលព្រះគម្ពីរពីអាសយដ្ឋាន xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml"
         },
         "settings.bible-settings.import-bible-language": {
-            "en": "Import a Bible in \"Khmer\"",
-            "text": "នាំចូលព្រះគម្ពីរជាភាសា \"ខ្មែរ\""
+            "en": "Import a Bible in \"your language\"",
+            "text": "នាំចូលព្រះគម្ពីរជា \"ភាសារបស់អ្នក\""
         }
     }
 }

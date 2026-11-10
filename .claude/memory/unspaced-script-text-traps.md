@@ -1,6 +1,6 @@
 ---
-name: khmer-text-spacing-traps
-description: "Khmer separates words with zero-width spaces and writes a sentence with no space — word checks and \"one word\" tests break on both"
+name: unspaced-script-text-traps
+description: "A script written without spaces (first met in Khmer) separates words with zero-width spaces and writes a sentence with no space — word checks and \"one word\" tests break on both"
 metadata:
   node_type: memory
   type: project
@@ -23,9 +23,10 @@ Khmer text in this app's data and in model answers has two spacing traps:
 **Why:** both are invisible on screen; tests written with ordinary spaces
 pass while real data fails.
 
-**How to apply:** when matching or counting Khmer words, normalise the
+**How to apply:** when matching or counting words of a script written without
+spaces (Khmer is the one measured; Thai, Lao and Burmese share the trait), normalise the
 zero-width characters first, and never treat "one token" as "one word".
 Writing the escape `​` through the Edit tool can put the literal
 character into the file instead — eslint's `no-irregular-whitespace` catches
 it in `src/`, nothing does in `extra-work/`; write such regexes from a script
-file. Related: [[chatbot-follows-app-language]], [[electron-icu-has-no-khmer]].
+file. Related: [[chatbot-follows-app-language]], [[electron-icu-trimmed-locales]].

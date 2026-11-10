@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run not focused on one area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in an installed non-English language — a missing key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run not focused on one area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "dnd" for every drag-and-drop pairing (DD-01..19) — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -12,8 +12,8 @@ unit or Playwright tests.
 
 > **Read first:** [references/knowledge-base.md](./references/knowledge-base.md) — verified
 > field notes on **what to observe**, expected-vs-noise (which console/network output to
-> ignore), and the traps that ruin a run (dynamic Khmer/English locale **and the missing-key
-> throw that only shows in Khmer — §1.1**, popup-only windows, the `setting.html` navigation
+> ignore), and the traps that ruin a run (dynamic locale **and the missing-key
+> throw that only shows in a non-English language — §1.1**, popup-only windows, the `setting.html` navigation
 > trap, restoring live state). Skim it before you start.
 
 ## When to use
@@ -320,7 +320,7 @@ firewall), so it doubles as a prod row rather than costing one.
 | -------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1/::1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
 | userData / `setting.json` (KB §3, §10)             | `%APPDATA%\open-worship-app-dev`                | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`.                                                                                                                                                                                                                                                                                                                                               |
-| Missing Khmer key (§6d)                            | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
+| Missing key (§6d)                                  | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a translated screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
 | Toast stack check (§6, GL-10)                      | lock, `F6`, hover the toast, `F6`               | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`).                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `owa_find_ui` component names, `data-react-comp-*` | present                                         | Absent (the Vite plugin is `apply: 'serve'`). Locate by label / `data-widget-name` / `aria-label` only. Findings name the control, not the file — find the file in `src/` afterwards.                                                                                                                                                                                                                                                                                                                                                                                             |
 | Extra Binaries (§6e, MD-05)                        | mocked: copies the local `bin-<ver>.tar.gz`     | **Real download from the release CDN** — this is the only place that path is ever exercised; needs network. A missing local pack is irrelevant here. ⚠️ **The published pack can be OLDER than the local one** and its yt-dlp too old for current YouTube: observed 2026-09-11, CDN `0.0.2` (yt-dlp 2026.07.04) 403'd on every media download while the local `0.0.3` (2026.08.19) worked on the same machine — dev cannot see this. Always record `info.json`'s version + binary names, and attribute a media failure with the three runs in KB §18.5 before calling it BLOCKED. |
@@ -651,8 +651,8 @@ reconnected" — re-`list_pages`/`select_page` after each, and read screen visib
 **An English-only run structurally cannot find a missing translation.** `tran()`
 ([src/lang/langHelpers.ts](../../../src/lang/langHelpers.ts)) returns early when the
 locale is `en-US` (`DEFAULT_LOCALE`) — no dictionary lookup happens at all. Switch to
-Khmer and the same call **throws** `Translation for text "…" not found in locale km-KH`
-in dev, and since the app's one error boundary wraps only the slide editor's ground
+any installed non-English language and the same call **throws**
+`Translation for text "…" not found in locale <locale>` in dev, and since the app's one error boundary wraps only the slide editor's ground
 (`AppErrorBoundaryComp`) the whole subtree renders **blank**. A real
 example: `PositionSizeFieldComp` called `tran(name)` with `name="X:"`, which blanked the
 entire slide-editor tools panel — invisible in English, fatal in Khmer.
@@ -660,11 +660,16 @@ entire slide-editor tools panel — invisible in English, fatal in Khmer.
 So this block is **not optional and not skippable by focus area**, exactly like §6a. Rows
 `LT-01..02`; recipe: test-plan.md §S15.
 
-**Khmer is a plugin, not built in** (memory `language-plugins-runtime`): a dev app has
-only the languages someone installed, and a window reads the INSTALLED copy, never
-`src/lang/data/online/km/`. If Khmer is not among the Language buttons, or its package
-changed since it was installed (a new `tran` key changes every package), first run
-`npm run lang:pack -- --pack=km`, then Settings → **Languages** → **Install**, or
+**Pick the pass language** — any installed language but English; every one
+throws the same. One whose script has no spaces or taller glyphs also shows
+clipped and overflowing text, so prefer such a one when the change touches
+layout, and vary it between runs. **Every language but English is a plugin, not
+built in** (memory `language-plugins-runtime`): a dev app has only the
+languages someone installed, and a window reads the INSTALLED copy, never
+`src/lang/data/online/<code>/`. If the language is not among the Language
+buttons, or its package changed since it was installed (a new `tran` key
+changes every package), first run `npm run lang:pack -- --pack=<code>`, then
+Settings → **Languages** → **Install**, or
 **Refresh** → **Update to** (shown only for a higher `meta.json` version than the installed
 one; packed under the same version, delete the installed copy and Install again).
 Otherwise the pass runs against the old dictionary, and a key
@@ -673,9 +678,9 @@ that IS in the source throws as missing: a false Critical.
 Minimum pass (≈3 minutes, self-restoring):
 
 1. **Record the starting locale** — open Settings (gear → popup target) → the
-   **Languages** tab, whose first section **Language** holds the buttons, and see which of `Khmer` / `English` / `French` is the active button. You MUST restore it at the end.
+   **Languages** tab, whose first section **Language** holds the buttons, and see which language button is the active one. You MUST restore it at the end.
    Do **not** read `localStorage['language-locale']`; it is a stale key (KB §1).
-2. **Switch to the other locale** — the press itself calls
+2. **Switch to the pass language** — the press itself calls
    `forceReloadAppWindows()` (since 2026-11-05 no `Apply Settings` is needed, and the
    press answers "target navigated or closed"), so **every window reloads**:
    re-`list_pages`, `select_page`, and re-run the readiness check (step 3). All
@@ -683,13 +688,14 @@ Minimum pass (≈3 minutes, self-restoring):
 3. **Re-walk the screens your focus touched**, plus the presenter baseline. For each:
    `take_screenshot` and `list_console_messages`.
 4. **Assert, per screen:**
-   - No `Translation for text "…" not found in locale km-KH` in the console →
+   - No `Translation for text "…" not found in locale <locale>` in the console →
      any occurrence is a **Critical** finding: name the missing key AND the component
      that rendered it (the React warning right after it names the component).
    - No blank/empty panel where content rendered in the other locale (that is the
      visible symptom of the throw above).
    - Labels actually translate — no raw English left in a translated screen, no clipped
-     or overflowing Khmer text (Khmer glyphs are taller; check buttons and table cells).
+     or overflowing text (a script with taller glyphs or no spaces shows it first; check
+     buttons and table cells).
 5. **Restore** — switch back to the locale from step 1 (it reloads every window again).
 
 Notes:
@@ -699,8 +705,8 @@ Notes:
   is not a reason to skip this block — but never use **Discard changed** to tidy up.
 - If the locale changes and you did **not** change it, assume the **user** did (KB §1) —
   confirm before filing anything.
-- Strings that are hardcoded rather than passed through `tran()` stay English in Khmer
-  mode. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
+- Strings that are hardcoded rather than passed through `tran()` stay English in a
+  translated window. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
   report them separately and name the file.
 
 ### 6e. MANDATORY: media download, video AND audio (every run not focused on one area)
@@ -971,7 +977,7 @@ and clicking a presenting flow row does not repaint every file row in the window
 #### P10 — Locale, then restore
 
 Run §6d over **this panel and its widget** — the presenting flow strings are listed in KB §14.8
-and a missing Khmer key **throws** and blanks the page. Then restore: delete the scratch
+and a missing key **throws** in the pass language and blanks the page. Then restore: delete the scratch
 presenting flow, remove what the import created (imported media, documents, the Default-list
 verses), unpark anything you parked, unpin anything you pinned, stop any interval you
 armed, and hide the screen you showed. Anything you cannot remove goes in the report by
@@ -999,8 +1005,11 @@ the **only** path that exercises `readFromUrl` → the **Review Bible import** p
 Monaco actions. It needs network. Model + CDP traps:
 [knowledge-base.md](./references/knowledge-base.md) §15. Tutorial voice: **W-34**.
 
-**Use the canonical NON-ENGLISH link.** An English XML structurally cannot fail this block,
-because everything an import falls back to is already English:
+**Use a NON-ENGLISH link**, in a language with a script and digits of its own, its package
+installed (a Bible's script is read only through an installed language). An English XML
+structurally cannot fail this block, because everything an import falls back to is already
+English. The block was recorded with this Beblia catalog file; the Khmer values below are
+that file's, and any other such language shows the same signals in its own words:
 
 ```
 https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml
@@ -1008,8 +1017,8 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 
 1. **Scratch key.** Settings (gear → popup, never `navigate_page`) → **Bible**. Never reuse an
    installed key — pick `ZZ<runid>`. Note the installed keys first: the suggested-key
-   buttons in step 3 hide any key you already have, so `ពគប` will NOT be offered on a machine
-   that has it. That absence is correct, not a bug.
+   buttons in step 3 hide any key you already have, so the file's usual key (`ពគប` for the
+   recorded one) will NOT be offered on a machine that has it. That absence is correct, not a bug.
 2. **`[ST-41]`** Paste the link into `input[name=url]` (native-setter + `input` event), check
    the file group dims and **Import** enables, submit. Watch `LoadingComp` walk
    `Downloading file… → Reading file… → Deleting file…`; ~14 MB, allow a minute.
@@ -1027,7 +1036,8 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
    **Keep existing book names**. Read the new `<key>.xml` head: it must show what the panel had
    chosen.
 6. **`[ST-45..ST-48]`** Pencil → **Info** → fix it up **in this order**:
-   **🌎 Choose Locale** (`km-KH`) → **#️⃣ Edit Numbers Map** (**Use ១ ២ ៣**) → **📚 Edit Books
+   **🌎 Choose Locale** (the language's locale) → **#️⃣ Edit Numbers Map** (**Use** its own
+   digits) → **📚 Edit Books
    Map** (**📖 Guessing Names** → the set naming your locale's bibles). Steps 2 and 3 read the
    locale out of the **editor buffer**, so out of order they silently offer English.
    Drive them with `.native-edit-context` `.focus()` + `press_key F1` — a synthetic
@@ -1035,8 +1045,9 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
    it re-sorts the last-used command to the top.
 7. **`[ST-49]`** **Save** (windows reload — expected), then open the reader's bible-key
    selector: the bible must sit under its own locale heading (it was imported as
-   `km-KH` already — the review panel guessed that from the file name — so it was never
-   in the **English** group) and render `(<key>) កិច្ចការ ២៨:១៥`. Screenshot that; it is the block's evidence.
+   that locale already — the review panel guessed it from the file name — so it was never
+   in the **English** group) and render Acts 28:15 in its own book name and digits
+   (`(<key>) កិច្ចការ ២៨:១៥` for the recorded file). Screenshot that; it is the block's evidence.
 8. **`[ST-50]` Teardown, always.** 🗑 → **Yes** trashes `<key>.xml` and deletes the
    sibling `<key>.xml.cache` folder. Confirm both are gone. Then restore anything the run
    moved: the reader's bible key, and any lookup-history entry the key switch added
@@ -1144,7 +1155,7 @@ leftovers.
   (version, commit + dirty flag, exe path and `builtAt`, the pack artefacts written to
   `release/`, the userData driven, whether `ai-enabled` was toggled and restored) and
   name `owa://local` as the origin every screenshot came from; the locale block says
-  explicitly that the missing-key throw is dev-only and what the Khmer pass asserted
+  explicitly that the missing-key throw is dev-only and what the non-English pass asserted
   instead; `SC-05` is `BLOCKED: no main-process stdout in prod`; and `MD-05` states
   that the Extra Binaries pack was downloaded from the real CDN, not the local mock.
 - In full-coverage mode the report MUST include the **coverage summary** (template in

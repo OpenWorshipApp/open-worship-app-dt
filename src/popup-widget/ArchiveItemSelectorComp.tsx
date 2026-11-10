@@ -10,7 +10,7 @@ export type ArchiveItemChoiceType = {
      * (`KJV`, `GKHB`), which is user data and has no dictionary entry, and
      * `tran()` THROWS on a missing key in dev rather than falling back. So a
      * `tran(choice.title)` here would blank this popup the first time it was
-     * opened in Khmer.
+     * opened in another language.
      */
     title: string;
     iconClassName: string;

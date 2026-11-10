@@ -3420,8 +3420,9 @@ row's own **[en:tran:Delete]**.
      takes a language (_make it Python_) and a colour theme. A style for the whole note
      in a short line -- _make all the text bold_, _centre everything_, _use Georgia for
      the whole note_, _clear the formatting_ -- the help window does by itself, with no
-     AI key and no internet, as it does the size: all of them in English, Khmer and
-     French, and _make all the text bold_ in every other installed language -- said
+     AI key and no internet, as it does the size: all of them in English and in a language whose
+     package carries the assistant's words for them, and _make all the text bold_ in every
+     other installed language -- said
      with the word _bold_ where the language's own word for it also means black or
      big. The rest, in those languages, the assistant does.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
@@ -3623,7 +3624,7 @@ _Verify: PM-174, CB-172._
    custom servers — see **W-42**.
 4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
     this computer, turned on or off, and the ones to install (those two — see **W-55**).
-   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+   - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in
@@ -3699,7 +3700,7 @@ _Verify: PM-170, PM-171._
 
 **Goal:** show the app in your own language, or stop offering one you never use.
 
-English is part of the app. Every other language — Khmer and French included — is a
+English is part of the app. Every other language is a
 separate package, installed from the list Open Worship publishes online. An installed
 language is kept in your data folder, under `lang`.
 
@@ -5717,7 +5718,7 @@ an XML file already on your computer.
    wanted the KJV, that is done: the language question that follows needs no answer.) Press
    **[en:tran:Import another Bible anyway]** to go on without it.
    The assistant then asks **Which language do you want the Bible in?** Press
-   **[en:tran:Khmer]**, **[en:tran:English]** or **[en:tran:French]**, or type the language — in English
+   the language the app is shown in, **[en:tran:English]** or another language you installed, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **[en:tran:A file on this computer]** opens the form below instead. A word it cannot find
    (`kmer`) is passed to the assistant to work out the language you meant; with no

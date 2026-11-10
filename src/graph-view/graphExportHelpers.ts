@@ -65,8 +65,8 @@ export type GraphExportOptionsType = {
     };
     fontFamily: string;
     // Without one, a line is cut by its CHARACTER count, which is all a test
-    // with no fonts can do — and not enough for a real picture: Khmer runs
-    // wider per character than Latin, and a 30-character description drawn
+    // with no fonts can do — and not enough for a real picture: some scripts
+    // run wider per character than Latin, and a 30-character description drawn
     // past the box's right border.
     measureText?: GraphTextMeasureType;
 };
@@ -126,7 +126,7 @@ function clipText(value: string, maxChars: number) {
  *
  * Cut between grapheme clusters, never inside one — a base letter keeps its
  * vowel signs — and never right after a sign that joins the next letter to
- * it (an invisible stacker, `scriptClusterHelpers.ts`; Khmer's subscript
+ * it (an invisible stacker, `scriptClusterHelpers.ts`; a script's subscript
  * sign is one): the letter it joins is a cluster of its own, and
  * the sign left at the end of a line draws as a stray mark.
  */
@@ -339,7 +339,7 @@ export function buildGraphSvg({
             const y = node.y - GRAPH_GEOMETRY.NODE_HEIGHT / 2 - bounds.top;
             const name = fitLine(view?.name ?? node.name, 22, NAME_FONT);
             // The English name the box shows beside a translated one: a
-            // picture of eight Khmer names that begin alike was the one copy
+            // picture of eight translated names that begin alike was the one copy
             // of the graph that could not be read by the people it was for.
             const kjvName = fitLine(
                 view?.kjvName ?? '',
@@ -435,7 +435,7 @@ export async function saveGraphImage(svgText: string, fontFamily?: string) {
 const EMBEDDED_FONT_WEIGHT_LIST = [KJV_NAME_FONT.weight, NAME_FONT.weight];
 // The picture is drawn from a data URL, which Chromium caps at 2 MB: a face
 // past this would leave no picture at all rather than one in a fallback font.
-// Battambang's faces are ~115 KB.
+// A language's own face measured ~115 KB.
 const EMBEDDED_FONT_MAX_BYTES = 512 * 1024;
 
 function toFontWeightNumber(value: string) {
@@ -467,9 +467,10 @@ function readBlobAsDataUrl(blob: Blob) {
  * Puts the export's font INSIDE the saved picture.
  *
  * An SVG drawn through an `<img>` is sealed off from the page: it can neither
- * use this window's `@font-face` fonts nor fetch anything, so `app-Battambang`
- * fell back to the system's Times and Khmer faces — the brackets turned serif,
- * and a description cut to fit in Battambang drew past its box's border. A
+ * use this window's `@font-face` fonts nor fetch anything, so a language's
+ * own face (`app-<Family>`) fell back to the system's Times and script faces
+ * — the brackets turned serif, and a description cut to fit in the app's face
+ * drew past its box's border. A
  * font inlined as a `data:` URL is the one kind it can use. Only the faces the
  * boxes ask for, read when an image is saved and dropped with the string.
  */
@@ -594,7 +595,7 @@ export const COPY_MARKDOWN_LABEL = 'Copy as Markdown';
  * BrowserWindow, `printToPDF`, then the Print Preview window.
  *
  * The @font-face rules have to travel with it or the print window rasterizes
- * fallback glyphs where Khmer should be — the print window loads from a temp
+ * fallback glyphs where a language's own letters should be — the print window loads from a temp
  * file and cannot reach this window's injected styles.
  */
 export function printGraph(svgText: string, title: string) {

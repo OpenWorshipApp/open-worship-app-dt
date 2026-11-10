@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-09T03:01:18.974Z
+  modified: 2026-11-10T13:25:12.335Z
 ---
 
 # Renderer entry static closure — fixed by leaf startup helpers
@@ -67,4 +67,17 @@ When changing a renderer entry, `boot.ts`, theme, settings or another helper
 used by all windows, build to the OS temp directory and compare the entry's
 recursive static JS imports. A chunk name is not evidence; inspect the source
 map and trace the source import path.
+
+## The windows that DO render: one server build, not two (EN-60)
+
+2026-11-10. `react-dom/server` is CommonJS that requires both of React's
+browser server builds, and CommonJS is not tree-shaken, so the six windows
+that call `renderToStaticMarkup` (Screen, Presenter, Reader, both editors,
+Bible Note) also carried the streaming build — 97.5 KB minified that nothing
+runs. `reactStaticMarkupOnlyPlugin` in `vite.config.ts` answers that import
+with the legacy build alone in the PRODUCTION build (dev and vitest resolve
+as before) and fails the build if React moves the file. Measured with the
+walker above: Screen 1,345 → 1,244 KB, Presenter 1,720 → 1,625 KB, each of
+the six −96 to −101 KB. A new `react-dom/server` export used anywhere
+(`renderToReadableStream`, `resume`) needs the plugin taken out first.
 

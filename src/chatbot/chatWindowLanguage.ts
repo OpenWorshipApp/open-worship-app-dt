@@ -13,7 +13,7 @@ import { getAppFontFamily } from '../setting/appFontSettingHelpers';
 
 // The CSS variable `chatWindowShared.scss` puts in every font stack of the
 // two AI windows, ahead of the system faces: a language whose letters the
-// signage and system faces lack (Khmer) is drawn in the face its pack ships,
+// signage and system faces lack is drawn in the face its pack ships,
 // the one the rest of the app draws it in. Never English's: its Google Sans
 // reaches these windows as the app's default (`--app-font-family`, boot.ts),
 // and is no language's script face.

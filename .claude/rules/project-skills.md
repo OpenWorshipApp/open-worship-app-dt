@@ -260,8 +260,8 @@ the rest of the hard checks since 2026-10-29 (`AD-21`), front matter that does
 not parse as YAML included (`AD-20`: one had hidden this skill's own
 description from every session's listing for four days). A translated manual
 page behind its English is a `manual` signal, kept out of the gate on purpose
-(`AD-24`); the run that corrects a recipe carries the change into its Khmer and
-French pages. **A big run ends with a second read**
+(`AD-24`); the run that corrects a recipe carries the change into every
+language's translated page of it (a package's `manual/`). **A big run ends with a second read**
 (`scripts/second-read.mjs`, `references/second-read.md`): every correction
 goes to a reader told no reason and ordered to refute it, every statement set
 aside for the running app gets a deeper look at stylesheets, libraries and
@@ -430,8 +430,8 @@ controls they reach.
 there — and an item is COVERED only when a tip presses or names it AND the
 All tips search (title + detail + category, `DailyTipComp`'s `filteredTips`)
 finds that tip by the control's own words; ACTED (a safe **Do it** reaches it)
-and the same search run through the Khmer and French dictionaries are reported
-beside it. The denominator cannot be quietly shrunk: `tran()` labels in a
+and the same search run through every non-English package's dictionary are
+reported beside it. The denominator cannot be quietly shrunk: `tran()` labels in a
 control position in the inventory's source folders and in every file a live
 harvest saw rendered (`data-react-comp-fp`), plus every label `--harvest`
 reads off the live window over raw CDP (`owa_list_ui`'s own reading, nothing
@@ -447,10 +447,11 @@ Khmer detail naming the control in other words than its button (`TP-01`,
 **A tip counts once it ran.** Every new or changed tip is found through the
 All tips search, started with **Show it** and pressed **Do it** by **Do it**
 in the dev window (the product path works with a stale MCP catalog because
-the renderer sends the lesson inline), then once in Khmer, where a missing
-string throws. No **Do it** presents, removes, picks a file or a record, or
-reloads; those stay words. Every tip string gets Khmer and French, with the
-control's own dictionary name inside the translated detail. And because
+the renderer sends the lesson inline), then once in an installed non-English
+language, where a missing string throws. No **Do it** presents, removes, picks a file or a record, or
+reloads; those stay words. Every tip string gets every language's
+translation, with the control's own dictionary name inside the translated
+detail. And because
 `dailyTipHelpers.ts` puts every catalog in every window that shows toasts,
 lessons stay terse and a lazy catalog is a proposal (`TP-03`), not a refactor.
 Ledger `references/backlog.md` (`TP-xx`), one row per window per run in

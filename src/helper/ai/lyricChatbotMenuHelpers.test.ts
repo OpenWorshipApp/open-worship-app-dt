@@ -23,7 +23,7 @@ import {
     openLyricInChatbot,
 } from './lyricChatbotMenuHelpers';
 
-const SONG_PATH = '/docs/Still khmer.owl';
+const SONG_PATH = '/docs/Still here.owl';
 
 beforeEach(() => {
     h.isAiEnabled = true;

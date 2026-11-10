@@ -996,8 +996,8 @@ export function getReaderDemo(id, translate = (value) => value) {
       .join(' > ');
   // A panel is matched by its `data-widget-name`, which stays English in
   // every language, while the control inside shows translated words: in a
-  // Khmer window only "Bibles > <Khmer Filter by name>" can land. It goes
-  // last: the renderer's inline fallback (`getDailyTipGuide`) takes the last.
+  // translated window only "Bibles > <translated Filter by name>" can land.
+  // It goes last: the renderer's inline fallback (`getDailyTipGuide`) takes the last.
   const translateControlOnly = (label) => {
     const parts = label.split(' > ');
     return parts.length < 2

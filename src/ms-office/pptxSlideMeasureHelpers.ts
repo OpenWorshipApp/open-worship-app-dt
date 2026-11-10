@@ -965,7 +965,7 @@ export class PptxSlideMeasurer {
             ];
         }
         // Several lines: find which line every grapheme landed on. Graphemes,
-        // never code units — a Khmer cluster is one piece or it is broken.
+        // never code units — a stacked cluster is one piece or it is broken.
         const fragmentList: FragmentType[] = [];
         let offset = 0;
         let current: {

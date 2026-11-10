@@ -48,7 +48,7 @@ describe('which files are songs', () => {
         expect(checkIsLyricFileName('Still.owl')).toBe(true);
         expect(checkIsLyricFileName('Still.OWL ')).toBe(true);
         expect(checkIsLyricFileName('notes.txt')).toBe(false);
-        expect(toSongName('C:\\docs\\Still khmer.owl')).toBe('Still khmer');
+        expect(toSongName('C:\\docs\\Still yours.owl')).toBe('Still yours');
         expect(toSongName('/docs/Still.owl')).toBe('Still');
     });
 
@@ -77,12 +77,12 @@ describe('which files are songs', () => {
 describe('the song a model names', () => {
     const songs = [
         { name: 'Still', filePath: '/docs/Still.owl' },
-        { name: 'Still khmer', filePath: '/docs/Still khmer.owl' },
+        { name: 'Still yours', filePath: '/docs/Still yours.owl' },
     ];
 
     test('an attached song by its name, with or without .owl, is its path', () => {
-        expect(resolveLyricEditFile('still khmer', songs)).toEqual({
-            filePath: '/docs/Still khmer.owl',
+        expect(resolveLyricEditFile('still yours', songs)).toEqual({
+            filePath: '/docs/Still yours.owl',
         });
         expect(resolveLyricEditFile('Still.owl', songs)).toEqual({
             filePath: '/docs/Still.owl',
@@ -95,7 +95,7 @@ describe('the song a model names', () => {
         });
         expect(
             (resolveLyricEditFile('', songs) as { reason: string }).reason,
-        ).toBe('Say which song (`file`): "Still", "Still khmer".');
+        ).toBe('Say which song (`file`): "Still", "Still yours".');
     });
 
     test('a path written by the model is refused; another name is a Documents song', () => {

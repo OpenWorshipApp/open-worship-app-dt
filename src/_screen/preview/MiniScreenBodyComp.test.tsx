@@ -236,12 +236,12 @@ describe('MiniScreenBodyComp', () => {
         await renderBody();
 
         screenManager.screenLongTextManager.applyBibleViewData(
-            genBibleViewData(['KJV', 'KHM']),
+            genBibleViewData(['KJV', 'TQAM']),
         );
         expect(h.viewController.nestedBibleItems).toEqual([]);
         expect(h.fromJson.mock.calls.map((call) => call[0])).toEqual([
             { id: -1, bibleKey: 'KJV', target, metadata: {} },
-            { id: -1, bibleKey: 'KHM', target, metadata: {} },
+            { id: -1, bibleKey: 'TQAM', target, metadata: {} },
         ]);
         expect(h.viewController.appendBibleItem).toHaveBeenCalledTimes(2);
     });
@@ -249,14 +249,14 @@ describe('MiniScreenBodyComp', () => {
     test('the same passage in the same versions leaves the Reader alone', async () => {
         h.viewController = createViewController([
             { bibleKey: 'KJV', target },
-            { bibleKey: 'KHM', target },
+            { bibleKey: 'TQAM', target },
         ]);
         const screenManager = createScreenManager(1);
         h.screenManagers = [screenManager];
         await renderBody();
 
         screenManager.screenLongTextManager.applyBibleViewData(
-            genBibleViewData(['KJV', 'KHM']),
+            genBibleViewData(['KJV', 'TQAM']),
         );
         expect(h.viewController.appendBibleItem).not.toHaveBeenCalled();
         expect(h.viewController.nestedBibleItems).toEqual(['old']);
@@ -270,7 +270,7 @@ describe('MiniScreenBodyComp', () => {
         // So is another verse range in the same versions.
         h.viewController.appendBibleItem.mockClear();
         screenManager.screenLongTextManager.applyBibleViewData(
-            genBibleViewData(['KJV', 'KHM'], { ...target, verseEnd: 9 }),
+            genBibleViewData(['KJV', 'TQAM'], { ...target, verseEnd: 9 }),
         );
         expect(h.viewController.appendBibleItem).toHaveBeenCalledTimes(2);
     });

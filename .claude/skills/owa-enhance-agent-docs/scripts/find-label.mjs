@@ -1,5 +1,6 @@
 // Is this what a control is CALLED? For each label: whether it is a
-// dictionary key (Khmer, French), and where the code writes those exact words.
+// dictionary key (each language package's), and where the code writes those
+// exact words.
 //
 //   node .../find-label.mjs "Start Slide Show" "Clear Long Text"
 //

@@ -54,7 +54,7 @@ vi.mock('../bible-reader/view-extra/BibleDirectViewTitleComp', () => ({
 
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
-const BIBLE_ITEM = { bibleKey: 'KHM', title: 'Romans 5:8' };
+const BIBLE_ITEM = { bibleKey: 'TQAM', title: 'Romans 5:8' };
 
 let host: HTMLDivElement;
 let root: Root;
@@ -111,7 +111,7 @@ describe('BibleCrossRefAIRenderFoundItemComp', () => {
         const row = (await render())!;
         const text = row.querySelector<HTMLSpanElement>('.app-xref-text')!;
         expect(text.title).toBe('But God commendeth his love toward us');
-        expect(text.style.fontFamily).toBe('KHM Font');
+        expect(text.style.fontFamily).toBe('TQAM Font');
         expect(row.tabIndex).toBe(0);
         expect(row.title).toBe('Click to open the verse');
     });

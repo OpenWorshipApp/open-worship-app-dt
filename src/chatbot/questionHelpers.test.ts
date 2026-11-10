@@ -710,8 +710,8 @@ describe('a picked question is a known one', () => {
         expect(genKnownAskExtra(null, null)).toEqual({});
     });
 
-    // The whole list asked in Khmer (EC-323): "Can you start a 5 minute
-    // countdown on the screen?" was answered with a question back.
+    // The whole list asked in another language (EC-323): "Can you start a
+    // 5 minute countdown on the screen?" was answered with a question back.
     test('a row asking to put something up is told to do it', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         const row = (text: string, tools: string[]) => {
@@ -988,10 +988,11 @@ describe('a picked question is a known one', () => {
 });
 
 // The page in the language the model is asked in (2026-10-17, the whole
-// corpus asked in Khmer of gemma4:cloud): handed the English page and told
-// to copy the part with the words "Open View on the top menu bar again and
-// click", it wrote the Khmer "open" and then the English words. The cut is
-// chosen in English and quoted from the translation, block for block.
+// corpus asked in another language of gemma4:cloud): handed the English page
+// and told to copy the part with the words "Open View on the top menu bar
+// again and click", it wrote that language's "open" and then the English
+// words. The cut is chosen in English and quoted from the translation,
+// block for block.
 describe('a known page rides in the language it is asked in', () => {
     // The same run: _The two small arrows at the end of that line walk them
     // in order_, quoted by itself, does not say which line, and the question
@@ -1136,7 +1137,8 @@ describe('a known page rides in the language it is asked in', () => {
     });
 
     // W-37's link list rode first with its example under it, and four passes
-    // in a row the Khmer answer left the example out (2026-10-18).
+    // in a row the answer in another language left the example out
+    // (2026-10-18).
     test('a part that ends on an example is answered with the example', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         const filler = Array.from({ length: 90 }, (_, index) => {
@@ -1178,10 +1180,11 @@ describe('a known page rides in the language it is asked in', () => {
     // What the cut rests on: every current translation of the manual is
     // written block for block -- as many blocks, each of the same kind
     // (`toLocalizedCut` of the whole page is null otherwise). Measured
-    // 2026-10-17 with a bold lead starting a block: every page of both, where
-    // blank lines and steps alone had left French W-42 a block short. A
-    // translation that drifts out of line fails here; it then rides as the
-    // English cut, so the way to make it pass is to fix the translation.
+    // 2026-10-17 with a bold lead starting a block: every translated page,
+    // where blank lines and steps alone had left one translation's W-42 a
+    // block short. A translation that drifts out of line fails here; it then
+    // rides as the English cut, so the way to make it pass is to fix the
+    // translation.
     test('every current translation lines up block for block', async () => {
         const { readFileSync } = await import('node:fs');
         const path = await import('node:path');
@@ -1205,8 +1208,9 @@ describe('a known page rides in the language it is asked in', () => {
                 // Read as the window reads it, its labels filled in: a bold
                 // label ending in a full stop that a translation wraps to
                 // the start of a line is a bold lead there, and a block
-                // more (French W-50's "The router opened the port.",
-                // 2026-10-18). The English key stands in for the word.
+                // more (one translation's W-50, "The router opened the
+                // port.", 2026-10-18). The English key stands in for the
+                // word.
                 const toResolved = (text: string) => {
                     return toManualPageBody(text).replace(
                         /\[en:tran:([^\]]+)\]/g,
@@ -1235,11 +1239,12 @@ describe('a known page rides in the language it is asked in', () => {
         expect(outOfLine).toEqual([]);
     });
 
-    // Pass 11 (2026-10-18): Khmer W-42's report paragraph split one sentence
-    // more than the English ("Report: " ends a sentence, "Report:," does
-    // not), so four rows' passages were pointed at its opening sentence. A
-    // passage inside its block needs the block's sentences to line up in
-    // every current translation; the fix is to the translation.
+    // Pass 11 (2026-10-18): one translation's W-42 report paragraph split
+    // one sentence more than the English ("Report: " ends a sentence,
+    // "Report:," does not), so four rows' passages were pointed at its
+    // opening sentence. A passage inside its block needs the block's
+    // sentences to line up in every current translation; the fix is to the
+    // translation.
     test('every row’s passage is pointed at in every current translation', async () => {
         const { readFileSync, readdirSync } = await import('node:fs');
         const path = await import('node:path');

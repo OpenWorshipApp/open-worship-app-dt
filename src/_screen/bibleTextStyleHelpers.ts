@@ -96,7 +96,7 @@ export const MAX_BIBLE_TEXT_SHADOW_OFFSET = 0.2;
 export const MAX_BIBLE_TEXT_SHADOW_BLUR = 0.5;
 export const MAX_BIBLE_TEXT_GLOW_SIZE = 0.6;
 // The chosen family, published on every row of the table. A verse of a Bible
-// whose language brings a font of its own (Khmer) says that font inline, where
+// whose language brings a font of its own says that font inline, where
 // no rule here could reach it -- so it reads this first and keeps its own
 // behind it, for the letters the chosen one does not have.
 export const BIBLE_TEXT_FONT_FAMILY_VAR = '--bible-font-family';

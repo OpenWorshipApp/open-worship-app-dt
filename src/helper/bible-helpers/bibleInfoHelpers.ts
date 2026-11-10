@@ -46,7 +46,7 @@ export async function getBookVKList(bibleKey: string) {
         }),
     ]);
     // A numbered book written with the language's own digit (3 John in
-    // Khmer digits) => 3 John, so "2 Timothy" in the Bible's own name is
+    // a script's own digits) => 3 John, so "2 Timothy" in the Bible's own name is
     // found as "2 Timothy"
     for (const [k, v] of Object.entries(vkMap)) {
         const arr = k.split(' ');

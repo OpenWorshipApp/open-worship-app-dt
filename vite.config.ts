@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
 import { defineConfig, normalizePath, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
@@ -65,6 +65,47 @@ const excludeExperimentsPlugin = (): Plugin => {
     };
 };
 
+/**
+ * `react-dom/server` is CommonJS that requires BOTH of React's browser server
+ * renderers -- the legacy one (`renderToString`, `renderToStaticMarkup`) and
+ * the streaming one (`renderToReadableStream`, `resume`) -- and a CommonJS
+ * module cannot be tree-shaken. The app calls `renderToStaticMarkup` alone,
+ * so the streaming build was 97.5 KB of minified code nothing runs, in the
+ * static closure of every window that renders a slide: the screens, the
+ * Presenter, the Reader, the editors (EN-60). The production build answers
+ * the import with the legacy build only; dev and the tests resolve as before.
+ * A React that moves the file fails the build here, rather than silently
+ * shipping both again.
+ */
+const reactStaticMarkupOnlyPlugin = (): Plugin => {
+    let filePath = '';
+    return {
+        name: 'react-static-markup-only',
+        apply: 'build',
+        enforce: 'pre',
+        configResolved(config) {
+            const flavor = config.isProduction ? 'production' : 'development';
+            filePath = resolve(
+                __dirname,
+                'node_modules/react-dom/cjs',
+                `react-dom-server-legacy.browser.${flavor}.js`,
+            );
+        },
+        resolveId(id) {
+            if (id !== 'react-dom/server') {
+                return null;
+            }
+            if (!existsSync(filePath)) {
+                this.error(
+                    `"${normalizePath(filePath)}" is gone: react-dom changed ` +
+                        'its layout, see reactStaticMarkupOnlyPlugin.',
+                );
+            }
+            return filePath;
+        },
+    };
+};
+
 const htmlDir = resolve(__dirname, 'html');
 const htmlFiles = readdirSync(htmlDir)
     .filter((fileName) => {
@@ -82,6 +123,7 @@ export default defineConfig({
     assetsInclude: ['**/*.dll'],
     plugins: [
         excludeExperimentsPlugin(),
+        reactStaticMarkupOnlyPlugin(),
         gzBundlePlugin(),
         compNameAttributePlugin(),
         react(),

@@ -11,6 +11,7 @@ import {
     toLongTextSectionKey,
     withLongTextColumnStyles,
 } from './screenLongTextTypeHelpers';
+import type { LocaleType } from '../lang/langHelpers';
 import type {
     BibleItemDataType,
     LongTextItemDataType,
@@ -19,15 +20,15 @@ import type {
 function genLongTextData(): LongTextItemDataType {
     return {
         type: 'long-text',
-        locale: 'km-KH',
+        locale: 'xx-XX',
         scroll: 0.4,
         selectedKJVVerseKey: 'lt-2',
         longTextData: {
             sourceId: 'long-text',
             renderedList: [
                 {
-                    locale: 'km-KH',
-                    code: 'KM',
+                    locale: 'xx-XX' as LocaleType,
+                    code: 'XX',
                     title: '♪ ✝',
                     sections: [
                         { num: '①', text: 'Line ①', key: 'lt-1' },
@@ -153,8 +154,8 @@ describe('a long-text column style', () => {
 
 describe('a long-text column in CSS', () => {
     test('says its own family ahead of the language font, without the screen variable', () => {
-        const css = genLongTextFontFamilyCss('Georgia', 'app-Battambang');
-        expect(css.startsWith('"Georgia", app-Battambang, ')).toBe(true);
+        const css = genLongTextFontFamilyCss('Georgia', 'app-Xx-Face');
+        expect(css.startsWith('"Georgia", app-Xx-Face, ')).toBe(true);
         expect(css).not.toContain('var(');
         expect(
             genLongTextFontFamilyCss('Georgia').startsWith('"Georgia", '),
@@ -220,7 +221,7 @@ describe('the data of the long-text layer', () => {
     test('validates a persisted long text by its shape and its locales', () => {
         const { longTextData } = genLongTextData();
         const checkIsValidLocale = (locale: string) => {
-            return locale === 'km-KH' || locale === 'en-US';
+            return locale === 'xx-XX' || locale === 'en-US';
         };
         expect(checkIsValidLongTextData(longTextData, checkIsValidLocale)).toBe(
             true,
@@ -258,12 +259,12 @@ describe('the data of the long-text layer', () => {
     test('restyles the columns by code and keeps the words, the position and the selection', () => {
         const data = genLongTextData();
         const restyled = withLongTextColumnStyles(data, {
-            KM: { fontFamily: 'Battambang', fontSizeScale: 1.2 },
+            XX: { fontFamily: 'Made Up Sans', fontSizeScale: 1.2 },
             EN: undefined,
         });
-        const [km, en] = restyled.longTextData.renderedList;
-        expect(km.style).toEqual({
-            fontFamily: 'Battambang',
+        const [xx, en] = restyled.longTextData.renderedList;
+        expect(xx.style).toEqual({
+            fontFamily: 'Made Up Sans',
             fontSizeScale: 1.2,
         });
         // EN is named with no style, so the size it had is gone -- and the
@@ -272,10 +273,10 @@ describe('the data of the long-text layer', () => {
         expect(restyled.scroll).toBe(0.4);
         expect(restyled.selectedKJVVerseKey).toBe('lt-2');
         expect(restyled.longTextData.sourceId).toBe('long-text');
-        expect(km.sections).toEqual(data.longTextData.renderedList[0].sections);
+        expect(xx.sections).toEqual(data.longTextData.renderedList[0].sections);
         // A column nobody names is left exactly as it is.
         expect(
-            withLongTextColumnStyles(data, { KM: { fontFamily: 'Georgia' } })
+            withLongTextColumnStyles(data, { XX: { fontFamily: 'Georgia' } })
                 .longTextData.renderedList[1],
         ).toBe(data.longTextData.renderedList[1]);
         // The data on the screen is not written through.

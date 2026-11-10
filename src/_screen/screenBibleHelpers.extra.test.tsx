@@ -309,12 +309,12 @@ describe('screenBibleHelpers', () => {
             await import('./screenBibleHelpers');
         const screenViewData = {
             type: 'long-text',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             longTextData: {
                 sourceId: 'long-text',
-                renderedList: ['KM', 'EN'].map((code) => {
+                renderedList: ['XX', 'EN'].map((code) => {
                     return {
-                        locale: code === 'KM' ? 'km-KH' : 'en-US',
+                        locale: code === 'XX' ? 'xx-XX' : 'en-US',
                         code,
                         title: `${code} song`,
                         sections: [{ num: '1', text: code, key: 'lt-1' }],

@@ -12,7 +12,7 @@ const h = vi.hoisted(() => {
         'id-ID': 'id',
         'in-ID': 'in',
         'iw-IL': 'iw',
-        'km-KH': 'km',
+        'xx-XX': 'xx',
     };
     return {
         localeMap,
@@ -21,7 +21,7 @@ const h = vi.hoisted(() => {
         ),
         showAppContextMenuMock: vi.fn(),
         openExternalURLMock: vi.fn(),
-        getBibleLocaleMock: vi.fn(async (): Promise<string> => 'km-KH'),
+        getBibleLocaleMock: vi.fn(async (): Promise<string> => 'xx-XX'),
         unknownCodes: [] as string[],
     };
 });
@@ -99,7 +99,7 @@ describe('RenderOpenWikiDictionaryComp', () => {
         const urls = await openMenuUrls();
 
         expect(urls).toEqual([
-            'https://km.wiktionary.org',
+            'https://xx.wiktionary.org',
             'https://he.wiktionary.org',
             'https://id.wiktionary.org',
         ]);
@@ -123,7 +123,7 @@ describe('RenderOpenWikiDictionaryComp', () => {
         expect(urls).toEqual([
             'https://he.wiktionary.org',
             'https://id.wiktionary.org',
-            'https://km.wiktionary.org',
+            'https://xx.wiktionary.org',
         ]);
         const items: any[] = h.showAppContextMenuMock.mock.calls[0][1];
         expect(items[0]).toMatchObject({
@@ -135,10 +135,10 @@ describe('RenderOpenWikiDictionaryComp', () => {
             'https://en.wiktionary.org',
         );
         items
-            .find((item) => item.title === 'https://km.wiktionary.org')
+            .find((item) => item.title === 'https://xx.wiktionary.org')
             .onSelect();
         expect(h.openExternalURLMock).toHaveBeenLastCalledWith(
-            'https://km.wiktionary.org',
+            'https://xx.wiktionary.org',
         );
         expect(h.openExternalURLMock).toHaveBeenCalledTimes(2);
     });
@@ -153,7 +153,7 @@ describe('RenderOpenWikiDictionaryComp', () => {
             .filter((item) => typeof item.title === 'string')
             .map((item) => item.menuElement);
         expect(labels).toEqual([
-            'Language km [km]',
+            'Language xx [xx]',
             'he (Unknown)',
             'Language id [id]',
         ]);

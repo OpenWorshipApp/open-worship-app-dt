@@ -19,19 +19,19 @@ vi.mock('../lang/langHelpers', () => ({
 import { applyFontFamily } from './LanguageWrapper';
 
 const FONTS: Record<string, string> = {
-    'km-KH': 'Battambang',
+    'xx-XX': 'Made Up Sans',
     'en-US': 'Arial',
 };
 
 beforeEach(() => {
     state.checkIsValidLocale.mockImplementation((locale: string) =>
-        ['km-KH', 'en-US', 'fr-FR'].includes(locale),
+        ['xx-XX', 'en-US', 'yy-YY'].includes(locale),
     );
     state.getFontFamilyByLocale.mockImplementation(
         async (locale: string) => FONTS[locale],
     );
     state.getBibleLocale.mockImplementation(async (bibleKey: string) =>
-        bibleKey === 'KHSV' ? 'km-KH' : 'en-US',
+        bibleKey === 'XXV' ? 'xx-XX' : 'en-US',
     );
 });
 
@@ -49,30 +49,30 @@ function genElement(html: string) {
 
 describe('applyFontFamily', () => {
     test('an element with its own locale gets that locale font', async () => {
-        const element = genElement('<p data-locale-ff="km-KH">✝✝</p>');
+        const element = genElement('<p data-locale-ff="xx-XX">✝✝</p>');
         await applyFontFamily(element, 'attr-modified');
-        expect(element.style.fontFamily).toBe('Battambang');
+        expect(element.style.fontFamily).toBe('Made Up Sans');
         expect(state.getBibleLocale).not.toHaveBeenCalled();
     });
 
     test('an element naming a bible gets the bible locale font', async () => {
-        const element = genElement('<p data-bible-key-ff="KHSV">✝✝</p>');
+        const element = genElement('<p data-bible-key-ff="XXV">✝✝</p>');
         await applyFontFamily(element, 'attr-modified');
-        expect(state.getBibleLocale).toHaveBeenCalledExactlyOnceWith('KHSV');
-        expect(element.style.fontFamily).toBe('Battambang');
+        expect(state.getBibleLocale).toHaveBeenCalledExactlyOnceWith('XXV');
+        expect(element.style.fontFamily).toBe('Made Up Sans');
     });
 
     test('an unknown locale changes nothing', async () => {
-        const element = genElement('<p data-locale-ff="xx-YY">?</p>');
+        const element = genElement('<p data-locale-ff="zz-ZZ">?</p>');
         await applyFontFamily(element, 'attr-modified');
         expect(state.getFontFamilyByLocale).not.toHaveBeenCalled();
         expect(element.style.fontFamily).toBe('');
     });
 
     test('a locale with no font of its own changes nothing', async () => {
-        const element = genElement('<p data-locale-ff="fr-FR">mot</p>');
+        const element = genElement('<p data-locale-ff="yy-YY">word</p>');
         await applyFontFamily(element, 'attr-modified');
-        expect(state.getFontFamilyByLocale).toHaveBeenCalledWith('fr-FR');
+        expect(state.getFontFamilyByLocale).toHaveBeenCalledWith('yy-YY');
         expect(element.style.fontFamily).toBe('');
     });
 
@@ -85,7 +85,7 @@ describe('applyFontFamily', () => {
 
     test('an added subtree is walked, a modified element is not', async () => {
         const html =
-            '<div><span data-locale-ff="km-KH">✝♪</span>' +
+            '<div><span data-locale-ff="xx-XX">✝♪</span>' +
             '<em><b data-bible-key-ff="KJV">b</b></em></div>';
         const modified = genElement(html);
         await applyFontFamily(modified, 'attr-modified');
@@ -98,7 +98,7 @@ describe('applyFontFamily', () => {
         await applyFontFamily(added, 'added');
         await flush();
         expect(added.querySelector<HTMLElement>('span')!.style.fontFamily).toBe(
-            'Battambang',
+            'Made Up Sans',
         );
         expect(added.querySelector<HTMLElement>('b')!.style.fontFamily).toBe(
             'Arial',

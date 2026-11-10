@@ -20,7 +20,7 @@ import type {
 /**
  * What ONE column says about itself: its font family and its size beside the
  * others, nothing else. A language needs a face of its own (a Latin one cannot
- * draw Khmer), and two faces at the same size are not the same size on the
+ * draw another script), and two faces at the same size are not the same size on the
  * wall; every other value of the look -- colour, weight, alignment, shadow,
  * the selection band, the size itself -- is the Bible's, set in
  * Bible/LongText Properties for both (the user, 2026-11-06: _make sure all
@@ -224,8 +224,8 @@ export function toLongTextColumnClassName(index: number) {
 
 /**
  * A column's own family as a `font-family` value: the language's font behind
- * it for the letters it does not have (a Latin family picked for a Khmer
- * column), then the screen's stack. No `var(--bible-font-family)` in it, so
+ * it for the letters it does not have (a Latin family picked for a column
+ * in another script), then the screen's stack. No `var(--bible-font-family)` in it, so
  * the family chosen for the whole screen cannot win over this column's.
  */
 export function genLongTextFontFamilyCss(

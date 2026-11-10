@@ -4,10 +4,11 @@
  * language I type it work seamlessly_).
  *
  * Before, only the three languages the app is shown in were known. A
- * Spanish question was read as French by the little words they share (`la`,
- * `de`, `un`) and answered in French, even by a model that wrote perfect
- * Spanish when left alone; a Portuguese, Vietnamese or Indonesian one was
- * answered in the app's language -- in a Khmer window, Khmer; and an answer
+ * question in one Latin-script language was read as another by the little
+ * words they share (`la`, `de`, `un`) and answered in that other language,
+ * even by a model that wrote the first one perfectly when left alone; a
+ * Portuguese, Vietnamese or Indonesian one was answered in the app's
+ * language -- whatever language the window was shown in; and an answer
  * in Chinese, Thai, Korean, Russian or Arabic lost every chip under it,
  * because only a package's script counted as one somebody chose. Measured
  * through the live window the same day: 16 of 18 answers in the language
@@ -15,8 +16,8 @@
  *
  * An installed language's `typed.json` names the others now. These rows hold
  * what a language only typed must get: its name, an answer in it, chips in
- * it, the English page read and translated for it -- and the three packaged
- * languages exactly as they were.
+ * it, the English page read and translated for it -- and every packaged
+ * language exactly as it was.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';

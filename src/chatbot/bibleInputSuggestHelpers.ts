@@ -1,8 +1,8 @@
 /**
  * When the chat box's input aid asks, and what it asks for (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held a Khmer
- * digit one and offered nothing: _assistant should help the input ... book auto complete ->
+ * Asked for with a picture of a lookup conversation whose box held a
+ * non-Latin digit one and offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The rows come from `owa_bible_suggest` (the app's own
  * Bibles and names lookup); this decides the questions, and is pure so every
@@ -13,7 +13,7 @@
  *   a reference -- book, then chapter, then verse.
  * - A NAME: `Who was Moses` / `Where is Bethlehem` (and every language's own
  *   way of asking, `bibleReaderWords.nameAsk`), or a bare name in a script
- *   that is not Latin (a Khmer name typed on its own). A bare Latin word is
+ *   that is not Latin (such a name typed on its own). A bare Latin word is
  *   NOT loaded speculatively (`allowLoad` false): the names dataset is 34MB
  *   and is only searched when a lookup panel already holds it.
  */
@@ -50,9 +50,9 @@ export type BibleInputSuggestRowType = {
 
 const MAX_REFERENCE_LENGTH = 40;
 const MIN_NAME_LENGTH = 3;
-// 99% of the lookup's Khmer names are 15 letters or fewer, and a name is
-// completed from its start, so a longer run is a sentence: Khmer writes one
-// with no space, and a Khmer "are there other verses related to this
+// 99% of one language's lookup names are 15 letters or fewer, and a name is
+// completed from its start, so a longer run is a sentence: a script without
+// spaces writes one with none, and such an "are there other verses related to this
 // passage?" under a passage card loaded the 34MB names dataset to complete
 // it (2026-10-23).
 const MAX_BARE_NAME_LENGTH = 16;
@@ -78,7 +78,7 @@ function checkIsNameCue(text: string) {
     });
 }
 
-// A Khmer "who is Moses" -- the name is what comes before the language's own
+// A translated "who is Moses" -- the name is what comes before the language's own
 // "who is" words, once the sentence's leading function words are taken off
 // (`nameAskLead`). A whole sentence that asks something else gives a phrase no name
 // lookup matches, and no suggestion is the honest answer.
@@ -170,7 +170,7 @@ function readNameAsk(plain: string): BibleInputSuggestAskType | null {
     if (localized !== null) {
         return localized;
     }
-    // A bare name typed on its own. A Khmer (or other non-Latin) one is worth
+    // A bare name typed on its own. A non-Latin one is worth
     // loading the lookup for; a Latin word is not (`hello` is not a person).
     const words = plain.split(/\s+/).filter(Boolean);
     if (

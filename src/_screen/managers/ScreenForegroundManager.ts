@@ -1974,16 +1974,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             // bootstrap (`body { line-height: 1.5 }`, unitless so it inherits
             // through the mini-screen's shadow root) while screen.html loads
             // only screen.scss, leaving `line-height: normal`. For fonts with
-            // tall metrics that diverges badly — Battambang's `normal` is ~1.81,
+            // tall metrics that diverges badly — one language face's `normal` is ~1.81,
             // so every widget's line box was ~20% taller on the real screen than
             // in the preview.
             // `normal` (the font's own metrics) is the side to standardise on:
-            // 1.5 is too tight for Khmer, whose stacked subscripts overflow the
+            // 1.5 is too tight for a script whose stacked subscripts overflow the
             // line box and get cut by the `overflow: hidden` above.
             lineHeight: 'normal',
             // Pinned for the same reason. Inherited through the shadow root,
             // the presenter's own app font reached every widget in the mini
-            // preview: with Battambang chosen, a countdown read serif there and
+            // preview: with a language's own face chosen, a countdown read serif there and
             // its wider digits broke `00:04:40` over two lines, while the real
             // screen showed one sans-serif line. A widget's own font
             // (Properties) is set on the widget, so it still wins.

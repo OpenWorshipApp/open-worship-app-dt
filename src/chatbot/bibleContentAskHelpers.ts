@@ -65,7 +65,7 @@ const VERSE_ASK_PATTERN_LIST = [
     // A STORY by its name (2026-10-22, EC-389): "where in the bible is the
     // story of the flood", "where can I find the parable of the sower",
     // "show me the story of Jonah". It went to the general assistant,
-    // whose Khmer answer named a book the Bible does not have. The words
+    // whose translated answer named a book the Bible does not have. The words
     // keep "story of", which tells the search it is a story.
     /^where\s+(?:in\s+the\s+(?:holy\s+)?(?:bible|scriptures?)\s+)?(?:is|are|can\s+i\s+find|do\s+i\s+find|does\s+it\s+tell)\s+(?:the\s+)?((?:story|stories|account|parable)\s+(?:of|about)\s+.+?)(?:\s+in\s+the\s+(?:holy\s+)?(?:bible|scriptures?))?$/i,
     /^(?:find|show|give)\s+(?:me\s+)?(?:the\s+)?((?:story|account|parable)\s+(?:of|about)\s+.+)$/i,

@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-29",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "reading",
@@ -602,7 +602,7 @@
                         "other bible",
                         "change bible",
                         "english",
-                        "khmer",
+                        "my language",
                         "show in another bible"
                     ],
                     "resources": {
@@ -1031,7 +1031,7 @@
                     "keywords": [
                         "detail language",
                         "compare languages",
-                        "English and Khmer",
+                        "English and my language",
                         "person panel",
                         "location panel"
                     ],
@@ -1166,7 +1166,7 @@
                     "keywords": [
                         "another bible",
                         "other language",
-                        "read in khmer",
+                        "read in my language",
                         "read in english",
                         "passage card"
                     ],
@@ -1641,7 +1641,7 @@
                         "numbers map",
                         "books map",
                         "wrong language",
-                        "khmer",
+                        "my language",
                         "book names"
                     ],
                     "resources": {

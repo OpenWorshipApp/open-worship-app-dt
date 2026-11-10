@@ -118,7 +118,8 @@ async function readLookupDataVersion(langCode: string) {
  *
  * Per language, because the index is stamped with English's version while a
  * labels sidecar is stamped with the version of the package it was written from
- * — a corrected Khmer name has to expire the Khmer sidecar and nothing else.
+ * — a corrected name in one language has to expire that language's sidecar
+ * and nothing else.
  * The map is bounded by the number of shipped languages.
  */
 function getLookupDataVersionCached(langCode: string) {
@@ -472,7 +473,7 @@ export function genLookupFileStore<T>(
  * The same subscriber-counted holding as `genLookupFileStore`, but with ONE
  * SLOT PER LANGUAGE, because which file is wanted is decided by the bible a
  * verse is in rather than by a setting — a comparison view can have a KJV column
- * and a Khmer one side by side, and each has to be able to ask for its own.
+ * and one in another language side by side, and each has to be able to ask for its own.
  *
  * A slot is created on its first subscriber and dropped whole when its last one
  * goes, so a language the reader has navigated away from is not left resident.

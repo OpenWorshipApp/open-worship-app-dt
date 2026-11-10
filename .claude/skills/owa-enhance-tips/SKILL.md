@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-tips
-description: 'Make the Open Worship App in-app TIPS genuinely useful, one window at a time — Help → Tips of the Day / All tips and the walkthrough card each tip starts (`tools/owa-devtools-mcp/readerDemos.mjs`, `readerExtraDemos.mjs`, `presenterDemos.mjs`, `pageDemos.mjs`, `appMenuDemos.mjs`, `src/toast/dailyTipHelpers.ts`, `DailyTipComp`). Use when asked to improve / add / upgrade / expand tips, tips of the day, All tips, lessons, demos or walkthrough tips, to make tips easier to find or more helpful, to fix a tip that fails, or to reach a tip-coverage percentage for a window, e.g. `/owa-enhance-tips reader.html 99%`. THE MEASUREMENT RULE: a percentage is of the window''s control INVENTORY (`references/inventory/<page>.json`) and comes only from scripts/tip-coverage.mjs. An item is COVERED when a tip presses or names it AND the All tips search finds that tip by the control''s own words; ACTED (a safe Do it reaches it) and the same search in Khmer and French are reported beside it; the figure is provisional while leads (labels the source or the live window draw that the inventory has not decided on) remain. THE TIP RULE: a tip counts once it is verified in the running dev app — found by search, Show it, every Do it pressed, once in Khmer — and no tip presents, deletes, picks a file or reloads for the person. Every new string needs Khmer and French, catalogs stay lean (all of them load in every window), and `npm run lint` is the gate.'
+description: 'Make the Open Worship App in-app TIPS genuinely useful, one window at a time — Help → Tips of the Day / All tips and the walkthrough card each tip starts (`tools/owa-devtools-mcp/readerDemos.mjs`, `readerExtraDemos.mjs`, `presenterDemos.mjs`, `pageDemos.mjs`, `appMenuDemos.mjs`, `src/toast/dailyTipHelpers.ts`, `DailyTipComp`). Use when asked to improve / add / upgrade / expand tips, tips of the day, All tips, lessons, demos or walkthrough tips, to make tips easier to find or more helpful, to fix a tip that fails, or to reach a tip-coverage percentage for a window, e.g. `/owa-enhance-tips reader.html 99%`. THE MEASUREMENT RULE: a percentage is of the window''s control INVENTORY (`references/inventory/<page>.json`) and comes only from scripts/tip-coverage.mjs. An item is COVERED when a tip presses or names it AND the All tips search finds that tip by the control''s own words; ACTED (a safe Do it reaches it) and the same search in each non-English package are reported beside it; the figure is provisional while leads (labels the source or the live window draw that the inventory has not decided on) remain. THE TIP RULE: a tip counts once it is verified in the running dev app — found by search, Show it, every Do it pressed, once in an installed non-English language — and no tip presents, deletes, picks a file or reloads for the person. Every new string needs a translation in every language, catalogs stay lean (all of them load in every window), and `npm run lint` is the gate.'
 argument-hint: '<window> [N%] (e.g. reader.html 99%) | measure <window> | harvest <window> | quality <window> | --all | report — default: --all, then ask which window'
 ---
 
@@ -18,7 +18,7 @@ gamed.
 
 ```text
 MEASURE → INVENTORY (harvest + triage until no lead is left) → PLAN (cheapest
-gain first) → WRITE → VERIFY LIVE (English, then Khmer) → GATE → PAPER TRAIL
+gain first) → WRITE → VERIFY LIVE (English, then non-English) → GATE → PAPER TRAIL
 ```
 
 `/owa-enhance-tips reader.html 99%` is a long climb, not one batch. The
@@ -38,7 +38,8 @@ numbers it moved.
 2. **A tip counts once it is verified live.** Found through the All tips
    search, started with **Show it**, every **Do it** pressed in the running dev
    window with the effect seen on a screenshot — and the window's new or
-   changed tips run once in Khmer, where a missing string THROWS. A tip that
+   changed tips run once in an installed non-English language, where a
+   missing string THROWS. A tip that
    passes the tests and was never run is not done (CLAUDE.md _Verifying code
    changes_).
 3. **No tip acts for the person where it should not.** **Do it** never
@@ -47,12 +48,13 @@ numbers it moved.
    record for them, and never reloads, relaunches, resets the layout or opens
    Developer Tools. Those stay self-guided words. A native menu is not in the
    page, so its tip explains and cannot press.
-4. **Every string a tip shows goes through Khmer AND French.** The title,
+4. **Every string a tip shows is translated in every language.** The title,
    the detail and the category are `tran()` keys
    (`src/toast/dailyTipTranslations.test.ts`); a `translateFind` label must be
-   a key too or `tran()` throws on it in a Khmer dev window. The Khmer detail
-   carries the button's **Khmer** name, word for word as the dictionary has it,
-   or a Khmer volunteer typing the button's words finds nothing.
+   a key too or `tran()` throws on it in any non-English dev window. Each
+   language's detail carries the button's name IN that language, word for
+   word as its dictionary has it, or a volunteer typing the button's words
+   finds nothing.
 5. **Performance outranks coverage** (CLAUDE.md). `dailyTipHelpers.ts`
    imports every catalog statically and `DailyTipComp` → `ToastComp` puts it
    in every window that shows toasts, so each tip is paid for in memory by
@@ -125,7 +127,7 @@ node .../tip-coverage.mjs --all                # one line per window
 
 It prints, for the window: the catalog (tips, how many have a **Do it**, the
 featured count, its weight in KB), **COVERED** (the headline), _taught but not
-findable_ and _uncovered_, the same search in Khmer and French, **ACTED** over
+findable_ and _uncovered_, the same search in each non-English package, **ACTED** over
 the items a tip may press, a table by surface, the leads, and the quality
 findings (`untranslated`, `find-untranslated`, `destructive-find`,
 `duplicate-title` are errors; `not-searchable`, `long-*`, `many-steps` are
@@ -174,7 +176,7 @@ COVERED figure a claim.
 
 1. **Errors** from `--quality` — they are tips that fail today.
 2. **Taught but not findable** — a tip already teaches it; put the control's
-   words (English, and the Khmer control name in the Khmer string) into the
+   words (English, and each language's control name in its string) into the
    tip's detail. Usually one detail rewrite covers several items.
 3. **Uncovered**, grouped by surface — first extend an existing lesson that
    already names that panel; write a new lesson only for a task no lesson is
@@ -196,14 +198,15 @@ words (that is what search reads); one visible action per step; the opener
 first, with `skipIfVisible`, when the control sits inside a closed panel;
 `translateFind` on every label; scoped labels for repeated controls; Mac keys
 named in a `press` step's text. New and changed `label`, `detail` and
-`category` strings get Khmer and French entries (reusing the dictionary's own
-words for the controls); a reworded string's OLD entry is removed from both
-dictionaries, because every entry is loaded into memory. Update the count
+`category` strings get an entry in every language's dictionary (reusing each
+dictionary's own words for the controls, each `meta.json` version raised and
+the packages packed again, CLAUDE.md); a reworded string's OLD entry is
+removed from every dictionary, because every entry is loaded into memory. Update the count
 tests in the same change: `readerDemos.test.mjs` / `presenterDemos.test.mjs`
 (total and the featured 30 / 25), `src/toast/dailyTipHelpers.test.ts`
 (`getDailyTips` lengths, the foreground set).
 
-### 5. Verify live — the product path, then Khmer
+### 5. Verify live — the product path, then a non-English language
 
 For every new or changed tip, in the running dev window:
 
@@ -218,17 +221,18 @@ For every new or changed tip, in the running dev window:
    A refusal or "no control named …" is a broken tip, not a flaky one.
 4. `owa_guide_step { action: 'stop' }`, then put back what the tip changed
    (font size, an opened panel) — with the app's own controls or Undo only.
-5. **Khmer pass** — record the language, switch to Khmer the way
-   `/owa-robot-test` §6d does (Settings → Language → Khmer → **Apply
-   Settings**, which reloads every window), open All tips, search the
-   control's KHMER words, Show it, one **Do it**. A missing key throws here and
-   blanks the card; a find that resolves in English and not in Khmer is a
-   `translateFind` gap. Restore the recorded language the same way. Pack
-   and update Khmer FIRST when a tip string was added or changed
-   (`npm run lang:pack -- --pack=km`, then Settings → **Languages** →
+5. **Non-English pass** — record the language, switch to an installed
+   non-English language the way `/owa-robot-test` §6d does (Settings →
+   **Languages** → Language → that language; the press reloads every
+   window), open All tips, search the control's words IN that language, Show
+   it, one **Do it**. A missing key throws here and blanks the card; a find
+   that resolves in English and not in that language is a `translateFind`
+   gap. Restore the recorded language the same way. Pack and update that
+   language FIRST when a tip string was added or changed
+   (`npm run lang:pack -- --pack=<code>`, then Settings → **Languages** →
    **Refresh** → **Update to**, offered only once its `meta.json` version
    was raised past the installed one): the window reads the installed plugin, so
-   a string just written into `online/km/` is not there yet and throws as
+   a string just written into `online/<code>/` is not there yet and throws as
    missing.
 
 `--steps=<demoId>` prints a tip as an `owa_guide_start` payload for a quick
@@ -265,10 +269,10 @@ In the same change:
 ```text
 Tips — Bible Reader (reader.html) · run <date>
 COVERED   61.0% → 74.5%  (provisional → final: leads 0 / 0)   target 99%
-ACTED     48.2% → 55.0%   search in km 40% → 66% · fr 52% → 71%
+ACTED     48.2% → 55.0%   search in <code> 40% → 66% · <code> 52% → 71% …
 catalog   100 → 109 tips · 74 → 79 KB lessons · 12 → 14 KB strings a language
 changed   9 new tips, 14 details reworded, 3 Do it steps added
-verified  live: 26 tips (English) · 6 (Khmer) — screenshots …
+verified  live: 26 tips (English) · 6 (<language>) — screenshots …
 excluded  4 items, each with its reason …
 not done  TP-04 … (needs a decision: …)
 ```
@@ -293,8 +297,9 @@ findings still open.
 - **A control painted only under the mouse is still a control** —
   `owa_list_ui` marks it `showsOnHover`, and a tip names it directly; the
   guide forces the hover before it rings or presses.
-- **`tran()` throws on a missing key in a Khmer or French dev window**, so a
-  tip with a gap blanks its card only there — the reason for the Khmer pass.
+- **`tran()` throws on a missing key in any non-English dev window**, so a
+  tip with a gap blanks its card only there — the reason for the non-English
+  pass.
 - **The firewall refuses a destructive word** in a `find` in every language
   (`destructiveLabel.mjs`); such a step can never run, and the script reports
   it as `destructive-find`.

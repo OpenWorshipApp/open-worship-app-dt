@@ -99,11 +99,11 @@ beforeEach(async () => {
     h.selectedLangCode = 'en';
     h.langDataMap = {
         en: genLangData('en'),
-        km: genLangData('km', 'app-Battambang'),
+        xx: genLangData('xx', 'app-Xx-Face'),
     };
     // Both the 60s cache and the holder are module-level.
     globalCacheManager10Seconds.clear();
-    for (const langCode of ['en', 'km']) {
+    for (const langCode of ['en', 'xx']) {
         for (let index = 0; index < 5; index += 1) {
             releaseLookupData(langCode);
         }
@@ -134,22 +134,22 @@ describe('loading the dataset', () => {
     // `fromRawDataset` normalizes EVERY language it is handed, eagerly, so
     // handing it every shipped package meant reading ~70MB to serve one.
     test('hands the managers only the selected language', async () => {
-        selectLangCode('km');
+        selectLangCode('xx');
 
         await getLookupDataCached();
 
-        expect(h.lastDataMapKeys).toStrictEqual(['km']);
+        expect(h.lastDataMapKeys).toStrictEqual(['xx']);
     });
 
     // The managers carry the style into `bible-note`'s OWN surfaces — the
     // mention popup, the hover card, the advanced panel — which otherwise
-    // render Khmer records in the editor's Latin font.
+    // render records in another script in the editor's Latin font.
     test('gives the managers the language package font', async () => {
-        selectLangCode('km');
+        selectLangCode('xx');
 
         await getLookupDataCached();
 
-        expect(h.lastStyle).toStrictEqual({ fontFamily: 'app-Battambang' });
+        expect(h.lastStyle).toStrictEqual({ fontFamily: 'app-Xx-Face' });
     });
 
     // English names no font, and then the records must keep the app's own
@@ -174,23 +174,23 @@ describe('loading the dataset', () => {
 describe('the shared reference', () => {
     test('different languages coexist and release independently', async () => {
         const english = await acquireLookupData('en');
-        const khmer = await acquireLookupData('km');
+        const other = await acquireLookupData('xx');
         globalCacheManager10Seconds.clear();
-        selectLangCode('km');
+        selectLangCode('xx');
         expect(await acquireLookupData('en')).toBe(english);
-        expect(await acquireLookupData('km')).toBe(khmer);
-        expect(english).not.toBe(khmer);
+        expect(await acquireLookupData('xx')).toBe(other);
+        expect(english).not.toBe(other);
         expect(h.loadCount).toBe(2);
 
         releaseLookupData('en');
         releaseLookupData('en');
-        expect(await acquireLookupData('km')).toBe(khmer);
+        expect(await acquireLookupData('xx')).toBe(other);
         expect(await acquireLookupData('en')).not.toBe(english);
         expect(h.loadCount).toBe(3);
         releaseLookupData('en');
-        releaseLookupData('km');
-        releaseLookupData('km');
-        releaseLookupData('km');
+        releaseLookupData('xx');
+        releaseLookupData('xx');
+        releaseLookupData('xx');
     });
     // The regression this exists for: the lookup panel and the detail widgets
     // are separate React trees and each used to ask for the dataset on its own.
@@ -286,14 +286,14 @@ describe('changing the lookup language', () => {
         const forEnglish = await acquireLookupData();
         expect(h.lastDataMapKeys).toStrictEqual(['en']);
 
-        selectLangCode('km');
-        const forKhmer = await acquireLookupData();
+        selectLangCode('xx');
+        const forOther = await acquireLookupData();
 
-        expect(forKhmer).not.toBe(forEnglish);
-        expect(h.lastDataMapKeys).toStrictEqual(['km']);
+        expect(forOther).not.toBe(forEnglish);
+        expect(h.lastDataMapKeys).toStrictEqual(['xx']);
 
         releaseLookupData('en');
-        releaseLookupData('km');
+        releaseLookupData('xx');
     });
 
     // The short cache sits behind the holder, so leaving it alone would keep the
@@ -302,13 +302,13 @@ describe('changing the lookup language', () => {
         await acquireLookupData();
         releaseLookupData();
 
-        selectLangCode('km');
+        selectLangCode('xx');
         h.loadCount = 0;
 
         // Nothing is mounted at this point, so nothing will ever ask again —
         // the English copy has to have been dropped by the CHANGE itself.
         await acquireLookupData();
-        expect(h.lastDataMapKeys).toStrictEqual(['km']);
+        expect(h.lastDataMapKeys).toStrictEqual(['xx']);
         releaseLookupData();
 
         selectLangCode('en');
@@ -327,18 +327,18 @@ describe('changing the lookup language', () => {
         releaseLookupData();
 
         const pendingEnglish = acquireLookupData();
-        selectLangCode('km');
-        const pendingKhmer = acquireLookupData();
-        await Promise.all([pendingEnglish, pendingKhmer]);
+        selectLangCode('xx');
+        const pendingOther = acquireLookupData();
+        await Promise.all([pendingEnglish, pendingOther]);
 
         // Whatever the superseded English load did on landing, a holder joining
         // now must still get the language that is actually selected.
-        const forKhmer = await acquireLookupData();
+        const forOther = await acquireLookupData();
 
-        expect(forKhmer).toBe(await pendingKhmer);
+        expect(forOther).toBe(await pendingOther);
         releaseLookupData('en');
-        releaseLookupData('km');
-        releaseLookupData('km');
+        releaseLookupData('xx');
+        releaseLookupData('xx');
     });
 });
 
@@ -347,24 +347,24 @@ describe('the dataset a mounted panel already holds', () => {
         expect(getHeldLookupData()).toBeNull();
         expect(h.loadCount).toBe(0);
 
-        const pending = acquireLookupData('km');
+        const pending = acquireLookupData('xx');
         // Still loading: there is nothing held to hand out yet.
-        expect(getHeldLookupData('km')).toBeNull();
-        const khmer = await pending;
-        expect(getHeldLookupData('km')).toBe(khmer);
+        expect(getHeldLookupData('xx')).toBeNull();
+        const other = await pending;
+        expect(getHeldLookupData('xx')).toBe(other);
         // Another language is not held just because one is.
         expect(getHeldLookupData('en')).toBeNull();
         expect(getHeldLookupData()).toBeNull();
         expect(h.loadCount).toBe(1);
 
-        releaseLookupData('km');
-        expect(getHeldLookupData('km')).toBeNull();
+        releaseLookupData('xx');
+        expect(getHeldLookupData('xx')).toBeNull();
     });
 
     test('follows the selected language by default', async () => {
-        selectLangCode('km');
-        const khmer = await acquireLookupData();
-        expect(getHeldLookupData()).toBe(khmer);
+        selectLangCode('xx');
+        const other = await acquireLookupData();
+        expect(getHeldLookupData()).toBe(other);
         releaseLookupData();
         expect(getHeldLookupData()).toBeNull();
     });

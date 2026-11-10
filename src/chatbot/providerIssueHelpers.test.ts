@@ -38,7 +38,8 @@ function genOpenAiError(
 describe('readLlmIssue', () => {
     // 2026-10-17, the user's LM Studio: a model that did not fit beside the
     // one already loaded was read as an empty account off "insufficient",
-    // and the person was told, in Khmer, that their money had run out.
+    // and the person was told, in the app's language, that their money had
+    // run out.
     test('a model the server could not load is not an empty account', () => {
         const issue = readLlmIssue(
             genOpenAiError(400, {

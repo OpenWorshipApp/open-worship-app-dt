@@ -301,8 +301,9 @@ function getGuidePayload(pageInfo, demoId) {
     if (demo === null) {
         return null;
     }
-    // The English window's words first; a Khmer window is reached through the
-    // app's own All tips list, which translates at the press.
+    // The English window's words first; a window in another language is
+    // reached through the app's own All tips list, which translates at the
+    // press.
     return {
         title: demo.title,
         mode: 'demo',
@@ -492,10 +493,11 @@ function translateIn(pack, text) {
     return pack?.get(toTranKey(text)) ?? text;
 }
 
-// The same search typed in a Khmer or French window: the button's words as
-// that window shows them, against the tip's title, detail and category as
-// that window shows them. A Khmer detail that leaves the button's Khmer name
-// out is a tip no Khmer volunteer finds by the button.
+// The same search typed in a window in each non-English language: the
+// button's words as that window shows them, against the tip's title, detail
+// and category as that window shows them. A translated detail that leaves the
+// button's translated name out is a tip no volunteer reading that language
+// finds by the button.
 function checkIsSearchHitIn(pack, tip, wordList, keptWordSet = new Set()) {
     const translatedTip = {
         title: translateIn(pack, tip.label),

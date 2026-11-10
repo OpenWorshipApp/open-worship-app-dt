@@ -14,61 +14,61 @@ import { loadTranBundle } from './tran.mjs';
 // No banner is drawn here: the app may not be running, and a test must not
 // reach out to it. The transport seam is what matters.
 beforeEach(() => {
-    process.env.OWA_MCP_NOTICE = '0';
+  process.env.OWA_MCP_NOTICE = '0';
 });
 
 describe('describeToolCall', () => {
-    it('names what an acting tool did, in the user of the app words', () => {
-        expect(describeToolCall('click', {})).toBe('clicked something');
-        expect(describeToolCall('owa_hide_screens', {})).toBe(
-            'took content off a screen',
-        );
-    });
+  it('names what an acting tool did, in the user of the app words', () => {
+    expect(describeToolCall('click', {})).toBe('clicked something');
+    expect(describeToolCall('owa_hide_screens', {})).toBe(
+      'took content off a screen',
+    );
+  });
 
-    it('stays quiet for a tool that only reads', () => {
-        expect(describeToolCall('take_snapshot', {})).toBeNull();
-        expect(describeToolCall('owa_app_state', {})).toBeNull();
-        // ...including the one tool that is a read or a draw by argument.
-        expect(describeToolCall('owa_find_ui', { text: 'KJV' })).toBeNull();
-        expect(
-            describeToolCall('owa_find_ui', { text: 'KJV', highlight: true }),
-        ).toBe('pointed out a control');
-    });
+  it('stays quiet for a tool that only reads', () => {
+    expect(describeToolCall('take_snapshot', {})).toBeNull();
+    expect(describeToolCall('owa_app_state', {})).toBeNull();
+    // ...including the one tool that is a read or a draw by argument.
+    expect(describeToolCall('owa_find_ui', { text: 'KJV' })).toBeNull();
+    expect(
+      describeToolCall('owa_find_ui', { text: 'KJV', highlight: true }),
+    ).toBe('pointed out a control');
+  });
 });
 
 describe('watchToolCalls', () => {
-    // The bug this exists for: the MCP SDK keeps the handler it finds and
-    // calls it from the new one. Wrapping with an accessor that answers
-    // "me" made every message recurse, and the whole MCP host answered 500.
-    it('does not recurse when the SDK has chained its own handler', () => {
-        const seen = [];
-        const transport = { onmessage: null };
-        // `server.connect` -- the SDK chains whatever was there.
-        const chained = transport.onmessage;
-        transport.onmessage = (message) => {
-            seen.push(message.params.name);
-            chained?.(message);
-        };
-        watchToolCalls(transport);
-        transport.onmessage({
-            method: 'tools/call',
-            params: { name: 'click', arguments: {} },
-        });
-        expect(seen).toEqual(['click']);
+  // The bug this exists for: the MCP SDK keeps the handler it finds and
+  // calls it from the new one. Wrapping with an accessor that answers
+  // "me" made every message recurse, and the whole MCP host answered 500.
+  it('does not recurse when the SDK has chained its own handler', () => {
+    const seen = [];
+    const transport = { onmessage: null };
+    // `server.connect` -- the SDK chains whatever was there.
+    const chained = transport.onmessage;
+    transport.onmessage = (message) => {
+      seen.push(message.params.name);
+      chained?.(message);
+    };
+    watchToolCalls(transport);
+    transport.onmessage({
+      method: 'tools/call',
+      params: { name: 'click', arguments: {} },
     });
+    expect(seen).toEqual(['click']);
+  });
 
-    it('wraps once, however many times it is called', () => {
-        const seen = [];
-        const transport = { onmessage: (message) => seen.push(message) };
-        watchToolCalls(transport);
-        watchToolCalls(transport);
-        transport.onmessage({ method: 'tools/call', params: { name: 'click' } });
-        expect(seen).toHaveLength(1);
-    });
+  it('wraps once, however many times it is called', () => {
+    const seen = [];
+    const transport = { onmessage: (message) => seen.push(message) };
+    watchToolCalls(transport);
+    watchToolCalls(transport);
+    transport.onmessage({ method: 'tools/call', params: { name: 'click' } });
+    expect(seen).toHaveLength(1);
+  });
 
-    it('leaves a transport it cannot wrap alone', () => {
-        expect(watchToolCalls(null)).toBeNull();
-    });
+  it('leaves a transport it cannot wrap alone', () => {
+    expect(watchToolCalls(null)).toBeNull();
+  });
 });
 
 // The verse goes on the congregation's screen, so the banner names it: "put
@@ -76,102 +76,100 @@ describe('watchToolCalls', () => {
 // the wall. A `check` reads the passage and touches no screen, and stays
 // quiet like every other read.
 describe('presenting a passage names the passage', () => {
-    it('names the reference', () => {
-        expect(
-            describeToolCall('owa_present_bible', { reference: 'John 3:16' }),
-        ).toBe('put John 3:16 on the screen');
-        expect(describeToolCall('owa_present_bible', {})).toBe(
-            'put a Bible passage on the screen',
-        );
-    });
+  it('names the reference', () => {
+    expect(
+      describeToolCall('owa_present_bible', { reference: 'John 3:16' }),
+    ).toBe('put John 3:16 on the screen');
+    expect(describeToolCall('owa_present_bible', {})).toBe(
+      'put a Bible passage on the screen',
+    );
+  });
 
-    it('says nothing for a check', () => {
-        expect(
-            describeToolCall('owa_present_bible', {
-                reference: 'John 3:16',
-                action: 'check',
-            }),
-        ).toBeNull();
-    });
+  it('says nothing for a check', () => {
+    expect(
+      describeToolCall('owa_present_bible', {
+        reference: 'John 3:16',
+        action: 'check',
+      }),
+    ).toBeNull();
+  });
 });
 
 // A found verse opened in the Bible Lookup replaces the passage being read,
 // so the banner names it; a search or a read of references stays quiet.
 describe('opening a found verse names the verse', () => {
-    it('a book-name URL announces the supplied site', () => {
-        expect(
-            describeToolNotice('owa_bible_xml', {
-                action: 'names',
-                url: 'https://example.org/books',
-            }),
-        ).toMatchObject({
-            text: 'read a page on example.org',
-            key: 'read a website',
-            detail: ['example.org'],
-        });
+  it('a book-name URL announces the supplied site', () => {
+    expect(
+      describeToolNotice('owa_bible_xml', {
+        action: 'names',
+        url: 'https://example.org/books',
+      }),
+    ).toMatchObject({
+      text: 'read a page on example.org',
+      key: 'read a website',
+      detail: ['example.org'],
     });
-    it('names a verse, and only a verse', () => {
-        expect(describeToolCall('owa_find_verse', { open: 'JHN 3:16' })).toBe(
-            'opened JHN 3:16 in the Bible Lookup',
-        );
-        expect(
-            describeToolCall('owa_find_verse', { open: '1 John 4:18-19' }),
-        ).toBe('opened 1 John 4:18-19 in the Bible Lookup');
-        expect(
-            describeToolCall('owa_find_verse', { open: 'the one about love' }),
-        ).toBe('opened a verse in the Bible Lookup');
-    });
+  });
+  it('names a verse, and only a verse', () => {
+    expect(describeToolCall('owa_find_verse', { open: 'JHN 3:16' })).toBe(
+      'opened JHN 3:16 in the Bible Lookup',
+    );
+    expect(describeToolCall('owa_find_verse', { open: '1 John 4:18-19' })).toBe(
+      'opened 1 John 4:18-19 in the Bible Lookup',
+    );
+    expect(
+      describeToolCall('owa_find_verse', { open: 'the one about love' }),
+    ).toBe('opened a verse in the Bible Lookup');
+  });
 
-    it('says nothing for a search or a read', () => {
-        expect(
-            describeToolCall('owa_find_verse', { words: 'love enemies' }),
-        ).toBeNull();
-        expect(
-            describeToolCall('owa_find_verse', { refs: 'John 3:16' }),
-        ).toBeNull();
-        expect(describeToolCall('owa_find_verse', {})).toBeNull();
-    });
+  it('says nothing for a search or a read', () => {
+    expect(
+      describeToolCall('owa_find_verse', { words: 'love enemies' }),
+    ).toBeNull();
+    expect(
+      describeToolCall('owa_find_verse', { refs: 'John 3:16' }),
+    ).toBeNull();
+    expect(describeToolCall('owa_find_verse', {})).toBeNull();
+  });
 });
 
 // A countdown or a message goes on the congregation's screen too, so the
 // banner names WHICH extra and how long -- a sentence the operator can check
 // against the wall. A check reads and stays quiet.
 describe('a foreground extra names the extra', () => {
-    it('names the countdown and its length, or its target time', () => {
-        expect(
-            describeToolCall('owa_foreground', { widget: 'countdown', minutes: 5 }),
-        ).toBe('started a 5 minute countdown on the screen');
-        expect(
-            describeToolCall('owa_foreground', { widget: 'countdown', at: '10:30' }),
-        ).toBe('started a countdown to 10:30 on the screen');
-        expect(
-            describeToolCall('owa_foreground', {
-                widget: 'marquee-bottom',
-                text: 'Please silence your phones',
-            }),
-        ).toBe('put a scrolling message on the screen');
-        expect(describeToolCall('owa_foreground', { widget: 'clock' })).toBe(
-            'put a clock on the screen',
-        );
-        expect(describeToolCall('owa_foreground', {})).toBe(
-            'put a countdown or a message on the screen',
-        );
-    });
+  it('names the countdown and its length, or its target time', () => {
+    expect(
+      describeToolCall('owa_foreground', { widget: 'countdown', minutes: 5 }),
+    ).toBe('started a 5 minute countdown on the screen');
+    expect(
+      describeToolCall('owa_foreground', { widget: 'countdown', at: '10:30' }),
+    ).toBe('started a countdown to 10:30 on the screen');
+    expect(
+      describeToolCall('owa_foreground', {
+        widget: 'marquee-bottom',
+        text: 'Please silence your phones',
+      }),
+    ).toBe('put a scrolling message on the screen');
+    expect(describeToolCall('owa_foreground', { widget: 'clock' })).toBe(
+      'put a clock on the screen',
+    );
+    expect(describeToolCall('owa_foreground', {})).toBe(
+      'put a countdown or a message on the screen',
+    );
+  });
 
-    it('says what came off, and nothing for a check', () => {
-        expect(
-            describeToolCall('owa_foreground', {
-                action: 'stop',
-                widget: 'countdown',
-            }),
-        ).toBe('took the countdown off the screen');
-        expect(
-            describeToolCall('owa_foreground', { action: 'stop', widget: 'all' }),
-        ).toBe('took every foreground extra off the screen');
-        expect(
-            describeToolCall('owa_foreground', { action: 'check' }),
-        ).toBeNull();
-    });
+  it('says what came off, and nothing for a check', () => {
+    expect(
+      describeToolCall('owa_foreground', {
+        action: 'stop',
+        widget: 'countdown',
+      }),
+    ).toBe('took the countdown off the screen');
+    expect(
+      describeToolCall('owa_foreground', { action: 'stop', widget: 'all' }),
+    ).toBe('took every foreground extra off the screen');
+    expect(describeToolCall('owa_foreground', { action: 'check' })).toBeNull();
+  });
 });
 
 // Reading a page changes nothing in the window, so by this file's own rule it
@@ -179,239 +177,238 @@ describe('a foreground extra names the extra', () => {
 // the one thing an operator is owed a look at even more than "what was
 // pressed", and the site is named because that is the part worth seeing.
 describe('reading a website announces where it went', () => {
-    it('names the site', () => {
-        expect(
-            describeToolCall('owa_read_website', {
-                url: 'https://en.wikipedia.org/wiki/King_James_Version',
-            }),
-        ).toBe('read a page on en.wikipedia.org');
-    });
+  it('names the site', () => {
+    expect(
+      describeToolCall('owa_read_website', {
+        url: 'https://en.wikipedia.org/wiki/King_James_Version',
+      }),
+    ).toBe('read a page on en.wikipedia.org');
+  });
 
-    // The path is where an exfiltration attempt puts its payload, and a
-    // banner is glanced at rather than read.
-    it('never puts the path in the banner', () => {
-        const said = describeToolCall('owa_read_website', {
-            url: 'https://example.com/collect?data=secret-looking-thing',
-        });
-        expect(said).not.toContain('secret-looking-thing');
-        expect(said).toBe('read a page on example.com');
+  // The path is where an exfiltration attempt puts its payload, and a
+  // banner is glanced at rather than read.
+  it('never puts the path in the banner', () => {
+    const said = describeToolCall('owa_read_website', {
+      url: 'https://example.com/collect?data=secret-looking-thing',
     });
+    expect(said).not.toContain('secret-looking-thing');
+    expect(said).toBe('read a page on example.com');
+  });
 
-    it('still announces itself for an unreadable address', () => {
-        expect(describeToolCall('owa_read_website', {})).toBe(
-            'read a website',
-        );
-        expect(describeToolCall('owa_read_website', { url: 'not a url' })).toBe(
-            'read a website',
-        );
-    });
+  it('still announces itself for an unreadable address', () => {
+    expect(describeToolCall('owa_read_website', {})).toBe('read a website');
+    expect(describeToolCall('owa_read_website', { url: 'not a url' })).toBe(
+      'read a website',
+    );
+  });
 
-    // The drafter reads a page itself when handed an address, through the
-    // same window -- so it is announced the same way, and only then: a draft
-    // from a paste leaves the computer no more than a spell-check does.
-    it('announces a song drafted straight off a page, and only then', () => {
-        expect(
-            describeToolCall('owa_lyric_validate', {
-                url: 'https://example.com/chords/1',
-            }),
-        ).toBe('read a page on example.com');
-        expect(
-            describeToolCall('owa_lyric_validate', { url: 'not a url' }),
-        ).toBe('read a website');
-        expect(
-            describeToolCall('owa_lyric_validate', { text: 'a lantern' }),
-        ).toBeNull();
-        expect(
-            describeToolCall('owa_lyric_validate', {
-                text: 'a lantern',
-                url: '',
-            }),
-        ).toBeNull();
-    });
+  // The drafter reads a page itself when handed an address, through the
+  // same window -- so it is announced the same way, and only then: a draft
+  // from a paste leaves the computer no more than a spell-check does.
+  it('announces a song drafted straight off a page, and only then', () => {
+    expect(
+      describeToolCall('owa_lyric_validate', {
+        url: 'https://example.com/chords/1',
+      }),
+    ).toBe('read a page on example.com');
+    expect(describeToolCall('owa_lyric_validate', { url: 'not a url' })).toBe(
+      'read a website',
+    );
+    expect(
+      describeToolCall('owa_lyric_validate', { text: 'a lantern' }),
+    ).toBeNull();
+    expect(
+      describeToolCall('owa_lyric_validate', {
+        text: 'a lantern',
+        url: '',
+      }),
+    ).toBeNull();
+  });
 });
 
 // The data tools write the user's own files, so the banner names WHAT: "moved
 // the song "Amazing Grace" to the trash" is something the operator can check;
 // "changed a file" is not.
 describe('the data tools name what they changed', () => {
-    it('says a file went to the trash, and which', () => {
-        expect(
-            describeToolCall('owa_lyric_file', {
-                action: 'delete',
-                name: 'Amazing Grace',
-            }),
-        ).toBe('moved the song "Amazing Grace" to the trash');
-        expect(describeToolCall('owa_slide_file', { action: 'delete' })).toBe(
-            'moved a slide document to the trash',
-        );
-        // What the earlier actions always said is unchanged.
-        expect(
-            describeToolCall('owa_lyric_file', { action: 'create', name: 'X' }),
-        ).toBe('made the song "X"');
-        expect(
-            describeToolCall('owa_slide_file', { action: 'rename', name: 'X' }),
-        ).toBe('renamed the slide document "X"');
-        expect(describeToolCall('owa_lyric_file', { action: 'update' })).toBe(
-            'changed a song',
-        );
-    });
+  it('says a file went to the trash, and which', () => {
+    expect(
+      describeToolCall('owa_lyric_file', {
+        action: 'delete',
+        name: 'Amazing Grace',
+      }),
+    ).toBe('moved the song "Amazing Grace" to the trash');
+    expect(describeToolCall('owa_slide_file', { action: 'delete' })).toBe(
+      'moved a slide document to the trash',
+    );
+    // What the earlier actions always said is unchanged.
+    expect(
+      describeToolCall('owa_lyric_file', { action: 'create', name: 'X' }),
+    ).toBe('made the song "X"');
+    expect(
+      describeToolCall('owa_slide_file', { action: 'rename', name: 'X' }),
+    ).toBe('renamed the slide document "X"');
+    expect(describeToolCall('owa_lyric_file', { action: 'update' })).toBe(
+      'changed a song',
+    );
+  });
 
-    it('names the slide a slide action touched', () => {
-        expect(
-            describeToolCall('owa_slide_file', {
-                action: 'update-slide',
-                name: 'Sunday',
-                slide: 3,
-            }),
-        ).toBe('changed slide 3 of "Sunday"');
-        expect(
-            describeToolCall('owa_slide_file', {
-                action: 'delete-slide',
-                name: 'Sunday',
-                slide: 2,
-            }),
-        ).toBe('removed slide 2 from "Sunday"');
-        expect(
-            describeToolCall('owa_slide_file', {
-                action: 'add-slide',
-                name: 'Sunday',
-            }),
-        ).toBe('added a slide to "Sunday"');
-        expect(
-            describeToolCall('owa_slide_file', { action: 'slides', name: 'x' }),
-        ).toBeNull();
-    });
+  it('names the slide a slide action touched', () => {
+    expect(
+      describeToolCall('owa_slide_file', {
+        action: 'update-slide',
+        name: 'Sunday',
+        slide: 3,
+      }),
+    ).toBe('changed slide 3 of "Sunday"');
+    expect(
+      describeToolCall('owa_slide_file', {
+        action: 'delete-slide',
+        name: 'Sunday',
+        slide: 2,
+      }),
+    ).toBe('removed slide 2 from "Sunday"');
+    expect(
+      describeToolCall('owa_slide_file', {
+        action: 'add-slide',
+        name: 'Sunday',
+      }),
+    ).toBe('added a slide to "Sunday"');
+    expect(
+      describeToolCall('owa_slide_file', { action: 'slides', name: 'x' }),
+    ).toBeNull();
+  });
 
-    it('names the passage and its list, the note and its file', () => {
-        expect(
-            describeToolCall('owa_bible_item', {
-                action: 'add',
-                reference: 'John 3:16',
-            }),
-        ).toBe('saved John 3:16 to the Bibles list "Default"');
-        expect(
-            describeToolCall('owa_bible_item', {
-                action: 'delete-list',
-                list: 'Easter',
-            }),
-        ).toBe('moved the Bibles list "Easter" to the trash');
-        expect(
-            describeToolCall('owa_bible_note', {
-                action: 'delete',
-                file: 'Sermons',
-            }),
-        ).toBe('removed a note from "Sermons"');
-        expect(describeToolCall('owa_bible_item', { action: 'list' })).toBeNull();
-        expect(describeToolCall('owa_bible_note', { action: 'read' })).toBeNull();
-    });
+  it('names the passage and its list, the note and its file', () => {
+    expect(
+      describeToolCall('owa_bible_item', {
+        action: 'add',
+        reference: 'John 3:16',
+      }),
+    ).toBe('saved John 3:16 to the Bibles list "Default"');
+    expect(
+      describeToolCall('owa_bible_item', {
+        action: 'delete-list',
+        list: 'Easter',
+      }),
+    ).toBe('moved the Bibles list "Easter" to the trash');
+    expect(
+      describeToolCall('owa_bible_note', {
+        action: 'delete',
+        file: 'Sermons',
+      }),
+    ).toBe('removed a note from "Sermons"');
+    expect(describeToolCall('owa_bible_item', { action: 'list' })).toBeNull();
+    expect(describeToolCall('owa_bible_note', { action: 'read' })).toBeNull();
+  });
 
-    it('names the Bible installed, changed or removed, and where it came from', () => {
-        expect(
-            describeToolCall('owa_bible_xml', {
-                action: 'check',
-                url: 'https://github.com/Beblia/x/raw/master/KhmerBible.xml',
-            }),
-        ).toBe('downloaded a Bible file from github.com');
-        expect(
-            describeToolCall('owa_bible_xml', { action: 'import', key: 'KSV' }),
-        ).toBe('installed the Bible "KSV"');
-        expect(
-            describeToolCall('owa_bible_xml', { action: 'delete', key: 'KSV' }),
-        ).toBe('moved the Bible "KSV" to the trash');
-        expect(describeToolCall('owa_bible_xml', { action: 'list' })).toBeNull();
-        expect(describeToolCall('owa_bible_xml', { action: 'cancel' })).toBeNull();
-    });
+  it('names the Bible installed, changed or removed, and where it came from', () => {
+    expect(
+      describeToolCall('owa_bible_xml', {
+        action: 'check',
+        url: 'https://github.com/Beblia/x/raw/master/EnglishKJBible.xml',
+      }),
+    ).toBe('downloaded a Bible file from github.com');
+    expect(
+      describeToolCall('owa_bible_xml', { action: 'import', key: 'TQVS' }),
+    ).toBe('installed the Bible "TQVS"');
+    expect(
+      describeToolCall('owa_bible_xml', { action: 'delete', key: 'TQVS' }),
+    ).toBe('moved the Bible "TQVS" to the trash');
+    expect(describeToolCall('owa_bible_xml', { action: 'list' })).toBeNull();
+    expect(describeToolCall('owa_bible_xml', { action: 'cancel' })).toBeNull();
+  });
 
-    it('announces an undo, and not a look at the list', () => {
-        // A key names itself; a run-sheet change names the sheet and what
-        // went in. Reading a sheet says nothing; a call with no action at
-        // all (the audit script's probe) gets the generic news.
-        expect(describeToolCall('owa_press_key', { keys: 'F5' })).toBe(
-            'pressed F5',
-        );
-        expect(describeToolCall('owa_drag', { from: 'a', to: 'b' })).toBe(
-            'dragged something',
-        );
-        expect(
-            describeToolCall('owa_menu', { action: 'click', item: 'View > Reload' }),
-        ).toBe('chose View > Reload in the menu');
-        expect(describeToolCall('owa_scroll', { find: 'Document List' })).toBe(
-            'scrolled a list',
-        );
-        expect(
-            describeToolCall('owa_media_file', {
-                action: 'delete',
-                kind: 'video',
-                name: 'bg.mp4',
-            }),
-        ).toBe('moved the media file "bg.mp4" to the trash');
-        expect(
-            describeToolCall('owa_media_file', {
-                action: 'import',
-                kind: 'image',
-                path: 'C:\\pics\\sunrise.jpg',
-            }),
-        ).toBe('imported "C:\\pics\\sunrise.jpg" from the disk');
-        expect(
-            describeToolCall('owa_media_file', { action: 'list', kind: 'image' }),
-        ).toBeNull();
-        expect(describeToolCall('owa_menu', { action: 'list' })).toBeNull();
-        expect(
-            describeToolCall('owa_presenting_flow', {
-                action: 'add',
-                name: 'Sunday',
-                document: 'Amazing Grace',
-            }),
-        ).toBe('added "Amazing Grace" to the run sheet "Sunday"');
-        expect(
-            describeToolCall('owa_presenting_flow', {
-                action: 'add',
-                name: 'Sunday',
-                reference: 'John 3:16',
-            }),
-        ).toBe('added John 3:16 to the run sheet "Sunday"');
-        expect(
-            describeToolCall('owa_presenting_flow', {
-                action: 'remove',
-                name: 'Sunday',
-                line: 2,
-            }),
-        ).toBe('removed a line from the run sheet "Sunday"');
-        expect(
-            describeToolCall('owa_presenting_flow', {
-                action: 'delete',
-                name: 'Sunday',
-            }),
-        ).toBe('moved the run sheet "Sunday" to the trash');
-        expect(describeToolCall('owa_presenting_flow', {})).toBe(
-            'changed a run sheet',
-        );
-        for (const action of ['list', 'info']) {
-            expect(
-                describeToolCall('owa_presenting_flow', { action, name: 'x' }),
-            ).toBeNull();
-        }
-        expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
-            'put back an earlier change',
-        );
-        expect(describeToolCall('owa_undo', { action: 'list' })).toBeNull();
-    });
+  it('announces an undo, and not a look at the list', () => {
+    // A key names itself; a run-sheet change names the sheet and what
+    // went in. Reading a sheet says nothing; a call with no action at
+    // all (the audit script's probe) gets the generic news.
+    expect(describeToolCall('owa_press_key', { keys: 'F5' })).toBe(
+      'pressed F5',
+    );
+    expect(describeToolCall('owa_drag', { from: 'a', to: 'b' })).toBe(
+      'dragged something',
+    );
+    expect(
+      describeToolCall('owa_menu', { action: 'click', item: 'View > Reload' }),
+    ).toBe('chose View > Reload in the menu');
+    expect(describeToolCall('owa_scroll', { find: 'Document List' })).toBe(
+      'scrolled a list',
+    );
+    expect(
+      describeToolCall('owa_media_file', {
+        action: 'delete',
+        kind: 'video',
+        name: 'bg.mp4',
+      }),
+    ).toBe('moved the media file "bg.mp4" to the trash');
+    expect(
+      describeToolCall('owa_media_file', {
+        action: 'import',
+        kind: 'image',
+        path: 'C:\\pics\\sunrise.jpg',
+      }),
+    ).toBe('imported "C:\\pics\\sunrise.jpg" from the disk');
+    expect(
+      describeToolCall('owa_media_file', { action: 'list', kind: 'image' }),
+    ).toBeNull();
+    expect(describeToolCall('owa_menu', { action: 'list' })).toBeNull();
+    expect(
+      describeToolCall('owa_presenting_flow', {
+        action: 'add',
+        name: 'Sunday',
+        document: 'Amazing Grace',
+      }),
+    ).toBe('added "Amazing Grace" to the run sheet "Sunday"');
+    expect(
+      describeToolCall('owa_presenting_flow', {
+        action: 'add',
+        name: 'Sunday',
+        reference: 'John 3:16',
+      }),
+    ).toBe('added John 3:16 to the run sheet "Sunday"');
+    expect(
+      describeToolCall('owa_presenting_flow', {
+        action: 'remove',
+        name: 'Sunday',
+        line: 2,
+      }),
+    ).toBe('removed a line from the run sheet "Sunday"');
+    expect(
+      describeToolCall('owa_presenting_flow', {
+        action: 'delete',
+        name: 'Sunday',
+      }),
+    ).toBe('moved the run sheet "Sunday" to the trash');
+    expect(describeToolCall('owa_presenting_flow', {})).toBe(
+      'changed a run sheet',
+    );
+    for (const action of ['list', 'info']) {
+      expect(
+        describeToolCall('owa_presenting_flow', { action, name: 'x' }),
+      ).toBeNull();
+    }
+    expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
+      'put back an earlier change',
+    );
+    expect(describeToolCall('owa_undo', { action: 'list' })).toBeNull();
+  });
 });
 
-// Reported 2026-10-06: the banner stayed English in a Khmer window. It is said
+// Reported 2026-10-06: the banner stayed English in a translated window. It is said
 // in the language the app is DISPLAYING now, through the app's own dictionary,
 // and a phrase the dictionary does not have yet is said in English WHOLE.
 describe('the banner speaks the language the app is shown in', () => {
   // A dictionary as `tran.mjs` hands it over: sanitized keys.
   const dictionaries = {
-    km: {
-      'app assistant': '«km» app assistant',
-      'clicked something': '«km» clicked something',
-      'took a foreground extra off the screen': '«km» took a foreground extra off the screen',
-      countdown: '«km» countdown',
-      'read a website': '«km» read a website',
+    xx: {
+      'app assistant': '«xx» app assistant',
+      'clicked something': '«xx» clicked something',
+      'took a foreground extra off the screen':
+        '«xx» took a foreground extra off the screen',
+      countdown: '«xx» countdown',
+      'read a website': '«xx» read a website',
     },
-    fr: { assistant: 'Assistant', 'app assistant': '«fr» app assistant' },
+    yy: { assistant: 'Assistant', 'app assistant': '«yy» app assistant' },
   };
 
   it('carries a name-free key and the names apart from it', () => {
@@ -436,13 +433,11 @@ describe('the banner speaks the language the app is shown in', () => {
       detail: ['"Sunday"', '#3'],
     });
     // No name given: the detail is empty rather than English filler.
-    expect(describeToolNotice('owa_lyric_file', { action: 'delete' })).toEqual(
-      {
-        text: 'moved a song to the trash',
-        key: 'moved a song to the trash',
-        detail: [],
-      },
-    );
+    expect(describeToolNotice('owa_lyric_file', { action: 'delete' })).toEqual({
+      text: 'moved a song to the trash',
+      key: 'moved a song to the trash',
+      detail: [],
+    });
   });
 
   it('banners a study file only when it is saved (EC-464)', () => {
@@ -474,21 +469,23 @@ describe('the banner speaks the language the app is shown in', () => {
       describeToolNotice('owa_click', {}),
       dictionaries,
     );
-    // French has who is acting but not "clicked something".
-    expect(words.fr).toBeUndefined();
-    expect(Object.keys(words).sort()).toEqual(['en', 'km']);
+    // `yy` has who is acting but not "clicked something".
+    expect(words.yy).toBeUndefined();
+    expect(Object.keys(words).sort()).toEqual(['en', 'xx']);
   });
 
-  // The keys only `tools/` asks for are added to `src/lang/data/km` and
-  // `fr` by hand. Half a pair is the mistake that would go unnoticed: a
-  // French window keeps its English banner and nothing fails.
-  it('finds every banner key translated in both km and fr, or in neither', () => {
-    const bundle = loadTranBundle();
-    const km = bundle.dictionaries.km ?? {};
-    const fr = bundle.dictionaries.fr ?? {};
+  // The keys only `tools/` asks for are added to every language's
+  // dictionary by hand. One left out is the mistake that would go unnoticed:
+  // a window in that language keeps its English banner and nothing fails.
+  // Every language the bundle holds (the checkout's, found by folder) alike.
+  it('finds every banner key translated in every language the bundle holds, or in none', () => {
+    const dictionaryList = Object.values(loadTranBundle().dictionaries);
     const halfDone = listNoticeTranKeys().filter((key) => {
       const lowered = key.trim().toLowerCase();
-      return (km[lowered] === undefined) !== (fr[lowered] === undefined);
+      const translatedCount = dictionaryList.filter((dictionary) => {
+        return dictionary[lowered] !== undefined;
+      }).length;
+      return translatedCount > 0 && translatedCount < dictionaryList.length;
     });
     expect(halfDone).toEqual([]);
   });
@@ -518,19 +515,19 @@ describe('the banner in the page', () => {
 
   const words = {
     en: { who: 'Assistant', what: 'clicked something' },
-    km: { who: '«km» assistant', what: '«km» clicked something' },
+    xx: { who: '«xx» assistant', what: '«xx» clicked something' },
   };
 
   it('picks the words for the language the window is displaying', () => {
-    document.documentElement.lang = 'km';
+    document.documentElement.lang = 'xx';
     expect(show(words)).toBe(true);
     expect(readPill()).toMatchObject({
-      lang: 'km',
+      lang: 'xx',
     });
   });
 
   it('falls back to English for a language it has no words for', () => {
-    document.documentElement.lang = 'fr';
+    document.documentElement.lang = 'yy';
     show(words);
     expect(readPill()).toMatchObject({
       who: 'Assistant',
@@ -557,7 +554,8 @@ describe('the banner in the page', () => {
     expect(pillRule).toMatch(/\n\s*backdrop-filter: blur\(/);
     const alpha = /background: rgba\([^)]*,\s*([\d.]+)\)/.exec(pillRule)[1];
     expect(Number(alpha)).toBeLessThanOrEqual(0.5);
-    const fallback = /@supports not \(backdrop-filter: blur\(1px\)\) \{([^}]*)\}/;
+    const fallback =
+      /@supports not \(backdrop-filter: blur\(1px\)\) \{([^}]*)\}/;
     expect(fallback.exec(css)[1]).toContain('rgba(16, 21, 28, 0.94)');
   });
 

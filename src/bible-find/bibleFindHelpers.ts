@@ -117,9 +117,9 @@ export function calcPerPage(toLineNumber: number, fromLineNumber: number) {
  * `quickTrimText` answers "is there anything of this locale in this word?", so
  * a query typed in another script drops every part and the needle comes out as
  * nothing but `%`. Handed to SQL that is `LIKE '%%'`, which matches EVERY row:
- * measured 2026-09-20, a Khmer word looked up in the KJV answered
- * **31,102 verses found** -- the whole bible, every word drawn as a match --
- * and an English word in a Khmer bible answered 31,099. `null` says "no verse
+ * measured 2026-09-20, a word in a script of its own looked up in the KJV
+ * answered **31,102 verses found** -- the whole bible, every word drawn as a
+ * match -- and an English word in a bible in that script answered 31,099. `null` says "no verse
  * can match", which the caller answers without touching the database.
  *
  * The needle keeps the RAW part, not the trimmed one: trimming is the test,
@@ -347,7 +347,7 @@ const graphemeSegmenter = new Intl.Segmenter(undefined, {
 /**
  * A verse's grapheme clusters, so a letter and the marks on it move as one.
  * One repair, the one `pptxFontHelpers` makes: Unicode has no conjunct rule for
- * Khmer, so a consonant with a subscript under it segments as two graphemes,
+ * some scripts, so a consonant with a subscript under it segments as two graphemes,
  * the subscript sign ending the first, and a match marker dropped between the
  * two would break the subscript off its consonant. A cluster that ends in an
  * invisible stacker is kept with what follows it.
@@ -409,7 +409,7 @@ const FOUND_MATCH_CLOSE = '</span>';
  * cluster by cluster, so every character of the finding form still knows
  * which cluster it came from, and the markers go around those ORIGINAL
  * clusters. A match may run over what the finding form drops -- a space, an
- * apostrophe, a Khmer zero-width break -- exactly as the find's own `LIKE`
+ * apostrophe, a zero-width word break -- exactly as the find's own `LIKE`
  * does.
  *
  * Everything the verse holds is escaped here, so the markers are the only

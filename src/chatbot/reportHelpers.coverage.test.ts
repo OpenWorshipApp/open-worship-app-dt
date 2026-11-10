@@ -124,7 +124,7 @@ describe('what a report says of the machine', () => {
     test('the OS, the Electron and Chromium builds, the locale and the display scale', async () => {
         vi.stubGlobal('navigator', {
             userAgent: ELECTRON_USER_AGENT,
-            language: 'km-KH',
+            language: 'xx-XX',
         });
         // The fact behind most "too small" reports.
         vi.stubGlobal('window', { devicePixelRatio: 1.25 });
@@ -132,7 +132,7 @@ describe('what a report says of the machine', () => {
         expect(
             machineLine.startsWith(
                 'Machine: Windows NT 10.0; Win64; x64, Electron 39.2.0, ' +
-                    'Chromium 142.0.7444.59, locale km-KH',
+                    'Chromium 142.0.7444.59, locale xx-XX',
             ),
         ).toBe(true);
         expect(machineLine.endsWith(', display scale 1.25x')).toBe(true);
@@ -155,7 +155,7 @@ describe('what a report says of the window', () => {
             mainWindow: {
                 title: 'Open Worship',
                 page: 'presenter.html',
-                language: 'km',
+                language: 'xx',
                 theme: 'dark',
                 tabs: [
                     { label: 'Documents', isActive: true },
@@ -178,12 +178,12 @@ describe('what a report says of the window', () => {
                     availableSheets: ['Sunday'],
                 },
                 // Never copied: it names the account.
-                instances: [{ dataDir: 'C:/Users/sokha/Documents' }],
+                instances: [{ dataDir: 'C:/Users/volunteer7/Documents' }],
             },
         });
         const evidence = await collectReportEvidence([]);
         expect(evidence.windowLine).toBe(
-            'Window: Open Worship (presenter.html), language km, theme ' +
+            'Window: Open Worship (presenter.html), language xx, theme ' +
                 'dark, active tabs: Documents / Lyrics',
         );
         expect(evidence.selectionLines).toHaveLength(2);
@@ -191,7 +191,7 @@ describe('what a report says of the window', () => {
             'The song "Amazing Grace" is selected (3 slides).',
         );
         expect(evidence.selectionLines[1]).toContain('No run sheet is open');
-        expect(JSON.stringify(evidence)).not.toContain('sokha');
+        expect(JSON.stringify(evidence)).not.toContain('volunteer7');
     });
 
     test('a state with no main window is said to be unreadable, with nothing selected', async () => {

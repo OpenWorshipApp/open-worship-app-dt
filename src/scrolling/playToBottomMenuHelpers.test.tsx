@@ -3,7 +3,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
 // The menu labels are not what is under test, and `tran` throws in dev on a key
-// the Khmer dictionary has not learned yet.
+// a language package's dictionary has not learned yet.
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
 }));

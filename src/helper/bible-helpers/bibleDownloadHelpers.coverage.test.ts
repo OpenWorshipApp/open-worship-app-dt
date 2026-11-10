@@ -74,12 +74,12 @@ type FakeRequestType = {
 };
 let requests: FakeRequestType[] = [];
 
-const khmerBibleInfo = {
-    key: 'KHSV',
-    locale: 'km-KH' as const,
-    title: 'Khmer Standard Version',
+const spacedBibleInfo = {
+    key: 'XXSV',
+    locale: 'en-US' as const,
+    title: 'Xx Standard Version',
     version: 2,
-    filePath: 'bibles/Khmer Bible.tar',
+    filePath: 'bibles/Xx Bible.tar',
 };
 
 beforeEach(() => {
@@ -121,20 +121,20 @@ describe('downloading a Bible', () => {
 
     test('requests the archive by its encoded path and streams it to disk', async () => {
         const options = { onDone: vi.fn() } as any;
-        await downloadBible({ bibleInfo: khmerBibleInfo, options });
+        await downloadBible({ bibleInfo: spacedBibleInfo, options });
         expect(mocks.toBiblePath).toHaveBeenCalledWith(
-            '/bibles/Khmer%20Bible.tar',
+            '/bibles/Xx%20Bible.tar',
         );
         expect(requests).toHaveLength(1);
         expect(requests[0].options).toMatchObject({
-            path: '/bibles/Khmer%20Bible.tar',
+            path: '/bibles/Xx%20Bible.tar',
             hostname: 'api.example.com',
             headers: { 'x-api-key': 'api-key' },
         });
         const response = { statusCode: 200, headers: {} };
         requests[0].respond(response);
         expect(mocks.writeStreamToFile).toHaveBeenCalledWith(
-            '/data/bibles/bibles/Khmer%20Bible.tar',
+            '/data/bibles/bibles/Xx%20Bible.tar',
             options,
             response,
         );
@@ -146,7 +146,7 @@ describe('downloading a Bible', () => {
         mocks.getWritableBiblePath.mockRejectedValue(error);
         const onDone = vi.fn();
         await downloadBible({
-            bibleInfo: khmerBibleInfo,
+            bibleInfo: spacedBibleInfo,
             options: { onDone } as any,
         });
         expect(onDone).toHaveBeenCalledExactlyOnceWith(error);

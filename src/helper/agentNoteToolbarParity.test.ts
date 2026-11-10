@@ -182,14 +182,14 @@ const PROBE_MAP: Record<string, () => void> = {
         // What the next words typed there get, too.
         expect(root.children[1].textStyle).toBe('font-family: Georgia;');
         // A language's own face, as the font box lists it.
-        const khmer = edit([{ block: 2, font: 'app-Battambang' }], {
-            fontList: ['Arial', 'app-Battambang'],
+        const ownFace = edit([{ block: 2, font: 'app-Xx-Face' }], {
+            fontList: ['Arial', 'app-Xx-Face'],
         });
-        expect(runOf(khmer.root, 'Love is patient and kind').style).toBe(
-            'font-family: app-Battambang;',
+        expect(runOf(ownFace.root, 'Love is patient and kind').style).toBe(
+            'font-family: app-Xx-Face;',
         );
         const back = applyNoteEdit({
-            content: khmer.result.content,
+            content: ownFace.result.content,
             changes: [{ block: 2, font: 'default' }],
         });
         expect(

@@ -1172,7 +1172,7 @@ editing heads in that order.
 
 `langHelpers` carries a bonus: restoring the translation-completeness check
 that died with `src/lang/data/{en,km}/index.test.ts` closes a real hole, since
-a missing Khmer key **throws in dev and blanks the page**.
+a missing key **throws in dev in any non-English language and blanks the page**.
 `src/lang/tranKeyCoverage.test.ts` catches static keys only.
 
 ### `UT-05` · `tools/owa-devtools-mcp` — 803 uncovered of 3 424 (76.5%)

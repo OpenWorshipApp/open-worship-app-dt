@@ -113,8 +113,8 @@ describe('bibleRenderHelper', () => {
         );
         mocks.getBibleInfoIsRtlMock.mockResolvedValue(false);
         mocks.getLangDataFromBibleKeyMock.mockResolvedValue({
-            fontFamily: 'Khmer System',
-            locale: 'km-KH',
+            fontFamily: 'Made Up Sans',
+            locale: 'xx-XX',
         });
         mocks.checkShouldNewLineMock.mockImplementation(
             async (
@@ -415,10 +415,10 @@ describe('bibleRenderHelper', () => {
                 isNewLine: true,
                 isRtl: false,
                 kjvBibleVersesKey: 'GEN 1:1',
-                locale: 'km-KH',
+                locale: 'xx-XX',
                 localeVerse: '1',
                 newLineTitlesHtmlText: 'Title 1',
-                style: { fontFamily: 'Khmer System' },
+                style: { fontFamily: 'Made Up Sans' },
                 text: 'In the beginning',
                 verse: 1,
             },
@@ -436,10 +436,10 @@ describe('bibleRenderHelper', () => {
                 isNewLine: true,
                 isRtl: false,
                 kjvBibleVersesKey: 'GEN 1:2',
-                locale: 'km-KH',
+                locale: 'xx-XX',
                 localeVerse: '2',
                 newLineTitlesHtmlText: 'Title 2',
-                style: { fontFamily: 'Khmer System' },
+                style: { fontFamily: 'Made Up Sans' },
                 text: 'The earth',
                 verse: 2,
             },
@@ -457,10 +457,10 @@ describe('bibleRenderHelper', () => {
                 isNewLine: false,
                 isRtl: false,
                 kjvBibleVersesKey: 'GEN 1:3',
-                locale: 'km-KH',
+                locale: 'xx-XX',
                 localeVerse: '3',
                 newLineTitlesHtmlText: 'Title 3',
-                style: { fontFamily: 'Khmer System' },
+                style: { fontFamily: 'Made Up Sans' },
                 text: 'Light',
                 verse: 3,
             },

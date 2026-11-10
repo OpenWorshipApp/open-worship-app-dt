@@ -1,10 +1,10 @@
 // `owa_lyric_edit`: one change to a song, made by code from the WORDS a
 // caller gives -- never from notation the caller wrote.
 //
-// Asked for 2026-11-06 (the user, with `Still khmer` -- a copy of `Still`
-// whose every line was still English -- circled in the Documents list: _I
-// want to translate all english in `Still khmer` to khmer, so chatbot should
-// be able to help doing this_; and the operations: _add section: verse 1,
+// Asked for 2026-11-06 (the user, with a copy of `Still` named for another
+// language -- every line still English -- circled in the Documents list,
+// asking that the chatbot help translate all its English into that language;
+// and the operations: _add section: verse 1,
 // verse 2 ...; translate text to another language; change text; add keynote_).
 //
 // WHY WORDS AND NOT A DOCUMENT. `owa_lyric_file update` takes the whole Open

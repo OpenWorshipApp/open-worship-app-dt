@@ -586,7 +586,7 @@ describe('the suggestions under the box', () => {
 
 describe('the Bible input aid', () => {
     test('a Reader tab completes a passage in the Reader’s own words', async () => {
-        plugTestTranslator({ Book: 'BOOK-IN-KHMER' });
+        plugTestTranslator({ Book: 'BOOK-IN-XX' });
         h.callTool.mockImplementation(async (name: string, args: any) => {
             if (name === 'owa_bible_suggest' && args.kind === 'reference') {
                 return JSON.stringify({
@@ -1009,7 +1009,7 @@ describe('what a message draws', () => {
         h.secret = { anthropicAPIKey: 'sk-ant-test' };
         plugTestTranslator({
             'Open {provider} billing': 'OPEN-BILLING {provider}',
-            'Show me step by step': 'STEP-BY-STEP-KM',
+            'Show me step by step': 'STEP-BY-STEP-XX',
         });
         seedSessions([
             genSession({
@@ -1062,7 +1062,7 @@ describe('what a message draws', () => {
         expect(page.querySelector('.bi-box-arrow-up-right')).not.toBeNull();
         expect(guide.className).toBe('cue-act cue-act-guide');
         // A label the dictionary has whole is drawn as the dictionary says.
-        expect(guide.textContent).toBe('STEP-BY-STEP-KM');
+        expect(guide.textContent).toBe('STEP-BY-STEP-XX');
         expect(demo.className).toBe('cue-act cue-act-demo');
         expect(data.className).toBe('cue-act cue-act-data');
         expect(data.textContent).toBe('GEN 4:1');
@@ -1566,7 +1566,7 @@ describe('the camera and the pointer', () => {
         h.callToolPicture.mockResolvedValue(PNG_DATA_URL);
         plugTestTranslator({
             'my {window} window': 'WINDOW-OF {window}',
-            Settings: 'SETTINGS-KM',
+            Settings: 'SETTINGS-XX',
         });
         seedSessions([genSession()]);
         await renderWindow();
@@ -1579,7 +1579,7 @@ describe('the camera and the pointer', () => {
             null,
             { windowId: 'W2', focus: 'setting', isSeparateWindow: false },
         );
-        expect(draftChipNames()).toEqual(['WINDOW-OF SETTINGS-KM']);
+        expect(draftChipNames()).toEqual(['WINDOW-OF SETTINGS-XX']);
     });
 
     test('the ◎ says to point first, then attaches what was pointed at', async () => {
@@ -1837,7 +1837,7 @@ describe('pressing a chip under a message', () => {
             }
             return JSON.stringify({ shownCount });
         });
-        plugTestTranslator({ 'Clear All': 'CLEAR-ALL-KM' });
+        plugTestTranslator({ 'Clear All': 'CLEAR-ALL-XX' });
         seedChips(
             [],
             [
@@ -1846,9 +1846,9 @@ describe('pressing a chip under a message', () => {
             ],
         );
         await renderWindow();
-        const chip = chipTitled('CLEAR-ALL-KM');
+        const chip = chipTitled('CLEAR-ALL-XX');
         expect(chip.getAttribute('title')).toBe(
-            'CLEAR-ALL-KM — press to ring it in the app',
+            'CLEAR-ALL-XX — press to ring it in the app',
         );
         expect(chip.querySelector('i')?.className).toBe('bi bi-bullseye');
         await press(chip);
@@ -1977,7 +1977,7 @@ describe('pressing a chip under a message', () => {
         plugTestTranslator({
             'app screen': 'APP-SCREEN',
             'my {window} window': 'WINDOW-OF {window}',
-            Settings: 'SETTINGS-KM',
+            Settings: 'SETTINGS-XX',
         });
         seedChips([
             {
@@ -2009,8 +2009,8 @@ describe('pressing a chip under a message', () => {
             'APP-SCREEN — not attached any more',
         );
         // A name that says its window already is not told it twice.
-        expect(chipTitled('WINDOW-OF SETTINGS-KM').getAttribute('title')).toBe(
-            'WINDOW-OF SETTINGS-KM — not attached any more',
+        expect(chipTitled('WINDOW-OF SETTINGS-XX').getAttribute('title')).toBe(
+            'WINDOW-OF SETTINGS-XX — not attached any more',
         );
         expect(chipTitled('holiday.jpg').querySelector('i')?.className).toBe(
             'bi bi-image',

@@ -64,6 +64,7 @@ import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { describeVerseOpened } from './verseFindChatHelpers';
 import { toSiteName } from './progressHelpers';
 import { checkIsOwnWindowQuestion, readWholePage } from './questionHelpers';
+import { checkHasLanguageName } from './languageNameWordHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
 import {
     OPEN_AI_SETTING_LABEL,
@@ -297,8 +298,10 @@ function readReaderButtonReference(
 ): ReaderButtonReferenceType | null {
     if (
         focus !== 'reader' ||
-        !/(?:book|chapter)\s+buttons?|khmer|non[- ]english|another language/i.test(
-            question,
+        !(
+            /(?:book|chapter)\s+buttons?|non[- ]english|another language/i.test(
+                question,
+            ) || checkHasLanguageName(question)
         )
     ) {
         return null;
@@ -421,7 +424,7 @@ const FOLLOW_UP_NO_PATTERN =
     /^(?:n|no|nope|nah|no\s+thanks?|not\s+now|never\s?mind|cancel|stop)[\s.!?]*$/i;
 
 // ...and the same in the app's other languages, whose words for yes and no
-// are data (`assistant.json`): the yes and no buttons under a Khmer answer
+// are data (`assistant.json`): the yes and no buttons under a translated answer
 // are pressed with no assistant at all.
 function checkIsFollowUpYes(text: string) {
     return FOLLOW_UP_YES_PATTERN.test(text) || checkIsLanguageWord(text, 'yes');
@@ -2068,7 +2071,7 @@ export async function runBotAction(
     // returned it, both were printed under the page.
     const pageId = action.args?.id;
     if (action.toolName === 'owa_help_page' && typeof pageId === 'string') {
-        // In the window's language: `W-06@km` is the page's current
+        // In the window's language: `W-06@<code>` is the page's current
         // translation when there is one and the English page when not.
         const appLangCode = getAppLangCode();
         const shownPageId =

@@ -100,8 +100,8 @@ A tool is not "added" until every line is true.
 9. **If it acts, add it to `ACTING_TOOLS`** in `notify.mjs`, with the phrase a
    volunteer would use ("clicked something", not "dispatched a click"). Run the
    audit script — it warns on an acting-looking tool that is missing. The
-   phrase is also a `tran()` key: add its km and fr strings (then rebuild the
-   knowledge), or a Khmer window shows that banner in English.
+   phrase is also a `tran()` key: add it to every language's dictionary (then
+   rebuild the knowledge), or a translated window shows that banner in English.
 10. **Page expressions stay dependency-free strings.** No `import()` of app
     modules (it re-runs `document.onkeydown` and kills every shortcut), no app
     state mutation, and anything drawn goes in its own shadow root.

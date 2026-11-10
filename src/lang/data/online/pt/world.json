@@ -10,5 +10,8 @@
     },
     "latinStopWords": {
         "pt-BR": "e de o que a do da em não os se para com ele por as dos"
+    },
+    "catalogLanguageCodes": {
+        "pt": "por"
     }
 }

@@ -195,8 +195,8 @@ describe('initOpenLyric', () => {
     // The overprint regression. open-lyric freezes a slide's lines into pixel
     // boxes measured in whatever faces the window has registered, and this used
     // to fetch the language list WITHOUT registering any: a song set in
-    // `app-Battambang` was measured in the fallback font, then drawn in
-    // Battambang, and its long lines wrapped over the next one.
+    // a language's own face (`app-Xx-Face`) was measured in the fallback
+    // font, then drawn in its own, and its long lines wrapped over the next one.
     test('registers every language font before handing the previewer out', async () => {
         let isRegistered = false;
         mocks.initAllLangCssMock.mockImplementationOnce(async () => {
@@ -252,14 +252,14 @@ describe('initOpenLyric settings and language plugins', () => {
     }
 
     test('the saved font size and family are applied to the previewer', async () => {
-        setSavedSetting('{"fontSize":30,"fontFamily":"app-Battambang"}');
+        setSavedSetting('{"fontSize":30,"fontFamily":"app-Xx-Face"}');
         const openLyricPreviewer: any = await initOpenLyric(FILE_PATH, true);
         expect(openLyricPreviewer.fontSize).toBe('30px');
-        expect(openLyricPreviewer.fontFamily).toBe('app-Battambang');
+        expect(openLyricPreviewer.fontFamily).toBe('app-Xx-Face');
         // The previewer reads its setting through the same record.
         expect(openLyricPreviewer.loadSetting()).toEqual({
             fontSize: 30,
-            fontFamily: 'app-Battambang',
+            fontFamily: 'app-Xx-Face',
         });
     });
 
@@ -302,13 +302,13 @@ describe('initOpenLyric settings and language plugins', () => {
 
     test('each language that has open-lyric plugins installs them', async () => {
         setSavedSetting(null);
-        const initKhmerPlugins = vi.fn();
+        const initLangPlugins = vi.fn();
         mocks.initAllLangCssMock.mockResolvedValue([
-            { initOpenLyricPlugins: initKhmerPlugins },
+            { initOpenLyricPlugins: initLangPlugins },
             {},
         ]);
         const openLyricPreviewer = await initOpenLyric(FILE_PATH);
-        expect(initKhmerPlugins).toHaveBeenCalledExactlyOnceWith({
+        expect(initLangPlugins).toHaveBeenCalledExactlyOnceWith({
             openLyric: openLyricPreviewer,
             // This window's own registry, for a language plugin's Open Lyric
             // half to register into.
@@ -319,8 +319,8 @@ describe('initOpenLyric settings and language plugins', () => {
         });
 
         // The caller that asked for no language init gets none.
-        initKhmerPlugins.mockClear();
+        initLangPlugins.mockClear();
         await initOpenLyric(FILE_PATH, true);
-        expect(initKhmerPlugins).not.toHaveBeenCalled();
+        expect(initLangPlugins).not.toHaveBeenCalled();
     });
 });

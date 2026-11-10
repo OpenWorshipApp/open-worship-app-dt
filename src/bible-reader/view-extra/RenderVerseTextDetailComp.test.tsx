@@ -156,7 +156,7 @@ describe('the verse element', () => {
 
     test('compared bibles mark the verse as extra verses', async () => {
         const element = await render(genVerseInfo({ isLast: true }), [
-            genVerseInfo({ bibleKey: 'KHM' }),
+            genVerseInfo({ bibleKey: 'TQAM' }),
         ]);
         expect(element.className).toBe('verse-text extra-verses');
         expect(element.dataset.isLast).toBe('1');

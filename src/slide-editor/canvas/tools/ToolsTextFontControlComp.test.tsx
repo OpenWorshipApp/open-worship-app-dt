@@ -59,7 +59,7 @@ vi.mock('../../../others/FontFamilyControlComp', () => ({
             data-font-family={props.fontFamily}
             data-font-weight={props.fontWeight}
         >
-            <button onClick={() => props.setFontFamily('Battambang')}>
+            <button onClick={() => props.setFontFamily('Made Up Sans')}>
                 family
             </button>
             <button onClick={() => props.setFontWeight('700')}>weight</button>
@@ -131,7 +131,7 @@ describe('ToolsTextFontControlComp', () => {
         expect(h.setProps).toHaveBeenLastCalledWith({ fontSize: 48 });
         await click('family');
         expect(h.setProps).toHaveBeenLastCalledWith({
-            fontFamily: 'Battambang',
+            fontFamily: 'Made Up Sans',
         });
         await click('weight');
         expect(h.setProps).toHaveBeenLastCalledWith({ fontWeight: '700' });

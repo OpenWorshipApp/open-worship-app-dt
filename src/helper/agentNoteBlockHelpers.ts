@@ -17,7 +17,7 @@
  * `[@Moses]`, `[#Jerusalem]`. Written back, a mention token it kept is the
  * ORIGINAL node with its data (a verse mention's words, a person's id), a run
  * of words it did not change keeps its own colour, font and size, and new
- * words take the block's own style -- a Khmer note's font included.
+ * words take the block's own style -- a note's language font included.
  *
  * Verse words are never a model's: a NEW verse (`[^Romans 8:28]`, or a
  * `passage` block) is resolved by the app from an installed Bible
@@ -151,7 +151,7 @@ export type NoteVerseType = {
     shownText: string;
     // "(16): For God so loved …" -- the verse words, a line a chapter.
     verseText: string;
-    // "font-family: app-Battambang;" for a Bible written in another script.
+    // "font-family: app-<Family>;" for a Bible written in another script.
     style: string;
 };
 
@@ -1696,7 +1696,7 @@ function checkIsCountedWord(word: string) {
 /**
  * The words of a block worth keeping, any script: cut by the segmenter, so
  * a script written with no spaces is words too (2026-11-08: split at the
- * spaces, a Khmer or Chinese paragraph was one or two "words", and the
+ * spaces, a paragraph in a script without spaces was one or two "words", and the
  * guard below never held a heading off it); split at what is not a letter
  * where there is no segmenter.
  */

@@ -709,7 +709,8 @@ export const RESOURCES_SYSTEM_PROMPT =
     'explanation paragraph ' +
     'starts in one picture and continues in the next, join both parts before ' +
     'answering. The pictures are authoritative: a scan may have ' +
-    'no text layer and a legacy Khmer font may expose wrong characters. ' +
+    'no text layer and a legacy (pre-Unicode) font may expose wrong ' +
+    'characters. ' +
     'When their message is just "Read" or its translated equivalent, do not ' +
     'start transcribing the whole chapter. Ask which verse or small range ' +
     'they want ' +

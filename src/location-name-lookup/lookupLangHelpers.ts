@@ -16,9 +16,9 @@ import { onLangFilesChanged } from '../lang/langFileStore';
  *
  * Deliberately its OWN setting rather than the app locale: the two answer
  * different questions. The locale picks the language of the interface, while
- * this picks the language of the *content* — a Khmer-speaking user reading an
- * English bible may well want the records in Khmer, and an English UI with
- * Khmer records is just as legitimate the other way round.
+ * this picks the language of the *content* — a user who speaks another
+ * language reading an English bible may well want the records in it, and an
+ * English UI with translated records is just as legitimate the other way round.
  *
  * A change reaches the lookup list, the note editor's mentions and the
  * "names and locations in your reading" list. Person/location details pin
@@ -98,7 +98,7 @@ export function useLookupLangCode() {
  * How to WRITE the lookup language: its font, and its dictionary.
  *
  * The records are in a language the user chose separately from the interface, so
- * anything that labels them has to follow the records — a Khmer list whose
+ * anything that labels them has to follow the records — a translated list whose
  * category filter reads `People` in the app's Latin font is the mismatch this
  * removes. Until the package resolves, both fall back to the app's own
  * rendering, which is what the panel showed before it loaded anyway.

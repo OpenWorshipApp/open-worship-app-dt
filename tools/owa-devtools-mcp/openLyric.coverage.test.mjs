@@ -78,7 +78,7 @@ describe('Config lines', () => {
   test('a Locales list with an empty entry says which comma to drop', () => {
     const { problems } = validateOpenLyric(
       genDoc(
-        ['- Structure: V1', '- Locales: en-US, , km-KH'],
+        ['- Structure: V1', '- Locales: en-US, , en-GB'],
         ['```ol:Verse 1', 'a', '```'],
       ),
     );
@@ -88,8 +88,8 @@ describe('Config lines', () => {
         part: 'Config',
         message:
           'Locales must be a comma-separated list of locales with no empty entry.',
-        hint: 'Drop the extra comma, e.g. "en-US, km-KH".',
-        excerpt: '- Locales: en-US, , km-KH',
+        hint: 'Drop the extra comma, e.g. "en-US, es-ES".',
+        excerpt: '- Locales: en-US, , en-GB',
       },
     ]);
   });

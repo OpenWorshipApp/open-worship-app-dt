@@ -46,7 +46,7 @@ const STYLE_JOB_LIST = [
 const ALIGN_JOB_LIST = ['center', 'left', 'right', 'justify'];
 
 // What a keyboard adds that is no part of the words (a zero-width space
-// between Khmer words) goes, a number in the language's own digits is read
+// between words of some scripts) goes, a number in the language's own digits is read
 // as one, the okina (U+02BB) a Tongan or Samoan keyboard types is the
 // apostrophe the patterns write (BN-39), and the line's closing mark is
 // dropped.

@@ -73,7 +73,7 @@ vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
     ensureLangPlugins: async () => [],
-    getSupportedLocales: () => ['en-US', 'km-KH', 'fr-FR'],
+    getSupportedLocales: () => ['en-US', 'xx-XX', 'yy-YY'],
     getLangCode: h.getLangCode,
     getLocalBibleCrossRef: h.getLocalBibleCrossRef,
 }));
@@ -185,27 +185,27 @@ describe('useGettingBibleCrossRefAI', () => {
     });
 
     it("fetches the bible's own language online when nothing is bundled", async () => {
-        h.getBibleLocale.mockResolvedValue('km-KH');
-        h.responses.set('bcr/anthropic/km/GEN/1/3.json', JSON.stringify(light));
-        const probe = await renderProbe('KHM');
+        h.getBibleLocale.mockResolvedValue('xx-XX');
+        h.responses.set('bcr/anthropic/xx/GEN/1/3.json', JSON.stringify(light));
+        const probe = await renderProbe('XXV');
         expect(probe.textContent).toBe(JSON.stringify(light));
-        expect(h.requests).toEqual(['bcr/anthropic/km/GEN/1/3.json']);
+        expect(h.requests).toEqual(['bcr/anthropic/xx/GEN/1/3.json']);
         expect(h.appLog).toHaveBeenCalledWith(
             'No local cross ref found for, fetching online',
-            { locale: 'km-KH', bookKey: 'GEN', chapter: 1, verseNum: 3 },
+            { locale: 'xx-XX', bookKey: 'GEN', chapter: 1, verseNum: 3 },
         );
     });
 
     it('falls back to the English set when its own language has none', async () => {
-        h.getBibleLocale.mockResolvedValue('fr-FR');
-        h.responses.set('bcr/anthropic/fr/GEN/1/3.json', 'not json');
+        h.getBibleLocale.mockResolvedValue('yy-YY');
+        h.responses.set('bcr/anthropic/yy/GEN/1/3.json', 'not json');
         h.responses.set(
             'bcr/anthropic/en/GEN/1/3.json',
             JSON.stringify(creation),
         );
-        const probe = await renderProbe('LSG');
+        const probe = await renderProbe('YYV');
         expect(h.requests).toEqual([
-            'bcr/anthropic/fr/GEN/1/3.json',
+            'bcr/anthropic/yy/GEN/1/3.json',
             'bcr/anthropic/en/GEN/1/3.json',
         ]);
         expect(h.handleError).toHaveBeenCalledTimes(1);

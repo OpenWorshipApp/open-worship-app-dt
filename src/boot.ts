@@ -183,9 +183,10 @@ export async function init(callback: () => void = () => {}) {
     await ensureLangPlugins();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech
-    // and `:lang()` CSS see Khmer as Khmer; it otherwise stays the HTML default
-    // ("en") even in km mode. `init` re-runs on every window (re)load, including
-    // the reload `forceReloadAppWindows` triggers after an Apply Settings.
+    // and `:lang()` CSS see a language as itself; it otherwise stays the HTML
+    // default ("en") whatever the app is shown in. `init` re-runs on every
+    // window (re)load, including the reload `forceReloadAppWindows` triggers
+    // after an Apply Settings.
     document.documentElement.lang =
         getLangCode(currentLocale) ?? DEFAULT_LANG_CODE;
     // A right-to-left language keeps the layout and reads each text in the

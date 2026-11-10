@@ -259,10 +259,10 @@ describe('genPassageExcerpt', () => {
     expect(excerpt.endsWith('. …')).toBe(true);
   });
 
-  // Seen in a Khmer excerpt: a Khmer word, a comma and then
+  // Seen in a translated excerpt: a word, a comma and then
   // `**[en:tran:Line …` -- a template no resolver could read, cut through.
-  // And a Khmer sentence ends on its own full stop, which the old cut never
-  // looked for.
+  // And a sentence of another script ends on its own full stop, which the
+  // old cut never looked for.
   it('never cuts through a button name, and stops at a sentence of any script', () => {
     const excerpt = genPassageExcerpt(
     );

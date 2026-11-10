@@ -22,7 +22,7 @@ const state = vi.hoisted(() => ({
     forceReload: vi.fn(),
     plugLanguage: vi.fn(),
     plugAppFont: vi.fn(),
-    appFontFamily: 'Battambang' as string | null,
+    appFontFamily: 'Made Up Sans' as string | null,
     languageFont: null as null | {
         family: string;
         css: string;
@@ -196,7 +196,7 @@ beforeEach(() => {
     state.lastInit = null;
     state.rootIds = [];
     state.isMainWindow = true;
-    state.appFontFamily = 'Battambang';
+    state.appFontFamily = 'Made Up Sans';
     state.languageFont = null;
     state.unicodeRange = 'U+2600-26FF';
     state.bibleNoteData = null;
@@ -345,7 +345,7 @@ describe('the help window', () => {
 describe('the AI Chat window', () => {
     test('hands the guest pages the app font and the language face for its letters only', async () => {
         state.languageFont = {
-            family: 'Battambang',
+            family: 'Made Up Sans',
             css: '@font-face{}',
             scriptPatternSource: '[\\u2600-\\u26FF]',
         };
@@ -355,12 +355,12 @@ describe('the AI Chat window', () => {
 
         expect(state.plugLanguage).toHaveBeenCalledOnce();
         expect(state.setLanguageFont).toHaveBeenCalledWith({
-            family: 'Battambang',
+            family: 'Made Up Sans',
             css: '@font-face{}',
             unicodeRange: 'U+2600-26FF',
         });
         await vi.waitFor(() => {
-            expect(state.setAppFontFamily).toHaveBeenCalledWith('Battambang');
+            expect(state.setAppFontFamily).toHaveBeenCalledWith('Made Up Sans');
         });
         expect(markupOf(state.render.mock.calls[0][0])).toBe('<i>AiChat</i>');
     });

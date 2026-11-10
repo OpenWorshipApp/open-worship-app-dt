@@ -87,7 +87,7 @@ function openMenuOf(
 
 describe('ItemColorNoteComp', () => {
     // The button was named `magenta` and nothing else: what it does went
-    // unsaid, and in a Khmer window that one English word was all there was.
+    // unsaid, and in a translated window that one English word was all there was.
     test('is named for what it is, then the colour it holds', () => {
         expect(renderNameOf('#ff00ff')).toBe('Color Note: magenta');
     });

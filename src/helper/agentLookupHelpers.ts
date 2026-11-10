@@ -707,7 +707,8 @@ async function listAroundVerseKeys(
 /**
  * What the app's cross references say a passage leads to, in the
  * language of the Bible it was read in when the app has that language's
- * bundle (the Khmer Bible gets the Khmer themes), else in English. Null
+ * bundle (a Bible in another language gets that language's themes), else
+ * in English. Null
  * when the bundle has nothing for it. One verse is told whole -- every
  * theme -- a passage the way `toPassageCrossRefs` tells it, cut to
  * the room its passage leaves (6 000-9 000) by its per-verse themes first.
@@ -1079,7 +1080,8 @@ async function readPassageRequest(request: AgentLookupRequestType) {
         return bibleKey;
     }
     // No Bible asked: read it in the one that NAMES the book the way it was
-    // written -- a Khmer reference from the Khmer Bible, not from the KJV
+    // written -- a reference in another language from that language's
+    // Bible, not from the KJV
     // the lookup happens to be on (2026-10-18).
     let readBibleKey = bibleKey;
     if (askedBible.length === 0) {
@@ -1212,8 +1214,8 @@ function genResolver(managers: LookupManagersType): LookupRecordResolverType {
 }
 
 // The records of the same name, in the dataset's spelling OR the KJV's: in
-// Khmer, Noah the ark-builder and Zelophehad's daughter Noah are spelt
-// apart -- the KJV calls both Noah (2026-10-22). One pass over the records a panel
+// a translated dataset, Noah the ark-builder and Zelophehad's daughter Noah
+// can be spelt apart -- the KJV calls both Noah (2026-10-22). One pass over the records a panel
 // already holds.
 function listRecordsNamed<T extends { name: string; kjvName: string | null }>(
     manager: { getAllRecords: () => T[] },
@@ -1352,8 +1354,8 @@ const REFERENCE_TOKEN_PATTERN =
 /**
  * A record's words with every book, chapter and verse they name written as
  * the lookup's Bible writes it, the way the panel draws them: the datasets
- * carry the KJV's English label (`[Genesis](book-key://GEN)`) in Khmer
- * prose, and a model handed it wrote _Genesis_ in a Khmer answer
+ * carry the KJV's English label (`[Genesis](book-key://GEN)`) in translated
+ * prose, and a model handed it wrote _Genesis_ in an answer in another language
  * (2026-10-18, seen live). An English record, and a key the Bible does not
  * know, keep the dataset's label.
  */

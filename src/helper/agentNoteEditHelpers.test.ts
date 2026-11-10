@@ -424,8 +424,8 @@ describe('changing one note', () => {
     test('a verse token naming a Bible is read from THAT Bible, whatever the lookup is on', async () => {
         h.resolveVersionOrder.mockImplementation(async (key: string | null) => {
             return key === null
-                ? { order: ['KHB', 'KJV'], installed: ['KHB', 'KJV'] }
-                : { order: [key], installed: ['KHB', 'KJV'] };
+                ? { order: ['TQAB', 'KJV'], installed: ['TQAB', 'KJV'] }
+                : { order: [key], installed: ['TQAB', 'KJV'] };
         });
         h.resolveBibleItem.mockImplementation(
             async (ref: string, order: string[]) => {
@@ -625,18 +625,18 @@ describe("the note editor's toolbar, in the worker", () => {
     });
 
     test("a read lists the font box's fonts, an installed language's face too", async () => {
-        h.langList = [{ fontFamily: 'app-Battambang' }, { langCode: 'en' }];
+        h.langList = [{ fontFamily: 'app-Xx-Face' }, { langCode: 'en' }];
         const answer = await ask({ action: 'read' });
         expect(answer.fonts).toContain('Georgia');
-        expect(answer.fonts).toContain('app-Battambang');
+        expect(answer.fonts).toContain('app-Xx-Face');
         // A font change is checked against that same list.
         const changed = await ask({
             action: 'edit',
-            changes: [{ block: 1, font: 'app-battambang' }],
+            changes: [{ block: 1, font: 'app-xx-face' }],
         });
         expect(changed.isChanged).toBe(true);
         const written = h.headNote.addItemEditingHistory.mock.calls[0][0];
-        expect(written.content).toContain('font-family: app-Battambang;');
+        expect(written.content).toContain('font-family: app-Xx-Face;');
     });
 
     test('a new person is a mention from the names lookup, read only for it', async () => {

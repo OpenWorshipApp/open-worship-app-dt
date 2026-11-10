@@ -1,14 +1,16 @@
 ---
-name: electron-icu-has-no-khmer
-description: "Electron's ICU has no Khmer — Intl asked for km-KH answers in English silently, while Node (vitest) formats it fine"
+name: electron-icu-trimmed-locales
+description: "Electron's ICU is trimmed — Intl asked for a locale it lacks answers in English silently, while Node (vitest) formats it fine"
 metadata:
   node_type: memory
   type: project
   originSessionId: d1f4e05a-0b07-4227-b76c-7400bbaf5e18
-  modified: 2026-10-06T22:15:29.387Z
+  modified: 2026-11-10T03:33:10.688Z
 ---
 
-Electron ships Chromium's trimmed ICU data, and Khmer is not in it.
+Electron ships Chromium's trimmed ICU data, and not every installed
+language's locale is in it -- any language may be missing, so check, never
+assume. Measured with the first one found missing:
 `Intl.DateTimeFormat.supportedLocalesOf(['km-KH'])` is `[]` in the app, and
 `new Date().toLocaleDateString('km-KH', …)` returns ENGLISH (`Oct 4`) with no
 error. French is there. Node, which runs vitest, has full ICU and answers
@@ -21,10 +23,10 @@ Measured 2026-10-06 with
 **Why:** the Stopwatch history's dates were fixed to pass the app's locale, the
 test passed, and the Khmer panel still read `Oct 4, 7:57 AM`.
 
-**How to apply:** any `toLocale*String` / `Intl.*Format` that must read in the
+**How to apply:** for EVERY language alike, any `toLocale*String` / `Intl.*Format` that must read in the
 app's language has to check `supportedLocalesOf([locale])` and fall back — the
 stopwatch history (`stopwatchHistoryHelpers.ts`) uses numbers only, day first,
 24-hour (`04/10 07:57`). A test of it must mock `supportedLocalesOf` to `[]` to
-be Electron; a test that only runs `km-KH` under Node proves nothing. Number
+be Electron; a test that only runs a locale under Node proves nothing. Number
 glyphs come from the app's own `toStringNum` / language data, never from Intl.
 See [[tran-missing-key-throws-in-dev]].

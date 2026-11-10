@@ -173,7 +173,7 @@ describe('BibleNotAvailableComp', () => {
             'translated:Or let the assistant import a Bible in your language for you:',
         );
         // Three steps, each through `tran`: a hardcoded one would read
-        // English in a Khmer window.
+        // English in a window shown in another language.
         const stepList = Array.from(host.querySelectorAll('ol > li'));
         expect(stepList).toHaveLength(3);
         for (const step of stepList) {
@@ -207,8 +207,9 @@ describe('BibleNotAvailableComp', () => {
 
     test('it asks in the window language, whichever key is missing', async () => {
         await renderCard('KJV');
-        await renderCard('KH16');
-        getCurrentLocale.mockReturnValue('km-KH');
+        await renderCard('XX16');
+        // A made-up language has no English name, so its code is said.
+        getCurrentLocale.mockReturnValue('xx-XX');
 
         await act(async () => {
             findButton(
@@ -216,9 +217,7 @@ describe('BibleNotAvailableComp', () => {
             ).click();
         });
 
-        expect(openChatbotAsking).toHaveBeenCalledWith(
-            'Import bible for Khmer',
-        );
+        expect(openChatbotAsking).toHaveBeenCalledWith('Import bible for xx');
     });
 
     test('a missing KJV asks first, and agreeing creates the provided one', async () => {
@@ -292,7 +291,7 @@ describe('BibleNotAvailableComp', () => {
     });
 
     test('another missing Bible is not offered the KJV', async () => {
-        await renderCard('KH16');
+        await renderCard('XX16');
 
         expect(mocks.showAppConfirm).not.toHaveBeenCalled();
         expect(

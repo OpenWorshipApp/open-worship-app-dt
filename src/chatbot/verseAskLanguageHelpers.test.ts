@@ -6,9 +6,9 @@ import {
     readTypedVerseFindAsk,
 } from './verseAskLanguageHelpers';
 
-// The questions are the elder-persona run's own (2026-10-17), read with the
-// Khmer package's real `assistant.json`: a test of the data as much as of
-// the code.
+// The questions are the elder-persona run's own (2026-10-17), in English
+// here; each language's own, read with its package's real `assistant.json`,
+// are in that package's tests -- a test of the data as much as of the code.
 
 describe('readTypedVerseFindAsk', () => {
     test('English is read as before', () => {

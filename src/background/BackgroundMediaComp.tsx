@@ -33,7 +33,7 @@ import BackgroundAutoPlayComp from './BackgroundAutoPlayComp';
 // `.image-thumbnail`/`.video-thumbnail` carry `margin: 2px`, so a tile takes
 // its own width plus 4. The two height figures are only a FIRST GUESS -- the
 // grid measures a real row and corrects itself, which is what keeps the name
-// footer's line box right in Khmer and French.
+// footer's line box right in every language.
 const THUMBNAIL_MARGIN = 4;
 const THUMBNAIL_EXTRA_HEIGHT = 44;
 const LIST_VIEW_ROW_HEIGHT = 30;

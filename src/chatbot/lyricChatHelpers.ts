@@ -3,7 +3,7 @@
  * a Documents row's **Open in Chatbot**, the Lyric Editor's 🤖, the
  * paperclip or a drop.
  *
- * Asked for 2026-11-06 (the user, with `Still khmer` circled in the
+ * Asked for 2026-11-06 (the user, with `Still <language>` circled in the
  * Documents list: _add lyric context menu `Open In Chatbot`, make chatbot to
  * support lyric files attached, when lyric files attached the chatbot should
  * provide all operations related to lyric modification_ -- add a section,
@@ -358,10 +358,11 @@ export const LYRIC_SYSTEM_PROMPT =
     'all of it in one call where one call can do it: every part in ONE ' +
     'set-lines or add-translation call. TRANSLATING has two ways and the ' +
     'person chooses: REPLACE the words with the translation (set-lines, ' +
-    'every sung part, with `locales` naming that language, e.g. ' +
-    '["es-ES"]) or ADD the translation as a line under each line, keeping ' +
-    'the words (add-translation, with `locales` naming both, e.g. ' +
-    '["en-US","es-ES"]). Unless their words already say which ("replace", ' +
+    'every sung part, with `locales` naming that language by its ' +
+    'language-region tag) or ADD the translation as a line under each line, ' +
+    'keeping the words (add-translation, with `locales` naming both, the ' +
+    "song's first). Unless their words already say which (" +
+    '"replace", ' +
     '"instead of" is replace; "under each line", "bilingual", "keep the ' +
     'English" is add), ask which way first and end with OPTIONS: Replace ' +
     'the words | Add it under each line. Once the way is known and the ' +
@@ -392,8 +393,8 @@ export const LYRIC_SYSTEM_PROMPT =
     'OPTIONS: two or three next changes they might want.';
 
 /**
- * The language a song's NAME says it is for -- `Still khmer` is the copy of
- * `Still` to be put into Khmer -- among the languages this computer knows.
+ * The language a song's NAME says it is for -- `Still thai` is the copy of
+ * `Still` to be put into Thai -- among the languages this computer knows.
  */
 export function findSongLanguage(
     songName: string,
@@ -420,8 +421,8 @@ export function findSongLanguage(
  * The language a translation chip offers: the one the song's name says; for
  * a name WRITTEN in a language other than English, the other one of the two
  * -- English for a name in the window's own language, else the window's
- * (2026-11-08, BN-25: a note named in Khmer, in a Khmer window, offered to
- * put its words "into Khmer"); else the language the app is shown in --
+ * (2026-11-08, BN-25: a note named in the window's own language offered to
+ * put its words "into" that same language); else the language the app is shown in --
  * never English, which is what most of the songs here are already in. A
  * name too short to tell (one Latin word) is the last case. Null: offer
  * "another language".

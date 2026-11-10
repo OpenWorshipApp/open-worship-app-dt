@@ -48,7 +48,11 @@ import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
 import { checkIsChatTipHidden, pickChatTip, showChatTips } from './tipHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
-import { listAssistantLanguages } from './chatLangHelpers';
+import {
+    listAssistantLanguages,
+    listTypedLanguages,
+    toShownLanguageName,
+} from './chatLangHelpers';
 import {
     checkIsMainWindowUrl,
     getCurrentWindowAim,
@@ -748,14 +752,20 @@ function genVersionLine(version: unknown) {
         : '';
 }
 
-// A language the app has a package for, by its English name (a dictionary
-// key) in the window's words; any other by its code. No language is named
-// in code.
+// A language the app has a package for -- any installed one, with an
+// `assistant.json` or not -- by its name in the window's words
+// (`toShownLanguageName`, every language the same way); any other by its
+// code. No language is named in code.
 function languageName(code: string) {
-    const language = listAssistantLanguages().find((one) => {
+    const language = [
+        ...listAssistantLanguages(),
+        ...listTypedLanguages(),
+    ].find((one) => {
         return one.code === code;
     });
-    return language === undefined ? code : tranLabel(language.name);
+    return language === undefined
+        ? code
+        : toShownLanguageName(language.code, language.name);
 }
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {
@@ -2322,7 +2332,7 @@ export function readGeneralQuestion(text: string): string | null {
 
 /**
  * A plain follow-up under a general question is a general question too:
- * "in Khmer please" typed under "/btw what is the Bible?" is about the
+ * "in my language please" typed under "/btw what is the Bible?" is about the
  * Bible, not about the app -- measured 2026-10-10 on the user's LM Studio
  * (gemma-4-e4b), it went the app road, cost 10.2k tokens, and the model
  * declined it as its helper "for the Open Worship App". The user's ask,

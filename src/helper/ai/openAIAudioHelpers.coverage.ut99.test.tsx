@@ -113,7 +113,7 @@ beforeEach(() => {
     h.fsWriteFile.mockResolvedValue(undefined);
     h.createSpeech.mockResolvedValue(genSpeech());
     h.ensureDataDirectory.mockResolvedValue('/data/ai-openai-data');
-    h.getBibleInfo.mockResolvedValue({ locale: 'km-KH' });
+    h.getBibleInfo.mockResolvedValue({ locale: 'xx-XX' });
     h.getLangDataFromBibleKey.mockResolvedValue({ bibleAudioAvailable: true });
 });
 
@@ -229,7 +229,7 @@ describe('bibleTextToSpeech', () => {
         expect(h.fsMkDirSync).toHaveBeenCalledWith(expectedDir);
         expect(h.createSpeech.mock.calls[0][0]).toMatchObject({
             input: 'In the beginning',
-            instructions: expect.stringContaining('Use km-KH accent.'),
+            instructions: expect.stringContaining('Use xx-XX accent.'),
         });
     });
 

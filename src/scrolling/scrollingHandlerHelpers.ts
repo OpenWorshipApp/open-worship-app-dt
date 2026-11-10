@@ -131,7 +131,7 @@ export function applyToTheTop(
     scrollingContainerSelector?: string,
 ) {
     // Translated at the call, never at module scope: this is the tooltip in
-    // every list of every window, and it used to stay English in Khmer.
+    // every list of every window, and it used to stay English when translated.
     element.title = tran('Click or Double Click to scroll to the top');
     const parent = scrollingContainerSelector
         ? element.closest<HTMLElement>(scrollingContainerSelector)

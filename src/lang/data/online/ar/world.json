@@ -8,5 +8,8 @@
             "locales": ["ar-SA"],
             "order": 800
         }
-    ]
+    ],
+    "catalogLanguageCodes": {
+        "ar": "arb"
+    }
 }

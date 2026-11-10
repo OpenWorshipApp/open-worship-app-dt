@@ -588,7 +588,7 @@ the record's chat, family line, related verses, word study).
     banner, drawn into the app's windows, take the page body's face the
     same way — and boot's `*` rule already gives those windows' bodies the
     picked face, so no extra carry is needed there. Named `tran` so
-    `tranKeyCoverage.test.ts` reads every key (Khmer AND French). One rule
+    `tranKeyCoverage.test.ts` reads every key (in every language). One rule
     decides where: words CODE reads back -- an action's label
     (`WALKTHROUGH_ACTION_PATTERN`, `DRAFT_ACTION_PATTERN`, `findTypedPress`),
     a thread's marker -- stay English in what is stored and are translated
@@ -759,8 +759,8 @@ the record's chat, family line, related verses, word study).
   window that is not going to open. The Presenting Control's _hand this
   snapshot to the help window_ is NOT gated — that press carries its own
   intent, and a Cancel would strand the snapshot the main process is holding.
-  Its five strings need Khmer keys like any other label outside
-  `src/chatbot/`; a missing one THROWS in dev.
+  Its five strings need a key in every language's dictionary like any other
+  label outside `src/chatbot/`; a missing one THROWS in dev.
   For automated chatbot verification, this caution remains person-only by
   default. A narrow exception applies only when `owa_app_state` confirms a
   development instance and the user explicitly authorizes acceptance in the
