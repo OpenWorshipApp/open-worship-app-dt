@@ -138,6 +138,67 @@ export function fitQuickTextFontSize(text: string, base: number, min: number) {
     return Math.max(min, Math.round(fitted));
 }
 
+export type QuickTextReadingPaceType = 'slow' | 'medium' | 'fast';
+
+/** The Live box's reading button goes through them in this order. */
+export const QUICK_TEXT_READING_PACE_LIST: readonly QuickTextReadingPaceType[] =
+    ['slow', 'medium', 'fast'];
+
+/** Words a minute, read aloud; a Bible Verse preset reads at `medium`. */
+const READING_WORDS_PER_MINUTE_MAP: Readonly<
+    Record<QuickTextReadingPaceType, number>
+> = {
+    slow: 110,
+    medium: 150,
+    fast: 200,
+};
+/** A moment to find the words before the reading, and to finish after it. */
+const READING_LEAD_SECONDS = 5;
+const READING_MIN_SECONDS = 10;
+/** Rounded up to a step the Live box reads at a glance. */
+const READING_STEP_SECONDS = 5;
+
+/**
+ * How long a passage stays up: long enough to be read aloud (2026-11-10,
+ * the user: _create quick text from bible verse should re-calculate live
+ * time base on text length_). Counted in WORDS, as the browser's word
+ * segmenter cuts them, so a script written with no spaces between its words
+ * is counted by its words and not as one, and a script of one letter a
+ * syllable is not counted by its letters. A verse number is not read aloud
+ * and does not count. `pace` is how fast it is read (the Live box's button,
+ * the same day: _slow, medium, fast_).
+ */
+export function genQuickTextReadingSeconds(
+    text: string,
+    pace: QuickTextReadingPaceType = 'medium',
+) {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
+    let wordCount = 0;
+    for (const { segment, isWordLike } of segmenter.segment(text)) {
+        if (isWordLike && !/^\p{Nd}+$/u.test(segment)) {
+            wordCount += 1;
+        }
+    }
+    const seconds =
+        READING_LEAD_SECONDS +
+        (wordCount * 60) / READING_WORDS_PER_MINUTE_MAP[pace];
+    return Math.max(
+        READING_MIN_SECONDS,
+        Math.ceil(seconds / READING_STEP_SECONDS) * READING_STEP_SECONDS,
+    );
+}
+
+/** The pace the next press goes to: slow first, then medium, fast, slow. */
+export function toNextQuickTextReadingPace(
+    pace: QuickTextReadingPaceType | null,
+) {
+    const index =
+        pace === null ? -1 : QUICK_TEXT_READING_PACE_LIST.indexOf(pace);
+    return QUICK_TEXT_READING_PACE_LIST[
+        (index + 1) % QUICK_TEXT_READING_PACE_LIST.length
+    ];
+}
+
 /**
  * What a preset writes into a box with nothing of the person's in it yet --
  * empty, or still the sample a new session starts with (2026-11-09, the

@@ -110,6 +110,10 @@ describe('foreground presets', () => {
                 'gave his only begotten Son, that whosoever believeth in him ' +
                 'should not perish, but have everlasting life.',
         );
+        // Timed by the example's own words.
+        expect(state.settings.get('foreground-quick-text-time-to-live')).toBe(
+            '20',
+        );
         // Emptied by hand: the same.
         state.settings.set('foreground-quick-text-setting-s4', '  ');
         applyQuickTextPreset('-s4', 'song-title');
@@ -143,6 +147,10 @@ describe('foreground presets', () => {
         expect(
             state.settings.get('quick-text-s3-setting-show-widget-font-size'),
         ).toBe('31');
+        // ...and stays up as long as its 202 words take to read aloud.
+        expect(
+            state.settings.get('foreground-quick-text-time-to-live-s3'),
+        ).toBe('90');
         expect(
             state.settings.get(
                 'quick-text-s3-setting-show-widget-width-percentage',

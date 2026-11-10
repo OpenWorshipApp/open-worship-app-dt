@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-107, CB-166, PM-168]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-56 — Change a song with the assistant (translate it, add a part, chords, its key)
 
@@ -55,5 +55,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-107` · `CB-166` · `PM-168`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

@@ -23,6 +23,7 @@ import {
     checkIsQuickTextUntouched,
     fitQuickTextFontSize,
     formatQuickTextMarkdown,
+    genQuickTextReadingSeconds,
 } from './quickTextFormatHelpers';
 
 /**
@@ -124,7 +125,8 @@ function genQuickTextOwnWrites({
     example,
     fit,
 }: {
-    seconds: number;
+    /** Or worked out from the words the box will hold. */
+    seconds: number | ((text: string) => number);
     format: QuickTextFormatType;
     /** Written when the box has nothing of the person's in it yet. */
     example: string;
@@ -134,8 +136,10 @@ function genQuickTextOwnWrites({
         const textKey = `foreground-quick-text-setting${suffix}`;
         const current = getSetting(textKey);
         const text = checkIsQuickTextUntouched(current) ? example : current!;
+        const liveSeconds =
+            typeof seconds === 'number' ? seconds : seconds(text);
         const writes: [string, string][] = [
-            [`foreground-quick-text-time-to-live${suffix}`, `${seconds}`],
+            [`foreground-quick-text-time-to-live${suffix}`, `${liveSeconds}`],
             [textKey, formatQuickTextMarkdown(text, format)],
         ];
         if (fit !== undefined) {
@@ -489,7 +493,8 @@ export const FOREGROUND_PRESET_MAP: Readonly<
             iconName: 'book',
             look: BIBLE_VERSE_LOOK,
             genOwnWrites: genQuickTextOwnWrites({
-                seconds: 120,
+                // As long as the passage takes to read aloud.
+                seconds: genQuickTextReadingSeconds,
                 // The reference as a `### ` heading (the user, 2026-11-09).
                 format: { title: 'h3', isBodyItalic: false },
                 example: QUICK_TEXT_EXAMPLE_MAP['bible-verse'],

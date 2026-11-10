@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-11-09",
+    "updated": "2026-11-10",
     "sections": [
         {
             "id": "orientation",
@@ -2020,6 +2020,8 @@
                         "speaker name",
                         "verse lower third",
                         "how long quick text stays",
+                        "how long a verse stays up",
+                        "quick text reading speed",
                         "quick text delay",
                         "keep text on screen until hidden",
                         "infinite quick text"

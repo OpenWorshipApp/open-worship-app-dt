@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, PM-167, SP-21]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-07 — Style the on-screen Bible text
 
@@ -82,5 +82,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `PM-167` · `SP-21`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

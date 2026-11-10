@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -116,8 +116,10 @@ workflowsVersion: "2026-11-09"
     words. The box holds the reference as a `### ` heading and the verses after
     it (one verse without its number, several with `(22): …`), and the session
     is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
-    full width of the bottom, words at 45px set left, two minutes on screen,
-    in the Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    full width of the bottom, words at 45px set left, on screen as long as
+    the passage takes to read aloud (its **[en:tran:Live]** seconds: 20 for
+    one verse like John 3:16, about a minute for six verses), in the
+    Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
     reads `app-Battambang` for a Khmer Bible.
     Press **[en:tran:Preview]** to
     read it as it will look, then **[en:tran:Show Quick Text]** when it is
@@ -128,5 +130,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102` · `CM-103`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

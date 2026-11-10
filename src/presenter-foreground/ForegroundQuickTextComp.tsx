@@ -56,7 +56,12 @@ import {
     QUICK_TEXT_DEFAULT_DELAY_SECOND,
     QUICK_TEXT_DEFAULT_LIVE_SECOND,
 } from './foregroundComponentRules';
-import { QUICK_TEXT_DEFAULT_MARKDOWN } from './quickTextFormatHelpers';
+import {
+    QUICK_TEXT_DEFAULT_MARKDOWN,
+    type QuickTextReadingPaceType,
+    genQuickTextReadingSeconds,
+    toNextQuickTextReadingPace,
+} from './quickTextFormatHelpers';
 import QuickTextMarkdownLessonComp from './QuickTextMarkdownLessonComp';
 
 /** The keys ONE session of this panel owns beyond its Properties. */
@@ -67,6 +72,21 @@ function genOwnSettingNames(suffix: string) {
         toQuickTextTimeToLiveSettingName(suffix),
         toQuickTextIsInfiniteSettingName(suffix),
     ];
+}
+
+/**
+ * The box's height, Edit and Preview alike so switching does not jump: 120px
+ * held about four lines of a verse (2026-11-10, the user: _make textarea
+ * height higher_). It can still be dragged taller.
+ */
+const QUICK_TEXT_BOX_HEIGHT = '220px';
+
+/** A pace's name, as written on the Live box's reading button. */
+function toReadingPaceLabel(pace: QuickTextReadingPaceType) {
+    if (pace === 'slow') {
+        return tran('Slow');
+    }
+    return pace === 'medium' ? tran('Medium') : tran('Fast');
 }
 
 // A link in the preview is something to read, not to follow: a press would
@@ -115,7 +135,7 @@ function QuickTextMarkdownPreviewComp({
             style={{
                 fontFamily: fontFamily || undefined,
                 fontWeight: fontWeight || undefined,
-                height: '120px',
+                height: QUICK_TEXT_BOX_HEIGHT,
             }}
             onClick={handlePreviewLinkClick}
             onAuxClick={handlePreviewLinkClick}
@@ -205,6 +225,10 @@ function QuickTextBodyComp({
         toQuickTextIsInfiniteSettingName(suffix),
         false,
     );
+    // The pace the Live box's reading button last worked the seconds out at:
+    // none until it is pressed, so the first press is always Slow.
+    const [readingPace, setReadingPace] =
+        useState<QuickTextReadingPaceType | null>(null);
 
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     const {
@@ -330,6 +354,18 @@ function QuickTextBodyComp({
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const markdownTextRef = useAppCurrentRef(markdownText);
+    const readingPaceRef = useAppCurrentRef(readingPace);
+    // Live worked out from the words in the box, read slow, then medium,
+    // then fast, then slow again, a press each (2026-11-10, the user: _click
+    // to get slow click again to get medium again to fast again to slow_).
+    const handleReadingPaceClick = useCallback(() => {
+        const pace = toNextQuickTextReadingPace(readingPaceRef.current);
+        setReadingPace(pace);
+        setTimeSecondToLiveRef.current(
+            genQuickTextReadingSeconds(markdownTextRef.current, pace),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const timeSecondDelayRef = useAppCurrentRef(timeSecondDelay);
     const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
     const isInfiniteRef = useAppCurrentRef(isInfinite);
@@ -358,6 +394,11 @@ function QuickTextBodyComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Words the dictionaries already hold, so the title needs no sentence of
+    // its own in every language: `Live: Slow / Medium / Fast`.
+    const readingPaceTitle =
+        `${tran('Live')}: ${tran('Slow')} / ${tran('Medium')} / ` +
+        tran('Fast');
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
@@ -374,9 +415,10 @@ function QuickTextBodyComp({
                  * Two numbers that used to be two 220px input-groups of four
                  * segments each -- an icon box, a word box, the field and a
                  * unit box -- for one value apiece. They are rows of the same
-                 * strip the Properties panel above them is built from.
+                 * strip the Properties panel above them is built from, side by
+                 * side on one line.
                  */}
-                <div className="fg-props-tail fg-props-tail-plain">
+                <div className="fg-props-tail fg-props-tail-plain fg-props-tail-inline">
                     <PropRowComp
                         iconClassName="bi bi-hourglass-top"
                         label={tran('Delay')}
@@ -414,6 +456,22 @@ function QuickTextBodyComp({
                             onChange={handleTimeSecondToLiveChange}
                         />
                         <span className="fg-unit-static">s</span>
+                        <button
+                            type="button"
+                            className="fg-reading-pace"
+                            title={readingPaceTitle}
+                            aria-label={readingPaceTitle}
+                            disabled={isInfinite}
+                            onClick={handleReadingPaceClick}
+                        >
+                            <i
+                                className="bi bi-speedometer2"
+                                aria-hidden="true"
+                            />
+                            {readingPace === null ? null : (
+                                <span>{toReadingPaceLabel(readingPace)}</span>
+                            )}
+                        </button>
                     </PropRowComp>
                     <PropRowComp
                         iconClassName="bi bi-infinity"
@@ -514,7 +572,7 @@ function QuickTextBodyComp({
                         style={{
                             fontFamily: fontFamily || undefined,
                             fontWeight: fontWeight || undefined,
-                            height: '120px',
+                            height: QUICK_TEXT_BOX_HEIGHT,
                         }}
                     />
                 )}

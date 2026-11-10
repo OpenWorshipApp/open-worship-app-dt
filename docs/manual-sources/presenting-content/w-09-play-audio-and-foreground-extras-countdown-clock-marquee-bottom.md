@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -56,19 +56,26 @@ button:
   example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
   **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
   white under black words on the **[en:tran:Light]** side), the
-  words at 45px set left, two minutes on screen; past about three verses it
+  words at 45px set left, on screen as long as they take to read aloud;
+  past about three verses it
   sets the words smaller, down to 28px, so a long passage stays a band
   instead of covering the slide. Every word you typed is kept; pressing a
   preset twice changes nothing more. The band sits flush on the bottom edge;
   **Y** in _Properties_ lifts it.
-- **How long a quick text stays is each session's own.** Above the box,
-  **[en:tran:Delay]** is the seconds it waits before it shows (0 to start)
-  and **[en:tran:Live]** the seconds it stays on the screen (5 to start; a
-  preset sets its own, two minutes for **[en:tran:Bible Verse]**). Switch on
-  **[en:tran:Infinite]** under them and that session's text stays up until
+- **How long a quick text stays is each session's own.** On one line above
+  the box, **[en:tran:Delay]** is the seconds it waits before it shows (0 to
+  start) and **[en:tran:Live]** the seconds it stays on the screen (5 to
+  start; a preset sets its own; **[en:tran:Bible Verse]** works it out from
+  the words in the box, about 150 a minute read aloud with a few seconds
+  more, never under 10). The dial button after Live works Live out from the
+  words in the box, at the pace it then names: the first press
+  **[en:tran:Slow]**, the next **[en:tran:Medium]**, then
+  **[en:tran:Fast]**, then **[en:tran:Slow]** again — press it again after
+  changing the words. Switch on
+  **[en:tran:Infinite]** beside them and that session's text stays up until
   you take it down with its **[en:tran:Hide Quick Text]** row or a Clear;
-  the Live box greys and keeps its number for when you switch it off again.
-  Each session keeps its own three, so a verse can stay up while a speaker's
+  the Live box and the dial grey and Live keeps its number for when you
+  switch it off again. Each session keeps its own three, so a verse can stay up while a speaker's
   name in another session leaves after a few seconds.
 - In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
   another size: it keeps its place until you type a number, and shows the
@@ -285,5 +292,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

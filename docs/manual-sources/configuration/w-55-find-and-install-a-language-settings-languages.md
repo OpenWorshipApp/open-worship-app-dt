@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-87, ST-88, ST-89, ST-90]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-55 — Find and install a language (Settings → Languages)
 
@@ -94,5 +94,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-87` · `ST-88` · `ST-89` · `ST-90`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

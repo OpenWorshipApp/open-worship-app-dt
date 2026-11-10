@@ -390,6 +390,52 @@
   border-top: none;
 }
 
+// Short rows side by side, each as wide as its name and its box (Quick
+// Text's Delay, Live and Infinite -- the user: _make those to be
+// inline-block_): three full-width rows had spent three lines on two numbers
+// and a switch. They wrap onto a second line only in a panel too narrow for
+// them.
+.fg-props-tail.fg-props-tail-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+
+  > .fg-prop {
+    flex: 0 0 auto;
+
+    > .fg-prop-control {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+// Live worked out from the words, a press per pace: the strip's small box,
+// the pace it last set written beside its dial.
+.fg-reading-pace {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: rgba(var(--bs-info-rgb), 0.14);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
 // A named group of controls, where there used to be a bordered card with a
 // heading inside an already-bordered panel. The caption names it and the
 // spacing groups it; nothing needs to draw a box.

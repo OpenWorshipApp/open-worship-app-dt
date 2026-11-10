@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-108, CB-167]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)
 
@@ -67,5 +67,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-108` · `CB-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

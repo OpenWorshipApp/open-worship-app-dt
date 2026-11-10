@@ -166,10 +166,11 @@ describe("a Bible passage's Create Quick Text", () => {
 
 For God \*so\*`,
         );
-        // Dressed by the Bible Verse preset, with time to read it.
+        // Dressed by the Bible Verse preset, with time to read it: five
+        // words, the shortest stay.
         expect(
             state.settings.get(`foreground-quick-text-time-to-live${suffix}`),
-        ).toBe('120');
+        ).toBe('10');
         expect(
             state.settings.get(
                 `quick-text${suffix}-setting-show-widget-font-size`,
@@ -204,6 +205,25 @@ For God \*so\*`,
             'quick-text',
         );
         expect(state.settings.has('foreground-open-panels')).toBe(false);
+    });
+
+    test('a longer passage stays up as long as it takes to read aloud', async () => {
+        mocks.requestForegroundPanelOpening.mockReturnValue(true);
+        const liveOf = async (text: string) => {
+            state.settings.clear();
+            await openBibleItemInQuickText(
+                genBibleItem({ verseStart: 16, verseEnd: 21 }, text),
+            );
+            const liveKey = [...state.settings.keys()].find((key) => {
+                return key.startsWith('foreground-quick-text-time-to-live');
+            })!;
+            return state.settings.get(liveKey);
+        };
+        // 150 words and the reference's two: a minute, and five seconds
+        // more, rounded up to 70.
+        expect(await liveOf(`(16): ${'word '.repeat(150)}`)).toBe('70');
+        // Twice the words, about twice as long.
+        expect(await liveOf(`(16): ${'word '.repeat(300)}`)).toBe('130');
     });
 
     test('with no launcher mounted, the panel is opened by its setting', async () => {

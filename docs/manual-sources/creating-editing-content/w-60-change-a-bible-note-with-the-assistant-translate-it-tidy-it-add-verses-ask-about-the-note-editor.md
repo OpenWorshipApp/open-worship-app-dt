@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-110, CB-169]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-09"
+workflowsVersion: "2026-11-10"
 ---
 # W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)
 
@@ -152,5 +152,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-110` · `CB-169`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-09).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

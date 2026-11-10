@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-09p** (**W-09 — Quick Text's timing is each session's own, with Infinite.** The user, with the panel's Delay and Live rows circled: _quick text: time control should be per session, and has an option for infinit. story: as a user I want to set timeout differently. default timeout 5 seconds delay 0 and infinite false_. Delay and Live were already kept per session; Live now starts at 5 seconds (was 3) and an **[en:tran:Infinite]** switch under it keeps the session's text up until it is hidden -- no timer runs, the Live box greys and keeps its number for when the switch goes off. The switch rides with the session's Show, a drag into a run sheet, and the assistant's show and read (`infinite`). Seen live 2026-11-09 on the dev Presenter in English: the row under Live, switched on in the `(ពគប) វិវរណៈ ៤:៥-៧ (2)` session with its 120 greyed, Session 6 keeping its own 10 and its switch off, the verse session's switch still on when chosen again, then turned back off. Not put on a screen live (the screen is the person's); unit-tested that an infinite quick text is never taken down by a timer. PM-177.)
+**workflowsVersion: 2026-11-10b** (**W-09 — Quick Text's Delay, Live and Infinite on one line; a dial that works Live out from the words, Slow → Medium → Fast; a taller box.** The user: _make those to be inline-block_, then _add button to re-calculated the live time (for slow, medium, fast) base on text length. click to get slow click again to get medium again to fast again to slow_, and _make textarea height higher_. The dial after Live (`Live: Slow / Medium / Fast`) shows no pace until pressed, then sets Live from the box's words at 110, 150 or 200 words a minute and names the pace; it greys with Infinite. The box (and its Preview) is 220px, was 120px. Seen live 2026-11-10 on the dev Presenter in English: the three on one line, the dial going Fast 50 → Slow 90 → Medium 65 on a six-verse Khmer passage. PM-177.)
+
+Previous: **workflowsVersion: 2026-11-10a** (**W-06 step 12, W-09 — a Bible Verse quick text stays up as long as its words take to read aloud.** The user, with Create Quick Text circled on a Khmer passage's row menu: _create quick text from bible verse should re-calculate live time base one text length_. The **[en:tran:Bible Verse]** preset wrote two minutes for every passage; it now works the **[en:tran:Live]** seconds out from the words in the box (`genQuickTextReadingSeconds` in `quickTextFormatHelpers.ts`: 150 words a minute plus 5 seconds, rounded up to 5, never under 10; verse numbers not counted; words counted by the browser's word segmenter, so a script written without spaces is counted by its words). Create Quick Text, the preset pressed in the panel and the assistant's verse quick text all go through it. Seen live 2026-11-10 on the dev Presenter in English: Create Quick Text on `(ពគប) សុភាសិត ១៧:១-៦` opened a new session with Live 65. PM-173, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09p** (**W-09 — Quick Text's timing is each session's own, with Infinite.** The user, with the panel's Delay and Live rows circled: _quick text: time control should be per session, and has an option for infinit. story: as a user I want to set timeout differently. default timeout 5 seconds delay 0 and infinite false_. Delay and Live were already kept per session; Live now starts at 5 seconds (was 3) and an **[en:tran:Infinite]** switch under it keeps the session's text up until it is hidden -- no timer runs, the Live box greys and keeps its number for when the switch goes off. The switch rides with the session's Show, a drag into a run sheet, and the assistant's show and read (`infinite`). Seen live 2026-11-09 on the dev Presenter in English: the row under Live, switched on in the `(ពគប) វិវរណៈ ៤:៥-៧ (2)` session with its 120 greyed, Session 6 keeping its own 10 and its switch off, the verse session's switch still on when chosen again, then turned back off. Not put on a screen live (the screen is the person's); unit-tested that an infinite quick text is never taken down by a timer. PM-177.)
 
 Previous: **workflowsVersion: 2026-11-09o** (**W-09 — Quick Text's Markdown Lesson.** The user: _for quick text, add button somewhere to open markdown lesson_, then _provide opening link as well `https://www.markdownguide.org/cheat-sheet/`_. **[en:tran:Markdown Lesson]** beside Edit / Preview opens the marks beside what the screen draws, above the box, with the cheat sheet one press away in the browser. Seen live 2026-11-09 on the dev Presenter in English: the lesson open over the user's own Khmer session, the link row on top, the editor below it; the link not pressed live (it opens the system browser; unit-tested). PM-172.)
 
@@ -2168,8 +2172,10 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
     words. The box holds the reference as a `### ` heading and the verses after
     it (one verse without its number, several with `(22): …`), and the session
     is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
-    full width of the bottom, words at 45px set left, two minutes on screen,
-    in the Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    full width of the bottom, words at 45px set left, on screen as long as
+    the passage takes to read aloud (its **[en:tran:Live]** seconds: 20 for
+    one verse like John 3:16, about a minute for six verses), in the
+    Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
     reads `app-Battambang` for a Khmer Bible.
     Press **[en:tran:Preview]** to
     read it as it will look, then **[en:tran:Show Quick Text]** when it is
@@ -2351,19 +2357,26 @@ button:
   example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
   **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
   white under black words on the **[en:tran:Light]** side), the
-  words at 45px set left, two minutes on screen; past about three verses it
+  words at 45px set left, on screen as long as they take to read aloud;
+  past about three verses it
   sets the words smaller, down to 28px, so a long passage stays a band
   instead of covering the slide. Every word you typed is kept; pressing a
   preset twice changes nothing more. The band sits flush on the bottom edge;
   **Y** in _Properties_ lifts it.
-- **How long a quick text stays is each session's own.** Above the box,
-  **[en:tran:Delay]** is the seconds it waits before it shows (0 to start)
-  and **[en:tran:Live]** the seconds it stays on the screen (5 to start; a
-  preset sets its own, two minutes for **[en:tran:Bible Verse]**). Switch on
-  **[en:tran:Infinite]** under them and that session's text stays up until
+- **How long a quick text stays is each session's own.** On one line above
+  the box, **[en:tran:Delay]** is the seconds it waits before it shows (0 to
+  start) and **[en:tran:Live]** the seconds it stays on the screen (5 to
+  start; a preset sets its own; **[en:tran:Bible Verse]** works it out from
+  the words in the box, about 150 a minute read aloud with a few seconds
+  more, never under 10). The dial button after Live works Live out from the
+  words in the box, at the pace it then names: the first press
+  **[en:tran:Slow]**, the next **[en:tran:Medium]**, then
+  **[en:tran:Fast]**, then **[en:tran:Slow]** again — press it again after
+  changing the words. Switch on
+  **[en:tran:Infinite]** beside them and that session's text stays up until
   you take it down with its **[en:tran:Hide Quick Text]** row or a Clear;
-  the Live box greys and keeps its number for when you switch it off again.
-  Each session keeps its own three, so a verse can stay up while a speaker's
+  the Live box and the dial grey and Live keeps its number for when you
+  switch it off again. Each session keeps its own three, so a verse can stay up while a speaker's
   name in another session leaves after a few seconds.
 - In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
   another size: it keeps its place until you type a number, and shows the

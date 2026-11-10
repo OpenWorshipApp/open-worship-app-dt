@@ -4,7 +4,9 @@ import {
     QUICK_TEXT_DEFAULT_MARKDOWN,
     fitQuickTextFontSize,
     formatQuickTextMarkdown,
+    genQuickTextReadingSeconds,
     stripLineMarks,
+    toNextQuickTextReadingPace,
 } from './quickTextFormatHelpers';
 
 describe('a Quick Text preset sets the words, every one kept', () => {
@@ -111,5 +113,58 @@ describe('a Bible Verse look fits a long passage', () => {
         expect(fitQuickTextFontSize(`**${'a'.repeat(158)}**   `, 44, 28)).toBe(
             44,
         );
+    });
+});
+
+describe('a Bible Verse stays up as long as it takes to read aloud', () => {
+    test('John 3:16 for 20 seconds, never under 10', () => {
+        // 27 words at 2.5 a second, 5 more, rounded up to a step of 5.
+        expect(
+            genQuickTextReadingSeconds(
+                '### (KJV) John 3:16\n\nFor God so loved the world, that he ' +
+                    'gave his only begotten Son, that whosoever believeth in ' +
+                    'him should not perish, but have everlasting life.',
+            ),
+        ).toBe(20);
+        expect(genQuickTextReadingSeconds('')).toBe(10);
+        expect(genQuickTextReadingSeconds('Amen')).toBe(10);
+    });
+
+    test('grows with the words, in steps of 5 seconds', () => {
+        expect(genQuickTextReadingSeconds('word '.repeat(200))).toBe(85);
+        expect(genQuickTextReadingSeconds('word '.repeat(201))).toBe(90);
+        expect(genQuickTextReadingSeconds('word '.repeat(1000))).toBe(405);
+    });
+
+    test('read slow, medium or fast; medium is the preset', () => {
+        const text = 'word '.repeat(110);
+        // 110, 150 and 200 words a minute.
+        expect(genQuickTextReadingSeconds(text, 'slow')).toBe(65);
+        expect(genQuickTextReadingSeconds(text, 'medium')).toBe(50);
+        expect(genQuickTextReadingSeconds(text)).toBe(50);
+        expect(genQuickTextReadingSeconds(text, 'fast')).toBe(40);
+        // A name is up for the shortest stay at any pace.
+        expect(genQuickTextReadingSeconds('Pastor John', 'slow')).toBe(10);
+    });
+
+    test('a press goes slow, medium, fast, then slow again', () => {
+        expect(toNextQuickTextReadingPace(null)).toBe('slow');
+        expect(toNextQuickTextReadingPace('slow')).toBe('medium');
+        expect(toNextQuickTextReadingPace('medium')).toBe('fast');
+        expect(toNextQuickTextReadingPace('fast')).toBe('slow');
+    });
+
+    test('counts words, not verse numbers, marks or spaces', () => {
+        const plain = genQuickTextReadingSeconds('word '.repeat(40));
+        expect(plain).toBe(25);
+        expect(
+            genQuickTextReadingSeconds(
+                Array.from({ length: 40 }, (_, index) => {
+                    return `(${index + 1}): **word**`;
+                }).join('   \n\n'),
+            ),
+        ).toBe(plain);
+        // A word with a digit in it is still a word.
+        expect(genQuickTextReadingSeconds('3rd '.repeat(40))).toBe(plain);
     });
 });

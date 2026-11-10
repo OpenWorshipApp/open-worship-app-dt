@@ -639,6 +639,49 @@ describe('foreground text panels', () => {
         expect(mocks.setQuick).not.toHaveBeenCalled();
     });
 
+    // The user, 2026-11-10: _add button to re-calculated the live time (for
+    // slow, medium, fast) base on text length. click to get slow click again
+    // to get medium again to fast again to slow_.
+    test('quick text works Live out from its words, slow, medium, fast, then slow again', async () => {
+        await render(<ForegroundQuickTextComp />);
+        const live = container.querySelector(
+            '[aria-label="Seconds the text stays on screen"]',
+        ) as HTMLInputElement;
+        const title = 'Live: Slow / Medium / Fast';
+        const pace = container.querySelector(
+            `[title="${title}"]`,
+        ) as HTMLButtonElement;
+        // No pace until it is pressed: the dial alone.
+        expect(pace.textContent).toBe('');
+        await change('Markdown', 'word '.repeat(110));
+        const presses: [string, string][] = [];
+        for (let index = 0; index < 4; index++) {
+            await clickTitle(title);
+            presses.push([pace.textContent!, live.value]);
+        }
+        // 110 words at 110, 150 and 200 a minute, 5 seconds more, rounded
+        // up to 5.
+        expect(presses).toEqual([
+            ['Slow', '65'],
+            ['Medium', '50'],
+            ['Fast', '40'],
+            ['Slow', '65'],
+        ]);
+        expect(mocks.persist).toHaveBeenLastCalledWith(
+            'foreground-quick-text-time-to-live-session-a',
+            65,
+        );
+        // With Infinite on there is no Live to work out.
+        await act(async () =>
+            (
+                container.querySelector(
+                    '[aria-label="Keep the text on screen until it is hidden"]',
+                ) as HTMLInputElement
+            ).click(),
+        );
+        expect(pace.disabled).toBe(true);
+    });
+
     // The user, 2026-11-09: each session its own timing, Live 5 seconds and
     // Infinite off until asked; Infinite keeps it up until it is hidden.
     test('quick text starts at 5 seconds, and Infinite keeps the session up until hidden', async () => {
