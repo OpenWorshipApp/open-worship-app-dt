@@ -42,6 +42,10 @@ export type AgentRestoreType =
           // file and in every window, which must be dropped once the file is
           // put back, or the Bible reads as it was before the undo for a week.
           bibleKey?: string;
+          // A file in a Resources folder (a study file, EC-464): nothing
+          // watches those folders, so the panel is told once it is put back,
+          // or it keeps a row for a file the undo just took away.
+          isResource?: true;
       }
     | {
           type: 'editing';

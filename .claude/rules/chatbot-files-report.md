@@ -193,6 +193,33 @@ window as a whole — tabs, pickers, its language, the caution — is in
   Khmer: a tab opened on `GEN.4.links.json` asked _what does the file for
   Luke chapter 7 say?_ listed Luke 7, read `pdf/LUK.7.pdf` (the waiting
   lines say both) and answered with its themes by page.
+- **A study file is a CARD the person presses** (2026-11-09, `EC-464`; the
+  user: _should ask user to confirm file name and confirst create_). A
+  drafted study (`owa_resource_file draft`, `chatbot-llm.md`) is held by the
+  window -- `keepDraftedStudy`, three at most, never saved with the tab; the
+  message keeps only a `reference`, and a press after the window was opened
+  again says the draft is not held any more -- and drawn under the answer
+  by `RenderStudyDraftComp` (`.cue-lyric.cue-study`, plain text in a
+  readonly box, never HTML): the heading, the passage, its Bible and the
+  diagram count, a line when the name was taken (_"…" is already in
+  Resources, so this one will be "… (1).md"_), the study. Three pseudo
+  tools, caught in `handleActing` and registered nowhere: **Create "…"**
+  (`owa-study-create`) calls `save`, attaches the new file to the tab
+  quietly (`attachHandedFileRef`'s `isQuiet`: no Resources opening card)
+  and answers _Saved as "…" in Resources → Default. It is attached to this
+  chat_ with **Open it** (`preview` of the real file), **Undo this change**
+  and the file chip; **Preview** (`owa-study-preview`) opens the held copy
+  in the Markdown Preview window; **Change the name**
+  (`owa-study-rename`) asks for a new name, and the tab's next short single
+  line (80 characters at most, not a question or a `/` command) is drafted
+  again with the held words and that title -- no model -- into a fresh
+  card; any other line or press ends the wait. Once attached, the tab is a `resources` ask, so a change
+  goes through `draft` with `file` and its card reads **Save changes to
+  "…"**, written only against the hash it was drafted from. While a press
+  works the tab is busy (`busyHoldListRef`). Every sentence is the
+  chatbot's `tran`, in every language's dictionary. Seen live through the
+  tools (`agent-tools.md`); the card in the 🤖 window not yet, the AI
+  caution being the person's press.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

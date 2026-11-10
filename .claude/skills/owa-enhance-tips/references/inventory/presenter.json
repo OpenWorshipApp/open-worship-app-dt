@@ -1,7 +1,7 @@
 {
     "page": "presenter",
     "window": "presenter.html",
-    "updated": "2026-11-09",
+    "updated": "2026-11-10",
     "scope": "html/presenter.html -> src/presenter.tsx: the header, the Document List (documents and lyrics), the Presenting Flow List and its preview, the previewer (slides, stages, stage style, slide notes, the editing toolbar), the Presenter's Bible pane, the Bible Lookup popup's presenting jobs, the Bibles and Bible Notes lists, Background (colours, images, videos, cameras, webs, audios), every Foreground component's floating panel, the Mini Screen (screen cards, drawing and focusing, the Virtual Screens Manager, Bible/LongText Properties), Presenting Control, the tips card and the native menus as the Presenter shows them. The lookup popup's study tools are the Reader's inventory; Settings, the editors, the note window and the AI windows are other windows'. A row or menu shared by several lists (Rename, Duplicate, Move up...) is one item: the app draws it from one component and it does the same job in each list. Destructive rows are items, counted and never acted.",
     "sourceDirs": [
         "src/presenter",
@@ -570,7 +570,11 @@
             "id": "panel-strip",
             "surface": "Presenter layout",
             "labels": ["Enable Note", "Enable Previewer"],
-            "aliases": ["Previewer"]
+            "aliases": [
+                "Previewer",
+                "Enable App Presenter Left",
+                "Enable Background"
+            ]
         },
         {
             "id": "tab-documents",
@@ -1810,6 +1814,127 @@
                 "A New Wait Is Drawn For Each Slide",
                 "Random Up To Seconds"
             ]
+        },
+        {
+            "id": "fg-quick-text-from-bible",
+            "surface": "Foreground",
+            "labels": ["Create Quick Text"],
+            "search": ["verse"],
+            "personOnly": "starts from a passage the person saved and writes a new Quick Text session"
+        },
+        {
+            "id": "fg-presets",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Presets"],
+            "aliases": [
+                "Bible Verse",
+                "Speaker",
+                "Song Title",
+                "Sermon Title",
+                "Event Session",
+                "Announcement",
+                "Top Banner",
+                "Bottom Banner",
+                "Urgent Alert",
+                "Top Left",
+                "Top Right",
+                "Bottom Left",
+                "Bottom Right",
+                "Center",
+                "Full Screen",
+                "Picture in Picture"
+            ],
+            "search": ["preset"],
+            "personOnly": "a preset tile rewrites the whole look of the person's session; which one is theirs (the row is the first of every component's Properties but Long Text Show's)"
+        },
+        {
+            "id": "fg-preset-background",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Dark", "Quick Text > Light"],
+            "aliases": [
+                "Light words for a dark background",
+                "Dark words for a light background"
+            ]
+        },
+        {
+            "id": "fg-preset-save",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Save as Preset"],
+            "aliases": ["Remove a preset to save a new one"],
+            "personOnly": "asks for a name in a popup, the person's to answer"
+        },
+        {
+            "id": "fg-preset-menu",
+            "surface": "Foreground",
+            "labels": [
+                "Quick Text > Rename Preset",
+                "Quick Text > Replace with Current Look"
+            ],
+            "search": ["preset"],
+            "personOnly": "renames or overwrites a saved look, from a saved preset's own menu"
+        },
+        {
+            "id": "fg-preset-remove",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Remove Preset"],
+            "search": ["preset"],
+            "personOnly": "removes a saved look"
+        },
+        {
+            "id": "fg-quick-text-markdown-lesson",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Markdown Lesson"],
+            "aliases": ["Heading", "Quote"]
+        },
+        {
+            "id": "fg-quick-text-lesson-link",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Open Link in Browser"],
+            "search": ["markdown"],
+            "personOnly": "opens the system browser, outside the app"
+        },
+        {
+            "id": "fg-quick-text-infinite",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Infinite"],
+            "aliases": ["Keep the text on screen until it is hidden"]
+        },
+        {
+            "id": "fg-quick-text-margin",
+            "surface": "Foreground",
+            "labels": [
+                "Quick Text > Horizontal Margin (%)",
+                "Quick Text > Vertical Margin (%)",
+                "Quick Text > Link horizontal and vertical margin"
+            ],
+            "search": ["margin"]
+        },
+        {
+            "id": "fg-quick-text-preview",
+            "surface": "Foreground",
+            "labels": ["Quick Text > Preview", "Quick Text > Edit"]
+        },
+        {
+            "id": "fg-sessions",
+            "surface": "Foreground",
+            "labels": [
+                "Marquee Top > Add Session",
+                "Marquee Top > Rename Session"
+            ],
+            "search": ["session"],
+            "personOnly": "adds or names a panel session that only Remove Session takes back"
+        },
+        {
+            "id": "fg-session-remove",
+            "surface": "Foreground",
+            "labels": ["Marquee Top > Remove Session"]
+        },
+        {
+            "id": "fg-open-chatbot",
+            "surface": "Foreground",
+            "labels": ["Marquee Top > Open in Chatbot"],
+            "search": ["assistant", "chatbot"],
+            "personOnly": "asks the AI caution first, which only the person answers"
         },
         {
             "id": "screen-toggle",

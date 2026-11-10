@@ -112,7 +112,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(114);
+        expect(getDailyTips('presenter')).toHaveLength(116);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
@@ -240,7 +240,7 @@ describe('daily tip helpers', () => {
         const foreground = getDailyTips('presenter').filter(({ demoId }) => {
             return demoId.startsWith('presenter-foreground-');
         });
-        expect(foreground).toHaveLength(22);
+        expect(foreground).toHaveLength(24);
         expect(
             foreground.every(({ category }) => {
                 return category === 'Foreground overlays';
@@ -354,6 +354,46 @@ describe('daily tip helpers', () => {
                     }),
                 ],
             }),
+        );
+    });
+
+    it('keeps the host card when every act step was already done', async () => {
+        // Quick Text's Properties open: the host skips all three act steps
+        // and starts the two look steps, a card that cannot demo. Re-sent
+        // inline, the openers came back without `skipIfVisible`.
+        const tip = getDailyTips('presenter').find(
+            ({ id }) => id === 'presenter-foreground-presets',
+        );
+        expect(tip).toBeDefined();
+        const callTool = vi
+            .fn()
+            .mockResolvedValueOnce(
+                '{"isRunning":true,"canDemo":false,"kind":"look","stepCount":2}',
+            );
+
+        await startDailyTipGuide('presenter', tip!, callTool);
+
+        expect(callTool).toHaveBeenCalledTimes(1);
+    });
+
+    it('still upgrades a stale host when not every act step was skipped', async () => {
+        const tip = getDailyTips('presenter').find(
+            ({ id }) => id === 'presenter-foreground-presets',
+        );
+        const callTool = vi
+            .fn()
+            .mockResolvedValueOnce(
+                '{"isRunning":true,"canDemo":false,"stepCount":5}',
+            )
+            .mockResolvedValueOnce('{"isRunning":true,"canDemo":true}');
+
+        await startDailyTipGuide('presenter', tip!, callTool);
+
+        expect(callTool).toHaveBeenCalledTimes(2);
+        expect(callTool).toHaveBeenNthCalledWith(
+            2,
+            'owa_guide_start',
+            expect.objectContaining({ mode: 'demo' }),
         );
     });
 

@@ -282,7 +282,14 @@ findings still open.
   session's `owa-devtools` stdio server both loaded `readerDemos.mjs` once;
   `owa_guide_start { demoId }` names a NEW id as unknown until that server is
   fresh (memory `mcp-tool-edit-two-processes`). Verify through All tips (§5),
-  or reconnect the MCP server.
+  or reconnect the MCP server. A CHANGED lesson is worse: Show it runs the
+  host's OLD steps, whose press may now mean something else (TP-06, the old
+  Quick Text Presets press on 2026-11-10) — restart the dev app before
+  pressing **Do it** on a changed lesson, and read each step with
+  `owa_guide_step goto` + status first. A host that imported an MCP module
+  while another session was saving it keeps that failure: every Show it says
+  _Could not start this walkthrough_ and the dev log says `MCP host request
+  failed SyntaxError` — restart once `node --check` passes every module.
 - **A control painted only under the mouse is still a control** —
   `owa_list_ui` marks it `showsOnHover`, and a tip names it directly; the
   guide forces the hover before it rings or presses.

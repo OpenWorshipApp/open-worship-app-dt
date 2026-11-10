@@ -130,6 +130,9 @@ const ACTING_TOOLS = {
     owa_foreground_edit: 'changed a foreground extra',
     // The Background tabs' files; each action names the file below.
     owa_media_file: 'changed a media file',
+    // A study file saved into Resources → Default (EC-464), named below. A
+    // list, a read, a draft and a preview change nothing and stay quiet.
+    owa_resource_file: 'made a study file',
 };
 
 // A verse as a banner may name it: a key (`JHN 3:16`) or a short reference
@@ -552,6 +555,27 @@ export function describeToolNotice(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
     }
+    if (name === 'owa_resource_file') {
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        if (args.action !== 'save') {
+            return null;
+        }
+        // A `file` is a change to a study file already there; a `name`, a
+        // new one.
+        const isChange =
+            typeof args?.file === 'string' && args.file.trim() !== '';
+        const named = toQuotedName(
+            isChange ? args.file.split(/[\\/]/).pop() : args?.name,
+            null,
+        );
+        const key = isChange ? 'changed a study file' : 'made a study file';
+        const said = isChange
+            ? `changed the study file ${named}`
+            : `made the study file ${named}`;
+        return toNotice(named === null ? key : said, key, [named]);
+    }
     if (name === 'owa_note_edit') {
         if (args?.action === undefined) {
             return toNotice(ACTING_TOOLS[name]);
@@ -844,6 +868,8 @@ export function listNoticeTranKeys() {
         FOREGROUND_STOP_ALL_KEY,
         FOREGROUND_PUT_UP_KEY,
         'Minutes',
+        // A study file saved over (EC-464); its making is ACTING_TOOLS'.
+        'changed a study file',
     ]);
     for (const phrase of Object.values(AGENT_FILE_PHRASE_MAP)) {
         for (const what of AGENT_FILE_KINDS) {

@@ -36,6 +36,8 @@ const { state, mocks } = vi.hoisted(() => ({
         lyricPreDelete: vi.fn(),
         slidePreDelete: vi.fn(),
         clearBibleXMLCache: vi.fn(),
+        invalidateResourcesScanCache: vi.fn(),
+        announceResourcesChanged: vi.fn(),
     },
 }));
 
@@ -60,6 +62,7 @@ vi.mock('../server/fileHelpers', () => ({
     fsReadFile: async (path: string) => state.texts.get(path) ?? '',
     fsWriteFile: mocks.fsWriteFile,
     getFileFullName: (path: string) => path.split('/').at(-1),
+    pathDirname: (path: string) => path.split('/').slice(0, -1).join('/'),
     pathJoin: (...parts: string[]) => {
         const joined = parts.join('/').replace(/\/{2,}/g, '/');
         return joined.replace(/\/[^/]+\/\.\.\//g, '/');
@@ -178,6 +181,13 @@ vi.mock('../app-document-list/AppDocument', () => ({
 vi.mock('../setting/bible-setting/bibleXMLHelpers', () => ({
     clearBibleXMLCache: (...args: unknown[]) =>
         mocks.clearBibleXMLCache(...args),
+}));
+vi.mock('../resources/resourcesScanHelpers', () => ({
+    invalidateResourcesScanCache: (...args: unknown[]) =>
+        mocks.invalidateResourcesScanCache(...args),
+}));
+vi.mock('../resources/resourcesChangedEvent', () => ({
+    announceResourcesChanged: () => mocks.announceResourcesChanged(),
 }));
 
 import {
@@ -1084,6 +1094,28 @@ describe('agent backup edges', () => {
         const { undoneBy } = readJson(`${dir}/${original.id}.meta.json`);
         expect(readJson(`${dir}/${undoneBy}.data.json`).restores).toEqual([
             { type: 'file', filePath, text: 'new xml', bibleKey: 'KJV' },
+        ]);
+    });
+
+    test('undo of a study file trashes it and tells the Resources panel', async () => {
+        const filePath = '/data/resources/Default/MAT.3.3-7 The Voice.md';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'study');
+
+        const { original, result } = await backUpThenUndo(
+            'Made the study file',
+            [{ type: 'file', filePath, text: null, isResource: true }],
+        );
+        expect(result).toMatchObject({ undone: 'Made the study file' });
+        expect(state.existing.has(filePath)).toBe(false);
+        expect(
+            mocks.invalidateResourcesScanCache,
+        ).toHaveBeenCalledExactlyOnceWith('/data/resources/Default');
+        expect(mocks.announceResourcesChanged).toHaveBeenCalledOnce();
+        // Its own undo carries the mark too, so redoing it tells the panel.
+        const { undoneBy } = readJson(`${dir}/${original.id}.meta.json`);
+        expect(readJson(`${dir}/${undoneBy}.data.json`).restores).toEqual([
+            { type: 'file', filePath, text: 'study', isResource: true },
         ]);
     });
 

@@ -332,7 +332,14 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
   // person, place or passage. And the notes (2026-11-08, the user's goal:
   // _chatbot can put a lesson to a new bible note for user_): what a record
   // or a word study taught is put into a new note, opened and attached.
-  lookup: ['owa_read_website', 'owa_find_verse', 'owa_bible_note'],
+  // And a study file (2026-11-09, EC-464): a passage's chat is where "make
+  // a study file of this" is asked next.
+  lookup: [
+    'owa_read_website',
+    'owa_find_verse',
+    'owa_bible_note',
+    'owa_resource_file',
+  ],
   // A study file names its sources and links; one past the files is
   // read there, rationed and announced like any web read. A passage the
   // file cites is read whole from the installed Bible rather than completed
@@ -375,6 +382,17 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
     'owa_click',
     'owa_help_search',
     'owa_find_verse',
+  ],
+  // An ask for a STUDY FILE from any tab (2026-11-09, EC-464, the user:
+  // _open chatbot then ask chatbot to make a resource study content for
+  // Matthew 3:3-7_): the file drafted (`owa_resource_file draft`, the
+  // person presses Create), the passage's people, places and cross
+  // references read first, a verse found by its words, a source on the web.
+  study: [
+    'owa_resource_file',
+    'owa_lookup_record',
+    'owa_find_verse',
+    'owa_read_website',
   ],
 };
 

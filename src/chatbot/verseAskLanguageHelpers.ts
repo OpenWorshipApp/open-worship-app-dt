@@ -185,14 +185,21 @@ export function pickVerseFindBible(
  * (`{bibles: [{key, locale, books?}]}`), a whole Bible before one that holds
  * `books` of them only (a New Testament had been picked for Genesis,
  * 2026-10-29). Null to keep `currentKey`: English, no language, a Bible
- * already in it, or none in it installed.
+ * already in it, or none in it installed. `isEnglishPicked`: English is
+ * looked for too -- a study file written in English quotes an English
+ * Bible, whatever the Lookup is on (EC-464).
  */
 export function pickBibleInLanguage(
     listed: unknown,
     currentKey: string | null,
     langCode: string,
+    isEnglishPicked = false,
 ): string | null {
-    if (langCode === 'en' || langCode === 'other' || langCode.length === 0) {
+    if (
+        (langCode === 'en' && !isEnglishPicked) ||
+        langCode === 'other' ||
+        langCode.length === 0
+    ) {
         return null;
     }
     const result = listed as {

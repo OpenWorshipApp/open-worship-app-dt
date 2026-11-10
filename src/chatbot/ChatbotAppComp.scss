@@ -799,6 +799,19 @@ button.chat-engine {
   resize: vertical;
 }
 
+// --- the study file a draft would save (EC-464) ------------------------------
+
+.cue-study-line {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+// Markdown is prose, not column work: it wraps.
+.cue-study-text {
+  white-space: pre-wrap;
+}
+
 // --- what you can do about the answer ---------------------------------------
 
 .cue-actions {

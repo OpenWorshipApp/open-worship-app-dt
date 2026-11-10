@@ -198,7 +198,26 @@ import {
 } from './foregroundChatHelpers';
 import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
 import { pickBibleInLanguage } from './verseAskLanguageHelpers';
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import {
+    NOTE_CREATE_PROMPT,
+    STUDY_FILE_PROMPT,
+} from './noteCreatePromptHelpers';
+import {
+    STUDY_ASK_KIND,
+    STUDY_MAX_TOOL_ROUNDS,
+    STUDY_SAVE_MODEL_REFUSAL,
+    STUDY_STOPPED_TEXT,
+    STUDY_SYSTEM_PROMPT,
+    type DraftedStudyType,
+    genStudyDraftActions,
+    keepDraftedStudy,
+    readDraftedStudy,
+    toModelDraftText,
+} from './studyFileChatHelpers';
+import {
+    dropStudyDiagrams,
+    lintStudyContent,
+} from '../helper/agentStudyFileRules';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -2124,6 +2143,14 @@ type ToolWatchType = {
      */
     draftedLyric: string | null;
     /**
+     * The study file the last good `owa_resource_file draft` answered
+     * (EC-464): held by the window and offered under the answer as Create,
+     * Preview and Change the name. Off the RESULT, like a drafted song.
+     */
+    draftedStudy: Omit<DraftedStudyType, 'reference'> | null;
+    /** A draft's diagrams sent back once already to be fixed. */
+    isStudyDiagramRetried: boolean;
+    /**
      * A song the model CREATED itself in this ask, name and path off the
      * `owa_lyric_file` result. Measured 2026-09-10: asked *Create a lyric
      * file from <address>*, Sonnet 5 drafted the song and created the file
@@ -2405,6 +2432,8 @@ export function genToolWatch(): ToolWatchType {
         isGuideStarted: false,
         isActedOn: false,
         draftedLyric: null,
+        draftedStudy: null,
+        isStudyDiagramRetried: false,
         createdLyric: null,
         createdNote: null,
         lyricFiles: null,
@@ -3030,6 +3059,18 @@ export function genChangedWithoutAnswer(
 }
 
 /**
+ * A drafted study file's card under an answer: the draft held by the window
+ * and its three buttons (`genStudyDraftActions`).
+ */
+function withStudyDraftUnder<T extends BotAnswerType>(
+    answer: T,
+    drafted: Omit<DraftedStudyType, 'reference'>,
+): T {
+    answer.actions = genStudyDraftActions(keepDraftedStudy(drafted));
+    return answer;
+}
+
+/**
  * What goes under an answer that MADE a Bible note: **Undo this change**
  * (the add's own backup -- the person's press, never the model's) and
  * **Show it in the list**, ringing its row in the Bible Notes panel. The
@@ -3421,6 +3462,118 @@ async function findNoteVerseBible(
     return watch.noteVerseBible;
 }
 
+/**
+ * The Bible a study file asked for from any tab quotes its passage from:
+ * one in the language of the ask -- English too, unlike a note's verse --
+ * when the Lookup's is not in it. Null keeps the Lookup's: no study ask (a
+ * Bible Reader or Resources chat quotes the Bible being read), no such
+ * Bible installed, or no list. Not kept on the watch: a draft is asked for
+ * once or twice an ask.
+ */
+async function findStudyVerseBible(
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (watch.noteVerseLang === null) {
+        return null;
+    }
+    try {
+        const listed = JSON.parse(
+            await callTool(VERSE_FIND_TOOL_NAME, {}, signal, watch.windowAim),
+        );
+        return pickBibleInLanguage(
+            listed,
+            typeof listed?.bible === 'string' ? listed.bible : null,
+            watch.noteVerseLang,
+            true,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+}
+
+/**
+ * A study file drafted (`owa_resource_file draft`, EC-464). Its passage is
+ * quoted from a Bible in the language asked in when the model named none;
+ * its diagrams are PARSED here with mermaid itself -- the one check the
+ * developer's door lacks -- a failing one sent back once to be fixed and
+ * dropped after; and the draft is held by the window, the model shown it
+ * without the study it wrote.
+ */
+async function runStudyDraft(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    let draftArgs = { ...(args ?? {}) };
+    if (
+        (typeof args?.bible !== 'string' || args.bible === '') &&
+        (typeof args?.file !== 'string' || args.file === '')
+    ) {
+        const verseBible = await findStudyVerseBible(watch, signal);
+        if (verseBible !== null) {
+            draftArgs = { ...draftArgs, bible: verseBible };
+        }
+    }
+    let text: string;
+    try {
+        text = await callTool(
+            RESOURCES_TOOL_NAME,
+            draftArgs,
+            signal,
+            watch.windowAim,
+        );
+    } catch (error: any) {
+        throwIfCancelled(signal);
+        return `Tool error: ${error.message}`;
+    }
+    const drafted = readDraftedStudy(text, draftArgs);
+    if (drafted === null) {
+        return text;
+    }
+    const { diagrams } = lintStudyContent(drafted.content);
+    if (diagrams.length > 0) {
+        let errors: (string | null)[] = [];
+        try {
+            const { findMermaidParseErrors } =
+                await import('../markdown-preview/markdownMermaidHelpers');
+            errors = await findMermaidParseErrors(diagrams);
+        } catch (_error) {
+            // Mermaid did not load: the preview window shows a diagram it
+            // cannot draw as its code, with the parser's words above it.
+        }
+        throwIfCancelled(signal);
+        const failed = errors.flatMap((error, index) => {
+            return error === null ? [] : [{ index, error }];
+        });
+        if (failed.length > 0 && !watch.isStudyDiagramRetried) {
+            watch.isStudyDiagramRetried = true;
+            return (
+                'Tool refused: ' +
+                failed
+                    .map(({ index, error }) => {
+                        return `Diagram ${index + 1} does not draw: ${error}`;
+                    })
+                    .join(' ') +
+                ' Fix it and call draft again with the whole study.'
+            );
+        }
+        if (failed.length > 0) {
+            drafted.content = dropStudyDiagrams(
+                drafted.content,
+                failed.map(({ index }) => {
+                    return index;
+                }),
+            );
+            drafted.diagramCount -= failed.length;
+        }
+    }
+    watch.draftedStudy = drafted;
+    watch.isActedOn = true;
+    return toModelDraftText(text);
+}
+
 async function runMcpToolCall(
     name: string,
     args: any,
@@ -3617,6 +3770,14 @@ async function runMcpToolCall(
     // to a model that cannot see them, are left out with a sentence saying
     // so rather than sent and refused with a 400.
     if (name === RESOURCES_TOOL_NAME) {
+        // A study file is saved, and previewed, by the person's press on the
+        // card the window draws under the answer -- never by the model.
+        if (args?.action === 'save' || args?.action === 'preview') {
+            return `Tool refused: ${STUDY_SAVE_MODEL_REFUSAL}`;
+        }
+        if (args?.action === 'draft') {
+            return await runStudyDraft(args, watch, signal);
+        }
         try {
             const { text, pictures } = await callToolWithPictures(
                 name,
@@ -4007,6 +4168,15 @@ export type AskExtraType = {
      * tools and the verse finder. `files`: what a `note` the model names is
      * turned into (`resolveNoteEditTarget`).
      */
+    /**
+     * An ask for a STUDY FILE (`studyFileChatHelpers.ts`, EC-464), from any
+     * tab: under `STUDY_SYSTEM_PROMPT` with the `study` tools. `verseLang`:
+     * the language asked in, when not English -- the passage and its verses
+     * are quoted from an installed Bible in it (`findNoteVerseBible`).
+     */
+    study?: {
+        verseLang?: string;
+    };
     note?: {
         files: NoteAskFileType[];
         // The language the question was asked in, when not English
@@ -4179,7 +4349,8 @@ const LOOKUP_SYSTEM_PROMPT =
     'only as the record or a tool read returned it: never translate one ' +
     'yourself, and never write one from memory. When they ask what they can ' +
     'do with the record, name the button under it that does it and say ' +
-    `pressing it is theirs. ${NOTE_CREATE_PROMPT} Answer in the language ` +
+    `pressing it is theirs. ${NOTE_CREATE_PROMPT} ${STUDY_FILE_PROMPT} ` +
+    'Answer in the language ' +
     'they write in; do not describe any other part of the app or offer a ' +
     'walkthrough.';
 
@@ -4236,6 +4407,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     }
     if (extra?.note !== undefined) {
         return NOTE_SYSTEM_PROMPT;
+    }
+    if (extra?.study !== undefined) {
+        return STUDY_SYSTEM_PROMPT;
     }
     return genSystemPrompt(
         focus,
@@ -4518,7 +4692,9 @@ async function askAnthropicCompatible(
                             ? SLIDE_MAX_TOOL_ROUNDS
                             : extra?.note !== undefined
                               ? NOTE_MAX_TOOL_ROUNDS
-                              : MAX_TOOL_ROUNDS;
+                              : extra?.study !== undefined
+                                ? STUDY_MAX_TOOL_ROUNDS
+                                : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4909,7 +5085,9 @@ async function askOpenAiCompatible(
                                     ? SLIDE_MAX_TOOL_ROUNDS
                                     : extra?.note !== undefined
                                       ? NOTE_MAX_TOOL_ROUNDS
-                                      : MAX_TOOL_ROUNDS,
+                                      : extra?.study !== undefined
+                                        ? STUDY_MAX_TOOL_ROUNDS
+                                        : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -6145,6 +6323,7 @@ export function genGeneralAskAction(
         extra?.lookup !== undefined ||
         extra?.resources !== undefined ||
         extra?.bibleReader !== undefined ||
+        extra?.study !== undefined ||
         !GENERAL_ADVICE_PATTERN.test(answer.text) ||
         (answer.actions ?? []).some((action) => {
             return action.toolName === GENERAL_ASK_TOOL_NAME;
@@ -6349,7 +6528,8 @@ async function askLlmBotAsWritten(
         extra?.flow !== undefined ||
         extra?.foreground !== undefined ||
         extra?.slide !== undefined ||
-        extra?.note !== undefined
+        extra?.note !== undefined ||
+        extra?.study !== undefined
             ? null
             : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
@@ -6396,7 +6576,8 @@ async function askLlmBotAsWritten(
             extra?.flow === undefined &&
             extra?.foreground === undefined &&
             extra?.slide === undefined &&
-            extra?.note === undefined;
+            extra?.note === undefined &&
+            extra?.study === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
@@ -6411,6 +6592,7 @@ async function askLlmBotAsWritten(
             extra?.foreground === undefined &&
             extra?.slide === undefined &&
             extra?.note === undefined &&
+            extra?.study === undefined &&
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.lyricFiles = extra?.lyric?.files ?? null;
@@ -6418,7 +6600,8 @@ async function askLlmBotAsWritten(
         seeded.flowFiles = extra?.flow?.files ?? null;
         seeded.foregroundAsks = extra?.foreground?.asks ?? null;
         seeded.noteFiles = extra?.note?.files ?? null;
-        seeded.noteVerseLang = extra?.note?.verseLang ?? null;
+        seeded.noteVerseLang =
+            extra?.note?.verseLang ?? extra?.study?.verseLang ?? null;
         seeded.noteTyped = extra?.note?.typed ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
@@ -6487,7 +6670,9 @@ async function askLlmBotAsWritten(
                           ? pickAskToolList(tools, SLIDE_ASK_KIND)
                           : extra?.note !== undefined
                             ? pickAskToolList(tools, NOTE_ASK_KIND)
-                            : filterModelToolList(tools);
+                            : extra?.study !== undefined
+                              ? pickAskToolList(tools, STUDY_ASK_KIND)
+                              : filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one
@@ -6629,6 +6814,11 @@ async function askLlmBotAsWritten(
         // tab once the answer is in (`ChatbotAppComp.tsx`).
         if (watch.createdNote !== null) {
             answer.createdNote = watch.createdNote;
+        }
+        // A study file drafted: its card is the whole of what goes under the
+        // answer -- Create, Preview, Change the name -- whatever the ask.
+        if (watch.draftedStudy !== null) {
+            return withStudyDraftUnder(answer, watch.draftedStudy);
         }
         // A verse search: a button for each found verse the answer names,
         // and the change of Bible -- no walkthrough, no page to go to.
@@ -6836,6 +7026,14 @@ async function askLlmBotAsWritten(
         const changed = genChangedWithoutAnswer(watch.editedLyric);
         if (changed !== null) {
             return changed;
+        }
+        // A study file drafted and THEN a failure: the card all the same,
+        // since the person saves it, not the model.
+        if (watch.draftedStudy !== null) {
+            return withStudyDraftUnder(
+                { text: tran(STUDY_STOPPED_TEXT) },
+                watch.draftedStudy,
+            );
         }
         // Re-thrown as one readable line; the caller shows it beside the
         // answer it fell back to.

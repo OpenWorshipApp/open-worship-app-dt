@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 114 Presenter lessons with stable unique ids', () => {
+  it('offers 116 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -32,6 +32,7 @@ describe('Presenter demos', () => {
       'presenter-foreground-screen',
       'presenter-foreground-web',
       'presenter-foreground-properties',
+      'presenter-foreground-presets',
       'presenter-foreground-sessions',
       'presenter-foreground-clear',
       'presenter-colors-tab',
@@ -97,6 +98,7 @@ describe('Presenter demos', () => {
       'presenter-slide-menu',
       'presenter-stage-style',
       'presenter-foreground-long-text',
+      'presenter-foreground-bible-quick-text',
       'presenter-virtual-screens',
       'presenter-screen-drawing',
       'presenter-bible-text-look',
@@ -125,7 +127,7 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(114);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(116);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
@@ -184,10 +186,16 @@ describe('Presenter demos', () => {
     ]) {
       const demo = getPresenterDemo(id);
       const actions = demo.steps.filter((step) => step.kind !== 'look');
-      expect(actions).toHaveLength(2);
       expect(actions[0].find).toBe('Foreground');
       expect(['Messages', 'Quick Text', 'Image Show']).toContain(
         actions[1].find,
+      );
+      // After the panel, only a disclosure may be pressed: it shows the
+      // settings and changes none (2026-11-09, the Foreground tips run).
+      expect(actions.slice(2).map((step) => step.find)).toEqual(
+        id === 'presenter-foreground-effects'
+          ? ['Quick Text > Properties', 'Quick Text > Effects']
+          : [],
       );
       // A bare localized "Messages" also matches "Documents" in Khmer.
       // Both prerequisites must test the actual foreground panel instead.
@@ -200,6 +208,66 @@ describe('Presenter demos', () => {
         expect(step.skipIfVisible).toBeTypeOf('string');
       }
       expect(demo.steps.at(-1).kind).toBe('look');
+    }
+  });
+
+  it('opens a picker or a view in a foreground panel and chooses nothing', () => {
+    // A city sets the clock, so Do it stops at the menu; Preview is undone
+    // by Edit and Markdown Lesson by itself, both named in their steps.
+    for (const [id, path] of [
+      [
+        'presenter-foreground-quick-text',
+        [
+          'Foreground',
+          'Quick Text',
+          'Quick Text > Preview',
+          'Quick Text > Markdown Lesson',
+          'look',
+        ],
+      ],
+      [
+        'presenter-foreground-time',
+        ['Foreground', 'Time', 'Time > Choose City', 'look'],
+      ],
+    ]) {
+      const demo = getPresenterDemo(id);
+      expect(demo.steps.map((step) => step.find ?? step.kind)).toEqual(path);
+      for (const step of demo.steps) {
+        expect(step.press).toBeUndefined();
+        expect(step.value).toBeUndefined();
+      }
+    }
+    expect(
+      getPresenterDemo('presenter-foreground-quick-text').steps[2].text,
+    ).toContain('Edit goes back');
+    expect(
+      getPresenterDemo('presenter-foreground-quick-text').steps[3].text,
+    ).toContain('Press it again to close it');
+  });
+
+  it('opens Properties for the presets and presses no preset', () => {
+    // A bare "Presets" find matches the tiles ("Presets: Speaker") before
+    // the row, and a tile rewrites the session's whole look (2026-11-09).
+    for (const id of [
+      'presenter-foreground-presets',
+      'presenter-foreground-properties',
+    ]) {
+      const demo = getPresenterDemo(id);
+      expect(demo.steps.map((step) => step.find ?? 'look')).toEqual([
+        'Foreground',
+        'Quick Text',
+        'Quick Text > Properties',
+        'look',
+        'look',
+        ...(id === 'presenter-foreground-properties' ? ['look'] : []),
+      ]);
+      expect(demo.steps[0].skipIfVisible).toBe('Quick Text > Properties');
+      expect(demo.steps[1].skipIfVisible).toBe('Quick Text > Properties');
+      // Properties is a toggle: a preset showing means it is already open.
+      expect(demo.steps[2].skipIfVisible).toBe('Quick Text > Presets');
+      for (const step of demo.steps) {
+        expect(step.find ?? '').not.toMatch(/Preset/);
+      }
     }
   });
 
@@ -228,6 +296,7 @@ describe('Presenter demos', () => {
       });
     }).map(({ id }) => id);
     expect(withoutSafeAction).toEqual([
+      'presenter-foreground-clear',
       'presenter-menu-file',
       'presenter-menu-edit',
       'presenter-menu-tools',
@@ -236,6 +305,7 @@ describe('Presenter demos', () => {
       'presenter-document-row-menu',
       'presenter-slide-menu',
       'presenter-stage-style',
+      'presenter-foreground-bible-quick-text',
       'presenter-screen-drawing',
       'presenter-bible-text-look',
       'presenter-take-back',

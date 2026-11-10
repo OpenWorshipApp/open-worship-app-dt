@@ -445,6 +445,30 @@ describe('the banner speaks the language the app is shown in', () => {
     );
   });
 
+  it('banners a study file only when it is saved (EC-464)', () => {
+    expect(
+      describeToolNotice('owa_resource_file', {
+        action: 'save',
+        name: 'MAT.3.3-7 The Voice.md',
+      }),
+    ).toMatchObject({
+      text: 'made the study file "MAT.3.3-7 The Voice.md"',
+      key: 'made a study file',
+    });
+    expect(
+      describeToolNotice('owa_resource_file', {
+        action: 'save',
+        file: 'Default/MAT.3.3-7 The Voice.md',
+      }),
+    ).toMatchObject({
+      text: 'changed the study file "MAT.3.3-7 The Voice.md"',
+      key: 'changed a study file',
+    });
+    for (const action of ['list', 'read', 'draft', 'preview']) {
+      expect(describeToolNotice('owa_resource_file', { action })).toBe(null);
+    }
+  });
+
   it('leaves a language out, never half-translated, when it lacks the phrase', () => {
     const words = genNoticeWords(
       describeToolNotice('owa_click', {}),

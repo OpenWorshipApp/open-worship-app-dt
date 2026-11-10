@@ -624,6 +624,13 @@ export function describeToolStep(name: string, args: any): string {
                 tran('Looking at the Bibles installed'),
             );
         case 'owa_resource_file':
+            if (args?.action === 'draft') {
+                return toQuotedStep(
+                    tran('Writing a study file: “{words}”'),
+                    args?.title,
+                    tran('Writing a study file'),
+                );
+            }
             return args?.action === 'read'
                 ? toQuotedStep(
                       tran('Reading “{words}” from Resources'),

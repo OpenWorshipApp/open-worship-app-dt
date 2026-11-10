@@ -113,6 +113,13 @@ import {
 import { LYRIC_SYSTEM_PROMPT } from './lyricChatHelpers';
 import { SLIDE_SYSTEM_PROMPT } from './slideChatHelpers';
 import { FLOW_SYSTEM_PROMPT } from './flowChatHelpers';
+import {
+    STUDY_CREATE_TOOL_NAME,
+    STUDY_HELD_NOTE,
+    STUDY_PREVIEW_TOOL_NAME,
+    STUDY_RENAME_TOOL_NAME,
+    STUDY_SAVE_MODEL_REFUSAL,
+} from './studyFileChatHelpers';
 
 function snapshotOf(request: any) {
     return JSON.parse(JSON.stringify(request));
@@ -240,6 +247,89 @@ describe('a document tool outside the conversation it belongs to', () => {
         );
         expect(results[3]).toContain('or use owa_bible_note.');
         expect(fake.toolCallList).toEqual([]);
+    });
+});
+
+// A study file (EC-464): the model drafts it, the person saves it.
+describe('a study file', () => {
+    test('saving and previewing are refused to the model and never reach the tool host', async () => {
+        const { sentList } = useAnthropic([
+            anthropicToolUse(
+                {
+                    name: 'owa_resource_file',
+                    input: { action: 'save', name: 'MAT.3.3-7 A.md' },
+                },
+                {
+                    name: 'owa_resource_file',
+                    input: { action: 'preview', name: 'MAT.3.3-7 A.md' },
+                },
+            ),
+            anthropicText('Press Create to save it.'),
+        ]);
+
+        await askLlmBot(
+            'Save the study for Matthew 3:3-7',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const results = readToolResults(sentList[1]);
+        expect(results).toHaveLength(2);
+        for (const result of results) {
+            expect(result).toBe(`Tool refused: ${STUDY_SAVE_MODEL_REFUSAL}`);
+        }
+        expect(fake.toolCallList).toEqual([]);
+    });
+
+    test('a draft is held by the window: the model sees no study and the answer carries the card', async () => {
+        const content =
+            '# The Voice\n\nA study of the voice in the wilderness.';
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: false,
+            name: 'MAT.3.3-7 The Voice.md',
+            passage: 'Matthew 3:3-7',
+            bible: 'KJV',
+            diagramCount: 0,
+            warnings: [],
+            content,
+        });
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    ref: 'Matthew 3:3-7',
+                    title: 'The Voice',
+                    content: 'A study of the voice in the wilderness.',
+                },
+            }),
+            anthropicText('It is drafted. Press Create to save it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Make a study file for Matthew 3:3-7',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        expect(fake.toolCallList).toHaveLength(1);
+        expect(fake.toolCallList[0].args.action).toBe('draft');
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).not.toContain('voice in the wilderness');
+        expect(seen).toContain(`[held by the window: ${content.length}`);
+        expect(seen).toContain(STUDY_HELD_NOTE);
+        expect(
+            answer.actions?.map((action) => {
+                return [action.label, action.toolName];
+            }),
+        ).toEqual([
+            ['Create "MAT.3.3-7 The Voice.md"', STUDY_CREATE_TOOL_NAME],
+            ['Preview', STUDY_PREVIEW_TOOL_NAME],
+            ['Change the name', STUDY_RENAME_TOOL_NAME],
+        ]);
     });
 });
 

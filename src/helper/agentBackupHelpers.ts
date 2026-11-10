@@ -48,6 +48,7 @@ import {
     fsReadFile,
     fsWriteFile,
     getFileFullName,
+    pathDirname,
     pathJoin,
 } from '../server/fileHelpers';
 import {
@@ -789,6 +790,14 @@ async function applyRestore(restore: AgentRestoreType) {
                 await import('../setting/bible-setting/bibleXMLHelpers');
             await clearBibleXMLCache(restore.bibleKey);
         }
+        if (restore.isResource) {
+            const { invalidateResourcesScanCache } =
+                await import('../resources/resourcesScanHelpers');
+            const { announceResourcesChanged } =
+                await import('../resources/resourcesChangedEvent');
+            invalidateResourcesScanCache(pathDirname(restore.filePath));
+            announceResourcesChanged();
+        }
         // A document's attached backgrounds: the manager keeps the map for a
         // few seconds, and the slide cards would draw the background just
         // undone until it let go.
@@ -895,6 +904,7 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
             ...(restore.bibleKey === undefined
                 ? {}
                 : { bibleKey: restore.bibleKey }),
+            ...(restore.isResource ? { isResource: true } : {}),
         } as AgentRestoreType,
     ];
     if (restore.kind !== undefined) {

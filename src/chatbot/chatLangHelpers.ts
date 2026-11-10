@@ -81,6 +81,10 @@ type AssistantLanguageFileType = {
     // "That is wrong", as this language says it (`disputeHelpers.ts`):
     // patterns, read whatever their case.
     disputeAsks?: string[];
+    // An ask for a STUDY FILE of a passage, as this language says it
+    // (`studyFileChatHelpers.ts`, EC-464): patterns, read whatever their
+    // case, that name making one -- the reference is read apart.
+    studyFileAsks?: string[];
     // Work the help window does with no model, asked in this language
     // (`languageEditAskHelpers.ts`, BN-16): every word of a document larger
     // or smaller, or one size (a `size` group), and a style for a WHOLE
@@ -280,6 +284,7 @@ export type AssistantLanguageType = {
     menuWords: string[];
     // See the file type: every list is [] for a language that does not say.
     disputeAskPatterns: RegExp[];
+    studyFileAskPatterns: RegExp[];
     textSizeAskPatterns: {
         larger: RegExp[];
         smaller: RegExp[];
@@ -426,6 +431,7 @@ function toLanguage(
         }),
         menuWords: file.menuWords ?? [],
         disputeAskPatterns: toPatternList(file.disputeAsks, 'iu'),
+        studyFileAskPatterns: toPatternList(file.studyFileAsks, 'iu'),
         textSizeAskPatterns: {
             larger: toPatternList(file.textSizeAsks?.larger, 'iu'),
             smaller: toPatternList(file.textSizeAsks?.smaller, 'iu'),

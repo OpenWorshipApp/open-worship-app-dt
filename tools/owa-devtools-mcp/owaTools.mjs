@@ -1876,9 +1876,17 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
 
   // The Resources panel's files -- listed by book, chapter or words, and
   // read: a PDF as pictures of its pages, a note as its words
-  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17). Reads only,
-  // inside the folders the panel lists. Offered to the chatbot's model only
-  // in a conversation about a Resources file (`MODEL_ON_ASK_TOOL_MAP`).
+  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17), inside the folders
+  // the panel lists. Offered to the chatbot's model only in a conversation
+  // about a Resources file or a passage, or asking for a study file
+  // (`MODEL_ON_ASK_TOOL_MAP`, `MODEL_ASK_SHARED_TOOL_MAP`).
+  //
+  // Since 2026-11-09 (EC-464) it also DRAFTS a study file for a passage
+  // (`src/helper/agentStudyFileHelpers.ts`): `draft` writes nothing; `save`
+  // writes into `<data folder>/resources/Default` with a backup and an undo
+  // id, and `preview` opens a temporary copy -- both the PERSON's presses,
+  // refused to the help window's model (`runMcpToolCall`), here for the
+  // window's buttons and the developer's door.
   server.registerTool(
     'owa_resource_file',
     {
@@ -1896,20 +1904,31 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
         'set it only to deliberately narrow a read. Use `detail` high for dense ' +
         'or unclear print. ' +
-        'Reads only.',
+        '`draft` a study file for `ref` (a passage: "Matthew 3:3-7") from ' +
+        'a 2-6 word `title` and your Markdown `content` (## sections, ' +
+        '```mermaid diagrams, each verse as [^Book C:V], never quoted); ' +
+        'the app quotes the passage, names the file and writes NOTHING -- ' +
+        'the person presses Create under your answer. To change a study ' +
+        'file in Default, `read` it, then `draft` with `file` and the WHOLE ' +
+        "new text. `save` and `preview` are the person's presses.",
       inputSchema: {
-        action: z.enum(['list', 'read']),
+        action: z.enum(['list', 'read', 'draft', 'save', 'preview']),
         book: z.string().optional(),
         chapter: z.number().int().optional(),
         ref: z
           .string()
           .optional()
-          .describe('A book and chapter together, e.g. "John 3"'),
+          .describe('A book and chapter, e.g. "John 3"; to draft, a passage'),
         search: z.string().optional(),
         file: z.string().optional(),
         page: z.number().int().optional(),
         pages: z.number().int().min(1).max(8).optional(),
         detail: z.enum(['normal', 'high']).optional(),
+        title: z.string().max(120).optional(),
+        content: z.string().max(20000).optional(),
+        bible: z.string().max(40).optional(),
+        name: z.string().max(160).optional(),
+        hash: z.string().max(40).optional(),
       },
     },
     async ({
@@ -1922,12 +1941,32 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
       page,
       pages,
       detail,
+      title,
+      content,
+      bible,
+      name,
+      hash,
     }) => {
       try {
         const { value } = await evaluateInApp(
           genAgentDataExpression(
             'resources',
-            { action, book, chapter, ref, search, file, page, pages, detail },
+            {
+              action,
+              book,
+              chapter,
+              ref,
+              search,
+              file,
+              page,
+              pages,
+              detail,
+              title,
+              content,
+              bible,
+              name,
+              hash,
+            },
             RESOURCE_FILE_TIMEOUT,
           ),
           { timeout: RESOURCE_FILE_TIMEOUT + 5000 },

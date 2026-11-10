@@ -347,15 +347,22 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 114 lessons across documents,
+  person's own word. The Presenter catalog has 116 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
   planning, app help and the View menu (2026-11-09: 23 added, among them the
   Long Text Show, the Virtual Screens Manager's guests and display cards, run
   sheet timing and the PowerPoint / PDF / Word rows; six of them reuse a
-  Reader lesson's own title and detail, so they cost no string). Eighty-three
+  Reader lesson's own title and detail, so they cost no string; then the
+  Foreground run added **Create Quick Text** from a saved passage and gave
+  Quick Text's Preview / **Markdown Lesson**, Time's Choose City and Effects
+  their own presses; when every component's Properties gained a Presets row,
+  a lesson of its own opened Properties and teaches the row in words -- a
+  bare `Presets` find matches a tile, `Presets: Speaker`, before the row, and
+  a tile rewrites the session's look, so it is a `skipIfVisible` only).
+  Eighty-three
   lessons begin with a safe deterministic **Do it**
   action, then turn any explanation-only follow-up into **Next**; ten native-menu
-  or disruptive lessons remain fully self-guided, and 21 teach in words a menu
+  or disruptive lessons remain fully self-guided, and 23 teach in words a menu
   that needs a row, a passage or a display chosen first, a control that
   removes something, or a panel whose opener the card cannot aim at (the
   **Documents** tab twins with its own region, the Mini Screen find lands on a
@@ -384,7 +391,12 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   one names its own component in its detail line (a friendly title alone left
   "countdown" matching no countdown lesson). Tips also send their current
   inline lesson when a hot-reloaded
-  renderer finds an older long-running MCP catalog. `demoId` is a string
+  renderer finds an older long-running MCP catalog -- but not when the host
+  ran the lesson and skipped every act step as already done, which also
+  answers `canDemo: false`: re-sent inline it lost its `skipIfVisible` and
+  offered to press the openers again (`checkHostSkippedEveryAction`,
+  2026-11-10, TP-21). A CHANGED lesson still runs the host's older copy until
+  the app restarts (TP-06). `demoId` is a string
   validated against those catalogs at call time, not a growing schema enum
   sent to the model on every round. Fourteen additional Presenter-only lessons
   (2026-09-28) cover lookup
@@ -1272,6 +1284,47 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   page's printed references were text, not buttons; a card at ANY position
   keeps its reference buttons, and a card saved by an older window derives
   them from its own references line).
+
+- **`owa_resource_file` also WRITES a study file, and only the person
+  saves one** (2026-11-09, `EC-464`; the user: _make a resource study
+  content for Mathew 3:3-7 … with creative mermaid diagrams_, _should ask
+  user to confirm file name and confirst create_, _if resource file exist
+  then should create with different suffix_). Three more actions, the
+  worker `src/helper/agentStudyFileHelpers.ts` (imported lazily from
+  `handleAgentResourcesRequest`), the rules pure in `agentStudyFileRules.ts`.
+  **`draft` writes nothing**: from `ref` + `title` + `content` it builds the
+  name from the PARSED reference, never the model's (`MAT.3.3-7 <title>.md`,
+  `JHN.3.16 <title>.md`, a whole chapter `MAT.3.<title>.md`; the title
+  refused, never cleaned, by `checkAgentFileName`), the next free name in
+  `<data folder>/resources/Default` (`… (1).md`, `nameTaken` says so), and
+  the file: `# title`, the passage QUOTED BY THE APP from an installed Bible
+  (`bible`, else the Lookup's) as a blockquote, a line saying it was drafted
+  by the app's assistant, then the content -- a `[^Isaiah 40:3]` token on a
+  line of its own becomes that verse quoted, inline its reference, an
+  unreadable one refused by name; fences balanced, every mermaid block one
+  of the allowed types with no `%%{init`, `click` or raw HTML, 16 000
+  characters at most. With `file` (a `.md` inside Default only) it drafts a
+  CHANGE and answers the file's `hash` and what changed by section.
+  **`save`** creates Default when missing, never overwrites (the free name
+  re-checked; a change needs the `hash` it was drafted from), writes behind
+  `runWithAgentBackup` (`isResource` on the restore), puts Default on
+  `resources-folder-list` unless a listed folder already covers it
+  (`folderAdded`), drops that folder's scan cache and fires
+  `RESOURCES_CHANGED_EVENT` (`src/resources/resourcesChangedEvent.ts`, a
+  leaf), which the panel answers with its own reload -- a nudge, nothing
+  watches these folders. An undo of it does the same, or the panel kept a
+  row for a file the undo had trashed (seen live, fixed the same day).
+  **`preview`** writes the content to `<temp>/open-worship-app-study-preview`
+  (the newest three kept) or takes a Default `file`, and opens it in the
+  Markdown Preview window, diagrams drawn. The model may only `draft`:
+  `save` and `preview` are refused to it in `runMcpToolCall`
+  (`STUDY_SAVE_MODEL_REFUSAL`) and are the help window's presses
+  (`chatbot-files-report.md`). Firewall: `save` is an acting call like the
+  rest; banner _made a study file "…"_ / _changed a study file "…"_
+  (`notify.mjs`), the other actions quiet. Seen live through a fresh stdio
+  server: Matthew 3:3-7 drafted with the KJV passage and two diagrams, both
+  drawn in the preview, saved twice (`(1)`), listed under **Default** in
+  the Reader's Resources panel, undone.
 
 - **A typed Bible-Reader question gets those three tools, in any language**
   (2026-10-18; the user's goal: _chatbot will help bible reader have more

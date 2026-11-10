@@ -1012,3 +1012,44 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `owa-enhance-mcp/references/tool-budget.md`) -- the user's choice of _any
   chat_ over a foreground ask alone. Not yet asked live through the window
   with a model: the AI caution is a person's press.
+
+- **A study file, asked for from ANY tab** (2026-11-09, `EC-464`; the
+  user: _open chatbot then ask chatbot to make a resource study content for
+  Mathew 3:3-7 I expect to have the new markdow file with enough information
+  for the passage with creative mermaid diagrams_). `readStudyFileAsk`
+  (`studyFileChatHelpers.ts`: a making verb and a study word; English in
+  code, Khmer and French from `studyFileAsks` in `assistant.json`, the rest
+  `EC-465`) makes a `study` ask, unless a Lookup subject or a Resources
+  file is in the tab, the line is a `/` command, a document or foreground
+  ask, or a corpus row (`findKnownQuestion` first, as everywhere). Under
+  `STUDY_SYSTEM_PROMPT`, eight rounds, with `owa_resource_file`,
+  `owa_lookup_record`, `owa_find_verse` and the web read
+  (`MODEL_ON_ASK_TOOL_MAP` kind `study`); `owa_resource_file` is shared to a
+  `lookup` ask too, and `STUDY_FILE_PROMPT` rides the Resources, Bible
+  Reader and lookup prompts, where a study is asked for next.
+  `STUDY_CONTENT_RULES` (`noteCreatePromptHelpers.ts`): draft at once and
+  never ask what to write, in the person's language, never a verse quoted
+  from memory (a `[^Book C:V]` token, which the app quotes), two to four
+  diagrams of different kinds with every label quoted, the sections a study
+  has, a 2-6 word title, and never say it is saved. **Its passage is in the
+  language asked in, English too**: `AskExtraType.study.verseLang` →
+  `findStudyVerseBible` → `pickBibleInLanguage(…, true)` (`isEnglishPicked`)
+  -- seen live, a study drafted with no `bible` had quoted the Lookup's
+  Khmer Bible under an English study; a note's verse still keeps the
+  Lookup's for English. On Auto a non-English study prefers a Gemma 4
+  (`preferModelPattern`). **`runStudyDraft`**: after a `draft`, each
+  mermaid block is PARSED in the help window (`findMermaidParseErrors` in
+  `markdownMermaidHelpers.ts`, mermaid loaded only when a block exists --
+  the one check the developer's door lacks, which has the structural lint);
+  a failure goes back once as the tool's refusal, a second drops the block
+  (`dropStudyDiagrams`) and the card counts what is left. The draft is
+  lifted into `watch.draftedStudy` and the model is shown
+  `[held by the window: N characters]` and `STUDY_HELD_NOTE` in place of
+  the study, so it is not billed twice; `save` and `preview` from the model
+  are refused (`STUDY_SAVE_MODEL_REFUSAL`, before the tool host is
+  reached). The answer's buttons are the card's alone
+  (`withStudyDraftUnder`), and a study ask is handed on after a round like
+  a Resources one (`canHandOnAfterRound`: the model writes nothing).
+  ~524 tokens a round to those asks; the ordinary list did not move
+  (8 478 of 8 480, `--stdio --ratchet`). Not yet asked live through the
+  window with a model: the AI caution is a person's press.

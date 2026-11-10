@@ -70,6 +70,11 @@ export type AgentResourcesRequestType = {
     page?: unknown;
     pages?: unknown;
     detail?: unknown;
+    title?: unknown;
+    content?: unknown;
+    bible?: unknown;
+    name?: unknown;
+    hash?: unknown;
 };
 
 type RefusalType = { isError: true; reason: string };
@@ -526,8 +531,18 @@ export async function handleAgentResourcesRequest(
     if (request.action === 'read') {
         return await readResource(request);
     }
+    if (
+        request.action === 'draft' ||
+        request.action === 'save' ||
+        request.action === 'preview'
+    ) {
+        // A study file (EC-464): loaded only when one is asked for.
+        const { handleAgentStudyRequest } =
+            await import('./agentStudyFileHelpers');
+        return await handleAgentStudyRequest(request);
+    }
     return toReason(
-        'Give action: "list" (by `book`, `chapter` or `search`) or "read" ' +
-            '(a `file` as listed).',
+        'Give action: "list" (by `book`, `chapter` or `search`), "read" ' +
+            '(a `file` as listed) or "draft" (a study file for `ref`).',
     );
 }

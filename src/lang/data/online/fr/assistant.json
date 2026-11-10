@@ -581,5 +581,8 @@
         "rose": "pink",
         "gris": "gray",
         "marron": "brown"
-    }
+    },
+    "studyFileAsks": [
+        "^(?!.*(?:^|[\\s'’])(?:comment|où|pourquoi|quels?|quelles?|dossiers?|notes?)(?=[\\s?.,!]|$)).*(?:^|[\\s'’])(?:crée[rz]?|créez|fais|faites|faire|écri(?:s|t|re|vez)|rédige[rz]?|rédigez|prépare[rz]?|préparez|enregistre[rz]?|enregistrez|sauvegarde[rz]?|sauvegardez|génère[rz]?|générez|mets|mettez)(?=[\\s,]).*(?:fichier (?:d['’]étude|de ressources?|markdown)|ressources?|fiche d['’]étude|guide d['’]étude|étude(?: biblique)?)"
+    ]
 }

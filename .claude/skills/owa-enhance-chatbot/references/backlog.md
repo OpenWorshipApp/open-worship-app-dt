@@ -10834,3 +10834,87 @@ not parse, and Ollama dropped it. Not the shared server at all. The loop
 now asks the same round once more on such a reply (`isDroppedReplyRetried`
 in `askOpenAiCompatible`); two in a row (about one ask in thirty-six) is
 the model's, and Auto hands it on as above.
+
+### EC-464 — a study file for a passage, written into Resources once the person confirms — `done`
+
+Asked 2026-11-09 by the user: _update chatbot to be able to create new
+resourse markdown file. make `Default` folder into the resource folder (if
+not exist) … chatbot should make very nice content the study content for
+John 3:16 with mermaid diagrams_, then _should ask user to confirm file name
+and confirst create_, _make a resource study content for Mathew 3:3-7 … with
+creative mermaid diagrams_ and _if resource file exist then should create
+with different suffix_. Before, no tool could write into Resources:
+`owa_resource_file` listed and read.
+
+Now `owa_resource_file` also takes `draft`, `save` and `preview`
+(`agentStudyFileHelpers.ts`; the rules are pure in `agentStudyFileRules.ts`).
+`draft` writes nothing. It builds:
+- the name from the parsed reference: `MAT.3.3-7 <title>.md`,
+  `JHN.3.16 <title>.md`, or `MAT.3.<title>.md` for a whole chapter;
+- the next free name in `<data folder>/resources/Default`, such as `… (1).md`;
+- the passage, quoted by the app from an installed Bible in the language the
+  study is asked in, English included (`findStudyVerseBible`,
+  `pickBibleInLanguage(…, true)`), with a `[^Isaiah 40:3]` token on its own
+  line quoted the same way;
+- a structural lint of every mermaid block;
+- for a change to a Default `.md`, a check against the file's hash.
+
+`save` and `preview` are the person's presses, and the model is refused both
+(`STUDY_SAVE_MODEL_REFUSAL`). The help window:
+- draws the draft as a card (`RenderStudyDraftComp`) with **Create "…"**,
+  **Preview** and **Change the name**;
+- holds the study itself (three at most, `studyFileChatHelpers.ts`) and shows
+  the model only its length;
+- parses every diagram with mermaid; one that does not draw goes back to the
+  model once, and is then dropped.
+
+**Create** makes the folder, puts it on the panel's list when no listed
+folder covers it, writes the file behind a backup and attaches it to the
+chat. A change after that is a **Save changes to "…"** card, and **Undo this
+change** trashes the file or puts it back.
+
+A study ask is read from any tab (`readStudyFileAsk`: English in code, Khmer
+and French from `studyFileAsks` in `assistant.json`). It is asked under
+`STUDY_SYSTEM_PROMPT` with `owa_resource_file`, `owa_lookup_record`,
+`owa_find_verse` and the web read; `owa_resource_file` is also shared to a
+lookup ask. The banner reads _made a study file_ or _changed a study file_.
+
+Seen live 2026-11-09 against the dev app, through a fresh stdio server:
+- `draft` of Matthew 3:3-7 gave `MAT.3.3-7 The Voice in the Wilderness.md`
+  with the KJV passage and the Isaiah 40:3 token quoted, and 2 diagrams;
+- `preview` opened the Markdown Preview window with the flowchart and the
+  mindmap drawn;
+- `save` created `Default` and put it on the list, and the same save again
+  gave `… (1).md`;
+- the Reader's Resources panel listed both under **Default**;
+- `owa_undo` trashed both.
+
+**Found on the way**: the panel kept a row for a file the undo had just
+trashed. A study file's backup now carries `isResource`, and its undo (and
+the undo of that undo) drops the scan cache and tells the panel. Seen live:
+the row went at the undo.
+
+Tokens: the ordinary list is unchanged, ~8 478 of 8 480; `owa_resource_file`
+costs ~524 a round in the asks it is offered to.
+
+**Not seen live**: the card in the 🤖 window (Create, Preview, Change the
+name, a change and its Save, the same in Khmer), because the AI caution is
+the person's press.
+
+### EC-465 — a study file asked for in a language other than English, Khmer or French — `open`
+
+`readStudyFileAsk` reads English in code, and Khmer and French from their
+`assistant.json` (`studyFileAsks`). In the other 84 languages, "make a study
+file for John 3:16" typed in the person's own language is not a study ask.
+It takes the ordinary route, and `owa_resource_file draft` is offered only
+when the tab is a Bible Reader, Resources or lookup chat. Each language's
+words for making a study file belong in its own data.
+
+### EC-466 — "save that as a study file" under an answer writes the study again — `open`
+
+When a passage chat has already explained a passage and the person types
+_save it as a study file_, the model writes a whole study again into
+`draft`'s `content`. That pays for the tokens twice, and on a small model it
+gives a different study from the one they read. The window holds the
+answer's words, so a draft built from the answer above would cost one short
+call: the passage and title from the model, the body from the answer.

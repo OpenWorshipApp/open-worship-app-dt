@@ -25,7 +25,10 @@ import {
     toCharClassSource,
 } from './chatLangHelpers';
 import type { BotActionType } from './helpBotHelpers';
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import {
+    NOTE_CREATE_PROMPT,
+    STUDY_FILE_PROMPT,
+} from './noteCreatePromptHelpers';
 
 export const RESOURCES_ASK_KIND = 'resources';
 export const RESOURCES_TOOL_NAME = 'owa_resource_file';
@@ -764,7 +767,7 @@ export const RESOURCES_SYSTEM_PROMPT =
     'button to continue with that file below the answer. ' +
     'Answer from what the complete document says, in its words, and name the ' +
     'file without discussing its pages. When the files do not say, say so ' +
-    `rather than guess. ${NOTE_CREATE_PROMPT} ` +
+    `rather than guess. ${NOTE_CREATE_PROMPT} ${STUDY_FILE_PROMPT} ` +
     'Answer plainly and in a few short paragraphs, for older readers, in ' +
     'the language they write in; do not describe the app or offer a ' +
     'walkthrough.';

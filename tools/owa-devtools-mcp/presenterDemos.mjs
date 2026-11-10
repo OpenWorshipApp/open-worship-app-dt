@@ -194,7 +194,13 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Show Countdown: a duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown). Once the time is up it counts the time over. This lesson will not start it for you.',
+        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment.',
+      },
+      {
+        text: 'Tick the screens it should reach, then press Show Countdown. A duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it; Auto-start makes it count the moment it is shown.',
+      },
+      {
+        text: 'Once the time is up it counts the time over. This lesson will not start it for you.',
       },
     ],
   },
@@ -219,7 +225,10 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
+        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again.',
+      },
+      {
+        text: 'It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
       },
     ],
   },
@@ -236,15 +245,25 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Time > Choose City',
       },
       {
         text: 'Choose Time. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
         find: 'Time',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Time > Choose City',
       },
       {
-        text: "Add Time adds a clock. Give it a label, and either keep this device's timezone or choose a city to set its own. More than one clock can run at once. This lesson will not put one on a screen.",
+        // Opens the city list and nothing else: the clock changes only when
+        // the person picks a city from it.
+        text: "Press Choose City to see the cities. Picking one sets the clock to that city's time; press Escape to leave it as it is. Use Current Timezone goes back to this computer's own time.",
+        find: 'Time > Choose City',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Add Time adds a clock. Give it a label shown above the time, and tick AM/PM for a 12-hour clock. More than one clock can run at once. This lesson will not put one on a screen.',
       },
     ],
   },
@@ -302,7 +321,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-quick-text',
     label: 'Put a short message up for a moment',
     detail:
-      'Quick Text puts a few words up that go by themselves: Delay waits first, Live sets how long they stay, Markdown formats them.',
+      'Quick Text puts a few words up: Delay waits first, Live sets how long they stay or Infinite keeps them until hidden, Markdown formats them, Preview shows them, Markdown Lesson each mark.',
     title: 'Put a short message up for a moment',
     isFeatured: false,
     steps: [
@@ -311,15 +330,34 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         text: 'Choose Quick Text. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
         find: 'Quick Text',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
-        text: 'Type the message -- Markdown is understood -- set how many seconds it stays and how long to wait first, then press Show Quick Text. Live shows it as you type. This lesson will not put it on a screen.',
+        text: 'Press Preview to see the words drawn the way the screen will draw them; Edit goes back to typing.',
+        find: 'Quick Text > Preview',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        // A toggle beside Edit and Preview; it opens a reading panel and
+        // changes nothing. Its "Open Link in Browser" leaves the app, so it
+        // stays the person's.
+        text: 'Press Markdown Lesson: each mark sits beside what the screen draws from it -- a heading, bold, a quote, a list -- so you can copy one while typing. Press it again to close it; Open Link in Browser, a fuller guide, is yours to press.',
+        find: 'Quick Text > Markdown Lesson',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        // Infinite stays words: it changes how long the session's text
+        // stays the next time it is shown.
+        text: 'Under Edit, type the message -- Markdown is understood. Delay is the seconds to wait first and Live the seconds it stays; Infinite keeps it up until you hide it. Each session keeps its own three. Show Quick Text puts it up; this lesson will not.',
       },
     ],
   },
@@ -419,7 +457,10 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties. It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
+        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties.',
+      },
+      {
+        text: 'It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
       },
     ],
   },
@@ -451,7 +492,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-properties',
     label: 'Place and size a foreground item',
     detail:
-      'Properties: Position, Width (%), Scale, Opacity (%), Behind Slide, Always on Top, Font Family, Text Color, Backdrop Filter and Own transition.',
+      'Properties: Position, Width (%) or Horizontal Margin (%), Scale, Opacity (%), Behind Slide, Always on Top, Font Family, Text Color, Backdrop Filter and Own transition.',
     title: 'Place and size a foreground item',
     isFeatured: false,
     steps: [
@@ -460,12 +501,14 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         text: 'Choose Quick Text to open its panel.',
         find: 'Quick Text',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         // Scoped to the panel by name: every open foreground panel has a
@@ -479,19 +522,65 @@ export const PRESENTER_DEMO_LIST = [
         finds: ['Quick Text > Properties', 'Properties'],
         translateFinds: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Presets',
       },
       {
-        text: 'Every foreground component carries this same strip, and each keeps its own settings: a pad for the corner it sits in, Width, Scale and Opacity, an X and Y nudge, Round for the corners, Blend Mode, and the transition it arrives with.',
+        text: 'Every foreground component carries this same strip, and each keeps its own settings: Presets first, a pad for the corner it sits in, Width, Scale and Opacity, an X and Y nudge, Round for the corners, Blend Mode, and the transition it arrives with.',
       },
       {
-        text: 'Two of them are worth knowing. Always on Top turns on a Z-Index, which is what decides who wins when two overlays land in the same place. And Blend Mode set to Screen drops the black out of a clip, which is how falling snow shot on black ends up over the live slide.',
+        text: 'Quick Text has Horizontal Margin (%) and Vertical Margin (%) in place of Width: the space kept clear at the sides and at the top and bottom. The chain between them, Link horizontal and vertical margin, moves both together.',
+      },
+      {
+        text: 'Always on Top turns on a Z-Index, which decides who wins when two overlays land in the same place. Blend Mode set to Screen drops the black out of a clip, which is how falling snow shot on black ends up over the live slide.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-presets',
+    label: 'Give a foreground item a ready look',
+    detail:
+      'Presets, first in every foreground Properties, give a ready look; Dark or Light sets the words for the background, and Save as Preset keeps yours (Rename Preset, Replace with Current Look).',
+    title: 'Give a foreground item a ready look',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        text: 'Choose Quick Text to open its panel.',
+        find: 'Quick Text',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        // Properties is a toggle; a preset tile showing means it is open.
+        // Never a FIND: a bare "Presets" matches the tiles ("Presets: Speaker")
+        // before the row, and a tile rewrites the session's whole look.
+        text: 'Open Properties inside the Quick Text panel.',
+        find: 'Quick Text > Properties',
+        finds: ['Quick Text > Properties', 'Properties'],
+        translateFinds: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Presets',
+      },
+      {
+        text: 'Presets is the first row. Each tile gives this component a whole look for one job -- here Bible Verse, Speaker, Song Title, Sermon Title, Event Session and Announcement -- keeping your font. Choosing one is yours; this lesson chooses none.',
+      },
+      {
+        text: 'Dark or Light sets the words for the background behind them. The + is Save as Preset: it keeps the current look under a name you give. Right-click a saved one for Rename Preset, Replace with Current Look and Remove Preset.',
       },
     ],
   },
   {
     id: 'presenter-foreground-sessions',
     label: 'Keep the lines you use every week',
-    detail: 'Save named sessions inside a foreground component.',
+    detail:
+      "Each foreground panel keeps sessions: Add Session starts one; a session's menu has Rename Session, Remove Session and Open in Chatbot, which asks the assistant to change it.",
     title: 'Keep the lines you use every week',
     isFeatured: false,
     steps: [
@@ -500,15 +589,23 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Marquee Top > Properties',
       },
       {
-        text: 'Choose Marquee Top and look at the row of names above its text box.',
+        text: 'Choose Marquee Top and look at the row of names at the top of its panel.',
         find: 'Marquee Top',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Marquee Top > Properties',
       },
       {
-        text: 'That row is the saved sessions. + adds one, and the dots beside a name rename or remove it, so the welcome line and the offering notice can each keep their own wording and speed.',
+        text: 'That row is the sessions, each with its own words, look and speed. + (Add Session) starts one; right-click a name, or press the dots on the one you are on, for Rename Session, Remove Session and Open in Chatbot.',
+      },
+      {
+        text: "Open in Chatbot -- also the robot in the panel's title bar -- opens the assistant with the session you are on attached, so you can ask for a slower scroll or bigger words.",
+      },
+      {
+        text: 'Each session owns its overlay: Show from a second session puts its words up beside the first instead of replacing them, and its Hide takes only its own down. This lesson changes no session.',
       },
     ],
   },
@@ -519,15 +616,13 @@ export const PRESENTER_DEMO_LIST = [
       'Hide one component, or clear the whole foreground layer; inside a panel, Remove Message, Remove Language and Delete this saved session take out what you added.',
     title: 'Take a foreground item back off',
     isFeatured: false,
+    // Words only (TP-14): the bare Mini Screen find can press a screen card.
     steps: [
       {
-        text: 'Open Mini Screen and find the screen card that is carrying the overlay.',
-        find: 'Mini Screen',
-        translateFind: true,
-        action: 'click',
+        text: "Each foreground panel has its own Hide button, which takes off only the session you are on; the panel's other sessions stay up.",
       },
       {
-        text: 'Each foreground panel has its own Hide button, which takes off only that component. The screen card has Clear Foreground, which takes off all of them at once. This lesson will not change a live screen.',
+        text: 'In the Mini Screen, the card of the screen carrying the overlay has Clear Foreground, which takes off all of them at once. This lesson will not change a live screen.',
       },
     ],
   },
@@ -971,7 +1066,10 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Twelve components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
+        text: 'Thirteen components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Long Text Show, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show.',
+      },
+      {
+        text: 'Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },
@@ -1607,10 +1705,22 @@ export const PRESENTER_DEMO_LIST = [
         skipIfVisible: 'Quick Text > Properties',
       },
       {
-        text: 'Open Properties in Quick Text and expand Effects. Border, Shadow and Padding style the box; Text Align, Line Height and Text Shadow style the words.',
+        // Both are disclosures: they show the settings and change none.
+        text: 'Open Properties inside the Quick Text panel.',
+        find: 'Quick Text > Properties',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Effects',
       },
       {
-        text: 'Each foreground component keeps its own settings. A change can reach an overlay already on screen; prepare the appearance before showing it. This lesson opens the panel without changing its style.',
+        text: 'Expand Effects at the foot of Properties.',
+        find: 'Quick Text > Effects',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Letter Spacing',
+      },
+      {
+        text: 'Round, Border, Shadow and Padding style the box; Text Align, Line Height, Letter Spacing and Text Shadow style the words. A change reaches an overlay already on screen. The same buttons fold Effects and Properties away again.',
       },
     ],
   },
@@ -1706,7 +1816,28 @@ export const PRESENTER_DEMO_LIST = [
         skipIfVisible: 'Long Text Show > Properties',
       },
       {
-        text: 'Add Language adds a column; Choose Language names it; take its words from Choose Lyric (a Lyric File) or type Raw Text with a Title and Add Section. Stack puts the languages under each other, Hide Number drops the section numbers, View as Text Cards shows them as cards, and Bring to Middle centres one. Show Long Text puts it on the screens; this lesson will not.',
+        text: 'Add Language adds a column; Choose Language names it; take its words from Choose Lyric (a Lyric File) or type Raw Text with a Title and Add Section.',
+      },
+      {
+        text: 'Stack puts the languages under each other, Hide Number drops the section numbers, View as Text Cards shows them as cards, and Bring to Middle centres one. Show Long Text puts it on the screens; this lesson will not.',
+      },
+    ],
+  },
+  {
+    // Words only: it starts from a passage the person saved, and the menu
+    // row writes a new Quick Text session.
+    id: 'presenter-foreground-bible-quick-text',
+    label: 'Put a Bible passage up as a Quick Text',
+    detail:
+      'Right-click a passage in Bibles and choose Create Quick Text: it opens in a new Quick Text session, set out by the Bible Verse preset.',
+    title: 'Put a Bible passage up as a Quick Text',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a saved passage in the Bibles list and choose Create Quick Text. The Quick Text panel opens on a new session holding the passage, laid out by the Bible Verse preset, ready for Show Quick Text. This lesson will not choose a passage for you.',
+      },
+      {
+        text: 'The words are yours to change in that session, and the session keeps them for next time. Delay and Live set when the passage comes up and how long it stays.',
       },
     ],
   },
@@ -1791,7 +1922,7 @@ export const PRESENTER_DEMO_LIST = [
     isFeatured: false,
     steps: [
       {
-        text: "Remove URL is on a saved web address in the Background panel's Webs; Remove Preset is in a preset's menu in Bible/LongText Properties; Remove Session is in a media session's menu; in Bible Lookup, Remove takes one reference out of the history. Each is your own choice to make; this lesson removes nothing.",
+        text: "Remove URL is on a saved web address in the Background panel's Webs; Remove Preset is in a saved preset's menu in Bible/LongText Properties and in a foreground component's Presets; Remove Session is in a media session's menu; in Bible Lookup, Remove takes one reference out of the history. Each is your own choice to make; this lesson removes nothing.",
       },
     ],
   },

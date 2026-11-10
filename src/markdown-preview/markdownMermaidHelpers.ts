@@ -119,3 +119,32 @@ export async function renderMermaidDiagrams(
         }
     }
 }
+
+/**
+ * Whether each diagram PARSES, without drawing one: null for a diagram that
+ * does, the parser's own message for one that does not. The help window's
+ * study file (EC-464) asks this of a draft before the person is shown its
+ * Create button -- the one check of a diagram the developer's door lacks,
+ * which has the structural one in `agentStudyFileRules.ts` alone. Loaded
+ * only when a draft holds a diagram.
+ */
+export async function findMermaidParseErrors(sources: string[]) {
+    const mermaid = await getMermaid();
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        suppressErrorRendering: true,
+    });
+    const errors: (string | null)[] = [];
+    for (const source of sources) {
+        try {
+            await mermaid.parse(source);
+            errors.push(null);
+        } catch (error) {
+            errors.push(
+                toErrorMessage(error).replace(/\s+/g, ' ').slice(0, 300),
+            );
+        }
+    }
+    return errors;
+}

@@ -53,7 +53,7 @@ export type DailyTipCallToolType = (
     args: Record<string, unknown>,
 ) => Promise<unknown>;
 
-function getCanDemoFromToolResult(result: unknown): boolean | null {
+function parseToolResult(result: unknown): Record<string, unknown> | null {
     let parsed = result;
     if (typeof parsed === 'string') {
         try {
@@ -62,15 +62,14 @@ function getCanDemoFromToolResult(result: unknown): boolean | null {
             return null;
         }
     }
-    if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        'canDemo' in parsed &&
-        typeof parsed.canDemo === 'boolean'
-    ) {
-        return parsed.canDemo;
-    }
-    return null;
+    return typeof parsed === 'object' && parsed !== null
+        ? (parsed as Record<string, unknown>)
+        : null;
+}
+
+function getCanDemoFromToolResult(result: unknown): boolean | null {
+    const canDemo = parseToolResult(result)?.canDemo;
+    return typeof canDemo === 'boolean' ? canDemo : null;
 }
 
 export const DAILY_TIP_SESSION_KEY = 'daily-tip-auto-shown';
@@ -216,6 +215,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-foreground-screen',
         'presenter-foreground-web',
         'presenter-foreground-properties',
+        'presenter-foreground-presets',
         'presenter-foreground-sessions',
         'presenter-foreground-clear',
         'presenter-foreground-extras',
@@ -225,6 +225,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-foreground-effects',
         'presenter-foreground-slideshow',
         'presenter-foreground-long-text',
+        'presenter-foreground-bible-quick-text',
     ]);
     const backgroundIds = new Set([
         'presenter-colors-tab',
@@ -396,16 +397,57 @@ export function getDailyTips(page: DailyTipPageType): DailyTipType[] {
     }));
 }
 
+function getDailyTipDemo(page: DailyTipPageType, tip: DailyTipType) {
+    return page === 'presenter'
+        ? getPresenterDemo(tip.demoId, tran)
+        : page === 'reader'
+          ? getReaderDemo(tip.demoId, tran)
+          : getPageDemo(tip.demoId, tran);
+}
+
+/**
+ * The host ran this very lesson and found every act step already done --
+ * each carries `skipIfVisible` and its control was on screen -- so the card
+ * it started is the words alone, and says `canDemo: false`. That is not the
+ * stale show-only host the inline upgrade is for: the inline form carries no
+ * `skipIfVisible`, and re-sent it offered to press the openers again, a
+ * panel toggled shut and a bare "Properties" ringed another panel's
+ * (2026-11-10, the presets tip started with Quick Text's Properties open).
+ */
+function checkHostSkippedEveryAction(
+    page: DailyTipPageType,
+    tip: DailyTipType,
+    result: unknown,
+) {
+    const stepCount = parseToolResult(result)?.stepCount;
+    const demo = getDailyTipDemo(page, tip);
+    if (demo === null || typeof stepCount !== 'number') {
+        return false;
+    }
+    const actionList = demo.steps.filter((step) => {
+        return (
+            typeof (step.finds?.at(-1) ?? step.find) === 'string' ||
+            typeof step.press === 'string' ||
+            step.action === 'rightClick'
+        );
+    });
+    return (
+        actionList.length > 0 &&
+        actionList.every((step) => {
+            return (
+                'skipIfVisible' in step &&
+                typeof step.skipIfVisible === 'string'
+            );
+        }) &&
+        stepCount === demo.steps.length - actionList.length
+    );
+}
+
 export function getDailyTipGuide(
     page: DailyTipPageType,
     tip: DailyTipType,
 ): DailyTipGuideType | null {
-    const demo =
-        page === 'presenter'
-            ? getPresenterDemo(tip.demoId, tran)
-            : page === 'reader'
-              ? getReaderDemo(tip.demoId, tran)
-              : getPageDemo(tip.demoId, tran);
+    const demo = getDailyTipDemo(page, tip);
     if (demo === null) {
         return null;
     }
@@ -456,7 +498,8 @@ export async function startDailyTipGuide(
         // form. Upgrade that successful-but-stale start in place too.
         if (
             guide?.mode !== 'demo' ||
-            getCanDemoFromToolResult(result) !== false
+            getCanDemoFromToolResult(result) !== false ||
+            checkHostSkippedEveryAction(page, tip, result)
         ) {
             return;
         }

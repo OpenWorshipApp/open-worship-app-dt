@@ -37,7 +37,10 @@ import {
     toCharClassSource,
     type AssistantLanguageType,
 } from './chatLangHelpers';
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import {
+    NOTE_CREATE_PROMPT,
+    STUDY_FILE_PROMPT,
+} from './noteCreatePromptHelpers';
 
 export const BIBLE_READER_ASK_KIND = 'bible-reader';
 // A listing and a read, a record and a verse, the answer.
@@ -507,6 +510,7 @@ export const BIBLE_READER_SYSTEM_PROMPT =
     'the King James Version: say so when asked where it comes from, and a ' +
     'kjvName is the KJV spelling. When a tool says a reference was not ' +
     'found (`notFound`), say what it says -- a chapter has fewer verses -- ' +
-    `and never make a verse up. ${NOTE_CREATE_PROMPT} Answer plainly ` +
+    `and never make a verse up. ${NOTE_CREATE_PROMPT} ${STUDY_FILE_PROMPT} ` +
+    'Answer plainly ' +
     'and briefly, for older readers, in the language they used; do not ' +
     'describe the app or offer a walkthrough.';

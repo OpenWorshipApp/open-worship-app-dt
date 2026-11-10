@@ -599,6 +599,22 @@ import {
     takeDraftedLyric,
 } from './lyricDraftHelpers';
 import {
+    STUDY_CREATE_TOOL_NAME,
+    STUDY_DRAFT_GONE_TEXT,
+    STUDY_PREVIEW_TOOL_NAME,
+    STUDY_RENAME_TOOL_NAME,
+    clearStudyRenameWait,
+    genStudyDraftActions,
+    keepDraftedStudy,
+    readDraftedStudy,
+    readStudyFileAsk,
+    setStudyRenameWait,
+    takeDraftedStudy,
+    takeStudyRenameWait,
+    toStudyAsk,
+} from './studyFileChatHelpers';
+import RenderStudyDraftComp from './RenderStudyDraftComp';
+import {
     dropActionEchoReplies,
     genMessageReplies,
     type AttachRequestType,
@@ -836,6 +852,7 @@ const SHOWN_LABEL_PATTERN_LIST: [RegExp, string][] = [
     [/^(.+) \(the one in Find\)$/, '{name} (the one in Find)'],
     [/^Put (.+) on the screen$/, 'Put {what} on the screen'],
     [/^Create "(.+)"$/, 'Create "{name}"'],
+    [/^Save changes to "(.+)"$/, 'Save changes to "{name}"'],
     [/^Open (.+) billing$/, 'Open {provider} billing'],
     [/^Open (.+) usage limits$/, 'Open {provider} usage limits'],
     [/^Open (.+) API keys$/, 'Open {provider} API keys'],
@@ -3286,6 +3303,9 @@ function RenderMessageComp({
                 ) : null}
                 {message.actions?.length ? (
                     <RenderLyricPreviewComp actions={message.actions} />
+                ) : null}
+                {message.actions?.length ? (
+                    <RenderStudyDraftComp actions={message.actions} />
                 ) : null}
                 {message.actions?.length ? (
                     <div className="cue-actions">
@@ -6537,6 +6557,9 @@ export default function ChatbotAppComp() {
             filePath: string,
             reading: ResourceReadingType | null = null,
             noteId: number | null = null,
+            // A study file the person just saved: the window's own "Saved"
+            // line says what it is, so no opening card under it.
+            isQuiet = false,
         ): Promise<ChatAttachmentType | null> => {
             setAttachError(null);
             const result = await genAttachmentFromPath(filePath, noteId);
@@ -6642,6 +6665,10 @@ export default function ChatbotAppComp() {
                     text: slideOpening.text,
                     replies: slideOpening.replies,
                 });
+                inputRef.current?.focus();
+                return result.attachment;
+            }
+            if (isQuiet) {
                 inputRef.current?.focus();
                 return result.attachment;
             }
@@ -8077,6 +8104,33 @@ export default function ChatbotAppComp() {
                     return;
                 }
             }
+            // The new name of a study file, typed after **Change the name**
+            // (`takeStudyRenameWait`): any other line ends the wait.
+            if (
+                options?.shownText === undefined &&
+                options?.isPressed !== true &&
+                lookupStudy === null
+            ) {
+                const renameReference = takeStudyRenameWait(
+                    activeSessionId,
+                    attachments.length === 0 ? trimmedAsked : '',
+                );
+                if (renameReference !== null) {
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                    });
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    await renameStudyDraftRef.current(
+                        renameReference,
+                        trimmedAsked,
+                        activeSessionId,
+                    );
+                    return;
+                }
+            }
             // `/btw <words>` is the one slash line that DOES go to a model:
             // a general question, asked with no tools and no lookup in the
             // app (`readGeneralQuestion`). It takes the ordinary road below
@@ -8816,13 +8870,30 @@ export default function ChatbotAppComp() {
             // Not in a conversation about one Bible note: a verse asked for
             // there is for THAT note, and its assistant has the verse search
             // and the note's editor (2026-11-08).
+            // An ask for a STUDY FILE (EC-464, `studyFileChatHelpers.ts`):
+            // from any tab, unless the tab is about a document, a foreground
+            // session, a Resources file or a lookup record -- those prompts
+            // offer the study tool themselves -- or the words are one of the
+            // app's own supported questions.
+            const isStudyWorded =
+                generalQuestion === null &&
+                !trimmedAsked.startsWith('/') &&
+                readStudyFileAsk(trimmedAsked);
+            const isStudyAsk =
+                isStudyWorded &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                !isDocumentAsk &&
+                !isForegroundAsk &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null;
             const isVerseAskable =
                 options?.shownText === undefined &&
                 generalQuestion === null &&
                 lookupSubject === null &&
                 attachments.length === 0 &&
                 !isNoteAsk &&
-                !isForegroundAsk;
+                !isForegroundAsk &&
+                !isStudyWorded;
             // In English or in the person's own language
             // (`verseAskLanguageHelpers.ts`).
             const oneLineVerse = isVerseAskable
@@ -8902,6 +8973,7 @@ export default function ChatbotAppComp() {
             // keeps owa_present_bible.
             const detectedBibleReaderAsk: BibleReaderAskType | null =
                 options?.shownText === undefined &&
+                !isStudyAsk &&
                 focus === 'reader' &&
                 generalQuestion === null &&
                 lookupSubject === null &&
@@ -8940,7 +9012,8 @@ export default function ChatbotAppComp() {
                 resourceFileNames.length === 0 &&
                 bibleReaderAsk === null &&
                 !isDocumentAsk &&
-                !isForegroundAsk;
+                !isForegroundAsk &&
+                !isStudyAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -10613,14 +10686,20 @@ export default function ChatbotAppComp() {
                             plan === null ? findPageLanguage(replyLang) : null,
                         );
                         throwIfCancelled(signal);
-                        const askedWithIntent =
-                            bibleReaderAsk === null
-                                ? englishBase
-                                : toBibleReaderAsk(
-                                      englishBase,
-                                      bibleReaderAsk,
-                                      bibleReaderBible,
-                                  );
+                        const askedWithIntent = isStudyAsk
+                            ? toStudyAsk(
+                                  englishBase,
+                                  replyLang === DEFAULT_CHAT_LANG_CODE
+                                      ? null
+                                      : getAssistantLanguage(replyLang).name,
+                              )
+                            : bibleReaderAsk === null
+                              ? englishBase
+                              : toBibleReaderAsk(
+                                    englishBase,
+                                    bibleReaderAsk,
+                                    bibleReaderBible,
+                                );
                         const modelAnswer = await askLlmBot(
                             genAskedWithHint(
                                 askedOf,
@@ -10688,6 +10767,12 @@ export default function ChatbotAppComp() {
                                       }),
                                 ...(isSongAsk
                                     ? { lyric: { files: lyricAskFiles } }
+                                    : {}),
+                                // The study's passage is quoted from a
+                                // Bible in the language it is written in,
+                                // English included.
+                                ...(isStudyAsk
+                                    ? { study: { verseLang: replyLang } }
                                     : {}),
                                 ...(isSlideDocAsk
                                     ? { slide: { files: slideAskFiles } }
@@ -10885,6 +10970,15 @@ export default function ChatbotAppComp() {
                                           VERSE_TRANSLATION_MODEL_PATTERN,
                                   }
                                 : {}),
+                            // A study file written in another language:
+                            // Gemma 4 first, like any translation.
+                            ...(isStudyAsk &&
+                            replyLang !== DEFAULT_CHAT_LANG_CODE
+                                ? {
+                                      preferModelPattern:
+                                          TRANSLATION_MODEL_PATTERN,
+                                  }
+                                : {}),
                             // A song or slides put into another language:
                             // Gemma 4 first, the user's word for any
                             // translation.
@@ -10922,6 +11016,7 @@ export default function ChatbotAppComp() {
                     // nothing pressed nothing either.
                     const canHandOnAfterRound =
                         generalQuestion !== null ||
+                        isStudyAsk ||
                         (isResourcesAsk &&
                             (lookupSubject === null || isLookupAppAsk));
                     // Who was handed the question after the tab's own
@@ -12950,11 +13045,231 @@ export default function ChatbotAppComp() {
     );
     const handleDraftedLyricRef = useAppCurrentRef(handleDraftedLyric);
 
+    // A study file's card (EC-464, `studyFileChatHelpers.ts`): Create or
+    // Save changes, Preview, Change the name -- and, once saved, Open it.
+    // The model only drafted it; these presses are the person's.
+    const handleStudyActionRef = useAppCurrentRef(
+        async (action: BotActionType, sessionId: string) => {
+            const savedFile = action.args?.file;
+            if (
+                action.toolName === STUDY_PREVIEW_TOOL_NAME &&
+                typeof savedFile === 'string'
+            ) {
+                try {
+                    await callTool(RESOURCES_TOOL_NAME, {
+                        action: 'preview',
+                        file: savedFile,
+                    });
+                } catch (error) {
+                    handleError(error);
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: tran('The preview could not be opened.'),
+                    });
+                }
+                return;
+            }
+            const drafted = takeDraftedStudy(action.args?.reference ?? '');
+            if (drafted === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(STUDY_DRAFT_GONE_TEXT),
+                });
+                return;
+            }
+            if (action.toolName === STUDY_RENAME_TOOL_NAME) {
+                setStudyRenameWait(sessionId, drafted.reference);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(
+                        'Type the new name for the study file, then press Send.',
+                    ),
+                });
+                inputRef.current?.focus();
+                return;
+            }
+            if (action.toolName === STUDY_PREVIEW_TOOL_NAME) {
+                let previewed: any = null;
+                try {
+                    previewed = parseToolJson(
+                        await callTool(RESOURCES_TOOL_NAME, {
+                            action: 'preview',
+                            name: drafted.name,
+                            content: drafted.content,
+                        }),
+                    );
+                } catch (error) {
+                    handleError(error);
+                }
+                if (typeof previewed?.previewed !== 'string') {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: tran('The preview could not be opened.'),
+                    });
+                }
+                return;
+            }
+            // Create, or Save changes: the tool takes the next free name for
+            // a new file and refuses a change to a file changed since.
+            let saved: any = null;
+            try {
+                saved = parseToolJson(
+                    await callTool(
+                        RESOURCES_TOOL_NAME,
+                        drafted.isChange
+                            ? {
+                                  action: 'save',
+                                  file: drafted.file ?? '',
+                                  hash: drafted.hash ?? '',
+                                  content: drafted.content,
+                              }
+                            : {
+                                  action: 'save',
+                                  name: drafted.name,
+                                  content: drafted.content,
+                              },
+                    ),
+                );
+            } catch (error) {
+                handleError(error);
+            }
+            if (typeof saved?.filePath !== 'string') {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: drafted.isChange
+                        ? tran(
+                              'The changes could not be saved: the file may ' +
+                                  'have changed since. Ask me to make the ' +
+                                  'change again.',
+                          )
+                        : tran(
+                              'The study file could not be saved. Ask me to ' +
+                                  'draft it again.',
+                          ),
+                });
+                return;
+            }
+            const name = String(saved.created ?? saved.changed ?? drafted.name);
+            if (!drafted.isChange) {
+                // Attached to the tab it was asked in: the next question is
+                // about it (the folder is on the panel's list now, so the
+                // tab asks about a Resources file).
+                await attachHandedFileRef.current(
+                    sessionId,
+                    saved.filePath,
+                    null,
+                    null,
+                    true,
+                );
+            }
+            const undoAction =
+                typeof saved.undoId === 'string'
+                    ? genLyricUndoAction({ name, undoId: saved.undoId })
+                    : null;
+            addMessage(sessionId, {
+                author: 'bot',
+                text: drafted.isChange
+                    ? fillWords(
+                          tran(
+                              'Saved the changes to "{name}". Undo this ' +
+                                  'change puts it back.',
+                          ),
+                          { name },
+                      )
+                    : fillWords(
+                          tran(
+                              'Saved as "{name}" in Resources → Default. ' +
+                                  'It is attached to this chat: ask me ' +
+                                  'about it, or ask me to change it.',
+                          ),
+                          { name },
+                      ),
+                actions: [
+                    {
+                        label: 'Open it',
+                        toolName: STUDY_PREVIEW_TOOL_NAME,
+                        args: { file: String(saved.file ?? '') },
+                    },
+                    ...(undoAction === null ? [] : [undoAction]),
+                ],
+                shows: [{ kind: 'file' as const, value: saved.filePath, name }],
+            });
+        },
+    );
+
+    // A new name typed after **Change the name**: the same study drafted
+    // again under it, with no model -- its words are held, only the name
+    // changes -- and a fresh card.
+    const renameStudyDraftRef = useAppCurrentRef(
+        async (reference: string, typed: string, sessionId: string) => {
+            const drafted = takeDraftedStudy(reference);
+            if (drafted === null || drafted.raw === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(STUDY_DRAFT_GONE_TEXT),
+                });
+                return;
+            }
+            let text = '';
+            try {
+                text = await callTool(RESOURCES_TOOL_NAME, {
+                    action: 'draft',
+                    ref: drafted.raw.ref,
+                    title: typed,
+                    content: drafted.raw.content,
+                    ...(drafted.raw.bible === null
+                        ? {}
+                        : { bible: drafted.raw.bible }),
+                });
+            } catch (error) {
+                handleError(error);
+            }
+            const renamed = readDraftedStudy(text, {
+                ...drafted.raw,
+                title: typed,
+            });
+            if (renamed === null) {
+                // The tool's own sentence says why ("cannot contain …").
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(
+                        'That name cannot be used for a file. Press Change ' +
+                            'the name and type another, in plain words.',
+                    ),
+                    actions: genStudyDraftActions(drafted),
+                });
+                return;
+            }
+            // The diagrams were checked when it was drafted; only the name
+            // and the title line are new.
+            renamed.content = drafted.content.replace(
+                /^# .*$/m,
+                `# ${renamed.raw?.title ?? typed}`,
+            );
+            renamed.diagramCount = drafted.diagramCount;
+            const kept = keepDraftedStudy(renamed);
+            addMessage(sessionId, {
+                author: 'bot',
+                text: fillWords(
+                    tran(
+                        'It will be saved as "{name}". Press Create to save ' +
+                            'it.',
+                    ),
+                    { name: kept.name },
+                ),
+                actions: genStudyDraftActions(kept),
+            });
+        },
+    );
+
     const handleActing = useCallback(
         async (action: BotActionType) => {
             // Same reason as `handleAsking`: the button that fired this lives
             // in a tab, and a tool call is slow enough to outlive looking at it.
             const actedSessionId = activeSessionId;
+            if (action.toolName !== STUDY_RENAME_TOOL_NAME) {
+                clearStudyRenameWait(actedSessionId);
+            }
             // Not a tool at all -- the Send button on a prepared report. It is
             // caught here rather than given a name in the tool host because
             // nothing outside this window may file a report on the user's
@@ -13438,6 +13753,31 @@ export default function ChatbotAppComp() {
                         },
                     ),
                 });
+                return;
+            }
+            // A study file's card: busy while it is written, not stoppable.
+            if (
+                action.toolName === STUDY_CREATE_TOOL_NAME ||
+                action.toolName === STUDY_PREVIEW_TOOL_NAME ||
+                action.toolName === STUDY_RENAME_TOOL_NAME
+            ) {
+                busyHoldListRef.current = [
+                    ...busyHoldListRef.current,
+                    actedSessionId,
+                ];
+                syncBusy();
+                try {
+                    await handleStudyActionRef.current(action, actedSessionId);
+                } finally {
+                    const holdIndex =
+                        busyHoldListRef.current.indexOf(actedSessionId);
+                    busyHoldListRef.current = busyHoldListRef.current.filter(
+                        (_sessionId, index) => {
+                            return index !== holdIndex;
+                        },
+                    );
+                    syncBusy();
+                }
                 return;
             }
             // The same seam, for the song the assistant just wrote out.
