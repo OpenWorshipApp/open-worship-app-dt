@@ -146,6 +146,14 @@ export const NOTE_CREATE_PROMPT =
 // (BN-94) was read as thin in every part, 15 and 16 of 24, the reader's
 // one change "divide the psalm into its movements": its one point now
 // walks the passage movement by movement, about 450 words.
+//
+// BN-102 (the BN-98 read, both readers): backgrounds said what came
+// earlier in the book and missed the OCCASION the passage answers -- Luke
+// 15:1-2's murmuring, the Philippians' gift, Isaiah 40:27's complaint, the
+// Jews' and Samaritans' quarrel (12 and 14 lessons). A retelling put words
+// in a mouth (Jonah "said he was sorry" in the fish, three reads running),
+// and a hearer's question took for granted what the verses do not say
+// ("Why is the father upset with the son who stayed?").
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -156,7 +164,8 @@ export const PREACHING_LESSON_SHAPE =
     'returns: say nothing of a verse, its words or its history you are not ' +
     'sure of, read into it nothing it does not say -- a retelling tells the ' +
     "events in the passage's own order and adds no feeling, motive, place, " +
-    "tool or detail it does not give, and a person's reason or message is " +
+    "tool, word anyone said or detail it does not give, and a person's " +
+    'reason or message is ' +
     'the one the passage states, so read the WHOLE story before telling any ' +
     'of it -- and tell no story as if it really happened. The main passage ' +
     'alone on a line as its token -- [^John 10:11-18] -- which the app ' +
@@ -165,9 +174,11 @@ export const PREACHING_LESSON_SHAPE =
     'background); then "## " headings: Big idea (ONE full ' +
     'sentence: what the passage says about God, and what that asks of us), ' +
     "Background (three or four sentences from the Bible's own pages: who " +
-    'wrote it and to whom where the Bible names them, and what happens just ' +
-    'before it that changes how it is heard -- for a psalm, its own words ' +
-    'and where the Bible tells its story, never the psalm before it), ' +
+    'wrote it and to whom where the Bible names them; the OCCASION it ' +
+    'answers -- who was speaking to whom and why, what had just happened or ' +
+    'been said, in its first verses or just before them -- and who its ' +
+    'people were to its first hearers; for a psalm, its own words and where ' +
+    'the Bible tells its story, never the psalm before it), ' +
     'Introduction (an everyday scene, or a question of the ' +
     'passage\'s own -- never "Have you ever" -- its picture agreeing with ' +
     'the passage; then ONE plain sentence that names the need in us the ' +
@@ -186,7 +197,8 @@ export const PREACHING_LESSON_SHAPE =
     'said again, no Hebrew or Greek word study>\n' +
     "**A hearer asks:** <an honest question of a hearer's that these verses " +
     'themselves answer -- never one they leave open, as why someone did ' +
-    'what the passage gives no reason for>\n' +
+    'what the passage gives no reason for, nor one that takes for granted ' +
+    'what they do not say>\n' +
     '**The passage answers:** <that answer in two or three sentences, with ' +
     'the words of the verse that gives it: a reason, motive or promise only ' +
     'where it states one>\n' +

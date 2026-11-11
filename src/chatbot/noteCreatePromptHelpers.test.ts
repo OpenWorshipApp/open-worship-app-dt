@@ -98,6 +98,19 @@ describe('a lesson to preach, asked anywhere', () => {
         }
     });
 
+    // BN-102 (2026-11-11): backgrounds missed the occasion a passage
+    // answers; Jonah "said he was sorry"; "why is the father upset?".
+    test('a background gives the occasion, a retelling adds no words', () => {
+        for (const line of [
+            'the OCCASION it answers',
+            'who was speaking to whom and why',
+            'word anyone said or detail it does not give',
+            'nor one that takes for granted what they do not say',
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(line);
+        }
+    });
+
     // BN-98 (2026-11-11): a devotion of "every part in a sentence or two"
     // was read as thin in every part (15 and 16 of 24), its one change
     // "divide the psalm into its movements".

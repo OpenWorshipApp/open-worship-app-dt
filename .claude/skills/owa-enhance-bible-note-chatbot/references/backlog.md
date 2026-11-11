@@ -1484,6 +1484,40 @@ was seen and what was done.
   background "as Jesus approached Jericho, he stopped to heal a blind man"
   (Luke 18:35-43), the lost sheep's "Just before this, Jesus told people
   that following him costs everything" (14:25-35), both right.
+- **BN-101 — fourfold opens on "MORE than the law asked"** (2026-11-11).
+  Even beside its entry (BN-92), Zacchaeus' fourfold was "the strict
+  penalty for stolen goods under the law" in two more reads. The entry
+  had opened on "what the law asked for a stolen sheep". It opens on the
+  correction now, as BN-92 found an entry must: "fourfold: MORE than the
+  law asked -- for goods taken falsely it asked them back "in the
+  principal" and "the fifth part more" (Leviticus 6:5); four times over it
+  asked only for a sheep stolen and killed or sold" (Exodus 22:1). Seen in
+  the run: "restore him fourfold means giving back far more than the law
+  required for stolen goods".
+- **BN-102 — a background gives the occasion; a retelling puts no words in
+  a mouth** (2026-11-11, both readers of the BN-98 read). Backgrounds said
+  what came earlier in the book and missed the OCCASION the passage
+  answers -- Luke 15:1-2's murmuring, the Philippians' gift, Isaiah 40:27's
+  complaint, the Jews' and Samaritans' quarrel (12 lessons by Opus, 14 by
+  Sonnet). Jonah "said he was sorry" in the fish (three reads), and a
+  hearer asked "Why is the father upset with the son who stayed?" of a
+  father who "intreated him". Background now asks for the occasion it
+  answers (who was speaking to whom and why, what had just happened or been
+  said, in its first verses or just before them) and who its people were to
+  its first hearers; a retelling adds no "word anyone said" the passage does
+  not; a hearer's question never takes for granted what the verses do not
+  say. ~1305 tokens.
+- **BN-103 — Jonah's prayer and God's turning, as Scripture says them**
+  (2026-11-11, the BN-99..101 read). Jonah was read wrong in four blind
+  reads running: he "said he was sorry" in the fish, and Jonah 3:10's "God
+  repented of the evil" meant "the people truly changed their hearts". Two
+  phrase entries join the table: "repented of the evil", said of God in all
+  eleven KJV places ("the LORD repented of the evil which he thought to do
+  unto his people", Exodus 32:14), and Jonah's prayer from "the fish's
+  belly", a cry and a thanksgiving ("Salvation is of the LORD", 2:9) that
+  "says no word of sorrow for running away". Asked again: "Jonah prayed to
+  God from the fish's belly", and "God turned away from the harm He said
+  He would bring because the people changed their ways".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

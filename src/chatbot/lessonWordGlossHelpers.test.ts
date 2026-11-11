@@ -91,6 +91,32 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ]);
     });
 
+    // BN-103 (2026-11-11): Jonah 3:10's "God repented of the evil" read as
+    // the people's change, and Jonah "said he was sorry" in the fish.
+    test("Jonah's prayer and God's turning, as Scripture says them", () => {
+        expect(
+            findLessonWordGlosses(
+                'and God repented of the evil, that he had said that he would do',
+            ),
+        ).toEqual([
+            expect.stringMatching(/^repented of the evil \(said of God\)/),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'I will repent me of the evil that I thought',
+            ),
+        ).toHaveLength(1);
+        expect(
+            findLessonWordGlosses(
+                "Then Jonah prayed unto the LORD his God out of the fish's belly",
+            ),
+        ).toEqual([expect.stringContaining('says no word of sorrow')]);
+        // A people turning from their evil is no such phrase.
+        expect(
+            findLessonWordGlosses('they turned from their evil way'),
+        ).toEqual([]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +

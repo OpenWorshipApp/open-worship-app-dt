@@ -228,11 +228,13 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
         // "The biblical standard for restitution when someone has been
         // cheated" (Zacchaeus, Luke 19:8).
         pattern: /\bfourfold\b/i,
+        // Opening on the sheep, it was read twice more as "the strict
+        // penalty for stolen goods": it opens on what Zacchaeus did now.
         text:
-            'fourfold: four times over -- what the law asked for a stolen ' +
-            'sheep, "four sheep for a sheep" (Exodus 22:1; 2 Samuel 12:6); ' +
-            'for goods taken falsely it asked them back "in the principal" ' +
-            'and "the fifth part more" (Leviticus 6:5)',
+            'fourfold: MORE than the law asked -- for goods taken falsely it ' +
+            'asked them back "in the principal" and "the fifth part more" ' +
+            '(Leviticus 6:5); four times over it asked only for a sheep ' +
+            'stolen and killed or sold, "four sheep for a sheep" (Exodus 22:1)',
     },
     {
         // "Interlocking metal rings", in two lessons.
@@ -241,6 +243,25 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'coat of mail: body armour of overlapping metal scales -- ' +
             'Goliath\'s weighed "five thousand shekels of brass" (1 Samuel ' +
             '17:5)',
+    },
+    // BN-103: Jonah, read wrong in four blind reads running.
+    {
+        // Jonah 3:10's "God repented of the evil" was read as the PEOPLE
+        // changing their hearts. In all eleven places the KJV says it, God
+        // is the one who turns.
+        pattern: /\brepent(?:ed|eth|est)?(?: (?:him|thee|me))? of the evil\b/i,
+        text:
+            'repented of the evil (said of God): God turned from the harm he ' +
+            'had said he would bring -- "the LORD repented of the evil which ' +
+            'he thought to do unto his people" (Exodus 32:14)',
+    },
+    {
+        // Jonah "said he was sorry" in the fish, in three reads.
+        pattern: /\bfish's belly\b/i,
+        text:
+            "Jonah's prayer from the fish's belly (2:2-9): a cry from the deep " +
+            'and a thanksgiving -- "Salvation is of the LORD" (Jonah 2:9); it ' +
+            'says no word of sorrow for running away',
     },
     {
         // Tied to "John on his island exile" in two reads.
