@@ -1780,6 +1780,36 @@ export function toBlankNoteFillArgs(
     };
 }
 
+/**
+ * A new lesson's line that is one verse token and nothing else is that verse
+ * printed whole (BN-112, 2026-11-11). Written as a section, a lesson's
+ * memory verse on its own line was printed; written as a change of its own,
+ * one verse stayed a chip, and the children's Jonah lesson's memory verse
+ * read to both blind readers as "a bare reference with no words", in both
+ * runs. Elsewhere one verse alone stays its chip: a key verse is often only
+ * named. Only lines the change adds; a block it rewrites keeps its kind.
+ */
+export function toLessonVerseLines(args: any) {
+    if (!Array.isArray(args?.changes)) {
+        return args;
+    }
+    return {
+        ...args,
+        changes: args.changes.map((change: any) => {
+            const isNewParagraph =
+                change?.block === undefined &&
+                (change?.kind === undefined || change?.kind === 'paragraph') &&
+                typeof change?.text === 'string';
+            const ref = isNewParagraph ? readPassageLineRef(change.text) : null;
+            if (ref === null) {
+                return change;
+            }
+            const { text: _text, ...rest } = change;
+            return { ...rest, kind: 'passage', ref };
+        }),
+    };
+}
+
 // --- a lesson written in place of loose lines (BN-67) -------------------------
 //
 // 2026-11-10, _please finish my sermon from these notes_ under six loose

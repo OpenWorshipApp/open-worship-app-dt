@@ -104,7 +104,9 @@ describe('a lesson to preach, asked anywhere', () => {
     test('Christ by the New Testament, an example by its own verses', () => {
         for (const line of [
             'where the New Testament itself takes THIS passage to Christ',
-            'read with owa_find_verse and written as its token, never quoted',
+            // BN-112: its words quoted, then its token -- a token alone in
+            // a sentence was a chip read out with no words.
+            'read with owa_find_verse, its words quoted as they read and then',
             "where what THIS point's verses tell happens again",
             'never ending on "This shows"',
         ]) {

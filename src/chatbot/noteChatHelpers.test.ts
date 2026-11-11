@@ -37,6 +37,7 @@ import {
     findLessonPointsProblem,
     findCitedMisquotes,
     findCitedQuotes,
+    toLessonVerseLines,
     findNoteMisquotes,
     genCitedMisquoteRefusal,
     genLessonPointsRefusal,
@@ -1544,6 +1545,38 @@ describe('a quote of the passage is its words', () => {
         expect(
             findNoteMisquotes('"sinners shall return unto thee"', []),
         ).toEqual([]);
+    });
+});
+
+// BN-112 (2026-11-11): a children's lesson's memory verse, given as a change
+// of its own, stayed a chip -- "a bare reference with no words" to both
+// blind readers, in both runs.
+describe("a new lesson's line of one verse token is that verse", () => {
+    it('prints a line that is one token, and leaves the rest', () => {
+        const args = toLessonVerseLines({
+            action: 'edit',
+            note: 'Lesson',
+            changes: [
+                { block: 1, remove: true },
+                { after: 0, kind: 'h2', text: 'Memory verse' },
+                { after: 1, text: '[^(KJV) Jonah 2:9]' },
+                { after: 2, kind: 'paragraph', text: '**[^John 3:16]**' },
+                { after: 3, text: 'Jesus says, [^Matthew 11:28].' },
+                // A block it rewrites keeps its kind.
+                { block: 4, text: '[^Luke 15:4]' },
+            ],
+        });
+        expect(args.changes).toEqual([
+            { block: 1, remove: true },
+            { after: 0, kind: 'h2', text: 'Memory verse' },
+            { after: 1, kind: 'passage', ref: '(KJV) Jonah 2:9' },
+            { after: 2, kind: 'passage', ref: 'John 3:16' },
+            { after: 3, text: 'Jesus says, [^Matthew 11:28].' },
+            { block: 4, text: '[^Luke 15:4]' },
+        ]);
+        expect(toLessonVerseLines({ action: 'read' })).toEqual({
+            action: 'read',
+        });
     });
 });
 

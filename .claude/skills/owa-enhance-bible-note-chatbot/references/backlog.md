@@ -1633,6 +1633,22 @@ was seen and what was done.
   hundred pence was a hundred days' pay -- a significant sum, but one that
   could actually be paid", and "Jesus told some people" (with the entry
   first naming only the scribes and Pharisees, still "His friends").
+- **BN-112 — a verse shows its words: the memory verse printed, the
+  Christ verse quoted** (2026-11-11, the BN-106/107 read, both readers:
+  "a bare reference with no words"). Written as a section, a lesson's
+  memory verse on its own line is printed whole; written as a change of
+  its own, one verse stayed a chip, and the children's Jonah lesson's
+  memory verse was "[^(KJV) Jonah 2:9]" alone in both runs. In a new
+  lesson, a line the change adds that is one verse token and nothing else
+  is now that verse printed (`toLessonVerseLines`; a block it rewrites
+  keeps its kind, and outside a new lesson one verse stays its chip). And
+  the Christ section's New Testament verse, told to be "written as its
+  token", stood in a sentence as a chip: "Jesus says, [^Matthew 11:28]."
+  Its words are now "quoted as they read and then its token" -- BN-110
+  holds such a quote to the verse. Asked again live (profile l, the last
+  one latched): "Come unto me, all ye that labour and are heavy laden, and
+  I will give you rest" [^(KJV) Matthew 11:28]; the children's memory line
+  "[^(KJV) Jonah 2:9] (Salvation is of the LORD)".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

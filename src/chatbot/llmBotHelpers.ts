@@ -221,6 +221,7 @@ import {
     restoreNoteTypedWords,
     toBlankNoteFillArgs,
     toLessonChangeText,
+    toLessonVerseLines,
     withRewrittenLinesRemoved,
     type CreatedNoteType,
     type NoteAskFileType,
@@ -4523,6 +4524,10 @@ async function runMcpToolCall(
             typeof watch.blankNoteBlockCount === 'number' &&
             lyricEditArgs.action === 'edit'
         ) {
+            // A line of the new lesson that is one verse token is that
+            // verse printed (BN-112): its memory verse, given as a change of
+            // its own, had stayed a chip with no words.
+            lyricEditArgs = toLessonVerseLines(lyricEditArgs);
             const problem = findBlankFillProblem(
                 toNoteChangeWords(lyricEditArgs),
             );

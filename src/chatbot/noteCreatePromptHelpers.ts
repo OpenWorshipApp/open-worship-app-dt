@@ -170,6 +170,12 @@ export const NOTE_CREATE_PROMPT =
 // warehouse", "a clerk at a busy office" -- in lesson after lesson. An
 // example is now a scene a listener can see -- the place, one thing there
 // to see or hear -- and never a manager, a clerk or an office.
+//
+// BN-112 (the BN-106/107 read, both readers): the New Testament verse a
+// Christ section was told to write "as its token" stood in a sentence as a
+// chip -- "Jesus says, [^Matthew 11:28]." -- read out as a reference with no
+// words. Its words are quoted as they read, then its token; BN-110 holds
+// such a quote to the verse it names.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -233,8 +239,8 @@ export const PREACHING_LESSON_SHAPE =
     '"remember" or "pray about it">\n' +
     'then Pointing to Jesus (where the New Testament itself takes THIS ' +
     "passage to Christ -- a verse that quotes it, or Jesus' own words about " +
-    'it -- read with owa_find_verse and written as its token, never quoted ' +
-    'from memory; else a phrase of the passage, quoted, and where its ' +
+    'it -- read with owa_find_verse, its words quoted as they read and then ' +
+    'its token, never from memory; else a phrase of the passage, quoted, and where its ' +
     'MEANING leads; then what Jesus did for us in his death and rising -- ' +
     'never a word it only shares with a name of his ("the word", "the ' +
     'way"), never only his example, never the story turned into an allegory ' +
