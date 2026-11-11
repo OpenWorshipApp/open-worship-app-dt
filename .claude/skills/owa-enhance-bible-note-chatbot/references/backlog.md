@@ -1854,7 +1854,29 @@ was seen and what was done.
   `countVerseWords`, `genChildMemoryVerseRefusal`); any other lesson's
   is not read. And BN-125's reading of the hospital room was wrong: with
   its name taken out of the stock pictures it stood in 7 lessons of 16
-  -- it is the model's default scene, never put there by naming.
+  -- it is the model's default scene, never put there by naming. Open:
+  the first run after it let 1 John 4:16 (29 words) through in the lost
+  sheep's lesson, and the same ask, built as the window builds it, is
+  refused in the test (`llmBotHelpers.coverage.test.ts`); three live asks
+  since chose short verses, so the miss is not seen again yet. The check
+  lets a verse through when its read fails (it counts no words), which is
+  the one place it could have.
+- **BN-130 — the passage printed once, and the lawyer's own questions**
+  (2026-11-11, the BN-125..127 read, Opus: the one lesson of sixteen under
+  Best). The Good Samaritan's whole passage was printed again after its
+  memory verse -- as Philippians 4:4-13 had been, "delete the duplicate
+  passage block" to both readers -- and every devotion printed its psalm
+  again under its one point though its movement lines carry their verses;
+  the shape and the form line both say a passage is printed once. The
+  window now takes out a line that is the top passage's token again,
+  after the memory verse or under a point whose other lines carry their
+  own verses (`dropRepeatedLessonPassages`), and nothing else: run over
+  80 lessons of five runs it took out 11 lines, each such a repeat (the
+  devotions' psalms, the two trailing passages, a children's Jonah 3:10
+  under its own point). And the parable's gospel had been told as an
+  allegory of Jesus the Samaritan: the word table gives the lawyer's own
+  questions it answers (10:25, 10:28, 10:29, 10:37), told as the answer
+  to him.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

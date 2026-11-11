@@ -1112,7 +1112,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   (BN-120, `findTokenAsWords`: a token shows its reference alone), and a
   children's lesson's memory verse over twenty words is read and sent back
   once (BN-129, `findMemoryVerseRef`: told twenty words twice, Luke 15:7's
-  28 kept coming back); the blind readers' commonest
+  28 kept coming back), and the passage at the top printed again -- after
+  the memory verse, or under a point whose lines carry their own verses --
+  is taken out by the window before the lesson is written (BN-130,
+  `dropRepeatedLessonPassages`); the blind readers' commonest
   error, and any error keeps a lesson out of Best. **A fix to a lesson
   carries the lesson's rules and adds, never operates** (BN-79, BN-80): a
   change asked in a lesson note (a change verb, no lesson hint of its own)

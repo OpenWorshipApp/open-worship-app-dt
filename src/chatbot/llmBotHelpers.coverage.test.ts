@@ -145,7 +145,8 @@ import {
     NOTE_BLANK_LESSON_HINT,
     NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_REVIEW_HINT,
-    genLessonFormWriteLine,
+    toNoteAsk,
+    toNoteDocumentText,
 } from './noteChatHelpers';
 import {
     GENERAL_ASK_LABEL,
@@ -1930,10 +1931,10 @@ describe('the Anthropic loop', () => {
                     {
                         ref: args.refs,
                         text:
-                            '(7): I say unto you, that likewise joy shall be ' +
-                            'in heaven over one sinner that repenteth, more ' +
-                            'than over ninety and nine just persons, which ' +
-                            'need no repentance.',
+                            '(16): And we have known and believed the love ' +
+                            'that God hath to us. God is love; and he that ' +
+                            'dwelleth in love dwelleth in God, and God in ' +
+                            'him.',
                     },
                 ],
             });
@@ -1942,7 +1943,7 @@ describe('the Anthropic loop', () => {
             '[^Luke 15:4-7]\n## Big idea\nGod looks for the lost.\n' +
             '## 1. God looks\n[^Luke 15:4]\n## 2. God rejoices\n' +
             '[^Luke 15:5-7]\n## Something to show\nA toy sheep.\n' +
-            '## Memory verse\n[^Luke 15:7]';
+            '## Memory verse\n[^1 John 4:16]';
         const edit = () => {
             return anthropicToolUse({
                 name: 'owa_note_edit',
@@ -1956,13 +1957,31 @@ describe('the Anthropic loop', () => {
                 },
             });
         };
-        const ask = async (form: string) => {
+        // The question as the window builds it for the passage pressed
+        // under the children's card (the shape26 run's miss): the tab's
+        // form, the empty note, the answer to its "which passage?".
+        const blank = toNoteDocumentText({
+            blockCount: 1,
+            hash: 'h',
+            blocks: [{ n: 1, kind: 'paragraph', text: '' }],
+        });
+        const ask = async (lessonForm: 'children' | null) => {
             const { sentList } = useAnthropic(
                 [edit(), edit(), anthropicText('Your lesson is in the note.')],
                 'anthropic',
             );
             await askLlmBot(
-                `the lost sheep\n${NOTE_BLANK_LESSON_HINT}${form}`,
+                toNoteAsk(
+                    'The Parable of the Lost Sheep (Luke 15:1-7)',
+                    [{ name: 'Lesson', text: blank }],
+                    null,
+                    false,
+                    null,
+                    null,
+                    true,
+                    null,
+                    lessonForm,
+                ),
                 'bibleNote',
                 'anthropic',
                 'claude-sonnet-5',
@@ -1983,21 +2002,21 @@ describe('the Anthropic loop', () => {
             );
             return sentList;
         };
-        const sentList = await ask(`\n${genLessonFormWriteLine('children')}`);
+        const sentList = await ask('children');
         expect(readToolResults(sentList[1])[0].content).toContain(
             "a child's memory verse is ONE verse of 20 words at most, one a " +
-                'child can say, and Luke 15:7 runs 28 words',
+                'child can say, and 1 John 4:16 runs 29 words',
         );
         expect(
             fake.toolCallList.map((call) => [call.name, call.args?.refs]),
         ).toEqual([
-            ['owa_find_verse', 'Luke 15:7'],
+            ['owa_find_verse', '1 John 4:16'],
             ['owa_note_edit', undefined],
         ]);
         // A sermon's memory verse is not read, nor sent back: both of its
         // edits go in.
         fake.toolCallList = [];
-        const sermonSentList = await ask('');
+        const sermonSentList = await ask(null);
         expect(fake.toolCallList.map((call) => call.name)).toEqual([
             'owa_note_edit',
             'owa_note_edit',

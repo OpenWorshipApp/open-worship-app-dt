@@ -390,6 +390,21 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'he is given it points back to "even so must the Son of man be ' +
             'lifted up" (3:14) -- never a reason these verses do not give',
     },
+    {
+        // BN-130 (2026-11-11, the BN-125..127 read, Opus: the one lesson of
+        // sixteen held under Best): the Good Samaritan's gospel told as an
+        // allegory of Jesus the Samaritan, its background "religious
+        // leaders sought to trap him" -- the lawyer's own questions, which
+        // the parable answers, never read.
+        pattern: /\bwilling to justify himself\b/i,
+        text:
+            'willing to justify himself (Luke 10:29): the lawyer had asked ' +
+            '"what shall I do to inherit eternal life?" (10:25) and been ' +
+            'told "this do, and thou shalt live" (10:28); the parable ' +
+            'answers his "who is my neighbour?" with "Go, and do thou ' +
+            'likewise" (10:37) -- told as the answer to him, never an ' +
+            'allegory of Christ',
+    },
     // BN-106: Luke 15, read wrong in blind read after blind read.
     {
         // The father "ignores the request for servitude", in three reads:

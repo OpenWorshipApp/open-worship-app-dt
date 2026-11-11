@@ -2053,6 +2053,132 @@ export function toLessonVerseLines(args: any) {
     };
 }
 
+// --- the passage printed once (BN-130) ----------------------------------------
+//
+// 2026-11-11, the BN-125..127 read and the reads before it: the whole
+// passage printed again after the memory verse (Luke 10:25-37, Philippians
+// 4:4-13 -- "delete the duplicate passage block", both readers), a
+// devotion's psalm printed again under its one point though its movement
+// lines carry their own verses, a one-verse sermon's verse "repeated four
+// times". The shape and the form line both say a passage is printed once;
+// the model printed it again. The window takes out a line that is the top
+// passage's token again -- after the memory verse, or under a point whose
+// other lines carry verses of their own -- and nothing else.
+
+function toPassageKey(ref: string) {
+    return ref
+        .replace(LESSON_BIBLE_PREFIX_PATTERN, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+type LessonLineType = {
+    changeIndex: number;
+    lineIndex: number | null;
+    text: string;
+};
+
+/** A new lesson's changes with its passage's repeated printings taken out. */
+export function dropRepeatedLessonPassages(args: any) {
+    if (!Array.isArray(args?.changes)) {
+        return args;
+    }
+    // Every line of the lesson in the order given, and where it came from.
+    const lines: LessonLineType[] = [];
+    args.changes.forEach((change: any, changeIndex: number) => {
+        const kind = String(change?.kind ?? '');
+        if (kind === 'section' && typeof change?.text === 'string') {
+            change.text
+                .split('\n')
+                .forEach((text: string, lineIndex: number) => {
+                    lines.push({ changeIndex, lineIndex, text });
+                });
+            return;
+        }
+        lines.push({
+            changeIndex,
+            lineIndex: null,
+            text: toLessonChangeText({ changes: [change] }),
+        });
+    });
+    const topLine = lines.find((line) => readPassageLineRef(line.text));
+    if (topLine === undefined) {
+        return args;
+    }
+    const topKey = toPassageKey(readPassageLineRef(topLine.text) ?? '');
+    const checkIsTopRepeat = (line: LessonLineType) => {
+        const ref = readPassageLineRef(line.text);
+        return line !== topLine && ref !== null && toPassageKey(ref) === topKey;
+    };
+    const dropped = new Set<LessonLineType>();
+    const points: LessonLineType[][] = [];
+    let pointLines: LessonLineType[] | null = null;
+    let memoryState: 'none' | 'heading' | 'verse' = 'none';
+    for (const line of lines) {
+        if (line === topLine) {
+            continue;
+        }
+        if (LESSON_POINT_HEADING_PATTERN.test(line.text)) {
+            pointLines = [];
+            points.push(pointLines);
+            continue;
+        }
+        if (LESSON_HEADING_PATTERN.test(line.text)) {
+            pointLines = null;
+            if (MEMORY_VERSE_HEADING_PATTERN.test(line.text)) {
+                memoryState = 'heading';
+            }
+            continue;
+        }
+        // The memory verse's own line is kept, whatever it is.
+        if (memoryState === 'heading' && readPassageLineRef(line.text)) {
+            memoryState = 'verse';
+            continue;
+        }
+        if (memoryState === 'verse' && checkIsTopRepeat(line)) {
+            dropped.add(line);
+            continue;
+        }
+        pointLines?.push(line);
+    }
+    for (const point of points) {
+        const repeats = point.filter(checkIsTopRepeat);
+        const hasOwnVerse = point.some((line) => {
+            return !repeats.includes(line) && /\[\^[^\]\n]+\]/.test(line.text);
+        });
+        if (hasOwnVerse) {
+            repeats.forEach((line) => dropped.add(line));
+        }
+    }
+    if (dropped.size === 0) {
+        return args;
+    }
+    return {
+        ...args,
+        changes: args.changes.flatMap((change: any, changeIndex: number) => {
+            const own = lines.filter(
+                (line) => line.changeIndex === changeIndex,
+            );
+            if (!own.some((line) => dropped.has(line))) {
+                return [change];
+            }
+            if (own[0]?.lineIndex === null) {
+                return [];
+            }
+            return [
+                {
+                    ...change,
+                    text: own
+                        .filter((line) => !dropped.has(line))
+                        .map((line) => line.text)
+                        .join('\n'),
+                },
+            ];
+        }),
+    };
+}
+
 // --- a lesson written in place of loose lines (BN-67) -------------------------
 //
 // 2026-11-10, _please finish my sermon from these notes_ under six loose

@@ -390,6 +390,21 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ]);
     });
 
+    // BN-130 (2026-11-11): the Good Samaritan told as an allegory of Christ,
+    // the lawyer's own questions never read.
+    test("the lawyer's questions the parable answers", () => {
+        expect(
+            findLessonWordGlosses(
+                'But he, willing to justify himself, said unto Jesus, And who ' +
+                    'is my neighbour?',
+            ),
+        ).toEqual([
+            expect.stringMatching(
+                /\(10:25\).*\(10:28\).*\(10:37\) -- told as the answer to him, never an allegory of Christ$/,
+            ),
+        ]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +

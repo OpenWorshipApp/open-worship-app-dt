@@ -41,6 +41,7 @@ import {
     findTokenAsWords,
     findMemoryVerseRef,
     countVerseWords,
+    dropRepeatedLessonPassages,
     MAX_CHILD_MEMORY_VERSE_WORDS,
     genChildMemoryVerseRefusal,
     genTestamentSlipRefusal,
@@ -1601,6 +1602,72 @@ describe('a verse is in the Testament its book is in', () => {
         ]) {
             expect(findTestamentSlips(text), text).toEqual([]);
         }
+    });
+});
+
+// BN-130 (2026-11-11, the BN-125..127 read): the whole passage printed
+// again after the memory verse, and a devotion's psalm again under its one
+// point -- the window takes out the repeat, and nothing else.
+describe("a new lesson's passage printed once", () => {
+    const top = { after: 0, kind: 'passage', ref: 'Luke 10:25-37' };
+    it('takes out the passage printed again after the memory verse', () => {
+        const section = {
+            after: 1,
+            kind: 'section',
+            text:
+                '## Big idea\nMercy to anyone.\n## 1. Who is my neighbour\n' +
+                '[^Luke 10:25-32]\n**What it means:** words.\n' +
+                '## Memory verse\n[^Luke 10:37]\n[^Luke 10:25-37]',
+        };
+        const result = dropRepeatedLessonPassages({
+            action: 'edit',
+            changes: [{ block: 1, remove: true }, top, section],
+        });
+        expect(result.changes[1]).toBe(top);
+        expect(result.changes[2].text).toBe(
+            '## Big idea\nMercy to anyone.\n## 1. Who is my neighbour\n' +
+                '[^Luke 10:25-32]\n**What it means:** words.\n' +
+                '## Memory verse\n[^Luke 10:37]',
+        );
+    });
+
+    it("takes out a devotion's psalm under a point of movement lines", () => {
+        const result = dropRepeatedLessonPassages({
+            action: 'edit',
+            changes: [
+                { after: 0, kind: 'passage', ref: 'Psalm 23:1-6' },
+                {
+                    after: 1,
+                    kind: 'section',
+                    text:
+                        '## 1. The care of the Shepherd\n[^(KJV) Psalm 23:1-6]\n' +
+                        '**What it means:**\n[^Psalm 23:1-3] The pasture.\n' +
+                        '[^Psalm 23:4] The valley.\n## Pointing to Jesus\nHim.',
+                },
+            ],
+        });
+        expect(result.changes[1].text).not.toContain('[^(KJV) Psalm 23:1-6]');
+        expect(result.changes[1].text).toContain('[^Psalm 23:4] The valley.');
+    });
+
+    it('keeps a repeat that is all a point has, and a memory verse', () => {
+        const args = {
+            action: 'edit',
+            changes: [
+                { after: 0, kind: 'passage', ref: 'John 3:16' },
+                {
+                    after: 1,
+                    kind: 'section',
+                    text:
+                        '## 1. God so loved\n[^John 3:16]\n**What it means:** ' +
+                        'love.\n## Memory verse\n[^John 3:16]',
+                },
+            ],
+        };
+        expect(dropRepeatedLessonPassages(args)).toBe(args);
+        expect(dropRepeatedLessonPassages({ action: 'edit' })).toEqual({
+            action: 'edit',
+        });
     });
 });
 

@@ -215,6 +215,7 @@ import {
     findTokenAsWords,
     findMemoryVerseRef,
     countVerseWords,
+    dropRepeatedLessonPassages,
     MAX_CHILD_MEMORY_VERSE_WORDS,
     genChildMemoryVerseRefusal,
     genCitedMisquoteRefusal,
@@ -4805,6 +4806,10 @@ async function runMcpToolCall(
             // verse printed (BN-112): its memory verse, given as a change of
             // its own, had stayed a chip with no words.
             lyricEditArgs = toLessonVerseLines(lyricEditArgs);
+            // ...and its passage printed once (BN-130): again after the
+            // memory verse, or under a point whose lines carry their own
+            // verses, it is taken out by the window.
+            lyricEditArgs = dropRepeatedLessonPassages(lyricEditArgs);
             const problem = findBlankFillProblem(
                 toNoteChangeWords(lyricEditArgs),
             );
