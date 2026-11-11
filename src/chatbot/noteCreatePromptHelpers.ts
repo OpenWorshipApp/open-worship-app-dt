@@ -264,7 +264,8 @@ export const PREACHING_LESSON_SHAPE =
     "comforts: its points the passage's own promises made plain for the " +
     'grieving and why they can be trusted, its examples gentle scenes of ' +
     "loss and hope, its This week a comfort to hold and never a task, Christ's " +
-    'gift of life offered freely, and no questions for discussion. A ' +
+    'gift of life offered freely, no questions for discussion, and still a ' +
+    'memory verse to carry home. A ' +
     "children's lesson keeps every part too, in words a " +
     'child knows: at the top only the verse or two its story turns on, ' +
     'never a whole chapter (name the rest in Background); after the ' +

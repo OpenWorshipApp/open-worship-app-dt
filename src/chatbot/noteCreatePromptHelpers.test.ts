@@ -176,6 +176,15 @@ describe('a lesson to preach, asked anywhere', () => {
         );
     });
 
+    // BN-127 (2026-11-11, the BN-118..124 read): told "no questions for
+    // discussion", a funeral message dropped its memory verse too -- both
+    // readers asked for one the mourners could carry home.
+    test('a funeral message keeps a memory verse', () => {
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'no questions for discussion, and still a memory verse to carry home',
+        );
+    });
+
     // BN-125 (2026-11-11): named among the stock pictures, the hospital room
     // came back in 6 lessons of 16 (4 before it was named) -- a scene named
     // to avoid is a scene put in mind. The list keeps its first three.

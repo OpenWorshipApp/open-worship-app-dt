@@ -1809,6 +1809,32 @@ was seen and what was done.
   tormentors of the cross" -- the tormentors entry now says the one
   delivered is the servant who would not forgive, never a picture of
   Christ.
+- **BN-126 — the order Luke tells, Jonah as his book tells him, and the
+  setting Scripture gives** (2026-11-11, the BN-118..124 read, both
+  readers). The father "ran ... while the son was still speaking his
+  apology" (an error to both readers, on both sides by Sonnet): the
+  "hired servants" entry's "the father spoke" (15:22) had been told as
+  his RUN. It now states the order -- he "ran, and fell on his neck, and
+  kissed him" (15:20) before the son said a word. The children's Jonah,
+  Good or a bare Best in every read: Jonah's reason for running is the
+  book's own, at its end (4:2), never fear; Nineveh is where the king of
+  Assyria dwelt, Assyria that "carried Israel away", and the city God
+  would spare (4:11) -- matched by Jonah's own "Nineveh, that great
+  city", so Matthew 12:41, read before the sower, gets none of it. And
+  the one fact of Scripture four backgrounds left out, each beside the
+  words that need it: David already anointed (16:13) as Saul and Israel
+  were "dismayed" (17:11); "my law" the father's teaching (Proverbs 4:1),
+  never the LORD's; Isaiah 40's people comforted (40:1-2) after "shall
+  be carried to Babylon" (39:6); the Philippians' gift (4:18) behind
+  "content". Not taken up: a check that every "The passage answers:" line
+  quotes the passage -- over 418 lines of five reads it would have
+  refused 13 weak paraphrases and let John 3:16's "equal value" by (its
+  line also carried a token).
+- **BN-127 — a funeral message keeps a memory verse** (2026-11-11, the
+  same read). Told "no questions for discussion", the funeral message
+  ended at its prayer with no memory verse either, and both readers asked
+  for one the mourners could carry home: "no questions for discussion,
+  and still a memory verse to carry home".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

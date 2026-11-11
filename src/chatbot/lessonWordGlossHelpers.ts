@@ -306,6 +306,29 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'says no word of sorrow for running away',
     },
     {
+        // BN-126 (2026-11-11, the BN-118..124 read): a children's Jonah
+        // lesson again and again Good -- why Jonah ran given as the
+        // lesson's guess, Nineveh "a city" with no setting, and chapter 4,
+        // where the big idea lives, never reached. Jonah's own reason, in
+        // his own words, is in 4:2.
+        pattern: /\bflee unto Tarshish\b/i,
+        text:
+            'rose up to flee unto Tarshish (Jonah 1:3): the book gives his ' +
+            'reason only at its end, in his own words -- "Therefore I fled ' +
+            'before unto Tarshish: for I knew that thou art a gracious God, ' +
+            'and merciful" (Jonah 4:2); never that he was afraid',
+    },
+    {
+        // Jonah's own words for it (1:2, 3:2, 4:11): "the men of Nineveh"
+        // of Matthew 12:41, read before the sower, is no Jonah lesson.
+        pattern: /\bNineveh, that great city\b/i,
+        text:
+            'Nineveh: the city where the king of Assyria dwelt (2 Kings ' +
+            '19:36) -- Assyria, which in time "carried Israel away" (2 Kings ' +
+            '17:6) -- and the city God would spare: "should not I spare ' +
+            'Nineveh, that great city" (Jonah 4:11)',
+    },
+    {
         // Tied to "John on his island exile" in two reads.
         pattern: /\bno more sea\b/i,
         text:
@@ -313,15 +336,61 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'like the troubled sea, when it cannot rest" (Isaiah 57:20); the ' +
             'beast rose "up out of the sea" (Revelation 13:1)',
     },
+    // BN-126 (2026-11-11, the BN-118..124 read, both readers): backgrounds
+    // left out the one fact of Scripture that changes how the passage is
+    // heard -- David already anointed, "my law" the father's, Isaiah 40's
+    // people facing Babylon, the Philippians' gift behind "content". Each
+    // is put beside the words that need it, by the passage's own phrase.
+    {
+        pattern: /\bthe armies of the living God\b/i,
+        text:
+            'the armies of the living God (1 Samuel 17:26): David stood ' +
+            'there already anointed -- Samuel "anointed him in the midst of ' +
+            'his brethren: and the Spirit of the LORD came upon David from ' +
+            'that day forward" (16:13) -- while Saul and all Israel "were ' +
+            'dismayed, and greatly afraid" (17:11)',
+    },
+    {
+        pattern: /\bforget not my law\b/i,
+        text:
+            "my law (Proverbs 3:1): the father's own teaching to his son -- " +
+            '"Hear, ye children, the instruction of a father" (Proverbs ' +
+            "4:1); these verses never call it the LORD's law or the law of " +
+            'Moses',
+    },
+    {
+        pattern: /\bmy way is hid from the LORD\b/i,
+        text:
+            'My way is hid from the LORD (Isaiah 40:27): the cry of a people ' +
+            'the chapter opens by comforting -- "Comfort ye, comfort ye my ' +
+            'people" (40:1), "her warfare is accomplished" (40:2) -- a ' +
+            'people whose king had been told all his house "shall be ' +
+            'carried to Babylon" (39:6)',
+    },
+    {
+        pattern: /\byour care of me hath flourished again\b/i,
+        text:
+            'your care of me hath flourished again (Philippians 4:10): the ' +
+            'church had sent Paul a gift -- "having received of Epaphroditus ' +
+            'the things which were sent from you" (4:18) -- and his ' +
+            'contentment is said over that gift: "Not that I speak in ' +
+            'respect of want" (4:11)',
+    },
     // BN-106: Luke 15, read wrong in blind read after blind read.
     {
         // The father "ignores the request for servitude", in three reads:
         // the son never made it.
         pattern: /\bmake me as one of thy hired servants\b/i,
         text:
+            // BN-126 (2026-11-11, the BN-118..124 read): the father "ran
+            // while the son was still speaking his apology", "before the son
+            // could finish his plea", on both sides of the read -- the
+            // father's words cutting the plea short (15:22) told as his run.
             'make me as one of thy hired servants (Luke 15:19): what the son ' +
-            'PLANNED to say; at home he never said it -- after "no more ' +
-            'worthy to be called thy son" (15:21) the father spoke (15:22)',
+            'PLANNED to say, and at home he never said it. The father "ran, ' +
+            'and fell on his neck, and kissed him" (15:20) before the son ' +
+            'said a word; the son then began, and after "no more worthy to ' +
+            'be called thy son" (15:21) the father spoke (15:22)',
     },
     {
         // BN-121 (2026-11-11, the BN-116/117 read): "give the robe, ring

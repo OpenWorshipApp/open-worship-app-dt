@@ -316,6 +316,66 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ).toEqual([expect.stringContaining('never "because they were safe"')]);
     });
 
+    // BN-126 (2026-11-11, the BN-118..124 read): the father "ran while the
+    // son was still speaking"; a children's Jonah with his reason guessed
+    // and Nineveh "a city" with no setting.
+    test('the order Luke tells, and Jonah as his book tells him', () => {
+        expect(
+            findLessonWordGlosses(
+                'And am no more worthy to be called thy son: make me as one ' +
+                    'of thy hired servants.',
+            ),
+        ).toEqual([
+            expect.stringContaining(
+                '"ran, and fell on his neck, and kissed him" (15:20) before ' +
+                    'the son said a word',
+            ),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'Arise, go to Nineveh, that great city, and cry against it. ' +
+                    'But Jonah rose up to flee unto Tarshish',
+            ),
+        ).toEqual([
+            expect.stringMatching(/\(Jonah 4:2\); never that he was afraid$/),
+            expect.stringMatching(/^Nineveh: .*\(2 Kings 19:36\)/),
+        ]);
+        // Matthew 12:41, read before the sower, gets no Assyria.
+        expect(
+            findLessonWordGlosses(
+                'The men of Nineveh shall rise in judgment with this ' +
+                    'generation',
+            ),
+        ).toEqual([]);
+    });
+
+    // BN-126 (2026-11-11, the BN-118..124 read, both readers): the one
+    // fact of Scripture a background left out, beside its passage.
+    test('the setting Scripture itself gives, by the passage own words', () => {
+        expect(
+            findLessonWordGlosses(
+                'that he should defy the armies of the living God?',
+            ),
+        ).toEqual([
+            expect.stringMatching(/already anointed .*\(16:13\).*\(17:11\)$/),
+        ]);
+        expect(
+            findLessonWordGlosses('My son, forget not my law; but let'),
+        ).toEqual([expect.stringContaining("never call it the LORD's law")]);
+        expect(
+            findLessonWordGlosses(
+                'and speakest, O Israel, My way is hid from the LORD',
+            ),
+        ).toEqual([
+            expect.stringContaining('"shall be carried to Babylon" (39:6)'),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'that now at the last your care of me hath flourished again',
+            ),
+        ).toEqual([expect.stringContaining('(4:18)')]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +
