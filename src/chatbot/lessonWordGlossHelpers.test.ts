@@ -239,6 +239,16 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ).toEqual([expect.stringContaining('owning the miracles')]);
     });
 
+    // BN-116 (2026-11-11, the BN-113..115 read): Paul's words about the
+    // Pharisees were given to John 3:1's Nicodemus as the text's own.
+    test("a Pharisee's party in plain words, Paul's words as his", () => {
+        expect(findLessonWordGlosses('a man of the Pharisees')).toEqual([
+            expect.stringMatching(
+                /^Pharisee: of the strictest party .*Paul, once one, called it "the most straitest sect of our religion" \(Acts 26:5\)/,
+            ),
+        ]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +

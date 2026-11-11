@@ -92,7 +92,14 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
     },
     {
         pattern: /\bpharisees?\b/i,
-        text: 'Pharisee: "the most straitest sect of our religion" (Acts 26:5)',
+        // BN-116: the entry was Paul's words alone, and a lesson made them
+        // John's: Nicodemus "a member of the most straitest sect" (John
+        // 3:1 says "a man of the Pharisees"). The meaning first, the words
+        // in Paul's mouth.
+        text:
+            "Pharisee: of the strictest party of the Jews' religion -- Paul, " +
+            'once one, called it "the most straitest sect of our religion" ' +
+            '(Acts 26:5)',
     },
     {
         pattern: /\bscribes?\b/i,

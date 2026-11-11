@@ -1694,6 +1694,20 @@ was seen and what was done.
   "Nicodemus had come to Jesus by night, acknowledging that Jesus must be
   from God because of the miracles He performed"; 14 cited quotations,
   every one word for word.
+- **BN-116 — the Pharisee entry gives the meaning, and Paul's words as
+  his** (2026-11-11, the BN-113..115 read, Sonnet). The entry was Paul's
+  phrase alone ("Pharisee: 'the most straitest sect of our religion' (Acts
+  26:5)"), and a John 3:16 lesson made it John's: Nicodemus "a member of
+  the most straitest sect of their religion" -- John 3:1 says "a man of the
+  Pharisees". The entry now opens on the meaning in plain words ("of the
+  strictest party of the Jews' religion") and gives the quotation as Paul's
+  ("Paul, once one, called it ..."). Asked again live: "Nicodemus, a ruler
+  of the Jews and a Pharisee -- one of the strictest parties of the Jews'
+  religion". The same read, by the KJV audit: 1 cited quotation of 35 off
+  in the run it read, "written in the book of life" given Revelation 20:12
+  for 20:15's words -- let by because 20:15 was in the lesson's own read
+  (BN-113); open: exempt a quote of what was read only when the reference
+  beside it names another book.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's
