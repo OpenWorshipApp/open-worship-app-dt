@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Ang file sa pagtuon, sumala sa pag-usab niini",
     "The study file, as it will be saved": "Ang file sa pagtuon, sumala sa pagtipig niini",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} ka dayagram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} ka dayagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Anaa na ang \"{taken}\" sa Mga Kahinguhaan, busa kini mahimong \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Gisulat uban sa Katabang sa App. Itandi kini sa inyong Biblia.",
     "Change the name": "Usba ang ngalan",

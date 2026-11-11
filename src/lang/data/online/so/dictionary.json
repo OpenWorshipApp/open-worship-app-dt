@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Faylka barashada, sida loo beddeli doono",
     "The study file, as it will be saved": "Faylka barashada, sida loo kaydin doono",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} jaantus",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} jaantus",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" horey ayuu ugu jiraa Kheyraadka, sidaa darteed kan wuxuu noqon doonaa \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Waxaa lagu diyaariyay kaaliyaha barnaamijka. Kala hubi Kitaabkaaga.",
     "Change the name": "Beddel magaca",

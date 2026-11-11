@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Датотеката за проучување, како што ќе биде сменета",
     "The study file, as it will be saved": "Датотеката за проучување, како што ќе биде зачувана",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} дијаграми",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} дијаграм",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ веќе постои во Ресурси, па оваа ќе биде „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Подготвено со асистентот на апликацијата. Проверете го според вашата Библија.",
     "Change the name": "Смени го името",

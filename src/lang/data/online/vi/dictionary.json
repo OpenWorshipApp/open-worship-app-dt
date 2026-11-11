@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Tệp nghiên cứu, như sẽ được thay đổi",
     "The study file, as it will be saved": "Tệp nghiên cứu, như sẽ được lưu",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} sơ đồ",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} sơ đồ",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" đã có trong Tài nguyên, nên tệp này sẽ là \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Được soạn với trợ lý của ứng dụng. Hãy đối chiếu với Kinh Thánh của bạn.",
     "Change the name": "Đổi tên",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Idosiye yo kwiga, uko izohindurwa",
     "The study file, as it will be saved": "Idosiye yo kwiga, uko izobikwa",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · ibishushanyo {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · igishushanyo {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" isanzwe iri muri Ibifashisho, rero iyi izokwitwa \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Yateguwe n'umufasha w'iyi porogarame. Muyigereranye na Bibiliya yanyu.",
     "Change the name": "Hindura izina",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Skedari i studimit, siç do të ndryshohet",
     "The study file, as it will be saved": "Skedari i studimit, siç do të ruhet",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagrame",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" është tashmë te Burimet, ndaj ky do të jetë \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Përgatitur me asistentin e aplikacionit. Krahasojeni me Biblën tuaj.",
     "Change the name": "Ndrysho emrin",

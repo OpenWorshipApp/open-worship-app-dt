@@ -252,11 +252,13 @@ import {
     STUDY_TRANSLATE_CHUNK_CHARS,
     STUDY_TRANSLATE_TRIES,
     type StudyTranslateLanguageType,
+    applyStudyHeadingTerms,
     assembleStudyTranslation,
     checkIsStudyDiagramTranslated,
     checkIsStudyTextTranslated,
     cleanStudyTranslation,
     describeStudyTranslation,
+    listMissingStudyTerms,
     readStudyTranslatePlace,
     readStudyTranslatePlan,
     resolveStudyTranslateLanguage,
@@ -3814,7 +3816,11 @@ async function checkDiagramDraws(source: string) {
 /**
  * Some of a study's words, or one diagram, put into the language by the
  * window's translator -- asked again once when the answer is not the part
- * translated (`checkIsStudyTextTranslated`), null after that.
+ * translated (`checkIsStudyTextTranslated`), null after that. A heading that
+ * is one of the language's church words is written as that word
+ * (`applyStudyHeadingTerms`), and words translated that say such a word
+ * another way are asked once more, naming it (`listMissingStudyTerms`,
+ * EC-486) -- the first kept when the second is no better, never a stop.
  */
 async function translateStudyPart(
     translateText: StudyTextTranslatorType,
@@ -3824,11 +3830,13 @@ async function translateStudyPart(
     signal?: AbortSignal | null,
 ) {
     let by = '';
+    let kept: { text: string; missingCount: number } | null = null;
+    let missingTerms: [string, string][] = [];
     for (let attempt = 0; attempt < STUDY_TRANSLATE_TRIES; attempt++) {
         throwIfCancelled(signal);
         const ask =
             kind === 'text'
-                ? toStudyTextTranslationAsk(source, language)
+                ? toStudyTextTranslationAsk(source, language, missingTerms)
                 : toStudyDiagramTranslationAsk(source, language);
         let answer: { text: string; by: string };
         try {
@@ -3844,17 +3852,30 @@ async function translateStudyPart(
         }
         by = answer.by;
         const translated = cleanStudyTranslation(answer.text);
-        const isGood =
-            kind === 'text'
-                ? checkIsStudyTextTranslated(source, translated, language)
-                : checkIsStudyDiagramTranslated(source, translated) &&
-                  checkStudyDiagram(translated) === null &&
-                  (await checkDiagramDraws(translated));
-        if (isGood) {
-            return { text: translated, by };
+        if (kind === 'diagram') {
+            if (
+                checkIsStudyDiagramTranslated(source, translated) &&
+                checkStudyDiagram(translated) === null &&
+                (await checkDiagramDraws(translated))
+            ) {
+                return { text: translated, by };
+            }
+            continue;
         }
+        if (!checkIsStudyTextTranslated(source, translated, language)) {
+            continue;
+        }
+        const termed = applyStudyHeadingTerms(source, translated, language);
+        const missingNow = listMissingStudyTerms(source, termed, language);
+        if (missingNow.length === 0) {
+            return { text: termed, by };
+        }
+        if (kept === null || missingNow.length < kept.missingCount) {
+            kept = { text: termed, missingCount: missingNow.length };
+        }
+        missingTerms = missingNow;
     }
-    return { text: null, by };
+    return { text: kept?.text ?? null, by };
 }
 
 /**

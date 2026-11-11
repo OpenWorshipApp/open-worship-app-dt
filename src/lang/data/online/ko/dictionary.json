@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "바뀔 학습 파일",
     "The study file, as it will be saved": "저장될 학습 파일",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · 도표 {count}개",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · 도표 {count}개",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" 파일이 이미 자료에 있으므로, 이 파일은 \"{name}\"(으)로 저장됩니다.",
     "Drafted with the app assistant. Check it against your Bible.": "앱 도우미가 작성한 초안입니다. 가지고 계신 성경과 대조해 확인하세요.",
     "Change the name": "이름 바꾸기",

@@ -70,6 +70,20 @@ export const STUDY_HELD_NOTE =
     'holds; never paste it.';
 
 /**
+ * The same for a CHANGE to a study file, whose button is Save changes --
+ * seen live 2026-11-10, a change's answer told the person to press Create,
+ * a button the card does not have. What it changes is said WHOLE: the card
+ * leaves that to the answer, and an answer naming only the part asked for
+ * hid a change that also rewrote another.
+ */
+export const STUDY_CHANGE_HELD_NOTE =
+    'Nothing is saved yet. The window holds this change and shows it under ' +
+    'your answer with Save changes and Preview: tell the person to press ' +
+    'Save changes to write it. Say in one or two sentences what it ' +
+    'changes -- every part `change` names, not only the one asked for; ' +
+    'never paste it.';
+
+/**
  * What a window that has been reopened since says instead. One literal, so
  * `tran(STUDY_DRAFT_GONE_TEXT)` where it is written is a key the coverage
  * test can read.
@@ -171,7 +185,8 @@ export function toModelDraftText(text: string) {
     return JSON.stringify({
         ...rest,
         content: `[held by the window: ${content.length} characters]`,
-        note: STUDY_HELD_NOTE,
+        note:
+            result.isChange === true ? STUDY_CHANGE_HELD_NOTE : STUDY_HELD_NOTE,
     });
 }
 

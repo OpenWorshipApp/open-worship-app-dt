@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "研读文件，即将更改后的内容",
     "The study file, as it will be saved": "研读文件，即将保存的内容",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} 个图表",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} 个图表",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "资源中已有“{taken}”，因此这个文件将命名为“{name}”。",
     "Drafted with the app assistant. Check it against your Bible.": "由应用助手起草。请对照您的圣经核对。",
     "Change the name": "更改名称",

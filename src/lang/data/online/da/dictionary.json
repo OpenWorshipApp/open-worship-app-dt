@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Studiefilen, som den bliver ændret",
     "The study file, as it will be saved": "Studiefilen, som den bliver gemt",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagrammer",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" findes allerede i Ressourcer, så denne bliver \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Udkast skrevet med appassistenten. Tjek det mod din Bibel.",
     "Change the name": "Skift navnet",

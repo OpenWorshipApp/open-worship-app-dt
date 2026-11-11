@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "అధ్యయన ఫైల్, మార్చబడే విధంగా",
     "The study file, as it will be saved": "అధ్యయన ఫైల్, సేవ్ చేయబడే విధంగా",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} డయాగ్రమ్‌లు",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} డయాగ్రమ్",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ఇప్పటికే వనరులు లో ఉంది, కాబట్టి ఇది \"{name}\" అవుతుంది.",
     "Drafted with the app assistant. Check it against your Bible.": "యాప్ సహాయకుడితో సిద్ధం చేయబడింది. దాన్ని మీ బైబిల్‌తో సరిచూసుకోండి.",
     "Change the name": "పేరు మార్చు",

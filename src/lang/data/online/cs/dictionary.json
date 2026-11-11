@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Studijní soubor, tak jak bude změněn",
     "The study file, as it will be saved": "Studijní soubor, tak jak bude uložen",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · diagramy: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ už je ve složce Zdroje, takže tento bude „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Připraveno s asistentem aplikace. Ověřte si to ve své Bibli.",
     "Change the name": "Změnit název",

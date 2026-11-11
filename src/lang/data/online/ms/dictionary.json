@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Fail kajian, seperti yang akan diubah",
     "The study file, as it will be saved": "Fail kajian, seperti yang akan disimpan",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} rajah",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} rajah",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" sudah ada dalam Sumber, jadi fail ini akan menjadi \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Dirangka dengan pembantu aplikasi. Semak dengan Alkitab anda.",
     "Change the name": "Tukar nama",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "ပြောင်းမည့်အတိုင်း လေ့လာရေး ဖိုင်",
     "The study file, as it will be saved": "သိမ်းဆည်းမည့်အတိုင်း လေ့လာရေး ဖိုင်",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · ပုံကြမ်း {count} ခု",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · ပုံကြမ်း {count} ခု",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" သည် အရင်းအမြစ်များတွင် ရှိပြီးဖြစ်သောကြောင့် ဤဖိုင်သည် \"{name}\" ဖြစ်ပါမည်။",
     "Drafted with the app assistant. Check it against your Bible.": "အက်ပ်၏ လက်ထောက်ဖြင့် မူကြမ်းရေးထားသည်။ သင့်ကျမ်းစာနှင့် တိုက်ဆိုင်စစ်ဆေးပါ။",
     "Change the name": "အမည် ပြောင်းရန်",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Çalışma dosyası, değiştirileceği şekilde",
     "The study file, as it will be saved": "Çalışma dosyası, kaydedileceği şekilde",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diyagram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diyagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" zaten Kaynaklar içinde var, bu yüzden bu dosya \"{name}\" olacak.",
     "Drafted with the app assistant. Check it against your Bible.": "Uygulama asistanıyla hazırlandı. Kendi Kutsal Kitabınızla karşılaştırın.",
     "Change the name": "Adı değiştir",

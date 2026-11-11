@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Ուսումնասիրության ֆայլը՝ ինչպես այն կփոխվի",
     "The study file, as it will be saved": "Ուսումնասիրության ֆայլը՝ ինչպես այն կպահպանվի",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} գծապատկեր",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} գծապատկեր",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}»-ն արդեն կա Ռեսուրսներում, ուստի այս մեկը կլինի «{name}»։",
     "Drafted with the app assistant. Check it against your Bible.": "Կազմված է հավելվածի օգնականի միջոցով։ Ստուգեք այն ձեր Աստվածաշնչով։",
     "Change the name": "Փոխել անունը",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "የጥናት ፋይሉ፣ እንደሚቀየር",
     "The study file, as it will be saved": "የጥናት ፋይሉ፣ እንደሚቀመጥ",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} ሥዕላዊ መግለጫዎች",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} ሥዕላዊ መግለጫ",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}» አስቀድሞ በግብዓቶች ውስጥ አለ፤ ስለዚህ ይህኛው «{name}» ይሆናል።",
     "Drafted with the app assistant. Check it against your Bible.": "በመተግበሪያ ረዳት የተረቀቀ። ከመጽሐፍ ቅዱስዎ ጋር ያመሳክሩት።",
     "Change the name": "ስሙን ቀይር",

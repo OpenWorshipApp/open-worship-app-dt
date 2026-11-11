@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Uurimisfail, nii nagu seda muudetakse",
     "The study file, as it will be saved": "Uurimisfail, nii nagu see salvestatakse",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagrammi",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagramm",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ on juba kaustas Ressursid, nii et see saab nimeks „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Koostatud rakenduse assistendiga. Kontrolli seda oma Piibli järgi.",
     "Change the name": "Muuda nime",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Opiskelutiedosto sellaisena kuin se muutetaan",
     "The study file, as it will be saved": "Opiskelutiedosto sellaisena kuin se tallennetaan",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} kaaviota",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} kaavio",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "”{taken}” on jo kansiossa Resurssit, joten tämän nimeksi tulee ”{name}”.",
     "Drafted with the app assistant. Check it against your Bible.": "Laadittu sovellusavustajan avulla. Tarkista se omasta Raamatustasi.",
     "Change the name": "Vaihda nimi",

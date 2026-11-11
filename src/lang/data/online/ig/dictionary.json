@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Faịlụ ọmụmụ ahụ, dịka a ga-esi gbanwee ya",
     "The study file, as it will be saved": "Faịlụ ọmụmụ ahụ, dịka a ga-esi chekwaa ya",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · eserese {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · eserese {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" adịlarị na Akụrụngwa, ya mere nke a ga-abụ \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "E ji onye enyemaka ngwa a dee ya. Jiri Baịbụl gị lelee ya.",
     "Change the name": "Gbanwee aha",

@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // `llmBotHelpers.ut100.test.ts`: a fake Anthropic client, a tool host that
 // records every call, a setting map -- and mermaid's parse, which says
 // whether a translated diagram still draws.
-const { fake, settingMap } = vi.hoisted(() => ({
+const { fake, settingMap, TERMISH } = vi.hoisted(() => ({
     fake: {
         anthropic: null as any,
         toolList: [] as { name: string }[],
@@ -20,6 +20,18 @@ const { fake, settingMap } = vi.hoisted(() => ({
         isDiagramBroken: (_source: string): boolean => false,
     },
     settingMap: new Map<string, string>(),
+    // A made-up language with church words, as a language's
+    // `translationTerms` carries them (EC-486); no Bible is looked up for it.
+    TERMISH: {
+        code: '',
+        name: 'Termish',
+        nativeName: 'Termo',
+        scriptPattern: null,
+        terms: {
+            'Cross references': 'Linked Verses',
+            'bronze serpent': 'brasssnake',
+        },
+    },
 }));
 
 vi.mock('../helper/ai/aiHelpers', () => ({
@@ -93,6 +105,19 @@ vi.mock('../markdown-preview/markdownMermaidHelpers', () => ({
         });
     },
 }));
+// Every rule of the real helpers, and one more language to name.
+vi.mock('./studyTranslateHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('./studyTranslateHelpers')>();
+    return {
+        ...original,
+        resolveStudyTranslateLanguage: (value: unknown) => {
+            return String(value).toLowerCase() === 'termish'
+                ? TERMISH
+                : original.resolveStudyTranslateLanguage(value);
+        },
+    };
+});
 vi.mock('./mcpClient', () => ({
     callTool: async (name: string, args?: any) => {
         fake.toolCallList.push({ name, args });
@@ -232,15 +257,33 @@ function genDraftResult() {
     });
 }
 
+// A study whose heading and words use the church words of Termish.
+function genTermPlan() {
+    return {
+        ...genPlan(null),
+        parts: [
+            {
+                kind: 'text',
+                text:
+                    '## Cross References\nMoses lifted the bronze serpent ' +
+                    '[^Numbers 21:9].\n',
+            },
+        ],
+    };
+}
+
 // The tool host: the Lookup's Bible list, the plan, and the draft.
-function useToolHost(bibleList: unknown = { bible: null, bibles: [] }) {
+function useToolHost(
+    bibleList: unknown = { bible: null, bibles: [] },
+    makePlan: (bible: string | null) => unknown = genPlan,
+) {
     fake.answerTool = (name, args) => {
         if (name === 'owa_find_verse') {
             return JSON.stringify(bibleList);
         }
         if (args?.action === 'translate') {
             return JSON.stringify(
-                genPlan(typeof args.bible === 'string' ? args.bible : null),
+                makePlan(typeof args.bible === 'string' ? args.bible : null),
             );
         }
         if (args?.action === 'draft') {
@@ -580,6 +623,89 @@ describe('a study file translated by the window', () => {
         expect(seen).toContain(
             '0 of its 1 diagrams are translated; 1 kept as they were, ' +
                 'since their translation would not draw.',
+        );
+    });
+
+    test('a church word written another way is asked once more, by name, and a heading that is one is written as it', async () => {
+        useToolHost(undefined, genTermPlan);
+        // The first answer says "bronze serpent" its own way; asked again
+        // with the word named, the translator writes it.
+        const { askList, translateText } = useTranslator((ask) => {
+            const translated = toTestish(ask);
+            return ask.includes('Your last translation')
+                ? translated.replace('bronzeo serpento', 'brasssnake')
+                : translated;
+        });
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Termish', place: 'append' }),
+            ),
+            anthropicText('Translated. Press Save changes to keep it.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Termish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        expect(askList).toHaveLength(2);
+        expect(askList[0]).toContain(
+            "Use the church's own words in Termish: Cross references = " +
+                'Linked Verses; bronze serpent = brasssnake.',
+        );
+        expect(askList[0]).not.toContain('Your last translation');
+        expect(askList[1]).toContain(
+            'Your last translation wrote these another way; write them so: ' +
+                'bronze serpent = brasssnake.',
+        );
+        const draftArgs = fake.toolCallList[1].args;
+        expect(draftArgs.append).toBe(
+            '---\n\n## Linked Verses\nMoseso liftedo the brasssnake ' +
+                '[^Numberso 21:9].',
+        );
+    });
+
+    test('a second answer no better keeps the first, and the job goes on', async () => {
+        useToolHost(undefined, genTermPlan);
+        // Neither answer writes the word; the second is otherwise worse.
+        const { askList, translateText } = useTranslator((ask) => {
+            const translated = toTestish(ask);
+            return ask.includes('Your last translation')
+                ? translated.replace('Moseso', 'Mosesu')
+                : translated;
+        });
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Termish', place: 'append' }),
+            ),
+            anthropicText('Translated.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Termish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        expect(askList).toHaveLength(2);
+        expect(
+            fake.toolCallList.map((call) => {
+                return call.args?.action;
+            }),
+        ).toEqual(['translate', 'draft']);
+        const draftArgs = fake.toolCallList[1].args;
+        expect(draftArgs.append).toBe(
+            '---\n\n## Linked Verses\nMoseso liftedo the bronzeo serpento ' +
+                '[^Numberso 21:9].',
         );
     });
 });

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Die studielêer, soos dit verander sal word",
     "The study file, as it will be saved": "Die studielêer, soos dit gestoor sal word",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagramme",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" is reeds in Hulpbronne, dus sal hierdie een \"{name}\" wees.",
     "Drafted with the app assistant. Check it against your Bible.": "Opgestel met die toepassingsassistent. Kontroleer dit teen jou Bybel.",
     "Change the name": "Verander die naam",

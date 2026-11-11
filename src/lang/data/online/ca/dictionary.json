@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "El fitxer d'estudi, tal com es canviarà",
     "The study file, as it will be saved": "El fitxer d'estudi, tal com es desarà",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagrames",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagrama",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}» ja és a Recursos, així que aquest serà «{name}».",
     "Drafted with the app assistant. Check it against your Bible.": "Redactat amb l'assistent de l'aplicació. Comproveu-lo amb la vostra Bíblia.",
     "Change the name": "Canvia el nom",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "קובץ הלימוד, כפי שישתנה",
     "The study file, as it will be saved": "קובץ הלימוד, כפי שיישמר",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} תרשימים",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} תרשים",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" כבר נמצא בתיקייה משאבים, ולכן זה יהיה \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "נוסח בעזרת עוזר האפליקציה. בדקו אותו מול כתבי הקודש שלכם.",
     "Change the name": "שינוי השם",

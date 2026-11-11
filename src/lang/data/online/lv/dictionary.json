@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Studiju fails tādā veidā, kādā tas tiks mainīts",
     "The study file, as it will be saved": "Studiju fails tādā veidā, kādā tas tiks saglabāts",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · diagrammas: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagramma",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}” jau ir sadaļā Resursi, tāpēc šis būs „{name}”.",
     "Drafted with the app assistant. Check it against your Bible.": "Sagatavots ar lietotnes asistentu. Pārbaudiet to pēc savas Bībeles.",
     "Change the name": "Mainīt nosaukumu",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "ไฟล์ศึกษาตามที่จะแก้ไข",
     "The study file, as it will be saved": "ไฟล์ศึกษาตามที่จะบันทึก",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · แผนภาพ {count} ภาพ",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · แผนภาพ {count} ภาพ",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "มี \"{taken}\" อยู่ใน แหล่งข้อมูล แล้ว ไฟล์นี้จึงจะเป็น \"{name}\"",
     "Drafted with the app assistant. Check it against your Bible.": "ร่างด้วยผู้ช่วยของแอป โปรดตรวจสอบกับพระคัมภีร์ของคุณ",
     "Change the name": "เปลี่ยนชื่อ",

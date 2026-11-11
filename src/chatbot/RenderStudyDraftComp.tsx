@@ -37,11 +37,17 @@ export default function RenderStudyDraftComp({
             <summary>{heading}</summary>
             {drafted.passage === '' ? null : (
                 <div className="cue-study-line">
-                    {fillWords(tran('{passage} ({bible}) · {count} diagrams'), {
-                        passage: drafted.passage,
-                        bible: drafted.bible,
-                        count: String(drafted.diagramCount),
-                    })}
+                    {fillWords(
+                        // One diagram is said as one (EC-487: _1 diagrams_).
+                        drafted.diagramCount === 1
+                            ? tran('{passage} ({bible}) · {count} diagram')
+                            : tran('{passage} ({bible}) · {count} diagrams'),
+                        {
+                            passage: drafted.passage,
+                            bible: drafted.bible,
+                            count: String(drafted.diagramCount),
+                        },
+                    )}
                 </div>
             )}
             {drafted.nameTaken === null ? null : (

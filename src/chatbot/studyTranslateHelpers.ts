@@ -251,11 +251,33 @@ export function toStudyTermsText(
         : ` Use the church's own words in ${language.name}: ${used.join('; ')}.`;
 }
 
+/**
+ * What a word MEANS, never how it sounds (2026-11-10, EC-486): the Gemma 4
+ * translator wrote a study's _Cross references_ heading as the English
+ * "Cross" spelled out in Khmer letters, in two studies on the same day --
+ * a word no reader knows. Said to every language's translator.
+ */
+export const STUDY_MEANING_RULE =
+    'Translate what each word means in a Bible study, never how it ' +
+    "sounds: spell no English word out in the language's letters, a " +
+    "person's or a place's name aside -- Cross references are other " +
+    'Bible verses on the same subject, not a cross.';
+
 export function toStudyTextTranslationAsk(
     text: string,
     language: StudyTranslateLanguageType,
+    missingTerms: [english: string, word: string][] = [],
 ) {
     const termsText = toStudyTermsText(text, language);
+    const missingText =
+        missingTerms.length === 0
+            ? ''
+            : ' Your last translation wrote these another way; write them ' +
+              `so: ${missingTerms
+                  .map(([english, word]) => {
+                      return `${english} = ${word}`;
+                  })
+                  .join('; ')}.`;
     return (
         `${text.trim()}\n\n(Translate the part of a Bible study above into ` +
         `${toLanguageText(language)}, in plain words a church reads aloud. ` +
@@ -263,8 +285,9 @@ export function toStudyTextTranslationAsk(
         '| of a table, ---), every line break and blank line, links, numbers ' +
         'and Bible references (write the book in that language), and every ' +
         '[^…] token. Translate every other word -- headings and table cells ' +
-        'too; leave nothing in the language it was in.' +
+        `too; leave nothing in the language it was in. ${STUDY_MEANING_RULE}` +
         termsText +
+        missingText +
         ' Answer with the translation alone, nothing else.)'
     );
 }
@@ -280,8 +303,9 @@ export function toStudyDiagramTranslationAsk(
         `${toLanguageText(language)}: the labels in quotes and brackets, ` +
         'the words after a colon in a timeline or a mindmap, a title. Keep ' +
         'everything else exactly as written: the first line, every node id, ' +
-        'arrow, bracket, quote mark, colon, indent and line break. Answer ' +
-        'with the diagram alone, no ``` fence.)'
+        'arrow, bracket, quote mark, colon, indent and line break.' +
+        toStudyTermsText(source, language) +
+        ' Answer with the diagram alone, no ``` fence.)'
     );
 }
 
@@ -298,6 +322,98 @@ export function cleanStudyTranslation(answer: string) {
         text = fenced[2];
     }
     return text.trim();
+}
+
+const HEADING_LINE_PATTERN = /^(\s{0,3}#{1,6})[ \t]+(.+?)[ \t]*$/;
+
+/** A heading's words as a term is keyed: no `The`, bold or colon, any case. */
+function toHeadingTermKey(words: string) {
+    return words
+        .replace(/\*\*|__/g, '')
+        .replace(/[ \t]+#+$/, '')
+        .replace(/[:.][ \t]*$/, '')
+        .replace(/^the[ \t]+/i, '')
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * A heading whose words ARE one of the language's church words (`terms`),
+ * written as that word whatever the translator wrote (EC-486): _Cross
+ * references_ came back as no word at all twice, with the word in the list.
+ * Headings are paired in their order, and only when the translation has as
+ * many as the words handed in.
+ */
+export function applyStudyHeadingTerms(
+    source: string,
+    translated: string,
+    language: StudyTranslateLanguageType,
+) {
+    const wordByKey = new Map(
+        Object.entries(language.terms).map(([english, word]) => {
+            return [toHeadingTermKey(english), word];
+        }),
+    );
+    const sourceHeadingList = source.split('\n').flatMap((line) => {
+        const match = HEADING_LINE_PATTERN.exec(line);
+        return match === null ? [] : [match[2]];
+    });
+    const lines = translated.split('\n');
+    const headingIndexList = lines.flatMap((line, index) => {
+        return HEADING_LINE_PATTERN.test(line) ? [index] : [];
+    });
+    if (
+        wordByKey.size === 0 ||
+        sourceHeadingList.length === 0 ||
+        headingIndexList.length !== sourceHeadingList.length
+    ) {
+        return translated;
+    }
+    sourceHeadingList.forEach((words, order) => {
+        const word = wordByKey.get(toHeadingTermKey(words));
+        if (word === undefined) {
+            return;
+        }
+        const index = headingIndexList[order];
+        const marks = HEADING_LINE_PATTERN.exec(lines[index])?.[1] ?? '##';
+        lines[index] = `${marks} ${word}`;
+    });
+    return lines.join('\n');
+}
+
+// What a Bible's own text puts between words and a translator does not --
+// zero-width spaces and joiners -- left out when one is looked for in the
+// other, and a curly apostrophe read as the straight one a term is written
+// with.
+const INVISIBLE_MARK_PATTERN = /[\u200B-\u200D\u2060\uFEFF]/g;
+const APOSTROPHE_PATTERN = /[\u2018\u2019\u02BC]/g;
+
+function toFindableText(text: string) {
+    return text
+        .replace(INVISIBLE_MARK_PATTERN, '')
+        .replace(APOSTROPHE_PATTERN, "'")
+        .toLowerCase();
+}
+
+/**
+ * The language's church words of more than one word -- the name of a
+ * thing, said one way (_bronze serpent_) -- that the English uses and the
+ * translation does not write, as `[english, word]`. One word (_God_,
+ * _verse_) is left out: a translation may fairly say it another way.
+ */
+export function listMissingStudyTerms(
+    source: string,
+    translated: string,
+    language: StudyTranslateLanguageType,
+): [english: string, word: string][] {
+    const findable = toFindableText(translated);
+    return Object.entries(language.terms).filter(([english, word]) => {
+        return (
+            /\s/.test(english.trim()) &&
+            new RegExp(`\\b${escapeRegExp(english)}\\b`, 'i').test(source) &&
+            !findable.includes(toFindableText(word))
+        );
+    });
 }
 
 function countMatches(text: string, pattern: RegExp) {

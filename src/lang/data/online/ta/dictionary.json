@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "படிப்புக் கோப்பு, மாற்றப்படும் விதத்தில்",
     "The study file, as it will be saved": "படிப்புக் கோப்பு, சேமிக்கப்படும் விதத்தில்",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} வரைபடங்கள்",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} வரைபடம்",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ஏற்கெனவே வளங்கள் பகுதியில் உள்ளது, எனவே இது \"{name}\" ஆக இருக்கும்.",
     "Drafted with the app assistant. Check it against your Bible.": "செயலியின் உதவியாளருடன் வரைவு செய்யப்பட்டது. உங்கள் வேதாகமத்துடன் ஒப்பிட்டுச் சரிபாருங்கள்.",
     "Change the name": "பெயரை மாற்று",

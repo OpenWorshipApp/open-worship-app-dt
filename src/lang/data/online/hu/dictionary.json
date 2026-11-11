@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "A tanulmányi fájl, ahogy módosítva lesz",
     "The study file, as it will be saved": "A tanulmányi fájl, ahogy el lesz mentve",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} ábra",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} ábra",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "A(z) „{taken}” már megvan a Források között, ezért ez „{name}” néven lesz mentve.",
     "Drafted with the app assistant. Check it against your Bible.": "Az alkalmazás asszisztensével készült vázlat. Vesse össze a Bibliájával.",
     "Change the name": "Név módosítása",

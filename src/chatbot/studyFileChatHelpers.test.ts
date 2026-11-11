@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    STUDY_CHANGE_HELD_NOTE,
     STUDY_CREATE_TOOL_NAME,
     STUDY_HELD_NOTE,
     STUDY_PREVIEW_TOOL_NAME,
@@ -97,6 +98,29 @@ describe('toModelDraftText', () => {
         );
         expect(shown.note).toBe(STUDY_HELD_NOTE);
         expect(shown.name).toBe(DRAFT_RESULT.name);
+        expect(JSON.stringify(shown)).not.toContain('Study words');
+    });
+
+    it('tells a CHANGE to name Save changes and every part it changes', () => {
+        const shown = JSON.parse(
+            toModelDraftText(
+                JSON.stringify({
+                    ...DRAFT_RESULT,
+                    isChange: true,
+                    file: 'Default/MAT.3.3-7 The Voice.md',
+                    hash: '1c6-0477206d',
+                    change: 'It changes “Questions” and adds “A prayer”.',
+                }),
+            ),
+        );
+        expect(shown.note).toBe(STUDY_CHANGE_HELD_NOTE);
+        expect(shown.note).toContain('Save changes');
+        expect(shown.note).not.toContain('Create');
+        expect(shown.note).toContain('every part `change` names');
+        // What it changes still reaches the model whole.
+        expect(shown.change).toBe(
+            'It changes “Questions” and adds “A prayer”.',
+        );
         expect(JSON.stringify(shown)).not.toContain('Study words');
     });
 

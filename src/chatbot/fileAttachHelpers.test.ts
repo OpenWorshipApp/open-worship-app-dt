@@ -106,6 +106,7 @@ import {
     findResourceFileNames,
     genAttachmentFromPath,
     genPdfAttachment,
+    refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
 
@@ -457,6 +458,98 @@ describe('reloadFileAttachment', () => {
         dropAttachmentData('held');
         putAttachmentPages('pages', [PAGE_ONE, PAGE_TWO]);
         dropAttachmentData('pages');
+    });
+});
+
+describe('refreshTextAttachment', () => {
+    const STUDY_PATH = 'C:/res/Default/JHN.3.16-17 Love.md';
+
+    function attachStudy(text: string) {
+        diskState.sizeMap.set(STUDY_PATH, text.length);
+        diskState.textMap.set(STUDY_PATH, text);
+        return {
+            ...genTextAttachment('JHN.3.16-17 Love.md', text, STUDY_PATH),
+            number: 1,
+        };
+    }
+
+    test('a study file changed on disk since it was attached goes with its words as they are now', async () => {
+        const attached = attachStudy('## Questions\n\n1. Old question?\n');
+        // The window saved a change to it since.
+        const saved = '## Questions\n\n1. New question?\n';
+        diskState.sizeMap.set(STUDY_PATH, saved.length);
+        diskState.textMap.set(STUDY_PATH, saved);
+
+        const fresh = await refreshTextAttachment(attached);
+
+        expect(fresh).not.toBe(attached);
+        expect(fresh.summary).toContain('New question?');
+        expect(fresh.summary).not.toContain('Old question?');
+        // The same chip: its id, its number and where it lives.
+        expect(fresh.id).toBe(attached.id);
+        expect(fresh.number).toBe(1);
+        expect(fresh.filePath).toBe(STUDY_PATH);
+        expect(fresh.byteSize).toBe(saved.length);
+        // The message keeps what was attached.
+        expect(attached.summary).toContain('Old question?');
+    });
+
+    test('the same attachment when the file is as it was, gone, or cannot be read', async () => {
+        const attached = attachStudy('## Questions\n\n1. Same?\n');
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+
+        diskState.textMap.delete(STUDY_PATH);
+        // Still sized, but the read fails.
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+
+        diskState.sizeMap.delete(STUDY_PATH);
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+    });
+
+    test('nothing is read for a picture, a PDF, words with no path, or one note of a notes file', async () => {
+        const picture: ChatAttachmentType = {
+            id: 'pic',
+            kind: 'image',
+            name: 'stage.png',
+            mimeType: 'image/png',
+            byteSize: 1,
+            filePath: 'C:/pics/stage.png',
+        };
+        const pdf = genFileAttachment('LUK.6.pdf', 10, 'C:/LUK.6.pdf');
+        const pasted = genTextAttachment('pasted.txt', 'words');
+        const note: ChatAttachmentType = {
+            ...genTextAttachment('Sunday', 'Note: Sunday\nwords', 'C:/n.own'),
+            noteId: 3,
+        };
+        for (const attachment of [picture, pdf, pasted, note]) {
+            expect(await refreshTextAttachment(attachment)).toBe(attachment);
+        }
+        expect(diskState.readCountMap.size).toBe(0);
+        expect(sendState.channelList).toEqual([]);
+    });
+
+    test("the app's own documents are left to their own conversations' reads", async () => {
+        // On disk and changed since -- still not read here: a song, a slide
+        // document, a presenting flow and a whole notes file are read as
+        // they are now by their own tools.
+        const documentList = [
+            'C:/songs/Amazing Grace.owl',
+            'C:/slides/Sunday.ows',
+            'C:/flows/Sunday.owpf',
+            'C:/notes/Sermons.own',
+        ].map((filePath) => {
+            diskState.sizeMap.set(filePath, 5);
+            diskState.textMap.set(filePath, 'new words');
+            return genTextAttachment(
+                filePath.split('/').pop() ?? '',
+                'old words',
+                filePath,
+            );
+        });
+        for (const attachment of documentList) {
+            expect(await refreshTextAttachment(attachment)).toBe(attachment);
+        }
+        expect(diskState.readCountMap.size).toBe(0);
     });
 });
 

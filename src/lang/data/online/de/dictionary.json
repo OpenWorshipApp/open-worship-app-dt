@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Die Studiendatei, so wie sie geändert wird",
     "The study file, as it will be saved": "Die Studiendatei, so wie sie gespeichert wird",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} Diagramme",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} Diagramm",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ ist schon in den Ressourcen, daher heißt diese hier „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Mit dem App-Assistenten entworfen. Prüfen Sie es anhand Ihrer Bibel.",
     "Change the name": "Namen ändern",
