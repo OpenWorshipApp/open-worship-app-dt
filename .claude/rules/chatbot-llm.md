@@ -1098,7 +1098,14 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `owa_note_edit` change -- a fill of the empty note included -- whose
   quotation takes most of its words from that without being word for word
   is refused once an ask (`findNoteMisquotes`); the blind readers' commonest
-  error, and any error keeps a lesson out of Best.
+  error, and any error keeps a lesson out of Best. **A fix to a lesson
+  carries the lesson's rules and adds, never operates** (BN-79, BN-80): a
+  change asked in a lesson note (a change verb, no lesson hint of its own)
+  carries `NOTE_LESSON_CHANGE_HINT` -- from the passage as read, no detail
+  it does not give, a point added in the passage's order -- and an edit in
+  it that moves or takes out a block the words did not ask to move or take
+  out is refused (`findLessonChangeSurgery`, `ToolWatchType.isLessonChange`):
+  done as block surgery, two fixes had broken a sermon's shape.
 
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening

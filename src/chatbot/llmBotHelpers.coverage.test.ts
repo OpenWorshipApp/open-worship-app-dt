@@ -141,7 +141,10 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
-import { NOTE_LESSON_REVIEW_HINT } from './noteChatHelpers';
+import {
+    NOTE_LESSON_CHANGE_HINT,
+    NOTE_LESSON_REVIEW_HINT,
+} from './noteChatHelpers';
 import {
     GENERAL_ASK_LABEL,
     GENERAL_ASK_TOOL_NAME,
@@ -1499,6 +1502,65 @@ describe('the Anthropic loop', () => {
             'Add a response that gathers it',
             'Write what verse 3 means',
         ]);
+    });
+
+    // BN-80 (2026-11-10): a fix to a lesson done as fifteen blocks moved
+    // broke its shape. In a fix, a move nobody asked for is refused; the
+    // same fix done by adding and rewording goes in.
+    test('a lesson fix that moves blocks is sent back to add instead', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'The Sower',
+            isChanged: true,
+        });
+        const edit = (changes: any[]) => {
+            return anthropicToolUse({
+                name: 'owa_note_edit',
+                input: { action: 'edit', note: 'The Sower', changes },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                edit([
+                    { after: 7, kind: 'h2', text: '1. Why parables' },
+                    { after: 11, block: 8 },
+                ]),
+                edit([
+                    { after: 7, kind: 'h2', text: '1. Why parables' },
+                    { block: 8, text: '2. The hardened heart' },
+                ]),
+                anthropicText('The point is in.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            `Add a point on why Jesus uses parables\n${NOTE_LESSON_CHANGE_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'The Sower',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    typed: 'Add a point on why Jesus uses parables',
+                },
+            },
+        );
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            'it moves or takes out no block of it (this named block 8)',
+        );
+        expect(fake.toolCallList).toHaveLength(1);
+        expect(fake.toolCallList[0].args.changes[1]).toEqual({
+            block: 8,
+            text: '2. The hardened heart',
+        });
     });
 
     // BN-77: asked once more and still no OPTIONS, the review's own fixes

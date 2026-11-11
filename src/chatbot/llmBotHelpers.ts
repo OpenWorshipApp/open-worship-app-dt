@@ -187,6 +187,7 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_BLANK_DROPPED_NUDGE,
     NOTE_DROPPED_NUDGE,
+    NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_REVIEW_HINT,
     NOTE_MAX_TOOL_ROUNDS,
     NOTE_REWRITE_DROPPED_NUDGE,
@@ -195,6 +196,7 @@ import {
     checkIsLanguageLessonAsk,
     findBlankFillProblem,
     findLostNoteLines,
+    findLessonChangeSurgery,
     findNoteMisquotes,
     genLostNoteLinesRefusal,
     genNoteMisquoteRefusal,
@@ -2378,6 +2380,12 @@ type ToolWatchType = {
      */
     isLessonReview: boolean;
     /**
+     * A note ask carrying `NOTE_LESSON_CHANGE_HINT`: a fix to their lesson,
+     * which adds and rewords -- a block moved or taken out is refused unless
+     * their words ask for it (BN-80).
+     */
+    isLessonChange: boolean;
+    /**
      * A tool answered that the question needs the main window on the
      * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
      * what the projector holds and what is selected are that page's alone),
@@ -2538,6 +2546,7 @@ export function genToolWatch(): ToolWatchType {
         isWhatAsk: false,
         isRunningOrderAsk: false,
         isLessonReview: false,
+        isLessonChange: false,
         needsPage: null,
         needsPageBy: null,
         verifiedControlNames: new Set<string>(),
@@ -3983,6 +3992,20 @@ async function runMcpToolCall(
                 lyricEditArgs,
                 watch.noteRewrite,
             );
+        }
+        // A fix to their lesson adds and rewords (BN-80, 2026-11-10: _Add a
+        // point on why Jesus uses parables_ came as fifteen blocks moved and
+        // left the path's verses under the wrong point; _Fix point
+        // numbering_ took the Pointing to Jesus heading out). A move or a
+        // removal goes only where their words ask for one.
+        if (watch.isLessonChange && lyricEditArgs.action === 'edit') {
+            const refusal = findLessonChangeSurgery(
+                lyricEditArgs,
+                watch.noteTyped ?? '',
+            );
+            if (refusal !== null) {
+                return `Tool refused: ${refusal}`;
+            }
         }
         // A quote of the passage is its words (BN-76): a change that
         // misquotes what this ask read is refused, once an ask -- a whole
@@ -6993,6 +7016,9 @@ async function askLlmBotAsWritten(
         seeded.isLessonReview =
             extra?.note !== undefined &&
             asked.includes(NOTE_LESSON_REVIEW_HINT);
+        seeded.isLessonChange =
+            extra?.note !== undefined &&
+            asked.includes(NOTE_LESSON_CHANGE_HINT);
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =

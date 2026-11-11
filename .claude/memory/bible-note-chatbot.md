@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T03:01:36.971Z
+  modified: 2026-11-11T03:35:54.349Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -309,6 +309,15 @@ Make, it wrote Grow, Rewrite and Clarify too -- read the shape, not the
 four words. (15) **A source edit hot-reloads into every scratch app on the
 same Vite**: a lesson run in flight lost a review to one. Edit `src/` only
 between runs, and know that a peer session's edits land the same way.
+(16) **A fix is safe when it only adds and rewords**: the blind reads of
+the whole loop moved the mean little (+0.4, then -0.25) because the few
+fixes done as block SURGERY -- a point added by moving fifteen blocks, a
+renumbering that took a heading out -- broke a sermon's shape and cost
+3 points each, more than the other fixes won. A lesson fix that moves or
+removes a block nobody asked to move or remove is refused (BN-80); measure
+the loop by its worst fix, not its average one. And a fix asked with none
+of the lesson's truth rules invents detail (BN-79): every ask that writes
+into a lesson carries them.
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

@@ -25,6 +25,7 @@
 import type { ChatAttachmentType } from './attachmentHelpers';
 import { checkIsFileAttachment } from './attachmentHelpers';
 import { EMPTY_NOTE_BODY } from './noteFileTextHelpers';
+import { checkIsChangeReply } from './quickReplyHelpers';
 import {
     DEFAULT_CHAT_LANG_CODE,
     listAssistantLanguages,
@@ -801,6 +802,63 @@ export const NOTE_DROPPED_NUDGE =
 // each new block after the one it had just added, put "## " into a
 // heading's words, left a point's one sentence as all it had, and wrote no
 // passage where the note had none.
+// A fix to a lesson -- a review's button pressed, or a change typed so --
+// writes new words into it with none of the lesson's rules on the ask
+// (BN-79, 2026-11-10: the blind readers found the fixes' own words adding
+// what the passage does not say -- the lost sheep "scared and stuck" in
+// prickly bushes, the crowd "a symbol of social walls" -- and a point added
+// after the last, a second "3.", out of the passage's order).
+export const NOTE_LESSON_CHANGE_HINT =
+    '(Their note is a lesson to preach: write this change from the passage ' +
+    'as read with owa_find_verse -- no feeling, motive, place, detail or ' +
+    'symbol it does not give, every quote word for word -- and a point ' +
+    "added goes where its verses fall in the passage's order, the points " +
+    'after it numbered on in the same edit.)';
+
+// Words that ask for a block to move, or to go (BN-80).
+const LESSON_MOVE_ASK_PATTERN =
+    /\b(?:move|swap|reorder|put\b.*\b(?:before|after|above|below))\b/i;
+const LESSON_REMOVE_ASK_PATTERN =
+    /\b(?:remove|delete|take (?:out|away)|cut|drop|replace|shorten|shorter|fewer|merge|combine)\b/i;
+
+/**
+ * Why a fix to their lesson is refused, or null: it moves or takes out a
+ * block their words did not ask to move or take out (BN-80). A small model
+ * renumbering by moving blocks lost track of them -- a point's verses went
+ * under the point before, a heading of the lesson went for good -- where
+ * adding the new blocks in their place and rewording the numbers keeps it.
+ */
+export function findLessonChangeSurgery(args: any, typed: string) {
+    const changes: any[] = Array.isArray(args?.changes) ? args.changes : [];
+    const moved = changes.filter((change) => {
+        return (
+            Number.isInteger(change?.block) &&
+            change?.after !== undefined &&
+            change?.remove !== true
+        );
+    });
+    const removed = changes.filter((change) => {
+        return Number.isInteger(change?.block) && change?.remove === true;
+    });
+    const isMoveAsked = LESSON_MOVE_ASK_PATTERN.test(typed);
+    const isRemoveAsked = LESSON_REMOVE_ASK_PATTERN.test(typed);
+    const named = [
+        ...(isMoveAsked ? [] : moved),
+        ...(isRemoveAsked ? [] : removed),
+    ].map((change) => change.block);
+    if (named.length === 0) {
+        return null;
+    }
+    return (
+        'Nothing was changed: this fix adds to their lesson and rewords it -- ' +
+        `it moves or takes out no block of it (this named block${
+            named.length === 1 ? '' : 's'
+        } ${[...new Set(named)].slice(0, 8).join(', ')}). Put each new block ` +
+        'where it goes with `after` (numbers as read), give the points after ' +
+        'it their new numbers by changing their words, and send it again.'
+    );
+}
+
 export const NOTE_LESSON_FINISH_HINT =
     '(This asks to make their lesson whole IN this note, in ONE edit: the ' +
     'parts of WHAT A LESSON HOLDS it lacks added where they belong, their ' +
@@ -1753,6 +1811,12 @@ export function toNoteAsk(
             ? genLessonGapsText(notes[0].text)
             : null;
     const shownHint = isRewrite ? NOTE_LESSON_REWRITE_HINT : lessonHint;
+    // A change to a lesson that is no lesson ask of its own (BN-79).
+    const isLessonChange =
+        shownHint === null &&
+        notes.length === 1 &&
+        checkIsLessonNoteText(notes[0].text) &&
+        checkIsChangeReply(asked);
     // A length they gave, as a number of words (BN-73) -- a lesson written
     // or finished, never a review or a cut.
     const lengthLine =
@@ -1766,6 +1830,7 @@ export function toNoteAsk(
         ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
         asked,
         ...(shownHint === null ? [] : [shownHint]),
+        ...(isLessonChange ? [NOTE_LESSON_CHANGE_HINT] : []),
         ...(lengthLine === null ? [] : [lengthLine]),
         ...(gapsText === null ? [] : [gapsText]),
         ...(lessonForm !== null &&

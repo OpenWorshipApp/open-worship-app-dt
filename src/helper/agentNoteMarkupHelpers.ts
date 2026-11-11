@@ -29,6 +29,20 @@ const INLINE_MARK_PATTERN =
     /\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|`[^`\n]+`|\[[\^@#][^\]\n]+\]|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)/;
 
 const HEADING_LINE_PATTERN = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)$/;
+// The kind label a note is READ with (`4. h2: "1. The Plea for Mercy"`),
+// copied by a model into a heading's words (2026-11-10, BN-80: two headings
+// of a reviewed Zacchaeus sermon read "h2: …"), and the quotes round them.
+const HEADING_KIND_LABEL_PATTERN = /^h[1-6][ \t]*:[ \t]*/i;
+const WRAPPED_HEADING_PATTERN = /^["“](.*)["”]$/u;
+
+/** A heading's words without a block-kind label a model copied in. */
+export function stripHeadingKindLabel(text: string) {
+    if (!HEADING_KIND_LABEL_PATTERN.test(text)) {
+        return text;
+    }
+    const words = text.replace(HEADING_KIND_LABEL_PATTERN, '').trim();
+    return (WRAPPED_HEADING_PATTERN.exec(words)?.[1] ?? words).trim();
+}
 const CHECK_LINE_PATTERN = /^[ \t]*[-*+•][ \t]+\[([ xX])\][ \t]+(.*)$/;
 const BULLET_LINE_PATTERN = /^[ \t]*[-*+•][ \t]+(.*)$/;
 const NUMBER_LINE_PATTERN = /^[ \t]*\d{1,3}[.)][ \t]+(.*)$/;
@@ -377,12 +391,26 @@ export function readHeadingMarks(
         return change;
     }
     const heading = HEADING_LINE_PATTERN.exec(change.text);
+    const isHeading = checkIsHeadingKind(change.kind);
+    // A heading's words with the read's kind label copied in, no marks
+    // (BN-80): the label goes.
+    if (
+        heading === null &&
+        (isHeading ||
+            (change.kind === undefined && checkIsHeadingKind(blockKind)))
+    ) {
+        const words = stripHeadingKindLabel(change.text);
+        return words === change.text || words === ''
+            ? change
+            : { ...change, text: words };
+    }
     if (heading === null || heading[2].trim() === '') {
         return change;
     }
-    const isHeading = checkIsHeadingKind(change.kind);
     if (change.block === undefined) {
-        return isHeading ? { ...change, text: heading[2].trim() } : change;
+        return isHeading
+            ? { ...change, text: stripHeadingKindLabel(heading[2].trim()) }
+            : change;
     }
     if (
         !isHeading &&
@@ -400,7 +428,7 @@ export function readHeadingMarks(
     return {
         ...change,
         kind: isHeading ? change.kind : `h${heading[1].length}`,
-        text: heading[2].trim(),
+        text: stripHeadingKindLabel(heading[2].trim()),
     };
 }
 
@@ -601,7 +629,7 @@ function toLineChange(line: string): NoteEditChangeType | null {
         return {
             after: 0,
             kind: `h${heading[1].length}`,
-            text: heading[2].trim(),
+            text: stripHeadingKindLabel(heading[2].trim()),
         };
     }
     const check = CHECK_LINE_PATTERN.exec(line);

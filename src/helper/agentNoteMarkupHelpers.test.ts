@@ -6,6 +6,7 @@ import {
     expandPassageChanges,
     expandSectionAdds,
     readHeadingMarks,
+    stripHeadingKindLabel,
     toNoteAddChanges,
     toUnfoundVersesAsWords,
 } from './agentNoteMarkupHelpers';
@@ -367,6 +368,32 @@ describe("a heading's marks in its words", () => {
         ] as const) {
             expect(readHeadingMarks(change as any, kind)).toBe(change);
         }
+    });
+
+    // BN-80 (2026-11-10): two headings of a reviewed sermon read "h2: …",
+    // the kind label the note is read with copied into the words.
+    test('lose the kind label the note was read with', () => {
+        expect(stripHeadingKindLabel('h2: "1. The Plea for Mercy"')).toBe(
+            '1. The Plea for Mercy',
+        );
+        expect(stripHeadingKindLabel('H2O and the flood')).toBe(
+            'H2O and the flood',
+        );
+        expect(
+            readHeadingMarks({ block: 4, text: 'h2: 1. Lost' }, 'h2'),
+        ).toEqual({ block: 4, text: '1. Lost' });
+        expect(
+            readHeadingMarks(
+                { after: 3, kind: 'h2', text: '## h2: "Grace"' },
+                null,
+            ),
+        ).toEqual({ after: 3, kind: 'h2', text: 'Grace' });
+        // A paragraph's words are its own.
+        const words = { block: 5, text: 'h2: a note to self' };
+        expect(readHeadingMarks(words, 'paragraph')).toBe(words);
+        expect(
+            toNoteAddChanges('## h2: Big idea\nIt is grace.', '')[0],
+        ).toEqual(expect.objectContaining({ kind: 'h2', text: 'Big idea' }));
     });
 });
 

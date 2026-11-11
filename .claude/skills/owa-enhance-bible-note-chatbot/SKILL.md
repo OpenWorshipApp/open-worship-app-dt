@@ -155,8 +155,10 @@ the lessons alone, score them; a weakness most lessons share is a change to
 the shape the model is given, never to the standard. **The job is to HELP
 PREPARE, so measure the loop, not only the first draft** (BN-72, BN-74):
 `--review=N` asks _is this a good sermon?_ after the draft and presses the
-review's first fix, N times, keeping the draft (`blocksBefore`) and every
-review; `scripts/lesson-ab.mjs <results> <prefix>` shuffles each draft and
+review's first fix, N times, and `--fixes=M` presses up to M of each
+review's fixes off the buttons each fix's answer carries (BN-77) -- the
+way an elder prepares with it -- keeping the draft (`blocksBefore`) and
+every review; `scripts/lesson-ab.mjs <results> <prefix>` shuffles each draft and
 its reviewed lesson under neutral ids with a key kept apart, the review's
 presses left out of what the readers are told was asked, for
 `lesson-rubric.mjs --text=<dir>` to write out. A review whose fix could

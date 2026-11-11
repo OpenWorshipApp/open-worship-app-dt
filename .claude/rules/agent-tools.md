@@ -2007,7 +2007,8 @@ false` and searches only a dataset a lookup panel already holds
   add` and the window turns it into this edit (`chatbot-llm.md`). **And
   what a model writes finishing one** (2026-11-10, BN-67, four partial
   sermons asked live): a heading's own `## ` in its words is read as the
-  heading (`readHeadingMarks`); new blocks ONE a place whose `after` goes up
+  heading (`readHeadingMarks`), and so is the `h2:` label the note is read
+  with when a model copies it in (`stripHeadingKindLabel`, BN-80); new blocks ONE a place whose `after` goes up
   one at a time and hold a heading with words after it are one section,
   each after the one before (`chainSectionAdds` -- sections one a place were
   numbered as read, and stay so); a line changed into one token naming a

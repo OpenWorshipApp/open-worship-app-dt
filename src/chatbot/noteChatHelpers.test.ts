@@ -7,6 +7,7 @@ import {
     NOTE_BLANK_LESSON_HINT,
     NOTE_EDIT_TOOL_NAME,
     NOTE_FORMAT_HINT,
+    NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_FINISH_HINT,
     NOTE_LESSON_REWRITE_HINT,
     NOTE_LESSON_REVIEW_HINT,
@@ -32,6 +33,7 @@ import {
     findSessionHoldingNote,
     findSessionNoteTarget,
     findLostNoteLines,
+    findLessonChangeSurgery,
     findNoteMisquotes,
     genLessonFormLine,
     genNoteMisquoteRefusal,
@@ -1591,5 +1593,77 @@ describe('the form a lesson was asked for', () => {
                 'devotion',
             ),
         ).not.toContain(genLessonFormLine('devotion'));
+    });
+});
+
+// BN-79 (2026-11-10): a review's fix pressed in a lesson had none of the
+// lesson's truth rules, and added what the passage does not say.
+describe('a fix to a lesson carries its rules', () => {
+    const LESSON =
+        '1. h2: "Big idea"\n2. h2: "1. Lost"\n3. paragraph: "A sheep is lost."\n' +
+        '4. h2: "2. Found"\n5. paragraph: "It is found."';
+
+    it('rides a change to a lesson, never a question or a plain note', () => {
+        const fix = toNoteAsk('Add details to the story', [
+            { name: 'The Lost Sheep', text: LESSON },
+        ]);
+        expect(fix).toContain(NOTE_LESSON_CHANGE_HINT);
+        expect(
+            toNoteAsk('what does verse 4 mean?', [
+                { name: 'The Lost Sheep', text: LESSON },
+            ]),
+        ).not.toContain(NOTE_LESSON_CHANGE_HINT);
+        expect(
+            toNoteAsk('Add a line about Tom', [
+                { name: 'Shopping', text: '1. paragraph: "milk"' },
+            ]),
+        ).not.toContain(NOTE_LESSON_CHANGE_HINT);
+    });
+});
+
+// BN-80 (2026-11-10): a fix done as block surgery broke a sermon's shape --
+// a point's verses under the point before it, a lesson heading taken out.
+describe('a fix to a lesson adds and rewords', () => {
+    const adds = {
+        changes: [
+            { after: 7, kind: 'h2', text: '1. Why parables' },
+            { block: 14, text: '2. The hardened heart' },
+        ],
+    };
+
+    it('goes through when it adds and rewords', () => {
+        expect(findLessonChangeSurgery(adds, 'Add a point on parables')).toBe(
+            null,
+        );
+    });
+
+    it('is refused when it moves or takes out what was not asked', () => {
+        expect(
+            findLessonChangeSurgery(
+                { changes: [...adds.changes, { after: 11, block: 8 }] },
+                'Add a point on why Jesus uses parables',
+            ),
+        ).toContain('block 8');
+        expect(
+            findLessonChangeSurgery(
+                { changes: [{ block: 29, remove: true }] },
+                'Fix point numbering and headings',
+            ),
+        ).toContain('it moves or takes out no block of it');
+    });
+
+    it('lets their own words ask for a move or a removal', () => {
+        expect(
+            findLessonChangeSurgery(
+                { changes: [{ block: 12, after: 20 }] },
+                'Move "Prayer for Restoration" to Point 2',
+            ),
+        ).toBe(null);
+        expect(
+            findLessonChangeSurgery(
+                { changes: [{ block: 30, remove: true }] },
+                'Remove the second question',
+            ),
+        ).toBe(null);
     });
 });

@@ -91,8 +91,9 @@ export const PREACHING_LESSON_SHAPE =
     'above all. First read the main passage with owa_find_verse (`refs`) ' +
     'when you have it, and build every point, quote and verse number on the ' +
     'words it returns: say nothing of a verse, its words or its history you ' +
-    'are not sure of, read into it nothing it does not say, and tell no ' +
-    'story as if it really happened. The main passage alone on a line as its ' +
+    'are not sure of, read into it nothing it does not say -- a retelling ' +
+    'adds no feeling, motive, place or detail it does not give -- and tell ' +
+    'no story as if it really happened. The main passage alone on a line as its ' +
     'token -- [^John 10:11-18] -- which the app prints whole from their ' +
     'Bible; then "## " headings: Big idea (one sentence: what the passage ' +
     'says about God and what it asks of us), Background (three or four ' +

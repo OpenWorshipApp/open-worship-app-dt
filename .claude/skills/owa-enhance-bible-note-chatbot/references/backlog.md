@@ -999,6 +999,38 @@ was seen and what was done.
   earlier ask (`readLessonFormAsked`: the card's button, or "devotion" /
   "children's" in a typed ask) and a review or a finish carries one line
   saying it (`genLessonFormLine`).
+- **BN-79 — a fix to a lesson carries the lesson's rules** (2026-11-10,
+  the blind read of the whole loop: drafts 19.25 -> after every fix 19.63
+  of 24 on one reader, the Psalm 23 devotion up to Best, and errors 3 -> 5
+  -- the fixes' own words added what the passage does not say, the lost
+  sheep "scared and stuck" in prickly bushes, the crowd "a symbol of social
+  walls", Jesus "the river" of Psalm 46 -- and a Psalm 51 sermon fell from
+  Best to 17, its added point a second "3." after the last, out of the
+  passage's order). A pressed fix -- _Add details to the story_ -- had
+  gone out with none of `PREACHING_LESSON_SHAPE`'s truth rules. A change
+  to a lesson that is no lesson ask of its own now carries
+  `NOTE_LESSON_CHANGE_HINT` (`toNoteAsk`, a change verb on a lesson note):
+  write it from the passage as read, no feeling, motive, place, detail or
+  symbol it does not give, every quote word for word, a point added where
+  its verses fall and the points after it numbered on. The shape's own
+  truth sentence says the same of a retelling.
+- **BN-80 — a fix adds and rewords; it does no surgery** (2026-11-10, the
+  blind read of BN-79's round: drafts 19.50 -> after every fix 19.25, the
+  sower sermon 19 -> 16 and a Zacchaeus sermon 20 -> 19). Traced on the
+  sower: _Add a point on why Jesus uses parables_ came back as fifteen
+  blocks MOVED and three reworded -- the path's verses ended under the new
+  point 1 -- and _Fix point numbering and headings_ took the Pointing to
+  Jesus heading out; a Zacchaeus fix wrote "h2: …" into two headings, the
+  kind label the note is read with. A small model keeps no count of
+  blocks it moves in a long note. Now a lesson fix (`isLessonChange`, the
+  ask carrying `NOTE_LESSON_CHANGE_HINT`) that moves or takes out a block
+  their words did not ask to move or take out is refused, naming the
+  blocks and saying to put each new block where it goes with `after` and
+  renumber by rewording (`findLessonChangeSurgery`; _Move …_, _Remove …_,
+  _Shorten …_ and the like let it through); and a heading's words lose a
+  leading `h1:`-`h6:` label and the quotes round it (`stripHeadingKindLabel`,
+  in `readHeadingMarks` and the mark-up reader; round trip still 342 / 376,
+  0 failures).
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's
