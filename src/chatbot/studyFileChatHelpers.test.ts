@@ -1,22 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ChatMessageType } from './chatSessionHelpers';
 import {
     STUDY_CHANGE_HELD_NOTE,
     STUDY_CREATE_TOOL_NAME,
     STUDY_HELD_NOTE,
+    STUDY_KEEP_ANSWER_HINT,
+    STUDY_KEPT_ANSWER_CHANGE_NOTE,
+    STUDY_KEPT_ANSWER_NOTE,
     STUDY_PREVIEW_TOOL_NAME,
     STUDY_RENAME_TOOL_NAME,
+    STUDY_SYSTEM_PROMPT,
+    checkIsStudyAnswerMarker,
     clearStudyRenameWait,
+    findStudyAnswerAbove,
     genStudyDraftActions,
     keepDraftedStudy,
+    pickKeptAnswerLanguage,
     readDraftedStudy,
+    readKeepAnswerAsk,
     readStudyFileAsk,
     setStudyRenameWait,
     takeDraftedStudy,
     takeStudyRenameWait,
+    toKeptAnswerDraftArgs,
     toModelDraftText,
     toStudyAsk,
+    toStudyContentFromAnswer,
 } from './studyFileChatHelpers';
+import { STUDY_FILE_PROMPT } from './noteCreatePromptHelpers';
 
 const DRAFT_RESULT = {
     drafted: true,
@@ -126,6 +138,25 @@ describe('toModelDraftText', () => {
 
     it('passes a refusal through untouched', () => {
         expect(toModelDraftText('Tool refused: no')).toBe('Tool refused: no');
+    });
+
+    it('says the answer was kept when the window put it in (EC-466)', () => {
+        const shown = JSON.parse(
+            toModelDraftText(JSON.stringify(DRAFT_RESULT), true),
+        );
+        expect(shown.note).toBe(STUDY_KEPT_ANSWER_NOTE);
+        expect(shown.note).toContain('Create');
+        expect(shown.note).toContain('name no section or diagram');
+        expect(JSON.stringify(shown)).not.toContain('Study words');
+        const changed = JSON.parse(
+            toModelDraftText(
+                JSON.stringify({ ...DRAFT_RESULT, isChange: true }),
+                true,
+            ),
+        );
+        expect(changed.note).toBe(STUDY_KEPT_ANSWER_CHANGE_NOTE);
+        expect(changed.note).toContain('Save changes');
+        expect(changed.note).not.toContain('Create');
     });
 });
 
@@ -244,6 +275,308 @@ describe('toStudyAsk', () => {
         );
         expect(toStudyAsk('make a study', 'Xxlang')).toContain(
             'every word of it -- in Xxlang.)',
+        );
+    });
+});
+
+// "Save that as a study file" (EC-466): the answer that was read, not a
+// study written again.
+const LONG_ANSWER =
+    'John 3:16 tells why Jesus came: God so loved the world that he gave ' +
+    'his only Son, so that whoever believes in him has eternal life.';
+
+function botMessage(
+    id: number,
+    text: string,
+    extra: Partial<ChatMessageType> = {},
+): ChatMessageType {
+    return { id, author: 'bot', text, ...extra };
+}
+
+describe('findStudyAnswerAbove', () => {
+    it('is the newest answer of the tab, as it was read', () => {
+        const older = `${LONG_ANSWER} (older)`;
+        expect(
+            findStudyAnswerAbove([
+                { id: 1, author: 'you', text: 'Explain John 3:16' },
+                botMessage(2, older),
+                { id: 3, author: 'you', text: 'And again?' },
+                botMessage(4, `  ${LONG_ANSWER}\n`),
+            ]),
+        ).toBe(LONG_ANSWER);
+    });
+
+    it("steps over a study card, the window's follow-up and a short line", () => {
+        const card = botMessage(3, `${LONG_ANSWER} -- drafted`, {
+            actions: [
+                {
+                    label: 'Create "JHN.3.16 Love.md"',
+                    toolName: STUDY_CREATE_TOOL_NAME,
+                    args: { reference: 'study-1' },
+                },
+            ],
+        });
+        expect(
+            findStudyAnswerAbove([
+                botMessage(1, LONG_ANSWER),
+                { id: 2, author: 'you', text: 'save it as a study file' },
+                card,
+                botMessage(4, `${LONG_ANSWER} -- what was wrong?`, {
+                    isFollowUp: true,
+                }),
+                botMessage(5, 'You are welcome!'),
+            ]),
+        ).toBe(LONG_ANSWER);
+    });
+
+    it('is null when the tab holds no answer worth keeping', () => {
+        expect(findStudyAnswerAbove([])).toBeNull();
+        expect(
+            findStudyAnswerAbove([
+                { id: 1, author: 'you', text: LONG_ANSWER },
+                botMessage(2, 'Which passage?'),
+            ]),
+        ).toBeNull();
+    });
+
+    it("reads a Retry's answer above the question it asks again", () => {
+        const retried = `${LONG_ANSWER} -- the answer being retried`;
+        const messages: ChatMessageType[] = [
+            botMessage(1, LONG_ANSWER),
+            { id: 2, author: 'you', text: 'save that as a study file' },
+            botMessage(3, retried),
+        ];
+        expect(findStudyAnswerAbove(messages)).toBe(retried);
+        expect(findStudyAnswerAbove(messages, { beforeId: 2 })).toBe(
+            LONG_ANSWER,
+        );
+        // An id no longer in the tab reads the whole tab.
+        expect(findStudyAnswerAbove(messages, { beforeId: 99 })).toBe(retried);
+    });
+
+    it('newest only: a study card or a short line there is no answer to keep', () => {
+        const card = botMessage(3, `${LONG_ANSWER} -- drafted`, {
+            actions: [
+                {
+                    label: 'Create "JHN.3.16 Love.md"',
+                    toolName: STUDY_CREATE_TOOL_NAME,
+                    args: { reference: 'study-1' },
+                },
+            ],
+        });
+        const isNewestOnly = true;
+        expect(
+            findStudyAnswerAbove(
+                [
+                    botMessage(1, LONG_ANSWER),
+                    { id: 2, author: 'you', text: 'make a study' },
+                    card,
+                ],
+                { isNewestOnly },
+            ),
+        ).toBeNull();
+        expect(
+            findStudyAnswerAbove(
+                [botMessage(1, LONG_ANSWER), botMessage(2, 'Glad to help!')],
+                { isNewestOnly },
+            ),
+        ).toBeNull();
+        // The window's follow-up to a thumb down is still stepped over.
+        expect(
+            findStudyAnswerAbove(
+                [
+                    botMessage(1, LONG_ANSWER),
+                    botMessage(2, `${LONG_ANSWER} -- what was wrong?`, {
+                        isFollowUp: true,
+                    }),
+                ],
+                { isNewestOnly },
+            ),
+        ).toBe(LONG_ANSWER);
+    });
+});
+
+describe('readKeepAnswerAsk', () => {
+    it('reads a line that keeps the answer above as a study file', () => {
+        for (const line of [
+            'save that as a study file',
+            'Save this as a study.',
+            'keep it as a study file',
+            'make that a study file',
+            'turn this into a study',
+            'put that in a study file',
+            'save your answer as a study file',
+            'save the answer above as a study',
+            'add that to my study',
+            'save as a study file',
+            'Can you save that as a study file?',
+            'please save this to my resources',
+            'save it as a markdown file',
+            'copy what you said into a study file',
+        ]) {
+            expect(readKeepAnswerAsk(line), line).toBe(true);
+        }
+    });
+
+    it('leaves a new study, a how-to and a line asking more to the model', () => {
+        for (const line of [
+            'make a study file for John 3:16',
+            'make a study file about this passage',
+            'make a study on it',
+            'make a study file that explains John 3',
+            'make a study file for John 3:16 like that',
+            'save that as a study file and add a diagram',
+            'save that as a study file with questions',
+            'translate that into a study file',
+            'how do I save this as a study file?',
+            'can I save that as a study file',
+            'save that as a note',
+            'save that study',
+            'keep this',
+            '/study that',
+            '',
+            `save that as a study file ${'please '.repeat(20)}`,
+        ]) {
+            expect(readKeepAnswerAsk(line), line).toBe(false);
+        }
+    });
+
+    it('is said on the ask with the marker the window reads', () => {
+        expect(STUDY_KEEP_ANSWER_HINT).toContain('`content` "@answer"');
+        expect(STUDY_KEEP_ANSWER_HINT).toContain('`append` "@answer"');
+    });
+});
+
+describe('toKeptAnswerDraftArgs', () => {
+    const answer = `# God So Loved\n\n${LONG_ANSWER}\n\nWould you like me to say more?`;
+
+    it("puts the answer in a new study's place of whatever the model wrote", () => {
+        expect(
+            toKeptAnswerDraftArgs(
+                {
+                    action: 'draft',
+                    ref: 'John 3:16',
+                    title: 'God So Loved',
+                    bible: 'KJV',
+                    content: '## Background\n\nA study of its own.',
+                    section: 'Background',
+                },
+                answer,
+            ),
+        ).toEqual({
+            action: 'draft',
+            ref: 'John 3:16',
+            title: 'God So Loved',
+            bible: 'KJV',
+            content: LONG_ANSWER,
+        });
+    });
+
+    it('adds it to a study file being changed, never as its whole text', () => {
+        expect(
+            toKeptAnswerDraftArgs(
+                {
+                    action: 'draft',
+                    file: 'JHN.3.16 Love.md',
+                    content: 'The whole study written again.',
+                },
+                answer,
+            ),
+        ).toEqual({
+            action: 'draft',
+            file: 'JHN.3.16 Love.md',
+            append: LONG_ANSWER,
+        });
+        expect(
+            toKeptAnswerDraftArgs(
+                {
+                    action: 'draft',
+                    file: 'JHN.3.16 Love.md',
+                    section: 'Questions',
+                    append: 'Words of its own.',
+                },
+                answer,
+            ),
+        ).toEqual({
+            action: 'draft',
+            file: 'JHN.3.16 Love.md',
+            section: 'Questions',
+            append: LONG_ANSWER,
+        });
+    });
+});
+
+describe('pickKeptAnswerLanguage', () => {
+    // Opaque to it: the language the line asking to keep was typed in.
+    const TYPED = 'typed-language';
+
+    it("is the answer's own, whatever the keep line was typed in", () => {
+        expect(pickKeptAnswerLanguage(LONG_ANSWER, TYPED, 'en')).toBe('en');
+    });
+
+    it("is the typed line's when the answer's cannot be told", () => {
+        expect(pickKeptAnswerLanguage('1. 2. 3.', TYPED, 'en')).toBe(TYPED);
+        // Runic: a script no language here claims.
+        const runic = String.fromCodePoint(0x16a0, 0x16a2, 0x16a6, 0x16b1);
+        expect(
+            pickKeptAnswerLanguage(`${runic} ${runic} ${runic}`, TYPED, 'en'),
+        ).toBe(TYPED);
+    });
+});
+
+describe('checkIsStudyAnswerMarker', () => {
+    it('reads @answer however it is quoted or cased', () => {
+        for (const value of [
+            '@answer',
+            ' "@answer" ',
+            '`@Answer`',
+            "'@ANSWER'",
+        ]) {
+            expect(checkIsStudyAnswerMarker(value)).toBe(true);
+        }
+        for (const value of ['@answer above', 'answer', '', null, 3]) {
+            expect(checkIsStudyAnswerMarker(value)).toBe(false);
+        }
+    });
+
+    it('is named in every prompt a study is drafted under', () => {
+        for (const prompt of [STUDY_SYSTEM_PROMPT, STUDY_FILE_PROMPT]) {
+            expect(prompt).toContain('put exactly "@answer" as `content`');
+        }
+    });
+});
+
+describe('toStudyContentFromAnswer', () => {
+    it('leaves the title to the file and keeps one # title in it', () => {
+        expect(
+            toStudyContentFromAnswer(
+                '# God So Loved\r\n\r\nWords.\r\n\r\n# Born again\r\n\r\nMore.',
+            ),
+        ).toBe('Words.\n\n## Born again\n\nMore.');
+    });
+
+    it('never touches a # inside a code block or a deeper heading', () => {
+        const kept =
+            'Words.\n\n```mermaid\nflowchart TD\n# a comment\n```\n\n## Kept';
+        expect(toStudyContentFromAnswer(kept)).toBe(kept);
+    });
+
+    it('takes off the offer the answer ended on, and nothing else', () => {
+        expect(
+            toStudyContentFromAnswer(
+                `${LONG_ANSWER}\n\nWould you like me to draw a timeline of it?\n`,
+            ),
+        ).toBe(LONG_ANSWER);
+        expect(
+            toStudyContentFromAnswer(
+                `${LONG_ANSWER}\n\nLet me know if you want more.`,
+            ),
+        ).toBe(LONG_ANSWER);
+        // A question of the study's own stays, and so does one alone.
+        const asked = `${LONG_ANSWER}\n\nDo you believe it today?`;
+        expect(toStudyContentFromAnswer(asked)).toBe(asked);
+        expect(toStudyContentFromAnswer('Would you like me to say more?')).toBe(
+            'Would you like me to say more?',
         );
     });
 });

@@ -457,6 +457,22 @@ export const STUDY_CONTENT_RULES =
     'their Bible, and inside a sentence names it.';
 
 /**
+ * What a model writes for "the answer above" (2026-11-11, EC-466): asked to
+ * save an answer it already gave as a study file, it had written a whole
+ * study again -- the tokens paid twice, and on a small model a study
+ * other than the one the person had read. The window puts the answer in
+ * for this word (`runStudyDraft`), word for word.
+ */
+export const STUDY_ANSWER_MARKER = '@answer';
+
+/** Said wherever a study is drafted: `STUDY_FILE_PROMPT` and the study ask's. */
+export const STUDY_KEEP_ANSWER_RULE =
+    'To keep an answer you already gave in this chat (save it, keep that, ' +
+    'make this a study file, add it to my study), never write it again: ' +
+    `put exactly "${STUDY_ANSWER_MARKER}" as \`content\` (or \`append\`) ` +
+    'and the app puts in your last answer word for word.';
+
+/**
  * What a Resources, Bible Reader or lookup conversation tells its model
  * about a study FILE, beside `NOTE_CREATE_PROMPT` (EC-464): those asks are
  * offered `owa_resource_file`, whose `draft` writes nothing -- the person
@@ -467,7 +483,7 @@ export const STUDY_FILE_PROMPT =
     'a Markdown file, not a note -- call owa_resource_file action "draft" ' +
     'at once with `ref` (the passage), a 2-6 word `title` and the whole ' +
     'study as Markdown `content`; never ask what to write. ' +
-    `${STUDY_CONTENT_RULES} ` +
+    `${STUDY_CONTENT_RULES} ${STUDY_KEEP_ANSWER_RULE} ` +
     'It saves NOTHING: tell them to press Create under your answer, or ' +
     'Preview to see it with its diagrams; never paste it. To change a ' +
     'study file in Resources → Default, `read` it, then `draft` with ' +

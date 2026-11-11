@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     RETRY_APPROACH_LIST,
     countRetryAttempt,
+    findFirstTryQuestion,
     findRetryQuestion,
     genRetryAskHint,
     listRetryableAnswerIds,
@@ -122,6 +123,32 @@ describe('the question a Retry asks again', () => {
         ];
         expect(countRetryAttempt(messages, 'How do I add a song?')).toBe(2);
         expect(countRetryAttempt([], 'anything')).toBe(1);
+    });
+
+    it('is first asked above the tries before it (EC-466)', () => {
+        const messages = [
+            genMessage(1, 'you', 'Explain John 3:16'),
+            genMessage(2, 'bot', 'God so loved the world.'),
+            genMessage(3, 'you', 'save that as a study file'),
+            genMessage(4, 'bot', 'Your study is ready: press Create.'),
+            genMessage(5, 'you', ' save that as a study file '),
+            genMessage(6, 'bot', 'Sorry.', { isFollowUp: true }),
+            genMessage(7, 'bot', 'Your answer is ready: press Create.'),
+            genMessage(8, 'you', 'save that as a study file'),
+            genMessage(9, 'bot', 'Ready again.'),
+        ];
+        expect(findFirstTryQuestion(messages, messages[7]).id).toBe(3);
+        expect(findFirstTryQuestion(messages, messages[2]).id).toBe(3);
+        // Other words between are another question, never the same one.
+        const asked = [
+            genMessage(1, 'you', 'save that as a study file'),
+            genMessage(2, 'bot', 'Ready.'),
+            genMessage(3, 'you', 'Explain it more simply'),
+            genMessage(4, 'bot', 'God loves you.'),
+            genMessage(5, 'you', 'save that as a study file'),
+        ];
+        expect(findFirstTryQuestion(asked, asked[4]).id).toBe(5);
+        expect(findFirstTryQuestion(asked, asked[0]).id).toBe(1);
     });
 });
 

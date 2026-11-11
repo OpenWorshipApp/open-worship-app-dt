@@ -188,6 +188,7 @@ import {
 import { toAnswerQuoteText } from './answerQuoteHelpers';
 import {
     countRetryAttempt,
+    findFirstTryQuestion,
     findRetryQuestion,
     genRetryAskHint,
     listRetryableAnswerIds,
@@ -632,9 +633,12 @@ import {
     STUDY_PREVIEW_TOOL_NAME,
     STUDY_RENAME_TOOL_NAME,
     clearStudyRenameWait,
+    findStudyAnswerAbove,
     genStudyDraftActions,
     keepDraftedStudy,
+    pickKeptAnswerLanguage,
     readDraftedStudy,
+    readKeepAnswerAsk,
     readStudyFileAsk,
     setStudyRenameWait,
     takeDraftedStudy,
@@ -8178,10 +8182,14 @@ export default function ChatbotAppComp() {
                 // person's, maybe half a sentence in -- is left as it is.
                 // `avoid`: who wrote the answer being retried -- put last
                 // in Auto's line for this one question (`toRetryPicks`).
+                // `questionId`: the question asked again -- its FIRST
+                // asking -- so what its "that" pointed at is read above it
+                // (EC-466).
                 retry?: {
                     attempt: number;
                     hint: string;
                     avoid?: RetryAnsweredByType;
+                    questionId?: number;
                 };
                 attachments?: ChatAttachmentType[];
                 // A deterministic menu for a local flow whose model answer
@@ -9695,6 +9703,21 @@ export default function ChatbotAppComp() {
                     return message.isFollowUp !== true;
                 })
                 .map(toHistoryTurn);
+            // What "save that as a study file" keeps, word for word: the
+            // history above is cut short, and a model asked to keep an
+            // answer had written a study of its own again (EC-466). A
+            // Retry's "that" is above the question it asks again.
+            const studyAnswerAbove = findStudyAnswerAbove(priorMessages, {
+                beforeId: retry?.questionId,
+            });
+            // Words that keep the NEWEST answer as it is: the window puts
+            // it in whatever the model writes.
+            const isKeepAnswerAsk =
+                readKeepAnswerAsk(trimmedAsked) &&
+                findStudyAnswerAbove(priorMessages, {
+                    beforeId: retry?.questionId,
+                    isNewestOnly: true,
+                }) !== null;
             if (!withoutEcho) {
                 addMessage(askedSessionId, {
                     author: 'you',
@@ -11040,9 +11063,29 @@ export default function ChatbotAppComp() {
                                     : {}),
                                 // The study's passage is quoted from a
                                 // Bible in the language it is written in,
-                                // English included.
+                                // English included -- a kept answer's own
+                                // (EC-466).
                                 ...(isStudyAsk
-                                    ? { study: { verseLang: replyLang } }
+                                    ? {
+                                          study: {
+                                              verseLang:
+                                                  isKeepAnswerAsk &&
+                                                  studyAnswerAbove !== null
+                                                      ? pickKeptAnswerLanguage(
+                                                            studyAnswerAbove,
+                                                            replyLang,
+                                                        )
+                                                      : replyLang,
+                                          },
+                                      }
+                                    : {}),
+                                // What a draft's `@answer` is, and kept
+                                // whatever the model writes (EC-466).
+                                ...(studyAnswerAbove === null
+                                    ? {}
+                                    : { answerAbove: studyAnswerAbove }),
+                                ...(isKeepAnswerAsk
+                                    ? { keepAnswer: true }
                                     : {}),
                                 ...(isSlideDocAsk
                                     ? { slide: { files: slideAskFiles } }
@@ -12182,6 +12225,7 @@ export default function ChatbotAppComp() {
                 return;
             }
             const attempt = countRetryAttempt(retriedMessages, question.text);
+            const firstAsked = findFirstTryQuestion(retriedMessages, question);
             // Someone else answers this once (`toRetryPicks` in the ask):
             // who wrote it, as the answer keeps it. On a paid key that is
             // another of its models, handed to the ask alone -- the tab's
@@ -12223,6 +12267,7 @@ export default function ChatbotAppComp() {
                         checkIsLastAnswer(retriedMessages, answerId),
                     ),
                     ...(avoid === undefined ? {} : { avoid }),
+                    questionId: firstAsked.id,
                 },
                 ...(otherModel === null ? {} : { model: otherModel.id }),
                 attachments: reused,

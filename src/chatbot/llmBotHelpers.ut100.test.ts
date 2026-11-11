@@ -116,6 +116,10 @@ import { FLOW_SYSTEM_PROMPT } from './flowChatHelpers';
 import {
     STUDY_CREATE_TOOL_NAME,
     STUDY_HELD_NOTE,
+    STUDY_KEEP_ANSWER_HINT,
+    STUDY_KEPT_ANSWER_CHANGE_NOTE,
+    STUDY_KEPT_ANSWER_NOTE,
+    STUDY_NO_ANSWER_REFUSAL,
     STUDY_PREVIEW_TOOL_NAME,
     STUDY_RENAME_TOOL_NAME,
     STUDY_SAVE_MODEL_REFUSAL,
@@ -330,6 +334,287 @@ describe('a study file', () => {
             ['Preview', STUDY_PREVIEW_TOOL_NAME],
             ['Change the name', STUDY_RENAME_TOOL_NAME],
         ]);
+    });
+
+    // EC-466: "save that as a study file" keeps the answer that was read.
+    const ANSWER_ABOVE =
+        '# God So Loved\n\nJohn 3:16 tells why Jesus came: God gave his ' +
+        'only Son, so that whoever believes has eternal life.\n\n' +
+        'Would you like me to draw a timeline of it?';
+    const ANSWER_BODY =
+        'John 3:16 tells why Jesus came: God gave his only Son, so that ' +
+        'whoever believes has eternal life.';
+
+    test('@answer is the answer above, put in word for word by the window', async () => {
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: false,
+            name: 'JHN.3.16 God So Loved.md',
+            passage: 'John 3:16',
+            bible: 'KJV',
+            diagramCount: 0,
+            warnings: [],
+            content: `# God So Loved\n\n${ANSWER_BODY}`,
+        });
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    ref: 'John 3:16',
+                    title: 'God So Loved',
+                    content: '@answer',
+                },
+            }),
+            anthropicText('It is drafted. Press Create to save it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'save that as a study file',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { answerAbove: ANSWER_ABOVE },
+        );
+
+        expect(fake.toolCallList).toHaveLength(1);
+        expect(fake.toolCallList[0].args).toEqual({
+            action: 'draft',
+            ref: 'John 3:16',
+            title: 'God So Loved',
+            content: ANSWER_BODY,
+        });
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).toContain(STUDY_HELD_NOTE);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Create "JHN.3.16 God So Loved.md"',
+        );
+    });
+
+    test('@answer appended to a study file is the answer above too', async () => {
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.16 God So Loved.md',
+            file: 'JHN.3.16 God So Loved.md',
+            hash: 'h-1',
+            passage: 'John 3:16',
+            bible: 'KJV',
+            diagramCount: 0,
+            change: 'added at the end',
+            warnings: [],
+            content: `# God So Loved\n\nWords.\n\n${ANSWER_BODY}`,
+        });
+        useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: 'JHN.3.16 God So Loved.md',
+                    append: '"@answer"',
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        await askLlmBot(
+            'add that to my study file',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { answerAbove: ANSWER_ABOVE },
+        );
+
+        expect(fake.toolCallList).toHaveLength(1);
+        expect(fake.toolCallList[0].args.append).toBe(ANSWER_BODY);
+    });
+
+    test('@answer with no answer above is refused and nothing is drafted', async () => {
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    ref: 'John 3:16',
+                    title: 'God So Loved',
+                    content: '@answer',
+                },
+            }),
+            anthropicText('Which passage shall I write about?'),
+        ]);
+
+        const answer = await askLlmBot(
+            'save that as a study file',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        expect(readToolResults(sentList[1])).toEqual([
+            `Tool refused: ${STUDY_NO_ANSWER_REFUSAL}`,
+        ]);
+        expect(fake.toolCallList).toEqual([]);
+        expect(answer.actions ?? []).toEqual([]);
+    });
+
+    // Seen live: told only the marker, gemma4:cloud drafted a study of its
+    // own under "save that as a study file". Words read so are the window's.
+    function readAskedText(sent: any): string {
+        const last = sent.messages[sent.messages.length - 1];
+        return typeof last.content === 'string'
+            ? last.content
+            : last.content
+                  .filter((block: any) => {
+                      return block.type === 'text';
+                  })
+                  .map((block: any) => {
+                      return block.text;
+                  })
+                  .join('\n');
+    }
+
+    test('words that keep the answer put it in whatever the model wrote, and the model is told so', async () => {
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: false,
+            name: 'JHN.3.16 God So Loved.md',
+            passage: 'John 3:16',
+            bible: 'KJV',
+            diagramCount: 0,
+            warnings: [],
+            content: `# God So Loved\n\n${ANSWER_BODY}`,
+        });
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    ref: 'John 3:16',
+                    title: 'God So Loved',
+                    content: '## Background\n\nA study of its own.',
+                },
+            }),
+            anthropicText('Your answer is ready. Press Create to save it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'save that as a study file',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { study: {}, answerAbove: ANSWER_ABOVE, keepAnswer: true },
+        );
+
+        expect(readAskedText(sentList[0])).toContain(STUDY_KEEP_ANSWER_HINT);
+        expect(fake.toolCallList).toHaveLength(1);
+        expect(fake.toolCallList[0].args).toEqual({
+            action: 'draft',
+            ref: 'John 3:16',
+            title: 'God So Loved',
+            content: ANSWER_BODY,
+        });
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).toContain(STUDY_KEPT_ANSWER_NOTE);
+        expect(seen).not.toContain(STUDY_HELD_NOTE);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Create "JHN.3.16 God So Loved.md"',
+        );
+    });
+
+    test('kept into a study file being changed, the answer is added at its end, never its whole text', async () => {
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.16 God So Loved.md',
+            file: 'JHN.3.16 God So Loved.md',
+            hash: 'h-1',
+            passage: 'John 3:16',
+            bible: 'KJV',
+            diagramCount: 0,
+            change: 'added at the end',
+            warnings: [],
+            content: `# God So Loved\n\nWords.\n\n${ANSWER_BODY}`,
+        });
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: 'JHN.3.16 God So Loved.md',
+                    content: 'The whole study written again.',
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        await askLlmBot(
+            'add that to my study',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { study: {}, answerAbove: ANSWER_ABOVE, keepAnswer: true },
+        );
+
+        expect(fake.toolCallList[0].args).toEqual({
+            action: 'draft',
+            file: 'JHN.3.16 God So Loved.md',
+            append: ANSWER_BODY,
+        });
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).toContain(STUDY_KEPT_ANSWER_CHANGE_NOTE);
+    });
+
+    test("without words that keep it, the model's own study stands and no hint rides the ask", async () => {
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolResultMap.owa_resource_file = JSON.stringify({
+            drafted: true,
+            isChange: false,
+            name: 'JHN.3.16 God So Loved.md',
+            passage: 'John 3:16',
+            bible: 'KJV',
+            diagramCount: 0,
+            warnings: [],
+            content: '# God So Loved\n\nA study of its own.',
+        });
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    ref: 'John 3:16',
+                    title: 'God So Loved',
+                    content: 'A study of its own.',
+                },
+            }),
+            anthropicText('Press Create to save it.'),
+        ]);
+
+        await askLlmBot(
+            'make a study file for John 3:16',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { study: {}, answerAbove: ANSWER_ABOVE },
+        );
+
+        expect(readAskedText(sentList[0])).not.toContain(
+            STUDY_KEEP_ANSWER_HINT,
+        );
+        expect(fake.toolCallList[0].args.content).toBe('A study of its own.');
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).toContain(STUDY_HELD_NOTE);
     });
 });
 

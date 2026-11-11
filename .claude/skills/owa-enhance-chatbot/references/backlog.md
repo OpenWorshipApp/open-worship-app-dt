@@ -10910,7 +10910,7 @@ It takes the ordinary route, and `owa_resource_file draft` is offered only
 when the tab is a Bible Reader, Resources or lookup chat. Each language's
 words for making a study file belong in its own data.
 
-### EC-466 — "save that as a study file" under an answer writes the study again — `open`
+### EC-466 — "save that as a study file" under an answer writes the study again — `done` 2026-11-11, seen in the window
 
 When a passage chat has already explained a passage and the person types
 _save it as a study file_, the model writes a whole study again into
@@ -10918,6 +10918,57 @@ _save it as a study file_, the model writes a whole study again into
 gives a different study from the one they read. The window holds the
 answer's words, so a draft built from the answer above would cost one short
 call: the passage and title from the model, the body from the answer.
+
+**A prompt rule first, and it did not hold.** `STUDY_KEEP_ANSWER_RULE`
+rode `STUDY_FILE_PROMPT` and the study ask's prompt: a `content` or
+`append` of `@answer` (`STUDY_ANSWER_MARKER`) is put in by the window
+(`toStudyContentFromAnswer`, the answer's own words without its offer
+line), and `@answer` with no answer above is refused
+(`STUDY_NO_ANSWER_REFUSAL`). Asked in a Bible Reader tab (English app, the
+Khmer Bible ពគប) on Auto, gemma4:cloud explained John 3:16 in Khmer. Then,
+asked _save that as a study file_, it drafted a new study with three
+diagrams anyway: 13.5k tokens, and not the answer the person had read.
+
+**So the window keeps it** (`studyFileChatHelpers.ts`, `llmBotHelpers.ts`):
+
+- `readKeepAnswerAsk` reads a short line (120 letters at most) that keeps
+  an answer: a keep verb, a study word, and _that_ / _this_ / _it_ / _your
+  answer_ / _what you said_ / _above_, or _save as …_. It never reads a
+  line that asks for more (_with a diagram_, _translated_, _shorter_), a
+  topic (_about that_, _like that_), a how-to, a note, or a relative
+  _that_ (_a study file that explains_). 14 lines that keep and 16 that do
+  not are its test.
+- Only when the NEWEST answer is a real one does the ask carry `keepAnswer`
+  (`findStudyAnswerAbove` with `isNewestOnly`: not a study card, not a
+  short line, the window's follow-ups stepped over). `STUDY_KEEP_ANSWER_HINT`
+  rides the ask, and `runStudyDraft` puts the answer in whatever the model
+  wrote (`toKeptAnswerDraftArgs`): a new study's `content`, or with `file`
+  an `append` (at the end of `section` when named), never the whole file
+  replaced.
+- The model is shown `STUDY_KEPT_ANSWER_NOTE` (a change:
+  `STUDY_KEPT_ANSWER_CHANGE_NOTE`): the answer is ready, press Create (or
+  Save changes), no diagram named. A kept diagram that will not parse is
+  dropped at once, never sent back to be fixed.
+- The passage is quoted from a Bible in the ANSWER's language
+  (`pickKeptAnswerLanguage`), not the typed line's. Typed in English under
+  the Khmer answer, it had come from the Amplified.
+- A Retry reads "that" above the question's FIRST asking (`retry.questionId`,
+  `findFirstTryQuestion` in `answerRetryHelpers.ts`). The retried words land
+  at the end of the tab, under the earlier try's study card; a Retry of a
+  Retry had found that card as "that".
+
+Seen in the window 2026-11-11, Auto → OWA Shared, nothing saved. The Retry
+of the line (Gemma 4 31b) held the Khmer answer word for word, under John
+3:16 from the Amplified. With the last two fixes, the Retry of that Retry
+(gemma4:cloud) held it word for word under the verse from ពគប, drawn as
+យ៉ូហាន ៣:១៦. Each reply was one sentence: _your answer is ready as a study
+file, press Create_. They took 6.0k and 6.2k tokens, against 13.5k for the
+study written again. The card still reads _· 0 diagrams_ for a kept answer:
+true, and left alone, because a line without the count would be a new label
+in all 87 packages. The kept answer holds a Thai word its model wrote into
+the Khmer (กล่าวว่า): EC-495. Tests: `studyFileChatHelpers.test.ts` (+18),
+`llmBotHelpers.ut100.test.ts` (+6, through the loop) and
+`answerRetryHelpers.test.ts` (+1).
 
 ### EC-467 — a pressed question naming a widget went to the foreground ask — `done`
 
@@ -11763,3 +11814,24 @@ translation into a turned-off or missing language could make the same
 offer: **Turn on** or **Install**, then translate. Reading a turned-off
 plugin's files behind the person's back is not the fix: turned off means
 not used.
+
+### EC-495 — an English question in an English app was answered in Khmer, under a Khmer Bible in the Reader — open
+
+Found 2026-11-11 setting up EC-466's run. The app was in English, a Bible
+Reader tab was on the Khmer Bible ពគប (BFBS 1954), and _Explain John 3:16
+in simple words_ was typed in English. gemma4:cloud answered wholly in
+Khmer: the verse quoted from the Reader's Bible and the explanation in
+Khmer. Nothing told it which language. `genReplyLanguageLine` adds no line
+for English in an English app, and the passage it was handed was Khmer.
+The answer also held a Thai word (กล่าวว่า, "said") inside its Khmer, and
+the English window kept it: `dropThirdScriptLetters` cleans an answer only
+in a window shown in another language.
+
+Two things to try:
+
+- a language line for English too when the ask carries a passage in
+  another language (a Reader, lookup or Resources ask on a non-English
+  Bible);
+- the third-script cleaning read against the ANSWER's main script,
+  whatever the window's language, keeping what the passage itself holds
+  (`AnswerKeepType`).

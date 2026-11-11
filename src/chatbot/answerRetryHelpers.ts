@@ -132,6 +132,35 @@ export function countRetryAttempt(
     );
 }
 
+/**
+ * The FIRST asking of a question tried again. A Retry asks the words once
+ * more at the end of the tab, so an earlier try is the same words right
+ * above, with only answers between. What its "that" points at is above the
+ * first: a Retry of a Retry of _save that as a study file_ had read the
+ * study card the first try drew as "that" (EC-466).
+ */
+export function findFirstTryQuestion(
+    messages: readonly ChatMessageType[],
+    question: ChatMessageType,
+): ChatMessageType {
+    const wanted = question.text.trim();
+    const at = messages.findIndex((message) => {
+        return message.id === question.id;
+    });
+    let first = question;
+    for (let index = at - 1; index >= 0; index--) {
+        const message = messages[index];
+        if (message.author !== 'you') {
+            continue;
+        }
+        if (message.text.trim() !== wanted) {
+            break;
+        }
+        first = message;
+    }
+    return first;
+}
+
 // Another way in for each try, in turn. Worded for any ask -- an app
 // question, a note, a song, a passage -- because a retry can be pressed
 // under any of them. The first asks for another ROUTE: measured live

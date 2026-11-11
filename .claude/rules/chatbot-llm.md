@@ -1260,6 +1260,28 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   said _press Create_ and named only the prayer, while the draft had also
   put back a section saved a moment before (the attachment's stale words,
   `chatbot-files-report.md`).
+  **An answer kept as a study is that answer, word for word** (2026-11-11,
+  `EC-466`). The prompts say how to keep one (`STUDY_KEEP_ANSWER_RULE`: a
+  `content` or `append` of `@answer`, put in by the window,
+  `toStudyContentFromAnswer`), and that alone did not hold: asked _save that
+  as a study file_ under its own explanation, gemma4:cloud wrote a study of
+  its own again, three diagrams and 13.5k tokens. So the window keeps it. A
+  short line that keeps an answer (`readKeepAnswerAsk`: a keep verb, a study
+  word, and _that_, _this_, _your answer_ or _above_, or _save as …_; never
+  a line asking for more, a topic -- _about that_ -- a how-to or a note)
+  under a real answer (the NEWEST: `findStudyAnswerAbove` with
+  `isNewestOnly`, never a study card or a short line) carries `keepAnswer`.
+  The ask then rides `STUDY_KEEP_ANSWER_HINT`, and `runStudyDraft` puts the
+  answer in whatever the model wrote (`toKeptAnswerDraftArgs`: a new
+  study's `content`, or an `append` to a `file`, at the end of `section`
+  when named -- never the whole file replaced). The model is told only that
+  it is ready (`STUDY_KEPT_ANSWER_NOTE`, `STUDY_KEPT_ANSWER_CHANGE_NOTE`),
+  and a kept diagram that will not parse is dropped, never sent back. Its
+  passage is quoted in the ANSWER's language, not the typed line's
+  (`pickKeptAnswerLanguage`). A Retry reads "that" above the question's
+  first asking (`retry.questionId`, `findFirstTryQuestion`): retried words
+  land at the end of the tab, under the earlier try's card. Seen in the
+  window: the answer kept for 6k tokens, with a one-sentence reply.
   **A study is TRANSLATED by the window, never by the model** (2026-11-10,
   `EC-478`; the user, a Khmer-only NEW file drafted for _translate all to
   khmer and then append the translated content to new pages_, its four

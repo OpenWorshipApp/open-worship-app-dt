@@ -251,15 +251,20 @@ import {
 } from './noteCreatePromptHelpers';
 import {
     STUDY_ASK_KIND,
+    STUDY_KEEP_ANSWER_HINT,
     STUDY_MAX_TOOL_ROUNDS,
+    STUDY_NO_ANSWER_REFUSAL,
     STUDY_SAVE_MODEL_REFUSAL,
     STUDY_STOPPED_TEXT,
     STUDY_SYSTEM_PROMPT,
     type DraftedStudyType,
+    checkIsStudyAnswerMarker,
     genStudyDraftActions,
     keepDraftedStudy,
     readDraftedStudy,
+    toKeptAnswerDraftArgs,
     toModelDraftText,
+    toStudyContentFromAnswer,
 } from './studyFileChatHelpers';
 import {
     checkStudyDiagram,
@@ -2242,6 +2247,16 @@ type ToolWatchType = {
     /** A draft's diagrams sent back once already to be fixed. */
     isStudyDiagramRetried: boolean;
     /**
+     * The tab's newest answer, as the person read it (`AskExtraType.
+     * answerAbove`): what a draft's `@answer` is (EC-466).
+     */
+    answerAbove: string | null;
+    /**
+     * The ask was read as keeping that answer as a study file
+     * (`AskExtraType.keepAnswer`): a draft gets it whatever the model wrote.
+     */
+    isKeepAnswerAsk: boolean;
+    /**
      * The window's translator for a study file (EC-478), handed in by the
      * ask (`AskExtraType.translateText`), and where its steps are said.
      */
@@ -2586,6 +2601,8 @@ export function genToolWatch(): ToolWatchType {
         draftedLyric: null,
         draftedStudy: null,
         isStudyDiagramRetried: false,
+        answerAbove: null,
+        isKeepAnswerAsk: false,
         translateText: null,
         onProgress: null,
         createdLyric: null,
@@ -3718,7 +3735,9 @@ async function findStudyVerseBible(
  * its diagrams are PARSED here with mermaid itself -- the one check the
  * developer's door lacks -- a failing one sent back once to be fixed and
  * dropped after; and the draft is held by the window, the model shown it
- * without the study it wrote.
+ * without the study it wrote. A `content` or `append` of `@answer` is the
+ * tab's newest answer, put in by the window word for word -- and on an ask
+ * read as keeping that answer it goes in whatever the model wrote (EC-466).
  */
 async function runStudyDraft(
     args: any,
@@ -3730,6 +3749,26 @@ async function runStudyDraft(
     isWindowMade = false,
 ) {
     let draftArgs = { ...(args ?? {}) };
+    // Asked to keep the answer above (`readKeepAnswerAsk`): it goes in
+    // whatever the model wrote -- told the marker in the prompt alone,
+    // gemma4:cloud drafted a study of its own again (EC-466).
+    const keptAnswer =
+        watch.isKeepAnswerAsk && !isWindowMade ? watch.answerAbove : null;
+    if (keptAnswer !== null) {
+        draftArgs = toKeptAnswerDraftArgs(draftArgs, keptAnswer);
+    }
+    for (const field of ['content', 'append'] as const) {
+        if (!checkIsStudyAnswerMarker(draftArgs[field])) {
+            continue;
+        }
+        if (watch.answerAbove === null) {
+            return `Tool refused: ${STUDY_NO_ANSWER_REFUSAL}`;
+        }
+        draftArgs = {
+            ...draftArgs,
+            [field]: toStudyContentFromAnswer(watch.answerAbove),
+        };
+    }
     if (
         (typeof args?.bible !== 'string' || args.bible === '') &&
         (typeof args?.file !== 'string' || args.file === '')
@@ -3770,7 +3809,12 @@ async function runStudyDraft(
         const failed = errors.flatMap((error, index) => {
             return error === null ? [] : [{ index, error }];
         });
-        if (failed.length > 0 && !watch.isStudyDiagramRetried) {
+        // A kept answer's diagram is not the model's to fix: dropped at once.
+        if (
+            failed.length > 0 &&
+            !watch.isStudyDiagramRetried &&
+            keptAnswer === null
+        ) {
             watch.isStudyDiagramRetried = true;
             return (
                 'Tool refused: ' +
@@ -3794,7 +3838,7 @@ async function runStudyDraft(
     }
     watch.draftedStudy = drafted;
     watch.isActedOn = true;
-    return toModelDraftText(text);
+    return toModelDraftText(text, keptAnswer !== null);
 }
 
 /** The window's translator: an ask in, its answer and who answered out. */
@@ -5114,14 +5158,6 @@ export type AskExtraType = {
         asks: ForegroundAskType[];
     };
     /**
-     * A question about a BIBLE NOTE attached to the tab
-     * (`noteChatHelpers.ts`): the ask carries each note as it reads now, as
-     * numbered blocks, and it goes out under `NOTE_SYSTEM_PROMPT` with
-     * `owa_note_edit` -- offered to no other question -- beside the guide's
-     * tools and the verse finder. `files`: what a `note` the model names is
-     * turned into (`resolveNoteEditTarget`).
-     */
-    /**
      * An ask for a STUDY FILE (`studyFileChatHelpers.ts`, EC-464), from any
      * tab: under `STUDY_SYSTEM_PROMPT` with the `study` tools. `verseLang`:
      * the language asked in, when not English -- the passage and its verses
@@ -5130,6 +5166,27 @@ export type AskExtraType = {
     study?: {
         verseLang?: string;
     };
+    /**
+     * The tab's newest answer as the person read it
+     * (`findStudyAnswerAbove`): asked to keep it as a study file, the model
+     * drafts with `content` (or `append`) `@answer` and this goes in, word
+     * for word (EC-466) -- never sent to the model.
+     */
+    answerAbove?: string;
+    /**
+     * The words were read as keeping that answer as a study file, as it is
+     * (`readKeepAnswerAsk`): the ask carries `STUDY_KEEP_ANSWER_HINT`, and
+     * a draft gets the answer whatever the model wrote as its text.
+     */
+    keepAnswer?: boolean;
+    /**
+     * A question about a BIBLE NOTE attached to the tab
+     * (`noteChatHelpers.ts`): the ask carries each note as it reads now, as
+     * numbered blocks, and it goes out under `NOTE_SYSTEM_PROMPT` with
+     * `owa_note_edit` -- offered to no other question -- beside the guide's
+     * tools and the verse finder. `files`: what a `note` the model names is
+     * turned into (`resolveNoteEditTarget`).
+     */
     note?: {
         files: NoteAskFileType[];
         // The language the question was asked in, when not English
@@ -7686,6 +7743,11 @@ async function askLlmBotAsWritten(
         seeded.flowFiles = extra?.flow?.files ?? null;
         seeded.foregroundAsks = extra?.foreground?.asks ?? null;
         seeded.noteFiles = extra?.note?.files ?? null;
+        seeded.answerAbove = extra?.answerAbove ?? null;
+        seeded.isKeepAnswerAsk =
+            extra?.keepAnswer === true &&
+            seeded.answerAbove !== null &&
+            extra?.isTranslation !== true;
         seeded.noteVerseLang =
             extra?.note?.verseLang ?? extra?.study?.verseLang ?? null;
         seeded.noteTyped = extra?.note?.typed ?? null;
@@ -7788,6 +7850,14 @@ async function askLlmBotAsWritten(
         asked =
             `${asked}\n\n${LESSON_MAKE_HINT}` +
             (lengthLine === null ? '' : `\n${lengthLine}`);
+    }
+    // "Save that as a study file" (EC-466): said on the ask itself, where a
+    // tool can draft one -- the prompt's rule alone was passed over.
+    if (
+        watch.isKeepAnswerAsk &&
+        modelTools.some((tool) => tool.name === RESOURCES_TOOL_NAME)
+    ) {
+        asked = `${asked}\n\n${STUDY_KEEP_ANSWER_HINT}`;
     }
     asked = toAskWithLanguage(asked, extra, appLang);
     const guardedExtra: AskExtraType = {

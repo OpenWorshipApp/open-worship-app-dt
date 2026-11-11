@@ -22,12 +22,19 @@
  * carries `STUDY_FILE_PROMPT` (`noteCreatePromptHelpers.ts`).
  */
 import {
+    STUDY_ANSWER_MARKER,
     STUDY_CONTENT_RULES,
     STUDY_FILE_PROMPT,
+    STUDY_KEEP_ANSWER_RULE,
 } from './noteCreatePromptHelpers';
-import { listAssistantLanguages } from './chatLangHelpers';
+import {
+    OTHER_CHAT_LANG_CODE,
+    detectTypedLanguage,
+    listAssistantLanguages,
+} from './chatLangHelpers';
+import type { ChatMessageType } from './chatSessionHelpers';
 
-export { STUDY_FILE_PROMPT };
+export { STUDY_ANSWER_MARKER, STUDY_FILE_PROMPT };
 
 export const STUDY_ASK_KIND = 'study';
 export const STUDY_MAX_TOOL_ROUNDS = 8;
@@ -47,7 +54,7 @@ export const STUDY_SYSTEM_PROMPT =
     '`content`; never ask what to write. First you may read the passage ' +
     'once with owa_lookup_record kind "verse" (`names` and `related` true) ' +
     'for its people, places and cross references. ' +
-    `${STUDY_CONTENT_RULES} ` +
+    `${STUDY_CONTENT_RULES} ${STUDY_KEEP_ANSWER_RULE} ` +
     'If draft refuses, fix what it says and call it again. The app saves ' +
     'NOTHING until they press Create under your answer: never say it is ' +
     'saved. Your answer: two or three sentences on what the study holds and ' +
@@ -174,19 +181,26 @@ export function readDraftedStudy(
 
 /**
  * The draft result as the model is shown it: everything but the study,
- * which is held by the window, and a note on what to do next.
+ * which is held by the window, and a note on what to do next -- the
+ * kept-answer note when the window put in the answer above (EC-466).
  */
-export function toModelDraftText(text: string) {
+export function toModelDraftText(text: string, isAnswerKept = false) {
     const result = parseJson(String(text ?? ''));
     if (result === null || typeof result.content !== 'string') {
         return text;
     }
     const { content, ...rest } = result;
+    const isChange = result.isChange === true;
     return JSON.stringify({
         ...rest,
         content: `[held by the window: ${content.length} characters]`,
-        note:
-            result.isChange === true ? STUDY_CHANGE_HELD_NOTE : STUDY_HELD_NOTE,
+        note: isAnswerKept
+            ? isChange
+                ? STUDY_KEPT_ANSWER_CHANGE_NOTE
+                : STUDY_KEPT_ANSWER_NOTE
+            : isChange
+              ? STUDY_CHANGE_HELD_NOTE
+              : STUDY_HELD_NOTE,
     });
 }
 
@@ -332,4 +346,263 @@ export function toStudyAsk(question: string, fileLanguageName: string | null) {
             ? ')'
             : ` Write the study file -- its title and every word of it -- in ${fileLanguageName}.)`)
     );
+}
+
+/** What the model is told when it writes `@answer` and none is held. */
+export const STUDY_NO_ANSWER_REFUSAL =
+    `There is no answer of yours above to put in for "${STUDY_ANSWER_MARKER}": ` +
+    'write the study itself as `content`.';
+
+// Shorter than this is a line, not a study: the window's own notices
+// ("That study file is not held any more …") are.
+const MIN_ANSWER_ABOVE_LENGTH = 120;
+
+const STUDY_CARD_TOOL_NAME_SET = new Set([
+    STUDY_CREATE_TOOL_NAME,
+    STUDY_PREVIEW_TOOL_NAME,
+    STUDY_RENAME_TOOL_NAME,
+]);
+
+/**
+ * The answer a "save that as a study file" means (EC-466): the newest in
+ * the tab that is the assistant's words -- never the window's follow-up to
+ * a thumb down, a study card (so a second ask still finds the answer that
+ * was read) or a line too short to be a study. Null when the tab holds
+ * none. `beforeId`: only what is above that message is looked at -- a
+ * Retry's question, so the answer it retries is not taken for the one its
+ * "that" pointed at. `isNewestOnly`: the newest of the assistant's own
+ * messages decides, and a study card or a short line there answers null --
+ * what the window keeps whatever the model writes must be the answer "that"
+ * can only mean.
+ */
+export function findStudyAnswerAbove(
+    messages: readonly ChatMessageType[],
+    options: { beforeId?: number; isNewestOnly?: boolean } = {},
+): string | null {
+    const beforeIndex =
+        options.beforeId === undefined
+            ? -1
+            : messages.findIndex((message) => {
+                  return message.id === options.beforeId;
+              });
+    const lastIndex = beforeIndex < 0 ? messages.length - 1 : beforeIndex - 1;
+    for (let index = lastIndex; index >= 0; index -= 1) {
+        const message = messages[index];
+        if (message.author !== 'bot' || message.isFollowUp === true) {
+            continue;
+        }
+        const text = String(message.text ?? '').trim();
+        if (
+            (message.actions ?? []).some((action) => {
+                return STUDY_CARD_TOOL_NAME_SET.has(action.toolName ?? '');
+            }) ||
+            text.length < MIN_ANSWER_ABOVE_LENGTH
+        ) {
+            if (options.isNewestOnly === true) {
+                return null;
+            }
+            continue;
+        }
+        return text;
+    }
+    return null;
+}
+
+// "Save that as a study file" (EC-466): a keeping word, the answer pointed
+// back at and a study word, and nothing more asked of it -- a line that also
+// asks for a change, a diagram or a translation is the model's to read.
+// English in code; another language's own words are EC-465's.
+const KEEP_VERB_PATTERN =
+    /\b(save|keep|store|put|turn|make|copy|convert|add|place)\b/i;
+// "that", "this", "it" -- never "this passage" or "that story", which name
+// what a NEW study is about, nor a study "that explains John 3" -- or the
+// answer itself.
+const ANSWER_POINTER_PATTERN = new RegExp(
+    [
+        String.raw`(?<!\b(?:stud(?:y|ies)|files?|resources?|markdown|documents?|pages?|sheets?|guides?)\s)` +
+            String.raw`\b(?:that|this|it|these|those)\b` +
+            String.raw`(?!\s+(?:passages?|verses?|chapters?|stor(?:y|ies)|books?|topics?|subjects?|psalms?|parables?|lessons?|sermons?|texts?|parts?|sections?|files?|stud(?:y|ies))\b)`,
+        String.raw`\b(?:your|the|last)\s+(?:last\s+)?(?:answer|reply|response|explanation|summary)\b`,
+        String.raw`\bwhat you (?:said|wrote|told me|explained|gave me)\b`,
+        String.raw`\babove\b`,
+    ].join('|'),
+    'i',
+);
+// "Save as a study file", the answer left unsaid.
+const KEEP_AS_PATTERN =
+    /^(?:(?:please|pls|can you|could you|would you)\s+)*(?:save|keep|store)\s+as\b/i;
+// What a new study is ABOUT or LIKE, not the answer kept: "a study about
+// this", "one for John 3 like that".
+const TOPIC_POINTER_PATTERN =
+    /\b(?:about|on|for|from|of|regarding|like|similar to)\s+(?:that|this|it|these|those)\b/i;
+const MORE_ASKED_PATTERN =
+    /\b(?:and|with|plus|also|but|then|except|translat\w*|diagrams?|charts?|mermaid|maps?|shorter|longer|simpler|more|less|expand\w*|rewrite|rephrase|improve|fix|change|edit|questions?|prayer)\b/i;
+const KEEP_HOW_TO_PATTERN =
+    /^\s*(?:how|where|what|why|when|which|is there|are there|can i|could i|do i|should i|may i)\b/i;
+const MAX_KEEP_ASK_LENGTH = 120;
+
+/**
+ * Whether a line asks to keep the answer above as a study file, as it is
+ * (EC-466). Told only to write `@answer`, gemma4:cloud drafted a study of
+ * its own again, so a line read so has the answer put in by the window
+ * whatever the model writes (`toKeptAnswerDraftArgs`).
+ */
+export function readKeepAnswerAsk(text: string) {
+    const line = String(text ?? '')
+        .trim()
+        .replace(/[.!?]+$/, '');
+    if (
+        line === '' ||
+        line.length > MAX_KEEP_ASK_LENGTH ||
+        line.startsWith('/') ||
+        KEEP_HOW_TO_PATTERN.test(line) ||
+        NOTE_WORD_PATTERN.test(line) ||
+        TOPIC_POINTER_PATTERN.test(line) ||
+        MORE_ASKED_PATTERN.test(line) ||
+        !KEEP_VERB_PATTERN.test(line) ||
+        !(STUDY_FILE_WORD_PATTERN.test(line) || STUDY_WORD_PATTERN.test(line))
+    ) {
+        return false;
+    }
+    return ANSWER_POINTER_PATTERN.test(line) || KEEP_AS_PATTERN.test(line);
+}
+
+/**
+ * Said on an ask read as keeping the answer above (`readKeepAnswerAsk`):
+ * the prompt's rule alone was passed over.
+ */
+export const STUDY_KEEP_ANSWER_HINT =
+    '(They ask to keep your last answer above as a study file, as it is: ' +
+    `call owa_resource_file draft once with \`content\` "${STUDY_ANSWER_MARKER}" ` +
+    '-- the app puts that answer in word for word -- the passage it is ' +
+    'about as `ref` and a 2-6 word `title` in the language of that answer; ' +
+    `to add it to a study file open here, \`file\` and \`append\` "${STUDY_ANSWER_MARKER}" ` +
+    'instead. Never write the study again.)';
+
+/**
+ * A draft's arguments with the answer above in place of whatever the model
+ * wrote (EC-466): a new study's `content`, or -- with `file`, a study file
+ * being changed -- words added at its end (or at the end of `section`),
+ * never its whole text replaced.
+ */
+export function toKeptAnswerDraftArgs(args: any, answer: string) {
+    const kept = toStudyContentFromAnswer(answer);
+    const { content: _content, append: _append, section, ...rest } = args ?? {};
+    if (typeof rest.file === 'string' && rest.file !== '') {
+        return {
+            ...rest,
+            ...(typeof section === 'string' && section !== ''
+                ? { section }
+                : {}),
+            append: kept,
+        };
+    }
+    return { ...rest, content: kept };
+}
+
+/**
+ * The language a kept answer's passage is quoted in (EC-466): the
+ * answer's own -- the answer IS the study -- whatever the line asking to
+ * keep it was typed in. Seen live: "save that as a study file" typed in
+ * English under a Khmer answer quoted John 3:16 from an English Bible over
+ * the Khmer words. The typed line's language when the answer's cannot be
+ * told, or is no language here.
+ */
+export function pickKeptAnswerLanguage(
+    answer: string,
+    typedLangCode: string,
+    appLangCode?: string,
+) {
+    const answerLangCode = detectTypedLanguage(answer, appLangCode);
+    return answerLangCode === null || answerLangCode === OTHER_CHAT_LANG_CODE
+        ? typedLangCode
+        : answerLangCode;
+}
+
+/**
+ * What the model sees in place of the held draft when the window put in the
+ * answer above (EC-466): what it wrote is not what is held, so it says only
+ * that the answer is kept -- a reply naming the diagrams it drew had
+ * described a study nobody would save.
+ */
+export const STUDY_KEPT_ANSWER_NOTE =
+    'Nothing is saved yet. The window put in your answer above, word for ' +
+    'word, as the study -- not anything you wrote for it -- and shows it ' +
+    'under your answer with Create, Preview and Change the name. Say in one ' +
+    'sentence that their answer is ready as a study file and tell them to ' +
+    'press Create to save it; name no section or diagram, never paste it.';
+
+export const STUDY_KEPT_ANSWER_CHANGE_NOTE =
+    'Nothing is saved yet. The window added your answer above, word for ' +
+    'word, to the study file -- not anything you wrote for it -- and shows ' +
+    'the change under your answer with Save changes and Preview. Say in one ' +
+    'sentence that their answer is added and tell them to press Save ' +
+    'changes to write it; never paste it.';
+
+/** Whether a model's `content` or `append` is the answer above. */
+export function checkIsStudyAnswerMarker(value: unknown) {
+    if (typeof value !== 'string') {
+        return false;
+    }
+    return (
+        value
+            .trim()
+            .replace(/^["'`]+|["'`]+$/g, '')
+            .trim()
+            .toLowerCase() === STUDY_ANSWER_MARKER
+    );
+}
+
+// A code block or a diagram: a `#` inside one is no heading.
+const ANSWER_FENCE_PATTERN = /^\s*(`{3,}|~{3,})/;
+// The offer a chat answer ends on, which a study file does not: "Would you
+// like me to …?". English only -- another language's stays.
+const ANSWER_OFFER_PATTERN =
+    /^(?:would you like|do you want me|shall i|should i|want me to|let me know if|if you(?:'d| would) like|i can also|feel free to)\b/i;
+const MAX_OFFER_LENGTH = 240;
+
+/**
+ * An answer as a study file's body (EC-466): its own `#` title left to the
+ * file's, every other `#` heading a level down -- a study has ONE `#` title,
+ * which `splitStudyTranslations` finds its translations by -- and the offer
+ * it ended on, a paragraph of its own, taken off. Nothing else is touched.
+ */
+export function toStudyContentFromAnswer(text: string) {
+    const lines = String(text ?? '')
+        .replace(/\r\n?/g, '\n')
+        .trim()
+        .split('\n');
+    if (lines.length > 0 && /^#\s/.test(lines[0])) {
+        lines.shift();
+    }
+    const outLines: string[] = [];
+    let fence: string | null = null;
+    for (const line of lines) {
+        const match = ANSWER_FENCE_PATTERN.exec(line);
+        if (match !== null) {
+            const mark = match[1][0];
+            if (fence === null) {
+                fence = mark;
+            } else if (fence === mark) {
+                fence = null;
+            }
+            outLines.push(line);
+            continue;
+        }
+        outLines.push(fence === null && /^#\s/.test(line) ? `#${line}` : line);
+    }
+    while (outLines.length > 0 && outLines[outLines.length - 1].trim() === '') {
+        outLines.pop();
+    }
+    const lastLine = (outLines[outLines.length - 1] ?? '').trim();
+    if (
+        fence === null &&
+        outLines.length > 2 &&
+        outLines[outLines.length - 2].trim() === '' &&
+        lastLine.length <= MAX_OFFER_LENGTH &&
+        ANSWER_OFFER_PATTERN.test(lastLine)
+    ) {
+        outLines.pop();
+    }
+    return outLines.join('\n').trim();
 }
