@@ -1140,7 +1140,23 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   empty note is empty while its window opens** (BN-87): the read before the
   ask had failed on a busy computer and the lesson went into a NEW note;
   an empty note's read is now worked out from its file
-  (`readBlankNoteFromFile`).
+  (`readBlankNoteFromFile`). **The window reads what the model would
+  otherwise make up** (BN-89, BN-91): in an empty note's lesson ask, the
+  first `owa_find_verse refs` naming one passage also reads the verses just
+  before it (`findVersesBeforeRef`). The model had invented backgrounds;
+  now it tells them from those words (`genVersesBeforeNote`). That read also
+  carries Scripture's own explanation of each KJV word its text holds that
+  a preacher stumbles on (`lessonWordGlossHelpers.ts`, eight at most), because
+  the commonest errors left were the model's memory of words: the hundred
+  pence as "a small amount". Such an entry is copied word for word wherever
+  it fits, so each one gives the unit AND how it counts, every sense the
+  Bible gives the word, or matches only the sense it gives, and it opens on
+  what corrects the commonest misreading (BN-92: "create" opened on Genesis
+  1:1 and was still read as "out of nothing"). The note over the list keeps
+  every point explaining its own verses: told only that a What it means
+  line says this of the words, a point holding none of them explained
+  nothing. Each line of a point also says what it may not add (BN-88), and
+  the Introduction is never "Have you ever" (BN-90).
 
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening

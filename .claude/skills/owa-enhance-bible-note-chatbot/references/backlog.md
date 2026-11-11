@@ -1216,7 +1216,110 @@ was seen and what was done.
   funeral sent the mourners home with a weekday task. The Introduction is
   an everyday scene or a question of the passage's own, never _Have you
   ever_; the Response says the big idea in new words; a funeral's This
-  week is a comfort to hold, never a task. ~1050 tokens.
+  week is a comfort to hold, never a task. ~1050 tokens. Seen on its run:
+  David's introduction "Imagine standing before a problem…", the funeral's
+  This week lines comforts ("When the house feels too quiet, sit for a
+  moment in the knowledge that God is with you"). Read blind (Sonnet
+  only, the Opus reader stalled twice): 20.54 -> 19.77, Best 8 -> 7. The
+  errors were the same kind as before (the hundred pence in two lessons,
+  "create" as making from nothing, Jesus called contrite), none in the
+  lines BN-90 changed. Within the reader's noise.
+- **BN-91 — the KJV words a preacher stumbles on, explained by Scripture**
+  (2026-11-11). After BN-86, the errors left were the model's memory of
+  words. The hundred pence of Matthew 18:28 was "a small amount a day's
+  wage might cover" in three runs of four, when a penny WAS a day's wage
+  (Matthew 20:2). The sling was "a shepherd's tool rather than a soldier's"
+  (Judges 20:16), and the priest and the Levite "the highest officials".
+  A table of 20 such words (`lessonWordGlossHelpers.ts`: penny and pence,
+  talent, mite and farthing, shekel, publican, Levite, priest, Samaritan,
+  Pharisee, scribe, hyssop, tabernacle, sling, cubit, leper, sackcloth,
+  uncircumcised, centurion, sabbath, bowels of mercies) gives each the verse
+  that says what it is. A new lesson's first passage read (BN-89's) carries
+  the entries whose words its text holds, eight at most, under a note
+  saying a What it means line says only this of them
+  (`findLessonWordGlosses`, `genLessonWordGlossNote`). Only words whose
+  meaning holds wherever they stand: "anoint" (a host's oil in Psalm 23:5)
+  and "firstborn" (Christ's place in Colossians 1) are left out. English
+  KJV words: another language's Bible matches none. The app's cross
+  references were looked at first: they are thematic (Matthew 18:28 leads
+  to Luke 7:41-43, the two debtors) and about 9 000 letters a passage, and
+  name no "penny a day".
+
+  The first run's David lesson copied an entry and got it wrong: "a shekel
+  is a weight of silver paid as money", said of Goliath's coat of brass. An
+  entry now gives every sense the Bible gives the word (the shekel: silver
+  weighed out as money, and the weight of Goliath's brass and iron), or
+  says where its sense holds (a priest "in Israel", a scribe "in the
+  Gospels"). Two words now match only in the sense their entry gives:
+  "tabernacle" in the singular (Peter's "three tabernacles" are booths),
+  and "bowels" only as "bowels of mercies" or "of compassion" (not Judas'
+  in Acts 1:18). That run was stopped and asked again.
+
+  The second run used the pence entry as a SUM: "a hundred pence was
+  roughly a labourer's pay for one day" (Matthew 18), and "pence is a
+  labourer's pay for one day" of the Samaritan's two pence. The old error
+  was gone and a worse one had taken its place. The entry now says how
+  pence count ("ONE penny was a labourer's pay for one day … so pence are
+  days' pay: two pence, two days' pay; a hundred pence, a hundred days'
+  pay"). Only those two lessons' passages hold the word, so only they were
+  asked again: "a hundred pence was only a hundred days' pay for a
+  labourer", "Two pence represents two days' pay". Seen elsewhere in the
+  run: "Hyssop is a plant dipped to sprinkle blood or water for cleansing
+  (Exodus 12:22; Numbers 19:18)", and the priest as "a son of Aaron who
+  offered sacrifices in Israel". The publican's line added "because they
+  were seen as traitors and extortionists", the model's own words beside
+  the entry's.
+- **BN-92 — the errors read again and again get Scripture beside them**
+  (2026-11-11). Every blind read since BN-82 was tallied for the errors in
+  its new lessons. Three came back read after read:
+  - Psalm 51:10's "create" as making "out of nothing" (four reads);
+  - the tormentors of Matthew 18:34 as "the spiritual agony of a life
+    lived without grace" (three);
+  - Saul's armour "too heavy" (two), where 17:39 says "I have not proved
+    them".
+
+  Nine entries join the table, each with the Bible's own words:
+  - create: "created the heaven and the earth", "created man", formed "of
+    the dust of the ground";
+  - span: "meted out heaven with the span";
+  - prove: to test, "prove me now herewith";
+  - tormentors: 18:34-35 quoted, "So likewise shall my heavenly Father do
+    also unto you";
+  - contrite: over sin, or crushed by trouble (Psalm 34:18) -- Jesus had
+    been called "the truly broken and contrite one";
+  - sacrifices of righteousness: Psalm 4:5, and named in Psalm 51:19 with
+    the burnt offerings;
+  - blot out: "I have blotted out, as a thick cloud, thy transgressions";
+  - a head anointed with oil: a host's honour to a guest, "My head with oil
+    thou didst not anoint" (Luke 7:46), against the shepherd's salve the
+    model remembered;
+  - "no more sea": the restless sea of Isaiah 57:20 and Revelation 13:1,
+    against John's island.
+
+  Each was checked against the app's KJV wherever the word appears.
+
+  Asked first on the eight asks whose passages hold one of the words:
+  - the shekel was right ("used for silver or metals like the brass and
+    iron in Goliath's armor");
+  - the tormentors were right ("Jesus warns that the heavenly Father will
+    do the same to those who do not forgive from their hearts");
+  - Psalm 51:19's sacrifices included "the burnt offerings mentioned in
+    verse 19".
+
+  Two things went wrong, and both were fixed:
+  - "create" still came out as "God's unique work of making something
+    where there was nothing before". The entry had opened on Genesis 1:1;
+    it now opens on the correction: "God's own work, and not only out of
+    nothing", man "of the dust of the ground", "I create Jerusalem a
+    rejoicing" (Isaiah 65:18).
+  - The Isaiah 40 lesson's last two points read "What it means: No
+    specific words in these verses require further explanation from
+    Scripture". The note over the list had said "a What it means line says
+    of them only this", and a point holding none of the words took that as
+    nothing to explain (0 such lines of 44 in BN-91's lessons, 2 of 12
+    here). The note now says that every point still explains the words and
+    pictures of its own verses. That changes every glossed passage read,
+    so the whole set is asked again.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

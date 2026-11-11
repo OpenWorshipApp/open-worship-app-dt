@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T06:48:54.784Z
+  modified: 2026-11-11T13:22:06.174Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -347,7 +347,23 @@ tool cutting, not the record. (21) **A busy computer is a test case**:
 another session's full test gate pegged the CPU, note windows took over
 20 s to open, and the window's read of an empty note failed. Seven
 lessons of twelve went into a NEW note (BN-87). The church machines this
-app is for are that slow on a normal day.
+app is for are that slow on a normal day. (22) **What the window gives as
+fact is copied word for word, wherever it fits**: the KJV word table's
+"penny, pence: a labourer's pay for one day" came back as "a hundred pence
+was roughly a labourer's pay for one day", and "a shekel is a weight of
+silver paid as money" was said of Goliath's coat of brass (BN-91). Each
+entry has to hold everywhere it can be copied to: give the unit AND how it
+counts ("ONE penny … two pence, two days' pay"), give every sense the Bible
+gives the word, or match only the sense the entry gives. Read a run's
+lessons for the table's own words before a blind read: both slips showed
+in the first lessons that used the entry. Two more from BN-92. An entry's
+FIRST words steer: "create: God's own work -- he created the heaven and
+the earth" still came out as "making something where there was nothing
+before", so the entry now opens on the correction ("not only out of
+nothing"). And a rule that limits a line to the list empties that line
+wherever the list has nothing: told "a What it means line says of them
+only this", a point with none of the words wrote "No specific words in
+these verses require further explanation".
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

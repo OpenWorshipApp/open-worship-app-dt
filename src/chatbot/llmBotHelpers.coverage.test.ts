@@ -1569,7 +1569,12 @@ describe('the Anthropic loop', () => {
         fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
         fake.toolResultMap.owa_find_verse = JSON.stringify({
             bible: 'KJV',
-            verses: [{ ref: 'Luke 10:25-37', text: '(25): And, behold…' }],
+            verses: [
+                {
+                    ref: 'Luke 10:25-37',
+                    text: '(35): he took out two pence, and gave them…',
+                },
+            ],
         });
         const read = (refs: string) => {
             return anthropicToolUse({
@@ -1609,12 +1614,17 @@ describe('the Anthropic loop', () => {
             'Luke 10:25-37; Luke 10:15-24',
             'Leviticus 19:18',
         ]);
-        expect(readToolResults(sentList[1])[0].content).toMatch(
+        const firstRead = readToolResults(sentList[1])[0].content;
+        expect(firstRead).toMatch(
             /^\(The window also read Luke 10:15-24, the verses just before/,
         );
-        expect(readToolResults(sentList[2])[0].content).not.toContain(
-            'The window also read',
+        // BN-91: the passage's KJV words, explained by Scripture.
+        expect(firstRead).toContain(
+            "- penny, pence: ONE penny was a labourer's pay for one day",
         );
+        const secondRead = readToolResults(sentList[2])[0].content;
+        expect(secondRead).not.toContain('The window also read');
+        expect(secondRead).not.toContain('as Scripture itself explains');
     });
 
     // BN-83 (2026-11-11): the sower sermon's points stopped at the thorns,

@@ -218,6 +218,10 @@ import {
     type NoteRewriteType,
 } from './noteChatHelpers';
 import {
+    findLessonWordGlosses,
+    genLessonWordGlossNote,
+} from './lessonWordGlossHelpers';
+import {
     FOREGROUND_ASK_KIND,
     FOREGROUND_EDIT_TOOL_NAME,
     FOREGROUND_MAX_TOOL_ROUNDS,
@@ -4418,6 +4422,7 @@ async function runMcpToolCall(
     // it too, for the background (BN-89, 2026-11-11): told to, the model did
     // in about half the lessons, and the rest made their background up.
     let versesBeforeRef: string | null = null;
+    let isLessonPassageRead = false;
     if (
         name === VERSE_FIND_TOOL_NAME &&
         watch.isBlankLesson &&
@@ -4425,6 +4430,7 @@ async function runMcpToolCall(
         typeof args?.refs === 'string'
     ) {
         watch.isLessonBeforeRead = true;
+        isLessonPassageRead = true;
         versesBeforeRef = findVersesBeforeRef(args.refs);
         if (versesBeforeRef !== null) {
             lyricEditArgs = {
@@ -4522,9 +4528,21 @@ async function runMcpToolCall(
             text = await callTool(name, calledArgs, signal, watch.windowAim);
         }
         applyToolWatch(watch, name, watchedArgs, text);
-        return versesBeforeRef === null
+        if (!isLessonPassageRead || text.startsWith('Tool ')) {
+            return text;
+        }
+        // What the verses before are for, and the words of the passage
+        // Scripture itself explains (BN-91: the hundred pence had been "a
+        // day's wage" from memory in three runs of four).
+        const lessonNotes = [
+            versesBeforeRef === null
+                ? null
+                : genVersesBeforeNote(versesBeforeRef),
+            genLessonWordGlossNote(findLessonWordGlosses(text)),
+        ].filter((note) => note !== null);
+        return lessonNotes.length === 0
             ? text
-            : `${genVersesBeforeNote(versesBeforeRef)}\n${text}`;
+            : `${lessonNotes.join('\n')}\n${text}`;
     } catch (error: any) {
         // ...except a stop, which is not a lookup the model can route around.
         // Handed back as text it would answer around it, spending another
