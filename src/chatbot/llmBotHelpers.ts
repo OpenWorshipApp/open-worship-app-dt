@@ -213,7 +213,12 @@ import {
     findNoteMisquotes,
     findTestamentSlips,
     findTokenAsWords,
+    findMemoryVerseRef,
+    countVerseWords,
+    MAX_CHILD_MEMORY_VERSE_WORDS,
+    genChildMemoryVerseRefusal,
     genCitedMisquoteRefusal,
+    genLessonFormWriteLine,
     genTestamentSlipRefusal,
     genTokenAsWordsRefusal,
     genLessonPointsRefusal,
@@ -2375,6 +2380,11 @@ type ToolWatchType = {
     // A verse token standing in for a sentence's words was sent back
     // (BN-120, `findTokenAsWords`): once an ask.
     isNoteTokenWordsChecked?: boolean;
+    // A new lesson written as a children's one -- the window's own form
+    // line rides the ask (BN-129) -- and its memory verse held to a length
+    // a child can say: once an ask.
+    isChildrenLesson?: boolean;
+    isChildMemoryVerseChecked?: boolean;
     // A new lesson's points were held to its passage, its order and its end
     // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
     isLessonPointsChecked?: boolean;
@@ -4814,6 +4824,24 @@ async function runMcpToolCall(
             if (pointsProblem !== null) {
                 watch.isLessonPointsChecked = true;
                 return `Tool refused: ${genLessonPointsRefusal(pointsProblem)}`;
+            }
+            // A child's memory verse is one a child can say (BN-129): told
+            // twenty words twice, Luke 15:7's 28 kept coming back.
+            const memoryRef =
+                watch.isChildrenLesson === true &&
+                watch.isChildMemoryVerseChecked !== true
+                    ? findMemoryVerseRef(toLessonChangeText(lyricEditArgs))
+                    : null;
+            if (memoryRef !== null) {
+                const verseText = (
+                    await readCitedVerseTexts([memoryRef], signal, watch)
+                ).get(memoryRef);
+                const wordCount =
+                    verseText === undefined ? 0 : countVerseWords(verseText);
+                if (wordCount > MAX_CHILD_MEMORY_VERSE_WORDS) {
+                    watch.isChildMemoryVerseChecked = true;
+                    return `Tool refused: ${genChildMemoryVerseRefusal(memoryRef, wordCount)}`;
+                }
             }
         }
         // A fix to their lesson adds and rewords (BN-80, 2026-11-10: _Add a
@@ -7973,6 +8001,9 @@ async function askLlmBotAsWritten(
         seeded.lessonNamedPassage = seeded.isBlankLesson
             ? findNamedPassageRef(extra?.askedText ?? '')
             : null;
+        seeded.isChildrenLesson =
+            seeded.isBlankLesson &&
+            asked.includes(genLessonFormWriteLine('children'));
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T21:28:49.468Z
+  modified: 2026-11-11T22:20:17.657Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -411,13 +411,15 @@ back cut with "…" (the note holds 1 Samuel 17:1-58 whole), and a block's
 line breaks were written as Markdown lines, which join. `lesson-rubric.mjs`
 now rebuilds a cut KJV passage and keeps the lines. When a reader names
 a defect, open the lesson file they read AND the note it came from.
-(28) **Naming stops a reading, not a picture; the line said last wins**:
-"never a stock picture: … a hospital room" put the hospital room into 6
-lessons of 16 (4 before it was named) -- name a wrong MEANING (the rule
-of (23)), never a scene to avoid. And the form line the window says after
-the shape (`genLessonFormWriteLine`) beat it: its "a memory verse of one
-short line" kept 24-28-word verses while the shape asked twenty words
-(BN-125). Change both, or the later one.
+(28) **A list of scenes to avoid moves nothing; a told number may not
+either**: a hospital room stood in 4 lessons of 16, 6 with it named among
+the stock pictures, 7 with the name taken out again -- it is the model's
+default scene, and naming it neither stopped nor caused it (the rule of
+(23) is for a wrong MEANING). And a children's memory verse "of twenty
+words at most", said in the shape AND in the form line said last
+(`genLessonFormWriteLine`, which had still said "one short line"), kept
+Luke 15:7's 28 words run after run: what a model will not follow when
+told, the window checks (BN-129 reads the verse and sends it back).
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

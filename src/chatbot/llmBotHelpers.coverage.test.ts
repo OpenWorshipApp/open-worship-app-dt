@@ -145,6 +145,7 @@ import {
     NOTE_BLANK_LESSON_HINT,
     NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_REVIEW_HINT,
+    genLessonFormWriteLine,
 } from './noteChatHelpers';
 import {
     GENERAL_ASK_LABEL,
@@ -1911,6 +1912,98 @@ describe('the Anthropic loop', () => {
         ]);
         expect(readToolResults(sentList[1])[0].content).toMatch(
             /^\(The window also read Proverbs 3:1-4, the verses just before Proverbs 3:5-6, for the Background/,
+        );
+    });
+
+    // BN-129 (2026-11-11): told twenty words twice, a children's lesson on
+    // the lost sheep kept Luke 15:7 (28 words) as its memory verse. The
+    // window reads the verse and sends it back once; a sermon is not read.
+    test("a child's memory verse too long to say is sent back once", async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.answerTool = (name: string, args: any) => {
+            if (name !== 'owa_find_verse') {
+                return JSON.stringify({ name: 'Lesson', isChanged: true });
+            }
+            return JSON.stringify({
+                bible: 'KJV',
+                verses: [
+                    {
+                        ref: args.refs,
+                        text:
+                            '(7): I say unto you, that likewise joy shall be ' +
+                            'in heaven over one sinner that repenteth, more ' +
+                            'than over ninety and nine just persons, which ' +
+                            'need no repentance.',
+                    },
+                ],
+            });
+        };
+        const lesson =
+            '[^Luke 15:4-7]\n## Big idea\nGod looks for the lost.\n' +
+            '## 1. God looks\n[^Luke 15:4]\n## 2. God rejoices\n' +
+            '[^Luke 15:5-7]\n## Something to show\nA toy sheep.\n' +
+            '## Memory verse\n[^Luke 15:7]';
+        const edit = () => {
+            return anthropicToolUse({
+                name: 'owa_note_edit',
+                input: {
+                    action: 'edit',
+                    note: 'Lesson',
+                    changes: [
+                        { block: 1, remove: true },
+                        { after: 0, kind: 'section', text: lesson },
+                    ],
+                },
+            });
+        };
+        const ask = async (form: string) => {
+            const { sentList } = useAnthropic(
+                [edit(), edit(), anthropicText('Your lesson is in the note.')],
+                'anthropic',
+            );
+            await askLlmBot(
+                `the lost sheep\n${NOTE_BLANK_LESSON_HINT}${form}`,
+                'bibleNote',
+                'anthropic',
+                'claude-sonnet-5',
+                [],
+                null,
+                {
+                    note: {
+                        files: [
+                            {
+                                name: 'Lesson',
+                                filePath: 'C:\\notes\\Default.own',
+                                noteId: 4,
+                            },
+                        ],
+                        blankBlockCount: 1,
+                    },
+                },
+            );
+            return sentList;
+        };
+        const sentList = await ask(`\n${genLessonFormWriteLine('children')}`);
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            "a child's memory verse is ONE verse of 20 words at most, one a " +
+                'child can say, and Luke 15:7 runs 28 words',
+        );
+        expect(
+            fake.toolCallList.map((call) => [call.name, call.args?.refs]),
+        ).toEqual([
+            ['owa_find_verse', 'Luke 15:7'],
+            ['owa_note_edit', undefined],
+        ]);
+        // A sermon's memory verse is not read, nor sent back: both of its
+        // edits go in.
+        fake.toolCallList = [];
+        const sermonSentList = await ask('');
+        expect(fake.toolCallList.map((call) => call.name)).toEqual([
+            'owa_note_edit',
+            'owa_note_edit',
+        ]);
+        expect(readToolResults(sermonSentList[1])[0].content).not.toContain(
+            'Tool refused',
         );
     });
 

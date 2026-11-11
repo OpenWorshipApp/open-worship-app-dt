@@ -1834,7 +1834,27 @@ was seen and what was done.
   same read). Told "no questions for discussion", the funeral message
   ended at its prayer with no memory verse either, and both readers asked
   for one the mourners could carry home: "no questions for discussion,
-  and still a memory verse to carry home".
+  and still a memory verse to carry home". Seen in the next run: the
+  funeral message closed on Revelation 21:4.
+- **BN-128 — John 3:16 gives its own reason, and no other** (2026-11-11,
+  the BN-118..124 read and the run after it). "The passage answers:
+  Because the gift had to be of equal value to the life being saved" (an
+  error to Opus), then "To satisfy justice ... to take the place of the
+  sinner": reasons the verse never gives, under the one line that answers
+  FROM it. A word-table entry gives the verse's own reason (love), its
+  end (life) and its how ("lifted up", 3:14), and names the wrong reading.
+- **BN-129 — a child's memory verse a child can say, held by the window**
+  (2026-11-11, the BN-125..127 run). Told "ONE verse of twenty words at
+  most" in the shape and in the form line said last, the lost sheep's
+  children's lesson still took Luke 15:7 (28 words), three runs running
+  (the Jonah one moved to Psalm 103:8, 13). A new lesson the window
+  wrote its children's form line for (`isChildrenLesson`) has the verse
+  its Memory verse part names read (`owa_find_verse`), and one over 20
+  words sent back once with its count (`findMemoryVerseRef`,
+  `countVerseWords`, `genChildMemoryVerseRefusal`); any other lesson's
+  is not read. And BN-125's reading of the hospital room was wrong: with
+  its name taken out of the stock pictures it stood in 7 lessons of 16
+  -- it is the model's default scene, never put there by naming.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

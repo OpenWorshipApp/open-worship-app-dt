@@ -1091,6 +1091,49 @@ export function genTokenAsWordsRefusal(
     );
 }
 
+// --- a child's memory verse a child can say (BN-129) -------------------------
+//
+// 2026-11-11: told "ONE verse of twenty words at most" in the shape AND in
+// the form line said last (BN-124, BN-125), the lost sheep's children's
+// lesson still took Luke 15:7 -- 28 words -- run after run, and both blind
+// readers marked it down each time. The window reads the verse the Memory
+// verse part names and sends a longer one back, once an ask.
+export const MAX_CHILD_MEMORY_VERSE_WORDS = 20;
+const MEMORY_VERSE_HEADING_PATTERN = /^#{1,6}\s*memory verse\b/im;
+
+/** The reference a lesson's Memory verse part gives, or null. */
+export function findMemoryVerseRef(text: string) {
+    const lesson = String(text ?? '');
+    const at = lesson.search(MEMORY_VERSE_HEADING_PATTERN);
+    if (at < 0) {
+        return null;
+    }
+    const token = /\[\^([^\]\n]+)\]/.exec(lesson.slice(at));
+    const ref = token?.[1].replace(/^\([^)]*\)\s*/, '').trim() ?? '';
+    return ref === '' ? null : ref;
+}
+
+/** The words of a verse as read, its numbers left out. */
+export function countVerseWords(verseText: string) {
+    return (
+        String(verseText ?? '')
+            .replace(/\(\d{1,3}\):\s*/g, ' ')
+            .match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)?.length ?? 0
+    );
+}
+
+/** What the model is told when a child's memory verse is too long to say. */
+export function genChildMemoryVerseRefusal(ref: string, wordCount: number) {
+    return (
+        "Nothing was written: a child's memory verse is ONE verse of " +
+        `${MAX_CHILD_MEMORY_VERSE_WORDS} words at most, one a child can ` +
+        `say, and ${ref} runs ${wordCount} words. Give a shorter verse that ` +
+        'says the big idea -- from the story or elsewhere in Scripture, ' +
+        'read with owa_find_verse -- as the Memory verse, then send the ' +
+        'lesson again, whole.'
+    );
+}
+
 /** What the model is told when a quote is not the verse it names. */
 export function genCitedMisquoteRefusal(
     misquotes: readonly (CitedQuoteType & { verse: string })[],

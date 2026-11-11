@@ -39,6 +39,10 @@ import {
     findCitedQuotes,
     findTestamentSlips,
     findTokenAsWords,
+    findMemoryVerseRef,
+    countVerseWords,
+    MAX_CHILD_MEMORY_VERSE_WORDS,
+    genChildMemoryVerseRefusal,
     genTestamentSlipRefusal,
     genTokenAsWordsRefusal,
     toLessonVerseLines,
@@ -1597,6 +1601,39 @@ describe('a verse is in the Testament its book is in', () => {
         ]) {
             expect(findTestamentSlips(text), text).toEqual([]);
         }
+    });
+});
+
+// BN-129 (2026-11-11): Luke 15:7, 28 words, as a children's memory verse.
+describe("a child's memory verse a child can say", () => {
+    it('finds the Memory verse part and counts its words', () => {
+        expect(
+            findMemoryVerseRef(
+                '[^Luke 15:4-7]\n## 1. God looks\n[^Luke 15:4]\n' +
+                    '## Memory verse\n[^(KJV) Luke 15:7]',
+            ),
+        ).toBe('Luke 15:7');
+        expect(findMemoryVerseRef('## Memory verse\nLearn it well.')).toBe(
+            null,
+        );
+        expect(findMemoryVerseRef('[^Luke 15:4]')).toBe(null);
+        expect(
+            countVerseWords(
+                '(7): I say unto you, that likewise joy shall be in heaven ' +
+                    'over one sinner that repenteth, more than over ninety ' +
+                    'and nine just persons, which need no repentance.',
+            ),
+        ).toBe(28);
+        expect(
+            countVerseWords(
+                '(8): The LORD is merciful and gracious, slow to anger, and ' +
+                    'plenteous in mercy.',
+            ),
+        ).toBeLessThanOrEqual(MAX_CHILD_MEMORY_VERSE_WORDS);
+        expect(genChildMemoryVerseRefusal('Luke 15:7', 28)).toContain(
+            'ONE verse of 20 words at most, one a child can say, and ' +
+                'Luke 15:7 runs 28 words',
+        );
     });
 });
 

@@ -376,6 +376,20 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ).toEqual([expect.stringContaining('(4:18)')]);
     });
 
+    // BN-128 (2026-11-11): John 3:16 answered with reasons it never gives.
+    test('John 3:16 gives its own reason, and no other', () => {
+        expect(
+            findLessonWordGlosses(
+                'For God so loved the world, that he gave his only begotten ' +
+                    'Son, that whosoever believeth in him should not perish',
+            ),
+        ).toEqual([
+            expect.stringMatching(
+                /"For God so loved the world".*\(3:14\) -- never a reason these verses do not give$/,
+            ),
+        ]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +

@@ -376,6 +376,20 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'contentment is said over that gift: "Not that I speak in ' +
             'respect of want" (4:11)',
     },
+    {
+        // BN-128 (2026-11-11, the BN-118..124 read, Opus: an error; and
+        // again in the next run): "The passage answers: Because the gift
+        // had to be of equal value to the life being saved", then "To
+        // satisfy justice ... to take the place of the sinner" -- reasons
+        // the verse never gives, under the line that answers FROM it.
+        pattern: /\bthat he gave his only begotten Son\b/i,
+        text:
+            'that he gave his only begotten Son (John 3:16): the verse gives ' +
+            'the reason as love, "For God so loved the world", and the end ' +
+            'as life, "should not perish, but have everlasting life"; of how ' +
+            'he is given it points back to "even so must the Son of man be ' +
+            'lifted up" (3:14) -- never a reason these verses do not give',
+    },
     // BN-106: Luke 15, read wrong in blind read after blind read.
     {
         // The father "ignores the request for servitude", in three reads:
