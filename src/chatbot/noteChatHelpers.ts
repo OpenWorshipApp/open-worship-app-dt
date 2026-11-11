@@ -923,33 +923,38 @@ const TESTAMENT_NAME_PATTERN = /\b(New|Old) Testament\b/gi;
 
 export type TestamentSlipType = { testament: 'New' | 'Old'; refs: string[] };
 
-/** The sentences that put a verse in the other Testament. */
+/**
+ * The sentences that put a verse in the other Testament: the first
+ * reference after the Testament is named is the one it introduces ("The New
+ * Testament tells us that '…' [^Isaiah 53:5], and that '…' [^Colossians
+ * 2:15]", BN-115's live run); a sentence with none after it is let be
+ * ("Isaiah 53:5 is quoted in the New Testament").
+ */
 export function findTestamentSlips(text: string) {
     const slips: TestamentSlipType[] = [];
     for (const sentence of String(text ?? '').split(/(?<=[.!?])\s+|\n/)) {
-        const named = new Set(
-            [...sentence.matchAll(TESTAMENT_NAME_PATTERN)].map((match) => {
-                return match[1].toLowerCase();
-            }),
-        );
-        const refs = sentence.match(CITED_REF_PATTERN) ?? [];
-        if (named.size !== 1 || refs.length === 0) {
+        const namedList = [...sentence.matchAll(TESTAMENT_NAME_PATTERN)];
+        const named = new Set(namedList.map((match) => match[1].toLowerCase()));
+        if (named.size !== 1) {
             continue;
         }
-        const keys = refs.map((ref) => {
-            return (
-                BOOK_NAME_KEY_MAP.get(
-                    ref.replace(/\s*\d{1,3}:.*$/, '').toLowerCase(),
-                ) ?? null
-            );
-        });
+        const namedEnd = (namedList[0].index ?? 0) + namedList[0][0].length;
+        const ref = [...sentence.matchAll(CITED_REF_PATTERN)].find((match) => {
+            return (match.index ?? 0) >= namedEnd;
+        })?.[0];
+        const key =
+            ref === undefined
+                ? null
+                : (BOOK_NAME_KEY_MAP.get(
+                      ref.replace(/\s*\d{1,3}:.*$/, '').toLowerCase(),
+                  ) ?? null);
         const isNew = named.has('new');
         if (
-            keys.every((key) => {
-                return key !== null && OLD_TESTAMENT_KEY_SET.has(key) === isNew;
-            })
+            ref !== undefined &&
+            key !== null &&
+            OLD_TESTAMENT_KEY_SET.has(key) === isNew
         ) {
-            slips.push({ testament: isNew ? 'New' : 'Old', refs });
+            slips.push({ testament: isNew ? 'New' : 'Old', refs: [ref] });
         }
     }
     return slips.slice(0, MAX_NOTE_MISQUOTES);

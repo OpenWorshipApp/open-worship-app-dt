@@ -1676,6 +1676,24 @@ was seen and what was done.
   same read: details no text gives (the stone striking "the only place his
   armour did not protect him") and a cross-reference told wrong ("those who
   were healed by Jonas", Matthew 12:41).
+- **BN-115 — four more slips, one the word table made** (2026-11-11, the
+  BN-108..112 read, Opus). Genesis 2:7 was cited for "create": the BN-92
+  entry had set "created man" (Genesis 1:27) beside "of the dust of the
+  ground" (Genesis 2:7), and a lesson merged them into "He created man
+  from the dust in Genesis 2:7" -- which says formed. The entry now keeps
+  them apart ("of the dust he 'formed man' (Genesis 2:7), a word of its
+  own"). Three entries, quoted from the app's KJV data: "sunk into his
+  forehead" (no gap in Goliath's armour -- "an helmet of brass upon his
+  head", 17:5), "repented at the preaching of Jonas" (Matthew 12:41: no
+  one was healed) and "came to Jesus by night" (John 3:2: Nicodemus owning
+  the miracles, not asking about them). And BN-114 tightened: the first
+  reference after a Testament is named is the one it introduces. The live
+  run had "The New Testament tells us that ... [Isaiah 53:5], and that ...
+  [Colossians 2:15]", let by because one reference was the New's. Asked
+  again live: "the men of Nineveh who repented at the preaching of Jonas";
+  "Nicodemus had come to Jesus by night, acknowledging that Jesus must be
+  from God because of the miracles He performed"; 14 cited quotations,
+  every one word for word.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

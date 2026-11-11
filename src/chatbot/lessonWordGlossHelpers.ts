@@ -168,10 +168,13 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
         // it opens on what corrects that now.
         pattern: /\bcreate(?:d|th)?\b/i,
         text:
-            "create: God's own work, and not only out of nothing -- he " +
-            '"created man" (Genesis 1:27) "of the dust of the ground" ' +
-            '(Genesis 2:7), and says "I create Jerusalem a rejoicing" (Isaiah ' +
-            '65:18)',
+            // BN-115: set side by side, "created man" (1:27) "of the dust
+            // of the ground" (2:7) was merged into "He created man from the
+            // dust in Genesis 2:7", which says formed.
+            "create: God's own work, and not only out of nothing -- " +
+            '"God created man in his own image" (Genesis 1:27); of the dust ' +
+            'he "formed man" (Genesis 2:7), a word of its own; and "I create ' +
+            'Jerusalem a rejoicing" (Isaiah 65:18)',
     },
     {
         // "A span is the width of a hand".
@@ -363,6 +366,35 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             "owed him an hundred pence (Matthew 18:28): a hundred days' pay " +
             '-- a debt that could be paid, and small only beside "ten ' +
             'thousand talents" (18:24); never "a few pence"',
+    },
+    // BN-115: what the BN-108..112 read found (Opus).
+    {
+        // "The only place his armour did not protect him": a sermon's gap
+        // the text never gives.
+        pattern: /\bsunk into his forehead\b/i,
+        text:
+            'the stone sunk into his forehead (1 Samuel 17:49): the text ' +
+            'says no more, and gives no gap in his armour -- he wore "an ' +
+            'helmet of brass upon his head" (17:5)',
+    },
+    {
+        // A sower lesson's verses before (Matthew 12) told as "those who
+        // were healed by Jonas".
+        pattern: /\brepented at the preaching of Jonas\b/i,
+        text:
+            'repented at the preaching of Jonas (Matthew 12:41): the men of ' +
+            'Nineveh turned when Jonah preached, and will condemn the ' +
+            'generation that would not -- "a greater than Jonas is here"; ' +
+            'no one was healed',
+    },
+    {
+        // "Nicodemus came to Jesus by night to ask about His miracles".
+        pattern: /\bcame to Jesus by night\b/i,
+        text:
+            'Nicodemus came to Jesus by night (John 3:2) owning the ' +
+            'miracles, not asking about them: "Rabbi, we know that thou art ' +
+            'a teacher come from God: for no man can do these miracles that ' +
+            'thou doest, except God be with him"',
     },
 ];
 

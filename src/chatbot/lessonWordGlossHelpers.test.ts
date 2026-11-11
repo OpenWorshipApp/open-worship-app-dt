@@ -71,7 +71,9 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
             findLessonWordGlosses('Create in me a clean heart, O God'),
         ).toEqual([
             expect.stringMatching(
-                /^create: God's own work, and not only out of nothing -- .*"of the dust of the ground" \(Genesis 2:7\)/,
+                // BN-115: "formed" kept apart from "created", which a lesson
+                // had merged into "created man from the dust (Genesis 2:7)".
+                /^create: God's own work, and not only out of nothing -- .*he "formed man" \(Genesis 2:7\), a word of its own/,
             ),
         ]);
         expect(findLessonWordGlosses('for I have not proved them')).toEqual([
@@ -215,6 +217,26 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
             expect.stringMatching(/^penny, pence: /),
             expect.stringContaining('never "a few pence"'),
         ]);
+    });
+
+    // BN-115 (2026-11-11, the BN-108..112 read): Goliath's armour given a
+    // gap, Nineveh "healed by Jonas", Nicodemus "asking about" miracles.
+    test('a detail the text never gives, and settings as they are told', () => {
+        expect(
+            findLessonWordGlosses(
+                'and smote the Philistine in his forehead, that the stone ' +
+                    'sunk into his forehead',
+            ),
+        ).toEqual([expect.stringContaining('gives no gap in his armour')]);
+        expect(
+            findLessonWordGlosses(
+                'because they repented at the preaching of Jonas; and, ' +
+                    'behold, a greater than Jonas is here.',
+            ),
+        ).toEqual([expect.stringContaining('no one was healed')]);
+        expect(
+            findLessonWordGlosses('The same came to Jesus by night, and said'),
+        ).toEqual([expect.stringContaining('owning the miracles')]);
     });
 
     test('a long story carries eight at most', () => {

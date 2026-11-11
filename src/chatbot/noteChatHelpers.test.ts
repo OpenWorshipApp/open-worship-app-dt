@@ -1567,6 +1567,14 @@ describe('a verse is in the Testament its book is in', () => {
             'Isaiah 53:5 is in the Old Testament, and the sentence says the ' +
                 'New Testament',
         );
+        // BN-115's live run: an Old Testament verse first, a New one after.
+        expect(
+            findTestamentSlips(
+                'The New Testament tells us that "with his stripes we are ' +
+                    'healed" [^(KJV) Isaiah 53:5], and that Jesus "spoiled ' +
+                    'principalities and powers" [^(KJV) Colossians 2:15].',
+            ),
+        ).toEqual([{ testament: 'New', refs: ['Isaiah 53:5'] }]);
     });
 
     it('lets a right Testament, both named, or an unknown book be', () => {
@@ -1578,6 +1586,7 @@ describe('a verse is in the Testament its book is in', () => {
                 'Testament (1 Peter 2:24).',
             'The New Testament quotes Hezekiah 3:1 here.',
             'The New Testament tells us so.',
+            'Isaiah 53:5 is quoted in the New Testament.',
         ]) {
             expect(findTestamentSlips(text), text).toEqual([]);
         }
