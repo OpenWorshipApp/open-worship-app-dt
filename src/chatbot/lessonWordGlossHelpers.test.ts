@@ -14,9 +14,13 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
                 'fellowservants, which owed him an hundred pence (24): ' +
                 'which owed him ten thousand talents.',
         );
-        expect(glosses).toHaveLength(2);
+        expect(glosses).toHaveLength(3);
         expect(glosses[0]).toContain('a penny a day" (Matthew 20:2)');
         expect(glosses[1]).toMatch(/^talent: .*Exodus 25:39/);
+        // BN-111: the fellowservant's debt said as Matthew says it.
+        expect(glosses[2]).toMatch(
+            /^owed him an hundred pence \(Matthew 18:28\)/,
+        );
     });
 
     // The first wording, "a labourer's pay for one day", was copied as "a
@@ -110,7 +114,11 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
             findLessonWordGlosses(
                 "Then Jonah prayed unto the LORD his God out of the fish's belly",
             ),
-        ).toEqual([expect.stringContaining('says no word of sorrow')]);
+        ).toEqual([
+            expect.stringContaining('says no word of sorrow'),
+            // BN-111: and the sign Jesus made of it, to whom he made it.
+            expect.stringContaining('as Jesus told it'),
+        ]);
         // A people turning from their evil is no such phrase.
         expect(
             findLessonWordGlosses('they turned from their evil way'),
@@ -173,6 +181,40 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
                     'becometh unfruitful.',
             ),
         ).toEqual([expect.stringContaining('neither asks nor answers that')]);
+    });
+
+    // BN-109 (2026-11-11): Isaiah 40's Christ section had Jesus "faint"
+    // on the cross, in three reads.
+    test('the LORD fainteth not, and Jesus is never said to faint', () => {
+        expect(
+            findLessonWordGlosses(
+                'the Creator of the ends of the earth, fainteth not, neither ' +
+                    'is weary?',
+            ),
+        ).toEqual([expect.stringContaining('but is never said to faint')]);
+    });
+
+    // BN-111 (2026-11-11, the BN-106/107 read): Jesus told Jonah's sign to
+    // "His friends", and the fellowservant owed "a few pence".
+    test("Jonah's sign as Jesus gave it, and an hundred pence", () => {
+        expect(
+            findLessonWordGlosses(
+                'And Jonah was in the belly of the fish three days and three ' +
+                    'nights.',
+            ),
+        ).toEqual([
+            expect.stringContaining(
+                '"certain of the scribes and of the Pharisees"',
+            ),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'which owed him an hundred pence: and he laid hands on him',
+            ),
+        ).toEqual([
+            expect.stringMatching(/^penny, pence: /),
+            expect.stringContaining('never "a few pence"'),
+        ]);
     });
 
     test('a long story carries eight at most', () => {

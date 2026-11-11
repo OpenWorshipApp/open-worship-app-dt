@@ -331,6 +331,39 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'no more -- whether he believes or is saved it does not say, so a ' +
             'lesson neither asks nor answers that',
     },
+    // BN-109: Isaiah 40's Christ section, read wrong in three reads.
+    {
+        // "Jesus fainted under the weight of our sins on the cross", "the
+        // ultimate faint one": the Gospels never say he fainted.
+        pattern: /\bfainteth not\b/i,
+        text:
+            'fainteth not, neither is weary (Isaiah 40:28): said of "the ' +
+            'everlasting God, the LORD"; it is the youths who "shall faint ' +
+            'and be weary" (40:30) -- in the Gospels Jesus was "wearied with ' +
+            'his journey" (John 4:6) and calls "all ye that labour and are ' +
+            'heavy laden" (Matthew 11:28), but is never said to faint',
+    },
+    // BN-111: what the BN-106/107 read found (Opus).
+    {
+        // "Jesus told His friends about Jonah": it was his answer to the
+        // scribes and Pharisees who asked him for a sign.
+        pattern: /\b(?:belly of the fish|fish's belly)\b/i,
+        text:
+            "Jonah's three days in the fish, as Jesus told it: his answer to " +
+            '"certain of the scribes and of the Pharisees" who asked him for ' +
+            'a sign, never told to his friends or disciples -- "as Jonas ' +
+            'was three days and three nights in the ' +
+            "whale's belly; so shall the Son of man be three days and three " +
+            'nights in the heart of the earth" (Matthew 12:38-40)',
+    },
+    {
+        // "Refused to forgive a few pence": the text says an hundred.
+        pattern: /\bowed him an hundred pence\b/i,
+        text:
+            "owed him an hundred pence (Matthew 18:28): a hundred days' pay " +
+            '-- a debt that could be paid, and small only beside "ten ' +
+            'thousand talents" (18:24); never "a few pence"',
+    },
 ];
 
 // The most entries one passage read carries: a long story holds many.

@@ -1597,6 +1597,42 @@ was seen and what was done.
   and still be fruitful? No", from the verse. Seventy times seven was read
   "not a number to be counted up to, but a way of saying that forgiveness
   must be without limit".
+- **BN-109 — Isaiah 40: Jesus never "fainted"** (2026-11-11, three reads:
+  "the ultimate faint one" in two Opus reads, "fainted under the weight of
+  our sins on the cross" in Sonnet's BN-106/107 read). "Fainteth not"
+  (only Isaiah 40:28) says it is said of the LORD, that the youths "shall
+  faint and be weary" (40:30), and that the Gospels have Jesus "wearied
+  with his journey" (John 4:6), calling "all ye that labour and are heavy
+  laden" (Matthew 11:28), never fainting. Asked again live: no fainting,
+  but Matthew 11:28 quoted from memory as "weary and heavy laden" -- which
+  BN-110 then caught.
+- **BN-110 — a quote given its chapter and verse is that verse's words**
+  (2026-11-11). BN-76 held a quotation to what the ask had READ, so a verse
+  quoted from memory and never read was let by, and that was most of what
+  the blind readers still counted: John 5:30's words as John 6:38, "He hath
+  spoken well, for he hath spoken truth" as 1 Samuel 17:52 (no such words),
+  Matthew 11:28 as "weary and heavy laden". A quotation with a reference in
+  its own sentence (`findCitedQuotes`: after it first, else before it, never
+  one that belongs to another quotation) is now held to that verse. The
+  window reads each cited reference itself (`readCitedVerseTexts`, eight at
+  most, the installed Bible, no model) and, when the quoted words are not
+  in it, sends the change back once with the verse as it reads
+  (`findCitedMisquotes`, `genCitedMisquoteRefusal`). A reference that could
+  not be read, a read cut short, a quote cut with an ellipsis (a piece at a
+  time) and a quote in another script than its verse are let be. Asked
+  again live: the Isaiah 40 lesson's Christ section quoted "Come unto me,
+  all ye that labour and are heavy laden, and I will give you rest" and
+  "wearied with his journey" word for word, each as its token.
+- **BN-111 — Jonah's sign, to whom, and an hundred pence** (2026-11-11, the
+  BN-106/107 read, Opus). A children's lesson had Jesus tell Jonah's sign
+  to "His friends" (Matthew 12:38-40: to the scribes and Pharisees who
+  asked a sign), and a forgiveness lesson had the fellowservant owe "a few
+  pence". Two entries: the fish's belly as Jesus told it, "never told to
+  his friends or disciples", and "owed him an hundred pence", a hundred
+  days' pay, small only beside ten thousand talents. Asked again live: "an
+  hundred pence was a hundred days' pay -- a significant sum, but one that
+  could actually be paid", and "Jesus told some people" (with the entry
+  first naming only the scribes and Pharisees, still "His friends").
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

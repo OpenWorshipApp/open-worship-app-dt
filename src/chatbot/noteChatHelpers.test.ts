@@ -35,7 +35,10 @@ import {
     findLostNoteLines,
     findLessonChangeSurgery,
     findLessonPointsProblem,
+    findCitedMisquotes,
+    findCitedQuotes,
     findNoteMisquotes,
+    genCitedMisquoteRefusal,
     genLessonPointsRefusal,
     toLessonChangeText,
     genLessonFormLine,
@@ -1541,6 +1544,85 @@ describe('a quote of the passage is its words', () => {
         expect(
             findNoteMisquotes('"sinners shall return unto thee"', []),
         ).toEqual([]);
+    });
+});
+
+// BN-110 (2026-11-11): the errors the blind readers found after BN-104 were
+// quotes tied to a verse the ask never read -- Matthew 11:28 as "weary and
+// heavy laden", John 5:30's words as 6:38, words 1 Samuel 17:52 never says.
+describe('a quote given its chapter and verse is that verse', () => {
+    const MATTHEW_11_28 =
+        '(28): Come unto me, all ye that labour and are heavy laden, and I ' +
+        'will give you rest.';
+    const JOHN_4_6 =
+        '(6): Now Jacob’s well was there. Jesus therefore, being wearied ' +
+        'with his journey, sat thus on the well: and it was about the sixth ' +
+        'hour.';
+
+    it('reads the reference in the quote’s own sentence', () => {
+        expect(
+            findCitedQuotes(
+                'Jesus invites all who are "weary and heavy laden" to come ' +
+                    'to Him for rest (Matthew 11:28). He was "wearied with ' +
+                    'his journey" (John 4:6) and calls "all ye that labour".',
+            ),
+        ).toEqual([
+            { quote: 'weary and heavy laden', ref: 'Matthew 11:28' },
+            { quote: 'wearied with his journey', ref: 'John 4:6' },
+        ]);
+        expect(
+            findCitedQuotes(
+                'In 1 Samuel 17:52 the men said, "He hath spoken well".',
+            ),
+        ).toEqual([{ quote: 'He hath spoken well', ref: '1 Samuel 17:52' }]);
+        // A sentence before is not this one, nor a hearer's own question.
+        expect(
+            findCitedQuotes(
+                'He found it (Luke 15:4). "Rejoice with me," he said. A ' +
+                    'hearer asks: "Why did they pass by?"',
+            ),
+        ).toEqual([]);
+    });
+
+    it('names a quote its verse does not have, with the verse', () => {
+        const misquotes = findCitedMisquotes(
+            [
+                { quote: 'weary and heavy laden', ref: 'Matthew 11:28' },
+                { quote: 'wearied with his journey', ref: 'John 4:6' },
+            ],
+            new Map([
+                ['Matthew 11:28', MATTHEW_11_28],
+                ['John 4:6', JOHN_4_6],
+            ]),
+        );
+        expect(misquotes.map((item) => item.quote)).toEqual([
+            'weary and heavy laden',
+        ]);
+        const refusal = genCitedMisquoteRefusal(misquotes);
+        expect(refusal).toContain(
+            'Matthew 11:28 reads: “Come unto me, all ye that labour and are ' +
+                'heavy laden, and I will give you rest.” -- not “weary and ' +
+                'heavy laden”',
+        );
+        expect(refusal).toContain('[^Matthew 11:28]');
+    });
+
+    it('lets a cut quote, an unread or cut verse and another script be', () => {
+        const check = (quote: string, verse: string | undefined) => {
+            return findCitedMisquotes(
+                [{ quote, ref: 'Matthew 11:28' }],
+                new Map(verse === undefined ? [] : [['Matthew 11:28', verse]]),
+            );
+        };
+        expect(
+            check('Come unto me … I will give you rest', MATTHEW_11_28),
+        ).toEqual([]);
+        expect(check('weary and heavy laden', undefined)).toEqual([]);
+        expect(
+            check('weary and heavy laden', '(28): Come unto me, all…'),
+        ).toEqual([]);
+        // A verse in a script of no a-z letters: the quote is not compared.
+        expect(check('weary and heavy laden', '(28): ✝✝✝ ✝✝✝ ✝✝✝')).toEqual([]);
     });
 });
 

@@ -1459,6 +1459,93 @@ describe('the Anthropic loop', () => {
         );
     });
 
+    // BN-110 (2026-11-11): Matthew 11:28, never read, was quoted as "weary
+    // and heavy laden". The window reads the verse a quote names and sends
+    // the lesson back once, with the verse; the next goes in.
+    test('a quote that is not the verse it names is sent back once', async () => {
+        fake.toolList = [
+            { name: 'owa_note_edit' },
+            { name: 'owa_bible_note' },
+            { name: 'owa_find_verse' },
+        ];
+        fake.answerTool = (name: string, args: any) => {
+            if (name !== 'owa_find_verse') {
+                return JSON.stringify({ name: 'Sermon Prep', isChanged: true });
+            }
+            return JSON.stringify({
+                bible: 'KJV',
+                verses:
+                    args.refs === 'Matthew 11:28'
+                        ? [
+                              {
+                                  ref: 'Matthew 11:28',
+                                  text:
+                                      '(28): Come unto me, all ye that labour ' +
+                                      'and are heavy laden, and I will give ' +
+                                      'you rest.',
+                              },
+                          ]
+                        : [],
+            });
+        };
+        const add = (quote: string) => {
+            return anthropicToolUse({
+                name: 'owa_bible_note',
+                input: {
+                    action: 'add',
+                    title: 'Strength for the Weary',
+                    text:
+                        '[^Isaiah 40:31]\n## Pointing to Jesus\nJesus calls ' +
+                        `"${quote}" to come to Him for rest (Matthew 11:28).`,
+                },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                add('weary and heavy laden'),
+                add('all ye that labour and are heavy laden'),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'help me prepare a sermon on Isaiah 40:31',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        const refused = readToolResults(sentList[1])[0].content;
+        expect(refused).toContain(
+            'Matthew 11:28 reads: “Come unto me, all ye that labour and are ' +
+                'heavy laden, and I will give you rest.” -- not “weary and ' +
+                'heavy laden”',
+        );
+        // The window read the verse; the lesson went in on the second try.
+        expect(
+            fake.toolCallList.map((call) => [call.name, call.args?.refs]),
+        ).toEqual([
+            ['owa_find_verse', 'Matthew 11:28'],
+            ['owa_note_edit', undefined],
+        ]);
+        expect(JSON.stringify(fake.toolCallList[1].args)).toContain(
+            'all ye that labour and are heavy laden',
+        );
+    });
+
     // BN-74 (2026-11-10): a review of their lesson with nothing to press
     // is asked once more, for the fixes it named as buttons.
     test('a lesson review with no fix to press is asked for them', async () => {

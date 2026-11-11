@@ -777,6 +777,146 @@ export function genNoteMisquoteRefusal(misquotes: readonly string[]) {
     );
 }
 
+// --- a quote given its chapter and verse is that verse's words (BN-110) ------
+//
+// 2026-11-11, the blind reads after BN-104: the factual errors left were
+// quotations tied to a reference the ask never read -- "I seek not mine own
+// will" as John 6:38 (it is 5:30), "He hath spoken well, for he hath spoken
+// truth" as 1 Samuel 17:52 (no such words), Matthew 11:28's "labour" as
+// "weary and heavy laden". BN-76 holds a quote to what the ask READ, so a
+// verse quoted from memory and never read was let by. A quote that names its
+// own chapter and verse in its sentence is held to that verse, read by the
+// window: one book, one chapter, a verse or a few.
+const CITED_REF_SOURCE =
+    '(?:[1-3] ?)?[A-Z][a-z]+(?: of [A-Z][a-z]+)? \\d{1,3}:\\d{1,3}' +
+    '(?:\\s*[-–,]\\s*\\d{1,3})?';
+const CITED_REF_PATTERN = new RegExp(CITED_REF_SOURCE, 'g');
+// The quote's own sentence on either side, never past another quotation.
+const QUOTE_MARK_OR_LINE_PATTERN = /[«»“”"\n]/u;
+const SENTENCE_END_PATTERN = /[.!?](?=\s|$)/u;
+const MAX_CITED_QUOTES = 8;
+
+function toSentenceAfter(text: string) {
+    return text
+        .split(QUOTE_MARK_OR_LINE_PATTERN)[0]
+        .split(SENTENCE_END_PATTERN)[0];
+}
+
+// Back to the start of the quote's sentence. A sentence that runs back to
+// another quotation gives nothing: a reference in it is that one's ("He was
+// "wearied …" (John 4:6) and calls "all ye that labour"").
+function toSentenceBefore(text: string) {
+    const match = /([«»“”"\n])?([^«»“”"\n]*)$/u.exec(text);
+    const sentences = (match?.[2] ?? '').split(SENTENCE_END_PATTERN);
+    if (
+        sentences.length === 1 &&
+        match?.[1] !== undefined &&
+        match[1] !== '\n'
+    ) {
+        return '';
+    }
+    return sentences[sentences.length - 1];
+}
+
+export type CitedQuoteType = { quote: string; ref: string };
+
+/**
+ * The quotations a change ties to a chapter and verse in their own sentence
+ * -- `"…" (Matthew 11:28)`, `In John 4:6, "…"` -- the reference after the
+ * quote first, else the last one before it.
+ */
+export function findCitedQuotes(text: string): CitedQuoteType[] {
+    const source = String(text ?? '');
+    const list: CitedQuoteType[] = [];
+    for (const match of source.matchAll(NOTE_QUOTE_PATTERN)) {
+        const start = match.index ?? 0;
+        const end = start + match[0].length;
+        const after = toSentenceAfter(source.slice(end, end + 160));
+        const before = toSentenceBefore(
+            source.slice(Math.max(0, start - 160), start),
+        );
+        const ref =
+            after.match(CITED_REF_PATTERN)?.[0] ??
+            before.match(CITED_REF_PATTERN)?.at(-1) ??
+            null;
+        if (ref !== null) {
+            list.push({
+                quote: match[1].trim(),
+                ref: ref.replace(/\s*–\s*/, '-'),
+            });
+        }
+        if (list.length >= MAX_CITED_QUOTES) {
+            break;
+        }
+    }
+    return list;
+}
+
+// How much of a text's letters are a-z: a quote and a verse in different
+// scripts (an English quote, the Khmer Bible) are not compared.
+function toLatinShare(key: string) {
+    return key.length === 0
+        ? 0
+        : (key.match(/[a-z]/g) ?? []).length / key.length;
+}
+
+/**
+ * The cited quotes whose words the verse read for their reference does not
+ * have, with the verse as it reads. A quote cut with an ellipsis is checked a
+ * piece at a time; a reference that could not be read, a verse read cut
+ * short ("…"), or a quote in another script than its verse is let be.
+ */
+export function findCitedMisquotes(
+    citedList: readonly CitedQuoteType[],
+    verseTextMap: ReadonlyMap<string, string>,
+) {
+    const misquoted: (CitedQuoteType & { verse: string })[] = [];
+    for (const cited of citedList) {
+        const verse = verseTextMap.get(cited.ref);
+        if (verse === undefined) {
+            continue;
+        }
+        const verseKey = toLetterKey(verse);
+        const isCut = /…\s*$/u.test(verse);
+        const isMisquoted = cited.quote.split(/…|\.\.\./).some((piece) => {
+            const key = toLetterKey(piece);
+            return (
+                key.length >= MIN_NOTE_QUOTE_LETTERS &&
+                !verseKey.includes(key) &&
+                !isCut &&
+                Math.abs(toLatinShare(key) - toLatinShare(verseKey)) < 0.5
+            );
+        });
+        if (
+            isMisquoted &&
+            !misquoted.some((item) => item.quote === cited.quote)
+        ) {
+            misquoted.push({ ...cited, verse });
+        }
+    }
+    return misquoted.slice(0, MAX_NOTE_MISQUOTES);
+}
+
+/** What the model is told when a quote is not the verse it names. */
+export function genCitedMisquoteRefusal(
+    misquotes: readonly (CitedQuoteType & { verse: string })[],
+) {
+    return (
+        'Nothing was written: a quote given its chapter and verse is read ' +
+        'out as that verse, and ' +
+        misquotes
+            .map((item) => {
+                return `${item.ref} reads: “${item.verse
+                    .replaceAll(/\(\d{1,3}\):\s*/g, '')
+                    .trim()}” -- not “${item.quote}”`;
+            })
+            .join('; ') +
+        '. Quote each word for word as it reads, write it as its token ' +
+        `([^${misquotes[0]?.ref ?? ''}]), or say it in your own words ` +
+        'without quotation marks -- then send the change again, whole.'
+    );
+}
+
 // --- a lesson's points follow and cover its passage (BN-83) -------------------
 //
 // 2026-11-11, BN-81's two runs read again by their verses: in each, five

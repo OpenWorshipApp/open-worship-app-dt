@@ -1097,7 +1097,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the ask, `owa_find_verse` results, reads of the note), and an
   `owa_note_edit` change -- a fill of the empty note included -- whose
   quotation takes most of its words from that without being word for word
-  is refused once an ask (`findNoteMisquotes`); the blind readers' commonest
+  is refused once an ask (`findNoteMisquotes`), and a quotation that names
+  its own chapter and verse is held to that verse, which the window reads
+  itself (BN-110, `findCitedMisquotes`: a verse quoted from memory and never
+  read had been let by); the blind readers' commonest
   error, and any error keeps a lesson out of Best. **A fix to a lesson
   carries the lesson's rules and adds, never operates** (BN-79, BN-80): a
   change asked in a lesson note (a change verb, no lesson hint of its own)

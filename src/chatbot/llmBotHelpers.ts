@@ -208,7 +208,10 @@ import {
     findLessonPointsProblem,
     findLostNoteLines,
     findLessonChangeSurgery,
+    findCitedMisquotes,
+    findCitedQuotes,
     findNoteMisquotes,
+    genCitedMisquoteRefusal,
     genLessonPointsRefusal,
     genLostNoteLinesRefusal,
     genNoteMisquoteRefusal,
@@ -2326,6 +2329,9 @@ type ToolWatchType = {
      */
     noteQuoteSources?: string[] | null;
     isNoteQuoteChecked?: boolean;
+    // A quote given its chapter and verse was held to that verse, read by
+    // the window (BN-110, `findCitedMisquotes`): once an ask.
+    isNoteCitedQuoteChecked?: boolean;
     // A new lesson's points were held to its passage, its order and its end
     // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
     isLessonPointsChecked?: boolean;
@@ -4182,6 +4188,41 @@ async function readVersesBefore(
     return 'entry' in last ? last.entry : await readEntry(last.ref);
 }
 
+/**
+ * The verses a change quotes BY their chapter and verse, each read on its
+ * own (BN-110): the tool leaves out a reference it cannot read, so one call
+ * for all of them could not say which text is whose. Eight at most, read by
+ * the window from the installed Bible, no model.
+ */
+async function readCitedVerseTexts(
+    refList: readonly string[],
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+) {
+    const verseTextMap = new Map<string, string>();
+    await Promise.all(
+        refList.map(async (ref) => {
+            try {
+                const read = await callTool(
+                    VERSE_FIND_TOOL_NAME,
+                    { refs: ref },
+                    signal,
+                    watch.windowAim,
+                );
+                const entry = JSON.parse(read)?.verses?.[0];
+                if (typeof entry?.text === 'string') {
+                    verseTextMap.set(ref, entry.text);
+                }
+            } catch (error) {
+                if (signal?.aborted) {
+                    throw error;
+                }
+            }
+        }),
+    );
+    return verseTextMap;
+}
+
 /** A read's answer with one more passage after its own. */
 function withVerseReadEntry(text: string, entry: VerseReadEntryType) {
     try {
@@ -4533,6 +4574,31 @@ async function runMcpToolCall(
             if (misquotes.length > 0) {
                 watch.isNoteQuoteChecked = true;
                 return `Tool refused: ${genNoteMisquoteRefusal(misquotes)}`;
+            }
+        }
+        // ...and a quote given its own chapter and verse is that verse's
+        // words, read now (BN-110): Matthew 11:28 had been quoted from
+        // memory as "weary and heavy laden", John 5:30's words as 6:38.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteCitedQuoteChecked !== true
+        ) {
+            const citedList = findCitedQuotes(toNoteChangeWords(lyricEditArgs));
+            if (citedList.length > 0) {
+                const misquotes = findCitedMisquotes(
+                    citedList,
+                    await readCitedVerseTexts(
+                        [...new Set(citedList.map((cited) => cited.ref))],
+                        signal,
+                        watch,
+                    ),
+                );
+                if (misquotes.length > 0) {
+                    watch.isNoteCitedQuoteChecked = true;
+                    return `Tool refused: ${genCitedMisquoteRefusal(misquotes)}`;
+                }
             }
         }
     }
