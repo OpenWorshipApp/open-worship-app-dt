@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T14:32:37.855Z
+  modified: 2026-11-11T19:17:44.726Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -368,6 +368,41 @@ phrase in a prompt (BN-95): shown "a nurse after a night shift" and "at
 the meal table" as samples, the first four lessons opened their examples
 and deeds on those very words. Describe what is wanted with no phrase to
 copy, or the sample becomes the next stock picture.
+(23) **Name the wrong reading to stop it**: a word-table entry that only
+states the truth is read past; one that names the wrong reading is
+followed. Told "the parable says no more of that hearer", a sower lesson
+still answered "Can a person be a believer but still be unfruitful? Yes";
+told he is "never a believer", it asked another question (BN-108). Told
+Jonah's sign was given "to the scribes and Pharisees", a children's
+lesson still had "His friends"; told "never told to his friends or
+disciples", it had "his listeners" (BN-111). And two facts set side by
+side get merged: "created man" (Genesis 1:27) beside "of the dust of the
+ground" (2:7) came back as "He created man from the dust (Genesis 2:7)"
+-- which says formed (BN-115). Say a different word is different, in so
+many words.
+(24) **More citing is more to get wrong**: asked to quote the New
+Testament's own words for Christ (BN-112), the lessons cited three times
+as many verses (10 -> 31 quotations a run). Every quotation was word for
+word -- BN-110 reads each verse a quote names, and an audit of the run
+against the app's KJV data found none off -- but the new errors were in
+what the sentences said ABOUT those verses: Isaiah 53:5 called the New
+Testament (BN-114 now catches that one), Ephesians 1:22's subject turned
+round. A check that holds the words holds nothing said around them.
+(25) **A blind read compares within itself only**: the reader brief went
+with a retired scratch folder and was written anew, and the same kind of
+baseline lessons scored Opus illustration 1.19 under the old brief and
+1.94 under the new. Compare the two sides of ONE read, never a figure
+across reads. A lost key can be rebuilt: `lesson-ab.mjs`'s shuffle is
+fixed by the before-run's row order and the seed (how ab18 and ab19 were
+unblinded after their key file was gone) -- check it against what the
+reader says each lesson is about.
+(26) **A run costs about seventy rounds of the hour's 150**: a 16-ask run
+spends 60-80 model calls, a single re-ask four or five, and three runs in
+an hour latched two scratch profiles' pace cap, which only a person's
+**Allow more** lifts. Read the profile's own
+`data/local-storage/chatbot-spend-ledger` (`rounds`, `[time, …]`) before a
+run and start when the past hour holds under about 60; a row recorded as
+`paused` is asked again by the next run of the same file.
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,
