@@ -1772,6 +1772,25 @@ was seen and what was done.
   carries one, so the model reads none. Titles from a sourced KJV text,
   read with the psalm, would give the background its own words; never
   written from memory.
+- **BN-123 — the wrong reading named where it was made** (2026-11-11, the
+  BN-116/117 read, Opus: four lessons held at accuracy 1, each "a meaning
+  the text does not give"). Three were read with an entry beside them:
+  "tormentors" (Matthew 18:34-35) as "the consequences of a heart", one's
+  own bitterness; David "had not proved" Saul's armour as "it didn't fit";
+  the ninety and nine left "because he knew they were safe". Each entry
+  now says what it never means (the 1 Samuel 17:39 words their own entry,
+  so the general "prove" carries no David into Romans 12:2), and Psalm
+  23:3's "restoreth my soul" -- read as "a sheep that has cast itself on
+  its back" -- has one: "a restorer of thy life" (Ruth 4:15), never the
+  cast sheep, a preacher's picture.
+- **BN-124 — a child's memory verse a child can say; no stock scene**
+  (2026-11-11, the same read). Children's lessons took Luke 15:7 (28
+  words) and Jonah 3:10 (37) as their memory verse, told "one short line";
+  it is "ONE verse of twenty words at most, from the story or elsewhere in
+  Scripture" now (a number is what the model follows, BN-73). And one
+  hospital room had stood in seven lessons of 32, beside a canyon bridge
+  and a stranger who pays the debt: named with the lifeboat, the garden
+  and the rescue as stock pictures.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

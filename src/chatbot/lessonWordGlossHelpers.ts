@@ -199,13 +199,28 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'thing true, "proving that this is very Christ" (Acts 9:22)',
     },
     {
+        // BN-123 (2026-11-11, the BN-116/117 read): "he had not proved
+        // them, meaning he knew they didn't fit", with the entry above
+        // beside it. Its own entry: in the one above, David's armour would
+        // ride into every lesson that holds "prove".
+        pattern: /\bI have not proved them\b/i,
+        text:
+            'I have not proved them (1 Samuel 17:39): David had not tried ' +
+            'the armor out -- never that it did not fit or was too heavy; ' +
+            'the passage says no more',
+    },
+    {
         // "The spiritual agony of a life lived without grace", three times.
         pattern: /\btormentors\b/i,
         text:
             'tormentors: those the angry lord delivered the servant to, "till ' +
             'he should pay all that was due unto him"; and Jesus says, "So ' +
             'likewise shall my heavenly Father do also unto you, if ye from ' +
-            'your hearts forgive not" (Matthew 18:34-35)',
+            'your hearts forgive not" (Matthew 18:34-35) -- ' +
+            // BN-123: "left to the consequences of a heart", "one's own
+            // bitterness", with this entry beside it.
+            "the lord's doing and the Father's, never only the torment of a " +
+            'bitter heart',
     },
     {
         // BN-121 (2026-11-11, the BN-116/117 read): a Psalm 51 lesson
@@ -331,7 +346,21 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             "wilderness is the flock's pasture, where the ninety and nine " +
             'are LEFT -- "with whom hast thou left those few sheep in the ' +
             'wilderness?" (1 Samuel 17:28) -- and the shepherd goes "after ' +
-            'that which is lost, until he find it"',
+            'that which is lost, until he find it"; ' +
+            // BN-123: "because he knew they were safe".
+            'Luke gives no reason he could leave them, never "because they ' +
+            'were safe"',
+    },
+    {
+        // BN-123 (2026-11-11, the BN-116/117 read): "'Restoreth my soul'
+        // means to bring back a sheep that has cast itself on its back" --
+        // a preacher's picture held to the verse.
+        pattern: /\brestoreth my soul\b/i,
+        text:
+            'restoreth my soul (Psalm 23:3): brings my life back, as the ' +
+            'women told Naomi her grandson would be "a restorer of thy ' +
+            'life" (Ruth 4:15) -- never a sheep cast on its back, a ' +
+            "preacher's picture the psalm does not have",
     },
     {
         // "Choosing their ritual purity or safety over a dying man", and a

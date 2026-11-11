@@ -165,6 +165,21 @@ describe('a lesson to preach, asked anywhere', () => {
         }
     });
 
+    // BN-124 (2026-11-11, the BN-116/117 read, Opus): children's memory
+    // verses a child cannot learn (Luke 15:7, Jonah 3:10, 28 and 37 words),
+    // and one hospital room in seven lessons of 32.
+    test("a child's memory verse is short, and an example no stock scene", () => {
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'ONE verse of twenty words at most, from the story or elsewhere',
+        );
+        expect(PREACHING_LESSON_SHAPE).not.toContain(
+            'memory verse of one short line',
+        );
+        for (const picture of ['a hospital room', 'a canyon bridge']) {
+            expect(PREACHING_LESSON_SHAPE).toContain(picture);
+        }
+    });
+
     // BN-118 (2026-11-11, the BN-116/117 read): six backgrounds of sixteen
     // were "generic", each opening on a line true of its whole book.
     test('a background changes how THIS passage is heard', () => {

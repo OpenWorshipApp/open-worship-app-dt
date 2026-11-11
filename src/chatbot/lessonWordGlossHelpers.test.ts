@@ -78,6 +78,8 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ]);
         expect(findLessonWordGlosses('for I have not proved them')).toEqual([
             expect.stringMatching(/^prove, proved: to test, to try out/),
+            // BN-123: and David's words, their wrong reading named.
+            expect.stringContaining('(1 Samuel 17:39)'),
         ]);
         expect(
             findLessonWordGlosses('thou anointest my head with oil'),
@@ -273,6 +275,43 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
                 '"departed from Saul" (16:14), the king before him',
             ),
         ]);
+    });
+
+    // BN-123 (2026-11-11, the BN-116/117 read, Opus): four meanings the
+    // text does not give, each read with an entry beside it -- named now.
+    test('the wrong reading is named where it was made', () => {
+        expect(
+            findLessonWordGlosses(
+                'And David said unto Saul, I cannot go with these; for I have ' +
+                    'not proved them.',
+            ),
+        ).toEqual([
+            expect.stringMatching(/^prove, proved: /),
+            expect.stringContaining('never that it did not fit'),
+        ]);
+        // The general entry carries no David into Romans 12:2.
+        expect(
+            findLessonWordGlosses('that ye may prove what is that good'),
+        ).toEqual([expect.not.stringContaining('David')]);
+        expect(
+            findLessonWordGlosses(
+                'He restoreth my soul: he leadeth me in the paths',
+            ),
+        ).toEqual([
+            expect.stringMatching(
+                /\(Ruth 4:15\) -- never a sheep cast on its back/,
+            ),
+        ]);
+        expect(
+            findLessonWordGlosses('and delivered him to the tormentors'),
+        ).toEqual([
+            expect.stringContaining('never only the torment of a bitter heart'),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'doth not leave the ninety and nine in the wilderness, and go',
+            ),
+        ).toEqual([expect.stringContaining('never "because they were safe"')]);
     });
 
     test('a long story carries eight at most', () => {

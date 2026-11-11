@@ -1107,7 +1107,9 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   is refused once an ask (`findNoteMisquotes`), and a quotation that names
   its own chapter and verse is held to that verse, which the window reads
   itself (BN-110, `findCitedMisquotes`: a verse quoted from memory and never
-  read had been let by); the blind readers' commonest
+  read had been let by), and a token standing where a sentence needs the
+  verse's words -- "Jesus, who [^John 1:14]." -- is sent back once
+  (BN-120, `findTokenAsWords`: a token shows its reference alone); the blind readers' commonest
   error, and any error keeps a lesson out of Best. **A fix to a lesson
   carries the lesson's rules and adds, never operates** (BN-79, BN-80): a
   change asked in a lesson note (a change verb, no lesson hint of its own)

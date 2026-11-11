@@ -235,7 +235,8 @@ export const PREACHING_LESSON_SHAPE =
     'or an office; told as a preacher would tell it, never ending on "This ' +
     'shows"; not mere courage or effort, and promising nothing the passage ' +
     'does not; never a memory of your own or a date, never a stock picture: ' +
-    'a lifeboat, a garden, a rescue>\n' +
+    'a lifeboat, a garden, a rescue, a hospital room, a canyon bridge, a ' +
+    'stranger who pays the debt>\n' +
     '**This week:** <one deed that answers what God gives in THIS point, ' +
     'with whom, at the moment of their week where this point meets them -- ' +
     'never a weekday or hour picked for no reason, never only "trust", ' +
@@ -270,8 +271,9 @@ export const PREACHING_LESSON_SHAPE =
     'never a whole chapter (name the rest in Background); after the ' +
     'Introduction the story TOLD in short sentences under its own heading, ' +
     'from its start to where the passage ends; two points a child can hold; ' +
-    'something to show; and a memory verse of one short line that says the ' +
-    'big idea. A verse is a token, never typed out -- a passage printed ' +
+    'something to show; and a memory verse a child can say -- ONE verse of ' +
+    'twenty words at most, from the story or elsewhere in Scripture -- that ' +
+    'says the big idea. A verse is a token, never typed out -- a passage printed ' +
     'once, after that its token in a sentence -- and a phrase quoted is ' +
     'word for word the passage as read.';
 
