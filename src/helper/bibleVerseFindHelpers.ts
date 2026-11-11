@@ -50,7 +50,7 @@ export const FOUND_TEXT_LIMIT = 300;
 export const READ_PASSAGE_TEXT_BUDGET = 6000;
 
 // The most verses before a passage read with it for a lesson's background.
-const MAX_VERSES_BEFORE = 10;
+export const MAX_VERSES_BEFORE = 10;
 
 // A psalm stands alone: the one before it is another song, never what
 // happens just before it (BN-96, 2026-11-11). Read before Psalms 23, 46 and
@@ -88,6 +88,47 @@ export function findVersesBeforeRef(refs: string) {
     return parts.chapter > 1 && !PSALMS_BOOK_PATTERN.test(parts.book.trim())
         ? `${parts.book} ${parts.chapter - 1}`
         : null;
+}
+
+type VerseReadEntryType = { key: string; ref: string; text: string };
+
+/**
+ * The last `count` verses of a chapter read whole -- "(1): … (35): …" under
+ * a key ending ":1-35" -- as their own entry, or the reference to read for
+ * them when the chapter came back cut before its end (BN-100, 2026-11-11).
+ * Read whole for a passage starting a chapter, the chapter before was cut
+ * from its END by the passage budget, and a lesson on Luke 15 told the
+ * Pharisee's dinner of 14:1 as what came "just before", not 14:25-35.
+ * Null when there is nothing to cut.
+ */
+export function toLastVersesRead(
+    entry: VerseReadEntryType | null | undefined,
+    count: number,
+): { entry: VerseReadEntryType } | { ref: string } | null {
+    const range = /:(\d{1,3})-(\d{1,3})$/;
+    const keyMatch = range.exec(String(entry?.key ?? ''));
+    if (entry === null || entry === undefined || keyMatch === null) {
+        return null;
+    }
+    const lastVerse = Number.parseInt(keyMatch[2], 10);
+    const firstVerse = lastVerse - count + 1;
+    if (firstVerse <= Number.parseInt(keyMatch[1], 10)) {
+        return null;
+    }
+    const toRange = (text: string) => {
+        return text.replace(range, `:${firstVerse}-${lastVerse}`);
+    };
+    const start = String(entry.text).indexOf(`(${firstVerse}): `);
+    if (start < 0 || !String(entry.text).includes(`(${lastVerse}): `)) {
+        return { ref: toRange(entry.ref) };
+    }
+    return {
+        entry: {
+            key: toRange(entry.key),
+            ref: toRange(entry.ref),
+            text: String(entry.text).slice(start),
+        },
+    };
 }
 
 // The most chapters one passage over chapters is read across (BN-99).

@@ -1567,15 +1567,22 @@ describe('the Anthropic loop', () => {
     // rest. A new lesson's first passage read takes them too, once an ask.
     test('a new lesson reads the verses before its passage too', async () => {
         fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
-        fake.toolResultMap.owa_find_verse = JSON.stringify({
-            bible: 'KJV',
-            verses: [
-                {
-                    ref: 'Luke 10:25-37',
-                    text: '(35): he took out two pence, and gave them…',
-                },
-            ],
-        });
+        // Each read answers its own refs (BN-100: the verses before are a
+        // read of their own, so the passage keeps its whole budget).
+        fake.answerTool = (_name: string, args: any) => {
+            return JSON.stringify({
+                bible: 'KJV',
+                verses: [
+                    {
+                        ref: args.refs,
+                        text:
+                            args.refs === 'Luke 10:25-37'
+                                ? '(35): he took out two pence, and gave them…'
+                                : '(15): And thou, Capernaum…',
+                    },
+                ],
+            });
+        };
         const read = (refs: string) => {
             return anthropicToolUse({
                 name: 'owa_find_verse',
@@ -1611,7 +1618,8 @@ describe('the Anthropic loop', () => {
             },
         );
         expect(fake.toolCallList.map((call) => call.args.refs)).toEqual([
-            'Luke 10:25-37; Luke 10:15-24',
+            'Luke 10:25-37',
+            'Luke 10:15-24',
             'Leviticus 19:18',
         ]);
         const firstRead = readToolResults(sentList[1])[0].content;
@@ -1625,6 +1633,76 @@ describe('the Anthropic loop', () => {
         const secondRead = readToolResults(sentList[2])[0].content;
         expect(secondRead).not.toContain('The window also read');
         expect(secondRead).not.toContain('as Scripture itself explains');
+    });
+
+    // BN-100 (2026-11-11): a passage starting a chapter had the chapter
+    // before read whole with it, cut from its END by the shared budget, and
+    // a lesson on Luke 15 told the dinner of 14:1 as what came "just
+    // before". Only the chapter's last ten verses are kept now.
+    test("a passage starting a chapter reads that chapter's last verses", async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
+        const chapter14 = Array.from({ length: 35 }, (_, index) => {
+            return `(${index + 1}): Verse ${index + 1} of Luke 14.`;
+        }).join(' ');
+        fake.answerTool = (_name: string, args: any) => {
+            return JSON.stringify({
+                bible: 'KJV',
+                verses: [
+                    args.refs === 'Luke 14'
+                        ? {
+                              key: 'LUK 14:1-35',
+                              ref: 'Luke 14:1-35',
+                              text: chapter14,
+                          }
+                        : {
+                              key: 'LUK 15:1-7',
+                              ref: 'Luke 15:1-7',
+                              text: '(1): Then drew near…',
+                          },
+                ],
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_find_verse',
+                    input: { refs: 'Luke 15:1-7' },
+                }),
+                anthropicText('Which way should the lesson go?'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            `a sermon on the lost sheep\n${NOTE_BLANK_LESSON_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(fake.toolCallList.map((call) => call.args.refs)).toEqual([
+            'Luke 15:1-7',
+            'Luke 14',
+        ]);
+        const read = readToolResults(sentList[1])[0].content;
+        expect(read).toMatch(
+            /^\(The window also read Luke 14:26-35, the verses/,
+        );
+        expect(read).toContain('"key":"LUK 14:26-35"');
+        expect(read).toContain('(26): Verse 26 of Luke 14.');
+        expect(read).not.toContain('(25): Verse 25');
     });
 
     // BN-83 (2026-11-11): the sower sermon's points stopped at the thorns,

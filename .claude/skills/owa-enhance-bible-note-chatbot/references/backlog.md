@@ -1470,6 +1470,20 @@ was seen and what was done.
   heaven" and "he shall be my son" in it. The BN-76 misquote check flags
   all three quotes when given the lesson and its passage, whole or cut, but
   it refused none of them in the live ask; that is not explained yet.
+- **BN-100 — "just before" is the end of the chapter before** (2026-11-11,
+  both readers of the BN-94..96 read). Two lessons on Luke 15 told the
+  Pharisee's dinner of Luke 14:1 as what came "just before" the lost sheep,
+  where 14:25-35 does, and 15:1-2 sets the scene. BN-89 had read the WHOLE
+  chapter before a passage that starts one, in the same call as the
+  passage. The call's shared letters cut that chapter from its END, so the
+  model saw the dinner and never the verses that lead in. The verses
+  before are now a read of their own, so the passage keeps its whole
+  budget. Of a chapter before, the last ten verses are kept (`toLastVersesRead`;
+  when a long chapter comes back cut, those ten are read on their own), in
+  `readVersesBefore` in `llmBotHelpers.ts`. Asked again live: Zacchaeus'
+  background "as Jesus approached Jericho, he stopped to heal a blind man"
+  (Luke 18:35-43), the lost sheep's "Just before this, Jesus told people
+  that following him costs everything" (14:25-35), both right.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

@@ -65,7 +65,9 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
 import {
     findVersesBeforeRef,
+    MAX_VERSES_BEFORE,
     resolveBookKey,
+    toLastVersesRead,
 } from '../helper/bibleVerseFindHelpers';
 import {
     ATTACHMENT_ONLY_QUESTION,
@@ -4121,6 +4123,59 @@ async function runStudyTranslate(
     );
 }
 
+type VerseReadEntryType = { key: string; ref: string; text: string };
+
+/**
+ * The verses just before a new lesson's passage, read in a call of their own
+ * (BN-100, 2026-11-11): of a chapter before, its last ten -- read whole with
+ * the passage, that chapter had been cut from its END, and a lesson on Luke
+ * 15 told the Pharisee's dinner of 14:1 as what came "just before". Null
+ * when they cannot be read; the lesson goes on without them.
+ */
+async function readVersesBefore(
+    ref: string,
+    args: any,
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+): Promise<VerseReadEntryType | null> {
+    const readEntry = async (refs: string) => {
+        try {
+            const read = await callTool(
+                VERSE_FIND_TOOL_NAME,
+                { ...(args ?? {}), refs },
+                signal,
+                watch.windowAim,
+            );
+            const entry = JSON.parse(read)?.verses?.[0];
+            return typeof entry?.text === 'string' ? entry : null;
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error;
+            }
+            return null;
+        }
+    };
+    const entry: VerseReadEntryType | null = await readEntry(ref);
+    const last = toLastVersesRead(entry, MAX_VERSES_BEFORE);
+    if (last === null) {
+        return entry;
+    }
+    return 'entry' in last ? last.entry : await readEntry(last.ref);
+}
+
+/** A read's answer with one more passage after its own. */
+function withVerseReadEntry(text: string, entry: VerseReadEntryType) {
+    try {
+        const read = JSON.parse(text);
+        if (!Array.isArray(read?.verses)) {
+            return text;
+        }
+        return JSON.stringify({ ...read, verses: [...read.verses, entry] });
+    } catch {
+        return text;
+    }
+}
+
 async function runMcpToolCall(
     name: string,
     args: any,
@@ -4486,13 +4541,9 @@ async function runMcpToolCall(
     ) {
         watch.isLessonBeforeRead = true;
         isLessonPassageRead = true;
+        // Read on their own once the passage is (BN-100), so the passage
+        // keeps its whole budget and they theirs.
         versesBeforeRef = findVersesBeforeRef(args.refs);
-        if (versesBeforeRef !== null) {
-            lyricEditArgs = {
-                ...args,
-                refs: `${args.refs}; ${versesBeforeRef}`,
-            };
-        }
     }
     // The page in the language the answer is written in (`pageLang`). The
     // watch keeps the id as the model gave it: it names the recipe.
@@ -4581,6 +4632,16 @@ async function runMcpToolCall(
             }
             throwIfCancelled(signal);
             text = await callTool(name, calledArgs, signal, watch.windowAim);
+        }
+        if (versesBeforeRef !== null && !text.startsWith('Tool ')) {
+            const before = await readVersesBefore(
+                versesBeforeRef,
+                args,
+                signal,
+                watch,
+            );
+            versesBeforeRef = before?.ref ?? null;
+            text = before === null ? text : withVerseReadEntry(text, before);
         }
         applyToolWatch(watch, name, watchedArgs, text);
         if (!isLessonPassageRead || text.startsWith('Tool ')) {

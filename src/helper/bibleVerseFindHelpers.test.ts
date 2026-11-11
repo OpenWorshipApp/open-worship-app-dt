@@ -27,6 +27,7 @@ import {
     toReadPassageTextLimit,
     findVersesBeforeRef,
     splitChapterSpan,
+    toLastVersesRead,
     toTermWeight,
     toVerseKey,
     withExactCounts,
@@ -222,6 +223,41 @@ describe('a found row', () => {
         ]) {
             expect(findVersesBeforeRef(refs), refs).toBe(null);
         }
+    });
+
+    // BN-100 (2026-11-11): the chapter before a passage that starts one is
+    // kept to its last verses -- read whole it was cut from its END.
+    it('keeps the last verses of a chapter read whole, or names them', () => {
+        const chapter = Array.from({ length: 12 }, (_, index) => {
+            return `(${index + 1}): v${index + 1}`;
+        }).join(' ');
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 14:1-12', ref: 'Luke 14:1-12', text: chapter },
+                10,
+            ),
+        ).toEqual({
+            entry: {
+                key: 'LUK 14:3-12',
+                ref: 'Luke 14:3-12',
+                text: chapter.slice(chapter.indexOf('(3): ')),
+            },
+        });
+        // Cut before its end: the last ten are read on their own.
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 14:1-35', ref: 'Luke 14:1-35', text: '(1): a…' },
+                10,
+            ),
+        ).toEqual({ ref: 'Luke 14:26-35' });
+        // Ten or fewer, or no range: nothing to cut.
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 10:15-24', ref: 'Luke 10:15-24', text: '(15): x' },
+                10,
+            ),
+        ).toBe(null);
+        expect(toLastVersesRead(null, 10)).toBe(null);
     });
 
     // BN-99 (2026-11-11): a passage over chapters, read as one reference,
