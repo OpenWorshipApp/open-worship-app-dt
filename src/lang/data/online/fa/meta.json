@@ -3,7 +3,7 @@
     "order": 14,
     "name": "Persian",
     "nativeName": "فارسی",
-    "version": "0.0.38",
+    "version": "0.0.39",
     "direction": "rtl",
     "description": "A right-to-left language: the app in Persian, Bible book names in English."
 }

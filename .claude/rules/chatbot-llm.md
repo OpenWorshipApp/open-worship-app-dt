@@ -1312,6 +1312,39 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   more** (`EC-490`, `listStudyStrayLetters` over `groupLettersByScript`):
   not the part's main script, Latin or one the English uses (Japanese's
   three and Korean's two count as one), counted with the missing church
-  words; a Burmese sentence had held a Sinhala letter. A word no list or
-  label holds is still the translator's. The card counts one diagram as
-  one (`EC-487`: a singular key in every package).
+  words; a Burmese sentence had held a Sinhala letter. **And every
+  language has its Bible's own words** (`EC-491`, the user's _yes_ to a
+  list for each language): `churchWords.json` in 72 packages, a side file
+  the plugin carries, holds up to sixty things a study names (_Son of
+  Man_, _bronze serpent_, _eternal life_, the Pharisees, Moses), each READ
+  off that language's own Bible at its anchor verses (`source` names the
+  Bible), never written from memory. A word is left out where the verse
+  paraphrases, says _ten words_ for the Commandments, or spells it as no
+  study now would. `withStudyChurchWords` puts them under the language's
+  `translationTerms` (a key in another case is the same word) and over
+  the labels, loaded beside the labels for the one job and let go. In a
+  language whose words change form in a sentence (`wordsChangeForm`,
+  `isWordFormChanging`) a church word is looked for by its stems, each
+  word of four letters or more by three fifths of its letters in a row;
+  elsewhere letter for letter. Both sides are compared with every
+  combining mark taken out (`toFindableText`: NFD, then `\p{M}`), so a
+  fully pointed Bible word is found in an unpointed translation and the
+  old spelling's cedilla in the new one's comma. A heading so written
+  starts with a capital (`toHeadingWord`). Fifteen packages have no list:
+  no free Bible text in the language, or one in a spelling the app does
+  not write (Armenian, Belarusian, Greek). The card counts one diagram as
+  one (`EC-487`: a singular key in every package). **The words also say
+  the script** (`EC-493`): when most of their letters are in one script
+  other than Latin, the translator is told to write it (_into Serbian,
+  written in Cyrillic letters_) and every part is held to it
+  (`scriptPattern`, the 40% rule); several scripts at once (Japanese) are
+  all held to, none named. Serbian had come back in Latin letters, every
+  Cyrillic word handed over "missing". A language turned off in Settings →
+  Languages is out of the window's file store, so its words, labels and
+  script are not read at all (`EC-494`, open). **A study translated again
+  is translated from its own words only** (`EC-492`,
+  `splitStudyTranslations`): a translation added after it opens with a rule
+  and a `#` title of its own, the plan hands that tail over as
+  `translations`, kept as it is -- after it for `append`, put back after the
+  new words for `replace`, left out of a copy. Serbian asked after a Khmer
+  translation had come back twice, from the English and from the Khmer.

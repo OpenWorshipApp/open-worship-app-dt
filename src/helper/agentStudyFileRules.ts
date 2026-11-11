@@ -1020,6 +1020,46 @@ export type StudyTranslatePartType = {
 const QUOTE_HEAD_PATTERN = /^\s{0,3}>\s*\*\*(.+?)\*\*\s*\(([^)\n]{1,40})\)\s*$/;
 
 /**
+ * The body (`splitStudyFooter`'s) as the study was written, apart from the
+ * translations added after it (2026-11-11, EC-492): an added translation
+ * opens with a rule and a `#` title of its own -- the window drafts it so,
+ * and a study has one `#` title, at its top. Asked for Serbian after a
+ * Khmer translation was added, the whole file had been translated and the
+ * Serbian came back twice, once from the English and once from the Khmer.
+ * `translations` starts at that rule; the two joined by `\n` are the body.
+ */
+export function splitStudyTranslations(body: string) {
+    const lineList = splitLinesByFence(String(body ?? ''));
+    const lines = lineList.map(({ line }) => {
+        return line;
+    });
+    let hasWords = false;
+    for (const [index, { line, isInFence }] of lineList.entries()) {
+        if (!isInFence && hasWords && RULE_PATTERN.test(line)) {
+            let next = index + 1;
+            while (next < lineList.length && lines[next].trim() === '') {
+                next += 1;
+            }
+            const after = lineList[next];
+            if (
+                after !== undefined &&
+                !after.isInFence &&
+                /^#\s+\S/.test(after.line)
+            ) {
+                return {
+                    original: lines.slice(0, index).join('\n'),
+                    translations: lines.slice(index).join('\n'),
+                };
+            }
+        }
+        if (line.trim() !== '') {
+            hasWords = true;
+        }
+    }
+    return { original: lines.join('\n'), translations: '' };
+}
+
+/**
  * The body (`splitStudyFooter`'s) in the parts a translation treats apart:
  * WORDS to translate; a DIAGRAM, its fences included, whose labels are
  * translated and its syntax kept; a PASSAGE the app quoted (`> **John

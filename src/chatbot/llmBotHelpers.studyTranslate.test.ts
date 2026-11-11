@@ -48,6 +48,15 @@ const { fake, settingMap, TERMISH, LABELISH } = vi.hoisted(() => ({
         } as Record<string, unknown>,
         // Every language whose labels the job asked the store for.
         loadedList: [] as string[],
+        // Its Bible's own words (EC-491), as its plugin's `churchWords.json`
+        // carries them: its words change form in a sentence.
+        churchWords: {
+            wordsChangeForm: true,
+            words: {
+                'Son of Man': 'Sono di Manno',
+                Pharisees: 'the strict ones',
+            },
+        } as unknown,
     },
 }));
 
@@ -131,7 +140,12 @@ vi.mock('./studyTranslateHelpers', async (importOriginal) => {
         resolveStudyTranslateLanguage: (value: unknown) => {
             const name = String(value).toLowerCase();
             if (name === 'labelish') {
-                const { labels: _d, loadedList: _l, ...language } = LABELISH;
+                const {
+                    labels: _d,
+                    loadedList: _l,
+                    churchWords: _c,
+                    ...language
+                } = LABELISH;
                 return language;
             }
             return name === 'termish'
@@ -150,6 +164,9 @@ vi.mock('../lang/langFileStore', async (importOriginal) => {
             if (fileName === 'tran.json') {
                 LABELISH.loadedList.push(langCode);
                 return langCode === LABELISH.code ? LABELISH.labels : null;
+            }
+            if (fileName === 'churchWords.json' && langCode === LABELISH.code) {
+                return LABELISH.churchWords;
             }
             return original.loadLangFile(langCode, fileName);
         },
@@ -801,6 +818,57 @@ describe('a study file translated by the window', () => {
             '---\n\n## Joined Verses\nThe Elder Book promiseo ' +
                 '[^Numberso 21:9].',
         );
+    });
+
+    test("a language's Bible words: told, asked again when written another way, a changed form taken", async () => {
+        useToolHost(undefined, () => {
+            return {
+                ...genPlan(null),
+                parts: [
+                    {
+                        kind: 'text',
+                        text: '## Pharisees\nThe Son of Man came [^John 3:14].\n',
+                    },
+                ],
+            };
+        });
+        const { askList, translateText } = useTranslator((ask) => {
+            const translated = toTestish(ask);
+            return translated.replace(
+                'Son of Man',
+                ask.includes('Your last translation')
+                    ? 'Sonon di Mannos'
+                    : 'Childo of Humano',
+            );
+        });
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Labelish', place: 'append' }),
+            ),
+            anthropicText('Translated. Press Save changes to keep it.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Labelish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        expect(askList[0]).toContain(
+            "Use the church's own words in Labelish: Son of Man = " +
+                'Sono di Manno; Pharisees = the strict ones.',
+        );
+        expect(askList).toHaveLength(2);
+        expect(askList[1]).toContain(
+            'write them so: Son of Man = Sono di Manno.',
+        );
+        const draftArgs = fake.toolCallList[fake.toolCallList.length - 1].args;
+        expect(draftArgs.append).toContain('## The strict ones\n');
+        expect(draftArgs.append).toContain('Sonon di Mannos cameo');
     });
 
     test.each([

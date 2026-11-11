@@ -10,6 +10,7 @@ import {
     separateStudyLines,
     splitStudyFooter,
     splitStudyForTranslation,
+    splitStudyTranslations,
     summarizeStudyChange,
     toStudyDiagramBlock,
     toStudyDiagramSource,
@@ -392,6 +393,49 @@ describe('the parts a translation treats apart', () => {
             kind: 'diagram',
             text: '```mermaid\ngraph TD',
         });
+    });
+
+    it('keeps the translations added after the study apart', () => {
+        const added = [
+            '---',
+            '',
+            '# The New Birth, again',
+            '',
+            '## The Setting, again',
+            'Words again.',
+            '',
+            '---',
+            '',
+            '# The New Birth, once more',
+        ].join('\n');
+        const body = `${STUDY}\n\n${added}`;
+        const { original, translations } = splitStudyTranslations(body);
+        expect(original).toBe(`${STUDY}\n`);
+        expect(translations).toBe(added);
+        expect(`${original}\n${translations}`).toBe(body);
+        expect(splitStudyForTranslation(original).at(-1)?.text).not.toContain(
+            'again',
+        );
+    });
+
+    it('splits nothing off a study with no translation added after it', () => {
+        for (const body of [
+            STUDY,
+            // A rule under the study's own words, a section under it.
+            `${STUDY}\n\n---\n\n## More\nWords.`,
+            // A rule and a title inside a block are the block's own.
+            `${STUDY}\n\n\`\`\`md\n---\n\n# Not a title\n\`\`\``,
+            // A rule before any words.
+            '---\n\n# The New Birth\n\nWords.',
+        ]) {
+            expect(splitStudyTranslations(body)).toEqual({
+                original: body,
+                translations: '',
+            });
+        }
+        expect(
+            splitStudyTranslations('# A\r\nWords.\r\n\r\n---\r\n\r\n# B'),
+        ).toEqual({ original: '# A\nWords.\n', translations: '---\n\n# B' });
     });
 
     it('cuts words where paragraphs end, a long one kept whole', () => {

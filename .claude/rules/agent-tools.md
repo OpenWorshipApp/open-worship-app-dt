@@ -1331,7 +1331,9 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   drawn John 3's verse-by-verse lines as one paragraph), never in lines
   the change did not reach. **`translate`** (`EC-478`) writes nothing
   either: it splits a study file into parts -- its words, each diagram,
-  each passage quoted again from `bible`, a footer -- and answers the plan
+  each passage quoted again from `bible`, a footer, and the translations
+  already added after it, kept apart as `translations` and never
+  translated again (`EC-492`) -- and answers the plan
   (`translating: true`, the file's `hash`); the help window translates it
   part by part and drafts the result as a change (`chatbot-llm.md`),
   while the developer's door gets the plan and its note to do the same.

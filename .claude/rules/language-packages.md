@@ -106,7 +106,14 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     kept (two subscripts a script draws alike, say), by which words a model
     writes into a note are put back to the typed ones (BN-37); `bibleSource.json` — what studying a
     Bible in it needs (Hebrew's chant and joiner marks, a grammar hint, which
-    letters say a word is in it; `wordStudyHelpers.ts`); `world.json` —
+    letters say a word is in it; `wordStudyHelpers.ts`); `churchWords.json` —
+    its Bible's own words for what a Bible study names (_Son of Man_,
+    _eternal life_, Moses), each read off the verses of the Bible its
+    `source` names, never from memory, and `wordsChangeForm` (a sentence
+    changes its words, so the help window's study translator looks for one
+    by its stems; 2026-11-11, EC-491) -- the script its words are written
+    in is the one a study is translated into (EC-493: Serbian's Bible is
+    Cyrillic); `world.json` —
     what the Bible import and the lyric tools know of it in its own words
     (its own name, the word for "language", stop words, letters, marks;
     `tools/owa-devtools-mcp/worldLanguages.mjs`). Each carries `order` where

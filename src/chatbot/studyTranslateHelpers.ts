@@ -47,6 +47,17 @@ export type StudyTranslateLanguageType = {
     scriptPattern: RegExp | null;
     /** The church's own words in it, by their English (`translationTerms`). */
     terms: Record<string, string>;
+    /**
+     * Its words take another form in a sentence -- an ending, a prefix --
+     * so a church word is looked for by its stems, not letter for letter
+     * (`churchWords.json`'s `wordsChangeForm`).
+     */
+    isWordFormChanging?: boolean;
+    /**
+     * The one script its church words are written in, when it is not Latin
+     * (`withStudyChurchWords`): the script the translator is told to write.
+     */
+    scriptName?: string;
 };
 
 export type StudyTranslatePlanPartType = {
@@ -63,6 +74,11 @@ export type StudyTranslatePlanType = {
     ref: string | null;
     bible: string | null;
     parts: StudyTranslatePlanPartType[];
+    /**
+     * The translations already added after the study (`translate`'s
+     * `translations`): kept as they are, never translated again.
+     */
+    translations: string;
     footer: string;
 };
 
@@ -204,6 +220,8 @@ export function readStudyTranslatePlan(
         ref: toTextOrNull(result.ref),
         bible: toTextOrNull(result.bible),
         parts,
+        translations:
+            typeof result.translations === 'string' ? result.translations : '',
         footer: typeof result.footer === 'string' ? result.footer : '',
     };
 }
@@ -220,9 +238,13 @@ export function splitEdgeLines(text: string) {
 }
 
 function toLanguageText(language: StudyTranslateLanguageType) {
-    return language.nativeName !== '' && language.nativeName !== language.name
-        ? `${language.name} (${language.nativeName})`
-        : language.name;
+    const name =
+        language.nativeName !== '' && language.nativeName !== language.name
+            ? `${language.name} (${language.nativeName})`
+            : language.name;
+    return language.scriptName === undefined
+        ? name
+        : `${name}, written in ${language.scriptName} letters`;
 }
 
 /**
@@ -311,6 +333,117 @@ export function withStudyLabelTerms(
     return {
         ...language,
         terms: { ...Object.fromEntries(labelTermList), ...language.terms },
+    };
+}
+
+/**
+ * The file a language keeps its Bible's own words in (2026-11-11, EC-491):
+ * what a Bible study names -- _Son of Man_, _eternal life_, _the
+ * Pharisees_, Moses and Peter -- as that language's Bible writes them, each
+ * read off the Bible's own verses, and whether its words change form in a
+ * sentence. The four labels above were all a language without a list of its
+ * own had, and only Khmer and French had a list.
+ */
+export const STUDY_CHURCH_WORDS_FILE_NAME = 'churchWords.json';
+
+/**
+ * The scripts other than Latin some church words are written in, when most
+ * of their letters are: every one of them in the pattern (Japanese writes
+ * three together), and the script's name when there is only one. Null for
+ * words written in Latin letters.
+ */
+function readStudyWordsScript(wordList: string[]) {
+    const letterMap = groupLettersByScript(wordList.join(' '));
+    let letterCount = 0;
+    const otherList: [name: string, count: number][] = [];
+    for (const [name, letters] of letterMap) {
+        letterCount += letters.length;
+        if (name !== 'Latin') {
+            otherList.push([name, letters.length]);
+        }
+    }
+    const otherCount = otherList.reduce((sum, [, count]) => {
+        return sum + count;
+    }, 0);
+    if (otherCount === 0 || otherCount * 2 < letterCount) {
+        return null;
+    }
+    return {
+        pattern: new RegExp(
+            `[${otherList
+                .map(([name]) => {
+                    return `\\p{Script=${name}}`;
+                })
+                .join('')}]`,
+            'u',
+        ),
+        name: otherList.length === 1 ? otherList[0][0] : undefined,
+    };
+}
+
+/**
+ * The language with its Bible's words (`churchWords.json`, read for the one
+ * translation) under its own `translationTerms`, which win where both name
+ * one, a key as written or in another case (_Gospel_ and _gospel_ are one
+ * word, never two the translator is told at once). A word left as its
+ * English, or not a word at all, adds nothing.
+ *
+ * The words also say the SCRIPT its Bible writes (2026-11-11, EC-491): a
+ * language written in two -- Serbian in Cyrillic and in Latin letters --
+ * came back in the one its words were not, so every word handed over was
+ * "missing". The translator is told that script, and a language with no
+ * script of its own here is held to it.
+ */
+export function withStudyChurchWords(
+    language: StudyTranslateLanguageType,
+    file: unknown,
+): StudyTranslateLanguageType {
+    if (file === null || typeof file !== 'object') {
+        return language;
+    }
+    const { words, wordsChangeForm } = file as Record<string, unknown>;
+    const ownKeySet = new Set(
+        Object.keys(language.terms).map((english) => {
+            return english.trim().toLowerCase();
+        }),
+    );
+    const wordList =
+        words === null || typeof words !== 'object'
+            ? []
+            : Object.entries(words as Record<string, unknown>).flatMap(
+                  ([english, word]) => {
+                      if (typeof word !== 'string') {
+                          return [];
+                      }
+                      const trimmed = word.trim();
+                      return trimmed === '' ||
+                          english.trim() === '' ||
+                          ownKeySet.has(english.trim().toLowerCase()) ||
+                          trimmed.toLowerCase() === english.toLowerCase()
+                          ? []
+                          : [[english.trim(), trimmed] as [string, string]];
+                  },
+              );
+    if (wordList.length === 0) {
+        return language;
+    }
+    const script = readStudyWordsScript(
+        wordList.map(([, word]) => {
+            return word;
+        }),
+    );
+    return {
+        ...language,
+        terms: { ...Object.fromEntries(wordList), ...language.terms },
+        isWordFormChanging: wordsChangeForm === true,
+        ...(script === null
+            ? {}
+            : {
+                  scriptPattern: language.scriptPattern ?? script.pattern,
+                  ...(script.name === undefined
+                      ? {}
+                      : { scriptName: script.name }),
+              }),
     };
 }
 
@@ -409,6 +542,22 @@ function toHeadingTermKey(words: string) {
 }
 
 /**
+ * A church word as a heading starts it: its first letter a capital in a
+ * script that has them (a Bible's words are kept as they stand in a
+ * sentence -- _the Pharisees_ -- EC-491).
+ */
+function toHeadingWord(word: string, langCode: string) {
+    const [first = '', ...rest] = [...word];
+    let upper = first.toUpperCase();
+    try {
+        upper = first.toLocaleUpperCase(langCode === '' ? undefined : langCode);
+    } catch (_error) {
+        // A code no locale has: the plain capital.
+    }
+    return upper + rest.join('');
+}
+
+/**
  * A heading whose words ARE one of the language's church words (`terms`),
  * written as that word whatever the translator wrote (EC-486): _Cross
  * references_ came back as no word at all twice, with the word in the list.
@@ -447,31 +596,33 @@ export function applyStudyHeadingTerms(
         }
         const index = headingIndexList[order];
         const marks = HEADING_LINE_PATTERN.exec(lines[index])?.[1] ?? '##';
-        lines[index] = `${marks} ${word}`;
+        lines[index] = `${marks} ${toHeadingWord(word, language.code)}`;
     });
     return lines.join('\n');
 }
 
 // What a Bible's own text puts between words and a translator does not --
 // zero-width spaces and joiners -- left out when one is looked for in the
-// other, and a curly apostrophe read as the straight one a term is written
-// with.
+// other, and a curly apostrophe or the turned comma some alphabets write as
+// a letter read as the straight one a term is written with.
 const INVISIBLE_MARK_PATTERN = /[\u200B-\u200D\u2060\uFEFF]/g;
-const APOSTROPHE_PATTERN = /[\u2018\u2019\u02BC]/g;
+const APOSTROPHE_PATTERN = /[\u2018\u2019\u02BB\u02BC]/g;
+// Every combining mark once a letter is taken apart: the vowel points,
+// accents, tone marks and dots one writer puts on a word and another
+// leaves off (EC-491: a Bible's fully pointed word was "missing" from every
+// unpointed translation, and the old spelling's cedilla from the new one's
+// comma). Leaving them out only ever finds more.
+const COMBINING_MARK_PATTERN = /\p{M}/gu;
 
 function toFindableText(text: string) {
     return text
         .replace(INVISIBLE_MARK_PATTERN, '')
         .replace(APOSTROPHE_PATTERN, "'")
-        .toLowerCase();
+        .normalize('NFD')
+        .toLowerCase()
+        .replace(COMBINING_MARK_PATTERN, '');
 }
 
-/**
- * The language's church words of more than one word -- the name of a
- * thing, said one way (_bronze serpent_) -- that the English uses and the
- * translation does not write, as `[english, word]`. One word (_God_,
- * _verse_) is left out: a translation may fairly say it another way.
- */
 // Scripts one language writes together -- Japanese's three, Korean's Hangul
 // with Han: never a stray letter among one another.
 const SHARED_TEXT_SCRIPT_SET = new Set([
@@ -522,6 +673,49 @@ export function listStudyStrayLetters(source: string, translated: string) {
     return [...straySet].slice(0, 8);
 }
 
+// A word shorter than this is never looked for by a stem: two or three
+// letters are in most sentences of the language anyway.
+const STEM_WORD_MIN_LETTERS = 4;
+// How much of a longer word a stem is: an ending or a prefix the sentence
+// put on it changes the rest (EC-491).
+const STEM_SHARE = 0.6;
+
+/**
+ * Whether a church word is in a translation whose words change form
+ * (`isWordFormChanging`): each of its words of four letters or more by a
+ * stem -- three fifths of its letters in a row, at any place in it --
+ * wherever it stands. Letter for letter, a word put after "of" in such a
+ * language was "missing" from every sentence that said it right, and the
+ * retry pushed the translator to write it wrong.
+ */
+function checkHasWordStems(findable: string, word: string) {
+    return toFindableText(word)
+        .split(/[\s-]+/)
+        .every((piece) => {
+            const letters = [...piece];
+            if (letters.length < STEM_WORD_MIN_LETTERS) {
+                return true;
+            }
+            const size = Math.ceil(letters.length * STEM_SHARE);
+            for (let start = 0; start + size <= letters.length; start++) {
+                if (
+                    findable.includes(
+                        letters.slice(start, start + size).join(''),
+                    )
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        });
+}
+
+/**
+ * The language's church words of more than one word -- the name of a
+ * thing, said one way (_bronze serpent_) -- that the English uses and the
+ * translation does not write, as `[english, word]`. One word (_God_,
+ * _verse_) is left out: a translation may fairly say it another way.
+ */
 export function listMissingStudyTerms(
     source: string,
     translated: string,
@@ -532,7 +726,9 @@ export function listMissingStudyTerms(
         return (
             /\s/.test(english.trim()) &&
             new RegExp(`\\b${escapeRegExp(english)}\\b`, 'i').test(source) &&
-            !findable.includes(toFindableText(word))
+            !(language.isWordFormChanging === true
+                ? checkHasWordStems(findable, word)
+                : findable.includes(toFindableText(word)))
         );
     });
 }
@@ -698,10 +894,16 @@ export function toStudyTranslateDraftArgs(
         };
     }
     if (place === 'replace') {
+        // In place of the study's own words: the translations added after
+        // it stay where they were.
+        const translations = plan.translations.trim();
         return {
             action: 'draft',
             file: plan.file,
-            content: `${trimmed}\n${plan.footer}`,
+            content:
+                translations === ''
+                    ? `${trimmed}\n${plan.footer}`
+                    : `${trimmed}\n\n${translations}\n${plan.footer}`,
             ...(plan.bible === null ? {} : { bible: plan.bible }),
         };
     }
@@ -768,6 +970,12 @@ export function describeStudyTranslation(
                       `${result.diagramCount} diagrams are translated; ` +
                       `${result.keptDiagramCount} kept as they were, since ` +
                       'their translation would not draw.',
+        );
+    }
+    if (plan.translations.trim() !== '') {
+        sentences.push(
+            'Only the study as it was written was translated: the ' +
+                'translations already added after it are kept as they are.',
         );
     }
     if (result.passageCount > 0) {

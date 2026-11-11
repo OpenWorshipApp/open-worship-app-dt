@@ -138,6 +138,9 @@ export const LANG_PLUGIN_SIDE_FILE_NAMES = [
     'typed.json',
     'bibleSource.json',
     'world.json',
+    // Its Bible's own words for what a Bible study names, read by the help
+    // window's study translator for one job (EC-491).
+    'churchWords.json',
 ];
 const SKIPPED_SOURCE_DIR_NAMES = new Set([
     'tests',

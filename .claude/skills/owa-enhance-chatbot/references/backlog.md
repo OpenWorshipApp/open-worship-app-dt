@@ -11652,3 +11652,114 @@ letters._ The stray letters count with the missing church words, and the
 answer with fewer is kept. It never stops the job. Unit-tested end to end.
 Not seen live: the stray letter came once in four Burmese asks, and not in
 the asks after the change.
+
+### EC-491 — church words for each language, read off its own Bible — `done` 2026-11-11
+
+The user's _yes_ to the question after EC-488: should each language get a
+list of church words beyond the four app labels? EC-488 gave every language
+four words. A study names many more: _Son of Man_, _eternal life_, the
+_bronze serpent_, the Pharisees, Moses. The translator was free to say each
+of them in its own words, and a church reads them the way its Bible does.
+
+**Done 2026-11-11.** Each package may carry `churchWords.json`: `source`
+(the Bible the words were read from), `wordsChangeForm`, and `words`, up to
+sixty English keys. 72 packages have one. Every word was READ off that
+language's own Bible at the key's anchor verses (John 3:14 for the bronze
+serpent, Matthew 23 for the Pharisees, and so on), never written from
+memory. Reviewers, one group of languages each, checked every list
+against its verses. A word was dropped where the verse paraphrases (_ten
+words_ for the Ten Commandments, in a dozen languages), where the Bible's
+spelling is one no
+study now writes (Filipino's 1905 spelling, Hebrew's defective spelling),
+or where the word is its English (Czech and Slovak _Satan_, German
+_Prophet_). Arabic and Urdu lost their vowel points, and Romanian's old
+cedillas became commas.
+- `withStudyChurchWords` puts the words under the language's own
+  `translationTerms` (a key in another case counts as the same key) and over
+  EC-488's labels. The file is loaded beside the labels for the one job and
+  let go.
+- In a language whose words change form in a sentence, a word of more than
+  one word is looked for by its stems: each word of four letters or more by
+  three fifths of its letters in a row (`checkHasWordStems`). Elsewhere it is
+  matched letter for letter.
+- Both sides drop every combining mark before they are compared
+  (`toFindableText`: NFD, then `\p{M}`, the turned comma read as an
+  apostrophe). A fully pointed Hebrew word was "missing" from every
+  unpointed translation before.
+- A heading made of a church word starts with a capital (`toHeadingWord`).
+- `churchWords.test.ts` holds every list to the shape the translator reads:
+  a source, plain words, no invisible marks and no Markdown signs, and no
+  word equal to its English.
+- Fifteen packages have no list. No free Bible text was found for Catalan,
+  Irish, Galician, Georgian, Macedonian, Malay, Slovenian, Samoan, Xhosa,
+  Zulu, Azerbaijani or Kinyarwanda. Armenian, Belarusian and Greek have one
+  only in a spelling the app does not write.
+
+Every changed package's version was raised and packed. The Serbian and
+Hebrew live runs are under EC-492 to EC-494.
+
+### EC-492 — a study translated again was translated with the translation already under it — `done` 2026-11-11, seen in the window
+
+Seen in EC-491's live run. The user's John 3 study already had its Khmer
+pages saved under the English. Asked for Serbian with the user's own words
+(_translate the English content to serbian and append it to new pages_),
+the window translated the WHOLE file: the Serbian came back twice, once
+from the English and once from the Khmer, both appended.
+
+**Done 2026-11-11.** `splitStudyTranslations` (`agentStudyFileRules.ts`)
+cuts the body at the first rule that a `#` title follows, outside a fenced
+block, after the study's own words. A translation the window adds opens
+exactly so, and a study has one `#` title, at its top. The `translate`
+plan carries the cut-off tail as `translations`, and only the study's own
+words are translated. For `append`, the tail stays where it is, ahead of
+the new pages. For `replace`, it is put back after the new words. A copy
+leaves it out. The window tells the model that the earlier translations
+were kept as they were.
+
+Seen in the 🤖 window, Auto (OWA Shared · gemma4:cloud, free, 24.1k tokens):
+the same ask, the same file. The card's draft held the English, the Khmer
+pages as saved, then ONE Serbian copy. Not saved.
+
+### EC-493 — Serbian came back in Latin letters while its Bible writes Cyrillic — `done` 2026-11-11, seen in the window in Hebrew
+
+Seen in EC-492's run. Serbian is written in two scripts, and the translator
+picked Latin (_Sveti Duh_, _Sin Čovečev_). Its church words, read off a
+Cyrillic Bible, could then never be found. Only a language with an
+`assistant.json` had a script to be held to, and Serbian has none.
+
+**Done 2026-11-11.** `withStudyChurchWords` reads the script off the
+words: when most of their letters are in scripts other than Latin, every
+one of those scripts goes into `scriptPattern` (unless the language already
+has its own), and when there is only one its name goes into `scriptName`.
+The translator is then told _into Serbian, written in Cyrillic letters_
+(`toLanguageText`, both the words' ask and a diagram's), and a part with
+fewer than 40% of its letters in that script is asked again
+(`checkIsStudyTextTranslated`). Of the 72 lists, 31 are in a script other
+than Latin. Japanese writes Han, Hiragana and Katakana together, so all
+three are held to and none is named.
+
+Seen in the 🤖 window, Auto (OWA Shared · gemma4:cloud, free, 25.2k
+tokens), with Hebrew, which is installed and turned on: _translate the
+English content to hebrew and append it to new pages_ on the same John 3
+study. The draft held the English, the Khmer pages as saved, then one
+Hebrew copy, its passage quoted from HebrewTD. Every one of the 18 church
+words the English uses was written as the Hebrew Bible writes it, and 97%
+of its letters were Hebrew. Not saved. Serbian itself could not be run:
+it is turned off on the dev profile (EC-494), and the setting was left as
+the person had it.
+
+### EC-494 — a translation into a language turned off in Settings gets none of its package — open
+
+Seen in the same run. Serbian is installed but turned off in Settings →
+Languages on the dev profile, so it is not in the window's file store
+(`syncLangFileStore` keeps the turned-on ones), and `loadLangFile` returns
+nothing for it. The translation got no church words, no labels and no
+script (EC-493), and came back in Latin letters. A language that is not
+installed at all gets the same.
+
+The help window already asks before it installs a language a Bible
+import needs (`langInstallChatHelpers.ts`, `owa_language`). A study
+translation into a turned-off or missing language could make the same
+offer: **Turn on** or **Install**, then translate. Reading a turned-off
+plugin's files behind the person's back is not the fix: turned off means
+not used.

@@ -22,6 +22,7 @@ import {
     toStudyTermsText,
     toStudyTextTranslationAsk,
     toStudyTranslateDraftArgs,
+    withStudyChurchWords,
     withStudyLabelTerms,
 } from './studyTranslateHelpers';
 
@@ -66,6 +67,7 @@ const PLAN: StudyTranslatePlanType = {
         { kind: 'text', text: '', quoted: null },
         { kind: 'keep', text: '---', quoted: null },
     ],
+    translations: '',
     footer: '\n---\n\n*Drafted by the app’s assistant.*\n',
 };
 
@@ -167,8 +169,22 @@ describe('readStudyTranslatePlan', () => {
                 { kind: 'text', text: 'Words.', quoted: null },
                 { kind: 'passage', text: '> x', quoted: '> y' },
             ],
+            translations: '',
             footer: PLAN.footer,
         });
+        // The translations already added after the study come along.
+        expect(
+            readStudyTranslatePlan(
+                JSON.stringify({
+                    translating: true,
+                    file: PLAN.file,
+                    name: PLAN.name,
+                    hash: PLAN.hash,
+                    parts: [],
+                    translations: '---\n\n# Again',
+                }),
+            )?.translations,
+        ).toBe('---\n\n# Again');
     });
 
     it('is null for a refusal or anything that is not a plan', () => {
@@ -383,7 +399,7 @@ describe('applyStudyHeadingTerms', () => {
                 '## Kross Refs\nSee theseo.\n\n### Spirito thing\nHe giveso.',
                 TERMISH,
             ),
-        ).toBe('## Linked Verses\nSee theseo.\n\n### the Breath\nHe giveso.');
+        ).toBe('## Linked Verses\nSee theseo.\n\n### The Breath\nHe giveso.');
     });
 
     it('reads a heading through bold, closing marks and any case', () => {
@@ -393,7 +409,7 @@ describe('applyStudyHeadingTerms', () => {
                 '# **Krossos** #\n\n## Graceo.',
                 TERMISH,
             ),
-        ).toBe('# Linked Verses\n\n## favour');
+        ).toBe('# Linked Verses\n\n## Favour');
     });
 
     it('leaves a heading that is no church word as translated', () => {
@@ -519,6 +535,231 @@ describe('withStudyLabelTerms', () => {
                 CAPITALISH,
             );
         }
+    });
+});
+
+describe('withStudyChurchWords', () => {
+    it("adds its Bible's words under the language's own, and how its words change", () => {
+        const language = withStudyChurchWords(TERMISH, {
+            source: 'A made-up Bible',
+            wordsChangeForm: true,
+            words: {
+                'Son of Man': ' the Man Born ',
+                'Holy Spirit': 'the Wind',
+                Pharisees: 'the strict ones',
+            },
+        });
+        expect(language.terms['Son of Man']).toBe('the Man Born');
+        expect(language.terms.Pharisees).toBe('the strict ones');
+        // The language's own `translationTerms` win.
+        expect(language.terms['Holy Spirit']).toBe('the Breath');
+        expect(language.isWordFormChanging).toBe(true);
+        // ... in any case: one word, never two the translator is told.
+        expect(
+            withStudyChurchWords(TERMISH, {
+                words: { 'holy spirit': 'the Wind', Grace: 'the gift' },
+            }),
+        ).toBe(TERMISH);
+        expect(
+            withStudyChurchWords(TERMISH, { words: { Moses: 'Mosa' } })
+                .isWordFormChanging,
+        ).toBe(false);
+    });
+
+    it('then takes the labels under both', () => {
+        const language = withStudyLabelTerms(
+            withStudyChurchWords(CAPITALISH, {
+                words: { 'Old Testament': 'Elder Covenant' },
+            }),
+            { 'old testament': 'Elder Book', 'new testament': 'Young Book' },
+        );
+        expect(language.terms).toEqual({
+            'Old Testament': 'Elder Covenant',
+            'New Testament': 'Young Book',
+        });
+    });
+
+    it('adds nothing for a word left as its English, empty, or no file', () => {
+        for (const file of [
+            null,
+            undefined,
+            'words',
+            { words: null },
+            {
+                wordsChangeForm: true,
+                words: { David: 'david', Paul: ' ', Peter: 3 },
+            },
+        ]) {
+            expect(withStudyChurchWords(CAPITALISH, file)).toBe(CAPITALISH);
+        }
+    });
+
+    // Letters of scripts that are not Latin, by their code points.
+    const lettersFrom = (start: number, count: number) => {
+        return String.fromCodePoint(
+            ...Array.from({ length: count }, (_, index) => {
+                return start + index;
+            }),
+        );
+    };
+
+    it('writes in the one script its words are written in, and is held to it', () => {
+        const word = lettersFrom(0x03b1, 6);
+        const language = withStudyChurchWords(TESTISH, {
+            words: { 'Son of Man': `${word} ${word}`, Moses: word },
+        });
+        expect(language.scriptName).toBe('Greek');
+        expect(language.scriptPattern?.test(word[0])).toBe(true);
+        expect(language.scriptPattern?.test('a')).toBe(false);
+        expect(
+            toStudyTextTranslationAsk('The Son of Man came.', language),
+        ).toContain('into Testish (Testo), written in Greek letters, in');
+        expect(
+            toStudyDiagramTranslationAsk('graph TD\n    A["Love"]', language),
+        ).toContain('into Testish (Testo), written in Greek letters:');
+        // The other script came back: not a translation.
+        const from = 'The Son of Man came to seek and to save the lost.';
+        expect(
+            checkIsStudyTextTranslated(
+                from,
+                'The Son of Man came to seek and save the lost ones.',
+                language,
+            ),
+        ).toBe(false);
+        expect(
+            checkIsStudyTextTranslated(
+                from,
+                `${word} ${word} ${word} ${word} ${word}.`,
+                language,
+            ),
+        ).toBe(true);
+        // A script of its own already known is kept.
+        expect(
+            withStudyChurchWords(CAPITALISH, { words: { Moses: word } })
+                .scriptPattern,
+        ).toBe(CAPITALISH.scriptPattern);
+    });
+
+    it('holds words in several scripts at once to all of them, naming none', () => {
+        const syllables = lettersFrom(0x3042, 3);
+        const angular = lettersFrom(0x30a2, 3);
+        const ideographs = lettersFrom(0x4e00, 3);
+        const language = withStudyChurchWords(TESTISH, {
+            words: { 'Son of Man': syllables + ideographs, Moses: angular },
+        });
+        expect(language.scriptName).toBeUndefined();
+        for (const letter of [syllables[0], angular[0], ideographs[0]]) {
+            expect(language.scriptPattern?.test(letter)).toBe(true);
+        }
+        expect(language.scriptPattern?.test('a')).toBe(false);
+        expect(toStudyTextTranslationAsk('Words.', language)).not.toContain(
+            'written in',
+        );
+    });
+
+    it('names no script for words mostly in Latin letters', () => {
+        for (const words of [
+            { 'Son of Man': 'the Man Born', Moses: 'Mosa' },
+            { 'Son of Man': 'the Man Born', Moses: lettersFrom(0x03b1, 2) },
+        ]) {
+            const language = withStudyChurchWords(TESTISH, { words });
+            expect(language.scriptPattern).toBeNull();
+            expect(language.scriptName).toBeUndefined();
+            expect(toStudyTextTranslationAsk('Words.', language)).toContain(
+                'into Testish (Testo), in plain words',
+            );
+        }
+    });
+});
+
+describe('a language whose words change form in a sentence', () => {
+    const SHIFTISH: StudyTranslateLanguageType = {
+        ...TESTISH,
+        name: 'Shiftish',
+        terms: { 'Holy Spirit': 'Holdo Spirak', 'Son of Man': 'Sono di Manno' },
+        isWordFormChanging: true,
+    };
+
+    it('finds a church word with an ending or a prefix put on it', () => {
+        expect(
+            listMissingStudyTerms(
+                'The gift of the Holy Spirit and the Son of Man.',
+                'Il donno ka-Holdon Spiraken e la Sonon di Mannos.',
+                SHIFTISH,
+            ),
+        ).toEqual([]);
+    });
+
+    it('still names a church word written as another word', () => {
+        expect(
+            listMissingStudyTerms(
+                'The gift of the Holy Spirit.',
+                'Il donno ka-Sacra Ventos.',
+                SHIFTISH,
+            ),
+        ).toEqual([['Holy Spirit', 'Holdo Spirak']]);
+    });
+
+    it('finds it whatever marks one writer puts on its letters and another leaves off', () => {
+        // Built from code points: a combining acute (U+0301) and a combining
+        // dot below (U+0323) on Latin letters, and a precomposed letter
+        // (U+00ED) whose taken-apart form is the plain one plus a mark.
+        const ACUTE = String.fromCodePoint(0x0301);
+        const DOT = String.fromCodePoint(0x0323);
+        const MARKED: StudyTranslateLanguageType = {
+            ...SHIFTISH,
+            terms: {
+                'Holy Spirit': `Ho${ACUTE}ldo Spi${DOT}rak`,
+                'Son of Man': `Sono d${String.fromCodePoint(0xed)} Manno`,
+            },
+        };
+        for (const isWordFormChanging of [true, false]) {
+            expect(
+                listMissingStudyTerms(
+                    'The Holy Spirit and the Son of Man.',
+                    `Il Holdo Spirak e${ACUTE} la Sono di Man${DOT}no.`,
+                    { ...MARKED, isWordFormChanging },
+                ),
+            ).toEqual([]);
+        }
+    });
+
+    it('reads a turned comma written as a letter as an apostrophe', () => {
+        expect(
+            listMissingStudyTerms(
+                'The Son of Man.',
+                `La Sono ${String.fromCodePoint(0x2018)}e Manno.`,
+                {
+                    ...SHIFTISH,
+                    terms: {
+                        'Son of Man': `Sono ${String.fromCodePoint(0x02bb)}e Manno`,
+                    },
+                    isWordFormChanging: false,
+                },
+            ),
+        ).toEqual([]);
+    });
+
+    it('looks for it letter for letter in a language whose words do not change', () => {
+        expect(
+            listMissingStudyTerms(
+                'The gift of the Holy Spirit.',
+                'Il donno ka-Holdon Spiraken.',
+                { ...SHIFTISH, isWordFormChanging: false },
+            ),
+        ).toEqual([['Holy Spirit', 'Holdo Spirak']]);
+    });
+
+    it('writes a church word as a heading with a capital first letter', () => {
+        expect(
+            applyStudyHeadingTerms(
+                '## Pharisees',
+                '## Farizo',
+                withStudyChurchWords(TESTISH, {
+                    words: { Pharisees: 'the strict ones' },
+                }),
+            ),
+        ).toBe('## The strict ones');
     });
 });
 
@@ -739,6 +980,33 @@ describe('toStudyTranslateDraftArgs', () => {
             file: PLAN.file,
             content: `${body}\n${PLAN.footer}`,
         });
+        // The translations added after the study stay where they were.
+        const translations = '---\n\n# Again\n\nWords again.';
+        expect(
+            toStudyTranslateDraftArgs(
+                { ...PLAN, bible: null, translations: `${translations}\n\n` },
+                body,
+                'replace',
+                TESTISH,
+            ),
+        ).toEqual({
+            action: 'draft',
+            file: PLAN.file,
+            content: `${body}\n\n${translations}\n${PLAN.footer}`,
+        });
+        // ... and are no part of what goes after them, or of a copy.
+        for (const place of ['append', 'new'] as const) {
+            expect(
+                JSON.stringify(
+                    toStudyTranslateDraftArgs(
+                        { ...PLAN, translations },
+                        body,
+                        place,
+                        TESTISH,
+                    ),
+                ),
+            ).not.toContain('Again');
+        }
     });
 
     it('drafts a copy under its translated title, its passage quoted anew', () => {
@@ -817,6 +1085,23 @@ describe('describeStudyTranslation', () => {
             `The window translated ${PLAN.name} into Testish part by part ` +
                 'with Gemma, as a copy of its own. 1 Bible passage(s) could ' +
                 'not be read in XB and are quoted as they were.',
+        );
+    });
+
+    it('says the translations already added were left as they are', () => {
+        expect(
+            describeStudyTranslation(
+                { ...PLAN, translations: '---\n\n# Again' },
+                { ...counts, diagramCount: 0, passageCount: 0 },
+                TESTISH,
+                'append',
+                'Gemma',
+            ),
+        ).toBe(
+            `The window translated ${PLAN.name} into Testish part by part ` +
+                'with Gemma, to be added after the file as it is. Only the ' +
+                'study as it was written was translated: the translations ' +
+                'already added after it are kept as they are.',
         );
     });
 });

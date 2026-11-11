@@ -264,6 +264,7 @@ import {
     toStudyDiagramSource,
 } from '../helper/agentStudyFileRules';
 import {
+    STUDY_CHURCH_WORDS_FILE_NAME,
     STUDY_LABEL_FILE_NAME,
     STUDY_TRANSLATE_CHUNK_CHARS,
     STUDY_TRANSLATE_TRIES,
@@ -283,6 +284,7 @@ import {
     toStudyDiagramTranslationAsk,
     toStudyTextTranslationAsk,
     toStudyTranslateDraftArgs,
+    withStudyChurchWords,
     withStudyLabelTerms,
 } from './studyTranslateHelpers';
 import {
@@ -3959,17 +3961,29 @@ async function runStudyTranslate(
             'or "French". When they did not say, ask which, with OPTIONS.'
         );
     }
-    // The church words the app's own labels already say in that language
-    // (EC-488): its labels, one file of an installed language, read for this
-    // job and let go with it.
-    const language = withStudyLabelTerms(
-        named,
+    // The church words its Bible writes (EC-491) and the ones the app's own
+    // labels already say in that language (EC-488): two files of an
+    // installed language, read for this job and let go with it.
+    const packageCode =
         named.code === '' || named.code === DEFAULT_CHAT_LANG_CODE
             ? null
-            : await loadLangFile<Record<string, unknown>>(
-                  toPackageLangCode(named.code),
-                  STUDY_LABEL_FILE_NAME,
-              ),
+            : toPackageLangCode(named.code);
+    const [labelFile, churchWordFile] =
+        packageCode === null
+            ? [null, null]
+            : await Promise.all([
+                  loadLangFile<Record<string, unknown>>(
+                      packageCode,
+                      STUDY_LABEL_FILE_NAME,
+                  ),
+                  loadLangFile<unknown>(
+                      packageCode,
+                      STUDY_CHURCH_WORDS_FILE_NAME,
+                  ),
+              ]);
+    const language = withStudyLabelTerms(
+        withStudyChurchWords(named, churchWordFile),
+        labelFile,
     );
     const translateText = watch.translateText;
     if (translateText === null) {

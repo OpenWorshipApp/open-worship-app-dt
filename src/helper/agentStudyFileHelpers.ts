@@ -54,6 +54,7 @@ import {
     separateStudyLines,
     splitStudyFooter,
     splitStudyForTranslation,
+    splitStudyTranslations,
     summarizeStudyChange,
     toStudyBody,
     toStudyFileName,
@@ -760,7 +761,9 @@ function toNamedPassageRef(name: string) {
  * words to translate, its diagrams to translate the labels of, the passages
  * it quotes quoted again from `bible` (a Bible in the new language), what
  * is kept as it is -- with its hash, its title and the app's last lines
- * apart. Writes nothing: whoever translates drafts the result.
+ * apart, and the translations already added after it apart too
+ * (`splitStudyTranslations`): only the study as it was written is
+ * translated again. Writes nothing: whoever translates drafts the result.
  */
 async function planTranslation(request: AgentStudyRequestType) {
     const resolved = await resolveStudyFile(request.file);
@@ -785,7 +788,8 @@ async function planTranslation(request: AgentStudyRequestType) {
         }
     }
     const { body, footer } = splitStudyFooter(oldText);
-    const parts = splitStudyForTranslation(body);
+    const { original, translations } = splitStudyTranslations(body);
+    const parts = splitStudyForTranslation(original);
     let quotedCount = 0;
     const planned = [];
     for (const [index, part] of parts.entries()) {
@@ -826,6 +830,7 @@ async function planTranslation(request: AgentStudyRequestType) {
         }).length,
         quotedCount,
         parts: planned,
+        translations,
         footer,
         note:
             'Translate each "text" part (keep its Markdown marks and line ' +
@@ -834,7 +839,9 @@ async function planTranslation(request: AgentStudyRequestType) {
             'quoted is null; keep each "keep" part. Join the parts with a ' +
             'line break, then draft with `file` and `append` (the ' +
             'translation added at the end) or `content` (the whole new text ' +
-            'with the footer last).',
+            'with the footer last). "translations" are the translations ' +
+            'already added after the study: never translate them again; ' +
+            'with `content`, keep them after the new text, before the footer.',
     };
 }
 
