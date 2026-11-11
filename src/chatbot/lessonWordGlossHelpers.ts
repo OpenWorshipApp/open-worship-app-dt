@@ -309,6 +309,28 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'gives no reason why, so a lesson gives none -- the parable turns ' +
             'on the one who "had compassion on him" (10:33)',
     },
+    // BN-108: what the BN-106/107 read found.
+    {
+        // "Not a mathematical limit of 497": the count got wrong.
+        pattern: /\bseventy times seven\b/i,
+        text:
+            'seventy times seven (Matthew 18:22): four hundred and ninety -- ' +
+            'Jesus\' answer to Peter\'s "till seven times?" (18:21), forgiving ' +
+            'past any count, as "if he trespass against thee seven times in ' +
+            'a day, and seven times in a day turn again to thee, saying, I ' +
+            'repent; thou shalt forgive him" (Luke 17:4)',
+    },
+    {
+        // "Can a choked hearer still be a believer? Yes", in two reads: the
+        // parable says only that the word bears no fruit.
+        pattern: /\bchoke the word\b/i,
+        text:
+            'choke the word (Matthew 13:22; Mark 4:19): cares and riches ' +
+            '"choke the word" and it bears no fruit; the parable calls that ' +
+            'hearer one "that heareth the word", never a believer, and says ' +
+            'no more -- whether he believes or is saved it does not say, so a ' +
+            'lesson neither asks nor answers that',
+    },
 ];
 
 // The most entries one passage read carries: a long story holds many.

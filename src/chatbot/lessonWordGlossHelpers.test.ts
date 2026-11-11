@@ -158,6 +158,23 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         expect(findLessonWordGlosses('a great high priest')).toEqual([]);
     });
 
+    // BN-108 (2026-11-11, the BN-106/107 read): "not a limit of 497", and a
+    // choked hearer "still a believer? Yes".
+    test('a count given, and a question the parable leaves open', () => {
+        expect(
+            findLessonWordGlosses(
+                'I say not unto thee, Until seven times: but, Until seventy ' +
+                    'times seven.',
+            ),
+        ).toEqual([expect.stringContaining('four hundred and ninety')]);
+        expect(
+            findLessonWordGlosses(
+                'and the deceitfulness of riches, choke the word, and he ' +
+                    'becometh unfruitful.',
+            ),
+        ).toEqual([expect.stringContaining('neither asks nor answers that')]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +

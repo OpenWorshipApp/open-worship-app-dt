@@ -1581,6 +1581,22 @@ was seen and what was done.
   one thing there to see or hear, and what was said or done; a person
   these hearers would know, never by name, and never a manager, a clerk
   or an office".
+- **BN-108 — seventy times seven, and the thorny ground's hearer**
+  (2026-11-11, the BN-106/107 read, Sonnet). "Seventy times seven is not a
+  mathematical limit of 497" (it is 490, the one definite error left in a
+  baseline lesson), and a sower lesson answered "Can a choked hearer still
+  be a believer?" with "Yes" (Opus had flagged the same in the BN-102
+  read). Two entries, quoted from the app's KJV data. "Seventy times seven"
+  (only Matthew 18:22) gives "four hundred and ninety" and Luke 17:4's
+  "seven times in a day". "Choke the word" (Matthew 13:22, Mark 4:19) says
+  the parable calls that hearer one "that heareth the word", never a
+  believer, and says no more, "so a lesson neither asks nor answers that".
+  Told first only that it "does not answer it", the model still asked "Can
+  a person be a believer but still be unfruitful?" and answered "Yes".
+  Asked again with the entry naming the word: "Can someone be distracted
+  and still be fruitful? No", from the verse. Seventy times seven was read
+  "not a number to be counted up to, but a way of saying that forgiveness
+  must be without limit".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's
