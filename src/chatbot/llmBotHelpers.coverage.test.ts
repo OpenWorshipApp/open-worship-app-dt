@@ -1562,6 +1562,125 @@ describe('the Anthropic loop', () => {
         expect(fake.toolCallList).toEqual([]);
     });
 
+    // BN-89 (2026-11-11): told to read the verses before the passage, the
+    // model did in about half the lessons and made the background up in the
+    // rest. A new lesson's first passage read takes them too, once an ask.
+    test('a new lesson reads the verses before its passage too', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
+        fake.toolResultMap.owa_find_verse = JSON.stringify({
+            bible: 'KJV',
+            verses: [{ ref: 'Luke 10:25-37', text: '(25): And, behold…' }],
+        });
+        const read = (refs: string) => {
+            return anthropicToolUse({
+                name: 'owa_find_verse',
+                input: { refs },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                read('Luke 10:25-37'),
+                read('Leviticus 19:18'),
+                anthropicText('Which way should the lesson go?'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            `a sermon on the good samaritan\n${NOTE_BLANK_LESSON_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(fake.toolCallList.map((call) => call.args.refs)).toEqual([
+            'Luke 10:25-37; Luke 10:15-24',
+            'Leviticus 19:18',
+        ]);
+        expect(readToolResults(sentList[1])[0].content).toMatch(
+            /^\(The window also read Luke 10:15-24, the verses just before/,
+        );
+        expect(readToolResults(sentList[2])[0].content).not.toContain(
+            'The window also read',
+        );
+    });
+
+    // BN-83 (2026-11-11): the sower sermon's points stopped at the thorns,
+    // never reaching the good ground of 13:23. A new lesson's points that
+    // stop before its passage does go back once; a second try goes in.
+    test('a new lesson whose points stop short is sent back once', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Lesson',
+            isChanged: true,
+        });
+        const lesson =
+            '[^Matthew 13:1-23]\n## Big idea\nHear and bear fruit.\n' +
+            '## 1. The hard path\n[^Matthew 13:3-9, 19]\n' +
+            '## 2. The stony places\n[^Matthew 13:20-21]\n' +
+            '## 3. The thorns\n[^Matthew 13:22]\n## Memory verse\n' +
+            '[^Matthew 13:23]';
+        const edit = () => {
+            return anthropicToolUse({
+                name: 'owa_note_edit',
+                input: {
+                    action: 'edit',
+                    note: 'Lesson',
+                    changes: [
+                        { block: 1, remove: true },
+                        { after: 0, kind: 'section', text: lesson },
+                    ],
+                },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [edit(), edit(), anthropicText('Your sermon is in the note.')],
+            'anthropic',
+        );
+        await askLlmBot(
+            `help me prepare a sermon on the sower\n${NOTE_BLANK_LESSON_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        const refused = readToolResults(sentList[1])[0].content;
+        expect(refused).toContain(
+            'the passage is Matthew 13:1-23, and the points stop at ' +
+                'Matthew 13:22',
+        );
+        expect(refused).toContain('Keep the passage as it is');
+        // Once an ask: the same lesson sent again is written.
+        expect(fake.toolCallList.map((call) => call.name)).toEqual([
+            'owa_note_edit',
+        ]);
+    });
+
     // BN-80 (2026-11-10): a fix to a lesson done as fifteen blocks moved
     // broke its shape. In a fix, a move nobody asked for is refused; the
     // same fix done by adding and rewording goes in.

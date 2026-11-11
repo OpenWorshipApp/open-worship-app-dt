@@ -90,6 +90,7 @@ import {
     findResourceFileNames,
     genAttachmentFromPath,
     genPdfAttachment,
+    readBlankNoteFromFile,
     reloadFileAttachment,
 } from './fileAttachHelpers';
 import {
@@ -9963,7 +9964,19 @@ export default function ChatbotAppComp() {
                                   };
                               } catch (_error) {
                                   throwIfCancelled(signal);
-                                  return { name: file.name, text: null };
+                                  // Its window still opening on a busy
+                                  // computer: an EMPTY note is told by its
+                                  // file, so a lesson still goes into it
+                                  // (BN-87).
+                                  return {
+                                      name: file.name,
+                                      text: toNoteDocumentText(
+                                          await readBlankNoteFromFile(
+                                              file.filePath,
+                                              file.noteId,
+                                          ),
+                                      ),
+                                  };
                               }
                           }),
                       )

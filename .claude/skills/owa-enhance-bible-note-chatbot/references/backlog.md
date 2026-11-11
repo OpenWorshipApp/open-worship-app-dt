@@ -1057,6 +1057,166 @@ was seen and what was done.
   time, its last round gone before it could answer (`splitRefList`, a
   bare chapter and verse is the book before it's, a two-digit chapter
   split too; "John 3:16, 17" stays one).
+- **BN-82 — a point is a template, not a sentence** (2026-11-11). BN-81's
+  thirteen pairs, read blind, missed the same things in both runs. Each
+  point was ONE paragraph: its verse said again, then an example and a
+  "this week" run on after it. The KJV words a preacher reads aloud
+  ("moderation", "no more sea", "son of Abraham") went unexplained, and no
+  hearer's question was met (Opus: 11 lessons of 26). The background had
+  nothing of what happens just before the passage (8). Jesus was pointed to
+  with a picture the passage does not have (6). Both funeral sermons were
+  skeletal. `PREACHING_LESSON_SHAPE` now writes each point as labelled
+  lines: **What it means:** (the words a hearer would stumble on, made plain
+  from where else Scripture uses them), **A hearer asks:**, **The passage
+  answers:**, **For example:** (a scene showing what THIS point says God
+  does or asks, not courage or effort) and **This week:** (a deed, never
+  only "trust" or "remember"). The passage is read with the verses before
+  it, for the background; Pointing to Jesus starts from a phrase of the
+  passage and goes to his death and rising, never his example alone; the
+  response invites to believe where the passage does; a funeral comforts
+  from the passage's promises, with no discussion questions; and a passage
+  is about twenty verses at most, a longer story preaching its part. The
+  first run of the template showed two things, both fixed before it was
+  measured. Told "the question, answered", the model wrote the question at
+  every point of four lessons and no answer, so the answer has its own
+  line. Asked for "the verses whose words say it", the points printed
+  their parts end to end, and David's 58 verses were printed twice. On
+  the fixed shape the whole set ran again (17 asks): 15 lessons were
+  written. L-05 waited past 240 s on the shared server and was written
+  when asked again; L-08 asked which passage, as the shape says when
+  none is named. Every point of every lesson answered its hearer's
+  question. The model read the verses before the passage for the
+  background (Luke 18:31-43 for Zacchaeus, Matthew 18:15-20 and Luke
+  23:34 for forgiveness). The points covered their passages whole and in
+  order in 14 of 15; David's armour came after his speech (BN-83 now). The
+  shape is ~968 tokens, on lesson asks only.
+- **BN-83 — a new lesson's points reach its passage's end** (2026-11-11).
+  Read by their verses, five lessons of thirteen in each of BN-81's runs
+  stopped before their passage did. The sower stopped at the thorns
+  (13:22), though the good ground of 13:23 was its memory verse. The Psalm
+  46 and Psalm 23 devotions stopped at verse 3, while their big ideas
+  rested on "be still" (46:10) and the valley (23:4). Psalm 51 stopped at
+  17 of 19, and David at 17:47 of 58. The shape had asked for "the last
+  ending where the passage ends" since BN-66. Now, while the note is still
+  empty, a lesson written into it whose numbered points' verses stop
+  before the passage at its top ends is refused once an ask, naming both.
+  The first run of BN-82's template put David's points at 17:45-47, then
+  17:38-40, then 17:48-50, the armour after the speech. So a point whose
+  verses ALL come before the point above it is refused in the same
+  sentence (`findLessonPointsProblem`, `genLessonPointsRefusal`,
+  `ToolWatchType.isLessonPointsChecked`). Comparing each point's first
+  verse would have refused a sower sermon pairing the parable's good
+  ground (13:8) with its meaning (13:23) after a point on 13:20-22. Only a
+  passage the app reads as one book, one chapter and three verses or more
+  is held, and only the points' verses inside it count. A children's
+  lesson's verse or two, a whole chapter unnumbered, a list of places and
+  a range over chapters are let be. Asked again on the final code, David's
+  points came in order (17:34-37, 38-40, 45-50) without a refusal. A later
+  run found the check blind to half the lessons: the passage given as a
+  `passage` change with its `ref` (David's `1 Samuel 17:1-58`, Psalm 51)
+  and headings as `h2` changes, where it read only the changes' words. So
+  the changes are read as the mark-up they write (`toLessonChangeText`);
+  that David sermon's points stopped at 17:50 of 58 and went through.
+- **BN-84 — a passage offered with a long story is shortened, never
+  dropped** (2026-11-11). _write an Easter sermon_ names no passage, so the
+  model asks which. It wrote "I have a few suggestions" over ONE button:
+  a passage option whose story in brackets ran past 50 letters, or whose
+  whole label passed 64, was dropped. Now it keeps its reference and as
+  much of its story as fits, cut at a word with "…"
+  (`toFittedPassageReply`, in the options line and in a list of passage
+  lines). Asked again live: "Luke 24:1-12 (The empty tomb and the
+  announcement of the…)", "John 20:1-18 (Mary Magdalene's encounter with
+  the risen Christ)", "Matthew 28:1-10 (The earthquake and the command to
+  tell the…)", three buttons.
+- **BN-85 — a preaching message is a lesson ask** (2026-11-11). The
+  funeral sermon (_a message of hope for a funeral, from Revelation
+  21:1-7_) was the thinnest lesson in every blind read since BN-66. It had
+  never been given the lesson shape: "message" was no lesson word, so the
+  empty note carried no lesson hint, and the model wrote from the short
+  outline (`*Example:*`, `*How to live it:*`, a marathon runner, two
+  sentences a point, 452 words). `checkIsLessonWriteAsk` now reads a
+  "message of hope / comfort / grace … / on / about / from" after a
+  writing word or as the ask's own start, and a funeral's message, talk,
+  homily or eulogy. "A message" alone is not a lesson: _paste the message
+  from my pastor_ and _write a message to my wife_ are not read as one.
+  Asked again live: 944 words, a big idea with its complement, the
+  background of Patmos, the seven churches and the judgment just before,
+  every image explained, the free gift offered, and no discussion
+  questions. Open: the French and Khmer packages' `lessonAsks` have no
+  "message" either.
+- **BN-86 — a passage read by its reference is given whole** (2026-11-11).
+  BN-82's lessons, read blind, carried 3 (Opus) and 7 (Sonnet) factual
+  errors where BN-81's had 0 and 4. Every error was in verses the model
+  had never read. `owa_find_verse refs` cut each reference's text at a found
+  verse's 300 letters ("a verse is quoted, not printed whole"), so a
+  lesson's passage was read as its first two or three verses. The shape's
+  "build every point on the words it returns" held no further than that,
+  and the misquote check (BN-76) had nothing to hold the rest to. The
+  priest and Levite of Luke 10:31-32, the prison of Matthew 18:30-35, the
+  Samaritan's question quoted in words Luke never wrote, and "the tree of
+  life" in Revelation 21:7 were all from memory. A passage (a range or a
+  chapter) read by its reference is now given whole, within 6000 letters
+  its call's references share (`READ_PASSAGE_TEXT_BUDGET`,
+  `toReadPassageTextLimit` in `bibleVerseFindHelpers.ts`, `readRefs` in
+  `agentBibleFindHelpers.ts`): one passage up to 6000 (the bound
+  `owa_lookup_record` already reads a passage to), eight references 750
+  each. A single verse is still cut as a found one is. No schema changed.
+- **BN-87 — an empty note whose window is slow to open is still empty**
+  (2026-11-11). With the computer at 100% CPU (another session's full
+  gate run), a fresh scratch app's note windows took over the tool's 20 s
+  to open. The window's read of the note before the ask failed ("The
+  note's window is still opening"), so the empty note was treated as
+  unknown: the lesson hint was left off, and the model's `owa_bible_note
+  add` made a NEW note beside the empty one. Seven of twelve lessons were
+  lost that way, and a slow church computer would do the same. When that
+  read fails, the window now works out an EMPTY note's read from its file
+  (`readBlankNoteFromFile` in `fileAttachHelpers.ts`,
+  `toBlankNoteReadFromFileText` in `noteFileTextHelpers.ts`). The fallback
+  gives the empty blocks the editor would show, counted off its saved tree
+  and with no hash, so a later edit is never refused as stale. It counts
+  only when every block is an empty paragraph: a note holding a picture
+  alone is not empty. Anything else goes on with no read, as before.
+- **BN-88 — each line of a point says what it may not add** (2026-11-11).
+  Read blind with whole passages (BN-86), the errors left were the
+  model's own priors, not words it had not read:
+  - **What it means:** a custom from commentaries (_asking for his
+    portion was wishing his father dead_, _the father ran to spare him the
+    village's shame_);
+  - **The passage answers:** a motive the text does not give (why the
+    priest passed by);
+  - **For example:** a promise the passage does not make (a widow meets
+    her husband again);
+  - **Pointing to Jesus:** the Samaritan turned into an allegory of him.
+
+  Each of those lines now says what it may not add: a custom only as the
+  Bible itself tells it; a reason, motive or promise only where the
+  passage states one; an example promising nothing the passage does not;
+  never the story turned into an allegory of him. The shape is ~1021
+  tokens.
+- **BN-89 — a new lesson reads the verses before its passage** (2026-11-11).
+  Told to read them, the model did in about half the lessons (Luke
+  18:31-43 before Zacchaeus, Revelation 20 before the funeral). The
+  backgrounds of the rest were made up: Jesus praising "the simple faith
+  of women" just before the Good Samaritan, and Psalm 46 following "a
+  series of psalms contrasting the pride of man". Now, in an empty note's
+  lesson ask (`isBlankLesson`), the first `owa_find_verse refs` naming ONE
+  passage also reads the verses just before it (`findVersesBeforeRef` in
+  `bibleVerseFindHelpers.ts`): up to ten verses in its chapter, or the
+  chapter before when it starts one (1 Samuel 16 before 17:1-58, Matthew 12
+  before 13). A note over the result says the window read them for the
+  Background, to be told from those words (`genVersesBeforeNote`). Once an
+  ask (`ToolWatchType.isLessonBeforeRead`). A list of places and a range
+  over chapters are left as asked. Seen on the first run: David's
+  background told of Samuel anointing David (1 Samuel 16 read with 17),
+  the Good Samaritan's of the seventy's return (Luke 10:15-24), Psalm 46's
+  of Psalm 45's royal wedding. Each had been made up the run before.
+- **BN-90 — no "Have you ever", no echo, no homework at a funeral**
+  (2026-11-11, the same blind read). 24 lessons of 26 opened _Have you
+  ever…?_, the response said the big idea again word for word, and a
+  funeral sent the mourners home with a weekday task. The Introduction is
+  an everyday scene or a question of the passage's own, never _Have you
+  ever_; the Response says the big idea in new words; a funeral's This
+  week is a comfort to hold, never a task. ~1050 tokens.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

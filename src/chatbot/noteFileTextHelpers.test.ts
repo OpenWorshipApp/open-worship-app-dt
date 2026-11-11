@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    toBlankNoteReadFromFileText,
     toNoteContentText,
     toNoteFileText,
     toNoteItemFromFileText,
@@ -148,5 +149,62 @@ describe('one note of a file, by its id', () => {
         expect(toNoteItemFromFileText(file, 9)).toBeNull();
         expect(toNoteItemFromFileText('not json', 0)).toBeNull();
         expect(toNoteItemFromFileText('{"x":1}', 0)).toBeNull();
+    });
+});
+
+// BN-87 (2026-11-11): on a busy computer the note's window took over twenty
+// seconds to open, the window's read of the note failed, and a lesson asked
+// for went into a NEW note beside the empty one.
+describe("an empty note's read, off its file", () => {
+    const emptyParagraph = { type: 'paragraph', children: [] };
+    const file = JSON.stringify({
+        items: [
+            { title: 'New', content: '', metadata: { id: 1 } },
+            {
+                title: 'Two lines',
+                content: toContent([emptyParagraph, emptyParagraph]),
+                metadata: { id: 2 },
+            },
+            {
+                title: 'Words',
+                content: toContent([
+                    { type: 'paragraph', children: [genText('Grace')] },
+                ]),
+                metadata: { id: 3 },
+            },
+            {
+                title: 'A picture',
+                content: toContent([{ type: 'image', src: 'x' }]),
+                metadata: { id: 4 },
+            },
+            {
+                title: 'John 3:16',
+                verseKey: 'JHN 3:16',
+                content: '',
+                metadata: { id: 5 },
+            },
+        ],
+    });
+
+    test('is the read the editor gives: its empty blocks', () => {
+        expect(toBlankNoteReadFromFileText(file, 1, 'Default')).toEqual({
+            file: 'Default',
+            blockCount: 1,
+            blocks: [{ n: 1, kind: 'paragraph', text: '' }],
+        });
+        expect(
+            toBlankNoteReadFromFileText(file, 2, 'Default')?.blockCount,
+        ).toBe(2);
+    });
+
+    test('a note with words or a picture, a marked verse, none: no read', () => {
+        for (const noteId of [3, 4, 5, 9]) {
+            expect(toBlankNoteReadFromFileText(file, noteId, 'Default')).toBe(
+                null,
+            );
+        }
+        expect(toBlankNoteReadFromFileText('not json', 1, 'Default')).toBe(
+            null,
+        );
     });
 });

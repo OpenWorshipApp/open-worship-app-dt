@@ -13,35 +13,39 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { settings, listeners, routes, mocks, langState } = vi.hoisted(() => ({
-    settings: new Map<string, string>(),
-    listeners: new Map<string, Set<(...args: any[]) => void>>(),
-    // What each tool answers in this test, by name. A tool with no route
-    // fails, the way a tool host that does not have it would.
-    routes: {} as Record<
-        string,
-        (args: any, signal?: AbortSignal | null) => any
-    >,
-    mocks: {
-        callTool: vi.fn(),
-        callToolPicture: vi.fn(),
-        getAiEndpoints: vi.fn(),
-        askLlmBot: vi.fn(),
-        electronSendAsync: vi.fn(),
-        sendData: vi.fn(),
-        openExternalURL: vi.fn(),
-        handleError: vi.fn(),
-    },
-    // The languages this window has, and who is told when they change.
-    langState: {
-        enabled: [] as {
-            langCode: string;
-            version: string;
-            isEnabled: boolean;
-        }[],
-        changeListeners: new Set<() => void>(),
-    },
-}));
+const { settings, files, listeners, routes, mocks, langState } = vi.hoisted(
+    () => ({
+        settings: new Map<string, string>(),
+        // Files on the disk, by path: none unless a test puts one there.
+        files: new Map<string, string>(),
+        listeners: new Map<string, Set<(...args: any[]) => void>>(),
+        // What each tool answers in this test, by name. A tool with no route
+        // fails, the way a tool host that does not have it would.
+        routes: {} as Record<
+            string,
+            (args: any, signal?: AbortSignal | null) => any
+        >,
+        mocks: {
+            callTool: vi.fn(),
+            callToolPicture: vi.fn(),
+            getAiEndpoints: vi.fn(),
+            askLlmBot: vi.fn(),
+            electronSendAsync: vi.fn(),
+            sendData: vi.fn(),
+            openExternalURL: vi.fn(),
+            handleError: vi.fn(),
+        },
+        // The languages this window has, and who is told when they change.
+        langState: {
+            enabled: [] as {
+                langCode: string;
+                version: string;
+                isEnabled: boolean;
+            }[],
+            changeListeners: new Set<() => void>(),
+        },
+    }),
+);
 
 vi.mock('../server/appProvider', () => ({
     default: {
@@ -81,6 +85,17 @@ vi.mock('../server/appProvider', () => ({
         },
         browserUtils: {
             openExternalURL: (url: string) => mocks.openExternalURL(url),
+        },
+        fileUtils: {
+            readFile: (filePath: string, ...args: any[]) => {
+                const done = args[args.length - 1];
+                const text = files.get(filePath);
+                if (text === undefined) {
+                    done(new Error(`ENOENT: ${filePath}`));
+                } else {
+                    done(null, text);
+                }
+            },
         },
     },
 }));
@@ -238,6 +253,7 @@ describe('ChatbotAppComp: a question about a document of theirs', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         settings.clear();
+        files.clear();
         listeners.clear();
         langState.enabled = [];
         langState.changeListeners.clear();
@@ -591,6 +607,39 @@ describe('ChatbotAppComp: a question about a document of theirs', () => {
                 '(it could not be read just now; call owa_note_edit with action "read")',
             );
             expect(bodyOf(lastCue())).toContain(NEEDS_ASSISTANT);
+        });
+
+        // BN-87 (2026-11-11): on a busy computer the note's window took
+        // over twenty seconds to open; the read failed, the empty note was
+        // taken for one with words, and the lesson went into a NEW note.
+        test('an empty note whose window is still opening is read off its file', async () => {
+            routes.owa_note_edit = () => {
+                throw new Error("The note's window is still opening.");
+            };
+            files.set(
+                NOTE_PATH,
+                json({
+                    items: [
+                        {
+                            title: 'Sunday Lesson',
+                            content: '',
+                            metadata: { id: 3 },
+                        },
+                    ],
+                }),
+            );
+            seedDocumentTab(genNoteAttachment());
+            await renderWindow();
+            await send('help me prepare a sermon on John 10');
+            await waitFor(
+                () => mocks.askLlmBot.mock.calls.length > 0,
+                'the assistant',
+            );
+            await waitForAnswer();
+            const extra = mocks.askLlmBot.mock.calls[0][6];
+            expect(extra.note.blankBlockCount).toBe(1);
+            expect(askedText()).toContain('1. paragraph');
+            expect(askedText()).not.toContain('it could not be read just now');
         });
     });
 

@@ -76,6 +76,7 @@ import {
     toNeededHits,
     toPassageRunName,
     toPassageRuns,
+    toReadPassageTextLimit,
     toSingleVerseText,
     toTermWeight,
     toVerseKey,
@@ -859,7 +860,11 @@ async function readRefs(bibleKey: string, refs: string) {
     // would answer it with `??`, its missing-verse placeholder, and that was
     // quoted to the model as scripture (2026-10-18).
     const notFound: { ref: string; reason: string }[] = [];
-    for (const ref of splitRefList(refs)) {
+    const refList = splitRefList(refs);
+    // A passage is read whole, within letters the call's references share
+    // (BN-86); a single verse is still quoted, cut as a found one is.
+    const passageTextLimit = toReadPassageTextLimit(refList.length);
+    for (const ref of refList) {
         const parts = parseRefParts(ref);
         const bookKey =
             parts === null ? null : resolveBookKey(parts.book, nameMapList);
@@ -937,11 +942,10 @@ async function readRefs(bibleKey: string, refs: string) {
                 target.verseStart,
                 target.verseEnd,
             ),
-            text: cutFoundText(
+            text:
                 target.verseEnd > target.verseStart
-                    ? text
-                    : toSingleVerseText(text),
-            ),
+                    ? cutFoundText(text, passageTextLimit)
+                    : cutFoundText(toSingleVerseText(text)),
         });
     }
     return {

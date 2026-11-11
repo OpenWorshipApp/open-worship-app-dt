@@ -13,6 +13,69 @@
 // (`checkIsEmptyNoteAttachment`) tells one by it.
 export const EMPTY_NOTE_BODY = '(empty)';
 
+/**
+ * What `owa_note_edit read` answers for an EMPTY note, worked out from its
+ * file: its blocks, every one an empty paragraph, counted off the editor's
+ * saved tree (none saved yet is the one the editor starts with). Null when
+ * the note holds anything at all -- a picture alone is not empty -- or is not
+ * there (BN-87, 2026-11-11: on a busy computer the note's window took over
+ * twenty seconds to open, the window's read of the note failed, and an empty
+ * note was taken for one with words -- the lesson asked for went into a NEW
+ * note beside it).
+ */
+export function toBlankNoteReadFromFileText(
+    text: string,
+    noteId: number,
+    file: string,
+) {
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        return null;
+    }
+    const item = Array.isArray(data?.items)
+        ? data.items.find((one: any) => one?.metadata?.id === noteId)
+        : undefined;
+    if (
+        typeof item !== 'object' ||
+        item === null ||
+        typeof item.verseKey === 'string'
+    ) {
+        return null;
+    }
+    const content = typeof item.content === 'string' ? item.content : '';
+    let blockCount = 1;
+    if (content.trim() !== '') {
+        let children;
+        try {
+            children = JSON.parse(content)?.root?.children;
+        } catch {
+            return null;
+        }
+        const isEveryBlockEmpty =
+            Array.isArray(children) &&
+            children.every((child: any) => {
+                return (
+                    child?.type === 'paragraph' &&
+                    (!Array.isArray(child.children) ||
+                        child.children.length === 0)
+                );
+            });
+        if (!isEveryBlockEmpty) {
+            return null;
+        }
+        blockCount = Math.max(1, children.length);
+    }
+    return {
+        file,
+        blockCount,
+        blocks: Array.from({ length: blockCount }, (_, index) => {
+            return { n: index + 1, kind: 'paragraph', text: '' };
+        }),
+    };
+}
+
 // The nodes that END a line of their own: what makes a heading, a paragraph
 // and a list item read as three lines instead of one run-on sentence.
 const BLOCK_TYPE_SET = new Set([

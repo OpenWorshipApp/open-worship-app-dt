@@ -38,7 +38,11 @@ import {
     toImageMediaType,
 } from './attachmentHelpers';
 import { fillWords, tran } from './chatTranHelpers';
-import { toNoteFileText, toNoteItemFromFileText } from './noteFileTextHelpers';
+import {
+    toBlankNoteReadFromFileText,
+    toNoteFileText,
+    toNoteItemFromFileText,
+} from './noteFileTextHelpers';
 import { checkIsLyricFileName, toLyricFileText } from './lyricChatHelpers';
 import { checkIsSlideFileName, toSlideFileText } from './slideChatHelpers';
 import { checkIsFlowFileName, toFlowFileText } from './flowChatHelpers';
@@ -200,6 +204,25 @@ export function findResourceFileNames(attachments: ChatAttachmentType[]) {
 
 export type FileAttachResultType =
     { attachment: ChatAttachmentType } | { failure: string };
+
+/**
+ * An EMPTY note's read worked out from its file, for a question asked while
+ * the note's window cannot be read yet (BN-87: on a busy computer it took
+ * over twenty seconds to open, and a lesson asked for meanwhile went into a
+ * NEW note beside the empty one). Null when the note holds anything, or the
+ * file cannot be read: the question then goes on with no read, as before.
+ */
+export async function readBlankNoteFromFile(filePath: string, noteId: number) {
+    try {
+        return toBlankNoteReadFromFileText(
+            await fsReadFile(filePath),
+            noteId,
+            pathBasename(filePath).replace(/\.[^.]+$/, ''),
+        );
+    } catch {
+        return null;
+    }
+}
 
 /**
  * ONE note of a Bible notes file (a note row's Open in Chatbot): named by its

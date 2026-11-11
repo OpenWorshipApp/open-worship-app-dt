@@ -743,6 +743,38 @@ describe('reading references', () => {
         });
     });
 
+    // BN-86 (2026-11-11): cut at a found verse's 300 letters, a lesson's
+    // thirteen verses were read as their first two, and the rest of the
+    // lesson was written from memory.
+    test('a passage read by its reference is given whole, a verse still cut', async () => {
+        const verse = (number: number) => {
+            return `Verse ${number} of the passage, read whole by the model.`;
+        };
+        state.verseCounts['KJV:MAT 13'] = 58;
+        state.verseTexts.KJV = {
+            ...KJV_VERSES,
+            ...Object.fromEntries(
+                Array.from({ length: 23 }, (_, index) => {
+                    return [`MAT 13:${index + 1}`, verse(index + 1)];
+                }),
+            ),
+            'MAT 13:24': `${'A long verse. '.repeat(40)}End.`,
+        };
+        const result: any = await handleAgentBibleFindRequest({
+            bible: 'KJV',
+            refs: 'Matthew 13:1-23; Matthew 13:24',
+        });
+        const [passage, single] = result.verses;
+        expect(passage.key).toBe('MAT 13:1-23');
+        expect(passage.text.length).toBeGreaterThan(300);
+        expect(passage.text).toContain(`(23): ${verse(23)}`);
+        expect(passage.text.endsWith('…')).toBe(false);
+        // One verse is quoted as a found one is: cut at its line.
+        expect(single.key).toBe('MAT 13:24');
+        expect(single.text.length).toBeLessThanOrEqual(301);
+        expect(single.text.endsWith('…')).toBe(true);
+    });
+
     test('a reference that names no book stays in the lookup’s Bible', async () => {
         state.newLookupBibleKey = 'XX';
         const semicolons: any = await handleAgentBibleFindRequest({

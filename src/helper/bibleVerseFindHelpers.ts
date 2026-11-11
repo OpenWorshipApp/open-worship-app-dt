@@ -39,6 +39,55 @@ export const MAX_FIND_CANDIDATES = 300;
 export const MAX_FIND_REFS = 8;
 // A verse is quoted, not printed whole: a long one is cut here.
 export const FOUND_TEXT_LIMIT = 300;
+// A passage READ by its reference is given whole, within letters its call
+// shares (BN-86, 2026-11-11). Cut at a verse's 300, a lesson's thirteen
+// verses of Luke 10 were read as its first two: every point after them was
+// written from memory, and the blind readers' errors were in exactly those
+// verses -- the Samaritan's question quoted in words Luke never wrote, "the
+// tree of life" brought into Revelation 21:7. One passage gets up to 6000
+// (about fifty verses, the bound `owa_lookup_record` reads a passage to);
+// eight references in one call, 750 each.
+export const READ_PASSAGE_TEXT_BUDGET = 6000;
+
+// The most verses before a passage read with it for a lesson's background.
+const MAX_VERSES_BEFORE = 10;
+
+/**
+ * The verses just before ONE passage, read with it for a new lesson's
+ * background (BN-89, 2026-11-11): up to ten verses before it in its
+ * chapter, or the whole chapter before when it starts a chapter. Null for a
+ * list of places, the first chapter's start, or words not read as one
+ * reference. Told to read them, the model did in about half the lessons,
+ * and the backgrounds of the rest were made up -- "the simple faith of
+ * women" before the Good Samaritan.
+ */
+export function findVersesBeforeRef(refs: string) {
+    const refList = splitRefList(refs);
+    if (refList.length !== 1) {
+        return null;
+    }
+    const parts = parseRefParts(refList[0].replace(/^\([^)\n]{1,24}\)\s*/, ''));
+    // A range over chapters reads as a book holding a chapter and verse.
+    if (parts === null || /\d\s*[:.]/.test(parts.book)) {
+        return null;
+    }
+    const start = parts.verseStart ?? 1;
+    if (start > 1) {
+        const from = Math.max(1, start - MAX_VERSES_BEFORE);
+        return from === start - 1
+            ? `${parts.book} ${parts.chapter}:${from}`
+            : `${parts.book} ${parts.chapter}:${from}-${start - 1}`;
+    }
+    return parts.chapter > 1 ? `${parts.book} ${parts.chapter - 1}` : null;
+}
+
+/** How much of each passage a read of `refCount` references gives. */
+export function toReadPassageTextLimit(refCount: number) {
+    return Math.max(
+        FOUND_TEXT_LIMIT,
+        Math.floor(READ_PASSAGE_TEXT_BUDGET / Math.max(1, refCount)),
+    );
+}
 // The start of the refusal for words the Bible's language has none of. The
 // chat reads it to say so in words of its own (`answerVerseFindOffline`), so
 // the worker and the chat share it here, where neither pulls the other in.

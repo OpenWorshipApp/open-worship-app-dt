@@ -84,53 +84,105 @@ export const NOTE_CREATE_PROMPT =
 // from the words printed, never by a word study; the background is what the
 // Bible itself says; a story is told AS an example; the points cover the
 // whole passage, and so does a devotion's one point.
+//
+// BN-82 (2026-11-11): BN-81's thirteen pairs, read blind, missed the same
+// things in both runs. Each point was ONE paragraph: its verse said again,
+// then an example and a "this week" run on after it. The words a preacher
+// reads aloud from the KJV ("moderation", "no more sea", "son of Abraham")
+// went unexplained, and no hearer's question was met. The background had
+// nothing of what happens just before the passage. Jesus was pointed to
+// with a picture the passage does not have. The funeral sermon was
+// skeletal. Told in one long sentence what a point holds, the model wrote
+// one paragraph. So a point is now a template of lines, each starting with
+// what it is, and the background reads the verses before the passage. On
+// the first run of it, a hearer's question was asked and never answered at
+// every point (told "the question, answered", it wrote the question), so
+// the answer has a line of its own. The points also printed their parts of
+// the passage end to end: all of it covered, all of it printed twice, which
+// for David's 58 verses was a note too long to preach from. So a passage is
+// about twenty verses, and a longer story preaches its part.
+//
+// BN-88 (2026-11-11): read blind with whole passages (BN-86), the errors
+// left were the model's own priors, not words it had not read. A custom
+// came from commentaries ("asking for his portion was wishing his father
+// dead"). A motive the text does not give was put under "The passage
+// answers". An example promised a reunion. Pointing to Jesus made the
+// Samaritan an allegory of him. So each of those lines says what it may not
+// add.
+//
+// BN-90 (the same read): 24 lessons of 26 opened "Have you ever…", the
+// response said the big idea again word for word, and a funeral sent the
+// mourners home with a task. The template says otherwise for each.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
     'WHAT A LESSON HOLDS, ready to preach in plain warm words and TRUE ' +
     'above all. First read the main passage with owa_find_verse (`refs`) ' +
-    'when you have it, and build every point, quote and verse number on the ' +
-    'words it returns: say nothing of a verse, its words or its history you ' +
-    'are not sure of, read into it nothing it does not say -- a retelling ' +
-    'adds no feeling, motive, place or detail it does not give, and a ' +
-    "person's reason or message is the one the passage states, so read the " +
-    'WHOLE story before telling any of it -- and tell no story as if it ' +
-    'really happened. The main passage alone on a line as its ' +
-    'token -- [^John 10:11-18] -- which the app prints whole from their ' +
-    'Bible; then "## " headings: Big idea (one sentence: what the passage ' +
-    'says about God and what it asks of us), Background (three or four ' +
-    "sentences from the Bible's own pages: who, to whom, when, what was " +
-    'happening), Introduction (a question or an everyday scene that raises ' +
-    'the need the passage answers), three points that follow the passage in ' +
-    'its own order and together cover ALL of it, the last ending where the ' +
-    'passage ends -- each "## 1. " and a sentence that states it, then the ' +
-    'token of the verse whose words say it; what it means, never the verse ' +
-    'said again: the word, image or custom in it a hearer today would miss ' +
-    '(hyssop, a publican, a shepherd\'s rod, "be still") explained from the ' +
-    "Bible's own pages -- where else Scripture uses it, read with " +
-    'owa_find_verse -- and its setting, in plain words, no Hebrew or Greek ' +
-    'word study; the question a hearer would ask of it, answered from the ' +
-    "passage itself; an example as a short scene from the hearers' own " +
-    'week, three or four sentences -- someone, somewhere, what happened and ' +
-    'how it shows THIS point ("Think of a nurse at the end of a night ' +
-    'shift who..." -- never a memory of your own, a real name or a date, ' +
-    'never a stock picture: a lifeboat, a garden, a rescue); and one thing ' +
-    'to do this week in the strength God gives --, Pointing to Jesus (where this passage stands ' +
-    'toward Jesus and his work, grown from its own words), Response (the big ' +
-    'idea said again, then ONE step for this week: what, when, with whom), ' +
+    'when you have it -- and the verses just before it, for its setting -- ' +
+    'and build every point, quote and verse number on the words it ' +
+    'returns: say nothing of a verse, its words or its history you are not ' +
+    'sure of, read into it nothing it does not say -- a retelling tells the ' +
+    "events in the passage's own order and adds no feeling, motive, place, " +
+    "tool or detail it does not give, and a person's reason or message is " +
+    'the one the passage states, so read the WHOLE story before telling any ' +
+    'of it -- and tell no story as if it really happened. The main passage ' +
+    'alone on a line as its token -- [^John 10:11-18] -- which the app ' +
+    'prints whole from their Bible, no more than about twenty verses (of a ' +
+    'longer story, the part the lesson preaches, the rest told in its ' +
+    'background); then "## " headings: Big idea (ONE full ' +
+    'sentence: what the passage says about God, and what that asks of us), ' +
+    "Background (three or four sentences from the Bible's own pages: who " +
+    'wrote it, to whom, and what happens just before it that changes how it ' +
+    'is heard), Introduction (an everyday scene, or a question of the ' +
+    'passage\'s own -- never "Have you ever" -- that raises the need in us ' +
+    'the passage answers, its picture agreeing with the passage), three ' +
+    'points that follow the passage in its own order and ' +
+    'together cover ALL of it, the last ending where the passage ends, each ' +
+    'written as:\n' +
+    '## 1. <a sentence that states it>\n' +
+    '[^<the verses whose words say it>]\n' +
+    '**What it means:** <the words of these verses a hearer would stumble ' +
+    'on when they are read aloud -- "moderation", a publican, hyssop, "no ' +
+    'more sea" -- each made plain from where else Scripture uses it (read ' +
+    'with owa_find_verse); a custom only as the Bible itself tells it, ' +
+    'never what a people is said to have thought; never the verse said ' +
+    'again, no Hebrew or Greek word study>\n' +
+    '**A hearer asks:** <the honest question these verses raise>\n' +
+    '**The passage answers:** <its answer in two or three sentences, from ' +
+    'the passage itself: a reason, motive or promise only where it states ' +
+    'one>\n' +
+    "**For example:** <a scene from the hearers' own week, three or four " +
+    'sentences -- someone, somewhere, what happened -- showing what THIS ' +
+    'point says God does or asks, not mere courage or effort, and promising ' +
+    'nothing the passage does not; never a memory of your own, a real name ' +
+    'or a date, never a stock picture: a lifeboat, a garden, a rescue>\n' +
+    '**This week:** <one deed -- what, when, with whom -- done in the ' +
+    'strength God gives, never only "trust", "remember" or "pray about ' +
+    'it">\n' +
+    'then Pointing to Jesus (a phrase of THIS passage, quoted, and where it ' +
+    'leads: what Jesus did for us in his death and rising -- never only his ' +
+    'example, never the story turned into an allegory of him, never a ' +
+    'picture the passage does not have), Response (the ' +
+    'big idea said again in new words, then ONE step for this week: what, when, with ' +
+    'whom; where the passage calls us to believe, a plain invitation to), ' +
     'Closing prayer (written out), Questions for discussion ("- " items, on ' +
-    'the passage and their lives -- none at a funeral) and Memory verse ' +
-    '([^ref], one short verse that says the big idea plainly). A devotion ' +
-    'keeps every part with ONE point that covers its whole passage, about ' +
-    "300 words. A children's lesson keeps every part too, in words a child " +
-    'knows: at the top only the verse or two its story turns on, never a ' +
-    'whole chapter (name the rest in Background); after the Introduction the ' +
-    'story TOLD in short sentences under its own heading, from its start to ' +
-    'where the passage ends; two points a child can hold; something to ' +
-    'show; and a memory verse of one short line that says the big idea. A ' +
-    'verse is a token, never ' +
-    'typed out -- a passage printed once, after that its token in a sentence ' +
-    '-- and a phrase quoted is word for word the passage as read.';
+    'the passage and their lives) and Memory verse ([^ref], one short verse ' +
+    'that says the big idea plainly). A devotion keeps every part with ONE ' +
+    'point that walks its whole passage from its first verse to its last, ' +
+    'naming them in its sentences, about 300 words. A funeral message ' +
+    "comforts: its points the passage's own promises made plain for the " +
+    'grieving and why they can be trusted, its examples gentle scenes of ' +
+    "loss and hope, its This week a comfort to hold and never a task, Christ's " +
+    'gift of life offered freely, and no questions for discussion. A ' +
+    "children's lesson keeps every part too, in words a " +
+    'child knows: at the top only the verse or two its story turns on, ' +
+    'never a whole chapter (name the rest in Background); after the ' +
+    'Introduction the story TOLD in short sentences under its own heading, ' +
+    'from its start to where the passage ends; two points a child can hold; ' +
+    'something to show; and a memory verse of one short line that says the ' +
+    'big idea. A verse is a token, never typed out -- a passage printed ' +
+    'once, after that its token in a sentence -- and a phrase quoted is ' +
+    'word for word the passage as read.';
 
 const LESSON_NOUN =
     '(?:lesson|devotion(?:al)?|outline|sermon|homily|bible study)(?!\\s+plan)\\b';
@@ -150,6 +202,15 @@ const NEW_LESSON_ASK_PATTERN = new RegExp(
     ].join('|'),
     'i',
 );
+// A preaching MESSAGE is a lesson too, and so is a funeral's talk (BN-85,
+// 2026-11-11). _a message of hope for a funeral, from Revelation 21:1-7_
+// had carried no lesson hint in any run since BN-66, because "message" was
+// no lesson word. It was written from the short outline alone, and was the
+// thinnest lesson of every set the readers scored. "A message" alone is
+// not one: _paste the message from my pastor_, _write a message to my wife_.
+const MESSAGE_TOPIC_SOURCE =
+    'message\\s+(?:of\\s+(?:hope|comfort|encouragement|grace|peace|joy|' +
+    'love|faith|salvation|forgiveness)|on|about|from)\\b';
 // Wider, where no lesson is attached to be meant instead: "help me prepare
 // my sermon on John 10", "I'm preaching from Psalm 23 on Sunday".
 const LESSON_WRITE_ASK_PATTERN = new RegExp(
@@ -157,6 +218,10 @@ const LESSON_WRITE_ASK_PATTERN = new RegExp(
         `\\b(?:write|make|create|prepare|plan|draft|give|need|want|start|build|help)\\b[^.?!]{0,40}?\\b${LESSON_NOUN}`,
         '\\bpreach(?:ing)?\\b[^.?!]{0,40}?\\b(?:on|about|from)\\b',
         `^\\s*(?:please\\s+)?(?:(?:a|an|my)\\s+)?${LESSON_WORDS}${LESSON_NOUN}\\s+(?:about|on|from)\\b`,
+        `\\b(?:write|make|create|prepare|plan|draft|give|need|want|start|build|help)\\b[^.?!]{0,40}?\\b${MESSAGE_TOPIC_SOURCE}`,
+        `^\\s*(?:please\\s+)?(?:a|an|my)\\s+(?:[\\w'-]+\\s+){0,2}?${MESSAGE_TOPIC_SOURCE}`,
+        '\\bfuneral\\b[^.?!]{0,40}?\\b(?:message|talk|homily|eulogy|sermon)\\b',
+        '\\b(?:message|talk|homily|eulogy)\\b[^.?!]{0,40}?\\bfuneral\\b',
     ].join('|'),
     'i',
 );

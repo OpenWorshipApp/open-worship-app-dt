@@ -1016,7 +1016,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   background, an introduction, three points each with its verses, what it
   means, an example and how to live it, Pointing to Jesus, a response, a
   written prayer, questions, a memory verse -- is `PREACHING_LESSON_SHAPE`
-  (`noteCreatePromptHelpers.ts`), ~190 tokens put on a LESSON ask alone,
+  (`noteCreatePromptHelpers.ts`), ~190 tokens when it was added (~968 since BN-82) put on a LESSON ask alone,
   never in a prompt: `LESSON_MAKE_HINT` where no note is attached
   (`askLlmBot`, only beside a tool list holding `owa_bible_note`) and, in a
   note ask, the one hint `genNoteLessonHint` picks -- the empty note's (the
@@ -1113,7 +1113,34 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   hearers' own week, and a person's reason or message only as the passage
   states it, the whole story read first; and while the note is still
   empty, an `owa_note_edit` that is a question is refused as the add's
-  redirect refuses one (`isBlankLesson`).
+  redirect refuses one (`isBlankLesson`). **A point is a template** (BN-82,
+  2026-11-11): told in one sentence what a point holds, the model wrote one
+  paragraph that said the verse again; each point is now labelled lines --
+  **What it means:**, **A hearer asks:**, **The passage answers:** (its own
+  line: told "the question, answered", it wrote only the question), **For
+  example:**, **This week:** -- the passage is read with the verses before
+  it for the background, it runs about twenty verses at most, Pointing to
+  Jesus starts from a phrase of the passage, and a funeral comforts from
+  the passage's promises with no discussion questions (~968 tokens, lesson
+  asks only). **A new lesson's points follow and cover its passage**
+  (BN-83): written into the empty note, a lesson whose numbered points stop
+  before the passage at its top ends, or put a point whose verses all come
+  before the point above it, is refused once an ask
+  (`findLessonPointsProblem`, `ToolWatchType.isLessonPointsChecked`).
+  **A preaching message is a lesson ask** (BN-85): _a message of hope for a
+  funeral_ held no lesson word, carried no lesson hint in any run, and was
+  written from the short outline -- a "message of hope / on / about /
+  from", and a funeral's message or talk, are read as one now
+  (`checkIsLessonWriteAsk`). **The passage is READ whole** (BN-86):
+  `owa_find_verse refs` had cut it at a found verse's 300 letters, so a
+  lesson was built on its first verses and the rest came from memory --
+  every factual error both readers found in BN-82's lessons sat in those
+  verses, and the misquote check had nothing to hold them to; a passage is
+  given whole now, within 6000 letters a call (`agent-tools.md`). **An
+  empty note is empty while its window opens** (BN-87): the read before the
+  ask had failed on a busy computer and the lesson went into a NEW note;
+  an empty note's read is now worked out from its file
+  (`readBlankNoteFromFile`).
 
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening

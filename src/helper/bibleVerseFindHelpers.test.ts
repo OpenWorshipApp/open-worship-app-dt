@@ -24,6 +24,8 @@ import {
     toNeededHits,
     toPassageRunName,
     toPassageRuns,
+    toReadPassageTextLimit,
+    findVersesBeforeRef,
     toTermWeight,
     toVerseKey,
     withExactCounts,
@@ -182,6 +184,44 @@ describe('a found row', () => {
         expect(cut.length).toBeLessThanOrEqual(21);
         expect(cut.endsWith('…')).toBe(true);
         expect(cutFoundText('  short\n verse ')).toBe('short verse');
+    });
+
+    // BN-86 (2026-11-11): a passage read by its reference is given whole,
+    // within letters its call shares -- never a found verse's 300.
+    it('gives a passage read by its reference the letters its call shares', () => {
+        expect(toReadPassageTextLimit(1)).toBe(6000);
+        expect(toReadPassageTextLimit(2)).toBe(3000);
+        expect(toReadPassageTextLimit(8)).toBe(750);
+        // Never below a found verse's line; nothing read is one.
+        expect(toReadPassageTextLimit(40)).toBe(300);
+        expect(toReadPassageTextLimit(0)).toBe(6000);
+    });
+
+    // BN-89 (2026-11-11): read with a new lesson's passage, for its
+    // background -- "the simple faith of women" had been made up for Luke 10.
+    it('names the verses just before one passage', () => {
+        expect(findVersesBeforeRef('Luke 10:25-37')).toBe('Luke 10:15-24');
+        expect(findVersesBeforeRef('John 3:16')).toBe('John 3:6-15');
+        expect(findVersesBeforeRef('Philippians 4:4-13')).toBe(
+            'Philippians 4:1-3',
+        );
+        expect(findVersesBeforeRef('Matthew 18:2-5')).toBe('Matthew 18:1');
+        // A passage starting a chapter, or a whole one: the chapter before.
+        expect(findVersesBeforeRef('1 Samuel 17:1-58')).toBe('1 Samuel 16');
+        expect(findVersesBeforeRef('Psalm 46')).toBe('Psalm 45');
+        expect(findVersesBeforeRef('(KJV) Revelation 21:1-7')).toBe(
+            'Revelation 20',
+        );
+        // A list, a range over chapters, the first chapter's start, words.
+        for (const refs of [
+            'Jonah 1:1-4, 1:17',
+            'Luke 10:25-37; John 3:16',
+            'Jonah 1:17-2:10',
+            'Genesis 1:1-5',
+            'the good shepherd',
+        ]) {
+            expect(findVersesBeforeRef(refs), refs).toBe(null);
+        }
     });
 });
 

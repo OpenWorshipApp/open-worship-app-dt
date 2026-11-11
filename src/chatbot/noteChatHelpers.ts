@@ -58,6 +58,11 @@ import {
     toNoteWindowTarget,
     type NoteWindowTargetType,
 } from '../helper/ai/noteWindowMatchHelpers';
+import {
+    readPassageLineRef,
+    splitVerseTokenRefs,
+} from '../helper/agentNoteMarkupHelpers';
+import { parseRefParts } from '../helper/bibleVerseFindHelpers';
 
 export const NOTE_ASK_KIND = 'note';
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
@@ -769,6 +774,272 @@ export function genNoteMisquoteRefusal(misquotes: readonly string[]) {
         misquotes.map((quote) => `“${quote}”`).join(', ') +
         '. Quote it word for word as it was read, or say it in your own ' +
         'words without quotation marks -- then send the change again, whole.'
+    );
+}
+
+// --- a lesson's points follow and cover its passage (BN-83) -------------------
+//
+// 2026-11-11, BN-81's two runs read again by their verses: in each, five
+// lessons of thirteen stopped before their passage did. The sower sermon
+// stopped at the thorns (Matthew 13:22), though the good ground of 13:23 was
+// its memory verse. The Psalm 46 and Psalm 23 devotions' one point stopped at
+// verse 3, while their big idea rested on "be still" (46:10) and the valley
+// (23:4). Psalm 51 stopped at 17 of 19, David at 17:47 of 58. Both blind
+// readers marked the points down for it. The shape has asked for "the last
+// ending where the passage ends" since BN-66; a small model reads a
+// sentence, and this reads the lesson. The same day, the template's first
+// run put David's points at 17:45-47, then 17:38-40, then 17:48-50: the
+// armour after the speech the passage puts after it. So no point's verses
+// may all come before the point above it either. It checks only a new
+// lesson's first write, once an ask, and only a passage the app reads as one
+// book, one chapter and three verses or more: a children's lesson's verse or
+// two, John 3:16, a whole chapter unnumbered or a list of places is let be.
+// Only the points' verses inside the passage count.
+const LESSON_POINT_HEADING_PATTERN =
+    /^[ \t]*#{2,3}[ \t]+(?:\*\*)?(?:point[ \t]+)?\d{1,2}[.):]/i;
+const LESSON_HEADING_PATTERN = /^[ \t]*#{1,6}[ \t]/;
+// A heading under the title: the lesson's top, where its passage is, ends.
+const LESSON_PART_HEADING_PATTERN = /^[ \t]*#{2,6}[ \t]/;
+const LESSON_VERSE_TOKEN_PATTERN = /\[\^([^\]\n]+)\]/g;
+const LESSON_BIBLE_PREFIX_PATTERN = /^\([^)\n]{1,24}\)\s*/;
+const MIN_COVERED_PASSAGE_VERSES = 3;
+
+type LessonRefType = NonNullable<ReturnType<typeof parseRefParts>>;
+
+export type LessonPointsProblemType = {
+    // The passage at the lesson's top: "Matthew 13:1-23".
+    passage: string;
+    // Where the points stop, short of its end: "Matthew 13:22" of "13:23".
+    gap: { reached: string; end: string } | null;
+    // A point that comes before the point above it in the passage.
+    slip: {
+        point: number;
+        ref: string;
+        earlierPoint: number;
+        earlierRef: string;
+    } | null;
+};
+
+function toLessonRefParts(words: string) {
+    const parts = parseRefParts(
+        words.replace(LESSON_BIBLE_PREFIX_PATTERN, '').trim(),
+    );
+    // A range over chapters ("Jonah 1:17-2:10") reads as a book named
+    // "Jonah 1:17-2:", which no point's verse is in.
+    if (parts === null || /\d\s*[:.]/.test(parts.book)) {
+        return null;
+    }
+    return parts;
+}
+
+function toLessonBookKey(book: string) {
+    return book
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim()
+        .replace(/s$/u, '');
+}
+
+function toLessonRefText({
+    book,
+    chapter,
+    verseStart,
+    verseEnd,
+}: LessonRefType) {
+    if (verseStart === null) {
+        return `${book} ${chapter}`;
+    }
+    return verseEnd === null || verseEnd === verseStart
+        ? `${book} ${chapter}:${verseStart}`
+        : `${book} ${chapter}:${verseStart}-${verseEnd}`;
+}
+
+/** The passage at a new lesson's top, and each point's verses inside it. */
+function readLessonPoints(text: string) {
+    const lines = String(text ?? '')
+        .replace(/\\r\\n|\\n/g, '\n')
+        .replace(/\r\n?/g, '\n')
+        .split('\n');
+    let passageWords: string | null = null;
+    let isPastTop = false;
+    let isInPoint = false;
+    const pointWords: string[][] = [];
+    for (const line of lines) {
+        if (LESSON_POINT_HEADING_PATTERN.test(line)) {
+            isPastTop = true;
+            isInPoint = true;
+            pointWords.push([]);
+            continue;
+        }
+        if (LESSON_HEADING_PATTERN.test(line)) {
+            isPastTop = isPastTop || LESSON_PART_HEADING_PATTERN.test(line);
+            isInPoint = false;
+            continue;
+        }
+        if (!isPastTop) {
+            passageWords ??= readPassageLineRef(line);
+        } else if (isInPoint) {
+            for (const match of line.matchAll(LESSON_VERSE_TOKEN_PATTERN)) {
+                pointWords[pointWords.length - 1].push(
+                    ...(splitVerseTokenRefs(match[1]) ?? [match[1]]),
+                );
+            }
+        }
+    }
+    if (passageWords === null || splitVerseTokenRefs(passageWords) !== null) {
+        return null;
+    }
+    const passage = toLessonRefParts(passageWords);
+    if (
+        passage === null ||
+        passage.verseStart === null ||
+        passage.verseEnd === null ||
+        passage.verseEnd - passage.verseStart + 1 < MIN_COVERED_PASSAGE_VERSES
+    ) {
+        return null;
+    }
+    const { chapter, verseStart, verseEnd } = passage;
+    const bookKey = toLessonBookKey(passage.book);
+    const points = pointWords.map((words) => {
+        return words
+            .map(toLessonRefParts)
+            .filter((parts): parts is LessonRefType => {
+                if (
+                    parts === null ||
+                    parts.chapter !== chapter ||
+                    toLessonBookKey(parts.book) !== bookKey
+                ) {
+                    return false;
+                }
+                // A whole chapter holds the passage.
+                if (parts.verseStart === null) {
+                    return true;
+                }
+                const end = parts.verseEnd ?? parts.verseStart;
+                return parts.verseStart <= verseEnd && end >= verseStart;
+            });
+    });
+    return { passage: { ...passage, verseStart, verseEnd }, points };
+}
+
+/**
+ * Where a new lesson's numbered points stop before its passage ends, or
+ * leave its order; null when they cover it in order, or cannot be read.
+ */
+export function findLessonPointsProblem(
+    text: string,
+): LessonPointsProblemType | null {
+    const lesson = readLessonPoints(text);
+    if (lesson === null) {
+        return null;
+    }
+    const { passage, points } = lesson;
+    const chapter = `${passage.book} ${passage.chapter}`;
+    const refs = points.flat();
+    let gap: LessonPointsProblemType['gap'] = null;
+    if (refs.length > 0 && refs.every((ref) => ref.verseStart !== null)) {
+        const reached = Math.max(
+            ...refs.map((ref) => ref.verseEnd ?? ref.verseStart ?? 0),
+        );
+        if (reached < passage.verseEnd) {
+            gap = {
+                reached: `${chapter}:${reached}`,
+                end: `${chapter}:${passage.verseEnd}`,
+            };
+        }
+    }
+    // Only a point whose verses ALL come before the point above it is out of
+    // order: a sower's point may pair the parable's verse with its meaning's.
+    let slip: LessonPointsProblemType['slip'] = null;
+    let last: { point: number; start: number; ref: string } | null = null;
+    for (const [index, pointRefs] of points.entries()) {
+        const numbered = pointRefs.filter((ref) => ref.verseStart !== null);
+        if (numbered.length === 0) {
+            continue;
+        }
+        const start = Math.min(...numbered.map((ref) => ref.verseStart ?? 0));
+        const end = Math.max(
+            ...numbered.map((ref) => ref.verseEnd ?? ref.verseStart ?? 0),
+        );
+        if (last !== null && end < last.start) {
+            slip = {
+                point: index + 1,
+                ref: toLessonRefText(numbered[0]),
+                earlierPoint: last.point,
+                earlierRef: last.ref,
+            };
+            break;
+        }
+        last = { point: index + 1, start, ref: toLessonRefText(numbered[0]) };
+    }
+    if (gap === null && slip === null) {
+        return null;
+    }
+    return {
+        passage: `${chapter}:${passage.verseStart}-${passage.verseEnd}`,
+        gap,
+        slip,
+    };
+}
+
+/**
+ * Said over a new lesson's passage read when the window read the verses
+ * just before it too (BN-89, `findVersesBeforeRef`): what the Background
+ * tells of them is to come from these words.
+ */
+export function genVersesBeforeNote(ref: string) {
+    return (
+        `(The window also read ${ref}, the verses just before the passage, ` +
+        'for the Background: say what happens there from these words, never ' +
+        'from memory.)'
+    );
+}
+
+// The kinds a heading change names, as its mark-up's `#`s.
+const LESSON_HEADING_KIND_PATTERN = /^h([1-6])$/;
+
+/**
+ * A lesson's changes as the mark-up lines they write, in the order given:
+ * a model adds the passage as a `passage` change with its `ref`, and a
+ * heading as an `h2` change, as often as it writes `[^ref]` and `## ` lines
+ * in a section. The David sermon's passage was one, and the check, reading
+ * only words, found no passage at the top to hold its points to.
+ */
+export function toLessonChangeText(args: any) {
+    const changes = Array.isArray(args?.changes) ? args.changes : [];
+    return changes
+        .map((change: any) => {
+            const kind = String(change?.kind ?? '');
+            if (kind === 'passage' && typeof change?.ref === 'string') {
+                return `[^${change.ref}]`;
+            }
+            const text = typeof change?.text === 'string' ? change.text : '';
+            const heading = LESSON_HEADING_KIND_PATTERN.exec(kind);
+            return heading !== null && !/^\s*#/.test(text)
+                ? `${'#'.repeat(Number(heading[1]))} ${text}`
+                : text;
+        })
+        .join('\n');
+}
+
+/** What the model is told when a new lesson's points leave its passage. */
+export function genLessonPointsRefusal(problem: LessonPointsProblemType) {
+    const faults = [
+        problem.slip === null
+            ? ''
+            : `point ${problem.slip.point} (${problem.slip.ref}) comes ` +
+              `before point ${problem.slip.earlierPoint} ` +
+              `(${problem.slip.earlierRef}) in it`,
+        problem.gap === null ? '' : `the points stop at ${problem.gap.reached}`,
+    ].filter((fault) => fault !== '');
+    const end = problem.gap === null ? '' : `, at ${problem.gap.end}`;
+    return (
+        `Nothing was written: the passage is ${problem.passage}, and ` +
+        `${faults.join(', and ')}. The points follow it in its own order and ` +
+        `together cover ALL of it, the last ending where it ends${end} -- a ` +
+        "devotion's one point walks the whole passage. Keep the passage as " +
+        'it is, put the points in its order and give any verses left out to ' +
+        'them, then send the lesson again, whole.'
     );
 }
 

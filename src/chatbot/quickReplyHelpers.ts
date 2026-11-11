@@ -172,11 +172,62 @@ function toShownLength(reply: string) {
     return reply.replace(/\p{M}/gu, '').length;
 }
 
+// A passage offered to choose whose story runs long keeps its reference and
+// as much of its story as fits (2026-11-11, BN-84: _write an Easter sermon_
+// was asked "which one would you like to use?" over a few passages, and only
+// the one whose story was short enough was drawn -- "a few suggestions" over
+// one button).
+const PASSAGE_THEN_STORY_PATTERN = new RegExp(
+    `^(${PASSAGE_REF_SOURCE}) \\(([^()]+)\\)$`,
+    'u',
+);
+const STORY_THEN_PASSAGE_PATTERN = new RegExp(
+    `^([^()]+) \\((${PASSAGE_REF_SOURCE})\\)$`,
+    'u',
+);
+// The most of a story kept in brackets after a passage: the pattern above
+// reads 50 letters there.
+const MAX_PASSAGE_STORY_LENGTH = 48;
+
+function toCutStory(story: string, room: number) {
+    const cut = story
+        .slice(0, room)
+        .replace(/\s+\S*$/u, '')
+        .replace(/[\s,;:–-]+$/u, '');
+    return cut.length > 0 ? `${cut}…` : '';
+}
+
+function toFittedPassageReply(reply: string) {
+    if (toShownLength(reply) <= MAX_PASSAGE_REPLY_LENGTH) {
+        return reply;
+    }
+    const passageFirst = PASSAGE_THEN_STORY_PATTERN.exec(reply);
+    if (passageFirst !== null) {
+        const story = toCutStory(
+            passageFirst[2],
+            Math.min(
+                MAX_PASSAGE_STORY_LENGTH,
+                MAX_PASSAGE_REPLY_LENGTH - passageFirst[1].length - 4,
+            ),
+        );
+        return story === '' ? passageFirst[1] : `${passageFirst[1]} (${story})`;
+    }
+    const storyFirst = STORY_THEN_PASSAGE_PATTERN.exec(reply);
+    if (storyFirst !== null) {
+        const story = toCutStory(
+            storyFirst[1],
+            MAX_PASSAGE_REPLY_LENGTH - storyFirst[2].length - 4,
+        );
+        return story === '' ? storyFirst[2] : `${story} (${storyFirst[2]})`;
+    }
+    return reply;
+}
+
 function toReplyList(raw: string, answerText = '') {
     const seen = new Set<string>();
     const replies: string[] = [];
     for (const part of raw.split('|')) {
-        const reply = toCleanReply(part);
+        const reply = toFittedPassageReply(toCleanReply(part));
         const key = reply.toLowerCase();
         const maxLength = PASSAGE_CLOSING_PATTERN.test(reply)
             ? MAX_PASSAGE_REPLY_LENGTH
@@ -434,7 +485,7 @@ function cutPassageListFrame(text: string) {
         if (line.length === 0) {
             continue;
         }
-        const option = toCleanReply(line);
+        const option = toFittedPassageReply(toCleanReply(line));
         if (
             option.length > MAX_PASSAGE_REPLY_LENGTH ||
             !PASSAGE_CLOSING_PATTERN.test(option)

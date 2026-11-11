@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T04:44:52.996Z
+  modified: 2026-11-11T06:48:54.784Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -326,6 +326,28 @@ a person's reason only as the passage gives it) moved one reader 19.00 ->
 running the whole set, not only the weakest asks, is what found the
 draft's own failures (a two-reference token refusing a whole lesson, a
 question written into an empty note, a reference list read one item).
+(18) **A small model follows a labelled line it skips in a sentence**:
+told in one long sentence what a point holds, gemma4:cloud wrote one
+paragraph a point. Given each point as labelled lines (**What it means:**,
+**A hearer asks:**, **The passage answers:** …), it wrote every line of
+every point. A placeholder that bundles two jobs ("the question,
+answered") gets the first job only, so each job gets its own line (BN-82).
+(19) **Before tuning a hint, check the ask gets it**: the funeral sermon was
+"thin" in every blind read for a day, and it had never been given the
+lesson shape at all. "A message of hope for a funeral" holds no lesson
+word, so it carried no lesson hint and was written from the short outline
+(BN-85). Read which hint each measured ask carries before blaming the
+hint's words. (20) **Check what the model was GIVEN, not only what it was
+told**: the shape said "build every point on the words it returns", and
+`owa_find_verse refs` returned a passage cut at 300 letters -- its first
+two or three verses. Every factual error two blind readers found in a
+day of richer lessons sat in the verses never read (BN-86). The tool's
+result in a run's own record ends in "…" inside the JSON: that is the
+tool cutting, not the record. (21) **A busy computer is a test case**:
+another session's full test gate pegged the CPU, note windows took over
+20 s to open, and the window's read of an empty note failed. Seven
+lessons of twelve went into a NEW note (BN-87). The church machines this
+app is for are that slow on a normal day.
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

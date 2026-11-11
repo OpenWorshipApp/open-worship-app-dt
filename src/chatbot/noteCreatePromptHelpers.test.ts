@@ -106,8 +106,25 @@ describe('a lesson to preach, asked anywhere', () => {
             'sermon on the prodigal son',
             'write a devotion for the youth about patience',
             'Can you make me a bible study on Romans 8',
+            // BN-85: a preaching message, and a funeral's talk.
+            'a message of hope for a funeral, from Revelation 21:1-7',
+            'help me prepare a short message on Psalm 23 for prayer night',
+            'I need a funeral message from John 14',
+            "a talk for my mother's funeral",
         ]) {
             expect(checkIsLessonWriteAsk(text), text).toBe(true);
+        }
+    });
+
+    // BN-85: "a message" alone is no lesson.
+    test('a message to someone is not one', () => {
+        for (const text of [
+            'paste the message from my pastor',
+            'write a message to my wife',
+            'send a message to the group',
+            'how do I write a funeral message?',
+        ]) {
+            expect(checkIsLessonWriteAsk(text), text).toBe(false);
         }
     });
 

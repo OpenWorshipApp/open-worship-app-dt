@@ -165,6 +165,22 @@ describe('parseAnswerOptions', () => {
                 'Psalm 23 (The Lord is my Shepherd)',
             ],
         });
+        // BN-84 (2026-11-11, _write an Easter sermon_): a passage whose
+        // story runs long keeps its reference and what of its story fits,
+        // never dropped -- two of three had been.
+        expect(
+            parseAnswerOptions(
+                'Which one would you like to use?\nOPTIONS: Luke 24:1-12 ' +
+                    '(The women find the empty tomb and hear the angels tell ' +
+                    'them He is risen) | John 20:11-18 (Jesus appearing to ' +
+                    'Mary Magdalene) | The resurrection morning when Mary ' +
+                    'and the other Mary came to the tomb (Matthew 28:1-10)',
+            ).options,
+        ).toEqual([
+            'Luke 24:1-12 (The women find the empty tomb and hear the…)',
+            'John 20:11-18 (Jesus appearing to Mary Magdalene)',
+            'The resurrection morning when Mary and the… (Matthew 28:1-10)',
+        ]);
         // Verses an answer cites ask nothing; steps name no passage.
         expect(
             parseAnswerOptions(

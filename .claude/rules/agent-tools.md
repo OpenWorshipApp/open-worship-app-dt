@@ -1086,7 +1086,11 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   search what it translated. `refs` quotes references (an English name, a
   code or the Bible's own) from that Bible -- a chapter and verse with no
   book being the book before it's (`splitRefList`, BN-81: "Jonah 1:1-4,
-  1:17, 2:1" had left all but the first unread); `open` puts one in the Bible
+  1:17, 2:1" had left all but the first unread), and a passage (a range
+  or a chapter) given WHOLE, within 6000 letters the call's references
+  share (`toReadPassageTextLimit`, BN-86, 2026-11-11: cut at a found
+  verse's 300, a lesson's thirteen verses were read as their first two and
+  every factual error the blind readers found was in the rest); `open` puts one in the Bible
   Lookup the way the names panel's **Open in bible lookup** does
   (`applyTargetOrBibleKey` on the live controller, or the Presenter's popup
   through `bibleLookupPopupOpener.ts`), never on a screen. Only `open` acts:

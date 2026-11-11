@@ -34,7 +34,10 @@ import {
     findSessionNoteTarget,
     findLostNoteLines,
     findLessonChangeSurgery,
+    findLessonPointsProblem,
     findNoteMisquotes,
+    genLessonPointsRefusal,
+    toLessonChangeText,
     genLessonFormLine,
     genNoteMisquoteRefusal,
     readLessonFormAsked,
@@ -1537,6 +1540,194 @@ describe('a quote of the passage is its words', () => {
         expect(
             findNoteMisquotes('"sinners shall return unto thee"', []),
         ).toEqual([]);
+    });
+});
+
+// BN-83 (2026-11-11): five lessons of thirteen stopped before their passage
+// did -- the sower at the thorns, the Psalm 46 devotion at verse 3 -- and a
+// David sermon put the armour after the speech.
+describe("a new lesson's points follow and cover its passage", () => {
+    const toLesson = (top: string, points: string[]) => {
+        return [
+            '# The lesson',
+            top,
+            '## Big idea',
+            'One sentence.',
+            ...points.map((point, index) => {
+                return `## ${index + 1}. A point\n${point}\n**What it means:** words.`;
+            }),
+            '## Pointing to Jesus',
+            'He is the sower [^Matthew 13:37].',
+            '## Memory verse',
+            '[^Matthew 13:23]',
+        ].join('\n');
+    };
+
+    it('names where the points stop and where the passage ends', () => {
+        const problem = findLessonPointsProblem(
+            toLesson('[^(KJV) Matthew 13:1-23]', [
+                '[^Matthew 13:3-9, 19]',
+                '[^Matthew 13:5-6] and [^Matthew 13:20-21]',
+                '[^Matthew 13:7, 22]',
+            ]),
+        );
+        expect(problem).toEqual({
+            passage: 'Matthew 13:1-23',
+            gap: { reached: 'Matthew 13:22', end: 'Matthew 13:23' },
+            slip: null,
+        });
+        const refusal = genLessonPointsRefusal(problem!);
+        expect(refusal).toContain(
+            'the passage is Matthew 13:1-23, and the points stop at ' +
+                'Matthew 13:22.',
+        );
+        expect(refusal).toContain(
+            'the last ending where it ends, at Matthew 13:23',
+        );
+        // A devotion's one point, its heading bold, the book named twice.
+        expect(
+            findLessonPointsProblem(
+                '[^Psalm 46:1-11]\n## **1. Our refuge**\n[^Psalms 46:1-3]',
+            )?.gap,
+        ).toEqual({ reached: 'Psalm 46:3', end: 'Psalm 46:11' });
+        // Lines a model wrote out as "\n".
+        expect(
+            findLessonPointsProblem(
+                '[^Luke 19:1-10]\\n## Point 1: Seeking\\n[^Luke 19:1-4]',
+            )?.gap?.reached,
+        ).toBe('Luke 19:4');
+    });
+
+    it('names a point that comes before the one above it', () => {
+        const problem = findLessonPointsProblem(
+            toLesson('[^1 Samuel 17:40-50]', [
+                '[^1 Samuel 17:45-47]',
+                '[^1 Samuel 17:38-40]',
+                '[^1 Samuel 17:48-50]',
+            ]),
+        );
+        expect(problem).toEqual({
+            passage: '1 Samuel 17:40-50',
+            gap: null,
+            slip: {
+                point: 2,
+                ref: '1 Samuel 17:38-40',
+                earlierPoint: 1,
+                earlierRef: '1 Samuel 17:45-47',
+            },
+        });
+        expect(genLessonPointsRefusal(problem!)).toContain(
+            'and point 2 (1 Samuel 17:38-40) comes before point 1 ' +
+                '(1 Samuel 17:45-47) in it. The points follow it in its own ' +
+                'order',
+        );
+        // Both at once, in one sentence.
+        expect(
+            genLessonPointsRefusal({
+                ...problem!,
+                gap: { reached: '1 Samuel 17:48', end: '1 Samuel 17:50' },
+            }),
+        ).toContain('in it, and the points stop at 1 Samuel 17:48.');
+    });
+
+    it('lets points that cover the passage in order through', () => {
+        // The parable and its meaning side by side, point by point.
+        expect(
+            findLessonPointsProblem(
+                toLesson('[^Matthew 13:1-23]', [
+                    '[^Matthew 13:3-9, 19]',
+                    '[^Matthew 13:20-22]',
+                    'The good ground [^Matthew 13:8, 23] bears fruit.',
+                ]),
+            ),
+        ).toBe(null);
+        // A point naming the whole chapter reaches every verse of it.
+        expect(
+            findLessonPointsProblem('[^Psalm 23:1-6]\n## 1. All\n[^Psalm 23]'),
+        ).toBe(null);
+    });
+
+    it('counts only the points, and only their verses in the passage', () => {
+        // The memory verse and a verse in another chapter or book are no
+        // point's reach; a verse after the passage neither.
+        expect(
+            findLessonPointsProblem(
+                toLesson('[^Luke 19:1-10]', [
+                    '[^Luke 19:1-4]',
+                    '[^Luke 19:5-7] and [^John 3:16]',
+                    '[^Luke 15:7] [^Luke 19:12]',
+                ]),
+            ),
+        ).toEqual({
+            passage: 'Luke 19:1-10',
+            gap: { reached: 'Luke 19:7', end: 'Luke 19:10' },
+            slip: null,
+        });
+        // Points that name no verse of the passage at all: nothing to hold.
+        expect(
+            findLessonPointsProblem(
+                toLesson('[^Luke 19:1-10]', ['[^John 3:16]']),
+            ),
+        ).toBe(null);
+    });
+
+    it('lets a passage it cannot hold the points to be', () => {
+        // A verse or two (a children's lesson's top), a whole chapter, a
+        // list of places, a range over chapters, none at the top.
+        for (const top of [
+            '[^Jonah 2:10]',
+            '[^Jonah 1:17-2:1]',
+            '[^Psalm 23]',
+            '[^Jonah 1:1-4, 1:17]',
+            'No passage line.',
+        ]) {
+            expect(
+                findLessonPointsProblem(
+                    `${top}\n## 1. A point\n[^Jonah 1:3]\n[^Psalm 23:1]`,
+                ),
+            ).toBe(null);
+        }
+        // A passage line under a heading is not the lesson's top.
+        expect(
+            findLessonPointsProblem(
+                '## Background\n[^Psalm 46:1-11]\n## 1. A point\n[^Psalm 46:1]',
+            ),
+        ).toBe(null);
+    });
+
+    // The David sermon gave its passage as a `passage` change with a `ref`,
+    // and the check, reading words alone, found no passage to hold.
+    it('reads a lesson written as changes the way it is written', () => {
+        const text = toLessonChangeText({
+            changes: [
+                { block: 1, remove: true },
+                { after: 0, kind: 'passage', ref: '1 Samuel 17:1-58' },
+                { after: 1, kind: 'h2', text: '1. Faith sees God' },
+                { after: 2, kind: 'passage', ref: '1 Samuel 17:33-40' },
+                {
+                    after: 3,
+                    kind: 'section',
+                    text: '## 2. The battle\n[^1 Samuel 17:41-50]',
+                },
+                { after: 4, kind: 'h3', text: '### Already marked' },
+            ],
+        });
+        expect(text).toBe(
+            [
+                '',
+                '[^1 Samuel 17:1-58]',
+                '## 1. Faith sees God',
+                '[^1 Samuel 17:33-40]',
+                '## 2. The battle',
+                '[^1 Samuel 17:41-50]',
+                '### Already marked',
+            ].join('\n'),
+        );
+        expect(findLessonPointsProblem(text)?.gap).toEqual({
+            reached: '1 Samuel 17:50',
+            end: '1 Samuel 17:58',
+        });
+        expect(toLessonChangeText({})).toBe('');
     });
 });
 

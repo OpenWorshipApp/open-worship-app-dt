@@ -63,7 +63,10 @@ import {
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
-import { resolveBookKey } from '../helper/bibleVerseFindHelpers';
+import {
+    findVersesBeforeRef,
+    resolveBookKey,
+} from '../helper/bibleVerseFindHelpers';
 import {
     ATTACHMENT_ONLY_QUESTION,
     type BotImageType,
@@ -196,15 +199,19 @@ import {
     checkAddsNoteVerse,
     checkIsLanguageLessonAsk,
     findBlankFillProblem,
+    findLessonPointsProblem,
     findLostNoteLines,
     findLessonChangeSurgery,
     findNoteMisquotes,
+    genLessonPointsRefusal,
     genLostNoteLinesRefusal,
     genNoteMisquoteRefusal,
+    genVersesBeforeNote,
     readCreatedNote,
     resolveNoteEditTarget,
     restoreNoteTypedWords,
     toBlankNoteFillArgs,
+    toLessonChangeText,
     withRewrittenLinesRemoved,
     type CreatedNoteType,
     type NoteAskFileType,
@@ -2302,6 +2309,12 @@ type ToolWatchType = {
      */
     noteQuoteSources?: string[] | null;
     isNoteQuoteChecked?: boolean;
+    // A new lesson's points were held to its passage, its order and its end
+    // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
+    isLessonPointsChecked?: boolean;
+    // A new lesson's first passage read took the verses before it too
+    // (BN-89, `findVersesBeforeRef`): once an ask.
+    isLessonBeforeRead?: boolean;
     /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
@@ -4321,6 +4334,20 @@ async function runMcpToolCall(
             if (problem !== null) {
                 return `Tool refused: ${problem}`;
             }
+            // Its points follow its passage in order and cover it whole
+            // (BN-83, 2026-11-11: five lessons of thirteen stopped before
+            // its end -- the sower at the thorns, two devotions at verse 3
+            // -- and David's armour came after his speech), once an ask.
+            const pointsProblem =
+                watch.isLessonPointsChecked === true
+                    ? null
+                    : findLessonPointsProblem(
+                          toLessonChangeText(lyricEditArgs),
+                      );
+            if (pointsProblem !== null) {
+                watch.isLessonPointsChecked = true;
+                return `Tool refused: ${genLessonPointsRefusal(pointsProblem)}`;
+            }
         }
         // A fix to their lesson adds and rewords (BN-80, 2026-11-10: _Add a
         // point on why Jesus uses parables_ came as fifteen blocks moved and
@@ -4365,6 +4392,25 @@ async function runMcpToolCall(
             return `Tool refused: ${MODEL_REMOVAL_REFUSAL}`;
         }
         watch.removalCount += 1;
+    }
+    // A new lesson's first read of its passage reads the verses just before
+    // it too, for the background (BN-89, 2026-11-11): told to, the model did
+    // in about half the lessons, and the rest made their background up.
+    let versesBeforeRef: string | null = null;
+    if (
+        name === VERSE_FIND_TOOL_NAME &&
+        watch.isBlankLesson &&
+        watch.isLessonBeforeRead !== true &&
+        typeof args?.refs === 'string'
+    ) {
+        watch.isLessonBeforeRead = true;
+        versesBeforeRef = findVersesBeforeRef(args.refs);
+        if (versesBeforeRef !== null) {
+            lyricEditArgs = {
+                ...args,
+                refs: `${args.refs}; ${versesBeforeRef}`,
+            };
+        }
     }
     // The page in the language the answer is written in (`pageLang`). The
     // watch keeps the id as the model gave it: it names the recipe.
@@ -4455,7 +4501,9 @@ async function runMcpToolCall(
             text = await callTool(name, calledArgs, signal, watch.windowAim);
         }
         applyToolWatch(watch, name, watchedArgs, text);
-        return text;
+        return versesBeforeRef === null
+            ? text
+            : `${genVersesBeforeNote(versesBeforeRef)}\n${text}`;
     } catch (error: any) {
         // ...except a stop, which is not a lookup the model can route around.
         // Handed back as text it would answer around it, spending another
