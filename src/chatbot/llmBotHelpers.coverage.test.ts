@@ -1918,33 +1918,34 @@ describe('the Anthropic loop', () => {
 
     // BN-129 (2026-11-11): told twenty words twice, a children's lesson on
     // the lost sheep kept Luke 15:7 (28 words) as its memory verse. The
-    // window reads the verse and sends it back once; a sermon is not read.
-    test("a child's memory verse too long to say is sent back once", async () => {
+    // window reads the verse and sends it back -- twice an ask (BN-132: sent
+    // back once, the model swapped it for 1 John 4:16's 29); a sermon's is
+    // not read.
+    test("a child's memory verse too long to say is sent back", async () => {
         fake.toolList = [{ name: 'owa_note_edit' }];
+        const verseMap: Record<string, string> = {
+            '1 John 4:16':
+                '(16): And we have known and believed the love that God ' +
+                'hath to us. God is love; and he that dwelleth in love ' +
+                'dwelleth in God, and God in him.',
+            'Nehemiah 9:31':
+                "(31): Nevertheless for thy great mercies' sake thou didst " +
+                'not utterly consume them, nor forsake them; for thou art a ' +
+                'gracious and merciful God.',
+            'Psalm 103:8':
+                '(8): The LORD is merciful and gracious, slow to anger, and ' +
+                'plenteous in mercy.',
+        };
         fake.answerTool = (name: string, args: any) => {
             if (name !== 'owa_find_verse') {
                 return JSON.stringify({ name: 'Lesson', isChanged: true });
             }
             return JSON.stringify({
                 bible: 'KJV',
-                verses: [
-                    {
-                        ref: args.refs,
-                        text:
-                            '(16): And we have known and believed the love ' +
-                            'that God hath to us. God is love; and he that ' +
-                            'dwelleth in love dwelleth in God, and God in ' +
-                            'him.',
-                    },
-                ],
+                verses: [{ ref: args.refs, text: verseMap[args.refs] }],
             });
         };
-        const lesson =
-            '[^Luke 15:4-7]\n## Big idea\nGod looks for the lost.\n' +
-            '## 1. God looks\n[^Luke 15:4]\n## 2. God rejoices\n' +
-            '[^Luke 15:5-7]\n## Something to show\nA toy sheep.\n' +
-            '## Memory verse\n[^1 John 4:16]';
-        const edit = () => {
+        const edit = (memoryRef: string) => {
             return anthropicToolUse({
                 name: 'owa_note_edit',
                 input: {
@@ -1952,7 +1953,16 @@ describe('the Anthropic loop', () => {
                     note: 'Lesson',
                     changes: [
                         { block: 1, remove: true },
-                        { after: 0, kind: 'section', text: lesson },
+                        {
+                            after: 0,
+                            kind: 'section',
+                            text:
+                                '[^Luke 15:4-7]\n## Big idea\nGod looks for ' +
+                                'the lost.\n## 1. God looks\n[^Luke 15:4]\n' +
+                                '## 2. God rejoices\n[^Luke 15:5-7]\n' +
+                                '## Something to show\nA toy sheep.\n' +
+                                `## Memory verse\n[^${memoryRef}]`,
+                        },
                     ],
                 },
             });
@@ -1965,9 +1975,15 @@ describe('the Anthropic loop', () => {
             hash: 'h',
             blocks: [{ n: 1, kind: 'paragraph', text: '' }],
         });
-        const ask = async (lessonForm: 'children' | null) => {
+        const ask = async (
+            lessonForm: 'children' | null,
+            memoryRefList: string[],
+        ) => {
             const { sentList } = useAnthropic(
-                [edit(), edit(), anthropicText('Your lesson is in the note.')],
+                [
+                    ...memoryRefList.map(edit),
+                    anthropicText('Your lesson is in the note.'),
+                ],
                 'anthropic',
             );
             await askLlmBot(
@@ -2002,21 +2018,31 @@ describe('the Anthropic loop', () => {
             );
             return sentList;
         };
-        const sentList = await ask('children');
+        const sentList = await ask('children', [
+            '1 John 4:16',
+            'Nehemiah 9:31',
+            'Psalm 103:8',
+        ]);
         expect(readToolResults(sentList[1])[0].content).toContain(
             "a child's memory verse is ONE verse of 20 words at most, one a " +
                 'child can say, and 1 John 4:16 runs 29 words',
+        );
+        // The second long choice is read and sent back too.
+        expect(readToolResults(sentList[2])[0].content).toContain(
+            'and Nehemiah 9:31 runs 23 words',
         );
         expect(
             fake.toolCallList.map((call) => [call.name, call.args?.refs]),
         ).toEqual([
             ['owa_find_verse', '1 John 4:16'],
+            ['owa_find_verse', 'Nehemiah 9:31'],
+            // Two sent back is all an ask gets: the third goes in unread.
             ['owa_note_edit', undefined],
         ]);
         // A sermon's memory verse is not read, nor sent back: both of its
         // edits go in.
         fake.toolCallList = [];
-        const sermonSentList = await ask(null);
+        const sermonSentList = await ask(null, ['1 John 4:16', 'Psalm 103:8']);
         expect(fake.toolCallList.map((call) => call.name)).toEqual([
             'owa_note_edit',
             'owa_note_edit',

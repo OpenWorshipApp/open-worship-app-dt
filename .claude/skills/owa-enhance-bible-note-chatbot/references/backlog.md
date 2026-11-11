@@ -1885,7 +1885,24 @@ was seen and what was done.
   three runs running, and Sonnet held both sides of the read at accuracy
   1 for it. The entry names what is not in the verses -- why it had to be
   the Son, an "only way", justice satisfied, a payment of equal value --
-  and that a hearer asks there what they do answer.
+  and that a hearer asks there what they do answer. Seen in the next run:
+  John 3:16's answers kept to the verse's own words.
+- **BN-132 — the window's checks read what was written from memory, and
+  hold a second choice too** (2026-11-11, the BN-128/129 read, Opus: three
+  errors; two of them checks that had not fired). Found by reading the
+  run's network log, where the window's own verse reads show and its
+  refusals do not (a refused edit never reaches the tool): BN-129 HAD
+  sent Luke 15:7 back -- the model then chose 1 John 4:16, 29 words, let
+  in because the check ran once an ask (the next run: Jonah 2:9 sent back,
+  Nehemiah 9:31's 23 let in). And BN-110 read a funeral lesson's first
+  eight cited quotes in the lesson's order -- the Background's and the
+  points', copied from the passage read -- while its Christ section's
+  "became flesh and dwelt among us" (John 1:14), the ninth, was never
+  read. Now every cited quote is found, and the verses read (eight at
+  most) are those of quotes found in nothing the ask read first, then of
+  quotes found only in a read of their own cited book (`pickCitedQuotesToRead`);
+  a quote of another book's read is let be unread, as BN-113 lets it be;
+  and a children's memory verse is sent back twice an ask at most.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

@@ -795,7 +795,11 @@ const CITED_REF_PATTERN = new RegExp(CITED_REF_SOURCE, 'g');
 // The quote's own sentence on either side, never past another quotation.
 const QUOTE_MARK_OR_LINE_PATTERN = /[«»“”"\n]/u;
 const SENTENCE_END_PATTERN = /[.!?](?=\s|$)/u;
-const MAX_CITED_QUOTES = 8;
+// Every cited quote a lesson holds is found (a bound for safety only); at
+// most MAX_CITED_REFS_READ of their verses are read, the ones written from
+// memory first (BN-132).
+const MAX_CITED_QUOTES = 40;
+export const MAX_CITED_REFS_READ = 8;
 
 function toSentenceAfter(text: string) {
     return text
@@ -894,6 +898,58 @@ function toRefBookKey(ref: string) {
             ref.replace(/\s*\d{1,3}:.*$/, '').toLowerCase(),
         ) ?? null
     );
+}
+
+/**
+ * The cited quotes whose verses the window reads, at most
+ * MAX_CITED_REFS_READ references (BN-132, 2026-11-11). Taken in the
+ * lesson's order and cut at eight, the quotes read were the Background's
+ * and the points' -- copied from the passage read -- and the Christ
+ * section's, written from memory near the end, were never read: "became
+ * flesh and dwelt among us" (John 1:14) went in, a funeral lesson's ninth.
+ * Now a quote found in nothing the ask read comes first, one found only in
+ * a read of its own cited book next (the right words, perhaps the wrong
+ * verse, BN-117), and one found in another book's read not at all: the
+ * check lets it be (BN-113).
+ */
+export function pickCitedQuotesToRead(
+    citedList: readonly CitedQuoteType[],
+    readTexts: readonly string[] = [],
+) {
+    const readEntryList = toReadEntryList(readTexts);
+    const toRank = (cited: CitedQuoteType) => {
+        const citedBookKey = toRefBookKey(cited.ref);
+        const keyList = cited.quote
+            .split(/…|\.\.\./)
+            .map(toLetterKey)
+            .filter((key) => key.length >= MIN_NOTE_QUOTE_LETTERS);
+        const foundList = keyList.map((key) => {
+            return readEntryList.filter((entry) => entry.key.includes(key));
+        });
+        if (foundList.some((found) => found.length === 0)) {
+            return 0;
+        }
+        const isOtherBook = foundList.every((found) => {
+            return found.some((entry) => {
+                return citedBookKey === null || entry.bookKey !== citedBookKey;
+            });
+        });
+        return isOtherBook ? 2 : 1;
+    };
+    const ranked = citedList
+        .map((cited, index) => ({ cited, index, rank: toRank(cited) }))
+        .filter((item) => item.rank < 2)
+        .sort((a, b) => a.rank - b.rank || a.index - b.index);
+    const refSet = new Set<string>();
+    const picked: CitedQuoteType[] = [];
+    for (const { cited } of ranked) {
+        if (!refSet.has(cited.ref) && refSet.size >= MAX_CITED_REFS_READ) {
+            continue;
+        }
+        refSet.add(cited.ref);
+        picked.push(cited);
+    }
+    return picked;
 }
 
 /**
@@ -1099,6 +1155,10 @@ export function genTokenAsWordsRefusal(
 // readers marked it down each time. The window reads the verse the Memory
 // verse part names and sends a longer one back, once an ask.
 export const MAX_CHILD_MEMORY_VERSE_WORDS = 20;
+// Sent back twice an ask at most (BN-132): once, the model swapped Luke
+// 15:7's 28 words for 1 John 4:16's 29, and Jonah 2:9's 24 for Nehemiah
+// 9:31's 23 -- the second choice let in unread.
+export const MAX_CHILD_MEMORY_VERSE_REFUSALS = 2;
 const MEMORY_VERSE_HEADING_PATTERN = /^#{1,6}\s*memory verse\b/im;
 
 /** The reference a lesson's Memory verse part gives, or null. */

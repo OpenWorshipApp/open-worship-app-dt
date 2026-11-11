@@ -42,6 +42,8 @@ import {
     findMemoryVerseRef,
     countVerseWords,
     dropRepeatedLessonPassages,
+    pickCitedQuotesToRead,
+    MAX_CITED_REFS_READ,
     MAX_CHILD_MEMORY_VERSE_WORDS,
     genChildMemoryVerseRefusal,
     genTestamentSlipRefusal,
@@ -1781,6 +1783,66 @@ describe("a new lesson's line of one verse token is that verse", () => {
         expect(toLessonVerseLines({ action: 'read' })).toEqual({
             action: 'read',
         });
+    });
+});
+
+// BN-132 (2026-11-11): a funeral lesson's Christ section quoted John 1:14
+// as "became flesh and dwelt among us", its ninth cited quote -- and the
+// check read the first eight, all copied from the passage read.
+describe('the quotes written from memory are the ones read', () => {
+    const PASSAGE_READ = JSON.stringify({
+        bible: 'KJV',
+        verses: [
+            {
+                key: 'REV 21:1-7',
+                ref: 'Revelation 21:1-7',
+                text:
+                    '(3): And I heard a great voice out of heaven saying, ' +
+                    'Behold, the tabernacle of God is with men, and he will ' +
+                    'dwell with them, (4): And God shall wipe away all tears ' +
+                    'from their eyes; and there shall be no more death',
+            },
+        ],
+    });
+    const PSALM_READ = JSON.stringify({
+        bible: 'KJV',
+        verses: [
+            {
+                key: 'PSA 23:1',
+                ref: 'Psalm 23:1',
+                text: '(1): The LORD is my shepherd; I shall not want.',
+            },
+        ],
+    });
+
+    it('finds every cited quote, the ninth too', () => {
+        const lesson = Array.from({ length: 9 }, (_, index) => {
+            return `He said "the tabernacle of God is with men" (Revelation 21:${index + 1}).`;
+        }).join(' ');
+        expect(findCitedQuotes(lesson)).toHaveLength(9);
+    });
+
+    it('puts a quote from memory before one copied from a read', () => {
+        const cited = [
+            ...Array.from({ length: 8 }, (_, index) => ({
+                quote: 'the tabernacle of God is with men',
+                ref: `Revelation 21:${index + 1}`,
+            })),
+            { quote: 'became flesh and dwelt among us', ref: 'John 1:14' },
+            // Read in ANOTHER book: let be, never read.
+            { quote: 'The LORD is my shepherd', ref: 'John 10:11' },
+        ];
+        const picked = pickCitedQuotesToRead(cited, [PASSAGE_READ, PSALM_READ]);
+        expect(picked[0]).toEqual({
+            quote: 'became flesh and dwelt among us',
+            ref: 'John 1:14',
+        });
+        expect(picked.map((item) => item.ref)).not.toContain('John 10:11');
+        // At most eight references are read.
+        expect(new Set(picked.map((item) => item.ref)).size).toBe(
+            MAX_CITED_REFS_READ,
+        );
+        expect(pickCitedQuotesToRead([], [PASSAGE_READ])).toEqual([]);
     });
 });
 

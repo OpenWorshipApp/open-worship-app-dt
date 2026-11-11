@@ -1111,8 +1111,12 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   verse's words -- "Jesus, who [^John 1:14]." -- is sent back once
   (BN-120, `findTokenAsWords`: a token shows its reference alone), and a
   children's lesson's memory verse over twenty words is read and sent back
-  once (BN-129, `findMemoryVerseRef`: told twenty words twice, Luke 15:7's
-  28 kept coming back), and the passage at the top printed again -- after
+  twice an ask at most (BN-129, `findMemoryVerseRef`: told twenty words
+  twice, Luke 15:7's 28 kept coming back; BN-132: once, its second choice
+  was as long), the cited quotes read being those written from memory
+  first (BN-132, `pickCitedQuotesToRead`: read in the lesson's order and
+  cut at eight, a Christ section's misquote was never read), and the
+  passage at the top printed again -- after
   the memory verse, or under a point whose lines carry their own verses --
   is taken out by the window before the lesson is written (BN-130,
   `dropRepeatedLessonPassages`); the blind readers' commonest

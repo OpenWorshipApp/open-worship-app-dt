@@ -216,6 +216,8 @@ import {
     findMemoryVerseRef,
     countVerseWords,
     dropRepeatedLessonPassages,
+    pickCitedQuotesToRead,
+    MAX_CHILD_MEMORY_VERSE_REFUSALS,
     MAX_CHILD_MEMORY_VERSE_WORDS,
     genChildMemoryVerseRefusal,
     genCitedMisquoteRefusal,
@@ -2383,9 +2385,10 @@ type ToolWatchType = {
     isNoteTokenWordsChecked?: boolean;
     // A new lesson written as a children's one -- the window's own form
     // line rides the ask (BN-129) -- and its memory verse held to a length
-    // a child can say: once an ask.
+    // a child can say: sent back twice an ask at most (BN-132: once, the
+    // model swapped Luke 15:7's 28 words for 1 John 4:16's 29).
     isChildrenLesson?: boolean;
-    isChildMemoryVerseChecked?: boolean;
+    childMemoryVerseRefusals?: number;
     // A new lesson's points were held to its passage, its order and its end
     // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
     isLessonPointsChecked?: boolean;
@@ -4834,7 +4837,8 @@ async function runMcpToolCall(
             // twenty words twice, Luke 15:7's 28 kept coming back.
             const memoryRef =
                 watch.isChildrenLesson === true &&
-                watch.isChildMemoryVerseChecked !== true
+                (watch.childMemoryVerseRefusals ?? 0) <
+                    MAX_CHILD_MEMORY_VERSE_REFUSALS
                     ? findMemoryVerseRef(toLessonChangeText(lyricEditArgs))
                     : null;
             if (memoryRef !== null) {
@@ -4844,7 +4848,8 @@ async function runMcpToolCall(
                 const wordCount =
                     verseText === undefined ? 0 : countVerseWords(verseText);
                 if (wordCount > MAX_CHILD_MEMORY_VERSE_WORDS) {
-                    watch.isChildMemoryVerseChecked = true;
+                    watch.childMemoryVerseRefusals =
+                        (watch.childMemoryVerseRefusals ?? 0) + 1;
                     return `Tool refused: ${genChildMemoryVerseRefusal(memoryRef, wordCount)}`;
                 }
             }
@@ -4919,7 +4924,12 @@ async function runMcpToolCall(
             watch.noteQuoteSources !== undefined &&
             watch.isNoteCitedQuoteChecked !== true
         ) {
-            const citedList = findCitedQuotes(toNoteChangeWords(lyricEditArgs));
+            // The quotes written from memory first, never cut at the
+            // lesson's eighth (BN-132).
+            const citedList = pickCitedQuotesToRead(
+                findCitedQuotes(toNoteChangeWords(lyricEditArgs)),
+                watch.noteQuoteSources,
+            );
             if (citedList.length > 0) {
                 const misquotes = findCitedMisquotes(
                     citedList,
