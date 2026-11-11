@@ -52,6 +52,13 @@ export const READ_PASSAGE_TEXT_BUDGET = 6000;
 // The most verses before a passage read with it for a lesson's background.
 const MAX_VERSES_BEFORE = 10;
 
+// A psalm stands alone: the one before it is another song, never what
+// happens just before it (BN-96, 2026-11-11). Read before Psalms 23, 46 and
+// 51, Psalms 22, 45 and 50 were told as their background -- "Psalm 22, a
+// song of praise", "Psalm 50, general praise" -- and blind readers counted
+// each an error.
+const PSALMS_BOOK_PATTERN = /^(?:psalms?|psa|pss?)\.?$/i;
+
 /**
  * The verses just before ONE passage, read with it for a new lesson's
  * background (BN-89, 2026-11-11): up to ten verses before it in its
@@ -78,7 +85,9 @@ export function findVersesBeforeRef(refs: string) {
             ? `${parts.book} ${parts.chapter}:${from}`
             : `${parts.book} ${parts.chapter}:${from}-${start - 1}`;
     }
-    return parts.chapter > 1 ? `${parts.book} ${parts.chapter - 1}` : null;
+    return parts.chapter > 1 && !PSALMS_BOOK_PATTERN.test(parts.book.trim())
+        ? `${parts.book} ${parts.chapter - 1}`
+        : null;
 }
 
 /** How much of each passage a read of `refCount` references gives. */

@@ -57,6 +57,43 @@ describe('a lesson to preach, asked anywhere', () => {
         expect(LESSON_MAKE_HINT).toContain('owa_bible_note action "add"');
     });
 
+    // BN-93 (2026-11-11, the BN-91 blind read): a point defined one word
+    // and left the hard phrase, asked a question the passage leaves open,
+    // and reached Jesus by a shared word ("the Word made flesh" from the
+    // sower's word).
+    test('a point explains its hard phrase and asks what the verses answer', () => {
+        for (const line of [
+            'first the phrase of these verses a hearer would find hardest',
+            'that these verses themselves answer',
+            'with the words of the verse that gives it',
+            'ONE plain sentence that names the need in us',
+            'a last one that turns them to the passage',
+            'never a word it only shares with a name of his',
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(line);
+        }
+    });
+
+    // BN-95 (2026-11-11): "Sarah, Mark, Elena" in example after example, and
+    // a weekday task under every point plus one more in the Response.
+    test('an example names no one, and a lesson asks one step', () => {
+        for (const line of [
+            'named by role and place, never by name',
+            'one deed that answers what God gives in THIS point',
+            'never a weekday or hour picked for no reason',
+            "taken from the points' deeds, never a new one",
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(line);
+        }
+        expect(PREACHING_LESSON_SHAPE).not.toContain('a real name');
+        // An example phrase in the shape is copied into lesson after
+        // lesson: given "a nurse after a night shift" and "at the meal
+        // table", the first lessons opened their examples and deeds on them.
+        for (const phrase of ['night shift', 'pew behind', 'meal table']) {
+            expect(PREACHING_LESSON_SHAPE).not.toContain(phrase);
+        }
+    });
+
     // BN-73 (2026-11-10): "a 15 minute sermon" came back five minutes
     // long from a rate; a number of words is what a model follows.
     test('a length they give is a number of words', () => {

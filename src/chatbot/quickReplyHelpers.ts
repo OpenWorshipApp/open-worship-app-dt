@@ -476,9 +476,16 @@ function cutBareOptionsLine(lines: readonly string[], index: number) {
  * end and one of the two lines over them asks: steps never end in a
  * reference, and a list of verses an answer cites asks nothing.
  */
+// A question under the passages that asks to choose among them (BN-97,
+// 2026-11-11: "Which passage shall we use, or do you have another one in
+// mind?" closed three passages, and nothing could be pressed). A yes/no
+// question under verses an answer cites keeps its Yes and No.
+const CHOOSING_QUESTION_PATTERN = /\b(?:which|choose|pick|prefer)\b/i;
+
 function cutPassageListFrame(text: string) {
     const lines = String(text ?? '').split('\n');
     const listed: string[] = [];
+    let closingIndex: number | null = null;
     let index = lines.length - 1;
     for (; index >= 0; index--) {
         const line = lines[index].trim();
@@ -490,6 +497,15 @@ function cutPassageListFrame(text: string) {
             option.length > MAX_PASSAGE_REPLY_LENGTH ||
             !PASSAGE_CLOSING_PATTERN.test(option)
         ) {
+            if (
+                listed.length === 0 &&
+                closingIndex === null &&
+                /[?？]\s*$/u.test(line) &&
+                CHOOSING_QUESTION_PATTERN.test(line)
+            ) {
+                closingIndex = index;
+                continue;
+            }
             break;
         }
         listed.push(option);
@@ -501,14 +517,20 @@ function cutPassageListFrame(text: string) {
         .slice(0, index + 1)
         .map((one) => one.trim())
         .filter((one) => one !== '');
-    if (!above.slice(-2).some((one) => /[?？]/u.test(one))) {
+    if (
+        closingIndex === null &&
+        !above.slice(-2).some((one) => /[?？]/u.test(one))
+    ) {
         return null;
     }
+    // The choosing question stays in the answer, under what came first.
+    const kept = lines
+        .slice(0, index + 1)
+        .join('\n')
+        .trimEnd();
+    const closing = closingIndex === null ? '' : lines[closingIndex].trim();
     return {
-        text: lines
-            .slice(0, index + 1)
-            .join('\n')
-            .trimEnd(),
+        text: closing === '' ? kept : `${kept}\n\n${closing}`.trimStart(),
         tail: listed.reverse().join(' | '),
     };
 }

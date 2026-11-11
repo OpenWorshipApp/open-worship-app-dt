@@ -181,6 +181,37 @@ describe('parseAnswerOptions', () => {
             'John 20:11-18 (Jesus appearing to Mary Magdalene)',
             'The resurrection morning when Mary and the… (Matthew 28:1-10)',
         ]);
+        // BN-97 (2026-11-11, the empty note card's preaching lesson): the
+        // passages closed by a question that asks to choose among them.
+        expect(
+            parseAnswerOptions(
+                'I would love to help you prepare this preaching lesson. ' +
+                    'Could you tell me which one you would like to use?\n\n' +
+                    "If you aren't sure yet, here are three options we could work with:\n\n" +
+                    'The Prodigal Son (Luke 15:11-32)\n\n' +
+                    'The Vine and the Branches (John 15:1-11)\n\n' +
+                    'The Armor of God (Ephesians 6:10-18)\n\n' +
+                    'Which passage shall we use, or do you have another one in mind?',
+            ),
+        ).toEqual({
+            text:
+                'I would love to help you prepare this preaching lesson. ' +
+                'Could you tell me which one you would like to use?\n\n' +
+                "If you aren't sure yet, here are three options we could work with:\n\n" +
+                'Which passage shall we use, or do you have another one in mind?',
+            options: [
+                'The Prodigal Son (Luke 15:11-32)',
+                'The Vine and the Branches (John 15:1-11)',
+                'The Armor of God (Ephesians 6:10-18)',
+            ],
+        });
+        // A yes/no question under verses an answer cites is no choosing.
+        expect(
+            parseAnswerOptions(
+                'These say it too:\n\nJohn 3:16\nRomans 5:8\n\n' +
+                    'Would you like me to add them to the note?',
+            ).options,
+        ).toEqual([]);
         // Verses an answer cites ask nothing; steps name no passage.
         expect(
             parseAnswerOptions(

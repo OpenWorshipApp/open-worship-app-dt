@@ -84,6 +84,11 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         expect(findLessonWordGlosses('of a contrite spirit')).toEqual([
             expect.stringContaining('or crushed by trouble'),
         ]);
+        // Zacchaeus' fourfold was "the biblical standard for restitution";
+        // the law asked it for a stolen sheep, a fifth more for fraud.
+        expect(findLessonWordGlosses('I restore him fourfold')).toEqual([
+            expect.stringContaining('"the fifth part more" (Leviticus 6:5)'),
+        ]);
     });
 
     test('a long story carries eight at most', () => {

@@ -113,6 +113,30 @@ export const NOTE_CREATE_PROMPT =
 // BN-90 (the same read): 24 lessons of 26 opened "Have you ever…", the
 // response said the big idea again word for word, and a funeral sent the
 // mourners home with a task. The template says otherwise for each.
+//
+// BN-93 (2026-11-11, the BN-91 read): explanation fell to 1.25 of 2, the
+// What it means lines defining one word ("A cubit is a measure of length")
+// while the verse's hard phrase went unexplained ("'born of water and of
+// the Spirit' never explained"). The hearer's question was one the
+// passage leaves open ("'against thee, thee only' asked but never
+// answered"), and answering it the model made up a motive. The need was
+// shown in a scene and never named, and the introduction never turned to
+// the passage. Pointing to Jesus went by a shared word ("He is the Word
+// made flesh" from the sower's word, "the ultimate faint one" from
+// Isaiah 40:31). So the hardest phrase is explained first, the question
+// is one the verses answer in their own words, the need is named in one
+// sentence, and Jesus is reached by what a phrase MEANS.
+//
+// BN-95 (the same read): Opus's first complaint, in two reads, was "all 26
+// attach a weekday task to every point and add another in the Response, so
+// a lesson asks 3 or 4 things -- most are duties rather than a response to
+// grace"; Sonnet's, "Sarah, Mark, Elena" in example after example. So an
+// example names a role and a place, never a name; a deed answers what God
+// gives in its point at the moment of the week it belongs to, never at a
+// weekday picked for no reason; and the Response takes its ONE step from
+// the points' deeds instead of adding another. No example phrase is given:
+// shown "a nurse after a night shift" and "at the meal table", the first
+// four lessons opened their examples and deeds on those very words.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -132,44 +156,56 @@ export const PREACHING_LESSON_SHAPE =
     'background); then "## " headings: Big idea (ONE full ' +
     'sentence: what the passage says about God, and what that asks of us), ' +
     "Background (three or four sentences from the Bible's own pages: who " +
-    'wrote it, to whom, and what happens just before it that changes how it ' +
-    'is heard), Introduction (an everyday scene, or a question of the ' +
-    'passage\'s own -- never "Have you ever" -- that raises the need in us ' +
-    'the passage answers, its picture agreeing with the passage), three ' +
+    'wrote it and to whom where the Bible names them, and what happens just ' +
+    'before it that changes how it is heard -- for a psalm, its own words ' +
+    'and where the Bible tells its story, never the psalm before it), ' +
+    'Introduction (an everyday scene, or a question of the ' +
+    'passage\'s own -- never "Have you ever" -- its picture agreeing with ' +
+    'the passage; then ONE plain sentence that names the need in us the ' +
+    'passage answers, and a last one that turns them to the passage), three ' +
     'points that follow the passage in its own order and ' +
     'together cover ALL of it, the last ending where the passage ends, each ' +
     'written as:\n' +
     '## 1. <a sentence that states it>\n' +
     '[^<the verses whose words say it>]\n' +
-    '**What it means:** <the words of these verses a hearer would stumble ' +
-    'on when they are read aloud -- "moderation", a publican, hyssop, "no ' +
-    'more sea" -- each made plain from where else Scripture uses it (read ' +
-    'with owa_find_verse); a custom only as the Bible itself tells it, ' +
-    'never what a people is said to have thought; never the verse said ' +
-    'again, no Hebrew or Greek word study>\n' +
-    '**A hearer asks:** <the honest question these verses raise>\n' +
-    '**The passage answers:** <its answer in two or three sentences, from ' +
-    'the passage itself: a reason, motive or promise only where it states ' +
-    'one>\n' +
+    '**What it means:** <first the phrase of these verses a hearer would ' +
+    'find hardest -- "be still", "against thee, thee only" -- and what it ' +
+    'means HERE, from the passage and from where else Scripture says it ' +
+    '(read with owa_find_verse); then any word they would stumble on read ' +
+    'aloud -- "moderation", a publican; a custom only as the Bible itself ' +
+    'tells it, never what a people is said to have thought; never the verse ' +
+    'said again, no Hebrew or Greek word study>\n' +
+    "**A hearer asks:** <an honest question of a hearer's that these verses " +
+    'themselves answer -- never one they leave open, as why someone did ' +
+    'what the passage gives no reason for>\n' +
+    '**The passage answers:** <that answer in two or three sentences, with ' +
+    'the words of the verse that gives it: a reason, motive or promise only ' +
+    'where it states one>\n' +
     "**For example:** <a scene from the hearers' own week, three or four " +
-    'sentences -- someone, somewhere, what happened -- showing what THIS ' +
-    'point says God does or asks, not mere courage or effort, and promising ' +
-    'nothing the passage does not; never a memory of your own, a real name ' +
-    'or a date, never a stock picture: a lifeboat, a garden, a rescue>\n' +
-    '**This week:** <one deed -- what, when, with whom -- done in the ' +
-    'strength God gives, never only "trust", "remember" or "pray about ' +
-    'it">\n' +
-    'then Pointing to Jesus (a phrase of THIS passage, quoted, and where it ' +
-    'leads: what Jesus did for us in his death and rising -- never only his ' +
-    'example, never the story turned into an allegory of him, never a ' +
-    'picture the passage does not have), Response (the ' +
-    'big idea said again in new words, then ONE step for this week: what, when, with ' +
-    'whom; where the passage calls us to believe, a plain invitation to), ' +
+    'sentences -- someone named by role and place, never by name, a person ' +
+    'these hearers would know; what was said or done -- ' +
+    'showing what THIS point says God does or asks, not mere courage or ' +
+    'effort, and promising nothing the passage does not; never a memory of ' +
+    'your own or a date, never a stock picture: a lifeboat, a garden, a ' +
+    'rescue>\n' +
+    '**This week:** <one deed that answers what God gives in THIS point, ' +
+    'with whom, at the moment of their week where this point meets them -- ' +
+    'never a weekday or hour picked for no reason, never only "trust", ' +
+    '"remember" or "pray about it">\n' +
+    'then Pointing to Jesus (a phrase of THIS passage, quoted, and where its ' +
+    'MEANING leads: what Jesus did for us in his death and rising -- never a ' +
+    'word it only shares with a name of his ("the word", "the way"), never ' +
+    'only his example, never the story turned into an allegory of him, never ' +
+    'a picture the passage does not have), Response (the ' +
+    'big idea said again in new words, then the ONE step the whole passage ' +
+    "asks most, taken from the points' deeds, never a new one; where the " +
+    'passage calls us to believe, a plain invitation to), ' +
     'Closing prayer (written out), Questions for discussion ("- " items, on ' +
     'the passage and their lives) and Memory verse ([^ref], one short verse ' +
-    'that says the big idea plainly). A devotion keeps every part with ONE ' +
-    'point that walks its whole passage from its first verse to its last, ' +
-    'naming them in its sentences, about 300 words. A funeral message ' +
+    'that says the big idea plainly). A devotion keeps every part, each in ' +
+    'a sentence or two, with ONE point that walks its whole passage from ' +
+    'its first verse to its last, naming them in its sentences, about 300 ' +
+    'words. A funeral message ' +
     "comforts: its points the passage's own promises made plain for the " +
     'grieving and why they can be trusted, its examples gentle scenes of ' +
     "loss and hope, its This week a comfort to hold and never a task, Christ's " +

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T13:22:06.174Z
+  modified: 2026-11-11T14:32:37.855Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -363,7 +363,11 @@ before", so the entry now opens on the correction ("not only out of
 nothing"). And a rule that limits a line to the list empties that line
 wherever the list has nothing: told "a What it means line says of them
 only this", a point with none of the words wrote "No specific words in
-these verses require further explanation".
+these verses require further explanation". The same goes for an example
+phrase in a prompt (BN-95): shown "a nurse after a night shift" and "at
+the meal table" as samples, the first four lessons opened their examples
+and deeds on those very words. Describe what is wanted with no phrase to
+copy, or the sample becomes the next stock picture.
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

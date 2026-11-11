@@ -605,6 +605,14 @@ for (const item of items) {
         break;
     }
     await sleep(1500);
+    // A new note is the list's last row. On a long list it is drawn past the
+    // fold, and a right-click there opens no menu: 2026-11-11, row 52 of a
+    // scratch profile's notes sat at y=1683 in a 1300-pixel window, and the
+    // run stopped with "no card".
+    await callTool('owa_scroll', {
+        find: `${shownWords.openNote}: ${title}`,
+        to: 'bottom',
+    });
     const row = await callTool('owa_click', {
         find: `${shownWords.openNote}: ${title}`,
         button: 'right',

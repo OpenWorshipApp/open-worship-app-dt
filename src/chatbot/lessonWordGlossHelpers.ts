@@ -225,6 +225,24 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'didst not anoint" (Luke 7:46)',
     },
     {
+        // "The biblical standard for restitution when someone has been
+        // cheated" (Zacchaeus, Luke 19:8).
+        pattern: /\bfourfold\b/i,
+        text:
+            'fourfold: four times over -- what the law asked for a stolen ' +
+            'sheep, "four sheep for a sheep" (Exodus 22:1; 2 Samuel 12:6); ' +
+            'for goods taken falsely it asked them back "in the principal" ' +
+            'and "the fifth part more" (Leviticus 6:5)',
+    },
+    {
+        // "Interlocking metal rings", in two lessons.
+        pattern: /\bcoats? of mail\b/i,
+        text:
+            'coat of mail: body armour of overlapping metal scales -- ' +
+            'Goliath\'s weighed "five thousand shekels of brass" (1 Samuel ' +
+            '17:5)',
+    },
+    {
         // Tied to "John on his island exile" in two reads.
         pattern: /\bno more sea\b/i,
         text:

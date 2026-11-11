@@ -39,6 +39,7 @@ import {
     genLessonPointsRefusal,
     toLessonChangeText,
     genLessonFormLine,
+    genLessonFormWriteLine,
     genNoteMisquoteRefusal,
     readLessonFormAsked,
     genLessonGapsText,
@@ -1784,6 +1785,56 @@ describe('the form a lesson was asked for', () => {
                 'devotion',
             ),
         ).not.toContain(genLessonFormLine('devotion'));
+    });
+
+    // BN-94 (2026-11-11): the card's "short devotion", then a passage
+    // pressed, was written as a three-point sermon of 1100 words in two runs
+    // of two -- the passage pressed named no form.
+    it('rides a lesson WRITTEN in it, off the tab or the words', () => {
+        const blankRead = toNoteDocumentText({
+            blockCount: 1,
+            file: 'Default',
+            hash: 'h1',
+            blocks: [{ n: 1, kind: 'paragraph', text: '' }],
+        });
+        const blank = [{ name: 'Sunday', text: blankRead }];
+        const pressed = toNoteAsk(
+            'Psalm 23 (The Lord is my Shepherd)',
+            blank,
+            null,
+            false,
+            null,
+            null,
+            true,
+            null,
+            'devotion',
+        );
+        expect(pressed).toContain(NOTE_BLANK_LESSON_HINT);
+        expect(pressed).toContain(genLessonFormWriteLine('devotion'));
+        expect(genLessonFormWriteLine('devotion')).toContain(
+            'never three points',
+        );
+        // Typed with its form: the words say it, the tab need not.
+        expect(toNoteAsk("a children's lesson on Jonah", blank)).toContain(
+            genLessonFormWriteLine('children'),
+        );
+        // A sermon carries no form line; neither does a change.
+        expect(
+            toNoteAsk('help me prepare a sermon on John 10', blank),
+        ).not.toContain('It was asked for as');
+        expect(
+            toNoteAsk(
+                'make the headings blue',
+                [{ name: 'Sunday', text: '1. h2: "Big idea"' }],
+                null,
+                false,
+                null,
+                null,
+                false,
+                null,
+                'devotion',
+            ),
+        ).not.toContain(genLessonFormWriteLine('devotion'));
     });
 });
 

@@ -208,7 +208,6 @@ describe('a found row', () => {
         expect(findVersesBeforeRef('Matthew 18:2-5')).toBe('Matthew 18:1');
         // A passage starting a chapter, or a whole one: the chapter before.
         expect(findVersesBeforeRef('1 Samuel 17:1-58')).toBe('1 Samuel 16');
-        expect(findVersesBeforeRef('Psalm 46')).toBe('Psalm 45');
         expect(findVersesBeforeRef('(KJV) Revelation 21:1-7')).toBe(
             'Revelation 20',
         );
@@ -222,6 +221,17 @@ describe('a found row', () => {
         ]) {
             expect(findVersesBeforeRef(refs), refs).toBe(null);
         }
+    });
+
+    // BN-96 (2026-11-11): read before Psalms 23, 46 and 51, Psalms 22, 45
+    // and 50 were told as their background ("Psalm 50, general praise").
+    it('reads no psalm before a psalm, only the verses before in it', () => {
+        for (const refs of ['Psalm 46', 'Psalms 51:1-19', 'Ps 23', 'PSA 1']) {
+            expect(findVersesBeforeRef(refs), refs).toBe(null);
+        }
+        expect(findVersesBeforeRef('Psalm 23:4-6')).toBe('Psalm 23:1-3');
+        // Proverbs' chapters are one father's teaching, read in a row.
+        expect(findVersesBeforeRef('Proverbs 3:1-6')).toBe('Proverbs 2');
     });
 });
 

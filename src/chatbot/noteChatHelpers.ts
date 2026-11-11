@@ -1531,6 +1531,24 @@ export function genLessonFormLine(form: LessonFormType) {
 }
 
 /**
+ * Said with a lesson WRITTEN in another form than a sermon (BN-94,
+ * 2026-11-11). The empty note card's "short devotion", then a passage
+ * pressed, had been written as a three-point sermon of 1100 words in two
+ * runs of two: the passage pressed names no form, and the line above went
+ * to a review or a finish alone.
+ */
+export function genLessonFormWriteLine(form: LessonFormType) {
+    return form === 'devotion'
+        ? '(It was asked for as a short devotion: write it as one -- every ' +
+              'part in a sentence or two and ONE point that walks the whole ' +
+              'passage, about 300 words in all; never three points.)'
+        : "(It was asked for as a children's lesson: write it as one -- the " +
+              'story told in short sentences under its own heading, two ' +
+              'points a child can hold, something to show, and a memory verse ' +
+              'of one short line a child can say.)';
+}
+
+/**
  * Whether a note attachment holds nothing -- its text, read off the file,
  * is its title line alone (`genNoteAttachment`): the card a lesson's.
  */
@@ -2082,6 +2100,7 @@ export function toNoteAsk(
             ? genLessonGapsText(notes[0].text)
             : null;
     const shownHint = isRewrite ? NOTE_LESSON_REWRITE_HINT : lessonHint;
+    const writtenForm = readLessonFormAsked(asked) ?? lessonForm;
     // A change to a lesson that is no lesson ask of its own (BN-79).
     const isLessonChange =
         shownHint === null &&
@@ -2108,6 +2127,13 @@ export function toNoteAsk(
         (shownHint === NOTE_LESSON_REVIEW_HINT ||
             shownHint === NOTE_LESSON_FINISH_HINT)
             ? [genLessonFormLine(lessonForm)]
+            : []),
+        // A lesson written: in the form these words name, else the tab's
+        // (BN-94).
+        ...(writtenForm !== null &&
+        (shownHint === NOTE_BLANK_LESSON_HINT ||
+            shownHint === NOTE_NEW_LESSON_HINT)
+            ? [genLessonFormWriteLine(writtenForm)]
             : []),
         ...(verseReadText === null ? [] : [verseReadText]),
         // The review hint and the verse check say to change nothing already.

@@ -1269,6 +1269,11 @@ was seen and what was done.
   offered sacrifices in Israel". The publican's line added "because they
   were seen as traitors and extortionists", the model's own words beside
   the entry's.
+
+  Read blind against BN-90 on all 16 asks (scoreboard 2026-11-11 (5th)):
+  errors 8 -> 4 by Sonnet and 3 -> 2 by Opus, accuracy up by both, no
+  error left in a listed word. Explanation fell as much where the passage
+  held no listed word (the same prompt both times) as where it did.
 - **BN-92 — the errors read again and again get Scripture beside them**
   (2026-11-11). Every blind read since BN-82 was tallied for the errors in
   its new lessons. Three came back read after read:
@@ -1278,7 +1283,7 @@ was seen and what was done.
   - Saul's armour "too heavy" (two), where 17:39 says "I have not proved
     them".
 
-  Nine entries join the table, each with the Bible's own words:
+  Eleven entries join the table, each with the Bible's own words:
   - create: "created the heaven and the earth", "created man", formed "of
     the dust of the ground";
   - span: "meted out heaven with the span";
@@ -1294,7 +1299,11 @@ was seen and what was done.
     thou didst not anoint" (Luke 7:46), against the shepherd's salve the
     model remembered;
   - "no more sea": the restless sea of Isaiah 57:20 and Revelation 13:1,
-    against John's island.
+    against John's island;
+  - and, from the BN-91 read, fourfold (the law's payment for a stolen
+    sheep, Exodus 22:1, against "the biblical standard for restitution" for
+    fraud, which was the whole and a fifth more, Leviticus 6:5) and a coat
+    of mail (scales, not "interlocking metal rings").
 
   Each was checked against the app's KJV wherever the word appears.
 
@@ -1320,6 +1329,113 @@ was seen and what was done.
     here). The note now says that every point still explains the words and
     pictures of its own verses. That changes every glossed passage read,
     so the whole set is asked again.
+- **BN-93 — a point explains its hard phrase and asks what the verses
+  answer** (2026-11-11, the BN-91 blind read). Sonnet put explanation at
+  1.25 of 2. Its evidence:
+  - What it means defined one word and left the verse's hard phrase ("'A
+    cubit is a measure of length' -- Goliath's height and the Elah setting
+    not explained", "'born of water and of the Spirit' never explained").
+  - The hearer's question was one the passage leaves open, answered with
+    a retelling or a made-up motive ("'against thee, thee only' asked but
+    never answered", "why they passed by not explored").
+  - The need was shown in a scene and never named ("Need implied by 'lost',
+    not named"). Opus said the same of the introduction: it stops at the
+    need and never turns the hearer to the passage.
+  - Pointing to Jesus went by a word the passage shares with a name of his:
+    "He is the Word made flesh" from the sower's word, "Jesus became the
+    Way" from Proverbs 3:6's paths, "the ultimate faint one" from Isaiah
+    40:31.
+
+  Five lines of the shape now say what the readers look for:
+  - What it means explains first the phrase a hearer would find hardest,
+    what it means HERE;
+  - A hearer asks is a question the verses themselves answer, never one
+    they leave open;
+  - The passage answers gives that answer with the words of the verse;
+  - the Introduction names the need in ONE plain sentence, and a last one
+    turns them to the passage;
+  - Pointing to Jesus goes where a phrase's MEANING leads, never by a word
+    it only shares with a name of his.
+
+  ~1141 tokens (was ~1050), lesson asks only. Measured with BN-92 against
+  BN-91 on the whole set.
+
+  Seen in the run: the introductions named the need and turned to the
+  passage ("Our sin is a stain that no amount of good works or regret can
+  erase. We need a cleansing that only God can provide. Let us look at how
+  David asks for this mercy"). What it means took the hard phrases
+  ("Against thee, thee only", "waxed gross", "understandeth it"), and the
+  questions were ones the passage answers. One miss: the sower's Pointing
+  to Jesus still opened on "the Word made flesh".
+
+  Read blind against BN-91 on all 16 (Sonnet): 20.50 -> 20.81, Best 11 ->
+  12, explanation 1.56 -> 1.81, the need 1.44 -> 1.75. Christ and grace
+  1.63 -> 1.50. All three errors in the new lessons were backgrounds (BN-96).
+- **BN-94 — a lesson is written in the form the tab asked for**
+  (2026-11-11, both BN-91 reads: "both 'short devotions' are three-point
+  sermons"). The empty note card's **Help me prepare a short devotion**,
+  then a passage pressed, was written as three points and 1100 words in
+  two runs of two. The passage pressed names no form, and BN-78's form line
+  went to a review or a finish alone. A lesson WRITTEN now carries the
+  form its own words name, else the tab's (`genLessonFormWriteLine`,
+  `readLessonFormAsked(asked) ?? lessonForm`): a devotion is every part in
+  a sentence or two, ONE point and about 300 words, never three points; a
+  children's lesson is the story told, two points, something to show and a
+  one-line memory verse. A typed devotion had kept its one point but run to
+  960-1010 words; the shape says each part is a sentence or two now.
+- **BN-95 — an example names no one, and a lesson asks one step**
+  (2026-11-11, the same reads). Opus, in two reads: "all 26 attach a
+  weekday task to every point and add another in the Response, so a lesson
+  asks 3 or 4 things -- most are duties rather than a response to grace".
+  Sonnet: "Sarah, Mark, Elena" in example after example. An example now
+  names a role and a place ("a nurse after a night shift"), never a name.
+  A deed answers what God gives in its point, at the moment of the week it
+  belongs to ("at the meal table"), never a weekday or hour picked for no
+  reason. The Response takes its ONE step from the points' deeds instead
+  of adding another. ~1209 tokens.
+
+  The first run used examples of each in the shape, and the model copied
+  them. One lesson opened two examples on "A man in the pew behind" and "A
+  nurse after a night shift", and three lessons in four opened their deeds
+  on "At the meal table" or "On the bus home". Across sixteen lessons that
+  makes a new stock picture. That run was stopped after four lessons. The
+  lines now describe what is wanted with no phrase to copy: someone "named
+  by role and place, never by name, a person these hearers would know"; a
+  deed "at the moment of their week where this point meets them".
+- **BN-96 — no psalm's background from the psalm before it** (2026-11-11,
+  the BN-92/93 read). All three errors in its new lessons were
+  backgrounds. Two were psalms told from the psalm read before them
+  (BN-89): "Psalm 22, a song of praise" before Psalm 23 (it opens "My God,
+  my God, why hast thou forsaken me"), and "Psalm 50, general praise"
+  before Psalm 51 (God judging his people). The third was "The prophet
+  Samuel wrote these accounts" for 1 Samuel, a book that names no author
+  and records Samuel's death in 25:1. A psalm is a song of its own, so a
+  psalm starting at its first verse gets no verses-before read
+  (`PSALMS_BOOK_PATTERN` in `findVersesBeforeRef`); verses before inside the
+  same psalm still are. Background now says who wrote a book and to whom
+  only where the Bible names them, and for a psalm "its own words and where
+  the Bible tells its story, never the psalm before it". The app's KJV
+  carries no psalm titles, so "when Nathan the prophet came unto him" is
+  not there to read.
+
+  Seen in the run: Psalm 51 was read alone, and its background came from
+  the right story: "David wrote this psalm after the prophet Nathan
+  confronted him about his sin with Bathsheba and the murder of her
+  husband, Uriah."
+- **BN-97 — passages closed by a question that chooses are still buttons**
+  (2026-11-11, the BN-94..96 run). The empty note card's **Help me prepare
+  a preaching lesson** was answered with three passages one a line --
+  "The Prodigal Son (Luke 15:11-32)", "The Vine and the Branches (John
+  15:1-11)", "The Armor of God (Ephesians 6:10-18)" -- then "Which passage
+  shall we use, or do you have another one in mind?", and NOTHING could be
+  pressed. BN-74's reader takes passages one a line only when they CLOSE
+  the answer, and it stopped at the question. It now steps over one closing
+  question that asks to choose ("which", "choose", "pick", "prefer") and
+  keeps that question in the answer, above the buttons
+  (`CHOOSING_QUESTION_PATTERN` in `cutPassageListFrame`). A yes/no question
+  under verses an answer cites ("Would you like me to add them to the
+  note?") keeps its Yes and No. Asked again, the card's press and the first
+  passage made a 993-word lesson.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's
