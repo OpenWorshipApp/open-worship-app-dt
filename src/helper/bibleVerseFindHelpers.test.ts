@@ -214,6 +214,20 @@ describe('references as they are written', () => {
             'John 3:16, 17',
             '1 John 4:18',
         ]);
+        // BN-81: a chapter and verse with no book is the book before it's.
+        expect(splitRefList('Jonah 1:1-4, 1:17, 2:1, 3:1-5, 4:10-11')).toEqual([
+            'Jonah 1:1-4',
+            'Jonah 1:17',
+            'Jonah 2:1',
+            'Jonah 3:1-5',
+            'Jonah 4:10-11',
+        ]);
+        expect(splitRefList('1 Samuel 17:1, 18:5; Jonah 1:1, 10:5')).toEqual([
+            '1 Samuel 17:1',
+            '1 Samuel 18:5',
+            'Jonah 1:1',
+            'Jonah 10:5',
+        ]);
         expect(
             splitRefList(
                 Array.from({ length: 20 }, () => 'John 3:16').join('; '),

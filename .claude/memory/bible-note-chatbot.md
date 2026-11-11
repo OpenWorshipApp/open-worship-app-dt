@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T03:35:54.349Z
+  modified: 2026-11-11T04:44:52.996Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -317,7 +317,15 @@ renumbering that took a heading out -- broke a sermon's shape and cost
 removes a block nobody asked to move or remove is refused (BN-80); measure
 the loop by its worst fix, not its average one. And a fix asked with none
 of the lesson's truth rules invents detail (BN-79): every ask that writes
-into a lesson carries them.
+into a lesson carries them. (17) **On a free model the draft IS the
+lesson**: two blind readers found the review loop moves the mean by under
+a point either way, while one change to the shape (each point's hard word
+explained from Scripture, an example as a scene from the hearers' week,
+a person's reason only as the passage gives it) moved one reader 19.00 ->
+20.08, Best 4 -> 6 of 13 (BN-81). Spend effort on the first draft; and
+running the whole set, not only the weakest asks, is what found the
+draft's own failures (a two-reference token refusing a whole lesson, a
+question written into an empty note, a reference list read one item).
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

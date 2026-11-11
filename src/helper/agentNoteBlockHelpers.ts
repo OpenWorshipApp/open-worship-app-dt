@@ -75,6 +75,7 @@ import {
     checkIsPassageRef,
     expandBlockSplits,
     expandSectionAdds,
+    withVerseTokensSplit,
 } from './agentNoteMarkupHelpers';
 import {
     genNoteBlockLink,
@@ -1656,6 +1657,8 @@ export function collectNewNoteVerseRefs(
     content: string,
     changes: readonly NoteEditChangeType[],
 ) {
+    // A token naming several references is several (BN-81).
+    changes = withVerseTokensSplit(changes);
     const state = readState(content);
     const knownVerses =
         state === null
@@ -2452,8 +2455,9 @@ export function applyNoteEdit({
                 'brings it up to date.',
         );
     }
-    // A section is the blocks its lines spell (`expandSectionAdds`).
-    changes = expandSectionAdds(changes);
+    // A token naming several references is several (BN-81), and a section
+    // is the blocks its lines spell (`expandSectionAdds`).
+    changes = expandSectionAdds(withVerseTokensSplit(changes));
     if (changes.length > NOTE_EDIT_MAX_CHANGES) {
         return toReason(
             `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +

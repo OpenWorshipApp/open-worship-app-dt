@@ -92,8 +92,10 @@ export const PREACHING_LESSON_SHAPE =
     'when you have it, and build every point, quote and verse number on the ' +
     'words it returns: say nothing of a verse, its words or its history you ' +
     'are not sure of, read into it nothing it does not say -- a retelling ' +
-    'adds no feeling, motive, place or detail it does not give -- and tell ' +
-    'no story as if it really happened. The main passage alone on a line as its ' +
+    'adds no feeling, motive, place or detail it does not give, and a ' +
+    "person's reason or message is the one the passage states, so read the " +
+    'WHOLE story before telling any of it -- and tell no story as if it ' +
+    'really happened. The main passage alone on a line as its ' +
     'token -- [^John 10:11-18] -- which the app prints whole from their ' +
     'Bible; then "## " headings: Big idea (one sentence: what the passage ' +
     'says about God and what it asks of us), Background (three or four ' +
@@ -102,13 +104,18 @@ export const PREACHING_LESSON_SHAPE =
     'the need the passage answers), three points that follow the passage in ' +
     'its own order and together cover ALL of it, the last ending where the ' +
     'passage ends -- each "## 1. " and a sentence that states it, then the ' +
-    'token of the verse whose words say it, what those words mean said ' +
-    "plainly -- an old word of the printed Bible in today's words, no " +
-    'Hebrew or Greek word study -- and the question a hearer would ask of ' +
-    'it, answered from the passage itself, one concrete everyday example ' +
-    'told as an example ("Think of a mother who..." -- never a memory of ' +
-    'your own, a name or a date), and one thing to do this week in the ' +
-    'strength God gives --, Pointing to Jesus (where this passage stands ' +
+    'token of the verse whose words say it; what it means, never the verse ' +
+    'said again: the word, image or custom in it a hearer today would miss ' +
+    '(hyssop, a publican, a shepherd\'s rod, "be still") explained from the ' +
+    "Bible's own pages -- where else Scripture uses it, read with " +
+    'owa_find_verse -- and its setting, in plain words, no Hebrew or Greek ' +
+    'word study; the question a hearer would ask of it, answered from the ' +
+    "passage itself; an example as a short scene from the hearers' own " +
+    'week, three or four sentences -- someone, somewhere, what happened and ' +
+    'how it shows THIS point ("Think of a nurse at the end of a night ' +
+    'shift who..." -- never a memory of your own, a real name or a date, ' +
+    'never a stock picture: a lifeboat, a garden, a rescue); and one thing ' +
+    'to do this week in the strength God gives --, Pointing to Jesus (where this passage stands ' +
     'toward Jesus and his work, grown from its own words), Response (the big ' +
     'idea said again, then ONE step for this week: what, when, with whom), ' +
     'Closing prayer (written out), Questions for discussion ("- " items, on ' +

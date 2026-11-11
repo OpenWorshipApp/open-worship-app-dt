@@ -186,6 +186,7 @@ import {
     NOTE_ASK_KIND,
     NOTE_EDIT_TOOL_NAME,
     NOTE_BLANK_DROPPED_NUDGE,
+    NOTE_BLANK_LESSON_HINT,
     NOTE_DROPPED_NUDGE,
     NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_REVIEW_HINT,
@@ -2413,6 +2414,11 @@ type ToolWatchType = {
      */
     isLessonChange: boolean;
     /**
+     * A note ask carrying `NOTE_BLANK_LESSON_HINT`: while the note is still
+     * empty, an edit writing a question into it is refused (BN-81).
+     */
+    isBlankLesson: boolean;
+    /**
      * A tool answered that the question needs the main window on the
      * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
      * what the projector holds and what is selected are that page's alone),
@@ -2576,6 +2582,7 @@ export function genToolWatch(): ToolWatchType {
         isRunningOrderAsk: false,
         isLessonReview: false,
         isLessonChange: false,
+        isBlankLesson: false,
         needsPage: null,
         needsPageBy: null,
         verifiedControlNames: new Set<string>(),
@@ -3461,6 +3468,8 @@ export function applyToolWatch(
         /"isChanged"\s*:\s*true/.test(text)
     ) {
         watch.noteRewrite = null;
+        // An empty note with words in it is empty no more (BN-81).
+        watch.blankNoteBlockCount = null;
     }
     if (
         name === NOTE_EDIT_TOOL_NAME &&
@@ -4296,6 +4305,22 @@ async function runMcpToolCall(
                 lyricEditArgs,
                 watch.noteRewrite,
             );
+        }
+        // A question for them is never written into their EMPTY note, by
+        // either tool (BN-81, 2026-11-10: the children's card pressed,
+        // gemma4:cloud wrote "Please tell me which Bible passage..." into the
+        // note with this tool; the guard had been on the add's redirect).
+        if (
+            watch.isBlankLesson &&
+            typeof watch.blankNoteBlockCount === 'number' &&
+            lyricEditArgs.action === 'edit'
+        ) {
+            const problem = findBlankFillProblem(
+                toNoteChangeWords(lyricEditArgs),
+            );
+            if (problem !== null) {
+                return `Tool refused: ${problem}`;
+            }
         }
         // A fix to their lesson adds and rewords (BN-80, 2026-11-10: _Add a
         // point on why Jesus uses parables_ came as fifteen blocks moved and
@@ -7332,6 +7357,8 @@ async function askLlmBotAsWritten(
         seeded.isLessonChange =
             extra?.note !== undefined &&
             asked.includes(NOTE_LESSON_CHANGE_HINT);
+        seeded.isBlankLesson =
+            extra?.note !== undefined && asked.includes(NOTE_BLANK_LESSON_HINT);
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =

@@ -1031,6 +1031,32 @@ was seen and what was done.
   leading `h1:`-`h6:` label and the quotes round it (`stripHeadingKindLabel`,
   in `readHeadingMarks` and the mark-up reader; round trip still 342 / 376,
   0 failures).
+- **BN-81 — the draft is the lesson, so the shape aims at what readers
+  mark down** (2026-11-10). Two blind readers agreed the review loop does
+  not lift a lesson on the free model (Opus 19.25 -> 18.75, Sonnet 18.13 ->
+  18.38), and both marked explanation and illustration 1 of 2 in 14 of 16
+  lessons -- a verse said again, one-line stock pictures (a lifeboat, a
+  rescue worker) -- and the Jonah children's lessons gave Jonah a reason and
+  a message the book does not (4:2, 3:4). The shape now asks, in each
+  point, for the word, image or custom a hearer would miss explained from
+  the Bible's own pages (read with `owa_find_verse`), an example as a short
+  scene from the hearers' own week, and a person's reason or message only
+  as the passage states it, the whole story read first. Two failures of the
+  draft itself, found running the set: a token naming two references,
+  `[^Jonah 1:17, 2:10]`, had a whole children's lesson refused and the model
+  gave up -- such a token is read as several now (`splitVerseTokenRefs`,
+  `withVerseTokensSplit`, in the collector and in `applyNoteEdit`; one alone
+  on a section's line is a line each, a passage each); and the children's
+  card pressed, the model wrote its "which passage?" INTO the empty note
+  with `owa_note_edit` -- the question guard had been on the add's redirect
+  alone (`isBlankLesson`: while the note is empty, an edit that is a
+  question is refused; an edit that changed the note clears the empty
+  mark). And `owa_find_verse`'s `refs` carry the book over: asked for
+  "Jonah 1:1-4, 1:17, 2:1, 3:1-5, 4:10-11", it had read the first and left
+  the rest unread, and the model spent four rounds asking again one at a
+  time, its last round gone before it could answer (`splitRefList`, a
+  bare chapter and verse is the book before it's, a two-digit chapter
+  split too; "John 3:16, 17" stays one).
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

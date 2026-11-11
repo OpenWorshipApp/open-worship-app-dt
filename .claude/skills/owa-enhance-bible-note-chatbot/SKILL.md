@@ -34,7 +34,7 @@ GATE (npm run lint) → PAPER TRAIL (W-60, CB-169, rules, memory, knowledge)
 | `src/helper/agentNoteBlockLinkHelpers.ts` | Link block text: the editor's own link entry (node paths), kept in its storage, not in the note |
 | `src/helper/agentNoteNormalizeHelpers.ts` | A changed block written as Lexical writes it, so an open note window never writes it back as a step of its own |
 | `src/helper/agentNoteEditHelpers.ts` | The app side: reads the editing HEAD, resolves new verses (installed Bible) and names (names lookup, on demand), the font list, undo/redo of the kept history (stepping over an echo), the ¶ (`view`) and block links -- the editor's own keys, backed up as `home-setting` restores -- writes, tells an open note window |
-| `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~878 tokens, a note ask only) |
+| `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~1 190 tokens, a note ask only) |
 | `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer, the lesson hints (`genNoteLessonHint`), an empty note filled (`toBlankNoteFillArgs`), the verse check's read (`toNoteVerseReadText`), the empty note's lesson card, what a lesson lacks and where each part goes (`genLessonGapsText`), loose lines made a lesson in their place (`readNoteRewrite`, `withRewrittenLinesRemoved`) |
 | `src/chatbot/noteCreatePromptHelpers.ts` | What a preaching lesson holds (`PREACHING_LESSON_SHAPE`, sent on a lesson ask only) and the English lesson readers; a language's own are `lessonAsks` / `verseCheckAsks` in its `assistant.json` |
 | `src/chatbot/ChatbotAppComp.tsx`, `windowAimHelpers.ts` | The note conversation in the window; the tab works IN the note's own window (`toNoteWindowAim`) |
@@ -162,7 +162,12 @@ every review; `scripts/lesson-ab.mjs <results> <prefix>` shuffles each draft and
 its reviewed lesson under neutral ids with a key kept apart, the review's
 presses left out of what the readers are told was asked, for
 `lesson-rubric.mjs --text=<dir>` to write out. A review whose fix could
-not be pressed is a finding, as a wrong lesson is.
+not be pressed is a finding, as a wrong lesson is. **A change to the shape
+is measured the same way across two runs** (BN-81): the set drafted before
+and after on identically seeded profiles, `lesson-ab.mjs --before=<a>
+--after=<b> <prefix>` pairing each ask's two lessons, only asks both runs
+wrote. Run-to-run noise is about a point of the mean on eight lessons, so
+read the criteria the change aimed at, not the mean alone.
 
 ### 3. Build
 

@@ -1105,7 +1105,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   it does not give, a point added in the passage's order -- and an edit in
   it that moves or takes out a block the words did not ask to move or take
   out is refused (`findLessonChangeSurgery`, `ToolWatchType.isLessonChange`):
-  done as block surgery, two fixes had broken a sermon's shape.
+  done as block surgery, two fixes had broken a sermon's shape. **The draft
+  is the lesson** (BN-81: two blind readers found the review loop does not
+  lift a lesson on the free model): the shape asks each point to explain
+  the word, image or custom a hearer would miss from the Bible's own pages
+  (read with `owa_find_verse`), an example as a short scene from the
+  hearers' own week, and a person's reason or message only as the passage
+  states it, the whole story read first; and while the note is still
+  empty, an `owa_note_edit` that is a question is refused as the add's
+  redirect refuses one (`isBlankLesson`).
 
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening

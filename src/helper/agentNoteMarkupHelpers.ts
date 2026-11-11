@@ -35,6 +35,111 @@ const HEADING_LINE_PATTERN = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)$/;
 const HEADING_KIND_LABEL_PATTERN = /^h[1-6][ \t]*:[ \t]*/i;
 const WRAPPED_HEADING_PATTERN = /^["“](.*)["”]$/u;
 
+// --- a verse token naming several references (BN-81) ------------------------
+//
+// 2026-11-10: a whole children's lesson on Jonah was refused because one of
+// its tokens read `[^Jonah 1:17, 2:10]` -- "no installed Bible could read"
+// it -- and the model never got the lesson in. A token naming several
+// references is several tokens, the book and the chapter carried over
+// ("John 3:16, 18" is John 3:18 too); one alone on its line of a section is
+// several lines, each printed as a passage. (`VERSE_TOKEN_PATTERN` below.)
+const LONE_VERSE_TOKEN_PATTERN = /^\s*\[\^([^\]\n]+)\]\s*$/;
+const BIBLE_PREFIX_PATTERN = /^(\([^)\n]{1,24}\)\s*)/;
+const FULL_REF_PATTERN =
+    /^((?:[1-3]\s?)?[\p{L}\p{M}][\p{L}\p{M}.' ]*?)\s+(\p{Nd}+)(?::(\p{Nd}+(?:\s*[-–]\s*\p{Nd}+)?))?$/u;
+const CHAPTER_VERSE_PATTERN = /^(\p{Nd}+):(\p{Nd}+(?:\s*[-–]\s*\p{Nd}+)?)$/u;
+const BARE_NUMBER_PATTERN = /^\p{Nd}+(?:\s*[-–]\s*\p{Nd}+)?$/u;
+
+/**
+ * The references a token's words name when they are several, each whole
+ * (the Bible a token names kept on each), or null for one or for words
+ * this cannot read.
+ */
+export function splitVerseTokenRefs(words: string): string[] | null {
+    const prefix = BIBLE_PREFIX_PATTERN.exec(words)?.[1] ?? '';
+    const parts = words
+        .slice(prefix.length)
+        .split(/[;,]/)
+        .map((part) => part.trim())
+        .filter((part) => part !== '');
+    if (parts.length < 2) {
+        return null;
+    }
+    const refs: string[] = [];
+    let book: string | null = null;
+    let chapter: string | null = null;
+    let hasVerse = false;
+    for (const part of parts) {
+        const full = FULL_REF_PATTERN.exec(part);
+        if (full !== null) {
+            book = full[1].trim();
+            chapter = full[2];
+            hasVerse = full[3] !== undefined;
+            refs.push(`${prefix}${part}`);
+            continue;
+        }
+        if (book === null) {
+            return null;
+        }
+        const chapterVerse = CHAPTER_VERSE_PATTERN.exec(part);
+        if (chapterVerse !== null) {
+            chapter = chapterVerse[1];
+            hasVerse = true;
+            refs.push(`${prefix}${book} ${part}`);
+            continue;
+        }
+        if (!BARE_NUMBER_PATTERN.test(part)) {
+            return null;
+        }
+        // After a verse a bare number is another verse; after a chapter,
+        // another chapter ("Psalm 23, 24").
+        if (hasVerse) {
+            refs.push(`${prefix}${book} ${chapter}:${part}`);
+        } else {
+            chapter = part;
+            refs.push(`${prefix}${book} ${part}`);
+        }
+    }
+    return refs;
+}
+
+function splitVerseTokensInText(text: string) {
+    const pieces = text.split(/(\r?\n|\\n)/);
+    const lineBreak = pieces.length > 1 ? pieces[1] : '\n';
+    const isSeveralLines = pieces.length > 1;
+    return pieces
+        .map((piece, index) => {
+            if (index % 2 === 1) {
+                return piece;
+            }
+            const lone = LONE_VERSE_TOKEN_PATTERN.exec(piece);
+            if (lone !== null && isSeveralLines) {
+                const refs = splitVerseTokenRefs(lone[1].trim());
+                return refs === null
+                    ? piece
+                    : refs.map((ref) => `[^${ref}]`).join(lineBreak);
+            }
+            return piece.replace(VERSE_TOKEN_PATTERN, (whole, words) => {
+                const refs = splitVerseTokenRefs(String(words).trim());
+                return refs === null
+                    ? whole
+                    : refs.map((ref) => `[^${ref}]`).join('; ');
+            });
+        })
+        .join('');
+}
+
+/** Changes whose verse tokens each name one reference (BN-81). */
+export function withVerseTokensSplit<T>(changes: readonly T[]): T[] {
+    return changes.map((change: any) => {
+        if (typeof change?.text !== 'string' || !change.text.includes('[^')) {
+            return change;
+        }
+        const text = splitVerseTokensInText(change.text);
+        return text === change.text ? change : { ...change, text };
+    });
+}
+
 /** A heading's words without a block-kind label a model copied in. */
 export function stripHeadingKindLabel(text: string) {
     if (!HEADING_KIND_LABEL_PATTERN.test(text)) {

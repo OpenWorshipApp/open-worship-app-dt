@@ -6,9 +6,11 @@ import {
     expandPassageChanges,
     expandSectionAdds,
     readHeadingMarks,
+    splitVerseTokenRefs,
     stripHeadingKindLabel,
     toNoteAddChanges,
     toUnfoundVersesAsWords,
+    withVerseTokensSplit,
 } from './agentNoteMarkupHelpers';
 import { applyNoteEdit, readNoteBlocks } from './agentNoteBlockHelpers';
 
@@ -473,5 +475,48 @@ describe('a block changed into one passage token', () => {
         ]) {
             expect(expandPassageChanges([change], ownText)).toEqual([change]);
         }
+    });
+});
+
+// BN-81 (2026-11-10): a whole children's lesson was refused for one
+// token naming two references, `[^Jonah 1:17, 2:10]`.
+describe('a verse token naming several references', () => {
+    test('is each reference, the book and chapter carried over', () => {
+        expect(splitVerseTokenRefs('Jonah 1:17, 2:10')).toEqual([
+            'Jonah 1:17',
+            'Jonah 2:10',
+        ]);
+        expect(splitVerseTokenRefs('John 3:16, 18')).toEqual([
+            'John 3:16',
+            'John 3:18',
+        ]);
+        expect(splitVerseTokenRefs('Psalm 23, 24')).toEqual([
+            'Psalm 23',
+            'Psalm 24',
+        ]);
+        expect(splitVerseTokenRefs('(KJV) Luke 15:4; 15:7')).toEqual([
+            '(KJV) Luke 15:4',
+            '(KJV) Luke 15:7',
+        ]);
+        expect(splitVerseTokenRefs('John 3:16')).toBe(null);
+        expect(splitVerseTokenRefs('Jonah 1:17, and more')).toBe(null);
+    });
+    test('alone on a section line is a line each; in words, tokens', () => {
+        expect(
+            withVerseTokensSplit([
+                {
+                    after: 0,
+                    kind: 'section',
+                    text: '## Story\n[^Jonah 1:17, 2:10]\nHe was saved.',
+                },
+            ])[0].text,
+        ).toBe('## Story\n[^Jonah 1:17]\n[^Jonah 2:10]\nHe was saved.');
+        expect(
+            withVerseTokensSplit([
+                { block: 3, text: 'Read [^John 3:16, 18] today' },
+            ])[0].text,
+        ).toBe('Read [^John 3:16]; [^John 3:18] today');
+        const kept = { block: 3, text: 'Read [^John 3:16] today' };
+        expect(withVerseTokensSplit([kept])[0]).toBe(kept);
     });
 });

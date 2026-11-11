@@ -142,6 +142,7 @@ vi.mock('./mcpClient', () => ({
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
 import {
+    NOTE_BLANK_LESSON_HINT,
     NOTE_LESSON_CHANGE_HINT,
     NOTE_LESSON_REVIEW_HINT,
 } from './noteChatHelpers';
@@ -1502,6 +1503,63 @@ describe('the Anthropic loop', () => {
             'Add a response that gathers it',
             'Write what verse 3 means',
         ]);
+    });
+
+    // BN-81 (2026-11-10): the children's card pressed, gemma4:cloud wrote
+    // its "which passage?" into the empty note with owa_note_edit -- the
+    // question guard had been on the add's redirect alone.
+    test('a question is never written into an empty note by an edit either', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Lesson',
+            isChanged: true,
+        });
+        const edit = (text: string) => {
+            return anthropicToolUse({
+                name: 'owa_note_edit',
+                input: {
+                    action: 'edit',
+                    note: 'Lesson',
+                    changes: [
+                        { block: 1, remove: true },
+                        { after: 0, kind: 'section', text },
+                    ],
+                },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                edit('Please tell me which Bible passage you would like?'),
+                anthropicText(
+                    'Which passage would you like?\nOPTIONS: Jonah | Psalm 23',
+                ),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            `Help me prepare a children's lesson\n${NOTE_BLANK_LESSON_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            'that is a question for them, not a lesson',
+        );
+        expect(fake.toolCallList).toEqual([]);
     });
 
     // BN-80 (2026-11-10): a fix to a lesson done as fifteen blocks moved

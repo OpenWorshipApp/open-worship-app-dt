@@ -435,18 +435,30 @@ export function resolveBookFilter(
 /**
  * A list of references as it is written -- `Matthew 6:34; Philippians 4:6-7`,
  * one a line, or with commas between whole references -- as one reference
- * each. A comma before a bare number stays: `John 3:16, 17` is one.
+ * each. A comma before a bare number stays: `John 3:16, 17` is one. A
+ * chapter and verse with no book is the book before it's (2026-11-10,
+ * BN-81: asked for "Jonah 1:1-4, 1:17, 2:1, 3:1-5, 4:10-11", the tool read
+ * the first and left the rest unread, and the model asked again a round
+ * for each, its rounds gone before it could answer).
  */
 export function splitRefList(refs: string): string[] {
-    return refs
-        .split(/\s*(?:;|\n|,(?=\s*(?:\d\s*)?[^\d\s,;]))\s*/)
-        .map((one) => {
-            return one.trim();
-        })
-        .filter((one) => {
-            return one.length > 0;
-        })
-        .slice(0, MAX_FIND_REFS);
+    const list: string[] = [];
+    let book: string | null = null;
+    for (const raw of refs.split(
+        /\s*(?:;|\n|,(?=\s*(?:\d\s*)?[^\d\s,;])|,(?=\s*\d+\s*:\s*\d))\s*/,
+    )) {
+        const one = raw.trim();
+        if (one.length === 0) {
+            continue;
+        }
+        if (book !== null && /^\d+\s*:\s*\d/.test(one)) {
+            list.push(`${book} ${one}`);
+            continue;
+        }
+        book = /^(.*?\S)\s+\d+(?:\s*[:,\-–]|\s*$)/.exec(one)?.[1] ?? null;
+        list.push(one);
+    }
+    return list.slice(0, MAX_FIND_REFS);
 }
 
 /**

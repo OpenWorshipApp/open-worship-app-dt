@@ -315,6 +315,17 @@ describe('a change to a note', () => {
                 { after: 0, kind: 'passage', ref: 'John 3:16' },
             ]),
         ).toEqual(['Romans 8:28', 'John 3:16']);
+        // BN-81: a token naming two references is read as the two -- a
+        // whole lesson had been refused for `[^Jonah 1:17, 2:10]`.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                {
+                    after: 3,
+                    kind: 'section',
+                    text: '## The fish\n[^Jonah 1:17, 2:10]\nGod saved him.',
+                },
+            ]),
+        ).toEqual(['Jonah 1:17', 'Jonah 2:10']);
         // BN-67: a token alone on a section's line is a passage, read even
         // where the note has its chip; in a paragraph's words it stays one.
         expect(

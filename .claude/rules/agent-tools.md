@@ -1084,7 +1084,9 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   and every verse found is quoted from the chosen one (`searchedIn`); a
   result from a Bible not in English names `englishBible` for the model to
   search what it translated. `refs` quotes references (an English name, a
-  code or the Bible's own) from that Bible; `open` puts one in the Bible
+  code or the Bible's own) from that Bible -- a chapter and verse with no
+  book being the book before it's (`splitRefList`, BN-81: "Jonah 1:1-4,
+  1:17, 2:1" had left all but the first unread); `open` puts one in the Bible
   Lookup the way the names panel's **Open in bible lookup** does
   (`applyTargetOrBibleKey` on the live controller, or the Presenter's popup
   through `bibleLookupPopupOpener.ts`), never on a screen. Only `open` acts:
@@ -2032,7 +2034,10 @@ false` and searches only a dataset a lookup panel already holds
   what a model writes finishing one** (2026-11-10, BN-67, four partial
   sermons asked live): a heading's own `## ` in its words is read as the
   heading (`readHeadingMarks`), and so is the `h2:` label the note is read
-  with when a model copies it in (`stripHeadingKindLabel`, BN-80); new blocks ONE a place whose `after` goes up
+  with when a model copies it in (`stripHeadingKindLabel`, BN-80); a verse
+  token naming several references, `[^Jonah 1:17, 2:10]`, is that many
+  tokens -- one alone on a section's line that many lines, each a passage
+  (`withVerseTokensSplit`, BN-81: the whole lesson had been refused); new blocks ONE a place whose `after` goes up
   one at a time and hold a heading with words after it are one section,
   each after the one before (`chainSectionAdds` -- sections one a place were
   numbered as read, and stay so); a line changed into one token naming a
