@@ -1708,6 +1708,19 @@ was seen and what was done.
   for 20:15's words -- let by because 20:15 was in the lesson's own read
   (BN-113); open: exempt a quote of what was read only when the reference
   beside it names another book.
+- **BN-117 — a quote read in its reference's own book, given another
+  verse, is a wrong reference** (2026-11-11, the BN-113..115 read, Opus:
+  the one error left in its 16 newer lessons). "Written in the book of
+  life" was credited to Revelation 20:12; the words are 20:15's, which the
+  funeral lesson's own read of the chapter before held -- so BN-113 let it
+  by as a quote of what was read. A read is now kept by its book (a
+  verse's `key`, `REV 20:6-15`), and a quote found only in a passage of
+  the cited verse's own book is sent back with that verse; read in another
+  book ("Purge me with hyssop", Psalm 51:7, beside Exodus 12:22) it is let
+  be as before. Words that are no read of verses -- the note, the ask --
+  still let a quote be. Asked again live: "those not found in the book of
+  life are cast into the lake of fire [^(KJV) Revelation 20:11-15]", 8
+  cited quotations, every one word for word.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

@@ -1711,6 +1711,68 @@ describe('a quote given its chapter and verse is that verse', () => {
         ).toEqual([]);
     });
 
+    // BN-117 (2026-11-11, the BN-113..115 read): "written in the book of
+    // life" given Revelation 20:12 -- 20:15's words, in the funeral
+    // lesson's own read of the chapter before -- was let by as a quote of
+    // what was read.
+    it("names a quote read in its reference's own book, another verse", () => {
+        const readOf = (key: string, ref: string, text: string) => {
+            return JSON.stringify({
+                bible: 'KJV',
+                verses: [{ key, ref, text }],
+            });
+        };
+        expect(
+            findCitedMisquotes(
+                [
+                    {
+                        quote: 'written in the book of life',
+                        ref: 'Revelation 20:12',
+                    },
+                ],
+                new Map([
+                    [
+                        'Revelation 20:12',
+                        'And I saw the dead, small and great, stand before ' +
+                            'God; and the books were opened: and another ' +
+                            'book was opened, which is the book of life: and ' +
+                            'the dead were judged out of those things which ' +
+                            'were written in the books, according to their ' +
+                            'works.',
+                    ],
+                ]),
+                [
+                    readOf(
+                        'REV 20:6-15',
+                        'Revelation 20:6-15',
+                        '(15): And whosoever was not found written in the ' +
+                            'book of life was cast into the lake of fire.',
+                    ),
+                ],
+            ).map((item) => item.ref),
+        ).toEqual(['Revelation 20:12']);
+        // Read in another book, it is that book's own words (BN-113).
+        expect(
+            findCitedMisquotes(
+                [{ quote: 'Purge me with hyssop', ref: 'Exodus 12:22' }],
+                new Map([
+                    [
+                        'Exodus 12:22',
+                        'And ye shall take a bunch of hyssop, and dip it in ' +
+                            'the blood',
+                    ],
+                ]),
+                [
+                    readOf(
+                        'PSA 51:1-19',
+                        'Psalm 51:1-19',
+                        '(7): Purge me with hyssop, and I shall be clean',
+                    ),
+                ],
+            ),
+        ).toEqual([]);
+    });
+
     it('lets a cut quote, an unread or cut verse and another script be', () => {
         const check = (quote: string, verse: string | undefined) => {
             return findCitedMisquotes(

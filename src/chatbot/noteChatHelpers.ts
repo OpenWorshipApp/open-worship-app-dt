@@ -861,21 +861,59 @@ function toLatinShare(key: string) {
         : (key.match(/[a-z]/g) ?? []).length / key.length;
 }
 
+// What an ask read, a verse read by its book (`REV 20:6-15` -> `REV`); words
+// that are no read of verses -- the note, the ask -- have none.
+function toReadEntryList(readTexts: readonly string[]) {
+    return readTexts.flatMap(
+        (text): { bookKey: string | null; key: string }[] => {
+            try {
+                const verses = JSON.parse(text)?.verses;
+                if (Array.isArray(verses) && verses.length > 0) {
+                    return verses.map((verse: any) => {
+                        const bookKey = String(verse?.key ?? '')
+                            .split(' ')[0]
+                            .toUpperCase();
+                        return {
+                            bookKey: bookKey === '' ? null : bookKey,
+                            key: toLetterKey(String(verse?.text ?? '')),
+                        };
+                    });
+                }
+            } catch {
+                // words, not a read of verses
+            }
+            return [{ bookKey: null, key: toLetterKey(text) }];
+        },
+    );
+}
+
+// The KJV book key a reference names, or null for a name the table lacks.
+function toRefBookKey(ref: string) {
+    return (
+        BOOK_NAME_KEY_MAP.get(
+            ref.replace(/\s*\d{1,3}:.*$/, '').toLowerCase(),
+        ) ?? null
+    );
+}
+
 /**
  * The cited quotes whose words the verse read for their reference does not
  * have, with the verse as it reads. A quote cut with an ellipsis is checked a
  * piece at a time; a reference that could not be read, a verse read cut
  * short ("…"), or a quote in another script than its verse is let be -- and
- * so is a quote of what the ask READ (`readTexts`, BN-113): "Purge me with
- * hyssop" is the passage's own Psalm 51:7, the Exodus 12:22 beside it named
- * for what hyssop was (the first live run sent that lesson back).
+ * so is a quote of what the ask READ in ANOTHER book (`readTexts`, BN-113,
+ * BN-117): "Purge me with hyssop" is the passage's own Psalm 51:7, the
+ * Exodus 12:22 beside it named for what hyssop was. Read in the cited
+ * verse's own book, the words are that book's other verse, and the
+ * reference is wrong: "written in the book of life" given Revelation 20:12
+ * is 20:15's, in the funeral lesson's own read.
  */
 export function findCitedMisquotes(
     citedList: readonly CitedQuoteType[],
     verseTextMap: ReadonlyMap<string, string>,
     readTexts: readonly string[] = [],
 ) {
-    const readKeyList = readTexts.map(toLetterKey);
+    const readEntryList = toReadEntryList(readTexts);
     const misquoted: (CitedQuoteType & { verse: string })[] = [];
     for (const cited of citedList) {
         const verse = verseTextMap.get(cited.ref);
@@ -884,12 +922,19 @@ export function findCitedMisquotes(
         }
         const verseKey = toLetterKey(verse);
         const isCut = /…\s*$/u.test(verse);
+        const citedBookKey = toRefBookKey(cited.ref);
         const isMisquoted = cited.quote.split(/…|\.\.\./).some((piece) => {
             const key = toLetterKey(piece);
             return (
                 key.length >= MIN_NOTE_QUOTE_LETTERS &&
                 !verseKey.includes(key) &&
-                !readKeyList.some((readKey) => readKey.includes(key)) &&
+                !readEntryList.some((entry) => {
+                    return (
+                        (citedBookKey === null ||
+                            entry.bookKey !== citedBookKey) &&
+                        entry.key.includes(key)
+                    );
+                }) &&
                 !isCut &&
                 Math.abs(toLatinShare(key) - toLatinShare(verseKey)) < 0.5
             );
