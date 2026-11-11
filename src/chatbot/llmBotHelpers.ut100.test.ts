@@ -89,7 +89,11 @@ vi.mock('./mcpClient', () => ({
     },
     callToolWithPictures: async (name: string, args?: any) => {
         fake.toolCallList.push({ name, args });
-        return { text: fake.toolResultMap[name] ?? '', pictures: [] };
+        const text =
+            fake.answerTool !== null
+                ? fake.answerTool(name, args)
+                : (fake.toolResultMap[name] ?? '');
+        return { text, pictures: [] };
     },
     listTools: async () => {
         return fake.toolList;
@@ -113,6 +117,7 @@ vi.mock('../markdown-preview/markdownMermaidHelpers', () => ({
 }));
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
+import { genTextAttachment, toAskedOfModel } from './attachmentHelpers';
 import {
     applyToolWatch,
     askLlmBot,
@@ -1128,6 +1133,11 @@ describe('a study file open in the tab', () => {
             openFiles: ['pdf/JHN.3.pdf', OPEN],
         },
     };
+    // The ask as the window composes it: the study open in the tab goes
+    // with every question, here whole (EC-500).
+    const ASKED_WITH_STUDY = toAskedOfModel('Fix them in the study file.', [
+        genTextAttachment('JHN.3.The New Birth.md', OLD),
+    ]);
 
     // `draft` as the tool host does it: a part changes the file on the
     // disk (OLD), the whole text is taken as it is.
@@ -1206,7 +1216,7 @@ describe('a study file open in the tab', () => {
         ]);
 
         const answer = await askLlmBot(
-            'Fix them in the study file.',
+            ASKED_WITH_STUDY,
             'reader',
             'anthropic',
             'claude-sonnet-5',
@@ -1258,7 +1268,7 @@ describe('a study file open in the tab', () => {
         ]);
 
         const answer = await askLlmBot(
-            'Fix them in the study file.',
+            ASKED_WITH_STUDY,
             'reader',
             'anthropic',
             'claude-sonnet-5',
@@ -1461,8 +1471,17 @@ describe('a study file written whole again', () => {
         resources: { canSeePictures: false, openFiles: [OPEN] },
     };
 
-    // A long file: `read` gives its start and a note naming every heading.
+    // A long file: `read` gives its start and a note naming every heading,
+    // or the part a `section` names.
     function answerLongStudyTool(_name: string, args: any) {
+        if (args.action === 'read' && args.section === 'Questions') {
+            return JSON.stringify({
+                file: OPEN,
+                kind: 'text',
+                section: 'Questions',
+                text: '## Questions\n\n1. Who came?',
+            });
+        }
         if (args.action === 'read') {
             return JSON.stringify({
                 file: OPEN,
@@ -1490,7 +1509,14 @@ describe('a study file written whole again', () => {
     test('one part sent as the whole text is drafted as that part', async () => {
         fake.answerTool = answerLongStudyTool;
         const content = '## Questions\n\n1. Who came to Jesus by night?';
+        // As seen live: the part past what the ask shows is read first.
+        const readPart = {
+            action: 'read',
+            file: 'JHN.3.The New Birth.md',
+            section: 'Questions',
+        };
         useAnthropic([
+            anthropicToolUse({ name: 'owa_resource_file', input: readPart }),
             anthropicToolUse({
                 name: 'owa_resource_file',
                 input: {
@@ -1515,6 +1541,7 @@ describe('a study file written whole again', () => {
         );
 
         expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: readPart },
             {
                 name: 'owa_resource_file',
                 args: { action: 'read', file: 'JHN.3.The New Birth.md' },
@@ -1582,6 +1609,14 @@ describe('a report of a change written into a study', () => {
         'the book names to match the Bible.';
 
     function answerStudyTool(_name: string, args: any) {
+        if (args.action === 'read' && args.section === 'Questions') {
+            return JSON.stringify({
+                file: OPEN,
+                kind: 'text',
+                section: 'Questions',
+                text: '## Questions\n\n1. Who came?',
+            });
+        }
         if (args.action === 'read') {
             return JSON.stringify({
                 file: OPEN,
@@ -1688,7 +1723,10 @@ describe('a report of a change written into a study', () => {
         const content =
             '## Questions\n\n1. Who came to Jesus by night?\n\n' +
             'I have fixed the date in this file.';
+        // The part is read first: no part is written from memory (EC-500).
+        const readPart = { action: 'read', file: OPEN, section: 'Questions' };
         useAnthropic([
+            anthropicToolUse({ name: 'owa_resource_file', input: readPart }),
             anthropicToolUse({
                 name: 'owa_resource_file',
                 input: {
@@ -1704,6 +1742,7 @@ describe('a report of a change written into a study', () => {
         const answer = await askToFix();
 
         expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: readPart },
             {
                 name: 'owa_resource_file',
                 args: {
@@ -1750,5 +1789,197 @@ describe('a report of a change written into a study', () => {
                 content: '1. Who came to Jesus by night?',
             }),
         ).toBeNull();
+    });
+});
+
+// EC-500, seen live: asked to fix a part past the 16 KB the ask shows of a
+// 44 KB study, gemma4:cloud drafted that part by its `section` without
+// reading it, and two of its labels came out written anew.
+describe('a part of a study drafted with none of its words shown', () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const NAME = 'JHN.3.The New Birth.md';
+    const LAST = [
+        '## Last Words',
+        '',
+        '- The bronze snake: Numbers 21:8-9',
+        '- Born of water: Titus 3:5',
+    ].join('\n');
+    // Long enough for the ask to show it cut inside its Background.
+    const STUDY = [
+        '# The New Birth',
+        '',
+        '## Questions',
+        '',
+        '1. Who came?',
+        '',
+        '## Background',
+        '',
+        ...Array.from({ length: 600 }, (_value, index) => {
+            return `Line ${index + 1} of the background, as it was.`;
+        }),
+        '',
+        LAST,
+        '',
+    ].join('\n');
+    const RESOURCES_EXTRA = {
+        resources: { canSeePictures: false, openFiles: [OPEN] },
+    };
+    // The ask as the window composes it, the study open in the tab with it.
+    const ASKED = toAskedOfModel('Fix the last words in the study file.', [
+        genTextAttachment(NAME, STUDY),
+    ]);
+    const DRAFT = { action: 'draft', file: OPEN, section: 'Last Words' };
+    const FIXED =
+        '## Last Words\n\n- The bronze snake: Numbers 21:8-9\n' +
+        '- Born of water: Titus 3:5 and John 3:5';
+    const READ_PART = { action: 'read', file: OPEN, section: 'Last Words' };
+
+    let isPartLong = false;
+    function answerStudyTool(_name: string, args: any) {
+        if (args.action === 'read' && args.section === 'Last Words') {
+            return JSON.stringify({
+                file: OPEN,
+                kind: 'text',
+                section: 'Last Words',
+                text: isPartLong ? LAST.slice(0, 20) : LAST,
+                ...(isPartLong
+                    ? { note: 'Only the start of this part is here.' }
+                    : {}),
+            });
+        }
+        return JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: NAME,
+            file: OPEN,
+            hash: 'h-1',
+            diagramCount: 0,
+            change: `It changes “${args.section}”.`,
+            warnings: [],
+            content: STUDY,
+        });
+    }
+
+    function askToFix() {
+        return askLlmBot(
+            ASKED,
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+    }
+
+    beforeEach(() => {
+        isPartLong = false;
+        fake.answerTool = answerStudyTool;
+    });
+
+    test('the window reads the part and sends the draft back with its words; drafted again, it goes through', async () => {
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    ...DRAFT,
+                    content:
+                        '## Last Words\n\n- The snake: Numbers 21:8-9\n' +
+                        '- Born again: Titus 3:5',
+                },
+            }),
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: { ...DRAFT, content: FIXED },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askToFix();
+
+        // Read once, by the window: the words written unread reached no tool.
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: READ_PART },
+            { name: 'owa_resource_file', args: { ...DRAFT, content: FIXED } },
+        ]);
+        const [refused] = readToolResults(sentList[1]);
+        expect(refused).toMatch(
+            /^Tool refused: The part “Last Words” is in nothing you were shown of "Default\/JHN\.3\.The New Birth\.md"/,
+        );
+        expect(refused).toContain(
+            'Call draft again with the same `file` and `section`',
+        );
+        expect(refused).toContain(
+            'Nothing in the file has changed: never say it was.',
+        );
+        expect(refused).toContain('- The bronze snake: Numbers 21:8-9');
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('a part the ask shows whole is drafted with no read', async () => {
+        const input = {
+            action: 'draft',
+            file: OPEN,
+            section: 'Questions',
+            content: '## Questions\n\n1. Who came to Jesus by night?',
+        };
+        useAnthropic([
+            anthropicToolUse({ name: 'owa_resource_file', input }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askToFix();
+
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: input },
+        ]);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('a part the model read first is drafted with no read of the window’s own', async () => {
+        const { sentList } = useAnthropic([
+            anthropicToolUse({ name: 'owa_resource_file', input: READ_PART }),
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: { ...DRAFT, content: FIXED },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askToFix();
+
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: READ_PART },
+            { name: 'owa_resource_file', args: { ...DRAFT, content: FIXED } },
+        ]);
+        expect(readToolResults(sentList[2])[0]).not.toMatch(/^Tool refused/);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('a part too long to hand over is drafted as before', async () => {
+        isPartLong = true;
+        useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: { ...DRAFT, content: FIXED },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askToFix();
+
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: READ_PART },
+            { name: 'owa_resource_file', args: { ...DRAFT, content: FIXED } },
+        ]);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
     });
 });

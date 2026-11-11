@@ -366,6 +366,21 @@ window as a whole — tabs, pickers, its language, the caution — is in
   part, one `section` draft, the one line changed and every other line of
   the file as it was. Neither guard fired that time (the model named the
   part, and read first); both are unit-tested on the words it had sent.
+- **A part of a study is changed on its own words, never from memory**
+  (2026-11-11, `EC-500`; the Khmer Cross References above, past the 16 KB
+  the ask shows, drafted by `section` with no read: two labels came out
+  written anew). The window keeps what of each study file the model was
+  shown in the ask (`ToolWatchType.shownStudyBlocks`): the attached words
+  as the ask carries them (`toAskedStudyBlocks` off `readAskedTextFiles`)
+  and every `read` since (`toReadStudyBlock`). A model's `draft` of a part
+  none of them shows whole (`checkIsStudyPartShown`) has the window read
+  that part, with no model round, and is refused with the part's words
+  and the call to make again (`findUnreadStudyPartRefusal`,
+  `genUnreadStudyPartRefusal`). The read is kept, so the next draft goes
+  through. Not for a draft the window made, a kept answer, an `append`, a
+  part too long to hand over, or a read that fails. Asked live, the model
+  read first, so the window had no read to make: only the asked words of
+  the part changed, its labels as written. The refusal is unit-tested.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

@@ -12002,7 +12002,7 @@ Tests: `studyFileChatHelpers.test.ts` (+10), `llmBotHelpers.ut100.test.ts`
 parts as one change, the claim handed back, no study open no nudge),
 `studyVerseCheckHelpers.test.ts` (the eight, every line).
 
-### EC-500 — a part of a study the ask never showed is written anew from memory — open
+### EC-500 — a part of a study the ask never showed is written anew from memory — `done` 2026-11-11
 
 From EC-499's run. The Khmer Cross References are past the 16 KB the ask
 shows, and the model replaced the part without reading it (`read` with
@@ -12015,6 +12015,50 @@ which keeps every other letter; or a section edit refused until that part
 was read in the ask when it lies past what the ask showed; or the draft
 result telling the model the part's lines it changed that the ask did not
 name.
+
+Done the second way, with the read made by the window rather than asked of
+the model: a refusal that only says "read it first" costs a round to read
+and another to draft, and a small model may draft from memory again.
+
+- **The window keeps what of each study file the model was shown in the
+  ask** (`ToolWatchType.shownStudyBlocks`): the attached file's words as
+  the ask carries them, cut at 16 KB and marked so (`readAskedTextFiles` →
+  `toAskedStudyBlocks`, read off the ask once), and every `read` of a study
+  since, the model's or the window's (`toReadStudyBlock`, cut when the read
+  carries a note).
+- **A part drafted by its `section` that none of them shows whole is read by
+  the window and sent back with its words** (`findUnreadStudyPartRefusal` in
+  `runStudyDraft`, the model's drafts only). A part counts as shown when a
+  block of that file holds its heading once and, in a cut block, its end
+  before the cut (`checkIsStudyPartShown`). The window reads that part
+  (`read` with `section`, no model round) and refuses the draft with the
+  part as the read gives it and the call to make again
+  (`genUnreadStudyPartRefusal`). The read is then kept, so the next draft
+  of that part goes through.
+- **Left as before**: a draft the window made (a translation), an answer
+  kept as a study (`EC-466`), an `append` (it rewrites no old words), a part
+  whose read says it is too long to hand over, and a read that fails.
+- `readAskedTextFiles` no longer counts the blank line `toAttachmentText`
+  joins two files with as a word of the first.
+
+Asked live in EC-499's tab (Auto → OWA Shared, gemma4:cloud): _Fix the book
+names in the Khmer Cross References of the study: Ezekiel is អេសេគាល, Titus
+is ទីតុស, Numbers is ជនគណនា, and take out the English word "and" there._
+The model read the file twice before its draft. The window's read draws no
+step, but 55.3k tokens is about four rounds, so no draft was sent back. The
+card's text against the file: the Khmer Cross References with only those
+words changed and both labels as written, Khmer question 3's លេខ →
+ជនគណនា (asked earlier in the tab), every other line as it was; the answer
+named both parts. Not saved. The refusal itself is unit-tested.
+
+Tests: `attachmentHelpers.test.ts` +2 (two files read apart, the join no
+word of the first; an ask with no file reads none), `studyFileChatHelpers.test.ts`
++6, `llmBotHelpers.ut100.test.ts` +4 (a part drafted unshown is refused with
+its words and drafted again; a part the ask shows whole is drafted with no
+read; the model's own read counts; a part too long to hand over is drafted
+as before) -- each new one fails with its step taken out. Four existing
+tests now have the ask carry the study or the model read first, as seen
+live.
 
 ### EC-501 — an answer claiming a change on the last round is not handed back — open
 

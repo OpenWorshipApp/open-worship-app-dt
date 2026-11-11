@@ -270,22 +270,28 @@ import {
     STUDY_STOPPED_TEXT,
     STUDY_SYSTEM_PROMPT,
     type DraftedStudyType,
+    type StudyShownBlockType,
     chainStudyPartEdit,
     checkIsStudyAnswerMarker,
+    checkIsStudyPartShown,
     checkIsWholeStudyRewrite,
     findOpenStudyFiles,
     genOpenStudyDraftRefusal,
     genStudyClaimNudge,
     genStudyDraftActions,
     genStudyReportRefusal,
+    genUnreadStudyPartRefusal,
     keepDraftedStudy,
     listWrittenDiagramIndexes,
     readDraftedStudy,
     routeOpenStudyDraft,
     routeWholeStudyRewrite,
+    toAskedStudyBlocks,
     toKeptAnswerDraftArgs,
     toModelDraftText,
+    toReadStudyBlock,
     toStudyContentFromAnswer,
+    toStudyPartDraft,
     toStudyReadShape,
 } from './studyFileChatHelpers';
 import {
@@ -2276,6 +2282,13 @@ type ToolWatchType = {
      */
     openStudyFiles: string[];
     /**
+     * What of the study files the model has been shown this ask (EC-500):
+     * the ask's words of each, and every `read` of one since. A part drafted
+     * by its `section` that none of them shows is read by the window and the
+     * draft sent back with its words.
+     */
+    shownStudyBlocks: StudyShownBlockType[];
+    /**
      * The tab's newest answer, as the person read it (`AskExtraType.
      * answerAbove`): what a draft's `@answer` is (EC-466).
      */
@@ -2643,6 +2656,7 @@ export function genToolWatch(): ToolWatchType {
         draftedStudy: null,
         isStudyDiagramRetried: false,
         openStudyFiles: [],
+        shownStudyBlocks: [],
         answerAbove: null,
         isKeepAnswerAsk: false,
         translateText: null,
@@ -3946,6 +3960,20 @@ async function runStudyDraft(
             draftArgs = routed.args;
         }
     }
+    // A part written by its `section` with no words of it in front of the
+    // model (EC-500): seen live, two labels of a part past the 16 KB the ask
+    // shows of a 44 KB study were written anew, and wrong. Sent back with
+    // the part's own words, read by the window.
+    if (!isWindowMade && keptAnswer === null) {
+        const refusal = await findUnreadStudyPartRefusal(
+            draftArgs,
+            watch,
+            signal,
+        );
+        if (refusal !== null) {
+            return `Tool refused: ${refusal}`;
+        }
+    }
     // What this call writes into the file, before a part is put into the
     // whole: a change parses only the diagrams in these words (EC-503).
     const writtenText = (['content', 'append'] as const)
@@ -4076,6 +4104,50 @@ async function readStudyFileShape(
         throwIfCancelled(signal);
         return null;
     }
+}
+
+/**
+ * Why a draft of one part of a study goes back (EC-500): nothing the model
+ * was shown this ask holds the part, so the window reads it and hands its
+ * words over. Null to draft it -- no part named, one shown, one too long to
+ * hand over, or a read that failed. What the read showed counts as shown,
+ * so the next draft of that part goes through.
+ */
+async function findUnreadStudyPartRefusal(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    const part = toStudyPartDraft(args);
+    if (
+        part === null ||
+        checkIsStudyPartShown(watch.shownStudyBlocks, part.file, part.section)
+    ) {
+        return null;
+    }
+    let readText: string;
+    try {
+        readText = await callTool(
+            RESOURCES_TOOL_NAME,
+            { action: 'read', file: part.file, section: part.section },
+            signal,
+            watch.windowAim,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+    // Judged before the read is kept, or its own words would count as shown.
+    const refusal = genUnreadStudyPartRefusal(
+        watch.shownStudyBlocks,
+        part.file,
+        readText,
+    );
+    const block = toReadStudyBlock(readText);
+    if (block !== null) {
+        watch.shownStudyBlocks.push(block);
+    }
+    return refusal;
 }
 
 /** The window's translator: an ask in, its answer and who answered out. */
@@ -5030,6 +5102,12 @@ async function runMcpToolCall(
                 watch.windowAim,
             );
             applyToolWatch(watch, name, args, text);
+            // A study file read is a part of it the model has seen (EC-500).
+            const readBlock =
+                args?.action === 'read' ? toReadStudyBlock(text) : null;
+            if (readBlock !== null) {
+                watch.shownStudyBlocks.push(readBlock);
+            }
             if (pictures.length === 0) {
                 return text;
             }
@@ -7973,6 +8051,8 @@ async function askLlmBotAsWritten(
             finishConnecting();
         }
     }
+    // What of each study file the ask itself shows (EC-500), read once.
+    const askedStudyBlocks = toAskedStudyBlocks(asked);
     // The known recipe, when there is one, is the search hit the model
     // would have had (`searchedId`: a guess the page it opens overrides).
     const genSeededWatch = (askedProvider: LlmProviderType = provider) => {
@@ -8083,6 +8163,7 @@ async function askLlmBotAsWritten(
         seeded.openStudyFiles = findOpenStudyFiles(
             extra?.resources?.openFiles ?? [],
         );
+        seeded.shownStudyBlocks = [...askedStudyBlocks];
         seeded.canSeePictures =
             extra?.resources?.canSeePictures === true ||
             extra?.bibleReader?.canSeePictures === true;

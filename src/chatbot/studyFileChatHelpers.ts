@@ -33,6 +33,7 @@ import {
     listAssistantLanguages,
 } from './chatLangHelpers';
 import type { ChatMessageType } from './chatSessionHelpers';
+import { readAskedTextFiles } from './attachmentHelpers';
 import {
     STUDY_FILE_EXTENSION,
     STUDY_FOLDER_NAME,
@@ -1029,5 +1030,150 @@ export function genStudyReportRefusal(report: string, outline: string) {
         'ask does not show in full is read first (`read` with `file` and ' +
         '`section`).' +
         (outline === '' ? '' : ` ${STUDY_HEADINGS_LEAD}\n${outline}`)
+    );
+}
+
+// --- a part of a study written without its words (2026-11-11, EC-500) -------
+//
+// Asked in EC-499's tab to fix the Khmer Cross References -- past the 16 KB
+// the ask shows of a 44 KB study -- gemma4:cloud drafted that part without
+// reading it: the three references came out right, and two labels it wrote
+// anew came out wrong, one a word short, the snake's another word. A change
+// is the words asked for and every other line as it was.
+
+/** What of a study file the model was shown: words whole, or cut short. */
+export type StudyShownBlockType = {
+    fileKey: string;
+    text: string;
+    isCut: boolean;
+};
+
+function checkIsStudyFileName(name: string) {
+    return name.toLowerCase().endsWith(STUDY_FILE_EXTENSION);
+}
+
+/** The study files an ask carries (`readAskedTextFiles`), as shown. */
+export function toAskedStudyBlocks(asked: string): StudyShownBlockType[] {
+    return readAskedTextFiles(String(asked ?? '')).flatMap((file) => {
+        return checkIsStudyFileName(file.name)
+            ? [
+                  {
+                      fileKey: toStudyFileKey(file.name),
+                      text: file.text,
+                      isCut: file.isCut,
+                  },
+              ]
+            : [];
+    });
+}
+
+/**
+ * A `read` of a study file as what it showed: the file's start, or a part
+ * (`section`), cut when the read says it holds only the start. Null for
+ * anything else.
+ */
+export function toReadStudyBlock(readText: string): StudyShownBlockType | null {
+    const result = parseJson(String(readText ?? ''));
+    if (
+        result === null ||
+        result.kind !== 'text' ||
+        typeof result.text !== 'string' ||
+        !checkIsStudyFileName(toText(result.file))
+    ) {
+        return null;
+    }
+    return {
+        fileKey: toStudyFileKey(toText(result.file)),
+        text: result.text,
+        isCut: toText(result.note) !== '',
+    };
+}
+
+/** A draft changing one part of a study file by its words; null if not. */
+export function toStudyPartDraft(args: any) {
+    const file = toText(args?.file).trim();
+    const section = toText(args?.section).trim();
+    return file !== '' &&
+        section !== '' &&
+        checkIsStudyFileName(file) &&
+        toText(args?.content).trim() !== ''
+        ? { file, section }
+        : null;
+}
+
+/**
+ * Whether a part of a study file was shown whole: in a block of that file
+ * holding its heading once -- and, in a block cut short, a heading of its
+ * level or above after it, where the part ends.
+ */
+export function checkIsStudyPartShown(
+    blocks: readonly StudyShownBlockType[],
+    file: string,
+    section: string,
+) {
+    const fileKey = toStudyFileKey(file);
+    const key = toStudyHeadingKey(section);
+    return blocks.some((block) => {
+        if (block.fileKey !== fileKey) {
+            return false;
+        }
+        const found = listStudySections(block.text).filter((one) => {
+            return toStudyHeadingKey(one.heading) === key;
+        });
+        return (
+            found.length === 1 &&
+            (!block.isCut ||
+                found[0].end <
+                    block.text.replace(/\r\n/g, '\n').split('\n').length)
+        );
+    });
+}
+
+function toShownWords(text: string) {
+    return text.replace(/\r\n/g, '\n').trim();
+}
+
+/**
+ * What the model is told when it drafts a part of a study it was not shown
+ * (EC-500), off the window's `read` of that part: the part as the read gives
+ * it, to make the change on. Null to draft it -- no part read, one too long
+ * to send back (its read says so), or words a block shows after all.
+ */
+export function genUnreadStudyPartRefusal(
+    blocks: readonly StudyShownBlockType[],
+    file: string,
+    readText: string,
+) {
+    const result = parseJson(String(readText ?? ''));
+    if (
+        result === null ||
+        result.kind !== 'text' ||
+        typeof result.text !== 'string' ||
+        toText(result.section) === '' ||
+        toText(result.note) !== ''
+    ) {
+        return null;
+    }
+    const words = toShownWords(result.text);
+    const fileKey = toStudyFileKey(file);
+    if (
+        words === '' ||
+        blocks.some((block) => {
+            return (
+                block.fileKey === fileKey &&
+                toShownWords(block.text).includes(words)
+            );
+        })
+    ) {
+        return null;
+    }
+    return (
+        `The part “${result.section}” is in nothing you were shown of ` +
+        `"${file}": these words were written without its own. A change is ` +
+        'the words asked for and every other line as it was. Call draft ' +
+        'again with the same `file` and `section`, `content` the words ' +
+        'below with only the asked change made. Nothing in the file has ' +
+        `changed: never say it was. The part as a read of it gives it: ` +
+        String(readText).trim()
     );
 }

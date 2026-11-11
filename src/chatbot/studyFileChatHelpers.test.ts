@@ -13,6 +13,7 @@ import {
     STUDY_SYSTEM_PROMPT,
     chainStudyPartEdit,
     checkIsStudyAnswerMarker,
+    checkIsStudyPartShown,
     checkIsWholeStudyRewrite,
     clearStudyRenameWait,
     findOpenStudyFiles,
@@ -21,6 +22,7 @@ import {
     genStudyClaimNudge,
     genStudyDraftActions,
     genStudyReportRefusal,
+    genUnreadStudyPartRefusal,
     keepDraftedStudy,
     listWrittenDiagramIndexes,
     pickKeptAnswerLanguage,
@@ -32,12 +34,16 @@ import {
     setStudyRenameWait,
     takeDraftedStudy,
     takeStudyRenameWait,
+    toAskedStudyBlocks,
     toKeptAnswerDraftArgs,
     toModelDraftText,
+    toReadStudyBlock,
     toStudyAsk,
     toStudyContentFromAnswer,
+    toStudyPartDraft,
     toStudyReadShape,
 } from './studyFileChatHelpers';
+import { genTextAttachment, toAskedOfModel } from './attachmentHelpers';
 import { STUDY_FILE_PROMPT } from './noteCreatePromptHelpers';
 import { lintStudyContent } from '../helper/agentStudyFileRules';
 
@@ -1070,5 +1076,181 @@ describe('genStudyReportRefusal', () => {
         expect(refusal.endsWith('(`read` with `file` and `section`).')).toBe(
             true,
         );
+    });
+});
+
+// EC-500: a part of a study drafted by its `section` with none of its words
+// in front of the model.
+describe('a part of a study written without its words', () => {
+    const FILE = 'Default/JHN.3.The New Birth.md';
+    const FILE_KEY = 'jhn.3.the new birth.md';
+    const LAST = '## Last Words\n\n- The bronze snake: Numbers 21:8-9';
+    // Long enough for an ask to show it cut inside its Background.
+    const STUDY = [
+        '# The New Birth',
+        '',
+        '## Questions',
+        '',
+        '1. Who came?',
+        '',
+        '## Background',
+        '',
+        ...Array.from({ length: 600 }, (_value, index) => {
+            return `Line ${index + 1} of the background, as it was.`;
+        }),
+        '',
+        LAST,
+    ].join('\n');
+    const SHOWN = toAskedStudyBlocks(
+        toAskedOfModel('Fix it.', [
+            genTextAttachment('JHN.3.The New Birth.md', STUDY),
+            genTextAttachment('notes.txt', 'Not a study.'),
+        ]),
+    );
+    const READ_LAST = JSON.stringify({
+        file: FILE,
+        kind: 'text',
+        section: 'Last Words',
+        text: LAST,
+    });
+
+    it('takes the study files an ask shows, cut where the ask cut them', () => {
+        expect(SHOWN).toHaveLength(1);
+        expect(SHOWN[0].fileKey).toBe(FILE_KEY);
+        expect(SHOWN[0].isCut).toBe(true);
+        expect(STUDY.startsWith(SHOWN[0].text)).toBe(true);
+        expect(toAskedStudyBlocks('What does John 3:16 say?')).toEqual([]);
+    });
+
+    it('takes a read of a study, part or start, and nothing else', () => {
+        expect(toReadStudyBlock(READ_LAST)).toEqual({
+            fileKey: FILE_KEY,
+            text: LAST,
+            isCut: false,
+        });
+        expect(
+            toReadStudyBlock(
+                JSON.stringify({
+                    file: FILE,
+                    kind: 'text',
+                    text: '# The New Birth',
+                    note: 'Only the start of it is here.',
+                }),
+            )?.isCut,
+        ).toBe(true);
+        expect(
+            toReadStudyBlock(
+                JSON.stringify({
+                    file: 'pdf/notes.txt',
+                    kind: 'text',
+                    text: 'A',
+                }),
+            ),
+        ).toBeNull();
+        expect(
+            toReadStudyBlock(
+                JSON.stringify({ file: 'pdf/JHN.3.pdf', kind: 'pdf' }),
+            ),
+        ).toBeNull();
+        expect(toReadStudyBlock('Tool error: no such file')).toBeNull();
+    });
+
+    it('a draft of one part is its words for a part of a study file', () => {
+        expect(
+            toStudyPartDraft({
+                action: 'draft',
+                file: FILE,
+                section: 'Questions',
+                content: '1. Who?',
+            }),
+        ).toEqual({ file: FILE, section: 'Questions' });
+        // Words added to a part need none of its own.
+        expect(
+            toStudyPartDraft({ file: FILE, section: 'Questions', append: 'A' }),
+        ).toBeNull();
+        expect(toStudyPartDraft({ file: FILE, content: 'All.' })).toBeNull();
+        expect(
+            toStudyPartDraft({ section: 'Questions', content: '1. Who?' }),
+        ).toBeNull();
+        expect(
+            toStudyPartDraft({
+                file: 'Default/notes.txt',
+                section: 'Questions',
+                content: '1. Who?',
+            }),
+        ).toBeNull();
+    });
+
+    it('a part is shown when a block holds it whole, and once', () => {
+        expect(checkIsStudyPartShown(SHOWN, FILE, 'Questions')).toBe(true);
+        expect(
+            checkIsStudyPartShown(
+                SHOWN,
+                'JHN.3.The New Birth.md',
+                '## questions',
+            ),
+        ).toBe(true);
+        // Running past where the ask was cut, or after it.
+        expect(checkIsStudyPartShown(SHOWN, FILE, 'Background')).toBe(false);
+        expect(checkIsStudyPartShown(SHOWN, FILE, 'Last Words')).toBe(false);
+        // The same heading in another file.
+        expect(
+            checkIsStudyPartShown(SHOWN, 'Default/Other.md', 'Questions'),
+        ).toBe(false);
+        const read = toReadStudyBlock(READ_LAST);
+        expect(read).not.toBeNull();
+        expect(
+            checkIsStudyPartShown([...SHOWN, read!], FILE, 'Last Words'),
+        ).toBe(true);
+        // A heading written twice is no one part.
+        const twice = {
+            fileKey: FILE_KEY,
+            text: '## Prayer\n\nA.\n\n## Prayer\n\nB.',
+            isCut: false,
+        };
+        expect(checkIsStudyPartShown([twice], FILE, 'Prayer')).toBe(false);
+    });
+
+    it('sends the part back with its own words, as the read gives them', () => {
+        const refusal = genUnreadStudyPartRefusal(SHOWN, FILE, READ_LAST);
+        expect(refusal).toMatch(
+            /^The part “Last Words” is in nothing you were shown of "Default\/JHN\.3\.The New Birth\.md"/,
+        );
+        expect(refusal).toContain(
+            'Call draft again with the same `file` and `section`',
+        );
+        expect(refusal).toContain(
+            'Nothing in the file has changed: never say it was.',
+        );
+        expect(refusal?.endsWith(READ_LAST)).toBe(true);
+    });
+
+    it('drafts it when the words were shown, the part is too long or the read failed', () => {
+        const whole = { fileKey: FILE_KEY, text: STUDY, isCut: false };
+        expect(genUnreadStudyPartRefusal([whole], FILE, READ_LAST)).toBeNull();
+        expect(
+            genUnreadStudyPartRefusal(
+                SHOWN,
+                FILE,
+                JSON.stringify({
+                    file: FILE,
+                    kind: 'text',
+                    section: 'Last Words',
+                    text: LAST,
+                    note: 'Only the start of this part is here.',
+                }),
+            ),
+        ).toBeNull();
+        // The start of the file, no part named.
+        expect(
+            genUnreadStudyPartRefusal(
+                SHOWN,
+                FILE,
+                JSON.stringify({ file: FILE, kind: 'text', text: LAST }),
+            ),
+        ).toBeNull();
+        expect(
+            genUnreadStudyPartRefusal(SHOWN, FILE, 'Tool error: no such file'),
+        ).toBeNull();
     });
 });

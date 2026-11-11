@@ -525,8 +525,55 @@ export function toImageMediaType(fileName: string) {
 // The line the model is given above a file's words, so it knows what it is
 // reading. Written and stripped in the same module deliberately: the preview
 // shows the FILE, not the sentence this window wrapped around it.
+const ATTACHED_TEXT_HEAD = 'The user attached a file called "';
 function genAttachedTextHeader(name: string) {
-    return `The user attached a file called "${name}":\n`;
+    return `${ATTACHED_TEXT_HEAD}${name}":\n`;
+}
+
+// Where a file's words stop when it is longer than `MAX_TEXT_LENGTH`.
+const ATTACHMENT_CUT_TEXT = '[... the rest of this file was not included ...]';
+
+export type AskedTextFileType = { name: string; text: string; isCut: boolean };
+
+/**
+ * The text files an ask carries, read back off the ask (EC-500): each one's
+ * name, its words as the model was shown them, and whether they stop at
+ * `MAX_TEXT_LENGTH` -- what of a study file the model has seen. A file's
+ * words run to the next file's header, the last one's to the end of the
+ * ask; a PDF's sentence is not one.
+ */
+export function readAskedTextFiles(asked: string): AskedTextFileType[] {
+    const fileList: AskedTextFileType[] = [];
+    let at = asked.indexOf(ATTACHED_TEXT_HEAD);
+    while (at >= 0) {
+        const nameStart = at + ATTACHED_TEXT_HEAD.length;
+        const next = asked.indexOf(ATTACHED_TEXT_HEAD, nameStart);
+        const end = next < 0 ? asked.length : next;
+        const headEnd = asked.indexOf('":\n', nameStart);
+        const name = headEnd < 0 ? '' : asked.slice(nameStart, headEnd);
+        if (
+            headEnd >= 0 &&
+            headEnd < end &&
+            name !== '' &&
+            !/["\n]/.test(name)
+        ) {
+            // The blank line `toAttachmentText` joins two files with is no
+            // word of the first.
+            const joined = asked.slice(headEnd + 3, end);
+            const body =
+                next >= 0 && joined.endsWith('\n\n')
+                    ? joined.slice(0, -2)
+                    : joined;
+            const cutAt = body.indexOf(`\n${ATTACHMENT_CUT_TEXT}`);
+            fileList.push({
+                name,
+                text: cutAt < 0 ? body : body.slice(0, cutAt),
+                isCut: cutAt >= 0,
+            });
+        }
+        at = next;
+    }
+    return fileList;
 }
 
 /** What was in the file, without the line written for the model. */
@@ -550,7 +597,7 @@ export function genTextAttachment(
     const body =
         trimmed.length < text.length
             ? trimmed.slice(0, lastBreak > 0 ? lastBreak : trimmed.length) +
-              '\n[... the rest of this file was not included ...]'
+              `\n${ATTACHMENT_CUT_TEXT}`
             : trimmed;
     return {
         id: genAttachmentId(),

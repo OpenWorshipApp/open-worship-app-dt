@@ -20,6 +20,7 @@ import {
     toAttachedText,
     getAttachmentData,
     putAttachmentData,
+    readAskedTextFiles,
     toAskedOfModel,
     toAttachmentLegend,
     toAttachmentNote,
@@ -238,6 +239,49 @@ describe('toAskedOfModel', () => {
     // be dressed up as one -- the window turns it away before this is reached.
     test('nothing at all stays nothing', () => {
         expect(toAskedOfModel('   ', [])).toBe('');
+    });
+});
+
+// EC-500: what of a text file the model was shown, read back off the ask.
+describe('readAskedTextFiles', () => {
+    const LONG = Array.from({ length: 900 }, (_value, index) => {
+        return `Line ${index + 1} of the notes, as it was.`;
+    }).join('\n');
+
+    test('each file the ask carries, its words whole or cut where the ask cut them', () => {
+        const asked = toAskedOfModel('Fix the notes.', [
+            genTextAttachment('short.md', '# Short\n\nAll of it.'),
+            genTextAttachment('long.md', LONG),
+        ]);
+
+        const fileList = readAskedTextFiles(asked);
+
+        expect(
+            fileList.map(({ name, isCut }) => {
+                return { name, isCut };
+            }),
+        ).toEqual([
+            { name: 'short.md', isCut: false },
+            { name: 'long.md', isCut: true },
+        ]);
+        // The blank line joining the two is no word of the first.
+        expect(fileList[0].text).toBe('# Short\n\nAll of it.');
+        const shown = fileList[1].text;
+        expect(LONG.startsWith(shown)).toBe(true);
+        expect(shown.length).toBeLessThan(LONG.length);
+        expect(shown).not.toContain('was not included');
+    });
+
+    test('an ask with no file in it, or the head written with no name, reads none', () => {
+        expect(readAskedTextFiles('What does John 3:16 say?')).toEqual([]);
+        expect(
+            readAskedTextFiles(
+                'The user attached a file called "x.md" yesterday.',
+            ),
+        ).toEqual([]);
+        expect(
+            readAskedTextFiles('The user attached a file called "":\nWords.'),
+        ).toEqual([]);
     });
 });
 

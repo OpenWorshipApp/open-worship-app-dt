@@ -1267,8 +1267,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   model's to fix nor the window's to drop). Before that, a change whose
   words report a change (`findStudyChangeReport`, `EC-505`) and a whole
   text that would drop the file's parts (`routeWholeStudyRewrite`,
-  `EC-502`) are refused or routed (`chatbot-files-report.md`). The draft is
-  lifted into `watch.draftedStudy` and the model is shown
+  `EC-502`) are refused or routed, and a part drafted by its `section` with
+  none of its words shown is read by the window and sent back with them
+  (`findUnreadStudyPartRefusal`, `EC-500`; `chatbot-files-report.md`). The
+  draft is lifted into `watch.draftedStudy` and the model is shown
   `[held by the window: N characters]` and `STUDY_HELD_NOTE` in place of
   the study, so it is not billed twice; `save` and `preview` from the model
   are refused (`STUDY_SAVE_MODEL_REFUSAL`, before the tool host is
