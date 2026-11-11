@@ -102,6 +102,7 @@ import {
     readNoteBlocks,
     splitNoteVerseRef,
     toNameKey,
+    withBlankNoteFilled,
 } from './agentNoteBlockHelpers';
 import {
     toNoteAddChanges,
@@ -513,10 +514,12 @@ async function handleEdit(request: AgentNoteEditRequestType) {
                 'Bible Notes folders): nothing in it can be changed.',
         );
     }
-    const changes = toChanges(request.changes);
-    if (changes === null) {
+    const askedChanges = toChanges(request.changes);
+    if (askedChanges === null) {
         return fail('`changes` is a list of changes.');
     }
+    // An empty note's own blank line gives way to what is put in it.
+    const changes = withBlankNoteFilled(noteItem.content, askedChanges);
     const title = typeof request.title === 'string' ? request.title : null;
     if (changes.length === 0 && title === null) {
         return fail('Nothing to change: give `changes` or `title`.');

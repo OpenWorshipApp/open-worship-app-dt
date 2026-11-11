@@ -302,3 +302,49 @@ export function parseTextToolCalls(
         text: rest.replace(/\n{3,}/g, '\n\n').trim(),
     };
 }
+
+// The list arguments of the editing tools -- `owa_note_edit`'s and
+// `owa_slide_edit`'s `changes`, a flow edit's `changes`, a slide's `items`
+// -- are always lists of objects.
+const LIST_ARG_KEY_LIST = ['changes', 'items'] as const;
+
+/**
+ * A list argument a model wrote as the JSON TEXT of a list, read as the
+ * list (2026-11-10, the goal _chatbot completely smart enough to help
+ * prepare a best preaching lesson_). Asked to prepare a sermon in an empty
+ * note, the shared gemma4:cloud wrote a whole, good lesson -- passage, big
+ * idea, background, three points with their verses -- as
+ * `"changes": "[{\"after\": 0, \"kind\": \"section\", …}]"`; the schema
+ * refused a string where a list goes, the model sent the same string again,
+ * two models gave up and the free one wrote a "Test paragraph" into the
+ * note. Only those keys, only a string that IS a JSON list of objects:
+ * anything else goes to the tool as written, for its own refusal.
+ */
+export function toListArgsRead<T>(args: T): T {
+    if (typeof args !== 'object' || args === null || Array.isArray(args)) {
+        return args;
+    }
+    let read: Record<string, unknown> | null = null;
+    for (const key of LIST_ARG_KEY_LIST) {
+        const value = (args as Record<string, unknown>)[key];
+        if (typeof value !== 'string' || !/^\s*\[/.test(value)) {
+            continue;
+        }
+        let list: unknown;
+        try {
+            list = JSON.parse(value);
+        } catch (_error) {
+            continue;
+        }
+        if (
+            Array.isArray(list) &&
+            list.every((item) => typeof item === 'object' && item !== null)
+        ) {
+            read = {
+                ...(read ?? (args as Record<string, unknown>)),
+                [key]: list,
+            };
+        }
+    }
+    return (read ?? args) as T;
+}

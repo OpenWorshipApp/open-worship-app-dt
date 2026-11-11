@@ -3042,6 +3042,55 @@ describe('the custom servers', () => {
         expect(request).toMatchObject({ temperature: 0 });
     });
 
+    // 2026-11-10, the goal _chatbot completely smart enough to help prepare
+    // a best preaching lesson_: a whole sermon written into one tool call is
+    // longer than a help answer's 2 000 tokens, and what a lesson holds rides
+    // on that ask alone.
+    test('a lesson ask carries what a lesson holds and room to write it', async () => {
+        fake.lmStudioInfoMap = new Map();
+        fake.toolList = [{ name: 'owa_bible_note' }];
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        try {
+            await askLlmBot(
+                'help me prepare a sermon on John 10',
+                'presenter',
+                'custom',
+                PHI_MODEL,
+            );
+            await askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'custom',
+                PHI_MODEL,
+            );
+        } finally {
+            fake.toolList = [];
+        }
+        const [lesson, plain] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(lesson.max_tokens).toBe(6000);
+        expect(JSON.stringify(lesson.messages)).toContain(
+            'WHAT A LESSON HOLDS',
+        );
+        // The lean list a server of the user's own gets keeps the tool
+        // that makes the note -- for this ask only.
+        const toToolNames = (request: any) => {
+            return (request.tools ?? []).map((tool: any) => {
+                return tool.function.name;
+            });
+        };
+        expect(toToolNames(lesson)).toContain('owa_bible_note');
+        expect(toToolNames(plain)).not.toContain('owa_bible_note');
+        expect(plain.max_tokens).toBe(2000);
+        expect(JSON.stringify(plain.messages)).not.toContain(
+            'WHAT A LESSON HOLDS',
+        );
+    });
+
     test('prices a server elsewhere as not known', async () => {
         fake.customServers = [
             genServer({ baseUrl: 'https://llm.example.org/v1' }),

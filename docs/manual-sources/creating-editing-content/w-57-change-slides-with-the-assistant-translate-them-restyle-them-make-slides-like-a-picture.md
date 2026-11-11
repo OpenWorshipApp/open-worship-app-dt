@@ -36,7 +36,8 @@ like a picture of slides you like.
      help window does by itself, at once — no assistant is needed for them, so they work
      with no AI key and no internet.
    - **[en:tran:Make slides like a picture]**: attach a picture of the slides you want — the
-     📷 under the box attaches a picture of the app, the paperclip a picture file — and say
+     **⋮** at the left of the box has **[en:tran:Attach a picture of the app]** and
+     **[en:tran:Attach a file]** for a picture file — and say
      what the slides should say, e.g. _Add 2 slides that look like slide 2 in this picture:
      one says Welcome, one says Let us pray_ — or send the picture with no words at all.
      Without a picture it asks for one. A photo or video behind the words is the slide's

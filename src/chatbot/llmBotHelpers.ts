@@ -109,7 +109,7 @@ import {
     genReaderButtonReferenceAnswer,
     getBotFocus,
 } from './helpBotHelpers';
-import { parseTextToolCalls } from './textToolCallHelpers';
+import { parseTextToolCalls, toListArgsRead } from './textToolCallHelpers';
 import type {
     BotActionType,
     BotAnswerType,
@@ -179,12 +179,16 @@ import {
 import {
     NOTE_ASK_KIND,
     NOTE_EDIT_TOOL_NAME,
+    NOTE_BLANK_DROPPED_NUDGE,
+    NOTE_DROPPED_NUDGE,
     NOTE_MAX_TOOL_ROUNDS,
     NOTE_SYSTEM_PROMPT,
     checkAddsNoteVerse,
+    checkIsLanguageLessonAsk,
     readCreatedNote,
     resolveNoteEditTarget,
     restoreNoteTypedWords,
+    toBlankNoteFillArgs,
     type CreatedNoteType,
     type NoteAskFileType,
 } from './noteChatHelpers';
@@ -200,8 +204,10 @@ import {
 import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
 import { pickBibleInLanguage } from './verseAskLanguageHelpers';
 import {
+    LESSON_MAKE_HINT,
     NOTE_CREATE_PROMPT,
     STUDY_FILE_PROMPT,
+    checkIsLessonWriteAsk,
 } from './noteCreatePromptHelpers';
 import {
     STUDY_ASK_KIND,
@@ -609,6 +615,12 @@ export function getLlmModelNotice(
 }
 // A help answer is a paragraph and a couple of steps, not an essay.
 const MAX_TOKENS = 2000;
+// ...but a lesson IS one, written whole into a tool call: big idea,
+// background, three points with their verses, examples and applications,
+// a prayer and questions run 1 200-1 800 words, about 1 700-2 600 tokens
+// with the call's JSON round them -- past 2 000, so the call came back cut
+// (`AskExtraType.isLongWrite`). The same room the paid providers have.
+const LONG_WRITE_MAX_TOKENS = 6000;
 // A whole answer put into a script of its own is several times the English's
 // tokens: a 300-word answer is ~400 tokens in English and well over 1 500 in
 // such a script, so
@@ -2214,6 +2226,12 @@ type ToolWatchType = {
     // What the person TYPED in a note ask, the words a model writes into the
     // note are put back to where only look-alike letters differ (BN-37).
     noteTyped: string | null;
+    /**
+     * How many empty blocks the ONE attached note holds when it holds
+     * nothing: a new note the model makes is written into it instead
+     * (`toBlankNoteFillArgs`), once. Null for a note with anything in it.
+     */
+    blankNoteBlockCount?: number | null;
     noteVerseBible?: string | null;
     /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
@@ -3394,7 +3412,9 @@ async function runMcpTool(
 ) {
     const finishStep = reportStep?.(describeToolStep(name, args));
     try {
-        return await runMcpToolCall(name, args, watch, signal);
+        // A list the model wrote as JSON text is read as the list
+        // (`toListArgsRead`): refused, it was sent the same way again.
+        return await runMcpToolCall(name, toListArgsRead(args), watch, signal);
     } finally {
         finishStep?.();
     }
@@ -3593,7 +3613,7 @@ async function runMcpToolCall(
     args: any,
     watch: ToolWatchType,
     signal?: AbortSignal | null,
-) {
+): Promise<string> {
     // The other half of `modelTools.mjs`: a tool is only really withheld if
     // naming it does not work either. These are documented in the app's own
     // manual, which the model can read, so a filtered list is a suggestion on
@@ -3639,6 +3659,36 @@ async function runMcpToolCall(
         !['add', 'list', 'read'].includes(String(args?.action ?? ''))
     ) {
         return `Tool refused: ${NOTE_ASK_BIBLE_NOTE_REFUSAL}`;
+    }
+    // A new note asked for in a conversation about ONE note that holds
+    // nothing goes INTO that note (2026-11-10, the goal _chatbot completely
+    // smart enough to help prepare a best preaching lesson_): the person
+    // made the empty note to hold it. Through `owa_note_edit` and the
+    // note's own editor -- one step of its Undo, the title kept at once.
+    if (
+        name === 'owa_bible_note' &&
+        watch.noteFiles?.length === 1 &&
+        typeof watch.blankNoteBlockCount === 'number'
+    ) {
+        const fill = toBlankNoteFillArgs(
+            args,
+            watch.noteFiles[0].name,
+            watch.blankNoteBlockCount,
+        );
+        if (fill !== null) {
+            watch.blankNoteBlockCount = null;
+            const filled = await runMcpToolCall(
+                NOTE_EDIT_TOOL_NAME,
+                fill,
+                watch,
+                signal,
+            );
+            return (
+                `(The attached note "${watch.noteFiles[0].name}" was empty, ` +
+                'so the lesson was written INTO it, not into a new note -- ' +
+                `say so.)\n${filled}`
+            );
+        }
     }
     // A song is changed only in a conversation about one the person
     // attached, and named by its NAME: the window puts the attached file's
@@ -3746,7 +3796,17 @@ async function runMcpToolCall(
         if ('reason' in resolved) {
             return `Tool refused: ${resolved.reason}`;
         }
-        lyricEditArgs = { ...(args ?? {}), ...resolved };
+        lyricEditArgs = {
+            ...(args ?? {}),
+            ...resolved,
+            // Changes with no action are an edit (2026-11-10: "make the
+            // three point headings bold" came as `changes` alone, refused,
+            // then sent again with it).
+            ...(args?.action === undefined &&
+            (args?.changes !== undefined || args?.title !== undefined)
+                ? { action: 'edit' }
+                : {}),
+        };
         // Words they typed to be written go in as they typed them, where a
         // model wrote a look-alike letter (BN-37).
         if (watch.noteTyped !== null) {
@@ -3791,6 +3851,16 @@ async function runMcpToolCall(
               : checkReadsInRecordBible(watch, name, args)
                 ? { ...args, bible: watch.quoteBible }
                 : (args ?? {});
+    // What the watch reads the call by: the model's own args, with the
+    // action the window filled in (a note edit sent with `changes` alone
+    // was done and then not counted, and the answer was sent back as a
+    // claim of a change nothing made -- 2026-11-10).
+    const watchedArgs =
+        lyricEditArgs !== null &&
+        args?.action === undefined &&
+        lyricEditArgs.action !== undefined
+            ? { ...(args ?? {}), action: lyricEditArgs.action }
+            : args;
     // A Resources file comes back with its pages as PICTURES, which go to
     // the model after this round's tool results (`watch.pictures`) -- or,
     // to a model that cannot see them, are left out with a sentence saying
@@ -3853,7 +3923,7 @@ async function runMcpToolCall(
             throwIfCancelled(signal);
             text = await callTool(name, calledArgs, signal, watch.windowAim);
         }
-        applyToolWatch(watch, name, args, text);
+        applyToolWatch(watch, name, watchedArgs, text);
         return text;
     } catch (error: any) {
         // ...except a stop, which is not a lookup the model can route around.
@@ -4066,6 +4136,16 @@ export type AskExtraType = {
      */
     isTranslation?: boolean;
     /**
+     * An ask that may WRITE a whole document in one call -- a note
+     * conversation, or a lesson asked for anywhere (2026-11-10, the goal
+     * _chatbot completely smart enough to help prepare a best preaching
+     * lesson_). Set by `askLlmBot` itself. A server of the user's own (the
+     * shared gemma4:cloud Auto asks first among them) answers within
+     * `MAX_TOKENS`, a help answer's 2 000, and a sermon written into a tool
+     * call is longer than that: it gets `LONG_WRITE_MAX_TOKENS`.
+     */
+    isLongWrite?: boolean;
+    /**
      * A verse somebody half-remembers, looked for in the installed Bible
      * `bible` (`verseFindChatHelpers.ts`): asked under a short prompt of its
      * own (`VERSE_FIND_SYSTEM_PROMPT`) with `owa_find_verse` as its ONLY tool
@@ -4210,6 +4290,9 @@ export type AskExtraType = {
         verseLang?: string;
         // What they typed, as typed (`ToolWatchType.noteTyped`).
         typed?: string;
+        // The ONE attached note holds nothing: its empty blocks
+        // (`ToolWatchType.blankNoteBlockCount`).
+        blankBlockCount?: number;
     };
 };
 
@@ -5300,6 +5383,22 @@ async function askOpenAiCompatible(
                     Number(completion.usage?.completion_tokens ?? 0) > 0
                 ) {
                     isDroppedReplyRetried = true;
+                    // A whole lesson for an EMPTY note is the long call a
+                    // server drops (BN-61): the retry asks for the flat one.
+                    // A note with words in it takes the change in parts
+                    // (BN-67: a sermon of loose lines finished in one edit
+                    // was dropped twice, the question unanswered at 111 s).
+                    if (typeof watch.blankNoteBlockCount === 'number') {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_BLANK_DROPPED_NUDGE,
+                        });
+                    } else if (watch.noteFiles !== null) {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_DROPPED_NUDGE,
+                        });
+                    }
                     round -= 1;
                     continue;
                 }
@@ -5407,6 +5506,12 @@ async function askOpenAiCompatible(
             };
         }
         messages.push(choice);
+        // The SAME document edit twice in one reply is done once, its answer
+        // given to both (2026-11-10: "make it fit 15 minutes" came back as one
+        // edit sent twice -- the first cut the note, the second was refused as
+        // made on a note that had changed, and the answer apologised for a
+        // change that had been made). A press is not: Zoom In twice is meant.
+        const roundResultMap = new Map<string, string>();
         for (const toolCall of toolCalls) {
             const call = toolCall as any;
             let args = {};
@@ -5416,16 +5521,20 @@ async function askOpenAiCompatible(
                 // A malformed argument string is the model's problem to fix on
                 // the next round; an empty object gets it a usable error back.
             }
+            const callName = toCleanToolName(call.function?.name);
+            const callKey = DOCUMENT_EDIT_TOOL_NAME_SET.has(callName)
+                ? `${callName} ${call.function?.arguments ?? ''}`
+                : null;
+            const content =
+                (callKey === null ? undefined : roundResultMap.get(callKey)) ??
+                (await runMcpTool(callName, args, watch, signal, reportStep));
+            if (callKey !== null) {
+                roundResultMap.set(callKey, content);
+            }
             messages.push({
                 role: 'tool',
                 tool_call_id: call.id,
-                content: await runMcpTool(
-                    toCleanToolName(call.function?.name),
-                    args,
-                    watch,
-                    signal,
-                    reportStep,
-                ),
+                content,
             });
         }
         // The same guarantee as in `askAnthropic`: a tool was called, so tools
@@ -5714,6 +5823,17 @@ const LOCAL_TOOL_NAME_LIST = [
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
+// The tools that change a document the person keeps: the same call twice in
+// one reply is a mistake for these, never a wish (a press twice may be one).
+const DOCUMENT_EDIT_TOOL_NAME_SET = new Set([
+    NOTE_EDIT_TOOL_NAME,
+    SLIDE_EDIT_TOOL_NAME,
+    LYRIC_EDIT_TOOL_NAME,
+    FLOW_EDIT_TOOL_NAME,
+    FOREGROUND_EDIT_TOOL_NAME,
+    'owa_bible_note',
+]);
+
 /**
  * Whether a tool the app's own model list carries is left OUT of what this
  * provider's model is sent -- today, a custom server's lean list. The window
@@ -5792,6 +5912,7 @@ function genCustomProvider(
         kind?: CustomServerKindType;
         isGeneral?: boolean;
         isTranslation?: boolean;
+        isLongWrite?: boolean;
     } = {},
 ): OpenAiCompatProviderType {
     const { server, row } = findCustomModelOrThrow(model);
@@ -5800,6 +5921,7 @@ function genCustomProvider(
         kind = 'other',
         isGeneral = false,
         isTranslation = false,
+        isLongWrite = false,
     } = options;
     return {
         key: 'custom',
@@ -5809,7 +5931,11 @@ function genCustomProvider(
         },
         genRequestExtra: () => {
             return {
-                max_tokens: isTranslation ? TRANSLATION_MAX_TOKENS : MAX_TOKENS,
+                max_tokens: isTranslation
+                    ? TRANSLATION_MAX_TOKENS
+                    : isLongWrite
+                      ? LONG_WRITE_MAX_TOKENS
+                      : MAX_TOKENS,
                 ...(LOCAL_TEMPERATURE_KIND_SET.has(kind)
                     ? { temperature: LOCAL_TEMPERATURE }
                     : {}),
@@ -5836,7 +5962,19 @@ function genCustomProvider(
         // A registry server says itself whether it is metered (`isFree`);
         // one on this machine or the church's network never is.
         isPricedAtZero: checkIsNoCostCustomServer(server),
-        filterTools: filterLocalToolList,
+        // An ask that may write a whole note keeps the tool that MAKES
+        // one (`isLongWrite`): without it a lesson asked for on Auto
+        // reached owa_bible_note only when the model guessed its name.
+        filterTools: isLongWrite
+            ? (tools) => {
+                  return tools.filter((tool) => {
+                      return (
+                          LOCAL_TOOL_NAME_SET.has(tool.name) ||
+                          tool.name === 'owa_bible_note'
+                      );
+                  });
+              }
+            : filterLocalToolList,
         describeRound: (round) => {
             if (round !== 0) {
                 return null;
@@ -5937,6 +6075,7 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
         kind,
         isGeneral: extra?.isGeneral === true,
         isTranslation: extra?.isTranslation === true,
+        isLongWrite: extra?.isLongWrite === true,
     });
     try {
         const answer = await askOpenAiCompatible(
@@ -6633,6 +6772,7 @@ async function askLlmBotAsWritten(
         seeded.noteVerseLang =
             extra?.note?.verseLang ?? extra?.study?.verseLang ?? null;
         seeded.noteTyped = extra?.note?.typed ?? null;
+        seeded.blankNoteBlockCount = extra?.note?.blankBlockCount ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -6712,10 +6852,26 @@ async function askLlmBotAsWritten(
     // end of the ask (`genReplyLanguageLine`). One reading for every round
     // and a stand-in alike.
     const appLang = extra?.appLang ?? getAppLangCode();
+    // A lesson asked for where no note is attached -- a Bible Reader, a
+    // lookup, a Resources file, an ordinary tab -- with the tool that makes
+    // one in the list (2026-11-10): what a lesson holds rides on that ask
+    // alone. A note conversation carries its own (`toNoteAsk`).
+    const isLessonAsked =
+        extra?.note === undefined &&
+        extra?.study === undefined &&
+        extra?.isTranslation !== true &&
+        modelTools.some((tool) => tool.name === 'owa_bible_note') &&
+        (checkIsLessonWriteAsk(extra?.askedText ?? '') ||
+            checkIsLanguageLessonAsk(extra?.askedText ?? '') ||
+            checkIsLessonWriteAsk(asked.split(/\n\s*\n/)[0] ?? ''));
+    if (isLessonAsked) {
+        asked = `${asked}\n\n${LESSON_MAKE_HINT}`;
+    }
     asked = toAskWithLanguage(asked, extra, appLang);
     const guardedExtra: AskExtraType = {
         ...extra,
         appLang,
+        isLongWrite: extra?.note !== undefined || isLessonAsked,
         onUsage: (round) => {
             recordSpendRound(round);
             extra?.onUsage?.(round);

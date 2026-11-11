@@ -370,10 +370,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    back by itself after that. **Want the tips back sooner?
    Type /tips** in the box and ask: the line is back at once, and the answer
    gives you one tip straight away. 📸
-7. **Show it, instead of describing it.** Beside the box are three buttons.
-   **📎** attaches a picture or a file from your computer; **📷** takes a picture
-   of the app as it looks right now; **🎯** lets you POINT — an outline follows
-   your mouse over the app and the control you click is the one you meant.
+7. **Show it, instead of describing it.** Press the **⋮** at the left of the box
+   (**[en:tran:More Options]**): it opens a short menu, each row an icon and its
+   name. **[en:tran:Attach a file]** attaches a picture or a file from your computer;
+   **[en:tran:Attach a picture of the app]** takes a picture of the app as it looks
+   right now; **[en:tran:Point at a control in the app]** lets you POINT — an outline
+   follows your mouse over the app and the control you click is the one you meant.
+   The same menu holds **[en:tran:Attach a foreground session]** and, last,
+   **[en:tran:List every command]**, which puts **/** in the box and lists the
+   commands. **Esc**, or a press anywhere else, closes the menu.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
    an **×** to take it off again, and up to four can ride one question.
@@ -531,7 +536,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
    **Attach a picture or PDF to a problem report.** In this help window, type what
-   went wrong into the question box, then use its paperclip to choose the picture,
+   went wrong into the question box, then press the **⋮** at its left and
+   **[en:tran:Attach a file]** to choose the picture,
    text file or PDF. Press **[en:tran:Report]** below **[en:tran:Send]**, then
    **[en:tran:Report it]** in the confirmation. Read the prepared report and its
    attachment list, then press **[en:tran:Send report]** when ready to send it.
@@ -540,7 +546,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
    **[en:tran:Report]** button on it: type a line, attach a picture or a file if it
-   helps (the paperclip takes pictures, text files and a PDF), and
+   helps (**[en:tran:Attach a file]** in the **⋮** takes pictures, text files and a PDF), and
    press **[en:tran:Send]** or **[en:tran:Report]** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
@@ -886,7 +892,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 18. **It can turn words you already have into a song.** Paste the verses of a song
     into the box of this help window, where you type a question (not into the Lyric
     Editor) — from an email, from a hymn sheet, from a page you found — and ask
-    for a song; or attach a `.txt` of the words with the paperclip; or give it the
+    for a song; or attach a `.txt` of the words (**⋮** → **[en:tran:Attach a file]**); or give it the
     address of a page the words are on. One of the **[en:tran:Try asking]** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
     The answer comes back in plain words — what the song came out as, its parts and

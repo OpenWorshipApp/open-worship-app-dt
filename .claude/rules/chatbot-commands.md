@@ -31,7 +31,10 @@ window as a whole — tabs, pickers, its language, the caution — is in
   row under the box circled: _add an icon of `/` somewhere to click then add
   `/` to input, so user know how `/` for. dom of the icon should explain what
   it is for_; `.chat-start-command`, `bi-slash-square`, `aria-label` **List
-  every command**, a tooltip saying what the press does).
+  every command**, a tooltip saying what the press does). **Since 2026-11-10
+  it is the LAST ROW of the ⋮ left of the box** (`RenderAskToolsMenuComp`,
+  `chatbot-window.md`), its words beside its glyph, under a line apart from
+  the four attach rows; the class and label stayed.
   `toCommandStartedDraft` decides the box: empty → `/` and the list opens;
   already a command → unchanged, the list brought back if Escape put it
   away; holding words → `/ ` IN FRONT of them, caret after the `/`, no list

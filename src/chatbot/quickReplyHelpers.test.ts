@@ -108,6 +108,16 @@ describe('parseAnswerOptions', () => {
             text: 'Done.',
             options: ['Undo it'],
         });
+        // BN-67 (2026-11-10, under every finished sermon): the marker in
+        // bold on its own line, its closing marks no words after it.
+        expect(
+            parseAnswerOptions(
+                'Done.\n\n**OPTIONS:**\n- Make the headings blue\n- Add a story',
+            ),
+        ).toEqual({
+            text: 'Done.',
+            options: ['Make the headings blue', 'Add a story'],
+        });
     });
 
     // BN-29 (2026-11-08, seen live on Free's Nemotron): its options line was

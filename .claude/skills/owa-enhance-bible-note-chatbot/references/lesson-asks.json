@@ -1,0 +1,135 @@
+[
+    {
+        "id": "L-01",
+        "form": "sermon",
+        "genre": "Old Testament narrative",
+        "ask": "Help me prepare a sermon on David and Goliath for Sunday"
+    },
+    {
+        "id": "L-02",
+        "form": "sermon",
+        "genre": "Gospel narrative",
+        "ask": "make me a preaching lesson on Zacchaeus"
+    },
+    {
+        "id": "L-03",
+        "form": "sermon",
+        "genre": "poetry, confession",
+        "ask": "I am preaching from Psalm 51 next week, please prepare the lesson"
+    },
+    {
+        "id": "L-04",
+        "form": "sermon",
+        "genre": "epistle",
+        "ask": "sermon on Philippians 4:4-13 about being content"
+    },
+    {
+        "id": "L-05",
+        "form": "sermon",
+        "genre": "prophecy",
+        "ask": "Prepare a sermon on Isaiah 40:28-31 for people who are tired"
+    },
+    {
+        "id": "L-06",
+        "form": "sermon",
+        "genre": "parable",
+        "ask": "help me prepare a sermon on the parable of the sower"
+    },
+    {
+        "id": "L-07",
+        "form": "sermon",
+        "genre": "topical",
+        "ask": "I need to preach about forgiveness this Sunday"
+    },
+    {
+        "id": "L-08",
+        "form": "sermon",
+        "genre": "occasion",
+        "ask": "write an Easter sermon"
+    },
+    {
+        "id": "L-09",
+        "form": "sermon",
+        "genre": "time limit",
+        "ask": "a 15 minute sermon on John 3:16"
+    },
+    {
+        "id": "L-10",
+        "form": "sermon",
+        "genre": "typed by an elder",
+        "ask": "pls help me make preach for sunday about the good samaritan"
+    },
+    {
+        "id": "L-11",
+        "form": "devotion",
+        "genre": "devotion",
+        "ask": "a short devotion on Psalm 46 for our prayer meeting"
+    },
+    {
+        "id": "L-12",
+        "form": "children",
+        "genre": "children's lesson",
+        "ask": "a children's lesson on Jonah"
+    },
+    {
+        "id": "L-13",
+        "form": "sermon",
+        "genre": "wisdom",
+        "ask": "Help me prepare a sermon on Proverbs 3:5-6"
+    },
+    {
+        "id": "L-14",
+        "form": "sermon",
+        "genre": "funeral, apocalyptic",
+        "ask": "a message of hope for a funeral, from Revelation 21:1-7"
+    },
+    {
+        "id": "F-01",
+        "form": "sermon",
+        "genre": "finish: an outline only",
+        "seed": "[^Luke 15:1-7]\n## Big idea\nGod goes after the one who is lost.\n## 1. The shepherd seeks [^Luke 15:4]\n## 2. The shepherd carries [^Luke 15:5]\n## 3. Heaven rejoices [^Luke 15:7]",
+        "ask": "finish my sermon"
+    },
+    {
+        "id": "F-02",
+        "form": "sermon",
+        "genre": "finish: three points as a list",
+        "seed": "Sermon on Matthew 6:25-34\n- Do not worry about tomorrow\n- Look at the birds of the air\n- Seek first the kingdom of God",
+        "ask": "can you make this into a full sermon"
+    },
+    {
+        "id": "F-03",
+        "form": "sermon",
+        "genre": "finish: no application, prayer or questions",
+        "seed": "[^Mark 10:46-52]\n## Big idea\nJesus stops for the one others tell to be quiet.\n## Introduction\nHave you ever been told to stop asking for help?\n## 1. Bartimaeus cries out [^Mark 10:47-48]\nThe crowd told him to be quiet, but he cried the more.\n## 2. Jesus stops and calls [^Mark 10:49]\nThe Son of God stood still for a blind beggar.\n## 3. He follows Jesus [^Mark 10:52]\nHe received his sight and followed Jesus in the way.",
+        "ask": "finish it please"
+    },
+    {
+        "id": "F-04",
+        "form": "sermon",
+        "genre": "finish: messy notes",
+        "seed": "mark 4 storm\njesus asleep in the boat\ndisciples afraid - why are you so fearful\npeace be still\nwho is this? even the wind obeys him\nmy story: the night at the hospital",
+        "ask": "please finish my sermon from these notes"
+    },
+    {
+        "id": "C-01",
+        "form": "sermon",
+        "genre": "empty note card: preaching lesson, then the first passage offered",
+        "press": "reply:1",
+        "then": "first-option"
+    },
+    {
+        "id": "C-02",
+        "form": "children",
+        "genre": "empty note card: children's lesson, then the first passage offered",
+        "press": "reply:2",
+        "then": "first-option"
+    },
+    {
+        "id": "C-03",
+        "form": "devotion",
+        "genre": "empty note card: short devotion, then the first passage offered",
+        "press": "reply:3",
+        "then": "first-option"
+    }
+]

@@ -584,5 +584,13 @@
     },
     "studyFileAsks": [
         "^(?!.*(?:^|[\\s'’])(?:comment|où|pourquoi|quels?|quelles?|dossiers?|notes?)(?=[\\s?.,!]|$)).*(?:^|[\\s'’])(?:crée[rz]?|créez|fais|faites|faire|écri(?:s|t|re|vez)|rédige[rz]?|rédigez|prépare[rz]?|préparez|enregistre[rz]?|enregistrez|sauvegarde[rz]?|sauvegardez|génère[rz]?|générez|mets|mettez)(?=[\\s,]).*(?:fichier (?:d['’]étude|de ressources?|markdown)|ressources?|fiche d['’]étude|guide d['’]étude|étude(?: biblique)?)"
+    ],
+    "lessonAsks": [
+        "^(?!.*(?:^|[\\s'’])(?:comment|où|pourquoi|quels?|quelles?)(?=[\\s?.,!]|$)).*(?:^|[\\s'’])(?:fais|faites|faire|écri(?:s|vez|re)|rédige[rz]?|rédigez|prépare[rz]?|préparez|crée[rz]?|créez)(?:-moi)?(?=[\\s,]|$)[^.?!]{0,40}?(?:^|[\\s'’])(?:une?\\s+|ma\\s+|mon\\s+)?(?:leçon|sermon|prédication|homélie|méditation)(?=[\\s?.,!]|$)(?!\\s+(?:plus|moins))",
+        "(?:^|[\\s'’])je\\s+(?:prêche|vais\\s+prêcher|dois\\s+prêcher)(?=[\\s,]|$)[^.?!]{0,40}?(?:^|[\\s'’])(?:sur|à\\s+propos|au\\s+sujet)(?=\\s|$)"
+    ],
+    "verseCheckAsks": [
+        "(?:^|[\\s'’])(?:vérifie[rz]?|vérifiez|contrôle[rz]?|contrôlez)(?=[\\s,]|$)[^.?!]{0,40}?(?:^|[\\s'’])(?:versets?|références?|passages?)(?=[\\s?.,!]|$)",
+        "(?:^|[\\s'’])(?:mes|les|ces)\\s+(?:versets?|références?)(?=[\\s,]|$)[^.?!]{0,30}?(?:^|[\\s'’])(?:justes?|corrects?|correctes?|exacts?|exactes?|faux|fausses?)(?=[\\s?.,!]|$)"
     ]
 }

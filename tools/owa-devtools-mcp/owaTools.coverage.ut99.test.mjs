@@ -1010,12 +1010,21 @@ describe('owa_pick_element', () => {
 });
 
 describe('owa_goto_page', () => {
+  const MAIN_ON = (page) => ({ id: 'main', url: `http://localhost/${page}` });
+  // A Bible Reader window of its own, listed FIRST as CDP lists the window
+  // opened last -- the one the tool sent away in robot run 20261110-1109.
+  const READER_WINDOW = {
+    id: 'reader-window',
+    url: 'http://localhost/reader.html?uuid=reader',
+  };
+
   it('waits for the window to arrive on the page it was sent to', async () => {
     fakeAllTimers();
     routeApp('en', () => ({ switching: true, from: 'presenter.html' }));
     app.listTargets
-      .mockResolvedValueOnce([{ url: 'http://localhost/presenter.html' }])
-      .mockResolvedValue([{ url: 'http://localhost/reader.html' }]);
+      .mockResolvedValueOnce([MAIN_ON('presenter.html')])
+      .mockResolvedValueOnce([MAIN_ON('presenter.html')])
+      .mockResolvedValue([MAIN_ON('reader.html')]);
     const pending = call('owa_goto_page', { page: 'reader.html' });
     await vi.advanceTimersByTimeAsync(400);
     expect(jsonOf(await pending)).toEqual({
@@ -1023,32 +1032,94 @@ describe('owa_goto_page', () => {
       switched: true,
       from: 'presenter.html',
     });
-    expect(app.listTargets).toHaveBeenCalledTimes(2);
+    expect(app.listTargets).toHaveBeenCalledTimes(3);
   });
 
   it('still proves the switch when the page left before it could answer', async () => {
     app.evaluateInApp.mockRejectedValue(
       new Error('Execution context was destroyed'),
     );
-    app.listTargets.mockResolvedValue([
-      { url: 'http://localhost/appDocumentEditor.html' },
-    ]);
+    app.listTargets
+      .mockResolvedValueOnce([MAIN_ON('reader.html')])
+      .mockResolvedValue([MAIN_ON('appDocumentEditor.html')]);
     expect(
       jsonOf(await call('owa_goto_page', { page: 'appDocumentEditor.html' })),
-    ).toEqual({ page: 'appDocumentEditor.html', switched: true, from: null });
+    ).toEqual({
+      page: 'appDocumentEditor.html',
+      switched: true,
+      from: 'reader.html',
+    });
   });
 
   it('answers the page asked for when the window is already there and names none', async () => {
     routeApp('en', () => ({ switching: false }));
+    app.listTargets.mockResolvedValue([MAIN_ON('reader.html')]);
     expect(
       jsonOf(await call('owa_goto_page', { page: 'reader.html' })),
     ).toEqual({ page: 'reader.html', switched: false });
-    expect(app.listTargets).not.toHaveBeenCalled();
+    expect(app.listTargets).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends the MAIN window, never a Reader window of its own beside it', async () => {
+    // Both on the Reader: ranked by page kind they tie, and the one listed
+    // first -- the popup -- was the one navigated.
+    routeApp('en', () => ({ switching: true, from: 'reader.html' }));
+    app.listTargets
+      .mockResolvedValueOnce([READER_WINDOW, MAIN_ON('reader.html')])
+      .mockResolvedValue([READER_WINDOW, MAIN_ON('presenter.html')]);
+    expect(
+      jsonOf(await call('owa_goto_page', { page: 'presenter.html' })),
+    ).toEqual({ page: 'presenter.html', switched: true, from: 'reader.html' });
+    expect(app.evaluateInApp).toHaveBeenCalledTimes(1);
+    expect(app.evaluateInApp.mock.calls[0][1]).toEqual({
+      port: 9222,
+      match: 'main',
+    });
+
+    // The main window on the Slide Editor: a Reader window outranked it.
+    app.evaluateInApp.mockClear();
+    app.listTargets
+      .mockReset()
+      .mockResolvedValueOnce([READER_WINDOW, MAIN_ON('appDocumentEditor.html')])
+      .mockResolvedValue([READER_WINDOW, MAIN_ON('presenter.html')]);
+    jsonOf(await call('owa_goto_page', { page: 'presenter.html' }));
+    expect(app.evaluateInApp.mock.calls[0][1].match).toBe('main');
+  });
+
+  it('does not take a Reader window of its own for the main window arriving', async () => {
+    fakeAllTimers();
+    routeApp('en', () => ({ switching: true, from: 'presenter.html' }));
+    // The main window never leaves the Presenter; a Reader window is open.
+    app.listTargets.mockResolvedValue([
+      READER_WINDOW,
+      MAIN_ON('presenter.html'),
+    ]);
+    const pending = call('owa_goto_page', { page: 'reader.html' });
+    await vi.advanceTimersByTimeAsync(8400);
+    expect(errorOf(await pending)).toBe(
+      'Asked the window to switch to "reader.html" but it is not there ' +
+        'yet -- check owa_app_state and try again.',
+    );
+  });
+
+  it('switches nothing when no window is the main one', async () => {
+    app.listTargets.mockResolvedValue([
+      READER_WINDOW,
+      { id: 'setting', url: 'http://localhost/setting.html?uuid=setting' },
+    ]);
+    expect(
+      errorOf(await call('owa_goto_page', { page: 'presenter.html' })),
+    ).toBe(
+      'The main app window was not found among the open windows, so ' +
+        'nothing was switched -- check owa_app_state and try again.',
+    );
+    expect(app.evaluateInApp).not.toHaveBeenCalled();
   });
 
   it('says so when the window never arrives', async () => {
     fakeAllTimers();
     routeApp('en', () => ({ switching: true, from: 'presenter.html' }));
+    app.listTargets.mockResolvedValue([MAIN_ON('presenter.html')]);
     const pending = call('owa_goto_page', { page: 'reader.html' });
     await vi.advanceTimersByTimeAsync(8400);
     expect(errorOf(await pending)).toBe(

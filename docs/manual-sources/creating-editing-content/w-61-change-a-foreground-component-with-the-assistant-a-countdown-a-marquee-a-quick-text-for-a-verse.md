@@ -33,7 +33,7 @@ a quick text of a Bible verse, and change how one looks or where it sits on the 
    - or press the robot in the panel's own header, beside its transition button: it
      attaches the session you are on (**[en:tran:Camera Show]** and
      **[en:tran:Screen Show]** have no sessions, so their robot attaches the panel);
-   - or, in the help window, press the layers button under the box,
+   - or, in the help window, press the **⋮** at the left of the box and choose
      **[en:tran:Attach a foreground session]**. It lists the panels open in the Presenter
      with their sessions. Pick one, or several one after another. When no panel is
      open, it says to open one from the **[en:tran:Foreground]** tab.

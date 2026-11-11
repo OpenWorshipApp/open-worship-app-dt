@@ -1,14 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChatAttachmentType } from './attachmentHelpers';
+import { genTextAttachment } from './attachmentHelpers';
+import { toNoteItemFromFileText } from './noteFileTextHelpers';
 import {
+    NOTE_BLANK_LESSON_HINT,
     NOTE_EDIT_TOOL_NAME,
     NOTE_FORMAT_HINT,
+    NOTE_LESSON_FINISH_HINT,
+    NOTE_LESSON_REVIEW_HINT,
+    NOTE_LESSON_SHORTEN_HINT,
     NOTE_NEW_LESSON_HINT,
     NOTE_QUESTION_HINT,
     NOTE_SYSTEM_PROMPT,
     NOTE_WORDLESS_HINT,
     checkAddsNoteVerse,
+    checkIsBlankNoteText,
+    checkIsEmptyNoteAttachment,
+    checkIsLessonCardAsk,
+    checkIsLessonNoteText,
+    checkIsNoteVerseCheckAsk,
+    collectNoteVerseRefs,
     checkIsNewLessonAsk,
     checkIsNoteFormatAsk,
     checkIsNoteQuestionOnly,
@@ -18,6 +30,11 @@ import {
     findOpenNoteAttachments,
     findSessionHoldingNote,
     findSessionNoteTarget,
+    genLessonGapsText,
+    genNoteLessonHint,
+    readBlankNoteBlockCount,
+    toBlankNoteFillArgs,
+    toNoteVerseReadText,
     genNoteStyleChanges,
     genNoteStyleDoneText,
     readCreatedNote,
@@ -699,6 +716,249 @@ describe('a lesson of its own', () => {
     });
 });
 
+// 2026-11-10, the goal _chatbot completely smart enough to help prepare a
+// best preaching lesson_: what a lesson holds rides on every lesson ask in
+// a note conversation, and an EMPTY note is where the lesson goes.
+describe('a lesson to preach, in a note conversation', () => {
+    const BLANK_READ = toNoteDocumentText({
+        blockCount: 1,
+        file: 'Default',
+        hash: 'h1',
+        blocks: [{ n: 1, kind: 'paragraph', text: '' }],
+    });
+    const EMPTY_READ = toNoteDocumentText({
+        blockCount: 0,
+        file: 'Default',
+        hash: 'h0',
+        blocks: [],
+    });
+    const LESSON_READ = toNoteDocumentText({
+        blockCount: 2,
+        file: 'Default',
+        hash: 'h2',
+        blocks: [
+            { n: 1, kind: 'h1', text: 'The Good Shepherd' },
+            { n: 2, kind: 'passage', isFixed: true, text: '' },
+        ],
+    });
+
+    it('a note read is blank only when it says it holds nothing', () => {
+        expect(checkIsBlankNoteText(BLANK_READ)).toBe(true);
+        expect(checkIsBlankNoteText(EMPTY_READ)).toBe(true);
+        expect(checkIsBlankNoteText(LESSON_READ)).toBe(false);
+        // A passage alone is something: it is fixed, not empty.
+        expect(
+            checkIsBlankNoteText(
+                toNoteDocumentText({
+                    blocks: [{ n: 1, kind: 'passage', isFixed: true }],
+                }),
+            ),
+        ).toBe(false);
+        expect(checkIsBlankNoteText(null)).toBe(false);
+        expect(checkIsBlankNoteText('1 h1: Not the read format')).toBe(false);
+    });
+
+    it('a lesson asked for in an empty note goes INTO it', () => {
+        for (const text of [
+            'help me prepare a sermon on John 10',
+            'make a best preaching lesson about the prodigal son',
+            "I'm preaching on Psalm 23 this Sunday",
+            'write the sermon about grace',
+        ]) {
+            expect(genNoteLessonHint(text, true), text).toBe(
+                NOTE_BLANK_LESSON_HINT,
+            );
+        }
+        const asked = toNoteAsk('help me prepare a sermon on John 10', [
+            { name: 'Sunday', text: BLANK_READ },
+        ]);
+        expect(asked).toContain(NOTE_BLANK_LESSON_HINT);
+        expect(asked).not.toContain(NOTE_NEW_LESSON_HINT);
+        // Into THIS note: the window writes the add into it.
+        expect(NOTE_BLANK_LESSON_HINT).toContain('INTO it');
+        expect(NOTE_BLANK_LESSON_HINT).toContain('not a new one');
+        // An empty note and a question: still a question.
+        expect(genNoteLessonHint('how do I write a sermon here?', true)).toBe(
+            null,
+        );
+    });
+
+    it('a new lesson beside a lesson is still a NEW note, with its shape', () => {
+        expect(
+            genNoteLessonHint('make a lesson about forgiveness', false),
+        ).toBe(NOTE_NEW_LESSON_HINT);
+        expect(NOTE_NEW_LESSON_HINT).toContain('WHAT A LESSON HOLDS');
+        expect(NOTE_NEW_LESSON_HINT).toContain('[^John 10:11-18]');
+    });
+
+    it('their own lesson made whole, or judged, in THIS note', () => {
+        for (const text of [
+            'finish my sermon please',
+            'can you complete this lesson, I only have the points',
+            'flesh out the outline into something I can preach',
+            'make it a full sermon',
+            'improve my sermon',
+        ]) {
+            expect(genNoteLessonHint(text, false), text).toBe(
+                NOTE_LESSON_FINISH_HINT,
+            );
+        }
+        for (const text of [
+            'review my sermon',
+            'is this a good lesson?',
+            'what do you think of my sermon',
+            'is it ready to preach?',
+            'any suggestions for my lesson',
+        ]) {
+            expect(genNoteLessonHint(text, false), text).toBe(
+                NOTE_LESSON_REVIEW_HINT,
+            );
+        }
+        const asked = toNoteAsk('is this a good lesson?', [
+            { name: 'The Good Shepherd', text: LESSON_READ },
+        ]);
+        expect(asked).toContain(NOTE_LESSON_REVIEW_HINT);
+        // It says to change nothing itself: not twice.
+        expect(asked).not.toContain(NOTE_QUESTION_HINT);
+        expect(NOTE_LESSON_FINISH_HINT).toContain('nothing removed');
+    });
+
+    // BN-67 (2026-11-10): told only to add "the parts it lacks", a model
+    // added the closing parts to a sermon whose points were a line each.
+    it('finishing, the window names what the lesson lacks', () => {
+        const sermon = toNoteDocumentText({
+            blockCount: 11,
+            file: 'Default',
+            hash: 'h3',
+            blocks: [
+                {
+                    n: 1,
+                    kind: 'passage',
+                    isFixed: true,
+                    text: '(KJV) Mark 10:46-52 — (46): And they came',
+                },
+                { n: 2, kind: 'h2', text: 'Big idea' },
+                { n: 3, kind: 'paragraph', text: 'Jesus stops for the one.' },
+                { n: 4, kind: 'h2', text: 'Introduction' },
+                { n: 5, kind: 'paragraph', text: 'Told to stop asking?' },
+                { n: 6, kind: 'h2', text: '1. He cries out [^Mark 10:47]' },
+                { n: 7, kind: 'paragraph', text: 'He cried the more.' },
+                { n: 8, kind: 'h2', text: '2. Jesus stops [^Mark 10:49]' },
+                { n: 9, kind: 'paragraph', text: 'He stood still.' },
+                { n: 10, kind: 'paragraph', text: 'He called him.' },
+                { n: 11, kind: 'h2', text: '3. He follows [^Mark 10:52]' },
+            ],
+        });
+        const gaps = genLessonGapsText(sermon)!;
+        // Each part where it goes, by the note as read: the background
+        // after the big idea, a point's words after its own line, the
+        // closing parts after the last point -- point 2 has two lines.
+        const pointWords =
+            'verse token if it has none, what it means, an example from ' +
+            'life and how to live it this week';
+        expect(gaps).toBe(
+            '(Where each missing part goes, by the note as read -- one add ' +
+                'a place: after block 3: Background; after block 7: point ' +
+                `1's ${pointWords}; after block 11: point 3's ${pointWords}, ` +
+                'then Pointing to Jesus, then Response, then Closing prayer, ' +
+                'then Questions for discussion, then Memory verse.)',
+        );
+        const asked = toNoteAsk('finish my sermon', [
+            { name: 'Bartimaeus', text: sermon },
+        ]);
+        expect(asked).toContain(NOTE_LESSON_FINISH_HINT);
+        expect(asked).toContain(gaps);
+        // An outline of lines, no heading: every part, the passage first.
+        expect(
+            genLessonGapsText(
+                toNoteDocumentText({
+                    blocks: [
+                        { n: 1, kind: 'paragraph', text: 'mark 4 storm' },
+                        { n: 2, kind: 'paragraph', text: 'peace be still' },
+                    ],
+                }),
+            ),
+        ).toContain('it lacks: the main passage printed first; Big idea;');
+        // Its points a list under a title line: each item its point, made a
+        // heading where it stands, the frame round them.
+        const listed = genLessonGapsText(
+            toNoteDocumentText({
+                blocks: [
+                    { n: 1, kind: 'paragraph', text: 'Sermon on worry' },
+                    { n: 2, kind: 'bullet', text: 'Do not worry' },
+                    { n: 3, kind: 'bullet', text: 'Seek first' },
+                ],
+            }),
+        )!;
+        expect(listed).toContain(
+            'after block 1: the main passage, its token alone on its line, ' +
+                'then Big idea, then Background, then Introduction; after ' +
+                'block 2: point 1 -- block 2 itself made {kind: "h2", text: ' +
+                '"1. " and its own words}',
+        );
+        expect(listed).toContain(
+            'how to live it this week, then Pointing to Jesus, then ' +
+                'Response, then Closing prayer, then Questions for ' +
+                'discussion, then Memory verse.)',
+        );
+        expect(listed.indexOf('after block 3: point 2')).toBeGreaterThan(0);
+        // Headings in words no English part name reads: never told it
+        // lacks them all.
+        const ownWords = genLessonGapsText(
+            toNoteDocumentText({
+                blocks: [
+                    { n: 1, kind: 'passage', isFixed: true, text: 'x' },
+                    { n: 2, kind: 'h2', text: 'Grand plan' },
+                    { n: 3, kind: 'paragraph', text: 'Words of theirs.' },
+                    { n: 4, kind: 'h2', text: 'Opening words' },
+                ],
+            }),
+        );
+        expect(ownWords).toBeNull();
+        expect(
+            toNoteAsk('is this a good lesson?', [
+                { name: 'Bartimaeus', text: sermon },
+            ]),
+        ).not.toContain('to work down');
+        // "finish it please" -- seen live, no hint at all -- names the
+        // lesson beside one, and nothing beside a note of reminders.
+        expect(checkIsLessonNoteText(sermon)).toBe(true);
+        for (const text of [
+            'finish it please',
+            'can you complete this?',
+            'please finish the rest for me',
+        ]) {
+            expect(
+                toNoteAsk(text, [{ name: 'Bartimaeus', text: sermon }]),
+                text,
+            ).toContain(NOTE_LESSON_FINISH_HINT);
+        }
+        const reminders = toNoteDocumentText({
+            blocks: [
+                { n: 1, kind: 'h2', text: 'Prayer requests' },
+                { n: 2, kind: 'bullet', text: 'call Tom' },
+            ],
+        });
+        expect(checkIsLessonNoteText(reminders)).toBe(false);
+        expect(
+            toNoteAsk('finish it please', [{ name: 'Week', text: reminders }]),
+        ).not.toContain(NOTE_LESSON_FINISH_HINT);
+    });
+
+    it('no lesson hint for a change that only names a part of it', () => {
+        for (const text of [
+            'make the title red',
+            'improve the drawing, make it bigger',
+            'what do you think of the colour?',
+            'is it ok to bold the title?',
+            'add a prayer at the end',
+            'Can you write a lesson plan with times?',
+        ]) {
+            expect(genNoteLessonHint(text, false), text).toBe(null);
+        }
+    });
+});
+
 // BN-55: a hello had the note's misspelt line corrected, unasked.
 describe('a greeting or a question, nothing to change', () => {
     it('is a line that greets or asks with no word asking for a change', () => {
@@ -763,5 +1023,357 @@ describe('a format ask', () => {
                 { name: 'lost sheep', text: '1 paragraph: points' },
             ]),
         ).toContain(NOTE_FORMAT_HINT);
+    });
+});
+
+// 2026-11-10: a whole lesson nested in owa_note_edit's `changes` came back
+// from the shared gemma4:cloud as no reply 7 times of 8, as one flat
+// `owa_bible_note add` text 5 of 5 -- so an add in a conversation about an
+// EMPTY note is written into that note by the window.
+describe('a lesson made for an empty note goes into it', () => {
+    it('reads how many empty blocks a blank note has, or null', () => {
+        const blank = toNoteDocumentText({
+            blockCount: 1,
+            hash: 'h',
+            blocks: [{ n: 1, kind: 'paragraph', text: '' }],
+        });
+        expect(readBlankNoteBlockCount(blank)).toBe(1);
+        expect(
+            readBlankNoteBlockCount(toNoteDocumentText({ blocks: [] })),
+        ).toBe(0);
+        expect(
+            readBlankNoteBlockCount(
+                toNoteDocumentText({
+                    blocks: [{ n: 1, kind: 'paragraph', text: 'Grace' }],
+                }),
+            ),
+        ).toBe(null);
+        expect(readBlankNoteBlockCount(null)).toBe(null);
+    });
+
+    it('turns the add into ONE edit of that note, its empty blocks out', () => {
+        expect(
+            toBlankNoteFillArgs(
+                {
+                    action: 'add',
+                    title: 'The Good Shepherd',
+                    text: '# The Good Shepherd\n[^John 10:11-18]\n## Big idea\nHe gives.',
+                },
+                'Sermon Prep',
+                1,
+            ),
+        ).toEqual({
+            action: 'edit',
+            note: 'Sermon Prep',
+            title: 'The Good Shepherd',
+            changes: [
+                { block: 1, remove: true },
+                {
+                    after: 0,
+                    kind: 'section',
+                    // The title line again is the note's name already.
+                    text: '[^John 10:11-18]\n## Big idea\nHe gives.',
+                },
+            ],
+        });
+        expect(
+            toBlankNoteFillArgs({ action: 'add', text: 'Grace' }, 'N', 0),
+        ).toEqual({
+            action: 'edit',
+            note: 'N',
+            changes: [{ after: 0, kind: 'section', text: 'Grace' }],
+        });
+    });
+
+    it('leaves every other call to the tool', () => {
+        expect(toBlankNoteFillArgs({ action: 'list' }, 'N', 1)).toBe(null);
+        expect(
+            toBlankNoteFillArgs(
+                { action: 'add', title: 'X', text: ' ' },
+                'N',
+                1,
+            ),
+        ).toBe(null);
+        expect(toBlankNoteFillArgs(null, 'N', 1)).toBe(null);
+    });
+
+    it('the empty note hint asks for that add', () => {
+        expect(NOTE_BLANK_LESSON_HINT).toContain('owa_bible_note action "add"');
+        expect(NOTE_BLANK_LESSON_HINT).toContain('into this empty');
+    });
+});
+
+// 2026-11-10: "check that my verses are right" was answered as checked with
+// no verse read, over a point that gave Isaiah 53:5's words to 53:6.
+describe('checking the verses a lesson cites', () => {
+    it('is read off a checking word, or their verses called right or wrong', () => {
+        for (const text of [
+            'check that my verses are right',
+            'can you verify the references',
+            'please double-check the scriptures I used',
+            'are my verses correct?',
+            'make sure the bible quotes are accurate',
+        ]) {
+            expect(checkIsNoteVerseCheckAsk(text), text).toBe(true);
+        }
+        for (const text of [
+            'add verses that fit point 2',
+            'are there verses about love?',
+            'check the spelling',
+            'add John 3:16',
+        ]) {
+            expect(checkIsNoteVerseCheckAsk(text), text).toBe(false);
+        }
+    });
+
+    it('collects each verse once, by the Bible its token names', () => {
+        expect(
+            collectNoteVerseRefs([
+                '9. bullet: "See [^(KJV) Isaiah 53:6] and [^(KJV) Romans 5:8]"\n' +
+                    '10. paragraph: "[^(KJV) Isaiah 53:6] again, [^John 3:16]"',
+                null,
+                '1. h2: "[^(NIV) Psalm 23:1]"',
+            ]),
+        ).toEqual([
+            { bible: 'KJV', refs: ['Isaiah 53:6', 'Romans 5:8'] },
+            { bible: null, refs: ['John 3:16'] },
+            { bible: 'NIV', refs: ['Psalm 23:1'] },
+        ]);
+        expect(collectNoteVerseRefs(['no verses'])).toEqual([]);
+    });
+
+    it('puts the verses as read beside the note, and changes nothing', () => {
+        const text = toNoteVerseReadText([
+            {
+                bible: 'KJV',
+                verses: [
+                    {
+                        ref: 'Isaiah 53:6',
+                        text: 'All we like sheep have gone astray',
+                    },
+                ],
+            },
+        ]);
+        expect(text).toContain('- (KJV) Isaiah 53:6');
+        expect(text).toContain(
+            'the Bible says: "All we like sheep have gone astray"',
+        );
+        expect(text).toContain('Change nothing unasked');
+        expect(toNoteVerseReadText([{ verses: [] }])).toBe(null);
+        const asked = toNoteAsk(
+            'check that my verses are right',
+            [{ name: 'Sermon', text: '1. paragraph: "x"' }],
+            null,
+            false,
+            null,
+            text,
+        );
+        expect(asked).toContain(text!);
+        expect(asked).not.toContain(NOTE_QUESTION_HINT);
+    });
+});
+
+// 2026-11-10: "it is too long, make it fit 15 minutes" took out every
+// example and application of the lesson.
+describe('a lesson made shorter', () => {
+    it('is read off time and length, never a line made shorter', () => {
+        for (const text of [
+            'it is too long, make it fit 15 minutes',
+            'my sermon is way too long',
+            'can you shorten my lesson',
+            'cut it down to twenty minutes',
+            'make the sermon shorter please',
+        ]) {
+            expect(genNoteLessonHint(text, false), text).toBe(
+                NOTE_LESSON_SHORTEN_HINT,
+            );
+        }
+        for (const text of [
+            'make the title shorter',
+            'shorten the third question',
+            'how long will this take to preach?',
+        ]) {
+            expect(genNoteLessonHint(text, false), text).not.toBe(
+                NOTE_LESSON_SHORTEN_HINT,
+            );
+        }
+        expect(NOTE_LESSON_SHORTEN_HINT).toContain('ONE example');
+    });
+});
+
+describe('the verse check sets each verse beside the note', () => {
+    it('quotes what the note says next to what the Bible says', () => {
+        const note = toNoteDocumentText({
+            blocks: [
+                {
+                    n: 14,
+                    kind: 'bullet',
+                    text: 'Cross-reference: [^(KJV) Isaiah 53:6] -- wounded for our transgressions.',
+                },
+            ],
+        });
+        const text = toNoteVerseReadText(
+            [
+                {
+                    bible: 'KJV',
+                    verses: [
+                        {
+                            ref: 'Isaiah 53:6',
+                            text: 'All we like sheep have gone astray',
+                        },
+                    ],
+                },
+            ],
+            [note],
+        )!;
+        expect(text).toContain(
+            'the note says: "Cross-reference: Isaiah 53:6 -- wounded for our transgressions."',
+        );
+        expect(text).toContain(
+            'the Bible says: "All we like sheep have gone astray"',
+        );
+        expect(text).toContain('is WRONG');
+    });
+});
+
+// 2026-11-10: "help me prepare a sermon" asked which passage; the passage
+// pressed under it was written as a fifteen-line outline, its words no
+// lesson ask of their own.
+describe('the answer to "which passage?" under a lesson asked for', () => {
+    it('carries the empty note lesson hint while the note is still empty', () => {
+        expect(
+            genNoteLessonHint('The Prodigal Son (Luke 15:11-32)', true, true),
+        ).toBe(NOTE_BLANK_LESSON_HINT);
+        // Nothing asked for before it: a passage named alone is no lesson.
+        expect(
+            genNoteLessonHint('The Prodigal Son (Luke 15:11-32)', true),
+        ).toBe(null);
+        // A lesson already written, the note no longer empty: no hint.
+        expect(
+            genNoteLessonHint('The Prodigal Son (Luke 15:11-32)', false, true),
+        ).toBe(null);
+        // A question asked next is answered, not written.
+        expect(genNoteLessonHint('what is a sermon?', true, true)).toBe(null);
+        const blank = toNoteDocumentText({ blocks: [] });
+        expect(
+            toNoteAsk(
+                'Faith over Fear (Psalm 23)',
+                [{ name: 'Sermon Prep', text: blank }],
+                null,
+                false,
+                null,
+                null,
+                true,
+            ),
+        ).toContain(NOTE_BLANK_LESSON_HINT);
+    });
+});
+
+// BN-64 (2026-11-10): an empty note's card offers a lesson.
+describe('the card of an empty note', () => {
+    const LANGUAGE = { code: 'en', name: 'English', nativeName: 'English' };
+
+    it('offers a lesson in place of the jobs an empty note cannot use', () => {
+        const card = genNoteOpeningAnswer('Sunday', LANGUAGE as any, [], true);
+        expect(card.text).toContain('“Sunday” is still empty');
+        expect(card.replies).toEqual([
+            'Help me prepare a preaching lesson',
+            "Help me prepare a children's lesson",
+            'Help me prepare a short devotion',
+        ]);
+        expect(card.translateLanguage).toBe(null);
+        for (const reply of card.replies) {
+            expect(checkIsLessonCardAsk(reply)).toBe(true);
+        }
+        expect(checkIsLessonCardAsk('Check the spelling')).toBe(false);
+        expect(checkIsLessonCardAsk('')).toBe(false);
+        // A note with words keeps its own card.
+        expect(
+            genNoteOpeningAnswer('Sunday', LANGUAGE as any, []).replies,
+        ).toContain('Format it so it is neat and easy to read');
+    });
+
+    it('tells an empty note by the text its attachment read off the file', () => {
+        const toAttachment = (summary: string) => {
+            return {
+                id: 1,
+                kind: 'text',
+                name: 'Sunday',
+                filePath: 'C:\notes\Default.own',
+                noteId: 3,
+                summary,
+            } as any;
+        };
+        expect(
+            checkIsEmptyNoteAttachment(
+                toAttachment('Attached text Sunday:\nNote: Sunday\n'),
+            ),
+        ).toBe(true);
+        expect(
+            checkIsEmptyNoteAttachment(
+                toAttachment('Attached text Sunday:\nNote: Sunday\nGrace'),
+            ),
+        ).toBe(false);
+        expect(
+            checkIsEmptyNoteAttachment({
+                ...toAttachment('Note: Sunday'),
+                noteId: undefined,
+            }),
+        ).toBe(false);
+    });
+
+    // Seen live 2026-11-10: the card read an empty note as one with words,
+    // because the file's reader writes its body as a marker. Built the way
+    // the window builds it (`genNoteAttachment`), off a note file's text.
+    it('tells an empty note as the window reads it off the file', () => {
+        const paragraph = (text: string) => {
+            return {
+                type: 'paragraph',
+                children:
+                    text === '' ? [] : [{ type: 'text', text, format: 0 }],
+            };
+        };
+        const toFileAttachment = (text: string) => {
+            const fileText = JSON.stringify({
+                items: [
+                    {
+                        metadata: { id: 2 },
+                        title: 'Sunday',
+                        content: JSON.stringify({
+                            root: { type: 'root', children: [paragraph(text)] },
+                        }),
+                    },
+                ],
+            });
+            const note = toNoteItemFromFileText(fileText, 2)!;
+            return {
+                ...genTextAttachment(
+                    note.title,
+                    `Note: ${note.title}\n${note.text}`,
+                    'C:/notes/Default.own',
+                ),
+                noteId: 2,
+            };
+        };
+        expect(checkIsEmptyNoteAttachment(toFileAttachment(''))).toBe(true);
+        expect(checkIsEmptyNoteAttachment(toFileAttachment('Grace'))).toBe(
+            false,
+        );
+    });
+
+    it('every lesson anywhere follows the outline; a point expands in place', () => {
+        expect(NOTE_SYSTEM_PROMPT).toContain(
+            'A lesson or sermon you write runs',
+        );
+        expect(NOTE_SYSTEM_PROMPT).toContain(
+            'the window puts it into the empty note',
+        );
+        // BN-67: numbers as read, one add a place, a point grows where it is.
+        expect(NOTE_LESSON_FINISH_HINT).toContain('AS YOU READ IT');
+        expect(NOTE_LESSON_FINISH_HINT).toContain('give each place ONE add');
+        expect(NOTE_LESSON_FINISH_HINT).toContain('stays where it is');
+        expect(NOTE_LESSON_FINISH_HINT).toContain(
+            'even when it has a sentence',
+        );
     });
 });

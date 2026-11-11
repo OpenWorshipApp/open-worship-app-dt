@@ -655,6 +655,25 @@ the record's chat, family line, related verses, word study).
   that decides. The arrows stop belonging to the suggestion list the moment the
   draft holds a newline: a caret that cannot get back to the line being fixed is
   worse than a list that needs the mouse.
+- **The box's tools sit behind ONE ⋮ at its left** (2026-11-10, the user's
+  picture with the five icons circled: _put those in vertical 3 dots_, _to
+  save space for input text_; `RenderAskToolsMenuComp`). The paperclip, the
+  📷, the ◎, the foreground session and `/` had taken ~150px of a 412px
+  window from the box; the ⋮ (`.chat-ask-tools`, `aria-label`
+  **[en:tran:More Options]** -- an existing key, so no language package
+  changed) takes ~25.
+  Each row is its icon AND its words (the old `aria-label`s, kept as labels
+  so the corpus `find`s, the tests and `owa_click` name them the same), the
+  `/` row last under a line. The menu is MOUNTED ONLY WHILE OPEN, opens
+  UPWARD (placed by `bottom` off the dots), and reuses the tab strip's
+  `.chat-menu` / `.chat-menu-sheet`: a row's press closes it and does its
+  job WITHOUT giving the dots the focus back (`/` puts the caret in the box),
+  Escape closes it and does (stopping its propagation, so the window's own
+  Escape -- Stop -- never sees it), ↑/↓ walk the rows round. Closed, its
+  rows are not in the DOM: a script or a test opens the ⋮ first
+  (`openAskTool` in the ui2 tests). The assistant's own **Send a picture of
+  my screen** / **Point at the control** / **Attach a file** buttons under
+  an answer are untouched -- they call the same handlers.
 - **Tab finishes the word, the arrows bring their row with them, and the list
   closes when it has nothing left to offer** (2026-10-10, the user's three
   asks, with pictures of `/bt` over a `/btw` row and of `/btw what is` still

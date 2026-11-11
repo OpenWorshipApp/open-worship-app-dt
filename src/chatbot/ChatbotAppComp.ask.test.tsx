@@ -1931,10 +1931,16 @@ describe('the help window asking its assistant', () => {
             const clicked = vi
                 .spyOn(input, 'click')
                 .mockImplementation(() => {});
+            // The paperclip is a row of the ⋮ beside the box.
+            act(() => {
+                container
+                    .querySelector<HTMLButtonElement>('button.chat-ask-tools')!
+                    .click();
+            });
             act(() => {
                 container
                     .querySelector<HTMLButtonElement>(
-                        '[aria-label="Attach a file"]',
+                        '[role="menu"] [aria-label="Attach a file"]',
                     )!
                     .click();
             });

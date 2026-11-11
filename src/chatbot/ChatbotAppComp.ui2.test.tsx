@@ -310,6 +310,13 @@ async function click(target: Element | null | undefined) {
     await settle();
 }
 
+// The ask row's tools sit behind its ⋮ (`RenderAskToolsMenuComp`): open it,
+// then hand back the row named.
+async function openAskTool<T extends Element = HTMLElement>(label: string) {
+    await click(query('button.chat-ask-tools'));
+    return query<T>(`[role="menu"] [aria-label="${label}"]`);
+}
+
 async function typeQuestion(value: string) {
     const box = query<HTMLTextAreaElement>('.chat-input')!;
     const setter = Object.getOwnPropertyDescriptor(
@@ -1009,9 +1016,8 @@ describe('attaching from the box', () => {
     test('the camera, five times: only the newest four are kept, numbered on', async () => {
         mocks.captureAppWindow.mockResolvedValue(PICTURE);
         await renderApp();
-        const camera = query('[aria-label="Attach a picture of the app"]');
         for (let index = 0; index < 5; index++) {
-            await click(camera);
+            await click(await openAskTool('Attach a picture of the app'));
         }
         expect(chipNames()).toHaveLength(4);
         expect(
@@ -1105,7 +1111,7 @@ describe('attaching from the box', () => {
             focus: 'setting',
             isSeparateWindow: false,
         };
-        await click(query('[aria-label="Attach a picture of the app"]'));
+        await click(await openAskTool('Attach a picture of the app'));
         expect(mocks.captureAppWindow).not.toHaveBeenCalled();
         expect(mocks.callToolPicture).toHaveBeenCalledWith(
             'owa_screenshot',
@@ -1129,7 +1135,7 @@ describe('attaching from the box', () => {
         mocks.callTool.mockImplementationOnce(() => {
             return pointing.promise;
         });
-        await click(query('[aria-label="Point at a control in the app"]'));
+        await click(await openAskTool('Point at a control in the app'));
         expect(attachError()).toBe(
             'Point at the control you mean in the Settings window…',
         );
@@ -1494,7 +1500,7 @@ describe('the preview of an asset', () => {
     async function openPicture() {
         mocks.captureAppWindow.mockResolvedValue(PICTURE);
         await renderApp();
-        await click(query('[aria-label="Attach a picture of the app"]'));
+        await click(await openAskTool('Attach a picture of the app'));
         await click(query('.chat-ask .chat-clip'));
     }
 
@@ -1521,7 +1527,7 @@ describe('the preview of an asset', () => {
         mocks.readAssetPreview.mockResolvedValue(genPreview());
         mocks.captureAppWindow.mockResolvedValue(PICTURE);
         await renderApp();
-        await click(query('[aria-label="Attach a picture of the app"]'));
+        await click(await openAskTool('Attach a picture of the app'));
         const chip = query<HTMLElement>('.chat-ask .chat-clip')!;
         chip.focus();
         await click(chip);
@@ -1670,7 +1676,7 @@ describe('the copy icon on a picture chip', () => {
     async function snapOne() {
         mocks.captureAppWindow.mockResolvedValue(PICTURE);
         await renderApp();
-        await click(query('[aria-label="Attach a picture of the app"]'));
+        await click(await openAskTool('Attach a picture of the app'));
         return query<HTMLButtonElement>('.chat-ask .chat-clip-copy')!;
     }
 
@@ -1768,9 +1774,9 @@ describe('what a tab is still asking about', () => {
     });
 });
 
-describe('the / button beside the box', () => {
+describe('the / row of the ⋮ beside the box', () => {
     const slashButton = () => {
-        return query<HTMLButtonElement>('button.chat-start-command');
+        return openAskTool<HTMLButtonElement>('List every command');
     };
     const box = () => {
         return query<HTMLTextAreaElement>('.chat-input')!;
@@ -1783,13 +1789,15 @@ describe('the / button beside the box', () => {
 
     test('says what it is for, and puts / in an empty box with the commands listed', async () => {
         await renderApp();
-        const button = slashButton();
-        expect(button?.getAttribute('aria-label')).toBe('List every command');
+        const button = await slashButton();
+        expect(button?.textContent).toBe('List every command');
         expect(button?.title).toBe(
             'Start a command: puts / in the box and lists the commands you can type',
         );
         expect(commandRows()).toEqual([]);
         await click(button);
+        // The menu is gone and the caret stayed in the box.
+        expect(query('[role="menu"]')).toBeNull();
         expect(box().value).toBe('/');
         expect(document.activeElement).toBe(box());
         expect(box().selectionStart).toBe(1);
@@ -1801,14 +1809,14 @@ describe('the / button beside the box', () => {
         ).toBe(true);
         expect(commandRows()).toContain('/commands');
         // Pressed again, a command already started is left as it is.
-        await click(slashButton());
+        await click(await slashButton());
         expect(box().value).toBe('/');
     });
 
     test('keeps the words already typed, behind the / with the caret after it', async () => {
         await renderApp();
         await typeQuestion('what is the Bible');
-        await click(slashButton());
+        await click(await slashButton());
         expect(box().value).toBe('/ what is the Bible');
         expect(box().selectionStart).toBe(1);
         expect(box().selectionEnd).toBe(1);
@@ -1822,8 +1830,72 @@ describe('the / button beside the box', () => {
         expect(commandRows().length).toBeGreaterThan(0);
         await pressKey(box(), 'Escape');
         expect(commandRows()).toEqual([]);
-        await click(slashButton());
+        await click(await slashButton());
         expect(box().value).toBe('/sc');
         expect(commandRows().length).toBeGreaterThan(0);
+    });
+});
+
+describe('the ⋮ that holds the ask row tools', () => {
+    const dots = () => {
+        return query<HTMLButtonElement>('button.chat-ask-tools')!;
+    };
+    const rowLabels = () => {
+        return queryAll('[role="menu"] [role="menuitem"]').map((row) => {
+            return row.textContent;
+        });
+    };
+
+    test('draws ONE button at rest and its five rows only once opened', async () => {
+        await renderApp();
+        expect(queryAll('.chat-attach-row button')).toEqual([dots()]);
+        expect(dots().getAttribute('aria-label')).toBe('More Options');
+        expect(dots().getAttribute('aria-expanded')).toBe('false');
+        expect(query('[role="menu"]')).toBeNull();
+        await click(dots());
+        expect(dots().getAttribute('aria-expanded')).toBe('true');
+        expect(rowLabels()).toEqual([
+            'Attach a file',
+            'Attach a picture of the app',
+            'Point at a control in the app',
+            'Attach a foreground session',
+            'List every command',
+        ]);
+        expect(document.activeElement?.textContent).toBe('Attach a file');
+        // Pressed again, the dots shut it.
+        await click(dots());
+        expect(query('[role="menu"]')).toBeNull();
+    });
+
+    test('arrows walk the rows round, Escape shuts it and gives the dots the keyboard', async () => {
+        await renderApp();
+        await click(dots());
+        const menu = query('[role="menu"]')!;
+        await pressKey(menu, 'ArrowUp');
+        expect(document.activeElement?.textContent).toBe('List every command');
+        await pressKey(menu, 'ArrowDown');
+        expect(document.activeElement?.textContent).toBe('Attach a file');
+        await pressKey(menu, 'ArrowDown');
+        expect(document.activeElement?.textContent).toBe(
+            'Attach a picture of the app',
+        );
+        await pressKey(menu, 'Escape');
+        expect(query('[role="menu"]')).toBeNull();
+        expect(document.activeElement).toBe(dots());
+    });
+
+    test('a press anywhere else shuts it without doing anything', async () => {
+        mocks.captureAppWindow.mockResolvedValue(PICTURE);
+        await renderApp();
+        await click(dots());
+        await act(async () => {
+            query('.chat-menu-sheet')!.dispatchEvent(
+                new Event('pointerdown', { bubbles: true }),
+            );
+        });
+        await settle();
+        expect(query('[role="menu"]')).toBeNull();
+        expect(mocks.captureAppWindow).not.toHaveBeenCalled();
+        expect(chipNames()).toEqual([]);
     });
 });

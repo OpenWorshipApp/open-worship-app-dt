@@ -35,7 +35,8 @@ GATE (npm run lint) → PAPER TRAIL (W-60, CB-169, rules, memory, knowledge)
 | `src/helper/agentNoteNormalizeHelpers.ts` | A changed block written as Lexical writes it, so an open note window never writes it back as a step of its own |
 | `src/helper/agentNoteEditHelpers.ts` | The app side: reads the editing HEAD, resolves new verses (installed Bible) and names (names lookup, on demand), the font list, undo/redo of the kept history (stepping over an echo), the ¶ (`view`) and block links -- the editor's own keys, backed up as `home-setting` restores -- writes, tells an open note window |
 | `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~878 tokens, a note ask only) |
-| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer |
+| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer, the lesson hints (`genNoteLessonHint`), an empty note filled (`toBlankNoteFillArgs`), the verse check's read (`toNoteVerseReadText`) |
+| `src/chatbot/noteCreatePromptHelpers.ts` | What a preaching lesson holds (`PREACHING_LESSON_SHAPE`, sent on a lesson ask only) and the English lesson readers; a language's own are `lessonAsks` / `verseCheckAsks` in its `assistant.json` |
 | `src/chatbot/ChatbotAppComp.tsx`, `windowAimHelpers.ts` | The note conversation in the window; the tab works IN the note's own window (`toNoteWindowAim`) |
 | `src/helper/ai/noteChatbotMenuHelpers.ts`, `noteWindowMatchHelpers.ts` | Open in Chatbot: opens the note's window first, the handoff |
 | `extra-work/bibleNoteGuideHelpers.mjs`, `tools/owa-devtools-mcp/help.mjs` | The editor's own guide as a corpus apart (`agent-knowledge.md`) |
@@ -137,6 +138,22 @@ ask); a new title is kept at once and is no part of the note's hash, so the
 harness puts the title back by name; and an ask with no `owa_note_edit`
 call was not about the note (`not-note-ask`, asked again).
 
+**A preaching lesson is judged against a written standard, never by the
+assistant that built the chatbot** (BN-66). `references/lesson-rubric.md`
+is that standard -- twelve criteria from the homiletics textbooks (Robinson's
+big idea, Chapell's fallen-condition focus and explanation / illustration /
+application, Stott's two worlds), 0-2 each, banded Best / Good / Needs work,
+a factual error about the Bible capping a lesson at Needs work.
+`scripts/run-lesson-asks.mjs <profile part>` makes every row of
+`references/lesson-asks.json` through the real window -- a new note (empty,
+or a preacher's own partial lesson for a `finish` row), its **Open in
+Chatbot**, the ask typed or the empty note's card pressed -- and
+`scripts/lesson-rubric.mjs <results> --text=<dir>` checks the structure by
+machine and writes each lesson as text with the ask and nothing of how it
+was made. Two readers on different models, briefed with the standard and
+the lessons alone, score them; a weakness most lessons share is a change to
+the shape the model is given, never to the standard.
+
 ### 3. Build
 
 Cheapest gain first, in this order of preference: the tool says why and how
@@ -158,6 +175,7 @@ BN item touched says what changed and what was seen.
 | *(none)* · `measure` | §1, then the cheapest open BN item is proposed |
 | `research` | §1 and §2 only — the asks graded, BN items written, nothing built |
 | `elder` | §2 over the elder corpus (`run-elder-asks.mjs`), then §3–§4 on what failed |
+| `lesson` | The lesson set made live (`run-lesson-asks.mjs`), checked by machine and by two blind readers against `lesson-rubric.md`, then §3–§4 on what most lessons miss |
 | `toolbar` | Parity only: leads triaged, missing controls built and tested |
 | `BN-xx` | That item through §3–§4 |
 | `report` | The scoreboard and the open BN items; nothing run |

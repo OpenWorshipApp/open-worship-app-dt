@@ -524,6 +524,9 @@ describe('registered app tools', () => {
   });
 
   it('handles navigation already on the requested page and a completed switch', async () => {
+    app.listTargets.mockResolvedValueOnce([
+      { id: 'main', url: 'http://localhost/reader.html' },
+    ]);
     app.evaluateInApp.mockResolvedValueOnce({
       value: { switching: false, page: 'reader.html' },
     });
@@ -537,9 +540,13 @@ describe('registered app tools', () => {
     app.evaluateInApp.mockResolvedValueOnce({
       value: { switching: true, from: 'reader.html' },
     });
-    app.listTargets.mockResolvedValueOnce([
-      { url: 'http://localhost/presenter.html' },
-    ]);
+    app.listTargets
+      .mockResolvedValueOnce([
+        { id: 'main', url: 'http://localhost/reader.html' },
+      ])
+      .mockResolvedValueOnce([
+        { id: 'main', url: 'http://localhost/presenter.html' },
+      ]);
     expect(
       JSON.parse(
         answer(await call('owa_goto_page', { page: 'presenter.html' })),

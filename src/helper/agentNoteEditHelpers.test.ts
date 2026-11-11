@@ -795,4 +795,39 @@ describe('genNewNoteContent', () => {
             ),
         ).resolves.toBeNull();
     });
+
+    // 2026-11-10, a preaching lesson opens on its passage READ.
+    test('a verse token alone on its line is the passage printed whole', async () => {
+        h.resolveBibleItem.mockImplementation(async (ref: string) => {
+            return ref === 'John 10:11-12'
+                ? {
+                      bibleKey: 'KJV',
+                      toTitleWithBibleKey: async () => '(KJV) John 10:11-12',
+                      toTitle: async () => 'John 10:11-12',
+                      toText: async () =>
+                          '(11): I am the good shepherd (12): But he that is an hireling',
+                  }
+                : null;
+        });
+        const content = await genNewNoteContent(
+            '[^John 10:11-12]\n## Big idea\nHe gives his life.\n' +
+                '[^Hezekiah 9:9]',
+            'The Good Shepherd',
+        );
+        const blocks = readNoteBlocks(content!)!.blocks;
+        expect(
+            blocks.map((block) => {
+                return [block.kind, block.isFixed === true, block.text];
+            }),
+        ).toEqual([
+            ['passage', true, expect.any(String)],
+            ['h2', false, 'Big idea'],
+            ['paragraph', false, 'He gives his life.'],
+            // No Bible has it: its reference, never a block dropped.
+            ['paragraph', false, 'Hezekiah 9:9'],
+        ]);
+        expect(JSON.stringify(JSON.parse(content!).root.children[0])).toContain(
+            'I am the good shepherd',
+        );
+    });
 });

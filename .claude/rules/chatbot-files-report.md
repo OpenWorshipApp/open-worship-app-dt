@@ -25,7 +25,8 @@ window as a whole — tabs, pickers, its language, the caution — is in
 
 - **A question can carry more than words**: a file or an image from the
   paperclip, a paste, a drop, a **📷** picture of the app window, or a
-  control the user POINTED at. `src/chatbot/attachmentHelpers.ts` is the one
+  control the user POINTED at (the paperclip, the 📷 and the ◎ are rows of
+  the ⋮ left of the box since 2026-11-10 -- `chatbot-window.md`). `src/chatbot/attachmentHelpers.ts` is the one
   place that holds them, and its rule is that the bytes are NEVER persisted:
   `chatbot-sessions` is read whole and synchronously at startup, so a message
   keeps the DESCRIPTION (`ChatAttachmentType` — name, kind, size, an element's

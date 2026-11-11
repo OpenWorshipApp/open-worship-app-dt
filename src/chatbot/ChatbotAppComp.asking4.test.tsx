@@ -1093,10 +1093,16 @@ describe('the window’s own keys and overlay', () => {
         seedSessions([{ id: 'files' }]);
         await renderWindow();
         const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+        // The paperclip is a row of the ⋮ beside the box.
+        await act(async () => {
+            container
+                .querySelector<HTMLButtonElement>('button.chat-ask-tools')!
+                .click();
+        });
         await act(async () => {
             container
                 .querySelector<HTMLButtonElement>(
-                    '[aria-label="Attach a file"]',
+                    '[role="menu"] [aria-label="Attach a file"]',
                 )!
                 .click();
         });

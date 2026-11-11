@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseTextToolCalls } from './textToolCallHelpers';
+import { parseTextToolCalls, toListArgsRead } from './textToolCallHelpers';
 
 const TOOLS = [
     {
@@ -205,5 +205,43 @@ describe('parseTextToolCalls', () => {
             TOOLS,
         );
         expect(parsed!.calls[0].function.name).toBe('owa_list_screens');
+    });
+});
+
+// 2026-11-10: a whole lesson sent as the JSON TEXT of the changes list.
+describe('toListArgsRead', () => {
+    it('reads a list of changes written as JSON text', () => {
+        const changes = [
+            {
+                after: 0,
+                kind: 'section',
+                text: '[^John 10:11-18]\n## Big idea',
+            },
+        ];
+        expect(
+            toListArgsRead({
+                action: 'edit',
+                note: 'Sunday',
+                changes: JSON.stringify(changes),
+            }),
+        ).toEqual({ action: 'edit', note: 'Sunday', changes });
+        expect(toListArgsRead({ items: ' [{"id": 1}]' })).toEqual({
+            items: [{ id: 1 }],
+        });
+    });
+
+    it('leaves anything else as written, for the tool to refuse', () => {
+        const kept = [
+            { changes: 'make it red' },
+            { changes: '[not json' },
+            { changes: '["a", "b"]' },
+            { changes: [{ block: 1 }] },
+            { text: '[{"a": 1}]' },
+        ];
+        for (const args of kept) {
+            expect(toListArgsRead(args)).toBe(args);
+        }
+        expect(toListArgsRead(null)).toBe(null);
+        expect(toListArgsRead('x')).toBe('x');
     });
 });

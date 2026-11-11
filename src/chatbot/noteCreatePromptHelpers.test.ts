@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import {
+    LESSON_MAKE_HINT,
+    LESSON_OUTLINE,
+    NOTE_CREATE_PROMPT,
+    PREACHING_LESSON_SHAPE,
+    checkIsLessonFinishAsk,
+    checkIsLessonReviewAsk,
+    checkIsLessonWriteAsk,
+} from './noteCreatePromptHelpers';
 import { BIBLE_READER_SYSTEM_PROMPT } from './bibleReaderChatHelpers';
 import { RESOURCES_SYSTEM_PROMPT } from './resourcesChatHelpers';
 
@@ -19,5 +27,95 @@ describe('the conversations that teach make a note when asked', () => {
     test('the Bible Reader and the Resources prompts carry it', () => {
         expect(BIBLE_READER_SYSTEM_PROMPT).toContain(NOTE_CREATE_PROMPT);
         expect(RESOURCES_SYSTEM_PROMPT).toContain(NOTE_CREATE_PROMPT);
+    });
+});
+
+// 2026-11-10, the goal _chatbot completely smart enough to help prepare a
+// best preaching lesson_: a lesson asked for where no note is attached
+// carries what a lesson holds, and only then.
+describe('a lesson to preach, asked anywhere', () => {
+    test('what a lesson holds, in the order it is preached', () => {
+        const order = [
+            '[^John 10:11-18]',
+            'Big idea',
+            'Background',
+            'Introduction',
+            'three points',
+            'Pointing to Jesus',
+            'Response',
+            'Closing prayer',
+            'Questions for discussion',
+            'Memory verse',
+        ].map((part) => PREACHING_LESSON_SHAPE.indexOf(part));
+        expect(order.every((index) => index >= 0)).toBe(true);
+        expect([...order].sort((a, b) => a - b)).toEqual(order);
+        expect(PREACHING_LESSON_SHAPE).toContain('never typed out');
+        // Not in a system prompt: it would ride every question.
+        expect(NOTE_CREATE_PROMPT).not.toContain('WHAT A LESSON HOLDS');
+        expect(LESSON_MAKE_HINT).toContain(PREACHING_LESSON_SHAPE);
+        expect(LESSON_MAKE_HINT).toContain('owa_bible_note action "add"');
+    });
+
+    // A Gemma 4 is asked in the person's own words, where no English
+    // reader sees a lesson asked for: the outline rides the prompt itself,
+    // in every language, short enough to.
+    test('the outline rides the prompt, in the order it is preached', () => {
+        expect(NOTE_CREATE_PROMPT).toContain(LESSON_OUTLINE);
+        const order = [
+            'main passage',
+            'Big idea',
+            'Background',
+            'Introduction',
+            'three numbered points',
+            'Pointing to Jesus',
+            'Response',
+            'Closing prayer',
+            'Questions for discussion',
+            'Memory verse',
+        ].map((part) => LESSON_OUTLINE.indexOf(part));
+        expect(order.every((index) => index >= 0)).toBe(true);
+        expect([...order].sort((a, b) => a - b)).toEqual(order);
+        // ~70 tokens: it is paid on every round of every Reader question.
+        expect(LESSON_OUTLINE.length).toBeLessThan(400);
+    });
+
+    test('read off the words a preacher types', () => {
+        for (const text of [
+            'make a best preaching lesson about the good shepherd',
+            'help me prepare my sermon on John 10',
+            "I'm preaching from Psalm 23 on Sunday",
+            'I need to preach about forgiveness next week',
+            'sermon on the prodigal son',
+            'write a devotion for the youth about patience',
+            'Can you make me a bible study on Romans 8',
+        ]) {
+            expect(checkIsLessonWriteAsk(text), text).toBe(true);
+        }
+    });
+
+    test('a question, or another job, is not one', () => {
+        for (const text of [
+            'how do I write a sermon in a note?',
+            'what should I preach on?',
+            'Where are my sermon notes?',
+            'make the words bigger',
+            'show John 3:16 on the screen',
+            'summarize this chapter',
+            'Can you write a lesson plan with times?',
+            '',
+        ]) {
+            expect(checkIsLessonWriteAsk(text), text).toBe(false);
+        }
+    });
+
+    test('their own lesson made whole, or judged', () => {
+        expect(checkIsLessonFinishAsk('finish my sermon')).toBe(true);
+        expect(checkIsLessonFinishAsk('make this a full lesson')).toBe(true);
+        expect(checkIsLessonFinishAsk('improve the drawing')).toBe(false);
+        expect(checkIsLessonReviewAsk('review my lesson')).toBe(true);
+        expect(checkIsLessonReviewAsk('is my sermon good enough')).toBe(true);
+        expect(checkIsLessonReviewAsk('is it ok to bold the title?')).toBe(
+            false,
+        );
     });
 });

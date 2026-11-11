@@ -95,3 +95,36 @@ reference a verse mention, every word kept but the joining ones
 
 The whole elder corpus (600 asks) is `elder-asks.json`, run by
 `run-elder-asks.mjs` (SKILL.md §2).
+
+## A preaching lesson (2026-11-10, BN-60..BN-63)
+
+Made through a note row's **Open in Chatbot** on an EMPTY note (the panel's
+**+**), then asked on, in order, in the same tab. Grade the lesson against
+`PREACHING_LESSON_SHAPE`: the passage printed whole first, Big idea,
+Background, Introduction, three points each with a verse chip, an example
+and how to live it, Pointing to Jesus, Response, a written prayer,
+questions, a memory verse; no empty line left; one call.
+
+37. _help me prepare a sermon on John 10:11-18 for Sunday_ -- written INTO
+    the empty note (an `owa_bible_note add` turned into one edit by the
+    window, or an `owa_note_edit` edit), one call
+38. _help me prepare a sermon_ with no passage -- asks which, OPTIONS of three
+39. _add an illustration to point 2_ -- one add after point 2's last block
+40. _give me two cross references for point 1_ -- two items, ONE list
+41. _add two more discussion questions_ -- after the last question, one list
+42. _write a stronger conclusion with an invitation to follow Jesus_ -- the
+    response rewritten
+43. _how long will this take to preach?_ -- an answer by part, no change
+44. _is this a good sermon?_ -- a review against the shape, no change,
+    the missing parts as options
+45. _check that my verses are right_ -- the window reads every cited verse
+    first (`owa_find_verse`); plant a wrong gloss (53:5's words on Isaiah
+    53:6) and it is named
+46. _it is too long, make it fit 15 minutes_ -- one edit, the shape kept,
+    every point keeping its verse, an example and how to live it
+47. _finish my sermon_ on a lesson that has only its points -- the parts it
+    lacks added, their words kept
+48. _make a version for the children's class_ -- a new note, opened and
+    attached
+49. In a Bible Reader tab with no note: _make a sermon on Romans 8:28-39_ --
+    a new note in the shape, opened and attached

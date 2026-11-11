@@ -832,16 +832,23 @@ describe('owa_goto_page', () => {
       throw new Error('Execution context was destroyed.');
     };
     app.listTargets
-      .mockResolvedValueOnce([{ url: 'http://localhost/presenter.html' }])
-      .mockResolvedValueOnce([{ url: 'http://localhost/reader.html' }]);
+      .mockResolvedValueOnce([
+        { id: 'main', url: 'http://localhost/presenter.html' },
+      ])
+      .mockResolvedValueOnce([
+        { id: 'main', url: 'http://localhost/presenter.html' },
+      ])
+      .mockResolvedValueOnce([
+        { id: 'main', url: 'http://localhost/reader.html' },
+      ]);
     const pending = call('owa_goto_page', { page: 'reader.html' });
     await vi.advanceTimersByTimeAsync(500);
     expect(JSON.parse(answer(await pending))).toEqual({
       page: 'reader.html',
       switched: true,
-      from: null,
+      from: 'presenter.html',
     });
-    expect(app.listTargets).toHaveBeenCalledTimes(2);
+    expect(app.listTargets).toHaveBeenCalledTimes(3);
   });
 
   it('says so when the window never got there', async () => {
@@ -849,6 +856,9 @@ describe('owa_goto_page', () => {
     state.answer = () => ({
       value: { switching: true, from: 'presenter.html' },
     });
+    app.listTargets.mockResolvedValue([
+      { id: 'main', url: 'http://localhost/presenter.html' },
+    ]);
     const pending = call('owa_goto_page', { page: 'reader.html' });
     await vi.advanceTimersByTimeAsync(9000);
     expect(refusal(await pending)).toBe(

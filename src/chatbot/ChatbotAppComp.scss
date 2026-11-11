@@ -1922,6 +1922,40 @@ button.chat-engine {
   }
 }
 
+// The ⋮ that holds the attach tools and `/` (`RenderAskToolsMenuComp`): one
+// narrow button, so the box keeps the width the five icons had taken.
+.chat-ask-tools {
+  padding-inline: 3px;
+
+  &.is-open {
+    color: var(--chat-clip-ink);
+    background-color: var(--chat-panel);
+  }
+}
+
+// Opened upward from the dots (placed by `bottom`), each row its icon and
+// its words.
+.chat-ask-tools-menu {
+  max-width: calc(100vw - 8px);
+
+  .chat-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    > .bi {
+      width: 14px;
+      color: var(--chat-muted);
+      text-align: center;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--chat-clip-ink);
+      outline-offset: -1px;
+    }
+  }
+}
+
 // The real file input. Hidden rather than absent: the paperclip and the
 // assistant's own "attach a file" button both click it, and a `display: none`
 // input still answers a programmatic click.

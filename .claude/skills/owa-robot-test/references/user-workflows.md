@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-10b** (**W-09 — Quick Text's Delay, Live and Infinite on one line; a dial that works Live out from the words, Slow → Medium → Fast; a taller box.** The user: _make those to be inline-block_, then _add button to re-calculated the live time (for slow, medium, fast) base on text length. click to get slow click again to get medium again to fast again to slow_, and _make textarea height higher_. The dial after Live (`Live: Slow / Medium / Fast`) shows no pace until pressed, then sets Live from the box's words at 110, 150 or 200 words a minute and names the pace; it greys with Infinite. The box (and its Preview) is 220px, was 120px. Seen live 2026-11-10 on the dev Presenter in English: the three on one line, the dial going Fast 50 → Slow 90 → Medium 65 on a six-verse Khmer passage. PM-177.)
+**workflowsVersion: 2026-11-10d** (**W-42 step 7, W-61 step 2 — the help window's attach tools sit behind one ⋮ at the left of the box.** The user, with the five icons left of the box circled: _put those in vertical 3 dots_, _to save space for input text_. The paperclip, the camera, the pointer, the foreground-session button and the **/** button are now the rows of one **⋮** (**[en:tran:More Options]**), each its icon and its name, opening upward; the box takes the width they had. W-18 / W-22 / W-42 step 9 name **[en:tran:Attach a file]** in the **⋮** where they said the paperclip. Seen live 2026-11-10 on the dev help window in English: the ⋮ alone left of the box, the five rows opened above it, Esc closed it and gave the ⋮ the keyboard. CB-26.)
+
+Previous: **workflowsVersion: 2026-11-10c** (**W-60 — a preaching lesson, made and prepared by asking.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3 gains a bullet: in a note that is still empty, _help me prepare a sermon on John 10:11-18_ writes a whole lesson into it, ready to preach -- the passage printed from your Bible, the big idea, the background, an introduction, three points each with its verses, an example and how to live it this week, how it points to Jesus, a response, a closing prayer, questions for discussion and a memory verse; beside a note with words in it, or in another chat, the lesson is a new note; with no passage named the assistant asks which one. Then the follow-ups a preacher asks: an illustration, cross references, more questions, a stronger conclusion, an object lesson for the children, a children's version, how long it takes, a review, finishing it, fitting it to 15 minutes, and checking its verses, which reads every verse the note cites and names a line that gives a verse another verse's words. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: the sermon written into an empty note in one change, 9-15 s (it had taken 70-134 s through two servers that dropped the call and the free tier); each follow-up one change or an answer, 3-8 s; a planted wrong verse named and fixed; the same asked in Khmer with the Khmer pack installed, the lesson written in Khmer. The French and Khmer pages carry the bullet. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10b** (**W-09 — Quick Text's Delay, Live and Infinite on one line; a dial that works Live out from the words, Slow → Medium → Fast; a taller box.** The user: _make those to be inline-block_, then _add button to re-calculated the live time (for slow, medium, fast) base on text length. click to get slow click again to get medium again to fast again to slow_, and _make textarea height higher_. The dial after Live (`Live: Slow / Medium / Fast`) shows no pace until pressed, then sets Live from the box's words at 110, 150 or 200 words a minute and names the pace; it greys with Infinite. The box (and its Preview) is 220px, was 120px. Seen live 2026-11-10 on the dev Presenter in English: the three on one line, the dial going Fast 50 → Slow 90 → Medium 65 on a six-verse Khmer passage. PM-177.)
 
 Previous: **workflowsVersion: 2026-11-10a** (**W-06 step 12, W-09 — a Bible Verse quick text stays up as long as its words take to read aloud.** The user, with Create Quick Text circled on a Khmer passage's row menu: _create quick text from bible verse should re-calculate live time base one text length_. The **[en:tran:Bible Verse]** preset wrote two minutes for every passage; it now works the **[en:tran:Live]** seconds out from the words in the box (`genQuickTextReadingSeconds` in `quickTextFormatHelpers.ts`: 150 words a minute plus 5 seconds, rounded up to 5, never under 10; verse numbers not counted; words counted by the browser's word segmenter, so a script written without spaces is counted by its words). Create Quick Text, the preset pressed in the panel and the assistant's verse quick text all go through it. Seen live 2026-11-10 on the dev Presenter in English: Create Quick Text on `(ពគប) សុភាសិត ១៧:១-៦` opened a new session with Live 65. PM-173, CM-103.)
 
@@ -3252,7 +3256,8 @@ like a picture of slides you like.
      help window does by itself, at once — no assistant is needed for them, so they work
      with no AI key and no internet.
    - **[en:tran:Make slides like a picture]**: attach a picture of the slides you want — the
-     📷 under the box attaches a picture of the app, the paperclip a picture file — and say
+     **⋮** at the left of the box has **[en:tran:Attach a picture of the app]** and
+     **[en:tran:Attach a file]** for a picture file — and say
      what the slides should say, e.g. _Add 2 slides that look like slide 2 in this picture:
      one says Welcome, one says Let us pray_ — or send the picture with no words at all.
      Without a picture it asks for one. A photo or video behind the words is the slide's
@@ -3300,7 +3305,8 @@ park, colour, pin or arm its lines, countdowns and CC elements.
      **[en:tran:Keyboard Event]** with no shortcut — and offers the fixes. It changes
      nothing until you say.
    - **Build it from my order of service**: paste your order of service into the box, or
-     attach a picture of the printed bulletin (the paperclip), or both, and the assistant
+     attach a picture of the printed bulletin (**[en:tran:Attach a file]** in the **⋮** at
+     the left of the box), or both, and the assistant
      adds every item in order — songs and slide documents by their names in
      **[en:tran:Documents]**, Bible passages, a countdown or a notice where the order says
      one. It says which items had no document to match; it never makes up a song.
@@ -3444,6 +3450,22 @@ row's own **[en:tran:Delete]**.
      another language than English, the verse comes from a Bible in that language when one
      is installed and the Bible Lookup is on another (asked in Khmer with the Lookup on the
      KJV, the Khmer Bible's words, in Khmer digits); name a Bible to have another.
+   - A preaching lesson: in a note that is still empty, _help me prepare a sermon on John
+     10:11-18_ (or _I'm preaching on Psalm 23 this Sunday_) writes a whole lesson into it,
+     ready to preach — the passage printed from your Bible, the big idea, the background,
+     an introduction, three points each with its verses, an example and how to live it
+     this week, how it points to Jesus, a response, a closing prayer, questions for
+     discussion and a memory verse; beside a note with words in it, or in any other chat,
+     the lesson is a new note. With no passage named, the assistant asks which one. Then
+     ask as you prepare: _add an illustration to point 2_, _give me two cross references
+     for point 1_, _add two more discussion questions_, _write a stronger conclusion with
+     an invitation_, _add a short object lesson for the children_, _make a version for the
+     children's class_ (a new note). _How long will this take to preach?_ and _is this a
+     good sermon?_ are answered and change nothing; _finish my sermon_ adds the parts it
+     lacks and keeps your words; _it is too long, make it fit 15 minutes_ tightens the
+     words and takes the extras out first, every point keeping its verse, an example and
+     how to live it; _check that my verses are right_ reads every verse the note cites
+     from your Bible and names any line that gives a verse words it does not have.
    - Put an answer into the note: right after the assistant has answered or taught you
      something in this chat, _add it_, _put it in_ or _new section_ adds that answer at the
      end of the note — its headings, points and verses as the editor's own — and _new page_
@@ -3500,7 +3522,7 @@ a quick text of a Bible verse, and change how one looks or where it sits on the 
    - or press the robot in the panel's own header, beside its transition button: it
      attaches the session you are on (**[en:tran:Camera Show]** and
      **[en:tran:Screen Show]** have no sessions, so their robot attaches the panel);
-   - or, in the help window, press the layers button under the box,
+   - or, in the help window, press the **⋮** at the left of the box and choose
      **[en:tran:Attach a foreground session]**. It lists the panels open in the Presenter
      with their sessions. Pick one, or several one after another. When no panel is
      open, it says to open one from the **[en:tran:Foreground]** tab.
@@ -6863,10 +6885,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    back by itself after that. **Want the tips back sooner?
    Type /tips** in the box and ask: the line is back at once, and the answer
    gives you one tip straight away. 📸
-7. **Show it, instead of describing it.** Beside the box are three buttons.
-   **📎** attaches a picture or a file from your computer; **📷** takes a picture
-   of the app as it looks right now; **🎯** lets you POINT — an outline follows
-   your mouse over the app and the control you click is the one you meant.
+7. **Show it, instead of describing it.** Press the **⋮** at the left of the box
+   (**[en:tran:More Options]**): it opens a short menu, each row an icon and its
+   name. **[en:tran:Attach a file]** attaches a picture or a file from your computer;
+   **[en:tran:Attach a picture of the app]** takes a picture of the app as it looks
+   right now; **[en:tran:Point at a control in the app]** lets you POINT — an outline
+   follows your mouse over the app and the control you click is the one you meant.
+   The same menu holds **[en:tran:Attach a foreground session]** and, last,
+   **[en:tran:List every command]**, which puts **/** in the box and lists the
+   commands. **Esc**, or a press anywhere else, closes the menu.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
    an **×** to take it off again, and up to four can ride one question.
@@ -7024,7 +7051,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
    **Attach a picture or PDF to a problem report.** In this help window, type what
-   went wrong into the question box, then use its paperclip to choose the picture,
+   went wrong into the question box, then press the **⋮** at its left and
+   **[en:tran:Attach a file]** to choose the picture,
    text file or PDF. Press **[en:tran:Report]** below **[en:tran:Send]**, then
    **[en:tran:Report it]** in the confirmation. Read the prepared report and its
    attachment list, then press **[en:tran:Send report]** when ready to send it.
@@ -7033,7 +7061,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
    **[en:tran:Report]** button on it: type a line, attach a picture or a file if it
-   helps (the paperclip takes pictures, text files and a PDF), and
+   helps (**[en:tran:Attach a file]** in the **⋮** takes pictures, text files and a PDF), and
    press **[en:tran:Send]** or **[en:tran:Report]** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
@@ -7379,7 +7407,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 18. **It can turn words you already have into a song.** Paste the verses of a song
     into the box of this help window, where you type a question (not into the Lyric
     Editor) — from an email, from a hymn sheet, from a page you found — and ask
-    for a song; or attach a `.txt` of the words with the paperclip; or give it the
+    for a song; or attach a `.txt` of the words (**⋮** → **[en:tran:Attach a file]**); or give it the
     address of a page the words are on. One of the **[en:tran:Try asking]** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
     The answer comes back in plain words — what the song came out as, its parts and

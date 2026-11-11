@@ -25,7 +25,8 @@ park, colour, pin or arm its lines, countdowns and CC elements.
      **[en:tran:Keyboard Event]** with no shortcut — and offers the fixes. It changes
      nothing until you say.
    - **Build it from my order of service**: paste your order of service into the box, or
-     attach a picture of the printed bulletin (the paperclip), or both, and the assistant
+     attach a picture of the printed bulletin (**[en:tran:Attach a file]** in the **⋮** at
+     the left of the box), or both, and the assistant
      adds every item in order — songs and slide documents by their names in
      **[en:tran:Documents]**, Bible passages, a countdown or a notice where the order says
      one. It says which items had no document to match; it never makes up a song.

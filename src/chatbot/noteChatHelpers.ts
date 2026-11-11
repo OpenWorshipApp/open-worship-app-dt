@@ -24,12 +24,25 @@
  */
 import type { ChatAttachmentType } from './attachmentHelpers';
 import { checkIsFileAttachment } from './attachmentHelpers';
+import { EMPTY_NOTE_BODY } from './noteFileTextHelpers';
 import {
     DEFAULT_CHAT_LANG_CODE,
+    listAssistantLanguages,
     type AssistantLanguageType,
 } from './chatLangHelpers';
 import { fillWords, tran } from './chatTranHelpers';
 import { readLanguageNoteStyleAsk } from './languageEditAskHelpers';
+import {
+    LESSON_OUTLINE,
+    PREACHING_LESSON_SHAPE,
+    checkIsBareFinishAsk,
+    checkIsLessonFinishAsk,
+    checkIsLessonQuestion,
+    checkIsLessonReviewAsk,
+    checkIsLessonShortenAsk,
+    checkIsLessonWriteAsk,
+    checkIsNewLessonAsk,
+} from './noteCreatePromptHelpers';
 import {
     type LyricTranslateModeType,
     genLyricTranslateReplies,
@@ -615,32 +628,679 @@ export function toNoteOwnWordsHint({ language, text }: NoteOwnWordsType) {
 // writing word before a lesson, devotion or outline that is "a" or "new":
 // "help me with my lesson", "make the lesson bigger" and "is this a good
 // lesson?" are not it. English; another language's ask is read in English
-// by the window first, else left to the prompt.
+// by the window first, else left to the prompt. The words read are in
+// `noteCreatePromptHelpers.ts`, beside what a lesson HOLDS
+// (`PREACHING_LESSON_SHAPE`, 2026-11-10), which every lesson hint here
+// carries: the shape rides on a lesson ask alone, never in the prompt.
 
-const LESSON_NOUN =
-    '(?:lesson|devotion(?:al)?|outline|sermon|homily|bible study)(?!\\s+plan)\\b';
-// One to three describing words between "a" and the noun, never a word
-// that ties it to something else ("a picture of a shepherd in my lesson").
-const LESSON_WORDS =
-    "(?:(?!(?:in|my|of|for|to|the|this|on|about|with)\\b)[\\w'-]+\\s+){0,3}?";
-const NEW_LESSON_ASK_PATTERN = new RegExp(
-    [
-        `\\b(?:write|make|create|prepare|plan|draft|give|need|want|like|start)\\b[^.?!]{0,40}?\\b(?:a|an|another|new|one more)\\s+${LESSON_WORDS}(?:${LESSON_NOUN}|version of this)`,
-        `\\b(?:make|write|create|need|want|start)\\s+(?:me\\s+)?(?:a\\s+)?${LESSON_NOUN}`,
-        `\\bwrite\\s+the\\s+${LESSON_NOUN}\\s+(?:about|on)\\b`,
-        `^\\s*(?:please\\s+)?(?:(?:a|an)\\s+)?${LESSON_WORDS}${LESSON_NOUN}\\s+(?:(?:about|on)\\b|for\\b[^.?!]{0,40}\\bplease\\b)`,
-    ].join('|'),
-    'i',
-);
+export { checkIsNewLessonAsk };
 
 export const NOTE_NEW_LESSON_HINT =
     '(This asks for a lesson of its own: make it a NEW note -- ' +
     'owa_bible_note action "add", its title and text yours -- and leave the ' +
-    'attached note as it is, unless their words say to put it in this note.)';
+    'attached note as it is, unless their words say to put it in this note. ' +
+    `${PREACHING_LESSON_SHAPE})`;
 
-/** Whether they asked for a lesson, devotion or outline of its own. */
-export function checkIsNewLessonAsk(text: string) {
-    return NEW_LESSON_ASK_PATTERN.test(text);
+// A note made to hold a lesson that does not exist yet -- the panel's +,
+// then Open in Chatbot, then "help me prepare a sermon on John 10" -- IS
+// where the lesson goes: a second note beside an empty one is two notes
+// to find on Sunday. Written with `owa_bible_note add` all the same, and
+// the WINDOW puts it into the empty note (`toBlankNoteFillArgs`): measured
+// 2026-11-10 against the shared gemma4:cloud, a whole lesson nested in
+// `owa_note_edit`'s `changes` came back as no reply at all 7 times of 8 --
+// the server dropped the call it could not parse -- and as one flat `text`
+// 5 times of 5.
+export const NOTE_BLANK_LESSON_HINT =
+    '(The attached note is empty and the lesson goes INTO it: write it ' +
+    'with ONE owa_bible_note action "add", its `title` the lesson\'s and ' +
+    'its `text` the whole lesson -- the window puts it into this empty ' +
+    'note, not a new one -- on the passage or subject they named, else the ' +
+    "note's name; when neither names one, ask only which passage, with " +
+    `OPTIONS of three. ${PREACHING_LESSON_SHAPE})`;
+
+// Said when a reply came back empty in a conversation about an empty note:
+// the server dropped a call it could not read, which a whole lesson nested
+// in `changes` is (BN-61) -- and the flat one it reads.
+export const NOTE_BLANK_DROPPED_NUDGE =
+    '(Nothing arrived: a call that long could not be read as a change. ' +
+    'Write the whole lesson as ONE owa_bible_note action "add" -- its ' +
+    "`title`, and its `text` the lesson's lines -- and the window puts it " +
+    'into the empty note.)';
+
+// BN-67 (2026-11-10): the same drop, for a note with words in it --
+// finishing a sermon of loose lines, the one long edit came back empty twice.
+// Told only to send it in parts, the model sent the top of the note first
+// and then named blocks by the numbers it had READ, which that first part
+// had moved: points went under the big idea's heading. What an edit adds
+// moves only the blocks AFTER it, so the parts go from the end up.
+export const NOTE_DROPPED_NUDGE =
+    '(Nothing arrived: a call that long could not be read as a change. ' +
+    `Send it in two or three smaller ${NOTE_EDIT_TOOL_NAME} edits, a few ` +
+    'places each, FROM THE END OF THE NOTE UP -- the places with the ' +
+    'highest block numbers first -- so the numbers you read stay right for ' +
+    'every edit after; each one with the hash the one before it answered.)';
+
+// 2026-11-10: finishing a lesson whose points were three one-line bullets
+// wrote each point out as a section of its own and left the three bullets
+// under them, the same points twice. A point already there is expanded
+// where it stands: its line made the point's heading, its words kept.
+// BN-67 (2026-11-10, four partial sermons asked live): a model numbered
+// each new block after the one it had just added, put "## " into a
+// heading's words, left a point's one sentence as all it had, and wrote no
+// passage where the note had none.
+export const NOTE_LESSON_FINISH_HINT =
+    '(This asks to make their lesson whole IN this note, in ONE edit: the ' +
+    'parts of WHAT A LESSON HOLDS it lacks added where they belong, their ' +
+    'own words kept as they are, nothing removed or written twice. A block ' +
+    'number is the note AS YOU READ IT -- what you add never renumbers ' +
+    'anything -- so give each place ONE add: {after: n, kind: "section", ' +
+    'text: every line that goes after block n, as mark-up}. With no ' +
+    'passage printed yet, the first is {after: 0, kind: "section"} opening ' +
+    'with the passage token alone on its line. A point of theirs -- a ' +
+    'heading, a list item or a line -- stays where it is and becomes that ' +
+    'point: {block: n, kind: "h2", text: "1. " and its own words}, then ' +
+    'one section after it with its [^ref], what it means, an example from ' +
+    'life and how to live it this week, even when it has a sentence of its ' +
+    `own. ${PREACHING_LESSON_SHAPE})`;
+
+// 2026-11-10: "it is too long, make it fit 15 minutes" took out every
+// example and every "this week" -- what makes a lesson one to preach --
+// and kept a second hymn.
+export const NOTE_LESSON_SHORTEN_HINT =
+    '(This asks to make their lesson shorter, in ONE edit: keep its shape ' +
+    '-- the passage, the big idea, each point with its verse, ONE example ' +
+    'and how to live it, the response and the prayer -- and shorten by ' +
+    'tightening their words ({block, text}, fewer sentences) and taking out ' +
+    "extras first: a second illustration, cross references, a children's " +
+    'part, extra questions. About 130 spoken words a minute; say how long ' +
+    'it runs now.)';
+
+// The parts of WHAT A LESSON HOLDS, by the English words a heading names
+// them with; a numbered heading is a point, never one of these.
+const LESSON_PART_PATTERN_LIST: readonly [string, RegExp][] = [
+    ['Big idea', /\b(?:big|main|central) idea\b/i],
+    ['Background', /\bbackground\b|\bsetting\b|\bcontext\b/i],
+    ['Introduction', /\bintroduction\b/i],
+    [
+        'Pointing to Jesus',
+        /\bpoint(?:s|ing)? to (?:jesus|christ)\b|\bgospel\b|\bjesus in\b/i,
+    ],
+    ['Response', /\brespon(?:se|d)\b|\binvitation\b|\bapplication\b/i],
+    ['Closing prayer', /\bprayer\b/i],
+    ['Questions for discussion', /\bquestions?\b|\bdiscussion\b/i],
+    ['Memory verse', /\bmemory\b/i],
+];
+const NOTE_BLOCK_LINE_PATTERN =
+    /^\s*(\d+)\.\s+([\w-]+)(?: \[[ x]\])?( \(fixed\))?[^:\n]*?(?::\s+(".*"))?\s*$/;
+const POINT_HEADING_PATTERN = /^\s*(?:\*\*)?\s*(\d+)[.)]/;
+
+function readNoteBlockLines(text: string) {
+    return text.split('\n').flatMap((line) => {
+        const match = NOTE_BLOCK_LINE_PATTERN.exec(line);
+        if (match === null) {
+            return [];
+        }
+        let words = '';
+        try {
+            words = match[4] === undefined ? '' : String(JSON.parse(match[4]));
+        } catch (_error) {
+            words = match[4] ?? '';
+        }
+        return [
+            {
+                n: Number(match[1]),
+                kind: match[2],
+                isFixed: match[3] !== undefined,
+                words,
+            },
+        ];
+    });
+}
+
+/**
+ * Whether a note as read is a lesson already: two numbered points, two of
+ * a lesson's parts named, or a passage printed with a numbered point --
+ * what "finish it" can be said of (BN-67). A note of reminders or prayer
+ * requests is none.
+ */
+export function checkIsLessonNoteText(text: string | null) {
+    if (text === null) {
+        return false;
+    }
+    const blocks = readNoteBlockLines(text);
+    const headings = blocks.filter((block) => /^h[1-6]$/.test(block.kind));
+    const pointCount = headings.filter((block) => {
+        return POINT_HEADING_PATTERN.test(block.words);
+    }).length;
+    const partCount = LESSON_PART_PATTERN_LIST.filter(([, pattern]) => {
+        return headings.some((block) => {
+            return (
+                !POINT_HEADING_PATTERN.test(block.words) &&
+                pattern.test(block.words)
+            );
+        });
+    }).length;
+    const hasPassage = blocks.some((block) => block.kind === 'passage');
+    return pointCount >= 2 || partCount >= 2 || (hasPassage && pointCount >= 1);
+}
+
+// The parts before the points and after them, in the order WHAT A LESSON
+// HOLDS gives: Big idea, Background, Introduction, the points, then the rest.
+const LESSON_POINTS_ORDER = 3;
+
+function toLessonPartOrder(partIndex: number) {
+    return partIndex < LESSON_POINTS_ORDER ? partIndex : partIndex + 1;
+}
+
+/**
+ * What a lesson attached to a _finish my sermon_ still lacks, and WHERE
+ * each goes, read by the window off the note as read (2026-11-10, BN-67).
+ * Told only to add "the parts it lacks", gemma4:cloud added the closing
+ * parts to a sermon whose three points were one line each and left them
+ * so, with no background; told the parts, it put the Introduction after the
+ * points and each point's own line under its new words. So every part
+ * missing is named with the block it goes after -- the end of the part
+ * before it in that order, a point's own last line for its words -- one
+ * place a line, in the order the adds go. The parts are read by their
+ * English names only when the note names some of them so: a lesson headed
+ * in another language is told only its passage and its points. A note with
+ * no numbered point is told what it lacks, its points being its own lines
+ * to make into points. Null when nothing is found missing.
+ */
+export function genLessonGapsText(text: string | null) {
+    if (text === null) {
+        return null;
+    }
+    const blocks = readNoteBlockLines(text);
+    if (blocks.length === 0) {
+        return null;
+    }
+    type SectionType = {
+        point: string | null;
+        partIndex: number;
+        lastN: number;
+        lineCount: number;
+        wordCount: number;
+    };
+    const sections: SectionType[] = [];
+    let topLastN = 0;
+    for (const block of blocks) {
+        if (/^h[1-6]$/.test(block.kind)) {
+            const point = POINT_HEADING_PATTERN.exec(block.words);
+            sections.push({
+                point: point === null ? null : point[1],
+                partIndex:
+                    point === null
+                        ? LESSON_PART_PATTERN_LIST.findIndex(([, pattern]) => {
+                              return pattern.test(block.words);
+                          })
+                        : -1,
+                lastN: block.n,
+                lineCount: 0,
+                wordCount: 0,
+            });
+            continue;
+        }
+        const section = sections.at(-1);
+        if (section === undefined) {
+            topLastN = block.n;
+            continue;
+        }
+        section.lastN = block.n;
+        section.lineCount += 1;
+        section.wordCount += block.words.split(/\s+/).filter(Boolean).length;
+    }
+    const named = sections.filter((section) => section.point === null);
+    const presentSet = new Set(
+        named.map((section) => section.partIndex).filter((index) => index >= 0),
+    );
+    const isNamedInEnglish = presentSet.size >= Math.min(2, named.length);
+    const missingList = isNamedInEnglish
+        ? LESSON_PART_PATTERN_LIST.map(([name], index) => {
+              return { name, index };
+          }).filter(({ index }) => !presentSet.has(index))
+        : [];
+    const hasPassage = blocks.some((block) => block.kind === 'passage');
+    const points = sections.filter((section) => section.point !== null);
+    const itemBlocks = blocks.filter((block) => {
+        return block.kind === 'bullet' || block.kind === 'number';
+    });
+    // An outline with no heading whose points are list items (BN-67: three
+    // points as a list, the frame came out at the top and the points after
+    // the memory verse): each item its point, made a heading where it is.
+    if (sections.length === 0 && itemBlocks.length >= 2) {
+        const firstIndex = blocks.indexOf(itemBlocks[0]);
+        const topN = firstIndex > 0 ? blocks[firstIndex - 1].n : 0;
+        const lastN = (itemBlocks.at(-1) as (typeof blocks)[number]).n;
+        const lines = [
+            `after block ${topN}${topN === 0 ? ' (the top)' : ''}: ` +
+                [
+                    ...(hasPassage
+                        ? []
+                        : ['the main passage, its token alone on its line']),
+                    ...LESSON_PART_PATTERN_LIST.slice(
+                        0,
+                        LESSON_POINTS_ORDER,
+                    ).map(([name]) => name),
+                ].join(', then '),
+            ...itemBlocks.map((item, index) => {
+                const tail =
+                    item.n === lastN
+                        ? LESSON_PART_PATTERN_LIST.slice(
+                              LESSON_POINTS_ORDER,
+                          ).map(([name]) => `, then ${name}`)
+                        : [];
+                return (
+                    `after block ${item.n}: point ${index + 1} -- block ` +
+                    `${item.n} itself made {kind: "h2", text: "${index + 1}. " ` +
+                    'and its own words} -- its verse token, what it means, ' +
+                    'an example from life and how to live it this week' +
+                    tail.join('')
+                );
+            }),
+        ];
+        return (
+            '(Where each missing part goes, by the note as read -- one add a ' +
+            `place: ${lines.join('; ')}.)`
+        );
+    }
+    if (points.length === 0) {
+        const gaps = [
+            ...(hasPassage ? [] : ['the main passage printed first']),
+            ...missingList.map(({ name }) => name),
+        ];
+        return gaps.length === 0
+            ? null
+            : `(What the window found in it, to work down -- it lacks: ${gaps.join('; ')}.)`;
+    }
+    const placeList = [
+        ...named
+            .filter((section) => section.partIndex >= 0)
+            .map((section) => {
+                return {
+                    order: toLessonPartOrder(section.partIndex),
+                    lastN: section.lastN,
+                };
+            }),
+        {
+            order: LESSON_POINTS_ORDER,
+            lastN: (points.at(-1) as SectionType).lastN,
+        },
+    ];
+    const anchorOf = (order: number) => {
+        const before = placeList
+            .filter((place) => place.order < order)
+            .sort((a, b) => b.order - a.order)[0];
+        return before === undefined ? topLastN : before.lastN;
+    };
+    const placeMap = new Map<number, string[]>();
+    const put = (after: number, words: string) => {
+        placeMap.set(after, [...(placeMap.get(after) ?? []), words]);
+    };
+    if (!hasPassage) {
+        put(0, 'the main passage, its token alone on its line');
+    }
+    for (const point of points) {
+        if (point.lineCount < 2 && point.wordCount < 40) {
+            put(
+                point.lastN,
+                `point ${point.point}'s verse token if it has none, what it ` +
+                    'means, an example from life and how to live it this week',
+            );
+        }
+    }
+    for (const { name, index } of missingList) {
+        put(anchorOf(toLessonPartOrder(index)), name);
+    }
+    if (placeMap.size === 0) {
+        return null;
+    }
+    const lines = [...placeMap.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([after, list]) => {
+            return `after block ${after}${after === 0 ? ' (the top)' : ''}: ${list.join(', then ')}`;
+        });
+    return (
+        '(Where each missing part goes, by the note as read -- one add a ' +
+        `place: ${lines.join('; ')}.)`
+    );
+}
+
+export const NOTE_LESSON_REVIEW_HINT =
+    '(This asks what you think of their lesson: answer against WHAT A ' +
+    'LESSON HOLDS -- what is strong, what is missing, one or two things ' +
+    'that would make it clearer -- and change nothing; offer the missing ' +
+    `parts as OPTIONS. ${PREACHING_LESSON_SHAPE})`;
+
+// A block line of the note read with words or a fixed object in it:
+// `3. paragraph: "Grace"`, `4. passage (fixed)`; and one with neither,
+// `1. paragraph` (`toBlockLine`).
+const NOTE_FILLED_BLOCK_LINE_PATTERN =
+    /^\s*\d+\.\s+\S[^:\n]*?(?:\(fixed\)|: ")/;
+const NOTE_EMPTY_BLOCK_LINE_PATTERN = /^\s*\d+\.\s+[\w-]+(?: \[[ x]\])?\s*$/;
+
+/**
+ * Whether a note as read holds nothing -- no words, no object -- said by
+ * the read itself: `(the note is empty …)` or only empty block lines.
+ */
+export function checkIsBlankNoteText(text: string | null) {
+    if (text === null) {
+        return false;
+    }
+    const lines = text.split('\n');
+    return (
+        !lines.some((line) => NOTE_FILLED_BLOCK_LINE_PATTERN.test(line)) &&
+        lines.some((line) => {
+            return (
+                line.startsWith('(the note is empty') ||
+                NOTE_EMPTY_BLOCK_LINE_PATTERN.test(line)
+            );
+        })
+    );
+}
+
+// The empty note card's buttons (BN-64), in English: a press asks the words
+// as the window shows them, which `checkIsLessonCardAsk` reads either way --
+// a Gemma 4 is asked in the person's language, where no English reader sees.
+const LESSON_CARD_ASK_LIST = [
+    'Help me prepare a preaching lesson',
+    "Help me prepare a children's lesson",
+    'Help me prepare a short devotion',
+];
+
+/** The empty note card's buttons, as the window shows them. */
+function genLessonCardReplies() {
+    return [
+        tran('Help me prepare a preaching lesson'),
+        tran("Help me prepare a children's lesson"),
+        tran('Help me prepare a short devotion'),
+    ];
+}
+
+/** Whether a line is a press of the empty note card's lesson buttons. */
+export function checkIsLessonCardAsk(text: string) {
+    const line = String(text ?? '').trim();
+    return (
+        line !== '' &&
+        [...LESSON_CARD_ASK_LIST, ...genLessonCardReplies()].includes(line)
+    );
+}
+
+/**
+ * Whether a note attachment holds nothing -- its text, read off the file,
+ * is its title line alone (`genNoteAttachment`): the card a lesson's.
+ */
+export function checkIsEmptyNoteAttachment(attachment: ChatAttachmentType) {
+    if (
+        !checkIsNoteAttachment(attachment) ||
+        typeof attachment.summary !== 'string'
+    ) {
+        return false;
+    }
+    // Read off the file, a note with no words is its title line and the
+    // empty body's marker (seen live 2026-11-10: the card had looked for the
+    // title line alone and never offered a lesson).
+    const head = `Note: ${attachment.name}`;
+    const summary = attachment.summary.trimEnd();
+    return (
+        summary.endsWith(head) ||
+        summary.endsWith(`${head}\n${EMPTY_NOTE_BODY}`)
+    );
+}
+
+/**
+ * How many blocks a blank note read holds (0 for none), or null when the
+ * note holds anything: what the window takes out when a lesson fills it.
+ */
+export function readBlankNoteBlockCount(text: string | null) {
+    if (!checkIsBlankNoteText(text)) {
+        return null;
+    }
+    const count = /^Blocks: (\d+)/.exec(text ?? '');
+    return count === null ? 0 : Number(count[1]);
+}
+
+/**
+ * A NEW note a model asked for in a conversation about an EMPTY note,
+ * written into that note instead: one `owa_note_edit` edit that gives it
+ * the title, takes out its empty blocks and puts the words in as a
+ * `section` -- a block a line, read as a new note's are. Null when the
+ * call is not such an add (no words, another action).
+ */
+export function toBlankNoteFillArgs(
+    args: any,
+    noteName: string,
+    blockCount: number,
+) {
+    if (
+        args?.action !== 'add' ||
+        typeof args?.text !== 'string' ||
+        args.text.trim() === ''
+    ) {
+        return null;
+    }
+    const title = typeof args.title === 'string' ? args.title.trim() : '';
+    // A first line that only says the title again is the note's name
+    // already, as a new note's is (`toNoteAddChanges`).
+    const toLoose = (line: string) => {
+        return line
+            .replace(/[#*_~`>]/g, ' ')
+            .replace(/^\s*title\s*:/i, ' ')
+            .replace(/\s+/g, ' ')
+            .replace(/[\s:.]+$/, '')
+            .trim()
+            .toLowerCase();
+    };
+    const lines = args.text.replace(/\r\n?/g, '\n').split('\n');
+    const firstIndex = lines.findIndex((line: string) => line.trim() !== '');
+    const text =
+        title !== '' && toLoose(lines[firstIndex] ?? '') === toLoose(title)
+            ? lines.slice(firstIndex + 1).join('\n')
+            : args.text;
+    return {
+        action: 'edit',
+        note: noteName,
+        ...(title === '' ? {} : { title }),
+        changes: [
+            ...Array.from({ length: blockCount }, (_, index) => {
+                return { block: index + 1, remove: true };
+            }),
+            { after: 0, kind: 'section', text },
+        ],
+    };
+}
+
+// --- checking the verses a lesson cites ---------------------------------------
+//
+// 2026-11-10, a sermon's follow-ups on gemma4:cloud: _check that my verses
+// are right_ was answered "I have checked your verses against the KJV text.
+// All the references are correct" with no verse read -- and a point said
+// Isaiah 53:6 was the servant "wounded for our transgressions", which is
+// 53:5. The window reads every verse the note cites (one `owa_find_verse
+// refs` call a Bible, no model round) and the ask carries their words, so
+// the answer compares instead of claiming.
+// A checking word before the verses, or THEIR verses said right or wrong:
+// "add verses that fit point 2" and "are there verses about love?" ask for
+// verses, not a check.
+const NOTE_VERSE_CHECK_ASK_PATTERN =
+    /\b(?:check|verify|double[- ]check|look over|confirm|make sure)\b[^.?!]{0,40}?\b(?:verses?|references?|scriptures?|refs?|bible quotes?)\b|\b(?:my|the|these|all|our)\s+(?:bible\s+)?(?:verses?|references?|scriptures?)\b[^.?!]{0,30}?\b(?:right|correct|accurate|wrong)\b/i;
+const NOTE_VERSE_TOKEN_PATTERN =
+    /\[\^(?:\(([^)\]\n]{1,24})\)\s*)?([^\]\n]+)\]/g;
+const MAX_NOTE_CHECK_VERSES = 24;
+
+/** Whether they asked to check the verses their note cites. */
+export function checkIsNoteVerseCheckAsk(text: string) {
+    const line = String(text ?? '');
+    return (
+        NOTE_VERSE_CHECK_ASK_PATTERN.test(line) ||
+        listAssistantLanguages().some((language) => {
+            return language.verseCheckAskPatterns.some((pattern) => {
+                return pattern.test(line);
+            });
+        })
+    );
+}
+
+/**
+ * Whether a lesson is asked to be written in the words of an installed
+ * language (its `lessonAsks`, BN-65): a Gemma 4 is asked in the person's own
+ * language, untranslated, where the English readers see nothing.
+ */
+export function checkIsLanguageLessonAsk(text: string) {
+    const line = String(text ?? '');
+    return listAssistantLanguages().some((language) => {
+        return language.lessonAskPatterns.some((pattern) => {
+            return pattern.test(line);
+        });
+    });
+}
+
+/**
+ * The verses the attached notes cite, by the Bible each token names (null:
+ * the Lookup's), each once, at most `MAX_NOTE_CHECK_VERSES`: what the window
+ * reads before a verse check.
+ */
+export function collectNoteVerseRefs(texts: readonly (string | null)[]) {
+    const byBible = new Map<string | null, string[]>();
+    let count = 0;
+    for (const text of texts) {
+        for (const match of String(text ?? '').matchAll(
+            NOTE_VERSE_TOKEN_PATTERN,
+        )) {
+            const bible = match[1]?.trim() || null;
+            const ref = match[2].trim();
+            const refs = byBible.get(bible) ?? [];
+            if (refs.includes(ref) || count >= MAX_NOTE_CHECK_VERSES) {
+                continue;
+            }
+            refs.push(ref);
+            byBible.set(bible, refs);
+            count++;
+        }
+    }
+    return [...byBible.entries()].map(([bible, refs]) => {
+        return { bible, refs };
+    });
+}
+
+// A block line of the note read: `14. bullet: "words"` -- its words.
+const NOTE_BLOCK_WORDS_PATTERN = /^\s*\d+\.\s+[^:\n]+?: (".*")\s*$/;
+
+/**
+ * The words of the note around each verse it cites, by its reference: the
+ * first block that cites it, its tokens written as plain references.
+ */
+function collectNoteVerseLines(texts: readonly (string | null)[]) {
+    const lineMap = new Map<string, string>();
+    for (const text of texts) {
+        for (const line of String(text ?? '').split('\n')) {
+            const quoted = NOTE_BLOCK_WORDS_PATTERN.exec(line);
+            if (quoted === null) {
+                continue;
+            }
+            let words: string;
+            try {
+                words = String(JSON.parse(quoted[1]));
+            } catch (_error) {
+                continue;
+            }
+            const plain = words.replace(
+                NOTE_VERSE_TOKEN_PATTERN,
+                (_token, _bible, ref: string) => ref.trim(),
+            );
+            for (const match of words.matchAll(NOTE_VERSE_TOKEN_PATTERN)) {
+                const key = match[2].trim().toLowerCase();
+                if (!lineMap.has(key)) {
+                    lineMap.set(key, plain);
+                }
+            }
+        }
+    }
+    return lineMap;
+}
+
+/**
+ * The verses as a Bible read them (`owa_find_verse` results), for the ask:
+ * each verse with what the NOTE says about it beside what the Bible says --
+ * told only "the Bible reads", gemma4:cloud called a line giving Isaiah
+ * 53:5's words to 53:6 right.
+ */
+export function toNoteVerseReadText(
+    results: readonly any[],
+    noteTexts: readonly (string | null)[] = [],
+) {
+    const lineMap = collectNoteVerseLines(noteTexts);
+    const lines = results.flatMap((result) => {
+        const bible = typeof result?.bible === 'string' ? result.bible : '';
+        const verses: any[] = Array.isArray(result?.verses)
+            ? result.verses
+            : [];
+        return verses.map((verse) => {
+            const ref = String(verse?.ref ?? verse?.key ?? '');
+            const noteLine = lineMap.get(ref.trim().toLowerCase());
+            return (
+                `- ${bible === '' ? '' : `(${bible}) `}${ref}\n` +
+                (noteLine === undefined
+                    ? ''
+                    : `  the note says: ${JSON.stringify(noteLine)}\n`) +
+                `  the Bible says: ${JSON.stringify(String(verse?.text ?? ''))}`
+            );
+        });
+    });
+    if (lines.length === 0) {
+        return null;
+    }
+    return (
+        '(This asks to check the verses. For each verse the note cites: is ' +
+        'it named right, and does what the note says about it match what the ' +
+        'verse says? A line that gives a verse words or a meaning it does not ' +
+        "have -- another verse's words -- is WRONG: name it, say which verse " +
+        'says that if you know, and offer the fix as an OPTION. Change ' +
+        'nothing unasked, and say only what these show.\n' +
+        `${lines.join('\n')})`
+    );
+}
+
+/** The one lesson hint an ask about a note carries, if it is about one. */
+export function genNoteLessonHint(
+    asked: string,
+    isBlank: boolean,
+    isLessonContinued = false,
+    // The note is a lesson already (`checkIsLessonNoteText`): "finish it"
+    // names it.
+    isLessonNote = false,
+) {
+    // "How do I write a sermon here?" is a question about the editor.
+    const isQuestion = checkIsLessonQuestion(asked);
+    // The answer to "which passage?" under a lesson asked for in this tab is
+    // that lesson too (2026-11-10: _The Prodigal Son (Luke 15:11-32)_,
+    // pressed under it, was written as a fifteen-line outline).
+    if (
+        isBlank &&
+        (checkIsLessonWriteAsk(asked) ||
+            checkIsLanguageLessonAsk(asked) ||
+            (isLessonContinued && !checkIsNoteQuestionOnly(asked)))
+    ) {
+        return NOTE_BLANK_LESSON_HINT;
+    }
+    if (!isQuestion && checkIsLessonShortenAsk(asked)) {
+        return NOTE_LESSON_SHORTEN_HINT;
+    }
+    // Before a new lesson: "make it a full sermon" names THIS one.
+    if (
+        !isQuestion &&
+        (checkIsLessonFinishAsk(asked) ||
+            (isLessonNote && checkIsBareFinishAsk(asked)))
+    ) {
+        return NOTE_LESSON_FINISH_HINT;
+    }
+    if (!isQuestion && checkIsNewLessonAsk(asked)) {
+        return NOTE_NEW_LESSON_HINT;
+    }
+    if (checkIsLessonReviewAsk(asked)) {
+        return NOTE_LESSON_REVIEW_HINT;
+    }
+    return null;
 }
 
 // --- a greeting or a question, nothing to change ------------------------------
@@ -691,7 +1351,10 @@ export function checkIsNoteQuestionOnly(text: string) {
 /**
  * The question as the model is asked it: what they typed, then each attached
  * note as it reads now, named as `note` takes it. `ownWords` when `asked` is
- * the English of what they typed in another language.
+ * the English of what they typed in another language; `verseReadText` the
+ * verses the notes cite as the Bible reads them, for a verse check
+ * (`toNoteVerseReadText`); `isLessonContinued` when the question before it in
+ * the tab asked for a lesson.
  */
 export function toNoteAsk(
     asked: string,
@@ -699,6 +1362,8 @@ export function toNoteAsk(
     translateMode: LyricTranslateModeType | null = null,
     isWordless = false,
     ownWords: NoteOwnWordsType | null = null,
+    verseReadText: string | null = null,
+    isLessonContinued = false,
 ) {
     // A button pressed in the window's language is read off its own words:
     // the English of them no longer matches the button.
@@ -717,11 +1382,29 @@ export function toNoteAsk(
             `${note.text ?? `(it could not be read just now; call ${NOTE_EDIT_TOOL_NAME} with action "read")`})`
         );
     });
+    const lessonHint = genNoteLessonHint(
+        asked,
+        notes.length === 1 && checkIsBlankNoteText(notes[0].text),
+        isLessonContinued,
+        notes.length === 1 && checkIsLessonNoteText(notes[0].text),
+    );
+    // What the lesson lacks, read by the window off the note (BN-67).
+    const gapsText =
+        lessonHint === NOTE_LESSON_FINISH_HINT && notes.length === 1
+            ? genLessonGapsText(notes[0].text)
+            : null;
     return [
         ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
         asked,
-        ...(checkIsNewLessonAsk(asked) ? [NOTE_NEW_LESSON_HINT] : []),
-        ...(checkIsNoteQuestionOnly(asked) ? [NOTE_QUESTION_HINT] : []),
+        ...(lessonHint === null ? [] : [lessonHint]),
+        ...(gapsText === null ? [] : [gapsText]),
+        ...(verseReadText === null ? [] : [verseReadText]),
+        // The review hint and the verse check say to change nothing already.
+        ...(lessonHint !== NOTE_LESSON_REVIEW_HINT &&
+        verseReadText === null &&
+        checkIsNoteQuestionOnly(asked)
+            ? [NOTE_QUESTION_HINT]
+            : []),
         ...(checkIsNoteFormatAsk(asked) ? [NOTE_FORMAT_HINT] : []),
         ...(ownWords === null ? [] : [toNoteOwnWordsHint(ownWords)]),
         ...(translateMode === null
@@ -863,7 +1546,8 @@ export const NOTE_SYSTEM_PROMPT =
     "block a heading's words in place of its own. Questions ABOUT the note " +
     '(sum it up, what verses it uses, what a point means) are answered from ' +
     'its words; a verse it names is quoted with owa_find_verse `refs`, never ' +
-    'from memory. How to do something in the note EDITOR itself (sticky ' +
+    'from memory, and never say you checked a verse you did not read. ' +
+    'How to do something in the note EDITOR itself (sticky ' +
     'notes, tables, comments, drawings, Word copies, printing, read-only, ' +
     'zoom) is in its guide: search it with owa_help_search, open the page ' +
     'with owa_help_page, and answer in its words. A NEW note -- asked to ' +
@@ -871,7 +1555,10 @@ export const NOTE_SYSTEM_PROMPT =
     'owa_bible_note action "add", ' +
     'its `title` and `text` written by you (# headings, - lists, **bold**, ' +
     'a verse as [^John 3:16]), never blocks added to this one; the app ' +
-    'opens it and the conversation moves to it. Opening, finding or ' +
+    'opens it and the conversation moves to it. When the attached note is ' +
+    'EMPTY, a lesson asked for goes INTO it: write it the same way, ONE ' +
+    'owa_bible_note "add", and the window puts it into the empty note. ' +
+    `${LESSON_OUTLINE} Opening, finding or ` +
     'printing ANOTHER note is never making one: list the notes ' +
     '(owa_bible_note "list") and say where it is in the Bible Notes list, ' +
     'or say none is called that. When the tool refuses, ' +
@@ -884,7 +1571,9 @@ export const NOTE_SYSTEM_PROMPT =
     'once -- and that Undo this change puts it back (after an "undo", that ' +
     'a "redo" does). Never write the blocks, ' +
     'the mark-up or any JSON out in your answer: a verse is named plainly ' +
-    '(John 3:16), never as [^John 3:16]. End with OPTIONS: two or three next ' +
+    '(John 3:16), never as [^John 3:16], and a part of the note by its ' +
+    'heading or its words, never by a block number they cannot see. End ' +
+    'with OPTIONS: two or three next ' +
     'changes they might want that the tool can make.';
 
 /**
@@ -897,7 +1586,25 @@ export function genNoteOpeningAnswer(
     name: string,
     appLanguage: AssistantLanguageType,
     languages: readonly AssistantLanguageType[],
+    isEmpty = false,
 ) {
+    // An EMPTY note is made to hold a lesson (2026-11-10, BN-64): its card
+    // offers one, where translating, a spelling check and formatting would
+    // have nothing to work on.
+    if (isEmpty) {
+        return {
+            text: fillWords(
+                tran(
+                    '“{name}” is still empty. I can write a whole preaching ' +
+                        'lesson into it and help you prepare it. Press one, ' +
+                        'or say what you want.',
+                ),
+                { name },
+            ),
+            replies: genLessonCardReplies(),
+            translateLanguage: null,
+        };
+    }
     const target = pickTranslateLanguage(name, appLanguage, languages);
     // Named as the reader of THIS window says it: its own word in a window
     // shown in English, the language's own name in any other.

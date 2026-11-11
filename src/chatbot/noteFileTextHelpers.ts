@@ -9,6 +9,10 @@
 //
 // Pure: no file is read here (`fileAttachHelpers.ts` does that).
 
+// What a note with no words reads as -- the empty note's lesson card
+// (`checkIsEmptyNoteAttachment`) tells one by it.
+export const EMPTY_NOTE_BODY = '(empty)';
+
 // The nodes that END a line of their own: what makes a heading, a paragraph
 // and a list item read as three lines instead of one run-on sentence.
 const BLOCK_TYPE_SET = new Set([
@@ -140,7 +144,7 @@ export function toNoteFileText(text: string): string | null {
         }
         parts.push(
             `Note: ${title.length > 0 ? title : '(no title)'}\n` +
-                (body.length > 0 ? body : '(empty)'),
+                (body.length > 0 ? body : EMPTY_NOTE_BODY),
         );
     }
     return parts.length === 0
@@ -186,5 +190,5 @@ export function toNoteItemFromFileText(
             : UNTITLED_NOTE_NAME;
     const body =
         typeof item.content === 'string' ? toNoteContentText(item.content) : '';
-    return { title, text: body.length > 0 ? body : '(empty)' };
+    return { title, text: body.length > 0 ? body : EMPTY_NOTE_BODY };
 }

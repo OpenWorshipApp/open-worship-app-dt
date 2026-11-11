@@ -121,6 +121,22 @@ row's own **[en:tran:Delete]**.
      another language than English, the verse comes from a Bible in that language when one
      is installed and the Bible Lookup is on another (asked in Khmer with the Lookup on the
      KJV, the Khmer Bible's words, in Khmer digits); name a Bible to have another.
+   - A preaching lesson: in a note that is still empty, _help me prepare a sermon on John
+     10:11-18_ (or _I'm preaching on Psalm 23 this Sunday_) writes a whole lesson into it,
+     ready to preach — the passage printed from your Bible, the big idea, the background,
+     an introduction, three points each with its verses, an example and how to live it
+     this week, how it points to Jesus, a response, a closing prayer, questions for
+     discussion and a memory verse; beside a note with words in it, or in any other chat,
+     the lesson is a new note. With no passage named, the assistant asks which one. Then
+     ask as you prepare: _add an illustration to point 2_, _give me two cross references
+     for point 1_, _add two more discussion questions_, _write a stronger conclusion with
+     an invitation_, _add a short object lesson for the children_, _make a version for the
+     children's class_ (a new note). _How long will this take to preach?_ and _is this a
+     good sermon?_ are answered and change nothing; _finish my sermon_ adds the parts it
+     lacks and keeps your words; _it is too long, make it fit 15 minutes_ tightens the
+     words and takes the extras out first, every point keeping its verse, an example and
+     how to live it; _check that my verses are right_ reads every verse the note cites
+     from your Bible and names any line that gives a verse words it does not have.
    - Put an answer into the note: right after the assistant has answered or taught you
      something in this chat, _add it_, _put it in_ or _new section_ adds that answer at the
      end of the note — its headings, points and verses as the editor's own — and _new page_

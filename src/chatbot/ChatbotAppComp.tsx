@@ -153,11 +153,19 @@ import {
     genNoteStyleChanges,
     genNoteStyleDoneText,
     readNoteStyleAsk,
+    checkIsEmptyNoteAttachment,
+    checkIsLanguageLessonAsk,
+    checkIsLessonCardAsk,
+    checkIsNoteVerseCheckAsk,
+    collectNoteVerseRefs,
+    readBlankNoteBlockCount,
     toNoteAsk,
+    toNoteVerseReadText,
     toNoteDocumentText,
     type CreatedNoteType,
     type NoteOwnWordsType,
 } from './noteChatHelpers';
+import { checkIsLessonWriteAsk } from './noteCreatePromptHelpers';
 import {
     SELECTION_STEP_TOOL_NAME,
     appendSelectionMention,
@@ -226,6 +234,7 @@ import {
     type ChatAssetPreviewType,
 } from './assetPreviewHelpers';
 import RenderSessionTabsComp from './RenderSessionTabsComp';
+import RenderAskToolsMenuComp from './RenderAskToolsMenuComp';
 import {
     AUTO_ASSISTANT_VALUE,
     findSteppedProvider,
@@ -6611,6 +6620,8 @@ export default function ChatbotAppComp() {
                     result.attachment.name,
                     getAppLanguage(),
                     [...listAssistantLanguages(), ...listTypedLanguages()],
+                    // An empty note's card offers a lesson (BN-64).
+                    checkIsEmptyNoteAttachment(result.attachment),
                 );
                 addMessage(sessionId, {
                     author: 'bot',
@@ -9803,6 +9814,58 @@ export default function ChatbotAppComp() {
                           }),
                       )
                     : [];
+                // ONE note attached and nothing in it: a lesson made now
+                // goes into it (`toBlankNoteFillArgs`).
+                const blankNoteBlockCount =
+                    noteDocs.length === 1
+                        ? readBlankNoteBlockCount(noteDocs[0].text)
+                        : null;
+                // The question before this one in the tab asked for a
+                // lesson: the answer to its "which passage?" is that lesson.
+                const lastAskedText =
+                    [...priorMessages].reverse().find((message) => {
+                        return message.author === 'you';
+                    })?.text ?? '';
+                const isLessonContinued =
+                    // A press of the empty note card's lesson button, in
+                    // any language, or the answer to its "which passage?".
+                    checkIsLessonCardAsk(trimmedAsked) ||
+                    checkIsLessonCardAsk(lastAskedText) ||
+                    checkIsLessonWriteAsk(lastAskedText) ||
+                    checkIsLanguageLessonAsk(lastAskedText);
+                // "Check my verses": the verses the note cites, read by the
+                // window from the Bible each names -- a model had said they
+                // were checked without reading one (2026-11-10).
+                let noteVerseReadText: string | null = null;
+                if (isNoteDocAsk && checkIsNoteVerseCheckAsk(trimmedAsked)) {
+                    const readList: any[] = [];
+                    for (const { bible, refs } of collectNoteVerseRefs(
+                        noteDocs.map((doc) => doc.text),
+                    )) {
+                        try {
+                            readList.push(
+                                parseToolJson(
+                                    await callTool(
+                                        'owa_find_verse',
+                                        {
+                                            refs: refs.join('; '),
+                                            ...(bible === null
+                                                ? {}
+                                                : { bible }),
+                                        },
+                                        signal,
+                                    ),
+                                ),
+                            );
+                        } catch (_error) {
+                            throwIfCancelled(signal);
+                        }
+                    }
+                    noteVerseReadText = toNoteVerseReadText(
+                        readList,
+                        noteDocs.map((doc) => doc.text),
+                    );
+                }
                 // A foreground session the same way (`owa_foreground_edit
                 // read`): its words, its look and the screens holding it as
                 // they are NOW. A component named with none attached is read
@@ -9918,6 +9981,8 @@ export default function ChatbotAppComp() {
                             readLyricTranslateMode(trimmedAsked),
                             trimmedAsked.length === 0,
                             ownWords,
+                            noteVerseReadText,
+                            isLessonContinued,
                         );
                     }
                     if (isFlowDocAsk) {
@@ -10812,6 +10877,14 @@ export default function ChatbotAppComp() {
                                               // Words to write go in as
                                               // typed (BN-37).
                                               typed: trimmedAsked,
+                                              // An empty note is where a
+                                              // lesson made now goes.
+                                              ...(blankNoteBlockCount === null
+                                                  ? {}
+                                                  : {
+                                                        blankBlockCount:
+                                                            blankNoteBlockCount,
+                                                    }),
                                           },
                                       }
                                     : {}),
@@ -14549,67 +14622,15 @@ export default function ChatbotAppComp() {
                     />
                 ) : null}
                 <div className="chat-attach-row">
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Attach a file')}
-                        title={tran('Attach a picture or a file')}
-                        onClick={() => {
+                    <RenderAskToolsMenuComp
+                        onAttachingFile={() => {
                             fileInputRef.current?.click();
                         }}
-                    >
-                        <i className="bi bi-paperclip" />
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Attach a picture of the app')}
-                        title={tran(
-                            'Attach a picture of the app as it looks now',
-                        )}
-                        onClick={handleSnapping}
-                    >
-                        <i className="bi bi-camera" />
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Point at a control in the app')}
-                        title={tran('Point at a control in the app window')}
-                        onClick={handlePicking}
-                    >
-                        <i className="bi bi-bullseye" />
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Attach a foreground session')}
-                        title={tran(
-                            'Attach a session of a foreground panel that is ' +
-                                'open in the Presenter',
-                        )}
-                        onClick={handleOpeningForegroundPick}
-                    >
-                        <i className="bi bi-layers" />
-                    </button>
-                    {/*
-                     * Last in the row, beside the box it writes into: it puts
-                     * `/` there and the command list opens, which is how
-                     * someone who never read the placeholder learns what `/`
-                     * is for. Says so in its own words (label and tooltip), not
-                     * only in the glyph.
-                     */}
-                    <button
-                        type="button"
-                        className="chat-attach chat-start-command"
-                        aria-label={tran('List every command')}
-                        title={tran(
-                            'Start a command: puts / in the box and lists the commands you can type',
-                        )}
-                        onClick={handleStartingCommand}
-                    >
-                        <i className="bi bi-slash-square" aria-hidden="true" />
-                    </button>
+                        onSnapping={handleSnapping}
+                        onPicking={handlePicking}
+                        onAttachingForeground={handleOpeningForegroundPick}
+                        onStartingCommand={handleStartingCommand}
+                    />
                     <input
                         ref={fileInputRef}
                         className="chat-file-input"

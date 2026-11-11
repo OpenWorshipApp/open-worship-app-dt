@@ -986,6 +986,53 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   note's chat, a Reader word lesson and a passage chat's explanation, each
   one call, each opened and attached.
 
+- **A preaching lesson, made and prepared by asking** (2026-11-10, the
+  user's goal: _chatbot completely smart enough to help prepare a best
+  preaching lesson_; BN-60..BN-63 in the `owa-enhance-bible-note-chatbot`
+  ledger). What a lesson HOLDS -- the passage read first, a big idea,
+  background, an introduction, three points each with its verses, what it
+  means, an example and how to live it, Pointing to Jesus, a response, a
+  written prayer, questions, a memory verse -- is `PREACHING_LESSON_SHAPE`
+  (`noteCreatePromptHelpers.ts`), ~190 tokens put on a LESSON ask alone,
+  never in a prompt: `LESSON_MAKE_HINT` where no note is attached
+  (`askLlmBot`, only beside a tool list holding `owa_bible_note`) and, in a
+  note ask, the one hint `genNoteLessonHint` picks -- the empty note's (the
+  lesson goes INTO it), a new lesson's, _finish my sermon_'s, _make it fit
+  15 minutes_' or _is this a good sermon?_'s -- and, while the note is
+  still empty, the answer to its "which passage?" (`isLessonContinued`, off
+  the tab's earlier question: a passage pressed alone had been written as a
+  fifteen-line outline). The readers are English in code; a language's own
+  are `lessonAsks` / `verseCheckAsks` in its `assistant.json` (French and
+  Khmer so far, BN-65 -- a Gemma 4 is asked in the person's language,
+  untranslated), acted on only in an empty note or a chat with no note.
+  **A long call nested in
+  `changes` is what the shared gemma4:cloud server DROPS**: replayed
+  straight to it, a whole sermon in `owa_note_edit`'s `changes[].text` came
+  back as no text and no call 7 times of 8, as one flat `owa_bible_note add`
+  `text` 5 of 5 -- so an add in a conversation about ONE note that holds
+  nothing is written into that note by the window (`toBlankNoteFillArgs`,
+  `AskExtraType.note.blankBlockCount` from `readBlankNoteBlockCount`). A
+  note ask or a lesson ask is `isLongWrite`: a custom server writes it with
+  `LONG_WRITE_MAX_TOKENS` 6 000 (a help answer's 2 000 cut a sermon) and its
+  lean tool list keeps `owa_bible_note`, which it had never had -- a new
+  lesson on Auto had reached it only when the model guessed the name. **What
+  a model writes anyway is read**: a list sent as JSON text
+  (`toListArgsRead`), changes with no `action` (an edit, and counted as one
+  by the watch -- `watchedArgs` -- or the claim nudge sends a done change
+  back and the model makes it again on a note that has moved), the same
+  document edit twice in one reply (run once; a press twice still twice),
+  and an empty reply about an empty
+  note asked again for the flat add (`NOTE_BLANK_DROPPED_NUDGE`). **_Check
+  my verses_ is read by the
+  window**: every verse the note cites, one `owa_find_verse refs` a Bible
+  before the ask (`collectNoteVerseRefs`), set beside the note's own line
+  about it (`toNoteVerseReadText`) -- told only to check, the model said
+  all were right having read none; told only what the Bible says, it
+  missed Isaiah 53:5's words credited to 53:6; side by side it named them.
+  Measured live on a scratch profile, Auto -> gemma4:cloud: a sermon into
+  an empty note in ONE call, 9-15 s, before 70-134 s through two failed
+  servers and Free; twelve follow-ups one call or an answer each, 3-8 s.
+
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening
   foreground component should be able to attached to the chatbot for the

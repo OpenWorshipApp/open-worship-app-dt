@@ -254,7 +254,12 @@ function cutListedFrame(text: string, marker: RegExp) {
         }
         const matched = marker.exec(line);
         if (matched !== null) {
-            const tail = line.slice(matched.index + matched[0].length);
+            // A bold marker's closing marks are no words after it
+            // (2026-11-10, BN-67: `**OPTIONS:**` over three lines, under
+            // every finished sermon, was drawn as words with no buttons).
+            const tail = line
+                .slice(matched.index + matched[0].length)
+                .replace(/^[*_~`]+/, '');
             if (tail.trim().length > 0 || listed.length === 0) {
                 return null;
             }

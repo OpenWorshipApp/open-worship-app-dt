@@ -3,7 +3,7 @@
     "order": 3,
     "name": "Hebrew",
     "nativeName": "עברית",
-    "version": "0.0.36",
+    "version": "0.0.37",
     "direction": "rtl",
     "description": "A right-to-left language: the app in Hebrew, Bible book names in English."
 }

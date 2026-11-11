@@ -64,7 +64,14 @@ import {
 } from './agentNoteStyleHelpers';
 import { normalizeNoteNode } from './agentNoteNormalizeHelpers';
 import {
+    chainListAdds,
     chainRewriteAdds,
+    chainSectionAdds,
+    expandPassageChanges,
+    readHeadingMarks,
+    readPassageLineRef,
+    checkHasBlockMarkup,
+    checkIsPassageRef,
     expandBlockSplits,
     expandSectionAdds,
 } from './agentNoteMarkupHelpers';
@@ -1594,6 +1601,55 @@ function toReason(reason: string): { reason: string } {
     return { reason };
 }
 
+/**
+ * New blocks put into a note that holds NOTHING -- only empty paragraphs,
+ * the line a new note opens with -- take those lines' place (2026-11-10, a
+ * sermon written into an empty note): the adds after them go at the top,
+ * in the order given, and the empty lines go. A change that names any
+ * block keeps the note as read, and a note with anything in it is left as
+ * it is.
+ */
+export function withBlankNoteFilled(
+    content: string,
+    changes: readonly NoteEditChangeType[],
+): NoteEditChangeType[] {
+    const blocks = readNoteBlocks(content)?.blocks ?? [];
+    const isBlank =
+        blocks.length > 0 &&
+        blocks.every((block) => {
+            return (
+                block.kind === 'paragraph' &&
+                block.isFixed !== true &&
+                block.text.trim() === ''
+            );
+        });
+    const isOnlyAdds =
+        changes.length > 0 &&
+        changes.every((change) => {
+            return (
+                typeof change === 'object' &&
+                change !== null &&
+                change.block === undefined
+            );
+        });
+    if (!isBlank || !isOnlyAdds) {
+        return [...changes];
+    }
+    return [
+        ...blocks.map((block) => {
+            return { block: block.n, remove: true };
+        }),
+        ...changes.map((change) => {
+            const after = change.after as number;
+            return Number.isInteger(after) &&
+                after >= 1 &&
+                after <= blocks.length
+                ? { ...change, after: 0 }
+                : change;
+        }),
+    ];
+}
+
 /** Every verse a change would add that is not in the note already. */
 export function collectNewNoteVerseRefs(
     content: string,
@@ -1625,6 +1681,31 @@ export function collectNewNoteVerseRefs(
                 return checkIsVerseToken(one, ref);
             });
             if (!isKnown) {
+                refs.add(ref);
+            }
+        }
+        // A token alone on its line of a section -- or alone in a paragraph,
+        // naming a range -- is a PASSAGE printed whole, which no chip of the
+        // note stands in for (BN-67: finishing an outline whose points
+        // carried Luke 15:4, 5 and 7, a section opening each point on its
+        // verse was refused -- "no installed Bible could read" them).
+        const isParagraph =
+            change.kind === undefined || change.kind === 'paragraph';
+        const isSection =
+            change.kind === 'section' ||
+            (change.block === undefined &&
+                isParagraph &&
+                checkHasBlockMarkup(change.text));
+        const lines = change.text.split(/\r?\n|\\n/);
+        for (const line of lines) {
+            const ref = readPassageLineRef(line);
+            if (
+                ref !== null &&
+                (isSection ||
+                    (lines.length === 1 &&
+                        isParagraph &&
+                        checkIsPassageRef(ref)))
+            ) {
                 refs.add(ref);
             }
         }
@@ -2354,8 +2435,9 @@ export function applyNoteEdit({
                 'brings it up to date.',
         );
     }
-    // A section is the blocks its lines spell (`expandSectionAdds`).
-    changes = expandSectionAdds(changes);
+    // A section is the blocks its lines spell (`expandSectionAdds`); a block
+    // changed into a passage's token is that passage (BN-67).
+    changes = expandPassageChanges(expandSectionAdds(changes));
     if (changes.length > NOTE_EDIT_MAX_CHANGES) {
         return toReason(
             `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +
@@ -2390,7 +2472,15 @@ export function applyNoteEdit({
                 return change;
             }
             const { splitText: _splitText, chain: _chain, ...rest } = change;
-            return rest;
+            // A heading's marks written into its words (BN-67).
+            const ref =
+                typeof rest.block === 'number'
+                    ? refs[rest.block - 1]
+                    : undefined;
+            return readHeadingMarks(
+                rest,
+                ref === undefined || ref.isFixed ? null : ref.kind,
+            );
         }),
         (block) => {
             const ref = refs[block - 1];
@@ -2401,6 +2491,12 @@ export function applyNoteEdit({
     );
     // A note rewritten as new blocks numbered as they will stand (BN-58).
     changes = chainRewriteAdds(changes, count);
+    // List items added in a row, numbered as they will stand: one list.
+    changes = chainListAdds(changes, (block) => {
+        return refs[block - 1]?.kind ?? null;
+    });
+    // A heading added with its words numbered as they will stand (BN-67).
+    changes = chainSectionAdds(changes);
     const touched = new Set<number>();
     const updates: NoteEditChangeType[] = [];
     const removes: number[] = [];
@@ -3070,12 +3166,22 @@ export function applyNoteEdit({
     }
     // The last new block placed: a chained one goes after it (BN-58).
     let lastAddedNode: NodeType | null = null;
+    // Where a chain grows from: a chained block counts as placed after THAT
+    // block, never after the number it was given, which is a block of the
+    // note too -- or a new block meant for that one would land after the
+    // chain (BN-67: a point's words went under the background before it).
+    let chainSlot: number | null = null;
     for (const change of adds) {
         const after = change.after as number;
-        const anchor: NodeType | null =
-            change.chain === true && lastAddedNode !== null
-                ? lastAddedNode
-                : anchorOf(after);
+        const isChained: boolean =
+            change.chain === true && lastAddedNode !== null;
+        const anchor: NodeType | null = isChained
+            ? lastAddedNode
+            : anchorOf(after);
+        const slot = isChained && chainSlot !== null ? chainSlot : after;
+        if (!isChained) {
+            chainSlot = after;
+        }
         const kind = (change.kind ?? 'paragraph') as NoteAddKindType;
         const style =
             anchor === null ? findFirstStyle(root) : findFirstStyle(anchor);
@@ -3141,7 +3247,7 @@ export function applyNoteEdit({
                     );
                     exampleAnchor = exampleNode;
                 }
-                lastPlacedMap.set(after, exampleAnchor);
+                lastPlacedMap.set(slot, exampleAnchor);
                 lastAddedNode = exampleAnchor;
                 continue;
             }
@@ -3205,7 +3311,7 @@ export function applyNoteEdit({
         }
         applyCodeFields(node, change);
         insertBlockNode(root, anchor, node, listKind, style);
-        lastPlacedMap.set(after, node);
+        lastPlacedMap.set(slot, node);
         lastAddedNode = node;
         // The toolbar on the new block, where it now sits (a list item
         // nests under the one before it).

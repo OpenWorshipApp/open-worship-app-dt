@@ -1,11 +1,11 @@
 ---
 name: bible-note-chatbot
-description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit runs ONLY in the note's own window (opened if closed), reads the live editor and writes through it, refusing another note by its whole path; verse tokens name their Bible [^(KJV) John 3:16]; edits Lexical blocks keeping the rest byte for byte; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one; words selected in the note window are quoted in the chat box with their line and range, in the tab ATTACHED to that note or window"
+description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit runs ONLY in the note's own window (opened if closed), reads the live editor and writes through it, refusing another note by its whole path; verse tokens name their Bible [^(KJV) John 3:16]; edits Lexical blocks keeping the rest byte for byte; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one; words selected in the note window are quoted in the chat box with their line and range, in the tab ATTACHED to that note or window; a preaching lesson is made and prepared by asking (its shape on lesson asks only, a long write sent FLAT -- the shared server drops a lesson nested in changes)"
 metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-09T16:48:56.525Z
+  modified: 2026-11-10T21:59:41.247Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -246,6 +246,27 @@ model went round seven times to no answer; it now reads them
 it) and splits a block given lines with a list kind or `section`. Read what
 a model WRITES before teaching it a new field -- each of three messy notes
 then went in one call.
+
+2026-11-10, the goal _chatbot completely smart enough to help prepare a
+best preaching lesson_ (BN-60..BN-65). What it taught, beyond the code:
+(1) **a small model writes the lesson it is SHOWN**: told only "a lesson
+given whole", it wrote a title, bullets and a verse; given what one holds
+(`PREACHING_LESSON_SHAPE`, on lesson asks only), a preachable sermon in one
+call. (2) **"wrote no answer" on the shared server can be the SERVER
+dropping a call it could not parse**: tap every round in dev (finish
+`stop`, ~850 tokens generated, no text, no call), capture the request and
+replay it straight to the registry server with small changes -- a whole
+lesson nested in `owa_note_edit`'s `changes[].text` dropped 7 of 8, the same
+lesson as one flat `owa_bible_note add` `text` came back 5 of 5. Shape the
+long writes FLAT. (3) **Read a fix's bookkeeping, not only its call**: the
+window filled a missing `action: "edit"` for the tool, but the watch read the
+model's own args, counted no change, and the claim nudge made the model
+repeat a done edit onto a note that had moved. (4) **"Check my verses" must
+be read by the window** and set side by side with the note's own words --
+told to check, the model claimed it had; told what the Bible says, it still
+missed a wrong verse; beside the note's line, it named it. (5) The custom
+servers' lean tool list had never held `owa_bible_note`; check the list a
+provider is actually SENT before trusting a hint that names a tool.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

@@ -1992,4 +1992,16 @@ false` and searches only a dataset a lookup panel already holds
   behind the note being changed; the call names no `page`, its worker runs
   in the main window). An `owa_undo` of it still bannered in the main
   window: its call carries only the undo id. Offered to the chatbot's model
-  only in a `note` ask (`chatbot-llm.md`).
+  only in a `note` ask (`chatbot-llm.md`). **A lesson written whole**
+  (2026-11-10, BN-60..BN-62): a verse token alone on its line of a
+  `section` or a new note -- or a paragraph add that is one token naming a
+  range or a chapter -- is the PASSAGE printed whole (`readPassageLineRef`,
+  `checkIsPassageRef`; one verse alone in a paragraph stays its chip); an
+  edit that only adds blocks to a note holding nothing but empty lines
+  takes those lines out (`withBlankNoteFilled`); and list items added in a
+  row, `after: N, N+1 …` onto a block that is not an item of that list, are
+  one list (`chainListAdds` -- two cross references had stood apart round a
+  point's example). A whole lesson nested in `changes[].text` is the call
+  the shared gemma4:cloud server drops (7 of 8 replays, no text and no call
+  back), so the chatbot writes an empty note's lesson as `owa_bible_note
+  add` and the window turns it into this edit (`chatbot-llm.md`).

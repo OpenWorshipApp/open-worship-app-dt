@@ -645,6 +645,103 @@ was seen and what was done.
   ONE call, 3-5 s, on gemma4:cloud: the lessons headed and listed, the
   questions split, Luke 15:4-7 and Matthew 6:6 verse chips, only
   connecting words ("first", "then") and a reference's "verse" dropped.
+- **BN-60 — a lesson worth preaching** (2026-11-10, the user's goal:
+  _chatbot completely smart enough to help prepare a best preaching
+  lesson_). A model was told a lesson is "given whole in its own words"
+  and nothing of what one holds. `PREACHING_LESSON_SHAPE`
+  (`noteCreatePromptHelpers.ts`) says it in the order it is preached --
+  the passage read first, a big idea, background, an introduction, three
+  points each with its verses, what it means, an example from life and
+  how to live it this week, Pointing to Jesus, a response, a written
+  prayer, questions for discussion, a memory verse -- and rides ONLY on a
+  lesson ask, never in a prompt (~190 tokens, paid on that ask alone):
+  `NOTE_NEW_LESSON_HINT`, `NOTE_BLANK_LESSON_HINT` (an empty note is
+  where the lesson goes), `NOTE_LESSON_FINISH_HINT` (_finish my sermon_:
+  the parts it lacks, their words kept), `NOTE_LESSON_REVIEW_HINT` (_is
+  this a good sermon?_: judged against the shape, nothing changed),
+  `NOTE_LESSON_SHORTEN_HINT` (_make it fit 15 minutes_: words tightened,
+  extras out first, every point keeping its verse, an example and how to
+  live it -- the first cut took out every example and application), and
+  `LESSON_MAKE_HINT` where no note is attached (`askLlmBot`, an ask whose
+  tools hold `owa_bible_note`). A verse token alone on its line -- in a
+  new note, a `section`, or a paragraph add naming a range or a chapter --
+  is the passage printed whole (`readPassageLineRef`, `checkIsPassageRef`;
+  one verse alone in a paragraph stays its chip). Seen live on a scratch
+  profile, Auto -> gemma4:cloud: _help me prepare a sermon on John
+  10:11-18 for Sunday_ in an empty note, ONE call, 15 s, 31 blocks (the
+  passage first, Big idea … Memory verse); Psalm 23 in 9 s; _I'm preaching
+  on Luke 15:11-32 this Sunday, help me prepare_ one call, 15 s; _make a
+  sermon on Romans 8:28-39_ beside a lesson, a new note, 14 s, opened and
+  attached. Follow-ups, one call or an answer each, 3-6 s: an
+  illustration under point 2, two cross references under point 1, two
+  more questions, a stronger conclusion with an invitation, an object
+  lesson for the children after the introduction, the point headings bold
+  dark blue, a fitting hymn, what "lay down his life" means, how long it
+  takes to preach (15-25 min, by part), an honest review (it caught that
+  verse 16's "other sheep" was never preached), a children's version (a
+  new note), and the 15-minute fit (one edit, the shape kept, 852 words
+  with the passage). _help me prepare a sermon_ with nothing named asks
+  which passage, three as buttons (3 s); the passage pressed under it was
+  first written as a fifteen-line outline -- its words are no lesson ask
+  -- so in an empty note the question after a lesson ask carries the
+  lesson hint too (`genNoteLessonHint`'s `isLessonContinued`, from the
+  tab's `priorMessages`): pressed again, 26 blocks, the whole shape.
+  _finish my sermon_ on the elder lesson (a title, three one-line points,
+  two questions, a hymn): one call, 6 s, every line of theirs kept and the
+  rest of the shape added round them -- its three one-line points left
+  below their expanded sections, since nothing of theirs is removed.
+  Elder corpus, the 25 asks these rules touch: 25 of 25 supported.
+- **BN-61 — the shared server drops a long call nested in `changes`**
+  (2026-11-10). The first sermon asks went gemma4:cloud -> Gemma 4 31b ->
+  Free's Nemotron, 70-134 s, and once a "Test paragraph" in the note. A
+  dev-only tap of every round showed `finish: stop`, ~820-890 tokens
+  generated and no text, no call: the server's own parser dropped the
+  call. The captured request replayed straight to the registry server
+  (`/v1/chat/completions`, the registry's key never printed; Ollama's
+  native `/api/chat` too) dropped the lesson nested in `owa_note_edit`'s
+  `changes[].text` 7 times of 8, and returned it as one flat
+  `owa_bible_note add` `text` 5 of 5 (3 256-3 605 characters). So an add
+  in a conversation about ONE note that holds nothing is written INTO that
+  note by the window (`toBlankNoteFillArgs` in `runMcpToolCall`: its empty
+  blocks out, the title set, one `section`), and the empty-note hint asks
+  for that add. The empty note's own blank line gives way to whatever is
+  put in it (`withBlankNoteFilled`, the edit path). The custom servers'
+  lean list had no `owa_bible_note` at all -- a new lesson on Auto reached
+  it only when the model guessed the name -- and wrote with 2 000 tokens,
+  short of a sermon: a note ask or a lesson ask keeps `owa_bible_note` and
+  writes with `LONG_WRITE_MAX_TOKENS` 6 000 (`AskExtraType.isLongWrite`).
+  And a reply that comes back empty in a conversation about an empty note
+  is asked again with `NOTE_BLANK_DROPPED_NUDGE` -- the flat add -- where
+  it had been asked again unchanged.
+- **BN-62 — what a model writes anyway** (2026-11-10). `changes` sent as
+  the JSON TEXT of the list (gemma4:cloud's first sermon; refused, sent
+  the same again) is read as the list (`toListArgsRead`, `changes` and
+  `items` only). `changes` with no `action` is an edit -- and the WATCH
+  counts the filled action (`watchedArgs`): counted by the model's own
+  args, a done edit read as no change, the claim nudge sent the answer
+  back, the model sent the edit again, the note had changed since its
+  read, and the answer apologised for a change it had made. The same
+  DOCUMENT edit twice in one reply runs once (`DOCUMENT_EDIT_TOOL_NAME_SET`;
+  a press twice still runs twice -- Zoom In twice is meant). List items
+  added in a row, `after: N`,
+  `N+1` …, onto a block that is not an item of that list are one list
+  (`chainListAdds`): two cross references stood apart round point 1's
+  example, and two more questions would have put the second under the
+  next heading.
+- **BN-63 — a verse check that reads the verses** (2026-11-10). _Check
+  that my verses are right_ was answered "I have checked your verses
+  against the KJV text. All correct" with no verse read, over a point
+  that gave Isaiah 53:6 the words of 53:5. The window reads every verse
+  the note cites (one `owa_find_verse refs` a Bible, ~100 ms, no model
+  round; `checkIsNoteVerseCheckAsk`, `collectNoteVerseRefs`) and the ask
+  sets each beside the note's own line about it (`toNoteVerseReadText`):
+  told only "the Bible reads", the model still called the line right;
+  side by side, it named it -- _that text is actually from Isaiah 53:5.
+  Verse 6 says, "All we like sheep have gone astray"_ -- and offered both
+  fixes; _Fix the reference to Isaiah 53:5_ was one edit. The prompt says
+  never to say a verse was checked that was not read, and to name a part
+  of the note by its heading or words, never a block number (_as noted in
+  your study (blocks 19 and 21)_).
 
 ## Open
 
@@ -694,3 +791,26 @@ was seen and what was done.
   (`indent: "more"`, as a change does).
 - **BN-21 — a Resources chat's note not seen live.** The scratch profile held no
   Resources files; that ask has the tool and the sentence, held by tests only.
+- **BN-64 — an empty note's card offers nothing to start a lesson.** The
+  card a note opens with offers translating, a spelling check, a summary
+  and formatting -- none of which an EMPTY note can use. A button such as
+  _Help me prepare a preaching lesson_ (the empty-note hint asks which
+  passage when none is named) would be one new key in every dictionary,
+  each version raised and packed.
+- **BN-65 — the lesson readers are English** (part done 2026-11-10). `checkIsLessonWriteAsk` and
+  its siblings read the English of an ask; a question asked of a Gemma 4
+  model in the person's own language goes to it untranslated, so on Auto
+  in a non-English app (which prefers a Gemma 4) a lesson asked for in
+  that language carries no `PREACHING_LESSON_SHAPE`, no blank-note fill
+  hint and no verse check. Each language's words for a sermon, a lesson
+  and checking verses would be language data (`assistant.json`), as
+  `studyFileAsks` is. **Done for French and Khmer** (`lessonAsks`,
+  `verseCheckAsks`, read by `checkIsLanguageLessonAsk` and
+  `checkIsNoteVerseCheckAsk`; acted on only in an empty note or a chat
+  with no note, never as a new lesson beside one; package tests in each
+  `tests/chatbot/noteLessonAsks.test.ts`; km 0.0.62, fr 0.0.54, packed).
+  Seen live with the Khmer pack installed: _ជួយខ្ញុំរៀបចំសេចក្ដីអធិប្បាយលើ
+  យ៉ូហាន ១០:១១-១៨_ in an empty note, the whole lesson written in Khmer in
+  one call, the note titled in Khmer -- one Thai word slipped into a Khmer
+  line (a model's, not caught: a note's words are never cleaned). Open:
+  the other 85 languages' words.

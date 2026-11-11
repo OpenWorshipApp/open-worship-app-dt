@@ -31,6 +31,7 @@ import {
   genTypeExpression,
 } from './domMatch.mjs';
 import { readLiveInstances } from './discovery.mjs';
+import { findMainWindowTarget, toMainWindowPage } from './mainWindowTarget.mjs';
 import { FRESH_PAGE_NOTE_LEAD } from './manualPage.mjs';
 import {
   genPressGuard,
@@ -2373,6 +2374,17 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     async ({ page }) => {
       return await attempt(async () => {
         const port = await requireLivePort();
+        // Aimed at the main window BY ITS ID: ranked by page kind, a
+        // Bible Reader window of its own tied with (or beat) the main
+        // window, and was the one sent away (`mainWindowTarget.mjs`).
+        const mainWindow = findMainWindowTarget(await listTargets(port));
+        if (mainWindow === null) {
+          throw new Error(
+            'The main app window was not found among the open ' +
+              'windows, so nothing was switched -- check owa_app_state ' +
+              'and try again.',
+          );
+        }
         // The navigation unloads the page mid-answer, so the
         // evaluation may never report back; what proves the switch
         // is the target list a moment later.
@@ -2380,6 +2392,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         try {
           const { value } = await evaluateInApp(genGotoPageExpression(page), {
             port,
+            match: mainWindow.id,
           });
           outcome = value;
         } catch {
@@ -2390,15 +2403,14 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         }
         const startedAt = Date.now();
         while (Date.now() - startedAt < 8000) {
-          const targets = await listTargets(port);
-          const arrived = targets.some((target) => {
-            return target.url.includes(page);
-          });
-          if (arrived) {
+          // The MAIN window on the page -- a Reader window of its own
+          // is on `reader.html` already and proves nothing.
+          const arrived = findMainWindowTarget(await listTargets(port));
+          if (arrived !== null && toMainWindowPage(arrived.url) === page) {
             return {
               page,
               switched: true,
-              from: outcome?.from ?? null,
+              from: outcome?.from ?? toMainWindowPage(mainWindow.url),
             };
           }
           await new Promise((resolve) => {

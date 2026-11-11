@@ -165,7 +165,7 @@ const STATE = `(() => {
                 return { name: name.innerText.trim(), number: clip?.querySelector('.chat-clip-number')?.innerText.trim() ?? null };
             })) : [],
         attachError: document.querySelector('.chat-attach-error')?.innerText.trim() ?? null,
-        attachTitles: [...document.querySelectorAll('.chat-attach')].map((b) => b.getAttribute('aria-label') + ' / ' + b.getAttribute('title')),
+        attachTitles: [...document.querySelectorAll('.chat-attach, [role="menu"] [role="menuitem"]')].map((b) => b.getAttribute('aria-label') + ' / ' + b.getAttribute('title')),
         cues,
     };
 })()`;
@@ -196,6 +196,17 @@ const CLICK = (selector) => `(() => {
     const node = document.querySelector(${JSON.stringify(selector)});
     if (!node) return false;
     node.click();
+    return true;
+})()`;
+
+// The box's tools are rows of the ⋮ at its left (`RenderAskToolsMenuComp`),
+// in the DOM only while it is open: open it, wait a frame, press the row.
+const ASK_TOOL = (label) => `(async () => {
+    document.querySelector('button.chat-ask-tools')?.click();
+    await new Promise((done) => requestAnimationFrame(done));
+    const row = document.querySelector('[role="menu"] [aria-label=' + ${JSON.stringify(JSON.stringify(label))} + ']');
+    if (!row) return false;
+    row.click();
     return true;
 })()`;
 
@@ -311,13 +322,13 @@ let firstQuestion = null;
 const steps = [
     {
         id: 'A1-camera',
-        attach: async () => chat.evaluate(CLICK('.chat-attach:nth-of-type(2)')),
+        attach: async () => chat.evaluate(ASK_TOOL('Attach a picture of the app')),
         ask: ATTACH_ASKS.asks['A1-camera'],
     },
     {
         id: 'A2-point',
         attach: async () => {
-            await chat.evaluate(CLICK('.chat-attach:nth-of-type(3)'));
+            await chat.evaluate(ASK_TOOL('Point at a control in the app'));
             // The picker up in the main window first: until then the click
             // would press the control itself.
             let isUp = false;

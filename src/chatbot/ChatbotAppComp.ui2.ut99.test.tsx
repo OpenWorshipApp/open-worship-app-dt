@@ -360,6 +360,13 @@ async function press(element: Element | null) {
     await flush();
 }
 
+// The ask row's tools sit behind its ⋮ (`RenderAskToolsMenuComp`): open it,
+// then hand back the row named.
+async function openAskTool(label: string) {
+    await press($('button.chat-ask-tools'));
+    return $(`[role="menu"] [aria-label="${label}"]`);
+}
+
 async function typeQuestion(value: string) {
     const box = $<HTMLTextAreaElement>('.chat-input')!;
     const setter = Object.getOwnPropertyDescriptor(
@@ -1529,8 +1536,10 @@ describe('the camera and the pointer', () => {
         plugTestTranslator({ 'my screen': 'MY-SCREEN' });
         seedSessions([genSession()]);
         await renderWindow();
-        const camera = $('[aria-label="Attach a picture of the app"]')!;
-        await press(camera);
+        const camera = () => {
+            return openAskTool('Attach a picture of the app');
+        };
+        await press(await camera());
         await flush();
         expect(draftChipNames()).toEqual(['MY-SCREEN']);
         // The main window it was of, said on its hover.
@@ -1538,11 +1547,11 @@ describe('the camera and the pointer', () => {
             $('.chat-ask > .chat-clips .chat-clip')!.getAttribute('title'),
         ).toBe('MY-SCREEN (main window, Presenter) — press to see it bigger');
         captured = 'data:text/plain;base64,aGk=';
-        await press(camera);
+        await press(await camera());
         await flush();
         expect(attachError()).toBe('I could not take a picture of the app.');
         captured = new Error('the window is hidden');
-        await press(camera);
+        await press(await camera());
         await flush();
         expect(attachError()).toBe(
             'I could not take a picture: the window is hidden',
@@ -1571,7 +1580,7 @@ describe('the camera and the pointer', () => {
         seedSessions([genSession()]);
         await renderWindow();
         await chooseOption(getSelect('Which window'), 'W2');
-        await press($('[aria-label="Attach a picture of the app"]'));
+        await press(await openAskTool('Attach a picture of the app'));
         await flush();
         expect(h.callToolPicture).toHaveBeenCalledWith(
             'owa_screenshot',
@@ -1589,7 +1598,7 @@ describe('the camera and the pointer', () => {
         });
         seedSessions([genSession()]);
         await renderWindow();
-        await press($('[aria-label="Point at a control in the app"]'));
+        await press(await openAskTool('Point at a control in the app'));
         expect(attachError()).toBe(
             'Point at the control you mean in the app window…',
         );
@@ -1643,14 +1652,16 @@ describe('the camera and the pointer', () => {
         ];
         seedSessions([genSession()]);
         await renderWindow();
-        const pointer = $('[aria-label="Point at a control in the app"]')!;
-        await press(pointer);
+        const pointer = () => {
+            return openAskTool('Point at a control in the app');
+        };
+        await press(await pointer());
         expect(attachError()).toBe('You pressed Escape.');
         answer = JSON.stringify({ picked: false });
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe('Nothing was picked in the app window.');
         answer = new Error('host down');
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe(
             'I could not do that just now. Try again in a moment.',
         );
@@ -1660,7 +1671,7 @@ describe('the camera and the pointer', () => {
         h.callTool.mockImplementation(async () => {
             return waiting.promise;
         });
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe(
             'Point at the control you mean in the Settings window…',
         );

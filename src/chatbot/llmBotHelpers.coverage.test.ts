@@ -1201,6 +1201,127 @@ describe('the Anthropic loop', () => {
         });
     });
 
+    // 2026-11-10, the goal _chatbot completely smart enough to help prepare
+    // a best preaching lesson_: the person made an EMPTY note to hold the
+    // lesson, so a new note the model makes is written into it, once.
+    test('a lesson made in a conversation about an empty note goes into it', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'The Good Shepherd',
+            isChanged: true,
+            undoId: 'u-1',
+            summary: 'added 3 blocks',
+        });
+        const lesson = '[^John 10:11-18]\n## Big idea\nHe gives his life.';
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_bible_note',
+                    input: {
+                        action: 'add',
+                        title: 'The Good Shepherd',
+                        text: lesson,
+                    },
+                }),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+
+        await askLlmBot(
+            'help me prepare a sermon on John 10:11-18',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_note_edit',
+                args: expect.objectContaining({
+                    action: 'edit',
+                    title: 'The Good Shepherd',
+                    file: 'C:\\notes\\Default.own',
+                    id: 4,
+                    changes: [
+                        { block: 1, remove: true },
+                        { after: 0, kind: 'section', text: lesson },
+                    ],
+                }),
+            },
+        ]);
+        const results = readToolResults(sentList[1]);
+        expect(results[0].content).toMatch(/was empty, so the lesson was/);
+    });
+
+    test('changes sent with no action are an edit', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Sermon',
+            isChanged: true,
+            undoId: 'u-2',
+            summary: 'block 12: bold',
+        });
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_note_edit',
+                    input: {
+                        note: 'Sermon',
+                        changes: [{ block: 12, styles: ['bold'] }],
+                    },
+                }),
+                anthropicText(
+                    "I've made the headings bold. Undo this change puts it back.",
+                ),
+            ],
+            'anthropic',
+        );
+        const answer = await askLlmBot(
+            'make the point headings bold',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 8,
+                        },
+                    ],
+                },
+            },
+        );
+        expect(fake.toolCallList[0]).toMatchObject({
+            name: 'owa_note_edit',
+            args: { action: 'edit', id: 8 },
+        });
+        // Counted as the change it was: no "claimed a change" round, and
+        // the press that puts it back is under the answer.
+        expect(sentList).toHaveLength(2);
+        expect(answer.actions).toEqual([
+            expect.objectContaining({ label: 'Undo this change' }),
+        ]);
+    });
+
     // BN-26 (2026-11-08, seen live): asked in another language under a
     // note in it, "add John 1:1 under the first line" read the verse from
     // the KJV the Lookup was on, a Bible in that language installed.
@@ -1899,6 +2020,159 @@ describe('the OpenAI-shaped loop', () => {
 
         expect(answer.text).toBe('Here it is.');
         expect(sentList).toHaveLength(2);
+        // No note in it: asked again as it was.
+        expect(JSON.stringify(sentList[1].messages)).not.toContain(
+            'Nothing arrived',
+        );
+    });
+
+    // BN-61 (2026-11-10): a whole lesson for an empty note, nested in
+    // `changes`, is the call the shared server dropped 7 times of 8 -- the
+    // retry asks for the flat add the window writes into the note.
+    test('a dropped reply about an empty note is asked for flat', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        const { sentList } = useOpenAiShaped(
+            [openAiText('', 'stop'), openAiText('Which passage?')],
+            'openai',
+        );
+        await askLlmBot(
+            'help me prepare a sermon on John 10:11-18',
+            'bibleNote',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(sentList).toHaveLength(2);
+        expect(JSON.stringify(sentList[1].messages.at(-1))).toContain(
+            'ONE owa_bible_note action \\"add\\"',
+        );
+        // A note with words in it: the change asked for in smaller parts
+        // (BN-67: a finished sermon's one long edit was dropped twice).
+        const plain = useOpenAiShaped(
+            [openAiText('', 'stop'), openAiText('Done.')],
+            'openai',
+        );
+        await askLlmBot(
+            'make the title red',
+            'bibleNote',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                },
+            },
+        );
+        const nudge = JSON.stringify(plain.sentList[1].messages.at(-1));
+        expect(nudge).toContain('smaller owa_note_edit edits');
+        // In parts, from the end up: an add moves only what comes after it.
+        expect(nudge).toContain('FROM THE END OF THE NOTE UP');
+    });
+
+    // 2026-11-10: _make it fit 15 minutes_ came back as one edit sent twice
+    // in one reply; the second was refused and the answer apologised.
+    test('the same edit twice in one reply runs once; a press twice, twice', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_click' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Sermon',
+            isChanged: true,
+            undoId: 'u-3',
+        });
+        const edit = {
+            id: 'call-1',
+            type: 'function',
+            function: {
+                name: 'owa_note_edit',
+                arguments: JSON.stringify({
+                    action: 'edit',
+                    note: 'Sermon',
+                    changes: [{ block: 2, text: 'Shorter.' }],
+                }),
+            },
+        };
+        const press = {
+            id: 'call-3',
+            type: 'function',
+            function: {
+                name: 'owa_click',
+                arguments: JSON.stringify({ find: 'Zoom In' }),
+            },
+        };
+        const { sentList } = useOpenAiShaped(
+            [
+                {
+                    choices: [
+                        {
+                            message: {
+                                role: 'assistant',
+                                content: null,
+                                tool_calls: [
+                                    edit,
+                                    { ...edit, id: 'call-2' },
+                                    press,
+                                    { ...press, id: 'call-4' },
+                                ],
+                            },
+                            finish_reason: 'tool_calls',
+                        },
+                    ],
+                    usage: { prompt_tokens: 10, completion_tokens: 5 },
+                },
+                openAiText('Done.'),
+            ],
+            'openai',
+        );
+        await askLlmBot(
+            'it is too long, make it fit 15 minutes',
+            'bibleNote',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                },
+            },
+        );
+        expect(
+            fake.toolCallList.map((call: any) => {
+                return call.name;
+            }),
+        ).toEqual(['owa_note_edit', 'owa_click', 'owa_click']);
+        // Every call still gets its answer, the second edit the first's.
+        const toolLegs = sentList[1].messages.filter((message: any) => {
+            return message.role === 'tool';
+        });
+        expect(toolLegs).toHaveLength(4);
+        expect(toolLegs[1].content).toBe(toolLegs[0].content);
     });
 
     test('a second empty reply is the model’s, and pressed nothing', async () => {
