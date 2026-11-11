@@ -18,6 +18,7 @@ import {
 } from './helpers';
 import appProvider from '../server/appProvider';
 import { openAiChatPage, openPopupWindow } from './popupWindowHelpers';
+import { openChatbotPage } from './chatbotPageHelpers';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -368,6 +369,7 @@ export {
     openAiChatPage,
     openPopupWindow,
 } from './popupWindowHelpers';
+export { openChatbotPage } from './chatbotPageHelpers';
 
 function openAboutPage() {
     return openPopupWindow(
@@ -388,27 +390,6 @@ appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
 });
 
-export function openChatbotPage() {
-    return openPopupWindow(
-        appProvider.chatbotHomePage,
-        `chatbot_${Date.now()}`,
-        'chatbot',
-        {
-            width: 460,
-            height: 640,
-            // Beside the app rather than over it: the answers point at
-            // controls in the window behind this one -- and the frosted
-            // backdrop keeps that window half-visible THROUGH the help, so a
-            // step that says "the button below the tabs" can be followed
-            // without moving anything out of the way.
-            appGlassy: true,
-            appAlignHorizontal: 'right',
-            appAlignVertical: 'center',
-            appFollowScale: true,
-            appTopToMain: true,
-        },
-    );
-}
 // Help -> App Help (Chatbot) in the native menu bar. It gets the same
 // caution the 🤖 button and the Tools entry ask for, so the warning cannot be
 // walked around by opening the window a different way.

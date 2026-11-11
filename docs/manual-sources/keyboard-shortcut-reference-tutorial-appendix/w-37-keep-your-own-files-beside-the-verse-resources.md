@@ -2,10 +2,10 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, CM-93]
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-130, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-10"
+workflowsVersion: "2026-11-11"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -128,7 +128,10 @@ all count as book-level too.
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written. The head row also has
      **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
-     **[en:tran:Reveal in File Explorer]**. **To change the file right there**, press
+     **[en:tran:Reveal in File Explorer]**.
+     **[en:tran:Ask the Assistant About This File]** (the 🤖, last in the row, shown while
+     AI is on) brings the help window forward with this file attached in a chat of its own,
+     as the 🤖 on its Resources row does. **To change the file right there**, press
      **[en:tran:Edit]** (the pencil): an editor of the file's markdown opens on the left,
      its lines wrapped, and the page stays on the right, drawing what you type a moment
      after you stop. Nothing is written until you press **[en:tran:Save]** (the disk) or
@@ -136,7 +139,13 @@ all count as book-level too.
      **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
      arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
      whole window back to the page — your unsaved words still drawn there as they will
-     look, still waiting for **[en:tran:Save]**. While something is unsaved,
+     look, still waiting for **[en:tran:Save]**. **To ask the assistant about some of the
+     words**, select them in the editor, right-click them (or press Shift+F10) and choose
+     **[en:tran:Ask the assistant about this]**: the help window comes forward with them
+     quoted in its box under _Selected text_, the file's name and their line number, in the
+     chat that already holds this file, else in a new one with the file attached. Nothing
+     is sent until you type your question under the quote and press **[en:tran:Send]**.
+     While something is unsaved,
      **[en:tran:Back]** and **[en:tran:Reload]** wait, a link to another `.md` does not open, and closing the
      window is stopped once with a note to save or discard first (keep trying and it
      closes anyway). A change saved in your own editor reaches an open editor here that
@@ -241,7 +250,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `RD-130` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-11).
 :::

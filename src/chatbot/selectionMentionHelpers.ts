@@ -18,6 +18,12 @@
  * Pure, every rule a test: no store, no tool call, no model.
  */
 import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
+import { toPreviewPathKey } from '../helper/ai/windowOnTopRequestHelpers';
+import type { ChatAttachmentType } from './attachmentHelpers';
+import {
+    checkIsFileAttachment,
+    findOpenFileAttachments,
+} from './attachmentHelpers';
 import { fillWords, tran } from './chatTranHelpers';
 import type { BotActionType } from './helpBotHelpers';
 
@@ -26,10 +32,29 @@ import type { BotActionType } from './helpBotHelpers';
 // **bold** is not in this quote, which is the words as the screen shows them.
 const SELECTION_MARK = '**';
 
+// The source's name, and a text file's lines the words are on after it the
+// way an editor and every model write them -- `notes.md:7`, `notes.md:7-9`
+// -- with no word of any language to translate.
+function toSourceWhere(
+    sourceName: string,
+    lines: SelectionMentionType['lines'],
+) {
+    const name = sourceName.replace(/\s+/g, ' ').trim();
+    if (lines === undefined || name.length === 0) {
+        return name;
+    }
+    const range =
+        lines.first === lines.last
+            ? `${lines.first}`
+            : `${lines.first}-${lines.last}`;
+    return `${name}:${range}`;
+}
+
 /**
  * The words as the box quotes them: what they are, where they are from
- * (the note's name, the passage's title) and their first and last character
- * in their line or verse, then their line or verse as a `> ` quote with the
+ * (the note's name, the passage's title, a text file's name and lines) and
+ * their first and last character in their line or verse, then their line
+ * or verse as a `> ` quote with the
  * selection marked -- a frame every model reads as words the person points
  * at, in any language (`NOTE_SYSTEM_PROMPT` and `LOOKUP_SYSTEM_PROMPT` say
  * so). With nothing around it, the selection alone, unmarked. Null for no
@@ -63,7 +88,7 @@ export function toSelectionMentionText(
         })
         .join('\n');
     const where = [
-        sourceName.replace(/\s+/g, ' ').trim(),
+        toSourceWhere(sourceName, mention.lines),
         mention.start === null || mention.end === null
             ? ''
             : `${mention.start}-${mention.end}`,
@@ -259,4 +284,55 @@ export function pickSelectionSession<T extends { id: string }>(
     return inWindow === undefined
         ? null
         : { sessionId: inWindow.id, isOnIt: false };
+}
+
+/**
+ * The tab already on a whole FILE -- waiting in its box, or still open in
+ * what it asked (`findOpenFileAttachments`) -- and the file's attachment
+ * there; the tab in front first, then the newest. A note of the file is not
+ * the file. Null when no tab holds it, and the file is attached in a tab of
+ * its own. Paths compare as the window aim compares them, slashes and case
+ * alike (`toPreviewPathKey`).
+ */
+export function findSessionHoldingFile(
+    sessions: readonly {
+        id: string;
+        messages: Parameters<typeof findOpenFileAttachments>[0];
+        fileClosedAt?: number;
+    }[],
+    draftAttachmentMap: Readonly<
+        Record<string, readonly ChatAttachmentType[] | undefined>
+    >,
+    activeId: string,
+    filePath: string,
+): { sessionId: string; attachment: ChatAttachmentType } | null {
+    const key = toPreviewPathKey(filePath);
+    const ordered = [
+        ...sessions.filter((session) => {
+            return session.id === activeId;
+        }),
+        ...sessions
+            .filter((session) => {
+                return session.id !== activeId;
+            })
+            .reverse(),
+    ];
+    for (const session of ordered) {
+        const attachment = [
+            ...(draftAttachmentMap[session.id] ?? []).filter(
+                checkIsFileAttachment,
+            ),
+            ...findOpenFileAttachments(session.messages, session.fileClosedAt),
+        ].find((one) => {
+            return (
+                one.noteId === undefined &&
+                one.filePath !== undefined &&
+                toPreviewPathKey(one.filePath) === key
+            );
+        });
+        if (attachment !== undefined) {
+            return { sessionId: session.id, attachment };
+        }
+    }
+    return null;
 }

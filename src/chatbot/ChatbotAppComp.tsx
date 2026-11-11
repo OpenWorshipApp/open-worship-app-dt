@@ -179,6 +179,7 @@ import {
     SELECTION_STEP_TOOL_NAME,
     appendSelectionMention,
     checkHasSelectionQuote,
+    findSessionHoldingFile,
     genSelectionOffer,
     pickSelectionSession,
     toSelectionMentionText,
@@ -7120,6 +7121,47 @@ export default function ChatbotAppComp() {
             });
         },
     );
+    // Words selected in a text file's editor (2026-11-11, the user, the
+    // Markdown Preview's editor with a line selected: _selected text in
+    // editor should have option to mention in chatbot input text_): quoted
+    // with their lines in the box of the tab holding that file, else of a
+    // tab of its own with the file attached and no opening card -- the
+    // quote is what the person came to ask about. No card of jobs under it
+    // either: those are a note's.
+    const mentionHandedFileRef = useAppCurrentRef(
+        async (
+            filePath: string,
+            mention: SelectionMentionType,
+            openSession: () => string,
+        ) => {
+            const held = findSessionHoldingFile(
+                sessionStateRef.current.sessions,
+                draftAttachmentMapRef.current,
+                sessionStateRef.current.activeId,
+                filePath,
+            );
+            if (held !== null) {
+                bringSessionToFront(held.sessionId);
+                putSelectionInBox(
+                    held.sessionId,
+                    held.attachment.name,
+                    mention,
+                );
+                return;
+            }
+            const sessionId = openSession();
+            const attachment = await attachHandedFileRef.current(
+                sessionId,
+                filePath,
+                null,
+                null,
+                true,
+            );
+            if (attachment !== null) {
+                putSelectionInBox(sessionId, attachment.name, mention);
+            }
+        },
+    );
     // A Lookup Detail panel's 🤖 (2026-10-18): the person, place or passage
     // it shows, read whole through `owa_lookup_record` in the panel's own
     // window -- where the names dataset is already held -- and kept on the
@@ -8093,6 +8135,16 @@ export default function ChatbotAppComp() {
                 void mentionHandedNoteRef.current(
                     handedFile.filePath,
                     handedFile.noteId,
+                    handedFile.mention,
+                    openHandoffSession,
+                );
+                return;
+            }
+            // Words selected in a text file's editor: the same, quoted with
+            // their lines.
+            if (handedFile !== null && handedFile.mention !== null) {
+                void mentionHandedFileRef.current(
+                    handedFile.filePath,
                     handedFile.mention,
                     openHandoffSession,
                 );

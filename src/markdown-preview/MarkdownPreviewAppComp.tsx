@@ -38,6 +38,7 @@ import {
     classifyMarkdownHref,
     toHeadingElementId,
 } from './markdownPreviewRenderHelpers';
+import MarkdownPreviewChatbotButtonComp from './MarkdownPreviewChatbotButtonComp';
 
 // Monaco is the heaviest thing this window could load, and most windows are
 // only read: it comes in the first time Edit is pressed, never before.
@@ -704,6 +705,7 @@ export default function MarkdownPreviewAppComp() {
                 >
                     <i className="bi bi-folder2-open" />
                 </button>
+                <MarkdownPreviewChatbotButtonComp filePath={filePath} />
             </div>
             {warningText ? (
                 <div className="app-markdown-preview-warning" role="status">

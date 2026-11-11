@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ChatAttachmentType } from './attachmentHelpers';
 import {
     SELECTION_ACTION_LABEL_LIST,
     SELECTION_STEP_TOOL_NAME,
     appendSelectionMention,
     checkHasSelectionQuote,
+    findSessionHoldingFile,
     genSelectionOffer,
     pickSelectionSession,
     toSelectionMentionText,
@@ -106,6 +108,109 @@ describe('the quote put in the box', () => {
 });
 
 // 2026-11-08, the user: _should reuse existing (attached window) chatbot tab_.
+// 2026-11-11, the user, the Markdown Preview's editor with a line selected:
+// _selected text in editor should have option to mention in chatbot input
+// text_.
+describe('words selected in a text file', () => {
+    it('names the file and the lines they are on, as an editor writes them', () => {
+        expect(
+            toSelectionMentionText('notes.md', {
+                ...genMention({
+                    text: 'so loved',
+                    before: 'For God ',
+                    after: ' the world',
+                }),
+                lines: { first: 7, last: 7 },
+            }),
+        ).toBe('Selected text (notes.md:7):\n> For God **so loved** the world');
+        expect(
+            toSelectionMentionText('notes.md', {
+                ...genMention({ text: '## Prayer\nLord, teach us' }),
+                lines: { first: 7, last: 9 },
+            }),
+        ).toBe('Selected text (notes.md:7-9):\n> ## Prayer\n> Lord, teach us');
+    });
+
+    it('says no line number with no name to put it after', () => {
+        expect(
+            toSelectionMentionText('  ', {
+                ...genMention({ text: 'Amen' }),
+                lines: { first: 2, last: 2 },
+            }),
+        ).toBe('Selected text:\n> Amen');
+    });
+});
+
+describe('the tab holding a file', () => {
+    function genFile(
+        filePath: string,
+        extra: Partial<ChatAttachmentType> = {},
+    ): ChatAttachmentType {
+        return {
+            id: filePath,
+            kind: 'text',
+            name: 'notes.md',
+            mimeType: 'text/markdown',
+            byteSize: 10,
+            filePath,
+            ...extra,
+        };
+    }
+    function genAsked(id: number, attachments: ChatAttachmentType[]) {
+        return { id, author: 'you', attachments };
+    }
+
+    it('is the tab with the file in its box or still open, the one in front first', () => {
+        const sessions = [
+            { id: 'a', messages: [genAsked(1, [genFile('C:\\r\\notes.md')])] },
+            { id: 'b', messages: [] },
+            { id: 'c', messages: [genAsked(1, [genFile('C:\\r\\notes.md')])] },
+        ];
+        const boxMap = { b: [genFile('C:/R/Notes.md')] };
+        // Slashes and case alike, as the window aim compares paths.
+        expect(
+            findSessionHoldingFile(sessions, boxMap, 'b', 'c:/r/notes.md'),
+        ).toEqual({ sessionId: 'b', attachment: boxMap.b[0] });
+        // Else the newest.
+        expect(
+            findSessionHoldingFile(sessions, {}, 'b', 'C:\\r\\notes.md')
+                ?.sessionId,
+        ).toBe('c');
+    });
+
+    it('is no tab that closed it, holds another file or one note of it', () => {
+        const sessions = [
+            {
+                id: 'a',
+                messages: [genAsked(3, [genFile('/r/notes.md')])],
+                // Closed at that question.
+                fileClosedAt: 3,
+            },
+            {
+                id: 'b',
+                messages: [genAsked(1, [genFile('/r/other.md')])],
+            },
+            {
+                id: 'c',
+                messages: [
+                    genAsked(1, [genFile('/r/notes.md', { noteId: 4 })]),
+                ],
+            },
+        ];
+        // A picture of the app is not a file, whatever path it was saved to.
+        const boxMap = {
+            a: [
+                genFile('/r/notes.md', {
+                    kind: 'element',
+                }),
+            ],
+        };
+        expect(
+            findSessionHoldingFile(sessions, boxMap, 'a', '/r/notes.md'),
+        ).toBeNull();
+    });
+});
+
 describe('the tab the quote goes to', () => {
     const sessions = [
         { id: 'a', note: false, window: 'w1' },

@@ -21,6 +21,19 @@ const h = vi.hoisted(() => ({
     setValue: vi.fn(),
     setTheme: vi.fn(),
     containerInits: 0,
+    isAIEnabled: true,
+    openMarkdownInChatbot: vi.fn(),
+}));
+
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => h.isAIEnabled,
+}));
+// The words selected are read for real; only the press is watched.
+vi.mock('./markdownPreviewChatbotHelpers', async (importOriginal) => ({
+    ...(await importOriginal<
+        typeof import('./markdownPreviewChatbotHelpers')
+    >()),
+    openMarkdownInChatbot: h.openMarkdownInChatbot,
 }));
 
 vi.mock('monaco-editor', () => ({
@@ -109,6 +122,8 @@ beforeEach(() => {
     h.setValue.mockClear();
     h.setTheme.mockClear();
     h.containerInits = 0;
+    h.isAIEnabled = true;
+    h.openMarkdownInChatbot.mockReset();
     onDraftChange.mockClear();
     onSave.mockClear();
     container = document.createElement('div');
@@ -173,6 +188,68 @@ describe('Markdown Preview editor', () => {
         saveAction.run();
         expect(newerOnSave).toHaveBeenCalledTimes(1);
         expect(onSave).not.toHaveBeenCalled();
+    });
+
+    // 2026-11-11, the user: _selected text in editor should have option to
+    // mention in chatbot input text_.
+    it('offers the words selected to the assistant, with the file shown', async () => {
+        await render();
+        const askAction = h.actions.find((action) => {
+            return action.id === 'ask-assistant-about-selection';
+        });
+        expect(askAction).toMatchObject({
+            label: 'Ask the assistant about this',
+            // Greyed out in the menu with nothing selected.
+            precondition: 'editorHasSelection',
+            contextMenuGroupId: 'navigation',
+            contextMenuOrder: 2,
+        });
+        const lineList = ['# Title', 'For God so loved the world'];
+        const actionEditor = {
+            getModel: () => ({
+                getLineContent: (lineNumber: number) => {
+                    return lineList[lineNumber - 1];
+                },
+                getValueInRange: () => 'so loved',
+            }),
+            getSelection: () => ({
+                startLineNumber: 2,
+                startColumn: 9,
+                endLineNumber: 2,
+                endColumn: 17,
+                isEmpty: () => false,
+            }),
+        };
+        // The file the window shows at the press, read off its address.
+        const filePath = 'C:\\r\\JHN.3.notes.md';
+        globalThis.history.replaceState(
+            null,
+            '',
+            `/markdownPreview.html?preview-file=${encodeURIComponent(filePath)}`,
+        );
+        askAction.run(actionEditor);
+        expect(h.openMarkdownInChatbot).toHaveBeenCalledWith(filePath, {
+            text: 'so loved',
+            before: 'For God ',
+            after: ' the world',
+            start: null,
+            end: null,
+            lines: { first: 2, last: 2 },
+        });
+        // No file in the address: nothing to hand over.
+        globalThis.history.replaceState(null, '', '/markdownPreview.html');
+        askAction.run(actionEditor);
+        expect(h.openMarkdownInChatbot).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers nothing to the assistant while AI is off', async () => {
+        h.isAIEnabled = false;
+        await render();
+        expect(
+            h.actions.map((action) => {
+                return action.id;
+            }),
+        ).toEqual(['save-markdown-file']);
     });
 
     it('follows the window theme', async () => {

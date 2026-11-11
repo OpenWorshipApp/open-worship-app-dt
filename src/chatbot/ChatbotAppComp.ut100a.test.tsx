@@ -709,6 +709,75 @@ describe('ChatbotAppComp: handed-over documents, selections and buttons', () => 
         });
     });
 
+    // 2026-11-11, the user, the Markdown Preview's editor with a line
+    // selected: _selected text in editor should have option to mention in
+    // chatbot input text_.
+    describe('words selected in a text file', () => {
+        const STUDY_PATH = '/resources/Default/JHN.3.study.md';
+        const STUDY_MENTION = {
+            text: 'so loved',
+            before: 'For God ',
+            after: ' the world',
+            start: null,
+            end: null,
+            lines: { first: 7, last: 7 },
+        };
+        const STUDY_QUOTE =
+            'Selected text (JHN.3.study.md:7):\n' +
+            '> For God **so loved** the world';
+
+        test('open a tab of their own with the file, quoted with their line, no card', async () => {
+            seedSessions([genSession('front', [])]);
+            handOver('file', { filePath: STUDY_PATH, mention: STUDY_MENTION });
+            await renderWindow();
+            expect(tabNames()).toHaveLength(2);
+            expect(mocks.genAttachmentFromPath).toHaveBeenCalledWith(
+                STUDY_PATH,
+                null,
+            );
+            expect(boxChipNames()).toEqual(['JHN.3.study.md']);
+            expect(inputBox().value).toBe(`${STUDY_QUOTE}\n`);
+            // The quote is what they came to ask about: no opening card,
+            // and none of a note's jobs.
+            expect(cues()).toHaveLength(0);
+        });
+
+        test('go to the tab already on the file, and are quoted once', async () => {
+            seedSessions(
+                [
+                    genSession('study', [
+                        {
+                            id: 1,
+                            author: 'you',
+                            text: 'Check this study',
+                            attachments: [genFileAttachment(STUDY_PATH)],
+                        },
+                    ]),
+                    genSession('front', []),
+                ],
+                'front',
+            );
+            // Its path written the other way: the same file.
+            handOver('file', {
+                filePath: STUDY_PATH.toUpperCase(),
+                mention: STUDY_MENTION,
+            });
+            await renderWindow();
+            expect(tabNames()).toHaveLength(2);
+            expect(activeTabName()).toBe('study');
+            expect(mocks.genAttachmentFromPath).not.toHaveBeenCalled();
+            expect(inputBox().value).toBe(`${STUDY_QUOTE}\n`);
+            const count = cues().length;
+            handOver('file', { filePath: STUDY_PATH, mention: STUDY_MENTION });
+            await act(async () => {
+                window.dispatchEvent(new Event('focus'));
+            });
+            await settle();
+            expect(inputBox().value).toBe(`${STUDY_QUOTE}\n`);
+            expect(cues()).toHaveLength(count);
+        });
+    });
+
     describe('words selected in a passage', () => {
         const PASSAGE = {
             kind: 'verse',

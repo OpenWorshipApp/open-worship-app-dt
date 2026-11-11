@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-109, CB-168]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-10"
+workflowsVersion: "2026-11-11"
 ---
 # W-59 — Change a presenting flow with the assistant (build it from your order of service, a clear between items, move on by itself)
 
@@ -57,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-109` · `CB-168`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-11).
 :::

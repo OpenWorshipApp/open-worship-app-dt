@@ -120,7 +120,9 @@ const SELECTION_AROUND_CUT = '…';
 /**
  * Words selected, and where: the words before and after them in their verse
  * or line ('' at its edge), and their first and last character in it,
- * counted from 1 -- null when the selection runs over several lines.
+ * counted from 1 -- null when the selection runs over several lines. Words
+ * selected in a text file's editor (a Markdown Preview's, 2026-11-11) carry
+ * the file's lines they are on, counted from 1, too.
  */
 export type SelectionMentionType = {
     text: string;
@@ -128,6 +130,7 @@ export type SelectionMentionType = {
     after: string;
     start: number | null;
     end: number | null;
+    lines?: { first: number; last: number };
 };
 
 function toSelectedWords(text: unknown) {
@@ -198,12 +201,20 @@ export function toValidSelectionMention(
         Number.isSafeInteger(end) &&
         start >= 1 &&
         end >= start;
+    const first = source.lines?.first;
+    const last = source.lines?.last;
+    const hasLines =
+        Number.isSafeInteger(first) &&
+        Number.isSafeInteger(last) &&
+        first >= 1 &&
+        last >= first;
     return {
         text,
         before: toAroundWords(source.before, 'before'),
         after: toAroundWords(source.after, 'after'),
         start: hasRange ? start : null,
         end: hasRange ? end : null,
+        ...(hasLines ? { lines: { first, last } } : {}),
     };
 }
 
@@ -220,9 +231,9 @@ export function requestChatbotFile(
     // `resourceReadingAskHelpers.ts`), checked on the way in and out.
     const validReading = toValidResourceReading(reading);
     const validNoteId = toValidNoteId(noteId);
-    // Words selected in a note, only beside the note they were selected in.
-    const validMention =
-        validNoteId === null ? null : toValidSelectionMention(mention);
+    // Words selected in a note, or in a text file's editor, beside what they
+    // were selected in.
+    const validMention = toValidSelectionMention(mention);
     setSetting(
         FILE_HANDOFF_KEY,
         JSON.stringify({
@@ -264,13 +275,11 @@ export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
         ) {
             return null;
         }
-        const noteId = toValidNoteId(data.noteId);
         return {
             filePath: data.filePath,
             reading: toValidResourceReading(data.reading),
-            noteId,
-            mention:
-                noteId === null ? null : toValidSelectionMention(data.mention),
+            noteId: toValidNoteId(data.noteId),
+            mention: toValidSelectionMention(data.mention),
         };
     } catch (_error) {
         return null;

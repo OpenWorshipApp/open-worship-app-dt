@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-10l** (**Two computers' work of 2026-11-10 merged.** The entries stamped 2026-11-10e to g further down came from one computer and stand as they were; the other computer's e to h were relabelled h to k. No recipe was changed by the merge.)
+**workflowsVersion: 2026-11-11b** (**W-37 step 6 — the Markdown Preview's 🤖, and words in its editor asked about.** The user, with the Markdown Preview window of `JHN.3.The New Birth and God's Love.md` and line 7 selected in its editor: _selected text in editor should have option to mention in chatbot input text, on the markdown file preview should have chatbot icon to attach and forcus on chatbot_. The head row ends in **[en:tran:Ask the Assistant About This File]** (the 🤖), which brings the help window forward with the file attached in a chat of its own. The editor's right-click menu offers **[en:tran:Ask the assistant about this]** for the words selected; they are quoted in the help window's box with the file's name and their line number, in the chat that already holds the file. Both only while AI is on. Seen live 2026-11-11 on the dev app in English, on the user's John 3 study: the 🤖, with all twelve chats open, put the file in the chat in front under its opening card, **Working in** naming the window; line 82 selected and asked about was quoted as `Selected text (JHN.3.The New Birth and God's Love.md:82):` in the chat holding the file. Not yet seen live: a selection over two lines, a non-English language. RD-130.)
+
+Previous: **workflowsVersion: 2026-11-10l** (**Two computers' work of 2026-11-10 merged.** The entries stamped 2026-11-10e to g further down came from one computer and stand as they were; the other computer's e to h were relabelled h to k. No recipe was changed by the merge.)
 
 Previous: **workflowsVersion: 2026-11-10k** (**W-37 step 6 — the markdown editor opens BESIDE the page.** The user, on the editor that took the page's place: _should edit on the left preview on the right_. **[en:tran:Edit]** now opens the editor on the left and keeps the page on the right, drawing the unsaved words a moment after typing stops; the pencil reads **[en:tran:Hide Editor]** while the editor is open, which gives the window back to the page (unsaved words still drawn there). Ctrl+S saves wherever the focus is. RD-128.)
 
@@ -6212,7 +6214,10 @@ all count as book-level too.
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written. The head row also has
      **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
-     **[en:tran:Reveal in File Explorer]**. **To change the file right there**, press
+     **[en:tran:Reveal in File Explorer]**.
+     **[en:tran:Ask the Assistant About This File]** (the 🤖, last in the row, shown while
+     AI is on) brings the help window forward with this file attached in a chat of its own,
+     as the 🤖 on its Resources row does. **To change the file right there**, press
      **[en:tran:Edit]** (the pencil): an editor of the file's markdown opens on the left,
      its lines wrapped, and the page stays on the right, drawing what you type a moment
      after you stop. Nothing is written until you press **[en:tran:Save]** (the disk) or
@@ -6220,7 +6225,13 @@ all count as book-level too.
      **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
      arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
      whole window back to the page — your unsaved words still drawn there as they will
-     look, still waiting for **[en:tran:Save]**. While something is unsaved,
+     look, still waiting for **[en:tran:Save]**. **To ask the assistant about some of the
+     words**, select them in the editor, right-click them (or press Shift+F10) and choose
+     **[en:tran:Ask the assistant about this]**: the help window comes forward with them
+     quoted in its box under _Selected text_, the file's name and their line number, in the
+     chat that already holds this file, else in a new one with the file attached. Nothing
+     is sent until you type your question under the quote and press **[en:tran:Send]**.
+     While something is unsaved,
      **[en:tran:Back]** and **[en:tran:Reload]** wait, a link to another `.md` does not open, and closing the
      window is stopped once with a note to save or discard first (keep trying and it
      closes anyway). A change saved in your own editor reaches an open editor here that
@@ -6322,7 +6333,7 @@ all count as book-level too.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-130, CM-93._
 
 ---
 

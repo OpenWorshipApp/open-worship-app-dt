@@ -1,9 +1,15 @@
 import { useMemo, useRef } from 'react';
 import { editor, KeyCode, KeyMod, Uri } from 'monaco-editor';
 
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    openMarkdownInChatbot,
+    toEditorSelectionMention,
+} from './markdownPreviewChatbotHelpers';
+import { getMarkdownPreviewFilePath } from './markdownPreviewParamHelpers';
 
 /**
  * ONE model for the whole window, whatever file it shows: the Monaco model
@@ -54,6 +60,30 @@ export default function MarkdownPreviewEditorComp({
                     onSaveRef.current();
                 },
             });
+            // Words selected here, quoted in the help window's box for a
+            // question about them (2026-11-11, the user: _selected text in
+            // editor should have option to mention in chatbot input text_),
+            // under the words the Bible view's selection bar gives the same
+            // press. Only while AI is on, like every other way into the
+            // assistant; the file is the one the window shows at the press.
+            if (getIsAIEnabled()) {
+                editorInstance.addAction({
+                    id: 'ask-assistant-about-selection',
+                    label: tran('Ask the assistant about this'),
+                    precondition: 'editorHasSelection',
+                    contextMenuGroupId: 'navigation',
+                    contextMenuOrder: 2,
+                    run: (actionEditor) => {
+                        const filePath = getMarkdownPreviewFilePath(
+                            globalThis.location.href,
+                        );
+                        const mention = toEditorSelectionMention(actionEditor);
+                        if (filePath !== null && mention !== null) {
+                            void openMarkdownInChatbot(filePath, mention);
+                        }
+                    },
+                });
+            }
         },
         onContentChange: (_, newText) => {
             if (isSettingTextRef.current) {

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-154, PM-155, PM-156, SP-06, ED-54]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-10"
+workflowsVersion: "2026-11-11"
 ---
 # W-48 — Give a slide, a song, a background or an overlay its own transition
 
@@ -93,5 +93,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-154` · `PM-155` · `PM-156` · `SP-06` · `ED-54`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-11).
 :::

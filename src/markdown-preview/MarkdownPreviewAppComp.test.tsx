@@ -113,6 +113,11 @@ vi.mock('./markdownMermaidHelpers', async (importOriginal) => ({
     ...(await importOriginal<typeof import('./markdownMermaidHelpers')>()),
     renderMermaidDiagrams: h.mermaid,
 }));
+// The toolbar's 🤖 has tests of its own; here it would ask main whether AI
+// is on, through an appProvider this stand-in leaves out.
+vi.mock('./MarkdownPreviewChatbotButtonComp', () => ({
+    default: () => null,
+}));
 
 import MarkdownPreviewAppComp from './MarkdownPreviewAppComp';
 

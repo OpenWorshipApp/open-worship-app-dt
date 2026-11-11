@@ -97,6 +97,20 @@ Documents list and the 🤖).
   notes go in an inline bar under the head. No new `tran` keys: every label was
   already in all 87 packages (`Edit`, `Hide Editor`, `Save`, `Unsaved changes`,
   `Discard unsaved changes`, the two block-unload sentences, `Error`).
+- **The assistant is one press away** (2026-11-11, the user: _selected text
+  in editor should have option to mention in chatbot input text, on the
+  markdown file preview should have chatbot icon to attach and forcus on
+  chatbot_). The head row's last button is a 🤖 that hands the file shown to
+  the help window and brings that window forward. The editor's right-click
+  menu offers **Ask the assistant about this** for the words selected,
+  quoted in the box with their line numbers. Both appear only while AI is
+  on, read once. No new `tran` keys. How it reaches the chat, and which tab
+  it lands in: `.claude/rules/chatbot-files-report.md`. The window has no
+  popup host, so the AI caution fails open here. Everything the press needs
+  is `import()`ed at the press, with `openChatbotPage` in its own leaf
+  `src/helper/chatbotPageHelpers.ts`. A test that renders
+  `MarkdownPreviewAppComp` stubs the button: the real one asks main whether
+  AI is on, through an `appProvider` a stand-in leaves out.
 - Driving it: `navigate_page` on the preview target to
   `markdownPreview.html?preview-file=<encoded path>&uuid=preview` previews any
   file (the repo's `README.md` is a good HTML fixture); put the user's file back

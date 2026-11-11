@@ -12,6 +12,8 @@ paths:
   - 'src/chatbot/reportMarks.ts'
   - 'src/helper/errorReportOfferHelpers.ts'
   - 'src/resources/ResourcesFileRowComp.tsx'
+  - 'src/markdown-preview/MarkdownPreviewChatbotButtonComp.tsx'
+  - 'src/markdown-preview/markdownPreviewChatbotHelpers.ts'
   - 'src/presenting-control/ControllerToolbarComp.tsx'
   - 'electron/consoleLogHelpers.ts'
   - 'public/js/pdf-to-chat-images.mjs'
@@ -214,6 +216,50 @@ window as a whole — tabs, pickers, its language, the caution — is in
   Khmer: a tab opened on `GEN.4.links.json` asked _what does the file for
   Luke chapter 7 say?_ listed Luke 7, read `pdf/LUK.7.pdf` (the waiting
   lines say both) and answered with its themes by page.
+- **The Markdown Preview has a 🤖 of its own, and its editor offers the
+  words selected** (2026-11-11, the user, the preview of
+  `JHN.3.The New Birth and God's Love.md` with line 7 selected in its
+  editor: _selected text in editor should have option to mention in chatbot
+  input text, on the markdown file preview should have chatbot icon to
+  attach and forcus on chatbot_). The head row ends in a 🤖 after
+  **[en:tran:Reveal in File Explorer]** (`MarkdownPreviewChatbotButtonComp`,
+  **[en:tran:Ask the Assistant About This File]**, the Resources row's
+  words), and the editor's right-click menu (Shift+F10 from the keyboard)
+  offers **[en:tran:Ask the assistant about this]**, the Bible selection
+  bar's words, greyed out while nothing is selected
+  (`precondition: 'editorHasSelection'`). Both appear only while AI is on,
+  and the switch is read ONCE: the button's `useState`, the action's
+  `onInit`. It is a synchronous ask of main, and the toolbar draws again at
+  every keystroke. Both presses go through `openMarkdownInChatbot`
+  (`markdownPreviewChatbotHelpers.ts`), which runs the caution, then
+  `requestChatbotFile(path, null, null, mention)` and `openChatbotPage()`.
+  Everything it needs is imported at the PRESS, `openChatbotPage` from its
+  own leaf `src/helper/chatbotPageHelpers.ts` (re-exported by `domHelpers`,
+  whose module-level IPC listeners a locked-down reader must not load).
+  The preview mounts no popup host, so the caution FAILS OPEN there, like
+  `lwShare`'s Ctrl+Shift+A (`chatbot-window.md`). The path is read at the
+  press (the toolbar's `filePath`, the editor's `preview-file`), so after a
+  link has taken the window to another file, that file is the one handed
+  over. The words (`toEditorSelectionMention`) are a
+  `SelectionMentionType` with `lines` (1-based `first`/`last`; a selection
+  ending at column 1 of the next line ends on the line before) and the
+  text around them on their lines; the quote reads
+  `Selected text (JHN.3.study.md:7):` (`toSourceWhere`), the words between
+  `**` in their line. **The tab** is the one already holding that file,
+  in its box or still open in it (`findSessionHoldingFile`: the tab in
+  front first, then the newest; slashes and case alike through
+  `toPreviewPathKey`; a note's file is not this file). That tab is brought
+  forward and the quote goes in its box, with nothing attached twice. With
+  no such tab, a new one gets the file and the Resources opening card, then
+  the quote (`mentionHandedFileRef`). The 🤖 alone opens a tab of its own
+  every time, as the row's does: at the 12-tab cap that is an empty tab,
+  else the tab in front. Seen live 2026-11-11 on the dev app with the
+  user's John 3 study. The 🤖, with twelve tabs open, attached the file to
+  the tab in front as chip 2 under the opening card, and **Working in**
+  named `… · own window 2`. Line 82 selected and asked about from the
+  editor's menu was quoted as
+  `Selected text (JHN.3.The New Birth and God's Love.md:82):` in the tab
+  holding the file. No console error.
 - **A study file is a CARD the person presses** (2026-11-09, `EC-464`; the
   user: _should ask user to confirm file name and confirst create_). A
   drafted study (`owa_resource_file draft`, `chatbot-llm.md`) is held by the

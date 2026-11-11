@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-10"
+workflowsVersion: "2026-11-11"
 ---
 # W-22c — Clear the screen, or show and hide it, from a running order
 
