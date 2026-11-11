@@ -90,6 +90,38 @@ export function findVersesBeforeRef(refs: string) {
         : null;
 }
 
+// The most chapters one passage over chapters is read across (BN-99).
+const MAX_SPAN_CHAPTERS = 4;
+
+/**
+ * A passage written over chapters -- "Revelation 20:11-21:7", "Jonah
+ * 1:17-2:10" -- as its book, first chapter and verse, and last chapter and
+ * verse, or null for anything else (BN-99, 2026-11-11). Read as one
+ * reference, the app's parser took it for ONE verse, so the tool quoted
+ * 300 letters of chapter 20 and chapter 21 never came back: the funeral
+ * sermon quoted Revelation 21 from memory ("the former heaven", "they shall
+ * be my sons"). The reader reads it a chapter at a time.
+ */
+export function splitChapterSpan(ref: string) {
+    const match =
+        /^(.*?\S)\s*(\d{1,3})\s*[:.]\s*(\d{1,3})\s*[-–]\s*(\d{1,3})\s*[:.]\s*(\d{1,3})$/.exec(
+            toAsciiDigitText(String(ref ?? '').trim()),
+        );
+    if (match === null) {
+        return null;
+    }
+    const [, book, fromChapter, fromVerse, toChapter, toVerse] = match.map(
+        (part, index) => (index > 1 ? Number.parseInt(part, 10) : part),
+    ) as [string, string, number, number, number, number];
+    if (
+        toChapter <= fromChapter ||
+        toChapter - fromChapter >= MAX_SPAN_CHAPTERS
+    ) {
+        return null;
+    }
+    return { book, fromChapter, fromVerse, toChapter, toVerse };
+}
+
 /** How much of each passage a read of `refCount` references gives. */
 export function toReadPassageTextLimit(refCount: number) {
     return Math.max(

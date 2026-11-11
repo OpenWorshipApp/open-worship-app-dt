@@ -1453,6 +1453,23 @@ was seen and what was done.
     task.
 
   ~1256 tokens.
+- **BN-99 — a passage over chapters is read whole** (2026-11-11, the
+  BN-94..98 read). The funeral lesson quoted Revelation 21 wrong three
+  times ("the former heaven and former earth", "they shall be my sons",
+  "God himself shall dwell with them"). Asked for "Revelation 20:11-21:7",
+  `owa_find_verse` had answered ONE entry, "Revelation 20:11", cut at 300
+  letters: the app's title parser reads a span over chapters as one item
+  whose end verse (7) is below its start (11), so the reader took it for a
+  single verse and read chapter 20 only. Every word of Revelation 21 in
+  that lesson came from memory -- the same fault BN-86 ended for passages
+  inside one chapter. A span over chapters is now read a chapter at a time,
+  each as a passage within the call's shared 6000 letters
+  (`splitChapterSpan` in `bibleVerseFindHelpers.ts`, `toChapterRefList` in
+  `agentBibleFindHelpers.ts`, four chapters at most): live, the same call
+  answers Revelation 20:11-15 (749 letters) and 21:1-7 (1072), "the first
+  heaven" and "he shall be my son" in it. The BN-76 misquote check flags
+  all three quotes when given the lesson and its passage, whole or cut, but
+  it refused none of them in the live ask; that is not explained yet.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

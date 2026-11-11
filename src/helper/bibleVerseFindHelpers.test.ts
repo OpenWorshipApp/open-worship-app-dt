@@ -26,6 +26,7 @@ import {
     toPassageRuns,
     toReadPassageTextLimit,
     findVersesBeforeRef,
+    splitChapterSpan,
     toTermWeight,
     toVerseKey,
     withExactCounts,
@@ -220,6 +221,30 @@ describe('a found row', () => {
             'the good shepherd',
         ]) {
             expect(findVersesBeforeRef(refs), refs).toBe(null);
+        }
+    });
+
+    // BN-99 (2026-11-11): a passage over chapters, read as one reference,
+    // came back as one verse of its first chapter.
+    it('reads a passage written over chapters, and only that', () => {
+        expect(splitChapterSpan('Revelation 20:11-21:7')).toEqual({
+            book: 'Revelation',
+            fromChapter: 20,
+            fromVerse: 11,
+            toChapter: 21,
+            toVerse: 7,
+        });
+        expect(splitChapterSpan('1 Samuel 16:23 - 17:58')?.book).toBe(
+            '1 Samuel',
+        );
+        for (const ref of [
+            'Revelation 21:1-7',
+            'Revelation 21:7-20:11',
+            'Genesis 1:1-50:26',
+            'John 3',
+            'Revelation 20:11-21',
+        ]) {
+            expect(splitChapterSpan(ref), ref).toBe(null);
         }
     });
 

@@ -775,6 +775,37 @@ describe('reading references', () => {
         expect(single.text.endsWith('…')).toBe(true);
     });
 
+    // BN-99 (2026-11-11): "Revelation 20:11-21:7" was read as ONE verse --
+    // 300 letters of chapter 20, chapter 21 never read -- and the funeral
+    // sermon quoted Revelation 21 from memory.
+    test('a passage over chapters is read a chapter at a time, whole', async () => {
+        state.verseCounts['KJV:JHN 2'] = 25;
+        state.verseCounts['KJV:JHN 3'] = 36;
+        state.verseTexts.KJV = {
+            ...KJV_VERSES,
+            ...Object.fromEntries(
+                [23, 24, 25].map((verse) => {
+                    return [`JHN 2:${verse}`, `Chapter two, verse ${verse}.`];
+                }),
+            ),
+            ...Object.fromEntries(
+                [1, 2, 3].map((verse) => {
+                    return [`JHN 3:${verse}`, `Chapter three, verse ${verse}.`];
+                }),
+            ),
+        };
+        const result: any = await handleAgentBibleFindRequest({
+            bible: 'KJV',
+            refs: 'John 2:23-3:3',
+        });
+        expect(result.verses.map((verse: any) => verse.key)).toEqual([
+            'JHN 2:23-25',
+            'JHN 3:1-3',
+        ]);
+        expect(result.verses[1].text).toContain('(3): Chapter three, verse 3.');
+        expect(result.unread).toBeUndefined();
+    });
+
     test('a reference that names no book stays in the lookup’s Bible', async () => {
         state.newLookupBibleKey = 'XX';
         const semicolons: any = await handleAgentBibleFindRequest({

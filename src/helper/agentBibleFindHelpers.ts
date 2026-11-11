@@ -68,6 +68,7 @@ import {
     resolveBookFilter,
     resolveBookKey,
     segmentByVocabulary,
+    splitChapterSpan,
     splitRefList,
     stripLeadingFrameWords,
     toBookCounts,
@@ -852,6 +853,40 @@ async function findVersesAcross(
     );
 }
 
+/**
+ * A passage written over chapters as one reference a chapter, each read as a
+ * passage (BN-99): "Revelation 20:11-21:7" is "Revelation 20:11-15" and
+ * "Revelation 21:1-7". Anything else is itself; so is a span whose book or
+ * a chapter's length cannot be read, which the reader then answers as it can.
+ */
+async function toChapterRefList(
+    bibleKey: string,
+    ref: string,
+    nameMapList: { [bookKey: string]: string }[],
+) {
+    const span = splitChapterSpan(ref);
+    const bookKey =
+        span === null ? null : resolveBookKey(span.book, nameMapList);
+    if (span === null || bookKey === null) {
+        return [ref];
+    }
+    const refList: string[] = [];
+    for (let chapter = span.fromChapter; chapter <= span.toChapter; chapter++) {
+        const isLast = chapter === span.toChapter;
+        const verseStart = chapter === span.fromChapter ? span.fromVerse : 1;
+        const verseEnd = isLast
+            ? span.toVerse
+            : await getVersesCount(bibleKey, bookKey, chapter).catch(() => {
+                  return null;
+              });
+        if (typeof verseEnd !== 'number' || verseEnd < verseStart) {
+            return [ref];
+        }
+        refList.push(`${span.book} ${chapter}:${verseStart}-${verseEnd}`);
+    }
+    return refList;
+}
+
 async function readRefs(bibleKey: string, refs: string) {
     const nameMapList = await toNameMapList(bibleKey);
     const verses: { key: string; ref: string; text: string }[] = [];
@@ -860,7 +895,13 @@ async function readRefs(bibleKey: string, refs: string) {
     // would answer it with `??`, its missing-verse placeholder, and that was
     // quoted to the model as scripture (2026-10-18).
     const notFound: { ref: string; reason: string }[] = [];
-    const refList = splitRefList(refs);
+    const refList = (
+        await Promise.all(
+            splitRefList(refs).map((ref) => {
+                return toChapterRefList(bibleKey, ref, nameMapList);
+            }),
+        )
+    ).flat();
     // A passage is read whole, within letters the call's references share
     // (BN-86); a single verse is still quoted, cut as a found one is.
     const passageTextLimit = toReadPassageTextLimit(refList.length);
