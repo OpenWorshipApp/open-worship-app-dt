@@ -578,6 +578,24 @@ const TYPED_CODE_BY_FOLDER_MAP = new Map(
     }),
 );
 
+/**
+ * The installed package a language's code names: the folder whose
+ * `typed.json` names its language by that code when the two differ (the
+ * reverse of `TYPED_CODE_BY_FOLDER_MAP`), else the code itself -- for a
+ * file read out of that package by a code from the table of names.
+ */
+export function toPackageLangCode(code: string) {
+    if (TYPED_CODE_BY_FOLDER_MAP.has(code)) {
+        return code;
+    }
+    for (const [folderCode, typedCode] of TYPED_CODE_BY_FOLDER_MAP) {
+        if (typedCode === code && folderCode !== code) {
+            return folderCode;
+        }
+    }
+    return code;
+}
+
 const TYPED_FILE_ENTRY_LIST = TYPED_FILE_LIST.flatMap(({ file }) => {
     return Object.entries(file);
 })
@@ -958,6 +976,38 @@ function findScriptName(character: string): string | null {
         }
     }
     return null;
+}
+
+/**
+ * A text's letters by their script's name, in order (a letter of a script
+ * nobody here names left out): the last script found is tried first, so a
+ * text in one script costs one test a letter.
+ */
+export function groupLettersByScript(text: string): Map<string, string[]> {
+    const letterMap = new Map<string, string[]>();
+    let lastScript: (typeof SCRIPT_LIST)[number] | undefined;
+    for (const character of text) {
+        if (!/\p{L}/u.test(character)) {
+            continue;
+        }
+        const script: (typeof SCRIPT_LIST)[number] | undefined =
+            lastScript !== undefined && lastScript.pattern.test(character)
+                ? lastScript
+                : SCRIPT_LIST.find((one) => {
+                      return one.pattern.test(character);
+                  });
+        if (script === undefined) {
+            continue;
+        }
+        lastScript = script;
+        const letters = letterMap.get(script.name);
+        if (letters === undefined) {
+            letterMap.set(script.name, [character]);
+        } else {
+            letters.push(character);
+        }
+    }
+    return letterMap;
 }
 
 /**

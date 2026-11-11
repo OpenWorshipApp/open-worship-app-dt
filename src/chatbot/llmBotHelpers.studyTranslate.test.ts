@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // `llmBotHelpers.ut100.test.ts`: a fake Anthropic client, a tool host that
 // records every call, a setting map -- and mermaid's parse, which says
 // whether a translated diagram still draws.
-const { fake, settingMap, TERMISH } = vi.hoisted(() => ({
+const { fake, settingMap, TERMISH, LABELISH } = vi.hoisted(() => ({
     fake: {
         anthropic: null as any,
         toolList: [] as { name: string }[],
@@ -31,6 +31,23 @@ const { fake, settingMap, TERMISH } = vi.hoisted(() => ({
             'Cross references': 'Linked Verses',
             'bronze serpent': 'brasssnake',
         },
+    },
+    // A made-up INSTALLED language with no church words of its own: its
+    // labels are what it calls them (EC-488), as its plugin's `tran.json`
+    // carries them -- every key in lower case.
+    LABELISH: {
+        code: 'zz',
+        name: 'Labelish',
+        nativeName: 'Labelo',
+        scriptPattern: null,
+        terms: {},
+        labels: {
+            'cross references': 'Joined Verses',
+            'old testament': 'Elder Book',
+            'new testament': 'New Testament',
+        } as Record<string, unknown>,
+        // Every language whose labels the job asked the store for.
+        loadedList: [] as string[],
     },
 }));
 
@@ -112,9 +129,29 @@ vi.mock('./studyTranslateHelpers', async (importOriginal) => {
     return {
         ...original,
         resolveStudyTranslateLanguage: (value: unknown) => {
-            return String(value).toLowerCase() === 'termish'
+            const name = String(value).toLowerCase();
+            if (name === 'labelish') {
+                const { labels: _d, loadedList: _l, ...language } = LABELISH;
+                return language;
+            }
+            return name === 'termish'
                 ? TERMISH
                 : original.resolveStudyTranslateLanguage(value);
+        },
+    };
+});
+// The installed language's own labels, read on demand.
+vi.mock('../lang/langFileStore', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../lang/langFileStore')>();
+    return {
+        ...original,
+        loadLangFile: async (langCode: string, fileName: string) => {
+            if (fileName === 'tran.json') {
+                LABELISH.loadedList.push(langCode);
+                return langCode === LABELISH.code ? LABELISH.labels : null;
+            }
+            return original.loadLangFile(langCode, fileName);
         },
     };
 });
@@ -335,6 +372,7 @@ beforeEach(() => {
     fake.answerTool = null;
     fake.parsedList = [];
     fake.isDiagramBroken = () => false;
+    LABELISH.loadedList.length = 0;
     resetSpendGuardForTests();
     resetReasoningOffMemoryForTests();
 });
@@ -707,5 +745,175 @@ describe('a study file translated by the window', () => {
             '---\n\n## Linked Verses\nMoseso liftedo the bronzeo serpento ' +
                 '[^Numberso 21:9].',
         );
+    });
+
+    test('a language with no church words of its own takes them from its installed labels', async () => {
+        useToolHost(undefined, () => {
+            return {
+                ...genPlan(null),
+                parts: [
+                    {
+                        kind: 'text',
+                        text:
+                            '## Cross References\nThe Old Testament promise ' +
+                            '[^Numbers 21:9].\n',
+                    },
+                ],
+            };
+        });
+        const { askList, translateText } = useTranslator((ask) => {
+            const translated = toTestish(ask);
+            return ask.includes('Your last translation')
+                ? translated.replace('Old Testamento', 'Elder Book')
+                : translated;
+        });
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Labelish', place: 'append' }),
+            ),
+            anthropicText('Translated. Press Save changes to keep it.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Labelish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        // Its own labels, once; a label it leaves in English is no word.
+        expect(LABELISH.loadedList).toEqual([LABELISH.code]);
+        expect(askList[0]).toContain(
+            "Use the church's own words in Labelish: Cross References = " +
+                'Joined Verses; Old Testament = Elder Book.',
+        );
+        expect(askList[0]).not.toContain('New Testament =');
+        expect(askList).toHaveLength(2);
+        expect(askList[1]).toContain(
+            'write them so: Old Testament = Elder Book.',
+        );
+        const draftArgs = fake.toolCallList[fake.toolCallList.length - 1].args;
+        expect(draftArgs.action).toBe('draft');
+        expect(draftArgs.append).toBe(
+            '---\n\n## Joined Verses\nThe Elder Book promiseo ' +
+                '[^Numberso 21:9].',
+        );
+    });
+
+    test.each([
+        {
+            title: 'an English Bible names its references',
+            bibles: [
+                { key: 'XB', locale: 'xq' },
+                { key: 'WEB', locale: 'en' },
+            ],
+            expected: 'WEB',
+        },
+        {
+            title: 'with no English Bible, nothing is named',
+            bibles: [{ key: 'XB', locale: 'xq' }],
+            expected: undefined,
+        },
+    ])(
+        "a language with no Bible of its own: $title, never the Lookup's",
+        async ({ bibles, expected }) => {
+            useToolHost({ bible: 'XB', bibles });
+            const { translateText } = useTranslator();
+            useAnthropic([
+                anthropicToolUse(
+                    translateCall({ language: 'Labelish', place: 'append' }),
+                ),
+                anthropicText('Translated.'),
+            ]);
+
+            await askLlmBot(
+                'Translate the study to Labelish and add it under',
+                'reader',
+                'anthropic',
+                'claude-sonnet-5',
+                [],
+                null,
+                { translateText },
+            );
+
+            expect(
+                fake.toolCallList.map((call) => {
+                    return call.name === 'owa_find_verse'
+                        ? 'list'
+                        : call.args?.action;
+                }),
+            ).toEqual(['list', 'translate', 'draft']);
+            // No Bible in it to quote the passage again from.
+            expect(fake.toolCallList[1].args).toEqual({
+                action: 'translate',
+                file: FILE,
+            });
+            expect(fake.toolCallList[2].args.bible).toBe(expected);
+        },
+    );
+
+    test('a letter of a third script slipped in is asked about once more, and the clean answer drafted', async () => {
+        useToolHost();
+        // A letter of one script, by code point: no language is written here.
+        const stray = String.fromCodePoint(0x0d94);
+        const { askList, translateText } = useTranslator((ask) => {
+            const translated = toTestish(ask);
+            return ask.startsWith('# The New Birth') &&
+                !ask.includes('letters of another language')
+                ? translated.replace('teachero', `teacher${stray}o`)
+                : translated;
+        });
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Testish', place: 'append' }),
+            ),
+            anthropicText('Translated.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Testish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        // Two word parts and a diagram, the first asked twice.
+        expect(askList).toHaveLength(4);
+        expect(askList[1]).toContain(
+            'Your last translation had letters of another language in it ' +
+                `(${stray}); write every word in Testish letters.`,
+        );
+        const draftArgs = fake.toolCallList[fake.toolCallList.length - 1].args;
+        expect(draftArgs.append).toContain('A nighto talko witho a teachero.');
+        expect(draftArgs.append).not.toContain(stray);
+    });
+
+    test('a language named with no code reads no labels', async () => {
+        useToolHost(undefined, genTermPlan);
+        const { translateText } = useTranslator();
+        useAnthropic([
+            anthropicToolUse(
+                translateCall({ language: 'Termish', place: 'append' }),
+            ),
+            anthropicText('Translated.'),
+        ]);
+
+        await askLlmBot(
+            'Translate the study to Termish and add it under',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { translateText },
+        );
+
+        expect(LABELISH.loadedList).toEqual([]);
     });
 });

@@ -95,7 +95,9 @@ import {
     pickReplyLanguage,
     SENTENCE_END_MARKS,
     toAsciiDigits,
+    toPackageLangCode,
 } from './chatLangHelpers';
+import { loadLangFile } from '../lang/langFileStore';
 import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
 import {
     checkIsSpendLimitError,
@@ -256,6 +258,7 @@ import {
     toStudyDiagramSource,
 } from '../helper/agentStudyFileRules';
 import {
+    STUDY_LABEL_FILE_NAME,
     STUDY_TRANSLATE_CHUNK_CHARS,
     STUDY_TRANSLATE_TRIES,
     type StudyTranslateLanguageType,
@@ -266,6 +269,7 @@ import {
     cleanStudyTranslation,
     describeStudyTranslation,
     listMissingStudyTerms,
+    listStudyStrayLetters,
     readStudyTranslatePlace,
     readStudyTranslatePlan,
     resolveStudyTranslateLanguage,
@@ -273,6 +277,7 @@ import {
     toStudyDiagramTranslationAsk,
     toStudyTextTranslationAsk,
     toStudyTranslateDraftArgs,
+    withStudyLabelTerms,
 } from './studyTranslateHelpers';
 import {
     BIBLE_READER_ASK_KIND,
@@ -3780,34 +3785,46 @@ export type StudyTextTranslatorType = (
 
 /**
  * An installed Bible in a language, off `owa_find_verse` with no arguments
- * (`pickBibleInLanguage`, English looked for too), or null.
+ * (`pickBibleInLanguage`, English looked for too), or null -- and, when it
+ * has none, an English one off the same list (`englishBible`): the Bible
+ * that names a translation's verse references (EC-489).
  */
 async function findBibleInLanguage(
     langCode: string,
     watch: ToolWatchType,
     signal?: AbortSignal | null,
-) {
+): Promise<{ bible: string | null; englishBible: string | null }> {
     if (langCode === '') {
-        return null;
+        return { bible: null, englishBible: null };
     }
     try {
         const listed = JSON.parse(
             await callTool(VERSE_FIND_TOOL_NAME, {}, signal, watch.windowAim),
         );
         const current = typeof listed?.bible === 'string' ? listed.bible : null;
-        const picked = pickBibleInLanguage(listed, current, langCode, true);
-        if (picked !== null) {
-            return picked;
-        }
-        // Null with the Lookup's own Bible named: that one is in the
-        // language -- the Bible the person reads -- or no Bible is.
-        return current !== null &&
-            pickBibleInLanguage(listed, null, langCode, true) !== null
-            ? current
-            : null;
+        const pick = (code: string) => {
+            const picked = pickBibleInLanguage(listed, current, code, true);
+            if (picked !== null) {
+                return picked;
+            }
+            // Null with the Lookup's own Bible named: that one is in the
+            // language -- the Bible the person reads -- or no Bible is.
+            return current !== null &&
+                pickBibleInLanguage(listed, null, code, true) !== null
+                ? current
+                : null;
+        };
+        const bible = pick(langCode);
+        return {
+            bible,
+            englishBible:
+                bible === null && langCode !== DEFAULT_CHAT_LANG_CODE
+                    ? pick(DEFAULT_CHAT_LANG_CODE)
+                    : null,
+        };
     } catch (_error) {
         throwIfCancelled(signal);
-        return null;
+        return { bible: null, englishBible: null };
     }
 }
 
@@ -3843,13 +3860,19 @@ async function translateStudyPart(
     signal?: AbortSignal | null,
 ) {
     let by = '';
-    let kept: { text: string; missingCount: number } | null = null;
+    let kept: { text: string; problemCount: number } | null = null;
     let missingTerms: [string, string][] = [];
+    let strayLetters: string[] = [];
     for (let attempt = 0; attempt < STUDY_TRANSLATE_TRIES; attempt++) {
         throwIfCancelled(signal);
         const ask =
             kind === 'text'
-                ? toStudyTextTranslationAsk(source, language, missingTerms)
+                ? toStudyTextTranslationAsk(
+                      source,
+                      language,
+                      missingTerms,
+                      strayLetters,
+                  )
                 : toStudyDiagramTranslationAsk(source, language);
         let answer: { text: string; by: string };
         try {
@@ -3880,13 +3903,18 @@ async function translateStudyPart(
         }
         const termed = applyStudyHeadingTerms(source, translated, language);
         const missingNow = listMissingStudyTerms(source, termed, language);
-        if (missingNow.length === 0) {
+        // A letter of a third script slipped into a word (EC-490) is asked
+        // about once more the same way, and counts the same way.
+        const strayNow = listStudyStrayLetters(source, termed);
+        const problemCount = missingNow.length + strayNow.length;
+        if (problemCount === 0) {
             return { text: termed, by };
         }
-        if (kept === null || missingNow.length < kept.missingCount) {
-            kept = { text: termed, missingCount: missingNow.length };
+        if (kept === null || problemCount < kept.problemCount) {
+            kept = { text: termed, problemCount };
         }
         missingTerms = missingNow;
+        strayLetters = strayNow;
     }
     return { text: kept?.text ?? null, by };
 }
@@ -3918,13 +3946,25 @@ async function runStudyTranslate(
             'not say, ask which, with OPTIONS.'
         );
     }
-    const language = resolveStudyTranslateLanguage(args?.language);
-    if (language === null) {
+    const named = resolveStudyTranslateLanguage(args?.language);
+    if (named === null) {
         return (
             'Tool refused: Name the language in `language`, e.g. "Khmer" ' +
             'or "French". When they did not say, ask which, with OPTIONS.'
         );
     }
+    // The church words the app's own labels already say in that language
+    // (EC-488): its labels, one file of an installed language, read for this
+    // job and let go with it.
+    const language = withStudyLabelTerms(
+        named,
+        named.code === '' || named.code === DEFAULT_CHAT_LANG_CODE
+            ? null
+            : await loadLangFile<Record<string, unknown>>(
+                  toPackageLangCode(named.code),
+                  STUDY_LABEL_FILE_NAME,
+              ),
+    );
     const translateText = watch.translateText;
     if (translateText === null) {
         return (
@@ -3932,7 +3972,11 @@ async function runStudyTranslate(
             'Tell them to ask in the help window.'
         );
     }
-    const bible = await findBibleInLanguage(language.code, watch, signal);
+    const { bible, englishBible } = await findBibleInLanguage(
+        language.code,
+        watch,
+        signal,
+    );
     let planText: string;
     try {
         planText = await callTool(
@@ -4047,7 +4091,18 @@ async function runStudyTranslate(
     if ('reason' in draftArgs) {
         return `Tool refused: ${draftArgs.reason}`;
     }
-    const drafted = await runStudyDraft(draftArgs, watch, signal, true);
+    // No Bible in that language: its verse references are named as an
+    // English Bible names them, as its passage stays -- never in the
+    // language the Lookup happens to be on (EC-489: a Burmese study's
+    // references came out in Khmer letters).
+    const drafted = await runStudyDraft(
+        'bible' in draftArgs || englishBible === null
+            ? draftArgs
+            : { ...draftArgs, bible: englishBible },
+        watch,
+        signal,
+        true,
+    );
     if (watch.draftedStudy === null) {
         return drafted;
     }

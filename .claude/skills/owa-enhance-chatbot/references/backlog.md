@@ -11581,3 +11581,74 @@ tokens): _Make a short study file for John 3:14-15 with one diagram_ drew a
 card reading _John 3:14-15 (Amplified) · 1 diagram_, the passage quoted by
 the app, eight sections and one diagram. Not created. A CHANGE's card (a
 translation) draws no passage line, so it never showed there.
+
+### EC-488 — church words for every installed language, not Khmer's and French's alone — `done` 2026-11-11, seen in the window
+
+The goal's stop hook after EC-486: the window checked only NAMED church
+words, and only Khmer and French had a list (`translationTerms` in an
+`assistant.json`), so a translation into any of the other 85 languages got
+the meaning rule alone.
+
+**Done 2026-11-11.** Every language package already names the Reader's
+**[en:tran:Cross References]** panel and the two Testaments in its own
+church's words: they are app labels, in its dictionary. The study
+translator now takes those labels as church words for the one job
+(`withStudyLabelTerms`, `STUDY_TERM_LABEL_LIST`: Cross References, Cross
+Reference, Old Testament, New Testament), so EC-486's heading fix, hint and
+missing-word retry work in every installed language:
+- They are read from the INSTALLED plugin's `tran.json`
+  (`STUDY_LABEL_FILE_NAME`), one file loaded for this job and let go
+  (`loadLangFile`, nothing cached). A plugin ships its dictionary as
+  `tran.json` with every key in lower case, and has no `dictionary.json`.
+  The first version read `dictionary.json`, which the source package and so
+  the unit tests' loader have. Its tests passed, and in the window it found
+  nothing: the heading came back as the translator's own word.
+- The language's own `translationTerms` win where both name a word. A label
+  left in English, or empty, adds nothing.
+- A language named by a code of the table of names that its package folder
+  does not use is read from that folder (`toPackageLangCode` in
+  `chatLangHelpers.ts`, the reverse of the typed-code map).
+
+Seen in the 🤖 window 2026-11-11 on Auto (OWA Shared · gemma4:cloud, free,
+8.5-9.2k tokens an ask). A scratch John 3:14-15 study with a _Cross
+References_ section and _Old Testament_ in its words was handed over by its
+Resources 🤖, and the user's own words were asked with _burmese_ for
+_khmer_. Burmese has no `assistant.json`. Before (the `dictionary.json`
+read): the heading came back ကျမ်းညွှန်းများ, the translator's word. After:
+ဆက်စပ်ကျမ်းချက်များ, the Burmese package's own label, in the card and in
+the answer, three asks of three; _Old Testament_ ဓမ္မဟောင်းကျမ်း, the
+package's word too. Not saved; the scratch study was undone.
+
+### EC-489 — a translation into a language with no installed Bible named its references in the Lookup's language — `done` 2026-11-11, seen in the window
+
+Seen in the same run. No Burmese Bible is installed, so the plan quoted no
+passage again and the draft got no `bible`. The draft then named every
+`[^ref]` token with the Lookup's Bible, which was Khmer: the Burmese pages
+read `တောလည်ရာ ၂၁:၈-၉ ជនគណនា ២១:៩`, Khmer letters in a Burmese study.
+
+**Done 2026-11-11.** `findBibleInLanguage` also picks an English Bible off
+the same list when the language has none (`englishBible`, no second call),
+and the draft names the references with it. The passage stays as the
+English study quoted it, so the references match it. Seen live: `Numbers
+21:9` and `John 12:32`, and the Burmese pages hold Myanmar letters only.
+With no English Bible installed either, nothing changes.
+
+### EC-490 — a letter of a third script slipped into a translated word — `done` 2026-11-11, not seen live
+
+The first Burmese ask of the same run wrote ඔ, a Sinhala letter, inside two
+Burmese words. Nothing checked for it.
+
+**Done 2026-11-11.** `listStudyStrayLetters` names the letters of a part
+that are in a script other than the part's main one (the one most of its
+letters are in). Latin is never stray, nor a script the English part
+itself uses. Japanese's three scripts, and Korean's Hangul with Han, count
+as one. Each letter is named once, eight at most. It reads scripts through
+`groupLettersByScript` in `chatLangHelpers.ts`, over English's
+`unicode-scripts.json`, trying the last script found first.
+
+Such a part is asked once more, naming the letters: _Your last translation
+had letters of another language in it (ඔ); write every word in Burmese
+letters._ The stray letters count with the missing church words, and the
+answer with fewer is kept. It never stops the job. Unit-tested end to end.
+Not seen live: the stray letter came once in four Burmese asks, and not in
+the asks after the change.

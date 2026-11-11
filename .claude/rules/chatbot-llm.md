@@ -1274,6 +1274,28 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   does not write is asked once more, naming it, and the answer missing
   fewer is kept (`listMissingStudyTerms`); a diagram's ask carries the
   terms its labels use. Seen in the window the same day: _Cross references_
-  ខគម្ពីរយោង, _bronze snake_ ពស់លង្ហិន. Only Khmer and French have such a
-  list; a word no list holds is still the translator's. The card counts one
-  diagram as one (`EC-487`: a singular key in every package).
+  ខគម្ពីរយោង, _bronze snake_ ពស់លង្ហិន. **Every installed language has
+  some** (`EC-488`, the same day): only Khmer and French have a list, but
+  every package names the Reader's **[en:tran:Cross References]** and the
+  two Testaments in its church's words, so those four labels
+  (`STUDY_TERM_LABEL_LIST`) are its church words for the job
+  (`withStudyLabelTerms`), its own list winning. They are read from the
+  INSTALLED plugin's `tran.json` (`STUDY_LABEL_FILE_NAME`), one file loaded
+  for the job and let go -- a plugin ships its dictionary as `tran.json`,
+  every key in lower case, and no `dictionary.json`, which only the source
+  package (and so the unit tests' loader) has: read by that name, the live
+  window found nothing. A code the table of names uses that a package
+  folder does not is read from that folder (`toPackageLangCode`). Seen in
+  the window: Burmese, with no list, wrote its heading as its package's
+  ဆက်စပ်ကျမ်းချက်များ three asks of three. **A language with no installed
+  Bible has its references named in English** (`EC-489`): the draft had
+  no `bible` and named every `[^ref]` with the Lookup's -- Khmer letters
+  in a Burmese study; `findBibleInLanguage` now also picks an English
+  Bible off the same list (`englishBible`), as the passage stays English.
+  **A letter of a third script slipped into a word is asked about once
+  more** (`EC-490`, `listStudyStrayLetters` over `groupLettersByScript`):
+  not the part's main script, Latin or one the English uses (Japanese's
+  three and Korean's two count as one), counted with the missing church
+  words; a Burmese sentence had held a Sinhala letter. A word no list or
+  label holds is still the translator's. The card counts one diagram as
+  one (`EC-487`: a singular key in every package).

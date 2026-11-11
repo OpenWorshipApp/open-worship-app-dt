@@ -21,7 +21,10 @@
  * `llmBotHelpers.ts`.
  */
 import languageNameMap from '../lang/data/en/language-names.json';
-import { listAssistantLanguages } from './chatLangHelpers';
+import {
+    groupLettersByScript,
+    listAssistantLanguages,
+} from './chatLangHelpers';
 
 export const STUDY_TRANSLATE_PLACE_LIST = ['append', 'replace', 'new'] as const;
 export type StudyTranslatePlaceType =
@@ -252,6 +255,66 @@ export function toStudyTermsText(
 }
 
 /**
+ * The app's own labels that are a study's church words (2026-11-11,
+ * EC-488). Every language package names the Reader's Cross References panel
+ * and the two Testaments in its own church's words, so a language with no
+ * `translationTerms` of its own still gets them -- only Khmer and French had
+ * a list, and the other packages' translators were told the meaning rule
+ * alone.
+ */
+export const STUDY_TERM_LABEL_LIST = [
+    'Cross References',
+    'Cross Reference',
+    'Old Testament',
+    'New Testament',
+];
+
+/**
+ * The file an installed language carries its labels in: the plugin build
+ * writes the dictionary as `tran.json`, its keys in lower case, and ships
+ * no `dictionary.json` (that is the source package's name for it).
+ */
+export const STUDY_LABEL_FILE_NAME = 'tran.json';
+
+/**
+ * The language with those labels added to its church words, read off its
+ * labels for the one translation (`runStudyTranslate`), a key as written or
+ * in lower case: its own `translationTerms` win where both name one, and a
+ * label left in English or empty adds nothing. No labels, no change.
+ */
+export function withStudyLabelTerms(
+    language: StudyTranslateLanguageType,
+    dictionary: unknown,
+): StudyTranslateLanguageType {
+    if (dictionary === null || typeof dictionary !== 'object') {
+        return language;
+    }
+    const record = dictionary as Record<string, unknown>;
+    const ownKeySet = new Set(
+        Object.keys(language.terms).map((english) => {
+            return english.toLowerCase();
+        }),
+    );
+    const labelTermList = STUDY_TERM_LABEL_LIST.flatMap((label) => {
+        const word = record[label] ?? record[label.toLowerCase()];
+        if (typeof word !== 'string' || ownKeySet.has(label.toLowerCase())) {
+            return [];
+        }
+        const trimmed = word.trim();
+        return trimmed === '' || trimmed.toLowerCase() === label.toLowerCase()
+            ? []
+            : [[label, trimmed] as [string, string]];
+    });
+    if (labelTermList.length === 0) {
+        return language;
+    }
+    return {
+        ...language,
+        terms: { ...Object.fromEntries(labelTermList), ...language.terms },
+    };
+}
+
+/**
  * What a word MEANS, never how it sounds (2026-11-10, EC-486): the Gemma 4
  * translator wrote a study's _Cross references_ heading as the English
  * "Cross" spelled out in Khmer letters, in two studies on the same day --
@@ -267,8 +330,15 @@ export function toStudyTextTranslationAsk(
     text: string,
     language: StudyTranslateLanguageType,
     missingTerms: [english: string, word: string][] = [],
+    strayLetters: string[] = [],
 ) {
     const termsText = toStudyTermsText(text, language);
+    const strayText =
+        strayLetters.length === 0
+            ? ''
+            : ' Your last translation had letters of another language in ' +
+              `it (${strayLetters.join(' ')}); write every word in ` +
+              `${language.name} letters.`;
     const missingText =
         missingTerms.length === 0
             ? ''
@@ -288,6 +358,7 @@ export function toStudyTextTranslationAsk(
         `too; leave nothing in the language it was in. ${STUDY_MEANING_RULE}` +
         termsText +
         missingText +
+        strayText +
         ' Answer with the translation alone, nothing else.)'
     );
 }
@@ -401,6 +472,56 @@ function toFindableText(text: string) {
  * translation does not write, as `[english, word]`. One word (_God_,
  * _verse_) is left out: a translation may fairly say it another way.
  */
+// Scripts one language writes together -- Japanese's three, Korean's Hangul
+// with Han: never a stray letter among one another.
+const SHARED_TEXT_SCRIPT_SET = new Set([
+    'Han',
+    'Hiragana',
+    'Katakana',
+    'Hangul',
+    'Bopomofo',
+    'Yi',
+]);
+
+/**
+ * The letters of a translated part in a script that is neither the one most
+ * of its letters are in nor one the words handed in use, each once, eight at
+ * most: a letter of another language a translator slips into a word
+ * (2026-11-11, EC-490: a letter of a third script in a translated
+ * sentence). Latin is never stray -- a name, the app's words.
+ */
+export function listStudyStrayLetters(source: string, translated: string) {
+    const letterMap = groupLettersByScript(translated);
+    let mainName: string | null = null;
+    let mainCount = 0;
+    for (const [name, letters] of letterMap) {
+        if (letters.length > mainCount) {
+            mainName = name;
+            mainCount = letters.length;
+        }
+    }
+    if (mainName === null) {
+        return [];
+    }
+    const sourceNameSet = new Set(groupLettersByScript(source).keys());
+    const isMainShared = SHARED_TEXT_SCRIPT_SET.has(mainName);
+    const straySet = new Set<string>();
+    for (const [name, letters] of letterMap) {
+        if (
+            name === 'Latin' ||
+            name === mainName ||
+            sourceNameSet.has(name) ||
+            (isMainShared && SHARED_TEXT_SCRIPT_SET.has(name))
+        ) {
+            continue;
+        }
+        for (const letter of letters) {
+            straySet.add(letter);
+        }
+    }
+    return [...straySet].slice(0, 8);
+}
+
 export function listMissingStudyTerms(
     source: string,
     translated: string,

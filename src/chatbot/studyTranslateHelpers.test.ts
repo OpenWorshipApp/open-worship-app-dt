@@ -13,6 +13,7 @@ import {
     cleanStudyTranslation,
     describeStudyTranslation,
     listMissingStudyTerms,
+    listStudyStrayLetters,
     readStudyTranslatePlace,
     readStudyTranslatePlan,
     resolveStudyTranslateLanguage,
@@ -21,6 +22,7 @@ import {
     toStudyTermsText,
     toStudyTextTranslationAsk,
     toStudyTranslateDraftArgs,
+    withStudyLabelTerms,
 } from './studyTranslateHelpers';
 
 // A made-up language: no test here names a real one but English.
@@ -459,6 +461,142 @@ describe('listMissingStudyTerms', () => {
                 TERMISH,
             ),
         ).toEqual([]);
+    });
+});
+
+describe('withStudyLabelTerms', () => {
+    it("adds the app's labels a dictionary words its own way", () => {
+        expect(
+            withStudyLabelTerms(CAPITALISH, {
+                'Cross References': ' Joined Verses ',
+                'Old Testament': 'Elder Book',
+                Cancel: 'Stop',
+            }).terms,
+        ).toEqual({
+            'Cross References': 'Joined Verses',
+            'Old Testament': 'Elder Book',
+        });
+    });
+
+    it("keeps the language's own words first, each English word once", () => {
+        const language = withStudyLabelTerms(TERMISH, {
+            'Cross References': 'Joined Verses',
+            'New Testament': 'Young Book',
+        });
+        expect(language.terms['Cross references']).toBe('Linked Verses');
+        expect(language.terms['New Testament']).toBe('Young Book');
+        expect(
+            Object.keys(language.terms).filter((english) => {
+                return english.toLowerCase() === 'cross references';
+            }),
+        ).toHaveLength(1);
+    });
+
+    it("reads an installed plugin's labels, every key in lower case", () => {
+        expect(
+            withStudyLabelTerms(CAPITALISH, {
+                'cross references': 'Joined Verses',
+                'new testament': 'Young Book',
+            }).terms,
+        ).toEqual({
+            'Cross References': 'Joined Verses',
+            'New Testament': 'Young Book',
+        });
+    });
+
+    it('adds nothing for a label left in English, empty or not words', () => {
+        for (const dictionary of [
+            null,
+            undefined,
+            'Cross References',
+            {
+                'Cross References': 'cross references',
+                'Old Testament': '  ',
+                'New Testament': 7,
+            },
+        ]) {
+            expect(withStudyLabelTerms(CAPITALISH, dictionary)).toBe(
+                CAPITALISH,
+            );
+        }
+    });
+});
+
+describe('listStudyStrayLetters', () => {
+    // Letters by code point, each of one Unicode script: no word of any
+    // language is written here.
+    const MAIN = String.fromCodePoint(0x1000, 0x1001, 0x1002, 0x1003);
+    const THIRD = String.fromCodePoint(0x0d94);
+    const OTHER_THIRD = String.fromCodePoint(0x0e01);
+    const GREEK = String.fromCodePoint(0x03b1, 0x03b3);
+    const HAN = String.fromCodePoint(0x4e00, 0x4e01, 0x4e03);
+    const HIRAGANA = String.fromCodePoint(0x3042);
+    const KATAKANA = String.fromCodePoint(0x30a2);
+
+    it('names a letter of a third script slipped into a word', () => {
+        expect(
+            listStudyStrayLetters(
+                'The Son of Man is lifted up.',
+                `${MAIN} ${MAIN}${THIRD}${MAIN} ${MAIN}.`,
+            ),
+        ).toEqual([THIRD]);
+        expect(
+            listStudyStrayLetters(
+                'Lifted up.',
+                `${MAIN}${THIRD} ${OTHER_THIRD}${MAIN}${THIRD}`,
+            ),
+        ).toEqual([THIRD, OTHER_THIRD]);
+    });
+
+    it('leaves Latin, the main script and the words handed in alone', () => {
+        // A name in Latin letters, and a Greek word the study itself uses.
+        expect(
+            listStudyStrayLetters(
+                `The word ${GREEK} means love.`,
+                `${MAIN} Moses ${GREEK} ${MAIN}.`,
+            ),
+        ).toEqual([]);
+        expect(listStudyStrayLetters('Plain words.', 'Mots simples.')).toEqual(
+            [],
+        );
+        expect(listStudyStrayLetters('Words.', '1 2 3.')).toEqual([]);
+    });
+
+    it('takes scripts one language writes together as its own', () => {
+        expect(
+            listStudyStrayLetters(
+                'Love.',
+                `${HAN}${HIRAGANA}${KATAKANA}${HAN}`,
+            ),
+        ).toEqual([]);
+    });
+
+    it('names each letter once, eight at most', () => {
+        const many = Array.from({ length: 12 }, (_, index) => {
+            return String.fromCodePoint(0x0d85 + index);
+        }).join('');
+        const stray = listStudyStrayLetters(
+            'Words.',
+            `${MAIN.repeat(10)}${many}${many}`,
+        );
+        expect(stray).toHaveLength(8);
+        expect(new Set(stray).size).toBe(8);
+    });
+
+    it('is named in the ask for the part once more', () => {
+        const ask = toStudyTextTranslationAsk(
+            'Lifted up.',
+            TESTISH,
+            [],
+            [THIRD],
+        );
+        expect(ask).toContain(
+            `Your last translation had letters of another language in it ` +
+                `(${THIRD}); write every word in Testish letters.`,
+        );
+        expect(toStudyTextTranslationAsk('Lifted up.', TESTISH)).not.toContain(
+            'letters of another language',
+        );
     });
 });
 
