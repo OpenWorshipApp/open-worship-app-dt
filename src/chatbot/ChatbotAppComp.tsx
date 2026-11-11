@@ -529,6 +529,7 @@ import {
     pickVerseFindBible,
     readTypedVerseContentAsk,
     readTypedVerseFindAsk,
+    toBibleReaderAnswerLanguage,
 } from './verseAskLanguageHelpers';
 import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
 import {
@@ -9844,19 +9845,20 @@ export default function ChatbotAppComp() {
                 // is named on the ask (`toBibleReaderAsk`), so a non-English reader
                 // is not quoted the KJV. One tool call, no model.
                 let bibleReaderBible: string | null = null;
+                // The list it was picked from: whether that Bible is in the
+                // language the answer is written in is told per assistant
+                // asked (EC-495).
+                let bibleReaderListed: unknown = null;
                 if (
                     bibleReaderAsk !== null &&
                     bibleReaderAsk.intent !== 'resources'
                 ) {
                     try {
+                        bibleReaderListed = parseToolJson(
+                            await callTool(VERSE_FIND_TOOL_NAME, {}, signal),
+                        );
                         bibleReaderBible = pickVerseFindBible(
-                            parseToolJson(
-                                await callTool(
-                                    VERSE_FIND_TOOL_NAME,
-                                    {},
-                                    signal,
-                                ),
-                            ),
+                            bibleReaderListed,
                             pickReplyLanguage(trimmedAsked),
                         );
                     } catch (_error) {
@@ -10989,6 +10991,15 @@ export default function ChatbotAppComp() {
                                     englishBase,
                                     bibleReaderAsk,
                                     bibleReaderBible,
+                                    toBibleReaderAnswerLanguage(
+                                        bibleReaderListed,
+                                        bibleReaderBible,
+                                        // Asked in English behind the
+                                        // scenes, it answers in English.
+                                        plan === null
+                                            ? replyLang
+                                            : DEFAULT_CHAT_LANG_CODE,
+                                    ),
                                 );
                         const modelAnswer = await askLlmBot(
                             genAskedWithHint(

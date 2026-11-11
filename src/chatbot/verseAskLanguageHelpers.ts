@@ -31,6 +31,7 @@ import { checkHasWord, checkIsAppWork } from './bibleReaderChatHelpers';
 import {
     checkIsInLanguageScript,
     COLON_MARKS,
+    getAssistantLanguage,
     listAssistantLanguages,
     SENTENCE_END_MARKS,
     toAsciiDigits,
@@ -238,6 +239,50 @@ export function pickBibleInLanguage(
         return toBookCount(bible) > toBookCount(best) ? bible : best;
     });
     return String(own.key);
+}
+
+/**
+ * Whether the Bible `key` names is in a language other than `langCode`, off
+ * `owa_find_verse` with no arguments (`{bibles: [{key, locale}]}`). False
+ * when it is in it, or when either cannot be told: no such Bible, no
+ * locale, no language (`other`).
+ */
+export function checkIsBibleInOtherLanguage(
+    listed: unknown,
+    key: string | null,
+    langCode: string,
+): boolean {
+    if (key === null || langCode === 'other' || langCode.length === 0) {
+        return false;
+    }
+    const result = listed as {
+        bibles?: { key?: unknown; locale?: unknown }[];
+    } | null;
+    const bible = (Array.isArray(result?.bibles) ? result.bibles : []).find(
+        (one) => {
+            return one?.key === key;
+        },
+    );
+    const locale = String(bible?.locale ?? '').toLowerCase();
+    return (
+        locale.length > 0 &&
+        !locale.startsWith(langCode.toLowerCase().split('-')[0])
+    );
+}
+
+/**
+ * The language a Bible Reader answer is told to be written in (EC-495), by
+ * name: only when the Bible it quotes is in another one, so an ask whose
+ * Bible is in the answer's language is the one it always was.
+ */
+export function toBibleReaderAnswerLanguage(
+    listed: unknown,
+    bibleKey: string | null,
+    answerLangCode: string,
+): string | null {
+    return checkIsBibleInOtherLanguage(listed, bibleKey, answerLangCode)
+        ? getAssistantLanguage(answerLangCode).name
+        : null;
 }
 
 /**

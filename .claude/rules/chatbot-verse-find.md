@@ -86,7 +86,16 @@ window as a whole — tabs, pickers, its language, the caution — is in
   (`chatbot-llm.md`, a NEW note) -- the installed
   Bibles are read once so a Khmer ask is quoted from the Khmer Bible, and
   the answer is marked `isBibleReaderAnswer` so the next plain line ("and
-  chapter 5?") stays in the conversation. The cue words are DATA
+  chapter 5?") stays in the conversation. An English question keeps the
+  Lookup's Bible, whatever its language: it is what they are reading. **When
+  that Bible is not in the language the model answers in, the ask says so**
+  (2026-11-11, `EC-495`, `toBibleReaderAnswerLanguage`): _Answer in
+  English, quoting that Bible's words as they read._ English in an English
+  app carries no language line, and with the Lookup on a Khmer Bible,
+  gemma4:cloud explained John 3:16 in Khmer to an English question, 2 asks
+  of 2. After the change, 2 of 2 were in English with the Khmer verse quoted
+  (gemma4:cloud, and Gemma 4 31b on a Retry). An ask whose Bible is in the
+  answer's language is unchanged, byte for byte. The cue words are DATA
   (`bibleReaderWords` in `assistant.json`); English reads in code. A
   **Presenter** tab is left alone -- it keeps `owa_present_bible` -- so
   "show John 3:16" on a projector still puts it up. Under a Resources

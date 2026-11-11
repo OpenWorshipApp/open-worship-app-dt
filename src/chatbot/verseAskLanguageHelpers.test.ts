@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    checkIsBibleInOtherLanguage,
     pickBibleInLanguage,
     readTypedVerseContentAsk,
     readTypedVerseFindAsk,
+    toBibleReaderAnswerLanguage,
 } from './verseAskLanguageHelpers';
 
 // The questions are the elder-persona run's own (2026-10-17), in English
@@ -42,5 +44,39 @@ describe('pickBibleInLanguage', () => {
         expect(pickBibleInLanguage(listed, 'XX1', 'en', true)).toBe('KJV');
         expect(pickBibleInLanguage(listed, 'KJV', 'en', true)).toBeNull();
         expect(pickBibleInLanguage(listed, 'XX1', 'other', true)).toBeNull();
+    });
+});
+
+// EC-495: an English question with the Lookup on a Bible of another
+// language was explained in that language.
+describe('a Bible in another language than the answer', () => {
+    const listed = {
+        bible: 'XX1',
+        bibles: [
+            { key: 'XX1', locale: 'xx-YY' },
+            { key: 'KJV', locale: 'en-US' },
+            { key: 'NONE' },
+        ],
+    };
+
+    test('is told by its locale against the language, region aside', () => {
+        expect(checkIsBibleInOtherLanguage(listed, 'XX1', 'en')).toBe(true);
+        expect(checkIsBibleInOtherLanguage(listed, 'KJV', 'en')).toBe(false);
+        expect(checkIsBibleInOtherLanguage(listed, 'XX1', 'xx')).toBe(false);
+    });
+
+    test('is never guessed: no Bible, no locale, no language', () => {
+        expect(checkIsBibleInOtherLanguage(listed, null, 'en')).toBe(false);
+        expect(checkIsBibleInOtherLanguage(listed, 'GONE', 'en')).toBe(false);
+        expect(checkIsBibleInOtherLanguage(listed, 'NONE', 'en')).toBe(false);
+        expect(checkIsBibleInOtherLanguage(listed, 'XX1', 'other')).toBe(false);
+        expect(checkIsBibleInOtherLanguage(null, 'XX1', 'en')).toBe(false);
+    });
+
+    test('names the answer language for the Reader ask, only then', () => {
+        expect(toBibleReaderAnswerLanguage(listed, 'XX1', 'en')).toBe(
+            'English',
+        );
+        expect(toBibleReaderAnswerLanguage(listed, 'KJV', 'en')).toBeNull();
     });
 });

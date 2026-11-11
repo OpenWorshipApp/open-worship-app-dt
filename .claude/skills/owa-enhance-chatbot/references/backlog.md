@@ -10966,7 +10966,7 @@ file, press Create_. They took 6.0k and 6.2k tokens, against 13.5k for the
 study written again. The card still reads _· 0 diagrams_ for a kept answer:
 true, and left alone, because a line without the count would be a new label
 in all 87 packages. The kept answer holds a Thai word its model wrote into
-the Khmer (กล่าวว่า): EC-495. Tests: `studyFileChatHelpers.test.ts` (+18),
+the Khmer (กล่าวว่า): EC-495 and EC-496. Tests: `studyFileChatHelpers.test.ts` (+18),
 `llmBotHelpers.ut100.test.ts` (+6, through the loop) and
 `answerRetryHelpers.test.ts` (+1).
 
@@ -11815,23 +11815,55 @@ offer: **Turn on** or **Install**, then translate. Reading a turned-off
 plugin's files behind the person's back is not the fix: turned off means
 not used.
 
-### EC-495 — an English question in an English app was answered in Khmer, under a Khmer Bible in the Reader — open
+### EC-495 — an English question in an English app was answered in Khmer, under a Khmer Bible in the Reader — `done` 2026-11-11, seen in the window
 
 Found 2026-11-11 setting up EC-466's run. The app was in English, a Bible
 Reader tab was on the Khmer Bible ពគប (BFBS 1954), and _Explain John 3:16
 in simple words_ was typed in English. gemma4:cloud answered wholly in
 Khmer: the verse quoted from the Reader's Bible and the explanation in
-Khmer. Nothing told it which language. `genReplyLanguageLine` adds no line
-for English in an English app, and the passage it was handed was Khmer.
-The answer also held a Thai word (กล่าวว่า, "said") inside its Khmer, and
-the English window kept it: `dropThirdScriptLetters` cleans an answer only
-in a window shown in another language.
+Khmer. The answer also held a Thai word (กล่าวว่า, "said") inside its
+Khmer, and the English window kept it: `dropThirdScriptLetters` cleans an
+answer only in a window shown in another language.
 
-Two things to try:
+The WINDOW had sent it there. `pickVerseFindBible` keeps the Lookup's
+Bible for an English question, on purpose: an English reader on a Khmer
+Bible is reading it. `toBibleReaderAsk` told the model to quote from ពគប,
+and the model's first call was `owa_find_verse {"bible": "ពគប", "refs":
+"John 3:16"}`. Nothing said what to answer in: `genReplyLanguageLine` adds
+no line for English in an English app, and the passage was all the model
+had to go by.
 
-- a language line for English too when the ask carries a passage in
-  another language (a Reader, lookup or Resources ask on a non-English
-  Bible);
-- the third-script cleaning read against the ANSWER's main script,
-  whatever the window's language, keeping what the passage itself holds
-  (`AnswerKeepType`).
+Now, when the Bible a Reader ask quotes is not in the language the model
+answers in, the ask says so: _Answer in English, quoting that Bible's
+words as they read._ (`toBibleReaderAnswerLanguage` and
+`checkIsBibleInOtherLanguage` in `verseAskLanguageHelpers.ts`, by the
+Bible's locale against the language, region aside; never a guess with no
+locale). On the translated path the model answers in English, so English
+is the language named. An ask whose Bible is in the answer's language is
+unchanged, byte for byte.
+
+Measured in a new Reader tab each time, Auto → OWA Shared:
+
+- **Before:** 2 of 2 in Khmer, word for word the same (temperature 0), the
+  Thai word both times.
+- **After:** 2 of 2 in English with the Khmer verse quoted as it reads:
+  gemma4:cloud (5.5k tokens) and, on a Retry, Gemma 4 31b (6.6k). No Thai
+  word, since the Khmer around it is gone.
+
+Tests: `verseAskLanguageHelpers.test.ts` (+3), `bibleReaderChatHelpers.test.ts`
+(+2). The third-script half is EC-496.
+
+### EC-496 — a letter of a third script in an answer the English window draws — open
+
+From EC-495's first answer: an English window drew a Khmer answer with a
+Thai word in it (กล่าวว่า), because `dropThirdScriptLetters` cleans only
+in a window shown in another language. EC-495 took away the case that was
+seen: the answer is English now. One still left: an English-app person
+who TYPES in another language gets an answer in it, with nothing cleaned.
+The cleaning could be read against the ANSWER's main script whatever the
+window's language, keeping what the passage itself holds (`AnswerKeepType`)
+and a word study's own letters.
+
+The Lookup panel's passage chat may have EC-495's gap too. It keeps a
+passage's own Bible on purpose ("that is what they are reading") and adds
+no language line for English. Not yet seen live.

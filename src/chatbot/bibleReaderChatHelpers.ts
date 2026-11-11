@@ -462,6 +462,12 @@ export function toBibleReaderAsk(
     // the installed list (`pickVerseFindBible`): the person's own language
     // first, so a reader is quoted a Bible in their own language.
     bible: string | null = null,
+    // The language the answer is written in, when that Bible is not in it
+    // (EC-495): an English question with the Lookup on a Khmer Bible was
+    // explained in Khmer, quote and all, 2 asks of 2 -- English in an
+    // English app carries no language line, and the passage was all the
+    // model had to go by.
+    answerLanguage: string | null = null,
 ) {
     const line =
         ask.intent === 'resources'
@@ -487,7 +493,11 @@ export function toBibleReaderAsk(
         bible === null
             ? ''
             : ` Quote a passage from the Bible "${bible}" (pass it as ` +
-              '`bible` on the tool that reads it).';
+              '`bible` on the tool that reads it).' +
+              (answerLanguage === null
+                  ? ''
+                  : ` Answer in ${answerLanguage}, quoting that Bible's ` +
+                    'words as they read.');
     return `${asked.trim()}\n\n(${line}${quote})`;
 }
 
