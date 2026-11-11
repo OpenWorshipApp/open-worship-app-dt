@@ -1877,6 +1877,15 @@ was seen and what was done.
   allegory of Jesus the Samaritan: the word table gives the lawyer's own
   questions it answers (10:25, 10:28, 10:29, 10:37), told as the answer
   to him.
+- **BN-131 — John 3:16's wrong question named** (2026-11-11, the
+  BN-125..129 runs and the BN-128/129 read). BN-128's "never a reason
+  these verses do not give" did not stop it: "A hearer asks: Why was it
+  necessary for God to give his Son instead of just forgiving us?",
+  answered "the only way to provide a rescue that satisfies justice", in
+  three runs running, and Sonnet held both sides of the read at accuracy
+  1 for it. The entry names what is not in the verses -- why it had to be
+  the Son, an "only way", justice satisfied, a payment of equal value --
+  and that a hearer asks there what they do answer.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

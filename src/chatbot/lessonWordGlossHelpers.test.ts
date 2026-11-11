@@ -385,7 +385,8 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
             ),
         ).toEqual([
             expect.stringMatching(
-                /"For God so loved the world".*\(3:14\) -- never a reason these verses do not give$/,
+                // BN-131: and the reasons given in its place, named.
+                /"For God so loved the world".*\(3:14\) -- never a reason these verses do not give: why it had to be the Son, an "only way", justice satisfied or a payment of equal value are not in them/,
             ),
         ]);
     });

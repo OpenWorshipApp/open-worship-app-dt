@@ -388,7 +388,14 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'the reason as love, "For God so loved the world", and the end ' +
             'as life, "should not perish, but have everlasting life"; of how ' +
             'he is given it points back to "even so must the Son of man be ' +
-            'lifted up" (3:14) -- never a reason these verses do not give',
+            'lifted up" (3:14) -- never a reason these verses do not give: ' +
+            // BN-131 (2026-11-11, the BN-125..129 runs): "Why was it
+            // necessary for God to give his Son instead of just forgiving
+            // us?" answered "the only way ... that satisfies justice", in
+            // three runs running and both blind readers' accuracy 1.
+            'why it had to be the Son, an "only way", justice satisfied or ' +
+            'a payment of equal value are not in them, so a hearer asks ' +
+            'here what they do answer',
     },
     {
         // BN-130 (2026-11-11, the BN-125..127 read, Opus: the one lesson of
