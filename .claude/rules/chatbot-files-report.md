@@ -293,7 +293,7 @@ window as a whole — tabs, pickers, its language, the caution — is in
   (`findOpenStudyFiles` off `resources.openFiles`), a part (`section`,
   `append`) goes to the one open, and the whole study is refused with the
   call to make and the file's headings, off a `read` the window makes
-  (`routeOpenStudyDraft`, `genOpenStudyDraftRefusal`, `toStudyReadOutline`
+  (`routeOpenStudyDraft`, `genOpenStudyDraftRefusal`, `toStudyReadShape`
   -- `STUDY_HEADINGS_LEAD` is the read note's own words). `draft` reads the
   file off the disk each call, so a second part of the same file in one ask
   is applied to the change already held and the whole drafted
@@ -303,6 +303,23 @@ window as a whole — tabs, pickers, its language, the caution — is in
   **Preview** copy differed from the file in the fixed lines, a blank line
   under each heading and two labels the model wrote anew without reading
   the part (`EC-500`). Nothing saved.
+- **A study's whole text written again, or a report of a change, is not
+  drafted as it came** (2026-11-11, `EC-502`, `EC-505`; asked to fix ONE
+  Khmer line past the 16 KB the ask shows, gemma4:cloud read that part and
+  sent it back as `content` with `file` and no `section` -- a **Save
+  changes** card removing 29 of the study's 30 parts -- and, asked again,
+  drafted the English part with its own earlier answer, _I have fixed the
+  cross-references in the study file …_, as the new words). `runStudyDraft`,
+  the model's drafts of a change only: words whose first line claims a
+  change and points at the file itself are refused with the file's
+  headings (`findStudyChangeReport`, `genStudyReportRefusal`); a whole text
+  that is ONE part of the file written out gets that part's `section`, and
+  one losing any part of a file the ask shows in part -- or most of one
+  shown whole -- is refused naming them (`routeWholeStudyRewrite`, off
+  `readStudyFileShape`). Seen live once both were in: a read of the Khmer
+  part, one `section` draft, the one line changed and every other line of
+  the file as it was. Neither guard fired that time (the model named the
+  part, and read first); both are unit-tested on the words it had sent.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

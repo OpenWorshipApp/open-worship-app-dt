@@ -12025,7 +12025,7 @@ refused drafts if each took a round. The window could say under such an
 answer, in the screen's language, that the file was not changed (a sentence
 in every dictionary), or keep one round back for the honest answer.
 
-### EC-502 — a whole rewrite of a long study, with its file named, can drop what the ask never showed — idea
+### EC-502 — a whole rewrite of a long study, with its file named, can drop what the ask never showed — `done` 2026-11-11, seen in the window
 
 From EC-499. `content` alone with `file` is the whole new text, and a model
 shown the first 16 KB of a 44 KB study writes back the first 16 KB: the
@@ -12034,3 +12034,125 @@ answer is told to say them, and a volunteer may still press Save changes.
 A model's whole rewrite (never the window's own -- a translation in place of
 the study removes every heading) that removes parts past what the ask showed
 could be refused with the outline, as EC-499 refuses one with no file.
+
+**Seen the same evening**, in EC-499's tab (Auto → OWA Shared,
+gemma4:cloud), asked _Question 3 of the Khmer discussion questions still
+calls Numbers by the wrong name. Fix it there too._ -- a part past the
+16 KB the ask shows. The model read that part with `section`, then sent
+`file` and `content` with no `section` twice: its last answer, two
+sentences (_I have fixed the cross-references in the study file …_), and
+then the Khmer questions alone. The second was held: _It changes
+“សំណួរសម្រាប់ពិភាក្សា”; removes “The New Birth and God's Love”, “The
+Setting” … and 24 more (1 line(s) in, 315 out)_ -- 29 of the study's 30
+parts -- with **Save changes** under the out-of-rounds answer _I looked
+several things up but could not settle on an answer_ (`EC-504`), 63.4k
+tokens.
+
+- **One part written out as the whole text is drafted as that part**
+  (`routeWholeStudyRewrite` in `runStudyDraft`, the model's drafts only).
+  The window reads the file's headings (`readStudyFileShape`,
+  `toStudyReadShape`, which also says whether the ask shows the file
+  whole); a text that opens on a heading the file has once, holds no
+  other heading but its own sub-headings and leaves none of them out
+  (`findWrittenPart`) gets that heading as its `section`. A part that may
+  run past the headings a long file's note lists is not guessed.
+- **A whole text losing parts is refused, naming them, with the file's
+  headings** (`genWholeStudyRewriteRefusal`): any part of a file the ask
+  shows only in part -- what it never showed goes with it -- or most of a
+  file shown whole. A few lost from a file shown whole is drafted, and the
+  card names them as before. A heading met twice (a translation repeats
+  them) counts twice (`listMissingParts`; `toStudyHeadingKey`, shared with
+  the rules).
+
+Asked again in that tab afterwards, the model named the part both times,
+so the routing was not reached live: first `section` _Questions for
+Discussion_ -- the ENGLISH part -- with that two-sentence answer as its
+words (`EC-505`), 17.8k tokens; then, with EC-505 in, a read of the
+Khmer part and one `section` draft, 61.6k tokens -- Khmer question 3's
+លេខ → ជនគណនា and every other line of the file as it was (the draft's
+text against the file). Nothing was saved; the file is 44 021 bytes from
+2026-11-10 as before.
+
+Tests: `studyFileChatHelpers.test.ts` (`routeWholeStudyRewrite` +7, the
+read shape), `llmBotHelpers.ut100.test.ts` (+2: a part sent whole drafted
+as that part; a text losing the parts never shown refused, no card) --
+both fail with the step taken out.
+
+### EC-503 — a change to a study parsed the file's own diagrams, and could drop one — `done` 2026-11-11
+
+Found reading `runStudyDraft` for EC-499. After a `draft` the window
+parses every mermaid block of the drafted text (`findMermaidParseErrors`),
+sends a failure back once and drops the block on a second -- right for a
+new study, whose every diagram the model wrote. A CHANGE's drafted text is
+the whole file: a diagram of the person's own that mermaid cannot draw (one
+written by hand, or for an older mermaid) went to the model to fix, the
+refusal asking for _the whole study_ again, and was dropped from their file
+when the second try did not mend it, the card counting what was left.
+
+- **A change parses only the diagrams the call writes**
+  (`listWrittenDiagramIndexes`): those in its `content` or `append`, taken
+  before a part is put into the whole file, found in the drafted file by
+  their source. The file's own are neither the model's to fix nor the
+  window's to drop. A text written whole again still has every diagram
+  checked.
+- **The refusal numbers a diagram among those the call wrote** and asks
+  for _the same change_ again; a drop goes by its place in the file.
+
+Live, EC-502's one-line change went through with the study's eight
+diagrams as they were. No file of the person's holds a diagram that will
+not draw, and none was made for it: the path is unit-tested with the
+parser stubbed (`llmBotHelpers.ut100.test.ts` +2, both failing with the
+step taken out; `studyFileChatHelpers.test.ts` +2).
+
+### EC-504 — a study change held when the rounds ran out comes under an answer that says nothing of it — open
+
+From EC-502's live run. The ask ran out of rounds with a change held, and
+the answer was the loop's own _I looked several things up but could not
+settle on an answer. Try asking about one step at a time._ with **Save
+changes** under it -- the card's change line the only word of what it
+does, there 29 of 30 parts removed. A volunteer reads the answer and
+presses the button. The other end of a held study, a failure after the
+draft (`STUDY_STOPPED_TEXT`), says _Press Create to save it_ for a change
+too, whose button reads **Save changes**. Ways: with a draft held, the
+out-of-rounds answer is the card's own sentence -- a new study drafted,
+Create; a change, what it changes, Save changes -- a new sentence in every
+dictionary (87 packages).
+
+### EC-505 — a report of a change written into the study as its words — `done` 2026-11-11, seen in the window
+
+From EC-502's re-run, the same ask in the same tab. The model drafted
+`section` _Questions for Discussion_ -- the ENGLISH part, where nothing was
+wrong -- with an earlier answer of its own as the new words: _I have fixed
+the cross-references in the study file. I corrected the book names to
+match the ពគប Bible …_ (request 5402). The card held it, under _I have
+corrected the name of the book of Numbers in Question 3 of the Khmer
+discussion questions. Please press Save changes to apply this fix to the
+study file._, 17.8k tokens: pressed, the four English questions would have
+become that sentence and the Khmer line stayed wrong. The first try of
+EC-502's run had sent the same answer as the whole study.
+
+- **Words reporting a change to the file are refused as its words**
+  (`findStudyChangeReport` in `runStudyDraft`, the model's drafts of a
+  change only, after `@answer` is put in, so a marker bringing such an
+  answer in is caught too): the first line of words of `content` or
+  `append` -- a heading stepped over -- claims a change (the note's claim
+  words, or _Save changes_) and points at the file itself (_study file_,
+  _this file_, _the file_, _your file_, _Save changes_). The refusal
+  (`genStudyReportRefusal`) quotes it, 100 letters at most; says nothing
+  changed and never to say it did; says how to change one line by its part
+  (the part's whole text, every other line as it was, read first when the
+  ask does not show it); and lists the file's headings.
+- A study's own words do not point at the file (a prayer's _I have made
+  my own way_), a line further down a part is the part's, and a new study
+  is not read. English claim words only, as the answer's own check
+  (`EC-465`).
+
+Asked again with it in: a read of the file, a read of the Khmer part, one
+`section` draft of that part -- 61.6k tokens, Khmer question 3's
+លេខ → ជនគណនា and every other line of the file as it was, under the same
+answer, true this time. The guard did not fire then: the model read
+before it drafted. It is held by tests on the very words the model sent
+(`llmBotHelpers.ut100.test.ts` +4: a part's words, `@answer`, a line
+further down kept, the pure reader -- the two loop tests fail with the
+step taken out; `studyFileChatHelpers.test.ts` +2). Nothing was saved; the
+file is 44 021 bytes from 2026-11-10 as before.

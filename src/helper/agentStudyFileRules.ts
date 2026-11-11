@@ -686,7 +686,7 @@ export type StudySectionType = {
 };
 
 /** A heading as it is compared: no #, no bold, no case, one space. */
-function toHeadingKey(text: string) {
+export function toStudyHeadingKey(text: string) {
     return String(text ?? '')
         .replace(/^\s*#{1,6}\s*/, '')
         .replace(/\s+#+\s*$/, '')
@@ -758,9 +758,9 @@ function findStudySection(
     section: string,
     twiceAdvice: string,
 ): { section: StudySectionType } | { reason: string } {
-    const key = toHeadingKey(section);
+    const key = toStudyHeadingKey(section);
     const found = listStudySections(body).filter((one) => {
-        return toHeadingKey(one.heading) === key;
+        return toStudyHeadingKey(one.heading) === key;
     });
     if (found.length === 1) {
         return { section: found[0] };

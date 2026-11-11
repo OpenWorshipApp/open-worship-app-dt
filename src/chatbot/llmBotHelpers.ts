@@ -264,17 +264,21 @@ import {
     type DraftedStudyType,
     chainStudyPartEdit,
     checkIsStudyAnswerMarker,
+    checkIsWholeStudyRewrite,
     findOpenStudyFiles,
     genOpenStudyDraftRefusal,
     genStudyClaimNudge,
     genStudyDraftActions,
+    genStudyReportRefusal,
     keepDraftedStudy,
+    listWrittenDiagramIndexes,
     readDraftedStudy,
     routeOpenStudyDraft,
+    routeWholeStudyRewrite,
     toKeptAnswerDraftArgs,
     toModelDraftText,
     toStudyContentFromAnswer,
-    toStudyReadOutline,
+    toStudyReadShape,
 } from './studyFileChatHelpers';
 import {
     checkStudyDiagram,
@@ -3018,6 +3022,49 @@ export function checkClaimsUnmadeStudyChange(
     );
 }
 
+// Words pointing at the study file ITSELF, as a report of a change to it
+// does ("in the study file", "press Save changes"); a study's own do not.
+const STUDY_FILE_POINTER_PATTERN =
+    /\b(?:study file|the file|this file|your file)\b|\bSave changes\b/i;
+const MARKDOWN_HEADING_LINE_PATTERN = /^#{1,6}\s/;
+
+/**
+ * The report of a change that a CHANGE to a study file would write into it
+ * (2026-11-11, EC-505): its first line of words -- a heading stepped over --
+ * claims a change (`NOTE_CLAIM_PATTERN`, or Save changes) and points at the
+ * file itself. Seen live: gemma4:cloud, asked to fix one Khmer line, sent
+ * its earlier answer "I have fixed the cross-references in the study file
+ * …" as the new words of the English discussion questions. Null for a
+ * study's own words, and for a new study (no `file`), which takes nothing
+ * of the person's away. English claims only, as the answer's own check.
+ */
+export function findStudyChangeReport(args: any): string | null {
+    if (typeof args?.file !== 'string' || args.file.trim() === '') {
+        return null;
+    }
+    for (const field of ['content', 'append'] as const) {
+        const text = typeof args[field] === 'string' ? args[field] : '';
+        const line = text
+            .replace(/\r\n?/g, '\n')
+            .split('\n')
+            .map((one: string) => {
+                return one.trim();
+            })
+            .find((one: string) => {
+                return one !== '' && !MARKDOWN_HEADING_LINE_PATTERN.test(one);
+            });
+        if (
+            line !== undefined &&
+            (NOTE_CLAIM_PATTERN.test(line) ||
+                SAVE_CHANGES_CLAIM_PATTERN.test(line)) &&
+            STUDY_FILE_POINTER_PATTERN.test(line)
+        ) {
+            return line;
+        }
+    }
+    return null;
+}
+
 // Enough letters to be an answer and not a name or a key cap.
 const MIN_WRONG_SCRIPT_LETTERS = 30;
 
@@ -3808,11 +3855,13 @@ async function runStudyDraft(
         if (routed !== null && 'isRefused' in routed) {
             const outline =
                 watch.openStudyFiles.length === 1
-                    ? await readStudyFileOutline(
-                          watch.openStudyFiles[0],
-                          watch,
-                          signal,
-                      )
+                    ? ((
+                          await readStudyFileShape(
+                              watch.openStudyFiles[0],
+                              watch,
+                              signal,
+                          )
+                      )?.outline ?? '')
                     : '';
             return `Tool refused: ${genOpenStudyDraftRefusal(
                 watch.openStudyFiles,
@@ -3843,6 +3892,53 @@ async function runStudyDraft(
             [field]: toStudyContentFromAnswer(watch.answerAbove),
         };
     }
+    // A report of a change written INTO the study (EC-505): asked to fix one
+    // Khmer line, gemma4:cloud sent its earlier "I have fixed the
+    // cross-references in the study file …" as the new English discussion
+    // questions. Read after `@answer` is put in, so a marker bringing that
+    // answer in is caught too; refused with the file's headings.
+    if (!isWindowMade && keptAnswer === null) {
+        const report = findStudyChangeReport(draftArgs);
+        if (report !== null) {
+            const shape = await readStudyFileShape(
+                draftArgs.file,
+                watch,
+                signal,
+            );
+            return `Tool refused: ${genStudyReportRefusal(
+                report,
+                shape?.outline ?? '',
+            )}`;
+        }
+    }
+    // The WHOLE text of a study written again with its file named (EC-502):
+    // seen live, one part of a 44 KB study sent as all of it, and a Save
+    // changes card that would have kept that part alone. One part is drafted
+    // as that part; a text losing parts the ask never showed, or most of
+    // them, is refused with the file's headings.
+    if (
+        !isWindowMade &&
+        keptAnswer === null &&
+        checkIsWholeStudyRewrite(draftArgs)
+    ) {
+        const routed = routeWholeStudyRewrite(
+            draftArgs,
+            await readStudyFileShape(draftArgs.file, watch, signal),
+        );
+        if (routed !== null && 'reason' in routed) {
+            return `Tool refused: ${routed.reason}`;
+        }
+        if (routed !== null) {
+            draftArgs = routed.args;
+        }
+    }
+    // What this call writes into the file, before a part is put into the
+    // whole: a change parses only the diagrams in these words (EC-503).
+    const writtenText = (['content', 'append'] as const)
+        .map((field) => {
+            return typeof draftArgs[field] === 'string' ? draftArgs[field] : '';
+        })
+        .join('\n');
     // A second part of the study whose change is already held (EC-499):
     // drafted on top of that change, never over it.
     if (!isWindowMade) {
@@ -3880,19 +3976,34 @@ async function runStudyDraft(
         return text;
     }
     const { diagrams } = lintStudyContent(drafted.content);
-    if (diagrams.length > 0 && !isWindowMade) {
+    // A change parses only the diagrams it writes (EC-503): the file's own
+    // are the person's, neither the model's to fix nor the window's to drop.
+    const checkedIndexes = drafted.isChange
+        ? listWrittenDiagramIndexes(diagrams, writtenText)
+        : diagrams.map((_diagram, index) => {
+              return index;
+          });
+    if (checkedIndexes.length > 0 && !isWindowMade) {
         let errors: (string | null)[] = [];
         try {
             const { findMermaidParseErrors } =
                 await import('../markdown-preview/markdownMermaidHelpers');
-            errors = await findMermaidParseErrors(diagrams);
+            errors = await findMermaidParseErrors(
+                checkedIndexes.map((index) => {
+                    return diagrams[index];
+                }),
+            );
         } catch (_error) {
             // Mermaid did not load: the preview window shows a diagram it
             // cannot draw as its code, with the parser's words above it.
         }
         throwIfCancelled(signal);
-        const failed = errors.flatMap((error, index) => {
-            return error === null ? [] : [{ index, error }];
+        // Numbered among the diagrams this call wrote, dropped by their
+        // place in the file.
+        const failed = errors.flatMap((error, at) => {
+            return error === null
+                ? []
+                : [{ at, index: checkedIndexes[at], error }];
         });
         // A kept answer's diagram is not the model's to fix: dropped at once.
         if (
@@ -3904,11 +4015,13 @@ async function runStudyDraft(
             return (
                 'Tool refused: ' +
                 failed
-                    .map(({ index, error }) => {
-                        return `Diagram ${index + 1} does not draw: ${error}`;
+                    .map(({ at, error }) => {
+                        return `Diagram ${at + 1} does not draw: ${error}`;
                     })
                     .join(' ') +
-                ' Fix it and call draft again with the whole study.'
+                (drafted.isChange
+                    ? ' Fix it and call draft again with the same change.'
+                    : ' Fix it and call draft again with the whole study.')
             );
         }
         if (failed.length > 0) {
@@ -3927,16 +4040,17 @@ async function runStudyDraft(
 }
 
 /**
- * A study file's headings, off a read of it (`toStudyReadOutline`); empty
- * when it cannot be read. Asked only for a draft refused for naming no file.
+ * A study file's headings and whether the ask could show it whole, off a
+ * read of it (`toStudyReadShape`); null when it cannot be read. Asked only
+ * for a draft refused for naming no file, or one writing a file whole.
  */
-async function readStudyFileOutline(
+async function readStudyFileShape(
     file: string,
     watch: ToolWatchType,
     signal?: AbortSignal | null,
 ) {
     try {
-        return toStudyReadOutline(
+        return toStudyReadShape(
             await callTool(
                 RESOURCES_TOOL_NAME,
                 { action: 'read', file },
@@ -3946,7 +4060,7 @@ async function readStudyFileOutline(
         );
     } catch (_error) {
         throwIfCancelled(signal);
-        return '';
+        return null;
     }
 }
 

@@ -1251,7 +1251,13 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `markdownMermaidHelpers.ts`, mermaid loaded only when a block exists --
   the one check the developer's door lacks, which has the structural lint);
   a failure goes back once as the tool's refusal, a second drops the block
-  (`dropStudyDiagrams`) and the card counts what is left. The draft is
+  (`dropStudyDiagrams`) and the card counts what is left -- of a CHANGE,
+  only the diagrams the call writes (`listWrittenDiagramIndexes`,
+  2026-11-11, `EC-503`: the file's own are the person's, neither the
+  model's to fix nor the window's to drop). Before that, a change whose
+  words report a change (`findStudyChangeReport`, `EC-505`) and a whole
+  text that would drop the file's parts (`routeWholeStudyRewrite`,
+  `EC-502`) are refused or routed (`chatbot-files-report.md`). The draft is
   lifted into `watch.draftedStudy` and the model is shown
   `[held by the window: N characters]` and `STUDY_HELD_NOTE` in place of
   the study, so it is not billed twice; `save` and `preview` from the model

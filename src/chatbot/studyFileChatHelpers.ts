@@ -38,7 +38,10 @@ import {
     STUDY_FOLDER_NAME,
     STUDY_HEADINGS_LEAD,
     applyStudyEdit,
+    lintStudyContent,
+    listStudySections,
     separateStudyLines,
+    toStudyHeadingKey,
     toStudyOutline,
 } from '../helper/agentStudyFileRules';
 
@@ -696,22 +699,28 @@ export function genOpenStudyDraftRefusal(
     );
 }
 
+export type StudyReadShapeType = { outline: string; isShownWhole: boolean };
+
 /**
- * A file's headings off its `read` result: the list a long file's note
- * gives (`STUDY_HEADINGS_LEAD`), or the headings of the text read whole.
- * Empty for anything else.
+ * What a `read` of a study file shows of it: its headings -- the list a
+ * long file's note gives (`STUDY_HEADINGS_LEAD`), or those of the text read
+ * whole -- and whether the read holds it whole (a long file's says it does
+ * not, in its note). Null for anything else.
  */
-export function toStudyReadOutline(readText: string) {
+export function toStudyReadShape(readText: string): StudyReadShapeType | null {
     const result = parseJson(String(readText ?? ''));
     if (result === null || typeof result.text !== 'string') {
-        return '';
+        return null;
     }
     const note = toText(result.note);
     const at = note.indexOf(STUDY_HEADINGS_LEAD);
-    if (at >= 0) {
-        return note.slice(at + STUDY_HEADINGS_LEAD.length).trim();
-    }
-    return toStudyOutline(result.text);
+    return {
+        outline:
+            at >= 0
+                ? note.slice(at + STUDY_HEADINGS_LEAD.length).trim()
+                : toStudyOutline(result.text),
+        isShownWhole: note === '',
+    };
 }
 
 function toStudyFileKey(file: string) {
@@ -774,5 +783,251 @@ export function genStudyClaimNudge(openStudyFiles: readonly string[]) {
         "reads) and `content` (that part's new words), or `append`. When it " +
         'cannot be done, say so plainly; when no change was asked for, ' +
         'write your answer again without saying the file was changed.'
+    );
+}
+
+/**
+ * The diagrams of a drafted CHANGE the window parses (2026-11-11, EC-503):
+ * those in the words the call writes -- a part's, an append's, or the
+ * whole text when it is all written anew -- by their indexes in the drafted
+ * file. The file's own are the person's: one mermaid cannot draw had been
+ * sent to the model to fix, and dropped from their file when it could not.
+ */
+export function listWrittenDiagramIndexes(
+    draftedDiagrams: readonly string[],
+    writtenText: string,
+) {
+    const writtenSet = new Set(
+        lintStudyContent(String(writtenText ?? '')).diagrams.map((diagram) => {
+            return diagram.trim();
+        }),
+    );
+    return draftedDiagrams.flatMap((diagram, index) => {
+        return writtenSet.has(diagram.trim()) ? [index] : [];
+    });
+}
+
+// --- a study written whole again (2026-11-11, EC-502) ------------------------
+//
+// Asked to fix one line of the Khmer discussion questions -- past the 16 KB
+// the ask shows of a 44 KB study -- gemma4:cloud read that part and sent it
+// back as the WHOLE new text: `file` named, `content` that part alone, no
+// `section`. The tool drafted a change taking out every other part of the
+// study, and the card offered Save changes under an answer saying only that
+// it could not settle on one. Its first try had sent the last answer, two
+// sentences, as the whole study.
+
+/** A draft writing a study file's whole text again: `file`, no part named. */
+export function checkIsWholeStudyRewrite(args: any) {
+    return (
+        toText(args?.file).trim() !== '' &&
+        toText(args?.content).trim() !== '' &&
+        !checkIsStudyPartEdit(args)
+    );
+}
+
+// An outline's line (`toStudyOutline`), and its last when it is cut short.
+const OUTLINE_HEADING_PATTERN = /^(#{1,6})\s+(.+)$/;
+const OUTLINE_CUT_PATTERN = /^… and \d+ more$/;
+const MAX_NAMED_PARTS = 5;
+
+function readOutlineEntries(outline: string) {
+    return outline.split('\n').flatMap((line) => {
+        const match = OUTLINE_HEADING_PATTERN.exec(line.trim());
+        return match === null
+            ? []
+            : [{ level: match[1].length, heading: match[2] }];
+    });
+}
+
+/** The file's headings the new text has none for; one met twice, twice. */
+function listMissingParts(fileHeadings: string[], writtenHeadings: string[]) {
+    const leftCountMap = new Map<string, number>();
+    for (const heading of writtenHeadings) {
+        const key = toStudyHeadingKey(heading);
+        leftCountMap.set(key, (leftCountMap.get(key) ?? 0) + 1);
+    }
+    return fileHeadings.filter((heading) => {
+        const key = toStudyHeadingKey(heading);
+        const left = leftCountMap.get(key) ?? 0;
+        if (left > 0) {
+            leftCountMap.set(key, left - 1);
+            return false;
+        }
+        return true;
+    });
+}
+
+/**
+ * The heading of the ONE part of the file a whole new text is: it opens on
+ * a heading the file has once, holds no other heading but its own
+ * sub-headings, and leaves none of the file's sub-headings of that part
+ * out. Null for anything else -- the part's end past the headings listed
+ * included.
+ */
+function findWrittenPart(
+    content: string,
+    entries: { level: number; heading: string }[],
+    isOutlineCut: boolean,
+) {
+    const sections = listStudySections(content);
+    const first = sections[0];
+    const firstLineIndex = content.split('\n').findIndex((line) => {
+        return line.trim() !== '';
+    });
+    if (
+        first === undefined ||
+        first.start !== firstLineIndex ||
+        sections.slice(1).some((one) => {
+            return one.level <= first.level;
+        })
+    ) {
+        return null;
+    }
+    const key = toStudyHeadingKey(first.heading);
+    const foundList = entries.flatMap((entry, index) => {
+        return toStudyHeadingKey(entry.heading) === key ? [index] : [];
+    });
+    if (foundList.length !== 1) {
+        return null;
+    }
+    const at = foundList[0];
+    const end = entries.findIndex((entry, index) => {
+        return index > at && entry.level <= entries[at].level;
+    });
+    if (end < 0 && isOutlineCut) {
+        return null;
+    }
+    const subHeadings = entries
+        .slice(at + 1, end < 0 ? entries.length : end)
+        .map((entry) => {
+            return entry.heading;
+        });
+    const writtenHeadings = sections.slice(1).map((one) => {
+        return one.heading;
+    });
+    return listMissingParts(subHeadings, writtenHeadings).length === 0
+        ? first.heading
+        : null;
+}
+
+/** What the model is told when a whole new text would lose study parts. */
+function genWholeStudyRewriteRefusal(
+    file: string,
+    missingHeadings: string[],
+    shape: StudyReadShapeType,
+) {
+    const named = missingHeadings
+        .slice(0, MAX_NAMED_PARTS)
+        .map((heading) => {
+            return `“${heading}”`;
+        })
+        .join(', ');
+    const more =
+        missingHeadings.length > MAX_NAMED_PARTS
+            ? ` and ${missingHeadings.length - MAX_NAMED_PARTS} more`
+            : '';
+    return (
+        `\`content\` with no \`section\` is the WHOLE new text of "${file}", ` +
+        `and this one leaves out ${missingHeadings.length} of its parts: ` +
+        `${named}${more}. ` +
+        (shape.isShownWhole
+            ? ''
+            : 'The ask shows only the start of this file: a whole text ' +
+              'written from it loses the rest. ') +
+        'To change a part, call draft with `file`, `section` (one of its ' +
+        "headings, as it reads) and `content` (that part's new words alone; " +
+        'a heading as their first line replaces its own), one call a part, ' +
+        'or `append` (words added at its end). Nothing in the file has ' +
+        'changed: never say it was. ' +
+        `${STUDY_HEADINGS_LEAD}\n${shape.outline}`
+    );
+}
+
+/**
+ * A model's draft writing a study file's whole text again, read against
+ * the file's headings (`toStudyReadShape`): ONE part of the file written
+ * out is drafted as that part (`section`); a text leaving out parts of a
+ * file the ask shows only in part, or most of any file's parts, is refused
+ * naming them. Null to draft it as it is: a text keeping every part, a file
+ * shown whole losing a few, no read.
+ */
+export function routeWholeStudyRewrite(
+    args: any,
+    shape: StudyReadShapeType | null,
+): { args: any } | { reason: string } | null {
+    if (shape === null || !checkIsWholeStudyRewrite(args)) {
+        return null;
+    }
+    const entries = readOutlineEntries(shape.outline);
+    if (entries.length === 0) {
+        return null;
+    }
+    const content = toText(args.content).replace(/\r\n/g, '\n');
+    const isOutlineCut = shape.outline.split('\n').some((line) => {
+        return OUTLINE_CUT_PATTERN.test(line.trim());
+    });
+    const part = findWrittenPart(content, entries, isOutlineCut);
+    if (part !== null) {
+        return { args: { ...args, section: part } };
+    }
+    const missing = listMissingParts(
+        entries.map((entry) => {
+            return entry.heading;
+        }),
+        listStudySections(content).map((one) => {
+            return one.heading;
+        }),
+    );
+    if (
+        missing.length === 0 ||
+        (shape.isShownWhole && missing.length * 2 <= entries.length)
+    ) {
+        return null;
+    }
+    return {
+        reason: genWholeStudyRewriteRefusal(
+            toText(args.file).trim(),
+            missing,
+            shape,
+        ),
+    };
+}
+
+// --- a report of a change written into the study (2026-11-11, EC-505) -------
+//
+// Asked to fix question 3 of the Khmer discussion questions, gemma4:cloud
+// drafted `section` "Questions for Discussion" -- the ENGLISH part -- with
+// an earlier answer of its own as the new words: "I have fixed the
+// cross-references in the study file. I corrected the book names …". Save
+// changes would have put that sentence in place of the four English
+// questions, under an answer saying question 3 was corrected; the Khmer
+// line was untouched. Its first try in the run before had sent that answer
+// too, as the whole study (EC-502).
+
+// How much of a report the model is shown back.
+const MAX_QUOTED_REPORT_LENGTH = 100;
+
+/**
+ * What the model is told when the words a draft would write into a study
+ * file say what was done to it (`findStudyChangeReport`), with the file's
+ * headings when they were read.
+ */
+export function genStudyReportRefusal(report: string, outline: string) {
+    const text = report.replace(/\s+/g, ' ').trim();
+    const quoted =
+        text.length > MAX_QUOTED_REPORT_LENGTH
+            ? `${text.slice(0, MAX_QUOTED_REPORT_LENGTH).trimEnd()}…`
+            : text;
+    return (
+        `These words say what was done to the study (“${quoted}”): a study ` +
+        'never says what was changed in it, so they are not its words. ' +
+        'Nothing in the file has changed: never say it was. To change a ' +
+        'line, call draft with `file`, `section` (the heading of the part ' +
+        "that holds the line, as it reads) and `content` (that part's whole " +
+        'text, the line changed and every other line as it was); a part the ' +
+        'ask does not show in full is read first (`read` with `file` and ' +
+        '`section`).' +
+        (outline === '' ? '' : ` ${STUDY_HEADINGS_LEAD}\n${outline}`)
     );
 }

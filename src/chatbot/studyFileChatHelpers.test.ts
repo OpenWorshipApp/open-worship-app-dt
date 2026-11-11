@@ -13,18 +13,22 @@ import {
     STUDY_SYSTEM_PROMPT,
     chainStudyPartEdit,
     checkIsStudyAnswerMarker,
+    checkIsWholeStudyRewrite,
     clearStudyRenameWait,
     findOpenStudyFiles,
     findStudyAnswerAbove,
     genOpenStudyDraftRefusal,
     genStudyClaimNudge,
     genStudyDraftActions,
+    genStudyReportRefusal,
     keepDraftedStudy,
+    listWrittenDiagramIndexes,
     pickKeptAnswerLanguage,
     readDraftedStudy,
     readKeepAnswerAsk,
     readStudyFileAsk,
     routeOpenStudyDraft,
+    routeWholeStudyRewrite,
     setStudyRenameWait,
     takeDraftedStudy,
     takeStudyRenameWait,
@@ -32,9 +36,10 @@ import {
     toModelDraftText,
     toStudyAsk,
     toStudyContentFromAnswer,
-    toStudyReadOutline,
+    toStudyReadShape,
 } from './studyFileChatHelpers';
 import { STUDY_FILE_PROMPT } from './noteCreatePromptHelpers';
+import { lintStudyContent } from '../helper/agentStudyFileRules';
 
 const DRAFT_RESULT = {
     drafted: true,
@@ -702,7 +707,7 @@ describe('the study a tab has open', () => {
 
     it("takes the headings off a read: a long file's list, else the text's own", () => {
         expect(
-            toStudyReadOutline(
+            toStudyReadShape(
                 JSON.stringify({
                     file: OPEN,
                     kind: 'text',
@@ -712,18 +717,24 @@ describe('the study a tab has open', () => {
                         'characters. Its headings:\n# The New Birth\n## Khmer',
                 }),
             ),
-        ).toBe('# The New Birth\n## Khmer');
+        ).toEqual({
+            outline: '# The New Birth\n## Khmer',
+            isShownWhole: false,
+        });
         expect(
-            toStudyReadOutline(
+            toStudyReadShape(
                 JSON.stringify({
                     file: OPEN,
                     kind: 'text',
                     text: HELD_CONTENT,
                 }),
             ),
-        ).toBe('# The New Birth\n## Cross References\n## Questions');
-        expect(toStudyReadOutline('Tool refused: no such file')).toBe('');
-        expect(toStudyReadOutline(JSON.stringify({ files: [] }))).toBe('');
+        ).toEqual({
+            outline: '# The New Birth\n## Cross References\n## Questions',
+            isShownWhole: true,
+        });
+        expect(toStudyReadShape('Tool refused: no such file')).toBeNull();
+        expect(toStudyReadShape(JSON.stringify({ files: [] }))).toBeNull();
     });
 
     it('puts a second part on top of the change already held, by its name alone too', () => {
@@ -796,5 +807,268 @@ describe('the study a tab has open', () => {
         expect(nudge).toMatch(/^Not yet: nothing in the study file changed/);
         expect(nudge).toContain(`\`file\` "${OPEN}"`);
         expect(nudge).toContain('say so plainly');
+    });
+});
+
+// EC-503: a change parsed every diagram in the file, the person's own too.
+describe('listWrittenDiagramIndexes', () => {
+    const OWN = '```mermaid\nflowchart TD\n    A["Law"] --> B["Grace"]\n```';
+    const OWN_BROKEN = '```mermaid\nflowchart TD\n    A["Law"] -->\n```';
+    const WRITTEN = '```mermaid\nmindmap\n  root((Love))\n    Gift\n```';
+
+    it('lists only the diagrams the call writes, by their place in the file', () => {
+        const drafted = [
+            '# The New Birth',
+            '',
+            OWN,
+            '',
+            '## Themes',
+            '',
+            WRITTEN,
+            '',
+            '## Old',
+            '',
+            OWN_BROKEN,
+        ].join('\n');
+        expect(
+            listWrittenDiagramIndexes(
+                lintStudyContent(drafted).diagrams,
+                `## Themes\n\n${WRITTEN}`,
+            ),
+        ).toEqual([1]);
+    });
+
+    it('lists every diagram of a text written whole, and none of plain words', () => {
+        const whole = ['# The New Birth', OWN, WRITTEN].join('\n\n');
+        expect(
+            listWrittenDiagramIndexes(lintStudyContent(whole).diagrams, whole),
+        ).toEqual([0, 1]);
+        expect(
+            listWrittenDiagramIndexes(
+                lintStudyContent(whole).diagrams,
+                'A prayer to end with.',
+            ),
+        ).toEqual([]);
+    });
+});
+
+// EC-502: one part of a long study sent back as the whole of it.
+describe('routeWholeStudyRewrite', () => {
+    const FILE = "JHN.3.The New Birth and God's Love.md";
+    const OUTLINE = [
+        "# The New Birth and God's Love",
+        '## Diagrams',
+        '### The Path to Salvation',
+        '### Themes of John 3',
+        '## Cross References',
+        '## Questions for Discussion',
+        '# The New Birth (translated)',
+        '## Questions (translated)',
+    ].join('\n');
+    const LONG = { outline: OUTLINE, isShownWhole: false };
+    const SHORT = { outline: OUTLINE, isShownWhole: true };
+
+    function readReason(routed: unknown) {
+        expect(routed).toHaveProperty('reason');
+        return (routed as { reason: string }).reason;
+    }
+
+    it('tells a whole new text from a part', () => {
+        expect(checkIsWholeStudyRewrite({ file: FILE, content: 'All.' })).toBe(
+            true,
+        );
+        expect(
+            checkIsWholeStudyRewrite({
+                file: FILE,
+                section: 'Cross References',
+                content: 'A.',
+            }),
+        ).toBe(false);
+        expect(checkIsWholeStudyRewrite({ file: FILE, append: 'More.' })).toBe(
+            false,
+        );
+        expect(
+            checkIsWholeStudyRewrite({ ref: 'John 3', content: 'New.' }),
+        ).toBe(false);
+        expect(checkIsWholeStudyRewrite({ file: FILE, content: ' ' })).toBe(
+            false,
+        );
+    });
+
+    it('drafts one part sent as the whole text as that part, sub-parts and all', () => {
+        // As seen live: the file, its passage and title, and one part.
+        const args = {
+            action: 'draft',
+            file: FILE,
+            ref: 'John 3:1-36',
+            title: "The New Birth and God's Love",
+            content:
+                '## Questions (translated)\n1. Why by night?\n\n2. Numbers 21:8-9?',
+        };
+        expect(routeWholeStudyRewrite(args, LONG)).toEqual({
+            args: { ...args, section: 'Questions (translated)' },
+        });
+        const withSubs = {
+            file: FILE,
+            content:
+                '## Diagrams\n\n### The Path to Salvation\nA\n\n### Themes of John 3\nB',
+        };
+        expect(routeWholeStudyRewrite(withSubs, LONG)).toEqual({
+            args: { ...withSubs, section: 'Diagrams' },
+        });
+    });
+
+    it('refuses a text losing parts the ask never showed, naming them, with the headings', () => {
+        const reason = readReason(
+            routeWholeStudyRewrite(
+                {
+                    file: FILE,
+                    content: 'I have fixed the cross-references in the file.',
+                },
+                LONG,
+            ),
+        );
+        expect(reason).toMatch(
+            /^`content` with no `section` is the WHOLE new text of "JHN\.3\.The New Birth and God's Love\.md", and this one leaves out 8 of its parts: “The New Birth and God's Love”, “Diagrams”, “The Path to Salvation”, “Themes of John 3”, “Cross References” and 3 more\. The ask shows only the start of this file/,
+        );
+        expect(reason).toContain('call draft with `file`, `section`');
+        expect(reason).toContain('never say it was.');
+        expect(reason.endsWith(`Its headings:\n${OUTLINE}`)).toBe(true);
+        // A part leaving its own sub-parts out is no part: refused whole.
+        expect(
+            readReason(
+                routeWholeStudyRewrite(
+                    {
+                        file: FILE,
+                        content: '## Diagrams\n\n### The Path to Salvation\nA',
+                    },
+                    LONG,
+                ),
+            ),
+        ).toContain(
+            "leaves out 6 of its parts: “The New Birth and God's Love”, “Themes of John 3”,",
+        );
+    });
+
+    it('refuses most of a file shown whole, and lets a few go', () => {
+        expect(
+            readReason(
+                routeWholeStudyRewrite(
+                    { file: FILE, content: 'Two sentences.' },
+                    SHORT,
+                ),
+            ),
+        ).not.toContain('The ask shows only the start');
+        const fewLost = {
+            file: FILE,
+            content: [
+                "# The New Birth and God's Love",
+                '## Diagrams',
+                '### The Path to Salvation',
+                '## Questions for Discussion',
+                '# The New Birth (translated)',
+                '## Questions (translated)',
+            ].join('\n\nWords.\n\n'),
+        };
+        expect(routeWholeStudyRewrite(fewLost, SHORT)).toBeNull();
+        expect(readReason(routeWholeStudyRewrite(fewLost, LONG))).toContain(
+            'leaves out 2 of its parts: “Themes of John 3”, “Cross References”.',
+        );
+    });
+
+    it('drafts a whole text keeping every part as it is', () => {
+        const whole = {
+            file: FILE,
+            content: OUTLINE.split('\n').join('\n\nWords.\n\n'),
+        };
+        expect(routeWholeStudyRewrite(whole, LONG)).toBeNull();
+        expect(routeWholeStudyRewrite(whole, SHORT)).toBeNull();
+    });
+
+    it('takes no part a heading cannot name for sure', () => {
+        // Words before it, a sibling part after it, a heading twice.
+        for (const content of [
+            'Here it is:\n\n## Cross References\n- Numbers 21:8-9',
+            '## Cross References\nA\n\n## Questions for Discussion\nB',
+        ]) {
+            expect(
+                routeWholeStudyRewrite({ file: FILE, content }, LONG),
+            ).toHaveProperty('reason');
+        }
+        expect(
+            routeWholeStudyRewrite(
+                { file: FILE, content: '## Questions\nA' },
+                {
+                    outline: '# A\n## Questions\n# B\n## Questions',
+                    isShownWhole: false,
+                },
+            ),
+        ).toHaveProperty('reason');
+        // Past the headings listed, a part's own may run on unseen.
+        expect(
+            routeWholeStudyRewrite(
+                { file: FILE, content: '## Last\nA' },
+                {
+                    outline: '# A\n## B\n## Last\n… and 3 more',
+                    isShownWhole: false,
+                },
+            ),
+        ).toHaveProperty('reason');
+    });
+
+    it('leaves alone a part, a new study, a file with no headings and no read', () => {
+        expect(
+            routeWholeStudyRewrite(
+                { file: FILE, section: 'Cross References', content: 'A.' },
+                LONG,
+            ),
+        ).toBeNull();
+        expect(
+            routeWholeStudyRewrite(
+                { ref: 'John 3', title: 'New', content: 'All.' },
+                LONG,
+            ),
+        ).toBeNull();
+        expect(
+            routeWholeStudyRewrite(
+                { file: FILE, content: 'All.' },
+                { outline: '', isShownWhole: false },
+            ),
+        ).toBeNull();
+        expect(
+            routeWholeStudyRewrite({ file: FILE, content: 'All.' }, null),
+        ).toBeNull();
+    });
+});
+
+describe('genStudyReportRefusal', () => {
+    it('quotes the report, says nothing changed and how to change a line, with the headings', () => {
+        const refusal = genStudyReportRefusal(
+            'I have fixed the cross-references in the study file.',
+            '# The New Birth\n## Questions',
+        );
+        expect(refusal).toMatch(
+            /^These words say what was done to the study \(“I have fixed the cross-references in the study file\.”\): a study never says what was changed in it/,
+        );
+        expect(refusal).toContain(
+            'Nothing in the file has changed: never say it was.',
+        );
+        expect(refusal).toContain('`section` (the heading of the part');
+        expect(refusal).toMatch(
+            /Its headings:\n# The New Birth\n## Questions$/,
+        );
+    });
+
+    it('cuts a long report and leaves the headings out when none were read', () => {
+        const refusal = genStudyReportRefusal(
+            `I have corrected the study file. ${'More words. '.repeat(20)}`,
+            '',
+        );
+        const quoted = /“([^”]*)”/.exec(refusal)?.[1] ?? '';
+        expect(quoted.endsWith('…')).toBe(true);
+        expect(quoted.length).toBeLessThanOrEqual(101);
+        expect(refusal.endsWith('(`read` with `file` and `section`).')).toBe(
+            true,
+        );
     });
 });

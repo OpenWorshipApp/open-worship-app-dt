@@ -102,11 +102,21 @@ vi.mock('./mcpClient', () => ({
         }
     },
 }));
+// The help window's own mermaid parse (`runStudyDraft`): a diagram with
+// BROKEN in it does not draw.
+vi.mock('../markdown-preview/markdownMermaidHelpers', () => ({
+    findMermaidParseErrors: async (diagrams: string[]) => {
+        return diagrams.map((diagram) => {
+            return diagram.includes('BROKEN') ? 'Parse error on line 2' : null;
+        });
+    },
+}));
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
 import {
     applyToolWatch,
     askLlmBot,
+    findStudyChangeReport,
     genToolWatch,
     resetReasoningOffMemoryForTests,
 } from './llmBotHelpers';
@@ -123,6 +133,7 @@ import {
     STUDY_PREVIEW_TOOL_NAME,
     STUDY_RENAME_TOOL_NAME,
     STUDY_SAVE_MODEL_REFUSAL,
+    takeDraftedStudy,
 } from './studyFileChatHelpers';
 
 function snapshotOf(request: any) {
@@ -1323,5 +1334,421 @@ describe('a study file open in the tab', () => {
         );
 
         expect(sentList).toHaveLength(1);
+    });
+});
+
+// EC-503: a change parsed every diagram in the file. One of the person's
+// own that mermaid could not draw went to the model to fix, and was dropped
+// from their file when the model sent its change again.
+describe("a change's diagrams", () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const FILE_DIAGRAM =
+        '```mermaid\nflowchart TD\n    A["Law"] --> BROKEN\n```';
+    const OLD = [
+        '# The New Birth',
+        '',
+        FILE_DIAGRAM,
+        '',
+        '## Questions',
+        '',
+        '1. Who came?',
+        '',
+    ].join('\n');
+    const RESOURCES_EXTRA = {
+        resources: { canSeePictures: false, openFiles: [OPEN] },
+    };
+
+    function answerStudyDraft(_name: string, args: any) {
+        if (args.action !== 'draft') {
+            return '';
+        }
+        return JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.The New Birth.md',
+            file: OPEN,
+            hash: 'h-1',
+            diagramCount: (args.content.match(/```mermaid/g) ?? []).length + 1,
+            change: 'It changes “Questions”.',
+            warnings: [],
+            content: OLD.replace('1. Who came?', args.content),
+        });
+    }
+
+    function readHeldContent(answer: any) {
+        const reference = answer.actions?.[0]?.args?.reference;
+        return takeDraftedStudy(reference)?.content ?? '';
+    }
+
+    test("the file's own diagram that does not draw is neither sent back nor dropped", async () => {
+        fake.answerTool = answerStudyDraft;
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: OPEN,
+                    section: 'Questions',
+                    content: '1. Who came to Jesus by night?',
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix the first question.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(readToolResults(sentList[1])[0]).not.toMatch(/^Tool refused/);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+        const held = readHeldContent(answer);
+        expect(held).toContain('A["Law"] --> BROKEN');
+        expect(held).toContain('1. Who came to Jesus by night?');
+    });
+
+    test('a diagram the change writes goes back once, then only it is dropped', async () => {
+        fake.answerTool = answerStudyDraft;
+        const part =
+            '1. Who came?\n\n```mermaid\nmindmap\n  root((BROKEN love))\n```';
+        const call = {
+            name: 'owa_resource_file',
+            input: {
+                action: 'draft',
+                file: OPEN,
+                section: 'Questions',
+                content: part,
+            },
+        };
+        const { sentList } = useAnthropic([
+            anthropicToolUse(call),
+            anthropicToolUse(call),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Add a mindmap to the questions.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        const [refused] = readToolResults(sentList[1]);
+        expect(refused).toMatch(/^Tool refused: Diagram 1 does not draw/);
+        expect(refused).toContain('with the same change.');
+        const held = readHeldContent(answer);
+        expect(held).not.toContain('root((BROKEN love))');
+        expect(held).toContain('A["Law"] --> BROKEN');
+    });
+});
+
+// EC-502, seen live: asked to fix one line past the 16 KB the ask shows of a
+// 44 KB study, gemma4:cloud sent that part back as the WHOLE new text, and
+// the card would have saved the part alone.
+describe('a study file written whole again', () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const RESOURCES_EXTRA = {
+        resources: { canSeePictures: false, openFiles: [OPEN] },
+    };
+
+    // A long file: `read` gives its start and a note naming every heading.
+    function answerLongStudyTool(_name: string, args: any) {
+        if (args.action === 'read') {
+            return JSON.stringify({
+                file: OPEN,
+                kind: 'text',
+                text: '# The New Birth\n\n',
+                note:
+                    'Only the start of it is here: it is 44021 characters. ' +
+                    'Its headings:\n# The New Birth\n## Cross References\n' +
+                    '## Questions',
+            });
+        }
+        return JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.The New Birth.md',
+            file: OPEN,
+            hash: 'h-1',
+            diagramCount: 0,
+            change: 'It changes “Questions”.',
+            warnings: [],
+            content: `# The New Birth\n\n${args.content}`,
+        });
+    }
+
+    test('one part sent as the whole text is drafted as that part', async () => {
+        fake.answerTool = answerLongStudyTool;
+        const content = '## Questions\n\n1. Who came to Jesus by night?';
+        useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: 'JHN.3.The New Birth.md',
+                    ref: 'John 3:1-36',
+                    title: 'The New Birth',
+                    content,
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Question 1 has the wrong word. Fix it.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_resource_file',
+                args: { action: 'read', file: 'JHN.3.The New Birth.md' },
+            },
+            {
+                name: 'owa_resource_file',
+                args: {
+                    action: 'draft',
+                    file: 'JHN.3.The New Birth.md',
+                    ref: 'John 3:1-36',
+                    title: 'The New Birth',
+                    content,
+                    section: 'Questions',
+                },
+            },
+        ]);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('a text losing the parts the ask never showed is refused, and no card comes', async () => {
+        fake.answerTool = answerLongStudyTool;
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: OPEN,
+                    content: 'Question 3 now names the book of Numbers.',
+                },
+            }),
+            anthropicText('I could not change the file this time.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: { action: 'read', file: OPEN } },
+        ]);
+        const [refused] = readToolResults(sentList[1]);
+        expect(refused).toMatch(
+            /^Tool refused: `content` with no `section` is the WHOLE new text/,
+        );
+        expect(refused).toContain(
+            'leaves out 3 of its parts: “The New Birth”, “Cross References”, “Questions”.',
+        );
+        expect(refused).toContain('The ask shows only the start of this file');
+        expect(answer.actions ?? []).toEqual([]);
+    });
+});
+
+describe('a report of a change written into a study', () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const REPORT =
+        'I have fixed the cross-references in the study file. I corrected ' +
+        'the book names to match the Bible.';
+
+    function answerStudyTool(_name: string, args: any) {
+        if (args.action === 'read') {
+            return JSON.stringify({
+                file: OPEN,
+                kind: 'text',
+                text: '# The New Birth\n\n',
+                note:
+                    'Only the start of it is here: it is 44021 characters. ' +
+                    'Its headings:\n# The New Birth\n## Cross References\n' +
+                    '## Questions',
+            });
+        }
+        return JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.The New Birth.md',
+            file: OPEN,
+            hash: 'h-1',
+            diagramCount: 0,
+            change: 'It changes “Questions”.',
+            warnings: [],
+            content: `# The New Birth\n\n${args.content}`,
+        });
+    }
+
+    function askToFix(extra: Record<string, unknown> = {}) {
+        return askLlmBot(
+            'Question 3 still calls Numbers by the wrong name. Fix it there too.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                resources: { canSeePictures: false, openFiles: [OPEN] },
+                ...extra,
+            },
+        );
+    }
+
+    test('an earlier answer sent as a part’s new words is refused with the headings, and no card comes', async () => {
+        fake.answerTool = answerStudyTool;
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: 'JHN.3.The New Birth.md',
+                    ref: 'John 3:1-36',
+                    title: 'The New Birth',
+                    section: 'Questions',
+                    content: REPORT,
+                },
+            }),
+            anthropicText('I could not change the file this time.'),
+        ]);
+
+        const answer = await askToFix();
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_resource_file',
+                args: { action: 'read', file: 'JHN.3.The New Birth.md' },
+            },
+        ]);
+        const [refused] = readToolResults(sentList[1]);
+        expect(refused).toMatch(
+            /^Tool refused: These words say what was done to the study \(“I have fixed the cross-references in the study file\./,
+        );
+        expect(refused).toContain('Nothing in the file has changed');
+        expect(refused).toContain(
+            '# The New Birth\n## Cross References\n## Questions',
+        );
+        expect(answer.actions ?? []).toEqual([]);
+    });
+
+    test('`@answer` bringing in a report of a change is refused too', async () => {
+        fake.answerTool = answerStudyTool;
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: OPEN,
+                    section: 'Questions',
+                    content: '@answer',
+                },
+            }),
+            anthropicText('I could not change the file this time.'),
+        ]);
+
+        const answer = await askToFix({ answerAbove: REPORT });
+
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: { action: 'read', file: OPEN } },
+        ]);
+        expect(readToolResults(sentList[1])[0]).toMatch(
+            /^Tool refused: These words say what was done to the study/,
+        );
+        expect(answer.actions ?? []).toEqual([]);
+    });
+
+    test('a part whose own words carry such a line further down is drafted', async () => {
+        fake.answerTool = answerStudyTool;
+        const content =
+            '## Questions\n\n1. Who came to Jesus by night?\n\n' +
+            'I have fixed the date in this file.';
+        useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    file: OPEN,
+                    section: 'Questions',
+                    content,
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askToFix();
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_resource_file',
+                args: {
+                    action: 'draft',
+                    file: OPEN,
+                    section: 'Questions',
+                    content,
+                },
+            },
+        ]);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('findStudyChangeReport reads the first line of words of a change', () => {
+        const file = 'JHN.3.The New Birth.md';
+        expect(findStudyChangeReport({ file, content: REPORT })).toBe(REPORT);
+        expect(
+            findStudyChangeReport({
+                file,
+                content: '## Notes\n\nI have fixed the typo in the study file.',
+            }),
+        ).toBe('I have fixed the typo in the study file.');
+        expect(
+            findStudyChangeReport({
+                file,
+                append: 'Please press Save changes to keep this fix.',
+            }),
+        ).toBe('Please press Save changes to keep this fix.');
+        // A new study takes nothing of theirs away.
+        expect(findStudyChangeReport({ content: REPORT })).toBeNull();
+        // A claim with nothing pointing at the file is a study's own words.
+        expect(
+            findStudyChangeReport({
+                file,
+                content: '## Prayer\n\nLord, I have made my own way.',
+            }),
+        ).toBeNull();
+        expect(
+            findStudyChangeReport({
+                file,
+                section: 'Questions',
+                content: '1. Who came to Jesus by night?',
+            }),
+        ).toBeNull();
     });
 });
