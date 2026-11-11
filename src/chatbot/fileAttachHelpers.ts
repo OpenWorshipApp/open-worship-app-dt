@@ -201,6 +201,27 @@ export async function refreshTextAttachment(
     };
 }
 
+/**
+ * A text file's words WHOLE, up to `maxChars`, for a check that must see all
+ * of it (2026-11-11, EC-497): an attachment's words stop at 16 KB, and a
+ * study's translated part runs past that -- the user's John 3 study is 44 KB,
+ * its Khmer Cross References from its 22 435th letter.
+ * Null when the file is larger than those letters could be or cannot be
+ * read. Read for the one question; nothing is kept.
+ */
+export async function readWholeTextFile(filePath: string, maxChars: number) {
+    try {
+        // Four bytes a letter at most in UTF-8.
+        if ((await fsGetFileSize(filePath)) > maxChars * 4) {
+            return null;
+        }
+        const text = await fsReadFile(filePath);
+        return text.length > maxChars ? text.slice(0, maxChars) : text;
+    } catch (_error) {
+        return null;
+    }
+}
+
 // A picture off the disk, already cut to what is worth sending.
 async function readImageDataUrl(filePath: string, name: string) {
     try {

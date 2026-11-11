@@ -2076,9 +2076,10 @@ export function genLostNoteLinesRefusal(lost: readonly string[]) {
 // the answer compares instead of claiming.
 // A checking word before the verses, or THEIR verses said right or wrong:
 // "add verses that fit point 2" and "are there verses about love?" ask for
-// verses, not a check.
+// verses, not a check. A study's "cross references" are its verses too
+// (EC-497: _Are the cross references in this study file right?_).
 const NOTE_VERSE_CHECK_ASK_PATTERN =
-    /\b(?:check|verify|double[- ]check|look over|confirm|make sure)\b[^.?!]{0,40}?\b(?:verses?|references?|scriptures?|refs?|bible quotes?)\b|\b(?:my|the|these|all|our)\s+(?:bible\s+)?(?:verses?|references?|scriptures?)\b[^.?!]{0,30}?\b(?:right|correct|accurate|wrong)\b/i;
+    /\b(?:check|verify|double[- ]check|look over|confirm|make sure)\b[^.?!]{0,40}?\b(?:cross[- ]?)?(?:verses?|references?|scriptures?|refs?|bible quotes?)\b|\b(?:my|the|these|all|our|its|their)\s+(?:bible\s+|cross[- ]?)?(?:verses?|references?|scriptures?|refs?)\b[^.?!]{0,30}?\b(?:right|correct|accurate|wrong)\b/i;
 const NOTE_VERSE_TOKEN_PATTERN =
     /\[\^(?:\(([^)\]\n]{1,24})\)\s*)?([^\]\n]+)\]/g;
 const MAX_NOTE_CHECK_VERSES = 24;

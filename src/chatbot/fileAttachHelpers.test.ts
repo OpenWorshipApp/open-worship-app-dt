@@ -106,6 +106,7 @@ import {
     findResourceFileNames,
     genAttachmentFromPath,
     genPdfAttachment,
+    readWholeTextFile,
     refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
@@ -590,5 +591,36 @@ describe('findResourceFileNames', () => {
         folderState.isThrowing = true;
         expect(findResourceFileNames([luke])).toEqual([]);
         expect(folderState.readCount).toBe(2);
+    });
+});
+
+// EC-497: a study is checked from its whole text, never the attachment's cut.
+describe('readWholeTextFile', () => {
+    test('reads the whole file, past what an attachment holds', async () => {
+        const study = `# Study\n${'word '.repeat(9000)}Romans 5:8`;
+        diskState.sizeMap.set('C:/r/study.md', study.length);
+        diskState.textMap.set('C:/r/study.md', study);
+        expect(await readWholeTextFile('C:/r/study.md', 64_000)).toBe(study);
+    });
+
+    test('cuts the words at the most asked for', async () => {
+        diskState.sizeMap.set('C:/r/long.md', 30);
+        diskState.textMap.set('C:/r/long.md', 'a'.repeat(30));
+        expect(await readWholeTextFile('C:/r/long.md', 20)).toBe(
+            'a'.repeat(20),
+        );
+    });
+
+    test('reads nothing of a file larger than the words could be', async () => {
+        diskState.sizeMap.set('C:/r/huge.md', 81);
+        diskState.textMap.set('C:/r/huge.md', 'words');
+        expect(await readWholeTextFile('C:/r/huge.md', 20)).toBeNull();
+        expect(diskState.readCountMap.get('C:/r/huge.md')).toBeUndefined();
+    });
+
+    test('a file that has gone or cannot be read is null', async () => {
+        expect(await readWholeTextFile('C:/r/gone.md', 20)).toBeNull();
+        diskState.sizeMap.set('C:/r/locked.md', 5);
+        expect(await readWholeTextFile('C:/r/locked.md', 20)).toBeNull();
     });
 });

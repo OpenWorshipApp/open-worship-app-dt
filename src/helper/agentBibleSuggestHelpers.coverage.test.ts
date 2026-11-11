@@ -339,3 +339,47 @@ test('an acquired lookup dataset is released when a names search throws', async 
     ).rejects.toThrow('lookup failed');
     expect(mocks.release).toHaveBeenCalledWith('xx');
 });
+
+// EC-497: what the help window finds a study's references by.
+test('books lists every installed Bible by its names, Bibles naming every book alike as one', async () => {
+    state.bibleList = [
+        { key: 'XX1', locale: 'xx' },
+        { key: 'KJV', locale: 'en' },
+        { key: 'XX2', locale: 'xx-XX' },
+        { key: 'ASV', locale: 'en' },
+        { key: 'GONE', locale: 'en' },
+    ];
+    state.bibleInfo.ASV = state.bibleInfo.KJV;
+
+    const result = await handleAgentBibleSuggestRequest({
+        kind: 'books',
+        prefix: '',
+    });
+
+    expect(result).toEqual({
+        kind: 'books',
+        bookKeys: ['GEN', 'JHN', 'JOB'],
+        english: ['Genesis', 'John', 'Job'],
+        bibles: [
+            {
+                keys: ['XX1'],
+                locale: 'xx',
+                books: ['First Genesis', 'First John', ''],
+            },
+            {
+                keys: ['KJV', 'ASV'],
+                locale: 'en',
+                books: ['Genesis', 'John', 'Job'],
+            },
+            {
+                keys: ['XX2'],
+                locale: 'xx-XX',
+                books: ['Genesis', 'John', 'Job'],
+            },
+            // A Bible whose names cannot be read names no book.
+            { keys: ['GONE'], locale: 'en', books: ['', '', ''] },
+        ],
+    });
+    // Nothing of the reference completion is asked for it.
+    expect(mocks.getModelChapterCount).not.toHaveBeenCalled();
+});

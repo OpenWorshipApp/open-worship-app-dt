@@ -91,6 +91,7 @@ import {
     genAttachmentFromPath,
     genPdfAttachment,
     readBlankNoteFromFile,
+    readWholeTextFile,
     refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
@@ -646,6 +647,15 @@ import {
     takeStudyRenameWait,
     toStudyAsk,
 } from './studyFileChatHelpers';
+import {
+    STUDY_CHECK_READ_MAX_CHARS,
+    checkIsStudyCheckFile,
+    collectStudyVerseRefs,
+    genStudyBookNames,
+    splitStudyRefCalls,
+    toStudyVerseReadText,
+    type StudyRefReadType,
+} from './studyVerseCheckHelpers';
 import RenderStudyDraftComp from './RenderStudyDraftComp';
 import {
     checkIsChangeReply,
@@ -1387,6 +1397,64 @@ async function readBibleReaderAskWithBook(asked: string) {
     } catch (_error) {
         return null;
     }
+}
+
+/**
+ * The references a study file cites, read before a verse check is asked of
+ * the model (2026-11-11, EC-497; `studyVerseCheckHelpers.ts`): the file
+ * whole off the disk, every installed Bible's book names, then each
+ * reference from the Bible its part of the study quotes -- one
+ * `owa_find_verse refs` call a Bible and eight references. Null when the
+ * file or the names cannot be read; a call that fails leaves its
+ * references said as unread.
+ */
+async function readStudyVerseCheckText(
+    file: ChatAttachmentType,
+    signal: AbortSignal,
+) {
+    const text = await readWholeTextFile(
+        file.filePath ?? '',
+        STUDY_CHECK_READ_MAX_CHARS,
+    );
+    if (text === null) {
+        return null;
+    }
+    const names = genStudyBookNames(
+        parseToolJson(
+            await callTool(
+                'owa_bible_suggest',
+                { kind: 'books', prefix: '' },
+                signal,
+            ),
+        ),
+    );
+    if (names === null) {
+        return null;
+    }
+    const check = collectStudyVerseRefs(text, names);
+    const readList: StudyRefReadType[] = [];
+    for (const call of splitStudyRefCalls(check)) {
+        try {
+            readList.push({
+                call,
+                result: parseToolJson(
+                    await callTool(
+                        'owa_find_verse',
+                        {
+                            refs: call.refs.join('; '),
+                            ...(call.isInstalled && call.bible !== null
+                                ? { bible: call.bible }
+                                : {}),
+                        },
+                        signal,
+                    ),
+                ),
+            });
+        } catch (_error) {
+            throwIfCancelled(signal);
+        }
+    }
+    return toStudyVerseReadText(check, readList);
 }
 
 /**
@@ -10082,6 +10150,41 @@ export default function ChatbotAppComp() {
                         noteDocs.map((doc) => doc.text),
                     );
                 }
+                // The same for a STUDY file open in the tab (EC-497): every
+                // reference it cites, read from the Bible its part quotes.
+                // Asked about the user's John 3 study, gemma4:cloud had
+                // checked the quoted passage's own bracketed notes and
+                // called the study's references right with none read.
+                let studyVerseReadText: string | null = null;
+                const studyCheckFile =
+                    !isNoteDocAsk &&
+                    !isSongAsk &&
+                    !isSlideDocAsk &&
+                    !isFlowDocAsk &&
+                    !isForegroundAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null &&
+                    lookupSubject === null &&
+                    generalQuestion === null &&
+                    checkIsNoteVerseCheckAsk(trimmedAsked)
+                        ? modelAttachments.findLast(checkIsStudyCheckFile)
+                        : undefined;
+                if (studyCheckFile !== undefined) {
+                    const finishReading = genProgressReporter(
+                        genSessionProgress(askedSessionId),
+                    )(tran('Reading Bible verses'));
+                    try {
+                        studyVerseReadText = await readStudyVerseCheckText(
+                            studyCheckFile,
+                            signal,
+                        );
+                    } catch (_error) {
+                        // The ask goes on as before: the model reads them.
+                        throwIfCancelled(signal);
+                    } finally {
+                        finishReading();
+                    }
+                }
                 // A foreground session the same way (`owa_foreground_edit
                 // read`): its words, its look and the screens holding it as
                 // they are NOW. A component named with none attached is read
@@ -10431,7 +10534,11 @@ export default function ChatbotAppComp() {
                               lookupQuoteBible,
                           );
                 };
-                const withResources = (text: string) => {
+                const withResources = (asked: string) => {
+                    const text =
+                        studyVerseReadText === null
+                            ? asked
+                            : `${asked}\n\n${studyVerseReadText}`;
                     if (!isResourcesAsk) {
                         return text;
                     }

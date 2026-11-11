@@ -11867,3 +11867,78 @@ and a word study's own letters.
 The Lookup panel's passage chat may have EC-495's gap too. It keeps a
 passage's own Bible on purpose ("that is what they are reading") and adds
 no language line for English. Not yet seen live.
+
+### EC-497 — a study's cross references were never read: the quoted Bible's own bracketed notes were checked instead — `done` 2026-11-11, seen in the window
+
+Found 2026-11-11 on the user's own John 3 study (`JHN.3.The New Birth and
+God's Love.md`, 44 KB, read and never changed): an English part quoting
+John 3 from the Amplified, then the same study in Khmer quoting ពគប, each
+with its Cross References. Asked _Are the cross references in this study
+file right?_, gemma4:cloud read the Amplified's own bracketed notes inside
+the quoted passage (`[Ezek. 36:25-27.]`) as the study's references and
+called them right. The study's Cross References were never read, and the
+Khmer part's three slips went unseen: Titus named as the French Bibles name
+it (`Tite`), Ezekiel as no installed Bible names it (អេសេគីអែល, ពគប writes
+អេសេគាល) and Numbers by the everyday word for a number (លេខ, ពគប writes
+ជនគណនា). The attachment had reached the model cut at 16 KB (16 384
+letters), which ends before the Khmer part's Cross References (from its
+22 435th letter); `owa_resource_file` reads a section past that only when
+the model asks for one, and it did not.
+
+The window now reads them first, as BN does for a note's verses
+(`studyVerseCheckHelpers.ts`, pure; `readStudyVerseCheckText` in
+`ChatbotAppComp`). A verse-check ask (`checkIsNoteVerseCheckAsk`, which
+reads _cross references_ and _crossref_ now) with a Markdown or text file
+open in the tab, and no conversation of its own, reads:
+
+- the WHOLE file (`readWholeTextFile`, 64 K letters, its size asked
+  first);
+- every installed Bible's book names, through a new hidden kind of the
+  input aid, `owa_bible_suggest books` (`listBookNames`: 66 names a Bible
+  beside the English and the book keys, Bibles naming every book alike as
+  one group, 40 Bibles at most, the small `_info` file each);
+- the references in the study's OWN words, never in a quoted passage, a
+  diagram or a code block. A name in a script written with spaces starts a
+  word and is not in lower case; one written without spaces may end a run
+  of letters; `Num.` and `1 Pet` are taken when only one name starts so;
+  `Romans 5:8; 8:1` reads the second as Romans. A time, a ratio and
+  `Part 2: 4` are no reference;
+- each verse from the Bible the part around it quotes (`owa_find_verse
+  refs`: one Bible a call, eight a call, 24 a check). A reference to a
+  verse of the passage the part quotes is counted, not read again.
+
+The ask carries each line with its references and their words, a book named
+as no installed Bible names it (listed, never guessed), a name only another
+language's Bibles give (read, and said so, with the part's own Bible's
+name, and that Bible's 66 names when most differ from English), and the
+Bible's bracketed notes named as not the study's.
+
+Measured in a new tab opened by the study's Resources 🤖, Auto → OWA
+Shared, three checks: the study's own references read; the Khmer slips
+named with ពគប's names; the Amplified's notes left out.
+
+- **Before:** 0 of 3 (gemma4:cloud).
+- **After:** 3 of 3, twice. gemma4:cloud (12.2k tokens) named all three
+  slips with ពគប's own names and offered each fix as a button; on a Retry,
+  Gemma 4 31b (12.7k) named the same three and offered the corrected
+  references as one button. Both also found a slip the window had not
+  pointed at: the Khmer line reads _អំពីពស់សព្ទោន: and លេខ ២១:៨-៩_, an
+  English "and" with nothing to join (the English line is _On the Bronze
+  Serpent: Numbers 21:8-9_). gemma4:cloud listed the Numbers slip twice and
+  both counted "5 wrong" over the three or four they named. Nothing was
+  saved.
+
+Tests: `studyVerseCheckHelpers.test.ts` (23), `agentBibleSuggestHelpers.coverage.test.ts`
+(+1), `fileAttachHelpers.test.ts` (+4), `noteChatHelpers.test.ts` (+4 asks).
+Not tested through the window's own component: the read is pressed live.
+
+### EC-498 — a file handed over to the help window waits in the box, and a reload of the window loses it — open
+
+From EC-497's run. The Resources 🤖 opens a tab whose card says the file
+_is attached below_: the chip waits in the box until a question carries it.
+A reload of the help window (a language installed, a code edit in dev)
+drops the box, the card still saying the file is attached, and the next
+question goes out about nothing. BN-19 is the same for a note the assistant
+made. The handed-over file could be kept with the tab (as `noteId` is),
+or the card could say so when the chip is gone.
+

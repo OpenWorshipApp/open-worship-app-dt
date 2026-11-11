@@ -18,6 +18,10 @@
  *   `acquireLookupData` and given back at once, like `owa_lookup_record`. The
  *   dataset is ~34MB, so the WINDOW only asks for a name when the person is
  *   naming one, or the panel already holds it (`checkIsLookupDataHeld`).
+ * - `books` (2026-11-11, EC-497) is every installed Bible's book names in the
+ *   model's order, its locale beside them, and the English ones with the
+ *   book keys: what the help window finds the references a study file cites
+ *   by, in whatever language the study names its books.
  * Reads only; nothing is opened or shown.
  */
 import {
@@ -311,9 +315,68 @@ async function suggestNames(
     }
 }
 
+// The Bibles whose names `books` reads: a study names its books as one of
+// them does. The user's dev profile holds 21, nine of them naming every book
+// alike, so a set of names is sent once with every Bible that writes it.
+const MAX_BOOK_NAME_BIBLES = 40;
+
+/**
+ * Every installed Bible's book names in the model's order ('' for a book it
+ * does not name), with its locale, and the book keys and English names: read
+ * when the window asks, nothing kept. Bibles of one locale naming every book
+ * alike are one entry, `keys` listing them.
+ */
+async function listBookNames() {
+    const englishMap = getModelKeyBookMap();
+    const bookKeyList = Object.keys(englishMap);
+    const infoList = ((await getAllLocalBibleInfoList()) ?? []).slice(
+        0,
+        MAX_BOOK_NAME_BIBLES,
+    );
+    const readList = await Promise.all(
+        infoList.map(async (one) => {
+            const info = await getBibleInfo(one.key).catch(() => {
+                return null;
+            });
+            const keyBookMap = info?.keyBookMap ?? {};
+            return {
+                key: one.key,
+                locale: String(one.locale ?? ''),
+                books: bookKeyList.map((bookKey) => {
+                    return keyBookMap[bookKey] ?? '';
+                }),
+            };
+        }),
+    );
+    const groupMap = new Map<
+        string,
+        { keys: string[]; locale: string; books: string[] }
+    >();
+    for (const { key, locale, books } of readList) {
+        const groupKey = `${locale}\n${books.join('\n')}`;
+        const group = groupMap.get(groupKey);
+        if (group === undefined) {
+            groupMap.set(groupKey, { keys: [key], locale, books });
+        } else {
+            group.keys.push(key);
+        }
+    }
+    return {
+        kind: 'books' as const,
+        bookKeys: bookKeyList,
+        english: bookKeyList.map((bookKey) => {
+            return englishMap[bookKey];
+        }),
+        bibles: [...groupMap.values()],
+    };
+}
+
 export async function handleAgentBibleSuggestRequest(
     request: AgentBibleSuggestRequestType,
 ) {
+    if (request.kind === 'books') {
+        return await listBookNames();
+    }
     const limit = toSuggestionLimit(request.limit);
     if (request.kind === 'name') {
         return await suggestNames(request, limit);

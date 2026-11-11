@@ -2059,7 +2059,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // chapters and verses of the Bible being read; `name` suggests the people
   // and places a who/where question is naming. The names dataset is 34MB, so
   // a NAME loads only when the person is clearly naming one (`allowLoad`) or
-  // a lookup panel already holds it (`getHeldLookupData`).
+  // a lookup panel already holds it (`getHeldLookupData`). `books` is every
+  // installed Bible's book names, which the window reads a study's own
+  // references by before a verse check (EC-497).
   server.registerTool(
     'owa_bible_suggest',
     {
@@ -2067,10 +2069,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         "The chat box's input aid, read by the WINDOW as a person types -- " +
         'not by you. `kind` "reference" completes a book, chapter and verse ' +
         'in the Bible being read (`prefix`, and `book` when only digits were ' +
-        'typed); "name" suggests people and places of the names lookup. ' +
-        'Reads only; answer with owa_find_verse or owa_lookup_record.',
+        'typed); "name" suggests people and places of the names lookup; ' +
+        "\"books\" lists every installed Bible's book names, which the " +
+        'window finds the references a study cites by. Reads only; ' +
+        'answer with owa_find_verse or owa_lookup_record.',
       inputSchema: {
-        kind: z.enum(['reference', 'name']),
+        kind: z.enum(['reference', 'name', 'books']),
         prefix: z.string(),
         book: z.string().optional(),
         allowLoad: z.boolean().optional(),

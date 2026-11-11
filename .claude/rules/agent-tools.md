@@ -1437,6 +1437,14 @@ false` and searches only a dataset a lookup panel already holds
   move (host tools 64); a model answers with `owa_find_verse` /
   `owa_lookup_record`. Seen live in Khmer: `យ៉ូ` -> Joshua/Job/Joel/Jonah/John,
   John -> chapters 1..21, chapter 3 -> verses, and `ម៉ូសេ` -> Moses/Moseroth.
+  **`kind: "books"` lists every book name the installed Bibles write**
+  (2026-11-11, `EC-497`; `prefix` `""`): `bookKeys`, the `english` names
+  and, per group of Bibles naming every book alike, `{keys, locale,
+  books}` -- 66 names each, `''` where a Bible lacks the book, at most 40
+  Bibles read (`getBibleInfo`, the small `_info` file each, no verse).
+  It is how the help window finds the references a study file cites, in
+  whatever language and script its parts are written (the study verse
+  check, `chatbot-files-report.md`).
 
 - **A step WAITING for typed input asks the assistant when the exact match
   fails** (2026-10-18; the user's picture of the Bible import's language step,

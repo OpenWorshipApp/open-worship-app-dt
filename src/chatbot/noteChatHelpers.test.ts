@@ -1240,6 +1240,10 @@ describe('checking the verses a lesson cites', () => {
             'please double-check the scriptures I used',
             'are my verses correct?',
             'make sure the bible quotes are accurate',
+            // EC-497: a study's cross references are its verses too.
+            'Are the cross references in this study file right?',
+            'are its cross-references correct?',
+            'check each crossref it cites',
         ]) {
             expect(checkIsNoteVerseCheckAsk(text), text).toBe(true);
         }
@@ -1248,6 +1252,7 @@ describe('checking the verses a lesson cites', () => {
             'are there verses about love?',
             'check the spelling',
             'add John 3:16',
+            'add cross references under each point',
         ]) {
             expect(checkIsNoteVerseCheckAsk(text), text).toBe(false);
         }

@@ -6,6 +6,7 @@ paths:
   - 'src/chatbot/attachErrorHelpers.ts'
   - 'src/chatbot/noteFileTextHelpers.ts'
   - 'src/chatbot/resourcesChatHelpers.ts'
+  - 'src/chatbot/studyVerseCheckHelpers.ts'
   - 'src/chatbot/foregroundChatHelpers.ts'
   - 'src/chatbot/reportHelpers.ts'
   - 'src/chatbot/reportMarks.ts'
@@ -251,6 +252,35 @@ window as a whole — tabs, pickers, its language, the caution — is in
   `STUDY_CHANGE_HELD_NOTE` -- press **Save changes**, and say every part
   `change` names -- after its answer had sent the person to a **Create**
   the card does not have, and named only the part asked for.
+- **The references a study file cites are read before a verse check**
+  (2026-11-11, `EC-497`; the user's John 3 study asked _Are the cross
+  references in this study file right?_). gemma4:cloud had read the
+  Amplified Bible's own bracketed notes inside the quoted passage
+  (`[Ezek. 36:25-27.]`) as the study's references and called them right:
+  the Cross References were never read, and the study's Khmer part named
+  Titus as the French Bibles do, Ezekiel as no installed Bible does and
+  Numbers by the everyday word for a number. Now a verse-check ask
+  (`checkIsNoteVerseCheckAsk`, which reads _cross references_ since) with a
+  Markdown or text file open in the tab (`checkIsStudyCheckFile`: `.md`,
+  `.markdown`, `.txt`, never one note of a notes file) and no conversation
+  of its own (a note, song, slides, flow, foreground, verse find, Reader,
+  lookup or general ask) has the WINDOW read first, no model round
+  (`studyVerseCheckHelpers.ts`, pure; `readStudyVerseCheckText` in
+  `ChatbotAppComp`): the WHOLE file (`readWholeTextFile`, 64 K letters,
+  its size asked first -- an attachment's words are cut at 16 KB, and the
+  study was 44 KB), every installed Bible's book names (`owa_bible_suggest
+  books`), the references in the study's OWN words -- never in a quoted
+  passage, a diagram or a code block; a name of a script written with
+  spaces starting a word, not in lower case; a time, a ratio, `Part 2: 4`
+  no reference -- and each verse from the Bible the part around it quotes
+  (`owa_find_verse refs`: one Bible a call, eight a call, 24 a check).
+  The ask carries each line with its references and their words, a book
+  named as no installed Bible names it (listed, never guessed), a name only
+  another language's Bibles give (read, and said so, with the name the
+  part's own Bible gives it -- and that Bible's names beside the English
+  when most differ), and how many references to a verse of a quoted
+  passage were left to check against it. A study with no reference in its
+  own words says that, and nothing else changes.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it
