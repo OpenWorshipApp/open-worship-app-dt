@@ -154,6 +154,15 @@ export const NOTE_CREATE_PROMPT =
 // in a mouth (Jonah "said he was sorry" in the fish, three reads running),
 // and a hearer's question took for granted what the verses do not say
 // ("Why is the father upset with the son who stayed?").
+//
+// BN-104 (the BN-99..102 reads, both readers): Pointing to Jesus was "tacked
+// on or allegorised" (1.31 of 2), and a verse it quoted from memory carried
+// the wrong reference ("I seek not mine own will…" as John 6:38; it is
+// 5:30). It goes first where the New Testament itself takes the passage to
+// Christ, that verse read and written as its token. And examples were stock
+// office types that "don't mirror the point": an example is now the point's
+// own verses happening again in the hearers' week, never ending on "This
+// shows".
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -202,22 +211,26 @@ export const PREACHING_LESSON_SHAPE =
     '**The passage answers:** <that answer in two or three sentences, with ' +
     'the words of the verse that gives it: a reason, motive or promise only ' +
     'where it states one>\n' +
-    "**For example:** <a scene from the hearers' own week, three or four " +
-    'sentences -- someone named by role and place, never by name, a person ' +
-    'these hearers would know; what was said or done -- ' +
-    'showing what THIS point says God does or asks, not mere courage or ' +
-    'effort, and promising nothing the passage does not; never a memory of ' +
-    'your own or a date, never a stock picture: a lifeboat, a garden, a ' +
-    'rescue>\n' +
+    "**For example:** <a scene from the hearers' own week where what THIS " +
+    "point's verses tell happens again -- the same need, and what God does " +
+    'or asks in it -- three or four sentences: someone named by role and ' +
+    'place, never by name, a person these hearers would know, and what was ' +
+    'said or done, told as a preacher would tell it, never ending on "This ' +
+    'shows"; not mere courage or effort, and promising nothing the passage ' +
+    'does not; never a memory of your own or a date, never a stock picture: ' +
+    'a lifeboat, a garden, a rescue>\n' +
     '**This week:** <one deed that answers what God gives in THIS point, ' +
     'with whom, at the moment of their week where this point meets them -- ' +
     'never a weekday or hour picked for no reason, never only "trust", ' +
     '"remember" or "pray about it">\n' +
-    'then Pointing to Jesus (a phrase of THIS passage, quoted, and where its ' +
-    'MEANING leads: what Jesus did for us in his death and rising -- never a ' +
-    'word it only shares with a name of his ("the word", "the way"), never ' +
-    'only his example, never the story turned into an allegory of him, never ' +
-    'a picture the passage does not have), Response (the ' +
+    'then Pointing to Jesus (where the New Testament itself takes THIS ' +
+    "passage to Christ -- a verse that quotes it, or Jesus' own words about " +
+    'it -- read with owa_find_verse and written as its token, never quoted ' +
+    'from memory; else a phrase of the passage, quoted, and where its ' +
+    'MEANING leads; then what Jesus did for us in his death and rising -- ' +
+    'never a word it only shares with a name of his ("the word", "the ' +
+    'way"), never only his example, never the story turned into an allegory ' +
+    'of him, never a picture the passage does not have), Response (the ' +
     'big idea said again in new words, then a clear call to the ONE step ' +
     'the whole passage asks most -- what, with whom and when in their week ' +
     '-- the deed of the point that carries the big idea, never one more ' +

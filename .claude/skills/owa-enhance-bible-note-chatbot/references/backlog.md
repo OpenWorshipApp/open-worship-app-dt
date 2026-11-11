@@ -1518,6 +1518,22 @@ was seen and what was done.
   "says no word of sorrow for running away". Asked again: "Jonah prayed to
   God from the fish's belly", and "God turned away from the harm He said
   He would bring because the people changed their ways".
+- **BN-104 — Christ by the New Testament's own link, an example by the
+  point's own verses** (2026-11-11, the BN-99..102 reads, both readers).
+  Pointing to Jesus was "tacked on or allegorised" (Sonnet 1.31 of 2), and
+  a verse it quoted from memory carried the wrong reference: "I seek not
+  mine own will…" as John 6:38, where it is 5:30. Examples were stock
+  office types, "a manager at a warehouse" in nine lessons, that "don't
+  mirror the point". Pointing to Jesus now goes first where the New
+  Testament itself takes the passage to Christ (a verse that quotes it, or
+  Jesus' own words about it), read with `owa_find_verse` and written as its
+  token, never quoted from memory. An example is the point's own verses
+  happening again in the hearers' week, told as a preacher would tell it,
+  never ending on "This shows". ~1386 tokens. Seen in the run: Psalm 23
+  through "I am the good shepherd: the good shepherd giveth his life for
+  the sheep" (John 10:11) and Jonah through Matthew 12:40, each read and
+  written as its token. Proverbs 3 still reached "the way" of John 14:6, a
+  shared word.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

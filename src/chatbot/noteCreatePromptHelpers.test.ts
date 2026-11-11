@@ -98,6 +98,20 @@ describe('a lesson to preach, asked anywhere', () => {
         }
     });
 
+    // BN-104 (2026-11-11): Pointing to Jesus "tacked on or allegorised", a
+    // verse it quoted from memory under the wrong reference, and examples
+    // that did not mirror their point.
+    test('Christ by the New Testament, an example by its own verses', () => {
+        for (const line of [
+            'where the New Testament itself takes THIS passage to Christ',
+            'read with owa_find_verse and written as its token, never quoted',
+            "where what THIS point's verses tell happens again",
+            'never ending on "This shows"',
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(line);
+        }
+    });
+
     // BN-102 (2026-11-11): backgrounds missed the occasion a passage
     // answers; Jonah "said he was sorry"; "why is the father upset?".
     test('a background gives the occasion, a retelling adds no words', () => {
