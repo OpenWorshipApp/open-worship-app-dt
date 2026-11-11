@@ -751,7 +751,14 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   that) while no `owa_note_edit` edit changed it, no note was made and no
   undo or redo stepped (`isNoteStepped`) goes back once with
   `NOTE_CLAIM_NUDGE`: make it now, or say plainly it was not done
-  (`checkClaimsUnmadeNoteChange`). And an edit that changed nothing answers
+  (`checkClaimsUnmadeNoteChange`). **A study file's the same** (2026-11-11,
+  `EC-499`: gemma4:cloud, every draft refused, answered _I have fixed the
+  cross-references in the study file_ with no card): in a tab with a
+  `Default/*.md` study open (`watch.openStudyFiles`), the note's claim
+  words or _Save changes_ with no draft held go back once with
+  `genStudyClaimNudge`, naming the file (`checkClaimsUnmadeStudyChange`).
+  Neither is asked on the last round, where no round is left to answer it
+  (`EC-501`). And an edit that changed nothing answers
   _Nothing was changed: the note already reads that way. Tell them so --
   never that you changed it_: asked to lay a drawing out across that
   already was, gemma4:cloud had answered "I've updated the drawing".

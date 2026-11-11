@@ -33,6 +33,14 @@ import {
     listAssistantLanguages,
 } from './chatLangHelpers';
 import type { ChatMessageType } from './chatSessionHelpers';
+import {
+    STUDY_FILE_EXTENSION,
+    STUDY_FOLDER_NAME,
+    STUDY_HEADINGS_LEAD,
+    applyStudyEdit,
+    separateStudyLines,
+    toStudyOutline,
+} from '../helper/agentStudyFileRules';
 
 export { STUDY_ANSWER_MARKER, STUDY_FILE_PROMPT };
 
@@ -605,4 +613,166 @@ export function toStudyContentFromAnswer(text: string) {
         outLines.pop();
     }
     return outLines.join('\n').trim();
+}
+
+// --- the study a tab has open (2026-11-11, EC-499) ---------------------------
+//
+// Asked to "fix them in the study file" -- the references a verse check had
+// found wrong in the study the tab was opened on -- gemma4:cloud drafted the
+// WHOLE study four times with no `file` and no `ref`, written from the first
+// 16 KB the tab is shown of a 44 KB file. The tool read each one as a NEW
+// study with no passage and refused it, 128k tokens went, and the answer
+// said the references were fixed. Nothing had changed.
+
+/**
+ * The study files a Resources tab has open, named as `draft` takes them --
+ * `Default/<name>.md`, the only files a change can be drafted for.
+ */
+export function findOpenStudyFiles(openFiles: readonly string[]) {
+    const prefix = `${STUDY_FOLDER_NAME}/`.toLowerCase();
+    return openFiles.filter((name) => {
+        const lower = String(name ?? '').toLowerCase();
+        return (
+            lower.startsWith(prefix) &&
+            lower.endsWith(STUDY_FILE_EXTENSION) &&
+            !lower.slice(prefix.length).includes('/')
+        );
+    });
+}
+
+function checkIsStudyPartEdit(args: any) {
+    return (
+        toText(args?.section).trim() !== '' ||
+        toText(args?.append).trim() !== ''
+    );
+}
+
+/**
+ * A model's draft that names no `file` and no `ref` while the tab has a
+ * study open: a part of it (`section`, `append`) goes to the one open; the
+ * whole study written again is refused (`genOpenStudyDraftRefusal`) -- a
+ * long file is shown in part, and the part not shown would be lost. Null
+ * when the call names a file or a passage, or no study is open.
+ */
+export function routeOpenStudyDraft(
+    args: any,
+    openStudyFiles: readonly string[],
+): { args: any } | { isRefused: true } | null {
+    if (
+        openStudyFiles.length === 0 ||
+        toText(args?.file).trim() !== '' ||
+        toText(args?.ref).trim() !== ''
+    ) {
+        return null;
+    }
+    if (openStudyFiles.length === 1 && checkIsStudyPartEdit(args)) {
+        return { args: { ...args, file: openStudyFiles[0] } };
+    }
+    return { isRefused: true };
+}
+
+/** What the model is told when it drafts no file and no passage. */
+export function genOpenStudyDraftRefusal(
+    openStudyFiles: readonly string[],
+    outline = '',
+) {
+    const names = openStudyFiles
+        .map((name) => {
+            return `"${name}"`;
+        })
+        .join(' or ');
+    return (
+        'No `file` and no `ref`. To change the study open in this chat, ' +
+        `call draft with \`file\` ${names} and \`section\` (one of its ` +
+        'headings, as it reads) with `content` (the new words of that part ' +
+        'alone), one call a part, or `append` (words added at its end). ' +
+        'Never write the whole study again to change a part of it: a long ' +
+        'file is shown only in part, and the rest would be lost. To see a ' +
+        'part first, call read with `file` and `section`. Until a draft ' +
+        'goes through, nothing in the file has changed: never say it was ' +
+        'changed or fixed. A NEW study needs `ref` (its passage) and a ' +
+        '`title`.' +
+        (outline === '' ? '' : ` ${STUDY_HEADINGS_LEAD}\n${outline}`)
+    );
+}
+
+/**
+ * A file's headings off its `read` result: the list a long file's note
+ * gives (`STUDY_HEADINGS_LEAD`), or the headings of the text read whole.
+ * Empty for anything else.
+ */
+export function toStudyReadOutline(readText: string) {
+    const result = parseJson(String(readText ?? ''));
+    if (result === null || typeof result.text !== 'string') {
+        return '';
+    }
+    const note = toText(result.note);
+    const at = note.indexOf(STUDY_HEADINGS_LEAD);
+    if (at >= 0) {
+        return note.slice(at + STUDY_HEADINGS_LEAD.length).trim();
+    }
+    return toStudyOutline(result.text);
+}
+
+function toStudyFileKey(file: string) {
+    return (
+        file.replaceAll('\\', '/').split('/').filter(Boolean).at(-1) ?? ''
+    ).toLowerCase();
+}
+
+/**
+ * A part of a study whose change the window already holds, drafted in the
+ * same ask: applied to the HELD change, and the whole of it drafted again.
+ * `draft` reads the file off the disk each call, so the English Cross
+ * References and then the Khmer had left only the Khmer changed. Null when
+ * the call is no part of that file; why not, when the part cannot be found.
+ */
+export function chainStudyPartEdit(
+    args: any,
+    held: Omit<DraftedStudyType, 'reference'> | null,
+): { args: any } | { reason: string } | null {
+    if (
+        held === null ||
+        !held.isChange ||
+        held.file === null ||
+        !checkIsStudyPartEdit(args) ||
+        toStudyFileKey(toText(args?.file)) !== toStudyFileKey(held.file)
+    ) {
+        return null;
+    }
+    const edited = applyStudyEdit(held.content, {
+        section: toText(args.section),
+        content: separateStudyLines(toText(args.content)),
+        append: separateStudyLines(toText(args.append)),
+    });
+    if ('reason' in edited) {
+        return edited;
+    }
+    const {
+        section: _section,
+        append: _append,
+        content: _content,
+        ...rest
+    } = args;
+    return { args: { ...rest, file: held.file, content: edited.text } };
+}
+
+/**
+ * What the model is told when it says the open study changed and no draft
+ * was made (EC-499), as `NOTE_CLAIM_NUDGE` is for a note.
+ */
+export function genStudyClaimNudge(openStudyFiles: readonly string[]) {
+    const names = openStudyFiles
+        .map((name) => {
+            return `"${name}"`;
+        })
+        .join(' or ');
+    return (
+        'Not yet: nothing in the study file changed -- no owa_resource_file ' +
+        'draft went through, so there is no Save changes under your answer. ' +
+        `Draft it now: \`file\` ${names}, \`section\` (a heading as it ` +
+        "reads) and `content` (that part's new words), or `append`. When it " +
+        'cannot be done, say so plainly; when no change was asked for, ' +
+        'write your answer again without saying the file was changed.'
+    );
 }

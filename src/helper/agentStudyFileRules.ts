@@ -729,6 +729,13 @@ export function listStudySections(text: string): StudySectionType[] {
     });
 }
 
+/**
+ * What opens the list of a file's headings wherever one is written for a
+ * model -- a long file's read note, a section not found -- and what the
+ * help window looks for to take the list off a read (EC-499).
+ */
+export const STUDY_HEADINGS_LEAD = 'Its headings:';
+
 /** The sections as a model reads them: `## Background`, one a line. */
 export function toStudyOutline(text: string, maxCount = 40) {
     const sections = listStudySections(text);
@@ -767,7 +774,7 @@ function findStudySection(
                   `“${section}”; ${twiceAdvice}.`) +
             (outline === ''
                 ? ' It has no headings: add to it with `append`.'
-                : ` Its headings:\n${outline}`),
+                : ` ${STUDY_HEADINGS_LEAD}\n${outline}`),
     };
 }
 

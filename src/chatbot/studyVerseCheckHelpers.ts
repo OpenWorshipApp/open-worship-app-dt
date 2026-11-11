@@ -589,7 +589,11 @@ export function collectStudyVerseRefs(
     const refs: StudyRefType[] = [];
     const lines: StudyCheckLineType[] = [];
     const passages: StudyPassageType[] = [];
-    const unknownSet = new Set<string>();
+    // A book named as no Bible names it is said on EVERY line it is
+    // written on, once a line, up to the cap: said once for the file, the
+    // Cross References' line was fixed and the same wrong name in a
+    // discussion question stayed (2026-11-11, EC-499).
+    let unknownCount = 0;
     const leftSet = new Set<string>();
     let region: {
         bible: string | null;
@@ -623,17 +627,18 @@ export function collectStudyVerseRefs(
                 heading = headingMatch[1];
             }
             const items: StudyLineItemType[] = [];
+            const lineUnknownSet = new Set<string>();
             let firstStart = -1;
             for (const hit of scanLineRefs(line, names)) {
                 if (hit.kind === 'unknown') {
-                    const unknownKey = `${region.bible ?? ''}\n${hit.written}`;
                     if (
-                        unknownSet.has(unknownKey) ||
-                        unknownSet.size >= STUDY_CHECK_MAX_UNKNOWNS
+                        lineUnknownSet.has(hit.written) ||
+                        unknownCount >= STUDY_CHECK_MAX_UNKNOWNS
                     ) {
                         continue;
                     }
-                    unknownSet.add(unknownKey);
+                    lineUnknownSet.add(hit.written);
+                    unknownCount += 1;
                     items.push({
                         kind: 'unknown',
                         written: hit.written,

@@ -260,13 +260,19 @@ import {
     STUDY_STOPPED_TEXT,
     STUDY_SYSTEM_PROMPT,
     type DraftedStudyType,
+    chainStudyPartEdit,
     checkIsStudyAnswerMarker,
+    findOpenStudyFiles,
+    genOpenStudyDraftRefusal,
+    genStudyClaimNudge,
     genStudyDraftActions,
     keepDraftedStudy,
     readDraftedStudy,
+    routeOpenStudyDraft,
     toKeptAnswerDraftArgs,
     toModelDraftText,
     toStudyContentFromAnswer,
+    toStudyReadOutline,
 } from './studyFileChatHelpers';
 import {
     checkStudyDiagram,
@@ -2249,6 +2255,13 @@ type ToolWatchType = {
     /** A draft's diagrams sent back once already to be fixed. */
     isStudyDiagramRetried: boolean;
     /**
+     * The study files the tab has open, as `draft` names them
+     * (`Default/<name>.md`, EC-499): a draft naming no file goes to the one
+     * open or is told how to change it, and an answer saying it changed
+     * one with no draft made is handed back.
+     */
+    openStudyFiles: string[];
+    /**
      * The tab's newest answer, as the person read it (`AskExtraType.
      * answerAbove`): what a draft's `@answer` is (EC-466).
      */
@@ -2606,6 +2619,7 @@ export function genToolWatch(): ToolWatchType {
         draftedLyric: null,
         draftedStudy: null,
         isStudyDiagramRetried: false,
+        openStudyFiles: [],
         answerAbove: null,
         isKeepAnswerAsk: false,
         translateText: null,
@@ -2921,6 +2935,9 @@ export function findAnswerShapeNudge(
     if (checkClaimsUnmadeNoteChange(words, watch)) {
         return { nudge: NOTE_CLAIM_NUDGE, kept: text };
     }
+    if (checkClaimsUnmadeStudyChange(words, watch)) {
+        return { nudge: genStudyClaimNudge(watch.openStudyFiles), kept: text };
+    }
     if (watch.isLessonReview && parseAnswerFrames(text).options.length === 0) {
         return { nudge: NOTE_REVIEW_OPTIONS_NUDGE, kept: text };
     }
@@ -2970,6 +2987,29 @@ export function checkClaimsUnmadeNoteChange(
         watch.createdNote === null &&
         watch.isNoteStepped !== true &&
         NOTE_CLAIM_PATTERN.test(words)
+    );
+}
+
+// The button a change's card has: an answer telling them to press Save
+// changes, with no card under it, claims a change too.
+const SAVE_CHANGES_CLAIM_PATTERN = /\bSave changes\b/i;
+
+/**
+ * Whether an answer in a tab with a study file open says it changed the
+ * study while no draft went through in this ask (2026-11-11, EC-499:
+ * gemma4:cloud, every draft refused, answered "I have fixed the
+ * cross-references in the study file"). Handed back once, as a note's is.
+ */
+export function checkClaimsUnmadeStudyChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.openStudyFiles.length > 0 &&
+        watch.draftedStudy === null &&
+        watch.createdNote === null &&
+        (NOTE_CLAIM_PATTERN.test(words) ||
+            SAVE_CHANGES_CLAIM_PATTERN.test(words))
     );
 }
 
@@ -3754,6 +3794,30 @@ async function runStudyDraft(
     isWindowMade = false,
 ) {
     let draftArgs = { ...(args ?? {}) };
+    // No `file` and no `ref` while the tab has a study open (EC-499): a
+    // part of it goes to the study open, and the whole study written again
+    // is told how to change it instead -- with its headings, which the
+    // first 16 KB of a long file in the ask do not all show.
+    if (!isWindowMade) {
+        const routed = routeOpenStudyDraft(draftArgs, watch.openStudyFiles);
+        if (routed !== null && 'isRefused' in routed) {
+            const outline =
+                watch.openStudyFiles.length === 1
+                    ? await readStudyFileOutline(
+                          watch.openStudyFiles[0],
+                          watch,
+                          signal,
+                      )
+                    : '';
+            return `Tool refused: ${genOpenStudyDraftRefusal(
+                watch.openStudyFiles,
+                outline,
+            )}`;
+        }
+        if (routed !== null) {
+            draftArgs = routed.args;
+        }
+    }
     // Asked to keep the answer above (`readKeepAnswerAsk`): it goes in
     // whatever the model wrote -- told the marker in the prompt alone,
     // gemma4:cloud drafted a study of its own again (EC-466).
@@ -3774,9 +3838,20 @@ async function runStudyDraft(
             [field]: toStudyContentFromAnswer(watch.answerAbove),
         };
     }
+    // A second part of the study whose change is already held (EC-499):
+    // drafted on top of that change, never over it.
+    if (!isWindowMade) {
+        const chained = chainStudyPartEdit(draftArgs, watch.draftedStudy);
+        if (chained !== null && 'reason' in chained) {
+            return `Tool refused: ${chained.reason}`;
+        }
+        if (chained !== null) {
+            draftArgs = chained.args;
+        }
+    }
     if (
         (typeof args?.bible !== 'string' || args.bible === '') &&
-        (typeof args?.file !== 'string' || args.file === '')
+        (typeof draftArgs.file !== 'string' || draftArgs.file === '')
     ) {
         const verseBible = await findStudyVerseBible(watch, signal);
         if (verseBible !== null) {
@@ -3844,6 +3919,30 @@ async function runStudyDraft(
     watch.draftedStudy = drafted;
     watch.isActedOn = true;
     return toModelDraftText(text, keptAnswer !== null);
+}
+
+/**
+ * A study file's headings, off a read of it (`toStudyReadOutline`); empty
+ * when it cannot be read. Asked only for a draft refused for naming no file.
+ */
+async function readStudyFileOutline(
+    file: string,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    try {
+        return toStudyReadOutline(
+            await callTool(
+                RESOURCES_TOOL_NAME,
+                { action: 'read', file },
+                signal,
+                watch.windowAim,
+            ),
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return '';
+    }
 }
 
 /** The window's translator: an ask in, its answer and who answered out. */
@@ -7801,6 +7900,9 @@ async function askLlmBotAsWritten(
                 seeded.isNotStatedNudged = true;
             }
         }
+        seeded.openStudyFiles = findOpenStudyFiles(
+            extra?.resources?.openFiles ?? [],
+        );
         seeded.canSeePictures =
             extra?.resources?.canSeePictures === true ||
             extra?.bibleReader?.canSeePictures === true;

@@ -280,7 +280,29 @@ window as a whole — tabs, pickers, its language, the caution — is in
   part's own Bible gives it -- and that Bible's names beside the English
   when most differ), and how many references to a verse of a quoted
   passage were left to check against it. A study with no reference in its
-  own words says that, and nothing else changes.
+  own words says that, and nothing else changes. A book named as no Bible
+  names it is listed on every line it is on, eight in all (`EC-499`: listed
+  once, a discussion question kept the slip its Cross References lost).
+- **A change asked of the study a tab has open is drafted by its parts**
+  (2026-11-11, `EC-499`; _Fix them in the study file._ after that verse
+  check: gemma4:cloud drafted the WHOLE study four times with no `file` and
+  no `ref`, written from the 16 KB the ask shows of a 44 KB file, each
+  refused as a new study with no passage -- 128k tokens and a claim of a fix
+  with no card). `runStudyDraft`, the model's drafts only: with no `file`
+  and no `ref` and a `Default/*.md` study open in the tab
+  (`findOpenStudyFiles` off `resources.openFiles`), a part (`section`,
+  `append`) goes to the one open, and the whole study is refused with the
+  call to make and the file's headings, off a `read` the window makes
+  (`routeOpenStudyDraft`, `genOpenStudyDraftRefusal`, `toStudyReadOutline`
+  -- `STUDY_HEADINGS_LEAD` is the read note's own words). `draft` reads the
+  file off the disk each call, so a second part of the same file in one ask
+  is applied to the change already held and the whole drafted
+  (`chainStudyPartEdit`): the parts of one ask are one card. Seen live the
+  same day, in that tab: the English and Khmer Cross References drafted by
+  `section` in one round, one **Save changes** card, 47.2k tokens; the
+  **Preview** copy differed from the file in the fixed lines, a blank line
+  under each heading and two labels the model wrote anew without reading
+  the part (`EC-500`). Nothing saved.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

@@ -568,14 +568,15 @@ async function toLongTextNote(name: string, text: string) {
     if (!name.toLowerCase().endsWith('.md')) {
         return 'Only the start of it is here.';
     }
-    const { toStudyOutline } = await import('./agentStudyFileRules');
+    const { STUDY_HEADINGS_LEAD, toStudyOutline } =
+        await import('./agentStudyFileRules');
     const outline = toStudyOutline(text);
     return (
         `Only the start of it is here: it is ${text.length} characters. ` +
         'Read one part with `section` (one of its headings); change it ' +
         'with `draft`, `file` and `section`, or `append` -- never by ' +
         'writing back the part read.' +
-        (outline === '' ? '' : ` Its headings:\n${outline}`)
+        (outline === '' ? '' : ` ${STUDY_HEADINGS_LEAD}\n${outline}`)
     );
 }
 

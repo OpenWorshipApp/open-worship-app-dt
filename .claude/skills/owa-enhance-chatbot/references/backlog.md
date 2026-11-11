@@ -11942,3 +11942,95 @@ question goes out about nothing. BN-19 is the same for a note the assistant
 made. The handed-over file could be kept with the tab (as `noteId` is),
 or the card could say so when the chip is gone.
 
+### EC-499 — asked to fix a study, the model drafted it whole with no file four times and said it was fixed — `done` 2026-11-11, seen in the window
+
+Found right after EC-497, in its tab: the verse check had named the Khmer
+part's three slips, and _Fix them in the study file._ came back as four
+`owa_resource_file draft` calls, the WHOLE study in `content` (17.6 K
+letters, written from the 16 KB the ask shows of a 44 KB file) and no
+`file`, no `ref`. The tool read each as a NEW study with no passage and
+refused it (_Give `ref`…_), 128k tokens went, and the answer on the last
+round said _I have fixed the cross-references in the study file_ -- no card
+under it, the file unchanged. The prompt already said to change a study by
+`file` + `section`.
+
+- **A draft naming no file and no passage while the tab has a study open**
+  (`watch.openStudyFiles`, the tab's `Default/*.md` files,
+  `findOpenStudyFiles`; `routeOpenStudyDraft` in `runStudyDraft`, the
+  model's drafts only): a part (`section` or `append`) goes to the one
+  study open; the whole study written again is refused with the call to
+  make -- the file by name, a part at a time, read a part first, a new
+  study needs `ref` -- and the file's headings, off a `read` the window
+  makes itself (`toStudyReadOutline`, `STUDY_HEADINGS_LEAD` shared with the
+  read note). A long file is shown in part, and what was not shown would
+  go with a whole rewrite.
+- **Parts of one ask are one change** (`chainStudyPartEdit`): `draft`
+  reads the file off the disk each call, so a second part had replaced the
+  first. A part of the file whose change the window already holds is
+  applied to the HELD change (`applyStudyEdit`) and the whole of it
+  drafted; a part the held change lacks is refused with its headings.
+- **A claimed change with no draft is handed back once**
+  (`checkClaimsUnmadeStudyChange` in `findAnswerShapeNudge`, as BN-53's for
+  a note: the note's claim words, or _Save changes_ with no card), with the
+  file to draft it in (`genStudyClaimNudge`). Not on the last round -- no
+  round is left to answer it (`EC-501`).
+- **The verse check names a wrong book on every line it is on**, once a
+  line, eight in all: listed once for the file, the Cross References' line
+  was fixed and the same name in a discussion question stayed.
+
+Measured in the same tab, Auto → OWA Shared, three checks: a change
+drafted (a card); the part past the first 16 KB changed and the rest kept;
+an answer that claims nothing the card does not hold.
+
+- **Before:** 0 of 3 (gemma4:cloud, 128k tokens).
+- **After:** 3 of 3 once, asked again in that tab (_Nothing changed in the
+  file. Fix them in the study file._). gemma4:cloud read the file and, in
+  one round, drafted the English Cross References (its words as they were)
+  and the Khmer ខសសាលយោង by `file` + `section`; the second went on top of
+  the first, and the card read _It changes “ខសសាលយោង” (2 line(s) in, 2
+  out)_ -- 47.2k tokens. **Preview**'s copy against the file: ទីតុស,
+  អេសេគាល, ជនគណនា and no stray _and_; everything else as it was but a blank
+  line under each Cross References heading and two labels the model wrote
+  anew (`EC-500`). The answer said both parts were corrected; only the
+  Khmer one had anything to correct. Nothing was saved; the file is 44 021
+  bytes from 2026-11-10 as before. The refusal and the claim nudge were not
+  reached live -- the model named the file itself this time -- and are
+  unit-tested.
+
+Tests: `studyFileChatHelpers.test.ts` (+10), `llmBotHelpers.ut100.test.ts`
+(+5: the refusal with its headings, a part sent to the study open, two
+parts as one change, the claim handed back, no study open no nudge),
+`studyVerseCheckHelpers.test.ts` (the eight, every line).
+
+### EC-500 — a part of a study the ask never showed is written anew from memory — open
+
+From EC-499's run. The Khmer Cross References are past the 16 KB the ask
+shows, and the model replaced the part without reading it (`read` with
+`section` was offered): the three references came out right, but two labels
+it wrote anew -- _On spiritual rebirth_ lost _spiritual_ (អំពីការកើតជាថ្មីខាងវិញ្ញាណ →
+អំពីការកើតជាថ្មី), and the snake's word changed (សព្ទោន → សំរិទ្ធ, the
+Bible's word this time). A change is meant to be the words asked for and
+nothing else. Ways: a `replace` edit (these words in this part → those),
+which keeps every other letter; or a section edit refused until that part
+was read in the ask when it lies past what the ask showed; or the draft
+result telling the model the part's lines it changed that the ask did not
+name.
+
+### EC-501 — an answer claiming a change on the last round is not handed back — open
+
+From EC-499. Every nudge in `findAnswerShapeNudge` is skipped on the last
+round (a Resources ask has five), so a claim written there stands -- as the
+first run's _I have fixed the cross-references_ would, written after four
+refused drafts if each took a round. The window could say under such an
+answer, in the screen's language, that the file was not changed (a sentence
+in every dictionary), or keep one round back for the honest answer.
+
+### EC-502 — a whole rewrite of a long study, with its file named, can drop what the ask never showed — idea
+
+From EC-499. `content` alone with `file` is the whole new text, and a model
+shown the first 16 KB of a 44 KB study writes back the first 16 KB: the
+card's change line names the parts it removes (`describeStudyChange`), the
+answer is told to say them, and a volunteer may still press Save changes.
+A model's whole rewrite (never the window's own -- a translation in place of
+the study removes every heading) that removes parts past what the ask showed
+could be refused with the outline, as EC-499 refuses one with no file.

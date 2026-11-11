@@ -11,15 +11,20 @@ import {
     STUDY_PREVIEW_TOOL_NAME,
     STUDY_RENAME_TOOL_NAME,
     STUDY_SYSTEM_PROMPT,
+    chainStudyPartEdit,
     checkIsStudyAnswerMarker,
     clearStudyRenameWait,
+    findOpenStudyFiles,
     findStudyAnswerAbove,
+    genOpenStudyDraftRefusal,
+    genStudyClaimNudge,
     genStudyDraftActions,
     keepDraftedStudy,
     pickKeptAnswerLanguage,
     readDraftedStudy,
     readKeepAnswerAsk,
     readStudyFileAsk,
+    routeOpenStudyDraft,
     setStudyRenameWait,
     takeDraftedStudy,
     takeStudyRenameWait,
@@ -27,6 +32,7 @@ import {
     toModelDraftText,
     toStudyAsk,
     toStudyContentFromAnswer,
+    toStudyReadOutline,
 } from './studyFileChatHelpers';
 import { STUDY_FILE_PROMPT } from './noteCreatePromptHelpers';
 
@@ -578,5 +584,217 @@ describe('toStudyContentFromAnswer', () => {
         expect(toStudyContentFromAnswer('Would you like me to say more?')).toBe(
             'Would you like me to say more?',
         );
+    });
+});
+
+// EC-499: asked to fix a study's references, gemma4:cloud drafted the whole
+// study with no `file` and no `ref`, four times, every one refused as a new
+// study with no passage -- and said the references were fixed.
+describe('the study a tab has open', () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const HELD_CONTENT = [
+        '# The New Birth',
+        '',
+        '## Cross References',
+        '',
+        '- Numbers 21:8-9 (the bronze serpent)',
+        '',
+        '## Questions',
+        '',
+        '1. Who came by night?',
+        '',
+    ].join('\n');
+    const HELD = {
+        name: 'JHN.3.The New Birth.md',
+        nameTaken: null,
+        isChange: true,
+        file: OPEN,
+        hash: 'h-1',
+        passage: '',
+        bible: '',
+        diagramCount: 0,
+        change: 'It changes “Cross References” (1 line(s) in, 1 out).',
+        content: HELD_CONTENT,
+        raw: null,
+    };
+
+    it('finds the Markdown files of the Default folder alone', () => {
+        expect(
+            findOpenStudyFiles([
+                'pdf/JHN.3.pdf',
+                OPEN,
+                'default/Other.MD',
+                'Default/notes/Deep.md',
+                'Default/Plain.txt',
+                'Media/Default/X.md',
+            ]),
+        ).toEqual([OPEN, 'default/Other.MD']);
+        expect(findOpenStudyFiles([])).toEqual([]);
+    });
+
+    it('sends a part named with no file to the one study open', () => {
+        expect(
+            routeOpenStudyDraft(
+                { action: 'draft', section: 'Questions', content: '1. Who?' },
+                [OPEN],
+            ),
+        ).toEqual({
+            args: {
+                action: 'draft',
+                section: 'Questions',
+                content: '1. Who?',
+                file: OPEN,
+            },
+        });
+        expect(
+            routeOpenStudyDraft({ action: 'draft', append: 'More.' }, [OPEN]),
+        ).toEqual({ args: { action: 'draft', append: 'More.', file: OPEN } });
+    });
+
+    it('refuses the whole study written again, and a part while two are open', () => {
+        expect(
+            routeOpenStudyDraft({ action: 'draft', content: '# All of it' }, [
+                OPEN,
+            ]),
+        ).toEqual({ isRefused: true });
+        expect(
+            routeOpenStudyDraft(
+                { action: 'draft', section: 'Questions', content: '1. Who?' },
+                [OPEN, 'Default/Other.md'],
+            ),
+        ).toEqual({ isRefused: true });
+    });
+
+    it('leaves a call naming a file or a passage, and a tab with no study open', () => {
+        expect(
+            routeOpenStudyDraft({ action: 'draft', file: OPEN, content: 'x' }, [
+                OPEN,
+            ]),
+        ).toBeNull();
+        expect(
+            routeOpenStudyDraft(
+                { action: 'draft', ref: 'John 3', title: 'New', content: 'x' },
+                [OPEN],
+            ),
+        ).toBeNull();
+        expect(
+            routeOpenStudyDraft({ action: 'draft', content: 'x' }, []),
+        ).toBeNull();
+    });
+
+    it('says the call to make: the file, a part at a time, and the headings', () => {
+        const refusal = genOpenStudyDraftRefusal(
+            [OPEN],
+            '# The New Birth\n## Cross References',
+        );
+        expect(refusal).toContain(`\`file\` "${OPEN}"`);
+        expect(refusal).toContain('`section` (one of its headings');
+        expect(refusal).toContain('never say it was changed or fixed');
+        expect(refusal).toContain('A NEW study needs `ref`');
+        expect(refusal).toMatch(
+            /Its headings:\n# The New Birth\n## Cross References$/,
+        );
+        expect(genOpenStudyDraftRefusal([OPEN, 'Default/Other.md'])).toContain(
+            `"${OPEN}" or "Default/Other.md"`,
+        );
+        expect(genOpenStudyDraftRefusal([OPEN])).not.toContain('Its headings');
+    });
+
+    it("takes the headings off a read: a long file's list, else the text's own", () => {
+        expect(
+            toStudyReadOutline(
+                JSON.stringify({
+                    file: OPEN,
+                    kind: 'text',
+                    text: '# The New Birth',
+                    note:
+                        'Only the start of it is here: it is 44021 ' +
+                        'characters. Its headings:\n# The New Birth\n## Khmer',
+                }),
+            ),
+        ).toBe('# The New Birth\n## Khmer');
+        expect(
+            toStudyReadOutline(
+                JSON.stringify({
+                    file: OPEN,
+                    kind: 'text',
+                    text: HELD_CONTENT,
+                }),
+            ),
+        ).toBe('# The New Birth\n## Cross References\n## Questions');
+        expect(toStudyReadOutline('Tool refused: no such file')).toBe('');
+        expect(toStudyReadOutline(JSON.stringify({ files: [] }))).toBe('');
+    });
+
+    it('puts a second part on top of the change already held, by its name alone too', () => {
+        const chained = chainStudyPartEdit(
+            {
+                action: 'draft',
+                file: 'JHN.3.The New Birth.md',
+                section: 'Questions',
+                content: '1. Who came to Jesus by night?',
+            },
+            HELD,
+        );
+        expect(chained).not.toBeNull();
+        const { args } = chained as { args: any };
+        expect(Object.keys(args).sort()).toEqual(['action', 'content', 'file']);
+        expect(args.file).toBe(OPEN);
+        // The held change's own words stay; the part is the new one.
+        expect(args.content).toContain('- Numbers 21:8-9 (the bronze serpent)');
+        expect(args.content).toContain('1. Who came to Jesus by night?');
+        expect(args.content).not.toContain('1. Who came by night?');
+        const appended = chainStudyPartEdit(
+            { action: 'draft', file: OPEN, append: 'Read John 3 again.' },
+            HELD,
+        ) as { args: any };
+        expect(appended.args.content).toContain('1. Who came by night?');
+        expect(appended.args.content.trimEnd()).toMatch(/Read John 3 again\.$/);
+    });
+
+    it('says why when the held change has no such part', () => {
+        const chained = chainStudyPartEdit(
+            {
+                action: 'draft',
+                file: OPEN,
+                section: 'Application',
+                content: 'Live it.',
+            },
+            HELD,
+        );
+        expect(chained).toEqual({
+            reason: expect.stringContaining(
+                'The file has no section “Application”. Its headings:',
+            ),
+        });
+    });
+
+    it('leaves the whole text, another file, a new study and nothing held', () => {
+        const part = {
+            action: 'draft',
+            file: OPEN,
+            section: 'Questions',
+            content: '1. Who?',
+        };
+        expect(
+            chainStudyPartEdit(
+                { action: 'draft', file: OPEN, content: '# All of it' },
+                HELD,
+            ),
+        ).toBeNull();
+        expect(
+            chainStudyPartEdit({ ...part, file: 'Default/Other.md' }, HELD),
+        ).toBeNull();
+        expect(
+            chainStudyPartEdit(part, { ...HELD, isChange: false, file: null }),
+        ).toBeNull();
+        expect(chainStudyPartEdit(part, null)).toBeNull();
+    });
+
+    it('hands a claimed change back with the file to draft it in', () => {
+        const nudge = genStudyClaimNudge([OPEN]);
+        expect(nudge).toMatch(/^Not yet: nothing in the study file changed/);
+        expect(nudge).toContain(`\`file\` "${OPEN}"`);
+        expect(nudge).toContain('say so plainly');
     });
 });

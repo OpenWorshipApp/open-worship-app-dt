@@ -496,7 +496,9 @@ describe('collectStudyVerseRefs', () => {
         expect(STUDY_CHECK_MAX_REFS).toBe(24);
     });
 
-    it('lists a name no Bible gives a book once, and at most eight', () => {
+    // EC-499: said once for the file, the wrong name was fixed on the line
+    // that was listed and stayed in a discussion question further down.
+    it('lists a name no Bible gives a book once a line, on every line it is on, eight in all', () => {
         const words = 'Aaaa Bbbb Cccc Dddd Eeee Ffff Gggg Hhhh Iiii Jjjj'.split(
             ' ',
         );
@@ -507,13 +509,14 @@ describe('collectStudyVerseRefs', () => {
             ].join('\n'),
             genNames(),
         );
+        expect(check.lines[0]?.items).toHaveLength(1);
         const unknownList = check.lines.flatMap((line) => {
             return line.items.map((item) => {
                 return item.written;
             });
         });
         expect(unknownList).toEqual(
-            words.slice(0, 8).map((word) => {
+            ['Aaaa', ...words.slice(0, 7)].map((word) => {
                 return `${word} 1:1`;
             }),
         );

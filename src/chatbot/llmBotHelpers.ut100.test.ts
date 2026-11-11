@@ -1092,3 +1092,236 @@ describe('a note made in a conversation that teaches', () => {
         });
     });
 });
+
+// EC-499: a study open in a Resources tab. Asked to "fix them in the study
+// file", gemma4:cloud drafted the WHOLE study four times with no `file` and
+// no `ref` -- each refused as a new study with no passage -- and answered
+// that it had fixed the references. Nothing had changed.
+describe('a study file open in the tab', () => {
+    const OPEN = 'Default/JHN.3.The New Birth.md';
+    const OLD = [
+        '# The New Birth',
+        '',
+        '## Cross References',
+        '',
+        '- Num 21:8-9',
+        '',
+        '## Questions',
+        '',
+        '1. Who came?',
+        '',
+    ].join('\n');
+    const RESOURCES_EXTRA = {
+        resources: {
+            canSeePictures: false,
+            openFiles: ['pdf/JHN.3.pdf', OPEN],
+        },
+    };
+
+    // `draft` as the tool host does it: a part changes the file on the
+    // disk (OLD), the whole text is taken as it is.
+    function answerStudyTool(name: string, args: any) {
+        if (name !== 'owa_resource_file') {
+            return '';
+        }
+        if (args.action === 'read') {
+            return JSON.stringify({ file: OPEN, kind: 'text', text: OLD });
+        }
+        let content = args.content;
+        if (args.section === 'Cross References') {
+            content = OLD.replace('- Num 21:8-9', args.content);
+        } else if (args.section === 'Questions') {
+            content = OLD.replace('1. Who came?', args.content);
+        }
+        return JSON.stringify({
+            drafted: true,
+            isChange: true,
+            name: 'JHN.3.The New Birth.md',
+            file: OPEN,
+            hash: 'h-1',
+            diagramCount: 0,
+            change: 'It changes words inside the sections.',
+            warnings: [],
+            content,
+        });
+    }
+
+    test('the whole study drafted with no file is refused with the call to make and its headings', async () => {
+        fake.answerTool = answerStudyTool;
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: { action: 'draft', content: '# The New Birth\n\nAll.' },
+            }),
+            anthropicText('I could not change the file.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        // Read for its headings; nothing drafted.
+        expect(fake.toolCallList).toEqual([
+            { name: 'owa_resource_file', args: { action: 'read', file: OPEN } },
+        ]);
+        const [seen] = readToolResults(sentList[1]);
+        expect(seen).toMatch(/^Tool refused: No `file` and no `ref`\./);
+        expect(seen).toContain(`\`file\` "${OPEN}"`);
+        expect(seen).toMatch(
+            /Its headings:\n# The New Birth\n## Cross References\n## Questions$/,
+        );
+        expect(answer.text).toBe('I could not change the file.');
+        expect(answer.actions ?? []).toEqual([]);
+    });
+
+    test('a part drafted with no file goes to the study open', async () => {
+        fake.answerTool = answerStudyTool;
+        useAnthropic([
+            anthropicToolUse({
+                name: 'owa_resource_file',
+                input: {
+                    action: 'draft',
+                    section: 'Cross References',
+                    content: '- Numbers 21:8-9',
+                },
+            }),
+            anthropicText('Press Save changes to write it.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_resource_file',
+                args: {
+                    action: 'draft',
+                    section: 'Cross References',
+                    content: '- Numbers 21:8-9',
+                    file: OPEN,
+                },
+            },
+        ]);
+        expect(answer.actions?.[0]?.label).toBe(
+            'Save changes to "JHN.3.The New Birth.md"',
+        );
+    });
+
+    test('two parts in one ask are one change: the second drafted on top of the first', async () => {
+        fake.answerTool = answerStudyTool;
+        useAnthropic([
+            anthropicToolUse(
+                {
+                    name: 'owa_resource_file',
+                    input: {
+                        action: 'draft',
+                        file: OPEN,
+                        section: 'Cross References',
+                        content: '- Numbers 21:8-9',
+                    },
+                },
+                {
+                    name: 'owa_resource_file',
+                    input: {
+                        action: 'draft',
+                        file: OPEN,
+                        section: 'Questions',
+                        content: '1. Who came to Jesus by night?',
+                    },
+                },
+            ),
+            anthropicText('Press Save changes to write both.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(fake.toolCallList).toHaveLength(2);
+        const second = fake.toolCallList[1].args;
+        expect(Object.keys(second).sort()).toEqual([
+            'action',
+            'content',
+            'file',
+        ]);
+        expect(second.content).toContain('- Numbers 21:8-9');
+        expect(second.content).toContain('1. Who came to Jesus by night?');
+        expect(second.content).not.toContain('- Num 21:8-9');
+        expect(
+            answer.actions?.map((action) => {
+                return action.label;
+            }),
+        ).toEqual(['Save changes to "JHN.3.The New Birth.md"', 'Preview']);
+    });
+
+    test('an answer saying the study changed when no draft was made is handed back once', async () => {
+        fake.answerTool = answerStudyTool;
+        const { sentList } = useAnthropic([
+            anthropicText(
+                'I have fixed the cross-references in the study file.',
+            ),
+            anthropicText('I have not changed the file yet.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            RESOURCES_EXTRA,
+        );
+
+        expect(sentList).toHaveLength(2);
+        const nudge = sentList[1].messages[sentList[1].messages.length - 1];
+        expect(nudge.role).toBe('user');
+        expect(nudge.content).toMatch(
+            /^Not yet: nothing in the study file changed/,
+        );
+        expect(nudge.content).toContain(`\`file\` "${OPEN}"`);
+        expect(answer.text).toBe('I have not changed the file yet.');
+    });
+
+    test('the same answer with no study open is not handed back', async () => {
+        const { sentList } = useAnthropic([
+            anthropicText('I have fixed the cross-references.'),
+        ]);
+
+        await askLlmBot(
+            'Fix them in the study file.',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                resources: {
+                    canSeePictures: false,
+                    openFiles: ['pdf/JHN.3.pdf'],
+                },
+            },
+        );
+
+        expect(sentList).toHaveLength(1);
+    });
+});
