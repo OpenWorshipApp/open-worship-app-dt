@@ -159,6 +159,8 @@ import {
     checkIsNoteVerseCheckAsk,
     collectNoteVerseRefs,
     readBlankNoteBlockCount,
+    readLessonFormAsked,
+    readNoteRewrite,
     toNoteAsk,
     toNoteVerseReadText,
     toNoteDocumentText,
@@ -178,6 +180,15 @@ import {
     toValidSelectionStep,
 } from './selectionMentionHelpers';
 import { toAnswerQuoteText } from './answerQuoteHelpers';
+import {
+    countRetryAttempt,
+    findRetryQuestion,
+    genRetryAskHint,
+    listRetryableAnswerIds,
+    pickRetryModel,
+    toRetryPicks,
+    type RetryAnsweredByType,
+} from './answerRetryHelpers';
 import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
     FLOW_EDIT_TOOL_NAME,
@@ -260,6 +271,7 @@ import {
 } from './autoAssistantHelpers';
 import {
     clearAutoAwayServers,
+    genAutoCandidates,
     guessAutoPick,
     resolveAutoPicks,
     resolveHandOnPicks,
@@ -624,6 +636,7 @@ import {
 } from './studyFileChatHelpers';
 import RenderStudyDraftComp from './RenderStudyDraftComp';
 import {
+    checkIsChangeReply,
     dropActionEchoReplies,
     genMessageReplies,
     type AttachRequestType,
@@ -3129,6 +3142,8 @@ function RenderMessageComp({
     onReuse,
     onRate,
     onQuote,
+    onRetry,
+    canRetry,
     onAttachRequest,
     onShowAttachment,
 }: Readonly<{
@@ -3156,6 +3171,12 @@ function RenderMessageComp({
     // The reply arrow: the answer, or the part of it selected, quoted in the
     // box (`answerQuoteHelpers`).
     onQuote: (quote: string) => void;
+    // **Retry**: the question this answer was given to, asked again for a
+    // different answer (`answerRetryHelpers`). Unset under an answer that
+    // has no question of theirs right above it to ask again; `canRetry`
+    // false while the tab is answering something.
+    onRetry?: (answerId: number) => void;
+    canRetry: boolean;
     onAttachRequest: (request: AttachRequestType) => void;
     onShowAttachment: (attachment: ChatAttachmentType) => void;
 }>) {
@@ -3451,6 +3472,32 @@ function RenderMessageComp({
                             >
                                 <i className="bi bi-reply" aria-hidden="true" />
                             </button>
+                            {onRetry === undefined ? null : (
+                                // Between the reply arrow and the thumbs
+                                // (2026-11-10, the user's picture with the
+                                // spot circled: _add a rotate icon there to
+                                // ask for retrying_). Disabled, not gone,
+                                // while the tab answers: the row keeps its
+                                // shape under the card being read.
+                                <button
+                                    type="button"
+                                    className="cue-tool cue-retry"
+                                    title={tran(
+                                        'A different answer: worked out ' +
+                                            'another way, with more effort.',
+                                    )}
+                                    aria-label={tran('Retry')}
+                                    disabled={!canRetry}
+                                    onClick={() => {
+                                        onRetry(message.id);
+                                    }}
+                                >
+                                    <i
+                                        className="bi bi-arrow-repeat"
+                                        aria-hidden="true"
+                                    />
+                                </button>
+                            )}
                         </>
                     )}
                     {isAsked || message.isFollowUp === true ? null : (
@@ -5737,6 +5784,11 @@ export default function ChatbotAppComp() {
     // answer further up rewrites that answer, and the list jumping to its
     // bottom took the card just pressed out of sight.
     const lastMessageId = messages[messages.length - 1]?.id;
+    // The answers that carry a **Retry**, worked out once per change of the
+    // list rather than once per card per render.
+    const retryableAnswerIds = useMemo(() => {
+        return listRetryableAnswerIds(messages);
+    }, [messages]);
     // Scrolled up away from the newest message: a round ↓ in the corner
     // takes them back (2026-10-16, the user's ask with the corner circled:
     // _when the scrollbar not at bottom then should have an icon for quick
@@ -7997,6 +8049,21 @@ export default function ChatbotAppComp() {
                 // press, before React has rendered the new one.
                 model?: string;
                 askHint?: string;
+                // **Retry** under an answer (`answerRetryHelpers`): which
+                // try, and the different way in said to the model on the
+                // ask alone -- the effort rides `AskExtraType.retryAttempt`.
+                // A retry is pressed, never typed: none of the waits for a
+                // typed line (a report, a new name) reads it, it is asked
+                // with the QUESTION's own attachments, and the box -- the
+                // person's, maybe half a sentence in -- is left as it is.
+                // `avoid`: who wrote the answer being retried -- put last
+                // in Auto's line for this one question (`toRetryPicks`).
+                retry?: {
+                    attempt: number;
+                    hint: string;
+                    avoid?: RetryAnsweredByType;
+                };
+                attachments?: ChatAttachmentType[];
                 // A deterministic menu for a local flow whose model answer
                 // may omit or malformedly punctuate its OPTIONS line.
                 repliesOverride?: string[];
@@ -8063,9 +8130,21 @@ export default function ChatbotAppComp() {
             // still nothing.
             const asking = draftAttachmentMapRef.current[activeSessionId] ?? [];
             const attachments =
-                options?.shownText === undefined && lookupStudy === null
+                options?.attachments ??
+                (options?.shownText === undefined && lookupStudy === null
                     ? asking
-                    : [];
+                    : []);
+            const retry = options?.retry ?? null;
+            // Every road below empties the box when it takes the question
+            // -- except under a Retry, which never came out of it.
+            const clearAskedDraft = (sessionId: string) => {
+                if (retry !== null) {
+                    return;
+                }
+                updateSession(sessionId, (session) => {
+                    return { ...session, draft: '' };
+                });
+            };
             if (
                 (trimmedAsked.length === 0 && attachments.length === 0) ||
                 (isBusy && !isForced)
@@ -8079,6 +8158,7 @@ export default function ChatbotAppComp() {
             if (
                 options?.shownText === undefined &&
                 lookupStudy === null &&
+                retry === null &&
                 !trimmedAsked.startsWith('/')
             ) {
                 const reportMessages =
@@ -8097,9 +8177,7 @@ export default function ChatbotAppComp() {
                         author: 'you',
                         text: echoText,
                     });
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     answerFixPressRef.current(
                         activeSessionId,
                         fixReply.reply,
@@ -8120,7 +8198,8 @@ export default function ChatbotAppComp() {
             if (
                 options?.shownText === undefined &&
                 options?.isPressed !== true &&
-                lookupStudy === null
+                lookupStudy === null &&
+                retry === null
             ) {
                 const renameReference = takeStudyRenameWait(
                     activeSessionId,
@@ -8131,9 +8210,7 @@ export default function ChatbotAppComp() {
                         author: 'you',
                         text: echoText,
                     });
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     await renameStudyDraftRef.current(
                         renameReference,
                         trimmedAsked,
@@ -8185,9 +8262,7 @@ export default function ChatbotAppComp() {
                 const typed = trimmedAsked
                     .replaceAll(/\s+/g, ' ')
                     .slice(0, 200);
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 const handled = await handleLookupStepRef.current(
                     activeSessionId,
                     {
@@ -8245,9 +8320,7 @@ export default function ChatbotAppComp() {
                     ? null
                     : readLookupWordStudyAsk(trimmedAsked, typedLookupSubject);
             if (typedLookupSubject !== null && wordStudyAsk !== null) {
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 if (wordStudyAsk.verseKey === null) {
                     await handleLookupStepRef.current(
                         activeSessionId,
@@ -8281,9 +8354,7 @@ export default function ChatbotAppComp() {
                     typedLookupSubject,
                 );
                 if (verseAsk !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     if (verseAsk.kind === 'anotherBible') {
                         const handled = await handleLookupStepRef.current(
                             activeSessionId,
@@ -8383,9 +8454,7 @@ export default function ChatbotAppComp() {
                     return one.args?.step === 'map';
                 });
                 if (mapAction !== undefined) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
@@ -8418,9 +8487,7 @@ export default function ChatbotAppComp() {
                 typedLookupSubject !== null &&
                 checkIsLookupLineageAsk(trimmedAsked, typedLookupSubject)
             ) {
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 await handleLookupStepRef.current(
                     activeSessionId,
                     { step: 'lineage', ask: typedLookupSubject },
@@ -8443,9 +8510,7 @@ export default function ChatbotAppComp() {
                         ? null
                         : readLookupFacts(typedLookupSubject.facts);
                 if (countField !== null && countFacts !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
@@ -8704,9 +8769,7 @@ export default function ChatbotAppComp() {
                               languages,
                           );
                 addMessage(activeSessionId, { author: 'you', text: echoText });
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 addMessage(activeSessionId, {
                     author: 'bot',
                     text: opening.text,
@@ -8758,9 +8821,7 @@ export default function ChatbotAppComp() {
                             author: 'you',
                             text: echoText,
                         });
-                        updateSession(activeSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(activeSessionId);
                         const undoAction = genLyricUndoAction({
                             name: slideFile.name,
                             undoId:
@@ -8844,9 +8905,7 @@ export default function ChatbotAppComp() {
                             author: 'you',
                             text: echoText,
                         });
-                        updateSession(activeSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(activeSessionId);
                         const undoAction = genLyricUndoAction({
                             name: noteFile.name,
                             undoId:
@@ -9072,9 +9131,7 @@ export default function ChatbotAppComp() {
                                     'first, then type `/clear` again.',
                             ),
                         });
-                        updateSession(commandSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(commandSessionId);
                         return;
                     }
                     clearProgressSteps(commandSessionId);
@@ -9093,9 +9150,7 @@ export default function ChatbotAppComp() {
                     author: 'you',
                     text: echoText,
                 });
-                updateSession(commandSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(commandSessionId);
                 const pending = genPendingAsk(
                     commandSessionId,
                     undefined,
@@ -9165,9 +9220,7 @@ export default function ChatbotAppComp() {
                           )
                         : null) ?? readLangInstallAsk(trimmedAsked);
                 if (langState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     await handleLangInstallStepRef.current(
                         activeSessionId,
                         langState,
@@ -9203,9 +9256,7 @@ export default function ChatbotAppComp() {
                         author: 'bot',
                         text: verseThanks,
                     });
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     return;
                 }
                 // A note conversation's own assistant searches verses for
@@ -9222,9 +9273,7 @@ export default function ChatbotAppComp() {
                           ? { step: 'bible', preferred: verseAsk.bibleKey }
                           : readVerseFindTypedPick(verseMessages, trimmedAsked);
                 if (verseState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     await handleVerseFindStepRef.current(
                         activeSessionId,
                         verseState,
@@ -9243,10 +9292,7 @@ export default function ChatbotAppComp() {
                     getVerseFindInputChoices(lastVerseQuestion.actions).length >
                         0
                 ) {
-                    updateSession(activeSessionId, (session) => ({
-                        ...session,
-                        draft: '',
-                    }));
+                    clearAskedDraft(activeSessionId);
                     if (
                         await handleVerseFindInputRef.current(
                             activeSessionId,
@@ -9277,10 +9323,7 @@ export default function ChatbotAppComp() {
                         trimmedAsked,
                     )
                 ) {
-                    updateSession(activeSessionId, (session) => ({
-                        ...session,
-                        draft: '',
-                    }));
+                    clearAskedDraft(activeSessionId);
                     const handled = await handleBibleImportStepRef.current(
                         activeSessionId,
                         null,
@@ -9302,9 +9345,7 @@ export default function ChatbotAppComp() {
                           { isNoteAsk },
                       );
                 if (importState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     const handled = await handleBibleImportStepRef.current(
                         activeSessionId,
                         importState,
@@ -9348,9 +9389,7 @@ export default function ChatbotAppComp() {
                         author: 'you',
                         text: echoText,
                     });
-                    updateSession(songSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(songSessionId);
                     const pending = genPendingAsk(
                         songSessionId,
                         undefined,
@@ -9446,9 +9485,7 @@ export default function ChatbotAppComp() {
                         author: 'you',
                         text: echoText,
                     });
-                    updateSession(directSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(directSessionId);
                     addMessage(directSessionId, {
                         author: 'bot',
                         text: directAnswer.text,
@@ -9543,11 +9580,10 @@ export default function ChatbotAppComp() {
                 });
             }
             if (lookupStudy === null) {
-                updateSession(askedSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(askedSessionId);
             }
-            if (attachments.length > 0) {
+            // A Retry's own were never in the box.
+            if (attachments.length > 0 && options?.attachments === undefined) {
                 // Off the box the moment they are asked with. They stay
                 // readable in the transcript above, which is where a sent
                 // attachment belongs.
@@ -9833,6 +9869,22 @@ export default function ChatbotAppComp() {
                     checkIsLessonCardAsk(lastAskedText) ||
                     checkIsLessonWriteAsk(lastAskedText) ||
                     checkIsLanguageLessonAsk(lastAskedText);
+                // The form the tab's lesson was asked for in, off its own
+                // earlier asks, newest first (BN-78): a devotion reviewed as
+                // a sermon had been given three points.
+                const lessonForm =
+                    [...priorMessages]
+                        .reverse()
+                        .filter((message) => message.author === 'you')
+                        .map((message) => readLessonFormAsked(message.text))
+                        .find((form) => form !== null) ?? null;
+                // Loose lines to finish as a lesson: written in their place
+                // by one flat add (BN-67, `readNoteRewrite`).
+                const noteRewrite = readNoteRewrite(
+                    trimmedAsked,
+                    noteDocs,
+                    isLessonContinued,
+                );
                 // "Check my verses": the verses the note cites, read by the
                 // window from the Bible each names -- a model had said they
                 // were checked without reading one (2026-11-10).
@@ -9983,6 +10035,8 @@ export default function ChatbotAppComp() {
                             ownWords,
                             noteVerseReadText,
                             isLessonContinued,
+                            noteRewrite,
+                            lessonForm,
                         );
                     }
                     if (isFlowDocAsk) {
@@ -10418,6 +10472,8 @@ export default function ChatbotAppComp() {
                             ),
                         ),
                         resourcesRangeHint ?? null,
+                        // Last, beside the question: what a Retry wants.
+                        retry?.hint ?? null,
                     ]
                         .filter((part) => {
                             return part !== null;
@@ -10785,6 +10841,9 @@ export default function ChatbotAppComp() {
                             signal,
                             {
                                 images,
+                                ...(retry === null
+                                    ? {}
+                                    : { retryAttempt: retry.attempt }),
                                 ...(generalQuestion === null
                                     ? {}
                                     : { isGeneral: true }),
@@ -10885,6 +10944,11 @@ export default function ChatbotAppComp() {
                                                         blankBlockCount:
                                                             blankNoteBlockCount,
                                                     }),
+                                              // Loose lines are where a
+                                              // finished lesson goes.
+                                              ...(noteRewrite === null
+                                                  ? {}
+                                                  : { rewrite: noteRewrite }),
                                           },
                                       }
                                     : {}),
@@ -11103,8 +11167,38 @@ export default function ChatbotAppComp() {
                     // assistant failed and could not answer either: said
                     // after it in the note over the guide's answer.
                     let handOnSkipped: AutoSkipType[] = [];
+                    // A Retry goes to someone OTHER than whoever wrote the
+                    // answer, for this one question (the user, 2026-11-10:
+                    // _user didn't like result from gemma4 then try with
+                    // another model (but keep the gemma4 for the next
+                    // asking)_). Matched by the pickers' own words, which is
+                    // what an answer keeps of who wrote it. A tab naming an
+                    // assistant Auto could pick goes down Auto's line this
+                    // once, that assistant last; a paid key was handed
+                    // another of its models by the press (`pickRetryModel`).
+                    const checkIsRetriedPick = (
+                        pickProvider: LlmProviderType,
+                        pickModel: string,
+                    ) => {
+                        return (
+                            retry?.avoid !== undefined &&
+                            getLlmProviderLabel(pickProvider, pickModel) ===
+                                retry.avoid.assistant &&
+                            getLlmModelLabel(pickProvider, pickModel) ===
+                                retry.avoid.model
+                        );
+                    };
+                    const isRetryElsewhere =
+                        !isAuto &&
+                        checkIsRetriedPick(provider, askModel) &&
+                        genAutoCandidates().some((candidate) => {
+                            return (
+                                candidate.provider === provider &&
+                                candidate.model === askModel
+                            );
+                        });
                     try {
-                        if (isAuto) {
+                        if (isAuto || isRetryElsewhere) {
                             // Auto: the servers are looked at, the best
                             // assistant that costs nothing and can answer
                             // is asked, and one that fails before saying
@@ -11132,6 +11226,14 @@ export default function ChatbotAppComp() {
                             // The look is a wait like any other, and a Stop
                             // pressed during it ends here.
                             throwIfCancelled(signal);
+                            if (retry?.avoid !== undefined) {
+                                picks = toRetryPicks(picks, (pick) => {
+                                    return checkIsRetriedPick(
+                                        pick.provider,
+                                        pick.model,
+                                    );
+                                });
+                            }
                             const auto = await askWithAutoAssistant({
                                 picks,
                                 checkIsFinal: checkIsFinalAskError,
@@ -11166,14 +11268,25 @@ export default function ChatbotAppComp() {
                                 },
                             });
                             answer = auto.answer;
+                            // A Retry says who answered when it was not the
+                            // one retried: _Auto asked … this time._
                             const autoNote = genAutoAnswerNote(
                                 auto.pick,
                                 auto.skipped,
-                                sessionStateRef.current.sessions.find(
-                                    (session) => {
-                                        return session.id === askedSessionId;
-                                    },
-                                )?.autoPick,
+                                retry !== null
+                                    ? checkIsRetriedPick(
+                                          auto.pick.provider,
+                                          auto.pick.model,
+                                      )
+                                        ? auto.pick.label
+                                        : ''
+                                    : sessionStateRef.current.sessions.find(
+                                          (session) => {
+                                              return (
+                                                  session.id === askedSessionId
+                                              );
+                                          },
+                                      )?.autoPick,
                             );
                             if (autoNote !== null) {
                                 note =
@@ -11184,9 +11297,10 @@ export default function ChatbotAppComp() {
                             // The tab STAYS on Auto and now says who
                             // answered. Left alone when it was taken off
                             // Auto while the answer came: that pick is the
-                            // user's own.
+                            // user's own. And by a Retry, which asked
+                            // someone else for this one question only.
                             updateSession(askedSessionId, (session) => {
-                                return session.isAuto === true
+                                return session.isAuto === true && retry === null
                                     ? {
                                           ...session,
                                           provider: auto.pick.provider,
@@ -11626,7 +11740,18 @@ export default function ChatbotAppComp() {
                             ? []
                             : !isAppQuestion
                               ? dropActionEchoReplies(
-                                    answer.replies ?? [],
+                                    [
+                                        ...new Set([
+                                            // The other changes offered
+                                            // with the one just pressed come
+                                            // first: they were being chosen
+                                            // among (BN-77).
+                                            ...(
+                                                options?.carryReplies ?? []
+                                            ).filter(checkIsChangeReply),
+                                            ...(answer.replies ?? []),
+                                        ]),
+                                    ],
                                     (answer.actions ?? []).map((action) => {
                                         return action.label;
                                     }),
@@ -11882,6 +12007,86 @@ export default function ChatbotAppComp() {
     );
 
     const handleAskingRef = useAppCurrentRef(handleAsking);
+    // **Retry** under an answer (2026-11-10, the user, the rotate icon drawn
+    // between the reply arrow and the thumbs: _as user I'd like to ask
+    // chatbot to retry again on the answer, so I can get different result_;
+    // the goal: _try with different approach and different effort_). The
+    // question that answer was given to is asked again in the tab in front,
+    // with what it was asked with, under a hint naming another way in and a
+    // step more effort for each try (`answerRetryHelpers`). The new answer
+    // lands at the bottom under a note saying what it is; the box is left
+    // as it was.
+    const handleRetrying = useCallback(
+        (answerId: number) => {
+            const retriedSessionId = activeSessionId;
+            if (checkIsSessionPending(retriedSessionId)) {
+                return;
+            }
+            const retriedMessages =
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === retriedSessionId;
+                })?.messages ?? [];
+            const question = findRetryQuestion(retriedMessages, answerId);
+            const answer = retriedMessages.find((message) => {
+                return message.id === answerId;
+            });
+            if (question === null || answer === undefined) {
+                return;
+            }
+            const attempt = countRetryAttempt(retriedMessages, question.text);
+            // Someone else answers this once (`toRetryPicks` in the ask):
+            // who wrote it, as the answer keeps it. On a paid key that is
+            // another of its models, handed to the ask alone -- the tab's
+            // MODEL list is not touched, so the next question asks the one
+            // it shows.
+            const avoid = answer.answeredBy;
+            const tab = sessionStateRef.current.sessions.find((session) => {
+                return session.id === retriedSessionId;
+            });
+            const isTabAnswered =
+                avoid !== undefined &&
+                tab?.provider !== null &&
+                tab?.provider !== undefined &&
+                tab.isAuto !== true &&
+                getLlmProviderLabel(tab.provider, tab.model) ===
+                    avoid.assistant &&
+                getLlmModelLabel(tab.provider, tab.model) === avoid.model;
+            const reused = toReusableAttachments(question.attachments);
+            const otherModel =
+                isTabAnswered && tab?.provider
+                    ? pickRetryModel(answererRef.current, (modelId) => {
+                          return (
+                              !reused.some((one) => {
+                                  return one.kind === 'image';
+                              }) || checkCanSeeImages(tab.provider!, modelId)
+                          );
+                      })
+                    : null;
+            // What is kept in the box was not typed just now: its type-ahead
+            // stays shut, or it opens over the new answer's own buttons when
+            // the box takes the focus back (seen live 2026-11-10).
+            setIsSuggestDismissed(true);
+            void handleAskingRef.current(question.text, false, {
+                retry: {
+                    attempt,
+                    hint: genRetryAskHint(
+                        answer.text,
+                        attempt,
+                        checkIsLastAnswer(retriedMessages, answerId),
+                    ),
+                    ...(avoid === undefined ? {} : { avoid }),
+                },
+                ...(otherModel === null ? {} : { model: otherModel.id }),
+                attachments: reused,
+                answerNote: tran(
+                    'A different answer: worked out another way, with more ' +
+                        'effort.',
+                ),
+            });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeSessionId],
+    );
     // A verse search handed over from Bible Find WITH its words, asked in
     // the tab the handoff opened once that tab is the one in front:
     // `handleAsking` asks in the tab it was last rendered with.
@@ -12037,6 +12242,15 @@ export default function ChatbotAppComp() {
                       return one.author === 'bot';
                   })?.text
                 : undefined;
+            // The other changes offered with the one pressed stay buttons
+            // under its answer (BN-77, 2026-11-10: a lesson review offers
+            // two or three fixes; one pressed, the others were gone until
+            // the review was asked again).
+            const carriedChanges = checkIsChangeReply(reply)
+                ? parentReplies.filter((one) => {
+                      return one !== reply && checkIsChangeReply(one);
+                  })
+                : [];
             // A card button the window does by itself, pressed in the
             // window's language, is asked in its English -- which the
             // window's own readers read (BN-16) -- and shown as pressed.
@@ -12057,7 +12271,9 @@ export default function ChatbotAppComp() {
                 // could not try a different one).
                 ...(isResourcesConversation
                     ? { carryReplies: parentReplies }
-                    : {}),
+                    : carriedChanges.length > 0
+                      ? { carryReplies: carriedChanges }
+                      : {}),
                 ...(typeof parentText === 'string' && parentText.length > 0
                     ? { pressContext: parentText.slice(0, 1200) }
                     : {}),
@@ -14350,6 +14566,12 @@ export default function ChatbotAppComp() {
                                     onReuse={handleReusing}
                                     onRate={handleRating}
                                     onQuote={handleQuotingAnswer}
+                                    onRetry={
+                                        retryableAnswerIds.has(message.id)
+                                            ? handleRetrying
+                                            : undefined
+                                    }
+                                    canRetry={!isBusy}
                                     onAttachRequest={handleAttachRequest}
                                     onShowAttachment={handleShowingAttachment}
                                 />

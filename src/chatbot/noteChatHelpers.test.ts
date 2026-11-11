@@ -8,6 +8,7 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_FORMAT_HINT,
     NOTE_LESSON_FINISH_HINT,
+    NOTE_LESSON_REWRITE_HINT,
     NOTE_LESSON_REVIEW_HINT,
     NOTE_LESSON_SHORTEN_HINT,
     NOTE_NEW_LESSON_HINT,
@@ -30,11 +31,18 @@ import {
     findOpenNoteAttachments,
     findSessionHoldingNote,
     findSessionNoteTarget,
+    findLostNoteLines,
+    findNoteMisquotes,
+    genLessonFormLine,
+    genNoteMisquoteRefusal,
+    readLessonFormAsked,
     genLessonGapsText,
     genNoteLessonHint,
     readBlankNoteBlockCount,
+    readNoteRewrite,
     toBlankNoteFillArgs,
     toNoteVerseReadText,
+    withRewrittenLinesRemoved,
     genNoteStyleChanges,
     genNoteStyleDoneText,
     readCreatedNote,
@@ -818,9 +826,116 @@ describe('a lesson to preach, in a note conversation', () => {
             { name: 'The Good Shepherd', text: LESSON_READ },
         ]);
         expect(asked).toContain(NOTE_LESSON_REVIEW_HINT);
+        // BN-66: judged as the blind readers judged, truth weighed first,
+        // the fixes offered as buttons.
+        const truthAt = NOTE_LESSON_REVIEW_HINT.indexOf('true to it');
+        expect(truthAt).toBeGreaterThan(0);
+        expect(truthAt).toBeLessThan(
+            NOTE_LESSON_REVIEW_HINT.indexOf('a concrete example'),
+        );
+        expect(NOTE_LESSON_REVIEW_HINT).toContain('END with them as OPTIONS');
         // It says to change nothing itself: not twice.
         expect(asked).not.toContain(NOTE_QUESTION_HINT);
         expect(NOTE_LESSON_FINISH_HINT).toContain('nothing removed');
+    });
+
+    // BN-67 (2026-11-10): six loose lines finished as a lesson -- the one
+    // long edit dropped by the shared server, the retries in parts naming
+    // blocks their own first part had moved.
+    it('loose lines are written over by one flat add, every line kept', () => {
+        const loose = toNoteDocumentText({
+            blockCount: 3,
+            file: 'Default',
+            hash: 'h4',
+            blocks: [
+                { n: 1, kind: 'paragraph', text: 'mark 4 storm' },
+                { n: 2, kind: 'paragraph', text: 'jesus asleep in the boat' },
+                { n: 3, kind: 'paragraph', text: 'peace be still' },
+            ],
+        });
+        const notes = [{ name: 'Storm', text: loose }];
+        const rewrite = readNoteRewrite('finish my sermon', notes)!;
+        expect(rewrite).toEqual({
+            lines: [
+                'mark 4 storm',
+                'jesus asleep in the boat',
+                'peace be still',
+            ],
+            lineBlocks: [1, 2, 3],
+            blockCount: 3,
+        });
+        // An EDIT that weaves their lines into a lesson takes out each line
+        // its new words hold -- seen live, all six left at the note's end --
+        // and keeps one it does not hold.
+        expect(
+            withRewrittenLinesRemoved(
+                {
+                    action: 'edit',
+                    changes: [
+                        {
+                            after: 1,
+                            kind: 'section',
+                            text: '## 1. **jesus asleep in the boat**\nThe storm of Mark 4.',
+                        },
+                    ],
+                },
+                rewrite,
+            ).changes,
+        ).toEqual([
+            expect.objectContaining({ after: 1, kind: 'section' }),
+            { block: 1, remove: true },
+            { block: 2, remove: true },
+        ]);
+        const asIs = { action: 'edit', changes: [{ block: 3, text: 'x' }] };
+        expect(withRewrittenLinesRemoved(asIs, rewrite)).toBe(asIs);
+        const asked = toNoteAsk(
+            'finish my sermon',
+            notes,
+            null,
+            false,
+            null,
+            null,
+            false,
+            rewrite,
+        );
+        expect(asked).toContain(NOTE_LESSON_REWRITE_HINT);
+        expect(asked).not.toContain(NOTE_LESSON_FINISH_HINT);
+        expect(asked).not.toContain('Where each missing part goes');
+        // Not for another ask, a heading, a part of it read, or two notes.
+        expect(readNoteRewrite('make the title red', notes)).toBeNull();
+        expect(
+            readNoteRewrite('finish my sermon', [notes[0], notes[0]]),
+        ).toBeNull();
+        const headed = toNoteDocumentText({
+            blockCount: 2,
+            blocks: [
+                { n: 1, kind: 'h2', text: 'Big idea' },
+                { n: 2, kind: 'paragraph', text: 'He calms it.' },
+            ],
+        });
+        expect(
+            readNoteRewrite('finish my sermon', [{ name: 'x', text: headed }]),
+        ).toBeNull();
+        const partRead = toNoteDocumentText({
+            blockCount: 30,
+            blocks: [
+                { n: 1, kind: 'paragraph', text: 'storm' },
+                { n: 2, kind: 'paragraph', text: 'boat' },
+            ],
+        });
+        expect(
+            readNoteRewrite('finish my sermon', [
+                { name: 'x', text: partRead },
+            ]),
+        ).toBeNull();
+        // A line is lost when fewer than four in five of its words are in
+        // the lesson; a verse token's words count.
+        expect(
+            findLostNoteLines(
+                rewrite.lines,
+                '[^Mark 4:35-41]\n## 1. Jesus asleep in the boat\nThe storm.',
+            ),
+        ).toEqual(['peace be still']);
     });
 
     // BN-67 (2026-11-10): told only to add "the parts it lacks", a model
@@ -1375,5 +1490,106 @@ describe('the card of an empty note', () => {
         expect(NOTE_LESSON_FINISH_HINT).toContain(
             'even when it has a sentence',
         );
+    });
+});
+
+// BN-76 (2026-11-10, the blind readers of BN-74): the commonest error in the
+// lessons was a phrase in quotation marks the passage just read does not say.
+describe('a quote of the passage is its words', () => {
+    const PSALM_51_13 =
+        '(KJV) Psalm 51:13 — (13): Then will I teach transgressors thy ' +
+        'ways; and sinners shall be converted unto thee.';
+
+    it('names a quote near the passage that is not word for word', () => {
+        expect(
+            findNoteMisquotes(
+                'David vows: "sinners shall return unto thee" (v. 13).',
+                [PSALM_51_13],
+            ),
+        ).toEqual(['sinners shall return unto thee']);
+        expect(
+            genNoteMisquoteRefusal(['sinners shall return unto thee']),
+        ).toContain('does not say “sinners shall return unto thee”');
+    });
+
+    it('lets the passage, a cut quote and the lesson’s own words through', () => {
+        expect(
+            findNoteMisquotes('“sinners shall be converted unto thee”', [
+                PSALM_51_13,
+            ]),
+        ).toEqual([]);
+        expect(
+            findNoteMisquotes(
+                '"Then will I teach transgressors … sinners shall be converted"',
+                [PSALM_51_13],
+            ),
+        ).toEqual([]);
+        // A hearer's question shares next to nothing with the passage.
+        expect(
+            findNoteMisquotes(
+                'Someone may ask, "Can God really forgive what I did?"',
+                [PSALM_51_13],
+            ),
+        ).toEqual([]);
+        // Nothing read: nothing to hold a quote to.
+        expect(
+            findNoteMisquotes('"sinners shall return unto thee"', []),
+        ).toEqual([]);
+    });
+});
+
+// BN-78 (2026-11-10): a devotion asked for by the card, reviewed as a
+// sermon, was offered "Add points for verses 4-6".
+describe('the form a lesson was asked for', () => {
+    it('is read off the card and off what was typed', () => {
+        expect(readLessonFormAsked('Help me prepare a short devotion')).toBe(
+            'devotion',
+        );
+        expect(readLessonFormAsked("Help me prepare a children's lesson")).toBe(
+            'children',
+        );
+        expect(readLessonFormAsked('Help me prepare a preaching lesson')).toBe(
+            null,
+        );
+        expect(
+            readLessonFormAsked(
+                'a short devotion on Psalm 46 for our prayer meeting',
+            ),
+        ).toBe('devotion');
+        expect(readLessonFormAsked("a children's lesson on Jonah")).toBe(
+            'children',
+        );
+        // Not an ask for a lesson: no form.
+        expect(readLessonFormAsked('is this a good devotion?')).toBe(null);
+    });
+
+    it('rides a review of that lesson, and nothing else', () => {
+        const note = { name: 'The Good Shepherd', text: '1. h2: "Big idea"' };
+        const review = toNoteAsk(
+            'is this a good sermon?',
+            [note],
+            null,
+            false,
+            null,
+            null,
+            false,
+            null,
+            'devotion',
+        );
+        expect(review).toContain(genLessonFormLine('devotion'));
+        expect(review).toContain(NOTE_LESSON_REVIEW_HINT);
+        expect(
+            toNoteAsk(
+                'make the headings blue',
+                [note],
+                null,
+                false,
+                null,
+                null,
+                false,
+                null,
+                'devotion',
+            ),
+        ).not.toContain(genLessonFormLine('devotion'));
     });
 });

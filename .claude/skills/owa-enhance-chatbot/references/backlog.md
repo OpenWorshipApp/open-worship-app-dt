@@ -11070,3 +11070,113 @@ Tests (`llmBotHelpers.coverage.ut99.test.ts`): a running order asked for
 lets only the check reach the app, and a verse asked for on its own still
 goes up. Re-asked live after the fix, the model called only the help tools,
 so the refusal itself was not reached live.
+
+### EC-476 — Retry under an answer: the same question again, another way and harder — `done`
+
+The user (2026-11-10), a picture of an answer's tool row with the spot
+between the reply arrow and 👍 circled: _add a rotate icon there to ask
+for retrying_; the story _as user I'd like to ask chatbot to retry again on
+the answer, so I can get different result_; and the goal the same hour:
+_when user ask for retrying chatbot have to try with different approach and
+different effort get different result for user_. The answer in the picture
+was _I looked several things up but could not settle on an answer_ — the
+window had no way to ask it again but retyping it, and re-asked as it stood
+a server of the user's own answers word for word (temperature 0, EC-258).
+
+Now a **[en:tran:Retry]** rotate icon (`.cue-retry`, `bi-arrow-repeat`)
+sits between the reply arrow and 👍 under every answer whose message right
+above it (the window's own follow-ups stepped over) is the person's own
+question — never under a `/` command's answer (`/btw` excepted), a card a
+button opened, or a question the window asked on their behalf
+(`answerRetryHelpers.ts`, `listRetryableAnswerIds`). Disabled while the tab
+answers. The press asks that question again in the tab, with what it was
+asked with and nothing from the box — the box keeps whatever is typed there
+(`clearAskedDraft`; no wait for a typed line reads it) — and the new answer
+lands at the bottom under _A different answer: worked out another way, with
+more effort._ Each try changes two things:
+
+- **approach** — a hint on the ask alone (`genRetryAskHint`): a DIFFERENT
+  answer is wanted, never a wrong one (right facts said another way, what
+  was left out added), an edit already made is still made, the earlier
+  answer quoted when it is not the tab's newest; and one of three ways in,
+  in turn (`RETRY_APPROACH_LIST`: another way the app has to get it done --
+  or, when there is only one, said so with what to do when a step fails /
+  take the question another way / start again from the job, step by step;
+  rewording is called out as the same answer);
+- **effort** — `AskExtraType.retryAttempt` steps each provider's own dial:
+  GPT-5, Kimi K3 and Bedrock's OpenAI models `reasoning_effort` low →
+  medium → high; Claude 5 `output_config.effort` one level a try above the
+  model's own default, never `max` (Haiku 4.5 takes none); twice the output
+  cap for the thinking; a local program sampled at 0.7, then 1.0, and a
+  general question let think. Free sends no new field (unmeasured there).
+
+Tests: `answerRetryHelpers.test.ts`; the window's two presses in
+`ChatbotAppComp.ask.test.tsx` (hint, try number, note, box kept, no icon
+under `/clear`).
+
+Seen live the same evening (a scratch profile's help window, Auto on
+gemma4:cloud, the chip _The words are too small. Can you help me?_): the
+first Retry came back as the same three Font Size steps but for one word.
+The cause was a SUPPORTED question's hint -- _answer from that part in ITS
+OWN WORDS, copy the sentences you use as they stand_ (EC-310, EC-342) --
+which outranked _say it differently_. The retry hint now sets that one
+line aside for the retry (every fact and every button, menu and key name
+kept exactly, the words new), and the first way in asks for what the
+earlier answer left out. After it: the first press, the same facts in new
+words with what each step is for; the second, _the first way did not help_
+and the reading view's **Full** with **Bring the panels back**. Also
+found: with words in the focused box the type-ahead covers the newest
+answer's tool row (pre-existing); Retry shuts it for the words it keeps.
+
+**And someone else answers it** (the user, the same evening: _make the
+retrying pick different assistant for temparary, e.g. user didn't like
+result from gemma4 then try with another model (but keep the gemma4 for
+the next asking)_). The press hands the answer's `answeredBy` over as
+`retry.avoid`. On Auto, and on a tab naming an assistant Auto could pick
+(a no-cost server, OWA Shared, Free -- which goes down Auto's line this
+once), the picks are ranked as ever and the one that wrote the answer put
+last (`toRetryPicks`); the note adds Auto's own _Auto asked … this time._
+and the tab's provider, model and Auto pick are not written. A paid key
+asks another of its own models for that ask only (`pickRetryModel`: the
+next up in a ranked list, else the nearest down), never another key.
+Tests: `answerRetryHelpers.test.ts` +4, `ChatbotAppComp.ask.test.tsx` +3
+(Auto, a named free model, Claude Sonnet 5 → Opus 5; each tab asks its
+own on the next question). Seen live on Auto: a gemma4:cloud answer retried was
+answered by OWA Shared · Gemma 4 31b, AUTO PICK still read gemma4:cloud,
+and the next question was gemma4:cloud's. A paid key's next model and a
+named free or server tab were not run live (no paid key in that window).
+
+**Re-measured after the first way in asked for a different ROUTE**
+(the hint now also says the same steps reworded are the same answer):
+three questions on the scratch profile, each a plain answer then one
+Retry. _The words are too small_ (Auto): gemma4:cloud gave the Font Size
+steps; the Retry (Gemma 4 31b) said there is only one way and added what
+to do when the ⋯ is not there. _I lost the passage I was reading_ (Auto):
+right-click a history row → Set to current editing; the Retry: click the
+row to read it in a floating panel, or its ⋮ → Set to current editing.
+_How do I put two Bible versions side by side?_ on a tab NAMED OWA Shared
+· gemma4:cloud: Add Extra Bible; the Retry (Gemma 4 31b, the tab still on
+gemma4:cloud): Split Horizontal to / Split Vertical to from the passage
+header. Every retried route checked true against W-11. Two of three a
+different route, the third an honest _only one way_ with more in it.
+The request each provider is handed is now tested at its client
+(`llmBotHelpers.test.ts`, _a Retry asks a step harder, on the wire_):
+ChatGPT `reasoning_effort` low → medium → high and 6 000 → 12 000
+tokens; Claude Sonnet 5 `output_config.effort: xhigh`, Haiku 4.5 none,
+an ordinary ask none; LM Studio temperature 0 → 0.7 → 1.0 and a general
+question let think. A paid key was not run live: no key in that window.
+**On the wire** (the live window's requests to OWA Shared, read at the relay fetch with a non-pausing conditional breakpoint; the relay forwards the body unchanged): plain gemma4:cloud, temperature 0, max_tokens 2000, no hint; Retry #1 gemma4:31b, 0.7, 2000, the hint; after the cap was doubled for servers too, Retry #2 gemma4:cloud (Gemma 4 31b, who wrote the retried answer, put last), 1, 4000, the hint -- answered two ways, the text too small (Font Size) or the window too crowded (Full).
+**And a paid key, on the wire** (the user chose an invalid key, no cost: a scratch development instance, the AI caution pressed with their OK, the help window's own requests to api.openai.com read over CDP's Network domain): plain gpt-5 `reasoning_effort` low, `max_completion_tokens` 6000; Retry #1 medium, 12000, the hint; Retry #2 high, 12000, the hint -- each answered 401, so no answer to compare; the key taken out and the instance stopped and deleted after.
+
+### EC-477 — the box's type-ahead covers the newest answer's buttons — `open`
+
+Found driving EC-476 (2026-11-10). With words in the box and the box
+focused, the suggestion list opens upward over the bottom of the
+conversation -- the newest answer's Copy, Reply, Retry and thumbs -- and a
+press there picks a suggestion instead (the box then held _What are the
+Extra Binaries and do I need them?_). The box takes the focus back every
+time an answer lands, so it comes back after each ask while anything is
+typed. Retry now shuts it for the words it keeps; the general case is
+open. Worth trying: close the list when the box loses focus, or open it
+only on a keystroke, never on a focus regained. Memory
+`chatbot-cdp-driver-gotchas` has the driving side.

@@ -68,6 +68,7 @@ import {
     chainRewriteAdds,
     chainSectionAdds,
     expandPassageChanges,
+    expandPassageRepoints,
     readHeadingMarks,
     readPassageLineRef,
     checkHasBlockMarkup,
@@ -1666,8 +1667,21 @@ export function collectNewNoteVerseRefs(
                   );
               });
     const refs = new Set<string>();
+    // A block's words as read, for the few changes that need them.
+    let readBlocks: NoteBlockType[] | null = null;
+    const ownTextOf = (block: unknown) => {
+        readBlocks ??= readNoteBlocks(content)?.blocks ?? [];
+        const found = readBlocks.find((one) => one.n === block);
+        return found === undefined ? null : found.text.trim();
+    };
     for (const change of changes) {
-        if (change.kind === 'passage' && typeof change.ref === 'string') {
+        // A passage added, or a passage block given another reference
+        // (BN-72, `expandPassageRepoints`).
+        if (
+            typeof change.ref === 'string' &&
+            (change.kind === 'passage' ||
+                (change.kind === undefined && typeof change.block === 'number'))
+        ) {
             refs.add(change.ref.trim());
         }
         if (typeof change.text !== 'string') {
@@ -1704,7 +1718,10 @@ export function collectNewNoteVerseRefs(
                 (isSection ||
                     (lines.length === 1 &&
                         isParagraph &&
-                        checkIsPassageRef(ref)))
+                        checkIsPassageRef(ref) &&
+                        // A block's own range chip given back stays the chip.
+                        (change.block === undefined ||
+                            ownTextOf(change.block) !== change.text.trim())))
             ) {
                 refs.add(ref);
             }
@@ -2435,9 +2452,8 @@ export function applyNoteEdit({
                 'brings it up to date.',
         );
     }
-    // A section is the blocks its lines spell (`expandSectionAdds`); a block
-    // changed into a passage's token is that passage (BN-67).
-    changes = expandPassageChanges(expandSectionAdds(changes));
+    // A section is the blocks its lines spell (`expandSectionAdds`).
+    changes = expandSectionAdds(changes);
     if (changes.length > NOTE_EDIT_MAX_CHANGES) {
         return toReason(
             `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +
@@ -2463,31 +2479,45 @@ export function applyNoteEdit({
     );
     const refs = collectBlockRefs(root);
     const count = refs.length;
+    const toOwnText = (block: number) => {
+        const ref = refs[block - 1];
+        return ref === undefined || ref.isFixed
+            ? null
+            : toBlockText(ref).trim();
+    };
+    // A passage given another reference is that passage, in its place
+    // (BN-72).
+    changes = expandPassageRepoints(changes, (block) => {
+        return refs[block - 1]?.kind ?? null;
+    });
     // A block given its words as lines with a list kind or `section` is made
-    // several, a block a line (BN-58).
-    changes = expandBlockSplits(
-        // The app's own marks, never a model's.
-        changes.map((change) => {
-            if (typeof change !== 'object' || change === null) {
-                return change;
-            }
-            const { splitText: _splitText, chain: _chain, ...rest } = change;
-            // A heading's marks written into its words (BN-67).
-            const ref =
-                typeof rest.block === 'number'
-                    ? refs[rest.block - 1]
-                    : undefined;
-            return readHeadingMarks(
-                rest,
-                ref === undefined || ref.isFixed ? null : ref.kind,
-            );
-        }),
-        (block) => {
-            const ref = refs[block - 1];
-            return ref === undefined || ref.isFixed
-                ? null
-                : toBlockText(ref).trim();
-        },
+    // several, a block a line (BN-58); a block changed into a passage's token
+    // is that passage (BN-67).
+    changes = expandPassageChanges(
+        expandBlockSplits(
+            // The app's own marks, never a model's.
+            changes.map((change) => {
+                if (typeof change !== 'object' || change === null) {
+                    return change;
+                }
+                const {
+                    splitText: _splitText,
+                    chain: _chain,
+                    ...rest
+                } = change;
+                // A heading's marks written into its words (BN-67).
+                const ref =
+                    typeof rest.block === 'number'
+                        ? refs[rest.block - 1]
+                        : undefined;
+                return readHeadingMarks(
+                    rest,
+                    ref === undefined || ref.isFixed ? null : ref.kind,
+                );
+            }),
+            toOwnText,
+        ),
+        toOwnText,
     );
     // A note rewritten as new blocks numbered as they will stand (BN-58).
     changes = chainRewriteAdds(changes, count);
@@ -2605,6 +2635,24 @@ export function applyNoteEdit({
                         'A passage needs `ref`, the Bible reference to put in ' +
                             '(e.g. "John 3:16-17"). Never write a verse\'s words ' +
                             'yourself.',
+                    );
+                }
+                // BN-72 (2026-11-10): "Matthew 13:5-6, 20-21" was read as one
+                // span, 13:5-21 -- the very passage already there -- and the
+                // edit answered that nothing had changed.
+                if (/[,;]/.test(change.ref)) {
+                    const [first, ...rest] = change.ref
+                        .split(/[,;]/)
+                        .map((part) => part.trim());
+                    const book = /^(.*?\d+:)\d/.exec(first)?.[1] ?? '';
+                    const next = rest[0] ?? '';
+                    const second = /\p{L}/u.test(next)
+                        ? next
+                        : `${book}${next}`;
+                    return toReason(
+                        `A passage is ONE reference, and "${change.ref}" is ` +
+                            'several: add a passage for each, in the order ' +
+                            `they go ("${first}", then "${second}").`,
                     );
                 }
             } else if (

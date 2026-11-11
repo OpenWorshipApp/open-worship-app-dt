@@ -12,6 +12,7 @@ vi.mock('./questionHelpers', () => ({
 }));
 
 import {
+    checkIsChangeReply,
     checkIsDraftEcho,
     checkIsWalkthroughEcho,
     dropActionEchoReplies,
@@ -21,6 +22,7 @@ import {
     parseAnswerOptions,
     parseAnswerShows,
     parseAttachRequests,
+    readReviewFixHeadings,
 } from './quickReplyHelpers';
 import { setChatTranslator } from './chatTranHelpers';
 
@@ -108,6 +110,75 @@ describe('parseAnswerOptions', () => {
             text: 'Done.',
             options: ['Undo it'],
         });
+        // BN-68 (2026-11-10, the empty note card's children's lesson): the
+        // choices as a bare `|` line right under the question asking them.
+        expect(
+            parseAnswerOptions(
+                'Which passage would you like?\n\nLuke 15 | Jonah 1 | Psalm 23',
+            ),
+        ).toEqual({
+            text: 'Which passage would you like?',
+            options: ['Luke 15', 'Jonah 1', 'Psalm 23'],
+        });
+        // Not under a statement, and never a table's row.
+        expect(
+            parseAnswerOptions('Here are the books.\n\nLuke | Jonah').options,
+        ).toEqual([]);
+        // BN-74 (2026-11-10, a lesson review): fixes to make are options
+        // under a statement too, the marker dropped -- every one of them.
+        expect(
+            parseAnswerOptions(
+                'It would make the point more complete.\n\n' +
+                    'Add why David fears losing the Spirit | ' +
+                    'Add meaning of verses 18-19 to Point 3',
+            ),
+        ).toEqual({
+            text: 'It would make the point more complete.',
+            options: [
+                'Add why David fears losing the Spirit',
+                'Add meaning of verses 18-19 to Point 3',
+            ],
+        });
+        expect(
+            parseAnswerOptions(
+                'It is strong.\n\nAdd a story | the good soil is missing',
+            ).options,
+        ).toEqual([]);
+        // BN-74 (the empty note card's children's lesson): passages to
+        // choose, one a line under an answer that asks, no marker -- and a
+        // passage's own name may run past an ordinary button's 40 letters.
+        expect(
+            parseAnswerOptions(
+                'Which Bible passage would you like the lesson to be about?\n\n' +
+                    'If you are not sure yet, here are a few that work well for children:\n\n' +
+                    'The Parable of the Lost Sheep (Luke 15:1-7)\n\n' +
+                    '- David and Goliath (1 Samuel 17)\n\n' +
+                    'Psalm 23 (The Lord is my Shepherd)',
+            ),
+        ).toEqual({
+            text:
+                'Which Bible passage would you like the lesson to be about?\n\n' +
+                'If you are not sure yet, here are a few that work well for children:',
+            options: [
+                'The Parable of the Lost Sheep (Luke 15:1-7)',
+                'David and Goliath (1 Samuel 17)',
+                'Psalm 23 (The Lord is my Shepherd)',
+            ],
+        });
+        // Verses an answer cites ask nothing; steps name no passage.
+        expect(
+            parseAnswerOptions(
+                'Those verses say the same.\n\nJohn 3:16\nRomans 5:8',
+            ).options,
+        ).toEqual([]);
+        expect(
+            parseAnswerOptions(
+                'Do you want it bigger? Here is how:\n\nOpen the menu\nPick Font',
+            ).options,
+        ).toEqual([]);
+        expect(
+            parseAnswerOptions('Which one?\n\n| Luke | Jonah |').options,
+        ).toEqual([]);
         // BN-67 (2026-11-10, under every finished sermon): the marker in
         // bold on its own line, its closing marks no words after it.
         expect(
@@ -118,6 +189,37 @@ describe('parseAnswerOptions', () => {
             text: 'Done.',
             options: ['Make the headings blue', 'Add a story'],
         });
+    });
+
+    // BN-77 (2026-11-10): a review's fixes open on more verbs than the four
+    // asked for, and one with none to press offers the fixes it named.
+    test('a change to make, and the fixes a review named', () => {
+        expect(checkIsChangeReply('Grow Jesus from the river in v. 4')).toBe(
+            true,
+        );
+        expect(checkIsChangeReply('Rewrite Response to gather Big idea')).toBe(
+            true,
+        );
+        expect(checkIsChangeReply('Fix the verses in the three points')).toBe(
+            true,
+        );
+        // Pressed, it is answered in the chat as a question (BN-72).
+        expect(checkIsChangeReply('Explain the hardened heart')).toBe(false);
+        expect(
+            readReviewFixHeadings(
+                [
+                    'A strong lesson.',
+                    'Strengths:',
+                    '- Big Idea: clear and single.',
+                    '1. **Deepen the explanation of verse 3:** the crowd is more',
+                    '2. **Strengthen the "Pointing to Jesus" section:** it tells',
+                    'Response: it repeats the big idea.',
+                ].join('\n'),
+            ),
+        ).toEqual([
+            'Deepen the explanation of verse 3',
+            'Strengthen the "Pointing to Jesus" section',
+        ]);
     });
 
     // BN-29 (2026-11-08, seen live on Free's Nemotron): its options line was

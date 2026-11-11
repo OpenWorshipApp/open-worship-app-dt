@@ -412,7 +412,7 @@ the record's chat, family line, related verses, word study).
     one a line under it to the end; `Choices:` is the same frame, BN-29,
     Free's Nemotron writing it as often as `OPTIONS:`); a card button the
     window does by itself, pressed in any language, is asked in its English
-    (`findWindowDoneCardAsk`, BN-16); an options line under a marker word of the person's OWN language (_Opcje:_) is read by its shape -- the last line, one to three words and a colon, two to five items between `|`, never another frame or a list (2026-11-09, BN-47);
+    (`findWindowDoneCardAsk`, BN-16); an options line under a marker word of the person's OWN language (_Opcje:_) is read by its shape -- the last line, one to three words and a colon, two to five items between `|`, never another frame or a list (2026-11-09, BN-47); a bare `|` line with no marker is options right under a question, or anywhere when every item opens on Add, Write, Move or Make -- a lesson review's fixes (BN-68, BN-74); passages one a line closing an answer that asks are its options (`cutPassageListFrame`, BN-74: the children's lesson's "which passage?" had nothing to press), and an option naming a passage may run to 64 letters, every other to 40; a change pressed among several (each opening on Add, Write, Move or Make) leaves the others as the first buttons under its answer (`carryReplies`, BN-77: a lesson review's other fixes had gone with the first press);
     failing that, the answer's trailing yes/no or either-or question, then the
     nearest corpus questions (`genFollowUpQuestions`). LAST message only,
     never duplicating an action button -- an answer that is not an app
@@ -984,6 +984,46 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   `appendSelectionMention`'s rule: the same quote twice is put in once), the
   caret on the line under it; nothing is asked. Seen live 2026-11-09 on the
   dev app: a Khmer lesson quoted whole, one double-clicked word quoted alone.
+- **A rotate icon after the reply arrow asks the question again, for a
+  DIFFERENT answer** (2026-11-10, `EC-476`, the user, the spot circled: _add
+  a rotate icon there to ask for retrying_; the goal _try with different
+  approach and different effort get different result_;
+  `answerRetryHelpers.ts`, pure). `.cue-retry`, `aria-label`
+  **[en:tran:Retry]** (a key every language already had), between the reply
+  arrow and 👍, only under an answer whose message right above it -- the
+  window's own follow-ups stepped over -- is the person's own question:
+  never a `/` command's (`/btw` excepted; `/clear` again empties the
+  projector again), a card a button opened, or a question with a `note`
+  (asked on their behalf). Worked out once per list
+  (`listRetryableAnswerIds`, memoised), disabled -- not hidden -- while the
+  tab answers. The press (`handleRetrying`) asks the question's own words
+  with its own attachments (`toReusableAttachments`) through `handleAsking`'s
+  `retry` and `attachments` options: the box and its attachments are NOT
+  touched (`clearAskedDraft`, every road that empties the box), and the
+  waits for a typed line -- a report, a study's new name -- never read it.
+  The question is echoed again and the answer carries the note _A different
+  answer: worked out another way, with more effort._ The try is counted off
+  the transcript (`countRetryAttempt`: how often these words were asked in
+  the tab), so nothing new is stored. APPROACH: `genRetryAskHint` rides the
+  ask last (`genAskedWithHint`) -- a different answer, never a wrong one; an
+  edit already made is still made; the earlier answer quoted only when it is
+  not the tab's newest (the history carries that one); one of three ways in
+  per try, in turn. EFFORT: `AskExtraType.retryAttempt` (`chatbot-llm.md`).
+  WHO, for that one question (the same evening, the user: _user didn't
+  like result from gemma4 then try with another model (but keep the gemma4
+  for the next asking)_): `retry.avoid` is the answer's `answeredBy`, the
+  pickers' own words. On Auto -- and on a tab naming an assistant Auto
+  could pick (`genAutoCandidates`: a no-cost server, OWA Shared, Free),
+  which goes down Auto's line this once (`isRetryElsewhere`) -- the picks
+  are ranked as ever and the one that wrote the answer put LAST
+  (`toRetryPicks`, never out: alone, it still answers); the note says
+  _Auto asked … this time._ (`genAutoAnswerNote`'s own sentence), and the
+  tab's provider, model and Auto pick are NOT written, so the next question
+  is the tab's as before. A paid key is handed another of its own models
+  for the ask alone (`pickRetryModel`: the next one up in a list written
+  best first, else the nearest down; one that cannot see a picture the
+  question carries is stepped over; a list in no order keeps its model) --
+  never another company's key.
 - **A page a PERSON asked to read is shown whole, and without what the page
   tool says to a model** (2026-10-12, `EC-242`). **Read the whole thing**
   under a guide answer presses `owa_help_page`, and what came back was

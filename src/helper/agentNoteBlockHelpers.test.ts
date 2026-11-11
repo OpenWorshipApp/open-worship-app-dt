@@ -425,6 +425,34 @@ describe('a change to a note', () => {
         ]);
     });
 
+    // BN-72 (2026-11-10): a review's fix narrowed a point's passage with
+    // `{block, ref}` -- "says nothing to change" -- and then with two ranges
+    // in one reference, read as the very span already there.
+    test('a passage given another reference is that passage, in its place', () => {
+        // The fixture's passage is block 8 of 10 (its list is two blocks).
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                { block: 8, ref: 'Romans 8:28' },
+            ]),
+        ).toEqual(['Romans 8:28']);
+        const result = edit([{ block: 8, ref: 'Romans 8:28' }], {
+            verseMap: new Map([['Romans 8:28', ROMANS]]),
+        });
+        const blocks = readNoteBlocks(result.content)!.blocks;
+        expect(blocks).toHaveLength(10);
+        expect(blocks[7].kind).toBe('passage');
+        expect(blocks[7].text).toContain('(KJV) Romans 8:28');
+        // A block that is no passage, given a `ref`, still says nothing.
+        expect(reasonOf([{ block: 2, ref: 'Romans 8:28' }])).toContain(
+            'says nothing to change',
+        );
+        const reason = reasonOf([
+            { after: 3, kind: 'passage', ref: 'Matthew 13:5-6, 20-21' },
+        ]);
+        expect(reason).toContain('A passage is ONE reference');
+        expect(reason).toContain('"Matthew 13:5-6", then "Matthew 13:20-21"');
+    });
+
     test('a passage is added from the resolved verse, after the block named', () => {
         const result = edit(
             [{ after: 1, kind: 'passage', ref: 'Romans 8:28' }],

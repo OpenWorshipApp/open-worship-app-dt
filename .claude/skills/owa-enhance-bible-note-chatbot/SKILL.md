@@ -35,7 +35,7 @@ GATE (npm run lint) → PAPER TRAIL (W-60, CB-169, rules, memory, knowledge)
 | `src/helper/agentNoteNormalizeHelpers.ts` | A changed block written as Lexical writes it, so an open note window never writes it back as a step of its own |
 | `src/helper/agentNoteEditHelpers.ts` | The app side: reads the editing HEAD, resolves new verses (installed Bible) and names (names lookup, on demand), the font list, undo/redo of the kept history (stepping over an echo), the ¶ (`view`) and block links -- the editor's own keys, backed up as `home-setting` restores -- writes, tells an open note window |
 | `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~878 tokens, a note ask only) |
-| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer, the lesson hints (`genNoteLessonHint`), an empty note filled (`toBlankNoteFillArgs`), the verse check's read (`toNoteVerseReadText`) |
+| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer, the lesson hints (`genNoteLessonHint`), an empty note filled (`toBlankNoteFillArgs`), the verse check's read (`toNoteVerseReadText`), the empty note's lesson card, what a lesson lacks and where each part goes (`genLessonGapsText`), loose lines made a lesson in their place (`readNoteRewrite`, `withRewrittenLinesRemoved`) |
 | `src/chatbot/noteCreatePromptHelpers.ts` | What a preaching lesson holds (`PREACHING_LESSON_SHAPE`, sent on a lesson ask only) and the English lesson readers; a language's own are `lessonAsks` / `verseCheckAsks` in its `assistant.json` |
 | `src/chatbot/ChatbotAppComp.tsx`, `windowAimHelpers.ts` | The note conversation in the window; the tab works IN the note's own window (`toNoteWindowAim`) |
 | `src/helper/ai/noteChatbotMenuHelpers.ts`, `noteWindowMatchHelpers.ts` | Open in Chatbot: opens the note's window first, the handoff |
@@ -152,7 +152,15 @@ Chatbot**, the ask typed or the empty note's card pressed -- and
 machine and writes each lesson as text with the ask and nothing of how it
 was made. Two readers on different models, briefed with the standard and
 the lessons alone, score them; a weakness most lessons share is a change to
-the shape the model is given, never to the standard.
+the shape the model is given, never to the standard. **The job is to HELP
+PREPARE, so measure the loop, not only the first draft** (BN-72, BN-74):
+`--review=N` asks _is this a good sermon?_ after the draft and presses the
+review's first fix, N times, keeping the draft (`blocksBefore`) and every
+review; `scripts/lesson-ab.mjs <results> <prefix>` shuffles each draft and
+its reviewed lesson under neutral ids with a key kept apart, the review's
+presses left out of what the readers are told was asked, for
+`lesson-rubric.mjs --text=<dir>` to write out. A review whose fix could
+not be pressed is a finding, as a wrong lesson is.
 
 ### 3. Build
 

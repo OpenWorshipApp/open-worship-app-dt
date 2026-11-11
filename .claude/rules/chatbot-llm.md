@@ -661,6 +661,29 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   that rode with a page said the day of the copy, and a regenerated manual
   with no page edited changed all 27 answers — it no longer rides
   (`agent-knowledge.md`, _nothing that changes with a release may ride_).
+- **A Retry asks a step harder, on purpose** (2026-11-10, `EC-476`,
+  `AskExtraType.retryAttempt` from the window's rotate icon,
+  `answerRetryHelpers.ts`): the one ask that sets the dials above aside.
+  `genRequestExtra(model, retryAttempt)` -- GPT-5, Kimi K3 and Bedrock's
+  OpenAI models step `reasoning_effort` low → medium → high; Claude 5
+  (`askAnthropicCompatible`) gets `output_config.effort` one level a try
+  above the model's own default (medium on Haiku 5.5 / Opus 5.5, high on
+  the rest), never `max`, and none to Haiku 4.5, which refuses it;
+  `max_tokens` / `max_completion_tokens` is doubled for the thinking (a
+  server of the user's own too); a local program (`genCustomProvider`) is
+  sampled at 0.7, then 1.0, and a general question is let think. Seen in
+  the requests a live help window sent to OWA Shared (a non-pausing
+  conditional breakpoint in `relayFetch`, the relay forwarding the body
+  unchanged): plain `gemma4:cloud` / temperature 0 / 2 000; first Retry
+  `gemma4:31b` / 0.7 / the hint; second Retry `gemma4:cloud` / 1 / 4 000.
+  And to api.openai.com (an invalid key, no cost, the window's requests
+  read over CDP): gpt-5 `reasoning_effort` low / 6 000, then medium /
+  12 000, then high / 12 000, the hint on both retries. Free and an unknown server get no new
+  field. A translation's sub-ask never carries it. An ordinary ask is
+  byte for byte as before, so the cached prefixes and the graded defaults
+  hold. And a retry is asked of SOMEONE ELSE where there is one -- Auto's
+  line with the assistant that wrote the answer last, or a paid key's next
+  model -- for that question alone; `chatbot-window.md` has the rule.
 - **An answer written from a CUT question is not shown** (2026-10-16,
   `EC-271`, `askCustomServer` + `genContextCutText`). Ollama loads a model
   on the question at its own default context and, at 0.40.3, cuts a longer
@@ -1032,6 +1055,50 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   Measured live on a scratch profile, Auto -> gemma4:cloud: a sermon into
   an empty note in ONE call, 9-15 s, before 70-134 s through two failed
   servers and Free; twelve follow-ups one call or an answer each, 3-8 s.
+  **In every language, and from the empty note's own buttons** (BN-64,
+  BN-65): `LESSON_OUTLINE` (~70 tokens) rides `NOTE_SYSTEM_PROMPT` and
+  `NOTE_CREATE_PROMPT` whatever the language, and an empty note's card
+  offers three lesson buttons, read as a lesson asked for in any language
+  (`checkIsLessonCardAsk`); a refused fill of the empty note leaves the
+  redirect for the next try. **_Finish my sermon_ is placed by the window**
+  (BN-67): `genLessonGapsText` names each missing part with the block it
+  goes after (the end of the part before it in the shape's order, a
+  point's own last line for its words), `checkIsBareFinishAsk` reads
+  _finish it_ beside a lesson (`checkIsLessonNoteText`), and a note of
+  loose lines is `readNoteRewrite`'s: `NOTE_LESSON_REWRITE_HINT` asks for
+  ONE flat `owa_bible_note add`, which the window writes in their place
+  (`toBlankNoteFillArgs`) only when every line of theirs is in it
+  (`findLostNoteLines`; else refused, naming the lines), and an EDIT that
+  weaves them into a lesson takes out each raw line its new words hold
+  (`withRewrittenLinesRemoved`). A dropped reply about a note with words
+  in it is asked for in parts from the end of the note up
+  (`NOTE_DROPPED_NUDGE`); about loose lines, flat (`NOTE_REWRITE_DROPPED_NUDGE`).
+  **"Best" is measured against a written standard by blind readers**
+  (BN-66, the skill's `lesson-rubric.md`), never by the assistant that
+  built it: the lesson shape READS the passage first (`owa_find_verse`) and
+  builds every quote and verse number on its words -- asked only to be
+  true, the model quoted from memory and invented history (accuracy 1.88
+  -> 1.13 of 2 as the lessons grew richer); read first, factual errors
+  2 -> 0 by one reader and accuracy up by the other. **_Is this a good
+  sermon?_ is the way from good to best** (BN-72): judged in the readers'
+  order of weight, its fixes offered as buttons that SAY the change; a
+  review with none goes back once for them (BN-74, `isLessonReview`,
+  `NOTE_REVIEW_OPTIONS_NUDGE` -- one more round of a free model, because a
+  fix the elder cannot press is a fix not made) and, still without, offers
+  the fixes it named (`readReviewFixHeadings`, BN-77); a fix pressed leaves
+  the review's others as the first buttons under its answer (BN-77); the
+  review is told the form the tab asked for (`readLessonFormAsked`,
+  BN-78), and a devotion keeps its one point, a children's lesson its
+  story, whatever the review offers. A
+  length asked for in minutes rides as a number of WORDS
+  (`genLessonLengthLine`, BN-73: told a rate, the model wrote its one
+  template whatever was asked). **A quote of the passage is its words**
+  (BN-76): a note ask keeps what it read (`ToolWatchType.noteQuoteSources`:
+  the ask, `owa_find_verse` results, reads of the note), and an
+  `owa_note_edit` change -- a fill of the empty note included -- whose
+  quotation takes most of its words from that without being word for word
+  is refused once an ask (`findNoteMisquotes`); the blind readers' commonest
+  error, and any error keeps a lesson out of Best.
 
 - **And one for a foreground session** (2026-11-09, the user: _chatbot can
   help modify any foreground component_, then _sessions of opening

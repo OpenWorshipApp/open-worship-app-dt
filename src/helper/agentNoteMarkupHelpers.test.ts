@@ -419,23 +419,32 @@ describe('new blocks numbered as they will stand, a heading with its words', () 
 });
 
 describe('a block changed into one passage token', () => {
+    const ownText = (block: number) => {
+        return block === 1
+            ? 'Sermon on Matthew 6:25-34'
+            : '[^(KJV) John 3:1-8]';
+    };
     test('gives way to the passage, in its place', () => {
         expect(
-            expandPassageChanges([
-                { block: 1, kind: 'paragraph', text: '[^Matthew 6:25-34]' },
-            ]),
+            expandPassageChanges(
+                [{ block: 1, kind: 'paragraph', text: '[^Matthew 6:25-34]' }],
+                ownText,
+            ),
         ).toEqual([
             { after: 0, kind: 'passage', ref: 'Matthew 6:25-34' },
             { block: 1, remove: true },
         ]);
     });
-    test("one verse, or a token among words, stays the block's words", () => {
+    test("one verse, a token among words, or its own words stay the block's", () => {
         for (const change of [
             { block: 2, text: '[^John 3:16]' },
             { block: 2, text: 'Read [^John 3:1-8]' },
             { block: 2, kind: 'h2', text: '[^John 3:1-8]' },
+            // Its own range chip given back (`note-roundtrip.mjs`, a note
+            // of the dev data folder): byte for byte, no passage.
+            { block: 2, text: '[^(KJV) John 3:1-8]' },
         ]) {
-            expect(expandPassageChanges([change])).toEqual([change]);
+            expect(expandPassageChanges([change], ownText)).toEqual([change]);
         }
     });
 });

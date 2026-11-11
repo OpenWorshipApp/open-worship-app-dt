@@ -141,6 +141,7 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
+import { NOTE_LESSON_REVIEW_HINT } from './noteChatHelpers';
 import {
     GENERAL_ASK_LABEL,
     GENERAL_ASK_TOOL_NAME,
@@ -1266,6 +1267,350 @@ describe('the Anthropic loop', () => {
         ]);
         const results = readToolResults(sentList[1]);
         expect(results[0].content).toMatch(/was empty, so the lesson was/);
+    });
+
+    // BN-66 (2026-11-10, seen live): the children's lesson button pressed,
+    // the model "added" its question with an OPTIONS frame, and the window
+    // wrote it into the empty note.
+    test('a question for them is never written into the empty note', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_bible_note',
+                    input: {
+                        action: 'add',
+                        title: 'Lesson',
+                        text:
+                            'Which passage would you like?\n\nOPTIONS:\n' +
+                            '- Luke 15:1-7\n- Jonah 1',
+                    },
+                }),
+                anthropicText('Which passage would you like?'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            "Help me prepare a children's lesson",
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(fake.toolCallList).toEqual([]);
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            'Nothing was written: that is a question for them',
+        );
+    });
+
+    // BN-67 (2026-11-10, seen live in Spanish): the fill was refused (a
+    // book name no installed Bible reads), and the corrected add made a
+    // second, new note -- the redirect had been spent on the refusal.
+    test('a refused fill leaves the note empty for the next try', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        let editCount = 0;
+        fake.answerTool = (name: string) => {
+            if (name !== 'owa_note_edit') {
+                return '';
+            }
+            editCount += 1;
+            return editCount === 1
+                ? 'No installed Bible could read "Salmos 23".'
+                : JSON.stringify({ name: 'Sermon Prep', isChanged: true });
+        };
+        const add = (text: string) => {
+            return anthropicToolUse({
+                name: 'owa_bible_note',
+                input: { action: 'add', title: 'The Shepherd', text },
+            });
+        };
+        useAnthropic(
+            [
+                add('[^Salmos 23]\n## Big idea\nHe leads.'),
+                add('[^Psalm 23]\n## Big idea\nHe leads.'),
+                add('[^Psalm 23]\n## Another\nA note of its own.'),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'help me prepare a sermon',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        // Refused, then filled; once in, a new note is a new note again.
+        expect(fake.toolCallList.map((call) => call.name)).toEqual([
+            'owa_note_edit',
+            'owa_note_edit',
+            'owa_bible_note',
+        ]);
+    });
+
+    // BN-76 (2026-11-10, the blind readers): a lesson quoted Psalm 51:13 as
+    // "sinners shall return unto thee", the passage it had just read saying
+    // "be converted". Refused once, naming the quote; the next goes in.
+    test('a lesson misquoting the passage it read is sent back once', async () => {
+        fake.toolList = [
+            { name: 'owa_note_edit' },
+            { name: 'owa_bible_note' },
+            { name: 'owa_find_verse' },
+        ];
+        fake.toolResultMap.owa_find_verse = JSON.stringify({
+            bible: 'KJV',
+            verses: [
+                {
+                    ref: 'Psalm 51:13',
+                    text:
+                        '(13): Then will I teach transgressors thy ways; and ' +
+                        'sinners shall be converted unto thee.',
+                },
+            ],
+        });
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Sermon Prep',
+            isChanged: true,
+        });
+        const add = (text: string) => {
+            return anthropicToolUse({
+                name: 'owa_bible_note',
+                input: { action: 'add', title: 'A Clean Heart', text },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_find_verse',
+                    input: { refs: 'Psalm 51:13' },
+                }),
+                add(
+                    '[^Psalm 51]\n## 1. Restored\nHe vows: "sinners shall return unto thee".',
+                ),
+                add(
+                    '[^Psalm 51]\n## 1. Restored\nHe vows: "sinners shall be converted unto thee".',
+                ),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'help me prepare a sermon on Psalm 51',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        // Refused before the tool host was asked, and never claimed written.
+        const refused = readToolResults(sentList[2])[0].content;
+        expect(refused).toContain(
+            'the passage as read does not say “sinners shall return unto thee”',
+        );
+        expect(refused).not.toContain('written INTO it');
+        expect(fake.toolCallList.map((call) => call.name)).toEqual([
+            'owa_find_verse',
+            'owa_note_edit',
+        ]);
+        expect(JSON.stringify(fake.toolCallList[1].args)).toContain(
+            'sinners shall be converted unto thee',
+        );
+    });
+
+    // BN-74 (2026-11-10): a review of their lesson with nothing to press
+    // is asked once more, for the fixes it named as buttons.
+    test('a lesson review with no fix to press is asked for them', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        const { sentList } = useAnthropic(
+            [
+                anthropicText(
+                    'A strong lesson. The response could gather the big idea.',
+                ),
+                anthropicText(
+                    'A strong lesson.\nOPTIONS: Add a response that ' +
+                        'gathers it | Write what verse 3 means',
+                ),
+            ],
+            'anthropic',
+        );
+        const answer = await askLlmBot(
+            `is this a good sermon?\n${NOTE_LESSON_REVIEW_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Zacchaeus',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                },
+            },
+        );
+        expect(sentList).toHaveLength(2);
+        expect(JSON.stringify(sentList[1].messages)).toContain(
+            'the review offers no change to press',
+        );
+        expect(answer.text).toBe('A strong lesson.');
+        expect(answer.replies).toEqual([
+            'Add a response that gathers it',
+            'Write what verse 3 means',
+        ]);
+    });
+
+    // BN-77: asked once more and still no OPTIONS, the review's own fixes
+    // -- each item opening on a change to make -- are its buttons.
+    test('a review that names its fixes and offers none has them as buttons', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        const REVIEW =
+            'A strong sermon.\n\n1. **Deepen the explanation of verse 3:** ' +
+            'the crowd is more than people.\n2. **Strengthen the response:** ' +
+            'it repeats the big idea.';
+        useAnthropic(
+            [anthropicText(REVIEW), anthropicText(REVIEW)],
+            'anthropic',
+        );
+        const answer = await askLlmBot(
+            `is this a good sermon?\n${NOTE_LESSON_REVIEW_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Zacchaeus',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                },
+            },
+        );
+        expect(answer.replies).toEqual([
+            'Deepen the explanation of verse 3',
+            'Strengthen the response',
+        ]);
+    });
+
+    // BN-67 (2026-11-10): loose lines finished as a lesson go in by the
+    // flat add, in their place -- only with every line of theirs in it.
+    test('loose lines are made a lesson in their place, none left out', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        fake.toolResultMap.owa_note_edit = JSON.stringify({
+            name: 'Storm',
+            isChanged: true,
+        });
+        const add = (text: string) => {
+            return anthropicToolUse({
+                name: 'owa_bible_note',
+                input: { action: 'add', title: 'Storm', text },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                add('[^Mark 4:35-41]\n## 1. Jesus asleep in the boat'),
+                add(
+                    '[^Mark 4:35-41]\n## Introduction\nThe storm.\n' +
+                        '## 1. Jesus asleep in the boat\n## 2. Peace be still',
+                ),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'finish my sermon',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Storm',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    rewrite: {
+                        lines: [
+                            'mark 4 storm',
+                            'jesus asleep in the boat',
+                            'peace be still',
+                        ],
+                        lineBlocks: [1, 2, 3],
+                        blockCount: 3,
+                    },
+                },
+            },
+        );
+        // The first left two lines out (the storm too: a verse token's
+        // words count, its story's do not): refused, nothing changed.
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            'Nothing was changed: these lines of theirs are not in the ' +
+                'lesson -- "mark 4 storm"; "peace be still".',
+        );
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_note_edit',
+                args: expect.objectContaining({
+                    action: 'edit',
+                    changes: [
+                        { block: 1, remove: true },
+                        { block: 2, remove: true },
+                        { block: 3, remove: true },
+                        expect.objectContaining({ after: 0, kind: 'section' }),
+                    ],
+                }),
+            },
+        ]);
     });
 
     test('changes sent with no action are an edit', async () => {

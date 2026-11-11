@@ -178,7 +178,9 @@ vi.mock('../server/appHelpers', async (importOriginal) => ({
 }));
 
 import ChatbotAppComp from './ChatbotAppComp';
+import { RETRY_APPROACH_LIST } from './answerRetryHelpers';
 import { AskCancelledError } from './cancelHelpers';
+import { getLlmModelLabel, getLlmProviderLabel } from './llmBotHelpers';
 import { ToolHostError } from './mcpClient';
 import { recordSpendRound, resetSpendGuardForTests } from './spendGuardHelpers';
 
@@ -960,6 +962,172 @@ describe('the help window asking its assistant', () => {
                 '[aria-label="Which model answers"]',
             )?.value,
         ).toBe('claude-opus-5');
+    });
+
+    // 2026-11-10, the user: _add a rotate icon there to ask for retrying_,
+    // _so I can get different result_, and the goal _try with different
+    // approach and different effort_.
+    test('Retry asks the question again another way and harder each try, and leaves the box alone', async () => {
+        seedSession([
+            { author: 'you', text: 'How do I change the background?' },
+            { author: 'bot', text: 'Press **Background** at the top.' },
+            { author: 'you', text: '/clear' },
+            { author: 'bot', text: 'The screens are clear.' },
+        ]);
+        render();
+        const retryOf = (answer: Element) => {
+            return answer.querySelector<HTMLButtonElement>(
+                '[aria-label="Retry"]',
+            );
+        };
+        // A command's answer has none: asked again it would do it again.
+        expect(retryOf(lastBot())).toBeNull();
+        const [firstAnswer] = botMessages();
+        // Between the reply arrow and the thumbs.
+        const toolLabels = [
+            ...firstAnswer.querySelectorAll('.cue-tools > button'),
+        ].map((button) => {
+            return button.getAttribute('aria-label');
+        });
+        expect(toolLabels.slice(1, 4)).toEqual([
+            'Reply',
+            'Retry',
+            'Good answer',
+        ]);
+        // Half a question in the box stays there.
+        typeQuestion('and the font');
+        await act(async () => {
+            retryOf(firstAnswer)!.click();
+        });
+        await settle();
+        expect(h.askLlmBot).toHaveBeenCalledTimes(1);
+        const [asked, , , , , , extra] = h.askLlmBot.mock.calls[0];
+        expect(asked).toContain('How do I change the background?');
+        expect(asked).toContain('they want a DIFFERENT answer');
+        expect(asked).toContain(RETRY_APPROACH_LIST[0]);
+        // Not the tab's newest answer: what not to say again is quoted.
+        expect(asked).toContain(
+            'Your earlier answer was: «Press **Background** at the top.»',
+        );
+        expect(extra.retryAttempt).toBe(1);
+        expect(lastBot().querySelector('.cue-note')?.textContent).toBe(
+            'A different answer: worked out another way, with more effort.',
+        );
+        expect(
+            container.querySelector<HTMLTextAreaElement>('.chat-input')!.value,
+        ).toBe('and the font');
+        // Again, under the new answer: the second try, the second way in,
+        // and the answer is in the history so it is not quoted twice.
+        await act(async () => {
+            retryOf(lastBot())!.click();
+        });
+        await settle();
+        const [againAsked, , , , , , againExtra] = h.askLlmBot.mock.calls[1];
+        expect(againAsked).toContain(RETRY_APPROACH_LIST[1]);
+        expect(againAsked).not.toContain('Your earlier answer was');
+        expect(againExtra.retryAttempt).toBe(2);
+    });
+
+    // 2026-11-10, the user: _make the retrying pick different assistant for
+    // temparary, e.g. user didn't like result from gemma4 then try with
+    // another model (but keep the gemma4 for the next asking)_.
+    function toAnsweredBy(provider: any, model: string) {
+        return {
+            assistant: getLlmProviderLabel(provider, model),
+            model: getLlmModelLabel(provider, model),
+        };
+    }
+
+    async function pressRetry() {
+        await act(async () => {
+            lastBot()
+                .querySelector<HTMLButtonElement>('[aria-label="Retry"]')!
+                .click();
+        });
+        await settle();
+    }
+
+    test('on Auto, Retry asks someone other than who wrote the answer, and the tab keeps its pick', async () => {
+        h.llm.isAuto = true;
+        h.guessAutoPick.mockReturnValue(FREE_LIGHTNING);
+        h.resolveAutoPicks.mockResolvedValue([FREE_LIGHTNING, FREE_SEEING]);
+        seedSession(
+            [
+                { author: 'you', text: 'How do I change the background?' },
+                {
+                    author: 'bot',
+                    text: 'Press Background.',
+                    answeredBy: toAnsweredBy('free', FREE_LIGHTNING.model),
+                },
+            ],
+            {
+                provider: 'free',
+                model: FREE_LIGHTNING.model,
+                isAuto: true,
+                autoPick: FREE_LIGHTNING.label,
+            },
+        );
+        render();
+        await pressRetry();
+        expect(h.askLlmBot.mock.calls.map((call) => call[3])).toEqual([
+            FREE_SEEING.model,
+        ]);
+        expect(lastBot().querySelector('.cue-note')?.textContent).toBe(
+            'A different answer: worked out another way, with more effort. ' +
+                'Auto asked Free · Nemotron Super VL this time.',
+        );
+        // The Auto pick still names who the tab asks next.
+        expect(container.textContent).toContain(
+            `Auto pick${FREE_LIGHTNING.label}`,
+        );
+    });
+
+    test('a tab on a free model retries on another this once, and asks its own next', async () => {
+        h.resolveAutoPicks.mockResolvedValue([FREE_LIGHTNING, FREE_SEEING]);
+        seedSession(
+            [
+                { author: 'you', text: 'How do I change the background?' },
+                {
+                    author: 'bot',
+                    text: 'Press Background.',
+                    answeredBy: toAnsweredBy('free', FREE_LIGHTNING.model),
+                },
+            ],
+            { provider: 'free', model: FREE_LIGHTNING.model },
+        );
+        h.llm.chosen = 'free';
+        render();
+        await pressRetry();
+        expect(h.askLlmBot.mock.calls.map((call) => call[3])).toEqual([
+            FREE_SEEING.model,
+        ]);
+        await ask('And the font?');
+        expect(h.askLlmBot.mock.calls.at(-1)?.[3]).toBe(FREE_LIGHTNING.model);
+    });
+
+    test('a paid key retries on its next model up, and its MODEL list does not move', async () => {
+        seedSession(
+            [
+                { author: 'you', text: 'How do I change the background?' },
+                {
+                    author: 'bot',
+                    text: 'Press Background.',
+                    answeredBy: toAnsweredBy('anthropic', 'claude-sonnet-5'),
+                },
+            ],
+            { model: 'claude-sonnet-5' },
+        );
+        render();
+        await pressRetry();
+        expect(h.askLlmBot.mock.calls[0][3]).toBe('claude-opus-5');
+        expect(h.resolveAutoPicks).not.toHaveBeenCalled();
+        expect(
+            container.querySelector<HTMLSelectElement>(
+                '[aria-label="Which model answers"]',
+            )?.value,
+        ).toBe('claude-sonnet-5');
+        await ask('And the font?');
+        expect(h.askLlmBot.mock.calls.at(-1)?.[3]).toBe('claude-sonnet-5');
     });
 
     test('a smarter-model button for a model the tab no longer asks says so and asks nothing', async () => {

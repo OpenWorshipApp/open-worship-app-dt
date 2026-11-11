@@ -436,6 +436,10 @@
             "en": "How do I ask a follow-up about one answer?",
             "text": "Comment poser une question de suite sur une réponse ?"
         },
+        "common.help.retry-answer": {
+            "en": "How do I get a different answer to the same question?",
+            "text": "Comment obtenir une autre réponse à la même question ?"
+        },
         "common.help.answer-was-wrong": {
             "en": "What can I do when an answer is wrong?",
             "text": "Que faire quand une réponse est fausse ?"

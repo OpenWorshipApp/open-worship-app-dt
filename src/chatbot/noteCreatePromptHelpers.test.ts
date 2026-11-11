@@ -8,6 +8,7 @@ import {
     checkIsLessonFinishAsk,
     checkIsLessonReviewAsk,
     checkIsLessonWriteAsk,
+    genLessonLengthLine,
 } from './noteCreatePromptHelpers';
 import { BIBLE_READER_SYSTEM_PROMPT } from './bibleReaderChatHelpers';
 import { RESOURCES_SYSTEM_PROMPT } from './resourcesChatHelpers';
@@ -54,6 +55,23 @@ describe('a lesson to preach, asked anywhere', () => {
         expect(NOTE_CREATE_PROMPT).not.toContain('WHAT A LESSON HOLDS');
         expect(LESSON_MAKE_HINT).toContain(PREACHING_LESSON_SHAPE);
         expect(LESSON_MAKE_HINT).toContain('owa_bible_note action "add"');
+    });
+
+    // BN-73 (2026-11-10): "a 15 minute sermon" came back five minutes
+    // long from a rate; a number of words is what a model follows.
+    test('a length they give is a number of words', () => {
+        expect(
+            genLessonLengthLine('a 15 minute sermon on John 3:16'),
+        ).toContain('about 1800');
+        expect(genLessonLengthLine('a 20-minute devotion')).toContain(
+            'about 2400',
+        );
+        // A cut has its own hint; no length, or a silly one, says nothing.
+        expect(
+            genLessonLengthLine('it is too long, make it fit 15 minutes'),
+        ).toBe(null);
+        expect(genLessonLengthLine('a sermon on Psalm 23')).toBe(null);
+        expect(genLessonLengthLine('a 90 minute sermon')).toBe(null);
     });
 
     // A Gemma 4 is asked in the person's own words, where no English

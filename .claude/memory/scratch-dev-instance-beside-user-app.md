@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-11-09T22:21:19.941Z
+  modified: 2026-11-11T02:26:35.736Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -20,7 +20,13 @@ env -u ELECTRON_RUN_AS_NODE OWA_USER_DATA_PATH="<repo>\release\<scratch>" NODE_E
 
 with `<scratch>\setting.json` seeded
 `{"clientSetting":{"selected-parent-dir":"<scratch>\\data","stay-awake":"false"}}` and
-`<scratch>\data` created.
+`<scratch>\data` created. **The data folder's child folders are ITS settings**
+(2026-11-10): write `<scratch>\data\local-storage\select-dir-bible-notes`
+(`$DATA_DIR_PATH\bible-notes`), `select-dir-app-document` (`…\documents`) and
+`select-dir-bible-presenter` (`…\bibles`) before the launch, or every note call
+answers _No Bible notes folder is set up yet_ (Path Settings is the person's way
+in). A copied `KJV.xml` carries whatever the source had when it was made --
+`kjvBibleBooks.json` fixes reach a fresh install only.
 
 - **Prove a pid is the scratch one by its `userDataPath` before driving or
   killing it** (2026-10-23). A loop taking "the first discovery file that is

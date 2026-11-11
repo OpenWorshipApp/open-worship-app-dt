@@ -656,10 +656,12 @@ describe('an answer as it is drawn', () => {
         const box = () => {
             return query<HTMLTextAreaElement>('.chat-input')!;
         };
-        // Right after Copy, before the thumbs; a question carries none.
+        // Right after Copy, then Retry, before the thumbs; a question
+        // carries none.
         const tools = queryAll('.cue-bot .cue-tools > button');
         expect(tools[1]).toBe(reply());
-        expect(tools[2].getAttribute('aria-label')).toBe('Good answer');
+        expect(tools[2].getAttribute('aria-label')).toBe('Retry');
+        expect(tools[3].getAttribute('aria-label')).toBe('Good answer');
         expect(query('.cue-you [aria-label="Reply"]')).toBeNull();
         await typeQuestion('About F6');
         await click(reply());

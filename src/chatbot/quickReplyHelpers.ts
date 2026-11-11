@@ -52,6 +52,20 @@ export const MAX_REPLY_COUNT_WITH_ACTIONS = 2;
 export const MAX_BUTTON_COUNT = 5;
 // Long enough for "Yes, walk me through it", short enough that three fit.
 export const MAX_REPLY_LENGTH = 40;
+// A passage offered to choose names its story AND where it is (2026-11-10,
+// BN-74: "The Parable of the Lost Sheep (Luke 15:1-7)", 43 letters, was
+// dropped, and two of the three passages under "which passage?" with it).
+const MAX_PASSAGE_REPLY_LENGTH = 64;
+// A Bible passage offered to choose, bare, with its story in brackets, or in
+// brackets after it: "Psalm 23", "Psalm 23 (The Lord is my Shepherd)",
+// "David and Goliath (1 Samuel 17)", "The Lost Sheep (Luke 15:1-7)".
+const PASSAGE_REF_SOURCE =
+    '(?:[1-3] ?)?[A-Z][a-z]+(?: (?:of )?[A-Z][a-z]+){0,2} \\d{1,3}' +
+    '(?::\\d{1,3}(?: ?[-–] ?\\d{1,3})?)?';
+const PASSAGE_CLOSING_PATTERN = new RegExp(
+    `^${PASSAGE_REF_SOURCE}(?: \\([^()]{1,50}\\))?$|\\(${PASSAGE_REF_SOURCE}\\)$`,
+    'u',
+);
 
 // The frame the model is held to. Written UPPERCASE and with a colon so it
 // cannot be confused with a sentence -- and required to START a word, so an
@@ -164,7 +178,10 @@ function toReplyList(raw: string, answerText = '') {
     for (const part of raw.split('|')) {
         const reply = toCleanReply(part);
         const key = reply.toLowerCase();
-        if (reply.length === 0 || toShownLength(reply) > MAX_REPLY_LENGTH) {
+        const maxLength = PASSAGE_CLOSING_PATTERN.test(reply)
+            ? MAX_PASSAGE_REPLY_LENGTH
+            : MAX_REPLY_LENGTH;
+        if (reply.length === 0 || toShownLength(reply) > maxLength) {
             continue;
         }
         if (!checkIsReadableReply(reply, answerText)) {
@@ -308,12 +325,153 @@ const UNNAMED_OPTIONS_PATTERN = new RegExp(
 // The lines the guide and the report write for the window, never options.
 const OTHER_FRAME_LEAD_PATTERN = /^\s*(?:DO|REPORT)\s*[:：]/i;
 
+// Two to five short items between `|` and nothing else on the line -- never
+// a table's row, which opens or closes on its `|`.
+const BARE_OPTIONS_LINE_PATTERN = /^[^|\n]{1,80}(?:\|[^|\n]{1,80}){1,4}$/u;
+
+// A change to make, as a lesson review's buttons are asked to open
+// (`NOTE_LESSON_REVIEW_HINT`: "Add, Write, Move or Make") -- and as they
+// open anyway (BN-77, seen live: "Grow Jesus from the river in v. 4",
+// "Rewrite Response to gather Big idea"). Never "Explain …": pressed, it
+// is answered in the chat as a question (BN-72).
+const CHANGE_OPTION_PATTERN =
+    /^(?:Add|Write|Rewrite|Move|Make|Fix|Edit|Grow|Change|Replace|Expand|Shorten|Strengthen|Deepen|Clarify|Insert|Include|Put|Turn|Simplify|Connect|Tie|Retell|Restate|Give|Use)\s\S/u;
+
+/** Whether an option is a change to make -- a lesson review's fix. */
+export function checkIsChangeReply(text: string) {
+    return CHANGE_OPTION_PATTERN.test(String(text ?? '').trim());
+}
+
+// A review's own improvement at the head of its line, a change to make:
+// "2. **Strengthen the "Pointing to Jesus" section:** While …".
+const REVIEW_FIX_HEAD_PATTERN =
+    /^\s*(?:\d{1,2}[.)]\s*|[-*•]\s+)?(?:\*\*)?([^:\n*]{8,70}?)\s*(?:\*\*)?\s*[:：](?:\*\*)?\s/u;
+const MAX_REVIEW_FIX_LENGTH = 64;
+
+/**
+ * The fixes a lesson review NAMED, when it offered none to press even once
+ * asked for them (BN-77, 2026-11-10: a Zacchaeus review headed its two
+ * fixes "Deepen …" and "Strengthen the "Pointing to Jesus" section" and
+ * ended with no OPTIONS, twice) -- each item that opens on a change to make.
+ */
+export function readReviewFixHeadings(text: string) {
+    const fixes: string[] = [];
+    for (const line of String(text ?? '').split('\n')) {
+        const matched = REVIEW_FIX_HEAD_PATTERN.exec(line);
+        if (matched === null) {
+            continue;
+        }
+        const fix = toCleanReply(matched[1]);
+        if (
+            !checkIsChangeReply(fix) ||
+            toShownLength(fix) > MAX_REVIEW_FIX_LENGTH ||
+            fixes.includes(fix)
+        ) {
+            continue;
+        }
+        fixes.push(fix);
+        if (fixes.length >= MAX_REPLY_COUNT) {
+            break;
+        }
+    }
+    return fixes;
+}
+
+/**
+ * The items alone as the last line, right under a QUESTION (2026-11-10,
+ * BN-68: the empty note card's children's lesson pressed, gemma4:cloud asked
+ * "Which passage or subject would you like …?" over "The Parable of the Lost
+ * Sheep (Luke 15:1-7) | The Fruit of the Spirit … | David and Goliath …" --
+ * no marker, drawn as words, nothing to press). Only under a line that asks
+ * -- the shape of a question's choices, never an answer's own words -- or
+ * when every item is a change to make (BN-74, the same day: a review of a
+ * Psalm 51 sermon ended "Add why David fears losing the Spirit | Add meaning
+ * of verses 18-19 to Point 3" under its last sentence, the marker dropped,
+ * and its two fixes could not be pressed).
+ */
+function cutBareOptionsLine(lines: readonly string[], index: number) {
+    const line = lines[index].trim();
+    if (
+        !BARE_OPTIONS_LINE_PATTERN.test(line) ||
+        line.startsWith('|') ||
+        line.endsWith('|')
+    ) {
+        return null;
+    }
+    const before = lines
+        .slice(0, index)
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+    const asking = before.at(-1) ?? '';
+    const isChangeList = line
+        .split('|')
+        .every((item) => CHANGE_OPTION_PATTERN.test(item.trim()));
+    if (!/[?？]\s*$/u.test(asking) && !isChangeList) {
+        return null;
+    }
+    return {
+        text: lines.slice(0, index).join('\n').trimEnd(),
+        tail: line,
+    };
+}
+
+/**
+ * Passages to choose from, one a line, closing an answer that asks
+ * (2026-11-10, BN-74: the empty note card's children's lesson pressed,
+ * gemma4:cloud asked "which Bible passage …?" then "here are a few options
+ * that work well for children:" over three lines -- "The Parable of the
+ * Lost Sheep (Luke 15:1-7)", "David and Goliath (1 Samuel 17)" … -- with no
+ * marker, and there was nothing to press). Every line names a passage at its
+ * end and one of the two lines over them asks: steps never end in a
+ * reference, and a list of verses an answer cites asks nothing.
+ */
+function cutPassageListFrame(text: string) {
+    const lines = String(text ?? '').split('\n');
+    const listed: string[] = [];
+    let index = lines.length - 1;
+    for (; index >= 0; index--) {
+        const line = lines[index].trim();
+        if (line.length === 0) {
+            continue;
+        }
+        const option = toCleanReply(line);
+        if (
+            option.length > MAX_PASSAGE_REPLY_LENGTH ||
+            !PASSAGE_CLOSING_PATTERN.test(option)
+        ) {
+            break;
+        }
+        listed.push(option);
+    }
+    if (listed.length < 2 || listed.length > MAX_LISTED_OPTION_COUNT) {
+        return null;
+    }
+    const above = lines
+        .slice(0, index + 1)
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+    if (!above.slice(-2).some((one) => /[?？]/u.test(one))) {
+        return null;
+    }
+    return {
+        text: lines
+            .slice(0, index + 1)
+            .join('\n')
+            .trimEnd(),
+        tail: listed.reverse().join(' | '),
+    };
+}
+
 function cutUnnamedFrame(text: string) {
     const lines = String(text ?? '').split('\n');
     for (let index = lines.length - 1; index >= 0; index--) {
         const line = lines[index].trimEnd();
         if (line.trim().length === 0) {
             continue;
+        }
+        const bare = cutBareOptionsLine(lines, index);
+        if (bare !== null) {
+            return bare;
         }
         const matched = UNNAMED_OPTIONS_PATTERN.exec(line);
         // Another frame of the window's own, with a list of its own
@@ -353,7 +511,9 @@ export function parseAnswerOptions(text: string): {
         cutListedFrame(text, OPTIONS_MARKER) ??
         cutTrailingFrame(text, OPTIONS_MARKER);
     const cut =
-        marked.tail === null ? (cutUnnamedFrame(text) ?? marked) : marked;
+        marked.tail === null
+            ? (cutUnnamedFrame(text) ?? cutPassageListFrame(text) ?? marked)
+            : marked;
     return {
         text: cut.text,
         options: cut.tail === null ? [] : toReplyList(cut.tail, cut.text),

@@ -18,7 +18,7 @@
 //                prayer, Questions, Memory verse); in another language, at
 //                least nine "## " headings
 //   points       at least three numbered points ("1." …) -- a children's
-//                lesson or a devotion at least two
+//                lesson two, a devotion one
 //   point verses every numbered point cites its verses (a chip or a passage)
 //   point depth  every numbered point is more than a line: two blocks after
 //                its heading, or sixty words
@@ -124,7 +124,8 @@ export function gradeLesson(blocks, { form = 'sermon', isEnglish = true } = {}) 
     const list = Array.isArray(blocks) ? blocks : [];
     const headings = list.filter(checkIsHeading);
     const points = listPointSections(list);
-    const minPoints = form === 'sermon' ? 3 : 2;
+    // A devotion keeps the parts with one point (PREACHING_LESSON_SHAPE).
+    const minPoints = form === 'sermon' ? 3 : form === 'children' ? 2 : 1;
     const ownWords = list
         .filter((block) => block.kind !== 'passage')
         .flatMap((block) => toWords(block.text));

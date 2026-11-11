@@ -74,6 +74,12 @@ import {
     toRepliesShownInLanguage,
     type AnswerKeepType,
 } from './answerLanguageHelpers';
+import {
+    toAnthropicRetryEffort,
+    toRetryMaxTokens,
+    toRetryReasoningEffort,
+    toRetryTemperature,
+} from './answerRetryHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { findPageLanguage } from './chatTranslateHelpers';
 import {
@@ -181,16 +187,25 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_BLANK_DROPPED_NUDGE,
     NOTE_DROPPED_NUDGE,
+    NOTE_LESSON_REVIEW_HINT,
     NOTE_MAX_TOOL_ROUNDS,
+    NOTE_REWRITE_DROPPED_NUDGE,
     NOTE_SYSTEM_PROMPT,
     checkAddsNoteVerse,
     checkIsLanguageLessonAsk,
+    findBlankFillProblem,
+    findLostNoteLines,
+    findNoteMisquotes,
+    genLostNoteLinesRefusal,
+    genNoteMisquoteRefusal,
     readCreatedNote,
     resolveNoteEditTarget,
     restoreNoteTypedWords,
     toBlankNoteFillArgs,
+    withRewrittenLinesRemoved,
     type CreatedNoteType,
     type NoteAskFileType,
+    type NoteRewriteType,
 } from './noteChatHelpers';
 import {
     FOREGROUND_ASK_KIND,
@@ -208,6 +223,7 @@ import {
     NOTE_CREATE_PROMPT,
     STUDY_FILE_PROMPT,
     checkIsLessonWriteAsk,
+    genLessonLengthLine,
 } from './noteCreatePromptHelpers';
 import {
     STUDY_ASK_KIND,
@@ -250,7 +266,11 @@ import {
     scrubAnswerRecipeIds,
     scrubAnswerToolFields,
 } from './recipeIdHelpers';
-import { parseAnswerFrames, type ShowRefType } from './quickReplyHelpers';
+import {
+    parseAnswerFrames,
+    readReviewFixHeadings,
+    type ShowRefType,
+} from './quickReplyHelpers';
 import {
     describeToolStep,
     genProgressReporter,
@@ -1916,7 +1936,12 @@ type OpenAiCompatProviderType = {
     // model to its own. None is today -- the keyless one was, until its LLM7
     // half was dropped (2026-09-12) -- so every descriptor ignores it.
     getInstance: (model: string) => OpenAI | null;
-    genRequestExtra: (model: string) => Record<string, any>;
+    // `retryAttempt`: which try of a **Retry** this is, 0 for an ordinary
+    // ask -- each try asks a step harder (`answerRetryHelpers`).
+    genRequestExtra: (
+        model: string,
+        retryAttempt?: number,
+    ) => Record<string, any>;
     /**
      * How many times this provider is worth asking before the loop gives up.
      * Unset means `MAX_TOOL_ROUNDS`.
@@ -2232,7 +2257,21 @@ type ToolWatchType = {
      * (`toBlankNoteFillArgs`), once. Null for a note with anything in it.
      */
     blankNoteBlockCount?: number | null;
+    /**
+     * The ONE attached note is loose lines a _finish my sermon_ makes a
+     * lesson of: a new note the model makes, holding every one of them, is
+     * written in their place (BN-67). Null once it went in.
+     */
+    noteRewrite?: NoteRewriteType | null;
     noteVerseBible?: string | null;
+    /**
+     * In a note ask, what the model has read -- the ask itself, every verse
+     * `owa_find_verse` returned, every read of the note -- for a quote in a
+     * change to be the passage's words; a change misquoting it is refused
+     * once an ask (BN-76, `findNoteMisquotes`).
+     */
+    noteQuoteSources?: string[] | null;
+    isNoteQuoteChecked?: boolean;
     /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
@@ -2332,6 +2371,12 @@ type ToolWatchType = {
      * -- `owa_present_bible` and `owa_foreground` may only check.
      */
     isRunningOrderAsk: boolean;
+    /**
+     * A note ask carrying `NOTE_LESSON_REVIEW_HINT`: its fixes are the
+     * buttons, and a review with none goes back once (BN-74,
+     * `findAnswerShapeNudge`).
+     */
+    isLessonReview: boolean;
     /**
      * A tool answered that the question needs the main window on the
      * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
@@ -2492,6 +2537,7 @@ export function genToolWatch(): ToolWatchType {
         partControls: [],
         isWhatAsk: false,
         isRunningOrderAsk: false,
+        isLessonReview: false,
         needsPage: null,
         needsPageBy: null,
         verifiedControlNames: new Set<string>(),
@@ -2768,8 +2814,23 @@ export function findAnswerShapeNudge(
     if (checkClaimsUnmadeNoteChange(words, watch)) {
         return { nudge: NOTE_CLAIM_NUDGE, kept: text };
     }
+    if (watch.isLessonReview && parseAnswerFrames(text).options.length === 0) {
+        return { nudge: NOTE_REVIEW_OPTIONS_NUDGE, kept: text };
+    }
     return null;
 }
+
+/**
+ * What the model is told when its review of a lesson offered no fix to
+ * press (BN-74, 2026-11-10: the second review of a Zacchaeus sermon named
+ * two things to improve, the response and verse 3's crowd, and ended with
+ * no OPTIONS -- an elder reading it has nothing to press).
+ */
+export const NOTE_REVIEW_OPTIONS_NUDGE =
+    'Not yet: the review offers no change to press. Write the whole review ' +
+    'again, ending with the OPTIONS line -- the two or three changes it ' +
+    'names, a short button each that says the change, opening on Add, ' +
+    'Write, Move or Make ("OPTIONS: Add … | Write …").';
 
 // What an answer says after a change to a note: the prompt has it say the
 // change is not saved yet and that Undo this change puts it back.
@@ -2920,6 +2981,21 @@ const QUOTED_SPAN_PATTERN = /[«“"]([^«»“”"]{8,800})[»”"]/gu;
 const MIN_QUOTE_KEY_LENGTH = 24;
 // The words kept of what a conversation was given, newest last.
 const MAX_QUOTE_SOURCES = 24;
+
+// What a note ask keeps of its reads for its quotes (BN-76): a whole
+// chapter of the KJV is about 6 000 characters, and nothing is kept past
+// the ask.
+const MAX_NOTE_QUOTE_SOURCES = 12;
+const MAX_NOTE_QUOTE_SOURCE_LENGTH = 40_000;
+
+/** The words a note change writes: each change's `text`. */
+function toNoteChangeWords(args: any) {
+    return (Array.isArray(args?.changes) ? args.changes : [])
+        .map((change: any) => {
+            return typeof change?.text === 'string' ? change.text : '';
+        })
+        .join('\n');
+}
 
 /** Fold a read's words into what the answer may quote from. */
 export function addQuoteSource(watch: ToolWatchType, text: string) {
@@ -3155,6 +3231,19 @@ export function applyToolWatch(
     if (name === watch.doTool) {
         watch.isDoToolCalled = true;
     }
+    // What a note ask read: a quote in its changes must be in it (BN-76).
+    if (
+        watch.noteQuoteSources !== null &&
+        watch.noteQuoteSources !== undefined &&
+        (name === VERSE_FIND_TOOL_NAME ||
+            (name === NOTE_EDIT_TOOL_NAME && args?.action === 'read')) &&
+        !text.startsWith('Tool refused')
+    ) {
+        watch.noteQuoteSources = [
+            ...watch.noteQuoteSources,
+            text.slice(0, MAX_NOTE_QUOTE_SOURCE_LENGTH),
+        ].slice(-MAX_NOTE_QUOTE_SOURCES);
+    }
     if (name === 'owa_find_ui' || name === 'owa_list_ui') {
         try {
             const result = JSON.parse(text);
@@ -3325,6 +3414,15 @@ export function applyToolWatch(
         } catch (_error) {
             // a refusal, in words
         }
+    }
+    // Loose lines made a lesson are loose lines no more (BN-67): no later
+    // edit of this ask takes a line out as written twice.
+    if (
+        name === NOTE_EDIT_TOOL_NAME &&
+        args?.action === 'edit' &&
+        /"isChanged"\s*:\s*true/.test(text)
+    ) {
+        watch.noteRewrite = null;
     }
     if (
         name === NOTE_EDIT_TOOL_NAME &&
@@ -3676,17 +3774,69 @@ async function runMcpToolCall(
             watch.blankNoteBlockCount,
         );
         if (fill !== null) {
-            watch.blankNoteBlockCount = null;
+            // A question for them is said, never written into their note.
+            const problem = findBlankFillProblem(String(args?.text ?? ''));
+            if (problem !== null) {
+                return `Tool refused: ${problem}`;
+            }
             const filled = await runMcpToolCall(
                 NOTE_EDIT_TOOL_NAME,
                 fill,
                 watch,
                 signal,
             );
+            // Once it went in. A fill refused -- a verse no installed Bible
+            // reads -- leaves the note empty, and the model's next try goes
+            // into it too (BN-67, seen live in Spanish: "Salmos 23" refused,
+            // the corrected add made a second, new note); and it is said as
+            // it came back, never as a lesson written (BN-76).
+            if (!/"isChanged"\s*:\s*true/.test(filled)) {
+                return filled;
+            }
+            watch.blankNoteBlockCount = null;
             return (
                 `(The attached note "${watch.noteFiles[0].name}" was empty, ` +
                 'so the lesson was written INTO it, not into a new note -- ' +
                 `say so.)\n${filled}`
+            );
+        }
+    }
+    // Loose lines made a whole lesson (BN-67): the lesson, holding every
+    // line of theirs, goes in their place -- or nothing is changed and the
+    // model is told which lines it left out.
+    if (
+        name === 'owa_bible_note' &&
+        watch.noteFiles?.length === 1 &&
+        watch.noteRewrite !== null &&
+        watch.noteRewrite !== undefined
+    ) {
+        const fill = toBlankNoteFillArgs(
+            args,
+            watch.noteFiles[0].name,
+            watch.noteRewrite.blockCount,
+        );
+        if (fill !== null) {
+            const lost = findLostNoteLines(
+                watch.noteRewrite.lines,
+                String(args?.text ?? ''),
+            );
+            if (lost.length > 0) {
+                return `Tool refused: ${genLostNoteLinesRefusal(lost)}`;
+            }
+            const filled = await runMcpToolCall(
+                NOTE_EDIT_TOOL_NAME,
+                fill,
+                watch,
+                signal,
+            );
+            if (!/"isChanged"\s*:\s*true/.test(filled)) {
+                return filled;
+            }
+            watch.noteRewrite = null;
+            return (
+                `(Their lines in "${watch.noteFiles[0].name}" were made the ` +
+                'whole lesson IN that note, in their place, every one of them ' +
+                `kept -- say so.)\n${filled}`
             );
         }
     }
@@ -3824,6 +3974,32 @@ async function runMcpToolCall(
             const verseBible = await findNoteVerseBible(watch, signal);
             if (verseBible !== null) {
                 lyricEditArgs = { ...lyricEditArgs, bible: verseBible };
+            }
+        }
+        // Loose lines made a lesson by an edit (BN-67): a line of theirs
+        // the edit's new words hold is not left beside them.
+        if (watch.noteRewrite !== null && watch.noteRewrite !== undefined) {
+            lyricEditArgs = withRewrittenLinesRemoved(
+                lyricEditArgs,
+                watch.noteRewrite,
+            );
+        }
+        // A quote of the passage is its words (BN-76): a change that
+        // misquotes what this ask read is refused, once an ask -- a whole
+        // lesson sent again is a round, a loop of them is not.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteQuoteChecked !== true
+        ) {
+            const misquotes = findNoteMisquotes(
+                toNoteChangeWords(lyricEditArgs),
+                watch.noteQuoteSources,
+            );
+            if (misquotes.length > 0) {
+                watch.isNoteQuoteChecked = true;
+                return `Tool refused: ${genNoteMisquoteRefusal(misquotes)}`;
             }
         }
     }
@@ -4014,6 +4190,14 @@ export function getFirstImageCapableModel(provider: LlmProviderType | null) {
  * `null` is which.
  */
 export type AskExtraType = {
+    /**
+     * Which try of a **Retry** under an answer this ask is (1 for the first
+     * retry), unset for every other ask. The window puts the different
+     * APPROACH on the ask's words; here it is the EFFORT -- a step up each
+     * provider's own dial (`answerRetryHelpers`). The window's own sub-asks
+     * (a translation) never carry it.
+     */
+    retryAttempt?: number;
     // Pictures the USER attached. Never fetched by the model -- there is no
     // screenshot tool in its list -- so this is the only way an image enters
     // the conversation, which is what keeps a question that needs no picture
@@ -4293,6 +4477,9 @@ export type AskExtraType = {
         // The ONE attached note holds nothing: its empty blocks
         // (`ToolWatchType.blankNoteBlockCount`).
         blankBlockCount?: number;
+        // The ONE attached note is loose lines to finish as a lesson:
+        // their words and how many blocks they are (`readNoteRewrite`).
+        rewrite?: NoteRewriteType;
     };
 };
 
@@ -4722,6 +4909,7 @@ async function askAnthropicCompatible(
     if (anthropic === null) {
         throw new Error(`${provider.label} is not available`);
     }
+    const retryEffort = toAnthropicRetryEffort(model, extra?.retryAttempt);
     const anthropicTools = tools.map((tool) => {
         return {
             name: tool.name,
@@ -4821,7 +5009,18 @@ async function askAnthropicCompatible(
             response = await anthropic.messages.create(
                 {
                     model,
-                    max_tokens: ANTHROPIC_MAX_TOKENS,
+                    max_tokens: toRetryMaxTokens(
+                        ANTHROPIC_MAX_TOKENS,
+                        extra?.retryAttempt,
+                    ),
+                    // A Retry only: one step above the model's default
+                    // effort a try (`toAnthropicRetryEffort`). An ordinary
+                    // ask sends none -- the default is what the corpus was
+                    // graded at. The tools and system blocks it reads from
+                    // the cache are unchanged by it.
+                    ...(retryEffort === null
+                        ? {}
+                        : { output_config: { effort: retryEffort } }),
                     cache_control: { type: 'ephemeral' },
                     system: systemBlockList,
                     // Nothing left to look up: answer with what you have. The
@@ -5152,7 +5351,7 @@ async function askOpenAiCompatible(
     });
     // Worked out ONCE, like the system prompt: it is a function of the model,
     // and the model does not change while a question is being answered.
-    const requestExtra = provider.genRequestExtra(model);
+    const requestExtra = provider.genRequestExtra(model, extra?.retryAttempt);
     const toolRequest = provider.checkIsOneToolCallPerTurn?.(model)
         ? { tools: openAITools, parallel_tool_calls: false }
         : { tools: openAITools };
@@ -5393,6 +5592,14 @@ async function askOpenAiCompatible(
                             role: 'user',
                             content: NOTE_BLANK_DROPPED_NUDGE,
                         });
+                    } else if (
+                        watch.noteRewrite !== null &&
+                        watch.noteRewrite !== undefined
+                    ) {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_REWRITE_DROPPED_NUDGE,
+                        });
                     } else if (watch.noteFiles !== null) {
                         messages.push({
                             role: 'user',
@@ -5630,15 +5837,22 @@ const OPENAI_PROVIDER: OpenAiCompatProviderType = {
     key: 'openai',
     label: 'ChatGPT',
     getInstance: getOpenAIInstance,
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         // Only the reasoning models take an effort setting -- and only they
         // need the bigger budget, because only they spend it on thinking
         // first. An older chat model rejects the parameter outright, which
         // matters because the user can pick one from their own key's list.
+        // A Retry thinks a step harder, with room for it.
         return OPENAI_REASONING_MODEL_PATTERN.test(model)
             ? {
-                  max_completion_tokens: OPENAI_MAX_TOKENS,
-                  reasoning_effort: OPENAI_REASONING_EFFORT,
+                  max_completion_tokens: toRetryMaxTokens(
+                      OPENAI_MAX_TOKENS,
+                      retryAttempt,
+                  ),
+                  reasoning_effort: toRetryReasoningEffort(
+                      OPENAI_REASONING_EFFORT,
+                      retryAttempt,
+                  ),
               }
             : { max_completion_tokens: MAX_TOKENS };
     },
@@ -5654,14 +5868,22 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
     key: 'kimi',
     label: 'Kimi',
     getInstance: getKimiInstance,
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         // The bigger budget for every Kimi model, not just the one that can be
         // told to think less: see KIMI_EFFORT_MODEL_PATTERN. No
         // `checkIsChatModel` either -- Moonshot lists chat models only.
         return {
-            max_completion_tokens: OPENAI_MAX_TOKENS,
+            max_completion_tokens: toRetryMaxTokens(
+                OPENAI_MAX_TOKENS,
+                retryAttempt,
+            ),
             ...(KIMI_EFFORT_MODEL_PATTERN.test(model)
-                ? { reasoning_effort: KIMI_REASONING_EFFORT }
+                ? {
+                      reasoning_effort: toRetryReasoningEffort(
+                          KIMI_REASONING_EFFORT,
+                          retryAttempt,
+                      ),
+                  }
                 : {}),
         };
     },
@@ -5711,14 +5933,21 @@ const BEDROCK_PROVIDER: OpenAiCompatProviderType = {
     getInstance: getBedrockInstance,
     // The bigger budget for every family: each of them reasons out of the
     // same allowance, and it is a cap, not a spend.
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         if (BEDROCK_OPENAI_PATTERN.test(model)) {
             // OpenAI's reasoning models refuse `max_tokens`, and a help
             // lookup is not worth more than a little thinking -- the same
-            // two settings the ChatGPT descriptor sends its GPT-5 models.
+            // two settings the ChatGPT descriptor sends its GPT-5 models,
+            // a step harder on a Retry.
             return {
-                max_completion_tokens: OPENAI_MAX_TOKENS,
-                reasoning_effort: OPENAI_REASONING_EFFORT,
+                max_completion_tokens: toRetryMaxTokens(
+                    OPENAI_MAX_TOKENS,
+                    retryAttempt,
+                ),
+                reasoning_effort: toRetryReasoningEffort(
+                    OPENAI_REASONING_EFFORT,
+                    retryAttempt,
+                ),
             };
         }
         if (BEDROCK_XAI_PATTERN.test(model)) {
@@ -5913,6 +6142,7 @@ function genCustomProvider(
         isGeneral?: boolean;
         isTranslation?: boolean;
         isLongWrite?: boolean;
+        retryAttempt?: number;
     } = {},
 ): OpenAiCompatProviderType {
     const { server, row } = findCustomModelOrThrow(model);
@@ -5922,7 +6152,10 @@ function genCustomProvider(
         isGeneral = false,
         isTranslation = false,
         isLongWrite = false,
+        retryAttempt = 0,
     } = options;
+    // A Retry is sampled, or at 0 it is the same answer word for word.
+    const retryTemperature = toRetryTemperature(retryAttempt);
     return {
         key: 'custom',
         label: server.name,
@@ -5931,13 +6164,17 @@ function genCustomProvider(
         },
         genRequestExtra: () => {
             return {
-                max_tokens: isTranslation
-                    ? TRANSLATION_MAX_TOKENS
-                    : isLongWrite
-                      ? LONG_WRITE_MAX_TOKENS
-                      : MAX_TOKENS,
+                // A Retry is let think more, with the room for it.
+                max_tokens: toRetryMaxTokens(
+                    isTranslation
+                        ? TRANSLATION_MAX_TOKENS
+                        : isLongWrite
+                          ? LONG_WRITE_MAX_TOKENS
+                          : MAX_TOKENS,
+                    retryAttempt,
+                ),
                 ...(LOCAL_TEMPERATURE_KIND_SET.has(kind)
-                    ? { temperature: LOCAL_TEMPERATURE }
+                    ? { temperature: retryTemperature ?? LOCAL_TEMPERATURE }
                     : {}),
                 // A general question goes out with its thinking OFF on the
                 // two programs measured to honour the field (LM Studio and
@@ -5949,7 +6186,10 @@ function genCustomProvider(
                 // model the day before. Not in the tool loop, where the same
                 // model reasons 30-120 tokens a round and a call may need
                 // them; not to llama.cpp or an unknown server, unmeasured.
-                ...(isGeneral && (kind === 'lm-studio' || kind === 'ollama')
+                // A Retry is let think: that is the more effort it is for.
+                ...(isGeneral &&
+                retryTemperature === null &&
+                (kind === 'lm-studio' || kind === 'ollama')
                     ? { reasoning_effort: 'none' }
                     : {}),
             };
@@ -6076,6 +6316,7 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
         isGeneral: extra?.isGeneral === true,
         isTranslation: extra?.isTranslation === true,
         isLongWrite: extra?.isLongWrite === true,
+        retryAttempt: extra?.retryAttempt ?? 0,
     });
     try {
         const answer = await askOpenAiCompatible(
@@ -6749,6 +6990,9 @@ async function askLlmBotAsWritten(
         seeded.isRunningOrderAsk = checkIsRunningOrderLine(
             extra?.askedText ?? '',
         );
+        seeded.isLessonReview =
+            extra?.note !== undefined &&
+            asked.includes(NOTE_LESSON_REVIEW_HINT);
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =
@@ -6773,6 +7017,8 @@ async function askLlmBotAsWritten(
             extra?.note?.verseLang ?? extra?.study?.verseLang ?? null;
         seeded.noteTyped = extra?.note?.typed ?? null;
         seeded.blankNoteBlockCount = extra?.note?.blankBlockCount ?? null;
+        seeded.noteRewrite = extra?.note?.rewrite ?? null;
+        seeded.noteQuoteSources = extra?.note === undefined ? null : [asked];
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -6865,7 +7111,10 @@ async function askLlmBotAsWritten(
             checkIsLanguageLessonAsk(extra?.askedText ?? '') ||
             checkIsLessonWriteAsk(asked.split(/\n\s*\n/)[0] ?? ''));
     if (isLessonAsked) {
-        asked = `${asked}\n\n${LESSON_MAKE_HINT}`;
+        const lengthLine = genLessonLengthLine(extra?.askedText ?? asked);
+        asked =
+            `${asked}\n\n${LESSON_MAKE_HINT}` +
+            (lengthLine === null ? '' : `\n${lengthLine}`);
     }
     asked = toAskWithLanguage(asked, extra, appLang);
     const guardedExtra: AskExtraType = {
@@ -6977,6 +7226,13 @@ async function askLlmBotAsWritten(
         answer.text = dropModelTokens(cutRunawayAnswer(frames.text));
         if (frames.options.length > 0) {
             answer.replies = frames.options.map(dropModelTokens);
+        } else if (watch.isLessonReview) {
+            // A review with no fix to press even once asked for them: the
+            // fixes it named are the buttons (BN-77).
+            const namedFixes = readReviewFixHeadings(frames.text);
+            if (namedFixes.length > 0) {
+                answer.replies = namedFixes;
+            }
         }
         if (frames.requests.length > 0) {
             answer.attachRequests = frames.requests;

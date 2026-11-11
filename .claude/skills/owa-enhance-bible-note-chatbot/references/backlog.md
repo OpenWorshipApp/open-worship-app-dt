@@ -791,13 +791,32 @@ was seen and what was done.
   (`indent: "more"`, as a change does).
 - **BN-21 — a Resources chat's note not seen live.** The scratch profile held no
   Resources files; that ask has the tool and the sentence, held by tests only.
-- **BN-64 — an empty note's card offers nothing to start a lesson.** The
-  card a note opens with offers translating, a spelling check, a summary
-  and formatting -- none of which an EMPTY note can use. A button such as
-  _Help me prepare a preaching lesson_ (the empty-note hint asks which
-  passage when none is named) would be one new key in every dictionary,
-  each version raised and packed.
-- **BN-65 — the lesson readers are English** (part done 2026-11-10). `checkIsLessonWriteAsk` and
+- ~~**BN-64 — an empty note's card offers nothing to start a lesson.**~~
+  Done 2026-11-10: an EMPTY note's card says it is still empty and offers
+  **Help me prepare a preaching lesson**, **… a children's lesson** and
+  **… a short devotion** (`genNoteOpeningAnswer`'s `isEmpty`, three keys in
+  all 87 dictionaries, each version raised, packed;
+  `lessonCardAsks.test.ts` holds every language's buttons to
+  `checkIsLessonCardAsk`), a press read as a lesson asked for in any
+  language (`isLessonContinued`). The first live run showed the ordinary
+  card on an empty note: the file's reader writes an empty body as
+  `(empty)` (`EMPTY_NOTE_BODY`) and the check had looked for the title line
+  alone -- a unit test built on that assumption had passed; the test is
+  now built through `toNoteItemFromFileText` and `genTextAttachment`, as the
+  window builds it. Seen live after: the card, the press, three passages
+  as buttons, the first pressed, the whole lesson in the note (C-01..C-03,
+  10/10 each by `lesson-rubric.mjs`); in Spanish the card in Spanish, the
+  passage typed (_Salmo 23_), a whole Spanish lesson in the note in 13 s.
+- ~~**BN-65 — the lesson readers are English**~~ Done 2026-11-10 for every
+  language, without lesson words for each: `LESSON_OUTLINE` (~70 tokens)
+  rides `NOTE_SYSTEM_PROMPT` and `NOTE_CREATE_PROMPT` in every language,
+  with the rule that an EMPTY note's lesson goes into it by one
+  `owa_bible_note add`; the card's buttons are read in every language. Seen
+  live with Spanish installed (no `assistant.json`, no `lessonAsks`):
+  _Ayúdame a preparar un sermón sobre el Salmo 23 para el domingo_ in an
+  empty note, the whole lesson in Spanish, 10/10, 548 words, one change.
+  The note on French and Khmer below is the part done first:
+  `checkIsLessonWriteAsk` and
   its siblings read the English of an ask; a question asked of a Gemma 4
   model in the person's own language goes to it untranslated, so on Auto
   in a non-English app (which prefers a Gemma 4) a lesson asked for in
@@ -812,5 +831,231 @@ was seen and what was done.
   Seen live with the Khmer pack installed: _ជួយខ្ញុំរៀបចំសេចក្ដីអធិប្បាយលើ
   យ៉ូហាន ១០:១១-១៨_ in an empty note, the whole lesson written in Khmer in
   one call, the note titled in Khmer -- one Thai word slipped into a Khmer
-  line (a model's, not caught: a note's words are never cleaned). Open:
-  the other 85 languages' words.
+  line (a model's, not caught: a note's words are never cleaned).
+- **BN-66 — "best" is a written standard and a blind reader's, not ours**
+  (2026-11-10, the goal's own word). `references/lesson-rubric.md` is the
+  standard: twelve criteria from Robinson's _Biblical Preaching_, Chapell's
+  _Christ-Centered Preaching_ and Stott's _Between Two Worlds_, 0-2 each,
+  Best / Good / Needs work, a factual error about the Bible capping a lesson
+  at Needs work. `scripts/run-lesson-asks.mjs` makes every row of
+  `references/lesson-asks.json` (14 asks across the genres, 4 partial
+  sermons to finish, the empty note's 3 buttons) through the real window on
+  a scratch profile and `scripts/lesson-rubric.mjs` checks the structure by
+  machine and writes each lesson as text for two readers on different
+  models told only the standard. Machine check, 2026-11-10: 19 of 22 every
+  check (the Easter sermon's points one paragraph each; a near-whole sermon
+  finished at 440 words of the 450 a sermon is held to; loose lines written
+  twice before BN-67's last rule). **The two readers of the 22**: Opus 8
+  Best, 10 Good, 4 Needs work; Sonnet 7 Best, 14 Good, 1 Needs work (mean
+  18.9 of 24); both found the same two errors (Psalm 51's "pure heart" cited
+  at verse 7, the KJV's "clean heart" being verse 10; the sower's parables
+  said to help the crowd understand, Matthew 13:11-13 saying the reverse),
+  and the same weakest criteria -- illustration (1.09 of 2), background
+  (1.18), explanation (1.18) -- plus one template for every ask (20 of 21
+  introductions "Have you ever…?", 460-720 words whatever was asked: a
+  15-minute sermon ran five minutes, a funeral had discussion questions, a
+  children's lesson printed a whole KJV chapter). **Three shapes compared
+  blind** (eight of the weakest asks made again, shuffled with the first
+  eight under neutral ids, two fresh readers each): asked for "the one fact
+  of that time" and "a concrete story (who, where, what happened)", the
+  lessons grew richer and LESS true -- background 1.13 -> 1.88, illustration
+  1.00 -> 1.63, accuracy 1.88 -> 1.38 (Sonnet) and 1.38 -> 0.75 (Opus), the
+  model inventing history and anecdotes told as true ("In 1944…", "I
+  remember a friend…"); told "TRUE above all" in words, still 2 errors
+  against 11, from Hebrew word studies and quotes made from memory -- the
+  model writes before the app prints the passage. The shape now READS the
+  passage first (`owa_find_verse`) and builds every point, quote and verse
+  number on its words, explains a word plainly (an old word of the printed
+  Bible in today's words, no word study), tells a story as an example,
+  covers the whole passage, keeps a length asked (about 120 spoken words a
+  minute), leaves discussion questions out of a funeral and gives a
+  children's lesson its key verses retold; and a question for the person is
+  never written into their empty note (`findBlankFillProblem`: seen once,
+  the children's button pressed, the model's own "which passage?" with its
+  OPTIONS went in). **The last blind read**, the first eight against the
+  read-first eight (shuffled, a fresh reader): mean 16.9 -> 19.0 of 24,
+  0 Best / 6 Good / 2 Needs work -> 2 / 5 / 1, and accuracy UP, 1.75 ->
+  1.88 -- background 1.00 -> 1.50, illustration 0.88 -> 1.25, the human
+  need 1.00 -> 1.38, Christ grown from the text 1.25 -> 1.63, fit 1.25 ->
+  1.50; the one fall a devotion's single point on Psalm 46 that left
+  "be still" out (19 -> 15). The second reader (Opus) the same way:
+  factual errors 2 -> 0, accuracy 1.38 -> 1.75, Needs work 2 -> 0, mean
+  18.6 -> 19.1. Each lesson one call after the read, 7-11 s.
+  Still weakest: explanation (1.13) and the points covering the whole
+  passage (1.38) -- a model that reads the passage still preaches its
+  first half; and a 15-minute sermon on one verse runs short.
+- **BN-72 — the review is the way from good to best** (2026-11-10). A
+  draft is a draft; the chatbot helps PREPARE, so _is this a good
+  sermon?_ is now judged as the blind readers judged
+  (`NOTE_LESSON_REVIEW_HINT`: read the passage first; truth, one big idea,
+  points over the WHOLE passage, verses explained, an example each,
+  something to do, Christ grown from the text, a response that gathers --
+  in that order of weight), the two or three fixes that matter most each a
+  button that SAYS the change (Add / Write / Move / Make: "Explain the
+  hardened heart" had been read as a question and answered in the chat).
+  Live on the sower sermon both readers had marked down: the review named,
+  by heading, the good soil with no point of its own and a point printing
+  verses 5-21; **Narrow the passage in Point 2** pressed -- refused once
+  ("A passage is ONE reference", the model having written "Matthew
+  13:5-6, 20-21", which the resolver had read as the very span already
+  there and answered "nothing was changed"), then two exact passages in its
+  place, 14 s; **Add a point on the Good Soil** pressed -- "4. The
+  fruitfulness of a receptive heart" with Matthew 13:8 printed, its
+  meaning, an example and something to do this week, before Pointing to
+  Jesus, one edit, 6 s. A passage block given another `ref` is that
+  passage in its place (`expandPassageRepoints`), and a passage `ref`
+  holding two ranges is refused with how to write it.
+- **BN-73 — a length they give is a number of words** (2026-11-10, the
+  readers of BN-66: _a 15-minute sermon ran five minutes_). Told "about 120
+  spoken words a minute", gemma4:cloud still wrote its one template,
+  460-720 words, whatever was asked. A lesson asked for in minutes now
+  carries one line with the number itself (`genLessonLengthLine`: 3-60
+  minutes, `minutes × 120` rounded to the hundred, the passages printed not
+  counted, "fill it with explanation and examples, never with more
+  points"), on a lesson written, made new or finished -- never a review,
+  and never a cut, which has its own hint. Seen live: _a 15 minute sermon
+  on John 3:16_ came to 1 220 words (about ten minutes) where it had been
+  460-720 -- still short of the 1 800 asked.
+- **BN-74 — the review's fixes can always be pressed, in the lesson's own
+  form** (2026-11-10). The way BN-72 opened -- a draft, _is this a good
+  sermon?_, its first fix pressed, twice -- run on BN-66's eight weakest
+  asks stopped short five ways. (1) A review ended with its fixes as a
+  bare `|` line, the marker dropped (Psalm 51), drawn as words:
+  `cutBareOptionsLine` reads a line whose every item opens on Add, Write,
+  Move or Make under a statement too, as it read any line under a
+  question. (2) A review named two fixes and offered none (the second on
+  Zacchaeus): a review ask (`ToolWatchType.isLessonReview`, its hint in
+  the ask) whose answer has no options goes back once
+  (`NOTE_REVIEW_OPTIONS_NUDGE`). (3) The empty note card's children's
+  lesson: the model offered its three passages one a line under "here are
+  a few options that work well for children:", no marker -- nothing to
+  press, and the note stayed empty; passages one a line closing an answer
+  that asks are its options now (`cutPassageListFrame`), and a passage
+  option may run to 64 letters ("The Parable of the Lost Sheep (Luke
+  15:1-7)", 43, had been dropped by the 40 every button keeps to). (4) Both
+  devotions were reviewed into three points (_Add a point on God's
+  victory_, _Make 3 points following the Psalm_), the form asked for
+  undone; the review hint now says a devotion keeps its ONE point and a
+  children's lesson its story, a fix adding to them. (5) The children's
+  lesson on Jonah printed the whole book (Jonah 1:1-4:11) and had no
+  introduction, points, Christ, response or prayer -- 5 of 10 by machine,
+  draft and reviewed alike: a children's lesson keeps every part now, only
+  the verse or two its story turns on printed, the story told to where the
+  passage ends, two points a child can hold.
+- ~~**BN-75 — a note's new name went back with the next change.**~~ Fixed
+  2026-11-10. A title is the list's: the assistant's rename (as the row's
+  Edit Title) saves the file at once and rebases the editing head. But the
+  note WINDOW writes its typing into that head with its own copy of the
+  item (`addItemEditingHistory`), and a window opened before the rename
+  held the old title -- so the next change, the assistant's or the
+  person's, put the old name back in the head, every read named the note
+  by it (the lesson review never saw "Devotion on Psalm 46", only
+  "Lesson L11 r3", and reviewed it as a sermon into three points), and the
+  window's Save would have put it back in the file. The same happened to
+  the list's own Edit Title with the note's window open. The window's
+  write now keeps the title the head holds, as the rebase already kept
+  each side's own (`takeItemContentsFrom`: the list owns titles, the
+  window the text). Seen live after: the devotion named once and read by
+  that name through two reviews and their changes; its fixes kept to its
+  one point (_Add verse 10 to the main point_).
+- **BN-76 — a quote of the passage is its words** (2026-11-10, the blind
+  readers of BN-74). The commonest factual error left in the lessons was a
+  phrase in quotation marks the passage, read a moment before, does not
+  say -- "sinners shall return unto thee" for Psalm 51:13's "be converted",
+  in the draft and the reviewed lesson alike -- and a quote is read out as
+  the Bible's own; under the standard, any such error keeps a lesson out of
+  Best. In a note ask the window now keeps what was read (the ask, every
+  `owa_find_verse` result, every read of the note), and a change whose
+  quote takes most of its words from that and is not word for word is
+  refused once an ask, naming the quote (`findNoteMisquotes`,
+  `genNoteMisquoteRefusal`; a hearer's question in quotation marks shares
+  little with the passage and goes through). A fill of the empty note that
+  is refused is said as it came back, no longer wrapped in "the lesson was
+  written INTO it -- say so". Seen live after, on Psalm 51: its quotes of
+  verses 3 and 4 word for word, its three hearer's questions untouched; the
+  refusal itself held by a loop test (the model wrote no misquote that
+  run). Not caught: a detail added without quotation marks ("left the
+  others in a safe place", Luke 15:4 saying "in the wilderness").
+- **BN-77 — a review's other fixes stay pressable** (2026-11-10, the blind
+  readers of BN-74: a children's lesson's first fix added Pointing to
+  Jesus, 0 -> 2, and its missing Response stayed missing -- one fix a
+  round, the review's other buttons gone with the first press). A change
+  pressed among several leaves the others as the first buttons under its
+  answer (`handleReplying`'s `carryReplies`, `checkIsChangeReply`); a
+  change opens on any of the common edit verbs, not only the four the
+  review is asked for (seen: "Grow Jesus from the river in v. 4", "Rewrite
+  Response to gather Big idea"), never "Explain …", which is answered as a
+  question. A review that names its fixes and offers none even once asked
+  for them has the ones it named as its buttons
+  (`readReviewFixHeadings`: "2. **Strengthen the "Pointing to Jesus"
+  section:**" -- a Zacchaeus review ended twice with none). Seen live: on
+  Jonah and on Psalm 23 the second fix pressed straight off the buttons
+  the first fix's answer carried.
+- **BN-78 — the review knows the form it judges** (2026-11-10). A short
+  devotion asked for by the empty note card's button was reviewed as a
+  sermon -- _is this a good sermon?_ names no form, the note neither --
+  and its first fix was _Add points for verses 4-6_, the one point a
+  devotion keeps undone. The window reads the form off the tab's own
+  earlier ask (`readLessonFormAsked`: the card's button, or "devotion" /
+  "children's" in a typed ask) and a review or a finish carries one line
+  saying it (`genLessonFormLine`).
+- **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
+  `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
+  in every text node, a passage's verse words included: Matthew 6:32's
+  "(For after all these things do the Gentiles seek:)" reads "seek🙂" in
+  the note (a blind reader of BN-66 caught it). The KJV closes many
+  asides so. Not the chatbot's code: the editor could leave a passage's
+  words alone, or the app turn the plugin off.
+- **BN-71 — a typo in the app's own KJV.** Jonah 1:15 read "So they look
+  up Jonah" in `src/helper/bible-helpers/bible-data/kjvBibleBooks.json`
+  (the KJV: "took up"), printed into every lesson on Jonah (a blind
+  reader caught it). Fixed 2026-11-10; a KJV already installed keeps its
+  copy until it is installed again.
+- **BN-67 — _finish my sermon_ grows the lesson where it stands**
+  (2026-11-10, the Stop hook: _checked live once, on a single partial
+  lesson_). Four partial sermons asked live, four ways wrong: the model
+  numbered each new block after the one it had just added
+  (`after: 3, 4, 5, 6` for a heading, its words, the next heading …) where
+  the tool reads every number as the note was read, wrote "## " into a
+  heading's words, left a point's one line as all it had, put the
+  introduction after the points and each point's own line under its new
+  words, and asked again in parts named blocks its first part had moved.
+  Now: the window names what the lesson lacks and the block each part goes
+  after (`genLessonGapsText` -- the end of the part before it in the
+  shape's order, a point's own last line for its words; a lesson headed in
+  another language is told only its passage and points); _finish it_
+  beside a lesson is read (`checkIsBareFinishAsk`, `checkIsLessonNoteText`);
+  the hint asks ONE add a place, numbers as read; the tool reads a
+  heading's marks as the heading (`readHeadingMarks`), a heading added with
+  its words numbered as they will stand as one section (`chainSectionAdds`,
+  one block a place only -- sections one a place were numbered right),
+  a line changed into a range token as the passage (`expandPassageChanges`),
+  reads a section's lone verse token even where the note has its chip
+  (the passage it becomes needs the verse; "no installed Bible could read
+  Luke 15:4"), and a chained block no longer claims the number it was given
+  (a point's words had gone under the background). A dropped long edit is
+  asked for in parts FROM THE END UP (`NOTE_DROPPED_NUDGE`: an add moves
+  only what is after it). Loose lines (every block a paragraph, read
+  whole, 20 at most) are a lesson written in their place by ONE flat add
+  (`readNoteRewrite`, `NOTE_LESSON_REWRITE_HINT`, the window's
+  `toBlankNoteFillArgs`) only when every line of theirs is in it
+  (`findLostNoteLines`), and an edit that weaves them into a lesson takes
+  out each raw line its new words hold (`withRewrittenLinesRemoved`). A
+  refused fill of an EMPTY note no longer spends the redirect (seen live in
+  Spanish: "Salmos 23" refused, the corrected add made a second note). Seen
+  live after: the outline, the listed points and the near-whole sermon each
+  every part in order, their words kept, one call (6-12 s).
+- **BN-68 — a bold OPTIONS marker over a list.** `**OPTIONS:**` on its own
+  line with the options under it -- how gemma4:cloud closed most finished
+  sermons -- was drawn as words: the closing `**` read as words after the
+  marker. `cutListedFrame` takes them off (`quickReplyHelpers.ts`); seen
+  live after, the buttons under every finished sermon. A model in a
+  language with no frame words of its own (Spanish) writes `OPCIONES:` over
+  a list, which BN-47 leaves as words on purpose (a list one a line under an
+  unknown word is how steps are written).
+- **BN-69 — a note named like a guide page loses its name in the answer.**
+  `scrubAnswerRecipeIds` takes any `L-01`-shaped word out of an answer: a
+  note titled "Lesson L-01 a" was answered as "Lesson the guide page a".
+  The run names its notes without the hyphen; a person's own title of that
+  shape (`Series A-1`) would be read so too. The attached note's name could
+  be spared.

@@ -410,10 +410,13 @@ export function readHeadingMarks(
  * asked to finish a sermon whose first line was "Sermon on Matthew
  * 6:25-34", gemma4:cloud changed that line to `[^Matthew 6:25-34]`, a chip
  * with ten verses folded into it where the lesson opens on the passage
- * read. The block gives way to the passage, in its place.
+ * read. The block gives way to the passage, in its place -- never a block
+ * given its OWN words back (a chip of a range the person put in a line
+ * stays that chip, byte for byte: `note-roundtrip.mjs`).
  */
 export function expandPassageChanges(
     changes: readonly NoteEditChangeType[],
+    toOwnText: (block: number) => string | null,
 ): NoteEditChangeType[] {
     return changes.flatMap((change) => {
         if (
@@ -427,12 +430,52 @@ export function expandPassageChanges(
         ) {
             return [change];
         }
+        const ownText = toOwnText(change.block);
+        if (ownText === null || ownText === change.text.trim()) {
+            return [change];
+        }
         const ref = readPassageLineRef(change.text);
         if (ref === null || !checkIsPassageRef(ref)) {
             return [change];
         }
         return [
             { after: change.block - 1, kind: 'passage', ref },
+            { block: change.block, remove: true },
+        ];
+    });
+}
+
+/**
+ * A passage given another reference is that passage, in its place (BN-72,
+ * 2026-11-10: a review's fix "narrow point 2's passage to the stony ground"
+ * came as `{block: 14, ref: "Matthew 13:5-6"}`, refused as saying nothing
+ * to change, then as a passage given another kind).
+ */
+export function expandPassageRepoints(
+    changes: readonly NoteEditChangeType[],
+    kindOf: (block: number) => string | null,
+): NoteEditChangeType[] {
+    return changes.flatMap((change) => {
+        if (
+            typeof change !== 'object' ||
+            change === null ||
+            typeof change.block !== 'number' ||
+            change.after !== undefined ||
+            change.remove === true ||
+            typeof change.ref !== 'string' ||
+            change.ref.trim() === '' ||
+            change.text !== undefined ||
+            !(change.kind === undefined || change.kind === 'passage') ||
+            kindOf(change.block) !== 'passage'
+        ) {
+            return [change];
+        }
+        return [
+            {
+                after: change.block - 1,
+                kind: 'passage',
+                ref: change.ref.trim(),
+            },
             { block: change.block, remove: true },
         ];
     });

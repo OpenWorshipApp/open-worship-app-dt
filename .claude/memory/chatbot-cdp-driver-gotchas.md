@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 20009620-23d6-4172-90ec-96d382b1023a
-  modified: 2026-09-10T17:33:25.288Z
+  modified: 2026-11-11T01:52:28.178Z
 ---
 
 Two traps when a script asks questions through the real chatbot window
@@ -34,6 +34,32 @@ textarea, `Network.enable` to count model rounds and `tools/call` posts):
   went there unasked (and hallucinated a cost). Put the default back before
   the last ask (`--provider=Claude --model=claude-sonnet-5` on a throwaway
   `/commands`) and read the provider on every answer's head row.
+
+- **With words in the focused box, the type-ahead list sits over the
+  newest answer's tool row** (2026-11-10, EC-476). A `click` by snapshot
+  uid on that answer's Copy / Reply / Retry / thumbs is sent at the
+  button's centre and lands on a suggestion row instead -- the box then
+  holds that question (_What are the Extra Binaries…_) and the press never
+  happened, with no error. Escape in the box, then click something that
+  is not the box (the answer's ASSISTANT label), then press; or keep the
+  box empty. The box takes the focus back when an answer lands, so it
+  comes back after every ask.
+
+- **What the window SENDS a server of the user's own is invisible to the
+  Network panel** (2026-11-10, EC-476): custom and registry servers go
+  renderer → IPC → the main-process relay, and `globalThis.provider` is
+  frozen (`freezeObject`), so nothing can be wrapped. Over raw CDP on the
+  `chatbot.html` target: `Debugger.enable`, find the script whose url holds
+  `customServerClientHelpers`, read that script's source over the Debugger
+  domain, and put a
+  breakpoint on the generated line with `const requestId =
+  crypto.randomUUID()` whose CONDITION parses `body`, pushes what you want
+  onto a page global and returns `false` -- it never pauses and changes no
+  code. Hold the session in a background script (a breakpoint dies with it,
+  and with a reload: restart it after an edit hot-reloads the window), read
+  the global with `Runtime.evaluate`, and on the way out remove the
+  breakpoint, `Debugger.disable` and delete the global. The relay forwards
+  that body unchanged, so it is the request on the wire.
 
 **Why:** both silently produce wrong measurements rather than errors.
 

@@ -954,11 +954,13 @@ button.chat-engine {
   }
 }
 
-// The reply arrow and the two thumbs beside Copy: icons, a little larger than
-// the lettering they stand next to so the hand reads at a glance. The thumb
-// pressed stays filled and at full strength -- the only colour change in the
-// row, and a steady one (nothing here animates).
+// The reply arrow, Retry and the two thumbs beside Copy: icons, a little
+// larger than the lettering they stand next to so the hand reads at a
+// glance. The thumb pressed stays filled and at full strength -- the only
+// colour change in the row, and a steady one (nothing here animates: the
+// rotate icon does not spin, not even while its answer is coming).
 .cue-quote,
+.cue-retry,
 .cue-rate {
   font-size: 12.5px;
   letter-spacing: 0;
@@ -968,6 +970,12 @@ button.chat-engine {
     opacity: 1;
     color: var(--chat-signal);
   }
+}
+
+// Retry waits while the tab answers something: faded, and no hover.
+.cue-retry:disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 // What the answer above it cost, at the end of the same quiet row as Copy.

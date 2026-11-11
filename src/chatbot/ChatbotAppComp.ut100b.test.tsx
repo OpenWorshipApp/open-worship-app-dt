@@ -161,7 +161,10 @@ function genNoteAttachment() {
 }
 
 // A tab whose last question attached the document.
-function seedDocumentTab(attachment: Record<string, unknown>) {
+function seedDocumentTab(
+    attachment: Record<string, unknown>,
+    botExtra: Record<string, unknown> = {},
+) {
     settings.set(
         SESSIONS_KEY,
         json({
@@ -177,7 +180,12 @@ function seedDocumentTab(attachment: Record<string, unknown>) {
                             text: 'About this',
                             attachments: [attachment],
                         },
-                        { id: 2, author: 'bot', text: 'It is attached.' },
+                        {
+                            id: 2,
+                            author: 'bot',
+                            text: 'It is attached.',
+                            ...botExtra,
+                        },
                     ],
                     draft: '',
                     focus: 'presenter',
@@ -584,6 +592,39 @@ describe('ChatbotAppComp: a question about a document of theirs', () => {
             );
             expect(bodyOf(lastCue())).toContain(NEEDS_ASSISTANT);
         });
+    });
+
+    // BN-77 (2026-11-10): a lesson review offers two or three fixes; one
+    // pressed, the others had gone until the review was asked again.
+    test('the other fixes of a review stay buttons after one is pressed', async () => {
+        routes.owa_note_edit = () => json(NOTE_READ);
+        mocks.askLlmBot.mockResolvedValue({
+            text: 'I added it under Point 1.',
+            replies: ['Make the headings blue'],
+        });
+        seedDocumentTab(genNoteAttachment(), {
+            text: 'A strong lesson. Three things would improve it.',
+            replies: [
+                'Add a point on the good soil',
+                'Write what verse 19 means',
+                'Make the response shorter',
+            ],
+        });
+        await renderWindow();
+        await act(async () => {
+            container.querySelector<HTMLButtonElement>('.cue-reply')!.click();
+        });
+        await waitFor(
+            () => mocks.askLlmBot.mock.calls.length > 0,
+            'the assistant',
+        );
+        await waitForAnswer();
+        expect(askedText()).toContain('Add a point on the good soil');
+        expect(replyLabels(lastCue())).toEqual([
+            'Write what verse 19 means',
+            'Make the response shorter',
+            'Make the headings blue',
+        ]);
     });
 
     describe('any other question goes to the assistant with the document as it reads now', () => {

@@ -2,7 +2,7 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, CB-175, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
 screenshots: 50
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-10"
@@ -463,6 +463,24 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    under _Replying to this part of your answer:_. Nothing is sent until you press
    **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
    pressing the arrow twice writes it in once.
+   **And every answer has a Retry beside the reply arrow, for a different answer.**
+   Press the round arrows (**[en:tran:Retry]**) under an answer and the same
+   question is asked again — with the file or picture it was asked with — and
+   the new answer comes at the bottom under _A different answer: worked out
+   another way, with more effort._ Each press tries another way in: another
+   way to do it that the app has (or, when there is only one, it says so and
+   adds what to do when a step does not work), the question read another way,
+   or the answer worked out again step by step — and it thinks harder each
+   time, but keeps every button name right. And where there is another assistant to ask, the press asks it,
+   for that one question: on **Auto** — or on your own server, OWA Shared or
+   Free — the one that wrote the answer goes to the back of the line and the
+   note says who answered this time (_Auto asked … this time._); with a key of
+   your own, the next model up of that same key answers. The next question
+   goes to the one picked at the top of the window, as before — nothing there
+   changes. Anything you were typing in the box stays there, and the round
+   arrows wait, greyed, while an answer is on its way. An answer to one of the
+   `/` commands has none — pressed again, a command would just do the same
+   thing again.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
@@ -1000,7 +1018,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `CB-175` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

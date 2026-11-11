@@ -2004,4 +2004,22 @@ false` and searches only a dataset a lookup panel already holds
   point's example). A whole lesson nested in `changes[].text` is the call
   the shared gemma4:cloud server drops (7 of 8 replays, no text and no call
   back), so the chatbot writes an empty note's lesson as `owa_bible_note
-  add` and the window turns it into this edit (`chatbot-llm.md`).
+  add` and the window turns it into this edit (`chatbot-llm.md`). **And
+  what a model writes finishing one** (2026-11-10, BN-67, four partial
+  sermons asked live): a heading's own `## ` in its words is read as the
+  heading (`readHeadingMarks`); new blocks ONE a place whose `after` goes up
+  one at a time and hold a heading with words after it are one section,
+  each after the one before (`chainSectionAdds` -- sections one a place were
+  numbered as read, and stay so); a line changed into one token naming a
+  range is that passage, in its place (`expandPassageChanges`); a section's
+  lone verse token is read from the Bible even where the note has its chip
+  (`collectNewNoteVerseRefs`: the passage it becomes needs the verse, and
+  "no installed Bible could read Luke 15:4" had refused a whole finish);
+  and a chained block counts as placed after the block its chain grows
+  from, never after the number it was given -- a block of the note too, so
+  a point's words had gone under the background. A passage block given
+  another `ref` is that passage in its place (`expandPassageRepoints`,
+  BN-72), and a passage `ref` holding two ranges ("Matthew 13:5-6, 20-21")
+  is refused with the two passages to add -- the resolver had read it as
+  one span, the very passage already there, and answered "nothing was
+  changed".

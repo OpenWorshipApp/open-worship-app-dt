@@ -24,6 +24,13 @@
 //
 // `--not-english`: the window is shown in another language; the structure
 // check counts headings instead of reading their English names.
+//
+// `--review=N`: how a preacher prepares with it -- each lesson made, then N
+// rounds of "is this a good sermon?" with its first fix pressed; the draft
+// (`blocksBefore`) is kept beside the lesson it became (`blocks`), so the
+// two can be read blind against each other (BN-72). `--fixes=N` presses up
+// to N of each review's fixes, the next one off the buttons the answer to
+// the last carries (BN-77) -- only fixes the review itself offered.
 
 import { spawn } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -53,6 +60,8 @@ const TAG =
     flag('tag') ?? new Date().toISOString().slice(11, 16).replace(':', '');
 const ONLY_SET = flag('only') === null ? null : new Set(flag('only').split(','));
 const IS_ENGLISH = !rest.includes('--not-english');
+const REVIEW_ROUNDS = Number(flag('review', '0'));
+const FIXES_PER_REVIEW = Math.max(1, Number(flag('fixes', '1')));
 
 // --- the instance ------------------------------------------------------------
 
@@ -389,7 +398,13 @@ async function ask(text) {
         return 'sent';
     })()`);
     const isDone = await waitForAnswer(before, startedAt);
-    return { isDone, startedAt, seconds: Math.round((Date.now() - startedAt) / 1000) };
+    const seconds = Math.round((Date.now() - startedAt) / 1000);
+    return {
+        isDone,
+        startedAt,
+        seconds,
+        answerText: (await readLastCue()).text.slice(0, 3000),
+    };
 }
 
 /** Presses the Nth option button of the last answer (or the card). */
@@ -595,8 +610,12 @@ for (const item of items) {
         button: 'right',
     });
     const menu = await callTool('owa_click', { find: shownWords.openInChatbot });
-    await sleep(1500);
-    const caution = await pressCaution();
+    // The caution can take a few seconds to come up on a busy window.
+    let caution = 'no caution';
+    for (let tries = 0; tries < 8 && caution === 'no caution'; tries++) {
+        await sleep(1000);
+        caution = await pressCaution();
+    }
     socket = null;
     const card = await waitForCard(title);
     if (card === null) {
@@ -628,6 +647,69 @@ for (const item of items) {
             note = await readWholeNote(added.filePath, added.id);
         }
     }
+    // `then: "ask:<words>"`: what a person types under the answer when the
+    // note is still empty -- the passage, when no button offers one.
+    if (String(item.then ?? '').startsWith('ask:') && isEmptyNote()) {
+        runs.push(await ask(item.then.slice(4)));
+        note = await readWholeNote(added.filePath, added.id);
+    }
+    // `then: "reply:N"`: the answer's Nth button pressed, whatever the note
+    // holds -- a review's first fix, say.
+    const replyThen = /^reply:(\d+)$/.exec(String(item.then ?? ''));
+    let blocksBefore = null;
+    if (replyThen !== null) {
+        blocksBefore = note.blocks;
+        runs.push(await pressReply(Number(replyThen[1]) - 1));
+        note = await readWholeNote(added.filePath, added.id);
+    }
+    // `--review=N`: how a preacher prepares with the chatbot -- the draft
+    // made, then N rounds of "is this a good sermon?" and its first fix
+    // pressed. The draft is kept beside the lesson it became.
+    const reviewList = [];
+    if (REVIEW_ROUNDS > 0 && !isEmptyNote()) {
+        blocksBefore = note.blocks;
+        for (let round = 0; round < REVIEW_ROUNDS; round++) {
+            const review = await ask('is this a good sermon?');
+            runs.push(review);
+            const fixes = (await readLastCue()).replies;
+            if (fixes.length === 0) {
+                reviewList.push({ review: review.answerText, pressed: null });
+                break;
+            }
+            const fix = await pressReply(0);
+            runs.push(fix);
+            // The review's other fixes, pressed off the buttons each fix's
+            // answer carries (BN-77).
+            const alsoPressed = [];
+            for (let count = 1; count < FIXES_PER_REVIEW; count++) {
+                const carried = (await readLastCue()).replies;
+                const next = carried.find((words) => {
+                    return (
+                        fixes.includes(words) &&
+                        words !== fix.pressed &&
+                        !alsoPressed.includes(words)
+                    );
+                });
+                if (next === undefined) {
+                    break;
+                }
+                const nextFix = await pressReply(carried.indexOf(next));
+                runs.push(nextFix);
+                if (nextFix.pressed === null) {
+                    break;
+                }
+                alsoPressed.push(nextFix.pressed);
+            }
+            reviewList.push({
+                review: review.answerText,
+                pressed: fix.pressed,
+                alsoPressed,
+                offered: fixes,
+                seconds: fix.seconds,
+            });
+        }
+        note = await readWholeNote(added.filePath, added.id);
+    }
     const answer = await readLastCue();
     const calls = runs.flatMap((run) => callsSince(run.startedAt));
     const uniqueCalls = [...new Map(calls.map((call) => [JSON.stringify(call), call])).values()];
@@ -655,6 +737,9 @@ for (const item of items) {
             text: String(call.text ?? '').slice(0, 600),
         })),
         answer: answer.text.slice(0, 3000),
+        firstAnswer: runs.length > 1 ? (runs[0].answerText ?? null) : null,
+        blocksBefore,
+        reviews: reviewList,
         replies: answer.replies,
         actions: answer.actions,
         noteName: note.name,

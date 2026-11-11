@@ -4253,5 +4253,6 @@
     "Open it": "ເປີດ",
     "Save changes to \"{name}\"": "ບັນທຶກການປ່ຽນແປງໃສ່ \"{name}\"",
     "made a study file": "ໄດ້ສ້າງໄຟລ໌ສຶກສາ",
-    "changed a study file": "ໄດ້ແກ້ໄຂໄຟລ໌ສຶກສາ"
+    "changed a study file": "ໄດ້ແກ້ໄຂໄຟລ໌ສຶກສາ",
+    "A different answer: worked out another way, with more effort.": "ຄຳຕອບທີ່ແຕກຕ່າງ: ຄິດດ້ວຍວິທີອື່ນ ແລະ ພະຍາຍາມຫຼາຍຂຶ້ນ."
 }

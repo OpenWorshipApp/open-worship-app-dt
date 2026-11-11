@@ -264,6 +264,27 @@ describe('bible-list/note Note editing history', () => {
         expect(note.getItemById(1)?.content).toBe('typed in the other window');
     });
 
+    // BN-75 (2026-11-10): the assistant named a lesson in an empty note, then
+    // a change made in its window put the old name back -- and the window's
+    // Save would have put it in the file. The list owns the title.
+    test('an item write keeps the title the head holds', async () => {
+        h.getCurrentHistoryMock.mockResolvedValue(
+            JSON.stringify(
+                genNoteJson([{ ...genItem(1, 'old text'), title: 'Renamed' }]),
+            ),
+        );
+        // this window opened before the rename
+        const note = genNote([genItem(1, 'old text')]);
+        const myItem = note.getItemById(1)!;
+        myItem.content = 'new text';
+        await note.addItemEditingHistory(myItem);
+        const written = JSON.parse(readAddedHistory());
+        expect(written.items[0].title).toBe('Renamed');
+        expect(written.items[0].content).toBe('new text');
+        // The window's own item is left as it was handed in.
+        expect(myItem.title).toBe('Item 1');
+    });
+
     // The head is the last readable copy of a note file that has been damaged.
     test('an unreadable file falls back to the editing head', async () => {
         h.readFileDataMock.mockResolvedValue('{ this is not json');

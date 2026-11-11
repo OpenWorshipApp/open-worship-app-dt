@@ -55,22 +55,74 @@ export const NOTE_CREATE_PROMPT =
 // to keep. It rides only on an ask for a lesson (the hints below and
 // `noteChatHelpers.ts`'), never in a system prompt: it would be paid on
 // every round of every question.
+//
+// BN-66 (2026-11-10): 22 lessons made through the window, read by two
+// readers against `lesson-rubric.md` (Robinson, Chapell, Stott). What most
+// lessons missed is said here in so many words: a stock picture where a
+// story was wanted (illustration the weakest criterion, 1.09 of 2), a
+// background of one line with nothing that changes how the passage is
+// heard, a verse restated where its word wanted explaining, a point
+// citing a verse that does not say it, a phrase quoted from another
+// translation than the one printed, Jesus added at the end, a response that
+// lists without gathering, and a devotion or a children's lesson the length
+// of a sermon.
+//
+// Then a blind before-and-after read of eight of them, shuffled: asked for
+// "the one fact of that time" and "a concrete story (who, where, what
+// happened)", the model invented both -- shepherds "looked down upon" in
+// David's day, a "1944" prisoner exchange and "I remember a friend" told as
+// true -- and accuracy fell from 1.88 to 1.38 of 2 while background,
+// explanation and illustration rose. Told "TRUE above all" in so many words,
+// a second blind read still found 11 errors in eight against 2: Hebrew word
+// studies ("blot out" a debt struck off a ledger), a meaning the text does
+// not give ("rocks of pride"), "unfailing love" where the KJV the app prints
+// says "lovingkindness", and a point on the thorns anchored to Matthew
+// 13:8-12 -- the model writes the lesson before the app prints the passage,
+// so it quotes and numbers from memory. So the passage is READ first
+// (`owa_find_verse`, offered to every ask a lesson is written in) and
+// everything is built on the words it returns; a word is explained plainly
+// from the words printed, never by a word study; the background is what the
+// Bible itself says; a story is told AS an example; the points cover the
+// whole passage, and so does a devotion's one point.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
-    'WHAT A LESSON HOLDS, ready to preach in plain warm words (a devotion ' +
-    "or a children's lesson shorter and simpler, in the same order): the " +
-    'main passage alone on a line as its token -- [^John 10:11-18] -- which ' +
-    'the app prints whole from their Bible; then "## " headings: Big idea ' +
-    '(the one sentence the lesson teaches), Background (who, to whom, what ' +
-    'was happening, in two or three sentences), Introduction (a question ' +
-    'or a short story from everyday life that leads in), three points -- ' +
-    'each "## 1. " and a sentence that states it, then what its verses say ' +
-    'with a [^ref] token, what it means, an example from life, and how to ' +
-    'live it this week --, Pointing to Jesus, Response (what to believe, ' +
-    'decide or do), Closing prayer (written out), Questions for discussion ' +
-    '("- " items) and Memory verse ([^ref]). A verse is a token, never ' +
-    'typed out.';
+    'WHAT A LESSON HOLDS, ready to preach in plain warm words and TRUE ' +
+    'above all. First read the main passage with owa_find_verse (`refs`) ' +
+    'when you have it, and build every point, quote and verse number on the ' +
+    'words it returns: say nothing of a verse, its words or its history you ' +
+    'are not sure of, read into it nothing it does not say, and tell no ' +
+    'story as if it really happened. The main passage alone on a line as its ' +
+    'token -- [^John 10:11-18] -- which the app prints whole from their ' +
+    'Bible; then "## " headings: Big idea (one sentence: what the passage ' +
+    'says about God and what it asks of us), Background (three or four ' +
+    "sentences from the Bible's own pages: who, to whom, when, what was " +
+    'happening), Introduction (a question or an everyday scene that raises ' +
+    'the need the passage answers), three points that follow the passage in ' +
+    'its own order and together cover ALL of it, the last ending where the ' +
+    'passage ends -- each "## 1. " and a sentence that states it, then the ' +
+    'token of the verse whose words say it, what those words mean said ' +
+    "plainly -- an old word of the printed Bible in today's words, no " +
+    'Hebrew or Greek word study -- and the question a hearer would ask of ' +
+    'it, answered from the passage itself, one concrete everyday example ' +
+    'told as an example ("Think of a mother who..." -- never a memory of ' +
+    'your own, a name or a date), and one thing to do this week in the ' +
+    'strength God gives --, Pointing to Jesus (where this passage stands ' +
+    'toward Jesus and his work, grown from its own words), Response (the big ' +
+    'idea said again, then ONE step for this week: what, when, with whom), ' +
+    'Closing prayer (written out), Questions for discussion ("- " items, on ' +
+    'the passage and their lives -- none at a funeral) and Memory verse ' +
+    '([^ref], one short verse that says the big idea plainly). A devotion ' +
+    'keeps every part with ONE point that covers its whole passage, about ' +
+    "300 words. A children's lesson keeps every part too, in words a child " +
+    'knows: at the top only the verse or two its story turns on, never a ' +
+    'whole chapter (name the rest in Background); after the Introduction the ' +
+    'story TOLD in short sentences under its own heading, from its start to ' +
+    'where the passage ends; two points a child can hold; something to ' +
+    'show; and a memory verse of one short line that says the big idea. A ' +
+    'verse is a token, never ' +
+    'typed out -- a passage printed once, after that its token in a sentence ' +
+    '-- and a phrase quoted is word for word the passage as read.';
 
 const LESSON_NOUN =
     '(?:lesson|devotion(?:al)?|outline|sermon|homily|bible study)(?!\\s+plan)\\b';
@@ -151,6 +203,32 @@ const LESSON_SHORTEN_ASK_PATTERN = new RegExp(
     ].join('|'),
     'i',
 );
+
+// A length they gave, in minutes (BN-73, 2026-11-10: "a 15 minute sermon
+// on John 3:16" came back as 625-724 words, five or six minutes spoken, from
+// a shape that said "about 120 spoken words a minute" -- a model follows a
+// NUMBER of words, not a rate). Never for a shorten ask, which has its own.
+const LESSON_MINUTES_PATTERN =
+    /\b(\d{1,2})[ -]?(?:minutes?|mins?)\b(?![^.?!]{0,20}\b(?:shorter|less|fewer)\b)/i;
+const SPOKEN_WORDS_A_MINUTE = 120;
+
+/**
+ * The words a lesson asked for at a length should hold, said as a number
+ * -- or null when no length was given. Lessons of 3 to 60 minutes only.
+ */
+export function genLessonLengthLine(text: string) {
+    const matched = LESSON_MINUTES_PATTERN.exec(String(text ?? ''));
+    const minutes = matched === null ? NaN : Number(matched[1]);
+    if (!(minutes >= 3 && minutes <= 60) || checkIsLessonShortenAsk(text)) {
+        return null;
+    }
+    const words = Math.round((minutes * SPOKEN_WORDS_A_MINUTE) / 100) * 100;
+    return (
+        `(They asked for ${minutes} minutes: the lesson's own words come to ` +
+        `about ${words} -- the passages printed are not counted. Fill it with ` +
+        'explanation and examples, never with more points.)'
+    );
+}
 
 /** Whether they asked for their lesson made to fit less time. */
 export function checkIsLessonShortenAsk(text: string) {

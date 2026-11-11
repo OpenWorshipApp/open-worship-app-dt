@@ -895,6 +895,24 @@
                     }
                 },
                 {
+                    "id": "retry-answer",
+                    "text": "How do I get a different answer to the same question?",
+                    "kind": "howto",
+                    "keywords": [
+                        "retry",
+                        "try again",
+                        "different answer",
+                        "another answer",
+                        "regenerate",
+                        "answer it another way"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "And every answer has a Retry beside the reply arrow",
+                        "find": "Retry"
+                    }
+                },
+                {
                     "id": "answer-was-wrong",
                     "text": "What can I do when an answer is wrong?",
                     "kind": "howto",

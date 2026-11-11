@@ -36,6 +36,7 @@ import {
     LESSON_OUTLINE,
     PREACHING_LESSON_SHAPE,
     checkIsBareFinishAsk,
+    genLessonLengthLine,
     checkIsLessonFinishAsk,
     checkIsLessonQuestion,
     checkIsLessonReviewAsk,
@@ -658,6 +659,118 @@ export const NOTE_BLANK_LESSON_HINT =
     "note's name; when neither names one, ask only which passage, with " +
     `OPTIONS of three. ${PREACHING_LESSON_SHAPE})`;
 
+// A question for the PERSON is no lesson (2026-11-10, BN-66's eight asked
+// again: the children's lesson button pressed, gemma4:cloud "added" a note
+// reading "Please tell me which Bible passage …" with its OPTIONS frame
+// under it, and the window wrote that into the empty note). Its frame, or a
+// few words that ask, are said back, never written.
+const NOTE_ADD_FRAME_PATTERN = /^\s*(?:\*\*)?(?:OPTIONS|CHOICES)\s*:/im;
+
+/** Why an add for an empty note is no lesson, or null when it is one. */
+export function findBlankFillProblem(text: string) {
+    const words = String(text ?? '').match(/[\p{L}\p{M}\p{N}']+/gu) ?? [];
+    if (
+        NOTE_ADD_FRAME_PATTERN.test(text) ||
+        (words.length < 40 && /[?？]/u.test(text))
+    ) {
+        return (
+            'Nothing was written: that is a question for them, not a lesson. ' +
+            'Ask it in your answer, with OPTIONS of three, and write the ' +
+            'lesson into the note once they choose.'
+        );
+    }
+    return null;
+}
+
+// --- a quote of the passage is its words (BN-76) ------------------------------
+//
+// 2026-11-10, the blind readers of BN-74: the lessons' commonest error was a
+// phrase in quotation marks that the passage, read a moment before, does not
+// say -- "sinners shall return unto thee" for Psalm 51:13's "sinners shall be
+// converted unto thee" -- and a preacher reads a quote out as the Bible's own.
+// A factual error keeps a lesson from the standard's best band whatever else
+// it does well. A quote that shares little with the passage (a hearer's
+// question, a saying) is the lesson's own words and left alone; one that
+// takes most of its words from the passage and is not word for word is a
+// misquote.
+const NOTE_QUOTE_PATTERN = /[«“"]([^«»“”"\n]{6,400})[»”"]/gu;
+const MIN_NOTE_QUOTE_LETTERS = 12;
+const NEAR_QUOTE_WORD_SHARE = 0.6;
+const MAX_NOTE_MISQUOTES = 5;
+
+/** Letters alone, lower case: a quote compared with the passage as read. */
+export function toLetterKey(text: string) {
+    return String(text ?? '')
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{M}]/gu, '')
+        .toLowerCase();
+}
+
+function toQuoteWordList(text: string) {
+    return (
+        String(text ?? '')
+            .normalize('NFC')
+            .toLowerCase()
+            .match(/\p{L}{3,}/gu) ?? []
+    );
+}
+
+/**
+ * The phrases a note change puts in quotation marks as the passage's words
+ * that the passage as read does not have -- `sourceTexts` being every verse
+ * read in this ask and the note as it was read -- or none. A quote cut with
+ * an ellipsis is checked a piece at a time.
+ */
+export function findNoteMisquotes(
+    text: string,
+    sourceTexts: readonly string[],
+) {
+    const sourceKeyList = sourceTexts.map(toLetterKey);
+    const sourceWordSet = new Set(sourceTexts.flatMap(toQuoteWordList));
+    if (sourceWordSet.size === 0) {
+        return [];
+    }
+    const misquoted: string[] = [];
+    for (const match of String(text ?? '').matchAll(NOTE_QUOTE_PATTERN)) {
+        const quote = match[1].trim();
+        const isMisquoted = quote.split(/…|\.\.\./).some((piece) => {
+            const key = toLetterKey(piece);
+            if (
+                key.length < MIN_NOTE_QUOTE_LETTERS ||
+                sourceKeyList.some((source) => source.includes(key))
+            ) {
+                return false;
+            }
+            const wordList = toQuoteWordList(piece);
+            const knownCount = wordList.filter((word) => {
+                return sourceWordSet.has(word);
+            }).length;
+            return (
+                wordList.length >= 3 &&
+                knownCount / wordList.length >= NEAR_QUOTE_WORD_SHARE
+            );
+        });
+        if (isMisquoted && !misquoted.includes(quote)) {
+            misquoted.push(quote);
+        }
+        if (misquoted.length >= MAX_NOTE_MISQUOTES) {
+            break;
+        }
+    }
+    return misquoted;
+}
+
+/** What the model is told when its change misquotes the passage. */
+export function genNoteMisquoteRefusal(misquotes: readonly string[]) {
+    return (
+        'Nothing was written: words in quotation marks are read out as the ' +
+        "Bible's own, and the passage as read does not say " +
+        misquotes.map((quote) => `“${quote}”`).join(', ') +
+        '. Quote it word for word as it was read, or say it in your own ' +
+        'words without quotation marks -- then send the change again, whole.'
+    );
+}
+
 // Said when a reply came back empty in a conversation about an empty note:
 // the server dropped a call it could not read, which a whole lesson nested
 // in `changes` is (BN-61) -- and the flat one it reads.
@@ -740,7 +853,7 @@ function readNoteBlockLines(text: string) {
         if (match === null) {
             return [];
         }
-        let words = '';
+        let words: string;
         try {
             words = match[4] === undefined ? '' : String(JSON.parse(match[4]));
         } catch (_error) {
@@ -966,11 +1079,28 @@ export function genLessonGapsText(text: string | null) {
     );
 }
 
+// BN-66 (2026-11-10): what blind readers of 38 lessons held against the
+// textbooks' standard marked down most -- a claim the passage does not make,
+// a verse only restated, a stock picture, points that stop before the
+// passage does, Christ added at the end, a response that does not gather --
+// is what a review names, in that order of weight, so that "is this a good
+// sermon?" and its buttons are the way from a good lesson to the best one.
 export const NOTE_LESSON_REVIEW_HINT =
-    '(This asks what you think of their lesson: answer against WHAT A ' +
-    'LESSON HOLDS -- what is strong, what is missing, one or two things ' +
-    'that would make it clearer -- and change nothing; offer the missing ' +
-    `parts as OPTIONS. ${PREACHING_LESSON_SHAPE})`;
+    '(This asks what you think of their lesson: judge it as a teacher of ' +
+    'preaching would, against WHAT A LESSON HOLDS. Read its passage with ' +
+    'owa_find_verse first when you have it. Weigh, in this order: is every ' +
+    'word about the passage true to it and every quote its own words; one ' +
+    'big idea; points that follow the WHOLE passage; each verse explained, ' +
+    'not only restated; a concrete example for each point; something to do ' +
+    'this week; Christ grown from the passage, not added; a response that ' +
+    "gathers the big idea. A devotion keeps its ONE point and a children's " +
+    'lesson its story told: a fix for them adds to that point or that story, ' +
+    'never another point. Say what is strong, then the two or three things ' +
+    'that would most improve it, naming the part by its heading; change ' +
+    'nothing, and END with them as OPTIONS, a short button each (under 40 ' +
+    'letters) that SAYS the change it makes to the note, opening on Add, ' +
+    'Write, Move or Make -- e.g. "OPTIONS: Add a point on the good soil | ' +
+    `Add what verse 19 means to point 1". ${PREACHING_LESSON_SHAPE})`;
 
 // A block line of the note read with words or a fixed object in it:
 // `3. paragraph: "Grace"`, `4. passage (fixed)`; and one with neither,
@@ -1024,6 +1154,51 @@ export function checkIsLessonCardAsk(text: string) {
         line !== '' &&
         [...LESSON_CARD_ASK_LIST, ...genLessonCardReplies()].includes(line)
     );
+}
+
+// --- the form a lesson was asked for (BN-78) --------------------------------
+//
+// 2026-11-10: a short devotion, asked for by the card's button, was reviewed
+// as a sermon -- _is this a good sermon?_ named no form, the note neither --
+// and its first fix was _Add points for verses 4-6_, the one point a
+// devotion keeps undone. The tab's own earlier ask says what it is.
+export type LessonFormType = 'devotion' | 'children';
+
+const DEVOTION_ASK_PATTERN = /\bdevotion(?:al)?s?\b/i;
+const CHILDREN_ASK_PATTERN =
+    /\b(?:children'?s?|child'?s|kids?'?|sunday school|youth group)\b/i;
+
+/** The form an ask for a lesson names, or null for a sermon or none. */
+export function readLessonFormAsked(text: string): LessonFormType | null {
+    const line = String(text ?? '').trim();
+    const cardIndex = [LESSON_CARD_ASK_LIST, genLessonCardReplies()]
+        .map((list) => list.indexOf(line))
+        .find((index) => index >= 0);
+    if (cardIndex !== undefined) {
+        return cardIndex === 1
+            ? 'children'
+            : cardIndex === 2
+              ? 'devotion'
+              : null;
+    }
+    if (!checkIsLessonWriteAsk(line) && !checkIsLanguageLessonAsk(line)) {
+        return null;
+    }
+    if (DEVOTION_ASK_PATTERN.test(line)) {
+        return 'devotion';
+    }
+    return CHILDREN_ASK_PATTERN.test(line) ? 'children' : null;
+}
+
+/** Said with a review of a lesson asked for in another form than a sermon. */
+export function genLessonFormLine(form: LessonFormType) {
+    return form === 'devotion'
+        ? '(It was asked for as a short devotion: judge it as one -- its ONE ' +
+              'point covering the whole passage -- and a fix adds to that ' +
+              'point, never another.)'
+        : "(It was asked for as a children's lesson: judge it as one -- the " +
+              'story told, two points a child can hold, a memory verse a ' +
+              "child can say -- and a fix keeps a child's words.)";
 }
 
 /**
@@ -1108,6 +1283,179 @@ export function toBlankNoteFillArgs(
             { after: 0, kind: 'section', text },
         ],
     };
+}
+
+// --- a lesson written in place of loose lines (BN-67) -------------------------
+//
+// 2026-11-10, _please finish my sermon from these notes_ under six loose
+// lines (`mark 4 storm`, `jesus asleep in the boat` …): the change that makes
+// them a lesson is the longest a note gets, and the shared gemma4:cloud
+// server dropped it as it drops a whole lesson nested in `changes` (BN-61);
+// asked again in parts, the model named blocks by numbers its own first part
+// had moved, and once it gave up at 47.8k tokens. An empty note had the
+// answer already: ONE flat `owa_bible_note add`, put in place by the window.
+// A note of plain lines takes it too -- every line of theirs checked to be in
+// the lesson before anything is changed, the lesson written in their place,
+// one step of the note's Undo.
+
+/** At most this many lines are a note of loose lines, not a lesson. */
+const NOTE_REWRITE_MAX_BLOCKS = 20;
+
+export type NoteRewriteType = {
+    // Their lines with words, and the block each is.
+    lines: string[];
+    lineBlocks: number[];
+    // Every block of the note, empty ones too.
+    blockCount: number;
+};
+
+export const NOTE_LESSON_REWRITE_HINT =
+    '(This asks to make their notes -- a few loose lines -- a whole ' +
+    'lesson. Write it as ONE owa_bible_note action "add": `title`, and ' +
+    '`text` the whole lesson in mark-up, with EVERY line of theirs in it in ' +
+    "its own words, where it belongs -- a line can be a point's heading, a " +
+    "sentence of a point, the introduction's story. The window checks their " +
+    'lines are all there and puts the lesson IN PLACE of them, in this ' +
+    `note. ${PREACHING_LESSON_SHAPE})`;
+
+export const NOTE_REWRITE_DROPPED_NUDGE =
+    '(Nothing arrived: a call that long could not be read as a change. ' +
+    'Write the whole lesson as ONE owa_bible_note action "add" -- its ' +
+    "`title`, and its `text` the lesson's lines, every line of theirs in " +
+    'it -- and the window puts it in place of their lines.)';
+
+/**
+ * The note a _finish my sermon_ is about, when it is loose lines: every
+ * block a paragraph, read whole, no more than `NOTE_REWRITE_MAX_BLOCKS`,
+ * two lines with words at least. Null for anything else -- headings, a
+ * list, a passage, a table, a long note -- which is finished in place.
+ */
+export function readNoteRewrite(
+    asked: string,
+    notes: readonly { name: string; text: string | null }[],
+    isLessonContinued = false,
+): NoteRewriteType | null {
+    if (notes.length !== 1) {
+        return null;
+    }
+    const text = notes[0].text;
+    if (text === null || checkIsBlankNoteText(text)) {
+        return null;
+    }
+    const hint = genNoteLessonHint(
+        asked,
+        false,
+        isLessonContinued,
+        checkIsLessonNoteText(text),
+    );
+    if (hint !== NOTE_LESSON_FINISH_HINT) {
+        return null;
+    }
+    const blocks = readNoteBlockLines(text);
+    const total = /^Blocks: (\d+)/m.exec(text);
+    if (
+        blocks.length === 0 ||
+        blocks.length > NOTE_REWRITE_MAX_BLOCKS ||
+        total === null ||
+        Number(total[1]) !== blocks.length ||
+        blocks.some((block) => block.kind !== 'paragraph' || block.isFixed)
+    ) {
+        return null;
+    }
+    const withWords = blocks.filter((block) => block.words.trim() !== '');
+    return withWords.length >= 2
+        ? {
+              lines: withWords.map((block) => block.words.trim()),
+              lineBlocks: withWords.map((block) => block.n),
+              blockCount: blocks.length,
+          }
+        : null;
+}
+
+/**
+ * An EDIT that makes their loose lines a lesson and leaves the lines beside
+ * it (BN-67, seen live: the model wove all six into the lesson, in bold, and
+ * left the six at the end of the note). Each line the edit does not touch
+ * and whose words its new text holds is taken out in the same edit -- a
+ * lesson put after it takes its place -- and, once one is, the empty blocks
+ * between them. A line the new text does not hold stays.
+ */
+export function withRewrittenLinesRemoved(args: any, rewrite: NoteRewriteType) {
+    if (args?.action !== 'edit' || !Array.isArray(args?.changes)) {
+        return args;
+    }
+    const changes: any[] = args.changes;
+    const touchedSet = new Set(
+        changes
+            .filter((change) => typeof change?.block === 'number')
+            .map((change) => change.block as number),
+    );
+    const newText = changes
+        .filter((change) => {
+            return typeof change?.text === 'string' && change.remove !== true;
+        })
+        .map((change) => change.text as string)
+        .join('\n');
+    if (newText.trim() === '') {
+        return args;
+    }
+    const removeList = rewrite.lineBlocks.filter((block, index) => {
+        return (
+            !touchedSet.has(block) &&
+            findLostNoteLines([rewrite.lines[index]], newText).length === 0
+        );
+    });
+    if (removeList.length === 0) {
+        return args;
+    }
+    const lineBlockSet = new Set(rewrite.lineBlocks);
+    const emptyList = Array.from({ length: rewrite.blockCount }, (_, index) => {
+        return index + 1;
+    }).filter((block) => !lineBlockSet.has(block) && !touchedSet.has(block));
+    return {
+        ...args,
+        changes: [
+            ...changes,
+            ...[...removeList, ...emptyList]
+                .sort((a, b) => a - b)
+                .map((block) => ({ block, remove: true })),
+        ],
+    };
+}
+
+function toLineWords(text: string) {
+    return (
+        String(text ?? '')
+            .toLowerCase()
+            .match(/[\p{L}\p{M}\p{N}']+/gu) ?? []
+    );
+}
+
+/**
+ * Their lines a written lesson leaves out: a line fewer than four in five
+ * of whose words are anywhere in it. A verse token's words count -- "mark 4
+ * storm" made the passage `[^Mark 4:35-41]` and the storm the lesson's.
+ */
+export function findLostNoteLines(lines: readonly string[], text: string) {
+    const keptSet = new Set(toLineWords(text));
+    return lines.filter((line) => {
+        const words = toLineWords(line);
+        if (words.length === 0) {
+            return false;
+        }
+        const found = words.filter((word) => keptSet.has(word)).length;
+        return found / words.length < 0.8;
+    });
+}
+
+/** Why a lesson that leaves out their lines is not put in place of them. */
+export function genLostNoteLinesRefusal(lost: readonly string[]) {
+    return (
+        'Nothing was changed: these lines of theirs are not in the lesson -- ' +
+        `${lost.map((line) => JSON.stringify(line)).join('; ')}. Write the ` +
+        'whole lesson again as ONE owa_bible_note "add" with each of them in ' +
+        'it, in its own words.'
+    );
 }
 
 // --- checking the verses a lesson cites ---------------------------------------
@@ -1364,6 +1712,10 @@ export function toNoteAsk(
     ownWords: NoteOwnWordsType | null = null,
     verseReadText: string | null = null,
     isLessonContinued = false,
+    rewrite: NoteRewriteType | null = null,
+    // The form the tab's lesson was asked for in (BN-78): a review or a
+    // finish is told it, the words of either naming none.
+    lessonForm: LessonFormType | null = null,
 ) {
     // A button pressed in the window's language is read off its own words:
     // the English of them no longer matches the button.
@@ -1388,16 +1740,39 @@ export function toNoteAsk(
         isLessonContinued,
         notes.length === 1 && checkIsLessonNoteText(notes[0].text),
     );
-    // What the lesson lacks, read by the window off the note (BN-67).
+    // Loose lines are written over as a whole lesson, by the flat add the
+    // window puts in their place (BN-67) -- decided ONCE, by the window, off
+    // the words as typed (`readNoteRewrite`), so the hint and the redirect
+    // agree; a lesson already is finished in place, the window naming what
+    // it lacks and where it goes.
+    const isRewrite = rewrite !== null;
     const gapsText =
-        lessonHint === NOTE_LESSON_FINISH_HINT && notes.length === 1
+        lessonHint === NOTE_LESSON_FINISH_HINT &&
+        notes.length === 1 &&
+        !isRewrite
             ? genLessonGapsText(notes[0].text)
+            : null;
+    const shownHint = isRewrite ? NOTE_LESSON_REWRITE_HINT : lessonHint;
+    // A length they gave, as a number of words (BN-73) -- a lesson written
+    // or finished, never a review or a cut.
+    const lengthLine =
+        shownHint === NOTE_BLANK_LESSON_HINT ||
+        shownHint === NOTE_NEW_LESSON_HINT ||
+        shownHint === NOTE_LESSON_FINISH_HINT ||
+        shownHint === NOTE_LESSON_REWRITE_HINT
+            ? genLessonLengthLine(asked)
             : null;
     return [
         ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
         asked,
-        ...(lessonHint === null ? [] : [lessonHint]),
+        ...(shownHint === null ? [] : [shownHint]),
+        ...(lengthLine === null ? [] : [lengthLine]),
         ...(gapsText === null ? [] : [gapsText]),
+        ...(lessonForm !== null &&
+        (shownHint === NOTE_LESSON_REVIEW_HINT ||
+            shownHint === NOTE_LESSON_FINISH_HINT)
+            ? [genLessonFormLine(lessonForm)]
+            : []),
         ...(verseReadText === null ? [] : [verseReadText]),
         // The review hint and the verse check say to change nothing already.
         ...(lessonHint !== NOTE_LESSON_REVIEW_HINT &&

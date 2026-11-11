@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-10d** (**W-42 step 7, W-61 step 2 — the help window's attach tools sit behind one ⋮ at the left of the box.** The user, with the five icons left of the box circled: _put those in vertical 3 dots_, _to save space for input text_. The paperclip, the camera, the pointer, the foreground-session button and the **/** button are now the rows of one **⋮** (**[en:tran:More Options]**), each its icon and its name, opening upward; the box takes the width they had. W-18 / W-22 / W-42 step 9 name **[en:tran:Attach a file]** in the **⋮** where they said the paperclip. Seen live 2026-11-10 on the dev help window in English: the ⋮ alone left of the box, the five rows opened above it, Esc closed it and gave the ⋮ the keyboard. CB-26.)
+**workflowsVersion: 2026-11-10g** (**W-60 — a devotion keeps to one point, a children's lesson tells its story, and the review can be asked again.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: a short devotion keeps to one point and a children's lesson tells the story in a child's words, printing only the verse or two it turns on; _is this a good sermon?_ may be asked again after a fix is made, for the next. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: eight lessons each drafted, then reviewed and its first fix pressed, twice -- every one of the sixteen reviews ended in buttons and every fix was made in place, 4-5 s a review; a devotion's fixes kept to its one point (_Add verse 10 to the main point_); a children's lesson on Jonah with the story told, two points, something to show and a prayer; the children's button's passages offered as buttons. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10f** (**W-42 step 8 — Retry under an answer, for a different answer.** The user, a picture of an answer's tool row with the spot between the reply arrow and 👍 circled: _add a rotate icon there to ask for retrying_; _as user I'd like to ask chatbot to retry again on the answer, so I can get different result_; the goal _try with different approach and different effort get different result_. The round arrows (**[en:tran:Retry]**) ask the answer's question again with what it was asked with, another way in each press and a step more effort, the new answer at the bottom under _A different answer: worked out another way, with more effort._, the box left as it was. Seen live 2026-11-10 on a scratch development profile's help window, Auto on gemma4:cloud: the arrows between the reply arrow and 👍 under every answer to a question and under none of a card the window wrote; pressed, the question came again, the note on the new answer, _and the colour too_ still in the box, the arrows greyed while it worked; the second press answered _the first way did not help_ with the reading view's **Full** where the first two had given the same Font Size steps. Then, at the user's next word (_try with another model (but keep the gemma4 for the next asking)_), a retry is asked of someone else: pressed under a gemma4:cloud answer it was answered by OWA Shared · Gemma 4 31b under _Auto asked OWA Shared · Gemma 4 31b this time._, AUTO PICK still reading gemma4:cloud, and the next question was gemma4:cloud's again. CB-175.)
+
+Previous: **workflowsVersion: 2026-11-10e** (**W-60 — an empty note offers a lesson, and _finish my sermon_ grows a lesson where it stands.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: an empty note opens on three buttons -- **[en:tran:Help me prepare a preaching lesson]**, **[en:tran:Help me prepare a children's lesson]**, **[en:tran:Help me prepare a short devotion]** -- and a lesson may be asked in any language; _finish my sermon_ (or _finish it_) puts each missing part where it belongs, a point of theirs growing under its own line, and loose lines become the lesson around them, none lost or written twice. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: 17 lessons asked or pressed into empty notes, each in one change, 7-12 s, 16 of them every part the standard asks for; the card pressed in Spanish and _Salmo 23_ typed, a whole Spanish lesson in the note in 13 s; four partial sermons finished -- an outline, three listed points, a near-whole sermon and six loose lines -- each every part in order, their words kept and none written twice, one change, 7-12 s. And _is this a good sermon?_ answers as a teacher of preaching would, its two or three fixes each a button: on a sower sermon it named the good soil with no point of its own, and **Add a point on the Good Soil** wrote that point in place in 6 s. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10d** (**W-42 step 7, W-61 step 2 — the help window's attach tools sit behind one ⋮ at the left of the box.** The user, with the five icons left of the box circled: _put those in vertical 3 dots_, _to save space for input text_. The paperclip, the camera, the pointer, the foreground-session button and the **/** button are now the rows of one **⋮** (**[en:tran:More Options]**), each its icon and its name, opening upward; the box takes the width they had. W-18 / W-22 / W-42 step 9 name **[en:tran:Attach a file]** in the **⋮** where they said the paperclip. Seen live 2026-11-10 on the dev help window in English: the ⋮ alone left of the box, the five rows opened above it, Esc closed it and gave the ⋮ the keyboard. CB-26.)
 
 Previous: **workflowsVersion: 2026-11-10c** (**W-60 — a preaching lesson, made and prepared by asking.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3 gains a bullet: in a note that is still empty, _help me prepare a sermon on John 10:11-18_ writes a whole lesson into it, ready to preach -- the passage printed from your Bible, the big idea, the background, an introduction, three points each with its verses, an example and how to live it this week, how it points to Jesus, a response, a closing prayer, questions for discussion and a memory verse; beside a note with words in it, or in another chat, the lesson is a new note; with no passage named the assistant asks which one. Then the follow-ups a preacher asks: an illustration, cross references, more questions, a stronger conclusion, an object lesson for the children, a children's version, how long it takes, a review, finishing it, fitting it to 15 minutes, and checking its verses, which reads every verse the note cites and names a line that gives a verse another verse's words. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: the sermon written into an empty note in one change, 9-15 s (it had taken 70-134 s through two servers that dropped the call and the free tier); each follow-up one change or an answer, 3-8 s; a planted wrong verse named and fixed; the same asked in Khmer with the Khmer pack installed, the lesson written in Khmer. The French and Khmer pages carry the bullet. CB-169.)
 
@@ -3450,19 +3456,31 @@ row's own **[en:tran:Delete]**.
      another language than English, the verse comes from a Bible in that language when one
      is installed and the Bible Lookup is on another (asked in Khmer with the Lookup on the
      KJV, the Khmer Bible's words, in Khmer digits); name a Bible to have another.
-   - A preaching lesson: in a note that is still empty, _help me prepare a sermon on John
-     10:11-18_ (or _I'm preaching on Psalm 23 this Sunday_) writes a whole lesson into it,
+   - A preaching lesson: a note that is still empty opens its conversation with three
+     buttons — **[en:tran:Help me prepare a preaching lesson]**,
+     **[en:tran:Help me prepare a children's lesson]** and
+     **[en:tran:Help me prepare a short devotion]** — and the assistant asks which passage;
+     or type _help me prepare a sermon on John 10:11-18_ (or _I'm preaching on Psalm 23 this
+     Sunday_), in your own language too. It writes a whole lesson into the note,
      ready to preach — the passage printed from your Bible, the big idea, the background,
      an introduction, three points each with its verses, an example and how to live it
      this week, how it points to Jesus, a response, a closing prayer, questions for
-     discussion and a memory verse; beside a note with words in it, or in any other chat,
+     discussion and a memory verse (a short devotion keeps to one point, and a children's
+     lesson tells the story in a child's words, printing only the verse or two it turns
+     on); beside a note with words in it, or in any other chat,
      the lesson is a new note. With no passage named, the assistant asks which one. Then
      ask as you prepare: _add an illustration to point 2_, _give me two cross references
      for point 1_, _add two more discussion questions_, _write a stronger conclusion with
      an invitation_, _add a short object lesson for the children_, _make a version for the
-     children's class_ (a new note). _How long will this take to preach?_ and _is this a
-     good sermon?_ are answered and change nothing; _finish my sermon_ adds the parts it
-     lacks and keeps your words; _it is too long, make it fit 15 minutes_ tightens the
+     children's class_ (a new note). _How long will this take to preach?_ is answered; _is
+     this a good sermon?_ is answered as a teacher of preaching would — what is strong, then
+     the two or three changes that would most improve it, each a button that makes that
+     change, nothing changed until you press one (ask it again after, for the next);
+     _finish my sermon_ (or _finish it_)
+     adds the parts it lacks, each where it belongs, and keeps your words: a point you
+     wrote stays where it is and grows under its own line, and a few loose lines become
+     the lesson around them, none of them lost or written twice; _it is too long, make it
+     fit 15 minutes_ tightens the
      words and takes the extras out first, every point keeping its verse, an example and
      how to live it; _check that my verses are right_ reads every verse the note cites
      from your Bible and names any line that gives a verse words it does not have.
@@ -6978,6 +6996,24 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    under _Replying to this part of your answer:_. Nothing is sent until you press
    **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
    pressing the arrow twice writes it in once.
+   **And every answer has a Retry beside the reply arrow, for a different answer.**
+   Press the round arrows (**[en:tran:Retry]**) under an answer and the same
+   question is asked again — with the file or picture it was asked with — and
+   the new answer comes at the bottom under _A different answer: worked out
+   another way, with more effort._ Each press tries another way in: another
+   way to do it that the app has (or, when there is only one, it says so and
+   adds what to do when a step does not work), the question read another way,
+   or the answer worked out again step by step — and it thinks harder each
+   time, but keeps every button name right. And where there is another assistant to ask, the press asks it,
+   for that one question: on **Auto** — or on your own server, OWA Shared or
+   Free — the one that wrote the answer goes to the back of the line and the
+   note says who answered this time (_Auto asked … this time._); with a key of
+   your own, the next model up of that same key answers. The next question
+   goes to the one picked at the top of the window, as before — nothing there
+   changes. Anything you were typing in the box stays there, and the round
+   arrows wait, greyed, while an answer is on its way. An answer to one of the
+   `/` commands has none — pressed again, a command would just do the same
+   thing again.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
@@ -7512,7 +7548,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     and the debugging endpoint they use are then never started. Tick it and restart to
     turn it back on.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, CB-175, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 

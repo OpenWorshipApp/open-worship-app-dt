@@ -207,6 +207,7 @@ import {
     genWrongLanguageNudge,
     checkClaimsUnmadeNoteChange,
     NOTE_CLAIM_NUDGE,
+    NOTE_REVIEW_OPTIONS_NUDGE,
     toAnswerScript,
     toGuideRescueAnswer,
     checkIsToolLeftOut,
@@ -4816,6 +4817,48 @@ describe('genGeneralAskAction', () => {
     });
 });
 
+// BN-74 (2026-11-10): a review of a Zacchaeus sermon named two things to
+// improve and offered nothing to press. A lesson review with no options goes
+// back once; a review with them, or any other note answer, does not.
+describe('a lesson review offers its fixes as buttons', () => {
+    const REVIEW =
+        'This is a strong lesson.\n\nImprovements:\n\nResponse: it could ' +
+        'first ask the hearer to let Jesus abide in their own house.';
+    const reviewWatch = () => {
+        const watch = genToolWatch();
+        watch.noteFiles = [{ name: 'Zacchaeus' } as any];
+        watch.isLessonReview = true;
+        return watch;
+    };
+
+    test('a review with no options is handed back once', () => {
+        const watch = reviewWatch();
+        expect(findAnswerShapeNudge(REVIEW, watch)?.nudge).toBe(
+            NOTE_REVIEW_OPTIONS_NUDGE,
+        );
+        watch.isShapeNudged = true;
+        expect(findAnswerShapeNudge(REVIEW, watch)).toBeNull();
+    });
+
+    test('options, marked or a bare change line, are enough', () => {
+        expect(
+            findAnswerShapeNudge(
+                `${REVIEW}\nOPTIONS: Add a stronger response | Write what the press means`,
+                reviewWatch(),
+            ),
+        ).toBeNull();
+        expect(
+            findAnswerShapeNudge(
+                `${REVIEW}\n\nAdd a stronger response | Write what the press means`,
+                reviewWatch(),
+            ),
+        ).toBeNull();
+        const notReview = reviewWatch();
+        notReview.isLessonReview = false;
+        expect(findAnswerShapeNudge(REVIEW, notReview)).toBeNull();
+    });
+});
+
 // BN-53 (2026-11-09, the elder run): asked to "draw a big star next to the
 // important bits", Free's Nemotron called no tool and answered that it had
 // added a gold star drawing. A note answer that says the note changed while
@@ -4938,5 +4981,147 @@ describe('the wrong-language check', () => {
         expect(toAnswerScript('en')).toBeNull();
         expect(toAnswerScript(null)).toBeNull();
         expect(toAnswerScript('xx')).toBeNull();
+    });
+});
+
+// 2026-11-10, the user's goal: _when user ask for retrying chatbot have to
+// try with different approach and different effort get different result_.
+// What each provider's client is HANDED -- the request as it goes out -- on
+// an ordinary ask, a first Retry and a second.
+describe('a Retry asks a step harder, on the wire', () => {
+    const RETRY_SERVER_ID = 'retry-server';
+    const RETRY_MODEL = `${RETRY_SERVER_ID}/row-gemma`;
+
+    function genOpenAiText() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        resetSpendGuardForTests();
+        resetReasoningOffMemoryForTests();
+    });
+    afterEach(() => {
+        fake.anthropic = null;
+        fake.openai = null;
+        fake.custom = null;
+        fake.customServers = [];
+        fake.lmStudioInfoMap = null;
+    });
+
+    test('ChatGPT thinks a level harder each try, with room for it', async () => {
+        const create = vi.fn(async () => {
+            return genOpenAiText();
+        });
+        fake.openai = { chat: { completions: { create } } };
+        for (const retryAttempt of [undefined, 1, 2, 3]) {
+            await askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'openai',
+                'gpt-5',
+                [],
+                null,
+                retryAttempt === undefined ? {} : { retryAttempt },
+            );
+        }
+        const sent = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(
+            sent.map((request: any) => {
+                return [
+                    request.reasoning_effort,
+                    request.max_completion_tokens,
+                ];
+            }),
+        ).toEqual([
+            ['low', 6000],
+            ['medium', 12000],
+            ['high', 12000],
+            ['high', 12000],
+        ]);
+    });
+
+    test('Claude 5 is asked one effort level above its default, never max; Haiku 4.5 none', async () => {
+        const create = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'Press F5.' }] };
+        });
+        fake.anthropic = { messages: { create } };
+        const ask = (model: string, retryAttempt?: number) => {
+            return askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'anthropic',
+                model,
+                [],
+                null,
+                retryAttempt === undefined ? {} : { retryAttempt },
+            );
+        };
+        await ask('claude-sonnet-5');
+        await ask('claude-sonnet-5', 1);
+        await ask('claude-opus-5', 3);
+        await ask('claude-haiku-4-5', 1);
+        const [plain, sonnet, opus, haiku] = create.mock.calls.map(
+            (call: any[]) => {
+                return call[0];
+            },
+        );
+        // An ordinary ask sends no effort: the default the corpus was
+        // graded at, and the cached prefix it reads.
+        expect(plain).not.toHaveProperty('output_config');
+        expect(plain.max_tokens).toBe(6000);
+        expect(sonnet.output_config).toEqual({ effort: 'xhigh' });
+        expect(sonnet.max_tokens).toBe(12000);
+        expect(opus.output_config).toEqual({ effort: 'xhigh' });
+        expect(haiku).not.toHaveProperty('output_config');
+        expect(haiku.max_tokens).toBe(12000);
+    });
+
+    test('a local program is sampled on a Retry, and a general one may think', async () => {
+        fake.customServers = [
+            {
+                id: RETRY_SERVER_ID,
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [{ id: 'row-gemma', model: 'gemma-4-12b', name: '' }],
+            },
+        ];
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async () => {
+            return genOpenAiText();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        for (const retryAttempt of [undefined, 1, 2]) {
+            await askLlmBot(
+                'What is the Bible?',
+                'presenter',
+                'custom',
+                RETRY_MODEL,
+                [],
+                null,
+                {
+                    isGeneral: true,
+                    ...(retryAttempt === undefined ? {} : { retryAttempt }),
+                },
+            );
+        }
+        const [plain, first, second] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(plain).toMatchObject({
+            temperature: 0,
+            reasoning_effort: 'none',
+        });
+        expect(plain.max_tokens).toBe(2000);
+        expect(first.temperature).toBe(0.7);
+        expect(first.max_tokens).toBe(4000);
+        expect(first).not.toHaveProperty('reasoning_effort');
+        expect(second.temperature).toBe(1);
     });
 });

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-10T21:59:41.247Z
+  modified: 2026-11-11T03:01:36.971Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -267,6 +267,55 @@ told to check, the model claimed it had; told what the Bible says, it still
 missed a wrong verse; beside the note's line, it named it. (5) The custom
 servers' lean tool list had never held `owa_bible_note`; check the list a
 provider is actually SENT before trusting a hint that names a tool.
+
+Later the same day (BN-64, BN-66..BN-68), the Stop hook's _the "best"
+standard is never shown_: (6) **"best" is a written standard and a blind
+reader's** -- `lesson-rubric.md` (Robinson, Chapell, Stott; twelve
+criteria, a factual error caps a lesson) and two readers on different models
+given the standard and the lessons alone; `run-lesson-asks.mjs` makes the
+lessons through the real window, `lesson-rubric.mjs` checks the structure.
+(7) **A unit test built on an assumption passes while the window fails**:
+the empty-note card read an attachment summary the test had made up; the
+file's reader writes `(empty)`. Build the fixture the way the window does.
+(8) **A model numbers new blocks as they will stand, and the tool reads
+them as read**: finishing an outline, `after: 3, 4, 5, 6` for a heading,
+its words, the next heading … scrambled the note. The window naming each
+missing part with the block it goes after, and the tool reading a heading
+with its words as one section, put four partial sermons right; asked to
+send a dropped change in parts, it must go FROM THE END UP (an add moves
+only what follows it). (9) **Loose lines want the flat add the empty note
+has**, placed by the window only when every line of theirs is in it.
+(10) **Asking a model for richer content buys invented content** -- "the
+fact that changes how it is heard" and "a concrete story" brought invented
+history and anecdotes told as true, and "be TRUE" in words did not stop
+it: the model writes before the app prints the passage, so it quotes and
+numbers from memory. Having it READ the passage first (`owa_find_verse`)
+made the lessons richer and truer at once, by two blind readers. Measure a
+prompt change blind, before against after, shuffled -- not by reading the
+new output. (11) **The review is the way to best**: a draft is good, the
+review's fixes as buttons that SAY the change make it better in place.
+(12) **A loop is only as good as its weakest press** (BN-74): run
+draft → review → first fix, twice, on eight asks, it stopped five ways --
+fixes written with the marker dropped, a review with no fix to press,
+passages offered as plain lines, a devotion reviewed into three points, a
+children's lesson printing a whole book. Each review answer is read by
+the window for its buttons whatever its frame, a review with none asked
+once more (then its named fixes are the buttons), a fix pressed leaves the
+review's others pressable, and the review is told the form the tab asked
+for. Test the JOB (help prepare: draft, review, every fix pressed), not
+the first draft alone. (14) **A model keeps to the words of a list it is
+given only loosely**: told to open its buttons on Add, Write, Move or
+Make, it wrote Grow, Rewrite and Clarify too -- read the shape, not the
+four words. (15) **A source edit hot-reloads into every scratch app on the
+same Vite**: a lesson run in flight lost a review to one. Edit `src/` only
+between runs, and know that a peer session's edits land the same way.
+(13) **A fresh scratch data folder needs its child folders too**: a
+`setting.json` naming the data folder is not enough -- that folder's own
+`local-storage/select-dir-bible-notes` (and `-app-document`,
+`-bible-presenter`, each `$DATA_DIR_PATH\<name>`) or every note call
+answers "No Bible notes folder is set up yet". And a scratch app that is
+the ONLY published instance is what any other session's tools find: seen
+2026-11-10, questions not ours in its help window minutes after launch.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

@@ -4253,5 +4253,6 @@
     "Open it": "དེ་ཁ་ཕྱེ",
     "Save changes to \"{name}\"": "“{name}” ཡི་འགྱུར་བ་ཉར",
     "made a study file": "སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བཟོས",
-    "changed a study file": "སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བསྒྱུར"
+    "changed a study file": "སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བསྒྱུར",
+    "A different answer: worked out another way, with more effort.": "ལན་མི་འདྲ་བ་ཞིག ཐབས་ལམ་གཞན་ཞིག་དང་འབད་བརྩོན་ཆེ་བའི་སྒོ་ནས་བཟོས་པ།"
 }
