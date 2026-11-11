@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Fayilo yophunzirira, monga idzasinthidwira",
     "The study file, as it will be saved": "Fayilo yophunzirira, monga idzasungidwira",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · zithunzi zofotokozera {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · chithunzi chofotokozera {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ili kale mu Zothandizira, choncho iyi idzakhala \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Yalembedwa ndi wothandiza wa pulogalamuyi. Iyerekezeni ndi Baibulo lanu.",
     "Change the name": "Sinthani dzina",

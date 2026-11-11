@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "ໄຟລ໌ສຶກສາ ຕາມທີ່ມັນຈະຖືກປ່ຽນ",
     "The study file, as it will be saved": "ໄຟລ໌ສຶກສາ ຕາມທີ່ມັນຈະຖືກບັນທຶກ",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · ແຜນພາບ {count} ອັນ",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · ແຜນພາບ {count} ອັນ",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ມີຢູ່ໃນ ແຫຼ່ງຂໍ້ມູນ ແລ້ວ, ສະນັ້ນໄຟລ໌ນີ້ຈະເປັນ \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "ຮ່າງໂດຍຜູ້ຊ່ວຍຂອງແອັບ. ກະລຸນາກວດເບິ່ງກັບພຣະຄຳພີຂອງທ່ານ.",
     "Change the name": "ປ່ຽນຊື່",

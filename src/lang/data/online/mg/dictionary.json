@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Ny rakitra fandalinana, araka ny hanovana azy",
     "The study file, as it will be saved": "Ny rakitra fandalinana, araka ny hitahirizana azy",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · sary fanazavana {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · sary fanazavana {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Efa ao amin'ny Loharano ny \"{taken}\", koa ho \"{name}\" ity iray ity.",
     "Drafted with the app assistant. Check it against your Bible.": "Nosoratana niaraka tamin'ny mpanampin'ny fampiharana. Ampitahao amin'ny Baiboly anao.",
     "Change the name": "Ovay ny anarana",

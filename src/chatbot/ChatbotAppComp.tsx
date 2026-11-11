@@ -91,6 +91,7 @@ import {
     genAttachmentFromPath,
     genPdfAttachment,
     readBlankNoteFromFile,
+    refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
 import {
@@ -9636,7 +9637,14 @@ export default function ChatbotAppComp() {
                           askedTab?.messages ?? [],
                           askedTab?.fileClosedAt,
                       );
-            const modelAttachments = [...openFiles, ...attachments];
+            // A text file still open goes with its words as they are NOW
+            // (`refreshTextAttachment`): a study file this window saved a
+            // change to since was otherwise sent as it was attached, and
+            // the model's next change put the saved one back.
+            const modelAttachments = [
+                ...(await Promise.all(openFiles.map(refreshTextAttachment))),
+                ...attachments,
+            ];
             // A file put back in the box by Ask again may have lost its
             // pages with a closed window, like one still open in the tab.
             await Promise.all(modelAttachments.map(reloadFileAttachment));

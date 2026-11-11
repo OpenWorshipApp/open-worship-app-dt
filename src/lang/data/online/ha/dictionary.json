@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Fayil ɗin nazari, kamar yadda za a canza shi",
     "The study file, as it will be saved": "Fayil ɗin nazari, kamar yadda za a ajiye shi",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · zane {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · zane {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ya riga ya kasance a cikin Albarkatu, don haka wannan zai zama \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "An shirya shi da Mataimakin Manhaja. Duba shi da Littafi Mai Tsarki naku.",
     "Change the name": "Canza sunan",

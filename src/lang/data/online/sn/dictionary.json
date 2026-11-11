@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Faira rekudzidza, sezvarichachinjwa",
     "The study file, as it will be saved": "Faira rekudzidza, sezvarichachengetedzwa",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · madhayagiramu {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · dhayagiramu {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ratova muZviwanikwa, saka iri richanzi \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Rakagadzirwa nemubatsiri wechirongwa. Riongororei neBhaibheri renyu.",
     "Change the name": "Chinja zita",

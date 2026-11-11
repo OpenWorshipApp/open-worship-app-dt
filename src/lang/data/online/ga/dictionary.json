@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "An comhad staidéir, mar a athrófar é",
     "The study file, as it will be saved": "An comhad staidéir, mar a shábhálfar é",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · léaráidí: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} léaráid",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Tá \"{taken}\" in Acmhainní cheana, mar sin \"{name}\" a bheidh ar an gceann seo.",
     "Drafted with the app assistant. Check it against your Bible.": "Dréachtaithe le cúntóir na haipe. Seiceáil é in aghaidh do Bhíobla.",
     "Change the name": "Athraigh an t-ainm",

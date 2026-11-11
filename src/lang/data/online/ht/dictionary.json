@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Fichye etid la, jan l ap chanje a",
     "The study file, as it will be saved": "Fichye etid la, jan l ap anrejistre a",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} dyagram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} dyagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" deja nan Resous, kidonk sa a ap rele \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Ekri ak èd Asistan Aplikasyon an. Tcheke l ak Bib ou.",
     "Change the name": "Chanje non an",

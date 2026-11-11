@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "File studi, seperti yang akan diubah",
     "The study file, as it will be saved": "File studi, seperti yang akan disimpan",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" sudah ada di Sumber Daya, jadi file ini akan menjadi \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Disusun dengan asisten aplikasi. Periksa dengan Alkitab Anda.",
     "Change the name": "Ganti nama",

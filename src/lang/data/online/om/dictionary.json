@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Faayilii qorannoo, akkuma jijjiiramutti",
     "The study file, as it will be saved": "Faayilii qorannoo, akkuma olkaa'amutti",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · fakkiiwwan ibsaa {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · fakkii ibsaa {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" duraanuu Qabeenyota keessa jira, kanaaf kun \"{name}\" ta'a.",
     "Drafted with the app assistant. Check it against your Bible.": "Gargaaraa appii kanaatiin qophaa'e. Macaafa Qulqulluu keetiin wal bira qabii mirkaneessi.",
     "Change the name": "Maqaa jijjiiri",

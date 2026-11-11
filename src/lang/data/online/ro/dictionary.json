@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Fișierul de studiu, așa cum va fi modificat",
     "The study file, as it will be saved": "Fișierul de studiu, așa cum va fi salvat",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diagrame",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagramă",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}” este deja în Resurse, așa că acesta va fi „{name}”.",
     "Drafted with the app assistant. Check it against your Bible.": "Pregătit cu asistentul aplicației. Verificați-l cu Biblia dumneavoastră.",
     "Change the name": "Schimbare nume",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "შესასწავლი ფაილი, როგორც შეიცვლება",
     "The study file, as it will be saved": "შესასწავლი ფაილი, როგორც შეინახება",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} დიაგრამა",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} დიაგრამა",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ უკვე არის საქაღალდეში „რესურსები“, ამიტომ ეს იქნება „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "მომზადებულია აპის ასისტენტით. შეამოწმეთ თქვენი ბიბლიით.",
     "Change the name": "სახელის შეცვლა",

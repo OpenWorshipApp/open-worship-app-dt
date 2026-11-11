@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "བསྒྱུར་རྒྱུ་ལྟར་གྱི་སློབ་སྦྱོང་ཡིག་ཆ",
     "The study file, as it will be saved": "ཉར་ཚགས་བྱེད་རྒྱུ་ལྟར་གྱི་སློབ་སྦྱོང་ཡིག་ཆ",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · རི་མོ་ {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · རི་མོ་ {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "“{taken}” རྒྱུ་ཆའི་ནང་སྔར་ནས་ཡོད། དེས་ན་འདིའི་མིང་“{name}” ཡིན།",
     "Drafted with the app assistant. Check it against your Bible.": "མཉེན་ཆས་ཀྱི་ལག་རོགས་ཀྱིས་ཟིན་བྲིས་བྱས་པ། ཁྱེད་ཀྱི་གསུང་རབ་དང་བསྡུར་ནས་ཞིབ་བཤེར་བྱེད།",
     "Change the name": "མིང་དེ་བསྒྱུར",

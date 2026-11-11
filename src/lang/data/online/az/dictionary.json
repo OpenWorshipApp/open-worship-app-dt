@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Öyrənmə faylı, dəyişdiriləcəyi kimi",
     "The study file, as it will be saved": "Öyrənmə faylı, saxlanılacağı kimi",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} diaqram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diaqram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "“{taken}” artıq Resurslarda var, ona görə bu, “{name}” olacaq.",
     "Drafted with the app assistant. Check it against your Bible.": "Tətbiq köməkçisi ilə hazırlanıb. Onu öz İncilinizlə yoxlayın.",
     "Change the name": "Adı dəyiş",

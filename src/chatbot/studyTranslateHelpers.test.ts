@@ -3,13 +3,16 @@ import { describe, expect, it } from 'vitest';
 import languageNameMap from '../lang/data/en/language-names.json';
 import { listAssistantLanguages } from './chatLangHelpers';
 import {
+    STUDY_MEANING_RULE,
     type StudyTranslateLanguageType,
     type StudyTranslatePlanType,
+    applyStudyHeadingTerms,
     assembleStudyTranslation,
     checkIsStudyDiagramTranslated,
     checkIsStudyTextTranslated,
     cleanStudyTranslation,
     describeStudyTranslation,
+    listMissingStudyTerms,
     readStudyTranslatePlace,
     readStudyTranslatePlan,
     resolveStudyTranslateLanguage,
@@ -218,6 +221,38 @@ describe('what the translator is handed and gives back', () => {
         );
     });
 
+    it('asks every language for what a word means, never its sound', () => {
+        // EC-486: "Cross references" had come back as "Cross" in the
+        // language's letters.
+        for (const language of [TESTISH, CAPITALISH]) {
+            expect(toStudyTextTranslationAsk('Words.', language)).toContain(
+                STUDY_MEANING_RULE,
+            );
+        }
+        expect(STUDY_MEANING_RULE).toContain('never how it sounds');
+        expect(STUDY_MEANING_RULE).toContain('Cross references are other');
+    });
+
+    it('names the church words the last translation wrote another way', () => {
+        const ask = toStudyTextTranslationAsk(
+            'The Holy Spirit and grace.',
+            TESTISH,
+            [['Holy Spirit', 'the Breath']],
+        );
+        expect(ask).toContain(
+            ' Your last translation wrote these another way; write them so: ' +
+                'Holy Spirit = the Breath.',
+        );
+        // Said after the list, and the frame still ends as it did.
+        expect(ask.indexOf('Your last translation')).toBeGreaterThan(
+            ask.indexOf('grace = favour'),
+        );
+        expect(ask.endsWith('nothing else.)')).toBe(true);
+        expect(
+            toStudyTextTranslationAsk('The Holy Spirit.', TESTISH),
+        ).not.toContain('Your last translation');
+    });
+
     it('asks for a diagram’s labels with its syntax kept', () => {
         const ask = toStudyDiagramTranslationAsk(
             'graph TD\n  A --> B',
@@ -228,6 +263,20 @@ describe('what the translator is handed and gives back', () => {
         ).toBe(true);
         expect(ask).toContain('every node id');
         expect(ask).toContain('no ``` fence');
+        expect(ask).not.toContain("church's own words");
+    });
+
+    it('gives a diagram the church words its labels use', () => {
+        const ask = toStudyDiagramTranslationAsk(
+            'graph TD\n  A["Holy Spirit"] --> B["Life"]',
+            TESTISH,
+        );
+        expect(ask).toContain(
+            "Use the church's own words in Testish: Holy Spirit = the Breath.",
+        );
+        expect(
+            ask.endsWith('Answer with the diagram alone, no ``` fence.)'),
+        ).toBe(true);
     });
 
     it('takes a fence off the answer, and only a whole one', () => {
@@ -305,6 +354,111 @@ describe('checkIsStudyTextTranslated', () => {
         expect(checkIsStudyTextTranslated('a b c', 'x y z', CAPITALISH)).toBe(
             true,
         );
+    });
+});
+
+// A made-up language with the church words a study's headings and names
+// use, the way a language's `translationTerms` carries them (EC-486).
+const TERMISH: StudyTranslateLanguageType = {
+    ...TESTISH,
+    name: 'Termish',
+    nativeName: 'Termo',
+    terms: {
+        'Cross references': 'Linked Verses',
+        'Holy Spirit': 'the Breath',
+        'bronze serpent': 'brasssnake',
+        'bronze snake': 'brasssnake',
+        'golden calf': "calf o'gold",
+        grace: 'favour',
+    },
+};
+
+describe('applyStudyHeadingTerms', () => {
+    it('writes a heading that is a church word as that word', () => {
+        expect(
+            applyStudyHeadingTerms(
+                '## Cross References\nSee these.\n\n### The Holy Spirit:\nHe gives.',
+                '## Kross Refs\nSee theseo.\n\n### Spirito thing\nHe giveso.',
+                TERMISH,
+            ),
+        ).toBe('## Linked Verses\nSee theseo.\n\n### the Breath\nHe giveso.');
+    });
+
+    it('reads a heading through bold, closing marks and any case', () => {
+        expect(
+            applyStudyHeadingTerms(
+                '# **CROSS REFERENCES** #\n\n## Grace.',
+                '# **Krossos** #\n\n## Graceo.',
+                TERMISH,
+            ),
+        ).toBe('# Linked Verses\n\n## favour');
+    });
+
+    it('leaves a heading that is no church word as translated', () => {
+        expect(
+            applyStudyHeadingTerms(
+                '## The Setting\n\n## Cross references',
+                '## The Settingo\n\n## Krossos',
+                TERMISH,
+            ),
+        ).toBe('## The Settingo\n\n## Linked Verses');
+    });
+
+    it('changes nothing when the headings cannot be paired, or no word is known', () => {
+        const source = '## Cross references\n\n## The Setting';
+        const merged = '## Krossos and the Settingo';
+        expect(applyStudyHeadingTerms(source, merged, TERMISH)).toBe(merged);
+        const translated = '## Krossos\n\n## Settingo';
+        expect(applyStudyHeadingTerms(source, translated, CAPITALISH)).toBe(
+            translated,
+        );
+        expect(applyStudyHeadingTerms('No heading.', 'Noo.', TERMISH)).toBe(
+            'Noo.',
+        );
+    });
+});
+
+describe('listMissingStudyTerms', () => {
+    const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b);
+    const CURLY_APOSTROPHE = String.fromCharCode(0x2019);
+
+    it('names a name of more than one word the translation says another way', () => {
+        expect(
+            listMissingStudyTerms(
+                'Moses lifted the bronze serpent. By grace.',
+                'Moseso liftedo the shiny snakeo. By favouro.',
+                TERMISH,
+            ),
+        ).toEqual([['bronze serpent', 'brasssnake']]);
+    });
+
+    it('leaves out one word, and a word the English does not use', () => {
+        // "grace" is one word: a translation may fairly say it its own way.
+        expect(
+            listMissingStudyTerms(
+                'By grace alone.',
+                'By kindnesso aloneo.',
+                TERMISH,
+            ),
+        ).toEqual([]);
+        expect(
+            listMissingStudyTerms(
+                'Bronze serpents are many.',
+                'Many.',
+                TERMISH,
+            ),
+        ).toEqual([]);
+    });
+
+    it('finds the word through a Bible’s invisible gaps, curly quotes and case', () => {
+        expect(
+            listMissingStudyTerms(
+                'The BRONZE SNAKE and the golden calf.',
+                `The Brass${ZERO_WIDTH_SPACE}Snake and the calf ` +
+                    `o${CURLY_APOSTROPHE}gold.`,
+                TERMISH,
+            ),
+        ).toEqual([]);
     });
 });
 

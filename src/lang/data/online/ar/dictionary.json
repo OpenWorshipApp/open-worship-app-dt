@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "ملف الدراسة كما سيُغيَّر",
     "The study file, as it will be saved": "ملف الدراسة كما سيُحفظ",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · المخططات: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} مخطط",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}» موجود بالفعل في الموارد، لذا سيكون اسم هذا «{name}».",
     "Drafted with the app assistant. Check it against your Bible.": "كُتبت مسودته بمساعدة مساعد التطبيق. راجعه على كتابك المقدس.",
     "Change the name": "تغيير الاسم",

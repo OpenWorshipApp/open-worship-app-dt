@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Na faile ni vuli, me vaka ena veisautaki kina",
     "The study file, as it will be saved": "Na faile ni vuli, me vaka ena maroroi kina",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} na ivakatakarakara",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} na ivakatakarakara",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Sa tu oti ena iYaya ni Vuli na \"{taken}\", o koya na yaca ni faile oqo ena \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Vakarautaki vata kei na Dauveivuke ni Porokaramu. Vakatautauvatataka kei na nomuni iVola Tabu.",
     "Change the name": "Veisautaka na yaca",

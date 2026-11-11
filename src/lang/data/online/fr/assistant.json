@@ -152,7 +152,11 @@
         "church": "Église",
         "worship": "culte",
         "hymn": "cantique",
-        "sermon": "prédication"
+        "sermon": "prédication",
+        "Cross references": "Références croisées",
+        "cross reference": "référence croisée",
+        "bronze serpent": "serpent d'airain",
+        "bronze snake": "serpent d'airain"
     },
     "glossary": {},
     "bibleReaderWords": {

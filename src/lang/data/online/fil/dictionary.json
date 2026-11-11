@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Ang file sa pag-aaral, kung paano ito babaguhin",
     "The study file, as it will be saved": "Ang file sa pag-aaral, kung paano ito ise-save",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} dayagram",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} dayagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Nasa Mga Mapagkukunan na ang \"{taken}\", kaya ang isang ito ay magiging \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Isinulat sa tulong ng Assistant ng App. Ihambing ito sa iyong Bibliya.",
     "Change the name": "Palitan ang pangalan",

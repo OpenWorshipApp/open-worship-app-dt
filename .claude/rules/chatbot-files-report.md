@@ -96,8 +96,14 @@ window as a whole — tabs, pickers, its language, the caution — is in
   with every later question until another file is attached or the ×
   of the **Still asking about** line above the box is pressed
   (`ChatSessionType.fileClosedAt`), read again from disk when the window
-  has let them go (`reloadFileAttachment`). Only to the model: the
-  transcript keeps the question as asked. An empty box with only files is
+  has let them go (`reloadFileAttachment`). A plain TEXT file's words are
+  read again for every question (`refreshTextAttachment`, 2026-11-10,
+  `EC-485`). They had been the words read when it was attached, so a study
+  saved by this window's own **Save changes** went out as it WAS, and the
+  model's next whole-file change put the saved section back. The app's own
+  documents (`.owl`, `.ows`, `.owpf`, `.own`) are not read twice: their
+  conversations read them as they are now with their own tools. Only to the
+  model: the transcript keeps the question as asked. An empty box with only files is
   `FILE_ONLY_QUESTION` (say what it is, ask what they want), not "help with
   whatever looks wrong". **The Resources panel's 🤖**
   (`ResourcesFileRowComp`, `.app-resources-file-ask`, beside the ⋮ and in
@@ -232,11 +238,19 @@ window as a whole — tabs, pickers, its language, the caution — is in
   "…"**, written only against the hash it was drafted from -- a
   translation too (2026-11-10, `EC-478`): the window translates the file a
   part at a time, each part a counted line on the wait, and the card holds
-  the whole file with the translation added. While a press
+  the whole file with the translation added. Seen in the 🤖 window the same
+  night: _translate all to khmer and then append the translated content to
+  new pages_, on a study handed over by its Resources 🤖, kept the English
+  unchanged and appended the Khmer pages. While a press
   works the tab is busy (`busyHoldListRef`). Every sentence is the
   chatbot's `tran`, in every language's dictionary. Seen live through the
-  tools (`agent-tools.md`); the card in the 🤖 window not yet, the AI
-  caution being the person's press.
+  tools (`agent-tools.md`), and in the 🤖 window on 2026-11-10 on Auto
+  (`EC-485`): a John 3:16-17 study drafted with three diagrams, previewed,
+  created, a section changed and a prayer appended, each written only by
+  its press. A drafted CHANGE is shown to the model with
+  `STUDY_CHANGE_HELD_NOTE` -- press **Save changes**, and say every part
+  `change` names -- after its answer had sent the person to a **Create**
+  the card does not have, and named only the part asked for.
 - **Report** (`src/chatbot/reportHelpers.ts`) is for when the app itself is
   wrong. Two presses: the first only ASKS, quoting what will be reported (with
   an empty box, the LAST question asked), cleared by a keystroke. Confirmed, it

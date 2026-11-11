@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Өөрчлөгдөх хэлбэрээрх судалгааны файл",
     "The study file, as it will be saved": "Хадгалагдах хэлбэрээрх судалгааны файл",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} диаграм",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} диаграм",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" аль хэдийн Эх сурвалжид байгаа тул энэ нь \"{name}\" болно.",
     "Drafted with the app assistant. Check it against your Bible.": "Програмын туслахаар бэлтгэсэн. Өөрийн Библитэй тулгаж шалгана уу.",
     "Change the name": "Нэрийг өөрчлөх",

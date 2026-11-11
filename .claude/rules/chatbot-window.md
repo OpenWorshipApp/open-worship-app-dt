@@ -231,7 +231,9 @@ the record's chat, family line, related verses, word study).
     (the same day; `ResourcesFileRowComp`'s `handleAskingAbout`): a PDF's
     viewer or a Markdown file's preview, passed as `openChatbotWithFile`'s
     `beforeOpening` so it opens only once the two questions are answered --
-    unit-tested, not pressed live (the caution is the person's).
+    unit-tested, and pressed live 2026-11-10 (`EC-478`'s run, the caution
+    put away on that dev profile): the 🤖 on a Markdown row opened its
+    preview window, then the help window.
     **And the tab WORKS IN that file's window** (the same day, the user,
     **Working in** naming only the main window after the 🤖 on `JHN.3.pdf`
     and a Markdown row: _open in chatbot didn't attach the window to the
@@ -260,7 +262,10 @@ the record's chat, family line, related verses, word study).
     `Markdown Preview - JHN.3.The New Birth and God's Love.md · own window`
     and `JHN.3.pdf · own window`, aimed at, and pictured in about 140 ms each;
     the help window's own line after the 🤖 is unit-tested
-    (`ChatbotAppComp.ut100a.test.tsx`), not seen.
+    (`ChatbotAppComp.ut100a.test.tsx`), and was seen 2026-11-10: the 🤖 on
+    a scratch study opened a tab with the file attached and **Working in**
+    reading `Markdown Preview - JHN.3.16-17 zz Robot Love Translated.md ·
+    own window`.
     **And a tab ASKING ABOUT a popup kind works in it** (the same day, the
     user: _chatbot's do it for me appear in wrong page, I ask for setting
     page and appear in main windows_;

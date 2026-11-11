@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Studijų failas, koks jis bus pakeistas",
     "The study file, as it will be saved": "Studijų failas, koks jis bus įrašytas",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · diagramų: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} diagrama",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ jau yra skiltyje „Ištekliai“, todėl šis bus „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Parengta su programos asistentu. Patikrinkite pagal savo Bibliją.",
     "Change the name": "Pakeisti pavadinimą",

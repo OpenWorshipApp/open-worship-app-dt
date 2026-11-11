@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Datoteka za proučavanje, kako će biti promijenjena",
     "The study file, as it will be saved": "Datoteka za proučavanje, kako će biti spremljena",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · dijagrami: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} dijagram",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}” već postoji u mapi Resursi, pa će ova biti „{name}”.",
     "Drafted with the app assistant. Check it against your Bible.": "Sastavljeno uz pomoćnika aplikacije. Provjerite to u svojoj Bibliji.",
     "Change the name": "Promijeni naziv",

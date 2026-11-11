@@ -150,6 +150,57 @@ export async function reloadFileAttachment(attachment: ChatAttachmentType) {
     }
 }
 
+/**
+ * A text file still open in a tab, its words read AGAIN from disk for the
+ * question being asked. The words a text attachment carries are the ones
+ * read when it was attached, and they ride every later question -- so a
+ * study file this window had itself saved a change to since went out as it
+ * WAS, and the model's next whole-file change put the saved one back
+ * (2026-11-10, live on Auto: a section changed and saved, then _add a short
+ * closing prayer at the end_ drafted the old section again, the answer
+ * naming only the prayer). A new object, so the message keeps what was
+ * attached; the same one when nothing changed, the file is gone or cannot
+ * be read. Nothing is kept between asks. The app's own documents -- a song,
+ * a slide document, a presenting flow, a Bible notes file -- are not read
+ * here: their conversations read them as they are now with their own tools
+ * (`owa_lyric_edit read`, `owa_note_edit read` …), and parsing one twice a
+ * question is a cost a weak machine pays for nothing.
+ */
+export async function refreshTextAttachment(
+    attachment: ChatAttachmentType,
+): Promise<ChatAttachmentType> {
+    const filePath = attachment.filePath;
+    if (
+        attachment.kind !== 'text' ||
+        filePath === undefined ||
+        attachment.noteId !== undefined
+    ) {
+        return attachment;
+    }
+    const name = pathBasename(filePath);
+    if (
+        checkIsBibleNoteFileName(name) ||
+        checkIsLyricFileName(name) ||
+        checkIsSlideFileName(name) ||
+        checkIsFlowFileName(name)
+    ) {
+        return attachment;
+    }
+    const fresh = await genAttachmentFromPath(filePath);
+    if (
+        !('attachment' in fresh) ||
+        fresh.attachment.kind !== 'text' ||
+        fresh.attachment.summary === attachment.summary
+    ) {
+        return attachment;
+    }
+    return {
+        ...attachment,
+        byteSize: fresh.attachment.byteSize,
+        summary: fresh.attachment.summary,
+    };
+}
+
 // A picture off the disk, already cut to what is worth sending.
 async function readImageDataUrl(filePath: string, name: string) {
     try {

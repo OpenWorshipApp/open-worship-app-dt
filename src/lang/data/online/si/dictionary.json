@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "වෙනස් කරනු ලබන ආකාරයටම අධ්‍යයන ගොනුව",
     "The study file, as it will be saved": "සුරකිනු ලබන ආකාරයටම අධ්‍යයන ගොනුව",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · රූප සටහන් {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · රූප සටහන් {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" දැනටමත් සම්පත් තුළ ඇත, එබැවින් මෙය \"{name}\" වනු ඇත.",
     "Drafted with the app assistant. Check it against your Bible.": "යෙදුමේ සහායකයා සමඟ සකස් කළ කෙටුම්පතකි. එය ඔබේ බයිබලය සමඟ සසඳා බලන්න.",
     "Change the name": "නම වෙනස් කරන්න",

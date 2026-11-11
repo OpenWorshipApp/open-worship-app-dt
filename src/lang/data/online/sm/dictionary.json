@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "O le faila suʻesuʻe, e pei ona suia ai",
     "The study file, as it will be saved": "O le faila suʻesuʻe, e pei ona teu ai",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} ata faʻatusa",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} ata faʻatusa",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Ua iai le \"{taken}\" i Punaoa, o lea o le a taʻua lenei o le \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Na tapenaina ma le fesoasoani a le polokalama. Siaki ma lau Tusi Paia.",
     "Change the name": "Sui le igoa",

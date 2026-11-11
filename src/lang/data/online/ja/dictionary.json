@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "変更後の学習ファイル",
     "The study file, as it will be saved": "保存される学習ファイル",
     "{passage} ({bible}) · {count} diagrams": "{passage}（{bible}）· 図 {count} 点",
+    "{passage} ({bible}) · {count} diagram": "{passage}（{bible}）· 図 {count} 点",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "「{taken}」はすでにリソースにあるため、こちらは「{name}」になります。",
     "Drafted with the app assistant. Check it against your Bible.": "アプリのアシスタントで下書きしました。お手持ちの聖書で確認してください。",
     "Change the name": "名前を変える",

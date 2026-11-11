@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Зерттеу файлы, өзгертілетін түрінде",
     "The study file, as it will be saved": "Зерттеу файлы, сақталатын түрінде",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} сызба",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} сызба",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}» Ресурстарда бар, сондықтан бұл «{name}» болады.",
     "Drafted with the app assistant. Check it against your Bible.": "Қолданба көмекшісімен жазылған. Оны өз Киелі кітабыңызбен салыстырыңыз.",
     "Change the name": "Атын өзгерту",

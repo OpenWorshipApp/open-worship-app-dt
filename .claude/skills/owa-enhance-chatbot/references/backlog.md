@@ -11181,7 +11181,7 @@ open. Worth trying: close the list when the box loses focus, or open it
 only on a keystroke, never on a focus regained. Memory
 `chatbot-cdp-driver-gotchas` has the driving side.
 
-### EC-478 — "translate it and append it" made a new file and lost the diagrams — `done`, not yet asked through the window
+### EC-478 — "translate it and append it" made a new file and lost the diagrams — `done`, asked through the window 2026-11-10
 
 Reported 2026-11-10 by the user, with a picture. In a Reader tab on Auto
 (OWA Shared · gemma4:cloud), with `JHN.3.The New Birth and God's Love.md`
@@ -11228,6 +11228,43 @@ person's press. Tests: `studyTranslateHelpers.test.ts` and
 `llmBotHelpers.studyTranslate.test.ts`. The second has 6 tests: appended
 end to end, the Bible chosen two ways, the three refusals, a stop with
 nothing drafted, and a diagram kept as it was.
+
+**Asked through the window 2026-11-10**, on the dev app, on Auto (the AI
+caution was put away on that profile). The study was a scratch one,
+`JHN.3.16-17 zz Robot Love Translated.md`: 2 930 bytes, nine sections, one
+diagram, the Amplified passage. It was made in the 🤖 window and created
+with its card.
+- Its Resources row's 🤖 opened the file's Markdown Preview and a new tab.
+  The tab had the file attached, and **Working in** read `Markdown Preview -
+  JHN.3.16-17 zz Robot Love Translated.md · own window` (EC-483).
+- In that tab, the user's own words: _translate all to khmer and then append
+  the translated content to new pages_.
+- One ask, about 30 s, gemma4:cloud, no cost, 11k tokens. The card read
+  **Save changes to "…"**, and the answer said _Please press Save changes to
+  write this to the file_.
+- The held copy began with the English study exactly as it was. Then came
+  `---`, a Khmer title, and John 3:16-17 quoted again from the Khmer Bible
+  (ពគប), not translated by the model. Then all nine sections and the diagram
+  in Khmer, and one footer at the end.
+- **Save changes** wrote exactly the held copy: 6 059 characters, 11 587
+  bytes. The open preview drew the Khmer pages and the diagram's Khmer boxes.
+- Both writes were undone with `owa_undo`, newest first, and John 3 listed
+  its four files as before.
+
+Two words of the Khmer were wrong (EC-486). The card's line read _1
+diagrams_ (EC-487). Both were fixed and seen right in the window on
+2026-11-11.
+
+A READ was asked the same night through the Resources 🤖 on the user's own
+`JHN.3.The New Birth and God's Love.md`: 44 KB, English with its Khmer
+pages. The tab's own **Sum up the main points** gave four points in one
+round, 8.7k tokens, free:
+- the new birth and the wind;
+- God's love and the bronze serpent;
+- light and darkness;
+- John's humility as the groomsman: _He must increase_.
+Each point is in the file (verses 8, 14-15, 20 and 29-30, and its Verse by
+Verse). Nothing was written.
 
 ### EC-479 — a change to a study file had to be the whole file again — `done`
 
@@ -11400,3 +11437,147 @@ A longest-phrase rule would route both to W-37. It was not made: the corpus
 holds 240 cross-page pairs where one keyword phrase sits inside another's
 (`turn off` / `turn off timer`, `my language` / `read in my language`),
 and changing all of them wants a measured corpus run, not a guess.
+
+### EC-485 — a saved change to a study went back with the next one — `done`
+
+The goal: _chatbot is smart enough to help producing and modifying
+excelent markdown resource file_. The study card had been seen only through
+a fresh stdio server, never in the 🤖 window with a model. Asked live
+2026-11-10 on the dev app, on Auto (it picked OWA Shared · gemma4:cloud,
+no cost). The AI caution had been put away for 30 days on that profile, so
+it was not asked.
+- The 🤖 on the `JHN.3.The New Birth and God's Love.md` row, with that
+  file's window already open, opened the chat with the file attached and
+  NO second window: the open one kept its id (RD-127, EC-484).
+- In a new tab: _Make a study file for John 3:16-17 titled zz Robot Love
+  That Gives, with a diagram of how the passage moves and questions for a
+  small group._ One card: the Amplified passage quoted by the app, eight
+  sections, three diagrams (a flowchart, a mindmap, a left-to-right graph)
+  and four questions. **Preview** drew all three. **Create** saved it and
+  attached it with **Open it** and **Undo this change**.
+- _change the Questions for Discussion section to three short questions
+  for teenagers_: only that section changed. Saved.
+- _Now add a short closing prayer at the end of the study._ **Wrong.** The
+  draft put the OLD four questions back with the prayer. The answer named
+  only the prayer, and told the person to press **Create**, a button the
+  card does not have (it reads **Save changes to "…"**). Not saved.
+
+Why: a text file attached to a tab carries the words read WHEN it was
+attached (`summary`), and those ride every later question
+(`findOpenFileAttachments`). The file attached at **Create** went out as
+it was created, so the model rewrote the whole file from it. The tool
+itself was right: a `section` or `append` draft reads the file fresh.
+- `refreshTextAttachment` (`fileAttachHelpers.ts`) reads a plain text
+  file still open again from disk for each question. It returns a new
+  object and the message keeps what was attached. It returns the same one
+  when nothing changed, the file is gone or cannot be read. The app's own
+  documents (a song, a slide document, a presenting flow, a notes file) are
+  left alone: their conversations already read them as they are now
+  (`owa_lyric_edit read` …), and the same stale words had been fixed for
+  them that way. One small read a question; nothing is kept between asks.
+- `STUDY_CHANGE_HELD_NOTE` (`studyFileChatHelpers.ts`) is what the model
+  sees in place of a drafted CHANGE: press **Save changes**, and say every
+  part `change` names, not only the one asked for.
+
+After the fix, the same ask in the same tab kept the three new questions,
+added _Closing Prayer_ before the footer, and said _Please press Save
+changes to update the file, or Preview to see it first._ Saved; **Open it**
+drew the file. The three writes were undone with `owa_undo`, newest first,
+and John 3 listed as it was. Tests: `fileAttachHelpers.test.ts` (4),
+`studyFileChatHelpers.test.ts` (1); the 137 chatbot test files pass.
+
+Two things for the next live run. The chatbot window HOT-reloaded between
+the two saves of one change and pressed Send into
+_refreshTextAttachment is not defined_ until it was reloaded
+(`navigate_page` `reload`), so reload it after editing its code. And three
+**Save changes** buttons in one tab are one label: `owa_click` takes the
+first, so press the newest by its snapshot uid. Not yet seen live: a study
+translated through the window (EC-478), **Change the name**, Khmer.
+A study translated through the window was seen the same night (EC-478).
+
+### EC-486 — a study's translation has wrong words the window cannot see — `done` 2026-11-11, seen in the window
+
+Seen 2026-11-10 in EC-478's live run. Every part of the study came back in
+Khmer, and the window checks only that it did (`checkIsStudyTextTranslated`).
+Two words were wrong all the same:
+- the heading _Cross references_ became ខសសេចក្តីយោង, which is no word;
+- _the bronze snake Moses lifted_ became ពស់សូដ. The Bible's word is
+  ពស់លង្ហិន.
+
+Both come from the free Gemma 4 translator, one part at a time, and the
+person sees them only on reading the file. The same heading is wrong in
+another way in the user's own `JHN.3.The New Birth and God's Love.md`.
+Its Khmer pages were appended at 21:00 that day, and its _Cross References_
+reads ខសសាលយោង. So that heading fails again and again, not once. Ideas, none
+tried yet:
+- hand the translator the language's own words for the headings a study
+  uses (`assistant.json`'s glossary, read the other way);
+- quote a name or a thing the passage itself names from the Bible being
+  quoted, as the passages already are.
+
+The card already says _Check it against your Bible_.
+
+**Done 2026-11-11**, both ideas in part, with the headings made the window's
+own check (`studyTranslateHelpers.ts`; `translateStudyPart` in
+`llmBotHelpers.ts`):
+- Every language's translator is told what a word MEANS, never how it
+  sounds (`STUDY_MEANING_RULE`): no English word spelt out in the
+  language's letters, a name aside, and _Cross references_ are other verses
+  on the same subject, not a cross. Both wrong headings had been the
+  English _Cross_ written in Khmer letters.
+- A heading whose words are one of the language's church words
+  (`translationTerms` in its `assistant.json`) is written as that word,
+  whatever came back (`applyStudyHeadingTerms`). The headings are paired in
+  their order, and only when the translation has as many as the part handed
+  in. Khmer and French gained _Cross references_, _cross reference_,
+  _bronze serpent_ and _bronze snake_ (km 0.0.68, fr 0.0.60, packed and
+  installed in the dev app).
+- A part whose English uses a church word of more than one word that its
+  translation does not write is asked once more, naming it: _Your last
+  translation wrote these another way; write them so: bronze serpent =
+  ពស់លង្ហិន._ (`listMissingStudyTerms`). The name of a thing is said one
+  way; one word such as _God_ may fairly be said another, so it is not
+  checked. The answer missing fewer is kept, the first when the second is
+  no better, and it never stops the job (`STUDY_TRANSLATE_TRIES` 2). A
+  Bible's text puts zero-width spaces between Khmer words, so those and
+  curly apostrophes are left out of the comparison.
+- A diagram's ask carries the church words its labels use
+  (`toStudyTermsText`), as a part of words already did.
+
+Seen in the 🤖 window 2026-11-11 on Auto (OWA Shared · gemma4:cloud, free,
+11.2k tokens). The scratch study was written again and handed over by its
+Resources 🤖, and the user's own words were asked in the tab it opened. The
+Khmer heading reads ខគម្ពីរយោង and _bronze snake_ reads ពស់លង្ហិន both
+times; neither wrong word is in the card. The English is unchanged and the
+diagram translated. Not saved; the scratch study was undone with
+`owa_undo`. Tests: `studyTranslateHelpers.test.ts` (10 new),
+`llmBotHelpers.studyTranslate.test.ts` (2 new).
+
+**Still open:** the check is of NAMED words. Only Khmer and French have an
+`assistant.json` with church words; the other 85 languages get the meaning
+rule alone, and a word no list holds is still the translator's. The card's
+_Check it against your Bible_ stays.
+
+### EC-487 — the study card reads "1 diagrams" — `done` 2026-11-11, seen in the window
+
+The card's line under its heading is one string,
+`{passage} ({bible}) · {count} diagrams`, in all 87 language packages
+(`RenderStudyDraftComp`). A study with one diagram reads _John 3:16-17
+(Amplified) · 1 diagrams_. A singular needs a new key in every package and
+each package's version raised and packed again. Some packages already write
+it as _diagrams: {count}_, which reads right for any number.
+
+**Done 2026-11-11.** A singular key, `{passage} ({bible}) · {count} diagram`,
+sits beside the plural in all 87 dictionaries, and `RenderStudyDraftComp`
+picks it for one. 49 languages wrote a singular (_{count} diagramme_,
+_{count} תרשים_); 38 whose words already read right for one, or that have
+no plural (Khmer, Japanese, Swedish and Turkish among them), keep the
+plural's words. Every package's version was raised once and all 87 packed;
+the dev app's six installed languages were updated.
+`RenderStudyDraftComp.test.tsx` (2): one reads _· 1 diagram_ and no
+_diagrams_, 0 and 2 read _diagrams_, and a draft with no passage draws no
+line. Seen in the 🤖 window 2026-11-11 on Auto (gemma4:cloud, free, 10.5k
+tokens): _Make a short study file for John 3:14-15 with one diagram_ drew a
+card reading _John 3:14-15 (Amplified) · 1 diagram_, the passage quoted by
+the app, eight sections and one diagram. Not created. A CHANGE's card (a
+translation) draws no passage line, so it never showed there.

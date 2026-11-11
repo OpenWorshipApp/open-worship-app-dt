@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Námsskráin, eins og henni verður breytt",
     "The study file, as it will be saved": "Námsskráin, eins og hún verður vistuð",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} skýringarmyndir",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} skýringarmynd",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "„{taken}“ er þegar í Gögnum, svo þessi verður „{name}“.",
     "Drafted with the app assistant. Check it against your Bible.": "Samið með aðstoðarmanni forritsins. Berðu það saman við Biblíuna þína.",
     "Change the name": "Breyta nafninu",

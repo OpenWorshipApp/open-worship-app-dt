@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Faili la kujifunza, kama litakavyobadilishwa",
     "The study file, as it will be saved": "Faili la kujifunza, kama litakavyohifadhiwa",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · michoro {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · mchoro {count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" tayari iko katika Rasilimali, kwa hiyo hili litakuwa \"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Limeandaliwa na msaidizi wa programu. Lilinganishe na Biblia yako.",
     "Change the name": "Badilisha jina",

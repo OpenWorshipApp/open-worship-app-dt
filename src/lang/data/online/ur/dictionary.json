@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "مطالعاتی فائل، جیسا کہ تبدیل ہوگی",
     "The study file, as it will be saved": "مطالعاتی فائل، جیسا کہ محفوظ ہوگی",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} ڈایاگرام",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} ڈایاگرام",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" پہلے سے وسائل میں موجود ہے، اس لیے یہ \"{name}\" ہوگی۔",
     "Drafted with the app assistant. Check it against your Bible.": "ایپ کے معاون کی مدد سے تیار کیا گیا مسودہ۔ اسے اپنی بائبل سے ملا کر دیکھیں۔",
     "Change the name": "نام بدلیں",

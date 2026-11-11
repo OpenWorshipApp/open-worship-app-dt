@@ -1229,8 +1229,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   (`withStudyDraftUnder`), and a study ask is handed on after a round like
   a Resources one (`canHandOnAfterRound`: the model writes nothing).
   ~524 tokens a round to those asks; the ordinary list did not move
-  (8 478 of 8 480, `--stdio --ratchet`). Not yet asked live through the
-  window with a model: the AI caution is a person's press.
+  (8 478 of 8 480, `--stdio --ratchet`). Asked live through the window
+  2026-11-10 on Auto, gemma4:cloud (`EC-485`): a John 3:16-17 study in one
+  round of drafting, a section change, and an appended prayer. A drafted
+  CHANGE shows the model `STUDY_CHANGE_HELD_NOTE` in place of
+  `STUDY_HELD_NOTE` (`toModelDraftText`): its button is **Save changes**,
+  and the answer names every part `change` names. The change's answer had
+  said _press Create_ and named only the prayer, while the draft had also
+  put back a section saved a moment before (the attachment's stale words,
+  `chatbot-files-report.md`).
   **A study is TRANSLATED by the window, never by the model** (2026-11-10,
   `EC-478`; the user, a Khmer-only NEW file drafted for _translate all to
   khmer and then append the translated content to new pages_, its four
@@ -1251,5 +1258,22 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   (`describeStudyTranslation`), never shown the words. A change to a study
   names its part (`section`, `append`, `EC-479`), and a `study` or
   `resources` ask is `isLongWrite` (`EC-480`). Unit-tested end to end
-  (`llmBotHelpers.studyTranslate.test.ts`); not yet asked through the
-  window: the in-app host loads the new schema at its next launch.
+  (`llmBotHelpers.studyTranslate.test.ts`), and asked through the window
+  2026-11-10 on Auto (`EC-478`, gemma4:cloud, one ask, ~30 s, 11k tokens,
+  no cost). The user's own words were sent in a tab a scratch study's
+  Resources 🤖 had opened. The card held the English unchanged, then the
+  Khmer pages with the passage quoted from the Khmer Bible and the diagram
+  translated, and **Save changes** wrote exactly that. Two words were wrong
+  (`EC-486`): the window had checked only that a part came back
+  translated. **Since 2026-11-11 it checks the church's own words too**:
+  every translator is told what a word means, never how it sounds
+  (`STUDY_MEANING_RULE` -- both wrong headings had been the English _Cross_
+  in Khmer letters); a heading that is one of the language's
+  `translationTerms` is written as that word (`applyStudyHeadingTerms`); a
+  part whose English uses one of more than one word that the translation
+  does not write is asked once more, naming it, and the answer missing
+  fewer is kept (`listMissingStudyTerms`); a diagram's ask carries the
+  terms its labels use. Seen in the window the same day: _Cross references_
+  ខគម្ពីរយោង, _bronze snake_ ពស់លង្ហិន. Only Khmer and French have such a
+  list; a word no list holds is still the translator's. The card counts one
+  diagram as one (`EC-487`: a singular key in every package).

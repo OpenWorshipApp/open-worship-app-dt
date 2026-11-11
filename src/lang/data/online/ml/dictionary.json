@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "പഠന ഫയൽ, മാറ്റുന്ന രീതിയിൽ",
     "The study file, as it will be saved": "പഠന ഫയൽ, സംരക്ഷിക്കുന്ന രീതിയിൽ",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} രേഖാചിത്രങ്ങൾ",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} രേഖാചിത്രം",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "\"{taken}\" ഇതിനകം “റിസോഴ്സുകൾ” എന്നതിൽ ഉണ്ട്, അതിനാൽ ഇത് \"{name}\" ആയിരിക്കും.",
     "Drafted with the app assistant. Check it against your Bible.": "ആപ്പിന്റെ സഹായിയോടൊപ്പം തയ്യാറാക്കിയത്. നിങ്ങളുടെ ബൈബിളുമായി ഒത്തുനോക്കുക.",
     "Change the name": "പേര് മാറ്റുക",

@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Учебный файл в том виде, в каком он будет изменён",
     "The study file, as it will be saved": "Учебный файл в том виде, в каком он будет сохранён",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · диаграмм: {count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} диаграмма",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "«{taken}» уже есть в папке Ресурсы, поэтому этот файл будет называться «{name}».",
     "Drafted with the app assistant. Check it against your Bible.": "Подготовлено с помощником приложения. Сверьте это со своей Библией.",
     "Change the name": "Изменить название",

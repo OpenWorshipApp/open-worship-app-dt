@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Ifayile yokufunda, njengoko iza kutshintshwa",
     "The study file, as it will be saved": "Ifayile yokufunda, njengoko iza kugcinwa",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · imizobo engu-{count}",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · umzobo ongu-{count}",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "I-\"{taken}\" sele ikwi-Izibonelelo, ngoko le iza kuba yi-\"{name}\".",
     "Drafted with the app assistant. Check it against your Bible.": "Ilungiswe ngumncedisi wenkqubo. Yithelekise neBhayibhile yakho.",
     "Change the name": "Tshintsha igama",

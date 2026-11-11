@@ -4247,6 +4247,7 @@
     "The study file, as it will be changed": "Το αρχείο μελέτης, όπως θα αλλάξει",
     "The study file, as it will be saved": "Το αρχείο μελέτης, όπως θα αποθηκευτεί",
     "{passage} ({bible}) · {count} diagrams": "{passage} ({bible}) · {count} διαγράμματα",
+    "{passage} ({bible}) · {count} diagram": "{passage} ({bible}) · {count} διάγραμμα",
     "\"{taken}\" is already in Resources, so this one will be \"{name}\".": "Το «{taken}» υπάρχει ήδη στον φάκελο Πόροι, οπότε αυτό θα είναι «{name}».",
     "Drafted with the app assistant. Check it against your Bible.": "Συντάχθηκε με τον βοηθό της εφαρμογής. Ελέγξτε το με την Αγία Γραφή σας.",
     "Change the name": "Αλλαγή ονόματος",
