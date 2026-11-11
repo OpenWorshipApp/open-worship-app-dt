@@ -1,6 +1,8 @@
 // A document to READ: one quiet head row, then the page. The head carries only
-// what somebody reading needs -- where this file is, back, reload, and the ways
-// out to the file's own application and its folder.
+// what somebody reading needs -- where this file is, back, reload, Edit (a
+// Monaco editor opens on the left of the page, which draws what is typed;
+// Save and Discard appear), and the ways out to the file's own application
+// and its folder.
 .app.app-markdown-preview {
   display: flex;
   flex-direction: column;
@@ -39,9 +41,50 @@
     }
   }
 
+  .app-markdown-preview-action.active {
+    color: var(--app-accent);
+  }
+
+  // Unsaved words: the mark after the name and the Save beside it carry the
+  // accent, and nothing moves -- a mark that stays up must not repaint.
+  .app-markdown-preview-unsaved,
+  .app-markdown-preview-save:not(:disabled) {
+    color: var(--app-accent);
+    font-weight: 600;
+  }
+
+  .app-markdown-preview-warning {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    font-size: var(--app-text-sm, 0.85rem);
+    color: var(--bs-warning-text-emphasis);
+    background-color: rgba(var(--bs-warning-rgb), 0.12);
+    border-bottom: 1px solid var(--app-line);
+  }
+
+  // A row: the editor's pane (while editing) on the left, the page on the
+  // right, half each. Each scrolls by itself.
   .app-markdown-preview-body {
     flex: 1 1 auto;
+    display: flex;
     min-height: 0;
+    overflow: hidden;
+  }
+
+  // Monaco scrolls itself and sizes to this box.
+  .app-markdown-preview-editor-pane {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--app-line);
+  }
+
+  .app-markdown-preview-page {
+    flex: 1 1 0;
+    min-width: 0;
     overflow: auto;
   }
 

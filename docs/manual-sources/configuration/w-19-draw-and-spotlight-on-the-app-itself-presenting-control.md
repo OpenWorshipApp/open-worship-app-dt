@@ -51,7 +51,8 @@ this is the same pair of tools pointed at the app.
    default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, dim amount and **edge
-   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming. 📸
+   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming.
+   Brush and spotlight both open on **[en:tran:Presets]**, as on the Mini Screen (W-10). 📸
 7. The **camera** at the end of the title bar takes a picture of the app **as it looks
    right now** — your drawing, your spotlight and all — and asks what to do with it:
    **[en:tran:Ask the assistant about this]** opens the help window with the picture already

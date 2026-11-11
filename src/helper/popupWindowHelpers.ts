@@ -34,6 +34,12 @@ export type PopupWindowFeaturesType = {
     // only, e.g. `['CanvasDrawElement']`. Joined with `+` because the window
     // features string is itself `,`/`=` delimited.
     appBlinkFeatures?: string[];
+    // Bring forward a window already open on the same page and file, WHATEVER
+    // its url id, and open one only when none is. A url id alone cannot say
+    // it: a fixed one finds only a window opened with that same id, and a
+    // Resources file's window is opened under a fresh id on every press, so
+    // two of one file can be read side by side (2026-11-10).
+    appReuseOpen?: boolean;
 };
 const DEFAULT_FEATURES: PopupWindowFeaturesType = {
     popup: true,

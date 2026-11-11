@@ -1196,3 +1196,25 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   ~524 tokens a round to those asks; the ordinary list did not move
   (8 478 of 8 480, `--stdio --ratchet`). Not yet asked live through the
   window with a model: the AI caution is a person's press.
+  **A study is TRANSLATED by the window, never by the model** (2026-11-10,
+  `EC-478`; the user, a Khmer-only NEW file drafted for _translate all to
+  khmer and then append the translated content to new pages_, its four
+  diagrams gone): the model calls `owa_resource_file translate` with
+  `file`, `language` and `place` (`STUDY_FILE_PROMPT` maps add / after /
+  under / new pages / both languages to `append`), and `runStudyTranslate`
+  asks the app for the plan -- passages quoted again from a Bible in that
+  language, the Lookup's own when it is in it (`findBibleInLanguage`) --
+  hands each part of words (`STUDY_TRANSLATE_CHUNK_CHARS` 1 600) and each
+  diagram's labels to `AskExtraType.translateText` (the window's
+  `genStudyTranslator`: the Gemma 4 `findTranslationPick` finds, else the
+  assistant asked; one round, no tools, its rounds `onHelperUsage`), asks a
+  part again once when it came back untranslated
+  (`checkIsStudyTextTranslated`), keeps a diagram whose translation will
+  not parse, stops with NOTHING drafted when words fail twice, and drafts
+  the result through `runStudyDraft(…, isWindowMade)`: the card reads
+  **Save changes to "…"**, and the model is told what the window did
+  (`describeStudyTranslation`), never shown the words. A change to a study
+  names its part (`section`, `append`, `EC-479`), and a `study` or
+  `resources` ask is `isLongWrite` (`EC-480`). Unit-tested end to end
+  (`llmBotHelpers.studyTranslate.test.ts`); not yet asked through the
+  window: the in-app host loads the new schema at its next launch.

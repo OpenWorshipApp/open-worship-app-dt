@@ -912,9 +912,11 @@ describe('SlideEditorToolsTextComp', () => {
         await click(query('.color'));
         expect(h.setProps).toHaveBeenLastCalledWith({ color: '#00FF00' });
 
+        // The alignment groups by their own names: a titled section is a
+        // named group too.
         const alignLabels = Array.from(
             container.querySelectorAll<HTMLButtonElement>(
-                '[role="group"] button',
+                '[role="group"][aria-label$="alignment"] button',
             ),
         ).map((button) => [button.getAttribute('aria-label'), button.disabled]);
         expect(alignLabels).toEqual([
@@ -953,7 +955,9 @@ describe('SlideEditorToolsTextComp', () => {
                 isTextContentEnabled={false}
             />,
         );
-        expect(container.querySelector('[role="group"]')).toBe(null);
+        expect(
+            container.querySelector('[role="group"][aria-label$="alignment"]'),
+        ).toBe(null);
         expect(container.querySelector('textarea')).toBe(null);
         expect(container.querySelector('.font-size')).not.toBe(null);
         await render(<SlideEditorToolsTextComp isAlignmentEnabled={false} />);

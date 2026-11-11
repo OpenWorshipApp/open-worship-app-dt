@@ -35,8 +35,8 @@
 // the guest is sandboxed on its own (`electron/aiChatGuestHelpers.ts`), and the
 // page around it draws a tab strip and needs nothing of Node either; and the
 // Markdown Preview, which renders a file from anywhere on the machine -- a
-// Resources folder somebody copied in, a download -- and reads it through the
-// provider bridge. Adding a page here is a one-line change, and each one needs
+// Resources folder somebody copied in, a download -- and reads it, and writes
+// it back when the person edits and saves it, through the provider bridge. Adding a page here is a one-line change, and each one needs
 // checking against what that page's code actually does -- a window that writes
 // files through `require` rather than the provider bridge would break.
 const LOCKED_DOWN_PATH_NAMES = [

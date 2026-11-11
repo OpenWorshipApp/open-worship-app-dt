@@ -183,7 +183,7 @@ describe('the Presets group of a Properties block', () => {
         const chip = container.querySelector(
             '[title="Presets: Top Banner"] i',
         ) as HTMLElement;
-        expect(chip.className).toContain('fg-preset-chip');
+        expect(chip.className).toContain('app-preset-chip');
         expect(chip.style.background).toBe('rgba(255, 255, 255, 0.8)');
         await act(async () =>
             (container.querySelector(
@@ -318,11 +318,11 @@ describe('the Presets group of a Properties block', () => {
                 />,
             ),
         );
-        expect(container.querySelector('.fg-presets-mode')).toBeNull();
+        expect(container.querySelector('.app-presets-mode')).toBeNull();
         expect(
-            container.querySelectorAll('.fg-preset:not(.fg-preset-add)'),
+            container.querySelectorAll('.app-preset:not(.app-preset-add)'),
         ).toHaveLength(4);
-        expect(container.querySelector('.fg-preset-chip')).toBeNull();
+        expect(container.querySelector('.app-preset-chip')).toBeNull();
     });
 
     test('a component with no presets draws nothing', async () => {

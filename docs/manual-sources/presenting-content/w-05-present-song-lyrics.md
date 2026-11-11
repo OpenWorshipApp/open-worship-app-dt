@@ -2,8 +2,8 @@
 id: W-05
 title: "Present song lyrics"
 section: "Presenting content"
-verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08]
-screenshots: 6
+verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-178, XW-08]
+screenshots: 7
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-10"
 ---
@@ -74,7 +74,11 @@ workflowsVersion: "2026-11-10"
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
-   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
+   **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting
+   layout), **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**, which set the layout and
+   keep the theme and **[en:tran:Custom CSS]**; **[en:tran:Save as Preset]** keeps the whole look
+   for **every** stage (right-click a saved one to rename, replace or remove it). 📸
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
 11. **Edit the words while the song is open and the verses follow by themselves; a verse
@@ -120,7 +124,7 @@ workflowsVersion: "2026-11-10"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `XW-08`
+`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `PM-178` · `XW-08`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

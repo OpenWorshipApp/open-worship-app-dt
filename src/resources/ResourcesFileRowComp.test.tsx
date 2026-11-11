@@ -228,8 +228,17 @@ describe('ResourcesFileRowComp previews', () => {
         await press(getRowButton());
         expect(h.openMarkdownPreviewMock).toHaveBeenCalledWith(
             '/r/Document/GEN.1.md',
+            { isAnother: true },
         );
         expect(h.openFileMock).not.toHaveBeenCalled();
+        // 2026-11-10, the user: _as a user I want to open 2 windows of one
+        // resource file so I can read different parts at the same time_ --
+        // a second press is a second window, as a Bible note's Open is.
+        await press(getRowButton());
+        expect(h.openMarkdownPreviewMock.mock.calls).toEqual([
+            ['/r/Document/GEN.1.md', { isAnother: true }],
+            ['/r/Document/GEN.1.md', { isAnother: true }],
+        ]);
     });
 
     test("a markdown file's menu offers Preview, and still Open", async () => {
@@ -274,6 +283,7 @@ describe('ResourcesFileRowComp previews', () => {
         expect(h.openBibleNotePreviewMock).toHaveBeenCalledWith(
             '/r/Document/GEN.1.own',
             1,
+            { isAnother: true },
         );
 
         // Folding it away lets the list go.
@@ -391,6 +401,7 @@ describe('ResourcesFileRowComp previews', () => {
         await press(getRowButton());
         expect(h.openPdfPreviewMock).toHaveBeenCalledWith(
             '/r/Document/GEN.1.PDF',
+            { isAnother: true },
         );
         expect(h.openFileMock).not.toHaveBeenCalled();
     });
@@ -518,6 +529,7 @@ describe('ResourcesFileRowComp previews', () => {
         await select('Preview');
         expect(h.openMarkdownPreviewMock).toHaveBeenCalledWith(
             '/r/Document/GEN.1.md',
+            { isAnother: true },
         );
         await select('Open');
         expect(h.openFileMock).toHaveBeenCalledWith('/r/Document/GEN.1.md');
@@ -536,6 +548,7 @@ describe('ResourcesFileRowComp previews', () => {
         await select('Preview PDF');
         expect(h.openPdfPreviewMock).toHaveBeenCalledWith(
             '/r/Document/GEN.1.pdf',
+            { isAnother: true },
         );
         expect(h.openMarkdownPreviewMock).toHaveBeenCalledTimes(1);
     });
@@ -571,7 +584,6 @@ describe('ResourcesFileRowComp previews', () => {
         test('opens the assistant on that file, not the file itself', async () => {
             h.isAiEnabled = true;
             for (const filePath of [
-                '/r/pdf/LUK.6.pdf',
                 '/r/YouTube/LUK.0.json',
                 '/r/notes/LUK.own',
             ]) {
@@ -582,7 +594,47 @@ describe('ResourcesFileRowComp previews', () => {
                     filePath,
                     null,
                 );
-                expect(h.openPdfPreviewMock).not.toHaveBeenCalledWith(filePath);
+                await act(async () => {
+                    root?.unmount();
+                });
+                root = null;
+            }
+            expect(h.openResourceLinkUrlMock).not.toHaveBeenCalled();
+            expect(h.readResourceNoteItemsMock).not.toHaveBeenCalled();
+        });
+
+        // 2026-11-10, the user, this 🤖 circled on a PDF and a Markdown row:
+        // _like bible note I want behavior of during attached to chatbot the
+        // window have to be on top of main window_. The file's own window
+        // opens only once the assistant's questions are answered -- the
+        // handoff runs it -- never on the press itself.
+        test("opens a PDF's or a Markdown file's own window with the assistant", async () => {
+            h.isAiEnabled = true;
+            for (const [filePath, openMock] of [
+                ['/r/pdf/LUK.6.pdf', h.openPdfPreviewMock],
+                ['/r/Default/LUK.6.Study.md', h.openMarkdownPreviewMock],
+            ] as const) {
+                h.openChatbotWithFileMock.mockClear();
+                openMock.mockClear();
+                await renderRow(filePath);
+                await press(getAskButton()!);
+                expect(h.openChatbotWithFileMock).toHaveBeenCalledWith(
+                    filePath,
+                    null,
+                    null,
+                    expect.any(Function),
+                );
+                expect(openMock).not.toHaveBeenCalled();
+                const beforeOpening =
+                    h.openChatbotWithFileMock.mock.calls.at(-1)![3];
+                await act(async () => {
+                    await beforeOpening();
+                });
+                // The 🤖 brings forward a window already open on the file
+                // instead of adding one more, as a row's press does.
+                expect(openMock).toHaveBeenCalledWith(filePath, {
+                    isAnother: false,
+                });
                 await act(async () => {
                     root?.unmount();
                 });
@@ -633,6 +685,8 @@ describe('ResourcesFileRowComp previews', () => {
                     title: '✝♪ ４:１５-１７',
                     bibleKey: '✝✝',
                 },
+                null,
+                expect.any(Function),
             );
             await act(async () => {
                 root?.unmount();
@@ -648,6 +702,8 @@ describe('ResourcesFileRowComp previews', () => {
                     title: '✝♪ ４:１５-１７',
                     bibleKey: '✝✝',
                 },
+                null,
+                expect.any(Function),
             );
             await act(async () => {
                 root?.unmount();
@@ -658,6 +714,8 @@ describe('ResourcesFileRowComp previews', () => {
             expect(h.openChatbotWithFileMock).toHaveBeenLastCalledWith(
                 '/r/pdf/GEN.9.pdf',
                 null,
+                null,
+                expect.any(Function),
             );
         });
 
@@ -681,6 +739,8 @@ describe('ResourcesFileRowComp previews', () => {
             expect(h.openChatbotWithFileMock).toHaveBeenCalledWith(
                 '/r/pdf/LUK.6.pdf',
                 null,
+                null,
+                expect.any(Function),
             );
             expect(h.openPdfPreviewMock).not.toHaveBeenCalled();
         });

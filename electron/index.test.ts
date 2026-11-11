@@ -61,6 +61,8 @@ const initLlmReportQueue = vi.fn();
 vi.mock('./llmReportHelpers', () => ({ initLlmReportQueue }));
 const initAppWindowListWatch = vi.fn();
 vi.mock('./appWindowListHelpers', () => ({ initAppWindowListWatch }));
+const initWindowOnTopWatch = vi.fn();
+vi.mock('./windowOnTopHelpers', () => ({ initWindowOnTopWatch }));
 vi.mock('./aiChatGuestHelpers', () => ({ initAiChatGuestGuard }));
 vi.mock('./screenMirrorService', () => ({
     initScreenMirror,
@@ -193,6 +195,12 @@ describe('electron index', () => {
         expect(initAppWindowListWatch.mock.invocationCallOrder[0]).toBeLessThan(
             getInstance.mock.invocationCallOrder[0],
         );
+        // What the help works on is held over the main window, a window
+        // that loads after the ask too.
+        expect(initWindowOnTopWatch).toHaveBeenCalledTimes(1);
+        expect(initWindowOnTopWatch.mock.invocationCallOrder[0]).toBeLessThan(
+            getInstance.mock.invocationCallOrder[0],
+        );
         // A window is heard from the moment it exists: the listener is in
         // place before the app controller makes the main window.
         expect(initConsoleLog.mock.invocationCallOrder[0]).toBeLessThan(
@@ -203,6 +211,7 @@ describe('electron index', () => {
         initConsoleLog.mockClear();
         initLlmReportQueue.mockClear();
         initAppWindowListWatch.mockClear();
+        initWindowOnTopWatch.mockClear();
         checkIsAiEnabled.mockReturnValue(false);
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
@@ -210,6 +219,7 @@ describe('electron index', () => {
         expect(initConsoleLog).not.toHaveBeenCalled();
         expect(initLlmReportQueue).not.toHaveBeenCalled();
         expect(initAppWindowListWatch).not.toHaveBeenCalled();
+        expect(initWindowOnTopWatch).not.toHaveBeenCalled();
     });
 
     test('the agent doors are opened before ready, never without the lock', async () => {

@@ -21,7 +21,11 @@ vi.mock('mermaid', () => ({
     },
 }));
 
-import { renderMermaidDiagrams } from './markdownMermaidHelpers';
+import {
+    putBackDrawnDiagrams,
+    renderMermaidDiagrams,
+    takeDrawnDiagrams,
+} from './markdownMermaidHelpers';
 
 // A fresh module: the loaded mermaid is kept for the window's life.
 async function importFresh() {
@@ -167,6 +171,9 @@ describe('drawing the mermaid blocks of a markdown file', () => {
             isDark: false,
             checkIsStale: () => false,
         });
+        // A later diagram comes in a page of its own: one already drawn is
+        // never drawn again.
+        genContainer(['0']);
         await render(container, ['b'], {
             isDark: true,
             checkIsStale: () => false,
@@ -231,5 +238,58 @@ describe('drawing the mermaid blocks of a markdown file', () => {
         expect(
             first.querySelector('.app-markdown-mermaid-error')?.textContent,
         ).toBe('bad diagram');
+    });
+});
+
+describe('keeping the diagrams already drawn when the page is drawn again', () => {
+    test('a diagram whose source did not change is put back, each picture once, and only the rest are drawn', async () => {
+        genContainer(['0', '1', '2']);
+        await renderMermaidDiagrams(container, ['graph A', 'graph B', 'bad'], {
+            isDark: false,
+            checkIsStale: () => false,
+        });
+        // The third failed: it is not a drawing to keep.
+        container
+            .querySelector('[data-mermaid-index="2"]')!
+            .classList.remove('app-markdown-mermaid--rendered');
+        const drawnMap = takeDrawnDiagrams(container, [
+            'graph A',
+            'graph B',
+            'bad',
+        ]);
+        expect([...drawnMap.keys()]).toEqual(['graph A', 'graph B']);
+
+        // The new page: B moved first, A twice, and a new diagram.
+        const [first, second, third, fourth] = genContainer([
+            '0',
+            '1',
+            '2',
+            '3',
+        ]);
+        const newSources = ['graph B', 'graph A', 'graph A', 'graph C'];
+        putBackDrawnDiagrams(container, newSources, drawnMap);
+        expect(first.innerHTML).toContain('graph B');
+        expect(second.innerHTML).toContain('graph A');
+        // One picture of A was taken: the second A is drawn anew.
+        expect(third.textContent).toBe('code 2');
+        expect(fourth.textContent).toBe('code 3');
+
+        const renderCount = state.render.mock.calls.length;
+        await renderMermaidDiagrams(container, newSources, {
+            isDark: false,
+            checkIsStale: () => false,
+        });
+        expect(
+            state.render.mock.calls
+                .slice(renderCount)
+                .map(([, source]) => source as string),
+        ).toEqual(['graph A', 'graph C']);
+    });
+
+    test('nothing drawn, nothing put back', () => {
+        const [first] = genContainer(['0']);
+        expect(takeDrawnDiagrams(container, ['graph A']).size).toBe(0);
+        putBackDrawnDiagrams(container, ['graph A'], new Map());
+        expect(first.textContent).toBe('code 0');
     });
 });

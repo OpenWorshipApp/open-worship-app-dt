@@ -630,6 +630,9 @@ export type PopupWindowFeaturesType = {
     // `+`-joined Blink runtime feature names, see `PopupWindowFeaturesType` in
     // `src/helper/domHelpers.ts`.
     appBlinkFeatures?: string;
+    // A window open on the same page and file under ANY url id is the one
+    // this open wants: it is brought forward and none is opened.
+    appReuseOpen?: boolean;
 };
 
 // features: 'popup,width=700,height=435,appCenter,appFollowScale'
@@ -1328,7 +1331,17 @@ function handlePopupWindowOpen(
             }
         }, 0);
     }
-    if (selfWindows.length > 0 || (isAiChat && !isOpeningAnotherAiChat)) {
+    // An open that asked to reuse (`appReuseOpen`) takes a window of the same
+    // page and file opened under another url id too -- the group just raised:
+    // a Resources file's 🤖 brings forward the window a row press opened,
+    // where every press of the row itself opens one more (2026-11-10).
+    const isReusingGroup =
+        featuresRecord.appReuseOpen === true && groupWindows.length > 0;
+    if (
+        selfWindows.length > 0 ||
+        isReusingGroup ||
+        (isAiChat && !isOpeningAnotherAiChat)
+    ) {
         return { action: 'deny' };
     }
     if (groupWindows.length === 0) {

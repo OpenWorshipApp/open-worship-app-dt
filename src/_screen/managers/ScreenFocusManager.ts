@@ -19,6 +19,7 @@ import {
     forwardToOwnScreenOutput,
     genFrameScheduler,
     toNativePoint,
+    type SpotlightLookType,
 } from './screenOverlayHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
 import type {
@@ -424,16 +425,36 @@ export default class ScreenFocusManager
         this.fireUpdateEvent();
     }
 
-    // Back to the shipped defaults. Assigned in one go rather than through the
-    // five setters so this costs ONE repaint, one update broadcast to every open
-    // panel and one debounced write, instead of five of each.
-    resetSettings() {
-        this.size = DEFAULT_FOCUS_SIZE;
-        this.dimColor = DEFAULT_FOCUS_COLOR;
-        this.dimOpacity = DEFAULT_FOCUS_DIM;
-        this.edgeBlur = DEFAULT_FOCUS_BLUR;
-        this.isContrast = false;
+    // A whole look at once -- the shipped one on Reset, a preset on a Presets
+    // press. Assigned in one go rather than through the five setters so this
+    // costs ONE repaint, one update broadcast to every open panel and one
+    // debounced write, instead of five of each; each value checked as its own
+    // setter checks it.
+    applySettings(look: SpotlightLookType) {
+        this.size = clampNumber(look.size, FOCUS_SIZE_MIN, FOCUS_SIZE_MAX);
+        this.dimColor = toValidDimColor(look.dimColor);
+        this.dimOpacity = clampNumber(
+            look.dimOpacity,
+            FOCUS_DIM_MIN,
+            FOCUS_DIM_MAX,
+        );
+        this.edgeBlur = clampNumber(
+            look.edgeBlur,
+            FOCUS_BLUR_MIN,
+            FOCUS_BLUR_MAX,
+        );
+        this.isContrast = look.isContrast === true;
         this.commitSettingChange();
+    }
+
+    resetSettings() {
+        this.applySettings({
+            size: DEFAULT_FOCUS_SIZE,
+            dimColor: DEFAULT_FOCUS_COLOR,
+            dimOpacity: DEFAULT_FOCUS_DIM,
+            edgeBlur: DEFAULT_FOCUS_BLUR,
+            isContrast: false,
+        });
     }
 
     stop() {

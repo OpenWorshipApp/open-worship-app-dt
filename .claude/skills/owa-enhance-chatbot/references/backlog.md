@@ -11180,3 +11180,223 @@ typed. Retry now shuts it for the words it keeps; the general case is
 open. Worth trying: close the list when the box loses focus, or open it
 only on a keystroke, never on a focus regained. Memory
 `chatbot-cdp-driver-gotchas` has the driving side.
+
+### EC-478 — "translate it and append it" made a new file and lost the diagrams — `done`, not yet asked through the window
+
+Reported 2026-11-10 by the user, with a picture. In a Reader tab on Auto
+(OWA Shared · gemma4:cloud), with `JHN.3.The New Birth and God's Love.md`
+attached, they typed _translate all to khmer and then append the
+translated content to new pages_. The first try ended _I looked several
+things up but could not settle on an answer_. The second drafted a NEW
+file in Khmer only, and its four diagrams were gone. The cause: a change
+to a study was the WHOLE new text in one `draft` call. The study is 13 KB
+in English and several times that in Khmer, and one help round on the
+shared server writes 2 000 tokens.
+
+Now `owa_resource_file` has a `translate` action. The model names only
+`file`, `language` and `place` (`append`, `replace` or `new`), and the help
+window does the rest (`runStudyTranslate`, `studyTranslateHelpers.ts`):
+- the app splits the file into parts (`translate` in
+  `agentStudyFileHelpers.ts`) and quotes each passage again from a Bible
+  in that language. The Lookup's own Bible is used when it is in that
+  language (`findBibleInLanguage`);
+- the words go to the window's translator 1 600 characters at a time, and
+  each diagram's labels go on their own. The translator is the Gemma 4
+  that Auto would ask at no cost (`genStudyTranslator`);
+- a part not given back translated is asked once more. A diagram whose
+  translation mermaid cannot parse stays as it was;
+- words still not translated after two tries stop the job, with nothing
+  drafted. Half a translation saved over a study is worse than none;
+- the result is drafted like any change: **Save changes** and **Preview**,
+  and nothing is written before the person presses.
+
+The prompt (`STUDY_FILE_PROMPT`) maps their words to `place`: add, after,
+under, new pages or both languages are `append`. It says never to write a
+translation yourself.
+
+Measured through a fresh stdio server against the dev app: the John 3
+study splits into 11 parts. That is 6 parts of words (4 711 characters,
+8 translator asks), 4 diagrams, and John 3:1-36, re-quoted from the Khmer
+Bible the Lookup is on (7 388 characters in the Amplified, 5 288 in
+Khmer). The plan took 0.5-0.7 s. An unknown Bible is refused with the
+installed ones named.
+
+**Not yet asked through the window.** The in-app MCP host keeps the tool
+schema it loaded at launch. Under `concurrently -k`, relaunching the
+Electron process takes Vite down with it. And the AI caution is the
+person's press. Tests: `studyTranslateHelpers.test.ts` and
+`llmBotHelpers.studyTranslate.test.ts`. The second has 6 tests: appended
+end to end, the Bible chosen two ways, the three refusals, a stop with
+nothing drafted, and a diagram kept as it was.
+
+### EC-479 — a change to a study file had to be the whole file again — `done`
+
+A model asked to fix one part of a study had to send the whole file back.
+On a 2 000-token round that cut long studies off. Now `draft` with `file`
+also takes:
+- `section` (a heading as it reads) and `content`: that part's new words;
+- `append`: words added at the end of the file (before its footer), or at
+  the end of `section`.
+
+`content` alone still means the WHOLE new text. A heading the file does
+not have is refused, with the file's headings listed. A repeated heading
+(a translation appended under a study repeats its headings) is told apart
+in the change summary. A list item appended to a list goes onto that list
+with no blank line (`joinAppendedLines`). The summary compares the bodies
+without the footer and names five sections at most, then "and N more". An
+appended translation used to read _changes Verse by Verse, Questions for
+Discussion_; it now reads _adds …_. `file` also takes the whole path of a
+file inside Default, which models copy off the attachment.
+
+Measured through a fresh stdio server: a section draft and an append
+draft each took 27-72 ms and wrote nothing. Tests:
+`agentStudyFileRules.parts.test.ts`.
+
+**The whole write cycle, seen live 2026-11-10** on the dev app through a
+fresh stdio server, on a scratch study `JHN.3.16-17 zz Robot God So
+Loved.md`:
+- `list` for John 3 named its four files.
+- `draft` quoted John 3:16-17 and named the file.
+- `save` with that `name` made it in `resources/Default`, with an undo id,
+  as the card's **Create** does.
+- `read` gave the file back.
+- A `section` draft of _Questions for a group_ (4 lines in, 3 out) was
+  saved by its `hash`.
+- An `append` draft made BEFORE that save was refused on its stale hash:
+  _has changed since this was drafted, so it is not written over_.
+- Drafted again, the append went in before the footer.
+- `preview` opened the Markdown Preview on it, and a picture shows the
+  study drawn.
+- `translate` to English with `bible` KJV quoted all three passages again
+  (`quotedCount` 3).
+- The three `owa_undo`s, newest first, took the file away, and `list`
+  showed John 3 as it was.
+
+With no `bible`, that door quoted the Reader's Khmer Bible under English
+words. The help window's own draft fills `bible` from the language asked
+in (`findStudyVerseBible`). The model's own asking is still not seen
+through the window: the AI caution is the person's press.
+
+### EC-480 — a study written into one call was cut at 2 000 tokens — `done`
+
+A `study` or `resources` ask is now `isLongWrite`, like a note or lesson
+ask: a custom server writes it with `LONG_WRITE_MAX_TOKENS` (6 000). The
+2 000 of a help answer had cut a study off on the shared gemma4:cloud.
+
+### EC-481 — a long study could not be read or changed in parts — `done`
+
+A study with its translation under it is past the old caps. The caps are
+now 64 KB for a file (was 16 KB), 48 000 characters for `content` (was
+12 000; the schema takes 65 536) and 16 diagrams for a whole file. A NEW
+study still draws 6 at most. A text file longer than 16 KB is read as its
+start and its list of headings, and `read` with `section` returns one
+heading's part whole. Measured: a section read took 89 ms; a missing
+section is answered with the file's headings.
+
+### EC-482 — one-item-a-line studies were drawn as one paragraph — `done`
+
+The user's John 3 file had its verse-by-verse lines (`John 3:1-2 …`,
+`John 3:3-8 …`) one under the other with no blank line. Markdown joins
+such lines into ONE paragraph, so the preview drew a single block.
+`separateStudyLines` now puts a blank line between plain lines when every
+line of the run starts with a reference or ends a sentence. Lists,
+quotes, tables, fenced blocks and the words straight under one of them
+are left alone, and so are lines the file already had where the change
+did not reach (`keptText`). It runs on a new study's body, on a section or
+an appended part, and on a whole new text. `STUDY_CONTENT_RULES` now asks
+for the passage verse by verse as a list (`- **3:1-2** …`), with a blank
+line between paragraphs. The reference reader works in any script
+(`\p{Nd}`, `\p{L}`, `\p{Sentence_Terminal}`). Tests:
+`agentStudyFileRules.parts.test.ts`.
+
+### EC-483 — a Resources file's own window was not the window its tab worked in — `done`
+
+The user pressed the 🤖 on a study file's row in the Reader's Resources
+panel. The Markdown Preview opened beside the chat, but **Working in**
+named only the main window: _open in chatbot didn't attach the window to
+the chatbot_. Then, with a note tab's **Working in** circled: _should
+behave like what working for bible-note_. The chat's window list kept only
+pages the help is about, so a Markdown Preview or a PDF viewer could never
+be aimed at.
+
+The list now holds a file's own window by the file it shows
+(`toPreviewWindowFilePath`; `focus: null`, no kind). A tab's newest file
+that has one (`tabPreviewFilePath`, the file held on top) is aimed after a
+note's window and before a chosen one (`toFileWindowAim`). Picking a
+window or a kind by hand lets it go until a file is handed over again. Only
+what looks at a window is aimed there; a state read and a walkthrough stay
+with the app's windows, and `/here` names the main window. `owa_screenshot`
+takes a file window's picture over the debugging connection, because the
+Markdown Preview has no Node to ask main with; the help and AI Chat windows
+are never pictured that way. Main tells the help window when a file's
+window comes or goes. The debugging endpoint lists titles escaped for HTML
+(`God&#39;s`), so every title is read back first.
+
+Seen live against the dev app: both rows opened their windows, which the
+list names `Markdown Preview - JHN.3.The New Birth and God's Love.md · own
+window` and `JHN.3.pdf · own window`. A tab on either file aims there, and
+both were pictured in about 140 ms each. The help window's own line is
+unit-tested, not yet seen live (the AI caution is the person's press).
+Tests: `windowAimHelpers.test.ts`, `windowOnTopRequestHelpers.test.ts`,
+`ChatbotAppComp.ut100a.test.tsx`, `owaTools.test.mjs`,
+`appWindowListHelpers.test.ts`.
+
+### EC-484 — one Resources file could not be open in two windows — `done`
+
+The user: _like bible-note resource window should be multiple, story: as a
+user I want to open 2 windows of one resource file so I can read different
+parts at the same time_. A Bible note's window opens under a fresh url id on
+every **Open**; a Resources file's Markdown Preview opened under the fixed id
+`preview` and its PDF viewer under the file's name, so a second press only
+brought the first window forward.
+
+A row's press, its **Preview** / **Preview PDF**, and a read-only note of a
+`.own` file now open ANOTHER window every time (`isAnother`: the id is
+`preview-<random>`, or the file's name and a random part), each a little
+below and to the right of the last. The 🤖 and the assistant's study
+`preview` still want the window already open: they pass the new popup
+feature `appReuseOpen`, and main then raises any window of that file,
+whatever its id, and opens none (`handlePopupWindowOpen`). The Documents
+list's PDF does the same, so it still brings forward a viewer a Resources row
+opened. With two windows of one file the tab works in the first, and the
+other is `… · own window 2` in **Working in**. The same run made a press
+that opens a PDF say so: `listNewAppPages` counts a PDF in Chromium's viewer,
+and those presses had answered `unverified`.
+
+Seen live against the dev app through a fresh stdio server: the study `.md`
+and `JHN.3.pdf` each pressed twice gave two windows of each, every press
+answering `opened: "window"`. One Markdown Preview was scrolled to its end
+while the other stayed on John 3:1-7, both pictured. `preview` of the study,
+with both open, opened none. Not seen live: the 🤖's own press (the AI
+caution is the person's), a `.own` note twice, a non-English language.
+Tests: `resourcePreviewOpenHelpers.test.ts`, `pdfPreviewHelpers.test.ts`,
+`ResourcesFileRowComp.test.tsx`, `ResourcesFileNotesComp.test.tsx`,
+`electronHelpers.test.ts`, `windowAimHelpers.test.ts`, `cdp.test.mjs`.
+Matrix RD-127, RD-118 corrected; W-37 step 6.
+
+The same day the French and Khmer W-37 were carried over, block for block,
+with the markdown **Edit** paragraph another session wrote into step 6
+(RD-128). They were stamped with the new English hash, which made fr 0.0.57
+and km 0.0.65, and both were packed. `manual-i18n-status.mjs --check` passes
+for both. Read out of the packed plugins the way the server reads an
+installed language, W-37 is current in each and comes back translated, not
+English. The dev app still has fr 0.0.50 and km 0.0.58 installed: no
+**Update to** was pressed while another session was driving it.
+
+The corpus had a wrong route for the story's own question. _How do I open one
+resource file in two windows?_ carries `two windows`, a keyword phrase of
+AI Chat's `ai-chat-more-windows` alone, so `findRowByKeywordPhrase` handed
+the model W-44 as the answer. _Can I open another window of this resource?_
+went the same way on `another window`. `resources-open` now carries
+`file twice`, `pdf twice`, `file in two windows` and `file in another
+window`:
+- _open the same pdf twice_ and _Can I open the same file twice?_ route to
+  W-37.
+- The two-window questions now match two pages, so no hint rides and the
+  search ranks W-37 first.
+- AI Chat's own phrasings still route to W-44.
+
+A longest-phrase rule would route both to W-37. It was not made: the corpus
+holds 240 cross-page pairs where one keyword phrase sits inside another's
+(`turn off` / `turn off timer`, `my language` / `read in my language`),
+and changing all of them wants a measured corpus run, not a guess.

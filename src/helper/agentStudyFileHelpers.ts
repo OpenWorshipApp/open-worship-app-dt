@@ -21,6 +21,13 @@
  * - `preview` writes the draft into a folder of its own under the system's
  *   temporary folder (the last three kept) and opens it in the Markdown
  *   Preview window, diagrams drawn.
+ * - A change goes by PART (EC-479): `section` names a heading and `content`
+ *   is its new text, `append` adds words at the end of it or of the file;
+ *   `content` alone is still the whole new text.
+ * - `translate` writes nothing either (EC-478): the file in the parts a
+ *   translation treats apart, each quoted passage quoted again from
+ *   `bible`. The help window translates the words part by part and drafts
+ *   the result; an outside agent can do the same.
  *
  * `save` and `preview` are refused to the help window's MODEL
  * (`runMcpToolCall`): the model drafts, the person presses.
@@ -29,20 +36,28 @@ import {
     STUDY_CONTENT_MAX_CHARS,
     STUDY_FILE_EXTENSION,
     STUDY_FILE_MAX_CHARS,
+    STUDY_FILE_MAX_DIAGRAMS,
     STUDY_FOLDER_NAME,
+    STUDY_MAX_DIAGRAMS,
     STUDY_MAX_QUOTED_VERSES,
     STUDY_MAX_VERSE_TOKENS,
     STUDY_PASSAGE_MAX_VERSES,
     type StudyQuoteType,
+    applyStudyEdit,
     applyStudyVerseTokens,
     composeStudyFile,
     describeStudyChange,
     lintStudyContent,
     listStudyVerseTokens,
     readStudyFileName,
+    readStudyTitleLine,
+    separateStudyLines,
+    splitStudyFooter,
+    splitStudyForTranslation,
     summarizeStudyChange,
     toStudyBody,
     toStudyFileName,
+    toStudyQuoteLines,
     toStudySpanText,
     toStudyTextHash,
     toStudyTitle,
@@ -93,6 +108,8 @@ export type AgentStudyRequestType = {
     name?: unknown;
     file?: unknown;
     hash?: unknown;
+    section?: unknown;
+    append?: unknown;
 };
 
 type RefusalType = { isError: true; reason: string };
@@ -239,9 +256,15 @@ async function readTokenQuotes(body: string, order: string[]) {
     return { quoteMap, warnings };
 }
 
-/** The content's lint as one refusal, or null when it can be written. */
-function checkContent(content: string) {
-    const lint = lintStudyContent(content);
+/**
+ * The content's lint as one refusal, or null when it can be written. A new
+ * study draws a few diagrams; a whole file may hold its translation's too.
+ */
+function checkContent(content: string, isWholeFile = false) {
+    const lint = lintStudyContent(
+        content,
+        isWholeFile ? STUDY_FILE_MAX_DIAGRAMS : STUDY_MAX_DIAGRAMS,
+    );
     if (lint.reasons.length > 0) {
         return {
             refusal: toReason(
@@ -261,7 +284,13 @@ function checkContent(content: string) {
  * outside that folder is changed here, and only a Markdown file.
  */
 async function resolveStudyFile(file: unknown) {
-    const text = toText(file).replaceAll('\\', '/');
+    let text = toText(file).replaceAll('\\', '/');
+    // A whole path inside Default -- what an attached file carries -- is
+    // taken as its name.
+    const dirText = `${getStudyDirPath().replaceAll('\\', '/').replace(/\/+$/, '')}/`;
+    if (text.toLowerCase().startsWith(dirText.toLowerCase())) {
+        text = text.slice(dirText.length);
+    }
     const parts = text.split('/').filter(Boolean);
     const name = parts.at(-1) ?? '';
     const folder = parts.length > 1 ? parts.at(-2) : STUDY_FOLDER_NAME;
@@ -299,7 +328,7 @@ async function draftNew(request: AgentStudyRequestType) {
     if ('reason' in titled) {
         return toReason(titled.reason);
     }
-    const body = toStudyBody(toText(request.content));
+    const body = separateStudyLines(toStudyBody(toText(request.content)));
     if (body === '') {
         return toReason(
             'Write the study itself in `content`: Markdown sections with ' +
@@ -410,14 +439,31 @@ async function draftChange(request: AgentStudyRequestType) {
                 'Make a new study file instead.',
         );
     }
-    const text = toText(request.content);
+    let text = toText(request.content);
+    const section = toText(request.section);
+    const append = separateStudyLines(toText(request.append));
+    if (section !== '' || append !== '') {
+        const edited = applyStudyEdit(oldText, {
+            section,
+            content: separateStudyLines(text),
+            append,
+        });
+        if ('reason' in edited) {
+            return toReason(edited.reason);
+        }
+        text = edited.text;
+    } else {
+        // The whole new text: only what the model wrote anew is kept apart.
+        text = separateStudyLines(text, oldText);
+    }
     if (text === '') {
         return toReason(
-            'Give the WHOLE new text of the file in `content`, as `read` ' +
-                'gave it with the change made.',
+            'Give the new words: `section` (a heading) with its new ' +
+                '`content`, `append` for words added at the end, or the ' +
+                'WHOLE new text in `content`.',
         );
     }
-    const { refusal, diagramCount } = checkContent(text);
+    const { refusal, diagramCount } = checkContent(text, true);
     if (refusal !== null) {
         return refusal;
     }
@@ -498,7 +544,7 @@ async function saveStudy(request: AgentStudyRequestType) {
             `The file is longer than ${STUDY_FILE_MAX_CHARS} characters.`,
         );
     }
-    const { refusal } = checkContent(content);
+    const { refusal } = checkContent(content, true);
     if (refusal !== null) {
         return refusal;
     }
@@ -642,7 +688,160 @@ async function previewStudy(request: AgentStudyRequestType) {
     };
 }
 
+/**
+ * A passage the file quotes, quoted again from `bibleKey`: read under the
+ * Bible that wrote it, so the verses are the same ones whatever language its
+ * reference is written in. Null when either Bible cannot read it -- the
+ * passage is then left as it is, never put into words by a model.
+ */
+async function requotePassage(
+    title: string,
+    sourceKey: string,
+    bibleKey: string,
+    maxVerses: number,
+) {
+    const [{ resolveBibleItem }, { default: BibleItem }] = await Promise.all([
+        import('./agentBibleHelpers'),
+        import('../bible-list/BibleItem'),
+    ]);
+    const source = await resolveBibleItem(title, [sourceKey]).catch(() => {
+        return null;
+    });
+    if (source === null) {
+        return null;
+    }
+    const { bookKey, chapter, verseStart, verseEnd, chapterEnd } =
+        source.target;
+    // The verse key every Bible reads (`JHN 3:1-21`), no book name in it.
+    const verseKey =
+        chapterEnd !== undefined && chapterEnd > chapter
+            ? `${bookKey} ${chapter}:${verseStart}-${chapterEnd}:${verseEnd}`
+            : verseEnd > verseStart
+              ? `${bookKey} ${chapter}:${verseStart}-${verseEnd}`
+              : `${bookKey} ${chapter}:${verseStart}`;
+    const target =
+        (await BibleItem.fromVerseKey(bibleKey, verseKey).catch(() => {
+            return null;
+        })) ??
+        (await resolveBibleItem(verseKey, [bibleKey]).catch(() => {
+            return null;
+        }));
+    if (target === null) {
+        return null;
+    }
+    const read = await readQuote(target, maxVerses);
+    if (read === null) {
+        return null;
+    }
+    const lines = toStudyQuoteLines(read.quote);
+    if (read.isCut) {
+        lines.push('>', '> …');
+    }
+    return lines.join('\n');
+}
+
+/**
+ * The passage a study file's NAME says it is about, as a reference any
+ * Bible reads (`JHN 3:1-21`), or null for a name that is not a study's.
+ */
+function toNamedPassageRef(name: string) {
+    const named = readStudyFileName(name);
+    if (named === null) {
+        return null;
+    }
+    const span = named.span.replace(/-(\d+)\.(\d+)$/, '-$1:$2');
+    return span === ''
+        ? `${named.bookKey} ${named.chapter}`
+        : `${named.bookKey} ${named.chapter}:${span}`;
+}
+
+/**
+ * `translate`: the file in its parts (`splitStudyForTranslation`) -- its
+ * words to translate, its diagrams to translate the labels of, the passages
+ * it quotes quoted again from `bible` (a Bible in the new language), what
+ * is kept as it is -- with its hash, its title and the app's last lines
+ * apart. Writes nothing: whoever translates drafts the result.
+ */
+async function planTranslation(request: AgentStudyRequestType) {
+    const resolved = await resolveStudyFile(request.file);
+    if ('isError' in resolved) {
+        return resolved;
+    }
+    const oldText = await fsReadFile(resolved.filePath);
+    if (oldText.length > STUDY_FILE_MAX_CHARS) {
+        return toReason(
+            `${resolved.name} is longer than ${STUDY_FILE_MAX_CHARS} ` +
+                'characters: it cannot be translated here.',
+        );
+    }
+    const bible = toText(request.bible);
+    if (bible !== '') {
+        const order = await getVersionOrder(bible);
+        if (!Array.isArray(order)) {
+            return order;
+        }
+        if (order[0]?.toLowerCase() !== bible.toLowerCase()) {
+            return toReason(`No installed Bible is called "${bible}".`);
+        }
+    }
+    const { body, footer } = splitStudyFooter(oldText);
+    const parts = splitStudyForTranslation(body);
+    let quotedCount = 0;
+    const planned = [];
+    for (const [index, part] of parts.entries()) {
+        if (part.kind !== 'passage') {
+            planned.push({ kind: part.kind, text: part.text });
+            continue;
+        }
+        const quoted =
+            bible === '' ||
+            part.title === undefined ||
+            part.bibleKey === undefined
+                ? null
+                : await requotePassage(
+                      part.title,
+                      part.bibleKey,
+                      bible,
+                      // The file's own passage, right under its title, is
+                      // quoted as far as a new study quotes it.
+                      index <= 1
+                          ? STUDY_PASSAGE_MAX_VERSES
+                          : STUDY_MAX_QUOTED_VERSES,
+                  );
+        if (quoted !== null) {
+            quotedCount += 1;
+        }
+        planned.push({ kind: part.kind, text: part.text, quoted });
+    }
+    return {
+        translating: true,
+        file: `${STUDY_FOLDER_NAME}/${resolved.name}`,
+        name: resolved.name,
+        hash: toStudyTextHash(oldText),
+        title: readStudyTitleLine(body),
+        ref: toNamedPassageRef(resolved.name),
+        bible: bible === '' ? null : bible,
+        passageCount: planned.filter((part) => {
+            return part.kind === 'passage';
+        }).length,
+        quotedCount,
+        parts: planned,
+        footer,
+        note:
+            'Translate each "text" part (keep its Markdown marks and line ' +
+            'breaks) and the labels of each "diagram" (keep its syntax); put ' +
+            'a passage\'s "quoted" in its place, or keep its "text" when ' +
+            'quoted is null; keep each "keep" part. Join the parts with a ' +
+            'line break, then draft with `file` and `append` (the ' +
+            'translation added at the end) or `content` (the whole new text ' +
+            'with the footer last).',
+    };
+}
+
 export async function handleAgentStudyRequest(request: AgentStudyRequestType) {
+    if (request.action === 'translate') {
+        return await planTranslation(request);
+    }
     if (request.action === 'draft') {
         return toText(request.file) === ''
             ? await draftNew(request)
@@ -654,5 +853,5 @@ export async function handleAgentStudyRequest(request: AgentStudyRequestType) {
     if (request.action === 'preview') {
         return await previewStudy(request);
     }
-    return toReason('Give action "draft", "save" or "preview".');
+    return toReason('Give action "draft", "translate", "save" or "preview".');
 }

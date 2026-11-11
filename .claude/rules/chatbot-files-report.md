@@ -106,7 +106,20 @@ window as a whole — tabs, pickers, its language, the caution — is in
   `chatbot-handoff-file` request (`requestChatbotFile`, a whole path, 30 s)
   through `openChatbotWithFile` — the two questions first — and the window
   attaches it in a tab of its own under a card written with no model
-  (`genResourceOpeningAnswer`). **The passage the Reader is on rides with the
+  (`genResourceOpeningAnswer`). **A PDF or Markdown file's own window opens
+  with it and stays above the main window while it is attached**
+  (2026-11-10, the user: _like bible note I want behavior of during attached
+  to chatbot the window have to be on top of main window_): the row passes
+  its own Preview PDF / Markdown Preview open as `beforeOpening`, and the
+  tab's newest such file is held over the main window, under the help
+  window (`chatbot-window.md`, the held window). **That open REUSES**
+  (2026-11-10, `EC-484`): a window already open on the file, whichever
+  press opened it, is brought forward and none is added (`isAnother: false`
+  → `appReuseOpen`), while the row's own press opens one more window every
+  time -- the user: _as a user I want to open 2 windows of one resource file
+  so I can read different parts at the same time_. With two open the tab
+  works in the first, and **Working in** lists the other as `… · own window
+  2`. **The passage the Reader is on rides with the
   file** (2026-10-22, `EC-380`; the user, with `MAT.18.pdf`'s 🤖 circled under
   a Reader on Matthew 18:15-17: _make the chatbot smarter to interact with
   user for the selected resource file_): the previewer provides a GETTER of
@@ -216,7 +229,10 @@ window as a whole — tabs, pickers, its language, the caution — is in
   again with the held words and that title -- no model -- into a fresh
   card; any other line or press ends the wait. Once attached, the tab is a `resources` ask, so a change
   goes through `draft` with `file` and its card reads **Save changes to
-  "…"**, written only against the hash it was drafted from. While a press
+  "…"**, written only against the hash it was drafted from -- a
+  translation too (2026-11-10, `EC-478`): the window translates the file a
+  part at a time, each part a counted line on the wait, and the card holds
+  the whole file with the translation added. While a press
   works the tab is busy (`busyHoldListRef`). Every sentence is the
   chatbot's `tran`, in every language's dictionary. Seen live through the
   tools (`agent-tools.md`); the card in the 🤖 window not yet, the AI

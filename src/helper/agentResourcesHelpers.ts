@@ -72,6 +72,8 @@ export type AgentResourcesRequestType = {
     detail?: unknown;
     title?: unknown;
     content?: unknown;
+    section?: unknown;
+    append?: unknown;
     bible?: unknown;
     name?: unknown;
     hash?: unknown;
@@ -512,14 +514,69 @@ async function readResource(request: AgentResourcesRequestType) {
     }
     const raw = await fsReadFile(filePath);
     const text = (kind === 'note' ? toNoteFileText(raw) : null) ?? raw;
+    const section =
+        typeof request.section === 'string' ? request.section.trim() : '';
+    if (section !== '' && kind === 'text') {
+        return await readTextSection(name, text, section);
+    }
     return {
         file: name,
         kind,
         text: text.slice(0, MAX_TEXT_CHARS),
         ...(text.length > MAX_TEXT_CHARS
-            ? { note: 'Only the start of it is here.' }
+            ? { note: await toLongTextNote(name, text) }
             : {}),
     };
+}
+
+/**
+ * One section of a text file, by its heading's words (EC-481): how what is
+ * past the first 16 KB of a long study file -- its translation under it --
+ * is read.
+ */
+async function readTextSection(name: string, text: string, section: string) {
+    const { readStudySection, toStudyOutline } =
+        await import('./agentStudyFileRules');
+    const found = readStudySection(text, section);
+    if ('reason' in found) {
+        return toReason(found.reason);
+    }
+    const isCut = found.text.length > MAX_TEXT_CHARS;
+    const outline = isCut ? toStudyOutline(found.text) : '';
+    return {
+        file: name,
+        kind: 'text',
+        section: found.heading,
+        text: found.text.slice(0, MAX_TEXT_CHARS),
+        ...(isCut
+            ? {
+                  note:
+                      'Only the start of this section is here. Read a ' +
+                      'heading inside it with `section`' +
+                      (outline === '' ? '.' : `:\n${outline}`),
+              }
+            : {}),
+    };
+}
+
+/**
+ * What a read of a long file says under the start of it. A Markdown file
+ * (a study file has its translation under it, EC-479) names every heading,
+ * so a change is made by section, never by writing back the part read.
+ */
+async function toLongTextNote(name: string, text: string) {
+    if (!name.toLowerCase().endsWith('.md')) {
+        return 'Only the start of it is here.';
+    }
+    const { toStudyOutline } = await import('./agentStudyFileRules');
+    const outline = toStudyOutline(text);
+    return (
+        `Only the start of it is here: it is ${text.length} characters. ` +
+        'Read one part with `section` (one of its headings); change it ' +
+        'with `draft`, `file` and `section`, or `append` -- never by ' +
+        'writing back the part read.' +
+        (outline === '' ? '' : ` Its headings:\n${outline}`)
+    );
 }
 
 export async function handleAgentResourcesRequest(
@@ -533,6 +590,7 @@ export async function handleAgentResourcesRequest(
     }
     if (
         request.action === 'draft' ||
+        request.action === 'translate' ||
         request.action === 'save' ||
         request.action === 'preview'
     ) {

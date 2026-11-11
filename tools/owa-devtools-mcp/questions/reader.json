@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-11-09",
+    "updated": "2026-11-10",
     "sections": [
         {
             "id": "reading",
@@ -1421,11 +1421,33 @@
                         "reveal",
                         "file explorer",
                         "double click",
-                        "view"
+                        "view",
+                        "file twice",
+                        "pdf twice",
+                        "file in two windows",
+                        "file in another window"
                     ],
                     "resources": {
                         "recipe": "W-37",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "resources-edit-markdown",
+                    "text": "How do I change a markdown file from Resources?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit",
+                        "markdown",
+                        "md file",
+                        "fix a typo",
+                        "save",
+                        "unsaved",
+                        "discard"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "passage": "To change the file right there"
                     }
                 },
                 {

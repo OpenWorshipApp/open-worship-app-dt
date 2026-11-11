@@ -4,6 +4,20 @@ import {
     setSetting,
 } from '../helper/settingHelpers';
 import {
+    readSavedPresets,
+    writeSavedPresets,
+} from '../others/savedPresetHelpers';
+import {
+    MAX_SAVED_PRESET_COUNT,
+    type SavedPresetBaseType,
+    addSavedPreset,
+    findSavedPresetByName,
+    genSavedPresetName,
+    removeSavedPreset,
+    renameSavedPreset,
+    replaceSavedPreset,
+} from '../others/savedPresetListHelpers';
+import {
     genCommonStyleSettingNames,
     genDecorationSettingName,
     genPropsSettingNames,
@@ -20,40 +34,30 @@ import {
  * nothing of the look it replaces is left behind.
  *
  * One setting per component (`foreground-<key>-saved-presets`), read when a
- * Presets row mounts and written only by it; never sent to a screen.
+ * Presets row mounts and written only by it; never sent to a screen. The
+ * list itself -- names, ids, the limit -- is `savedPresetHelpers`', shared
+ * with every other panel that keeps looks.
  */
 
-export type ForegroundSavedPresetType = {
-    id: string;
-    name: string;
+export type ForegroundSavedPresetType = SavedPresetBaseType & {
     /** By field (`props.widthPercentage`, `common.color`, `decoration`). */
     values: Record<string, string>;
 };
 
 // A row of buttons, not an archive: past this the row stops being a glance.
-export const MAX_FOREGROUND_SAVED_PRESET_COUNT = 30;
-const MAX_PRESET_NAME_LENGTH = 40;
+export const MAX_FOREGROUND_SAVED_PRESET_COUNT = MAX_SAVED_PRESET_COUNT;
 
 export function genSavedPresetSettingName(widgetKey: string) {
     return `foreground-${widgetKey}-saved-presets`;
 }
 
-function toPresetName(name: unknown) {
-    return typeof name === 'string'
-        ? name.trim().slice(0, MAX_PRESET_NAME_LENGTH)
-        : '';
-}
-
-function toSavedPreset(value: unknown): ForegroundSavedPresetType | null {
-    if (typeof value !== 'object' || value === null) {
-        return null;
-    }
-    const { id, name, values } = value as Record<string, unknown>;
-    const presetName = toPresetName(name);
+/** One entry as read off disk: its `values` cut down to strings, or null. */
+export function toForegroundSavedPreset(
+    item: Record<string, unknown>,
+    base: SavedPresetBaseType,
+): ForegroundSavedPresetType | null {
+    const { values } = item;
     if (
-        typeof id !== 'string' ||
-        id === '' ||
-        presetName === '' ||
         typeof values !== 'object' ||
         values === null ||
         Array.isArray(values)
@@ -66,7 +70,7 @@ function toSavedPreset(value: unknown): ForegroundSavedPresetType | null {
             cleanValues[field] = fieldValue;
         }
     }
-    return { id, name: presetName, values: cleanValues };
+    return { ...base, values: cleanValues };
 }
 
 /**
@@ -76,34 +80,17 @@ function toSavedPreset(value: unknown): ForegroundSavedPresetType | null {
 export function getForegroundSavedPresets(
     widgetKey: string,
 ): ForegroundSavedPresetType[] {
-    const text = getSetting(genSavedPresetSettingName(widgetKey));
-    let parsed: unknown;
-    try {
-        parsed = text ? JSON.parse(text) : null;
-    } catch {
-        parsed = null;
-    }
-    if (!Array.isArray(parsed)) {
-        return [];
-    }
-    const presets: ForegroundSavedPresetType[] = [];
-    const seenIdSet = new Set<string>();
-    for (const item of parsed) {
-        const preset = toSavedPreset(item);
-        if (preset === null || seenIdSet.has(preset.id)) {
-            continue;
-        }
-        seenIdSet.add(preset.id);
-        presets.push(preset);
-    }
-    return presets.slice(0, MAX_FOREGROUND_SAVED_PRESET_COUNT);
+    return readSavedPresets(
+        genSavedPresetSettingName(widgetKey),
+        toForegroundSavedPreset,
+    );
 }
 
 export function setForegroundSavedPresets(
     widgetKey: string,
     presets: readonly ForegroundSavedPresetType[],
 ) {
-    setSetting(genSavedPresetSettingName(widgetKey), JSON.stringify(presets));
+    writeSavedPresets(genSavedPresetSettingName(widgetKey), presets);
 }
 
 /**
@@ -178,21 +165,7 @@ export function genForegroundSavedPresetName(
     presets: readonly ForegroundSavedPresetType[],
     baseName: string,
 ) {
-    const nameSet = new Set(
-        presets.map((preset) => {
-            return preset.name;
-        }),
-    );
-    for (let i = 1; ; i++) {
-        const name = `${baseName} ${i}`;
-        if (!nameSet.has(name)) {
-            return name;
-        }
-    }
-}
-
-function genPresetId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return genSavedPresetName(presets, baseName);
 }
 
 /** The list with the session's look added; null when full or unnamed. */
@@ -201,14 +174,7 @@ export function addForegroundSavedPreset(
     name: string,
     values: Record<string, string>,
 ): ForegroundSavedPresetType[] | null {
-    const presetName = toPresetName(name);
-    if (
-        presetName === '' ||
-        presets.length >= MAX_FOREGROUND_SAVED_PRESET_COUNT
-    ) {
-        return null;
-    }
-    return [...presets, { id: genPresetId(), name: presetName, values }];
+    return addSavedPreset(presets, name, { values });
 }
 
 export function renameForegroundSavedPreset(
@@ -216,12 +182,7 @@ export function renameForegroundSavedPreset(
     id: string,
     name: string,
 ): ForegroundSavedPresetType[] {
-    const presetName = toPresetName(name);
-    return presets.map((preset) => {
-        return preset.id === id && presetName !== ''
-            ? { ...preset, name: presetName }
-            : preset;
-    });
+    return renameSavedPreset(presets, id, name);
 }
 
 export function replaceForegroundSavedPreset(
@@ -229,29 +190,17 @@ export function replaceForegroundSavedPreset(
     id: string,
     values: Record<string, string>,
 ): ForegroundSavedPresetType[] {
-    return presets.map((preset) => {
-        return preset.id === id ? { ...preset, values } : preset;
-    });
+    return replaceSavedPreset(presets, id, { values });
 }
 
 export function removeForegroundSavedPreset(
     presets: readonly ForegroundSavedPresetType[],
     id: string,
 ): ForegroundSavedPresetType[] {
-    return presets.filter((preset) => {
-        return preset.id !== id;
-    });
+    return removeSavedPreset(presets, id);
 }
 
 /** A saved preset named in words (the assistant), case aside. */
 export function findForegroundSavedPreset(widgetKey: string, name: string) {
-    const wanted = name.trim().toLowerCase();
-    if (wanted === '') {
-        return null;
-    }
-    return (
-        getForegroundSavedPresets(widgetKey).find((preset) => {
-            return preset.name.toLowerCase() === wanted;
-        }) ?? null
-    );
+    return findSavedPresetByName(getForegroundSavedPresets(widgetKey), name);
 }

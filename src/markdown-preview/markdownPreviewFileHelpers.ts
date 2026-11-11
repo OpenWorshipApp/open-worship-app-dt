@@ -3,6 +3,7 @@ import {
     fsCheckFileExist,
     fsGetFileSize,
     fsReadFile,
+    fsWriteFile,
     pathDirname,
     pathResolve,
 } from '../server/fileHelpers';
@@ -20,18 +21,23 @@ import {
  */
 export const MAX_MARKDOWN_PREVIEW_FILE_SIZE = 5 * 1024 * 1024;
 
+type MarkdownPreviewFailStatusType = 'not-found' | 'too-large' | 'unreadable';
+
 export type MarkdownPreviewLoadResultType =
     | ({ status: 'ready' } & MarkdownPreviewRenderResultType)
-    | { status: 'loading' | 'not-found' | 'too-large' | 'unreadable' };
+    | { status: 'loading' | MarkdownPreviewFailStatusType };
+
+export type MarkdownPreviewTextResultType =
+    | { status: 'ready'; text: string }
+    | { status: MarkdownPreviewFailStatusType };
 
 /**
- * Read and render one markdown file. Never throws. Nothing is cached: the
- * window re-reads on every change the file watcher reports, and the rendered
- * HTML it keeps is only what is on screen.
+ * Read one markdown file's text. Never throws. The editor reads through this
+ * too, so a file too large to preview is never put into an editor either.
  */
-export async function loadMarkdownPreviewFile(
+export async function readMarkdownPreviewText(
     filePath: string,
-): Promise<MarkdownPreviewLoadResultType> {
+): Promise<MarkdownPreviewTextResultType> {
     try {
         if (!(await fsCheckFileExist(filePath))) {
             return { status: 'not-found' };
@@ -40,7 +46,21 @@ export async function loadMarkdownPreviewFile(
         if ((await fsGetFileSize(filePath)) > MAX_MARKDOWN_PREVIEW_FILE_SIZE) {
             return { status: 'too-large' };
         }
-        const text = await fsReadFile(filePath);
+        return { status: 'ready', text: await fsReadFile(filePath) };
+    } catch {
+        return { status: 'unreadable' };
+    }
+}
+
+/**
+ * Render markdown text as it would be shown for `filePath` -- the file on
+ * disk, or a draft of it not saved yet.
+ */
+export function renderMarkdownPreviewText(
+    filePath: string,
+    text: string,
+): MarkdownPreviewLoadResultType {
+    try {
         // A picture written as `images/map.png` is beside the FILE, not beside
         // the app.
         const baseDirPath = pathDirname(filePath);
@@ -50,6 +70,35 @@ export async function loadMarkdownPreviewFile(
         return { status: 'ready', ...rendered };
     } catch {
         return { status: 'unreadable' };
+    }
+}
+
+/**
+ * Read and render one markdown file. Never throws. Nothing is cached: the
+ * window re-reads on every change the file watcher reports, and the rendered
+ * HTML it keeps is only what is on screen.
+ */
+export async function loadMarkdownPreviewFile(
+    filePath: string,
+): Promise<MarkdownPreviewLoadResultType> {
+    const textResult = await readMarkdownPreviewText(filePath);
+    if (textResult.status !== 'ready') {
+        return textResult;
+    }
+    return renderMarkdownPreviewText(filePath, textResult.text);
+}
+
+/**
+ * Write the editor's text back to the file. Never throws: `false` keeps the
+ * draft and its unsaved mark on screen. Written through the provider bridge
+ * like the read, so the data folder's portable paths round-trip.
+ */
+export async function saveMarkdownPreviewFile(filePath: string, text: string) {
+    try {
+        await fsWriteFile(filePath, text);
+        return true;
+    } catch {
+        return false;
     }
 }
 

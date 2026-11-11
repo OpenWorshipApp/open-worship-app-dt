@@ -1895,6 +1895,34 @@ describe('the commands when the app answers otherwise', () => {
         }
     });
 
+    // 2026-11-10: a tab on a study file works in the file's own Markdown
+    // Preview, which a state read is never aimed at -- the read is the main
+    // window's, and said as such.
+    test("/here in a tab working in a file's own window names the main window", async () => {
+        setCurrentWindowAim({
+            windowId: 'MD-1',
+            focus: null,
+            isSeparateWindow: false,
+            filePath: '/resources/JHN.3.md',
+        });
+        try {
+            callTool.mockResolvedValue(
+                JSON.stringify({
+                    mainWindow: { page: 'reader.html' },
+                    windows: [{ url: 'https://localhost:3000/reader.html' }],
+                }),
+            );
+            const answer = await runBuiltinCommand('/here', 'reader');
+            expect(callTool.mock.calls.at(-1)?.[1]).toEqual({});
+            expect(answer.text).toContain(
+                '**The main window is on the Bible Reader**',
+            );
+            expect(answer.text).not.toContain('a window of its own');
+        } finally {
+            setCurrentWindowAim(null);
+        }
+    });
+
     test('the slide commands off the Presenter, or with nothing selected', async () => {
         callTool.mockResolvedValue(genAppState(null, 'reader.html'));
         const selected = await runBuiltinCommand('/selected', 'presenter');

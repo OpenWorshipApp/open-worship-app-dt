@@ -11,8 +11,9 @@ import {
     setCurrentWindowAim,
     toAimedToolArgs,
     toAppWindowList,
+    toFileWindowAim,
     toFocusOfUrl,
-    toHeldNoteWindowUrl,
+    toHeldWindowUrl,
     toNoteWindowAim,
     toTabWindowAim,
     toWindowAim,
@@ -231,18 +232,18 @@ describe('toNoteWindowAim', () => {
         expect(toNoteWindowAim(undefined, noteWindowList)).toBeNull();
     });
 
-    it('holds on top only the note window the tab works in', () => {
+    it('holds on top the window the tab works in, of any kind', () => {
         const aim = toNoteWindowAim(
             { fileFullName: 'Sermons.own', noteId: 3 },
             noteWindowList,
         );
-        expect(toHeldNoteWindowUrl(aim, noteWindowList)).toBe(
+        expect(toHeldWindowUrl(aim, noteWindowList)).toBe(
             `${HOST}/bibleNote.html?file=Sermons.own&id=3&uuid=b`,
         );
-        expect(toHeldNoteWindowUrl(null, noteWindowList)).toBeNull();
+        expect(toHeldWindowUrl(null, noteWindowList)).toBeNull();
         // A window that went is held no more.
-        expect(toHeldNoteWindowUrl(aim, noteWindowList.slice(0, 2))).toBeNull();
-        // Another kind of window is never held.
+        expect(toHeldWindowUrl(aim, noteWindowList.slice(0, 2))).toBeNull();
+        // A Reader of its own is held too; the main window never is.
         const readerList = toAppWindowList([
             {
                 id: 'MAIN',
@@ -256,7 +257,17 @@ describe('toNoteWindowAim', () => {
             },
         ]);
         expect(
-            toHeldNoteWindowUrl(toWindowAim('READER', readerList), readerList),
+            toHeldWindowUrl(toWindowAim('READER', readerList), readerList),
+        ).toBe(`${HOST}/reader.html?uuid=reader`);
+        expect(
+            toHeldWindowUrl(
+                {
+                    windowId: 'MAIN',
+                    focus: 'presenter',
+                    isSeparateWindow: false,
+                },
+                readerList,
+            ),
         ).toBeNull();
     });
 });
@@ -470,5 +481,191 @@ describe('the window a tab works in, and the window an address is', () => {
         expect(
             findWindowIdByUrl(`${HOST}/setting.html`, windowList),
         ).toBeNull();
+    });
+});
+
+// 2026-11-10, the user, the Resources 🤖 having opened a study file's
+// Markdown Preview beside a chat whose **Working in** named only the main
+// window: _should behave like what working for bible-note_.
+describe("a file's own window", () => {
+    const MD_PATH =
+        "C:\\data\\resources\\JHN.3.The New Birth and God's Love.md";
+    const MD_URL =
+        `${HOST}/markdownPreview.html?preview-file=` +
+        `${encodeURIComponent(MD_PATH)}&uuid=preview`;
+    const PDF_URL = 'file:///C:/data/resources/JHN.3.pdf?uuid=JHN.3.pdf';
+    const windowList = toAppWindowList([
+        ...ENTRY_LIST,
+        {
+            id: 'MD',
+            // As the debugging endpoint lists it: escaped for HTML.
+            title:
+                'Open Worship app - Markdown Preview - ' +
+                'JHN.3.The New Birth and God&#39;s Love.md',
+            url: MD_URL,
+        },
+        // A PDF titles itself from inside the file.
+        { id: 'PDF', title: 'Microsoft Word - draft', url: PDF_URL },
+        {
+            id: 'NOTE-A',
+            title: 'Open Worship app - Bible Note',
+            url: `${HOST}/bibleNote.html?file=Sermons.own&id=1&uuid=a`,
+        },
+    ]);
+    const findListed = (id: string) => {
+        return windowList.find((item) => {
+            return item.id === id;
+        });
+    };
+
+    it('is listed with the file it shows, by its title or the file name', () => {
+        expect(findListed('MD')).toMatchObject({
+            focus: null,
+            isMain: false,
+            filePath: MD_PATH,
+            label:
+                "Markdown Preview - JHN.3.The New Birth and God's Love.md" +
+                ' · own window',
+        });
+        expect(findListed('PDF')).toMatchObject({
+            focus: null,
+            filePath: 'C:/data/resources/JHN.3.pdf',
+            label: 'JHN.3.pdf · own window',
+        });
+        // A page of the app carries no file.
+        expect(findListed('READER-1')?.filePath).toBeUndefined();
+        // Every title read back to its own letters, `&amp;` once.
+        expect(
+            toAppWindowList([
+                {
+                    id: 'SONG',
+                    title: 'Open Worship app - Lyric Editor - Rock &amp; Roll &amp;lt;3',
+                    url: `${HOST}/lyricEditor.html?uuid=lyric`,
+                },
+            ])[0].label,
+        ).toBe('Lyric Editor - Rock & Roll &lt;3 · own window');
+        // Still no help or projector window.
+        expect(findListed('CHATBOT')).toBeUndefined();
+        expect(findListed('SCREEN')).toBeUndefined();
+    });
+
+    it('is the window a tab on that file works in, any slash or case', () => {
+        expect(toFileWindowAim(MD_PATH, windowList)).toEqual({
+            windowId: 'MD',
+            focus: null,
+            isSeparateWindow: false,
+            filePath: MD_PATH,
+        });
+        expect(
+            toFileWindowAim('c:/DATA/resources/jhn.3.pdf', windowList)
+                ?.windowId,
+        ).toBe('PDF');
+        // No window shows it, or no file.
+        expect(toFileWindowAim('C:\\data\\JHN.4.md', windowList)).toBeNull();
+        expect(toFileWindowAim(null, windowList)).toBeNull();
+    });
+
+    // 2026-11-10, the user: _as a user I want to open 2 windows of one
+    // resource file so I can read different parts at the same time_ -- each
+    // window under a url id of its own.
+    it('two windows of one file are told apart, and the tab works in the first', () => {
+        const studyPath = 'C:\\data\\resources\\Study.md';
+        const toStudyEntry = (id: string, uuid: string) => {
+            return {
+                id,
+                title: 'Open Worship app - Markdown Preview - Study.md',
+                url:
+                    `${HOST}/markdownPreview.html?preview-file=` +
+                    `${encodeURIComponent(studyPath)}&uuid=${uuid}`,
+            };
+        };
+        const twoList = toAppWindowList([
+            ...ENTRY_LIST,
+            toStudyEntry('STUDY-1', 'preview-0f1e'),
+            toStudyEntry('STUDY-2', 'preview-9a8b'),
+        ]);
+        expect(
+            twoList
+                .filter((item) => {
+                    return item.filePath !== undefined;
+                })
+                .map((item) => {
+                    return [item.id, item.label];
+                }),
+        ).toEqual([
+            ['STUDY-1', 'Markdown Preview - Study.md · own window'],
+            ['STUDY-2', 'Markdown Preview - Study.md · own window 2'],
+        ]);
+        expect(toFileWindowAim(studyPath, twoList)?.windowId).toBe('STUDY-1');
+        // The other one is still the person's to choose.
+        expect(toWindowAim('STUDY-2', twoList)?.filePath).toBe(studyPath);
+    });
+
+    it("comes after the note's window and before a chosen one", () => {
+        expect(
+            toTabWindowAim(
+                { fileFullName: 'Sermons.own', noteId: 1 },
+                'READER-1',
+                'reader',
+                windowList,
+                MD_PATH,
+            )?.windowId,
+        ).toBe('NOTE-A');
+        expect(
+            toTabWindowAim(null, 'READER-1', 'reader', windowList, MD_PATH)
+                ?.windowId,
+        ).toBe('MD');
+        // Its window closed: the chosen one, as before.
+        expect(
+            toTabWindowAim(
+                null,
+                'READER-1',
+                'reader',
+                windowList,
+                'C:\\data\\JHN.4.md',
+            )?.windowId,
+        ).toBe('READER-1');
+        // Picked by hand, a file's window is an aim like any other.
+        expect(toWindowAim('PDF', windowList)).toEqual({
+            windowId: 'PDF',
+            focus: null,
+            isSeparateWindow: false,
+            filePath: 'C:/data/resources/JHN.3.pdf',
+        });
+    });
+
+    it('takes what looks at a window, never the state read or a walkthrough', () => {
+        const aim = toFileWindowAim(MD_PATH, windowList);
+        expect(toAimedToolArgs('owa_screenshot', {}, aim)).toEqual({
+            page: 'MD',
+        });
+        expect(toAimedToolArgs('owa_pick_element', undefined, aim)).toEqual({
+            page: 'MD',
+        });
+        expect(toAimedToolArgs('owa_find_ui', { text: 'Reload' }, aim)).toEqual(
+            { text: 'Reload', page: 'MD' },
+        );
+        const state = { page: undefined };
+        expect(toAimedToolArgs('owa_app_state', state, aim)).toBe(state);
+        const guide = { recipe: 'W-05' };
+        expect(toAimedToolArgs('owa_guide_start', guide, aim)).toBe(guide);
+        // A page asked for on purpose goes where it was sent.
+        const reader = { text: 'Resources', page: 'reader.html' };
+        expect(toAimedToolArgs('owa_find_ui', reader, aim)).toBe(reader);
+    });
+
+    it('is called by its file in a sentence and on a picture', () => {
+        const aim = toFileWindowAim(MD_PATH, windowList);
+        expect(toWindowAimLabel(aim)).toBe(
+            "JHN.3.The New Birth and God's Love.md",
+        );
+        expect(findAttachmentWindow(aim, windowList)).toEqual({
+            id: 'MD',
+            page: 'markdownPreview.html?uuid=preview',
+            label: "JHN.3.The New Birth and God's Love.md",
+            isMain: false,
+        });
+        // Held over the main window by its address too.
+        expect(toHeldWindowUrl(aim, windowList)).toBe(MD_URL);
     });
 });

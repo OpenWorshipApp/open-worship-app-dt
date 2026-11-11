@@ -208,3 +208,84 @@ describe('pointers that must not spotlight', () => {
         expect(manager.point).toEqual({ x: 50, y: 100 });
     });
 });
+
+// A Presets press hands the spotlight a whole look at once.
+describe('applyLook', () => {
+    const LOOK = {
+        size: 520,
+        dimColor: '#000000',
+        dimOpacity: 65,
+        edgeBlur: 60,
+        isContrast: false,
+    };
+
+    test('the five values in one go: one repaint, one update, one write', async () => {
+        const div = mountMask(manager);
+        manager.setIsArmed(true);
+        div.dispatchEvent(pointer('pointermove', 100, 100));
+        expect(manager.isSpotlighting).toBe(true);
+        const listener = vi.fn();
+        manager.addUpdateListener(listener);
+
+        manager.applyLook({
+            size: 5,
+            dimColor: '#ABCDEF',
+            dimOpacity: 400,
+            edgeBlur: -1,
+            isContrast: true,
+        });
+        // Each value checked as its own setter checks it...
+        expect(manager.size).toBe(40);
+        expect(manager.dimColor).toBe('#abcdef');
+        expect(manager.dimOpacity).toBe(100);
+        expect(manager.edgeBlur).toBe(0);
+        expect(manager.isContrast).toBe(true);
+        // ...painted and told at once, written after.
+        expect(div.style.background).toContain('#abcdef');
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(setSetting).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(150);
+        expect(setSetting).toHaveBeenCalledTimes(6);
+        expect(settingStore.get('presenting-control-focus-size')).toBe('40');
+        expect(settingStore.get('presenting-control-focus-color')).toBe(
+            '#abcdef',
+        );
+        expect(settingStore.get('presenting-control-focus-dim')).toBe('100');
+        expect(settingStore.get('presenting-control-focus-blur')).toBe('0');
+        expect(settingStore.get('presenting-control-focus-contrast')).toBe(
+            'true',
+        );
+    });
+
+    test('a colour it cannot use falls back; contrast is on only when true', () => {
+        manager.setDimColor('#123456');
+        manager.setIsContrast(true);
+        manager.applyLook({
+            ...LOOK,
+            dimColor: 'red',
+            isContrast: 'yes' as any,
+        });
+        expect(manager.dimColor).toBe('#000000');
+        expect(manager.isContrast).toBe(false);
+    });
+
+    test('Hold or Follow is how the tool behaves: a look leaves it, and a held spotlight', async () => {
+        const div = mountMask(manager);
+        manager.setIsHoldMode(true);
+        manager.setIsArmed(true);
+        div.dispatchEvent(pointer('pointerdown', 100, 100));
+        expect(manager.isSpotlighting).toBe(true);
+
+        manager.applyLook(LOOK);
+        expect(manager.isHoldMode).toBe(true);
+        expect(manager.isSpotlighting).toBe(true);
+        await vi.advanceTimersByTimeAsync(150);
+        expect(settingStore.get('presenting-control-focus-hold')).toBe('true');
+
+        manager.setIsHoldMode(false);
+        manager.applyLook({ ...LOOK, size: 300 });
+        expect(manager.isHoldMode).toBe(false);
+        expect(manager.size).toBe(300);
+    });
+});

@@ -549,6 +549,60 @@ describe('electronHelpers', () => {
         expect(notYetWin.focus).not.toHaveBeenCalled();
     });
 
+    // 2026-11-10, the user: _as a user I want to open 2 windows of one
+    // resource file so I can read different parts at the same time_. A
+    // Resources row opens each window under a fresh id; its 🤖 asks to reuse.
+    test('a fresh id opens another window of a file, and appReuseOpen takes the open one', async () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+        const fileUrl = (name: string, uuid: string) => {
+            return (
+                'https://localhost:3000/markdownPreview.html' +
+                `?preview-file=%2Fr%2F${name}&uuid=${uuid}`
+            );
+        };
+        const rowWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => fileUrl('Study.md', 'preview-1')),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() => rowWin);
+        new electronMockState.BrowserWindowMock();
+        const openDetails = (url: string, features: string) => ({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_markdown-preview_1`,
+            features,
+        });
+
+        // The row pressed again: one more window, stepped off the first.
+        const another = windowOpenHandler(
+            openDetails(fileUrl('Study.md', 'preview-2'), 'popup,width=870'),
+        );
+        expect(another.action).toBe('allow');
+        expect(another.overrideBrowserWindowOptions).toEqual(
+            expect.objectContaining({ x: 30, y: 40 }),
+        );
+
+        // The 🤖: the window the row opened is brought forward, none opened.
+        const reuseFeatures = 'popup,width=870,appReuseOpen';
+        expect(
+            windowOpenHandler(
+                openDetails(fileUrl('Study.md', 'preview'), reuseFeatures),
+            ).action,
+        ).toBe('deny');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(rowWin.focus).toHaveBeenCalled();
+
+        // Nothing open on THAT file: reusing opens it.
+        expect(
+            windowOpenHandler(
+                openDetails(fileUrl('Other.md', 'preview'), reuseFeatures),
+            ).action,
+        ).toBe('allow');
+    });
+
     test('a window.open whose URL does not parse opens nothing', () => {
         const parentWin = createMockBrowserWindow();
         guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);

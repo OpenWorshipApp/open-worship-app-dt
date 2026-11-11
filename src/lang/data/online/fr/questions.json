@@ -1,6 +1,6 @@
 {
     "lang": "fr",
-    "updated": "2026-11-09",
+    "updated": "2026-11-10",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -1619,6 +1619,10 @@
         "reader.resources.resources-open": {
             "en": "How do I open one of my Resources files?",
             "text": "Comment ouvrir l'un de mes fichiers de Ressources ?"
+        },
+        "reader.resources.resources-edit-markdown": {
+            "en": "How do I change a markdown file from Resources?",
+            "text": "Comment modifier un fichier Markdown de Ressources ?"
         },
         "reader.resources.resources-ask-assistant": {
             "en": "How do I ask the assistant about a study file for the verses I am reading?",

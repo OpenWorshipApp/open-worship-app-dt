@@ -676,4 +676,118 @@ describe('ScreenFocusManager', () => {
         expect(manager.size).toBe(450);
         expect(showSimpleToast).not.toHaveBeenCalled();
     });
+
+    // A Presets press (and Reset) hands the manager a whole look at once.
+    test('a whole look is one change: one repaint, one update, one write', async () => {
+        const ScreenFocusManager = await importManager();
+        vi.useFakeTimers();
+        try {
+            const base = createBase(90);
+            const manager = new ScreenFocusManager(base);
+            const div = mountOverlay(manager);
+            const flush = async () => {
+                vi.advanceTimersByTime(200);
+                for (let i = 0; i < 5; i++) {
+                    await Promise.resolve();
+                }
+            };
+            manager.setIsArmed(true);
+            press(div, 50, 25);
+            await flush();
+            const onUpdate = vi.fn();
+            manager.registerEventListener(['update'], onUpdate);
+            // What ONE slider step costs is the yardstick.
+            manager.setSize(500);
+            await flush();
+            const updatesPerChange = onUpdate.mock.calls.length;
+            expect(updatesPerChange).toBeGreaterThan(0);
+            onUpdate.mockClear();
+            setSettingMock.mockClear();
+            base.sendScreenMessage.mockClear();
+
+            manager.applySettings({
+                size: 99999,
+                dimColor: '#ABCDEF',
+                dimOpacity: -5,
+                edgeBlur: 500,
+                isContrast: true,
+            });
+            // Each value checked as its own setter checks it...
+            expect(manager.size).toBe(1200);
+            expect(manager.dimColor).toBe('#abcdef');
+            expect(manager.dimOpacity).toBe(10);
+            expect(manager.edgeBlur).toBe(100);
+            expect(manager.isContrast).toBe(true);
+            // ...painted at once, written after.
+            expect(div.style.background).toContain('#abcdef');
+            expect(setSettingMock).not.toHaveBeenCalled();
+            await flush();
+            expect(onUpdate).toHaveBeenCalledTimes(updatesPerChange);
+            expect(base.sendScreenMessage).toHaveBeenCalledTimes(1);
+            expect(Object.fromEntries(setSettingMock.mock.calls)).toEqual({
+                'screen-focus-size-90': '1200',
+                'screen-focus-color-90': '#abcdef',
+                'screen-focus-dim-90': '10',
+                'screen-focus-blur-90': '100',
+                'screen-focus-contrast-90': 'true',
+            });
+            expect(setSettingMock).toHaveBeenCalledTimes(5);
+
+            // Reset is a whole look too: the same one change.
+            onUpdate.mockClear();
+            setSettingMock.mockClear();
+            base.sendScreenMessage.mockClear();
+            manager.resetSettings();
+            await flush();
+            expect(onUpdate).toHaveBeenCalledTimes(updatesPerChange);
+            expect(base.sendScreenMessage).toHaveBeenCalledTimes(1);
+            expect(setSettingMock).toHaveBeenCalledTimes(5);
+            expect(manager.toSyncMessage().data).toMatchObject({
+                size: 300,
+                dimColor: '#000000',
+                dimOpacity: 70,
+                edgeBlur: 35,
+                isContrast: false,
+            });
+            release();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a look it cannot use falls back as its setters do', async () => {
+        const ScreenFocusManager = await importManager();
+        const manager = new ScreenFocusManager(createBase(91));
+        manager.setDimColor('#123456');
+        manager.setIsContrast(true);
+
+        manager.applySettings({
+            size: 300,
+            dimColor: 'rgb(1, 2, 3)',
+            dimOpacity: 50,
+            edgeBlur: 20,
+            isContrast: 'true' as any,
+        });
+        // An unparseable colour would paint NO dim at all.
+        expect(manager.dimColor).toBe('#000000');
+        expect(manager.isContrast).toBe(false);
+    });
+
+    test('deleting a screen leaves the spotlight presets every screen shares', async () => {
+        const ScreenFocusManager = await importManager();
+        const { SPOTLIGHT_SAVED_PRESETS_SETTING_NAME } =
+            await import('../preview/overlayPresetHelpers');
+        settingStore.set(SPOTLIGHT_SAVED_PRESETS_SETTING_NAME, '[]');
+        const manager = new ScreenFocusManager(createBase(92));
+        manager.setIsPanelOpen(true);
+
+        manager.delete();
+        expect(removeSettingMock).toHaveBeenCalledWith('screen-focus-open-92');
+        expect(removeSettingMock).not.toHaveBeenCalledWith(
+            SPOTLIGHT_SAVED_PRESETS_SETTING_NAME,
+        );
+        expect(settingStore.get(SPOTLIGHT_SAVED_PRESETS_SETTING_NAME)).toBe(
+            '[]',
+        );
+    });
 });

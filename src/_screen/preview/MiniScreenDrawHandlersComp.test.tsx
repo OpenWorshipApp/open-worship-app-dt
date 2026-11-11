@@ -6,6 +6,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
     settingNames: [] as string[],
+    brushPresets: null as null | {
+        readCurrent: () => unknown;
+        onApply: (look: unknown) => void;
+    },
     shortcuts: new Map<string, () => void>(),
     rangeShortcutTargets: new Map<string, () => boolean>(),
     manager: {
@@ -96,6 +100,14 @@ vi.mock('./miniScreenOverlayControlComps', () => ({
                 {label} range
             </button>
         );
+    },
+}));
+
+vi.mock('./overlayPresetComps', () => ({
+    // The row has its own suite; here only what the panel hands it.
+    BrushPresetsComp: (props: NonNullable<typeof h.brushPresets>) => {
+        h.brushPresets = props;
+        return null;
     },
 }));
 
@@ -219,6 +231,51 @@ describe('MiniScreenDrawHandlersComp', () => {
         h.manager.isShowing = true;
         await act(async () => h.shortcuts.get('clearDrawing')?.());
         expect(h.manager.clear).toHaveBeenCalledOnce();
+    });
+
+    test('a brush preset sets the whole brush through the panel, and paints', async () => {
+        await act(async () => root.render(<MiniScreenDrawHandlersComp />));
+        expect(h.brushPresets!.readCurrent()).toEqual({
+            color: '#ff2d2d',
+            alpha: 100,
+            size: 10,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        await click('Manual eraser');
+        h.settingNames.length = 0;
+        await act(async () => {
+            h.brushPresets!.onApply({
+                color: '#ffd60a',
+                alpha: 35,
+                size: 28,
+                isStraight: true,
+                is3D: false,
+                isDots: true,
+            });
+        });
+        // 35% of 255 rounds to 0x59; the eraser a preset was picked over
+        // gives way to the brush.
+        expect(h.manager.updatePaintToolParams).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                color: '#ffd60a59',
+                size: 28,
+                isStraight: true,
+                is3D: false,
+                isDots: true,
+                isEraser: false,
+            }),
+        );
+        expect(h.manager.setPaintTool).toHaveBeenCalledTimes(1);
+        expect(h.brushPresets!.readCurrent()).toEqual({
+            color: '#ffd60a',
+            alpha: 35,
+            size: 28,
+            isStraight: true,
+            is3D: false,
+            isDots: true,
+        });
     });
 
     test('a slider step key belongs to whichever canvas holds the keyboard', async () => {

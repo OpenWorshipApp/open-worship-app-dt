@@ -18,6 +18,8 @@ import {
     handleKeepOverlayFocus,
     useOverlayShortcut,
 } from '../_screen/preview/miniScreenOverlayControlComps';
+import { BrushPresetsComp } from '../_screen/preview/overlayPresetComps';
+import type { BrushLookType } from '../_screen/preview/overlayPresetHelpers';
 import type PresentingDrawManager from './PresentingDrawManager';
 import {
     DEFAULT_IS_3D,
@@ -161,6 +163,17 @@ export default function ControllerDrawToolsComp({
         drawManager.setRenderQuality(DEFAULT_IS_HIGH_QUALITY);
     };
 
+    // A Presets press: the whole brush through the setters a hand edit uses.
+    // Paint or eraser is the toolbar's, and stays as it is.
+    const handleBrushPresetApplying = (look: BrushLookType) => {
+        setBaseColor(look.color);
+        setAlpha(look.alpha);
+        setSize(look.size);
+        setIsStraight(look.isStraight);
+        setIs3D(look.is3D);
+        setIsDots(look.isDots);
+    };
+
     useDrawShortcut('toggleQuality', handleToggleQuality);
     useDrawShortcut('resetSettings', handleResetSettings);
     // NOTE: `b` / `e` (paint vs eraser) and `c` / `Ctrl+Z` / `Ctrl+Shift+Z`
@@ -182,6 +195,19 @@ export default function ControllerDrawToolsComp({
         <div className="w-100">
             <hr className="w-100 my-1" />
             <div className="d-flex flex-wrap align-items-center gap-2 px-1 pb-1">
+                <BrushPresetsComp
+                    readCurrent={() => {
+                        return {
+                            color: baseColor,
+                            alpha,
+                            size,
+                            isStraight,
+                            is3D,
+                            isDots,
+                        };
+                    }}
+                    onApply={handleBrushPresetApplying}
+                />
                 <OverlayColorSwatchComp
                     icon="bi-brush"
                     label={tran('Color')}

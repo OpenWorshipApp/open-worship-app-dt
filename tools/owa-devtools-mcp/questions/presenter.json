@@ -971,7 +971,10 @@
                         "stage style",
                         "opacity",
                         "bigger text",
-                        "too small"
+                        "too small",
+                        "stage preset",
+                        "save the stage look",
+                        "lyrics banner"
                     ],
                     "resources": {
                         "recipe": "W-05",
@@ -1461,7 +1464,6 @@
                     "text": "How do I save my Bible text style as a preset?",
                     "kind": "howto",
                     "keywords": [
-                        "save as preset",
                         "save the style",
                         "my own look",
                         "reuse a style",
@@ -1469,7 +1471,7 @@
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Save as Preset",
+                        "find": "Bible/LongText Properties > Save as Preset",
                         "guide": true
                     }
                 },
@@ -2497,7 +2499,9 @@
                         "brush",
                         "highlight",
                         "mark up",
-                        "presenting control"
+                        "presenting control",
+                        "highlighter",
+                        "brush preset"
                     ],
                     "resources": {
                         "recipe": "W-19",
@@ -2515,7 +2519,8 @@
                         "dim",
                         "highlight area",
                         "circle",
-                        "point at"
+                        "point at",
+                        "spotlight preset"
                     ],
                     "resources": {
                         "recipe": "W-19",

@@ -6,6 +6,7 @@ import {
     handleKeepOverlayFocus,
     useOverlayShortcut,
 } from '../_screen/preview/miniScreenOverlayControlComps';
+import { SpotlightPresetsComp } from '../_screen/preview/overlayPresetComps';
 import type PresentingFocusManager from './PresentingFocusManager';
 import {
     FOCUS_BLUR_MAX,
@@ -99,6 +100,20 @@ export default function ControllerFocusToolsComp({
         <div className="w-100">
             <hr className="w-100 my-1" />
             <div className="d-flex flex-wrap align-items-center gap-2 px-1 pb-1">
+                <SpotlightPresetsComp
+                    readCurrent={() => {
+                        return {
+                            size: focusManager.size,
+                            dimColor: focusManager.dimColor,
+                            dimOpacity: focusManager.dimOpacity,
+                            edgeBlur: focusManager.edgeBlur,
+                            isContrast: focusManager.isContrast,
+                        };
+                    }}
+                    onApply={(look) => {
+                        focusManager.applyLook(look);
+                    }}
+                />
                 <OverlayRangeComp
                     icon="bi-circle"
                     label={tran('Spotlight size')}

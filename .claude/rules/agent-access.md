@@ -186,7 +186,11 @@ version, userDataPath, startedAt}` — one file per live instance, swept when a 
   anywhere in `src/chatbot/` and there must never be one. The same list holds
   `aichat.html` and `markdownPreview.html` (2026-09-17, a markdown file from
   any folder, its HTML parsed and then DOMPurify-sanitized — memory
-  `markdown-preview-window`). **Nothing a preload reaches may evaluate a
+  `markdown-preview-window`; since 2026-11-10 its **Edit** writes the file
+  back on the person's Save, through the provider bridge like the read). With no Node there to ask main for a picture,
+  `owa_screenshot` takes a FILE's own window — that preview, a PDF viewer —
+  over the debugging connection (`Page.captureScreenshot`, 2026-11-10); the
+  help and AI Chat windows are never pictured that way. **Nothing a preload reaches may evaluate a
   string at load** (2026-09-18, `MC-32`): every preload requires
   `electronHelpers`, which reaches `aiHelpers` through `webCaptureHelpers`,
   and that tighter CSP has no 'unsafe-eval' — nor does EVERY page's in a

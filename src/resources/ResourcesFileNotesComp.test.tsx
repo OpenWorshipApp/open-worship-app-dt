@@ -172,7 +172,10 @@ describe('ResourcesFileNotesComp', () => {
         await renderNotes('/shelf/notes.own');
         act(() => buttons()[0].click());
         await flush();
-        expect(h.openNote).toHaveBeenCalledWith('/shelf/notes.own', 7);
+        // One more window a press, as a Bible note's own Open.
+        expect(h.openNote).toHaveBeenCalledWith('/shelf/notes.own', 7, {
+            isAnother: true,
+        });
     });
 
     test('a verse unfolds to its marks; a mark opens its verse beside the passage', async () => {

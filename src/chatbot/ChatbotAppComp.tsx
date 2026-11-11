@@ -29,7 +29,7 @@ import {
     findWindowIdByUrl,
     toAttachmentWindowPage,
     toWindowPage,
-    toHeldNoteWindowUrl,
+    toHeldWindowUrl,
     toTabWindowAim,
     toWindowAimLabel,
     type AppWindowEntryType,
@@ -38,7 +38,11 @@ import {
 } from './windowAimHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import {
-    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+    HOLD_WINDOW_ON_TOP_CHANNEL,
+    toHeldPreviewFilePath,
+    type HoldWindowRequestType,
+} from '../helper/ai/windowOnTopRequestHelpers';
+import {
     findNoteWindow,
     toNoteWindowTarget,
     type NoteWindowTargetType,
@@ -602,6 +606,7 @@ import {
     type LlmModelType,
     type LlmBotAnswerType,
     type LlmProviderType,
+    type StudyTextTranslatorType,
     toUsableLlmModel,
 } from './llmBotHelpers';
 import {
@@ -3936,6 +3941,43 @@ async function translateVerseWords(
     }
 }
 
+/**
+ * The translator a study file is translated with, part by part (EC-478):
+ * the Gemma 4 Auto would ask at no cost -- the user's word for any
+ * translation -- looked for once an ask, at the first part; else the
+ * assistant the question went to. One round, no tools, the translator's
+ * room on a server of the user's own; its rounds count in the cost.
+ */
+function genStudyTranslator(
+    focus: BotFocusType,
+    provider: LlmProviderType,
+    model: string,
+    signal: AbortSignal,
+    onUsage: (round: LlmRoundUsageType) => void,
+): StudyTextTranslatorType {
+    let pickPromise: Promise<TranslationPickType | null> | null = null;
+    return async (ask) => {
+        pickPromise ??= findTranslationPick();
+        const pick = await pickPromise;
+        const answer = await askLlmBot(
+            ask,
+            focus,
+            pick?.provider ?? provider,
+            pick?.model ?? model,
+            [],
+            signal,
+            { isGeneral: true, isTranslation: true, onUsage },
+        );
+        return {
+            text: answer.text,
+            by:
+                pick === null
+                    ? getLlmModelLabel(provider, model)
+                    : toShownPickLabel(pick.label),
+        };
+    };
+}
+
 export default function ChatbotAppComp() {
     // Popup windows carry no theme of their own: without this the help window
     // opens white in front of a dark app.
@@ -4254,9 +4296,43 @@ export default function ChatbotAppComp() {
     // Read by the hand-overs, which run outside a render.
     const noteWindowBySessionRef = useAppCurrentRef(noteWindowBySession);
     const windowIdBySessionRef = useAppCurrentRef(windowIdBySession);
-    // The note's own window, else a window chosen for the tab, else the one
-    // window of the kind it asks about when that is a popup
-    // (`toFocusWindowAim`): a tab asking about Settings works in Settings.
+    // The tab's file whose own window -- a Markdown Preview, the PDF
+    // viewer -- it works in, as a note's tab works in the note's window
+    // (2026-11-10, the user, the Resources 🤖 having opened the preview
+    // beside a chat that did not name it: _should behave like what working
+    // for bible-note_): the newest of its files that has one, in the box or
+    // still open -- the one held over the main window too. Let go of, per
+    // tab, once a window or a kind is picked by hand, until a file is
+    // handed over again.
+    const [fileWindowLetGoMap, setFileWindowLetGoMap] = useState<
+        Record<string, true>
+    >({});
+    const tabPreviewFilePath = useMemo(() => {
+        const boxFileList = (draftAttachmentMap[activeSession.id] ?? []).filter(
+            checkIsFileAttachment,
+        );
+        const openFileList =
+            boxFileList.length > 0
+                ? []
+                : findOpenFileAttachments(
+                      activeSession.messages,
+                      activeSession.fileClosedAt,
+                  );
+        return toHeldPreviewFilePath(
+            [...openFileList, ...boxFileList].map((attachment) => {
+                return attachment.filePath;
+            }),
+        );
+    }, [
+        draftAttachmentMap,
+        activeSession.id,
+        activeSession.messages,
+        activeSession.fileClosedAt,
+    ]);
+    // The note's own window, else the file's, else a window chosen for the
+    // tab, else the one window of the kind it asks about when that is a
+    // popup (`toFocusWindowAim`): a tab asking about Settings works in
+    // Settings.
     const windowAim = useMemo(() => {
         const noteTarget =
             activeSession.id in noteWindowBySession
@@ -4270,10 +4346,15 @@ export default function ChatbotAppComp() {
             windowIdBySession[activeSession.id],
             activeSession.focus,
             appWindowList,
+            fileWindowLetGoMap[activeSession.id] === true
+                ? null
+                : tabPreviewFilePath,
         );
     }, [
         noteWindowBySession,
         windowIdBySession,
+        fileWindowLetGoMap,
+        tabPreviewFilePath,
         activeSession.id,
         activeSession.focus,
         activeSession.messages,
@@ -4309,18 +4390,13 @@ export default function ChatbotAppComp() {
     useAppEffect(() => {
         setCurrentWindowAim(windowAim);
     }, [windowAim]);
-    // The Bible note window the tab in front works in stays on top while it
-    // does, so a press here or in the main window does not bury the note
-    // being changed (`toHeldNoteWindowUrl`). Said only when the address
-    // changes: a refreshed list re-pins nothing the person took down.
-    const heldNoteWindowUrl = useMemo(() => {
-        return toHeldNoteWindowUrl(windowAim, appWindowList);
+    // The window the tab in front works in stays over the main window while
+    // it does, so a press here or in the main window does not bury what is
+    // being worked on (`toHeldWindowUrl`); sent with the attached file's
+    // preview window below.
+    const heldWindowUrl = useMemo(() => {
+        return toHeldWindowUrl(windowAim, appWindowList);
     }, [windowAim, appWindowList]);
-    useAppEffect(() => {
-        appProvider.messageUtils.sendData(HOLD_NOTE_WINDOW_ON_TOP_CHANNEL, {
-            url: heldNoteWindowUrl,
-        });
-    }, [heldNoteWindowUrl]);
     const handleWindowChanging = useCallback(
         (windowId: string) => {
             const found = appWindowList.find((item) => {
@@ -4339,12 +4415,22 @@ export default function ChatbotAppComp() {
                 }
                 return newMap;
             });
-            // A window picked by hand is the person's word over the note's.
+            // A window picked by hand is the person's word over the note's,
+            // and over the file's.
             setNoteWindowBySession((oldMap) => {
                 return { ...oldMap, [sessionId]: null };
             });
+            setFileWindowLetGoMap((oldMap) => {
+                return { ...oldMap, [sessionId]: true };
+            });
+            // A file's own window is no kind to ask about: the tab asks
+            // about what it did.
+            const pickedFocus = found.focus;
+            if (pickedFocus === null) {
+                return;
+            }
             updateActiveSession((session) => {
-                return { ...session, focus: found.focus, isFocusChosen: true };
+                return { ...session, focus: pickedFocus, isFocusChosen: true };
             });
         },
         [appWindowList, activeSession.id, updateActiveSession],
@@ -4801,6 +4887,11 @@ export default function ChatbotAppComp() {
                     return { ...oldMap, [sessionId]: null };
                 });
             }
+            // Any kind picked by hand: the file's own window no longer
+            // wins either.
+            setFileWindowLetGoMap((oldMap) => {
+                return { ...oldMap, [sessionId]: true };
+            });
             updateActiveSession((session) => {
                 return { ...session, focus: newFocus, isFocusChosen: true };
             });
@@ -5178,6 +5269,22 @@ export default function ChatbotAppComp() {
             return /\.pdf$/i.test(name);
         },
     );
+    // HELD over the main window: the window the tab works in, and the
+    // preview window (Markdown or PDF) of the file it asks about -- in the
+    // box or still open (`tabPreviewFilePath`), even once another window is
+    // picked by hand -- which main finds from the file
+    // (`windowOnTopRequestHelpers.ts`): it takes an address only of a page
+    // of the app. Said only when one of the two changes: a refreshed list
+    // re-pins nothing the person took down, and main holds a preview opened
+    // later by itself.
+    const heldPreviewFilePath = tabPreviewFilePath;
+    useAppEffect(() => {
+        const request: HoldWindowRequestType = {
+            url: heldWindowUrl,
+            filePath: heldPreviewFilePath,
+        };
+        appProvider.messageUtils.sendData(HOLD_WINDOW_ON_TOP_CHANNEL, request);
+    }, [heldWindowUrl, heldPreviewFilePath]);
     // The person, place or passage the tab is asking about
     // (`findOpenLookupSubject`), drawn above the box with a × that puts it
     // away: it goes with every question, so a person moving on to something
@@ -6648,6 +6755,17 @@ export default function ChatbotAppComp() {
                         -MAX_ATTACHMENT_COUNT,
                     ),
                 };
+            });
+            // A file handed over works in its own window again (a Markdown
+            // Preview, the PDF viewer -- `toFileWindowAim`), whatever was
+            // picked by hand in the tab before.
+            setFileWindowLetGoMap((oldMap) => {
+                if (!(sessionId in oldMap)) {
+                    return oldMap;
+                }
+                const newMap = { ...oldMap };
+                delete newMap[sessionId];
+                return newMap;
             });
             // A Bible note (a note row's or the note window's Open in
             // Chatbot): the same, for one note of its file -- written with
@@ -10981,6 +11099,15 @@ export default function ChatbotAppComp() {
                                     localPageText,
                                 ),
                                 askedText: plan?.english ?? trimmedAsked,
+                                // A study file the model asks to translate
+                                // is translated by the window (EC-478).
+                                translateText: genStudyTranslator(
+                                    activeFocus,
+                                    askedOf,
+                                    askedModelId,
+                                    signal,
+                                    usageTally.onHelperUsage,
+                                ),
                                 // Worked in English: the English prompt and
                                 // no language line, the answer translated
                                 // below.

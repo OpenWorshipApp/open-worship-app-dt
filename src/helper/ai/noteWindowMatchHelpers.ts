@@ -16,12 +16,6 @@
 
 export const NOTE_WINDOW_PAGE_NAME = 'bibleNote.html';
 
-// The note window the help window works in is held over the main window
-// (`electron/noteWindowOnTopHelpers.ts`, whose test holds the name equal):
-// the help window says which, by its address, or `null` for none.
-export const HOLD_NOTE_WINDOW_ON_TOP_CHANNEL =
-    'main:app:hold-note-window-on-top';
-
 /** What names a note's window: its file's name and its id in that file. */
 export type NoteWindowTargetType = {
     fileFullName: string;

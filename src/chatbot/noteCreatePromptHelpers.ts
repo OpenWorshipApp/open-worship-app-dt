@@ -287,9 +287,11 @@ export const LESSON_MAKE_HINT =
  */
 export const STUDY_CONTENT_RULES =
     'Write it in the language of their question. Sections with ## ' +
-    'headings: the setting, the passage verse by verse, its people and ' +
-    'places, 2 to 4 diagrams, cross references, key themes, how to live it, ' +
-    'questions for discussion. Each diagram in a ```mermaid block and of a ' +
+    'headings: the setting, the passage verse by verse (a list, one ' +
+    '`- **3:1-2** ...` a part), its people and places, 2 to 4 diagrams, ' +
+    'cross references, key themes, how to live it, questions for ' +
+    'discussion; a blank line between paragraphs. Each diagram in a ' +
+    '```mermaid block and of a ' +
     'different kind -- a flowchart of how the passage moves, a timeline, a ' +
     'mindmap of its themes, a graph of its people and places, a ' +
     'sequenceDiagram of a dialogue; in a flowchart or graph every node ' +
@@ -312,4 +314,11 @@ export const STUDY_FILE_PROMPT =
     'It saves NOTHING: tell them to press Create under your answer, or ' +
     'Preview to see it with its diagrams; never paste it. To change a ' +
     'study file in Resources → Default, `read` it, then `draft` with ' +
-    '`file` and the WHOLE new text.';
+    '`file` and `section` (a heading as it reads) + `content` (its new ' +
+    'words), or `append` (words added at its end, or at the end of ' +
+    '`section`); ' +
+    'the WHOLE new text in `content` only to rewrite it all. To ' +
+    'translate one, call `translate` with `file`, `language` and ' +
+    '`place`: "append" when they say add, after, under, new pages or ' +
+    'both languages, "replace" when in place of it, "new" for a copy -- ' +
+    'the window translates it; never write a translation yourself.';

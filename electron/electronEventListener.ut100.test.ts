@@ -63,6 +63,7 @@ vi.mock('./aiHelpers', () => ({
 }));
 vi.mock('./appWindowListHelpers', () => ({
     listAppWindows: state.listAppWindows,
+    checkIsWatchedPageUrl: () => false,
 }));
 vi.mock('./aiChatWindowHelpers', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),

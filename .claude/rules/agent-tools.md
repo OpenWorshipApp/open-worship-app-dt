@@ -62,7 +62,10 @@ projector, so it is offered and never done unasked.
   a layer shown after the press that was not shown before it (identity +
   `checkVisibility`), and `window` + `page` for a new app page target. The
   window check polls up to 1 s only when nothing else changed; the capture and
-  read-website windows never count. Any of them means `didChange: true` and no
+  read-website windows never count. A PDF in Chromium's viewer does
+  (2026-11-10, `listNewAppPages`: a Resources row opens one more on every
+  press, and those presses read `unverified`), its `page` the file's name.
+  Any of them means `didChange: true` and no
   `unverified`. A projector change still needs `owa_list_screens`. +2 tokens a
   round.
 - **A press also says what it made the app ASK, and what it switched beside
@@ -1262,7 +1265,10 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   verify coverage; `pages` deliberately narrows a read to at most eight, and
   `detail: "high"` renders the complete read at a 2048px long edge. A
   Bible note answers as its notes' words (`toNoteFileText`), a text
-  file's words cut at 16 KB, a picture itself. Reads only, counted in the
+  file's words cut at 16 KB -- a `.md` file longer than that with its
+  headings and a note to read one with `section`, which answers that
+  heading's part whole (`readStudySection`, 2026-11-10, `EC-481`) -- a
+  picture itself. Reads only, counted in the
   acting budget (each PDF read spawns a process). Offered to the
   chatbot's model only in a `resources` ask (`MODEL_ON_ASK_TOOL_MAP`), so
   the ordinary bill did not move. That ask also receives the shared
@@ -1302,9 +1308,27 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   by the app's assistant, then the content -- a `[^Isaiah 40:3]` token on a
   line of its own becomes that verse quoted, inline its reference, an
   unreadable one refused by name; fences balanced, every mermaid block one
-  of the allowed types with no `%%{init`, `click` or raw HTML, 16 000
-  characters at most. With `file` (a `.md` inside Default only) it drafts a
-  CHANGE and answers the file's `hash` and what changed by section.
+  of the allowed types with no `%%{init`, `click` or raw HTML; `content`
+  48 000 characters at most, a whole file 64 KB and 16 diagrams (a NEW
+  study 6). With `file` (a `.md` inside Default only, by its name or its
+  whole path) it drafts a CHANGE and answers the file's `hash` and what
+  changed by section. **A change names its part** (2026-11-10, `EC-479`):
+  `section` (a heading as it reads) with `content` rewrites that part,
+  `append` adds words at the file's end before its footer or at the end of
+  `section`, and `content` alone is still the WHOLE new text -- the user's
+  ask to add a translation had been a whole file in one call, past what a
+  help round writes. A heading the file lacks is refused with its
+  headings; a repeated one (a translation repeats them) is told apart in
+  the summary, which compares bodies without the footer and names five
+  sections at most. A run of plain lines written one item a line gets a
+  blank line between them (`separateStudyLines`, `EC-482`: Markdown had
+  drawn John 3's verse-by-verse lines as one paragraph), never in lines
+  the change did not reach. **`translate`** (`EC-478`) writes nothing
+  either: it splits a study file into parts -- its words, each diagram,
+  each passage quoted again from `bible`, a footer -- and answers the plan
+  (`translating: true`, the file's `hash`); the help window translates it
+  part by part and drafts the result as a change (`chatbot-llm.md`),
+  while the developer's door gets the plan and its note to do the same.
   **`save`** creates Default when missing, never overwrites (the free name
   re-checked; a change needs the `hash` it was drafted from), writes behind
   `runWithAgentBackup` (`isResource` on the restore), puts Default on

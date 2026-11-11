@@ -482,6 +482,88 @@ describe('ChatbotAppComp: handed-over documents, selections and buttons', () => 
             // Not a note: the tab keeps the part it was on.
             expect(focusPick()).not.toBe('bibleNote');
         });
+
+        // 2026-11-10, the user, **Working in** naming a note's window:
+        // _should behave like what working for bible-note_ -- the preview
+        // a Resources row opened first is the window its tab works in.
+        test("a study file: its tab works in the file's own preview window", async () => {
+            const mdPath = '/resources/JHN.3.The New Birth.md';
+            const previewUrl =
+                'https://localhost:3000/markdownPreview.html?preview-file=' +
+                `${encodeURIComponent(mdPath)}&uuid=preview`;
+            mocks.electronSendAsync.mockImplementation(
+                async (channel: string) => {
+                    return channel === 'main:app:list-app-windows'
+                        ? [
+                              {
+                                  id: 'main-window',
+                                  title: 'Open Worship app - Reader',
+                                  url: 'https://localhost:3000/reader.html',
+                              },
+                              {
+                                  id: 'md-window',
+                                  title:
+                                      'Open Worship app - Markdown Preview' +
+                                      ' - JHN.3.The New Birth.md',
+                                  url: previewUrl,
+                              },
+                          ]
+                        : null;
+                },
+            );
+            seedSessions([genSession('front', [])]);
+            handOver('file', { filePath: mdPath });
+            await renderWindow();
+            const windowPick = () => {
+                return container.querySelector<HTMLSelectElement>(
+                    'select[aria-label="Which window"]',
+                );
+            };
+            await waitFor(() => {
+                return windowPick()?.value === 'md-window';
+            }, 'the preview window on the window line');
+            const row = () => {
+                return container.querySelector('.chat-window-row');
+            };
+            expect(row()?.classList.contains('is-aimed')).toBe(true);
+            expect(windowPick()?.selectedOptions[0]?.textContent?.trim()).toBe(
+                'Markdown Preview - JHN.3.The New Birth.md · own window',
+            );
+            // A file's window is no kind: the part the new tab asks about
+            // is what it was.
+            const askedAbout = focusPick();
+            expect(askedAbout).toBe('presenter');
+            // Held over the main window, by its address and by its file.
+            expect(mocks.sendData).toHaveBeenLastCalledWith(
+                'main:app:hold-window-on-top',
+                { url: previewUrl, filePath: mdPath },
+            );
+            const pickWindow = async (windowId: string) => {
+                await act(async () => {
+                    const setter = Object.getOwnPropertyDescriptor(
+                        HTMLSelectElement.prototype,
+                        'value',
+                    )!.set!;
+                    setter.call(windowPick(), windowId);
+                    windowPick()!.dispatchEvent(
+                        new Event('change', { bubbles: true }),
+                    );
+                });
+                await settle();
+            };
+            // The main window picked by hand: the preview is let go, and
+            // the tab asks about the main window's page, as any pick does.
+            await pickWindow('main-window');
+            expect(windowPick()?.value).toBe('main-window');
+            expect(row()?.classList.contains('is-aimed')).toBe(false);
+            expect(focusPick()).toBe('reader');
+            // The preview picked back by hand: worked in again, the kind
+            // left as it was.
+            await pickWindow('md-window');
+            expect(windowPick()?.value).toBe('md-window');
+            expect(row()?.classList.contains('is-aimed')).toBe(true);
+            expect(focusPick()).toBe('reader');
+        });
     });
 
     describe('words selected in a note', () => {

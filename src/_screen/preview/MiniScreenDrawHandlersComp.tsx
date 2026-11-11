@@ -30,6 +30,8 @@ import {
     handleKeepOverlayFocus,
     useOverlayShortcut,
 } from './miniScreenOverlayControlComps';
+import { BrushPresetsComp } from './overlayPresetComps';
+import type { BrushLookType } from './overlayPresetHelpers';
 
 const DEFAULT_COLOR = '#ff2d2d';
 const DEFAULT_SIZE = 10;
@@ -165,6 +167,19 @@ export default function MiniScreenDrawHandlersComp() {
         screenDrawManager.setRenderQuality(DEFAULT_HIGH_QUALITY);
     };
 
+    // A Presets press: the whole brush through the same setters a hand edit
+    // uses, so each value is kept per screen as one moved by hand is. A brush
+    // is for painting, so one picked while rubbing out paints again.
+    const handleBrushPresetApplying = (look: BrushLookType) => {
+        setBaseColor(look.color);
+        setAlpha(look.alpha);
+        setSize(look.size);
+        setIsStraight(look.isStraight);
+        setIs3D(look.is3D);
+        setIsDots(look.isDots);
+        setIsEraser(false);
+    };
+
     // Quick-select palette keys. Straight/3D/Dots and the two sliders bind
     // theirs inside their own sub-components, next to the control they drive.
     useDrawShortcut('toggleEraser', () => {
@@ -223,6 +238,19 @@ export default function MiniScreenDrawHandlersComp() {
         <div className="w-100">
             <hr className="w-100 my-1" />
             <div className="d-flex flex-wrap align-items-center gap-2 px-1 pb-1">
+                <BrushPresetsComp
+                    readCurrent={() => {
+                        return {
+                            color: baseColor,
+                            alpha,
+                            size,
+                            isStraight,
+                            is3D,
+                            isDots,
+                        };
+                    }}
+                    onApply={handleBrushPresetApplying}
+                />
                 <OverlayColorSwatchComp
                     icon="bi-brush"
                     label={tran('Color')}

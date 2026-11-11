@@ -5,6 +5,7 @@ const app = vi.hoisted(() => ({
   evaluateInTarget: vi.fn(),
   listTargets: vi.fn(),
   requireLivePort: vi.fn(),
+  runInTarget: vi.fn(),
   waitForNewAppPage: vi.fn(),
   readLiveInstances: vi.fn(),
   searchHelp: vi.fn(),
@@ -13,11 +14,15 @@ const app = vi.hoisted(() => ({
   matchQuestions: vi.fn(),
 }));
 
-vi.mock('./cdp.mjs', () => ({
+vi.mock('./cdp.mjs', async (importOriginal) => ({
+  // The real choosing of a window by `page`: the 📷 of a file's own window
+  // finds its target the way every tool does.
+  pickTarget: (await importOriginal()).pickTarget,
   evaluateInApp: app.evaluateInApp,
   evaluateInTarget: app.evaluateInTarget,
   listTargets: app.listTargets,
   requireLivePort: app.requireLivePort,
+  runInTarget: app.runInTarget,
   waitForNewAppPage: app.waitForNewAppPage,
 }));
 vi.mock('./discovery.mjs', () => ({
@@ -312,6 +317,67 @@ describe('registered app tools', () => {
     expect(app.evaluateInApp.mock.calls[0][1]).toEqual({
       match: 'EDITOR-TARGET-ID',
     });
+  });
+
+  // The help window's 📷 with a tab working in a study file's Markdown
+  // Preview (2026-11-10, the user: _should behave like what working for
+  // bible-note_): that window runs with no Node to ask main with, so its
+  // picture comes over the debugging connection.
+  it("photographs a file's own window over the debugging connection", async () => {
+    const preview = {
+      id: 'MD-TARGET-ID',
+      url:
+        'https://localhost:3000/markdownPreview.html?preview-file=' +
+        '%2Fa%2FJHN.3.md&uuid=preview',
+    };
+    const pdf = { id: 'PDF-TARGET-ID', url: 'file:///C:/a/JHN.3.pdf' };
+    app.listTargets.mockResolvedValue([
+      { id: 'MAIN', url: 'https://localhost:3000/reader.html' },
+      preview,
+      pdf,
+    ]);
+    app.runInTarget.mockResolvedValue([{ data: 'aGVsbG8=' }]);
+    const picture = await call('owa_screenshot', { page: 'MD-TARGET-ID' });
+    expect(picture.content[1]).toEqual({
+      type: 'image',
+      mimeType: 'image/png',
+      data: 'aGVsbG8=',
+    });
+    expect(app.runInTarget).toHaveBeenCalledWith(preview, [
+      { method: 'Page.captureScreenshot', params: { format: 'png' } },
+    ]);
+    // A PDF viewer the same way; the capture ask is never sent.
+    await call('owa_screenshot', { page: 'PDF-TARGET-ID' });
+    expect(app.runInTarget.mock.calls[1][0]).toBe(pdf);
+    expect(app.evaluateInApp).not.toHaveBeenCalled();
+
+    app.runInTarget.mockResolvedValueOnce([{}]);
+    const blank = await call('owa_screenshot', { page: 'MD-TARGET-ID' });
+    expect(blank.isError).toBe(true);
+    expect(blank.content[0].text).toContain('did not return a picture');
+  });
+
+  // Locked down the same way, the help and AI Chat windows stay out of
+  // every picture: they are asked as before, and refuse.
+  it('never photographs the help window that way', async () => {
+    app.listTargets.mockResolvedValue([
+      { id: 'HELP', url: 'https://localhost:3000/chatbot.html?uuid=chatbot' },
+    ]);
+    app.evaluateInApp.mockResolvedValueOnce({
+      value: 'data:image/png;base64,aGVsbG8=',
+    });
+    await call('owa_screenshot', { page: 'HELP' });
+    expect(app.runInTarget).not.toHaveBeenCalled();
+    expect(app.evaluateInApp.mock.calls[0][0]).toContain(
+      '{ isOwnWindow: true }',
+    );
+    // A projector screen is never a file's window.
+    app.listTargets.mockClear();
+    app.evaluateInApp.mockResolvedValueOnce({
+      value: 'data:image/png;base64,aGVsbG8=',
+    });
+    await call('owa_screenshot', { screenId: 1, page: 'MD-TARGET-ID' });
+    expect(app.listTargets).not.toHaveBeenCalled();
   });
 
   it('returns website text with the image when available and text alone otherwise', async () => {

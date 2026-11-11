@@ -42,8 +42,65 @@ function showDiagramError(element: HTMLElement, message: string) {
     element.prepend(messageElement);
 }
 
+const DRAWN_CLASS_NAME = 'app-markdown-mermaid--rendered';
+
 /**
- * Swaps each `[data-mermaid-index]` placeholder in `container` for its diagram.
+ * The diagrams already DRAWN in `container`, by the source each was drawn
+ * from (`sources`: the sources the page was rendered with), read just before
+ * the page is replaced. The Markdown Preview's editor re-renders the page as
+ * the person types, and drawing every diagram again on each pause is the
+ * whole cost of that render; one whose source did not change is put back by
+ * `putBackDrawnDiagrams` instead. Taken off the page about to go, handed to
+ * the next one and dropped: nothing is kept between renders.
+ */
+export function takeDrawnDiagrams(container: HTMLElement, sources: string[]) {
+    const drawnMap = new Map<string, string[]>();
+    const elements = container.querySelectorAll<HTMLElement>(
+        `[data-mermaid-index].${DRAWN_CLASS_NAME}`,
+    );
+    for (const element of elements) {
+        const source = sources[Number(element.dataset.mermaidIndex)];
+        if (source === undefined) {
+            continue;
+        }
+        const drawnList = drawnMap.get(source) ?? [];
+        drawnList.push(element.innerHTML);
+        drawnMap.set(source, drawnList);
+    }
+    return drawnMap;
+}
+
+/**
+ * Puts `takeDrawnDiagrams`' pictures back into the new page's placeholders
+ * of the same source, each picture once, and marks them drawn, so
+ * `renderMermaidDiagrams` draws only the rest.
+ */
+export function putBackDrawnDiagrams(
+    container: HTMLElement,
+    sources: string[],
+    drawnMap: Map<string, string[]>,
+) {
+    if (drawnMap.size === 0) {
+        return;
+    }
+    const elements = container.querySelectorAll<HTMLElement>(
+        '[data-mermaid-index]',
+    );
+    for (const element of elements) {
+        const source = sources[Number(element.dataset.mermaidIndex)];
+        const drawn =
+            source === undefined ? undefined : drawnMap.get(source)?.shift();
+        if (drawn === undefined) {
+            continue;
+        }
+        element.innerHTML = drawn;
+        element.classList.add(DRAWN_CLASS_NAME);
+    }
+}
+
+/**
+ * Swaps each `[data-mermaid-index]` placeholder in `container` for its diagram,
+ * skipping one already drawn (`putBackDrawnDiagrams`).
  * A block that does not parse keeps its code and gains the parser's message
  * above it; one bad diagram never stops the next. `checkIsStale` is asked
  * after every await, so a file changed (or a theme switched) mid-render drops
@@ -61,7 +118,9 @@ export async function renderMermaidDiagrams(
     },
 ) {
     const elements = Array.from(
-        container.querySelectorAll<HTMLElement>('[data-mermaid-index]'),
+        container.querySelectorAll<HTMLElement>(
+            `[data-mermaid-index]:not(.${DRAWN_CLASS_NAME})`,
+        ),
     );
     if (elements.length === 0) {
         return;
@@ -104,7 +163,7 @@ export async function renderMermaidDiagrams(
                 return;
             }
             element.innerHTML = svg;
-            element.classList.add('app-markdown-mermaid--rendered');
+            element.classList.add(DRAWN_CLASS_NAME);
         } catch (error) {
             // A failure can leave the half-built diagram in the body. On a
             // success that id is the SVG just placed, so only here.

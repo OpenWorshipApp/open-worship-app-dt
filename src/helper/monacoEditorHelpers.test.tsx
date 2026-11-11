@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
     models: [] as any[],
     editors: [] as any[],
     setting: false,
+    settingDefaults: [] as unknown[],
     errors: vi.fn(),
     dark: false,
 }));
@@ -87,7 +88,8 @@ vi.mock('monaco-editor', () => ({
 vi.mock('./settingHelpers', async () => {
     const react = await import('react');
     return {
-        useStateSettingBoolean: () => {
+        useStateSettingBoolean: (_name: string, defaultValue?: boolean) => {
+            h.settingDefaults.push(defaultValue);
             const [value, setValue] = react.useState(h.setting);
             const save = (next: boolean) => {
                 h.setting = next;
@@ -121,9 +123,16 @@ let observer: {
 let uriCounter = 0;
 let currentUri: string;
 
-function Probe({ uri = 'file:///one' }: { uri?: string }) {
+function Probe({
+    uri = 'file:///one',
+    isWrapTextDefault,
+}: {
+    uri?: string;
+    isWrapTextDefault?: boolean;
+}) {
     store = useInitMonacoEditor({
         settingName: 'wrap',
+        isWrapTextDefault,
         options: { value: 'original', fontSize: 20 },
         uri: { toString: () => uri } as any,
         language: 'json',
@@ -150,6 +159,7 @@ beforeEach(() => {
     h.models.length = 0;
     h.editors.length = 0;
     h.setting = false;
+    h.settingDefaults.length = 0;
     h.dark = false;
     h.errors.mockClear();
     onContentChange = vi.fn<(oldContent: string, newContent: string) => void>();
@@ -181,6 +191,20 @@ afterEach(async () => {
 });
 
 describe('Monaco editor hook', () => {
+    it('starts unwrapped unless the caller asks for wrapping by default', async () => {
+        await mount();
+        expect(h.settingDefaults.at(-1)).toBe(false);
+        await act(async () =>
+            root.render(
+                createElement(Probe, {
+                    uri: currentUri,
+                    isWrapTextDefault: true,
+                }),
+            ),
+        );
+        expect(h.settingDefaults.at(-1)).toBe(true);
+    });
+
     it('creates a themed editor with a model and records mouse position', async () => {
         h.dark = true;
         await mount();

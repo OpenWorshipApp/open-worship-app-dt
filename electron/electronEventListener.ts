@@ -25,9 +25,9 @@ import {
 import { getRecentConsoleLines } from './consoleLogHelpers';
 import { listAppWindows } from './appWindowListHelpers';
 import {
-    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
-    holdNoteWindowOnTop,
-} from './noteWindowOnTopHelpers';
+    HOLD_WINDOW_ON_TOP_CHANNEL,
+    holdWindowOnTop,
+} from './windowOnTopHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -1337,14 +1337,21 @@ export function initEventOther(appController: ElectronAppController) {
             win.setAlwaysOnTop(data.isOnTop);
         },
     );
-    // The help window's tab works in this note window (or in none), held
-    // over the main window: `noteWindowOnTopHelpers.ts`.
+    // What the help window's tab works on -- the window it works in, the
+    // preview window of the file it asks about -- held over the main window:
+    // `windowOnTopHelpers.ts`.
     ipcMain.on(
-        HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
-        (event, data: { url?: unknown } | undefined) => {
-            holdNoteWindowOnTop(
+        HOLD_WINDOW_ON_TOP_CHANNEL,
+        (event, data: { url?: unknown; filePath?: unknown } | undefined) => {
+            holdWindowOnTop(
                 event.sender,
-                typeof data?.url === 'string' ? data.url : null,
+                {
+                    url: typeof data?.url === 'string' ? data.url : null,
+                    filePath:
+                        typeof data?.filePath === 'string'
+                            ? data.filePath
+                            : null,
+                },
                 () => {
                     return appController.mainWin;
                 },

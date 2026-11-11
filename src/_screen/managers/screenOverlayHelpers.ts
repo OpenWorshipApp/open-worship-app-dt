@@ -242,6 +242,10 @@ export type SpotlightMaskType = {
     isContrast: boolean;
 };
 
+// What a spotlight LOOKS like, wherever it is: what a Presets press puts on
+// either spotlight (a Mini Screen's, Presenting Control's) in one go.
+export type SpotlightLookType = Omit<SpotlightMaskType, 'point'>;
+
 // The spotlight's ENTIRE paint: one radial-gradient that is both the hole and
 // the dim, no extra element. Returns a `background` value.
 //

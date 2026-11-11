@@ -627,7 +627,16 @@ export function describeToolStep(name: string, args: any): string {
             if (args?.action === 'draft') {
                 return toQuotedStep(
                     tran('Writing a study file: “{words}”'),
-                    args?.title,
+                    args?.title ?? args?.section,
+                    tran('Writing a study file'),
+                );
+            }
+            // Translated part by part by the window, each part its own step
+            // under this one (EC-478).
+            if (args?.action === 'translate') {
+                return toQuotedStep(
+                    tran('Writing a study file: “{words}”'),
+                    args?.language,
                     tran('Writing a study file'),
                 );
             }

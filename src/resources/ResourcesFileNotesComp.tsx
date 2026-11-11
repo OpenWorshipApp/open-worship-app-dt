@@ -35,10 +35,12 @@ function ResourcesNoteRowComp({
     const noteItemRef = useAppCurrentRef(noteItem);
     const handleOpening = useCallback(async () => {
         // Loaded at the press: the lookup panel carries no window helpers for
-        // a note nobody opens.
+        // a note nobody opens. One more window a press, as the file rows'.
         const { openBibleNotePreview } =
             await import('./resourcePreviewOpenHelpers');
-        openBibleNotePreview(filePathRef.current, noteItemRef.current.id);
+        openBibleNotePreview(filePathRef.current, noteItemRef.current.id, {
+            isAnother: true,
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleOpeningSync = useCallback(() => {

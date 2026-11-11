@@ -1232,14 +1232,17 @@ describe('electronEventListener handlers', () => {
         );
         expect(win.setAlwaysOnTop).toHaveBeenCalledWith(true);
 
-        // the help window's hold: an address that is no note window holds
-        // nothing, and no address lets go of nothing
-        const holdSender = createMockWebContents();
-        findOnHandler('main:app:hold-note-window-on-top')(
+        // the help window's hold: an address no window has and a file no
+        // preview shows hold nothing, and no ask lets go of nothing
+        const holdSender = { ...createMockWebContents(), off: vi.fn() };
+        findOnHandler('main:app:hold-window-on-top')(
             { sender: holdSender },
-            { url: 'https://localhost:3000/reader.html?uuid=reader' },
+            {
+                url: 'https://localhost:3000/reader.html?uuid=reader',
+                filePath: 'C:/data/resources/pdf/JHN.3.pdf',
+            },
         );
-        findOnHandler('main:app:hold-note-window-on-top')(
+        findOnHandler('main:app:hold-window-on-top')(
             { sender: holdSender },
             undefined,
         );

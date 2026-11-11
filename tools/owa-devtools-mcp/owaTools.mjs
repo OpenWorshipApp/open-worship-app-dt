@@ -12,6 +12,7 @@ import {
   evaluateInApp,
   evaluateInTarget,
   listTargets,
+  pickTarget,
   requireLivePort,
   runInTarget,
   waitForNewAppPage,
@@ -523,6 +524,46 @@ function genCaptureExpression(screenId, isOwnWindow) {
 }
 
 /**
+ * A FILE's own window: the Markdown Preview, which renders a file from
+ * anywhere on the machine and so runs with no Node (`rendererLockdown.ts`),
+ * or the PDF viewer, Chromium's own page on the PDF's `file:` address. The
+ * help window works in one when its tab is on that file (2026-11-10, the
+ * user: _should behave like what working for bible-note_), and neither can
+ * answer the capture ask above -- so its picture is taken over the debugging
+ * connection instead. These two alone: the help and AI Chat windows, locked
+ * down the same way, stay out of every picture.
+ */
+export function checkIsFileWindowUrl(url) {
+  if (!URL.canParse(url)) {
+    return false;
+  }
+  const urlObject = new URL(url);
+  if (urlObject.pathname.split('/').pop() === 'markdownPreview.html') {
+    return true;
+  }
+  return (
+    urlObject.protocol === 'file:' &&
+    urlObject.pathname.toLowerCase().endsWith('.pdf')
+  );
+}
+
+/** The window `page` names, when it is a file's own window; else null. */
+async function findFileWindowTarget(page) {
+  const targets = await listTargets(await requireLivePort());
+  const target = Array.isArray(targets) ? pickTarget(targets, page) : null;
+  return target && checkIsFileWindowUrl(target.url) ? target : null;
+}
+
+async function captureTargetPicture(target) {
+  const [result] = await runInTarget(target, [
+    { method: 'Page.captureScreenshot', params: { format: 'png' } },
+  ]);
+  return typeof result?.data === 'string'
+    ? `data:image/png;base64,${result.data}`
+    : null;
+}
+
+/**
  * Put the picker up and wait for the user.
  *
  * Polled rather than pushed, like `waitForBest`: the page has no way to call
@@ -819,7 +860,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         lang: z
           .string()
           .optional()
-          .describe('A language code; default the language the app is showing.'),
+          .describe(
+            'A language code; default the language the app is showing.',
+          ),
       },
     },
     async ({ text, lang }) => {
@@ -1243,6 +1286,15 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     },
     async ({ screenId, page }) => {
       try {
+        // A file's own window has nothing to ask main with
+        // (`checkIsFileWindowUrl`).
+        const fileWindow =
+          page && screenId === undefined
+            ? await findFileWindowTarget(page)
+            : null;
+        if (fileWindow !== null) {
+          return toImageResult(await captureTargetPicture(fileWindow));
+        }
         const { value } = await evaluateInApp(
           genCaptureExpression(screenId, Boolean(page)),
           { match: page },
@@ -1904,16 +1956,29 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'text layer is excluded because legacy ' +
         'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
         'set it only to deliberately narrow a read. Use `detail` high for dense ' +
-        'or unclear print. ' +
+        'or unclear print. A long text file returns its start and its ' +
+        'headings; `section` reads one. ' +
         '`draft` a study file for `ref` (a passage: "Matthew 3:3-7") from ' +
         'a 2-6 word `title` and your Markdown `content` (## sections, ' +
         '```mermaid diagrams, each verse as [^Book C:V], never quoted); ' +
         'the app quotes the passage, names the file and writes NOTHING -- ' +
         'the person presses Create under your answer. To change a study ' +
-        'file in Default, `read` it, then `draft` with `file` and the WHOLE ' +
-        "new text. `save` and `preview` are the person's presses.",
+        'file in Default, `draft` with `file` and `section` (a heading) + ' +
+        '`content` (its new text), or `append` (words added at the end of ' +
+        'it, or of `section`); `content` alone is the WHOLE new text. ' +
+        '`translate` a study file: `file`, `language` and `place` ("append" ' +
+        'adds the translation after it, "replace", "new" a copy); the help ' +
+        'window translates it part by part, diagrams kept -- elsewhere it ' +
+        "answers the parts to translate. `save` and `preview` are the person's presses.",
       inputSchema: {
-        action: z.enum(['list', 'read', 'draft', 'save', 'preview']),
+        action: z.enum([
+          'list',
+          'read',
+          'draft',
+          'translate',
+          'save',
+          'preview',
+        ]),
         book: z.string().optional(),
         chapter: z.number().int().optional(),
         ref: z
@@ -1926,7 +1991,13 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         pages: z.number().int().min(1).max(8).optional(),
         detail: z.enum(['normal', 'high']).optional(),
         title: z.string().max(120).optional(),
-        content: z.string().max(20000).optional(),
+        // A whole study with its translation under it (EC-478): what the
+        // help window drafts once it has translated a file part by part.
+        content: z.string().max(65536).optional(),
+        section: z.string().max(160).optional(),
+        append: z.string().max(65536).optional(),
+        language: z.string().max(60).optional(),
+        place: z.enum(['append', 'replace', 'new']).optional(),
         bible: z.string().max(40).optional(),
         name: z.string().max(160).optional(),
         hash: z.string().max(40).optional(),
@@ -1944,6 +2015,8 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
       detail,
       title,
       content,
+      section,
+      append,
       bible,
       name,
       hash,
@@ -1964,6 +2037,8 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
               detail,
               title,
               content,
+              section,
+              append,
               bible,
               name,
               hash,

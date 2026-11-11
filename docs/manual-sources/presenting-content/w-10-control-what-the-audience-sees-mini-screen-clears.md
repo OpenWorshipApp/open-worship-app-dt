@@ -2,8 +2,8 @@
 id: W-10
 title: "Control what the audience sees (mini screen + clears)"
 section: "Presenting content"
-verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
-screenshots: 4
+verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, SP-35, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
+screenshots: 5
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-10"
 ---
@@ -79,11 +79,20 @@ workflowsVersion: "2026-11-10"
   corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
+- **Draw or spotlight on the screen** (footer, the brush — **[en:tran:Drawing]**): press it to
+  draw on that screen; its settings open in a strip under the card. Its **⋮**
+  (**[en:tran:Choose Drawing or Focusing]**) turns it into **[en:tran:Focusing]**, a spotlight
+  that dims the rest; press the lit button again to stop either. The strip opens on
+  **[en:tran:Presets]**: **[en:tran:Highlight]** (a see-through yellow marker),
+  **[en:tran:Underline]** and **[en:tran:Bold]** for the brush, **[en:tran:Haze]** (light),
+  **[en:tran:Strong]** (dark) and **[en:tran:Halo]** (wide) for the spotlight.
+  **[en:tran:Save as Preset]** keeps the current look; right-click a saved one to rename,
+  replace or remove it. Every screen and Presenting Control (W-19) share the saved ones. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
+`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `SP-35` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

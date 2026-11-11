@@ -240,9 +240,30 @@ import {
     toModelDraftText,
 } from './studyFileChatHelpers';
 import {
+    checkStudyDiagram,
+    chunkStudyText,
     dropStudyDiagrams,
     lintStudyContent,
+    toStudyDiagramBlock,
+    toStudyDiagramSource,
 } from '../helper/agentStudyFileRules';
+import {
+    STUDY_TRANSLATE_CHUNK_CHARS,
+    STUDY_TRANSLATE_TRIES,
+    type StudyTranslateLanguageType,
+    assembleStudyTranslation,
+    checkIsStudyDiagramTranslated,
+    checkIsStudyTextTranslated,
+    cleanStudyTranslation,
+    describeStudyTranslation,
+    readStudyTranslatePlace,
+    readStudyTranslatePlan,
+    resolveStudyTranslateLanguage,
+    splitEdgeLines,
+    toStudyDiagramTranslationAsk,
+    toStudyTextTranslationAsk,
+    toStudyTranslateDraftArgs,
+} from './studyTranslateHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -2192,6 +2213,12 @@ type ToolWatchType = {
     /** A draft's diagrams sent back once already to be fixed. */
     isStudyDiagramRetried: boolean;
     /**
+     * The window's translator for a study file (EC-478), handed in by the
+     * ask (`AskExtraType.translateText`), and where its steps are said.
+     */
+    translateText: StudyTextTranslatorType | null;
+    onProgress: BotProgressCallbackType | null;
+    /**
      * A song the model CREATED itself in this ask, name and path off the
      * `owa_lyric_file` result. Measured 2026-09-10: asked *Create a lyric
      * file from <address>*, Sonnet 5 drafted the song and created the file
@@ -2513,6 +2540,8 @@ export function genToolWatch(): ToolWatchType {
         draftedLyric: null,
         draftedStudy: null,
         isStudyDiagramRetried: false,
+        translateText: null,
+        onProgress: null,
         createdLyric: null,
         createdNote: null,
         lyricFiles: null,
@@ -3646,6 +3675,10 @@ async function runStudyDraft(
     args: any,
     watch: ToolWatchType,
     signal?: AbortSignal | null,
+    // A draft the WINDOW wrote (a translation): its diagrams were parsed
+    // as it went, and a diagram of the file as it was is not the model's
+    // to fix, nor the window's to drop.
+    isWindowMade = false,
 ) {
     let draftArgs = { ...(args ?? {}) };
     if (
@@ -3674,7 +3707,7 @@ async function runStudyDraft(
         return text;
     }
     const { diagrams } = lintStudyContent(drafted.content);
-    if (diagrams.length > 0) {
+    if (diagrams.length > 0 && !isWindowMade) {
         let errors: (string | null)[] = [];
         try {
             const { findMermaidParseErrors } =
@@ -3713,6 +3746,277 @@ async function runStudyDraft(
     watch.draftedStudy = drafted;
     watch.isActedOn = true;
     return toModelDraftText(text);
+}
+
+/** The window's translator: an ask in, its answer and who answered out. */
+export type StudyTextTranslatorType = (
+    ask: string,
+    signal?: AbortSignal | null,
+) => Promise<{ text: string; by: string }>;
+
+/**
+ * An installed Bible in a language, off `owa_find_verse` with no arguments
+ * (`pickBibleInLanguage`, English looked for too), or null.
+ */
+async function findBibleInLanguage(
+    langCode: string,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (langCode === '') {
+        return null;
+    }
+    try {
+        const listed = JSON.parse(
+            await callTool(VERSE_FIND_TOOL_NAME, {}, signal, watch.windowAim),
+        );
+        const current = typeof listed?.bible === 'string' ? listed.bible : null;
+        const picked = pickBibleInLanguage(listed, current, langCode, true);
+        if (picked !== null) {
+            return picked;
+        }
+        // Null with the Lookup's own Bible named: that one is in the
+        // language -- the Bible the person reads -- or no Bible is.
+        return current !== null &&
+            pickBibleInLanguage(listed, null, langCode, true) !== null
+            ? current
+            : null;
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+}
+
+/**
+ * Whether a diagram source DRAWS: mermaid's own parse, loaded only now. Not
+ * loaded, it is taken: the preview shows one it cannot draw as its code.
+ */
+async function checkDiagramDraws(source: string) {
+    try {
+        const { findMermaidParseErrors } =
+            await import('../markdown-preview/markdownMermaidHelpers');
+        const [error] = await findMermaidParseErrors([source]);
+        return error === null || error === undefined;
+    } catch (_error) {
+        return true;
+    }
+}
+
+/**
+ * Some of a study's words, or one diagram, put into the language by the
+ * window's translator -- asked again once when the answer is not the part
+ * translated (`checkIsStudyTextTranslated`), null after that.
+ */
+async function translateStudyPart(
+    translateText: StudyTextTranslatorType,
+    source: string,
+    kind: 'text' | 'diagram',
+    language: StudyTranslateLanguageType,
+    signal?: AbortSignal | null,
+) {
+    let by = '';
+    for (let attempt = 0; attempt < STUDY_TRANSLATE_TRIES; attempt++) {
+        throwIfCancelled(signal);
+        const ask =
+            kind === 'text'
+                ? toStudyTextTranslationAsk(source, language)
+                : toStudyDiagramTranslationAsk(source, language);
+        let answer: { text: string; by: string };
+        try {
+            answer = await translateText(ask, signal);
+        } catch (error) {
+            if (
+                checkIsCancelError(error, signal) ||
+                checkIsSpendLimitError(error)
+            ) {
+                throw error;
+            }
+            continue;
+        }
+        by = answer.by;
+        const translated = cleanStudyTranslation(answer.text);
+        const isGood =
+            kind === 'text'
+                ? checkIsStudyTextTranslated(source, translated, language)
+                : checkIsStudyDiagramTranslated(source, translated) &&
+                  checkStudyDiagram(translated) === null &&
+                  (await checkDiagramDraws(translated));
+        if (isGood) {
+            return { text: translated, by };
+        }
+    }
+    return { text: null, by };
+}
+
+/**
+ * `owa_resource_file translate` from the help window's model (EC-478): the
+ * WINDOW translates the study file -- the model only names it, the language
+ * and where the translation goes, which is all one 2 000-token round on a
+ * server of the user's own can be trusted to carry. The app splits the file
+ * and quotes its passages again from a Bible in that language; the words go
+ * to the translator a part at a time and each diagram's labels on their
+ * own, parsed before they are taken (one that will not draw stays as it
+ * was); and the result is drafted like any change, held for the person's
+ * **Save changes**. Words the translator gets wrong twice stop the job with
+ * nothing drafted: half a translation saved over a study is worse than none.
+ */
+async function runStudyTranslate(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    const place = readStudyTranslatePlace(args?.place);
+    if (place === null) {
+        return (
+            'Tool refused: Say where the translation goes in `place`: ' +
+            '"append" (added after the file as it is -- add, under it, ' +
+            'after it, new pages, both languages), "replace" (in place of ' +
+            'its words) or "new" (a copy of its own). When their words do ' +
+            'not say, ask which, with OPTIONS.'
+        );
+    }
+    const language = resolveStudyTranslateLanguage(args?.language);
+    if (language === null) {
+        return (
+            'Tool refused: Name the language in `language`, e.g. "Khmer" ' +
+            'or "French". When they did not say, ask which, with OPTIONS.'
+        );
+    }
+    const translateText = watch.translateText;
+    if (translateText === null) {
+        return (
+            'Tool refused: No assistant can translate a file from here. ' +
+            'Tell them to ask in the help window.'
+        );
+    }
+    const bible = await findBibleInLanguage(language.code, watch, signal);
+    let planText: string;
+    try {
+        planText = await callTool(
+            RESOURCES_TOOL_NAME,
+            {
+                action: 'translate',
+                file: args?.file,
+                ...(bible === null ? {} : { bible }),
+            },
+            signal,
+            watch.windowAim,
+        );
+    } catch (error: any) {
+        throwIfCancelled(signal);
+        return `Tool error: ${error.message}`;
+    }
+    const plan = readStudyTranslatePlan(planText);
+    if (plan === null) {
+        return planText;
+    }
+    type JobType = {
+        index: number;
+        kind: 'text' | 'diagram';
+        chunks: string[];
+    };
+    const jobs = plan.parts.flatMap((part, index): JobType[] => {
+        if (part.kind === 'text') {
+            const { words } = splitEdgeLines(part.text);
+            return words.trim() === ''
+                ? []
+                : [
+                      {
+                          index,
+                          kind: 'text' as const,
+                          chunks: chunkStudyText(
+                              words,
+                              STUDY_TRANSLATE_CHUNK_CHARS,
+                          ),
+                      },
+                  ];
+        }
+        return part.kind === 'diagram'
+            ? [
+                  {
+                      index,
+                      kind: 'diagram' as const,
+                      chunks: [toStudyDiagramSource(part.text)],
+                  },
+              ]
+            : [];
+    });
+    const total = jobs.reduce((sum, job) => {
+        return sum + job.chunks.length;
+    }, 0);
+    const reportStep = genProgressReporter(watch.onProgress ?? undefined);
+    const textByPart = new Map<number, string>();
+    const diagramByPart = new Map<number, string | null>();
+    let done = 0;
+    let translatorName = '';
+    for (const job of jobs) {
+        const outChunks: string[] = [];
+        for (const chunk of job.chunks) {
+            done += 1;
+            const finishStep = reportStep(
+                fillWords(tran('Writing a study file: “{words}”'), {
+                    words: `${language.nativeName} ${done}/${total}`,
+                }),
+            );
+            let translated: { text: string | null; by: string };
+            try {
+                translated = await translateStudyPart(
+                    translateText,
+                    chunk,
+                    job.kind,
+                    language,
+                    signal,
+                );
+            } finally {
+                finishStep();
+            }
+            translatorName = translated.by || translatorName;
+            if (translated.text === null && job.kind === 'text') {
+                return (
+                    `Tool refused: The translation of ${plan.name} into ` +
+                    `${language.name} stopped at part ${done} of ${total}: ` +
+                    'the translator did not give it back translated, twice. ' +
+                    'Nothing was drafted. Tell them so in a sentence and ' +
+                    'offer to try again, or to choose another assistant.'
+                );
+            }
+            outChunks.push(translated.text ?? '');
+        }
+        if (job.kind === 'text') {
+            textByPart.set(job.index, outChunks.join('\n\n'));
+            continue;
+        }
+        diagramByPart.set(
+            job.index,
+            outChunks[0] === ''
+                ? null
+                : toStudyDiagramBlock(plan.parts[job.index].text, outChunks[0]),
+        );
+    }
+    throwIfCancelled(signal);
+    const result = assembleStudyTranslation(plan, textByPart, diagramByPart);
+    const draftArgs = toStudyTranslateDraftArgs(
+        plan,
+        result.body,
+        place,
+        language,
+    );
+    if ('reason' in draftArgs) {
+        return `Tool refused: ${draftArgs.reason}`;
+    }
+    const drafted = await runStudyDraft(draftArgs, watch, signal, true);
+    if (watch.draftedStudy === null) {
+        return drafted;
+    }
+    return (
+        describeStudyTranslation(
+            plan,
+            result,
+            language,
+            place,
+            translatorName || 'the translator',
+        ) + `\n${drafted}`
+    );
 }
 
 async function runMcpToolCall(
@@ -4073,6 +4377,9 @@ async function runMcpToolCall(
         if (args?.action === 'draft') {
             return await runStudyDraft(args, watch, signal);
         }
+        if (args?.action === 'translate') {
+            return await runStudyTranslate(args, watch, signal);
+        }
         try {
             const { text, pictures } = await callToolWithPictures(
                 name,
@@ -4352,6 +4659,12 @@ export type AskExtraType = {
      * call is longer than that: it gets `LONG_WRITE_MAX_TOKENS`.
      */
     isLongWrite?: boolean;
+    /**
+     * The window's translator, for a study file translated part by part
+     * (EC-478): one round, no tools, a Gemma 4 when one answers at no cost.
+     * Offered to every ask; used only by `owa_resource_file translate`.
+     */
+    translateText?: StudyTextTranslatorType;
     /**
      * A verse somebody half-remembers, looked for in the installed Bible
      * `bible` (`verseFindChatHelpers.ts`): asked under a short prompt of its
@@ -7035,6 +7348,8 @@ async function askLlmBotAsWritten(
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.lyricFiles = extra?.lyric?.files ?? null;
+        seeded.translateText = extra?.translateText ?? null;
+        seeded.onProgress = extra?.onProgress ?? null;
         seeded.slideFiles = extra?.slide?.files ?? null;
         seeded.flowFiles = extra?.flow?.files ?? null;
         seeded.foregroundAsks = extra?.foreground?.asks ?? null;
@@ -7146,7 +7461,14 @@ async function askLlmBotAsWritten(
     const guardedExtra: AskExtraType = {
         ...extra,
         appLang,
-        isLongWrite: extra?.note !== undefined || isLessonAsked,
+        // A study file is written whole into one call too, and a change to
+        // one by section (EC-480): the 2 000 of a help answer cut a study
+        // off on the shared gemma4:cloud.
+        isLongWrite:
+            extra?.note !== undefined ||
+            isLessonAsked ||
+            extra?.study !== undefined ||
+            extra?.resources !== undefined,
         onUsage: (round) => {
             recordSpendRound(round);
             extra?.onUsage?.(round);

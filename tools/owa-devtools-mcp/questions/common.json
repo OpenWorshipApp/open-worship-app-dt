@@ -703,7 +703,9 @@
                         "slide editor window",
                         "settings window",
                         "working in",
-                        "window list"
+                        "window list",
+                        "pdf window",
+                        "markdown preview window"
                     ],
                     "resources": {
                         "recipe": "W-42",

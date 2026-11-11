@@ -663,8 +663,11 @@ async function runWhere({ report }: BuiltinRunContextType) {
         const version = state?.instances?.[0]?.version;
         // A window of its own chosen in the window picker: the read above was
         // of THAT window (`windowAimHelpers.ts`), so it is named as the one
-        // this tab works with, and the main window is told apart from it.
-        if (getCurrentWindowAim() !== null) {
+        // this tab works with, and the main window is told apart from it. A
+        // file's own window is not read (`APP_LEVEL_TOOL_NAME_SET`): the read
+        // was the main window's, said as such.
+        const aim = getCurrentWindowAim();
+        if (aim !== null && aim.filePath === undefined) {
             const mainEntry = (state.windows ?? []).find((one: any) => {
                 return (
                     typeof one?.url === 'string' &&

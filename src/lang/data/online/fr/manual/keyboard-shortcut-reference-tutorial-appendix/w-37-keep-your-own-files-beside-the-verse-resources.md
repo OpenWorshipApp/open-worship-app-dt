@@ -3,7 +3,7 @@ id: W-37
 title: "Garder vos propres fichiers à côté du verset (Ressources)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: e6a8845c945ff84b
+translatedFrom: a8b3459310ae95e2
 ---
 # W-37 — Garder vos propres fichiers à côté du verset (Ressources)
 
@@ -110,8 +110,8 @@ comptent tous aussi au niveau du livre.
    - **Un PDF** (`.pdf`) s'ouvre dans la fenêtre de visionneuse PDF de l'application elle-même — la même que celle
      qu'ouvre **[en:tran:Preview PDF]** depuis un PDF de la liste Documents — avec ses pages sur
      le côté, le zoom et l'impression. Faites un clic droit sur la ligne pour **[en:tran:Preview PDF]**, ou **[en:tran:Open]**
-     pour utiliser votre propre lecteur PDF à la place. Appuyer sur un PDF dont l'aperçu est déjà ouvert met
-     cette fenêtre au premier plan. 📸
+     pour utiliser votre propre lecteur PDF à la place. Chaque appui ouvre une fenêtre de plus sur le fichier,
+     un peu plus bas et à droite de la précédente, pour en lire deux parties côte à côte. 📸
    - **Un fichier markdown** (`.md`, `.markdown`, affiché avec l'icône markdown) s'ouvre dans sa
      propre fenêtre **Markdown Preview**, comme le fait une note biblique : titres, listes, tableaux, citations,
      code, images gardées à côté du fichier, et les **diagrammes Mermaid** écrits dans un bloc ` ```mermaid `
@@ -125,9 +125,24 @@ comptent tous aussi au niveau du livre.
      sont retirés. Si un fichier affiche `#` et `**` au lieu d'un titre et de texte en gras, c'est que le fichier lui-même
      a été enregistré avec ces signes échappés (`\#`, `\*\*`), ce que fait la vue mise en forme de certains éditeurs
      quand on y colle du texte ; l'aperçu montre ce qui est écrit. La ligne d'en-tête a aussi
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (pour le modifier) et
-     **[en:tran:Reveal in File Explorer]**. Faites un clic droit sur la ligne pour **[en:tran:Preview]** ou **[en:tran:Open]**. Appuyer sur un
-     fichier dont l'aperçu est déjà ouvert met cette fenêtre au premier plan. 📸
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** et
+     **[en:tran:Reveal in File Explorer]**. **Pour modifier le fichier sur place**, appuyez sur
+     **[en:tran:Edit]** (le crayon) : un éditeur du markdown du fichier s'ouvre à gauche, le texte
+     renvoyé à la ligne, et la page reste à droite, où ce que vous tapez est dessiné un instant
+     après que vous vous arrêtez. Rien n'est écrit avant que vous appuyiez sur
+     **[en:tran:Save]** (la disquette) ou Ctrl+S (⌘+S sur un Mac) ; d'ici là, un `*` après le nom
+     signale des **[en:tran:Unsaved changes]**, et **[en:tran:Discard unsaved changes]** (la flèche
+     ronde) remet ce qui est enregistré. **[en:tran:Hide Editor]** (de nouveau le crayon) rend toute
+     la fenêtre à la page — vos mots non enregistrés y restent dessinés tels qu'ils apparaîtront,
+     toujours en attente de **[en:tran:Save]**. Tant que quelque chose n'est pas enregistré, **[en:tran:Back]** et
+     **[en:tran:Reload]** attendent, un lien vers un autre `.md` ne s'ouvre pas, et la fermeture de la
+     fenêtre est arrêtée une fois, avec une note invitant à enregistrer ou à abandonner d'abord
+     (insistez et elle se ferme quand même). Une modification enregistrée dans votre propre éditeur
+     arrive dans un éditeur ouvert ici qui n'a rien de non enregistré ; celui qui a des mots non
+     enregistrés les garde, et **[en:tran:Save]** les écrit par-dessus le fichier. Faites un clic
+     droit sur la ligne pour **[en:tran:Preview]** ou **[en:tran:Open]**. Chaque appui ouvre une
+     fenêtre de plus sur le fichier, comme pour un PDF : faites défiler l'une jusqu'aux diagrammes
+     et gardez l'autre sur le passage. 📸
    - **Un fichier de notes bibliques** (`.own`) reçoit un chevron : cliquez dessus et tout ce qu'il contient est
      listé en dessous, comme le panneau **[en:tran:Bible Notes]** le liste — ses notes, et chaque verset
      marqué dedans (l'icône de surligneur) avec ses surlignages dans leur couleur et ses commentaires

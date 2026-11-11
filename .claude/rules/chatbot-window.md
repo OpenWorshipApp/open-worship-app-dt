@@ -180,29 +180,87 @@ the record's chat, family line, related verses, word study).
     note's address names wins over the opener's -- until a window or a kind
     is picked by hand -- and holds across a reload and a relaunch (the note
     the tab keeps, `findSessionNoteTarget`; the launch focus leaves it).
-    **That note window is held over the MAIN window while the tab in front
-    works in it, under the help and AI Chat windows** (2026-11-08, the user,
-    **Working in** on a note window with an arrow to its **Toggle Always On
-    Top**: _a bible note window that attached to chatbot should toggled for
-    stay on top_, and within the hour, the OS-wide always-on-top tried first:
-    _change the bible note stay on top to be top of the main app window
-    instead and still make chatbot and ai chat be the highest stack_ -- a
-    press in the help or the main window had buried it behind the main
-    window; `toHeldNoteWindowUrl` → `main:app:hold-note-window-on-top` →
-    `electron/noteWindowOnTopHelpers.ts`). Held, the note window is made a
-    CHILD of the main window (`setParentWindow`): above it, over no other
-    program (and, as an owned window, expected to hide while the main window
-    is minimised, like the help window -- not checked live). The help and
-    AI Chat windows are children of the main window too, and the one activated last goes over its siblings, so
-    every visible one is `moveTop()`ped when the note window takes the focus
-    -- seen live on Windows, the order read from the system stayed Chatbot,
-    Bible Note, Reader with the note window in front. The help window says
-    the address only when it CHANGES, so a refreshed window list repeats
-    nothing; main lets go when another window or tab is aimed, the note
-    window closes or the help window is destroyed, giving the window back
-    the parent it had (none). Its own **Toggle Always On Top** is never
-    touched. Note windows only, by the page in the address: a Settings or
-    editor window aimed at is not held.
+    **The window the tab in front works in is held over the MAIN window,
+    under the help and AI Chat windows, and so is an attached file's own
+    window** (first a note window, 2026-11-08, the user, **Working in** on a
+    note window with an arrow to its **Toggle Always On Top**: _a bible note
+    window that attached to chatbot should toggled for stay on top_, and
+    within the hour, the OS-wide always-on-top tried first: _change the bible
+    note stay on top to be top of the main app window instead and still make
+    chatbot and ai chat be the highest stack_ -- a press in the help or the
+    main window had buried it behind the main window; then, 2026-11-10, the
+    Resources 🤖 on a PDF and a Markdown row circled: _like bible note I want
+    behavior of during attached to chatbot the window have to be on top of
+    main window_, and _this behavior should apply to all window types,
+    imagine chatbot working on an attached window but the window is covered
+    by main window that's wrong behavior_). The help window sends
+    `HoldWindowRequestType` (`src/helper/ai/windowOnTopRequestHelpers.ts`, a
+    leaf) over `main:app:hold-window-on-top` to
+    `electron/windowOnTopHelpers.ts`: `url`, the window **Working in** names
+    (`toHeldWindowUrl` -- any kind, never the main window; main takes only a
+    `WATCHED_PAGE_LIST` page), and `filePath`, the tab's newest attached file
+    that has a window of its own (`toHeldPreviewFilePath`: a PDF, a Markdown
+    file -- open in its tab or waiting in the box). Main finds that file's
+    window from its address (`toPreviewWindowFilePath`: the Markdown
+    Preview's `preview-file`, the PDF viewer's `file:` URL), named in
+    **Working in** or not; when it is, `url` names it too
+    (`checkIsWatchedPageUrl` takes a file's window). Held, a window is made a CHILD of
+    the main window (`setParentWindow`): above it, over no other program
+    (and, as an owned window, expected to hide while the main window is
+    minimised, like the help window -- not checked live). The help and AI
+    Chat windows are children of the main window too, and the one activated
+    last goes over its siblings, so every visible one is `moveTop()`ped when
+    a held window takes the focus -- seen live on Windows, the order read
+    from the system stayed Chatbot, Bible Note, Reader with the note window
+    in front -- and once more 300 ms after a window is first held
+    (`RAISE_AGAIN_MILLISECONDS`): a popup is `focus()`ed 100 ms after it is
+    made, Windows puts it on top before activating it, and an activation
+    the OS refuses fires no `focus` (seen live 2026-11-10 on a scratch app
+    in the background: a PDF reopened from its row came up over the help
+    window). The help window says what it wants only when that CHANGES, so
+    main KEEPS the ask and looks again whenever any window finishes loading
+    (`initWindowOnTopWatch`, with AI on; nothing is looked at while nothing
+    is asked): a preview opened or reopened after the ask is held too --
+    seen live 2026-11-10, `1CH.1.pdf` attached and then opened, and closed
+    and opened again, each time owned by the Presenter under the help
+    window. Main lets go when another window, file or tab is aimed, or the
+    help window is destroyed, giving the window back the parent it had; a
+    held window that closes is only forgotten. Its own **Toggle Always On
+    Top** is never touched. Settings, already an `appTopToMain` child, is
+    held as it was. **The Resources 🤖 opens the file's own window too**
+    (the same day; `ResourcesFileRowComp`'s `handleAskingAbout`): a PDF's
+    viewer or a Markdown file's preview, passed as `openChatbotWithFile`'s
+    `beforeOpening` so it opens only once the two questions are answered --
+    unit-tested, not pressed live (the caution is the person's).
+    **And the tab WORKS IN that file's window** (the same day, the user,
+    **Working in** naming only the main window after the 🤖 on `JHN.3.pdf`
+    and a Markdown row: _open in chatbot didn't attach the window to the
+    chatbot_, then, a note tab's **Working in** circled: _should behave like
+    what working for bible-note_). The window list holds a file's own window
+    by the file it shows (`toAppWindowList` with the leaf's
+    `toPreviewWindowFilePath`: `focus: null`, no kind, and a `filePath`; a
+    PDF titles itself from inside, so one whose title lacks the file's name
+    is named by it), and every title is read back from the HTML escaping the
+    debugging list gives it (`toUnescapedTitle`: it had read `God&#39;s`).
+    `toTabWindowAim` aims a note's window, then the window of the file held
+    on top (`tabPreviewFilePath` → `toFileWindowAim`, slashes and case
+    alike; of two windows of one file -- a Resources row opens one more on
+    every press, `EC-484` -- the first, the other listed as `… · own window
+    2`), then a chosen window, then the kind's; a window or a kind picked
+    by hand lets the file go for that tab (`fileWindowLetGoMap`) until a file
+    is handed over again, and picking a file's window leaves _asking about_
+    as it was. Only what LOOKS at a window is aimed there: `owa_app_state`
+    and the walkthrough (`APP_LEVEL_TOOL_NAME_SET`) stay with the app's own
+    windows, and `/here` names the main window (`runWhere`). The 📷 there
+    goes through `owa_screenshot`, which pictures a file's window over the
+    debugging connection (`checkIsFileWindowUrl`, `Page.captureScreenshot`):
+    the Markdown Preview is locked down and has no Node to ask main with.
+    Main tells the help window when one comes, goes or is retitled. Seen live
+    on the dev app: both windows named by the window's own code as
+    `Markdown Preview - JHN.3.The New Birth and God's Love.md · own window`
+    and `JHN.3.pdf · own window`, aimed at, and pictured in about 140 ms each;
+    the help window's own line after the 🤖 is unit-tested
+    (`ChatbotAppComp.ut100a.test.tsx`), not seen.
     **And a tab ASKING ABOUT a popup kind works in it** (the same day, the
     user: _chatbot's do it for me appear in wrong page, I ask for setting
     page and appear in main windows_;

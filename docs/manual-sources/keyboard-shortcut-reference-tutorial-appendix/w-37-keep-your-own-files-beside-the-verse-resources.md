@@ -2,7 +2,7 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-10"
@@ -112,8 +112,8 @@ all count as book-level too.
    - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
      **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
-     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
-     that window forward. 📸
+     to use your own PDF reader instead. Each press opens one more window on the file, a
+     little below and to the right of the last, so two parts of it can be read side by side. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
@@ -127,9 +127,23 @@ all count as book-level too.
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written. The head row also has
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and
-     **[en:tran:Reveal in File Explorer]**. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Pressing a
-     file whose preview is already open brings that window forward. 📸
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
+     **[en:tran:Reveal in File Explorer]**. **To change the file right there**, press
+     **[en:tran:Edit]** (the pencil): an editor of the file's markdown opens on the left,
+     its lines wrapped, and the page stays on the right, drawing what you type a moment
+     after you stop. Nothing is written until you press **[en:tran:Save]** (the disk) or
+     Ctrl+S (⌘+S on a Mac); until then a `*` after the name says there are
+     **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
+     arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
+     whole window back to the page — your unsaved words still drawn there as they will
+     look, still waiting for **[en:tran:Save]**. While something is unsaved,
+     **[en:tran:Back]** and **[en:tran:Reload]** wait, a link to another `.md` does not open, and closing the
+     window is stopped once with a note to save or discard first (keep trying and it
+     closes anyway). A change saved in your own editor reaches an open editor here that
+     has nothing unsaved; one with unsaved words keeps them, and **[en:tran:Save]** writes
+     them over the file. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Each
+     press opens one more window on the file, as a PDF's does: scroll one to the
+     diagrams and keep the other on the passage. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
      marked in it (the highlighter icon) with its highlights in their colour and its comments
@@ -227,7 +241,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `CM-93`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-10).
 :::

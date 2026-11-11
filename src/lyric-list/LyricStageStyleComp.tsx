@@ -8,6 +8,7 @@ import AlignmentPadComp, {
     type AlignmentPadDataType,
 } from '../others/AlignmentPadComp';
 import AppRangeComp from '../others/AppRangeComp';
+import PresetsRowComp from '../others/PresetsRowComp';
 import {
     getLyricStageStyle,
     LYRIC_STAGE_STYLE_DEFAULT,
@@ -16,6 +17,14 @@ import {
     setLyricStageStyle,
     type LyricStageStyleType,
 } from './lyricStageStyleHelpers';
+import {
+    genLyricStageStylePresetPatch,
+    LYRIC_STAGE_STYLE_PRESET_LIST,
+    LYRIC_STAGE_STYLE_SAVED_PRESETS_SETTING_NAME,
+    toLyricStageStyleSavedPreset,
+    type LyricStageStylePresetIdType,
+    type LyricStageStyleSavedPresetType,
+} from './lyricStageStylePresetHelpers';
 
 // Module-level so a fresh literal per render does not re-run `AppRangeComp`'s
 // `[value, defaultSize, fixedSize]` effect on every keystroke elsewhere in the
@@ -74,6 +83,23 @@ export function toReadableCss(css: string) {
         .join('\n')
         .replace(/\n{3,}/g, '\n\n')
         .trim();
+}
+
+/**
+ * A stage look's name, translated in render. One literal per look so the key
+ * coverage test can read every one of them.
+ */
+function toLyricStageStylePresetLabel(id: LyricStageStylePresetIdType) {
+    switch (id) {
+        case 'full-screen':
+            return tran('Full Screen');
+        case 'center':
+            return tran('Center');
+        case 'top-banner':
+            return tran('Top Banner');
+        case 'bottom-banner':
+            return tran('Bottom Banner');
+    }
 }
 
 function RenderStyleRowComp({
@@ -346,6 +372,28 @@ export default function LyricStageStyleComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // A look a press: written at once, like the theme. One of the app's looks
+    // moves only the layout; a saved one is the whole record, Custom CSS and
+    // theme included.
+    const handlePresetApplying = useCallback(
+        (patch: Partial<LyricStageStyleType>) => {
+            handleChangeRef.current(patch, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const readCurrentStyle = useCallback(() => {
+        return { values: { ...styleRef.current } };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSavedPresetApplying = useCallback(
+        (preset: LyricStageStyleSavedPresetType) => {
+            handleChangeRef.current({ ...preset.values }, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
     const handleReset = useCallback(() => {
         const newStyle = { ...LYRIC_STAGE_STYLE_DEFAULT };
         styleRef.current = newStyle;
@@ -369,6 +417,34 @@ export default function LyricStageStyleComp({
                         <i className="bi bi-info-circle me-1" />
                         {tran('Applies to every song')}
                     </small>
+                </div>
+                <div className="m-1 px-1">
+                    <PresetsRowComp<LyricStageStyleSavedPresetType>
+                        savedSettingName={
+                            LYRIC_STAGE_STYLE_SAVED_PRESETS_SETTING_NAME
+                        }
+                        toSavedPreset={toLyricStageStyleSavedPreset}
+                        builtIns={LYRIC_STAGE_STYLE_PRESET_LIST.map(
+                            (preset) => {
+                                return {
+                                    id: preset.id,
+                                    iconName: preset.iconName,
+                                    label: toLyricStageStylePresetLabel(
+                                        preset.id,
+                                    ),
+                                    onPick: () => {
+                                        handlePresetApplying(
+                                            genLyricStageStylePresetPatch(
+                                                preset,
+                                            ),
+                                        );
+                                    },
+                                };
+                            },
+                        )}
+                        readCurrent={readCurrentStyle}
+                        onSavedPick={handleSavedPresetApplying}
+                    />
                 </div>
                 <RenderMarginRowComp
                     style={style}

@@ -90,12 +90,34 @@ export const WATCHED_PAGE_LIST: readonly string[] = [
 // lists the new window with its address, and no longer lists a closed one.
 const CHANGE_SETTLE_MILLISECONDS = 300;
 
+/**
+ * A FILE's own window: the Markdown Preview, or the PDF viewer on a PDF's
+ * own `file:` address. The help window lists it too, for the tab on that
+ * file to work in, as a note's tab works in the note's window (2026-11-10,
+ * the user: _should behave like what working for bible-note_) -- so its
+ * coming, retitling and going are news to it, and main holds it over the
+ * main window by its address as well as by its file.
+ */
+export function checkIsFileWindowUrl(url: string) {
+    if (!URL.canParse(url)) {
+        return false;
+    }
+    const urlObject = new URL(url);
+    if (urlObject.pathname.split('/').pop() === htmlFiles.markdownPreview) {
+        return true;
+    }
+    return (
+        urlObject.protocol === 'file:' &&
+        urlObject.pathname.toLowerCase().endsWith('.pdf')
+    );
+}
+
 export function checkIsWatchedPageUrl(url: string) {
     if (!URL.canParse(url)) {
         return false;
     }
     const pageName = new URL(url).pathname.split('/').pop() ?? '';
-    return WATCHED_PAGE_LIST.includes(pageName);
+    return WATCHED_PAGE_LIST.includes(pageName) || checkIsFileWindowUrl(url);
 }
 
 function sendToHelpWindows(windowList: BrowserWindow[]) {

@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-10g** (**W-60 — a devotion keeps to one point, a children's lesson tells its story, and the review can be asked again.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: a short devotion keeps to one point and a children's lesson tells the story in a child's words, printing only the verse or two it turns on; _is this a good sermon?_ may be asked again after a fix is made, for the next. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: eight lessons each drafted, then reviewed and its first fix pressed, twice -- every one of the sixteen reviews ended in buttons and every fix was made in place, 4-5 s a review; a devotion's fixes kept to its one point (_Add verse 10 to the main point_); a children's lesson on Jonah with the story told, two points, something to show and a prayer; the children's button's passages offered as buttons. CB-169.)
+**workflowsVersion: 2026-11-10l** (**Two computers' work of 2026-11-10 merged.** The entries stamped 2026-11-10e to g further down came from one computer and stand as they were; the other computer's e to h were relabelled h to k. No recipe was changed by the merge.)
+
+Previous: **workflowsVersion: 2026-11-10k** (**W-37 step 6 — the markdown editor opens BESIDE the page.** The user, on the editor that took the page's place: _should edit on the left preview on the right_. **[en:tran:Edit]** now opens the editor on the left and keeps the page on the right, drawing the unsaved words a moment after typing stops; the pencil reads **[en:tran:Hide Editor]** while the editor is open, which gives the window back to the page (unsaved words still drawn there). Ctrl+S saves wherever the focus is. RD-128.)
+
+Previous: **workflowsVersion: 2026-11-10j** (**W-37 step 6 — a markdown file is edited in its own window.** The user, with the Markdown Preview window of `JHN.3.The New Birth and God's Love.md`: _I want the bible markdown preview be editable, let setup toggle editing (with monaco markdown) for bible markdown_; asked, an explicit Save rather than saving as you type, and the editor in place of the page rather than beside it. The head row gains **[en:tran:Edit]** (the pencil, **[en:tran:Preview]** while editing), **[en:tran:Save]** with Ctrl+S, a `*` for **[en:tran:Unsaved changes]** and **[en:tran:Discard unsaved changes]**; **[en:tran:Open in Default App]** is no longer named as the way to edit. RD-128.)
+
+Previous: **workflowsVersion: 2026-11-10i** (**W-37 step 6 — a Resources file opens in one more window on every press.** The user: _like bible-note resource window should be multiple, story: as a user I want to open 2 windows of one resource file so I can read different parts at the same time_. A PDF row and a markdown row, and their **[en:tran:Preview PDF]** / **[en:tran:Preview]**, now open another window on each press, as a Bible note's own window does, each a little below and to the right of the last; the 🤖 beside the row and the assistant's study preview bring forward a window already open on the file instead of adding one. Seen live 2026-11-10 on the dev app in English: `JHN.3.The New Birth and God's Love.md` and `JHN.3.pdf` each pressed twice, two windows of each, one Markdown Preview scrolled to its end while the other stayed on John 3:1-7; the study preview, asked with both open, opened none. Not yet seen live: the 🤖's own press (the AI caution is the person's), a read-only note of a `.own` file opened twice, and a non-English language. RD-118, RD-127.)
+
+Previous: **workflowsVersion: 2026-11-10h** (**W-05 step 9, W-10, W-15 (after step 10), W-19 step 6 — a Presets row in every style panel: Stage Style, a slide's canvas items, and the brush and spotlight of a Mini Screen and of Presenting Control.** The user, with the Stage Style panel beside Marquee Top's Presets row: _like foreground preset I want setting everywhere provide preset_, then _like stage setting, slide's canvas item setting, ..._ and _for slide editing make sure support dark/light preset_. Each panel now opens on the row a foreground component's Properties has: the app's own looks, the ones you saved, and **[en:tran:Save as Preset]**, whose saved chips offer **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]** on a right-click (30 at most). Stage Style: **[en:tran:Full Screen]**, **[en:tran:Center]**, **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]** set the layout and keep the stage's theme and Custom CSS, and one saved list serves every stage. A canvas item: **[en:tran:Plain]**, **[en:tran:Shadow]**, **[en:tran:Glass Effect]** (not on a picture or a video), and on a box of words **[en:tran:Highlight]**, **[en:tran:Urgent Alert]** and a **[en:tran:Dark]** / **[en:tran:Light]** switch that works the colours out for the side the words are on, as a foreground preset's are; one press is one **[en:tran:Undo]**. The brush: **[en:tran:Highlight]**, **[en:tran:Underline]**, **[en:tran:Bold]**; the spotlight: **[en:tran:Haze]**, **[en:tran:Strong]**, **[en:tran:Halo]**, each one list shared by every screen and Presenting Control. W-10 also gains the Mini Screen's own **[en:tran:Drawing]** / **[en:tran:Focusing]** button, which W-19 pointed to and W-10 never described; the looks are described there, and W-19 step 6 only says Presenting Control opens on the same ones — both pages stay under the 6 000 characters a supported question is handed whole (W-19 had 122 to spare). For the same reason W-05's words are few, so its first 6 000 characters still hold steps 10 and 11, and W-15's paragraph comes after its Save step, so every question filed under it is handed what it was before. Seen live 2026-11-10 on the dev app in English: Bottom Banner on Stage 0 kept its Custom CSS; a text box flipped Dark and Light, took Glass Effect, then Highlight, then Plain (the bold went with it), each press undone by one Undo; a picture offered Plain and Shadow and no switch; a Mini Screen's brush took Highlight and its spotlight Haze; Presenting Control's brush took Highlight (28px, 35%, Straight, HQ kept) and its spotlight Haze (Hold and the dim colour kept). Not yet seen live: a preset saved, renamed, replaced or removed (a name typed into the app's own box and a confirm, both the person's), and a non-English language. PM-178, ED-55, SP-35, PC-34.)
+
+Previous: **workflowsVersion: 2026-11-10g** (**W-60 — a devotion keeps to one point, a children's lesson tells its story, and the review can be asked again.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: a short devotion keeps to one point and a children's lesson tells the story in a child's words, printing only the verse or two it turns on; _is this a good sermon?_ may be asked again after a fix is made, for the next. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: eight lessons each drafted, then reviewed and its first fix pressed, twice -- every one of the sixteen reviews ended in buttons and every fix was made in place, 4-5 s a review; a devotion's fixes kept to its one point (_Add verse 10 to the main point_); a children's lesson on Jonah with the story told, two points, something to show and a prayer; the children's button's passages offered as buttons. CB-169.)
 
 Previous: **workflowsVersion: 2026-11-10f** (**W-42 step 8 — Retry under an answer, for a different answer.** The user, a picture of an answer's tool row with the spot between the reply arrow and 👍 circled: _add a rotate icon there to ask for retrying_; _as user I'd like to ask chatbot to retry again on the answer, so I can get different result_; the goal _try with different approach and different effort get different result_. The round arrows (**[en:tran:Retry]**) ask the answer's question again with what it was asked with, another way in each press and a step more effort, the new answer at the bottom under _A different answer: worked out another way, with more effort._, the box left as it was. Seen live 2026-11-10 on a scratch development profile's help window, Auto on gemma4:cloud: the arrows between the reply arrow and 👍 under every answer to a question and under none of a card the window wrote; pressed, the question came again, the note on the new answer, _and the colour too_ still in the box, the arrows greyed while it worked; the second press answered _the first way did not help_ with the reading view's **Full** where the first two had given the same Font Size steps. Then, at the user's next word (_try with another model (but keep the gemma4 for the next asking)_), a retry is asked of someone else: pressed under a gemma4:cloud answer it was answered by OWA Shared · Gemma 4 31b under _Auto asked OWA Shared · Gemma 4 31b this time._, AUTO PICK still reading gemma4:cloud, and the next question was gemma4:cloud's again. CB-175.)
 
@@ -2028,7 +2038,11 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
-   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
+   **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting
+   layout), **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**, which set the layout and
+   keep the theme and **[en:tran:Custom CSS]**; **[en:tran:Save as Preset]** keeps the whole look
+   for **every** stage (right-click a saved one to rename, replace or remove it). 📸
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
 11. **Edit the words while the song is open and the verses follow by themselves; a verse
@@ -2071,7 +2085,7 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     every song. A song's slide that a screen holds moves to that part's first line when you
     turn it on, and back to the whole part when you turn it off. 📸
 
-_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08._
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-178, XW-08._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -2787,8 +2801,17 @@ _Verify: PM-163, PM-164, PM-165, PM-166, PM-167._
   corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
+- **Draw or spotlight on the screen** (footer, the brush — **[en:tran:Drawing]**): press it to
+  draw on that screen; its settings open in a strip under the card. Its **⋮**
+  (**[en:tran:Choose Drawing or Focusing]**) turns it into **[en:tran:Focusing]**, a spotlight
+  that dims the rest; press the lit button again to stop either. The strip opens on
+  **[en:tran:Presets]**: **[en:tran:Highlight]** (a see-through yellow marker),
+  **[en:tran:Underline]** and **[en:tran:Bold]** for the brush, **[en:tran:Haze]** (light),
+  **[en:tran:Strong]** (dark) and **[en:tran:Halo]** (wide) for the spotlight.
+  **[en:tran:Save as Preset]** keeps the current look; right-click a saved one to rename,
+  replace or remove it. Every screen and Presenting Control (W-19) share the saved ones. 📸
 
-_Verify: PR-04..07, SP-01..09, SP-23, SP-24, KB-03..07, KB-13._
+_Verify: PR-04..07, SP-01..09, SP-23, SP-24, SP-35, KB-03..07, KB-13._
 
 ---
 
@@ -3131,6 +3154,17 @@ in the same documents folder. 📸
    slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
 10. Save with **Ctrl+S**.
 
+**A ready-made look for a box:** select it, and **[en:tran:Presets]** at the top of
+**[en:tran:Properties]** offers **[en:tran:Plain]** (no backing, shadow, blend or bold),
+**[en:tran:Shadow]** and **[en:tran:Glass Effect]** (not on a picture or a video). A box of
+words also gets **[en:tran:Highlight]** and **[en:tran:Urgent Alert]** (bold words) and a
+**[en:tran:Dark]** / **[en:tran:Light]** switch: light words for a dark background or dark
+words for a light one — the other side trades the lightness of the words and their backing,
+each keeping its hue. A look never changes the box's size, place, words or font, and one press
+is one **[en:tran:Undo]**. **[en:tran:Save as Preset]** keeps the box's look — from a box of
+words its words' style too, and then it is offered to boxes of words only; right-click a saved
+one to rename, replace or remove it. 📸
+
 **HTML and plain text:** imported HTML keeps its formatting, but scripts, event
 handlers and embedded pages are removed in the editor, previews, screen rendering
 and print. Use **[en:tran:Insert Website]** or **[en:tran:Insert YouTube]** for a
@@ -3153,7 +3187,7 @@ folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in i
 its code beside a preview. The Web Editor saves itself as you type, so there is no Save
 to press.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -3935,7 +3969,8 @@ this is the same pair of tools pointed at the app.
    default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, dim amount and **edge
-   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming. 📸
+   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming.
+   Brush and spotlight both open on **[en:tran:Presets]**, as on the Mini Screen (W-10). 📸
 7. The **camera** at the end of the title bar takes a picture of the app **as it looks
    right now** — your drawing, your spotlight and all — and asks what to do with it:
    **[en:tran:Ask the assistant about this]** opens the help window with the picture already
@@ -3967,9 +4002,10 @@ this is the same pair of tools pointed at the app.
 > the panel's own sliders and color box. Escape or the arrow tool hands everything
 > straight back. The Undo / Redo / Clear **buttons** work in every tool regardless.
 
-_Verify: CB-30 (the snapshot), PC-33 (every window). The rest is still pending — the matrix
-lives at `docs/test-paths/coverage-matrix.md`, whose `PC-xx` (presenting-control) block
-holds PC-33 alone; add the rest for this workflow._
+_Verify: CB-30 (the snapshot), PC-33 (every window), PC-34 (the brush's and the spotlight's
+Presets). The rest is still pending — the matrix lives at `docs/test-paths/coverage-matrix.md`,
+whose `PC-xx` (presenting-control) block holds PC-33 and PC-34 alone; add the rest for this
+workflow._
 
 ### W-20 — Show the keys you press (Keyboard Screencast)
 
@@ -6160,8 +6196,8 @@ all count as book-level too.
    - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
      **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
-     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
-     that window forward. 📸
+     to use your own PDF reader instead. Each press opens one more window on the file, a
+     little below and to the right of the last, so two parts of it can be read side by side. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
@@ -6175,9 +6211,23 @@ all count as book-level too.
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written. The head row also has
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and
-     **[en:tran:Reveal in File Explorer]**. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Pressing a
-     file whose preview is already open brings that window forward. 📸
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
+     **[en:tran:Reveal in File Explorer]**. **To change the file right there**, press
+     **[en:tran:Edit]** (the pencil): an editor of the file's markdown opens on the left,
+     its lines wrapped, and the page stays on the right, drawing what you type a moment
+     after you stop. Nothing is written until you press **[en:tran:Save]** (the disk) or
+     Ctrl+S (⌘+S on a Mac); until then a `*` after the name says there are
+     **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
+     arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
+     whole window back to the page — your unsaved words still drawn there as they will
+     look, still waiting for **[en:tran:Save]**. While something is unsaved,
+     **[en:tran:Back]** and **[en:tran:Reload]** wait, a link to another `.md` does not open, and closing the
+     window is stopped once with a note to save or discard first (keep trying and it
+     closes anyway). A change saved in your own editor reaches an open editor here that
+     has nothing unsaved; one with unsaved words keeps them, and **[en:tran:Save]** writes
+     them over the file. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Each
+     press opens one more window on the file, as a PDF's does: scroll one to the
+     diagrams and keep the other on the passage. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
      marked in it (the highlighter icon) with its highlights in their colour and its comments
@@ -6272,7 +6322,7 @@ all count as book-level too.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, CM-93._
 
 ---
 

@@ -22,20 +22,39 @@
  * - The DIAGRAM check. Each ```mermaid block starts with a kind the preview
  *   draws and carries no `%%{init`, no `click` and no HTML; the help window
  *   also parses each one with mermaid itself, which this check cannot.
- * - The whole file stays under `STUDY_FILE_MAX_CHARS`, what
- *   `owa_resource_file read` returns WHOLE -- a change is drafted from the
- *   file as read, and a file read in part would be written back in part.
+ * - A CHANGE by part (2026-11-10, EC-479): a section named by its heading
+ *   given new words, words added at the end of one or of the file, the
+ *   app's own last lines (the rule and the italic footnote) kept last.
+ *   A model never has to write a whole file back to change a line of it --
+ *   on a server of the user's own it COULD not: a help round is 2 000
+ *   tokens, and the user's 13 KB John 3 study is more than that.
+ * - A TRANSLATION's parts (EC-478): the words, each diagram and each quoted
+ *   passage apart, so the words are translated, a diagram keeps its syntax
+ *   and a passage is quoted again from a Bible in the new language rather
+ *   than put into it by a model.
+ * - The whole file stays under `STUDY_FILE_MAX_CHARS`, which holds a study
+ *   with its translation added under it; a read returns
+ *   `STUDY_READ_MAX_CHARS` of it whole, and a longer one is changed by part.
  */
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
 
 export const STUDY_FOLDER_NAME = 'Default';
 export const STUDY_FILE_EXTENSION = '.md';
+/**
+ * A study file whole: a 16 KB study and its translation into a script that
+ * takes more letters (2026-11-10, EC-478: the user's John 3 study, 13 KB in
+ * English, with its Khmer added under it).
+ */
+export const STUDY_FILE_MAX_CHARS = 64 * 1024;
 /** `MAX_TEXT_CHARS` in `agentResourcesHelpers.ts`: a read returns it whole. */
-export const STUDY_FILE_MAX_CHARS = 16 * 1024;
-/** The model's own part; the rest is the title and the quoted passage. */
-export const STUDY_CONTENT_MAX_CHARS = 12_000;
+export const STUDY_READ_MAX_CHARS = 16 * 1024;
+/** The study's own part; the rest is the title and the quoted passage. */
+export const STUDY_CONTENT_MAX_CHARS = 48_000;
 export const STUDY_TITLE_MAX_CHARS = 60;
+/** What a NEW study draws: the 2 to 4 that teach it, and room. */
 export const STUDY_MAX_DIAGRAMS = 6;
+/** What a whole file may hold: a study and its translation under it. */
+export const STUDY_FILE_MAX_DIAGRAMS = 16;
 export const STUDY_MAX_VERSE_TOKENS = 24;
 /** One quoted reference: a few verses, not a chapter. */
 export const STUDY_MAX_QUOTED_VERSES = 30;
@@ -328,7 +347,10 @@ export type StudyLintType = {
  * no raw HTML outside code, and every diagram one the preview draws. Each
  * reason is a sentence for the model, naming the diagram by its number.
  */
-export function lintStudyContent(content: string): StudyLintType {
+export function lintStudyContent(
+    content: string,
+    maxDiagrams = STUDY_MAX_DIAGRAMS,
+): StudyLintType {
     const reasons: string[] = [];
     const diagrams: string[] = [];
     let fence: string | null = null;
@@ -363,10 +385,12 @@ export function lintStudyContent(content: string): StudyLintType {
     if (fence !== null) {
         reasons.push(`A ${fence} block is not closed.`);
     }
-    if (diagrams.length > STUDY_MAX_DIAGRAMS) {
+    if (diagrams.length > maxDiagrams) {
         reasons.push(
-            `${diagrams.length} diagrams is more than ${STUDY_MAX_DIAGRAMS}: ` +
-                'keep the 2 to 4 that teach the passage best.',
+            `${diagrams.length} diagrams is more than ${maxDiagrams}: ` +
+                (maxDiagrams === STUDY_MAX_DIAGRAMS
+                    ? 'keep the 2 to 4 that teach the passage best.'
+                    : 'keep the ones that teach the passage best.'),
         );
     }
     diagrams.forEach((source, index) => {
@@ -464,18 +488,51 @@ export function toStudyTextHash(text: string) {
 }
 
 const HEADING_PATTERN = /^#{1,6}\s+(.+?)\s*#*\s*$/;
+const RULE_PATTERN = /^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$/;
 
+/**
+ * A section's words as two drafts are compared: the blank lines and rules
+ * at its end left out -- a rule between sections is a separator, and a
+ * translation added after the last one starts with one (EC-478).
+ */
+function toComparedBody(lines: string[]) {
+    const kept = [...lines];
+    while (
+        kept.length > 0 &&
+        (kept[kept.length - 1].trim() === '' ||
+            RULE_PATTERN.test(kept[kept.length - 1]))
+    ) {
+        kept.pop();
+    }
+    return kept.join('\n').trim();
+}
+
+/**
+ * Every section by its heading, outside fenced blocks. A heading met again
+ * -- the same words in a translation added under the study -- is a section
+ * of its own (`Verse by Verse (2)`), never the first one changed.
+ */
 function toSectionMap(text: string) {
-    const sectionMap = new Map<string, string>();
+    const sectionMap = new Map<string, { heading: string; body: string }>();
+    const seenCountMap = new Map<string, number>();
     let heading = '';
     let body: string[] = [];
     const flush = () => {
-        if (heading !== '' || body.join('').trim() !== '') {
-            sectionMap.set(heading, body.join('\n').trim());
+        const compared = toComparedBody(body);
+        if (heading === '' && compared === '') {
+            return;
         }
+        const count = (seenCountMap.get(heading) ?? 0) + 1;
+        seenCountMap.set(heading, count);
+        sectionMap.set(count === 1 ? heading : `${heading} (${count})`, {
+            heading,
+            body: compared,
+        });
     };
-    for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
-        const match = HEADING_PATTERN.exec(line);
+    for (const { line, isInFence } of splitLinesByFence(
+        text.replace(/\r\n/g, '\n'),
+    )) {
+        const match = isInFence ? null : HEADING_PATTERN.exec(line);
         if (match !== null) {
             flush();
             heading = match[1];
@@ -512,20 +569,26 @@ export function summarizeStudyChange(
     oldText: string,
     newText: string,
 ): StudyChangeType {
-    const oldMap = toSectionMap(oldText);
-    const newMap = toSectionMap(newText);
+    // The app's last lines are no section's words.
+    const oldMap = toSectionMap(splitStudyFooter(oldText).body);
+    const newMap = toSectionMap(splitStudyFooter(newText).body);
     const addedSections: string[] = [];
     const changedSections: string[] = [];
-    for (const [heading, body] of newMap) {
-        if (!oldMap.has(heading)) {
-            addedSections.push(heading);
-        } else if (oldMap.get(heading) !== body) {
-            changedSections.push(heading);
+    for (const [key, section] of newMap) {
+        const old = oldMap.get(key);
+        if (old === undefined) {
+            addedSections.push(section.heading);
+        } else if (old.body !== section.body) {
+            changedSections.push(section.heading);
         }
     }
-    const removedSections = [...oldMap.keys()].filter((heading) => {
-        return !newMap.has(heading);
-    });
+    const removedSections = [...oldMap.entries()]
+        .filter(([key]) => {
+            return !newMap.has(key);
+        })
+        .map(([, section]) => {
+            return section.heading;
+        });
     const oldCount = countLines(oldText);
     const newCount = countLines(newText);
     let addedLines = 0;
@@ -551,13 +614,13 @@ export function summarizeStudyChange(
 export function describeStudyChange(change: StudyChangeType) {
     const parts: string[] = [];
     if (change.addedSections.length > 0) {
-        parts.push(`adds ${change.addedSections.map(quote).join(', ')}`);
+        parts.push(`adds ${toNamesText(change.addedSections)}`);
     }
     if (change.changedSections.length > 0) {
-        parts.push(`changes ${change.changedSections.map(quote).join(', ')}`);
+        parts.push(`changes ${toNamesText(change.changedSections)}`);
     }
     if (change.removedSections.length > 0) {
-        parts.push(`removes ${change.removedSections.map(quote).join(', ')}`);
+        parts.push(`removes ${toNamesText(change.removedSections)}`);
     }
     const lineText = `${change.addedLines} line(s) in, ${change.removedLines} out`;
     if (parts.length === 0) {
@@ -570,4 +633,518 @@ export function describeStudyChange(change: StudyChangeType) {
 
 function quote(text: string) {
     return `“${text}”`;
+}
+
+// A whole translation adds every heading the study has: five are named.
+const MAX_NAMED_SECTIONS = 5;
+
+function toNamesText(headings: string[]) {
+    const named = headings.slice(0, MAX_NAMED_SECTIONS).map(quote).join(', ');
+    return headings.length > MAX_NAMED_SECTIONS
+        ? `${named} and ${headings.length - MAX_NAMED_SECTIONS} more`
+        : named;
+}
+
+// --- a change by part (EC-479) -----------------------------------------------
+
+// The app's own last lines (`composeStudyFile`): a rule, then the footnote
+// in italics, and nothing after them.
+const FOOTER_PATTERN =
+    /\n[ \t]{0,3}-{3,}[ \t]*\n(?:[ \t]*\n)*[ \t]*\*[^*\n][^\n]*\*[ \t]*\n*$/;
+
+/**
+ * The file and the app's last lines apart: `body + footer` is the text as
+ * it was (line ends made `\n`). A file with no such lines has no footer.
+ */
+export function splitStudyFooter(text: string) {
+    const normalized = String(text ?? '').replace(/\r\n/g, '\n');
+    const match = FOOTER_PATTERN.exec(normalized);
+    if (match === null) {
+        return { body: normalized, footer: '' };
+    }
+    return {
+        body: normalized.slice(0, match.index),
+        footer: normalized.slice(match.index),
+    };
+}
+
+/** The body and the footer joined again, a blank line between them. */
+function joinStudyFooter(body: string, footer: string) {
+    const trimmed = body.trimEnd();
+    if (footer === '') {
+        return `${trimmed}\n`;
+    }
+    return `${trimmed}\n${footer.endsWith('\n') ? footer : `${footer}\n`}`;
+}
+
+export type StudySectionType = {
+    level: number;
+    heading: string;
+    /** The heading's line, and the first line past the section. */
+    start: number;
+    end: number;
+};
+
+/** A heading as it is compared: no #, no bold, no case, one space. */
+function toHeadingKey(text: string) {
+    return String(text ?? '')
+        .replace(/^\s*#{1,6}\s*/, '')
+        .replace(/\s+#+\s*$/, '')
+        .replace(/\*\*|__/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * Every section of the text: a heading outside a fenced block, down to the
+ * next heading of its level or above (a `##` holds its `###`s).
+ */
+export function listStudySections(text: string): StudySectionType[] {
+    const marked = splitLinesByFence(text.replace(/\r\n/g, '\n'));
+    const headings: { level: number; heading: string; line: number }[] = [];
+    marked.forEach(({ line, isInFence }, index) => {
+        if (isInFence) {
+            return;
+        }
+        const match = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
+        if (match !== null) {
+            headings.push({
+                level: match[1].length,
+                heading: match[2],
+                line: index,
+            });
+        }
+    });
+    return headings.map((one, index) => {
+        const next = headings.slice(index + 1).find((other) => {
+            return other.level <= one.level;
+        });
+        return {
+            level: one.level,
+            heading: one.heading,
+            start: one.line,
+            end: next === undefined ? marked.length : next.line,
+        };
+    });
+}
+
+/** The sections as a model reads them: `## Background`, one a line. */
+export function toStudyOutline(text: string, maxCount = 40) {
+    const sections = listStudySections(text);
+    const lines = sections.slice(0, maxCount).map((section) => {
+        return `${'#'.repeat(section.level)} ${section.heading}`;
+    });
+    if (sections.length > maxCount) {
+        lines.push(`… and ${sections.length - maxCount} more`);
+    }
+    return lines.join('\n');
+}
+
+/**
+ * The ONE section a heading's words name, or why not: none there, or the
+ * same words twice (`twiceAdvice` says what to do then), with the headings
+ * the text has.
+ */
+function findStudySection(
+    body: string,
+    section: string,
+    twiceAdvice: string,
+): { section: StudySectionType } | { reason: string } {
+    const key = toHeadingKey(section);
+    const found = listStudySections(body).filter((one) => {
+        return toHeadingKey(one.heading) === key;
+    });
+    if (found.length === 1) {
+        return { section: found[0] };
+    }
+    const outline = toStudyOutline(body);
+    return {
+        reason:
+            (found.length === 0
+                ? `The file has no section “${section}”.`
+                : `The file has ${found.length} sections called ` +
+                  `“${section}”; ${twiceAdvice}.`) +
+            (outline === ''
+                ? ' It has no headings: add to it with `append`.'
+                : ` Its headings:\n${outline}`),
+    };
+}
+
+/**
+ * One section of a long file as `read` gives it (EC-481): its heading's
+ * line down to the next heading of its level or above -- what is past the
+ * first 16 KB, a translation under the study included, is reached so.
+ */
+export function readStudySection(
+    text: string,
+    section: string,
+): { heading: string; text: string } | { reason: string } {
+    const { body } = splitStudyFooter(text);
+    const found = findStudySection(
+        body,
+        String(section ?? '').trim(),
+        'read the whole file instead',
+    );
+    if ('reason' in found) {
+        return found;
+    }
+    const lines = body.split('\n');
+    return {
+        heading: found.section.heading,
+        text: dropEdgeBlankLines(
+            lines.slice(found.section.start, found.section.end),
+        ).join('\n'),
+    };
+}
+
+// A line Markdown takes as a block of its own, or as the inside of one: a
+// heading, a list item, a quote, a table row, a rule, a footnote, HTML, and
+// an indented line (code, or a list item's own words).
+const BLOCK_LINE_PATTERN =
+    /^(?:\s{0,3}(?:#{1,6}(?:\s|$)|[-*+](?:\s|$)|\d{1,3}[.)](?:\s|$)|>|\||(?:-{3,}|\*{3,}|_{3,}|={3,})\s*$|\[\^[^\]\n]+\]:|<)| {4}|\t)/;
+// A line that ends a sentence in any script, a quote or a mark after it.
+const SENTENCE_END_PATTERN =
+    /[\p{Sentence_Terminal}:;]["'\p{Pf}\p{Pe}*_]*\s*$/u;
+// A line led by a reference -- `John 3:1-2`, `1 John 2:3`, `3:16` -- in any
+// script's letters and digits, or by a bold label.
+const LEAD_PATTERN =
+    /^\s{0,3}(?:\*\*[^*\n]+\*\*|(?:\p{Nd}\s?)?\p{L}[\p{L}\p{M}.]*(?:\s\p{L}[\p{L}\p{M}.]*)?\s+\p{Nd}{1,3}:\p{Nd}{1,3}|\p{Nd}{1,3}:\p{Nd}{1,3})/u;
+// A line that already breaks: two spaces or a backslash at its end.
+const HARD_BREAK_PATTERN = /(?: {2,}|\\)$/;
+
+/** Whether lines run into one paragraph were written one item a line. */
+function checkIsLinePerItem(lines: string[]) {
+    if (
+        lines.some((line) => {
+            return HARD_BREAK_PATTERN.test(line);
+        })
+    ) {
+        return false;
+    }
+    return (
+        lines.every((line) => {
+            return LEAD_PATTERN.test(line);
+        }) ||
+        lines.slice(0, -1).every((line) => {
+            return SENTENCE_END_PATTERN.test(line);
+        })
+    );
+}
+
+/**
+ * The text with lines written one item a line kept apart (EC-482):
+ * Markdown joins lines with no blank line between them into ONE paragraph,
+ * so a study's `John 3:1-2 …` / `John 3:3-8 …` lines -- the user's own
+ * John 3 file -- were drawn as a single block. A run of plain lines each
+ * led by a reference, or each ending a sentence, gets a blank line between
+ * its lines. Fenced blocks, lists, quotes, tables and the words straight
+ * under one of them (they continue it) are left alone, and so is a run
+ * whose every line is in `keptText` -- the file as it was, which a change
+ * does not rewrite where it was not asked to.
+ */
+export function separateStudyLines(text: string, keptText = '') {
+    const keptLineSet = new Set(
+        String(keptText ?? '')
+            .replace(/\r\n/g, '\n')
+            .split('\n')
+            .map((line) => {
+                return line.trim();
+            }),
+    );
+    const outLines: string[] = [];
+    let run: string[] = [];
+    let isContinuing = false;
+    const flush = () => {
+        const isSeparated =
+            !isContinuing &&
+            run.length > 1 &&
+            checkIsLinePerItem(run) &&
+            !run.every((line) => {
+                return keptLineSet.has(line.trim());
+            });
+        run.forEach((line, index) => {
+            if (isSeparated && index > 0) {
+                outLines.push('');
+            }
+            outLines.push(line);
+        });
+        run = [];
+    };
+    let previous = '';
+    for (const { line, isInFence } of splitLinesByFence(
+        String(text ?? '').replace(/\r\n/g, '\n'),
+    )) {
+        const isPlain =
+            !isInFence && line.trim() !== '' && !BLOCK_LINE_PATTERN.test(line);
+        if (!isPlain) {
+            flush();
+            outLines.push(line);
+            previous = isInFence ? '' : line;
+            continue;
+        }
+        if (run.length === 0) {
+            // Words straight under a list item, a quote or a table row are
+            // more of it, not a paragraph of their own.
+            isContinuing =
+                previous.trim() !== '' && !/^\s{0,3}#{1,6}\s/.test(previous);
+        }
+        run.push(line);
+        previous = line;
+    }
+    flush();
+    return outLines.join('\n');
+}
+
+export type StudyEditType = {
+    /** The heading of the section changed, as the file writes it. */
+    section?: string;
+    /** That section's new text; without `section`, the whole new body. */
+    content?: string;
+    /** Words added at the end of the section, or of the file. */
+    append?: string;
+};
+
+function dropEdgeBlankLines(lines: string[]) {
+    let start = 0;
+    let end = lines.length;
+    while (start < end && lines[start].trim() === '') {
+        start += 1;
+    }
+    while (end > start && lines[end - 1].trim() === '') {
+        end -= 1;
+    }
+    return lines.slice(start, end);
+}
+
+const LIST_ITEM_PATTERN = /^\s{0,3}(?:[-*+]|\d{1,9}[.)])\s/;
+
+/**
+ * Words added under some lines: a blank line between them, except more
+ * items for the list the lines end in, which go on that list -- a gap would
+ * spread every item of it apart.
+ */
+function joinAppendedLines(lines: string[], append: string) {
+    const kept = dropEdgeBlankLines(lines);
+    const appended = append.split('\n');
+    const isListGoingOn =
+        LIST_ITEM_PATTERN.test(kept[kept.length - 1] ?? '') &&
+        LIST_ITEM_PATTERN.test(appended[0] ?? '');
+    return [...kept, ...(isListGoingOn ? [] : ['']), ...appended];
+}
+
+/**
+ * The text with ONE change made by part: a section given new words or more
+ * words, or words added at the end -- before the app's last lines, which
+ * stay last. A section is named by its heading's words; one not there, or
+ * named twice, is refused with the headings the file has.
+ */
+export function applyStudyEdit(
+    oldText: string,
+    edit: StudyEditType,
+): { text: string } | { reason: string } {
+    const { body, footer } = splitStudyFooter(oldText);
+    const section = String(edit.section ?? '').trim();
+    const content = String(edit.content ?? '')
+        .replace(/\r\n/g, '\n')
+        .trim();
+    const append = String(edit.append ?? '')
+        .replace(/\r\n/g, '\n')
+        .trim();
+    if (section === '') {
+        if (append === '') {
+            return {
+                reason:
+                    'Give `append` (the words added at the end), or ' +
+                    '`section` (a heading) with its new `content`.',
+            };
+        }
+        return {
+            text: joinStudyFooter(
+                joinAppendedLines(body.split('\n'), append).join('\n'),
+                footer,
+            ),
+        };
+    }
+    if (content === '' && append === '') {
+        return {
+            reason:
+                `Give the new words of “${section}” in \`content\`, or the ` +
+                'words to add to it in `append`.',
+        };
+    }
+    const found = findStudySection(
+        body,
+        section,
+        'change one with its whole text instead',
+    );
+    if ('reason' in found) {
+        return found;
+    }
+    const target = found.section;
+    const lines = body.split('\n');
+    let sectionLines = lines.slice(target.start, target.end);
+    if (content !== '') {
+        const newLines = content.split('\n');
+        sectionLines = /^#{1,6}\s/.test(newLines[0])
+            ? newLines
+            : [lines[target.start], '', ...newLines];
+    }
+    if (append !== '') {
+        sectionLines = joinAppendedLines(sectionLines, append);
+    }
+    const before = lines.slice(0, target.start);
+    const after = lines.slice(target.end);
+    const outLines = [
+        ...before,
+        ...dropEdgeBlankLines(sectionLines),
+        ...(after.length > 0 ? ['', ...dropEdgeBlankLines(after)] : []),
+    ];
+    return { text: joinStudyFooter(outLines.join('\n'), footer) };
+}
+
+// --- a translation's parts (EC-478) ------------------------------------------
+
+export type StudyTranslatePartKindType =
+    'text' | 'diagram' | 'passage' | 'keep';
+
+export type StudyTranslatePartType = {
+    kind: StudyTranslatePartKindType;
+    /** The part as the file writes it, line ends `\n`, none at its end. */
+    text: string;
+    /** A passage's reference as its Bible writes it, and that Bible. */
+    title?: string;
+    bibleKey?: string;
+};
+
+const QUOTE_HEAD_PATTERN = /^\s{0,3}>\s*\*\*(.+?)\*\*\s*\(([^)\n]{1,40})\)\s*$/;
+
+/**
+ * The body (`splitStudyFooter`'s) in the parts a translation treats apart:
+ * WORDS to translate; a DIAGRAM, its fences included, whose labels are
+ * translated and its syntax kept; a PASSAGE the app quoted (`> **John
+ * 3:16** (KJV)` and its verse lines), quoted again rather than translated;
+ * and what is KEPT as it is -- a code block, a rule. The parts joined by
+ * `\n` are the body as it was.
+ */
+export function splitStudyForTranslation(
+    body: string,
+): StudyTranslatePartType[] {
+    const lines = String(body ?? '')
+        .replace(/\r\n/g, '\n')
+        .split('\n');
+    const parts: StudyTranslatePartType[] = [];
+    const push = (part: StudyTranslatePartType) => {
+        const last = parts.at(-1);
+        if (
+            last !== undefined &&
+            last.kind === part.kind &&
+            (part.kind === 'text' || part.kind === 'keep')
+        ) {
+            last.text = `${last.text}\n${part.text}`;
+            return;
+        }
+        parts.push(part);
+    };
+    let index = 0;
+    while (index < lines.length) {
+        const line = lines[index];
+        const fence = FENCE_PATTERN.exec(line);
+        if (fence !== null) {
+            let end = index + 1;
+            while (end < lines.length) {
+                const closing = FENCE_PATTERN.exec(lines[end]);
+                if (closing !== null && closing[1] === fence[1]) {
+                    break;
+                }
+                end += 1;
+            }
+            const block = lines.slice(index, Math.min(end + 1, lines.length));
+            push({
+                kind: MERMAID_FENCE_PATTERN.test(line) ? 'diagram' : 'keep',
+                text: block.join('\n'),
+            });
+            index = end + 1;
+            continue;
+        }
+        const quoteHead = QUOTE_HEAD_PATTERN.exec(line);
+        if (quoteHead !== null) {
+            let end = index + 1;
+            while (end < lines.length && /^\s{0,3}>/.test(lines[end])) {
+                end += 1;
+            }
+            push({
+                kind: 'passage',
+                text: lines.slice(index, end).join('\n'),
+                title: quoteHead[1].trim(),
+                bibleKey: quoteHead[2].trim(),
+            });
+            index = end;
+            continue;
+        }
+        push({ kind: RULE_PATTERN.test(line) ? 'keep' : 'text', text: line });
+        index += 1;
+    }
+    return parts;
+}
+
+/**
+ * A part's words cut where a paragraph ends, each piece at most `maxChars`
+ * where the text allows -- one paragraph longer than that stays whole -- so
+ * each is translated within one answer.
+ */
+export function chunkStudyText(text: string, maxChars: number) {
+    const paragraphs = String(text ?? '')
+        .split(/\n[ \t]*\n/)
+        .map((paragraph) => {
+            return paragraph.replace(/^\n+|\s+$/g, '');
+        })
+        .filter((paragraph) => {
+            return paragraph.trim() !== '';
+        });
+    const chunks: string[] = [];
+    for (const paragraph of paragraphs) {
+        const last = chunks.at(-1);
+        if (
+            last !== undefined &&
+            last.length + paragraph.length + 2 <= maxChars
+        ) {
+            chunks[chunks.length - 1] = `${last}\n\n${paragraph}`;
+        } else {
+            chunks.push(paragraph);
+        }
+    }
+    return chunks;
+}
+
+/** A diagram's source, its fences off: what a translator is handed. */
+export function toStudyDiagramSource(block: string) {
+    const lines = block.split('\n');
+    const isClosed = lines.length > 1 && FENCE_PATTERN.test(lines.at(-1) ?? '');
+    return lines.slice(1, isClosed ? -1 : undefined).join('\n');
+}
+
+/** A diagram's source in its fences again, the way the file opened them. */
+export function toStudyDiagramBlock(block: string, source: string) {
+    const lines = block.split('\n');
+    const opening = lines[0];
+    const fence = FENCE_PATTERN.exec(opening)?.[1] ?? '```';
+    return `${opening}\n${source.replace(/\n+$/, '')}\n${fence}`;
+}
+
+/**
+ * The first `#` line's words -- the study's title -- or null when the file
+ * opens with none.
+ */
+export function readStudyTitleLine(body: string) {
+    for (const { line, isInFence } of splitLinesByFence(body)) {
+        if (isInFence) {
+            continue;
+        }
+        const match = /^#\s+(.+?)\s*#*\s*$/.exec(line);
+        if (match !== null) {
+            return match[1];
+        }
+    }
+    return null;
 }
