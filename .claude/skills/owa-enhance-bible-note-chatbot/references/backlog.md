@@ -1549,6 +1549,38 @@ was seen and what was done.
   and the Background "the father urges his son not to forget the law and
   to keep mercy and truth close to his heart to find favor with God and
   man".
+- **BN-106 — Luke 15 and the priest in the word table** (2026-11-11, the
+  BN-99..104 reads). Three misreadings came back read after read. The
+  prodigal's father "ignores the request for servitude", which the son
+  never made (three reads: 15:21 stops at "no more worthy to be called
+  thy son"). The lost sheep's shepherd "goes into the scary wilderness",
+  where Luke 15:4 LEAVES the ninety and nine in it. The priest and the
+  Levite were "the highest religious leaders in Israel" (two reads). Three
+  entries, each quoting the KJV as the app's own data has it. "make me as
+  one of thy hired servants" is what the son PLANNED to say. "The ninety
+  and nine in the wilderness" is the flock's pasture where they are left,
+  as Eliab asked David "with whom hast thou left those few sheep in the
+  wilderness?"; Matthew's shepherd goes "into the mountains", which this
+  does not match. The priest entry opens on "ONE of the many sons of
+  Aaron, who served in turn" (Luke 1:8) and names the high priest
+  (Leviticus 21:10); it no longer matches "chief priests" or "high
+  priest". And, from the run itself: "passed by on the other side" (only
+  Luke 10:31-32 in the KJV) says Luke gives no reason why, so a lesson
+  gives none. Seen live: the children's lost sheep read "the wilderness
+  is the open land where the sheep eat grass" (before: "a wild place
+  where it is easy to get lost"); the Good Samaritan, which had the priest
+  and the Levite "choosing their ritual purity or safety over the life of
+  a dying man", answered "The passage does not give their reason".
+- **BN-107 — an example a listener can see, never a manager at an
+  office** (2026-11-11, the BN-103/104 read). Opus scored illustration
+  1.19 of 2 (25 lessons of 32 at 1, "stock workplace vignettes"); Sonnet
+  had said the same since BN-95. The shape asked for "someone named by
+  role and place, never by name", and the model filled both with a
+  workplace: "a manager at a warehouse", "a clerk at a busy office". An
+  example is now "three or four sentences a listener can see: the place,
+  one thing there to see or hear, and what was said or done; a person
+  these hearers would know, never by name, and never a manager, a clerk
+  or an office".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

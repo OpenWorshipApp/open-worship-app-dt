@@ -73,10 +73,16 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'tabernacle, not a priest himself (Numbers 3:6-10)',
     },
     {
-        pattern: /\bpriests?\b/i,
+        // "The highest religious leaders in Israel", of Luke 10:31's "a
+        // certain priest", in two blind reads (BN-106): it opens on ONE of
+        // many. Not said of the chief priests or the high priest.
+        pattern: /(?<!\b(?:chief|high) )\bpriests?\b/i,
         text:
-            "priest: in Israel, of Aaron's sons, who offered the sacrifices " +
-            '(Exodus 28:1; Leviticus 1:5)',
+            'priest: in Israel, ONE of the many sons of Aaron, who served in ' +
+            'turn -- Zacharias "executed the priest\'s office before God in ' +
+            'the order of his course" (Luke 1:8) -- and offered the ' +
+            'sacrifices (Leviticus 1:5); one among them was "the high priest ' +
+            'among his brethren" (Leviticus 21:10)',
     },
     {
         pattern: /\bsamaritans?\b/i,
@@ -270,6 +276,38 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'the sea, in "no more sea": the restless deep -- "the wicked are ' +
             'like the troubled sea, when it cannot rest" (Isaiah 57:20); the ' +
             'beast rose "up out of the sea" (Revelation 13:1)',
+    },
+    // BN-106: Luke 15, read wrong in blind read after blind read.
+    {
+        // The father "ignores the request for servitude", in three reads:
+        // the son never made it.
+        pattern: /\bmake me as one of thy hired servants\b/i,
+        text:
+            'make me as one of thy hired servants (Luke 15:19): what the son ' +
+            'PLANNED to say; at home he never said it -- after "no more ' +
+            'worthy to be called thy son" (15:21) the father spoke (15:22)',
+    },
+    {
+        // The shepherd "goes into the scary wilderness": Luke leaves the
+        // ninety and nine in it. Matthew's shepherd goes "into the
+        // mountains", which this does not match.
+        pattern: /\bninety and nine in the wilderness\b/i,
+        text:
+            'the ninety and nine in the wilderness (Luke 15:4): the ' +
+            "wilderness is the flock's pasture, where the ninety and nine " +
+            'are LEFT -- "with whom hast thou left those few sheep in the ' +
+            'wilderness?" (1 Samuel 17:28) -- and the shepherd goes "after ' +
+            'that which is lost, until he find it"',
+    },
+    {
+        // "Choosing their ritual purity or safety over a dying man", and a
+        // hearer asking why they did not stop: a reason Luke never gives.
+        pattern: /\bpassed by on the other side\b/i,
+        text:
+            'passed by on the other side (Luke 10:31-32): the priest saw him, ' +
+            'the Levite "came and looked on him", and each passed by; Luke ' +
+            'gives no reason why, so a lesson gives none -- the parable turns ' +
+            'on the one who "had compassion on him" (10:33)',
     },
 ];
 

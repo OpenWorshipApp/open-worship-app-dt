@@ -78,7 +78,7 @@ describe('a lesson to preach, asked anywhere', () => {
     // a weekday task under every point plus one more in the Response.
     test('an example names no one, and a lesson asks one step', () => {
         for (const line of [
-            'named by role and place, never by name',
+            'never by name',
             'one deed that answers what God gives in THIS point',
             'never a weekday or hour picked for no reason',
             // BN-98: told only to take a deed already given, the Response
@@ -110,6 +110,18 @@ describe('a lesson to preach, asked anywhere', () => {
         ]) {
             expect(PREACHING_LESSON_SHAPE).toContain(line);
         }
+    });
+
+    // BN-107 (2026-11-11): "someone named by role and place" was filled with
+    // a workplace in lesson after lesson -- "a manager at a warehouse".
+    test('an example is a scene to see, never a manager at an office', () => {
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'three or four sentences a listener can see: the place',
+        );
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'never a manager, a clerk or an office',
+        );
+        expect(PREACHING_LESSON_SHAPE).not.toContain('named by role and place');
     });
 
     // BN-102 (2026-11-11): backgrounds missed the occasion a passage

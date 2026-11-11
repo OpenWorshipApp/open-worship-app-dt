@@ -163,6 +163,13 @@ export const NOTE_CREATE_PROMPT =
 // office types that "don't mirror the point": an example is now the point's
 // own verses happening again in the hearers' week, never ending on "This
 // shows".
+//
+// BN-107 (the BN-103/104 read, Opus: illustration 1.19 of 2, 25 lessons of
+// 32 at 1, "stock workplace vignettes"): told to name "someone by role and
+// place", the model filled both with a workplace -- "a manager at a
+// warehouse", "a clerk at a busy office" -- in lesson after lesson. An
+// example is now a scene a listener can see -- the place, one thing there
+// to see or hear -- and never a manager, a clerk or an office.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -213,9 +220,10 @@ export const PREACHING_LESSON_SHAPE =
     'where it states one>\n' +
     "**For example:** <a scene from the hearers' own week where what THIS " +
     "point's verses tell happens again -- the same need, and what God does " +
-    'or asks in it -- three or four sentences: someone named by role and ' +
-    'place, never by name, a person these hearers would know, and what was ' +
-    'said or done, told as a preacher would tell it, never ending on "This ' +
+    'or asks in it -- three or four sentences a listener can see: the place, ' +
+    'one thing there to see or hear, and what was said or done; a person ' +
+    'these hearers would know, never by name, and never a manager, a clerk ' +
+    'or an office; told as a preacher would tell it, never ending on "This ' +
     'shows"; not mere courage or effort, and promising nothing the passage ' +
     'does not; never a memory of your own or a date, never a stock picture: ' +
     'a lifeboat, a garden, a rescue>\n' +

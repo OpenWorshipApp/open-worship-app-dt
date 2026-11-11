@@ -117,6 +117,47 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ).toEqual([]);
     });
 
+    // BN-106 (2026-11-11): what blind reads found again and again -- the
+    // prodigal's father "ignores the request" the son never made, the
+    // shepherd "goes into the wilderness" where Luke leaves the ninety and
+    // nine, the priest "the highest religious leader".
+    test('Luke 15 and the priest, as Scripture says them', () => {
+        expect(
+            findLessonWordGlosses(
+                'And am no more worthy to be called thy son: make me as one ' +
+                    'of thy hired servants.',
+            ),
+        ).toEqual([expect.stringContaining('at home he never said it')]);
+        expect(
+            findLessonWordGlosses(
+                'doth not leave the ninety and nine in the wilderness, and go',
+            ),
+        ).toEqual([expect.stringContaining('ninety and nine are LEFT')]);
+        // Matthew's shepherd goes into the mountains: nothing to correct.
+        expect(
+            findLessonWordGlosses(
+                'doth he not leave the ninety and nine, and goeth into the ' +
+                    'mountains',
+            ),
+        ).toEqual([]);
+        expect(
+            findLessonWordGlosses('there came down a certain priest'),
+        ).toEqual([
+            expect.stringMatching(/^priest: in Israel, ONE of the many/),
+        ]);
+        // Why they passed by is a reason Luke never gives.
+        expect(
+            findLessonWordGlosses(
+                'and when he saw him, he passed by on the other side.',
+            ),
+        ).toEqual([expect.stringContaining('Luke gives no reason why')]);
+        // The chief priests and the high priest are no one-of-many.
+        expect(
+            findLessonWordGlosses('the chief priests and the scribes'),
+        ).toEqual([expect.stringMatching(/^scribe: /)]);
+        expect(findLessonWordGlosses('a great high priest')).toEqual([]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +
