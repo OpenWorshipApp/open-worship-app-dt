@@ -208,6 +208,16 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'your hearts forgive not" (Matthew 18:34-35)',
     },
     {
+        // BN-121 (2026-11-11, the BN-116/117 read): a Psalm 51 lesson
+        // never said why David fears being cast away.
+        pattern: /\btake not thy holy spirit from me\b/i,
+        text:
+            'take not thy holy spirit from me (Psalm 51:11): the Spirit of ' +
+            'the LORD "came upon David" when Samuel anointed him (1 Samuel ' +
+            '16:13), and "departed from Saul" (16:14), the king before him ' +
+            '-- what David begs God not to do to him',
+    },
+    {
         // Jesus had been called "the truly broken and contrite one".
         pattern: /\bcontrite\b/i,
         text:
@@ -296,6 +306,20 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             'make me as one of thy hired servants (Luke 15:19): what the son ' +
             'PLANNED to say; at home he never said it -- after "no more ' +
             'worthy to be called thy son" (15:21) the father spoke (15:22)',
+    },
+    {
+        // BN-121 (2026-11-11, the BN-116/117 read): "give the robe, ring
+        // and shoes some explanation of what they meant". One place of
+        // Scripture only: two side by side are merged.
+        pattern: /\bbring forth the best robe\b/i,
+        text:
+            "the best robe, a ring, shoes (Luke 15:22): the father's answer " +
+            'to "no more worthy to be called thy son" (15:21), given before ' +
+            'the son had done anything -- a ring on the hand and fine ' +
+            'clothing are what Pharaoh put on Joseph when he set him over ' +
+            'all the land (Genesis 41:41-42), so the ring and the robe say ' +
+            'honour and trust given to him; of the shoes Luke says nothing ' +
+            'more',
     },
     {
         // The shepherd "goes into the scary wilderness": Luke leaves the

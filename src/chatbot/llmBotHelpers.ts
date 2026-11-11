@@ -212,8 +212,10 @@ import {
     findCitedQuotes,
     findNoteMisquotes,
     findTestamentSlips,
+    findTokenAsWords,
     genCitedMisquoteRefusal,
     genTestamentSlipRefusal,
+    genTokenAsWordsRefusal,
     genLessonPointsRefusal,
     genLostNoteLinesRefusal,
     genNoteMisquoteRefusal,
@@ -2366,6 +2368,9 @@ type ToolWatchType = {
     // A sentence putting a verse in the other Testament was sent back
     // (BN-114, `findTestamentSlips`): once an ask.
     isNoteTestamentChecked?: boolean;
+    // A verse token standing in for a sentence's words was sent back
+    // (BN-120, `findTokenAsWords`): once an ask.
+    isNoteTokenWordsChecked?: boolean;
     // A new lesson's points were held to its passage, its order and its end
     // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
     isLessonPointsChecked?: boolean;
@@ -4741,6 +4746,21 @@ async function runMcpToolCall(
             if (slips.length > 0) {
                 watch.isNoteTestamentChecked = true;
                 return `Tool refused: ${genTestamentSlipRefusal(slips)}`;
+            }
+        }
+        // A token is never a sentence's words (BN-120): "Jesus, who
+        // [^John 1:14]." was left with nothing where the verse's words were
+        // meant to be.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteTokenWordsChecked !== true
+        ) {
+            const found = findTokenAsWords(toNoteChangeWords(lyricEditArgs));
+            if (found.length > 0) {
+                watch.isNoteTokenWordsChecked = true;
+                return `Tool refused: ${genTokenAsWordsRefusal(found)}`;
             }
         }
         // ...and a quote given its own chapter and verse is that verse's

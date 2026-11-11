@@ -230,12 +230,69 @@ export function gradeLesson(blocks, { form = 'sermon', isEnglish = true } = {}) 
 }
 
 /** A note's blocks as plain text a reader can judge: headings, items, passages. */
+const REPO_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
+let kjvData = null;
+
+function readKjvData() {
+    if (kjvData === null) {
+        const read = (path) => {
+            return JSON.parse(readFileSync(join(REPO_DIR, path), 'utf8'));
+        };
+        const config = read('src/helper/bible-helpers/kjvBibleConfig.json');
+        kjvData = {
+            books: read('src/helper/bible-helpers/bible-data/kjvBibleBooks.json'),
+            keyMap: new Map(
+                Object.entries(config.keyBookMap).map(([key, name]) => {
+                    return [String(name).toLowerCase(), key];
+                }),
+            ),
+        };
+    }
+    return kjvData;
+}
+
+// A block over the note read's 8000 letters comes back cut with "…"
+// (`isTextCut`) though the note holds it whole: every reader of ab20..ab23
+// was given L-01's 1 Samuel 17:1-58 stopping at "(51): Therefore David
+// ran,…" -- the harness's cut, not the note's. A KJV passage is rebuilt
+// from the repo's KJV, the words the installed one gives (byte for byte
+// on every passage block not cut), and only where the cut text is the
+// start of what is rebuilt.
+export function toWholePassageText(text) {
+    const cut = String(text ?? '');
+    if (!cut.endsWith('…')) {
+        return cut;
+    }
+    const match =
+        /^\(KJV\) ((?:[1-3] )?[A-Za-z][A-Za-z ]*?) (\d+):(\d+)-(\d+) — /.exec(
+            cut,
+        );
+    if (match === null) {
+        return cut;
+    }
+    const { books, keyMap } = readKjvData();
+    const chapter = books[keyMap.get(match[1].toLowerCase())]?.[match[2]];
+    if (chapter === undefined) {
+        return cut;
+    }
+    const verseList = [];
+    for (let verse = Number(match[3]); verse <= Number(match[4]); verse++) {
+        const words = chapter[String(verse)];
+        if (typeof words !== 'string') {
+            return cut;
+        }
+        verseList.push(`(${verse}): ${words}`);
+    }
+    const whole = `${match[0]}${verseList.join(' ')}`;
+    return whole.startsWith(cut.slice(0, -1)) ? whole : cut;
+}
+
 export function toLessonText(blocks, title = '') {
     const lines = title === '' ? [] : [`# ${title}`, ''];
     for (const block of Array.isArray(blocks) ? blocks : []) {
         const text = String(block.text ?? '');
         if (block.kind === 'passage') {
-            lines.push(`> ${text}`, '');
+            lines.push(`> ${toWholePassageText(text)}`, '');
         } else if (/^h[1-6]$/.test(block.kind)) {
             lines.push(`${'#'.repeat(Number(block.kind[1]) + 0)} ${text}`, '');
         } else if (['bullet', 'check'].includes(block.kind)) {
@@ -243,7 +300,10 @@ export function toLessonText(blocks, title = '') {
         } else if (block.kind === 'number') {
             lines.push(`1. ${text}`);
         } else if (text.trim() !== '') {
-            lines.push(text, '');
+            // A block's line breaks are lines in the note window; in
+            // Markdown they ran together -- "bold labels run together in
+            // the points" (ab23, a children's lesson written as one block).
+            lines.push(text.split('\n').join('\n\n'), '');
         }
     }
     return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();

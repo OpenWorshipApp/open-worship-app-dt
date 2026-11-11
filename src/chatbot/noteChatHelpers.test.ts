@@ -38,7 +38,9 @@ import {
     findCitedMisquotes,
     findCitedQuotes,
     findTestamentSlips,
+    findTokenAsWords,
     genTestamentSlipRefusal,
+    genTokenAsWordsRefusal,
     toLessonVerseLines,
     findNoteMisquotes,
     genCitedMisquoteRefusal,
@@ -1594,6 +1596,54 @@ describe('a verse is in the Testament its book is in', () => {
             'Isaiah 53:5 is quoted in the New Testament.',
         ]) {
             expect(findTestamentSlips(text), text).toEqual([]);
+        }
+    });
+});
+
+// BN-120 (2026-11-11, the BN-116/117 read): "finds its fulfillment in
+// Jesus, who [^(KJV) John 1:14]." -- a token shows as its reference alone.
+describe("a verse token is never a sentence's words", () => {
+    it('names a sentence a token was left to finish', () => {
+        const found = findTokenAsWords(
+            'The promise that "the tabernacle of God is with men" finds its ' +
+                'fulfillment in Jesus, who [^(KJV) John 1:14]. He entered ' +
+                'our world.\n**What it means:** In the New Testament, Jesus ' +
+                'says, [^Matthew 11:28]\n- Paul wrote: [^Romans 8:28].',
+        );
+        expect(found).toEqual([
+            {
+                sentence:
+                    'The promise that "the tabernacle of God is with men" ' +
+                    'finds its fulfillment in Jesus, who [^(KJV) John 1:14].',
+                token: '[^(KJV) John 1:14]',
+            },
+            {
+                sentence: 'In the New Testament, Jesus says, [^Matthew 11:28]',
+                token: '[^Matthew 11:28]',
+            },
+            {
+                sentence: 'Paul wrote: [^Romans 8:28].',
+                token: '[^Romans 8:28]',
+            },
+        ]);
+        const refusal = genTokenAsWordsRefusal(found.slice(0, 1));
+        expect(refusal).toContain('a token shows only as its reference');
+        expect(refusal).toContain(
+            'Jesus, who “<its words, as read>” [^(KJV) John 1:14].',
+        );
+        expect(refusal).toContain('that sentence is left without them');
+    });
+
+    it('lets a token that cites or sits inside a sentence be', () => {
+        for (const text of [
+            'We are loved, as Jesus said [^John 3:16].',
+            'Jesus says, "Come unto me" [^Matthew 11:28].',
+            'The God who [^Psalm 23:1] calls himself a shepherd keeps us.',
+            'The Word was made flesh [^John 1:14].',
+            '[^(KJV) Psalm 23:1-3] In the pasture, he gives rest.',
+            'He promised it in [^Isaiah 41:10].',
+        ]) {
+            expect(findTokenAsWords(text), text).toEqual([]);
         }
     });
 });

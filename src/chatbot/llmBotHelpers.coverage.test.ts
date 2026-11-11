@@ -1546,6 +1546,67 @@ describe('the Anthropic loop', () => {
         );
     });
 
+    // BN-120 (2026-11-11): "finds its fulfillment in Jesus, who [^John
+    // 1:14]." -- a token in place of the verse's words is sent back once,
+    // with the sentence; the next goes in.
+    test('a token standing in for a verse is sent back once', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_bible_note' }];
+        fake.answerTool = () => {
+            return JSON.stringify({ name: 'Sermon Prep', isChanged: true });
+        };
+        const add = (christ: string) => {
+            return anthropicToolUse({
+                name: 'owa_bible_note',
+                input: {
+                    action: 'add',
+                    title: 'A Home Prepared',
+                    text: `[^Revelation 21:1-7]\n## Pointing to Jesus\n${christ}`,
+                },
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                add('It is fulfilled in Jesus, who [^John 1:14].'),
+                add(
+                    'It is fulfilled in Jesus, who came to dwell among us [^John 1:14].',
+                ),
+                anthropicText('Your lesson is in the note.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'a message of hope for a funeral, from Revelation 21:1-7',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Sermon Prep',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        const refused = readToolResults(sentList[1])[0].content;
+        expect(refused).toContain(
+            '“It is fulfilled in Jesus, who [^John 1:14].” -- a token shows ' +
+                'only as its reference',
+        );
+        expect(fake.toolCallList.map((call) => call.name)).toEqual([
+            'owa_note_edit',
+        ]);
+        expect(JSON.stringify(fake.toolCallList[0].args)).toContain(
+            'who came to dwell among us',
+        );
+    });
+
     // BN-74 (2026-11-10): a review of their lesson with nothing to press
     // is asked once more, for the fixes it named as buttons.
     test('a lesson review with no fix to press is asked for them', async () => {

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-11T19:17:44.726Z
+  modified: 2026-11-11T20:43:59.885Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -403,6 +403,14 @@ an hour latched two scratch profiles' pace cap, which only a person's
 `data/local-storage/chatbot-spend-ledger` (`rounds`, `[time, …]`) before a
 run and start when the past hour holds under about 60; a row recorded as
 `paused` is asked again by the next run of the same file.
+(27) **Read what the readers were given before believing a score**: four
+reads (ab20..ab23) scored L-01's lesson down for a passage "cut off at
+verse 51" and a children's lesson for labels that "run together" -- both
+the harness's doing. `owa_note_edit read` hands a block over 8000 letters
+back cut with "…" (the note holds 1 Samuel 17:1-58 whole), and a block's
+line breaks were written as Markdown lines, which join. `lesson-rubric.mjs`
+now rebuilds a cut KJV passage and keeps the lines. When a reader names
+a defect, open the lesson file they read AND the note it came from.
 (13) **A fresh scratch data folder needs its child folders too**: a
 `setting.json` naming the data folder is not enough -- that folder's own
 `local-storage/select-dir-bible-notes` (and `-app-document`,

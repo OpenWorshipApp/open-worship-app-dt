@@ -195,7 +195,10 @@ export const PREACHING_LESSON_SHAPE =
     'longer story, the part the lesson preaches, the rest told in its ' +
     'background); then "## " headings: Big idea (ONE full ' +
     'sentence: what the passage says about God, and what that asks of us), ' +
-    "Background (three or four sentences from the Bible's own pages: who " +
+    "Background (three or four sentences from the Bible's own pages that " +
+    'change how THIS passage is heard -- never one that would fit any ' +
+    'passage of its book, as "part of the historical books", "wrote for a ' +
+    'Jewish audience" or "a song of trust": who ' +
     'wrote it and to whom where the Bible names them; the OCCASION it ' +
     'answers -- who was speaking to whom and why, what had just happened or ' +
     'been said, in its first verses or just before them -- and who its ' +
@@ -253,8 +256,11 @@ export const PREACHING_LESSON_SHAPE =
     'the passage and their lives) and Memory verse ([^ref], one short verse ' +
     'that says the big idea plainly). A devotion keeps every part, short, ' +
     'with ONE point that walks its whole passage movement by movement from ' +
-    'its first verse to its last -- its What it means making each ' +
-    "movement's words plain -- about 450 words. A funeral message " +
+    'its first verse to its last: under its heading no passage printed ' +
+    'again, and its What it means a line for each movement in order, each ' +
+    "opening with that movement's verses as a token -- [^<its first " +
+    'verses>] <what happens there>: <its words made plain> -- about 450 ' +
+    'words. A funeral message ' +
     "comforts: its points the passage's own promises made plain for the " +
     'grieving and why they can be trusted, its examples gentle scenes of ' +
     "loss and hope, its This week a comfort to hold and never a task, Christ's " +

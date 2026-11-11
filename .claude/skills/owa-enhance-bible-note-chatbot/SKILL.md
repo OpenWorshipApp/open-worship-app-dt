@@ -150,7 +150,11 @@ or a preacher's own partial lesson for a `finish` row), its **Open in
 Chatbot**, the ask typed or the empty note's card pressed -- and
 `scripts/lesson-rubric.mjs <results> --text=<dir>` checks the structure by
 machine and writes each lesson as text with the ask and nothing of how it
-was made. Two readers on different models, briefed with the standard and
+was made -- as its note window shows it: a passage over the note read's
+8000 letters, which the read hands back cut with "…", rebuilt from the KJV,
+and a block's line breaks kept as lines (until 2026-11-11 every reader of
+1 Samuel 17:1-58 got it stopping at verse 51, and a children's lesson's
+labels run together -- the harness's doing, scored as the lesson's). Two readers on different models, briefed with the standard and
 the lessons alone, score them; a weakness most lessons share is a change to
 the shape the model is given, never to the standard. **The job is to HELP
 PREPARE, so measure the loop, not only the first draft** (BN-72, BN-74):

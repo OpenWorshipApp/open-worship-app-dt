@@ -150,6 +150,36 @@ describe('a lesson to preach, asked anywhere', () => {
         expect(PREACHING_LESSON_SHAPE).not.toContain('about 300 words');
     });
 
+    // BN-119 (2026-11-11, the BN-116/117 read): told to walk its passage
+    // "movement by movement", a devotion still printed the whole psalm
+    // under its one point and explained three phrases -- "one point holds
+    // all six verses", "divide the psalm by its refrains (vv.1-3, 4-7,
+    // 8-11)". The movements are lines now, each named by its verses.
+    test("a devotion's movements are lines, each opening with its verses", () => {
+        for (const line of [
+            'under its heading no passage printed again',
+            'a line for each movement in order',
+            "opening with that movement's verses as a token",
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(line);
+        }
+    });
+
+    // BN-118 (2026-11-11, the BN-116/117 read): six backgrounds of sixteen
+    // were "generic", each opening on a line true of its whole book.
+    test('a background changes how THIS passage is heard', () => {
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'change how THIS passage is heard',
+        );
+        for (const phrase of [
+            '"part of the historical books"',
+            '"wrote for a Jewish audience"',
+            '"a song of trust"',
+        ]) {
+            expect(PREACHING_LESSON_SHAPE).toContain(phrase);
+        }
+    });
+
     // BN-73 (2026-11-10): "a 15 minute sermon" came back five minutes
     // long from a rate; a number of words is what a model follows.
     test('a length they give is a number of words', () => {

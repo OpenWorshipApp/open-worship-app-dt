@@ -1024,6 +1024,73 @@ export function genTestamentSlipRefusal(slips: readonly TestamentSlipType[]) {
     );
 }
 
+// --- a verse token is never a sentence's words (BN-120) ----------------------
+//
+// 2026-11-11, the BN-116/117 read: a funeral message's Christ section read
+// "finds its fulfillment in Jesus, who [^(KJV) John 1:14]." -- and, a read
+// before, "Jesus says, [^(KJV) Matthew 11:28]." A token shows as its
+// reference alone, so each sentence was left with no words where the
+// verse's were meant to be. A token right after "who", "which" or "whom",
+// or after a saying word and its comma or colon, that ends its sentence,
+// is sent back once; "as Jesus said [^John 3:16]." cites, and is let be.
+const TOKEN_AS_WORDS_PATTERN =
+    /(?:\b(?:who|which|whom)|\b(?:says?|said|saith|writes?|wrote|declares?|promises?|promised|cries|cried|answers?|answered|asks?|asked|reads?|prays?|prayed|tells? us|told us)\s*[,:])\s*(\[\^[^\]\n]+\])\s*(?=[.!?;]|$)/gi;
+const MAX_TOKEN_SENTENCE_CHARS = 160;
+
+/** The sentences whose words a verse token stands in for, three at most. */
+export function findTokenAsWords(text: string) {
+    const found: { sentence: string; token: string }[] = [];
+    for (const line of String(text ?? '').split(/\r?\n/)) {
+        for (const match of line.matchAll(TOKEN_AS_WORDS_PATTERN)) {
+            const at = match.index ?? 0;
+            const before = line.slice(0, at);
+            const start = Math.max(
+                ...['. ', '! ', '? '].map((end) => {
+                    const index = before.lastIndexOf(end);
+                    return index < 0 ? 0 : index + 2;
+                }),
+            );
+            const end = at + match[0].length;
+            const closing = /[.!?;]/.test(line[end] ?? '') ? line[end] : '';
+            let sentence = `${line.slice(start, end)}${closing}`
+                .replace(/^\s*(?:[-*]\s+)?(?:\*\*[^*]+\*\*\s*)?/, '')
+                .trim();
+            if (sentence.length > MAX_TOKEN_SENTENCE_CHARS) {
+                sentence = `…${sentence.slice(-MAX_TOKEN_SENTENCE_CHARS)}`;
+            }
+            if (!found.some((item) => item.sentence === sentence)) {
+                found.push({ sentence, token: match[1] });
+            }
+        }
+    }
+    return found.slice(0, 3);
+}
+
+/** What the model is told when a token stands in for a verse's words. */
+export function genTokenAsWordsRefusal(
+    found: readonly { sentence: string; token: string }[],
+) {
+    return (
+        'Nothing was written: ' +
+        found.map((item) => `“${item.sentence}”`).join(' and ') +
+        ' -- a token shows only as its reference, never its words, so ' +
+        (found.length > 1 ? 'those sentences are' : 'that sentence is') +
+        " left without them. Write the verse's words in quotes as you read " +
+        'them with owa_find_verse, then its token -- ' +
+        found
+            .slice(0, 1)
+            .map((item) => {
+                return `“${item.sentence.replace(
+                    item.token,
+                    `“<its words, as read>” ${item.token}`,
+                )}”`;
+            })
+            .join('') +
+        ' -- or end the sentence in your own words before the token, then ' +
+        'send the change again, whole.'
+    );
+}
+
 /** What the model is told when a quote is not the verse it names. */
 export function genCitedMisquoteRefusal(
     misquotes: readonly (CitedQuoteType & { verse: string })[],

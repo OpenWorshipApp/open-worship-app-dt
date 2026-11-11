@@ -1721,6 +1721,57 @@ was seen and what was done.
   still let a quote be. Asked again live: "those not found in the book of
   life are cast into the lake of fire [^(KJV) Revelation 20:11-15]", 8
   cited quotations, every one word for word.
+- **BN-118 — a background that changes how THIS passage is heard**
+  (2026-11-11, the BN-116/117 read, Sonnet: six backgrounds of sixteen at
+  1, "generic", "boilerplate"). Each opened on a sentence true of its whole
+  book -- "This account is part of the historical books of the Old
+  Testament", "Matthew wrote this account for a Jewish audience", "a song
+  of confidence", "a song of trust" -- and the occasion the reader asked
+  for was missing or came after it: the Philippians' gift (4:10) for
+  Paul's contentment, Babylon for Isaiah 40. The shape's Background asks
+  for sentences that change how THIS passage is heard and names those as
+  what it never says: naming the wrong reading is what ended "Have you
+  ever" (BN-90).
+- **BN-119 — a devotion's movements are lines, each named by its verses**
+  (2026-11-11, the same read: the Psalm 23 and Psalm 46 devotions both "one
+  point holds all the verses", D and E at 1; the reader's one change
+  "break the psalm into its movements (pasture, valley, table)", "divide
+  the psalm by its refrains (vv.1-3, 4-7, 8-11)"). BN-98 had told the one
+  point to walk its passage "movement by movement"; the model printed the
+  whole psalm under it again and explained three phrases. Now: under its
+  heading no passage printed again, and its What it means a line for each
+  movement in order, each opening with that movement's verses as a token.
+  BN-83 reads every token under a point, so the movements still cover the
+  passage.
+- **BN-120 — a verse token is never a sentence's words** (2026-11-11, the
+  same read: a funeral message's "finds its fulfillment in Jesus, who
+  [^(KJV) John 1:14]." -- and ab20's "Jesus says, [^(KJV) Matthew
+  11:28]."). A token shows its reference alone, so the sentence was left
+  with no words where the verse's were meant to be. A token right after
+  "who", "which" or "whom", or after a saying word and its comma or colon,
+  that ends its sentence is sent back once an ask (`findTokenAsWords`,
+  `genTokenAsWordsRefusal`), the sentence quoted and the way to give the
+  words shown in it; "as Jesus said [^John 3:16]." cites, and is let be.
+  Run over the 128 lessons of ab20..ab23, it names exactly those two.
+- **BN-121 — the father's gifts and the Spirit taken, in the word table**
+  (2026-11-11, the same read: "give the robe, ring and shoes some
+  explanation of what they meant"; a Psalm 51 lesson that never said why
+  David fears being cast away). Luke 15:22's best robe, ring and shoes --
+  the father's answer to "no more worthy", the ring and fine clothing
+  Pharaoh put on Joseph when he set him over the land (Genesis 41:41-42),
+  of the shoes nothing more (one place of Scripture: two side by side are
+  merged) -- and Psalm 51:11's "take not thy holy spirit from me": the
+  Spirit "came upon David" (1 Samuel 16:13) and "departed from Saul"
+  (16:14).
+- **BN-122 — a psalm's title is Scripture the app's KJV does not hold**
+  (open, 2026-11-11). Psalm backgrounds are the thinnest the readers find
+  ("David, a shepherd himself ... wrote this psalm" -- thin), and the
+  shape tells a psalm's background from "its own words": the KJV prints a
+  title over most psalms ("A Psalm of David", "when Nathan the prophet came
+  unto him"), and neither `kjvBibleBooks.json` nor an installed KJV.xml
+  carries one, so the model reads none. Titles from a sourced KJV text,
+  read with the psalm, would give the background its own words; never
+  written from memory.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

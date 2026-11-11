@@ -249,6 +249,32 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         ]);
     });
 
+    // BN-121 (2026-11-11, the BN-116/117 read): the robe, ring and shoes
+    // left unexplained, and Psalm 51 never saying why David fears being
+    // cast away.
+    test("the father's gifts and the Spirit taken, by Scripture", () => {
+        expect(
+            findLessonWordGlosses(
+                'Bring forth the best robe, and put it on him; and put a ring ' +
+                    'on his hand, and shoes on his feet:',
+            ),
+        ).toEqual([
+            expect.stringMatching(
+                /^the best robe, a ring, shoes \(Luke 15:22\): .*\(Genesis 41:41-42\).*of the shoes Luke says nothing more$/,
+            ),
+        ]);
+        expect(
+            findLessonWordGlosses(
+                'Cast me not away from thy presence; and take not thy holy ' +
+                    'spirit from me.',
+            ),
+        ).toEqual([
+            expect.stringContaining(
+                '"departed from Saul" (16:14), the king before him',
+            ),
+        ]);
+    });
+
     test('a long story carries eight at most', () => {
         const words =
             'pence talents mites shekels publicans Levites priests ' +
