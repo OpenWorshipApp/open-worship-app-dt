@@ -1540,8 +1540,10 @@ export function genLessonFormLine(form: LessonFormType) {
 export function genLessonFormWriteLine(form: LessonFormType) {
     return form === 'devotion'
         ? '(It was asked for as a short devotion: write it as one -- every ' +
-              'part in a sentence or two and ONE point that walks the whole ' +
-              'passage, about 300 words in all; never three points.)'
+              'part short and ONE point that walks the whole passage ' +
+              "movement by movement, each movement's words made plain, one " +
+              'example and a Response with a clear call, about 450 words in ' +
+              'all; never three points.)'
         : "(It was asked for as a children's lesson: write it as one -- the " +
               'story told in short sentences under its own heading, two ' +
               'points a child can hold, something to show, and a memory verse ' +

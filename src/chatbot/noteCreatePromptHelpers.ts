@@ -137,6 +137,15 @@ export const NOTE_CREATE_PROMPT =
 // the points' deeds instead of adding another. No example phrase is given:
 // shown "a nurse after a night shift" and "at the meal table", the first
 // four lessons opened their examples and deeds on those very words.
+//
+// BN-98 (the BN-94..96 read): told to take its step "from the points'
+// deeds, never a new one", the Response shrank to "one line: 'Go and show
+// mercy'" with no clear call (conclusion 2.00 -> 1.69 by Sonnet), so it is
+// a clear call again -- what, with whom, when -- to the one deed that
+// carries the big idea. And a devotion of "every part in a sentence or two"
+// (BN-94) was read as thin in every part, 15 and 16 of 24, the reader's
+// one change "divide the psalm into its movements": its one point now
+// walks the passage movement by movement, about 450 words.
 
 /** What a preaching lesson holds, in the order it is preached. */
 export const PREACHING_LESSON_SHAPE =
@@ -197,15 +206,16 @@ export const PREACHING_LESSON_SHAPE =
     'word it only shares with a name of his ("the word", "the way"), never ' +
     'only his example, never the story turned into an allegory of him, never ' +
     'a picture the passage does not have), Response (the ' +
-    'big idea said again in new words, then the ONE step the whole passage ' +
-    "asks most, taken from the points' deeds, never a new one; where the " +
-    'passage calls us to believe, a plain invitation to), ' +
+    'big idea said again in new words, then a clear call to the ONE step ' +
+    'the whole passage asks most -- what, with whom and when in their week ' +
+    '-- the deed of the point that carries the big idea, never one more ' +
+    'task; where the passage calls us to believe, a plain invitation to), ' +
     'Closing prayer (written out), Questions for discussion ("- " items, on ' +
     'the passage and their lives) and Memory verse ([^ref], one short verse ' +
-    'that says the big idea plainly). A devotion keeps every part, each in ' +
-    'a sentence or two, with ONE point that walks its whole passage from ' +
-    'its first verse to its last, naming them in its sentences, about 300 ' +
-    'words. A funeral message ' +
+    'that says the big idea plainly). A devotion keeps every part, short, ' +
+    'with ONE point that walks its whole passage movement by movement from ' +
+    'its first verse to its last -- its What it means making each ' +
+    "movement's words plain -- about 450 words. A funeral message " +
     "comforts: its points the passage's own promises made plain for the " +
     'grieving and why they can be trusted, its examples gentle scenes of ' +
     "loss and hope, its This week a comfort to hold and never a task, Christ's " +

@@ -1436,6 +1436,23 @@ was seen and what was done.
   under verses an answer cites ("Would you like me to add them to the
   note?") keeps its Yes and No. Asked again, the card's press and the first
   passage made a 993-word lesson.
+- **BN-98 — a devotion walks its passage, and a Response calls**
+  (2026-11-11, the BN-94..96 read, Sonnet 21.06 -> 20.00). Two of BN-94
+  and BN-95's lines went too far:
+  - The devotions BN-94 shortened (362 and 401 words) were read "Short,
+    fits a prayer-meeting devotion" for form and thin in every other part,
+    21 -> 16 and 19 -> 15, the reader's one change "divide the psalm into
+    its movements". Opus, two reads before, had marked three-point
+    devotions down, so the form keeps ONE point. That point now walks the
+    passage movement by movement, its What it means making each
+    movement's words plain: about 450 words, every part short.
+  - Told to take its step "from the points' deeds, never a new one", the
+    Response shrank to "one line: 'Go and show mercy'", "two sentences with
+    no call" (conclusion 2.00 -> 1.69). It is a clear call again (what, with
+    whom, when) to the one deed that carries the big idea, never one more
+    task.
+
+  ~1256 tokens.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

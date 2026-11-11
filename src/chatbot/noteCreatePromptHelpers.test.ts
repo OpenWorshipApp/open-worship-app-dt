@@ -81,7 +81,11 @@ describe('a lesson to preach, asked anywhere', () => {
             'named by role and place, never by name',
             'one deed that answers what God gives in THIS point',
             'never a weekday or hour picked for no reason',
-            "taken from the points' deeds, never a new one",
+            // BN-98: told only to take a deed already given, the Response
+            // was "one line: 'Go and show mercy'" with no clear call.
+            'a clear call to the ONE step',
+            'what, with whom and when in their week',
+            'never one more task',
         ]) {
             expect(PREACHING_LESSON_SHAPE).toContain(line);
         }
@@ -92,6 +96,17 @@ describe('a lesson to preach, asked anywhere', () => {
         for (const phrase of ['night shift', 'pew behind', 'meal table']) {
             expect(PREACHING_LESSON_SHAPE).not.toContain(phrase);
         }
+    });
+
+    // BN-98 (2026-11-11): a devotion of "every part in a sentence or two"
+    // was read as thin in every part (15 and 16 of 24), its one change
+    // "divide the psalm into its movements".
+    test("a devotion's one point walks the passage movement by movement", () => {
+        expect(PREACHING_LESSON_SHAPE).toContain(
+            'ONE point that walks its whole passage movement by movement',
+        );
+        expect(PREACHING_LESSON_SHAPE).toContain('about 450 words');
+        expect(PREACHING_LESSON_SHAPE).not.toContain('about 300 words');
     });
 
     // BN-73 (2026-11-10): "a 15 minute sermon" came back five minutes
