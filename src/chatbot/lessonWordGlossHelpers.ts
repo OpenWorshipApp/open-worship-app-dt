@@ -220,7 +220,8 @@ const LESSON_WORD_GLOSS_LIST: LessonWordGlossType[] = [
             // BN-123: "left to the consequences of a heart", "one's own
             // bitterness", with this entry beside it.
             "the lord's doing and the Father's, never only the torment of a " +
-            'bitter heart',
+            'bitter heart; and the one delivered is the servant who would ' +
+            'not forgive, never a picture of Christ or his cross',
     },
     {
         // BN-121 (2026-11-11, the BN-116/117 read): a Psalm 51 lesson

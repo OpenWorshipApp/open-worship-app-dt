@@ -2112,6 +2112,17 @@ describe('the form a lesson was asked for', () => {
         expect(genLessonFormWriteLine('devotion')).toContain(
             'never three points',
         );
+        // BN-125: said last, the line agrees with the shape -- the psalm not
+        // printed again under the one point, a child's verse of twenty words.
+        expect(genLessonFormWriteLine('devotion')).toContain(
+            'no passage printed under it again',
+        );
+        expect(genLessonFormWriteLine('children')).toContain(
+            'ONE verse of twenty words at most',
+        );
+        expect(genLessonFormWriteLine('children')).not.toContain(
+            'one short line',
+        );
         // Typed with its form: the words say it, the tab need not.
         expect(toNoteAsk("a children's lesson on Jonah", blank)).toContain(
             genLessonFormWriteLine('children'),

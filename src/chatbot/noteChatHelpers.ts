@@ -1878,16 +1878,22 @@ export function genLessonFormLine(form: LessonFormType) {
  * to a review or a finish alone.
  */
 export function genLessonFormWriteLine(form: LessonFormType) {
+    // BN-125 (2026-11-11): said last, these words win over the shape's --
+    // "a memory verse of one short line" here, twenty words there, and the
+    // children's lessons took Luke 15:7 (28 words) and Jonah 2:9 (24); the
+    // devotions printed their psalm again under their one point.
     return form === 'devotion'
         ? '(It was asked for as a short devotion: write it as one -- every ' +
               'part short and ONE point that walks the whole passage ' +
-              "movement by movement, each movement's words made plain, one " +
-              'example and a Response with a clear call, about 450 words in ' +
-              'all; never three points.)'
+              'movement by movement, no passage printed under it again, its ' +
+              'What it means a line for each movement opening with its ' +
+              'verses as a token, one example and a Response with a clear ' +
+              'call, about 450 words in all; never three points.)'
         : "(It was asked for as a children's lesson: write it as one -- the " +
               'story told in short sentences under its own heading, two ' +
               'points a child can hold, something to show, and a memory verse ' +
-              'of one short line a child can say.)';
+              'a child can say: ONE verse of twenty words at most, from the ' +
+              'story or elsewhere in Scripture.)';
 }
 
 /**

@@ -1791,6 +1791,24 @@ was seen and what was done.
   hospital room had stood in seven lessons of 32, beside a canyon bridge
   and a stranger who pays the debt: named with the lifeboat, the garden
   and the rescue as stock pictures.
+- **BN-125 — the line said last agrees with the shape; a stock scene is not
+  named** (2026-11-11, the BN-118..124 run, 16 lessons read by hand before
+  the blind read). What held: no background opened on a line true of its
+  whole book (BN-118); both devotions walked their psalm a line a movement,
+  each line opening with its verses (BN-119); the word table's new entries
+  were used where they fit (the father's gifts "signs of honor and trust",
+  Psalm 51:11 "the Spirit that came upon David"). What did not: the
+  children's lessons still took Luke 15:7 (28 words) and Jonah 2:9 (24),
+  and the devotions printed their psalm again under the one point -- the
+  form line said with a written lesson (`genLessonFormWriteLine`, said
+  LAST) still read "a memory verse of one short line" and said nothing of
+  the passage, and it now says what the shape says. And the hospital room
+  named as a stock picture came back in 6 lessons of 16 (4 of 16 before
+  it was named): a scene named to avoid is a scene put in mind, so the
+  list keeps its first three. One more slip: "He was delivered to the
+  tormentors of the cross" -- the tormentors entry now says the one
+  delivered is the servant who would not forgive, never a picture of
+  Christ.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

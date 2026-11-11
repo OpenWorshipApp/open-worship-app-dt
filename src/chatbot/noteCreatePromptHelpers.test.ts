@@ -166,17 +166,22 @@ describe('a lesson to preach, asked anywhere', () => {
     });
 
     // BN-124 (2026-11-11, the BN-116/117 read, Opus): children's memory
-    // verses a child cannot learn (Luke 15:7, Jonah 3:10, 28 and 37 words),
-    // and one hospital room in seven lessons of 32.
-    test("a child's memory verse is short, and an example no stock scene", () => {
+    // verses a child cannot learn (Luke 15:7, Jonah 3:10, 28 and 37 words).
+    test("a child's memory verse is short", () => {
         expect(PREACHING_LESSON_SHAPE).toContain(
             'ONE verse of twenty words at most, from the story or elsewhere',
         );
         expect(PREACHING_LESSON_SHAPE).not.toContain(
             'memory verse of one short line',
         );
+    });
+
+    // BN-125 (2026-11-11): named among the stock pictures, the hospital room
+    // came back in 6 lessons of 16 (4 before it was named) -- a scene named
+    // to avoid is a scene put in mind. The list keeps its first three.
+    test('a stock picture is not named into the shape', () => {
         for (const picture of ['a hospital room', 'a canyon bridge']) {
-            expect(PREACHING_LESSON_SHAPE).toContain(picture);
+            expect(PREACHING_LESSON_SHAPE).not.toContain(picture);
         }
     });
 

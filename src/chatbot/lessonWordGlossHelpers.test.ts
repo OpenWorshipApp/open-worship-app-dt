@@ -305,7 +305,9 @@ describe('the KJV words a passage holds, explained by Scripture', () => {
         expect(
             findLessonWordGlosses('and delivered him to the tormentors'),
         ).toEqual([
-            expect.stringContaining('never only the torment of a bitter heart'),
+            expect.stringMatching(
+                /never only the torment of a bitter heart; .*never a picture of Christ or his cross$/,
+            ),
         ]);
         expect(
             findLessonWordGlosses(
