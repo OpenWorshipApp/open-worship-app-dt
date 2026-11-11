@@ -1662,6 +1662,20 @@ was seen and what was done.
   sentence): the BN-105 baseline 1 of 22 not in its verse -- the invented
   1 Samuel 17:52 the readers had found -- BN-106/107 0 of 10, BN-108..112
   0 of 31.
+- **BN-114 — a verse is in the Testament its book is in** (2026-11-11, the
+  BN-108..112 read, Sonnet). A David and Goliath lesson's Christ section:
+  "The New Testament tells us that 'But he was wounded for our
+  transgressions' [^(KJV) Isaiah 53:5]" -- the quote right, so BN-110 let
+  it be, the Testament wrong. A sentence naming one Testament and never
+  the other, whose every reference is a book of the other (the KJV
+  config's `bookKeysOld`), is sent back once with what is where
+  (`findTestamentSlips`, `genTestamentSlipRefusal`); a book the table does
+  not know, or a sentence naming both, is let be. Unit-tested; asked again
+  live, the lesson's Christ section named no Testament ("Jesus, the true
+  Champion"), so the check had nothing to send back. Still open from the
+  same read: details no text gives (the stone striking "the only place his
+  armour did not protect him") and a cross-reference told wrong ("those who
+  were healed by Jonas", Matthew 12:41).
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

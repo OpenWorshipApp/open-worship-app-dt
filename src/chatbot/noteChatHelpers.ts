@@ -63,6 +63,7 @@ import {
     splitVerseTokenRefs,
 } from '../helper/agentNoteMarkupHelpers';
 import { parseRefParts } from '../helper/bibleVerseFindHelpers';
+import kjvBibleConfig from '../helper/bible-helpers/kjvBibleConfig.json';
 
 export const NOTE_ASK_KIND = 'note';
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
@@ -901,6 +902,76 @@ export function findCitedMisquotes(
         }
     }
     return misquoted.slice(0, MAX_NOTE_MISQUOTES);
+}
+
+// --- a verse is in the Testament its book is in (BN-114) ---------------------
+//
+// 2026-11-11, the BN-108..112 read (Sonnet): a David and Goliath lesson's
+// Christ section read "The New Testament tells us that 'But he was wounded
+// for our transgressions' [^(KJV) Isaiah 53:5]" -- the quote right, so
+// BN-110 let it be, and the Testament wrong. A sentence that names one
+// Testament, never the other, while every reference in it is a book of the
+// other, is sent back once. A book this table does not know is let be.
+const OLD_TESTAMENT_KEY_SET = new Set<string>(kjvBibleConfig.bookKeysOld);
+const BOOK_NAME_KEY_MAP = new Map<string, string>([
+    ...Object.entries(kjvBibleConfig.keyBookMap as Record<string, string>).map(
+        ([key, name]): [string, string] => [name.toLowerCase(), key],
+    ),
+    ['psalm', 'PSA'],
+]);
+const TESTAMENT_NAME_PATTERN = /\b(New|Old) Testament\b/gi;
+
+export type TestamentSlipType = { testament: 'New' | 'Old'; refs: string[] };
+
+/** The sentences that put a verse in the other Testament. */
+export function findTestamentSlips(text: string) {
+    const slips: TestamentSlipType[] = [];
+    for (const sentence of String(text ?? '').split(/(?<=[.!?])\s+|\n/)) {
+        const named = new Set(
+            [...sentence.matchAll(TESTAMENT_NAME_PATTERN)].map((match) => {
+                return match[1].toLowerCase();
+            }),
+        );
+        const refs = sentence.match(CITED_REF_PATTERN) ?? [];
+        if (named.size !== 1 || refs.length === 0) {
+            continue;
+        }
+        const keys = refs.map((ref) => {
+            return (
+                BOOK_NAME_KEY_MAP.get(
+                    ref.replace(/\s*\d{1,3}:.*$/, '').toLowerCase(),
+                ) ?? null
+            );
+        });
+        const isNew = named.has('new');
+        if (
+            keys.every((key) => {
+                return key !== null && OLD_TESTAMENT_KEY_SET.has(key) === isNew;
+            })
+        ) {
+            slips.push({ testament: isNew ? 'New' : 'Old', refs });
+        }
+    }
+    return slips.slice(0, MAX_NOTE_MISQUOTES);
+}
+
+/** What the model is told when a sentence puts a verse in the other Testament. */
+export function genTestamentSlipRefusal(slips: readonly TestamentSlipType[]) {
+    return (
+        'Nothing was written: ' +
+        slips
+            .map((slip) => {
+                const other = slip.testament === 'New' ? 'Old' : 'New';
+                return (
+                    `${slip.refs.join(', ')} ${slip.refs.length > 1 ? 'are' : 'is'} ` +
+                    `in the ${other} Testament, and the sentence says the ` +
+                    `${slip.testament} Testament`
+                );
+            })
+            .join('; ') +
+        '. Name the Testament it is in, or name it by its book, then send ' +
+        'the change again, whole.'
+    );
 }
 
 /** What the model is told when a quote is not the verse it names. */

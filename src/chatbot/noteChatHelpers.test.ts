@@ -37,6 +37,8 @@ import {
     findLessonPointsProblem,
     findCitedMisquotes,
     findCitedQuotes,
+    findTestamentSlips,
+    genTestamentSlipRefusal,
     toLessonVerseLines,
     findNoteMisquotes,
     genCitedMisquoteRefusal,
@@ -1545,6 +1547,40 @@ describe('a quote of the passage is its words', () => {
         expect(
             findNoteMisquotes('"sinners shall return unto thee"', []),
         ).toEqual([]);
+    });
+});
+
+// BN-114 (2026-11-11, the BN-108..112 read): "The New Testament tells us
+// that 'But he was wounded for our transgressions' [Isaiah 53:5]".
+describe('a verse is in the Testament its book is in', () => {
+    it('names a sentence that puts a verse in the other Testament', () => {
+        const slips = findTestamentSlips(
+            'The New Testament tells us that "But he was wounded for our ' +
+                'transgressions" [^(KJV) Isaiah 53:5]. The Old Testament ' +
+                'says "God so loved the world" (John 3:16).',
+        );
+        expect(slips).toEqual([
+            { testament: 'New', refs: ['Isaiah 53:5'] },
+            { testament: 'Old', refs: ['John 3:16'] },
+        ]);
+        expect(genTestamentSlipRefusal(slips)).toContain(
+            'Isaiah 53:5 is in the Old Testament, and the sentence says the ' +
+                'New Testament',
+        );
+    });
+
+    it('lets a right Testament, both named, or an unknown book be', () => {
+        for (const text of [
+            'Isaiah foresaw it, and the New Testament applies it to Jesus ' +
+                '(1 Peter 2:24).',
+            'In the Old Testament, David says it plainly (Psalm 23:1).',
+            'The Old Testament promise (Isaiah 53:5) is fulfilled in the New ' +
+                'Testament (1 Peter 2:24).',
+            'The New Testament quotes Hezekiah 3:1 here.',
+            'The New Testament tells us so.',
+        ]) {
+            expect(findTestamentSlips(text), text).toEqual([]);
+        }
     });
 });
 

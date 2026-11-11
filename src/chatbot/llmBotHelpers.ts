@@ -211,7 +211,9 @@ import {
     findCitedMisquotes,
     findCitedQuotes,
     findNoteMisquotes,
+    findTestamentSlips,
     genCitedMisquoteRefusal,
+    genTestamentSlipRefusal,
     genLessonPointsRefusal,
     genLostNoteLinesRefusal,
     genNoteMisquoteRefusal,
@@ -2348,6 +2350,9 @@ type ToolWatchType = {
     // A quote given its chapter and verse was held to that verse, read by
     // the window (BN-110, `findCitedMisquotes`): once an ask.
     isNoteCitedQuoteChecked?: boolean;
+    // A sentence putting a verse in the other Testament was sent back
+    // (BN-114, `findTestamentSlips`): once an ask.
+    isNoteTestamentChecked?: boolean;
     // A new lesson's points were held to its passage, its order and its end
     // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
     isLessonPointsChecked?: boolean;
@@ -4623,6 +4628,20 @@ async function runMcpToolCall(
             if (misquotes.length > 0) {
                 watch.isNoteQuoteChecked = true;
                 return `Tool refused: ${genNoteMisquoteRefusal(misquotes)}`;
+            }
+        }
+        // A verse is in the Testament its book is in (BN-114): "The New
+        // Testament tells us ... [Isaiah 53:5]", the quote itself right.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteTestamentChecked !== true
+        ) {
+            const slips = findTestamentSlips(toNoteChangeWords(lyricEditArgs));
+            if (slips.length > 0) {
+                watch.isNoteTestamentChecked = true;
+                return `Tool refused: ${genTestamentSlipRefusal(slips)}`;
             }
         }
         // ...and a quote given its own chapter and verse is that verse's
