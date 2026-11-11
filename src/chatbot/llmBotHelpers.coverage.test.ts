@@ -1705,6 +1705,67 @@ describe('the Anthropic loop', () => {
         expect(read).not.toContain('(25): Verse 25');
     });
 
+    // BN-105 (2026-11-11): asked for Proverbs 3:5-6, the model read
+    // Proverbs 3 whole, Proverbs 2's last verses were read as "just before",
+    // and the lesson told the strange woman of 2:16 as its background.
+    test('the verses before are read before the passage they named', async () => {
+        fake.toolList = [{ name: 'owa_note_edit' }, { name: 'owa_find_verse' }];
+        fake.answerTool = (_name: string, args: any) => {
+            return JSON.stringify({
+                bible: 'KJV',
+                verses: [
+                    {
+                        key:
+                            args.refs === 'Proverbs 3'
+                                ? 'PRO 3:1-35'
+                                : 'PRO 3:1-4',
+                        ref: args.refs,
+                        text: '(1): My son, forget not my law…',
+                    },
+                ],
+            });
+        };
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse({
+                    name: 'owa_find_verse',
+                    input: { refs: 'Proverbs 3' },
+                }),
+                anthropicText('Which way should the lesson go?'),
+            ],
+            'anthropic',
+        );
+        const typed = 'Help me prepare a sermon on Proverbs 3:5-6';
+        await askLlmBot(
+            `${typed}\n${NOTE_BLANK_LESSON_HINT}`,
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                askedText: typed,
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    blankBlockCount: 1,
+                },
+            },
+        );
+        expect(fake.toolCallList.map((call) => call.args.refs)).toEqual([
+            'Proverbs 3',
+            'Proverbs 3:1-4',
+        ]);
+        expect(readToolResults(sentList[1])[0].content).toMatch(
+            /^\(The window also read Proverbs 3:1-4, the verses just before Proverbs 3:5-6, for the Background/,
+        );
+    });
+
     // BN-83 (2026-11-11): the sower sermon's points stopped at the thorns,
     // never reaching the good ground of 13:23. A new lesson's points that
     // stop before its passage does go back once; a second try goes in.

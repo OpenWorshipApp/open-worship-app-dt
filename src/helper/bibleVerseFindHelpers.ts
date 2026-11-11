@@ -90,6 +90,60 @@ export function findVersesBeforeRef(refs: string) {
         : null;
 }
 
+// A passage written with its chapter and verse in a person's words: a book
+// of up to three capitalised words ("of" between them, "Song of Solomon"),
+// a number first or not, then the chapter and the verse or verses.
+const NAMED_PASSAGE_PATTERN =
+    /(?:^|[^\p{L}\p{N}])((?:[1-3] ?)?\p{Lu}\p{L}*(?: (?:of )?\p{Lu}\p{L}*){0,2} \d{1,3}\s*:\s*\d{1,3}(?:\s*[-–]\s*\d{1,3})?)(?![\d:])/gu;
+
+/**
+ * The one passage a lesson's ask names with its chapter and verse -- "a
+ * sermon on Proverbs 3:5-6" -- or null for none, or for more than one.
+ */
+export function findNamedPassageRef(text: string) {
+    const named = new Set<string>();
+    for (const match of String(text ?? '').matchAll(NAMED_PASSAGE_PATTERN)) {
+        named.add(match[1].replace(/\s*([:–-])\s*/g, '$1').replace('–', '-'));
+    }
+    return named.size === 1 ? [...named][0] : null;
+}
+
+// A book's name as one run of letters: "1 Sam" and "1 Samuel", "Psalm" and
+// "Psalms" are one book when the shorter starts the longer.
+function toBookNameStem(book: string) {
+    return book.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+/**
+ * The passage a new lesson's verses before are read for (BN-105,
+ * 2026-11-11): the one the person NAMED, when the model's first read is in
+ * its book -- else the read. Read wider for its setting, a passage's read
+ * starts earlier than the passage: asked for Proverbs 3:5-6, the model read
+ * Proverbs 3 from its first verse, the window read the last ten verses of
+ * Proverbs 2, and the lesson told the strange woman of 2:16 as "the verses
+ * just before this passage" (a blind reader's accuracy 0); the verses just
+ * before it are 3:1-4.
+ */
+export function pickVersesBeforePassage(named: string | null, refs: string) {
+    if (named === null) {
+        return refs;
+    }
+    const namedParts = parseRefParts(named);
+    if (namedParts === null) {
+        return refs;
+    }
+    const namedBook = toBookNameStem(namedParts.book);
+    const isNamedBook = splitRefList(refs).some((ref) => {
+        const parts = parseRefParts(ref.replace(/^\([^)\n]{1,24}\)\s*/, ''));
+        const book = parts === null ? '' : toBookNameStem(parts.book);
+        return (
+            Math.min(book.length, namedBook.length) >= 3 &&
+            (book.startsWith(namedBook) || namedBook.startsWith(book))
+        );
+    });
+    return isNamedBook ? named : refs;
+}
+
 type VerseReadEntryType = { key: string; ref: string; text: string };
 
 /**

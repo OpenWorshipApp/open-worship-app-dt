@@ -985,11 +985,17 @@ export function findLessonPointsProblem(
 /**
  * Said over a new lesson's passage read when the window read the verses
  * just before it too (BN-89, `findVersesBeforeRef`): what the Background
- * tells of them is to come from these words.
+ * tells of them is to come from these words. It names the passage they come
+ * before (BN-105): read wider than the passage asked for, a lesson told the
+ * verses before its READ as the verses before its passage.
  */
-export function genVersesBeforeNote(ref: string) {
+export function genVersesBeforeNote(ref: string, passage?: string | null) {
+    const before =
+        typeof passage === 'string' && passage.trim() !== ''
+            ? passage.trim()
+            : 'the passage';
     return (
-        `(The window also read ${ref}, the verses just before the passage, ` +
+        `(The window also read ${ref}, the verses just before ${before}, ` +
         'for the Background: say what happens there from these words, never ' +
         'from memory.)'
     );

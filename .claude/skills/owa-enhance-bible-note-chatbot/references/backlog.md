@@ -1534,6 +1534,21 @@ was seen and what was done.
   the sheep" (John 10:11) and Jonah through Matthew 12:40, each read and
   written as its token. Proverbs 3 still reached "the way" of John 14:6, a
   shared word.
+- **BN-105 — the verses before the passage they NAMED** (2026-11-11, the
+  BN-103/104 run and a blind reader's accuracy 0). Asked for Proverbs
+  3:5-6, the model read Proverbs 3:1-6 for its setting, so the window read
+  the verses before THAT read -- Proverbs 2's last ten -- and the lesson
+  told the strange woman and the paths of darkness (2:13-22) as "the
+  verses just before this passage". The window now reads the verses before
+  the one passage the ask names with its chapter and verse
+  (`findNamedPassageRef`, off `askedText`), when the model's first read is
+  in its book (`pickVersesBeforePassage`; a time like "Sunday 10:30" is
+  in no book read), else before the read as it did; and the note over the
+  read names the passage they come before ("the verses just before
+  Proverbs 3:5-6"). Asked again live: read 3:1-6, the window read 3:1-4,
+  and the Background "the father urges his son not to forget the law and
+  to keep mercy and truth close to his heart to find favor with God and
+  man".
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

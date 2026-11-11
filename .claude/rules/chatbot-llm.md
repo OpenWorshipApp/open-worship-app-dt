@@ -1143,7 +1143,10 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   (`readBlankNoteFromFile`). **The window reads what the model would
   otherwise make up** (BN-89, BN-91): in an empty note's lesson ask, the
   first `owa_find_verse refs` naming one passage also reads the verses just
-  before it (`findVersesBeforeRef`). The model had invented backgrounds;
+  before it (`findVersesBeforeRef`) -- before the passage the ask NAMED
+  when that read is in its book (BN-105, `pickVersesBeforePassage`: read
+  from 3:1 for Proverbs 3:5-6, Proverbs 2's strange woman had been told as
+  "just before"), and the note names it. The model had invented backgrounds;
   now it tells them from those words (`genVersesBeforeNote`). That read also
   carries Scripture's own explanation of each KJV word its text holds that
   a preacher stumbles on (`lessonWordGlossHelpers.ts`, eight at most), because

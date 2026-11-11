@@ -25,7 +25,9 @@ import {
     toPassageRunName,
     toPassageRuns,
     toReadPassageTextLimit,
+    findNamedPassageRef,
     findVersesBeforeRef,
+    pickVersesBeforePassage,
     splitChapterSpan,
     toLastVersesRead,
     toTermWeight,
@@ -293,6 +295,61 @@ describe('a found row', () => {
         expect(findVersesBeforeRef('Psalm 23:4-6')).toBe('Psalm 23:1-3');
         // Proverbs' chapters are one father's teaching, read in a row.
         expect(findVersesBeforeRef('Proverbs 3:1-6')).toBe('Proverbs 2');
+    });
+
+    // BN-105 (2026-11-11): asked for Proverbs 3:5-6, the model read Proverbs
+    // 3 whole, and Proverbs 2's strange woman was told as "the verses just
+    // before this passage".
+    it('reads the verses before the passage the person named', () => {
+        const named = findNamedPassageRef(
+            'Help me prepare a sermon on Proverbs 3:5-6',
+        );
+        expect(named).toBe('Proverbs 3:5-6');
+        expect(pickVersesBeforePassage(named, 'Proverbs 3')).toBe(
+            'Proverbs 3:5-6',
+        );
+        expect(
+            findVersesBeforeRef(pickVersesBeforePassage(named, 'Prov 3:1-12')),
+        ).toBe('Proverbs 3:1-4');
+        expect(
+            pickVersesBeforePassage(
+                findNamedPassageRef('a 15 minute sermon on John 3:16'),
+                '(KJV) John 3:1-21',
+            ),
+        ).toBe('John 3:16');
+        expect(
+            findNamedPassageRef('Luke 15:11 – 32 (the son who came home)'),
+        ).toBe('Luke 15:11-32');
+        expect(findNamedPassageRef('a lesson on 1 John 4:7-21')).toBe(
+            '1 John 4:7-21',
+        );
+        expect(findNamedPassageRef('Song of Solomon 2:1, please')).toBe(
+            'Song of Solomon 2:1',
+        );
+        // Over chapters, its first verse is where it starts.
+        expect(findNamedPassageRef('from Jonah 1:17-2:10')).toBe('Jonah 1:17');
+    });
+
+    it('keeps the read when the words name no one passage of its book', () => {
+        for (const text of [
+            'a short devotion on Psalm 46 for our prayer meeting',
+            'I need to preach about forgiveness this Sunday',
+            'compare John 3:16 with Romans 5:8',
+            'sermon on the good samaritan at 10:30',
+        ]) {
+            const named = findNamedPassageRef(text);
+            expect(pickVersesBeforePassage(named, 'Luke 10:25-37'), text).toBe(
+                'Luke 10:25-37',
+            );
+        }
+        // A time is no passage of the book read.
+        expect(
+            pickVersesBeforePassage(
+                findNamedPassageRef('a sermon on Psalm 46 for Sunday 10:30'),
+                'Psalms 46:1-11',
+            ),
+        ).toBe('Psalms 46:1-11');
+        expect(findNamedPassageRef('')).toBe(null);
     });
 });
 

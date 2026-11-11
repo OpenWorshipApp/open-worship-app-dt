@@ -64,8 +64,10 @@ import {
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
 import {
+    findNamedPassageRef,
     findVersesBeforeRef,
     MAX_VERSES_BEFORE,
+    pickVersesBeforePassage,
     resolveBookKey,
     toLastVersesRead,
 } from '../helper/bibleVerseFindHelpers';
@@ -2330,6 +2332,9 @@ type ToolWatchType = {
     // A new lesson's first passage read took the verses before it too
     // (BN-89, `findVersesBeforeRef`): once an ask.
     isLessonBeforeRead?: boolean;
+    // The one passage a new lesson's ask NAMED with its chapter and verse,
+    // the verses before are read for (BN-105, `pickVersesBeforePassage`).
+    lessonNamedPassage?: string | null;
     /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
@@ -4546,6 +4551,7 @@ async function runMcpToolCall(
     // it too, for the background (BN-89, 2026-11-11): told to, the model did
     // in about half the lessons, and the rest made their background up.
     let versesBeforeRef: string | null = null;
+    let lessonPassage: string | null = null;
     let isLessonPassageRead = false;
     if (
         name === VERSE_FIND_TOOL_NAME &&
@@ -4556,8 +4562,13 @@ async function runMcpToolCall(
         watch.isLessonBeforeRead = true;
         isLessonPassageRead = true;
         // Read on their own once the passage is (BN-100), so the passage
-        // keeps its whole budget and they theirs.
-        versesBeforeRef = findVersesBeforeRef(args.refs);
+        // keeps its whole budget and they theirs -- before the passage they
+        // NAMED, when this read is in its book (BN-105).
+        lessonPassage = pickVersesBeforePassage(
+            watch.lessonNamedPassage ?? null,
+            args.refs,
+        );
+        versesBeforeRef = findVersesBeforeRef(lessonPassage);
     }
     // The page in the language the answer is written in (`pageLang`). The
     // watch keeps the id as the model gave it: it names the recipe.
@@ -4667,7 +4678,7 @@ async function runMcpToolCall(
         const lessonNotes = [
             versesBeforeRef === null
                 ? null
-                : genVersesBeforeNote(versesBeforeRef),
+                : genVersesBeforeNote(versesBeforeRef, lessonPassage),
             genLessonWordGlossNote(findLessonWordGlosses(text)),
         ].filter((note) => note !== null);
         return lessonNotes.length === 0
@@ -7576,6 +7587,9 @@ async function askLlmBotAsWritten(
             asked.includes(NOTE_LESSON_CHANGE_HINT);
         seeded.isBlankLesson =
             extra?.note !== undefined && asked.includes(NOTE_BLANK_LESSON_HINT);
+        seeded.lessonNamedPassage = seeded.isBlankLesson
+            ? findNamedPassageRef(extra?.askedText ?? '')
+            : null;
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =
