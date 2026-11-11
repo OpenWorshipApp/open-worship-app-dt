@@ -1640,6 +1640,27 @@ describe('a quote given its chapter and verse is that verse', () => {
         expect(refusal).toContain('[^Matthew 11:28]');
     });
 
+    // BN-113: the first live run sent back a lesson whose "Purge me with
+    // hyssop" (its own Psalm 51:7) stood beside Exodus 12:22, named for
+    // what hyssop was.
+    it('lets a quote of what was read be, whatever it names beside it', () => {
+        const cited = [{ quote: 'Purge me with hyssop', ref: 'Exodus 12:22' }];
+        const verses = new Map([
+            [
+                'Exodus 12:22',
+                'And ye shall take a bunch of hyssop, and dip it in the blood',
+            ],
+        ]);
+        // Read against Exodus 12:22 alone, it is not that verse...
+        expect(findCitedMisquotes(cited, verses)).toHaveLength(1);
+        // ...but it is the passage this ask read.
+        expect(
+            findCitedMisquotes(cited, verses, [
+                '(7): Purge me with hyssop, and I shall be clean',
+            ]),
+        ).toEqual([]);
+    });
+
     it('lets a cut quote, an unread or cut verse and another script be', () => {
         const check = (quote: string, verse: string | undefined) => {
             return findCitedMisquotes(

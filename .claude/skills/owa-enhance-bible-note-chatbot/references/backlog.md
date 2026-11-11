@@ -1649,6 +1649,19 @@ was seen and what was done.
   one latched): "Come unto me, all ye that labour and are heavy laden, and
   I will give you rest" [^(KJV) Matthew 11:28]; the children's memory line
   "[^(KJV) Jonah 2:9] (Salvation is of the LORD)".
+- **BN-113 — a quote of the passage read is not held to a reference named
+  beside it** (2026-11-11, BN-110's first live run). A Psalm 51 lesson
+  wrote "'Purge me with hyssop' refers to the plant used to sprinkle blood
+  or water for cleansing, as seen in [^(KJV) Exodus 12:22]": the quote is
+  its own passage's 51:7, Exodus 12:22 named for what hyssop was, and
+  BN-110 would have sent the lesson back as a misquote of Exodus. A quoted
+  piece that what the ask read already holds (`watch.noteQuoteSources`,
+  BN-76's own, `findCitedMisquotes`' `readTexts`) is that text's words and
+  is let be. An audit of three 16-lesson runs by the same rule against the
+  app's KJV data (every quotation with a chapter and verse in its
+  sentence): the BN-105 baseline 1 of 22 not in its verse -- the invented
+  1 Samuel 17:52 the readers had found -- BN-106/107 0 of 10, BN-108..112
+  0 of 31.
 - **BN-70 — the note editor turns the KJV's `:)` into a smiley.** The
   `bible-note` package's EmojisPlugin replaces `:)`, `:D`, `:(` and `<3`
   in every text node, a passage's verse words included: Matthew 6:32's

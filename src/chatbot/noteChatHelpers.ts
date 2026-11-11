@@ -864,12 +864,17 @@ function toLatinShare(key: string) {
  * The cited quotes whose words the verse read for their reference does not
  * have, with the verse as it reads. A quote cut with an ellipsis is checked a
  * piece at a time; a reference that could not be read, a verse read cut
- * short ("…"), or a quote in another script than its verse is let be.
+ * short ("…"), or a quote in another script than its verse is let be -- and
+ * so is a quote of what the ask READ (`readTexts`, BN-113): "Purge me with
+ * hyssop" is the passage's own Psalm 51:7, the Exodus 12:22 beside it named
+ * for what hyssop was (the first live run sent that lesson back).
  */
 export function findCitedMisquotes(
     citedList: readonly CitedQuoteType[],
     verseTextMap: ReadonlyMap<string, string>,
+    readTexts: readonly string[] = [],
 ) {
+    const readKeyList = readTexts.map(toLetterKey);
     const misquoted: (CitedQuoteType & { verse: string })[] = [];
     for (const cited of citedList) {
         const verse = verseTextMap.get(cited.ref);
@@ -883,6 +888,7 @@ export function findCitedMisquotes(
             return (
                 key.length >= MIN_NOTE_QUOTE_LETTERS &&
                 !verseKey.includes(key) &&
+                !readKeyList.some((readKey) => readKey.includes(key)) &&
                 !isCut &&
                 Math.abs(toLatinShare(key) - toLatinShare(verseKey)) < 0.5
             );

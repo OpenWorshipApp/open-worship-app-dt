@@ -4599,6 +4599,9 @@ async function runMcpToolCall(
                         signal,
                         watch,
                     ),
+                    // A quote of what this ask read is that text's words
+                    // (BN-113), whatever it names beside it.
+                    watch.noteQuoteSources,
                 );
                 if (misquotes.length > 0) {
                     watch.isNoteCitedQuoteChecked = true;
