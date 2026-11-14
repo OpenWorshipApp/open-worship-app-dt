@@ -50,6 +50,7 @@ import {
     genPreviewSettingStore,
     lockBibleNoteReadOnly,
 } from './bibleNoteReadOnlyHelpers';
+import { genHostDefaultSettingStore } from './bibleNoteSettingDefaultHelpers';
 import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { toEmoticonSafeText } from '../../helper/noteEmoticonHelpers';
@@ -556,9 +557,11 @@ export async function initBibleNote({
             handleOutsideWriteSaved?.(true);
         },
         // A preview's lock is the host's, never the user's preference.
-        storageManager: (isReadOnly
-            ? genPreviewSettingStore(trackedStorageManager)
-            : trackedStorageManager) as any,
+        storageManager: genHostDefaultSettingStore(
+            isReadOnly
+                ? genPreviewSettingStore(trackedStorageManager)
+                : trackedStorageManager,
+        ) as any,
         stickyNoteExtraFontFamilies,
         resolveFilePath: resolveLocalFilePath as FilePathResolver,
         revealFile,

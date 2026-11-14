@@ -865,6 +865,20 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect(h.homeRemoveItemMock).toHaveBeenCalledWith('k');
         });
 
+        test('the editor reads its switches with the Table of contents on', async () => {
+            await setupInit();
+            h.homeGetItemMock.mockReturnValue(
+                '{"showInvisibleCharacters":true}',
+            );
+            const value = capturedConfig.storageManager.getSetting(
+                'lexical-playground-settings',
+            );
+            expect(JSON.parse(value)).toEqual({
+                showTableOfContents: true,
+                showInvisibleCharacters: true,
+            });
+        });
+
         test('file watch waits while the editor is focused', async () => {
             vi.useFakeTimers();
             try {
