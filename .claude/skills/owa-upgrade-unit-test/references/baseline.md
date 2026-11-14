@@ -1,5 +1,43 @@
 # Baseline — the honest starting point
 
+## Back to 99% a third time — 2026-11-14 (UT-102)
+
+The user set **99% coverage** as the session's goal after three days of
+feature work (~50,000 new source lines in 222 files: the screen-control
+tools, study files, deck songs, a document's words, the Markdown Preview)
+had taken the figure from 99.50% to 98.65%. Measured with
+`coverage-gap.mjs --goal=99` on macOS at `00cb0c365`, HEAD the same before
+and after: **98.65% (111,022 / 112,539) → 99.34% (111,799 / 112,539)**,
++777 covered lines over the same 1,511 files. 99% is 111,414 covered lines,
+cleared by 385. Files at 0%: **2 → 0**; at 100%: **1,228 → 1,259**. No
+exclusions or thresholds changed.
+
+| Surface        | Lines before              | Lines after                | Branches after           |
+| -------------- | ------------------------- | -------------------------- | ------------------------ |
+| Renderer + MCP | 98.64% (101,708 / 103,108) | 99.31% (102,398 / 103,108) | 93.70% (69,231 / 73,879) |
+| Electron       | 98.76% (9,314 / 9,431)    | 99.68% (9,401 / 9,431)     | 94.95% (6,038 / 6,359)   |
+
+By kind, lines: helper 99.6% (671 files), module 99.7% (324), component
+98.2% (492), entry 99.2% (24). `src/chatbot/ChatbotAppComp.tsx` holds 276
+of the 740 lines left (92.8%) and was left out on purpose: the costliest
+lines per hour in the repo.
+
+| Suite (instrumented) | Before                        | After                         |
+| -------------------- | ----------------------------- | ----------------------------- |
+| Renderer + MCP       | 1,801 files / 27,209 tests, 94 s | 1,848 files / 27,671 tests, 101 s |
+| Electron             | 124 files / 1,779 tests, 9 s  | 129 files / 1,816 tests, 8 s  |
+
+**How.** Six disjoint batches, one agent each on one brief (`plan.md`,
+UT-102a-f), 499 new tests in 52 new `*.ut102.test.*` files, none a smoke
+render. The first measurement wrote no report: one load-only flake in
+`ChatbotAppComp.ask.test.tsx` (the corpus's cold dynamic import, fixed in
+the test, memory `coverage-run-load-flakes`).
+
+Evidence: `ut102-before.log`, `ut102-before-worklist.json`,
+`ut102-after.log`, `ut102-after-worklist.json`,
+`ut102-after-src-summary.json` and `ut102-after-electron-summary.json` under
+`test-results/unit-coverage/`.
+
 ## Back to 99% again — 2026-11-11 (UT-101)
 
 The user set **99% of the whole source surface** again after two days of

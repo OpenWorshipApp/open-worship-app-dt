@@ -576,6 +576,7 @@ fi
 if [[ "$is_dry_run" != "true" ]]; then
     echo "Release process completed successfully."
     git pull
+    echo "Don't forget release mcp"
 else
     echo "Dry run completed successfully. No changes were made."
 fi

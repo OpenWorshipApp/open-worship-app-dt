@@ -2,7 +2,15 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    test,
+    vi,
+} from 'vitest';
 
 // The model branch of `handleAsking` and what answers a press under it: the
 // assistant answering, failing, stopped, standing in, handing on and being
@@ -181,6 +189,7 @@ import ChatbotAppComp from './ChatbotAppComp';
 import { RETRY_APPROACH_LIST } from './answerRetryHelpers';
 import { AskCancelledError } from './cancelHelpers';
 import { getLlmModelLabel, getLlmProviderLabel } from './llmBotHelpers';
+import { genTopicChoices } from './questionHelpers';
 import { ToolHostError } from './mcpClient';
 import { recordSpendRound, resetSpendGuardForTests } from './spendGuardHelpers';
 
@@ -255,6 +264,14 @@ function seedSession(
 describe('the help window asking its assistant', () => {
     let container: HTMLDivElement;
     let root: Root;
+
+    // The corpus is read once per window, by dynamic imports (the ranking
+    // and every page). Cold under the whole-surface instrumented run, that
+    // read outlasts `settle()`'s two hops and the topic ask drew nothing
+    // yet; loaded here once, every ask reads the cached copy.
+    beforeAll(async () => {
+        expect(await genTopicChoices('lyric', 'presenter')).not.toEqual([]);
+    });
 
     beforeEach(() => {
         vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);

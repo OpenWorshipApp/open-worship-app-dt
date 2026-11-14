@@ -32,6 +32,15 @@ runs. Three failure classes showed up there only, never focused (2026-11-03):
 first two block the whole report (and `npm run lint`'s `test:all` on a slow
 machine).
 
+- **A fixed number of event-loop hops before a lazy import is read**
+  (2026-11-14, UT-102). `ChatbotAppComp.ask.test.tsx`'s `settle()` turns
+  the loop twice, and _a word typed alone in a new tab is asked about_
+  waited on the question corpus, which `questionHelpers.ts` reads once by
+  dynamic imports (`questionMatch.mjs` and every page JSON). Focused it
+  passed every time; cold under the whole-surface run the read outlasted
+  the two hops and no answer was drawn, so the first measurement wrote no
+  report. A `beforeAll` that loads the corpus once (`genTopicChoices`)
+  ended it -- the same cure as the lazy dialog chunk above.
 - **The tree changed under the run** (2026-11-04). The suite reads files as
   it reaches them, so a commit or a save made mid-run is half in the run:
   four tests failed on files committed during it, all green when re-run.

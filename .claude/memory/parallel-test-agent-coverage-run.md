@@ -26,7 +26,17 @@ What cost time, so the next run does not pay it again:
   `let onChange: ReturnType<typeof vi.fn>` passed as a typed prop fails —
   write `Mock<(value: number) => void>`. Agents can check only their own files
   with a scratch tsconfig that `extends` the repo's and `include`s
-  `src/**/*.d.ts` plus their tests.
+  `src/**/*.d.ts` plus their tests -- and points its type roots at the
+  repo's own node_modules/@types, with the node types named (UT-102, 2026-11-14): from
+  a scratch folder outside the repo the node types do not resolve, and
+  the run lists `Buffer` errors in files nobody touched. Use the gate's
+  own compiler, `node node_modules/@typescript/native/bin/tsc`. The
+  electron config excludes `*.test.ts`, so an electron test is checked
+  only through a scratch config that extends `electron.tsconfig.json`.
+- **Six agents was the right size for a ~400-line gap** (UT-102): six
+  disjoint batches of ~100-190 uncovered lines each finished in 15-45
+  minutes and +777 lines (the gap was 392), about 1.9M subagent tokens
+  in all, the machine never saturated.
 - **17 concurrent agents** held the 12-thread machine at 100% CPU and spent the
   account's 5-hour usage limit in ~2 hours: every agent stopped mid-slice and
   four slices never started. Run ~8 at a time; the subagent cap is 20.

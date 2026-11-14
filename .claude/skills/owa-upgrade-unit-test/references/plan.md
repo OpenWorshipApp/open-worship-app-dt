@@ -7,6 +7,123 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
+## Back to 99% a third time — 2026-11-14 (UT-102)
+
+`done` · **98.65% → 99.34% (111,799 / 112,539)**, +777 lines, 0 files at
+0%, measured 2026-11-14 at `00cb0c365` (`references/baseline.md`);
+predicted ~700. The user set **99% coverage** as the session's goal; the
+gap was 392 lines. Six disjoint batches, one agent each, on one shared
+brief (UT-101's: new `*.ut102.test.*` files only, no source edit, no shared
+`appProvider` mock, a test that can fail, a bug reported and never
+asserted, `coverage-gap.mjs --no-run` only, prettier and
+`language-confinement.mjs` on its own files, the gate's own `tsc` through
+a scratch tsconfig). `ChatbotAppComp.tsx` (276 lines) was left out: an
+8-15 s import per test file makes it the costliest lines in the repo, and
+the goal did not need it.
+
+| Batch | Files | Uncovered before | Covered (focused run) | New tests |
+| --- | --- | --- | --- | --- |
+| UT-102a | `agentScreenControlHelpers`, `agentScreenControlRestoreHelpers`, `agentScreenControlRules`, `agentScreenEdit.mjs` | 193 | 193 (all four 100%) | 4 files, 121 |
+| UT-102b | `screenChangeOfferHelpers`, `deckSongAnswerHelpers` (0%), `studyTranslationCheckHelpers`, `lyricDocumentChatHelpers`, `typedCreateAskHelpers`, `bibleListPasteHelpers` | 172 | 176 (with lines other suites had not lit) | 6 files, 110 |
+| UT-102c | `agentDocumentWordsHelpers` (0%), `documentWordsRules`, `documentWordsParsers`, `documentWordsHelpers`, `Lyric.ts`, `openLyricEdit.mjs` | 155 | 152 | 7 files, 75 |
+| UT-102d | `electron/documentCaptureHelpers` and six electron residuals; `notify`, `discovery`, `host`, `owaTools`, `stdio` (.mjs) | 120 | 106 | 10 files, 65 |
+| UT-102e | `llmBotHelpers`, `noteChatHelpers`, `agentNoteBlockHelpers`, `helpBotHelpers`, `agentStudyFile*`, `studyName*`, `studyFileChatHelpers`, `studyDiagramWordHelpers`, `lessonFactCheckHelpers` | 107 | 79 | 11 files, 65 |
+| UT-102f | the Markdown Preview's five, `agentBackupHelpers`, `domHelpers`, `ControllerDrawToolsComp`, `builtinActionHelpers`, `questionHelpers`, `pptxSlideMeasureHelpers`, `langPluginRegistry`, `onlineLangPackage`, `Bible.ts` (+ `FlexResizeActorComp`, `AiChatAppComp`: nothing reachable left) | 102 | 110 | 14 files, 66 |
+
+No smoke renders in any batch.
+
+**Fixed by the lead**: `src/chatbot/ChatbotAppComp.ask.test.tsx` -- the
+first whole-surface run failed (no report) on _a word typed alone in a new
+tab is asked about_: the topic ask awaits the corpus, read once by dynamic
+imports (the ranking and every page), and cold under instrumentation that
+read outlasted `settle()`'s two hops. A `beforeAll` loads it once
+(`genTopicChoices`), asserting it is not empty.
+
+**Bugs found, reported and NOT fixed** (no test asserts the wrong
+behaviour; each wants a regression test with its fix). Checked against the
+code by the lead: 1, 2, 4 and 15.
+
+1. `agentScreenControlHelpers.ts` `setScreens` -- `newScreen: false` (the
+   schema's optional boolean, as a model fills it) sends the call to
+   `addNewScreen`, which refuses anything but `true`: `{screens: [0],
+   lineSync: true, newScreen: false}` changes nothing and is told
+   "`newScreen` is true, to add a screen."
+2. `agentScreenControlRules.ts` `toOutlineEm` -- an outline in pixels is
+   divided by a fixed 65, not the screen's size, against its own comment:
+   `outline: 4` at a 130px font is an ~8px outline.
+3. `agentScreenControlHelpers.ts` ~1525 -- the "no Undo could be kept" note
+   opens with a stray space when no other note came first.
+4. `screenChangeOfferHelpers.ts` ~530 -- the first replace takes the word
+   "outline" out, so `outline in|of <colour>` never matches: _an outline in
+   red_ also turns the WORDS red, and _white words with an outline of dark
+   blue_ reads the words as dark blue -- the offered button hides the
+   outline.
+5. `studyTranslationCheckHelpers.ts` ~498 -- an English stretch over 40
+   characters left in a translation is cut with `…` before it is looked for
+   in the text, never found, and never named; the same when a code span or
+   link sits inside it.
+6. `bibleListPasteHelpers.ts` ~653 -- on a list line of passages, a known
+   book with numbers it does not have (`Psalm 151`, `John 3:0`) is neither
+   saved nor named as unread, while `Psalm 1-3:4` on the same list is.
+7. `studyTranslationCheckHelpers.ts` `findStudyStrayLetterSet` -- a
+   translation still mostly English takes Latin as its own script, and its
+   real script's words are listed as another script's (minor).
+8. `openLyricEdit.mjs` `checkIsInsideWord` -- `replace` `race` → `run` in
+   `Saved by grace¹` writes `grun¹` and says "1 time": the word breaker
+   draws `¹` as a non-word piece, the letter pattern counts it a digit, and
+   the run is taken for a script written without spaces.
+9. `openLyricEdit.mjs` `toSameLineShare` -- `set-lines` handing a chords-only
+   line back unchanged warns that its chords were not carried (two wordless
+   lines are never paired), with `isChanged: false`.
+10. `openLyricEdit.mjs` `mergeGivenChords` -- `set-chords` with a chords-only
+    line given back empty blanks it: both chords gone and a stanza break
+    put in, where the action never takes a chord away.
+11. `electron/documentCaptureHelpers.ts` ~287 -- `lockDownSession()` and
+    `new BrowserWindow(...)` run before the `try/finally`: when either
+    throws, the staged pages stay in the temp folder and `allowedDirPath`
+    stays set.
+12. `electron/documentCaptureHelpers.ts` ~189 -- the 15 s load-race timer is
+    never cleared after a load: up to eight pending timers a capture.
+13. `electron/electronHelpers.ts` `toShortcutKey` -- pushes into the
+    caller's own `allControlKey` array (latent: today's callers pass fresh
+    literals).
+14. `agentNoteBlockHelpers.ts` `toPlainWords` -- still UT-100's bug 2: a
+    line break inside a cell, sticky or collapsible reads `Gracealone`.
+15. `helpBotHelpers.ts` `runScreenChange` -- a pressed screen offer whose
+    args do not read (`{kind: 'lock', set: [0]}`) answers "Done." with
+    nothing changed.
+16. `lessonFactCheckHelpers.ts` `toBoundedText` -- a first verse line over
+    9,000 characters leaves the verses empty and the check is still asked.
+17. `FlexResizeActorComp.tsx` ~690 -- the divider's hover timeout
+    (`genTimeoutAttempt(100)`) is not cancelled on unmount: unmounted within
+    100 ms of a hover, it throws `currentNode is null` from a timer.
+
+**Order-dependent tests found, not fixed** (green in the default order,
+red under `--sequence.shuffle`; `fix-flaky` work):
+`tools/owa-devtools-mcp/owaTools.test.mjs` (three tests, `"en" is not
+valid JSON`), `tools/owa-devtools-mcp/index.test.mjs` (_loads no MCP server
+until one is asked for_), and `src/chatbot/llmBotHelpers.test.ts` (_asks by
+the server's own model id … at no cost_: the module-level
+`lastServerKindMap` keeps an earlier test's server kind, and there is no
+reset for tests).
+
+**What no test can reach**, named so the next run does not chase it (line
+numbers as of `00cb0c365`): `virtualDisplayService.ts` 1063, 1247, 1714,
+1757-1758, 1800-1801; `customLlmProtocol.ts` 267, 307, 575;
+`electronHelpers.ts` 779; `langPluginHelpers.ts` 127; `notify.mjs` 556;
+`discovery.mjs` 149; `openLyricEdit.mjs` 970-972 (and 1249, 1253 but
+through bug 8 or a script without spaces); `screenChangeOfferHelpers.ts`
+733; `typedCreateAskHelpers.ts` 802; `bibleListPasteHelpers.ts` 324;
+`llmBotHelpers.ts` 4691, 5126, 8646-8652, 8734-8744, 10529;
+`noteChatHelpers.ts` 2079; `studyFileChatHelpers.ts` 536, 1229, 2293;
+`helpBotHelpers.ts` 1034; `agentStudyFileHelpers.ts` 810, 1450;
+`agentStudyFileRules.ts` 1944; `agentNoteBlockHelpers.ts` 1570, 1575, 1619,
+1629, 1635, 1645, 1684-1689, 3609; `Bible.ts` 285; `builtinActionHelpers.ts`
+245, 1822; `pptxSlideMeasureHelpers.ts` 219, 491, 882;
+`markdownScrollFollowHelpers.ts` 261; `MarkdownPreviewAppComp.tsx` 417, 944,
+951, 983, 1073; `FlexResizeActorComp.tsx` 239, 244, 380, 444, 498, 583 (and
+159, through bug 17); `AiChatAppComp.tsx` 264, 341, 558, 743, 785, 863, 987.
+
 ## Back to 99% again — 2026-11-11 (UT-101)
 
 `done` · **98.19% → 99.50% (99,715 / 100,217)**, +1,386 lines, 0 files at
