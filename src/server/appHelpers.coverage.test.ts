@@ -72,7 +72,7 @@ vi.mock('../progress-bar/progressBarHelpers', () => ({
 }));
 vi.mock('../helper/loggerHelpers', () => ({ appError: h.logError }));
 vi.mock('../helper/appHooks', () => ({ useAppEffect: vi.fn() }));
-vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
+vi.mock('../helper/extra-bin/extraBinGateHelpers', () => ({
     requireExtraBinPaths: h.requireExtraBinPaths,
 }));
 
@@ -193,7 +193,7 @@ describe('downloadImageBase64Data', () => {
         );
         expect(h.showSimpleToast).toHaveBeenCalledExactlyOnceWith(
             'Download',
-            `Image saved at: ${filePath}`,
+            `File saved at: ${filePath}`,
         );
         expect(h.sendData).toHaveBeenCalledExactlyOnceWith(
             'main:app:reveal-path',

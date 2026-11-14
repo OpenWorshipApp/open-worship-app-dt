@@ -52,14 +52,14 @@ Not running? `env -u ELECTRON_RUN_AS_NODE npm run dev` (the harness exports
 
 | Window | `list_pages` url |
 | --- | --- |
-| Main | `…/presenter.html` or `…/reader.html` |
+| Main | `…/presenter.html`, `…/reader.html`, `…/appDocumentEditor.html` or `…/screen-mirror.html` |
 | Chatbot | `…/chatbot.html?uuid=chatbot` |
 | Settings | `…/setting.html` |
 | A SHOWING projector screen | `…/screen.html?screenId=N` — the target vanishes when it hides |
 
 `mcp__owa-devtools__take_screenshot` with the chatbot target's `pageId` (the
 number `list_pages` prints before it) is the quickest look at the chatbot
-window: chrome-devtools-mcp 1.8 requires `pageId` on every page-scoped tool
+window: chrome-devtools-mcp 1.12, like 1.8 before it, requires `pageId` on every page-scoped tool
 (`pageIdRouting` defaults on, and `server.mjs` leaves it on), so `select_page`
 alone does not aim it. Screenshot before and after any UI change.
 

@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-02T00:54:36.674Z
 ---
 
-`npm run pack:*` starts with `electron:build`, which deletes `electron-build/` — the running
+`npm run pack:*` runs `npm run build`, whose `electron:build` deletes `electron-build/` — the running
 dev app's own main entry ([[build-kills-running-dev-app]]). The 2026-10-01 release golden-path
 run needed a packaged build while the user's `npm run dev` + `electron:dev` watch chain was up,
 and packed from a **snapshot** instead, which left the dev app untouched:

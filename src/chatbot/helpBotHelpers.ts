@@ -38,14 +38,22 @@ import {
 import { readAnyBibleContentAsk } from './verseAskLanguageHelpers';
 import {
     BIBLE_IMPORT_MANUAL_ID,
+    genBibleImportLanguageOfferAction,
     genBibleImportOfferAction,
 } from './bibleImportChatHelpers';
+import { genStudyBookNames } from './studyVerseCheckHelpers';
+import {
+    checkHasBibleInLanguage,
+    readTypedVerseLine,
+    readTypedVerseRef,
+} from './typedVerseAskHelpers';
 import {
     checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
+    type DraftedLyricType,
+    genLyricDraftActions,
     keepDraftedLyric,
-    LYRIC_COPY_TOOL_NAME,
-    LYRIC_CREATE_TOOL_NAME,
+    MAX_SONGS_PER_ASK,
     readDraftedLyric,
     readDraftReport,
     readSongLinkAsk,
@@ -53,6 +61,7 @@ import {
     readSongTitleAsk,
 } from './lyricDraftHelpers';
 import { translateDraftReport } from './lyricDraftReportHelpers';
+import { checkIsSongDocumentName } from './documentTextHelpers';
 import { toShownPage } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import { callTool, parseToolJson } from './mcpClient';
 import {
@@ -62,13 +71,36 @@ import {
 } from './chatLangHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { describeVerseOpened } from './verseFindChatHelpers';
-import { toSiteName } from './progressHelpers';
+import {
+    describeToolStep,
+    type ProgressReporterType,
+    toSiteName,
+} from './progressHelpers';
 import { checkIsOwnWindowQuestion, readWholePage } from './questionHelpers';
+import { checkHasLanguageName } from './languageNameWordHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
 import {
     OPEN_AI_SETTING_LABEL,
     OPEN_AI_SETTING_TOOL_NAME,
 } from './providerIssueHelpers';
+import {
+    checkNeedsScreenEditRead,
+    genScreenChangeLaterText,
+    genScreenSettingText,
+} from './screenStateAnswerHelpers';
+import {
+    SCREEN_CHANGE_TOOL_NAME,
+    genScreenChangeOffers,
+    genScreenOfferText,
+    readScreenChangeArgs,
+} from './screenChangeOfferHelpers';
+import {
+    SCREEN_EDIT_TOOL_NAME,
+    genScreenUndoAction,
+    readAddedScreenId,
+    readEditedScreen,
+} from './screenChatHelpers';
+import type { ScreenAskReadType } from './typedScreenAskHelpers';
 import { describeScreenContent } from '../../tools/owa-devtools-mcp/agentScreens.mjs';
 import {
     describeRunSheet,
@@ -297,8 +329,10 @@ function readReaderButtonReference(
 ): ReaderButtonReferenceType | null {
     if (
         focus !== 'reader' ||
-        !/(?:book|chapter)\s+buttons?|khmer|non[- ]english|another language/i.test(
-            question,
+        !(
+            /(?:book|chapter)\s+buttons?|non[- ]english|another language/i.test(
+                question,
+            ) || checkHasLanguageName(question)
         )
     ) {
         return null;
@@ -421,7 +455,7 @@ const FOLLOW_UP_NO_PATTERN =
     /^(?:n|no|nope|nah|no\s+thanks?|not\s+now|never\s?mind|cancel|stop)[\s.!?]*$/i;
 
 // ...and the same in the app's other languages, whose words for yes and no
-// are data (`assistant.json`): the yes and no buttons under a Khmer answer
+// are data (`assistant.json`): the yes and no buttons under a translated answer
 // are pressed with no assistant at all.
 function checkIsFollowUpYes(text: string) {
     return FOLLOW_UP_YES_PATTERN.test(text) || checkIsLanguageWord(text, 'yes');
@@ -482,8 +516,11 @@ export function checkIsPresenterStateAsk(asked: string) {
 // with any dash the parser reads (`DASH_VARIANTS` in
 // `bibleReferenceTokenizer.ts`) or a word: "John 1:2 to 3:4". The word needs
 // a number after it, so "to the screen" stays the tail.
+// Asked as a request too -- "can you put John 3:16 on the projector?",
+// "show me Psalm 23, please" (2026-11-14, EC-622): it had been the guide's
+// page, and "me John" the book.
 const VERSE_ASK_PATTERN =
-    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+)?(?:(?:\s*[-‐-―−﹘﹣－]\s*|\s+(?:to|through|thru)\s+)\d+(?:\s*[:.]\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
+    /^(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+(?:please\s+)?)?(?:put|show|present|display|open|bring)\s+(?!(?:me\s+)?(?:up\s+)?(?:the\s+)?(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)(?:me\s+)?(?:up\s+)?(?:the\s+)?((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+)?(?:(?:\s*[-‐-―−﹘﹣－]\s*|\s+(?:to|through|thru)\s+)\d+(?:\s*[:.]\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?(?:\s*,?\s*please)?\s*[.!?]?\s*$/i;
 
 /**
  * The pseudo tool name a button carries when pressing it should run one of
@@ -529,6 +566,10 @@ const PRESENTER_ROUTE_FROM_READER =
     'click the 🖥️ **Go Back to Presenter** button at the top right';
 const PRESENTER_ROUTE_FROM_EDITOR =
     'click the **Presenter** tab at the top of the window';
+// The Screen Mirror page has no tab list: its top bar's first button is the
+// way back (`MirrorPageComp`).
+const PRESENTER_ROUTE_FROM_SCREEN_MIRROR =
+    'click **Presenter** at the top left of the window';
 
 /**
  * The words that take the user from a page of the main window back to the
@@ -546,7 +587,21 @@ export function genBackToPresenterRoute(focus: BotFocusType): string | null {
     if (focus === 'appDocumentEditor') {
         return PRESENTER_ROUTE_FROM_EDITOR;
     }
+    if (focus === 'screen-mirror') {
+        return PRESENTER_ROUTE_FROM_SCREEN_MIRROR;
+    }
     return null;
+}
+
+/** A route in the words the app is shown in, each key written out. */
+function toShownPresenterRoute(route: string): string {
+    if (route === PRESENTER_ROUTE_FROM_READER) {
+        return tran(PRESENTER_ROUTE_FROM_READER);
+    }
+    if (route === PRESENTER_ROUTE_FROM_SCREEN_MIRROR) {
+        return tran(PRESENTER_ROUTE_FROM_SCREEN_MIRROR);
+    }
+    return tran(PRESENTER_ROUTE_FROM_EDITOR);
 }
 
 /**
@@ -636,10 +691,7 @@ export function genBackToPresenterLead(focus: BotFocusType, text: string) {
             ),
             {
                 page: tranLabel(pageLabel),
-                route:
-                    route === PRESENTER_ROUTE_FROM_READER
-                        ? tran(PRESENTER_ROUTE_FROM_READER)
-                        : tran(PRESENTER_ROUTE_FROM_EDITOR),
+                route: toShownPresenterRoute(route),
             },
         ) + '\n\n'
     );
@@ -825,9 +877,17 @@ export async function answerWhereIs(
     };
 }
 
-async function answerScreens(): Promise<BotAnswerType | null> {
-    const state = parseToolJson(await callTool('owa_list_screens'));
-    if (state === null || state.error) {
+/**
+ * What each screen holds, said with no model: the guide's answer to "is
+ * anything on the screen?", and the window's to a screen ask in another
+ * language when no assistant can answer (EC-614) -- the guide searches
+ * English words.
+ */
+export async function answerScreens(
+    listState?: any,
+): Promise<BotAnswerType | null> {
+    const state = listState ?? (await readScreenListState());
+    if (state === null) {
         return null;
     }
     const showingIds: number[] = state.showingScreenIds ?? [];
@@ -917,6 +977,154 @@ async function answerScreens(): Promise<BotAnswerType | null> {
     };
 }
 
+async function readScreenListState() {
+    const state = parseToolJson(await callTool('owa_list_screens'));
+    return state === null || state.error ? null : state;
+}
+
+// The screens' quiet read (`owa_screen_edit`): no banner. Null when it
+// could not be made -- the Presenter is not up, say.
+async function readScreenEditState() {
+    try {
+        return parseToolJson(
+            await callTool(SCREEN_EDIT_TOOL_NAME, { action: 'read' }),
+        );
+    } catch (error) {
+        appError(error, 'offline screen read');
+        return null;
+    }
+}
+
+/**
+ * A screen ask with no assistant to answer it (EC-625): the setting it asks
+ * about, as each screen has it now (`screenStateAnswerHelpers.ts`), that
+ * nothing was changed, then what each screen holds. A kind the state does
+ * not answer -- a clear, a screen named by its number -- gets what each
+ * screen holds and the same last sentence. `owa_screen_edit`'s read is
+ * quiet: it raises no "something is driving your app" banner.
+ *
+ * And, with the line asked (EC-627), the change itself as buttons
+ * (`genScreenChangeOffers`): each press is one `owa_screen_edit` set, and
+ * the last sentence says so. `isOfferOnly` is a kind the state does not
+ * answer in English -- a clear: answered here only with a button to press,
+ * else the guide's.
+ */
+export async function answerScreenAsk(
+    kind: ScreenAskReadType | null,
+    line?: string,
+    options?: { isOfferOnly?: boolean },
+): Promise<BotAnswerType | null> {
+    const listState = await readScreenListState();
+    if (listState === null) {
+        return null;
+    }
+    const isOfferWanted = line !== undefined && kind !== null;
+    const editState =
+        checkNeedsScreenEditRead(kind) || isOfferWanted
+            ? await readScreenEditState()
+            : null;
+    const offers = isOfferWanted
+        ? genScreenChangeOffers(line, kind, editState)
+        : [];
+    if (options?.isOfferOnly === true && offers.length === 0) {
+        return null;
+    }
+    const shown = await answerScreens(listState);
+    if (shown === null) {
+        return null;
+    }
+    const setting = genScreenSettingText(kind, listState, editState);
+    return {
+        ...shown,
+        text: [
+            setting,
+            shown.text,
+            offers.length > 0
+                ? genScreenOfferText()
+                : genScreenChangeLaterText(),
+        ]
+            .filter((part): part is string => {
+                return part !== null && part !== '';
+            })
+            .join('\n\n'),
+        actions: [...offers, ...(shown.actions ?? [])],
+    };
+}
+
+/**
+ * A plain line typed under a screen answer with no assistant -- _centre
+ * it_, _make it yellow_, _unlock it_ (EC-627): the press that does it,
+ * read off the line alone, under one sentence. Null when the line asks for
+ * nothing the screens' state can offer: the guide answers it.
+ */
+export async function answerScreenThreadAsk(
+    line: string,
+): Promise<BotAnswerType | null> {
+    const offers = genScreenChangeOffers(
+        line,
+        null,
+        await readScreenEditState(),
+    );
+    return offers.length === 0
+        ? null
+        : { text: genScreenOfferText(), actions: offers };
+}
+
+/**
+ * An offer pressed (EC-627): the change made through `owa_screen_edit`,
+ * then the screens read again and the setting said as it is now -- or, for
+ * a clear, what each screen holds -- with **Undo this change** under it.
+ * A change that was already so says the setting alone.
+ */
+async function runScreenChange(args: unknown): Promise<BotActionResultType> {
+    const change = readScreenChangeArgs(args);
+    if (change === null) {
+        return { text: tran('Done.'), isNeedingModel: false };
+    }
+    const text = await callTool(SCREEN_EDIT_TOOL_NAME, {
+        ...change.set,
+        action: 'set',
+    });
+    const edited = readEditedScreen(text);
+    const undoAction = edited === null ? null : genScreenUndoAction(edited);
+    // The Bible text's look is said by its size alone: after a centring,
+    // "the Bible text is 65 pixels high" says nothing of what was done, so
+    // a look changed is "Done." and no more.
+    const style = change.set.style as Record<string, unknown> | undefined;
+    const isLookOnly =
+        edited !== null &&
+        change.kind === 'style' &&
+        style?.size === undefined &&
+        style?.reset === undefined;
+    let said: string | null = null;
+    if (!isLookOnly) {
+        const listState = await readScreenListState();
+        const editState = checkNeedsScreenEditRead(change.kind)
+            ? await readScreenEditState()
+            : null;
+        // A screen added is said by its number (EC-630).
+        said = genScreenSettingText(
+            change.kind,
+            listState,
+            editState,
+            change.kind === 'newScreen' ? readAddedScreenId(text) : null,
+        );
+        if (said === null && listState !== null) {
+            said = (await answerScreens(listState))?.text ?? null;
+        }
+    }
+    return {
+        text:
+            [edited === null ? null : tran('Done.'), said]
+                .filter((part): part is string => {
+                    return part !== null && part !== '';
+                })
+                .join(' ') || tran('Done.'),
+        isNeedingModel: false,
+        ...(undoAction === null ? {} : { actions: [undoAction] }),
+    };
+}
+
 /**
  * "Put John 3:16 on the screen", with no model: the reference is checked
  * against the app's own parser first (`owa_present_bible` with `check`, which
@@ -931,7 +1139,32 @@ async function answerScreens(): Promise<BotAnswerType | null> {
  */
 async function answerVerseAsk(
     reference: string,
+    // The check already made of it, when there is one.
+    checkedBefore?: VerseCheckType | null,
 ): Promise<BotAnswerType | null> {
+    const checked =
+        checkedBefore === undefined
+            ? await checkVerseReference(reference)
+            : checkedBefore;
+    if (checked === null) {
+        return null;
+    }
+    return checked.kind === 'refused'
+        ? { text: checked.reason }
+        : genVerseReadAnswer(checked.result);
+}
+
+type VerseCheckType =
+    { kind: 'read'; result: any } | { kind: 'refused'; reason: string };
+
+/**
+ * The app's own parser on a reference (`owa_present_bible` with `check`,
+ * which touches no screen): what it reads, or its sentence saying it reads
+ * no passage. Null when the app could not be asked.
+ */
+async function checkVerseReference(
+    reference: string,
+): Promise<VerseCheckType | null> {
     let result: any;
     try {
         result = parseToolJson(
@@ -940,7 +1173,7 @@ async function answerVerseAsk(
     } catch (error: any) {
         const reason = String(error?.message ?? '');
         if (/could not be read as a passage/.test(reason)) {
-            return { text: reason };
+            return { kind: 'refused', reason };
         }
         appError(error, 'offline verse ask');
         return null;
@@ -948,11 +1181,32 @@ async function answerVerseAsk(
     if (result === null || typeof result.reference !== 'string') {
         return null;
     }
+    return { kind: 'read', result };
+}
+
+/**
+ * A passage the parser read: its first words and ONE button that puts it
+ * up. What the screens hold is said only where the check could see them --
+ * on the Presenter (`isAnyShowing`); anywhere else the check carries no
+ * screens, and the sentence that the screen is off had been said of a
+ * screen nobody looked at (2026-11-14, EC-622).
+ */
+function genVerseReadAnswer(result: any): BotAnswerType {
     const passage = {
         reference: result.reference,
         version: result.version,
         words: result.text,
     };
+    const screenText =
+        result.isAnyShowing === true
+            ? tran('I can put it on the screen for you.')
+            : result.isAnyShowing === false
+              ? tran(
+                    'I can put it on the screen for you -- the screen is ' +
+                        'off just now, so it will be loaded and ready for ' +
+                        'when it is turned on.',
+                )
+              : '';
     return {
         text:
             (result.text
@@ -963,15 +1217,7 @@ async function answerVerseAsk(
                 : fillWords(
                       tran('**{reference} ({version})** reads.'),
                       passage,
-                  )) +
-            ' ' +
-            (result.isAnyShowing === true
-                ? tran('I can put it on the screen for you.')
-                : tran(
-                      'I can put it on the screen for you -- the screen is ' +
-                          'off just now, so it will be loaded and ready for ' +
-                          'when it is turned on.',
-                  )),
+                  )) + (screenText === '' ? '' : ` ${screenText}`),
         actions: [
             {
                 // Nothing reads this label back (the press runs its
@@ -983,6 +1229,86 @@ async function answerVerseAsk(
                 args: { command: `/verse ${result.reference}` },
             },
         ],
+    };
+}
+
+// Every installed Bible's book names, read once for the line and let go
+// with it. Null when the app cannot be asked.
+async function readInstalledBookNames() {
+    try {
+        return genStudyBookNames(
+            parseToolJson(
+                await callTool('owa_bible_suggest', {
+                    kind: 'books',
+                    prefix: '',
+                }),
+            ),
+        );
+    } catch (error) {
+        appError(error, 'offline typed verse ask');
+        return null;
+    }
+}
+
+/**
+ * A passage asked for in a language other than English, with no model
+ * (2026-11-14, EC-622; `typedVerseAskHelpers.ts`): put up or read, a verse
+ * typed in a person's own words had been answered with the guide's page on
+ * Settings, because `VERSE_ASK_PATTERN` reads English verbs only. The line
+ * is read by what it holds -- a chapter and a verse after a book's name as
+ * an installed Bible or English names it -- and the answer is the English
+ * one: the verse's first words in the Bible that reads it and ONE button
+ * that puts it up.
+ *
+ * A word before a chapter and a verse that no installed Bible names a book
+ * by is read too, when `isUnknownRead`: the parser's sentence is the
+ * answer, in the window's language, never the guide's page -- and when no
+ * installed Bible is in the language the line is typed in, the import, already
+ * searching for that language's Bibles. Not when the window put the line
+ * into English for the guide: the guide's own verse reader may read the
+ * book there (`John` for another language's name of it). Null for a line
+ * that names no passage, or when the app cannot be asked.
+ */
+export async function answerTypedVerseAsk(
+    text: string,
+    options: { isUnknownRead: boolean; appLangCode?: string },
+): Promise<BotAnswerType | null> {
+    const line = readTypedVerseLine(text, options.appLangCode);
+    if (line === null) {
+        return null;
+    }
+    const names = await readInstalledBookNames();
+    if (names === null) {
+        return null;
+    }
+    const ref = readTypedVerseRef(text, names);
+    if (ref === null || (!ref.isBookNamed && !options.isUnknownRead)) {
+        return null;
+    }
+    const checked = await checkVerseReference(ref.reference);
+    if (checked === null) {
+        return null;
+    }
+    if (checked.kind === 'read') {
+        return genVerseReadAnswer(checked.result);
+    }
+    const refusal = fillWords(
+        tran(
+            'These could not be read as a passage in any installed Bible: {passages}.',
+        ),
+        { passages: ref.reference },
+    );
+    if (ref.isBookNamed || checkHasBibleInLanguage(names, line.typedCode)) {
+        return { text: refusal };
+    }
+    return {
+        text:
+            refusal +
+            '\n\n' +
+            tran(
+                'Or let the assistant import a Bible in your language for you:',
+            ),
+        actions: [genBibleImportLanguageOfferAction(line.typedCode)],
     };
 }
 
@@ -1376,15 +1702,49 @@ export async function answerLyricTitle(title: string): Promise<BotAnswerType> {
  * the app's own validator) is the only one there is. Null when the drafter
  * would not call it a song.
  */
-function genLyricDraftAnswer(
+export function genLyricDraftAnswer(
     raw: string,
     opening: string,
+    {
+        fontFamily = null,
+        notes = [],
+        actions = [],
+    }: {
+        // A song made from a document keeps the document's face
+        // (`lyricDocumentChatHelpers.ts`): written on Create.
+        fontFamily?: string | null;
+        // Sentences of the caller's own, said before the buttons.
+        notes?: string[];
+        // Buttons of the caller's own, after Create and Copy.
+        actions?: BotActionType[];
+    } = {},
 ): BotAnswerType | null {
     const content = readDraftedLyric(raw);
     if (content === null) {
         return null;
     }
-    const drafted = keepDraftedLyric(content);
+    return genDraftedAnswer(
+        keepDraftedLyric(content, fontFamily),
+        raw,
+        opening,
+        { notes, actions },
+    );
+}
+
+function genDraftedAnswer(
+    drafted: DraftedLyricType,
+    raw: string,
+    opening: string,
+    {
+        notes = [],
+        actions = [],
+    }: {
+        // Sentences of the caller's own, said before the buttons.
+        notes?: string[];
+        // Buttons of the caller's own, after Create and Copy.
+        actions?: BotActionType[];
+    } = {},
+): BotAnswerType {
     const report = translateDraftReport(readDraftReport(raw));
     const lines = [
         opening,
@@ -1405,6 +1765,7 @@ function genLyricDraftAnswer(
                     .join('\n'),
         );
     }
+    lines.push(...notes);
     lines.push(
         fillWords(
             tran(
@@ -1416,20 +1777,245 @@ function genLyricDraftAnswer(
     );
     return {
         text: lines.join('\n\n'),
-        actions: [
-            {
-                // English: `DRAFT_ACTION_PATTERN` (quickReplyHelpers) reads it.
-                label: `Create "${drafted.name}"`,
-                toolName: LYRIC_CREATE_TOOL_NAME,
-                args: { reference: drafted.reference },
-            },
-            {
-                label: 'Copy song text',
-                toolName: LYRIC_COPY_TOOL_NAME,
-                args: { reference: drafted.reference },
-            },
-        ],
+        // English: `DRAFT_ACTION_PATTERN` (quickReplyHelpers) reads them.
+        actions: [...genLyricDraftActions([drafted]), ...actions],
     };
+}
+
+/** Where a song is drafted from: a page by its address, or a file's words. */
+export type SongSourceType =
+    { kind: 'url'; url: string } | { kind: 'text'; name: string; text: string };
+
+type SourceDraftType =
+    | { drafted: DraftedLyricType; raw: string; from: string }
+    | { failure: string };
+
+// A file's name without its extension, for a song whose words carry no
+// title: "Untitled" four times is four songs nobody can tell apart.
+function toFileTitle(name: string) {
+    return name.replace(/\.[^.]+$/, '').trim();
+}
+
+async function draftSource(source: SongSourceType): Promise<SourceDraftType> {
+    if (source.kind === 'url') {
+        const site = toSiteName(source.url) ?? tran('that page');
+        let raw: string;
+        try {
+            raw = await callTool('owa_lyric_validate', {
+                url: source.url,
+                mode: 'draft',
+            });
+        } catch (error) {
+            appError(error, 'offline song links');
+            return {
+                failure: fillWords(
+                    tran(
+                        'I could not read {site} just now. Check the address, ' +
+                            'or copy the words off the page and paste them ' +
+                            'here and I will write them out.',
+                    ),
+                    { site },
+                ),
+            };
+        }
+        const content = readDraftedLyric(raw);
+        if (content !== null) {
+            return { drafted: keepDraftedLyric(content), raw, from: site };
+        }
+        return {
+            failure: fillWords(
+                checkIsBrowserCheckRefusal(raw)
+                    ? tran(
+                          '{site} answered with a "checking your browser" ' +
+                              'page instead of the song. Open the page in ' +
+                              'your own browser once and try again, or copy ' +
+                              'the words off it and paste them here.',
+                      )
+                    : tran(
+                          'I read {site} but could not find a song on it. If ' +
+                              'the words are in front of you, paste them here ' +
+                              'and I will write them out.',
+                      ),
+                { site },
+            ),
+        };
+    }
+    const failure = fillWords(tran('I could not find a song in "{name}".'), {
+        name: source.name,
+    });
+    try {
+        let raw = await callTool('owa_lyric_validate', {
+            text: source.text,
+            mode: 'draft',
+        });
+        let content = readDraftedLyric(raw);
+        const fileTitle = toFileTitle(source.name);
+        if (
+            content !== null &&
+            fileTitle !== '' &&
+            /^- Title:[ \t]*Untitled[ \t]*$/m.test(content)
+        ) {
+            // No title in the words: drafted again under the file's name.
+            const named = await callTool('owa_lyric_validate', {
+                text: source.text,
+                mode: 'draft',
+                title: fileTitle,
+            });
+            const namedContent = readDraftedLyric(named);
+            if (namedContent !== null) {
+                raw = named;
+                content = namedContent;
+            }
+        }
+        return content === null
+            ? { failure }
+            : { drafted: keepDraftedLyric(content), raw, from: source.name };
+    } catch (error) {
+        appError(error, 'offline song files');
+        return { failure };
+    }
+}
+
+// One song of several, as its own paragraph: what it came out as, where it
+// came from, and what had to be guessed -- the drafter's own words, as the
+// single answer gives them.
+function genSongParagraph(
+    drafted: DraftedLyricType,
+    raw: string,
+    from: string,
+) {
+    const report = translateDraftReport(readDraftReport(raw));
+    const head = `${report.song ?? `"${drafted.name}"`} · ${from}`;
+    const lines = [head, report.sections, report.playOrder].filter(
+        (line): line is string => {
+            return line !== null;
+        },
+    );
+    if (report.guessed.length > 0) {
+        lines.push(
+            tran('The words did not say everything, so I guessed:'),
+            ...report.guessed.map((one) => {
+                return `- ${one}`;
+            }),
+        );
+    }
+    return lines.join('\n');
+}
+
+/**
+ * Several songs written out with no model -- the links of one message, the
+ * files of one question (EC-589). The pages are read ONE AFTER ANOTHER, as
+ * one ask reads one: each read is a hidden window on a weak machine and a
+ * call out of the firewall's ten reads in five minutes. A source that gives
+ * no song is said in its own sentence, the songs that came out are offered
+ * under **Create all N songs** and each one's own **Create "…"**, and
+ * `leftOutCount` sources past `MAX_SONGS_PER_ASK` are said to be left for
+ * another message. Nothing is written until a button is pressed.
+ */
+export async function answerLyricSources(
+    sources: readonly SongSourceType[],
+    leftOutCount = 0,
+    reportStep: ProgressReporterType | null = null,
+): Promise<BotAnswerType> {
+    const drafts: Exclude<SourceDraftType, { failure: string }>[] = [];
+    const failures: string[] = [];
+    for (const source of sources) {
+        // The tab's own progress line, in the words a model's draft call
+        // shows: which site is being read, or that a song is being written.
+        const finishStep = reportStep?.(
+            describeToolStep(
+                'owa_lyric_validate',
+                source.kind === 'url'
+                    ? { url: source.url, mode: 'draft' }
+                    : { mode: 'draft' },
+            ),
+        );
+        const result = await draftSource(source).finally(() => {
+            finishStep?.();
+        });
+        if ('failure' in result) {
+            failures.push(result.failure);
+        } else {
+            drafts.push(result);
+        }
+    }
+    const tail = [...failures];
+    if (leftOutCount > 0) {
+        tail.push(
+            fillWords(
+                tran(
+                    'I read the first {count} links only. Send me the ' +
+                        'others in another message.',
+                ),
+                { count: sources.length },
+            ),
+        );
+    }
+    if (drafts.length === 1) {
+        const [{ drafted, raw, from }, source] = [drafts[0], sources[0]];
+        // A document -- a slide document, a deck, a Word file, a PDF -- is
+        // named, as a page is: "those words" are words the person never
+        // saw here (EC-590).
+        const single = genDraftedAnswer(
+            drafted,
+            raw,
+            sources.length === 1 &&
+                source.kind === 'text' &&
+                !checkIsSongDocumentName(source.name)
+                ? tran(
+                      'I wrote those words out as a song for the Lyric Editor.',
+                  )
+                : fillWords(
+                      tran(
+                          'I read {site} and wrote the song on it out for ' +
+                              'the Lyric Editor.',
+                      ),
+                      { site: from },
+                  ),
+        );
+        return { ...single, text: [single.text, ...tail].join('\n\n') };
+    }
+    if (drafts.length === 0) {
+        return { text: tail.join('\n\n') };
+    }
+    const draftedList = drafts.map((one) => {
+        return one.drafted;
+    });
+    return {
+        text: [
+            fillWords(
+                tran(
+                    'I wrote out {count} songs for the Lyric Editor. Press ' +
+                        'Create all {count} songs to add them all, or a ' +
+                        'song’s own Create button for just that one.',
+                ),
+                { count: drafts.length },
+            ),
+            ...drafts.map(({ drafted, raw, from }) => {
+                return genSongParagraph(drafted, raw, from);
+            }),
+            ...tail,
+        ].join('\n\n'),
+        actions: genLyricDraftActions(draftedList),
+    };
+}
+
+/** The pages of a song-link ask, `MAX_SONGS_PER_ASK` of them at most. */
+export async function answerLyricLinks(
+    urls: readonly string[],
+    reportStep: ProgressReporterType | null = null,
+): Promise<BotAnswerType> {
+    if (urls.length === 1) {
+        return await answerLyricLink(urls[0]);
+    }
+    const shown = urls.slice(0, MAX_SONGS_PER_ASK);
+    return await answerLyricSources(
+        shown.map((url) => {
+            return { kind: 'url' as const, url };
+        }),
+        urls.length - shown.length,
+        reportStep,
+    );
 }
 
 // The manual's hits for a question, the ones under the floor left out.
@@ -1645,9 +2231,9 @@ export async function askHelpBot(
     // below it: the manual has no page about an address, and measured
     // (2026-09-10, assistant paused) it answered this with how to make an
     // empty file.
-    const songLink = readSongLinkAsk(trimmedQuestion);
-    if (songLink !== null) {
-        return await answerLyricLink(songLink);
+    const songLinks = readSongLinkAsk(trimmedQuestion);
+    if (songLinks !== null) {
+        return await answerLyricLinks(songLinks);
     }
     // A song named by its TITLE -- *Create a lyric file for song "Amazing
     // Grace"*, the starter beside the link one. Same reason, same place.
@@ -1718,15 +2304,27 @@ export async function askHelpBot(
     // "Where is the clear button?" is answered by pointing at the real one,
     // not by quoting a manual page about it.
     const whereIsMatch = WHERE_IS_PATTERN.exec(trimmedQuestion);
+    const verseMatch = HOW_DO_I_PATTERN.test(trimmedQuestion)
+        ? null
+        : VERSE_ASK_PATTERN.exec(trimmedQuestion);
+    // "Show me Psalm 23" is read by both: a passage the app's parser reads
+    // is the verse, anything else a control to point at (EC-622) -- the
+    // pointing had answered it with the closest control's name.
+    let verseCheck: VerseCheckType | null | undefined;
+    if (whereIsMatch !== null && verseMatch !== null) {
+        verseCheck = await checkVerseReference(verseMatch[1].trim());
+        if (verseCheck?.kind === 'read') {
+            return withPrefix(genVerseReadAnswer(verseCheck.result), prefix);
+        }
+    }
     if (whereIsMatch !== null) {
         const answer = await answerWhereIs(whereIsMatch[1], focus);
         if (answer !== null) {
             return withPrefix(answer, prefix);
         }
     }
-    const verseMatch = VERSE_ASK_PATTERN.exec(trimmedQuestion);
-    if (verseMatch !== null && !HOW_DO_I_PATTERN.test(trimmedQuestion)) {
-        const answer = await answerVerseAsk(verseMatch[1].trim());
+    if (verseMatch !== null) {
+        const answer = await answerVerseAsk(verseMatch[1].trim(), verseCheck);
         if (answer !== null) {
             return withPrefix(answer, prefix);
         }
@@ -2068,7 +2666,7 @@ export async function runBotAction(
     // returned it, both were printed under the page.
     const pageId = action.args?.id;
     if (action.toolName === 'owa_help_page' && typeof pageId === 'string') {
-        // In the window's language: `W-06@km` is the page's current
+        // In the window's language: `W-06@<code>` is the page's current
         // translation when there is one and the English page when not.
         const appLangCode = getAppLangCode();
         const shownPageId =
@@ -2119,6 +2717,11 @@ export async function runBotAction(
                       ),
             isNeedingModel: false,
         };
+    }
+    // A screen change offered with no model (EC-627): what it changed, in
+    // words, with its Undo -- never the tool's JSON.
+    if (action.toolName === SCREEN_CHANGE_TOOL_NAME) {
+        return await runScreenChange(action.args);
     }
     // **Open … in Bible Lookup** under a found verse: what it opened, in
     // words, never the tool's JSON.

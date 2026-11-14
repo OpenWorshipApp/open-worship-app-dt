@@ -4,6 +4,11 @@
 //   node .../apply-manual-edits.mjs <edits.json>            check only
 //   node .../apply-manual-edits.mjs <edits.json> --apply    check, then write
 //   node .../apply-manual-edits.mjs <edits.json> --apply --only=template
+//   node .../check-manual-edits.mjs <edits.json>            the READERS' door:
+//                                    these checks, never a write, whatever is
+//                                    passed (`AD-25`: a permission check
+//                                    refused this file's name to 7 of 22
+//                                    readers on 2026-11-10, --apply or not)
 //
 // A big backlog -- fifty recipes, a hundred notes -- is read by several agents
 // at once, and several agents writing one 5 800-line file lose each other's
@@ -47,7 +52,11 @@ const MANUAL_PATH =
 
 const argList = process.argv.slice(2);
 const jsonPath = argList.find((arg) => !arg.startsWith('--'));
-const isApplying = argList.includes('--apply');
+// `check-manual-edits.mjs` sets this before it loads this file: one set of
+// checks, two doors, and only this one can write.
+const isApplying =
+    argList.includes('--apply') &&
+    globalThis.__OWA_MANUAL_EDITS_CHECK_ONLY !== true;
 const onlyKind = argList
     .find((arg) => arg.startsWith('--only='))
     ?.slice('--only='.length);

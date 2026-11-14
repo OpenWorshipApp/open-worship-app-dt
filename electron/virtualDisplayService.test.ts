@@ -237,6 +237,12 @@ beforeEach(() => {
     fixture.client.clear();
     fixture.secure.clear();
     electronMockState.reset();
+    // On macOS a microphone is asked for first (`askForMediaAccess`), and a
+    // bare mock answers `undefined` -- denied. These tests are about where
+    // the sound goes once the person has allowed it, on every platform.
+    electronMockState.systemPreferences.askForMediaAccess.mockResolvedValue(
+        true,
+    );
     // A compositor window the service sizes after creating it.
     electronMockState.setBrowserWindowFactory(() => ({
         ...createMockBrowserWindow(),

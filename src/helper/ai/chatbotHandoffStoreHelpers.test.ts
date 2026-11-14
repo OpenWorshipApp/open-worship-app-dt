@@ -255,9 +255,21 @@ describe('a file handed to the assistant', () => {
                 end: null,
             },
         });
-        // No note, no words: a file is not a note.
-        requestChatbotFile('/r/LUK.6.pdf', null, null, 'Grace');
-        expect(takeChatbotFileRequest()?.mention).toBeNull();
+        // Beside a whole file too: words selected in a text file's editor
+        // (a Markdown Preview's, 2026-11-11).
+        requestChatbotFile('/r/notes.md', null, null, 'Grace');
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/r/notes.md',
+            reading: null,
+            noteId: null,
+            mention: {
+                text: 'Grace',
+                before: '',
+                after: '',
+                start: null,
+                end: null,
+            },
+        });
         requestChatbotFile('/n/Default.own', null, 4, '   \n ');
         expect(takeChatbotFileRequest()?.mention).toBeNull();
         // A hand-edited setting cannot make it anything but words.
@@ -271,6 +283,51 @@ describe('a file handed to the assistant', () => {
             }),
         );
         expect(takeChatbotFileRequest()?.mention).toBeNull();
+    });
+
+    // 2026-11-11, the Markdown Preview's editor: the file's lines too.
+    it("carries a text file's lines the words are on, checked both ways", () => {
+        requestChatbotFile('/r/notes.md', null, null, {
+            text: 'so loved',
+            before: 'For God ',
+            after: ' the world',
+            start: null,
+            end: null,
+            lines: { first: 7, last: 9 },
+        });
+        expect(takeChatbotFileRequest()?.mention?.lines).toEqual({
+            first: 7,
+            last: 9,
+        });
+        // Lines that do not check out are none -- and leave no field.
+        for (const lines of [
+            { first: 0, last: 2 },
+            { first: 5, last: 4 },
+            { first: 1.5, last: 2 },
+            { first: '7', last: '9' },
+            { first: 7 },
+            null,
+        ]) {
+            const mention = toValidSelectionMention({ text: 'a', lines });
+            expect(mention).not.toBeNull();
+            expect(mention).not.toHaveProperty('lines');
+        }
+        // A hand-edited setting cannot ride anything else along on them.
+        store.set(
+            'chatbot-handoff-file',
+            JSON.stringify({
+                filePath: '/r/notes.md',
+                mention: {
+                    text: 'a',
+                    lines: { first: 2, last: 3, evil: true },
+                },
+                at: Date.now(),
+            }),
+        );
+        expect(takeChatbotFileRequest()?.mention?.lines).toEqual({
+            first: 2,
+            last: 3,
+        });
     });
 
     // 2026-11-08: _should provide selection range in the input text_.

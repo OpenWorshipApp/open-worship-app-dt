@@ -602,7 +602,7 @@ describe('the Extra editor', () => {
         });
         expect(mocks.toast).toHaveBeenCalledWith(
             'Saving Bible Data',
-            'Invalid Bible Key ESV',
+            'Invalid Bible key: ESV',
         );
 
         state.xmlData = null;
@@ -612,7 +612,7 @@ describe('the Extra editor', () => {
         await flush();
         expect(mocks.toast).toHaveBeenCalledWith(
             'Saving Bible Data',
-            'Bible Data not found for key KJV',
+            'Bible XML data not found: "KJV"',
         );
         expect(mocks.saveXML).not.toHaveBeenCalled();
     });

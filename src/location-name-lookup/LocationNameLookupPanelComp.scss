@@ -18,7 +18,7 @@
 
   // The tab buttons and the type filter share one row. Letting the filter
   // shrink freely ellipsized its SELECTED option down to a couple of glyphs —
-  // "All types" fits, its Khmer equivalent does not, which left the app's
+  // "All types" fits, a longer translation of it does not, which left the app's
   // primary audience unable to read what the list was filtered by. Wrapping the
   // row keeps the filter readable without ever widening the panel: it drops to
   // its own full-width line when it cannot sit beside the tabs.
@@ -74,7 +74,7 @@
 
 // The English name beside a translated one. Dimmed rather than smaller: the
 // name it follows is already at the surface's base size, and shrinking a Latin
-// gloss under a Khmer name made it unreadable at the app's default zoom.
+// gloss under a name in another script made it unreadable at the app's default zoom.
 //
 // NOT nested under `.location-name-lookup`: a detail panel shows it in the
 // floating widget's TITLE BAR, which is chrome outside that root.

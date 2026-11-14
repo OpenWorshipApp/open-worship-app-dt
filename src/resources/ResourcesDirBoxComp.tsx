@@ -11,6 +11,10 @@ import {
     pressElementLikeButton,
 } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
+import {
+    FILE_ERROR_TOAST_TIMEOUT,
+    toFileErrorText,
+} from '../server/fileErrorTextHelpers';
 import LoadingComp from '../others/LoadingComp';
 import {
     hideProgressBar,
@@ -181,7 +185,8 @@ export default function ResourcesDirBoxComp({
             handleError(error);
             showSimpleToast(
                 title,
-                `${tran('Cannot copy file')}: ${(error as Error).message}`,
+                `${tran('Cannot copy file')}: ${toFileErrorText(error)}`,
+                FILE_ERROR_TOAST_TIMEOUT,
             );
         } finally {
             isAddingFilesRef.current = false;

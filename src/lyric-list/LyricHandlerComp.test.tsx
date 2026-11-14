@@ -10,6 +10,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // init, the pane layout and the slide class are stood in for.
 const h = vi.hoisted(() => ({
     resizeProps: null as any,
+    resizePropsMap: {} as Record<string, any>,
+    appProvider: { isPagePresenter: true },
+    noteRenders: [] as any[][],
     contextManager: null as any,
     initOpenLyric: vi.fn(),
     applyOpenLyricTheme: vi.fn(),
@@ -29,15 +32,19 @@ vi.mock('../resize-actor/ResizeActorComp', async () => {
     return {
         default: (props: any) => {
             h.resizeProps = props;
+            h.resizePropsMap[props.flexSizeName] = props;
             h.contextManager = use(LyricManagerContext);
+            const isNoteActor = props.flexSizeName.endsWith('-note');
             return createElement(
                 'div',
-                { id: 'panes' },
+                { id: isNoteActor ? 'note-panes' : 'panes' },
                 props.dataInput.map((input: any) =>
                     createElement(
                         Suspense,
                         { key: input.key, fallback: null },
-                        createElement(input.children),
+                        'render' in input.children
+                            ? input.children.render()
+                            : createElement(input.children),
                     ),
                 ),
             );
@@ -50,6 +57,17 @@ vi.mock('./LyricRenderPreviewBodyComp', () => ({
 vi.mock('./LyricSlidesPreviewerComp', () => ({
     default: () => createElement('div', { id: 'slides-body' }),
 }));
+vi.mock('./LyricNotesComp', () => ({
+    default: ({ noteList }: { noteList: any[] }) => {
+        h.noteRenders.push(noteList);
+        return createElement(
+            'div',
+            { id: 'notes' },
+            noteList.map((note) => note.text).join('|'),
+        );
+    },
+}));
+vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
 vi.mock('./Lyric', () => ({
     default: { getInstance: () => h.lyric },
 }));
@@ -58,9 +76,14 @@ vi.mock('./lyricHelpers', () => ({
     initOpenLyric: h.initOpenLyric,
 }));
 vi.mock('../helper/appHooks', async () => {
-    const { useEffect, useState } = await import('react');
+    const { useEffect, useRef, useState } = await import('react');
     return {
         useAppEffect: useEffect,
+        useAppCurrentRef: (value: any) => {
+            const ref = useRef(value);
+            ref.current = value;
+            return ref;
+        },
         useAppStateAsync: (callee: () => Promise<any>, deps: any[] = []) => {
             const [value, setValue] = useState<any>(undefined);
             useEffect(() => {
@@ -184,6 +207,9 @@ function getManager(): LyricManager {
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.resizeProps = null;
+    h.resizePropsMap = {};
+    h.appProvider.isPagePresenter = true;
+    h.noteRenders = [];
     h.contextManager = null;
     h.isDarkMode = false;
     h.lyric = genLyric();
@@ -325,6 +351,110 @@ describe('the file on disk', () => {
             await h.lyric.fileSource.fireUpdate();
         });
         expect(openLyric.value).toBe('v1: edited');
+    });
+});
+
+const SONG_WITH_NOTE = [
+    '```ol:Verse 1',
+    'first',
+    '```',
+    '```ol:Note',
+    'play verse 1 twice',
+    '```',
+].join('\n');
+
+describe("the song's notes", () => {
+    test('a song with a Note gets the read-only note pane under its panes', async () => {
+        h.lyric.content = SONG_WITH_NOTE;
+        openLyric.value = SONG_WITH_NOTE;
+        await renderBody('floating-');
+
+        const noteActor = h.resizePropsMap['floating-lyric-previewer-note'];
+        expect(noteActor.isHorizontal).toBe(false);
+        expect(noteActor.flexSizeDefault).toEqual({
+            v1: ['6'],
+            v2: ['1'],
+        });
+        expect(
+            noteActor.dataInput.map((input: any) => {
+                return [input.key, input.widgetName];
+            }),
+        ).toEqual([
+            ['v1', 'Lyrics'],
+            ['v2', 'Note'],
+        ]);
+        // The song's own panes are inside it, unchanged, so their stored
+        // split is kept.
+        const panes = container.querySelector('#note-panes #panes');
+        expect(panes).not.toBeNull();
+        expect(h.resizePropsMap['floating-lyric-previewer']).toBeDefined();
+        // Found on the FIRST render the manager had: no pane mounted twice.
+        expect(h.noteRenders).toEqual([
+            [{ partName: 'Note', text: 'play verse 1 twice' }],
+        ]);
+        expect(container.querySelector('#notes')!.textContent).toBe(
+            'play verse 1 twice',
+        );
+    });
+
+    test('a song without a Note, or outside the Presenter, has no note pane', async () => {
+        await renderBody();
+        expect(container.querySelector('#note-panes')).toBeNull();
+        expect(h.resizeProps.flexSizeName).toBe('lyric-previewer');
+
+        act(() => {
+            root.unmount();
+        });
+        root = createRoot(container);
+        h.appProvider.isPagePresenter = false;
+        h.lyric.content = SONG_WITH_NOTE;
+        openLyric.value = SONG_WITH_NOTE;
+        await renderBody();
+        expect(container.querySelector('#note-panes')).toBeNull();
+        expect(container.querySelector('#notes')).toBeNull();
+    });
+
+    test('an edit that adds or removes a note brings the pane or takes it away', async () => {
+        await renderBody();
+        expect(container.querySelector('#notes')).toBeNull();
+
+        h.lyric.content = SONG_WITH_NOTE;
+        await act(async () => {
+            await h.lyric.fileSource.fireUpdate();
+        });
+        expect(container.querySelector('#notes')!.textContent).toBe(
+            'play verse 1 twice',
+        );
+
+        h.lyric.content = 'v1: first';
+        await act(async () => {
+            await h.lyric.fileSource.fireUpdate();
+        });
+        expect(container.querySelector('#note-panes')).toBeNull();
+        expect(container.querySelector('#panes')).not.toBeNull();
+    });
+
+    test('an edit that leaves the notes alone does not render them again', async () => {
+        h.lyric.content = SONG_WITH_NOTE;
+        openLyric.value = SONG_WITH_NOTE;
+        await renderBody();
+        expect(h.noteRenders).toHaveLength(1);
+
+        h.lyric.content = SONG_WITH_NOTE.replace('first', 'edited');
+        await act(async () => {
+            await h.lyric.fileSource.fireUpdate();
+        });
+        expect(openLyric.value).toContain('edited');
+        expect(h.noteRenders).toHaveLength(1);
+
+        h.lyric.content = SONG_WITH_NOTE.replace('twice', 'three times');
+        await act(async () => {
+            await h.lyric.fileSource.fireUpdate();
+        });
+        expect(h.noteRenders).toHaveLength(2);
+        expect(container.querySelector('#notes')!.textContent).toBe(
+            'play verse 1 three times',
+        );
     });
 });
 

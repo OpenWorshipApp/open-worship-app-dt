@@ -17,6 +17,7 @@ import {
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
+import { checkIsBibleNoteFileName } from './bibleNotePreviewHelpers';
 import NoteItem from './NoteItem';
 import { type NoteItemType } from './noteItemHelpers';
 
@@ -110,9 +111,14 @@ export default class Note
         return 0;
     }
 
+    // The note file named Default, never a `Default.md` the list shows beside
+    // it: only the notes' own Default holds the verse marks.
     static checkIsDefault(filePath: string) {
         const fileSource = FileSource.getInstance(filePath);
-        return fileSource.name === this.DEFAULT_FILE_NAME;
+        return (
+            fileSource.name === this.DEFAULT_FILE_NAME &&
+            checkIsBibleNoteFileName(fileSource.fullName)
+        );
     }
 
     get isDefault() {
@@ -429,6 +435,17 @@ export default class Note
     async addItemEditingHistory(noteItem: NoteItem) {
         const headNote =
             (await Note.fromFilePathEditing(this.filePath)) ?? this;
+        // The window's TEXT, under the title the head holds: the list owns
+        // titles (`takeItemContentsFrom`). Edit Title -- or the assistant's
+        // rename -- saves the file and rebases this head at once, while a
+        // window opened before it still holds the old title; written whole,
+        // its copy put that title back in the head, and the window's Save
+        // then put it back in the file (2026-11-10, BN-75).
+        const headItem = headNote.getItemById(noteItem.id);
+        if (headItem !== null && headItem.title !== noteItem.title) {
+            noteItem = NoteItem.fromJson(noteItem.toJson(), this.filePath);
+            noteItem.title = headItem.title;
+        }
         headNote.updateNoteItem(noteItem, true);
         await headNote.addEditingHistory();
         this.originalJson = headNote.toJson();

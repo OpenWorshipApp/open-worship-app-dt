@@ -72,7 +72,7 @@ vi.mock('../bible-list/bibleRenderHelpers', () => ({
             if (bookKey === 'ZZZ') {
                 return undefined;
             }
-            return bibleKey === 'KHOV' ? `${bookKey} in Khmer` : bookKey;
+            return bibleKey === 'XXV' ? `${bookKey} in its language` : bookKey;
         },
     },
 }));
@@ -87,7 +87,7 @@ vi.mock('../bible-reader/LookupBibleItemController', () => ({
 vi.mock('../helper/appHooks', () => ({ useAppEffect: () => undefined }));
 vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
     toLocaleNumBible: async (bibleKey: string, n: number) => {
-        return bibleKey === 'KHOV' ? `[${n}]` : `${n}`;
+        return bibleKey === 'XXV' ? `[${n}]` : `${n}`;
     },
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
@@ -173,18 +173,19 @@ describe('which bible a stored reference is read back in', () => {
         expect(toLookupVerseBibleKey(null)).toBe('KJV');
     });
 
-    // A Khmer record citing `Ezekiel 27:11` in English beside its own Khmer
-    // prose is unreadable to exactly the person who chose Khmer.
+    // A record in another language citing `Ezekiel 27:11` in English beside
+    // its own prose is unreadable to exactly the person who chose that
+    // language.
     test('follows the reader for any other lookup language', () => {
-        h.langCode = 'km';
+        h.langCode = 'xx';
 
-        expect(toLookupVerseBibleKey('KHOV')).toBe('KHOV');
+        expect(toLookupVerseBibleKey('XXV')).toBe('XXV');
     });
 
     // The detail panels are window-level widgets and outlive any reader, so
     // "no bible selected" has to resolve to something readable, not to null.
     test('falls back to KJV when no reader is mounted', () => {
-        h.langCode = 'km';
+        h.langCode = 'xx';
 
         expect(toLookupVerseBibleKey(null)).toBe('KJV');
     });
@@ -192,19 +193,19 @@ describe('which bible a stored reference is read back in', () => {
 
 describe('resolving a reference', () => {
     test('reads the title from the bible it was handed', async () => {
-        expect(await shortToVerseTitle('KHOV', 'EZK 27:11')).toBe(
-            'title in KHOV',
+        expect(await shortToVerseTitle('XXV', 'EZK 27:11')).toBe(
+            'title in XXV',
         );
 
-        expect(h.askedBibleKeys).toStrictEqual(['KHOV']);
+        expect(h.askedBibleKeys).toStrictEqual(['XXV']);
     });
 
     // Anything outside the canonical `EZK 27:11` shape still goes through the
     // lenient parser rather than being dropped from the list.
     test('falls back to the lenient parser in the same bible', async () => {
-        expect(await shortToVerseTitle('KHOV', 'BAD')).toBeNull();
+        expect(await shortToVerseTitle('XXV', 'BAD')).toBeNull();
 
-        expect(h.askedBibleKeys).toStrictEqual(['KHOV', 'KHOV']);
+        expect(h.askedBibleKeys).toStrictEqual(['XXV', 'XXV']);
     });
 });
 
@@ -218,11 +219,11 @@ describe('opening a citation in the reader', () => {
     // Swapping the reader to the KJV underneath the user would undo the very
     // choice that put the citation in their own language a moment earlier.
     test('keeps the reader on its own bible otherwise', async () => {
-        h.langCode = 'km';
+        h.langCode = 'xx';
 
-        await openVerseInBibleLookup(genViewController('KHOV'), 'EZK 27:11');
+        await openVerseInBibleLookup(genViewController('XXV'), 'EZK 27:11');
 
-        expect(h.appliedList[0].bibleKey).toBe('KHOV');
+        expect(h.appliedList[0].bibleKey).toBe('XXV');
     });
 
     // A panel opened in a bible of its own -- a cross reference, a found
@@ -231,11 +232,11 @@ describe('opening a citation in the reader', () => {
         await openVerseInBibleLookup(
             genViewController('NIV'),
             'EZK 27:11',
-            'KHOV',
+            'XXV',
         );
 
-        expect(h.appliedList[0].bibleKey).toBe('KHOV');
-        expect(h.askedBibleKeys).toContain('KHOV');
+        expect(h.appliedList[0].bibleKey).toBe('XXV');
+        expect(h.askedBibleKeys).toContain('XXV');
     });
 
     test('reports a reference it cannot resolve instead of applying it', async () => {
@@ -250,31 +251,29 @@ describe('naming a book or a chapter in the bible behind it', () => {
     // The datasets are written against the KJV, so `[Acts](book-key://ACT)`
     // ships an English label whatever language the record itself is in.
     test('names a book from that bible own book map', async () => {
-        expect(await shortToReferenceTitle('KHOV', 'book', 'ACT')).toBe(
-            'ACT in Khmer',
+        expect(await shortToReferenceTitle('XXV', 'book', 'ACT')).toBe(
+            'ACT in its language',
         );
     });
 
     // The chapter goes through that bible numeral list, exactly as a verse
-    // title does — a Khmer bible writes `14` in its own digits.
+    // title does — a bible in another script writes `14` in its own digits.
     test('numbers a chapter the way that bible numbers it', async () => {
-        expect(await shortToReferenceTitle('KHOV', 'chapter', 'GEN 14')).toBe(
-            'GEN in Khmer [14]',
+        expect(await shortToReferenceTitle('XXV', 'chapter', 'GEN 14')).toBe(
+            'GEN in its language [14]',
         );
     });
 
     test('routes a verse through the verse resolver', async () => {
-        expect(await shortToReferenceTitle('KHOV', 'verse', 'EZK 27:11')).toBe(
-            'title in KHOV',
+        expect(await shortToReferenceTitle('XXV', 'verse', 'EZK 27:11')).toBe(
+            'title in XXV',
         );
     });
 
     // Null, not a blank: the caller falls back to the label the dataset
     // shipped rather than dropping the reference out of the sentence.
     test('gives back nothing for a key that bible does not know', async () => {
-        expect(await shortToReferenceTitle('KHOV', 'book', 'ZZZ')).toBeNull();
-        expect(
-            await shortToReferenceTitle('KHOV', 'chapter', 'GEN'),
-        ).toBeNull();
+        expect(await shortToReferenceTitle('XXV', 'book', 'ZZZ')).toBeNull();
+        expect(await shortToReferenceTitle('XXV', 'chapter', 'GEN')).toBeNull();
     });
 });

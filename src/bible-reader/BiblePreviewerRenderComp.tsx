@@ -74,7 +74,7 @@ export default function BiblePreviewerRenderComp({
             } catch (error) {
                 showSimpleToast(
                     tran('Toggle full screen failed'),
-                    `Error: ${error}`,
+                    `${tran('Error')}: ${error}`,
                 );
             }
         },

@@ -63,12 +63,16 @@ added for one is shipped to the other — unless the code registers it for one
 ```json
 { "pid": 3824, "port": 65138, "url": "http://127.0.0.1:65138",
   "mcpUrl": "http://127.0.0.1:39223/mcp", "mcpToken": "…", "isDev": true,
-  "version": "…", "userDataPath": "…", "startedAt": "…" }
+  "version": "…", "userDataPath": "…", "startedAt": "…",
+  "langDirs": ["…"] }
 ```
 
 One file per live instance, swept when a pid is gone, removed on `will-quit`.
 Chromium reports its chosen port through `<userData>/DevToolsActivePort`, polled
-after `ready`. `discovery.mjs` reads these files for the stdio side.
+after `ready`. `discovery.mjs` reads these files for the stdio side, and `bin.mjs`
+reads its languages from `langDirs` (the folders of the language plugins
+installed and turned on, written again whenever one is installed, updated,
+deleted or turned on or off).
 
 **Read `mcpUrl` and `mcpToken` from here.** 39223 is where the host usually lands, not a
 promise, and the door answers 401 without the token.
@@ -94,7 +98,9 @@ in `<userData>/setting.json`.
 ## Knowledge
 
 `extra-work/build-knowledge.mjs` runs as part of `npm run electron:build` and
-bundles two corpora into `electron-build/knowledge/` with a search index:
+bundles two corpora into `electron-build/knowledge/` with a search index (a
+third, the Bible Note editor's own guide, is indexed apart in
+`bible-note/index.json` and read only for a question about a note):
 
 | kind | source | weight |
 | --- | --- | ---: |
@@ -110,7 +116,7 @@ not a denylist, and why anything you write under `.claude/skills/` ships.
 
 A query reads ONE index file (and, for a manual search in a window shown in
 another language, the installed language plugin's `manual/index.json`) rather than opening
-~370 markdown files, and reads a
+~410 markdown files, and reads a
 document in full only when it is actually opened. Nothing is held between
 questions: this runs inside the app, on machines where a cached corpus would be
 felt.
@@ -198,7 +204,12 @@ it finds. `OWA_MCP_NOTICE=0` runs without it.
 It sits at the bottom centre. Each banner is `{text, key, detail}`
 (`describeToolNotice`); `genNoticeWords` sends every language's words and the
 page picks by `<html lang>`. The keys (`listNoticeTranKeys()`) live in
-`src/lang/data/km` and `fr`, and `notify.test.mjs` fails on a half pair. The
+every language's own dictionary (`src/lang/data/online/<code>/dictionary.json`;
+in the app, the installed plugin's) — all but `owa_bible_xml`'s six, which no
+language has yet, so those banners stay English — and `notify.test.mjs` fails
+on a key some of the languages it reads have and others lack: in a checkout,
+the packages with an `assistant.json` (`tranKeyCoverage.test.ts` holds every
+package to the same keys). The
 in-page runtime is versioned (`NOTICE_RUNTIME_VERSION`).
 
 ## Host limits
@@ -221,5 +232,6 @@ in-page runtime is versioned (`NOTICE_RUNTIME_VERSION`).
 | ✔ | `src/chatbot/llmBotHelpers.test.ts` |
 
 `tools/**/*.test.mjs` is in the `include` list of `vitest.config.ts`, so MCP
-package tests are part of the gate. Untested today: `host.mjs` session
-lifecycle and `mcpClient.ts` retry.
+package tests are part of the gate. The `host.mjs` session
+lifecycle and the `mcpClient.ts` retry are tested too
+(`host.coverage.test.mjs`, `mcpClient.coverage.test.ts`).

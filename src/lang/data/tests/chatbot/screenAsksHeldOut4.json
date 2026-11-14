@@ -1,0 +1,2114 @@
+{
+    "af": {
+        "asks": {
+            "style": "die vers op die skerm agter in die saal is te klein vir die ouer mense, maak dit groter",
+            "versions": "voeg die NIV by die vers by",
+            "lineSync": "ek wil die twee vertalings op skerm twee reël vir reël langs mekaar sien, kan dit?",
+            "transition": "stel die agtergrond se oorgang op niks",
+            "display": "waar is skerm 1, op die TV of op die monitor?",
+            "group": "laat skerm 0 en 1 as 'n span werk",
+            "lock": "sluit die projektor se skerm toe sodat niemand per ongeluk iets verskuif nie",
+            "stage": "verhoognommer 2 vir skerm 1",
+            "select": "ontmerk skerm 0, net skerm 1 moet die aanbieding kry",
+            "clear": "maak die skerm agter skoon, ek wil dit blank hê"
+        },
+        "others": {
+            "present": "kan jy asseblief Romeine 8:28 vir die gemeente wys",
+            "countdown": "begin die tel af van 5 minute vir die pouse",
+            "howto": "hoe sluit ek 'n skerm sodat dit nie verander nie?",
+            "showHide": "wys die groot skerm nou iets?",
+            "song": "die refrein van die lied moet vet gedruk word op die skerm",
+            "phone": "die glas van my foon het gekraak",
+            "prayerGroup": "ons is vyf in die kleingroep, sal julle vanaand vir ons bid?"
+        },
+        "floor": 9
+    },
+    "am": {
+        "asks": {
+            "style": "በአዳራሹ ጀርባ ያለው ስክሪን ላይ ጥቅሱ ለአዛውንቶች ትንሽ ነው፣ አሳድገው",
+            "versions": "NIVን ከጥቅሱ ጋር ጨምር",
+            "lineSync": "ሁለቱን ትርጉሞች በስክሪን ሁለት ላይ መስመር በመስመር ጎን ለጎን ማየት እፈልጋለሁ፣ ይቻላል?",
+            "transition": "የጀርባውን ሽግግር ወደ ምንም አድርግ",
+            "display": "ስክሪን 1 የት ነው፣ በቲቪው ወይስ በሞኒተሩ?",
+            "group": "ስክሪን 0 እና 1 እንደ አንድ ቡድን ይስሩ",
+            "lock": "ማንም በስህተት እንዳያንቀሳቅስ የፕሮጀክተሩን ስክሪን ቆልፈው",
+            "stage": "ለስክሪን 1 የመድረክ ቁጥር 2",
+            "select": "ስክሪን 0ን አትምረጥ፣ ማቅረቢያውን ስክሪን 1 ብቻ ይቀበል",
+            "clear": "የኋላውን ስክሪን አጽዳ፣ ባዶ እንዲሆን እፈልጋለሁ"
+        },
+        "others": {
+            "present": "እባክህ ሮሜ 8:28ን ለምዕመናኑ አሳይ",
+            "countdown": "ለእረፍቱ የ5 ደቂቃ ቆጠራ ጀምር",
+            "howto": "ስክሪን እንዳይቀየር እንዴት ነው የምቆልፈው?",
+            "showHide": "ትልቁ ስክሪን አሁን የሚያሳየው ነገር አለ?",
+            "song": "የዝማሬው ዝማሬ መስመር በስክሪኑ ላይ ደማቅ ይሁን",
+            "phone": "የስልኬ መስታወት ተሰነጠቀ",
+            "prayerGroup": "በትንሹ ቡድን አምስት ነን፣ ዛሬ ማታ ታጸልዩልናላችሁ?"
+        },
+        "floor": 7
+    },
+    "ar": {
+        "asks": {
+            "style": "الآية على الشاشة اللي ورا في القاعة صغيرة على الكبار، كبّرها",
+            "versions": "ضيف NIV للآية",
+            "lineSync": "ابغى اشوف الترجمتين على الشاشة اثنين سطر بسطر جنب بعض، ينفع؟",
+            "transition": "خل انتقال الخلفية بدون شي",
+            "display": "وين الشاشة 1، على التلفزيون ولا على المونيتر؟",
+            "group": "خل الشاشة 0 و1 تشتغل كفريق",
+            "lock": "اقفل شاشة البروجكتر عشان ما احد يحرك شي بالغلط",
+            "stage": "رقم المسرح 2 للشاشة 1",
+            "select": "شيل التحديد عن الشاشة 0، العرض لـ الشاشة 1 بس",
+            "clear": "نظف الشاشة اللي ورا، ابغاها فاضية"
+        },
+        "others": {
+            "present": "ممكن تعرض رومية 8:28 للجماعة",
+            "countdown": "ابدأ عد تنازلي 5 دقايق للاستراحة",
+            "howto": "كيف اقفل شاشة عشان ما تتغير؟",
+            "showHide": "الشاشة الكبيرة تعرض شي الحين؟",
+            "song": "خل لازمة الترنيمة بخط عريض على الشاشة",
+            "phone": "زجاج جوالي انكسر",
+            "prayerGroup": "نحن خمسة في المجموعة الصغيرة، تصلون لنا الليلة؟"
+        },
+        "floor": 10
+    },
+    "az": {
+        "asks": {
+            "style": "zalın arxasındakı ekranda ayə yaşlılar üçün kiçikdir, böyüt",
+            "versions": "ayəyə NIV əlavə et",
+            "lineSync": "iki tərcüməni 2-ci ekranda sətir-sətir yan-yana görmək istəyirəm, olar?",
+            "transition": "fonun keçidini heç nə elə",
+            "display": "ekran 1 haradadır, televizorda yoxsa monitorda?",
+            "group": "ekran 0 və 1 komanda kimi işləsin",
+            "lock": "proyektor ekranını kilidlə ki, heç kim səhvən nəsə dəyişməsin",
+            "stage": "ekran 1 üçün səhnə nömrəsi 2",
+            "select": "ekran 0-ın işarəsini götür, təqdimat yalnız ekran 1-ə getsin",
+            "clear": "arxadakı ekranı təmizlə, boş istəyirəm"
+        },
+        "others": {
+            "present": "zəhmət olmasa Romalılara 8:28-i icmaya göstər",
+            "countdown": "fasilə üçün 5 dəqiqəlik geri sayım başlat",
+            "howto": "ekranı dəyişməsin deyə necə kilidləyim?",
+            "showHide": "böyük ekran indi nəsə göstərir?",
+            "song": "ilahinin nəqəratı ekranda qalın olsun",
+            "phone": "telefonumun şüşəsi çatlayıb",
+            "prayerGroup": "kiçik qrupda beş nəfərik, bu axşam bizim üçün dua edərsiniz?"
+        },
+        "floor": 9
+    },
+    "be": {
+        "asks": {
+            "style": "верш на экране ззаду ў зале малы для пажылых людзей, павялічы",
+            "versions": "дадай NIV да верша",
+            "lineSync": "хачу бачыць два пераклады на экране два радок у радок побач, можна?",
+            "transition": "пастаў пераход фону на нішто",
+            "display": "дзе экран 1, на тэлевізары ці на мониторы?",
+            "group": "хай экран 0 і 1 працуюць як каманда",
+            "lock": "заблакуй экран праектара, каб ніхто выпадкова нічога не зрушыў",
+            "stage": "нумар сцэны 2 для экрана 1",
+            "select": "здымі выбар з экрана 0, паказ толькі на экран 1",
+            "clear": "ачысці экран ззаду, хачу пусты"
+        },
+        "others": {
+            "present": "калі ласка, пакажы Рымлянам 8:28 для супольнасці",
+            "countdown": "запусці адлік на 5 хвілін на перапынак",
+            "howto": "як заблакаваць экран, каб ён не мяняўся?",
+            "showHide": "вялікі экран цяпер штосьці паказвае?",
+            "song": "прыпеў песні зрабі тоўстым шрыфтам на экране",
+            "phone": "шкло майго тэлефона трэснула",
+            "prayerGroup": "нас пяцёра ў малой групе, памолішся за нас сёння?"
+        },
+        "floor": 10
+    },
+    "bg": {
+        "asks": {
+            "style": "стихът на екрана отзад в залата е малък за възрастните, увеличи го",
+            "versions": "добави NIV към стиха",
+            "lineSync": "искам да видя двата превода на екран две ред по ред един до друг, може ли?",
+            "transition": "направи прехода на фона на нищо",
+            "display": "къде е екран 1, на телевизора или на монитора?",
+            "group": "екран 0 и 1 да работят като екип",
+            "lock": "заключи екрана на проектора, да не размести някой нещо случайно",
+            "stage": "номер на сцена 2 за екран 1",
+            "select": "махни отметката от екран 0, презентацията само на екран 1",
+            "clear": "изчисти екрана отзад, искам го празен"
+        },
+        "others": {
+            "present": "моля те покажи Римляни 8:28 за събранието",
+            "countdown": "пусни обратно броене от 5 минути за почивката",
+            "howto": "как да заключа екран, за да не се променя?",
+            "showHide": "големият екран показва ли нещо сега?",
+            "song": "припевът на песента да е с удебелен шрифт на екрана",
+            "phone": "стъклото на телефона ми се спука",
+            "prayerGroup": "петима сме в малката група, ще се помолиш ли за нас довечера?"
+        },
+        "floor": 10
+    },
+    "bn": {
+        "asks": {
+            "style": "হলের পেছনের পর্দায় পদটা বয়স্কদের জন্য ছোট, বড় করো",
+            "versions": "পদটার সাথে NIV যোগ করো",
+            "lineSync": "স্ক্রিন দুইয়ে দুই অনুবাদ লাইনে লাইনে পাশাপাশি দেখতে চাই, হবে?",
+            "transition": "ব্যাকগ্রাউন্ডের ট্রানজিশন কিছু না করে দাও",
+            "display": "স্ক্রিন ১ কোথায়, টিভিতে না মনিটরে?",
+            "group": "স্ক্রিন ০ আর ১ একটা দলের মতো চলুক",
+            "lock": "প্রজেক্টরের স্ক্রিন লক করো যাতে কেউ ভুল করে কিছু না সরায়",
+            "stage": "স্ক্রিন ১-এর জন্য স্টেজ নম্বর ২",
+            "select": "স্ক্রিন ০ থেকে টিক সরাও, উপস্থাপনা শুধু স্ক্রিন ১-এ",
+            "clear": "পেছনের পর্দা পরিষ্কার করো, ফাঁকা চাই"
+        },
+        "others": {
+            "present": "দয়া করে মণ্ডলীর জন্য রোমীয় ৮:২৮ দেখাও",
+            "countdown": "বিরতির জন্য ৫ মিনিটের কাউন্টডাউন শুরু করো",
+            "howto": "পর্দা যাতে না বদলায় তাই কীভাবে লক করব?",
+            "showHide": "বড় পর্দায় এখন কিছু দেখাচ্ছে কি?",
+            "song": "গানের ধুয়াটা পর্দায় মোটা অক্ষরে হোক",
+            "phone": "আমার ফোনের কাচ ফেটে গেছে",
+            "prayerGroup": "ছোট দলে আমরা পাঁচজন, আজ রাতে আমাদের জন্য প্রার্থনা করবেন?"
+        },
+        "floor": 10
+    },
+    "bo": {
+        "asks": {
+            "style": "ཚོགས་ཁང་རྒྱབ་ཀྱི་བརྙན་ཁྱེར་ཐོག་ཚིག་དེ་རྒན་གཞོན་ལ་ཆུང་དྲགས། ཆེ་རུ་གཏོང་།",
+            "versions": "ཚིག་དེ་ལ་ NIV སྣོན།",
+            "lineSync": "བརྙན་ཁྱེར་གཉིས་ཐོག་འགྱུར་མ་གཉིས་ཐིག་རེ་རེ་འགྲིག་པ་མཐོང་འདོད། ཐུབ་བམ།",
+            "transition": "རྒྱབ་ལྗོངས་ཀྱི་བརྗེ་སྒྱུར་ཅི་ཡང་མེད་པར་བཟོ།",
+            "display": "བརྙན་ཁྱེར་ ༡ གང་ལ་ཡོད། བརྙན་འཕྲིན་ལམ་ཚོད་ལྟ་ཆས་ལ།",
+            "group": "བརྙན་ཁྱེར་ ༠ དང་ ༡ ཚོགས་པ་གཅིག་ལྟར་ལས་ཀ་བྱེད།",
+            "lock": "བརྙན་འཕྲོ་ཆས་ཀྱི་བརྙན་ཁྱེར་ལ་ལྡེ་མིག་བརྒྱབ། སུས་ཀྱང་ནོར་འཁྲུལ་གྱིས་མི་སྤོ།",
+            "stage": "བརྙན་ཁྱེར་ ༡ ལ་སྟེགས་བུའི་ཨང་ ༢",
+            "select": "བརྙན་ཁྱེར་ ༠ ནས་རྟགས་བསལ། སྟོན་རིམ་ ༡ ལ་ཁོ་ན།",
+            "clear": "རྒྱབ་ཀྱི་བརྙན་ཁྱེར་བསལ། སྟོང་པ་དགོས།"
+        },
+        "others": {
+            "present": "རོ་མ་ ༨:༢༨ ཚོགས་མི་ལ་སྟོན་རོགས།",
+            "countdown": "ངལ་གསོའི་ཆེད་སྐར་མ་ ༥ ཚུར་བགྲང་འགོ་འཛུགས།",
+            "howto": "བརྙན་ཁྱེར་མི་འགྱུར་བའི་ཆེད་ཇི་ལྟར་ལྡེ་མིག་རྒྱག",
+            "showHide": "བརྙན་ཁྱེར་ཆེན་པོ་ལ་ད་ལྟ་ཅི་མཁན་འདུག་གམ།",
+            "song": "གླུའི་ཟློས་ཚིག་བརྙན་ཁྱེར་ཐོག་སྦོམ་པོར་བཟོ།",
+            "phone": "ངའི་ཁ་པར་གྱི་ཤེལ་གས་སོང་།",
+            "prayerGroup": "ཚོགས་ཆུང་ནང་ང་ཚོ་ལྔ་ཡོད། དགོང་མོ་ང་ཚོའི་ཆེད་གསོལ་འདེབས་བྱེད་དམ།"
+        },
+        "floor": 10
+    },
+    "ca": {
+        "asks": {
+            "style": "el vers de la pantalla del fons de la sala es veu petit per la gent gran, fes-lo mes gran",
+            "versions": "afegeix la NVI al vers",
+            "lineSync": "vull veure les dues traduccions a la pantalla dos línia per línia una al costat de l'altra, es pot?",
+            "transition": "posa la transició del fons en res",
+            "display": "on és la pantalla 1, a la tele o al monitor?",
+            "group": "que la pantalla 0 i la 1 treballin com un equip",
+            "lock": "bloqueja la pantalla del projector perquè ningú mogui res per error",
+            "stage": "número d'escenari 2 per a la pantalla 1",
+            "select": "desmarca la pantalla 0, la presentació només a la pantalla 1",
+            "clear": "neteja la pantalla del fons, la vull en blanc"
+        },
+        "others": {
+            "present": "si us plau, mostra Romans 8:28 a la congregació",
+            "countdown": "comença un compte enrere de 5 minuts per a la pausa",
+            "howto": "com bloquejo una pantalla perquè no canviï?",
+            "showHide": "la pantalla gran mostra alguna cosa ara?",
+            "song": "el tornada de la cançó que surti en negreta a la pantalla",
+            "phone": "el vidre del meu mòbil s'ha trencat",
+            "prayerGroup": "som cinc al grup petit, pregareu per nosaltres aquesta nit?"
+        },
+        "floor": 10
+    },
+    "ceb": {
+        "asks": {
+            "style": "gamay ra ang bersikulo sa screen sa likod sa hall alang sa mga tigulang, padak-a",
+            "versions": "dugangi og NIV ang bersikulo",
+            "lineSync": "gusto nakong makita ang duha ka hubad sa screen duha matag linya nga magtapad, puwede?",
+            "transition": "himoa nga walay transition ang background",
+            "display": "asa ang screen 1, sa TV ba o sa monitor?",
+            "group": "ang screen 0 ug 1 magtrabaho isip usa ka team",
+            "lock": "i-lock ang screen sa projector aron walay makabalhin sa sayop",
+            "stage": "stage number 2 alang sa screen 1",
+            "select": "kuhaa ang tsek sa screen 0, ang presentasyon sa screen 1 lang",
+            "clear": "limpyohi ang screen sa likod, gusto nakong blangko"
+        },
+        "others": {
+            "present": "palihug ipakita ang Roma 8:28 alang sa kongregasyon",
+            "countdown": "sugdi ang 5 ka minutos nga countdown para sa pahulay",
+            "howto": "unsaon nako pag-lock sa screen aron dili mausab?",
+            "showHide": "naay gipakita karon ang dakong screen?",
+            "song": "ang koro sa kanta himoa nga bold sa screen",
+            "phone": "nabuak ang bildo sa akong cellphone",
+            "prayerGroup": "lima mi sa gamay nga grupo, mag-ampo ba mo para namo karong gabii?"
+        },
+        "floor": 10
+    },
+    "cs": {
+        "asks": {
+            "style": "verš na obrazovce vzadu v sále je pro starší malý, zvětši ho",
+            "versions": "přidej k verši B21",
+            "lineSync": "chci vidět oba překlady na obrazovce dvě řádek po řádku vedle sebe, jde to?",
+            "transition": "nastav přechod pozadí na nic",
+            "display": "kde je obrazovka 1, na televizi nebo na monitoru?",
+            "group": "ať obrazovka 0 a 1 pracují jako tým",
+            "lock": "zamkni obrazovku projektoru, aby nikdo omylem nic nepřehodil",
+            "stage": "číslo stage 2 pro obrazovku 1",
+            "select": "odškrtni obrazovku 0, prezentace jen na obrazovku 1",
+            "clear": "vyčisti obrazovku vzadu, chci ji prázdnou"
+        },
+        "others": {
+            "present": "prosím ukaž Římanům 8:28 pro sbor",
+            "countdown": "spusť odpočet 5 minut na pauzu",
+            "howto": "jak zamknu obrazovku, aby se neměnila?",
+            "showHide": "ukazuje velká obrazovka teď něco?",
+            "song": "refrén písně dej na obrazovce tučně",
+            "phone": "sklo na mém telefonu je prasklé",
+            "prayerGroup": "v malé skupince jsme pět, pomodlíte se za nás dnes večer?"
+        },
+        "floor": 9
+    },
+    "da": {
+        "asks": {
+            "style": "verset paa skaermen bagerst i salen er for lille til de aeldre, goer det stoerre",
+            "versions": "tilføj NIV til verset",
+            "lineSync": "jeg vil se de to oversættelser på skærm to linje for linje side om side, kan det lade sig gøre?",
+            "transition": "sæt baggrundens overgang til ingenting",
+            "display": "hvor er skærm 1, på tv'et eller på monitoren?",
+            "group": "lad skærm 0 og 1 arbejde som ét hold",
+            "lock": "lås projektorens skærm så ingen flytter noget ved en fejl",
+            "stage": "scenenummer 2 til skærm 1",
+            "select": "fjern markeringen på skærm 0, præsentationen kun til skærm 1",
+            "clear": "ryd skærmen bagved, jeg vil have den tom"
+        },
+        "others": {
+            "present": "vis venligst Romerbrevet 8,28 for menigheden",
+            "countdown": "start en nedtælling på 5 minutter til pausen",
+            "howto": "hvordan låser jeg en skærm så den ikke ændrer sig?",
+            "showHide": "viser den store skærm noget lige nu?",
+            "song": "sangens omkvæd skal stå med fed på skærmen",
+            "phone": "glasset på min telefon er revnet",
+            "prayerGroup": "vi er fem i den lille gruppe, vil I bede for os i aften?"
+        },
+        "floor": 9
+    },
+    "de": {
+        "asks": {
+            "style": "der Vers auf dem Bildschirm hinten im Saal ist für die Älteren zu klein, mach ihn größer",
+            "versions": "füge die NGÜ zum Vers hinzu",
+            "lineSync": "ich möchte die beiden Übersetzungen auf Bildschirm zwei Zeile für Zeile nebeneinander sehen, geht das?",
+            "transition": "stell den Übergang des Hintergrunds auf nichts",
+            "display": "wo ist Bildschirm 1, am Fernseher oder am Monitor?",
+            "group": "Bildschirm 0 und 1 sollen als ein Team arbeiten",
+            "lock": "sperr den Beamer-Bildschirm, damit niemand aus Versehen was verschiebt",
+            "stage": "Bühnennummer 2 für Bildschirm 1",
+            "select": "nimm den Haken bei Bildschirm 0 raus, die Präsentation nur auf Bildschirm 1",
+            "clear": "räum den Bildschirm hinten leer, ich will ihn blank"
+        },
+        "others": {
+            "present": "bitte zeig Römer 8,28 für die Gemeinde",
+            "countdown": "starte einen 5-Minuten-Countdown für die Pause",
+            "howto": "wie sperre ich einen Bildschirm, damit er sich nicht ändert?",
+            "showHide": "zeigt die große Leinwand gerade irgendwas?",
+            "song": "der Refrain vom Lied soll auf dem Bildschirm fett stehen",
+            "phone": "das Glas von meinem Handy ist gesprungen",
+            "prayerGroup": "wir sind fünf im Hauskreis, betet ihr heute Abend für uns?"
+        },
+        "floor": 9
+    },
+    "el": {
+        "asks": {
+            "style": "το εδάφιο στην οθόνη πίσω στην αίθουσα είναι μικρό για τους ηλικιωμένους, μεγάλωσέ το",
+            "versions": "πρόσθεσε τη NIV στο εδάφιο",
+            "lineSync": "θέλω να δω τις δύο μεταφράσεις στην οθόνη δύο γραμμή προς γραμμή δίπλα-δίπλα, γίνεται;",
+            "transition": "βάλε τη μετάβαση του φόντου σε τίποτα",
+            "display": "πού είναι η οθόνη 1, στην τηλεόραση ή στο μόνιτορ;",
+            "group": "η οθόνη 0 και η 1 να δουλεύουν σαν μια ομάδα",
+            "lock": "κλείδωσε την οθόνη του προβολέα να μην μετακινήσει κανείς κάτι κατά λάθος",
+            "stage": "αριθμός σκηνής 2 για την οθόνη 1",
+            "select": "βγάλε το τικ από την οθόνη 0, η παρουσίαση μόνο στην οθόνη 1",
+            "clear": "καθάρισε την οθόνη πίσω, τη θέλω κενή"
+        },
+        "others": {
+            "present": "παρακαλώ δείξε Ρωμαίους 8:28 για την εκκλησία",
+            "countdown": "ξεκίνα αντίστροφη μέτρηση 5 λεπτών για το διάλειμμα",
+            "howto": "πώς κλειδώνω μια οθόνη για να μην αλλάζει;",
+            "showHide": "η μεγάλη οθόνη δείχνει κάτι τώρα;",
+            "song": "το ρεφρέν του τραγουδιού να είναι με έντονα γράμματα στην οθόνη",
+            "phone": "το τζάμι του κινητού μου ράγισε",
+            "prayerGroup": "είμαστε πέντε στη μικρή ομάδα, θα προσευχηθείτε για μας απόψε;"
+        },
+        "floor": 10
+    },
+    "es": {
+        "asks": {
+            "style": "el versiculo en la pantalla del fondo de la sala es pequeno para los mayores, hazlo mas grande",
+            "versions": "agrega la NVI al versículo",
+            "lineSync": "quiero ver las dos traducciones en la pantalla dos línea por línea una junto a otra, se puede?",
+            "transition": "pon la transición del fondo en nada",
+            "display": "¿dónde está la pantalla 1, en la tele o en el monitor?",
+            "group": "que la pantalla 0 y la 1 trabajen como un equipo",
+            "lock": "bloquea la pantalla del proyector para que nadie mueva algo por error",
+            "stage": "número de escenario 2 para la pantalla 1",
+            "select": "quita la marca de la pantalla 0, la presentación solo a la pantalla 1",
+            "clear": "limpia la pantalla de atrás, la quiero en blanco"
+        },
+        "others": {
+            "present": "por favor muestra Romanos 8:28 para la congregación",
+            "countdown": "inicia una cuenta regresiva de 5 minutos para el descanso",
+            "howto": "¿cómo bloqueo una pantalla para que no cambie?",
+            "showHide": "¿la pantalla grande muestra algo ahora?",
+            "song": "el coro de la canción que salga en negrita en la pantalla",
+            "phone": "el cristal de mi celular se rompió",
+            "prayerGroup": "somos cinco en el grupo pequeño, ¿oran por nosotros esta noche?"
+        },
+        "floor": 10
+    },
+    "et": {
+        "asks": {
+            "style": "saali tagaosas olev ekraan näitab salmi vanematele liiga väikeselt, suurenda",
+            "versions": "lisa salmile NIV",
+            "lineSync": "tahan näha kahte tõlget ekraanil kaks rida-realt kõrvuti, kas saab?",
+            "transition": "pane tausta üleminek mitte millekski",
+            "display": "kus on ekraan 1, teleril või monitoril?",
+            "group": "ekraan 0 ja 1 töötagu ühe tiimina",
+            "lock": "lukusta projektori ekraan, et keegi kogemata midagi ei nihutaks",
+            "stage": "lava number 2 ekraanile 1",
+            "select": "võta ekraanilt 0 linnuke, esitus ainult ekraanile 1",
+            "clear": "puhasta tagumine ekraan, tahan seda tühjana"
+        },
+        "others": {
+            "present": "palun näita koguduse jaoks Roomlastele 8:28",
+            "countdown": "käivita 5-minutiline tagasiloendus pausiks",
+            "howto": "kuidas ma lukustan ekraani, et see ei muutuks?",
+            "showHide": "kas suur ekraan näitab praegu midagi?",
+            "song": "laulu refrään olgu ekraanil rasvases kirjas",
+            "phone": "mu telefoni klaas läks katki",
+            "prayerGroup": "meid on väikeses grupis viis, kas palvetate täna õhtul meie eest?"
+        },
+        "floor": 10
+    },
+    "fa": {
+        "asks": {
+            "style": "آیه روی صفحه ته سالن برای سالمندها ریزه، بزرگش کن",
+            "versions": "NIV رو به آیه اضافه کن",
+            "lineSync": "می‌خوام دو ترجمه رو روی صفحه دو خط به خط کنار هم ببینم، می‌شه؟",
+            "transition": "گذار پس‌زمینه رو بذار روی هیچ",
+            "display": "صفحه ۱ کجاست، روی تلویزیون یا مانیتور؟",
+            "group": "صفحه ۰ و ۱ مثل یه تیم کار کنن",
+            "lock": "صفحه پروژکتور رو قفل کن که کسی اشتباهی چیزی رو جابه‌جا نکنه",
+            "stage": "شماره استیج ۲ برای صفحه ۱",
+            "select": "تیک صفحه ۰ رو بردار، ارائه فقط روی صفحه ۱",
+            "clear": "صفحه عقب رو پاک کن، خالی می‌خوامش"
+        },
+        "others": {
+            "present": "لطفاً رومیان ۸:۲۸ رو برای جماعت نشون بده",
+            "countdown": "شمارش معکوس ۵ دقیقه‌ای برای استراحت شروع کن",
+            "howto": "چطور یه صفحه رو قفل کنم که عوض نشه؟",
+            "showHide": "صفحه بزرگ الان چیزی نشون می‌ده؟",
+            "song": "ترجیع‌بند سرود روی صفحه پررنگ باشه",
+            "phone": "شیشه گوشیم ترک خورد",
+            "prayerGroup": "ما پنج نفر تو گروه کوچک هستیم، امشب برامون دعا می‌کنید؟"
+        },
+        "floor": 10
+    },
+    "fi": {
+        "asks": {
+            "style": "salin takaseinän näytöllä jae on vanhuksille liian pieni, suurenna",
+            "versions": "lisää jakeeseen NIV",
+            "lineSync": "haluan nähdä molemmat käännökset näytöllä kaksi rivi riviltä vierekkäin, onnistuuko?",
+            "transition": "aseta taustan siirtymäksi ei mitään",
+            "display": "missä näyttö 1 on, televisiossa vai monitorissa?",
+            "group": "näytöt 0 ja 1 toimikoot yhtenä tiiminä",
+            "lock": "lukitse videotykin näyttö ettei kukaan siirrä mitään vahingossa",
+            "stage": "lavan numero 2 näytölle 1",
+            "select": "poista valinta näytöltä 0, esitys vain näytölle 1",
+            "clear": "tyhjennä takanäyttö, haluan sen tyhjäksi"
+        },
+        "others": {
+            "present": "näytä ystävällisesti Room. 8:28 seurakunnalle",
+            "countdown": "käynnistä 5 minuutin lähtölaskenta tauolle",
+            "howto": "miten lukitsen näytön ettei se muutu?",
+            "showHide": "näyttääkö iso näyttö nyt jotain?",
+            "song": "laulun kertosäe lihavoituna ruudulle",
+            "phone": "puhelimeni lasi on halkeillut",
+            "prayerGroup": "meitä on pienryhmässä viisi, rukoiletteko puolestamme tänä iltana?"
+        },
+        "floor": 10
+    },
+    "fj": {
+        "asks": {
+            "style": "lailai na tikina ena screen e muri ni vale ni soqo vei ira na qase, vakalevutaka",
+            "versions": "tarova na NIV ki na tikina",
+            "lineSync": "au via raica na vosa rua ena screen rua laini ka laini e tabaka, rawa?",
+            "transition": "biuta na veisau ni background me sega na ka",
+            "display": "e vei na screen 1, ena TV se ena monitor?",
+            "group": "me rau cakacaka vata na screen 0 kei na 1 vaka e dua na timi",
+            "lock": "lokataka na screen ni projector me kua ni mani veisau e dua na ka",
+            "stage": "stage number 2 ni screen 1",
+            "select": "kovea na tick e screen 0, na veivakaraitaki ena screen 1 ga",
+            "clear": "vakacokotaka na screen e muri, au via lila"
+        },
+        "others": {
+            "present": "yalovinaka vakaraitaka na Roma 8:28 vei ira na lotu",
+            "countdown": "tekivutaka na countdown ni miniti lima ni veivakacegu",
+            "howto": "au na lokataka vakacava e dua na screen me kua ni veisau?",
+            "showHide": "e vakaraitaki tiko e dua na ka ena screen levu oqo?",
+            "song": "me bolt na ikoro ni sere ena screen",
+            "phone": "sa basika na kaloko ni noqu talevoni",
+            "prayerGroup": "lima keimami ena ilawalawa lailai, o ni na masulaka keimami nikua?"
+        },
+        "floor": 9
+    },
+    "fr": {
+        "asks": {
+            "style": "le verset sur l'ecran du fond de la salle est trop petit pour les anciens, agrandis-le",
+            "versions": "ajoute la NEG au verset",
+            "lineSync": "je veux voir les deux traductions sur l'écran deux ligne par ligne côte à côte, c'est possible ?",
+            "transition": "mets la transition du fond sur rien",
+            "display": "où est l'écran 1, sur la télé ou sur le moniteur ?",
+            "group": "que l'écran 0 et le 1 travaillent comme une équipe",
+            "lock": "verrouille l'écran du projecteur pour que personne ne déplace rien par erreur",
+            "stage": "numéro de scène 2 pour l'écran 1",
+            "select": "décoche l'écran 0, la présentation seulement sur l'écran 1",
+            "clear": "nettoie l'écran du fond, je le veux vide"
+        },
+        "others": {
+            "present": "s'il te plaît montre Romains 8:28 pour l'assemblée",
+            "countdown": "lance un compte à rebours de 5 minutes pour la pause",
+            "howto": "comment je verrouille un écran pour qu'il ne change pas ?",
+            "showHide": "le grand écran montre quelque chose en ce moment ?",
+            "song": "le refrain du chant en gras sur l'écran",
+            "phone": "la vitre de mon téléphone s'est fissurée",
+            "prayerGroup": "nous sommes cinq dans le petit groupe, vous priez pour nous ce soir ?"
+        },
+        "floor": 8
+    },
+    "ga": {
+        "asks": {
+            "style": "tá an véarsa ar an scáileán ag cúl an halla ró-bheag do na seandaoine, déan níos mó é",
+            "versions": "cuir an NIV leis an véarsa",
+            "lineSync": "ba mhaith liom an dá aistriúchán a fheiceáil ar scáileán a dó líne ar líne taobh le taobh, an féidir?",
+            "transition": "socraigh aistriú an chúlra ar rud ar bith",
+            "display": "cá bhfuil scáileán 1, ar an teilifís nó ar an monatóir?",
+            "group": "bíodh scáileán 0 agus 1 ag obair mar fhoireann",
+            "lock": "glas scáileán an teilgeora ionas nach mbogfaidh aon duine rud trí earráid",
+            "stage": "uimhir stáitse 2 do scáileán 1",
+            "select": "bain an tic de scáileán 0, an cur i láthair ar scáileán 1 amháin",
+            "clear": "glan an scáileán ar chúl, ba mhaith liom é folamh"
+        },
+        "others": {
+            "present": "taispeáin Rómhánaigh 8:28 don phobal le do thoil",
+            "countdown": "tosaigh comhaireamh síos 5 nóiméad don sos",
+            "howto": "conas a ghlasálaim scáileán ionas nach n-athróidh sé?",
+            "showHide": "an bhfuil rud éigin á thaispeáint ar an scáileán mór anois?",
+            "song": "bíodh curfá an amhráin trom ar an scáileán",
+            "phone": "tá gloine mo ghutháin scoilte",
+            "prayerGroup": "tá cúigear againn sa ghrúpa beag, an ndéanfaidh sibh guí ar ár son anocht?"
+        },
+        "floor": 8
+    },
+    "gl": {
+        "asks": {
+            "style": "o versículo na pantalla do fondo da sala é pequeno para os maiores, faino máis grande",
+            "versions": "engade a NVI ao versículo",
+            "lineSync": "quero ver as dúas traducións na pantalla dúas liña por liña unha ao carón da outra, pódese?",
+            "transition": "pon a transición do fondo en nada",
+            "display": "onde está a pantalla 1, na tele ou no monitor?",
+            "group": "que a pantalla 0 e a 1 traballen como un equipo",
+            "lock": "bloquea a pantalla do proxector para que ninguén mova nada por erro",
+            "stage": "número de escenario 2 para a pantalla 1",
+            "select": "quita a marca da pantalla 0, a presentación só na pantalla 1",
+            "clear": "limpa a pantalla de atrás, quéroa en branco"
+        },
+        "others": {
+            "present": "por favor amosa Romanos 8:28 para a congregación",
+            "countdown": "inicia unha conta atrás de 5 minutos para o descanso",
+            "howto": "como bloqueo unha pantalla para que non cambie?",
+            "showHide": "a pantalla grande amosa algo agora?",
+            "song": "o coro da canción en negriña na pantalla",
+            "phone": "rompeuse o cristal do meu móbil",
+            "prayerGroup": "somos cinco no grupo pequeno, rezades por nós esta noite?"
+        },
+        "floor": 10
+    },
+    "gu": {
+        "asks": {
+            "style": "હૉલની પાછળની સ્ક્રીન પર પદ વડીલો માટે નાનું છે, મોટું કરો",
+            "versions": "પદમાં NIV ઉમેરો",
+            "lineSync": "સ્ક્રીન બે પર બંને અનુવાદ લીટી દર લીટી બાજુ બાજુમાં જોવા છે, થશે?",
+            "transition": "બૅકગ્રાઉન્ડનું ટ્રાન્ઝિશન કંઈ નહીં કરી દો",
+            "display": "સ્ક્રીન 1 ક્યાં છે, ટીવી પર કે મોનિટર પર?",
+            "group": "સ્ક્રીન 0 અને 1 એક ટીમ તરીકે ચાલે",
+            "lock": "પ્રોજેક્ટરની સ્ક્રીન લૉક કરો જેથી કોઈ ભૂલથી કંઈ ખસેડે નહીં",
+            "stage": "સ્ક્રીન 1 માટે સ્ટેજ નંબર 2",
+            "select": "સ્ક્રીન 0 પરથી ટિક કાઢો, રજૂઆત ફક્ત સ્ક્રીન 1 પર",
+            "clear": "પાછળની સ્ક્રીન સાફ કરો, ખાલી જોઈએ છે"
+        },
+        "others": {
+            "present": "કૃપા કરી મંડળી માટે રોમનો 8:28 બતાવો",
+            "countdown": "વિરામ માટે 5 મિનિટનું કાઉન્ટડાઉન શરૂ કરો",
+            "howto": "સ્ક્રીન બદલાય નહીં તે માટે તેને કેવી રીતે લૉક કરું?",
+            "showHide": "મોટી સ્ક્રીન પર હમણાં કંઈ દેખાય છે?",
+            "song": "ગીતનો ટેક સ્ક્રીન પર જાડા અક્ષરમાં રાખો",
+            "phone": "મારા ફોનનો કાચ તૂટી ગયો છે",
+            "prayerGroup": "નાના જૂથમાં અમે પાંચ છીએ, આજે રાત્રે અમારા માટે પ્રાર્થના કરશો?"
+        },
+        "floor": 10
+    },
+    "ha": {
+        "asks": {
+            "style": "ayar da ke allon bayan zauren ta yi kankanta ga tsofaffi, ka kara girma",
+            "versions": "ka kara NIV a ayar",
+            "lineSync": "ina so in ga fassarori biyu a allo na biyu layi da layi gefe da gefe, ko za a iya?",
+            "transition": "ka sa sauyawar bango ya zama babu komai",
+            "display": "ina allo 1 yake, a talabijin ko a na'urar duba?",
+            "group": "allo 0 da 1 su yi aiki a matsayin tawaga",
+            "lock": "ka kulle allon proyekta don kada wani ya motsa wani abu bisa kuskure",
+            "stage": "lambar mataki 2 ga allo 1",
+            "select": "cire alamar allo 0, gabatarwa a allo 1 kawai",
+            "clear": "ka share allon baya, ina so ya zama fanko"
+        },
+        "others": {
+            "present": "don Allah nuna Romawa 8:28 ga ikilisiya",
+            "countdown": "fara kirgen minti 5 don hutu",
+            "howto": "ta yaya zan kulle allo don kada ya canza?",
+            "showHide": "babban allo yana nuna wani abu yanzu?",
+            "song": "ka sa ayar waka ta zama mai kauri a allo",
+            "phone": "gilashin wayata ya fashe",
+            "prayerGroup": "mu biyar ne a karamar kungiya, za ku yi mana addu'a yau da dare?"
+        },
+        "floor": 10
+    },
+    "he": {
+        "asks": {
+            "style": "הפסוק על המסך שבסוף האולם קטן מדי לקשישים, תגדיל",
+            "versions": "תוסיף את NIV לפסוק",
+            "lineSync": "אני רוצה לראות את שני התרגומים במסך שתיים שורה אחרי שורה זה ליד זה, אפשרי?",
+            "transition": "תשים את מעבר הרקע על כלום",
+            "display": "איפה מסך 1, בטלוויזיה או במוניטור?",
+            "group": "שמסך 0 ו-1 יעבדו כצוות",
+            "lock": "תנעל את מסך המקרן שאף אחד לא יזיז משהו בטעות",
+            "stage": "מספר במה 2 למסך 1",
+            "select": "תוריד את הסימון ממסך 0, המצגת רק על מסך 1",
+            "clear": "תנקה את המסך האחורי, אני רוצה אותו ריק"
+        },
+        "others": {
+            "present": "בבקשה תציג את הרומים 8:28 לקהילה",
+            "countdown": "תתחיל ספירה לאחור של 5 דקות להפסקה",
+            "howto": "איך אני נועל מסך כדי שלא ישתנה?",
+            "showHide": "המסך הגדול מציג משהו עכשיו?",
+            "song": "הפזמון של השיר יהיה מודגש על המסך",
+            "phone": "הזכוכית של הטלפון שלי נסדקה",
+            "prayerGroup": "אנחנו חמישה בקבוצה הקטנה, תתפללו עלינו הערב?"
+        },
+        "floor": 10
+    },
+    "hi": {
+        "asks": {
+            "style": "हॉल के पीछे की स्क्रीन पर पद बुज़ुर्गों के लिए छोटा है, बड़ा करो",
+            "versions": "पद में NIV जोड़ दो",
+            "lineSync": "मुझे स्क्रीन दो पर दोनों अनुवाद पंक्ति-दर-पंक्ति साथ-साथ देखने हैं, हो सकेगा?",
+            "transition": "बैकग्राउंड का ट्रांज़िशन कुछ नहीं कर दो",
+            "display": "स्क्रीन 1 कहाँ है, टीवी पर या मॉनिटर पर?",
+            "group": "स्क्रीन 0 और 1 एक टीम की तरह चलें",
+            "lock": "प्रोजेक्टर की स्क्रीन लॉक करो ताकि कोई गलती से कुछ न खिसकाए",
+            "stage": "स्क्रीन 1 के लिए स्टेज नंबर 2",
+            "select": "स्क्रीन 0 से टिक हटाओ, प्रस्तुति सिर्फ़ स्क्रीन 1 पर",
+            "clear": "पीछे की स्क्रीन साफ़ करो, खाली चाहिए"
+        },
+        "others": {
+            "present": "कृपया मंडली के लिए रोमियों 8:28 दिखाइए",
+            "countdown": "विराम के लिए 5 मिनट का काउंटडाउन शुरू करो",
+            "howto": "स्क्रीन को बदलने से रोकने के लिए उसे कैसे लॉक करूँ?",
+            "showHide": "बड़ी स्क्रीन पर अभी कुछ दिख रहा है?",
+            "song": "गाने का टेक स्क्रीन पर बोल्ड में रखो",
+            "phone": "मेरे फ़ोन का शीशा टूट गया है",
+            "prayerGroup": "छोटे समूह में हम पाँच हैं, आज रात हमारे लिए प्रार्थना करेंगे?"
+        },
+        "floor": 10
+    },
+    "hr": {
+        "asks": {
+            "style": "stih na ekranu otraga u dvorani je premalen za starije, povećaj ga",
+            "versions": "dodaj NIV stihu",
+            "lineSync": "želim vidjeti oba prijevoda na ekranu dva redak po redak jedan uz drugi, može li?",
+            "transition": "postavi prijelaz pozadine na ništa",
+            "display": "gdje je ekran 1, na televizoru ili na monitoru?",
+            "group": "neka ekran 0 i 1 rade kao tim",
+            "lock": "zaključaj ekran projektora da nitko slučajno ništa ne pomakne",
+            "stage": "broj pozornice 2 za ekran 1",
+            "select": "skini kvačicu s ekrana 0, prezentacija samo na ekran 1",
+            "clear": "očisti ekran otraga, želim ga prazan"
+        },
+        "others": {
+            "present": "molim te prikaži Rimljanima 8,28 za zajednicu",
+            "countdown": "pokreni odbrojavanje od 5 minuta za stanku",
+            "howto": "kako zaključam ekran da se ne mijenja?",
+            "showHide": "prikazuje li veliki ekran sada nešto?",
+            "song": "refren pjesme neka bude podebljan na ekranu",
+            "phone": "staklo na mom mobitelu je napuklo",
+            "prayerGroup": "nas je petero u maloj grupi, hoćete li moliti za nas večeras?"
+        },
+        "floor": 10
+    },
+    "ht": {
+        "asks": {
+            "style": "vèsè a sou ekran ki dèyè sal la two piti pou granmoun yo, fè l pi gwo",
+            "versions": "ajoute NIV sou vèsè a",
+            "lineSync": "m vle wè de tradiksyon yo sou ekran de liy pa liy kòt a kòt, ou kapab?",
+            "transition": "mete tranzisyon background lan sou anyen",
+            "display": "ki kote ekran 1 la ye, sou televizyon an oswa sou monitè a?",
+            "group": "kite ekran 0 ak 1 travay kòm yon ekip",
+            "lock": "fèmen ekran pwojektè a pou pesonn pa deplase yon bagay pa erè",
+            "stage": "nimewo sèn 2 pou ekran 1",
+            "select": "wete tik la sou ekran 0, prezantasyon an sou ekran 1 sèlman",
+            "clear": "netwaye ekran dèyè a, m vle l vid"
+        },
+        "others": {
+            "present": "tanpri montre Women 8:28 pou legliz la",
+            "countdown": "kòmanse yon konte 5 minit pou poz la",
+            "howto": "kijan m fè fèmen yon ekran pou li pa chanje?",
+            "showHide": "gwo ekran an ap montre yon bagay kounye a?",
+            "song": "refren chante a an gra sou ekran an",
+            "phone": "vit telefòn mwen an fann",
+            "prayerGroup": "nou senk nan ti gwoup la, nou ka konte sou priyè nou aswè a?"
+        },
+        "floor": 9
+    },
+    "hu": {
+        "asks": {
+            "style": "a terem hátsó képernyőjén a vers túl kicsi az időseknek, nagyítsd",
+            "versions": "add hozzá az NIV-t a versehez",
+            "lineSync": "látni szeretném a két fordítást a kettes képernyőn sorról sorra egymás mellett, megoldható?",
+            "transition": "állítsd a háttér átmenetét semmire",
+            "display": "hol van az 1-es képernyő, a tévén vagy a monitoron?",
+            "group": "a 0-s és az 1-es képernyő dolgozzon egy csapatként",
+            "lock": "zárold a vetítő képernyőjét, hogy senki ne mozdítson el semmit véletlenül",
+            "stage": "színpadszám 2 az 1-es képernyőnek",
+            "select": "vedd le a pipát a 0-s képernyőről, a bemutató csak az 1-esre",
+            "clear": "takarítsd le a hátsó képernyőt, üresen kérem"
+        },
+        "others": {
+            "present": "kérlek mutasd meg a Róma 8,28-at a gyülekezetnek",
+            "countdown": "indíts 5 perces visszaszámlálást a szünetre",
+            "howto": "hogyan zárolhatok egy képernyőt, hogy ne változzon?",
+            "showHide": "a nagy képernyő mutat most valamit?",
+            "song": "az ének refrénje legyen félkövér a képernyőn",
+            "phone": "megrepedt a telefonom üvege",
+            "prayerGroup": "öten vagyunk a kiscsoportban, imádkoztok értünk ma este?"
+        },
+        "floor": 8
+    },
+    "hy": {
+        "asks": {
+            "style": "Հետևի էկրանի Աստվածաշնչի տառերը ինչ-որ կերպ աղավաղվել են, վերադարձրու նորմալ տեսքին",
+            "versions": "Աստվածաշունչ՝ Արարատ թարգմանությունը ավելացրու ցույց տրվող համարի մոտ",
+            "lineSync": "Ինչո՞ւ երկու թարգմանությունները չեն համընկնում մոնիտորի վրա, հավասարեցրու ըստ համարների",
+            "transition": "Սլայդների անցումը կարող ես հանել, ինձ պետք չէ",
+            "display": "Այս պահին էկրան 1-ը ո՞ր հեռուստացույցի վրա է երևում",
+            "group": "Երկու էկրանները, 0 և 1, միավորիր մեկ խմբի մեջ, որ նույնը ցույց տան",
+            "lock": "Խնդրում եմ կողպիր նախավերջին... էկրան 0-ը, երեխաները ձեռք են տալիս",
+            "stage": "Էկրան 1՝ բեմ երկու",
+            "select": "Միայն էկրան 1 թող ստանա ներկայացվածը, մյուսի նշումը հանիր",
+            "clear": "Մաքրիր ամեն ինչ հետևի էկրանից"
+        },
+        "others": {
+            "present": "Ցույց տուր Սաղմոս 23-ը մեծ էկրանին",
+            "countdown": "Սկսիր հետհաշվարկ 5 րոպե",
+            "howto": "Ասա խնդրեմ՝ ինչպես կողպել էկրանը, որ երեխաները չփոխեն",
+            "showHide": "Արդյո՞ք պրոյեկտորը միացած է հիմա",
+            "song": "Երգի խոսքերը անընթեռնելի են, ուզում եմ դրանք մեծ լինեն",
+            "phone": "Իմ հեռախոսի էկրանը չի արձագանքում հպմանը",
+            "prayerGroup": "Խնդրում եմ աղոթեք մեր երգչախմբի անդամների համար"
+        },
+        "floor": 10
+    },
+    "id": {
+        "asks": {
+            "style": "Tulisan ayat di layar belakang kok jadi aneh, balikin ke tampilan normal dong",
+            "versions": "Tambahkan Alkitab Terjemahan Baru di sebelah ayat yang lagi tampil",
+            "lineSync": "Kenapa dua terjemahan di monitor nggak sejajar? Tolong samakan ayat per ayat",
+            "transition": "Efek transisi antar slide nggak usah dipakai, matiin aja",
+            "display": "Sekarang layar 1 lagi muncul di TV yang mana?",
+            "group": "Layar 0 dan layar 1 satukan supaya menampilkan hal yang sama",
+            "lock": "Anak-anak suka pencet layar 0, tolong dikunci",
+            "stage": "Layar 1 stage-nya 2",
+            "select": "Cuma layar 1 yang boleh nerima tampilan, centang yang lain dicopot",
+            "clear": "Kosongkan semua dari layar yang di belakang"
+        },
+        "others": {
+            "present": "Tampilkan Mazmur 23 di layar besar",
+            "countdown": "Mulai hitung mundur 5 menit",
+            "howto": "Gimana caranya ngunci layar biar nggak diubah anak-anak?",
+            "showHide": "Proyektor sekarang lagi nyala nggak?",
+            "song": "Lirik lagunya nggak kebaca, saya mau hurufnya besar",
+            "phone": "Layar HP saya nggak respon waktu disentuh",
+            "prayerGroup": "Tolong doakan anggota paduan suara kita"
+        },
+        "floor": 9
+    },
+    "ig": {
+        "asks": {
+            "style": "Edere Baịbụl dị n'ihuenyo azụ agbagoro, laghachi ya n'ụdị nkịtị",
+            "versions": "Tinye Baịbụl Union Igbo n'akụkụ amaokwu a na-egosi",
+            "lineSync": "Gịnị mere ụdị abụọ na monitọ ahụ anaghị edozi? Mee ka amaokwu ha dakọ",
+            "transition": "Enweghị m mkpa mgbanwe slide, gbanyụọ ya",
+            "display": "Ugbu a ihuenyo 1 na-apụta na TV ole?",
+            "group": "Jikọta ihuenyo abụọ ahụ, 0 na 1, ka ha gosi otu ihe",
+            "lock": "Ụmụaka na-emetụ ihuenyo 0 aka, biko mechie ya",
+            "stage": "Ihuenyo 1, stage abụọ",
+            "select": "Ka ihuenyo 1 naanị nweta ihe a na-eweta, wepụ akara nke ọzọ",
+            "clear": "Hichapụ ihe niile n'ihuenyo dị n'azụ"
+        },
+        "others": {
+            "present": "Gosi Abụ Ọma 23 n'ihuenyo buru ibu",
+            "countdown": "Bido ọgụgụ azụ nkeji ise",
+            "howto": "Kedu ka e si emechi ihuenyo ka ụmụaka ghara ịgbanwe ya?",
+            "showHide": "Projector ahụ ọ na-agba ugbu a?",
+            "song": "Okwu ukwe adịghị agụ, achọrọ m ka mkpụrụedemede buru ibu",
+            "phone": "Ihuenyo ekwentị m anaghị aza mgbe m metụrụ ya",
+            "prayerGroup": "Biko kpeere ndị otu ukwe anyị ekpere"
+        },
+        "floor": 7
+    },
+    "is": {
+        "asks": {
+            "style": "Textinn a skjanum aftast er skrytinn, settu hann aftur i venjulegt utlit",
+            "versions": "Bættu Biblíunni 1981 við versið sem er á skjánum",
+            "lineSync": "Af hverju passa þýðingarnar tvær ekki saman á skjánum? Raðaðu þeim vers fyrir vers",
+            "transition": "Eg vil ekki hafa neina yfirfærslu milli glæra, slokktu a henni",
+            "display": "Á hvaða sjónvarpi birtist skjár 1 núna?",
+            "group": "Hafðu skjá 0 og skjá 1 í einum hópi svo þeir sýni það sama",
+            "lock": "Krakkarnir eru alltaf að snerta skjá 0, læstu honum",
+            "stage": "Skjár 1, svið tvö",
+            "select": "Bara skjár 1 á að fá kynninguna, taktu hakið af hinum",
+            "clear": "Hreinsaðu allt af skjánum fyrir aftan"
+        },
+        "others": {
+            "present": "Sýndu Sálm 23 á stóra skjánum",
+            "countdown": "Ræstu fimm mínútna niðurtalningu",
+            "howto": "Hvernig get ég læst skjánum svo krakkarnir breyti engu?",
+            "showHide": "Er kveikt á skjávarpanum núna?",
+            "song": "Ég get ekki lesið söngtextann, hann á að vera stærri",
+            "phone": "Skjárinn á símanum mínum bregst ekki við snertingu",
+            "prayerGroup": "Viltu biðja fyrir kórfélögunum okkar"
+        },
+        "floor": 9
+    },
+    "it": {
+        "asks": {
+            "style": "Il testo sullo schermo dietro e venuto strano, rimettilo normale",
+            "versions": "Aggiungi la Bibbia CEI 2008 accanto al versetto che si vede",
+            "lineSync": "Perche le due traduzioni non sono allineate sul monitor? Falle andare versetto per versetto",
+            "transition": "Non mi serve nessuna transizione tra le slide, toglila",
+            "display": "Su quale tv sta uscendo adesso lo schermo 1?",
+            "group": "Metti insieme schermo 0 e schermo 1 in modo che mostrino la stessa cosa",
+            "lock": "I bambini toccano sempre lo schermo 0, blocca per favore",
+            "stage": "Schermo 1: palco 2",
+            "select": "Solo lo schermo 1 deve ricevere la presentazione, togli la spunta agli altri",
+            "clear": "Svuota tutto dallo schermo in fondo"
+        },
+        "others": {
+            "present": "Mostra il Salmo 23 sul grande schermo",
+            "countdown": "Fai partire un conto alla rovescia di 5 minuti",
+            "howto": "Come si blocca lo schermo perche i bambini non lo cambino?",
+            "showHide": "Il proiettore e acceso in questo momento?",
+            "song": "Non si leggono le parole del canto, le voglio piu grandi",
+            "phone": "Il display del mio telefono non risponde al tocco",
+            "prayerGroup": "Preghiamo per i membri del nostro coro"
+        },
+        "floor": 8
+    },
+    "ja": {
+        "asks": {
+            "style": "後ろのスクリーンの聖書の文字が変になったので、元の見た目に戻して",
+            "versions": "表示中の節のとなりに新共同訳を足してほしいです",
+            "lineSync": "モニターで2つの訳がずれてるのはなぜ?節ごとにそろえてください",
+            "transition": "スライドの切り替え効果は要らないのでオフにして",
+            "display": "今、画面1はどのテレビに映ってますか",
+            "group": "画面0と画面1を一緒にして、同じ内容を映すように",
+            "lock": "子どもが画面0を触っちゃうので、ロックしてください",
+            "stage": "画面1、ステージ2で",
+            "select": "画面1だけが発表を受け取るようにして、他のチェックは外して",
+            "clear": "奥のスクリーンを全部まっさらにして"
+        },
+        "others": {
+            "present": "大きいスクリーンに詩篇23篇を映してください",
+            "countdown": "5分のカウントダウンを始めて",
+            "howto": "子どもたちが変えないように、画面をロックするにはどうするの?",
+            "showHide": "いまプロジェクターは点いていますか",
+            "song": "歌詞が読めないので、もっと大きな字にしたい",
+            "phone": "私のスマホ、タッチしても反応しません",
+            "prayerGroup": "聖歌隊のメンバーのために祈ってください"
+        },
+        "floor": 8
+    },
+    "ka": {
+        "asks": {
+            "style": "უკანა ეკრანზე ბიბლიის ტექსტი უცნაურად გამოიყურება, ჩვეულებრივად დააბრუნე",
+            "versions": "დაამატე ბიბლია ძველი ქართული თარგმანი ახლა ნაჩვენები მუხლის გვერდით",
+            "lineSync": "რატომ არ ემთხვევა ორი თარგმანი მონიტორზე? დააწყვილე მუხლ-მუხლ",
+            "transition": "სლაიდების გადასვლა არ მჭირდება, გამორთე",
+            "display": "ახლა ეკრანი 1 რომელ ტელევიზორზე ჩანს?",
+            "group": "ეკრანი 0 და ეკრანი 1 გააერთიანე, რომ ერთი და იგივე აჩვენონ",
+            "lock": "ბავშვები ეკრანი 0-ს ეხებიან, გთხოვ ჩაკეტე",
+            "stage": "ეკრანი 1, სცენა ორი",
+            "select": "მხოლოდ ეკრანმა 1 უნდა მიიღოს პრეზენტაცია, დანარჩენს მონიშვნა მოხსენი",
+            "clear": "ყველაფერი გაასუფთავე უკანა ეკრანიდან"
+        },
+        "others": {
+            "present": "დიდ ეკრანზე გამოაჩინე ფსალმუნი 23",
+            "countdown": "დაიწყე ხუთი წუთის უკუთვლა",
+            "howto": "როგორ ჩავრაზო ეკრანი, რომ ბავშვებმა არ შეცვალონ?",
+            "showHide": "პროექტორი ახლა ჩართულია?",
+            "song": "სიმღერის სიტყვები არ იკითხება, დიდი მინდა",
+            "phone": "ჩემი ტელეფონის ეკრანი შეხებაზე არ რეაგირებს",
+            "prayerGroup": "ილოცეთ ჩვენი გუნდის წევრებისთვის"
+        },
+        "floor": 9
+    },
+    "kk": {
+        "asks": {
+            "style": "Артқы экрандағы Киелі кітап мәтіні әлдеқалай болып кетті, қалыпты күйге қайтар",
+            "versions": "Қазіргі көрініп тұрған аяттың жанына Киелі кітап, Синодальдық аударманы қос",
+            "lineSync": "Неге монитордағы екі аударма сәйкес емес? Аят аятқа тураластыр",
+            "transition": "Слайд ауысуының қажеті жоқ, өшіріп таста",
+            "display": "Қазір 1-экран қай теледидарда көрініп тұр?",
+            "group": "0 және 1 экрандарды біріктір, екеуі бірдей көрсетсін",
+            "lock": "Балалар 0-экранды ұстай береді, құлыптап қойыңызшы",
+            "stage": "1-экран, екінші сахна",
+            "select": "Тек 1-экран ғана қабылдасын, басқасының белгісін ал",
+            "clear": "Артқы экранның бәрін тазала"
+        },
+        "others": {
+            "present": "Үлкен экранға 23-зәбүрді шығар",
+            "countdown": "Бес минуттық кері санауды қос",
+            "howto": "Балалар өзгертпеу үшін экранды қалай құлыптаймын?",
+            "showHide": "Проектор қазір қосулы ма?",
+            "song": "Ән сөздері оқылмайды, әріптері үлкен болсын",
+            "phone": "Телефонымның экраны тигенде жауап бермейді",
+            "prayerGroup": "Хор мүшелеріміз үшін дұға етіңізші"
+        },
+        "floor": 8
+    },
+    "km": {
+        "asks": {
+            "style": "អក្សរព្រះគម្ពីរលើអេក្រង់ខាងក្រោយមើលទៅចម្លែក សូមប្តូរមកធម្មតាវិញ",
+            "versions": "សូមបន្ថែមព្រះគម្ពីរខ្មែរសាកល ក្បែរខដែលកំពុងបង្ហាញ",
+            "lineSync": "ហេតុអ្វីបានជាការបកប្រែពីរលើម៉ូនីទ័រមិនត្រូវគ្នា? សូមតម្រឹមតាមខ",
+            "transition": "ខ្ញុំមិនត្រូវការឥទ្ធិពលប្តូរស្លាយទេ បិទវាទៅ",
+            "display": "ឥឡូវនេះអេក្រង់ 1 បង្ហាញលើទូរទស្សន៍មួយណា",
+            "group": "ដាក់អេក្រង់ 0 និងអេក្រង់ 1 ជាក្រុមមួយ ឲ្យបង្ហាញដូចគ្នា",
+            "lock": "កូនក្មេងចូលចិត្តប៉ះអេក្រង់ 0 សូមចាក់សោវា",
+            "stage": "អេក្រង់ 1 ឆាកទី 2",
+            "select": "ឲ្យតែអេក្រង់ 1 ទទួលការបង្ហាញ ដកធីកអេក្រង់ផ្សេង",
+            "clear": "សម្អាតអ្វីៗទាំងអស់ពីអេក្រង់ខាងក្រោយ"
+        },
+        "others": {
+            "present": "បង្ហាញទំនុកដំកើង 23 លើអេក្រង់ធំ",
+            "countdown": "ចាប់ផ្តើមរាប់ថយក្រោយ 5 នាទី",
+            "howto": "តើធ្វើដូចម្តេចដើម្បីចាក់សោអេក្រង់កុំឲ្យកូនក្មេងប្តូរ",
+            "showHide": "ឥឡូវនេះម៉ាស៊ីនបញ្ចាំងកំពុងបើកឬទេ",
+            "song": "ខ្ញុំអានពាក្យចម្រៀងមិនឃើញ ចង់បានអក្សរធំ",
+            "phone": "អេក្រង់ទូរស័ព្ទខ្ញុំមិនឆ្លើយតបពេលប៉ះ",
+            "prayerGroup": "សូមអធិស្ឋានឲ្យសមាជិកក្រុមចម្រៀងរបស់យើង"
+        },
+        "floor": 9
+    },
+    "kn": {
+        "asks": {
+            "style": "ಹಿಂದಿನ ಪರದೆಯಲ್ಲಿ ಬೈಬಲ್ ಅಕ್ಷರಗಳು ವಿಚಿತ್ರವಾಗಿವೆ, ಮೊದಲಿನಂತೆ ಮಾಡಿ",
+            "versions": "ಈಗ ತೋರಿಸುತ್ತಿರುವ ವಚನದ ಪಕ್ಕ ಪವಿತ್ರ ಬೈಬಲ್ ಸೇರಿಸಿ",
+            "lineSync": "ಮಾನಿಟರ್‌ನಲ್ಲಿ ಎರಡು ಭಾಷಾಂತರ ಯಾಕೆ ಹೊಂದಿಕೆಯಾಗಿಲ್ಲ? ವಚನಕ್ಕೆ ವಚನ ಮಾಡಿ",
+            "transition": "ಸ್ಲೈಡ್ ಬದಲಾವಣೆ ಪರಿಣಾಮ ಬೇಡ, ತೆಗೆದುಬಿಡಿ",
+            "display": "ಈಗ ಪರದೆ 1 ಯಾವ ಟಿವಿಯಲ್ಲಿ ಕಾಣುತ್ತಿದೆ?",
+            "group": "ಪರದೆ 0 ಮತ್ತು ಪರದೆ 1 ಅನ್ನು ಒಟ್ಟಿಗೆ ಮಾಡಿ, ಒಂದೇ ತೋರಿಸಲಿ",
+            "lock": "ಮಕ್ಕಳು ಪರದೆ 0 ಮುಟ್ಟುತ್ತಾರೆ, ದಯವಿಟ್ಟು ಲಾಕ್ ಮಾಡಿ",
+            "stage": "ಪರದೆ 1, ಸ್ಟೇಜ್ ಎರಡು",
+            "select": "ಪರದೆ 1 ಮಾತ್ರ ಸ್ವೀಕರಿಸಲಿ, ಬೇರೆಯದರ ಟಿಕ್ ತೆಗೆಯಿರಿ",
+            "clear": "ಹಿಂದಿನ ಪರದೆಯಲ್ಲಿರುವ ಎಲ್ಲವನ್ನೂ ಖಾಲಿ ಮಾಡಿ"
+        },
+        "others": {
+            "present": "ದೊಡ್ಡ ಪರದೆಯಲ್ಲಿ ಕೀರ್ತನೆ 23 ತೋರಿಸಿ",
+            "countdown": "ಐದು ನಿಮಿಷದ ಕೌಂಟ್‌ಡೌನ್ ಶುರು ಮಾಡಿ",
+            "howto": "ಮಕ್ಕಳು ಬದಲಿಸದಂತೆ ಪರದೆಯನ್ನು ಲಾಕ್ ಮಾಡುವುದು ಹೇಗೆ?",
+            "showHide": "ಈಗ ಪ್ರೊಜೆಕ್ಟರ್ ಆನ್ ಇದೆಯಾ?",
+            "song": "ಹಾಡಿನ ಸಾಲುಗಳು ಓದಲಾಗುತ್ತಿಲ್ಲ, ದೊಡ್ಡ ಅಕ್ಷರ ಬೇಕು",
+            "phone": "ನನ್ನ ಫೋನ್ ಪರದೆ ಮುಟ್ಟಿದರೆ ಸ್ಪಂದಿಸುತ್ತಿಲ್ಲ",
+            "prayerGroup": "ನಮ್ಮ ಗಾಯನ ತಂಡದ ಸದಸ್ಯರಿಗಾಗಿ ಪ್ರಾರ್ಥಿಸಿ"
+        },
+        "floor": 9
+    },
+    "ko": {
+        "asks": {
+            "style": "뒤쪽 스크린 성경 글씨가 이상해졌어요, 원래 모양으로 돌려 주세요",
+            "versions": "지금 나온 구절 옆에 새번역도 추가해 줄래요?",
+            "lineSync": "모니터에서 두 번역이 왜 안 맞죠? 절 단위로 맞춰 주세요",
+            "transition": "슬라이드 전환 효과는 필요 없으니 꺼 주세요",
+            "display": "지금 1번 화면은 어느 TV에 나오고 있나요?",
+            "group": "0번 화면이랑 1번 화면 합쳐서 같은 걸 보여 주게 해줘",
+            "lock": "애들이 자꾸 0번 화면을 만져서 그런데 잠가 주세요",
+            "stage": "1번 화면, 무대 2",
+            "select": "1번 화면만 발표를 받게 하고 다른 건 체크 빼줘",
+            "clear": "뒤에 있는 화면 전부 비워 줘"
+        },
+        "others": {
+            "present": "큰 화면에 시편 23편을 보여 줘",
+            "countdown": "5분 카운트다운 시작",
+            "howto": "아이들이 못 바꾸게 화면을 잠그려면 어떻게 해요?",
+            "showHide": "프로젝터 지금 켜져 있나요?",
+            "song": "가사가 안 읽혀요, 글자를 크게 하고 싶어요",
+            "phone": "제 폰 화면이 터치를 해도 반응이 없어요",
+            "prayerGroup": "찬양대 단원들을 위해 기도해 주세요"
+        },
+        "floor": 8
+    },
+    "lo": {
+        "asks": {
+            "style": "ຕົວໜັງສືພຣະຄໍາພີໃນຈໍຫຼັງເບິ່ງແປກໆ ປ່ຽນກັບເປັນແບບປົກກະຕິ",
+            "versions": "ເພີ່ມພຣະຄໍາພີລາວສະບັບປັດຈຸບັນ ຂ້າງຂໍ້ທີ່ສະແດງຢູ່",
+            "lineSync": "ເປັນຫຍັງສອງສະບັບໃນມອນິເຕີບໍ່ຕົງກັນ? ຈັດຕາມຂໍ້ແດ່",
+            "transition": "ບໍ່ຕ້ອງການການປ່ຽນສະໄລດ໌ ປິດມັນ",
+            "display": "ຕອນນີ້ຈໍ 1 ສະແດງຢູ່ໂທລະພາບເຄື່ອງໃດ",
+            "group": "ເອົາຈໍ 0 ກັບຈໍ 1 ມາລວມກັນ ໃຫ້ສະແດງຄືກັນ",
+            "lock": "ເດັກນ້ອຍມັກຈັບຈໍ 0 ກະລຸນາລັອກ",
+            "stage": "ຈໍ 1 ເວທີສອງ",
+            "select": "ໃຫ້ຈໍ 1 ຮັບການນຳສະເໜີຢ່າງດຽວ ເອົາເຄື່ອງໝາຍອັນອື່ນອອກ",
+            "clear": "ລ້າງທຸກຢ່າງຈາກຈໍທາງຫຼັງ"
+        },
+        "others": {
+            "present": "ສະແດງເພງສັນລະເສີນ 23 ໃນຈໍໃຫຍ່",
+            "countdown": "ເລີ່ມນັບຖອຍຫຼັງຫ້ານາທີ",
+            "howto": "ຈະລັອກຈໍແນວໃດບໍ່ໃຫ້ເດັກນ້ອຍປ່ຽນ",
+            "showHide": "ດຽວນີ້ໂປເຈັກເຕີເປີດຢູ່ບໍ",
+            "song": "ອ່ານເນື້ອເພງບໍ່ອອກ ຢາກໃຫ້ຕົວໃຫຍ່",
+            "phone": "ໜ້າຈໍໂທລະສັບຂ້ອຍບໍ່ຕອບສະໜອງເວລາແຕະ",
+            "prayerGroup": "ກະລຸນາອະທິຖານເພື່ອສະມາຊິກວົງດົນຕີຂອງເຮົາ"
+        },
+        "floor": 8
+    },
+    "lt": {
+        "asks": {
+            "style": "Galinio ekrano Biblijos tekstas kazkoks keistas, grazink ji i normalu",
+            "versions": "Pridek Lietuvos Biblija salia dabar rodomos eilutes",
+            "lineSync": "Kodel du vertimai monitoriuje nesutampa? Sulygiuok pagal eilutes",
+            "transition": "Man nereikia skaidriu perejimo, isjunk",
+            "display": "Kuriame televizoriuje dabar rodomas ekranas 1?",
+            "group": "Sujunk ekrana 0 ir ekrana 1, kad rodytu ta pati",
+            "lock": "Vaikai nuolat liecia ekrana 0, uzrakink prasau",
+            "stage": "Ekranas 1, antra scena",
+            "select": "Tik ekranas 1 tegauna prezentacija, nuimk kitu varnele",
+            "clear": "Isvalyk viska galiniame ekrane"
+        },
+        "others": {
+            "present": "Parodyk 23 psalme dideliame ekrane",
+            "countdown": "Paleisk penkiu minuciu atgaline skaiciavima",
+            "howto": "Kaip uzrakinti ekrana, kad vaikai nieko nepakeistu?",
+            "showHide": "Ar projektorius dabar ijungtas?",
+            "song": "Giesmes zodziu neperskaitau, noriu didesniu raidziu",
+            "phone": "Mano telefono ekranas nereaguoja i palietima",
+            "prayerGroup": "Pasimelskite uz musu choro nariu"
+        },
+        "floor": 8
+    },
+    "lv": {
+        "asks": {
+            "style": "Aizmugures ekrana Bibeles teksts izskatas dīvaini, atgriez to normala",
+            "versions": "Pievieno Latvijas Bibeli blakus pantam, kas tagad redzams",
+            "lineSync": "Kapec divi tulkojumi monitora nesakrit? Salidzini pa pantiem",
+            "transition": "Man nevajag slaidu paraju, izslegs",
+            "display": "Kura televizora tagad redzams ekrans 1?",
+            "group": "Apvieno ekranu 0 un ekranu 1, lai raditu to pasu",
+            "lock": "Berni visu laiku skar ekranu 0, ludzu nobloke",
+            "stage": "Ekrans 1, otra skatuve",
+            "select": "Tikai ekrans 1 lai sanem prezentaciju, nonem citiem atzimi",
+            "clear": "Notiri visu aizmugures ekrana"
+        },
+        "others": {
+            "present": "Paradi 23. psalmu liela ekrana",
+            "countdown": "Sak piecu minusu atpakalskaitisanu",
+            "howto": "Ka nobloket ekranu, lai berni neko nemaina?",
+            "showHide": "Vai projektors si brīdi ir ieslegts?",
+            "song": "Nevaru izlasit dziesmas vardus, gribu lielakus burtus",
+            "phone": "Mana telefona ekrans nereage uz pieskarsanos",
+            "prayerGroup": "Palugsim par musu kora dalibniekiem"
+        },
+        "floor": 6
+    },
+    "mg": {
+        "asks": {
+            "style": "Hafahafa ny soratra Baiboly eo amin'ny efijery any aoriana, averina amin'ny fanta-draharaha",
+            "versions": "Ampio ny Baiboly Protestanta eo anilan'ny andininy aseho izao",
+            "lineSync": "Maninona no tsy mifanaraka ireo fandikana roa eo amin'ny monitor? Ampifanarahonao araka ny andininy",
+            "transition": "Tsy mila fiovan'ny slide aho, vonoy",
+            "display": "Amin'ny televiziona inona no hita izao ny efijery 1?",
+            "group": "Atombohy hiaraka ny efijery 0 sy efijery 1 mba hitovy ny aseho",
+            "lock": "Mikasika ny efijery 0 foana ny ankizy, hidiro azafady",
+            "stage": "Efijery 1, sehatra roa",
+            "select": "Ny efijery 1 irery no handray ny aseho, esory ny soritra amin'ny hafa",
+            "clear": "Fafao daholo ny any amin'ny efijery any aoriana"
+        },
+        "others": {
+            "present": "Asehoy ny Salamo 23 amin'ny efijery lehibe",
+            "countdown": "Atombohy ny isa mihena dimy minitra",
+            "howto": "Ahoana no hanidiana ny efijery mba tsy hovan'ny ankizy?",
+            "showHide": "Mirehitra ve ny projecteur izao?",
+            "song": "Tsy vakivaky ny tonon-kira, tiako lehibe ny soratra",
+            "phone": "Tsy mamaly rehefa tsindrina ny efijeriky ny findaiko",
+            "prayerGroup": "Mivavaha ho an'ny mpikambana ao amin'ny hiran'ny fiangonana"
+        },
+        "floor": 9
+    },
+    "mi": {
+        "asks": {
+            "style": "He ahua rerekē ngā pūrākau Paipera o te mata o muri, whakahokia ki te āhua noa",
+            "versions": "Tāpirihia te Paipera Māori ki te taha o te irava e whakaaturia ana",
+            "lineSync": "He aha ngā whakamāoritanga e rua e kore ai e rite i te kaiwhakaatu? Whakaritea ia irava",
+            "transition": "Kāore au e hiahia ana ki te whakawhiti kāri, whakaweheatia",
+            "display": "Kei tēhea pouaka whakaata te mata 1 e kitea ana ināianei?",
+            "group": "Kia kotahi te rōpū mō te mata 0 me te mata 1 kia ōrite te whakaatu",
+            "lock": "Ka pā tonu ngā tamariki ki te mata 0, tēnā raka",
+            "stage": "Mata 1, atamira tuarua",
+            "select": "Ko te mata 1 anake hei whiwhi, tangohia ngā tohu o ērā atu",
+            "clear": "Whakawātea ngā mea katoa i te mata o muri"
+        },
+        "others": {
+            "present": "Whakaatuhia te Waiata 23 ki te mata nui",
+            "countdown": "Tīmata te tatau whakamuri e rima meneti",
+            "howto": "Me pēhea te raka i te mata kei whakarerekē ngā tamariki?",
+            "showHide": "Kua tuwhera te pūrere ināianei?",
+            "song": "Kāore e taea te pānui ngā kupu o te waiata, me whakanui",
+            "phone": "Kāore taku mata waea e whakautu ina pā",
+            "prayerGroup": "Tēnā īnoia ngā mema o tō tātou kapa waiata"
+        },
+        "floor": 7
+    },
+    "mk": {
+        "asks": {
+            "style": "Текстот од Библијата на задниот екран изгледа чудно, врати го во нормален",
+            "versions": "Додај ја Македонската Библија до стихот што се гледа сега",
+            "lineSync": "Зошто двата превода не се совпаѓаат на мониторот? Израмни ги по стихови",
+            "transition": "Не ми треба премин меѓу слајдови, исклучи го",
+            "display": "На кој телевизор се гледа сега екранот 1?",
+            "group": "Спои ги екраните 0 и 1 да покажуваат исто",
+            "lock": "Децата постојано го допираат екранот 0, заклучи го те молам",
+            "stage": "Екран 1, сцена два",
+            "select": "Само екранот 1 да ја прима презентацијата, тргни ги ознаките од другите",
+            "clear": "Исчисти сѐ од задниот екран"
+        },
+        "others": {
+            "present": "Прикажи го Псалм 23 на големиот екран",
+            "countdown": "Започни одбројување од пет минути",
+            "howto": "Како да го заклучам екранот за да не го менуваат децата?",
+            "showHide": "Дали проекторот е вклучен во моментов?",
+            "song": "Не можам да го прочитам текстот на песната, сакам поголеми букви",
+            "phone": "Екранот на мојот телефон не реагира на допир",
+            "prayerGroup": "Помолете се за членовите на нашиот хор"
+        },
+        "floor": 8
+    },
+    "ml": {
+        "asks": {
+            "style": "പിന്നിലെ സ്ക്രീനിലെ ബൈബിൾ അക്ഷരം വിചിത്രമായി, സാധാരണ രൂപത്തിലാക്കൂ",
+            "versions": "ഇപ്പോൾ കാണിക്കുന്ന വാക്യത്തിനടുത്ത് സത്യവേദപുസ്തകം കൂടി ചേർക്കൂ",
+            "lineSync": "മോണിറ്ററിൽ രണ്ടു പരിഭാഷ എന്താ ചേരാത്തത്? വാക്യം വാക്യമായി ഒപ്പിക്കൂ",
+            "transition": "സ്ലൈഡ് മാറ്റം വേണ്ട, ഓഫ് ചെയ്യൂ",
+            "display": "ഇപ്പോൾ സ്ക്രീൻ 1 ഏത് ടിവിയിലാണ് കാണുന്നത്?",
+            "group": "സ്ക്രീൻ 0-ഉം സ്ക്രീൻ 1-ഉം ഒന്നിപ്പിക്കൂ, ഒരുപോലെ കാണിക്കണം",
+            "lock": "കുട്ടികൾ സ്ക്രീൻ 0 തൊടുന്നു, ദയവായി ലോക്ക് ചെയ്യൂ",
+            "stage": "സ്ക്രീൻ 1, സ്റ്റേജ് രണ്ട്",
+            "select": "സ്ക്രീൻ 1 മാത്രം സ്വീകരിക്കട്ടെ, മറ്റുള്ളവയുടെ ടിക്ക് മാറ്റൂ",
+            "clear": "പിന്നിലെ സ്ക്രീനിലെ എല്ലാം ഒഴിവാക്കൂ"
+        },
+        "others": {
+            "present": "വലിയ സ്ക്രീനിൽ സങ്കീർത്തനം 23 കാണിക്കൂ",
+            "countdown": "അഞ്ച് മിനിറ്റ് കൗണ്ട്ഡൗൺ തുടങ്ങൂ",
+            "howto": "കുട്ടികൾ മാറ്റാതിരിക്കാൻ സ്ക്രീൻ എങ്ങനെ ലോക്ക് ചെയ്യാം?",
+            "showHide": "ഇപ്പോൾ പ്രൊജക്ടർ ഓണാണോ?",
+            "song": "പാട്ടിന്റെ വരികൾ വായിക്കാൻ പറ്റുന്നില്ല, വലിയ അക്ഷരം വേണം",
+            "phone": "എന്റെ ഫോണിന്റെ സ്ക്രീൻ തൊട്ടാൽ പ്രതികരിക്കുന്നില്ല",
+            "prayerGroup": "നമ്മുടെ ഗായകസംഘത്തിലെ അംഗങ്ങൾക്കായി പ്രാർത്ഥിക്കൂ"
+        },
+        "floor": 9
+    },
+    "mn": {
+        "asks": {
+            "style": "Ард талын дэлгэц дээрх Библийн үсэг сонин болчихсон, хэвийн байдалд нь буцаа",
+            "versions": "Одоо гарч байгаа шүлгийн хажууд Шинэ Нэгдсэн орчуулгыг нэм",
+            "lineSync": "Яагаад монитор дээрх хоёр орчуулга таарахгүй байна? Шүлгээр нь тааруул",
+            "transition": "Слайдын шилжилт надад хэрэггүй, унтраа",
+            "display": "Одоо 1-р дэлгэц аль зурагт дээр гарч байна?",
+            "group": "0-р дэлгэц, 1-р дэлгэцийг нэгтгэ, ижил зүйл үзүүлэг",
+            "lock": "Хүүхдүүд 0-р дэлгэцийг барьсаар байна, түгжиж өгөөч",
+            "stage": "1-р дэлгэц, хоёрдугаар тайз",
+            "select": "Зөвхөн 1-р дэлгэц хүлээн авна, бусдын сонголтыг ав",
+            "clear": "Ард байгаа дэлгэцийн бүгдийг цэвэрлэ"
+        },
+        "others": {
+            "present": "Том дэлгэц дээр Дуулал 23-ыг үзүүл",
+            "countdown": "Таван минутын тоолол эхлүүл",
+            "howto": "Хүүхдүүд өөрчлөхгүйн тулд дэлгэцийг яаж түгжих вэ?",
+            "showHide": "Проектор одоо асаалттай юу?",
+            "song": "Дууны үг уншигдахгүй байна, том үсэг хэрэгтэй",
+            "phone": "Миний утасны дэлгэц хүрэхэд хариу өгөхгүй байна",
+            "prayerGroup": "Манай найрал дууны гишүүдийн төлөө залбираарай"
+        },
+        "floor": 9
+    },
+    "mr": {
+        "asks": {
+            "style": "मागील स्क्रीनवरचे बायबल अक्षर विचित्र दिसते, पूर्वीसारखे सामान्य करा",
+            "versions": "आता दिसणाऱ्या वचनाशेजारी पवित्र शास्त्र जोडा",
+            "lineSync": "मॉनिटरवर दोन भाषांतरे का जुळत नाहीत? वचनानुसार जुळवा",
+            "transition": "स्लाईड बदलाचा इफेक्ट नको, बंद करा",
+            "display": "आता स्क्रीन 1 कोणत्या टीव्हीवर दिसत आहे?",
+            "group": "स्क्रीन 0 आणि स्क्रीन 1 एकत्र करा, सारखेच दाखवावे",
+            "lock": "मुले स्क्रीन 0 ला हात लावतात, कृपया लॉक करा",
+            "stage": "स्क्रीन 1, स्टेज दोन",
+            "select": "फक्त स्क्रीन 1 ने प्रस्तुती घ्यावी, इतरांची खूण काढा",
+            "clear": "मागच्या स्क्रीनवरचे सगळे रिकामे करा"
+        },
+        "others": {
+            "present": "मोठ्या स्क्रीनवर स्तोत्र 23 दाखवा",
+            "countdown": "पाच मिनिटांचा काउंटडाउन सुरू करा",
+            "howto": "मुलांनी बदलू नये म्हणून स्क्रीन कशी लॉक करायची?",
+            "showHide": "आत्ता प्रोजेक्टर चालू आहे का?",
+            "song": "गाण्याचे शब्द वाचता येत नाहीत, मोठी अक्षरे हवीत",
+            "phone": "माझ्या फोनची स्क्रीन स्पर्श केल्यावर प्रतिसाद देत नाही",
+            "prayerGroup": "आपल्या गायनवृंदातील सदस्यांसाठी प्रार्थना करा"
+        },
+        "floor": 9
+    },
+    "ms": {
+        "asks": {
+            "style": "Tulisan Alkitab pada skrin belakang nampak pelik, kembalikan ke biasa",
+            "versions": "Tambah Alkitab Berita Baik di sebelah ayat yang sedang dipaparkan",
+            "lineSync": "Kenapa dua terjemahan pada monitor tak sama? Selaraskan ikut ayat",
+            "transition": "Saya tak perlukan peralihan slaid, tutup je",
+            "display": "Sekarang skrin 1 keluar pada TV yang mana?",
+            "group": "Gabungkan skrin 0 dan skrin 1 supaya papar benda sama",
+            "lock": "Budak-budak asyik sentuh skrin 0, tolong kunci",
+            "stage": "Skrin 1, pentas dua",
+            "select": "Hanya skrin 1 yang terima persembahan, buang tanda yang lain",
+            "clear": "Kosongkan segala-galanya dari skrin belakang"
+        },
+        "others": {
+            "present": "Papar Mazmur 23 pada skrin besar",
+            "countdown": "Mulakan kira detik lima minit",
+            "howto": "Macam mana nak kunci skrin supaya budak-budak tak ubah?",
+            "showHide": "Projektor tengah hidup sekarang?",
+            "song": "Tak boleh baca lirik lagu, nak huruf besar",
+            "phone": "Skrin telefon saya tak bertindak balas bila disentuh",
+            "prayerGroup": "Tolong doakan ahli koir kita"
+        },
+        "floor": 8
+    },
+    "my": {
+        "asks": {
+            "style": "နောက်ဖက်ဖန်သားပြင်က ကျမ်းစာစာလုံးတွေ ထူးဆန်းနေတယ်၊ ပုံမှန်ပြန်ပြောင်းပါ",
+            "versions": "အခုပြနေတဲ့ အပိုဒ်ဘေးမှာ မြန်မာ့ကျမ်းစာ ဗားရှင်း ထပ်ထည့်ပါ",
+            "lineSync": "မော်နီတာမှာ ဘာသာပြန်နှစ်ခု ဘာကြောင့်မကိုက်တာလဲ၊ အပိုဒ်အလိုက်ညှိပါ",
+            "transition": "ဆလိုက်ကူးပြောင်းမှု မလိုဘူး၊ ပိတ်လိုက်ပါ",
+            "display": "အခု ဖန်သားပြင် ၁ က ဘယ်တီဗီမှာ ပေါ်နေတာလဲ",
+            "group": "ဖန်သားပြင် ၀ နဲ့ ၁ ကို ပေါင်းပါ၊ တူတူပြစေချင်တယ်",
+            "lock": "ကလေးတွေ ဖန်သားပြင် ၀ ကို ကိုင်နေလို့ လော့ခ်ချပေးပါ",
+            "stage": "ဖန်သားပြင် ၁၊ စင်မြင့်နှစ်",
+            "select": "ဖန်သားပြင် ၁ ကပဲ လက်ခံပါစေ၊ တခြားတွေ အမှန်ခြစ်ဖြုတ်ပါ",
+            "clear": "နောက်က ဖန်သားပြင်ကို အားလုံးရှင်းပါ"
+        },
+        "others": {
+            "present": "မျက်နှာပြင်ကြီးမှာ ဆာလံ ၂၃ ပြပါ",
+            "countdown": "ငါးမိနစ် နောက်ပြန်ရေတွက်စတင်ပါ",
+            "howto": "ကလေးတွေ မပြောင်းနိုင်အောင် ဖန်သားပြင်ကို ဘယ်လိုလော့ခ်ချရလဲ",
+            "showHide": "အခု ပရိုဂျက်တာ ဖွင့်ထားလား",
+            "song": "သီချင်းစာသား မဖတ်နိုင်ဘူး၊ စာလုံးကြီးကြီးလိုချင်တယ်",
+            "phone": "ကျွန်တော့်ဖုန်းမျက်နှာပြင် ထိရင် မတုံ့ပြန်ဘူး",
+            "prayerGroup": "ကျွန်တော်တို့ ကျူးရှင်အဖွဲ့ဝင်တွေအတွက် ဆုတောင်းပေးပါ"
+        },
+        "floor": 9
+    },
+    "ne": {
+        "asks": {
+            "style": "पछाडिको स्क्रिनमा बाइबलका अक्षर अनौठो देखियो, पहिलेकै सामान्य बनाइदिनुस्",
+            "versions": "अहिले देखिएको पदको छेउमा पवित्र बाइबल पनि थप्नुस्",
+            "lineSync": "मोनिटरमा दुई अनुवाद किन नमिलेको? पद-पद अनुसार मिलाइदिनुस्",
+            "transition": "स्लाइड परिवर्तन चाहिँदैन, बन्द गरिदिनुस्",
+            "display": "अहिले स्क्रिन १ कुन टिभीमा देखिँदैछ?",
+            "group": "स्क्रिन ० र स्क्रिन १ एकैसाथ गर्नुस्, उस्तै देखाओस्",
+            "lock": "बच्चाहरूले स्क्रिन ० छोइरहन्छन्, कृपया लक गर्नुस्",
+            "stage": "स्क्रिन १, स्टेज दुई",
+            "select": "स्क्रिन १ ले मात्र प्रस्तुति पाओस्, अरूको चिन्ह हटाउनुस्",
+            "clear": "पछाडिको स्क्रिनका सबै कुरा खाली गर्नुस्"
+        },
+        "others": {
+            "present": "ठूलो स्क्रिनमा भजन २३ देखाउनुस्",
+            "countdown": "पाँच मिनेटको उल्टो गनती सुरु गर्नुस्",
+            "howto": "बच्चाहरूले नबदलून् भनेर स्क्रिन कसरी लक गर्ने?",
+            "showHide": "अहिले प्रोजेक्टर खुला छ?",
+            "song": "गीतका शब्द पढ्न सकिएन, ठूला अक्षर चाहियो",
+            "phone": "मेरो फोनको स्क्रिनले छुँदा प्रतिक्रिया दिँदैन",
+            "prayerGroup": "हाम्रो गायक समूहका सदस्यहरूका लागि प्रार्थना गर्नुस्"
+        },
+        "floor": 8
+    },
+    "nl": {
+        "asks": {
+            "style": "De bijbeltekst op het achterste scherm ziet er raar uit, zet hem terug naar normaal",
+            "versions": "Voeg de Herziene Statenvertaling toe naast het vers dat nu in beeld is",
+            "lineSync": "Waarom lopen de twee vertalingen op de monitor niet gelijk? Zet ze vers voor vers",
+            "transition": "Ik heb geen dia-overgang nodig, zet hem uit",
+            "display": "Op welke tv staat scherm 1 op dit moment?",
+            "group": "Voeg scherm 0 en scherm 1 samen zodat ze hetzelfde laten zien",
+            "lock": "De kinderen blijven aan scherm 0 zitten, vergrendel hem alsjeblieft",
+            "stage": "Scherm 1, podium twee",
+            "select": "Alleen scherm 1 moet de presentatie krijgen, haal de vinkjes bij de rest weg",
+            "clear": "Maak alles leeg op het scherm achterin"
+        },
+        "others": {
+            "present": "Toon Psalm 23 op het grote scherm",
+            "countdown": "Start een aftelling van vijf minuten",
+            "howto": "Hoe vergrendel ik het scherm zodat de kinderen niets veranderen?",
+            "showHide": "Staat de beamer op dit moment aan?",
+            "song": "Ik kan de liedtekst niet lezen, ik wil grotere letters",
+            "phone": "Het scherm van mijn telefoon reageert niet op aanraking",
+            "prayerGroup": "Bid voor de leden van ons koor"
+        },
+        "floor": 10
+    },
+    "no": {
+        "asks": {
+            "style": "Bibelteksten pa den bakerste skjermen ser rar ut, sett den tilbake til vanlig",
+            "versions": "Legg til Bibelen 2011 ved siden av verset som vises na",
+            "lineSync": "Hvorfor passer ikke de to oversettelsene sammen pa skjermen? Still dem opp vers for vers",
+            "transition": "Jeg trenger ingen lysbildeovergang, skru den av",
+            "display": "Pa hvilken TV vises skjerm 1 akkurat na?",
+            "group": "Slå sammen skjerm 0 og skjerm 1 sa de viser det samme",
+            "lock": "Barna rorer stadig skjerm 0, kan du lase den",
+            "stage": "Skjerm 1, scene to",
+            "select": "Bare skjerm 1 skal fa presentasjonen, fjern haken pa de andre",
+            "clear": "Tom alt pa skjermen bakerst"
+        },
+        "others": {
+            "present": "Vis Salme 23 pa storskjermen",
+            "countdown": "Start fem minutters nedtelling",
+            "howto": "Hvordan laser jeg skjermen sa barna ikke endrer noe?",
+            "showHide": "Er projektoren pa akkurat na?",
+            "song": "Jeg kan ikke lese sangteksten, onsker storre skrift",
+            "phone": "Skjermen pa telefonen min reagerer ikke pa berøring",
+            "prayerGroup": "Be for medlemmene i koret vårt"
+        },
+        "floor": 7
+    },
+    "ny": {
+        "asks": {
+            "style": "Lemba la Baibulo pa sikirini yakumbuyo likuoneka lachilendo, libwezereni ku nthawi zonse",
+            "versions": "Onjezani Buku Lopatulika pambali pa vesi lomwe likuwonetsedwa tsopano",
+            "lineSync": "N'chifukwa chiyani matembenuzidwe awiri pa monitor sakugwirizana? Agwirizanitseni vesi ndi vesi",
+            "transition": "Sindikufuna kusintha kwa masilaidi, zimitsani",
+            "display": "Tsopano sikirini 1 ikuwoneka pa TV iti?",
+            "group": "Phatikizani sikirini 0 ndi sikirini 1 kuti zionetse chimodzimodzi",
+            "lock": "Ana amangokhudza sikirini 0, chonde itsekeni",
+            "stage": "Sikirini 1, siteji yachiwiri",
+            "select": "Sikirini 1 yokha ilandire chiwonetsero, chotsani zizindikiro zina",
+            "clear": "Chotsani zonse pa sikirini yakumbuyo"
+        },
+        "others": {
+            "present": "Onetsani Salimo 23 pa sikirini yaikulu",
+            "countdown": "Yambani kuwerenga mmbuyo kwa mphindi zisanu",
+            "howto": "Ndingatseke bwanji sikirini kuti ana asasinthe?",
+            "showHide": "Pulojekitala yayaka pakali pano?",
+            "song": "Sindingathe kuwerenga mawu a nyimbo, ndikufuna zilembo zazikulu",
+            "phone": "Sikirini ya foni yanga siyankha ikakhudzidwa",
+            "prayerGroup": "Pempherani anthu a kwaya yathu"
+        },
+        "floor": 7
+    },
+    "om": {
+        "asks": {
+            "style": "Barreeffamni Macaafa Qulqulluu iskiriinii duubaa irra jiru ajaa'iba fakkaata, gara idileetti deebisi",
+            "versions": "Macaafa Qulqulluu Afaan Oromoo ayaata amma mul'atu cinaatti dabali",
+            "lineSync": "Maaliif hiikkaaleen lamaan monitara irratti wal hin simne? Ayaan ayaatti sirreessi",
+            "transition": "Jijjiirama slaayidii na hin barbaachisu, cufi",
+            "display": "Amma iskiriiniin 1 tiivii kam irratti mul'ata?",
+            "group": "Iskiriinii 0 fi iskiriinii 1 wal-makii wanta wal-fakkaatu haa agarsiisan",
+            "lock": "Ijoolleen iskiriinii 0 tuquu itti fufu, maaloo cufi",
+            "stage": "Iskiriinii 1, stejii lama",
+            "select": "Iskiriiniin 1 qofti dhiyeessa haa fudhatu, mallattoo kaan irraa kaasi",
+            "clear": "Wanta hundaa iskiriinii duubaa irraa haqi"
+        },
+        "others": {
+            "present": "Faarfannaa 23 iskiriinii guddaa irratti agarsiisi",
+            "countdown": "Lakkoofsa duubatti daqiiqaa shan jalqabi",
+            "howto": "Ijoolleen akka hin jijjiirre iskiriinii akkamitti cufa?",
+            "showHide": "Pirojektarii amma ni ka'eeraa?",
+            "song": "Jecha weedduu dubbisuu hin danda'u, qubee guddaa barbaada",
+            "phone": "Iskiriiniin bilbila kootii yeroo tuqamu deebii hin kennu",
+            "prayerGroup": "Miseensota kooriin keenyaaf kadhaadhaa"
+        },
+        "floor": 8
+    },
+    "or": {
+        "asks": {
+            "style": "ପଛ ସ୍କ୍ରିନର ବାଇବଲ ଅକ୍ଷର ଅଜବ ଦିଶୁଛି, ସାଧାରଣ ରୂପକୁ ଫେରାଇଦିଅ",
+            "versions": "ବର୍ତ୍ତମାନ ଦେଖାଯାଉଥିବା ପଦ ପାଖରେ ପବିତ୍ର ବାଇବଲ ଯୋଡ଼ିଦିଅ",
+            "lineSync": "ମନିଟରରେ ଦୁଇ ଅନୁବାଦ କାହିଁକି ମେଳ ଖାଉନି? ପଦ ଅନୁସାରେ ମିଳାଅ",
+            "transition": "ସ୍ଲାଇଡ୍ ପରିବର୍ତ୍ତନ ଦରକାର ନାହିଁ, ବନ୍ଦ କରିଦିଅ",
+            "display": "ଏବେ ସ୍କ୍ରିନ୍ ୧ କେଉଁ ଟିଭିରେ ଦିଶୁଛି?",
+            "group": "ସ୍କ୍ରିନ୍ ୦ ଓ ସ୍କ୍ରିନ୍ ୧ ଏକାଠି କର, ସମାନ ଦେଖାଉ",
+            "lock": "ପିଲାମାନେ ସ୍କ୍ରିନ୍ ୦ ଛୁଇଁଥାନ୍ତି, ଦୟାକରି ଲକ୍ କର",
+            "stage": "ସ୍କ୍ରିନ୍ ୧, ଷ୍ଟେଜ୍ ଦୁଇ",
+            "select": "କେବଳ ସ୍କ୍ରିନ୍ ୧ ଉପସ୍ଥାପନା ପାଉ, ଅନ୍ୟର ଚିହ୍ନ ହଟାଅ",
+            "clear": "ପଛ ସ୍କ୍ରିନର ସବୁକିଛି ଖାଲି କରିଦିଅ"
+        },
+        "others": {
+            "present": "ବଡ଼ ସ୍କ୍ରିନରେ ଗୀତସଂହିତା ୨୩ ଦେଖାଅ",
+            "countdown": "ପାଞ୍ଚ ମିନିଟ୍ର କାଉଣ୍ଟଡାଉନ୍ ଆରମ୍ଭ କର",
+            "howto": "ପିଲାମାନେ ବଦଳାଇ ନପାରିବା ପାଇଁ ସ୍କ୍ରିନ୍ କେମିତି ଲକ୍ କରିବି?",
+            "showHide": "ଏବେ ପ୍ରୋଜେକ୍ଟର ଚାଲୁ ଅଛି କି?",
+            "song": "ଗୀତର ଶବ୍ଦ ପଢ଼ି ହେଉନି, ବଡ଼ ଅକ୍ଷର ଦରକାର",
+            "phone": "ମୋ ଫୋନର ସ୍କ୍ରିନ ଛୁଇଁଲେ ସାଡ଼ା ଦେଉନି",
+            "prayerGroup": "ଆମ କୋରସ୍ ଦଳର ସଦସ୍ୟମାନଙ୍କ ପାଇଁ ପ୍ରାର୍ଥନା କର"
+        },
+        "floor": 8
+    },
+    "pa": {
+        "asks": {
+            "style": "ਪਿਛਲੀ ਸਕ੍ਰੀਨ 'ਤੇ ਬਾਈਬਲ ਦੇ ਅੱਖਰ ਅਜੀਬ ਲੱਗ ਰਹੇ ਹਨ, ਪਹਿਲਾਂ ਵਾਂਗ ਕਰ ਦਿਓ",
+            "versions": "ਹੁਣ ਦਿਖ ਰਹੀ ਆਇਤ ਕੋਲ ਪਵਿੱਤਰ ਬਾਈਬਲ ਵੀ ਜੋੜ ਦਿਓ",
+            "lineSync": "ਮਾਨੀਟਰ 'ਤੇ ਦੋਵੇਂ ਅਨੁਵਾਦ ਕਿਉਂ ਨਹੀਂ ਮਿਲਦੇ? ਆਇਤ ਅਨੁਸਾਰ ਮਿਲਾਓ",
+            "transition": "ਸਲਾਈਡ ਬਦਲਣ ਦਾ ਪ੍ਰਭਾਵ ਨਹੀਂ ਚਾਹੀਦਾ, ਬੰਦ ਕਰ ਦਿਓ",
+            "display": "ਹੁਣ ਸਕ੍ਰੀਨ 1 ਕਿਹੜੇ ਟੀਵੀ 'ਤੇ ਦਿਖ ਰਹੀ ਹੈ?",
+            "group": "ਸਕ੍ਰੀਨ 0 ਤੇ ਸਕ੍ਰੀਨ 1 ਇਕੱਠੀਆਂ ਕਰੋ, ਇੱਕੋ ਜਿਹਾ ਦਿਖਾਉਣ",
+            "lock": "ਬੱਚੇ ਸਕ੍ਰੀਨ 0 ਨੂੰ ਛੂਹੀ ਜਾਂਦੇ ਹਨ, ਕਿਰਪਾ ਕਰਕੇ ਲਾਕ ਕਰੋ",
+            "stage": "ਸਕ੍ਰੀਨ 1, ਸਟੇਜ ਦੋ",
+            "select": "ਸਿਰਫ਼ ਸਕ੍ਰੀਨ 1 ਪੇਸ਼ਕਾਰੀ ਲਵੇ, ਬਾਕੀਆਂ ਦੇ ਨਿਸ਼ਾਨ ਹਟਾਓ",
+            "clear": "ਪਿਛਲੀ ਸਕ੍ਰੀਨ ਦਾ ਸਭ ਕੁਝ ਖਾਲੀ ਕਰ ਦਿਓ"
+        },
+        "others": {
+            "present": "ਵੱਡੀ ਸਕ੍ਰੀਨ 'ਤੇ ਜ਼ਬੂਰ 23 ਦਿਖਾਓ",
+            "countdown": "ਪੰਜ ਮਿੰਟ ਦੀ ਕਾਊਂਟਡਾਊਨ ਸ਼ੁਰੂ ਕਰੋ",
+            "howto": "ਬੱਚੇ ਨਾ ਬਦਲਣ ਇਸ ਲਈ ਸਕ੍ਰੀਨ ਨੂੰ ਲਾਕ ਕਿਵੇਂ ਕਰਾਂ?",
+            "showHide": "ਕੀ ਪ੍ਰੋਜੈਕਟਰ ਇਸ ਵੇਲੇ ਚਾਲੂ ਹੈ?",
+            "song": "ਗੀਤ ਦੇ ਬੋਲ ਪੜ੍ਹ ਨਹੀਂ ਹੁੰਦੇ, ਵੱਡੇ ਅੱਖਰ ਚਾਹੀਦੇ ਹਨ",
+            "phone": "ਮੇਰੇ ਫ਼ੋਨ ਦੀ ਸਕ੍ਰੀਨ ਛੂਹਣ 'ਤੇ ਜਵਾਬ ਨਹੀਂ ਦਿੰਦੀ",
+            "prayerGroup": "ਸਾਡੇ ਕੋਇਰ ਦੇ ਮੈਂਬਰਾਂ ਲਈ ਪ੍ਰਾਰਥਨਾ ਕਰੋ"
+        },
+        "floor": 9
+    },
+    "pl": {
+        "asks": {
+            "style": "zmien kolor tekstu wersetu na zolty, bo na ekranie z tylu go nie widac",
+            "versions": "czy moge usunac ESV sprzed wersetu na ekranie 1?",
+            "lineSync": "synchronizuj wersety obu przekladow na telewizorze, linia po linii",
+            "transition": "ustaw zanikanie jako przejscie tla na ekranie numer zero",
+            "display": "Powiedz mi, na jakim monitorze jest ekran 1, bo nie widze go z sali",
+            "group": "ekran 1 i 0 w jedna grupe",
+            "lock": "Mozesz zamknac ekran 0, zeby nikt nic nie przestawil?",
+            "stage": "jaki numer sceny ma teraz ekran 1? ustaw dwa",
+            "select": "tylko ekran nr 1 ma odbierac, reszte odhacz",
+            "clear": "wyzeruj wszystko na ekranie z tylu"
+        },
+        "others": {
+            "present": "puść Jana 1:1 na rzutniku",
+            "countdown": "uruchom minutnik na 5 minut na telewizorze",
+            "howto": "jak sie ustawia przejscie miedzy slajdami? szukam i nie moge znalezc",
+            "showHide": "czy projektor jest teraz wlaczony i cos pokazuje?",
+            "song": "slowa tej piesni sa nieczytelne na duzym ekranie, powieksz",
+            "phone": "w moim iphonie pekl wyswietlacz",
+            "prayerGroup": "nasza grupa domowa spotyka sie dzis, prosze o modlitwe za nas"
+        },
+        "floor": 8
+    },
+    "pt": {
+        "asks": {
+            "style": "muda a cor do texto do versículo para amarelo no telão",
+            "versions": "dá pra adicionar a NVT ao lado do versículo no ecrã 1?",
+            "lineSync": "quero as duas versões lado a lado, linha por linha, na TV",
+            "transition": "o fundo do projetor devia aparecer com fade, configura isso",
+            "display": "em que monitor está o ecrã dois? da sala não consigo ver",
+            "group": "agrupa 0 e 1",
+            "lock": "Tranque o ecrã 0 para ninguém mexer",
+            "stage": "ecrã 1 → palco 2",
+            "select": "só o ecrã um deve receber o que apresento",
+            "clear": "tira tudo do ecrã do fundo"
+        },
+        "others": {
+            "present": "projeta Gênesis 1:1",
+            "countdown": "põe um temporizador de 5 minutos na TV",
+            "howto": "como é que se muda a transição dos slides? não encontro",
+            "showHide": "o projetor está ligado e a mostrar alguma coisa?",
+            "song": "a letra desta música está ilegível, aumenta",
+            "phone": "o ecrã do meu iPhone partiu todo",
+            "prayerGroup": "o nosso grupo de oração reúne hoje, orem por nós"
+        },
+        "floor": 8
+    },
+    "rn": {
+        "asks": {
+            "style": "hindura ibara ry'umurongo kuri ecran yo inyuma ribe umuhondo",
+            "versions": "Ndashobora gukuraho KJV iruhande y'umurongo kuri ecran 1?",
+            "lineSync": "huza imirongo y'ibisobanuro bibiri kuri televiziyo",
+            "transition": "shira fade nka transition y'inyuma kuri ecran 0",
+            "display": "ecran 1 iri kuri monitor iyihe? sinyibona ndi hano",
+            "group": "ecran 0 na 1 mu gatsiko kamwe",
+            "lock": "Funga ecran 0 ntihagire uyikoraho",
+            "stage": "ecran 1 ihabwe stage 2 nyabuna",
+            "select": "ecran 1 gusa niyo yakire",
+            "clear": "Kuraho vyose ku ecran yo inyuma"
+        },
+        "others": {
+            "present": "Erekana Yohani 1:1 kuri projecteur",
+            "countdown": "tangura umubaruzi w'iminota 5 kuri televiziyo",
+            "howto": "Transition hagati y'amashusho iremwa gute? ndayibuze",
+            "showHide": "projecteur irarashe kandi hari ico yerekana?",
+            "song": "amajambo y'iyi ndirimbo ntagaragara, yagure",
+            "phone": "ecran ya iPhone yanje yaravunitse",
+            "prayerGroup": "itsinda ryacu ry'isengesho rirahura uno munsi, mudusengere"
+        },
+        "floor": 9
+    },
+    "ro": {
+        "asks": {
+            "style": "schimbă culoarea textului versetului în galben, nu se vede de la spate",
+            "versions": "pot elimina ESV din fața versetului de pe ecranul 1?",
+            "lineSync": "aliniază versetele celor două traduceri pe televizor, rând cu rând",
+            "transition": "pune fade ca tranziție a fundalului pe ecranul zero",
+            "display": "spune-mi pe ce monitor e ecranul 1, nu-l văd din sală",
+            "group": "ecran 1 și 0 într-un grup",
+            "lock": "poți bloca ecranul 0 ca să nu-l atingă nimeni?",
+            "stage": "ecranul 1, scena 2",
+            "select": "doar ecranul nr 1 să primească, restul debifat",
+            "clear": "golește tot de pe ecranul din spate"
+        },
+        "others": {
+            "present": "dă Ioan 1:1 pe proiector",
+            "countdown": "pornește un cronometru de 5 minute pe televizor",
+            "howto": "cum se setează tranziția între diapozitive? caut și nu găsesc",
+            "showHide": "proiectorul e pornit acum și arată ceva?",
+            "song": "versurile cântării nu se citesc pe ecranul mare, mărește-le",
+            "phone": "mi s-a spart afișajul de la iPhone",
+            "prayerGroup": "grupul nostru de rugăciune se întâlnește azi, rugați-vă pentru noi"
+        },
+        "floor": 10
+    },
+    "ru": {
+        "asks": {
+            "style": "поменяй цвет текста стиха на жёлтый, с заднего ряда не видно",
+            "versions": "можно убрать ESV перед стихом на экране 1?",
+            "lineSync": "сделай чтобы стихи двух переводов шли строка в строку на телевизоре",
+            "transition": "поставь затухание как переход фона на нулевом экране",
+            "display": "скажи, на каком мониторе экран 1, из зала не вижу",
+            "group": "экран 1 и 0 в одну группу",
+            "lock": "можешь закрыть экран 0, чтоб никто не трогал?",
+            "stage": "экран один, сцена два",
+            "select": "только экран №1 принимает, остальные снять",
+            "clear": "обнули всё на дальнем экране"
+        },
+        "others": {
+            "present": "включи Иоанна 1:1 на проекторе",
+            "countdown": "запусти таймер на 5 минут на телевизоре",
+            "howto": "как настраивается переход между слайдами? ищу и не нахожу",
+            "showHide": "проектор сейчас включён и что-то показывает?",
+            "song": "слова этой песни не читаются на большом экране, увеличь",
+            "phone": "на моём айфоне разбился дисплей",
+            "prayerGroup": "наша домашняя группа собирается сегодня, помолитесь за нас"
+        },
+        "floor": 8
+    },
+    "rw": {
+        "asks": {
+            "style": "hindura ibara ry'umurongo kuri ecran yo inyuma rive umuhondo",
+            "versions": "Nakuraho KJV iruhande rw'umurongo kuri ecran 1?",
+            "lineSync": "huza imirongo y'ubusobanuro bubiri kuri televiziyo",
+            "transition": "shyira fade nka transition y'inyuma kuri ecran 0",
+            "display": "ecran 1 iri kuri monitor iyihe? sinyibona ndi hano",
+            "group": "ecran 0 na 1 mu itsinda rimwe",
+            "lock": "Funga ecran 0 hatagira uyikoraho",
+            "stage": "ecran 1 ihabwe stage 2 nyabuneka",
+            "select": "ecran 1 yonyine niyo yakira",
+            "clear": "Siba byose kuri ecran yo inyuma"
+        },
+        "others": {
+            "present": "Erekana Yohana 1:1 kuri projecteur",
+            "countdown": "tangira igihe cy'iminota 5 kuri televiziyo",
+            "howto": "Transition hagati ya slides ishyirwahoite? ndayibuze",
+            "showHide": "projecteur irakoze kandi hari icyo yerekana?",
+            "song": "amagambo y'iyi ndirimbo ntasomeka, yongere",
+            "phone": "ecran ya iPhone yanjye yavunitse",
+            "prayerGroup": "itsinda ryacu ry'amasengesho rirahura uyu munsi, mudusabire"
+        },
+        "floor": 10
+    },
+    "si": {
+        "asks": {
+            "style": "පිටුපස තිරයේ පද්‍ය අකුරු කහ පාටට හරවන්න, පේන්නේ නෑ",
+            "versions": "තිර 1 හි පදය ඉදිරියෙන් ESV අයින් කරන්න පුළුවන්ද?",
+            "lineSync": "ටීවී එකේ පරිවර්තන දෙකේ පද පේළියෙන් පේළියට එකතු කරන්න",
+            "transition": "තිර 0 පසුබිම් සංක්‍රමණය fade ලෙස දාන්න",
+            "display": "තිර 1 තියෙන්නේ මොන මොනිටරයෙද? හාල් එකෙන් පේන්නේ නෑ",
+            "group": "තිර 1 සහ 0 එක කණ්ඩායමකට",
+            "lock": "කවුරුවත් අල්ලන්නේ නැති වෙන්න තිර 0 අගුළු දාන්න පුළුවන්ද?",
+            "stage": "තිරය 1, stage 2",
+            "select": "තිර අංක 1 විතරක් ලබාගන්න, අනිත් ඒවා අයින් කරන්න",
+            "clear": "පිටුපස තිරයේ ඔක්කොම මකන්න"
+        },
+        "others": {
+            "present": "ප්‍රොජෙක්ටරයේ යොහන් 1:1 දාන්න",
+            "countdown": "ටීවී එකේ විනාඩි 5ක කාල ගණකයක් පටන් ගන්න",
+            "howto": "ස්ලයිඩ් අතර සංක්‍රමණය සකසන්නේ කොහොමද? හොයාගන්න බෑ",
+            "showHide": "ප්‍රොජෙක්ටරය දැන් ඔන් වෙලා මොනවා හරි පෙන්වනවද?",
+            "song": "මේ ගීතයේ වදන් ලොකු තිරයේ කියවන්න බෑ, ලොකු කරන්න",
+            "phone": "මගේ iPhone එකේ තිරය කැඩිලා",
+            "prayerGroup": "අපේ යාච්ඤා කණ්ඩායම අද රැස්වෙනවා, අපි වෙනුවෙන් යාච්ඤා කරන්න"
+        },
+        "floor": 10
+    },
+    "sk": {
+        "asks": {
+            "style": "zmeň farbu textu verša na žltú, zozadu to nevidno",
+            "versions": "môžem odstrániť ESV pred veršom na obrazovke 1?",
+            "lineSync": "zosúlaď verše oboch prekladov na televízore, riadok po riadku",
+            "transition": "nastav zatemnenie ako prechod pozadia na obrazovke nula",
+            "display": "povedz mi, na akom monitore je obrazovka 1, zo sály ju nevidím",
+            "group": "obrazovka 1 a 0 do jednej skupiny",
+            "lock": "môžeš zamknúť obrazovku 0, aby sa jej nikto nedotkol?",
+            "stage": "obrazovka jedna, scéna dva",
+            "select": "len obrazovka č. 1 má prijímať, ostatné odznač",
+            "clear": "vynuluj všetko na zadnej obrazovke"
+        },
+        "others": {
+            "present": "pusti Ján 1:1 na projektore",
+            "countdown": "spusti časovač na 5 minút na televízore",
+            "howto": "ako sa nastavuje prechod medzi snímkami? hľadám a nenachádzam",
+            "showHide": "je projektor teraz zapnutý a niečo ukazuje?",
+            "song": "slová tejto piesne sa nedajú prečítať na veľkej obrazovke, zväčši",
+            "phone": "na mojom iPhone sa rozbil displej",
+            "prayerGroup": "naša domáca skupinka sa dnes stretáva, modlite sa za nás"
+        },
+        "floor": 7
+    },
+    "sl": {
+        "asks": {
+            "style": "spremeni barvo besedila verza v rumeno, od zadaj se ne vidi",
+            "versions": "lahko odstranim ESV pred verzom na zaslonu 1?",
+            "lineSync": "uskladi verze obeh prevodov na televizorju, vrstica za vrstico",
+            "transition": "nastavi bledenje kot prehod ozadja na zaslonu nič",
+            "display": "povej mi, na katerem monitorju je zaslon 1, iz dvorane ga ne vidim",
+            "group": "zaslon 1 in 0 v eno skupino",
+            "lock": "ali lahko zakleneš zaslon 0, da se ga nihče ne dotakne?",
+            "stage": "zaslon ena, oder dva",
+            "select": "samo zaslon št. 1 naj sprejema, ostale odznači",
+            "clear": "izprazni vse na zadnjem zaslonu"
+        },
+        "others": {
+            "present": "predvajaj Janez 1,1 na projektorju",
+            "countdown": "zaženi časovnik za 5 minut na televizorju",
+            "howto": "kako se nastavi prehod med diapozitivi? iščem pa ne najdem",
+            "showHide": "je projektor zdaj prižgan in kaj kaže?",
+            "song": "besed te pesmi ni mogoče prebrati na velikem zaslonu, povečaj",
+            "phone": "na mojem iPhonu se je razbil zaslon",
+            "prayerGroup": "naša domača skupina se danes zbira, molite za nas"
+        },
+        "floor": 9
+    },
+    "sm": {
+        "asks": {
+            "style": "sui le lanu o le fuaiupu i le samasama, e le vaaia mai tua",
+            "versions": "e mafai ona ou aveese le ESV mai luma o le fuaiupu i le lau 1?",
+            "lineSync": "faatusa fuaiupu o fetuunaiga uma e lua i luga o le TV, laina i laina",
+            "transition": "seti le fade e fai ma suiga o le talaaga i le lau numera 0",
+            "display": "ta mai o le fea le monitor o le lau 1, ou te le vaai mai le fale",
+            "group": "lau 1 ma le 0 i se vaega e tasi",
+            "lock": "e mafai ona e loka le lau 0 ina ia leai se tasi e pa i ai?",
+            "stage": "lau 1, stage 2",
+            "select": "na o le lau numera 1 e talia, aveese isi",
+            "clear": "faamama mea uma i le lau i tua"
+        },
+        "others": {
+            "present": "faaali Ioane 1:1 i le projector",
+            "countdown": "amata se uati e 5 minute i luga o le TV",
+            "howto": "e faapefea ona seti le suiga i le va o ata? ou te le maua",
+            "showHide": "o loo tele le projector ma faaali se mea?",
+            "song": "e le mafai ona faitau upu o lenei pese i le lau tele, faateleina",
+            "phone": "ua gau le lau o laʻu iPhone",
+            "prayerGroup": "o loo potopoto la matou vaega tatalo i le aso nei, tatalo mo i matou"
+        },
+        "floor": 9
+    },
+    "sn": {
+        "asks": {
+            "style": "chinja ruvara rwemashoko evhesi kuti yero, hazvioneki kumashure",
+            "versions": "ndingabvisa ESV pamberi pevhesi pascreen 1 here?",
+            "lineSync": "taridza mavhesi eshanduro mbiri paTV, mutsetse nemutsetse",
+            "transition": "isa fade senzira yekuchinja background pascreen zero",
+            "display": "ndiudze screen 1 iri pamonitor ipi, handiioni ndiri mukati",
+            "group": "screen 1 ne 0 muboka rimwe",
+            "lock": "unogona kukiya screen 0 kuti pasave anoibata here?",
+            "stage": "screen rimwe, stage mbiri",
+            "select": "screen nhamba 1 chete inotambira, dzimwe bvisa",
+            "clear": "bvisa zvese pascreen yekumashure"
+        },
+        "others": {
+            "present": "tamba Johane 1:1 pa projector",
+            "countdown": "tanga timer yemaminetsi 5 paTV",
+            "howto": "transition pakati pema slide inosetwa sei? ndatsvaga ndakatadza",
+            "showHide": "projector yakabatidzwa here ichiratidza chimwe chinhu?",
+            "song": "mazwi enziyo iyi haaverengeki pascreen huru, kudza",
+            "phone": "screen yeiPhone yangu yaputika",
+            "prayerGroup": "boka redu rekunyengetera rinosangana nhasi, titengererei"
+        },
+        "floor": 10
+    },
+    "so": {
+        "asks": {
+            "style": "u beddel midabka qoraalka aayadda huruud, laga danbeeyo lama arko",
+            "versions": "ma ka saari karaa ESV hortiisa aayadda shaashadda 1?",
+            "lineSync": "isku toosi aayadaha labada tarjumaad TV-ga, sadar sadar",
+            "transition": "dhig fade sida is-beddelka gadaasha shaashadda eber",
+            "display": "ii sheeg shaashadda 1 monitor kee ay ku jirto, hoolka ka ma arko",
+            "group": "shaashadda 1 iyo 0 koox keliya",
+            "lock": "ma quful kartaa shaashadda 0 si aan cidina u taaban?",
+            "stage": "shaashad kow, masrax laba",
+            "select": "shaashadda lambarka 1 oo keliya ha qaadato",
+            "clear": "nadiifi wax walba shaashadda dambe"
+        },
+        "others": {
+            "present": "ku fur Yooxanaa 1:1 projector-ka",
+            "countdown": "bilow saacad 5 daqiiqo ah TV-ga",
+            "howto": "sidee loo dejiyaa is-beddelka u dhexeeya slides-ka? waan raadiyay",
+            "showHide": "projector-ku ma shidan yahay oo wax ma muujinayaa?",
+            "song": "erayada heestan lama akhriyi karo shaashadda weyn, weyso",
+            "phone": "iPhone-kayga shaashaddiisa ayaa jabtay",
+            "prayerGroup": "kooxdeenna tukashada ayaa maanta kulmaysa, noogu ducee"
+        },
+        "floor": 9
+    },
+    "sq": {
+        "asks": {
+            "style": "ndërro ngjyrën e tekstit të vargut në të verdhë, nga fundi nuk duket",
+            "versions": "mund ta heq ESV para vargut në ekranin 1?",
+            "lineSync": "sinkronizo vargjet e të dy përkthimeve në televizor, rresht pas rreshti",
+            "transition": "vendos zbehjen si kalim të sfondit në ekranin zero",
+            "display": "më thuaj në cilin monitor është ekrani 1, nga salla nuk e shoh",
+            "group": "ekrani 1 dhe 0 në një grup",
+            "lock": "mund ta mbyllësh ekranin 0 që të mos e prekë njeri?",
+            "stage": "ekrani një, skena dy",
+            "select": "vetëm ekrani nr 1 të marrë, të tjerat çshënoji",
+            "clear": "zbraz gjithçka në ekranin e prapmë"
+        },
+        "others": {
+            "present": "hap Gjoni 1:1 në projektor",
+            "countdown": "nis një kohëmatës 5 minutash në televizor",
+            "howto": "si caktohet kalimi mes sllajdeve? po kërkoj dhe nuk e gjej",
+            "showHide": "projektori është i ndezur tani dhe po tregon diçka?",
+            "song": "fjalët e kësaj kënge nuk lexohen në ekranin e madh, zmadhoji",
+            "phone": "iPhone-it tim i është thyer ekrani",
+            "prayerGroup": "grupi ynë i lutjes mblidhet sot, lutuni për ne"
+        },
+        "floor": 9
+    },
+    "sr": {
+        "asks": {
+            "style": "промени боју текста стиха у жуту, одозго се не види",
+            "versions": "могу ли да уклоним ESV испред стиха на екрану 1?",
+            "lineSync": "uskladi stihove oba prevoda na televizoru, red po red",
+            "transition": "постави бледење као прелаз позадине на екрану нула",
+            "display": "реци ми на ком монитору је екран 1, из сале га не видим",
+            "group": "екран 1 и 0 у једну групу",
+            "lock": "можеш ли да закључаш екран 0 да нико не дира?",
+            "stage": "екран један, сцена два",
+            "select": "само екран бр. 1 да прима, остале искључи",
+            "clear": "испразни све на задњем екрану"
+        },
+        "others": {
+            "present": "пусти Јован 1:1 на пројектору",
+            "countdown": "покрени тајмер од 5 минута на телевизору",
+            "howto": "како се подешава прелаз између слајдова? тражим и не налазим",
+            "showHide": "да ли је пројектор сада укључен и нешто приказује?",
+            "song": "речи ове песме се не читају на великом екрану, увећај",
+            "phone": "на мом ајфону се разбио екран",
+            "prayerGroup": "наша кућна група се данас окупља, молите се за нас"
+        },
+        "floor": 9
+    },
+    "sv": {
+        "asks": {
+            "style": "ändra färgen på versens text till gult, man ser inte bakifrån",
+            "versions": "kan jag ta bort ESV framför versen på skärm 1?",
+            "lineSync": "synka versernas båda översättningar på tv:n, rad för rad",
+            "transition": "välj tona som bakgrundens övergång på skärm noll",
+            "display": "säg vilken monitor skärm 1 är på, jag ser den inte härifrån",
+            "group": "skärm 1 och 0 i en grupp",
+            "lock": "kan du låsa skärm 0 så ingen rör den?",
+            "stage": "skärm ett, scen två",
+            "select": "bara skärm nr 1 ska ta emot, avmarkera resten",
+            "clear": "töm allt på den bakre skärmen"
+        },
+        "others": {
+            "present": "spela upp Joh 1:1 på projektorn",
+            "countdown": "starta en timer på 5 minuter på tv:n",
+            "howto": "hur ställer man in övergången mellan bilder? jag letar men hittar inte",
+            "showHide": "är projektorn på nu och visar något?",
+            "song": "orden i den här sången går inte att läsa på stora skärmen, förstora",
+            "phone": "displayen på min iPhone har gått sönder",
+            "prayerGroup": "vår bönegrupp samlas i kväll, be för oss"
+        },
+        "floor": 10
+    },
+    "sw": {
+        "asks": {
+            "style": "badilisha rangi ya maandishi ya mstari iwe njano, nyuma hayaonekani",
+            "versions": "naweza kuondoa ESV mbele ya mstari kwenye skrini 1?",
+            "lineSync": "sawazisha mistari ya tafsiri zote mbili kwenye TV, mstari kwa mstari",
+            "transition": "weka fade kama mpito wa mandharinyuma kwenye skrini sifuri",
+            "display": "niambie skrini 1 iko kwenye kifuatiliaji kipi, siioni kutoka ukumbini",
+            "group": "skrini 1 na 0 kwenye kundi moja",
+            "lock": "unaweza kufunga skrini 0 ili mtu asiiguse?",
+            "stage": "skrini moja, jukwaa mbili",
+            "select": "skrini namba 1 tu ipokee, zingine ondoa",
+            "clear": "safisha kila kitu kwenye skrini ya nyuma"
+        },
+        "others": {
+            "present": "cheza Yohana 1:1 kwenye projekta",
+            "countdown": "anza kipima muda cha dakika 5 kwenye TV",
+            "howto": "mpito kati ya slaidi unawekwaje? natafuta sioni",
+            "showHide": "projekta imewashwa sasa na inaonyesha kitu?",
+            "song": "maneno ya wimbo huu hayasomeki kwenye skrini kubwa, yakuze",
+            "phone": "kioo cha iPhone yangu kimevunjika",
+            "prayerGroup": "kikundi chetu cha maombi kinakutana leo, tuombeeni"
+        },
+        "floor": 8
+    },
+    "ta": {
+        "asks": {
+            "style": "வசன எழுத்தின் நிறத்தை மஞ்சளாக்குங்கள், பின்னாலிருந்து தெரியவில்லை",
+            "versions": "திரை 1 இல் வசனத்தின் முன் உள்ள ESV ஐ நீக்கலாமா?",
+            "lineSync": "டிவியில் இரு மொழிபெயர்ப்பு வசனங்களையும் வரிக்கு வரி ஒத்திசையுங்கள்",
+            "transition": "திரை பூஜ்யத்தில் பின்னணி மாற்றமாக fade வையுங்கள்",
+            "display": "திரை 1 எந்த மானிட்டரில் இருக்கிறது சொல்லுங்கள், மண்டபத்திலிருந்து தெரியவில்லை",
+            "group": "திரை 1 மற்றும் 0 ஒரே குழுவில்",
+            "lock": "யாரும் தொடாதபடி திரை 0 ஐ பூட்ட முடியுமா?",
+            "stage": "திரை ஒன்று, stage இரண்டு",
+            "select": "திரை எண் 1 மட்டும் பெறட்டும், மற்றவற்றை நீக்குங்கள்",
+            "clear": "பின் திரையில் எல்லாவற்றையும் அழியுங்கள்"
+        },
+        "others": {
+            "present": "ப்ரொஜெக்டரில் யோவான் 1:1 ஐ ஓட்டுங்கள்",
+            "countdown": "டிவியில் 5 நிமிட டைமரை தொடங்குங்கள்",
+            "howto": "ஸ்லைடுகளுக்கு இடையிலான மாற்றத்தை எப்படி அமைப்பது? தேடியும் கிடைக்கவில்லை",
+            "showHide": "ப்ரொஜெக்டர் இப்போது இயங்கி ஏதாவது காட்டுகிறதா?",
+            "song": "இந்தப் பாடலின் வரிகள் பெரிய திரையில் படிக்க முடியவில்லை, பெரிதாக்குங்கள்",
+            "phone": "என் ஐபோன் திரை உடைந்துவிட்டது",
+            "prayerGroup": "எங்கள் ஜெபக் குழு இன்று கூடுகிறது, எங்களுக்காக ஜெபியுங்கள்"
+        },
+        "floor": 10
+    },
+    "te": {
+        "asks": {
+            "style": "వచనం అక్షరాల రంగును పసుపుగా మార్చండి, వెనుక నుంచి కనిపించడం లేదు",
+            "versions": "స్క్రీన్ 1 లో వచనం ముందున్న ESV ని తొలగించవచ్చా?",
+            "lineSync": "టీవీలో రెండు అనువాదాల వచనాలను లైన్ లైన్‌గా సమకాలీకరించండి",
+            "transition": "స్క్రీన్ సున్నాలో బ్యాక్‌గ్రౌండ్ మార్పుగా fade పెట్టండి",
+            "display": "స్క్రీన్ 1 ఏ మానిటర్‌లో ఉందో చెప్పండి, హాల్ నుంచి కనిపించదు",
+            "group": "స్క్రీన్ 1, 0 ఒకే గ్రూప్‌లో",
+            "lock": "ఎవరూ ముట్టుకోకుండా స్క్రీన్ 0 ను లాక్ చేయగలరా?",
+            "stage": "స్క్రీన్ ఒకటి, stage రెండు",
+            "select": "స్క్రీన్ నంబర్ 1 మాత్రమే అందుకోవాలి, మిగతావి తీసేయండి",
+            "clear": "వెనుక స్క్రీన్‌లో అన్నీ తుడిచేయండి"
+        },
+        "others": {
+            "present": "ప్రొజెక్టర్‌లో యోహాను 1:1 నడపండి",
+            "countdown": "టీవీలో 5 నిమిషాల టైమర్ మొదలుపెట్టండి",
+            "howto": "స్లైడ్‌ల మధ్య ట్రాన్సిషన్ ఎలా సెట్ చేయాలి? వెతికినా దొరకలేదు",
+            "showHide": "ప్రొజెక్టర్ ఇప్పుడు ఆన్‌లో ఉండి ఏదైనా చూపుతోందా?",
+            "song": "ఈ పాట సాహిత్యం పెద్ద స్క్రీన్‌పై చదవలేకపోతున్నా, పెద్దది చేయండి",
+            "phone": "నా ఐఫోన్ స్క్రీన్ పగిలిపోయింది",
+            "prayerGroup": "మా ప్రార్థన గుంపు ఈ రోజు కలుస్తోంది, మా కోసం ప్రార్థించండి"
+        },
+        "floor": 8
+    },
+    "th": {
+        "asks": {
+            "style": "เปลี่ยนสีตัวอักษรข้อพระคัมภีร์เป็นสีเหลือง นั่งหลังห้องมองไม่เห็น",
+            "versions": "ลบ ESV ที่อยู่หน้าข้อพระคัมภีร์บนจอ 1 ออกได้ไหม",
+            "lineSync": "ซิงค์ข้อพระคัมภีร์ทั้งสองฉบับบนทีวี ทีละบรรทัด",
+            "transition": "ตั้งเฟดเป็นการเปลี่ยนพื้นหลังบนจอศูนย์",
+            "display": "บอกหน่อยว่าจอ 1 อยู่มอนิเตอร์ไหน มองจากในห้องไม่เห็น",
+            "group": "จอ 1 กับ 0 เข้ากลุ่มเดียวกัน",
+            "lock": "ล็อกจอ 0 ได้ไหม จะได้ไม่มีใครมาแตะ",
+            "stage": "จอหนึ่ง เวทีสอง",
+            "select": "เฉพาะจอหมายเลข 1 ที่รับ ที่เหลือเอาออก",
+            "clear": "ล้างทุกอย่างบนจอด้านหลัง"
+        },
+        "others": {
+            "present": "เปิดยอห์น 1:1 บนโปรเจกเตอร์",
+            "countdown": "เริ่มตัวจับเวลา 5 นาทีบนทีวี",
+            "howto": "ตั้งค่าการเปลี่ยนระหว่างสไลด์ยังไง หาไม่เจอ",
+            "showHide": "โปรเจกเตอร์เปิดอยู่ตอนนี้และกำลังแสดงอะไรไหม",
+            "song": "เนื้อเพลงนี้อ่านไม่ออกบนจอใหญ่ ช่วยขยาย",
+            "phone": "จอไอโฟนของฉันแตกแล้ว",
+            "prayerGroup": "กลุ่มอธิษฐานของเรานัดพบกันวันนี้ ช่วยอธิษฐานเผื่อด้วย"
+        },
+        "floor": 8
+    },
+    "tl": {
+        "asks": {
+            "style": "maliit ang talata sa screen sa likod ng hall para sa mga matatanda, palakihin mo",
+            "versions": "dagdagan ng NIV ang talata",
+            "lineSync": "gusto kong makita ang dalawang salin sa screen dalawa linya por linya magkatabi, puwede ba?",
+            "transition": "gawing wala ang transition ng background",
+            "display": "nasaan ang screen 1, sa TV ba o sa monitor?",
+            "group": "magtulungan ang screen 0 at 1 bilang isang team",
+            "lock": "i-lock ang screen ng projector para walang magalaw nang hindi sinasadya",
+            "stage": "stage number 2 para sa screen 1",
+            "select": "alisin ang tsek sa screen 0, ang presentasyon sa screen 1 lang",
+            "clear": "linisin ang screen sa likod, gusto kong blangko"
+        },
+        "others": {
+            "present": "pakipakita ang Roma 8:28 para sa kongregasyon",
+            "countdown": "magsimula ng 5 minutong countdown para sa pahinga",
+            "howto": "paano ko ila-lock ang screen para hindi magbago?",
+            "showHide": "may ipinapakita ba ngayon ang malaking screen?",
+            "song": "gawing bold ang koro ng kanta sa screen",
+            "phone": "nabasag ang salamin ng cellphone ko",
+            "prayerGroup": "lima kami sa small group, ipagdarasal ninyo kami mamayang gabi?"
+        },
+        "floor": 10
+    },
+    "to": {
+        "asks": {
+            "style": "Liliu e lanu ʻo e tohi ʻo e veesi ki he engeenga, ʻoku ʻikai sio mei mui",
+            "versions": "ʻE lava ke u toʻo e ESV mei muʻa he veesi ʻi he ʻaipoti 1?",
+            "lineSync": "Fakatatau e ngaahi veesi ʻo e liliu ʻe ua ʻi he TV, laine ki he laine",
+            "transition": "Tuku e fade ko e hiki ʻo e tuʻa ʻi he ʻaipoti 0",
+            "display": "Tala mai ko e monitā fē ʻoku ʻi ai e ʻaipoti 1, ʻoku ʻikai te u sio mei he fale",
+            "group": "ʻaipoti 1 mo e 0 ʻi he kulupu pē ʻe taha",
+            "lock": "ʻE lava ke ke lokaʻi e ʻaipoti 0 ke ʻoua naʻa ala ki ai ha taha?",
+            "stage": "ʻaipoti taha, stage ua",
+            "select": "Ko e ʻaipoti fika 1 pē ke maʻu, toʻo e ngaahi toe",
+            "clear": "Fakamaʻa e meʻa kotoa he ʻaipoti ʻi mui"
+        },
+        "others": {
+            "present": "Fakahā Sione 1:1 he projector",
+            "countdown": "Kamata ha taimi miniti ʻe 5 he TV",
+            "howto": "Fēfē haku seti e hiki he vahaʻa ʻo e ngaahi sileiti? kuo u kumi ka ʻikai ke ʻiloa",
+            "showHide": "ʻOku tutu e projector he taimi ni pea fakahā ha meʻa?",
+            "song": "ʻOku ʻikai lava ʻo lau e ngaahi lea ʻo e hiva ni he ʻaipoti lahi, fakalahi",
+            "phone": "Kuo maumau e sio ʻo hoku iPhone",
+            "prayerGroup": "ʻOku fakataha ʻaho ni hotau kulupu lotu, lotu maʻatautolu"
+        },
+        "floor": 3
+    },
+    "tr": {
+        "asks": {
+            "style": "ayet yazısının rengini sarı yap, arkadan görünmüyor",
+            "versions": "ekran 1'de ayetin önündeki ESV'yi kaldırabilir miyim?",
+            "lineSync": "iki mealın ayetlerini televizyonda satır satır eşitle",
+            "transition": "sıfır numaralı ekranda arka plan geçişi olarak solmayı koy",
+            "display": "ekran 1 hangi monitörde söyler misin, salondan göremiyorum",
+            "group": "ekran 1 ile 0 aynı grupta olsun",
+            "lock": "kimse dokunmasın diye ekran 0'ı kilitleyebilir misin?",
+            "stage": "ekran bir, sahne iki",
+            "select": "yalnız 1 numaralı ekran alsın, kalanların işaretini kaldır",
+            "clear": "arkadaki ekranı bomboş yap"
+        },
+        "others": {
+            "present": "projektörde Yuhanna 1:1'i oynat",
+            "countdown": "televizyonda 5 dakikalık sayaç başlat",
+            "howto": "slaytlar arası geçiş nasıl ayarlanır? arıyorum bulamıyorum",
+            "showHide": "projektör şu an açık mı ve bir şey gösteriyor mu?",
+            "song": "bu ilahinin sözleri büyük ekranda okunmuyor, büyüt",
+            "phone": "iPhone'umun ekranı kırıldı",
+            "prayerGroup": "dua grubumuz bugün toplanıyor, bizim için dua edin"
+        },
+        "floor": 8
+    },
+    "uk": {
+        "asks": {
+            "style": "зміни колір тексту вірша на жовтий, ззаду не видно",
+            "versions": "можна прибрати ESV перед віршем на екрані 1?",
+            "lineSync": "зроби щоб вірші двох перекладів ішли рядок у рядок на телевізорі",
+            "transition": "постав згасання як перехід фону на нульовому екрані",
+            "display": "скажи, на якому моніторі екран 1, із залу не бачу",
+            "group": "екран 1 і 0 в одну групу",
+            "lock": "можеш закрити екран 0, щоб ніхто не чіпав?",
+            "stage": "екран один, сцена два",
+            "select": "тільки екран №1 приймає, решту зняти",
+            "clear": "обнули все на задньому екрані"
+        },
+        "others": {
+            "present": "увімкни Івана 1:1 на проєкторі",
+            "countdown": "запусти таймер на 5 хвилин на телевізорі",
+            "howto": "як налаштувати перехід між слайдами? шукаю і не знаходжу",
+            "showHide": "проєктор зараз увімкнений і щось показує?",
+            "song": "слова цієї пісні не читаються на великому екрані, збільш",
+            "phone": "на моєму айфоні розбився дисплей",
+            "prayerGroup": "наша домашня група збирається сьогодні, помоліться за нас"
+        },
+        "floor": 9
+    },
+    "ur": {
+        "asks": {
+            "style": "آیت کے متن کا رنگ پیلا کر دیں، پیچھے سے نظر نہیں آتا",
+            "versions": "کیا سکرین 1 پر آیت کے آگے سے ESV ہٹا سکتا ہوں؟",
+            "lineSync": "ٹی وی پر دونوں ترجموں کی آیات سطر بہ سطر ہم آہنگ کریں",
+            "transition": "سکرین صفر پر پس منظر کی تبدیلی کے طور پر فیڈ لگائیں",
+            "display": "بتائیں سکرین 1 کس مانیٹر پر ہے، ہال سے نظر نہیں آتی",
+            "group": "سکرین 1 اور 0 ایک گروپ میں",
+            "lock": "کیا آپ سکرین 0 لاک کر سکتے ہیں تاکہ کوئی نہ چھیڑے؟",
+            "stage": "سکرین ایک، اسٹیج دو",
+            "select": "صرف سکرین نمبر 1 وصول کرے، باقی ہٹا دیں",
+            "clear": "پچھلی سکرین پر سب کچھ خالی کر دیں"
+        },
+        "others": {
+            "present": "پروجیکٹر پر یوحنا 1:1 چلائیں",
+            "countdown": "ٹی وی پر 5 منٹ کا ٹائمر شروع کریں",
+            "howto": "سلائیڈز کے درمیان تبدیلی کیسے سیٹ کرتے ہیں؟ ڈھونڈا نہیں ملا",
+            "showHide": "کیا پروجیکٹر ابھی چل رہا ہے اور کچھ دکھا رہا ہے؟",
+            "song": "اس گیت کے بول بڑی سکرین پر پڑھے نہیں جاتے، بڑے کریں",
+            "phone": "میرے آئی فون کی سکرین ٹوٹ گئی ہے",
+            "prayerGroup": "ہمارا دعائیہ گروپ آج جمع ہو رہا ہے، ہمارے لیے دعا کریں"
+        },
+        "floor": 9
+    },
+    "vi": {
+        "asks": {
+            "style": "đổi màu chữ câu Kinh Thánh sang vàng, ngồi cuối không thấy",
+            "versions": "mình xoá được ESV trước câu Kinh Thánh ở màn hình 1 không?",
+            "lineSync": "đồng bộ các câu của hai bản dịch trên tivi, từng dòng một",
+            "transition": "đặt mờ dần làm hiệu ứng chuyển nền ở màn hình số không",
+            "display": "cho mình biết màn hình 1 đang ở màn nào, ngồi dưới hội trường không thấy",
+            "group": "màn hình 1 với 0 vào chung một nhóm",
+            "lock": "khóa màn hình 0 giùm để không ai đụng vào được không?",
+            "stage": "màn hình một, sân khấu hai",
+            "select": "chỉ màn hình số 1 nhận thôi, mấy cái còn lại bỏ chọn",
+            "clear": "xoá sạch mọi thứ ở màn hình phía sau"
+        },
+        "others": {
+            "present": "mở Giăng 1:1 trên máy chiếu",
+            "countdown": "bật đồng hồ hẹn giờ 5 phút trên tivi",
+            "howto": "cài hiệu ứng chuyển giữa các slide kiểu gì vậy? mình tìm hoài không ra",
+            "showHide": "máy chiếu đang bật và có chiếu gì không?",
+            "song": "lời bài hát này không đọc được trên màn hình lớn, phóng to lên",
+            "phone": "màn hình iPhone của mình bị vỡ rồi",
+            "prayerGroup": "nhóm cầu nguyện của mình họp hôm nay, mọi người cầu nguyện cho nhé"
+        },
+        "floor": 9
+    },
+    "xh": {
+        "asks": {
+            "style": "tshintsha umbala wombhalo wevesi ube mthubi, ukusuka ngasemva akubonakali",
+            "versions": "ndingayisusa i-ESV phambi kwevesi kwiskrini 1?",
+            "lineSync": "vumelanisa iivesi zeenguqulelo zombini kwi-TV, umgca ngomgca",
+            "transition": "beka i-fade njengendlela yokutshintsha kwengemva kwiskrini zero",
+            "display": "ndixelele iskrini 1 sikwimonitha ephi, andisiboni ndisehalleni",
+            "group": "iskrini 1 no-0 kwiqela elinye",
+            "lock": "ungasivala iskrini 0 ukuze kungabikho uthinta?",
+            "stage": "iskrini sinye, isiteji sibini",
+            "select": "iskrini inombolo 1 kuphela makifumane, ezinye zisuse",
+            "clear": "cima yonke into kwiskrini esingasemva"
+        },
+        "others": {
+            "present": "dlala uYohane 1:1 kwiprojekta",
+            "countdown": "qala iwotshi yemizuzu emi-5 kwi-TV",
+            "howto": "ukutshintsha phakathi kwezilayidi kuseta njani? ndiyakukhangela andikufumani",
+            "showHide": "iprojekta ivuliwe ngoku ibonisa into?",
+            "song": "amagama alengoma awafundeki kwiskrini esikhulu, ukhulise",
+            "phone": "iskrini se-iPhone yam siqhekekile",
+            "prayerGroup": "iqela lethu lemithandazo liyadibana namhlanje, sithandazeleni"
+        },
+        "floor": 9
+    },
+    "yo": {
+        "asks": {
+            "style": "yí àwọ̀ ọ̀rọ̀ ẹsẹ padà sí àwọ̀ ofeefee, a kò rí i láti ẹ̀yìn",
+            "versions": "ṣé mo lè yọ ESV kúrò níwájú ẹsẹ lórí ìpìlẹ̀ 1?",
+            "lineSync": "mú àwọn ẹsẹ ìtúmọ̀ méjèèjì bára mu lórí tẹlifíṣọ̀n, ìlà dé ìlà",
+            "transition": "fi fade ṣe ìyípadà ẹ̀yìn lórí ìpìlẹ̀ òdo",
+            "display": "sọ fún mi orí mọ́ní tọ̀ wo ni ìpìlẹ̀ 1 wà, mi ò rí i láti inú gbọ̀ngàn",
+            "group": "ìpìlẹ̀ 1 àti 0 sínú àwùjọ kan",
+            "lock": "ṣé o lè tì ìpìlẹ̀ 0 kí ẹnikẹ́ni má baà fọwọ́ kàn án?",
+            "stage": "ìpìlẹ̀ kìíní, ìpele kejì",
+            "select": "ìpìlẹ̀ nọ́mbà 1 nìkan ló gbà, yọ àwọn yòókù",
+            "clear": "pa ohun gbogbo rẹ́ lórí ìpìlẹ̀ ẹ̀yìn"
+        },
+        "others": {
+            "present": "ṣe Jòhánù 1:1 lórí pírójẹ́kítọ̀",
+            "countdown": "bẹ̀rẹ̀ aago ìṣẹ́jú márùn-ún lórí tẹlifíṣọ̀n",
+            "howto": "báwo ni a ṣe ń ṣètò ìyípadà láàrín àwọn àwòrán? mo ti wá ṣùgbọ́n mi ò rí",
+            "showHide": "ṣé pírójẹ́kítọ̀ ti tan báyìí tó sì ń fi nǹkan hàn?",
+            "song": "a kò lè ka ọ̀rọ̀ orin yìí lórí ìpìlẹ̀ ńlá, mú un tóbi",
+            "phone": "ojú iPhone mi ti fọ́",
+            "prayerGroup": "àwùjọ àdúrà wa péjọ lónìí, ẹ gbàdúrà fún wa"
+        },
+        "floor": 3
+    },
+    "zh": {
+        "asks": {
+            "style": "把经文的字体颜色改成黄色，后排看不清",
+            "versions": "我能把屏幕1上经文前面的ESV删掉吗？",
+            "lineSync": "电视上两个译本的经文逐行同步一下",
+            "transition": "屏幕0的背景切换用淡出",
+            "display": "告诉我屏幕1在哪个显示器上，我在台下看不到",
+            "group": "屏幕1和0编一组",
+            "lock": "能把屏幕0锁上吗，免得有人乱碰",
+            "stage": "屏幕一，舞台二",
+            "select": "只有1号屏幕接收，其余的取消勾选",
+            "clear": "把后面那块屏幕清空"
+        },
+        "others": {
+            "present": "在投影仪上放约翰福音1:1",
+            "countdown": "在电视上开一个5分钟的计时器",
+            "howto": "幻灯片之间的转场怎么设置？我找半天没找到",
+            "showHide": "投影仪现在开着吗，有在放东西吗？",
+            "song": "这首诗歌的歌词在大屏幕上看不清，放大",
+            "phone": "我的苹果手机屏幕碎了",
+            "prayerGroup": "我们的祷告小组今天聚会，请为我们祷告"
+        },
+        "floor": 10
+    },
+    "zh-Hant": {
+        "asks": {
+            "style": "把經文的字體顏色改成黃色，後排看不清",
+            "versions": "我能把螢幕1上經文前面的ESV刪掉嗎？",
+            "lineSync": "電視上兩個譯本的經文逐行同步一下",
+            "transition": "螢幕0的背景切換用淡出",
+            "display": "告訴我螢幕1在哪個顯示器上，我在台下看不到",
+            "group": "螢幕1和0編一組",
+            "lock": "能把螢幕0鎖上嗎，免得有人亂碰",
+            "stage": "螢幕一，舞台二",
+            "select": "只有1號螢幕接收，其餘的取消勾選",
+            "clear": "把後面那塊螢幕清空"
+        },
+        "others": {
+            "present": "在投影機上放約翰福音1:1",
+            "countdown": "在電視上開一個5分鐘的計時器",
+            "howto": "投影片之間的轉場怎麼設定？我找半天沒找到",
+            "showHide": "投影機現在開著嗎，有在放東西嗎？",
+            "song": "這首詩歌的歌詞在大螢幕上看不清，放大",
+            "phone": "我的蘋果手機螢幕碎了",
+            "prayerGroup": "我們的禱告小組今天聚會，請為我們禱告"
+        },
+        "floor": 10
+    },
+    "zu": {
+        "asks": {
+            "style": "shintsha umbala wombhalo wevesi ube mshubhisa, ngemuva akubonakali",
+            "versions": "ngingayisusa i-ESV phambi kwevesi esikrinini 1?",
+            "lineSync": "vumelanisa amavesi ezinguqulo zombili ku-TV, umugqa ngomugqa",
+            "transition": "setha i-fade njengokushintsha kwengemuva esikrinini zero",
+            "display": "ngitshele isikrini 1 simonithani ephi, angisiboni ngisehholo",
+            "group": "isikrini 1 no-0 eqenjini linye",
+            "lock": "ungasivala isikrini 0 ukuze kungabikho othinta?",
+            "stage": "isikrini sinye, inkundla yesibili",
+            "select": "isikrini inombolo 1 kuphela sithole, ezinye zisuse",
+            "clear": "cima konke esikrinini sangemuva"
+        },
+        "others": {
+            "present": "dlala uJohane 1:1 kuprojektha",
+            "countdown": "qala isibali semizuzu emi-5 ku-TV",
+            "howto": "ukushintsha phakathi kwamaslayidi kusethwa kanjani? ngiyakufuna angikuthole",
+            "showHide": "iprojektha ivuliwe manje iyabonisa okuthile?",
+            "song": "amagama alengoma awafundeki esikrinini esikhulu, yikhulise",
+            "phone": "isikrini se-iPhone yami siqhekekile",
+            "prayerGroup": "iqembu lethu lomthandazo liyahlangana namuhla, sithandazeleni"
+        },
+        "floor": 9
+    }
+}

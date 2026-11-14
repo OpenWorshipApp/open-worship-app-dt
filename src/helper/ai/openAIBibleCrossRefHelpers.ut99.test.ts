@@ -146,8 +146,7 @@ describe('the OpenAI cross-reference request', () => {
         );
         expect(h.showSimpleToast).toHaveBeenCalledWith(
             'Cross References',
-            'Failed to get cross references. Please check your OpenAI API ' +
-                'Key and network connection.',
+            'Check your OpenAI API key and the internet connection.',
         );
         expect(h.handleError).toHaveBeenCalledWith(expect.any(SyntaxError));
     });

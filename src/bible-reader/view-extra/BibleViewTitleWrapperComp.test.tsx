@@ -32,7 +32,7 @@ vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
 
 import BibleViewTitleWrapperComp from './BibleViewTitleWrapperComp';
 
-const BIBLE_ITEM = { id: 2, bibleKey: 'KHM' } as any;
+const BIBLE_ITEM = { id: 2, bibleKey: 'TQAM' } as any;
 
 let host: HTMLDivElement;
 let root: Root;
@@ -54,7 +54,7 @@ afterEach(() => {
 
 async function render(bibleItem?: any, wrap = true) {
     const title = (
-        <BibleViewTitleWrapperComp bibleKey="KHM" bibleItem={bibleItem}>
+        <BibleViewTitleWrapperComp bibleKey="TQAM" bibleItem={bibleItem}>
             <b>John 3:16</b>
         </BibleViewTitleWrapperComp>
     );
@@ -83,7 +83,7 @@ describe('BibleViewTitleWrapperComp', () => {
         const title = await render(BIBLE_ITEM);
         expect(title.textContent).toBe('John 3:16');
         expect(title.style.fontSize).toBe('24px');
-        expect(title.style.fontFamily).toBe('KHM Font');
+        expect(title.style.fontFamily).toBe('TQAM Font');
         expect(title.draggable).toBe(true);
     });
 

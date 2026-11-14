@@ -166,7 +166,7 @@ describe('font measurement and loading', () => {
 const BOX_RIGHT_PADDING = 8;
 
 /**
- * Code points times an advance per pixel of font size: crude, and Khmer
+ * Code points times an advance per pixel of font size: crude, and every script
  * deliberately as wide as Latin, but the SAME numbers decide the cut and
  * check it, which is all this needs.
  */
@@ -228,7 +228,7 @@ describe('saveGraphImage', () => {
     ]
         .map(([name, weight]) => {
             return (
-                '@font-face { font-family: app-Battambang;' +
+                '@font-face { font-family: app-Xx-Face;' +
                 ` src: url("https://fonts.test/${name}.ttf")` +
                 ` format("truetype"); font-weight: ${weight}; }`
             );
@@ -283,16 +283,16 @@ describe('saveGraphImage', () => {
     });
 
     // Drawn through an <img>, the SVG cannot reach this window's fonts: the
-    // Khmer fell back to a system face and no longer fit the cut made for
-    // Battambang.
+    // text fell back to a system face and no longer fit the cut made for
+    // the language's own font.
     test('carries the export font inside the picture', async () => {
         addFontStyle();
         const fetchMock = stubPicture();
         const svg = buildGraphSvg({
             ...genOptions('David'),
-            fontFamily: 'app-Battambang',
+            fontFamily: 'app-Xx-Face',
         });
-        await saveGraphImage(svg, 'app-Battambang');
+        await saveGraphImage(svg, 'app-Xx-Face');
 
         // The nearest face to each weight drawn: 400 and 600 (bold).
         expect(fetchMock.mock.calls.map(([url]) => url).sort()).toEqual([
@@ -301,11 +301,11 @@ describe('saveGraphImage', () => {
         ]);
         const drawnSvg = readDrawnSvg();
         expect(drawnSvg).toContain(
-            '<style>@font-face{font-family:"app-Battambang";src:url("data:',
+            '<style>@font-face{font-family:"app-Xx-Face";src:url("data:',
         );
         expect(drawnSvg).toContain('font-weight:normal;}');
         expect(drawnSvg).toContain('font-weight:bold;}');
-        expect(drawnSvg).toContain('text{font-family:app-Battambang;}');
+        expect(drawnSvg).toContain('text{font-family:app-Xx-Face;}');
         expect(h.handleErrorMock).not.toHaveBeenCalled();
     });
 
@@ -323,9 +323,9 @@ describe('saveGraphImage', () => {
         stubPicture(600 * 1024);
         const svg = buildGraphSvg({
             ...genOptions('David'),
-            fontFamily: 'app-Battambang',
+            fontFamily: 'app-Xx-Face',
         });
-        await saveGraphImage(svg, 'app-Battambang');
+        await saveGraphImage(svg, 'app-Xx-Face');
         expect(h.handleErrorMock).toHaveBeenCalledTimes(1);
         expect(readDrawnSvg()).toBe(svg);
     });
@@ -429,9 +429,9 @@ describe('saveGraphImage', () => {
         );
         const svg = buildGraphSvg({
             ...genOptions('David'),
-            fontFamily: 'app-Battambang',
+            fontFamily: 'app-Xx-Face',
         });
-        await saveGraphImage(svg, 'app-Battambang');
+        await saveGraphImage(svg, 'app-Xx-Face');
         expect(h.handleErrorMock).toHaveBeenCalledWith(
             expect.objectContaining({ message: 'Failed to read font' }),
         );
@@ -461,9 +461,9 @@ describe('saveGraphImage', () => {
         try {
             const svg = buildGraphSvg({
                 ...genOptions('David'),
-                fontFamily: 'app-Battambang',
+                fontFamily: 'app-Xx-Face',
             });
-            await saveGraphImage(svg, 'app-Battambang');
+            await saveGraphImage(svg, 'app-Xx-Face');
         } finally {
             delete (document as any).styleSheets;
             otherStyle.remove();

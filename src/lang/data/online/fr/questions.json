@@ -1,6 +1,6 @@
 {
     "lang": "fr",
-    "updated": "2026-11-08",
+    "updated": "2026-11-14",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -157,6 +157,10 @@
         "screen.screen-mirror": {
             "en": "Screen Mirror",
             "text": "Écran miroir (Screen Mirror)"
+        },
+        "screen-mirror.connect": {
+            "en": "Connecting to a host",
+            "text": "Se connecter à un hôte"
         },
         "screen.virtual-displays": {
             "en": "Virtual displays",
@@ -431,6 +435,14 @@
         "common.help.copy-answer": {
             "en": "How do I copy an answer?",
             "text": "Comment copier une réponse ?"
+        },
+        "common.help.reply-to-answer": {
+            "en": "How do I ask a follow-up about one answer?",
+            "text": "Comment poser une question de suite sur une réponse ?"
+        },
+        "common.help.retry-answer": {
+            "en": "How do I get a different answer to the same question?",
+            "text": "Comment obtenir une autre réponse à la même question ?"
         },
         "common.help.answer-was-wrong": {
             "en": "What can I do when an answer is wrong?",
@@ -728,6 +740,10 @@
             "en": "How do I make a new song?",
             "text": "Comment créer un nouveau chant ?"
         },
+        "presenter.making.song-from-powerpoint": {
+            "en": "Can you turn a PowerPoint song into a lyric file?",
+            "text": "Pouvez-vous transformer un chant PowerPoint en fichier de paroles ?"
+        },
         "presenter.making.song-from-text": {
             "en": "Can you make a song from words I paste in?",
             "text": "Pouvez-vous créer un chant à partir de paroles que je colle ?"
@@ -836,6 +852,10 @@
             "en": "How do I open the Note panel under the slides?",
             "text": "Comment ouvrir le panneau Note sous les diapositives ?"
         },
+        "presenter.documents.song-notes": {
+            "en": "Where do I see the Note I wrote in a song?",
+            "text": "Où voir la note que j'ai écrite dans un chant ?"
+        },
         "presenter.documents.trash-document": {
             "en": "How do I delete a song or document?",
             "text": "Comment supprimer un chant ou un document ?"
@@ -864,6 +884,10 @@
             "en": "Can the assistant translate or change my song?",
             "text": "L'assistant peut-il traduire ou modifier mon chant ?"
         },
+        "presenter.lyrics.song-from-document": {
+            "en": "How do I make a song from a PowerPoint file?",
+            "text": "Comment faire un chant à partir d'un fichier PowerPoint ?"
+        },
         "presenter.lyrics.find-song": {
             "en": "Where are my songs?",
             "text": "Où sont mes chants ?"
@@ -875,6 +899,10 @@
         "presenter.lyrics.song-look": {
             "en": "How do I change how the song looks on screen?",
             "text": "Comment changer l'apparence du chant à l'écran ?"
+        },
+        "presenter.lyrics.song-font": {
+            "en": "How do I give one song its own font?",
+            "text": "Comment donner à un chant sa propre police ?"
         },
         "presenter.lyrics.song-add-stage": {
             "en": "How do I add another stage to the Stage Previewer?",
@@ -975,6 +1003,14 @@
         "presenter.bible.verse-font": {
             "en": "How do I change the font of the Bible text on the screen?",
             "text": "Comment changer la police du texte biblique à l'écran ?"
+        },
+        "presenter.bible.screen-change-with-assistant": {
+            "en": "Can the assistant change the Bible text or a transition on the screens for me?",
+            "text": "L'assistant peut-il modifier le texte biblique ou un effet de transition sur les écrans pour moi ?"
+        },
+        "presenter.bible.add-screen-with-assistant": {
+            "en": "Can the assistant add a new screen for me?",
+            "text": "L'assistant peut-il ajouter un nouvel écran pour moi ?"
         },
         "presenter.bible.bible-list": {
             "en": "How do I save a verse to a list for later?",
@@ -1103,6 +1139,14 @@
         "presenter.foreground.clear-foreground": {
             "en": "How do I clear the countdown or the message off the screen?",
             "text": "Comment retirer le compte à rebours ou le message de l'écran ?"
+        },
+        "presenter.foreground.foreground-change-with-assistant": {
+            "en": "Can the assistant change a countdown or a marquee for me?",
+            "text": "L'assistant peut-il modifier un compte à rebours ou un bandeau défilant pour moi ?"
+        },
+        "presenter.foreground.foreground-attach-session": {
+            "en": "How do I give the assistant a foreground session to work on?",
+            "text": "Comment confier une session de premier plan à l'assistant pour qu'il s'en occupe ?"
         },
         "presenter.foreground.foreground-two-overlays": {
             "en": "Can I show two pictures over the slide at the same time?",
@@ -1500,6 +1544,10 @@
             "en": "How do I share a page of Bible notes with another machine?",
             "text": "Comment partager une page de notes bibliques avec un autre ordinateur ?"
         },
+        "reader.notes.notes-markdown-file": {
+            "en": "How do I make a Markdown file in Bible Notes?",
+            "text": "Comment créer un fichier Markdown dans les Notes bibliques ?"
+        },
         "reader.notes.bible-list-add": {
             "en": "How do I add a verse to a Bible list?",
             "text": "Comment ajouter un verset à une liste biblique ?"
@@ -1603,6 +1651,10 @@
         "reader.resources.resources-open": {
             "en": "How do I open one of my Resources files?",
             "text": "Comment ouvrir l'un de mes fichiers de Ressources ?"
+        },
+        "reader.resources.resources-edit-markdown": {
+            "en": "How do I change a markdown file from Resources?",
+            "text": "Comment modifier un fichier Markdown de Ressources ?"
         },
         "reader.resources.resources-ask-assistant": {
             "en": "How do I ask the assistant about a study file for the verses I am reading?",
@@ -1784,17 +1836,25 @@
             "en": "How do I send the host address to the guest computer?",
             "text": "Comment envoyer l'adresse de l'hôte à l'ordinateur invité ?"
         },
-        "screen.screen-mirror.fill-address-from-qr-or-paste": {
-            "en": "How do I fill in the host address from a QR code or a copied link?",
-            "text": "Comment remplir l'adresse de l'hôte à partir d'un code QR ou d'un lien copié ?"
-        },
-        "screen.screen-mirror.connect-several-hosts": {
-            "en": "Can this computer show screens from more than one host?",
-            "text": "Cet ordinateur peut-il afficher les écrans de plusieurs hôtes ?"
-        },
         "screen.screen-mirror.guest-from-internet-or-local": {
             "en": "How can I tell which guests are connected from the internet?",
             "text": "Comment savoir quels invités sont connectés par Internet ?"
+        },
+        "screen-mirror.connect.connect-to-host": {
+            "en": "How do I connect this computer to a host?",
+            "text": "Comment connecter cet ordinateur à un hôte ?"
+        },
+        "screen-mirror.connect.no-host-found": {
+            "en": "No host is listed. What do I check?",
+            "text": "Aucun hôte n'apparaît dans la liste. Que dois-je vérifier ?"
+        },
+        "screen-mirror.connect.fill-address-from-qr-or-paste": {
+            "en": "How do I fill in the host address from a QR code or a copied link?",
+            "text": "Comment remplir l'adresse de l'hôte à partir d'un code QR ou d'un lien copié ?"
+        },
+        "screen-mirror.connect.connect-several-hosts": {
+            "en": "Can this computer show screens from more than one host?",
+            "text": "Cet ordinateur peut-il afficher les écrans de plusieurs hôtes ?"
         },
         "screen.virtual-displays.make-virtual-display": {
             "en": "How do I make a virtual display?",
@@ -2024,6 +2084,10 @@
             "en": "How do I install the Extra Binaries on a computer with no internet?",
             "text": "Comment installer les Binaires supplémentaires sur un ordinateur sans Internet ?"
         },
+        "settings.others.extra-binaries-mcp": {
+            "en": "How do I connect my own AI agent to the app?",
+            "text": "Comment connecter mon propre agent d'IA à l'application ?"
+        },
         "troubleshooting.screen.nothing-showing": {
             "en": "Nothing is showing on the projector — what do I check?",
             "text": "Rien ne s'affiche sur le projecteur : que dois-je vérifier ?"
@@ -2172,6 +2236,10 @@
             "en": "Save John 3:16 to my Bibles list",
             "text": "Enregistre John 3:16 dans ma liste de Bibles"
         },
+        "common.changes.make-new-for-me": {
+            "en": "Can you make a new running order, slide document, Bible list or background for me?",
+            "text": "Peux-tu me créer un nouveau déroulé, un document de diapositives, une liste de Bibles ou un arrière-plan ?"
+        },
         "common.changes.write-a-note": {
             "en": "Write a Bible note about ...",
             "text": "Écris une note biblique sur ..."
@@ -2197,12 +2265,12 @@
             "text": "Mets John 3:16 à l’écran"
         },
         "settings.bible-settings.import-xml-url": {
-            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
-            "text": "Importer une Bible depuis l’adresse xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
+            "text": "Importer une Bible depuis l’adresse xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml"
         },
         "settings.bible-settings.import-bible-language": {
-            "en": "Import a Bible in \"Khmer\"",
-            "text": "Importer une Bible en \"French\""
+            "en": "Import a Bible in \"your language\"",
+            "text": "Importer une Bible dans \"votre langue\""
         }
     }
 }

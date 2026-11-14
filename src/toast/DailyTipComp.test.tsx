@@ -72,6 +72,15 @@ async function sendMenu(data: object) {
         for (const listener of state.listeners) listener({}, data);
     });
 }
+// The hide is a BUTTON. Its words are not looked for in the whole card: the
+// tip is picked at random, and one tip's own detail says "Hide for 30 days
+// rests the daily tip" -- the card's text held the words with no button
+// (2026-11-11, a red gate).
+function findHideButton() {
+    return [...container.querySelectorAll('button')].find(
+        (element) => element.textContent === 'Hide for 30 days',
+    );
+}
 
 describe('tips in each window', () => {
     beforeEach(() => {
@@ -143,19 +152,19 @@ describe('tips in each window', () => {
         expect(container.textContent).toContain('Tip of the Day');
         // Asked for from Help, the card does not offer to put the automatic
         // tips away -- not on the tip, nor after Next tip or All tips.
-        expect(container.textContent).not.toContain('Hide for 30 days');
+        expect(findHideButton()).toBeUndefined();
         const nextButton = [...container.querySelectorAll('button')].find(
             (element) => element.textContent === 'Next tip',
         )!;
         await act(async () => nextButton.click());
-        expect(container.textContent).not.toContain('Hide for 30 days');
+        expect(findHideButton()).toBeUndefined();
         await sendMenu({ isBrowseDailyTips: true });
         const backButton = [...container.querySelectorAll('button')].find(
             (element) => element.textContent === 'Back to tip',
         )!;
         await act(async () => backButton.click());
         expect(container.textContent).toContain('Tip of the Day');
-        expect(container.textContent).not.toContain('Hide for 30 days');
+        expect(findHideButton()).toBeUndefined();
         // Closed, the next automatic card offers it again.
         await act(async () =>
             container
@@ -170,7 +179,7 @@ describe('tips in each window', () => {
         await act(async () =>
             vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
         );
-        expect(container.textContent).toContain('Hide for 30 days');
+        expect(findHideButton()).toBeDefined();
         await act(async () => root.unmount());
         expect(state.menu).toHaveBeenLastCalledWith('daily-tips', null);
         root = createRoot(container);
@@ -237,7 +246,7 @@ describe('tips in each window', () => {
         // Help is never hidden, and asking there does not end the 30 days.
         await sendMenu({ isOpenDailyTip: true });
         expect(container.textContent).toContain('Tip of the Day · Setting');
-        expect(container.textContent).not.toContain('Hide for 30 days');
+        expect(findHideButton()).toBeUndefined();
         await launch();
         expect(container.textContent).toBe('');
 

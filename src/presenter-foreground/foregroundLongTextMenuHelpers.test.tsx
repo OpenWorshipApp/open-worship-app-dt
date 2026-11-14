@@ -69,7 +69,7 @@ vi.mock('../server/fileHelpers', () => ({
     },
 }));
 vi.mock('./foregroundLongTextLangHelpers', () => ({
-    getLongTextLangCodes: () => ['en', 'km', 'fr', 'de'],
+    getLongTextLangCodes: () => ['en', 'xx', 'yy', 'de'],
     toLongTextLanguageLabel: (langCode: string) => {
         return `${langCode.toUpperCase()} - name`;
     },
@@ -127,7 +127,7 @@ function pick(label: string) {
 describe('choosing a language for a card', () => {
     test('offers only the languages the session does not have yet', async () => {
         const event = { clientX: 3, clientY: 4 };
-        const answer = chooseLongTextLangCode(event, ['en', 'fr']);
+        const answer = chooseLongTextLangCode(event, ['en', 'yy']);
         await flush();
         expect(mocks.menu).toHaveBeenCalledTimes(1);
         expect(mocks.menu.mock.calls[0][0]).toBe(event);
@@ -138,7 +138,7 @@ describe('choosing a language for a card', () => {
             state.menuItems.map((item) => {
                 return item.menuElement;
             }),
-        ).toEqual(['KM - name', 'DE - name']);
+        ).toEqual(['XX - name', 'DE - name']);
         pick('DE - name');
         // The menu closing after the pick changes nothing.
         state.closeMenu!();

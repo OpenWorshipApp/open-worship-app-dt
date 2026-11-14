@@ -71,7 +71,8 @@ export function createScreenManager(screenId: number) {
     return cache.get(key) as ScreenManager;
 }
 
-export function genNewScreenManagerBase() {
+/** The id the next screen added gets: the lowest no screen has. */
+export function findFreeScreenId() {
     const screenManagers = getAllScreenManagers();
     const screenIds = new Set(
         screenManagers.map((screenManagerBase) => {
@@ -82,8 +83,24 @@ export function genNewScreenManagerBase() {
     while (screenIds.has(newScreenId)) {
         newScreenId++;
     }
-    createScreenManager(newScreenId);
+    return newScreenId;
+}
+
+/**
+ * A screen made with this id, and the Mini Screen panel told: Add New
+ * Screen's own, and an undo putting back a screen it took away.
+ */
+export function addScreenManager(screenId: number) {
+    const screenManager = createScreenManager(screenId);
     ScreenManagerBase.fireInstanceEvent();
+    return screenManager;
+}
+
+/** The Mini Screen menu's Add New Screen: the new screen's id. */
+export function genNewScreenManagerBase() {
+    const newScreenId = findFreeScreenId();
+    addScreenManager(newScreenId);
+    return newScreenId;
 }
 
 // Layers that persist their content per screen, and can therefore come back

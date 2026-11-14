@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: b50c561c-e7e6-4085-ac04-fe3c4e617f19
-  modified: 2026-11-05T22:23:04.060Z
+  modified: 2026-11-12T03:44:54.816Z
 ---
 
 Decided 2026-11-04 by the user, in their words: _Khmer and French are modular,
@@ -31,12 +31,13 @@ datasets are tens of MB nobody else needs on a weak church machine.
 - Every language but English lives in `src/lang/data/online/<code>/`
   (rule `language-packages.md`) as a folder of DATA made by one factory
   (`online/onlineLangPackage.ts`, layout in `online/README.md`; Khmer and
-  French are the templates, 2026-11-05); `npm run lang:pack [-- --pack=<codes>]` (=
+  French were the templates 2026-11-05 to 2026-11-09, when the user had every
+  language but English treated the same and none is a template); `npm run lang:pack [-- --pack=<codes>]` (=
   `node extra-work/build-lang-plugins.mjs --pack`, cached in
   `node_modules/.cache/owa-lang`) builds each into a plugin and
   packs it for the catalog. NOTHING ships: `electron:build` no longer runs
-  it, so a dev app starts English-only and a Khmer check starts with
-  `npm run lang:pack -- --pack=km` and Settings > Languages > Install. A
+  it, so a dev app starts English-only and a non-English check starts with
+  `npm run lang:pack -- --pack=<code>` and Settings > Languages > Install. A
   language whose source changed is packed again and updated (Refresh >
   Update to) before any live check ([[language-data-change-bumps-version]]). There are 87
   (Hebrew and 47 more since 2026-11-04 at the user's _add all well-known
@@ -94,11 +95,16 @@ datasets are tens of MB nobody else needs on a weak church machine.
   packages (every `data/online/*/` with a `dictionary.json`, assembled by
   `loadSourceLangData` through the same factory). A test that reads `getSupportedLangCodes()` synchronously must
   `await ensureLangPlugins()` first.
-- Dev catalog: `npm run lang:pack [-- --pack=km,fr --bump=he]`
+- Dev catalog: `npm run lang:pack [-- --pack=<code>,<code> --bump=<code>]`
   writes `extra-work/lang/info.json` + packs (gitignored; named languages
   alone when any are named); publishing is
   `npm run release:lang` (`extra-work/s3-push-lang.js`, cumulative catalog at
-  `<homepage>/lang/info.json`) — outward-facing, ask first.
+  `<homepage>/lang/info.json`) — outward-facing, ask first. It reads its
+  credentials from `extra-work/.env` itself (the file `release.sh` sources;
+  until 2026-11-11 it read only the `RELEASE_AWS_*` names `release.sh`
+  exports, so a bare run packed all 87 and died on "Region is missing"),
+  checks them and reads the published catalog BEFORE packing, and skips any
+  version already published. First published 2026-11-11: 87 languages.
 - A language travels as a FILE too (2026-11-04): a catalog row's **Download**
   saves its checked pack to Downloads, **Import** on Installed Languages
   installs one from disk; a file no catalog entry's checksum matches is asked

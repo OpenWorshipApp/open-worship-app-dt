@@ -203,6 +203,10 @@ import { resetSpendGuardForTests } from './spendGuardHelpers';
 import { BIBLE_KJV_MODEL_REFUSAL } from './bibleImportChatHelpers';
 import { BIBLE_READER_SYSTEM_PROMPT } from './bibleReaderChatHelpers';
 import {
+    genForegroundBlankRefusal,
+    genForegroundEchoQuestion,
+} from './foregroundChatHelpers';
+import {
     LYRIC_COPY_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
     takeDraftedLyric,
@@ -219,6 +223,8 @@ import {
     GENERAL_ASK_LABEL,
     GENERAL_ASK_TOOL_NAME,
     RECORD_TURN_ACK,
+    RUNNING_ORDER_SCREEN_REFUSAL,
+    BIBLE_LIST_SCREEN_REFUSAL,
     WORDLESS_ANSWER_NUDGE,
     addQuoteSource,
     applyToolWatch,
@@ -439,7 +445,7 @@ describe('model lists and labels', () => {
                         model: 'gemma4:31b',
                         name: 'Gemma 4 31B',
                         canSeeImages: true,
-                        note: { en: 'best for Khmer' },
+                        note: { en: 'best for long answers' },
                     },
                 ],
             },
@@ -459,7 +465,7 @@ describe('model lists and labels', () => {
             id: 'registry-box/gemma',
             label: 'Gemma 4 31B',
             note: 'Shared Box, shared by openworship.app · free · can see pictures',
-            notice: 'slow, but it saves us the cost of usage best for Khmer',
+            notice: 'slow, but it saves us the cost of usage best for long answers',
             wireId: 'gemma4:31b',
         });
         expect(paidRow).toMatchObject({
@@ -471,10 +477,10 @@ describe('model lists and labels', () => {
         expect(genLlmModelTitle(freeRow)).toBe(
             'gemma4:31b\n' +
                 'Shared Box, shared by openworship.app · free · can see pictures\n' +
-                'slow, but it saves us the cost of usage best for Khmer',
+                'slow, but it saves us the cost of usage best for long answers',
         );
         expect(getLlmModelNotice('custom', 'registry-box/gemma')).toBe(
-            'slow, but it saves us the cost of usage best for Khmer',
+            'slow, but it saves us the cost of usage best for long answers',
         );
         expect(getLlmModelNotice('custom', 'registry-paid/qwen')).toBe('');
         expect(getLlmModelNotice('custom', 'registry-gone/none')).toBe('');
@@ -824,8 +830,8 @@ describe('the walkthrough rescue, the remaining shapes', () => {
     test('a run with no spaces is never cut inside a letter', () => {
         // 'a' then 'a' + a combining acute over and over: the cut at 240
         // falls before the mark, which belongs to the letter in front of it.
-        // (Any script's marks are read alike, `\p{M}`; a Khmer run is in the
-        // Khmer package's own tests.)
+        // (Any script's marks are read alike, `\p{M}`; a run in a
+        // language's own script is in that language's package tests.)
         const said = toGuideRescueAnswer(`a${'á'.repeat(150)}`);
 
         expect(said).toBe(`a${'á'.repeat(119)}…`);
@@ -981,6 +987,94 @@ describe('the Anthropic loop', () => {
         );
     });
 
+    // 2026-11-13, EC-572: the time asked for in Spanish, Indonesian and
+    // Russian, no clock or screen named, was answered with the panel's
+    // steps; only a question asks how.
+    test('a foreground command in any language asks it started', async () => {
+        const { calls } = useAnthropic(genAnthropicText('The clock is up.'));
+
+        await askLlmBot(
+            'Show the time',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const prompt = calls[0].request.system[0].text.replace(/\s+/g, ' ');
+        expect(prompt).toContain(
+            'A command in ANY language -- "show the time", "put the clock ' +
+                'up", said in their own words, no screen named -- asks for ' +
+                'it to START. Only a question -- how do I, where is, can I ' +
+                'learn -- asks HOW: then answer from the manual and offer.',
+        );
+    });
+
+    // 2026-11-14, EC-644: "the sermon lasted 40 minutes", typed in Hausa
+    // and in Kinyarwanda, started a 40:00 countdown on Auto, and five
+    // other such lines were answered with the offer of one.
+    // 2026-11-14, EC-645: "show on the projector: …" and its like, asked
+    // the general way, went up as a quick text twice -- gone by itself
+    // after its seconds -- and as a scrolling marquee once, of six.
+    test('a notice asked for goes up as a message', async () => {
+        const { calls } = useAnthropic(genAnthropicText('Done.'));
+
+        await askLlmBot(
+            'show on the projector: the car park is full',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const prompt = calls[0].request.system[0].text.replace(/\s+/g, ' ');
+        expect(prompt).toContain(
+            'A notice to stay up -- a welcome, "show on the projector: the ' +
+                'car park is full", "put this announcement up: …" -- is ' +
+                '`widget: "message"`, up until it is taken off: a quick ' +
+                'text goes off by itself after some seconds and a marquee ' +
+                'scrolls, so those only when they ask for one.',
+        );
+    });
+
+    // 2026-11-14, EC-646: a clock counting up from zero, asked for in
+    // Hausa, Korean and Kinyarwanda the general way, was answered with the
+    // Countdown or the clock panel's steps, and nothing was started.
+    test('a clock that counts up is the stopwatch', async () => {
+        const { calls } = useAnthropic(genAnthropicText('Done.'));
+
+        await askLlmBot(
+            'start counting the time from 0 on the screen',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const prompt = calls[0].request.system[0].text.replace(/\s+/g, ' ');
+        expect(prompt).toContain(
+            'A clock or a timer that counts UP -- from zero, the time since ' +
+                'the sermon started, how long it has run -- is `widget: ' +
+                '"stopwatch"`, started like the others; one that counts ' +
+                'DOWN is the countdown.',
+        );
+    });
+
+    test('a line that only tells something asks for no timer', async () => {
+        const { calls } = useAnthropic(genAnthropicText('Thank you.'));
+
+        await askLlmBot(
+            'the sermon lasted 40 minutes',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const prompt = calls[0].request.system[0].text.replace(/\s+/g, ' ');
+        expect(prompt).toContain(
+            'A line that only TELLS you something -- the sermon took 40 ' +
+                'minutes, the service started late -- asks for nothing: ' +
+                'answer it, put nothing up and offer no timer.',
+        );
+    });
+
     test('a refused call is answered for the model, and one removal is all', async () => {
         fake.toolResultMap = {
             owa_bible_item: '{"deleted":"Sunday","undoId":"u-1"}',
@@ -1019,6 +1113,283 @@ describe('the Anthropic loop', () => {
         expect(results[2].content).toContain(
             'Tool refused: Only ONE thing may be removed in one answer',
         );
+    });
+
+    test('a running order asked for puts nothing on a screen (EC-475)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":false,"reference":"Psalm 23"}',
+        };
+        const { calls } = useAnthropic(
+            genAnthropicTools(
+                ['t1', 'owa_foreground', { action: 'start', minutes: 5 }],
+                ['t2', 'owa_present_bible', { reference: 'Psalm 23' }],
+                [
+                    't3',
+                    'owa_present_bible',
+                    { action: 'check', reference: 'Psalm 23' },
+                ],
+            ),
+            genAnthropicText('Add them in the Presenting Flows list.'),
+        );
+        const asked =
+            'Make a new running order for Sunday: a welcome countdown, ' +
+            'Psalm 23';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        // Only the check reached the app.
+        expect(fake.toolCallList).toEqual(['owa_present_bible']);
+        const results = calls[1].request.messages.at(-1).content;
+        expect(results[0].content).toBe(
+            `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`,
+        );
+        expect(results[1].content).toBe(
+            `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`,
+        );
+        expect(results[2].content).toContain('Psalm 23');
+    });
+
+    // 2026-11-14, EC-703: "add bible items for me for: john 3:16 gen 1"
+    // reached the model, which put Genesis 1 on the screen.
+    test('passages to save as Bible items put nothing up (EC-703)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":false,"reference":"Genesis 1"}',
+            owa_bible_item: '{"added":"John 3:16"}',
+        };
+        const { calls } = useAnthropic(
+            genAnthropicTools(
+                ['t1', 'owa_present_bible', { reference: 'Genesis 1' }],
+                [
+                    't2',
+                    'owa_present_bible',
+                    { action: 'check', reference: 'Genesis 1' },
+                ],
+                [
+                    't3',
+                    'owa_bible_item',
+                    { action: 'add', reference: 'John 3:16' },
+                ],
+            ),
+            genAnthropicText('Saved John 3:16 and Genesis 1.'),
+        );
+        const asked = 'add bible items for me for:\njohn 3:16 gen 1';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        expect(fake.toolCallList).toEqual([
+            'owa_present_bible',
+            'owa_bible_item',
+        ]);
+        const results = calls[1].request.messages.at(-1).content;
+        expect(results[0].content).toBe(
+            `Tool refused: ${BIBLE_LIST_SCREEN_REFUSAL}`,
+        );
+        expect(results[1].content).toContain('Genesis 1');
+        expect(results[2].content).toContain('John 3:16');
+    });
+
+    test('a reply under a save of Bible items puts nothing up (EC-703)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":false,"reference":"John 3:16"}',
+        };
+        const { calls } = useAnthropic(
+            genAnthropicTools([
+                't1',
+                'owa_present_bible',
+                { reference: 'John 3:16' },
+            ]),
+            genAnthropicText('Saved John 3:16.'),
+        );
+
+        await askLlmBot(
+            'John 3:16',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [
+                {
+                    author: 'you',
+                    text: 'add a bible item for me: the verse where God so loved the world',
+                },
+                { author: 'bot', text: 'Which verse do you mean?' },
+            ],
+            null,
+            { askedText: 'John 3:16' },
+        );
+
+        expect(fake.toolCallList).toEqual([]);
+        const results = calls[1].request.messages.at(-1).content;
+        expect(results[0].content).toBe(
+            `Tool refused: ${BIBLE_LIST_SCREEN_REFUSAL}`,
+        );
+    });
+
+    // 2026-11-14, EC-652: "show the church wifi password on the screen"
+    // went up as "Church WiFi Password: [Insert Password Here]", and the
+    // answer said the password was up.
+    test('a blank to fill in never goes up (EC-652)', async () => {
+        fake.toolResultMap = { owa_foreground: '{"did":"started"}' };
+        const { calls } = useAnthropic(
+            genAnthropicTools(
+                [
+                    't1',
+                    'owa_foreground',
+                    {
+                        widget: 'message',
+                        text: 'Church WiFi Password: [Insert Password Here]',
+                    },
+                ],
+                [
+                    't2',
+                    'owa_foreground',
+                    { widget: 'message', text: '[Youth group] meets tonight' },
+                ],
+            ),
+            genAnthropicText('What is the password?'),
+        );
+        const asked =
+            'show "[Youth group] meets tonight", and the wifi password';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        // Only the person's own brackets reached the app.
+        expect(fake.toolCallList).toEqual(['owa_foreground']);
+        const results = calls[1].request.messages.at(-1).content;
+        expect(results[0].content).toBe(
+            `Tool refused: ${genForegroundBlankRefusal('[Insert Password Here]')}`,
+        );
+        expect(results[1].content).toBe('{"did":"started"}');
+        const prompt = calls[0].request.system[0].text.replace(/\s+/g, ' ');
+        // EC-653: "put up how long until the service starts" started a 5
+        // minute countdown nobody named.
+        expect(prompt).toContain(
+            'What they did not give is asked for, never made up. Asked to ' +
+                'show a thing by what it is and not the thing itself ("show ' +
+                'the door code", "put up who is preaching"), ask them for ' +
+                'it: its name alone on the screen shows nothing. A countdown ' +
+                'TO something they gave no time for ("count down to the ' +
+                'wedding") asks what time it is. Never a blank to fill in, ' +
+                'or a length they did not say.',
+        );
+    });
+
+    test('words only the line typed go back once, then up (EC-652)', async () => {
+        fake.toolResultMap = { owa_foreground: '{"did":"started"}' };
+        const call = { widget: 'message', text: 'Church WiFi Password' };
+        const { calls } = useAnthropic(
+            genAnthropicTools(['t1', 'owa_foreground', call]),
+            genAnthropicTools(['t2', 'owa_foreground', call]),
+            genAnthropicText('It is up.'),
+        );
+        const asked = 'show the church wifi password on the screen';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        // The first is asked about, the same one sent again goes up.
+        expect(fake.toolCallList).toEqual(['owa_foreground']);
+        expect(calls[1].request.messages.at(-1).content[0].content).toBe(
+            `Tool refused: ${genForegroundEchoQuestion('Church WiFi Password')}`,
+        );
+        expect(calls[2].request.messages.at(-1).content[0].content).toBe(
+            '{"did":"started"}',
+        );
+    });
+
+    test('a song drafted from typed words keeps the title named (EC-517)', async () => {
+        fake.toolResultMap = { owa_lyric_validate: 'Drafted a song.' };
+        useAnthropic(
+            genAnthropicTools(
+                [
+                    't1',
+                    'owa_lyric_validate',
+                    { mode: 'draft', text: 'Verse 1: Tinsel, Chorus: Hum' },
+                ],
+                [
+                    't2',
+                    'owa_lyric_validate',
+                    { mode: 'draft', text: 'Hum', title: 'Their Own' },
+                ],
+            ),
+            genAnthropicText('Drafted.'),
+        );
+        const asked =
+            'Create a song called Kettle Song with these words: ' +
+            'Verse 1: Tinsel, Chorus: Hum';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        expect(
+            fake.toolArgsList.map((one) => {
+                return one.args.title;
+            }),
+        ).toEqual(['Kettle Song', 'Their Own']);
+    });
+
+    test('a verse asked for on its own still goes up (EC-475)', async () => {
+        fake.toolResultMap = {
+            owa_present_bible: '{"isPresented":true,"reference":"Psalm 23"}',
+        };
+        useAnthropic(
+            genAnthropicTools([
+                't1',
+                'owa_present_bible',
+                { reference: 'Psalm 23' },
+            ]),
+            genAnthropicText('Psalm 23 is up.'),
+        );
+        const asked = 'Put Psalm 23 on the screen';
+
+        await askLlmBot(
+            asked,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { askedText: asked },
+        );
+
+        expect(fake.toolCallList).toEqual(['owa_present_bible']);
     });
 
     test("a tool's failure goes back to the model as a sentence", async () => {

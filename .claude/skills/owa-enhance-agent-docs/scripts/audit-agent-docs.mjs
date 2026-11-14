@@ -13,6 +13,9 @@
 //                                    same for notes, rules and skill files
 //   node .../audit-agent-docs.mjs --stamp-notes=… --allow-dirty   also when the
 //                                    code they name is uncommitted (your own)
+//   node .../audit-agent-docs.mjs --stamp-notes=… --at-head   (or --stamp-manual)
+//                                    read against the LAST COMMIT while another
+//                                    session's work is uncommitted under them
 //
 // The agent documents are what `extra-work/build-knowledge.mjs` ships as the
 // chatbot's internal corpus and what every Claude Code session reads:
@@ -42,7 +45,12 @@
 // session's. A note or a recipe that is due ONLY because of it is listed apart
 // (read with those files as the last commit has them, it is the code it was
 // checked against), and a stamp against uncommitted code is refused unless
-// --allow-dirty says the changes are the stamper's own.
+// --allow-dirty says the changes are the stamper's own. A document read against
+// the last commit while somebody else's work sits uncommitted under it is
+// stamped with --at-head: every uncommitted file is hashed as the last commit
+// has it -- the code the reader judged -- so the document is listed apart until
+// that work is committed, and due again once it is (`AD-26`, 2026-11-11: 33
+// notes and 11 recipes read in one run had no way to say so and stayed due).
 //
 // A lead a run already confirmed as history or as an external name is listed
 // in the skill's `references/killed-leads.json` (check + doc + name, never a
@@ -91,6 +99,7 @@ const isJson = argList.includes('--json');
 const isAll = argList.includes('--all');
 const isWithLedgers = argList.includes('--with-ledgers');
 const isAllowDirty = argList.includes('--allow-dirty');
+const isAtHead = argList.includes('--at-head');
 const readArgValue = (name) => {
     return argList
         .find((arg) => arg.startsWith(`--${name}=`))
@@ -168,7 +177,11 @@ const EXTERNAL_NAME_SET = new Set([
     'getWindowForTarget',
     'ignoreCache',
     'runIfWaitingForDebugger',
+    'setDeviceMetricsOverride',
     'setWindowBounds',
+    // mupdf's own pixmap call (the print notes render PDFs with it), proven
+    // external 2026-11-11.
+    'getPixels',
     // The OpenAI SDK's own method.
     'withOptions',
     // React's and DOMPurify's own internals, named by the note on why a
@@ -226,7 +239,7 @@ const TOOL_NAME_PATTERN = /\bowa_[a-z][a-z_]*[a-z]\b(?![*_])/g;
 const ENV_NAME_PATTERN = /\bOWA_[A-Z0-9_]*[A-Z0-9]\b/g;
 const NPM_RUN_PATTERN = /\bnpm\s+run\s+([\w:.-]+)/g;
 const ID_PATTERN =
-    /\b(EN|EC|MC|AC|AD|UT|TP|W|PM|RD|PL|CM|CB|KB|ST|ED|SP|PR|GL|NAV|PU|XW|SC|AP|EX|MD|LT|PC)-(\d+[a-z]?)\b/g;
+    /\b(EN|EC|MC|AC|AD|UT|TP|BN|W|PM|RD|PL|CM|CB|KB|ST|ED|SP|PR|GL|NAV|PU|XW|SC|AP|EX|MD|LT|PC)-(\d+[a-z]?)\b/g;
 const MEMORY_REF_PATTERN =
     /\bmemor(?:y|ies)\s+((?:`[a-z0-9][a-z0-9-]*`(?:\s*(?:,|and|\+|·|or|\/)\s*)?)+)/g;
 const WIKI_LINK_PATTERN = /\[\[([a-z0-9][a-z0-9-]*)\]\]/g;
@@ -246,6 +259,9 @@ const ID_OWNER_MAP = {
     AD: '.claude/skills/owa-enhance-agent-docs/references/backlog.md',
     UT: '.claude/skills/owa-upgrade-unit-test/references/plan.md',
     TP: '.claude/skills/owa-enhance-tips/references/backlog.md',
+    // Since 2026-11-11 (`AD-29`): 63 `BN-` ids were cited across the docs
+    // with nothing checking them against their ledger.
+    BN: '.claude/skills/owa-enhance-bible-note-chatbot/references/backlog.md',
     W: '.claude/skills/owa-robot-test/references/user-workflows.md',
 };
 const MATRIX_PATH = 'docs/test-paths/coverage-matrix.md';
@@ -363,7 +379,7 @@ function readText(relPath, maxBytes = MAX_READ_BYTES) {
 // (`language-packages.md`). A path inside the package of a real language
 // (one English's `language-names.json` names) whose folder is not here
 // belongs to a language not installed, not to a file that is gone. A code no
-// language has (`online/kmm/`) is still held to the disk.
+// language has (`online/xx/`) is still held to the disk.
 const ONLINE_LANG_PATH_PATTERN = /^src\/lang\/data\/online\/([^/]+)(?:\/|$)/;
 let languageNameMap = null;
 function checkIsAbsentLangPackagePath(relPath) {
@@ -947,6 +963,12 @@ function runSymbolsCheck(claimList) {
 
 function readRegisteredTools() {
     const toolSet = new Set();
+    // A tool may be registered by a constant that holds its name
+    // (`registerTool(NOTE_EDIT_TOOL_NAME, …)`): the five one-document editors
+    // are, and until 2026-11-11 (`AD-27`) this check counted 40 of 45, so
+    // CLAUDE.md's list could leave four of them out with nothing printed.
+    const constantMap = new Map();
+    const registeredConstantSet = new Set();
     for (const relPath of repoFileList) {
         if (
             !/^tools\/owa-devtools-mcp\/[^/]+\.mjs$/.test(relPath) ||
@@ -960,19 +982,36 @@ function readRegisteredTools() {
         for (const match of text.matchAll(pattern)) {
             toolSet.add(match[1]);
         }
+        const constantPattern =
+            /\bconst\s+([A-Z][A-Z0-9_]*)\s*=\s*['"](owa_[a-z_]+)['"]/g;
+        for (const match of text.matchAll(constantPattern)) {
+            constantMap.set(match[1], match[2]);
+        }
+        for (const match of text.matchAll(
+            /registerTool\(\s*([A-Z][A-Z0-9_]*)\b/g,
+        )) {
+            registeredConstantSet.add(match[1]);
+        }
+    }
+    for (const name of registeredConstantSet) {
+        if (constantMap.has(name)) {
+            toolSet.add(constantMap.get(name));
+        }
     }
     return toolSet;
 }
 
-// `owa_guide_start` / `_step` / `_status` is how CLAUDE.md lists a family.
+// `owa_guide_start` / `_step` / `_status` is how CLAUDE.md lists a family, and
+// `owa_foreground` / `_edit` a tool beside its own variant.
 function checkMentionsTool(text, toolName) {
     if (text.includes(toolName)) {
         return true;
     }
     const cut = toolName.lastIndexOf('_');
+    const suffix = '`' + toolName.slice(cut) + '`';
     return (
-        text.includes(toolName.slice(0, cut + 1)) &&
-        text.includes('`' + toolName.slice(cut) + '`')
+        (text.includes(toolName.slice(0, cut + 1)) && text.includes(suffix)) ||
+        text.includes('`' + toolName.slice(0, cut) + '` / ' + suffix)
     );
 }
 
@@ -1926,7 +1965,7 @@ function hashNoteCode(fileList, headSet = null) {
     );
 }
 
-function readNoteState(relPath, relPathSet) {
+function readNoteState(relPath, relPathSet, headSet = null) {
     // Files only. A note that says `tools/` names a folder, which has no
     // content to hash and, handed to `git diff`, lists everything under it.
     // A file that is gone stays: that IS a change.
@@ -1939,7 +1978,7 @@ function readNoteState(relPath, relPathSet) {
         // Which files it names, apart from what is in them: a note reworded
         // without naming anything new is still a note read against that code.
         files: hashNoteText(fileList.join('\0')),
-        code: hashNoteCode(fileList),
+        code: hashNoteCode(fileList, headSet),
     };
 }
 
@@ -1961,6 +2000,14 @@ function runStalenessCheck(docList, claimList) {
         const review = reviewMap[doc.relPath];
         if (review !== undefined) {
             const state = readNoteState(doc.relPath, relPathSet);
+            // Every file it names is outside what the repository tracks (a
+            // git-ignored `.env`, a folder a release writes): there is no code
+            // for it to fall behind. And `git diff` handed no path at all
+            // lists the whole repository -- RELEASE.md was due against 3 835
+            // "changed" files that way (`AD-28`, 2026-11-11).
+            if (state.fileList.length === 0) {
+                continue;
+            }
             // A one-line edit to a 60 KB rule must not pass for a re-read of
             // it: while the note names the same files, it is the CODE that
             // decides, whatever was reworded since.
@@ -2081,7 +2128,7 @@ function stampNotesReview(pathArg, docList, claimList) {
         process.exit(2);
     }
     const referenceMap = collectDocReferences(docList, claimList);
-    if (!isAllowDirty) {
+    if (!isAllowDirty && !isAtHead) {
         // CODE only: the documents a note names are this run's own to edit,
         // and a flag every docs run has to pass would say nothing.
         const dirtySet = readDirtySet();
@@ -2099,11 +2146,14 @@ function stampNotesReview(pathArg, docList, claimList) {
     }
     const reviewMap = readNotesReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
-    const reviewed = new Date().toLocaleDateString('sv-SE');
+    const reviewed = new Date().toLocaleDateString('en-CA');
     for (const relPath of wantedList) {
+        // `--at-head`: hashed as the last commit has every uncommitted file,
+        // which is how the staleness check reads one listed apart.
         const { text, files, code } = readNoteState(
             relPath,
             referenceMap.get(relPath),
+            isAtHead ? readDirtySet() : null,
         );
         reviewMap[relPath] = { reviewed, at: head, text, files, code };
     }
@@ -2601,7 +2651,8 @@ function runManualCheck() {
 // The manual in the app's other languages (`src/lang/data/online/<code>/manual/`). A
 // page made from an older English is shown in English, so a corrected recipe
 // left its translations behind every run until 2026-10-29 (`AD-24`): 46 of 65
-// pages in Khmer and in French that day, the old words still in them. Never
+// pages in each of the two languages translated that day, the old words still
+// in them. Never
 // a failing gate -- `manual-i18n-status.mjs` decided a manual edit must not
 // wait for a translation -- but a run of this skill is not done while one lags.
 function readTranslationLagList() {
@@ -2660,7 +2711,7 @@ function stampManualReview(idArg, deadItemList) {
         process.exit(2);
     }
     const sourceMap = readMatrixSourceMap();
-    if (!isAllowDirty) {
+    if (!isAllowDirty && !isAtHead) {
         const dirtySet = readDirtySet();
         const refusedList = recipeList.flatMap((recipe) => {
             if (!idList.includes(recipe.id)) {
@@ -2680,10 +2731,14 @@ function stampManualReview(idArg, deadItemList) {
     }
     const reviewMap = readManualReviewMap();
     const head = runGit(['rev-parse', '--short', 'HEAD']).trim();
-    const reviewed = new Date().toLocaleDateString('sv-SE');
+    const reviewed = new Date().toLocaleDateString('en-CA');
     for (const recipe of recipeList) {
         if (idList.includes(recipe.id)) {
-            const { text, code } = readRecipeState(recipe, sourceMap);
+            const { text, code } = readRecipeState(
+                recipe,
+                sourceMap,
+                isAtHead ? readDirtySet() : null,
+            );
             reviewMap[recipe.id] = { reviewed, at: head, text, code };
         }
     }

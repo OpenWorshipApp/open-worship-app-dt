@@ -64,6 +64,22 @@ vi.mock('./discovery.mjs', () => {
 
 const originalArgv = process.argv;
 const originalTitle = process.title;
+// Node ignores a write to `process.title` in a worker thread, which is where
+// the suite runs (`pool: 'threads'`), so bin.mjs is handed a `process` that
+// keeps the title it is given -- everything else is the real process.
+const titleHolder = { title: originalTitle };
+const processKeepingTitle = new Proxy(process, {
+  get: (target, key) => {
+    return key === 'title' ? titleHolder.title : Reflect.get(target, key);
+  },
+  set: (target, key, value) => {
+    if (key === 'title') {
+      titleHolder.title = String(value);
+      return true;
+    }
+    return Reflect.set(target, key, value);
+  },
+});
 const openSocketList = [];
 let logSpy;
 
@@ -168,6 +184,8 @@ beforeEach(() => {
   binState.connectToCdp = null;
   binState.netServerList = [];
   logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  titleHolder.title = originalTitle;
+  vi.stubGlobal('process', processKeepingTitle);
 });
 
 afterEach(async () => {
@@ -185,6 +203,7 @@ afterEach(async () => {
   );
   process.argv = originalArgv;
   process.title = originalTitle;
+  vi.unstubAllGlobals();
 });
 
 describe('--bridge', () => {

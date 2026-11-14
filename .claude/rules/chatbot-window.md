@@ -31,11 +31,14 @@ the record's chat, family line, related verses, word study).
   ten renderer entries — presenter, reader, appDocumentEditor, bibleNote,
   setting, webEditor, lwShare, lyricEditor, experiment, screen-mirror — and
   deliberately NOT on
-  `about`, `chatbot`, `finder`, `markdownPreview` or `screen` (an overlay or a
-  help window on the projector is the one place they must never appear; the
-  markdown preview is a locked-down reader that never calls `run()`). All draw nothing until
+  `about`, `aichat`, `chatbot`, `finder`, `markdownPreview` or `screen` (an
+  overlay or a help window on the projector is the one place they must never
+  appear; the markdown preview is a locked-down reader that never calls
+  `run()`), nor on `camera-broker`, `vd-screen`, `virtual-display` or
+  `virtual-display-viewer`. All draw nothing until
   asked for, so mounting them everywhere costs a menu registration.
-  Only three windows have a top bar to hold the 🤖 button, so the way in
+  Only the main window's pages have a top bar to hold the 🤖 button (the
+  Screen Mirror page's since 2026-11-14), so the way in
   everywhere is `Tools → Start Controlling` / `Ctrl+Shift+P` and
   `Tools → App Assistant` / `Ctrl+Shift+A`; a popup's menu bar is hidden, which
   makes the shortcut the real door. `AppAssistantComp` calls `openChatbotPage()`
@@ -56,7 +59,13 @@ the record's chat, family line, related verses, word study).
   purpose.
 - **Chatbot**: `html/chatbot.html` → `src/chatbot/*`, opened by the **🤖**
   (`ChatbotButtonComp`, left of Help on the presenter, slide editor and reader
-  — the only windows with a top bar), Help → _App Help (Chatbot)_, the Help
+  — the only windows with a top bar — and, since 2026-11-14, in the Screen
+  Mirror page's top bar with the rest of the Presenter header's group: the
+  user, that bar beside the header's group, _screen mirror page should has
+  all of this buttons_, the story _as a user I want chatbot help control
+  screen mirror page as well especially ask for help_; its focus is
+  `screen-mirror`, its corpus `questions/screen-mirror.json`, and it mounts
+  the toast, menu and alert hosts those buttons open into), Help → _App Help (Chatbot)_, the Help
   button's own **[en:tran:Open Chatbot]** (2026-10-12, the user's ask: the
   **?** opens a two-row menu, **[en:tran:Open Online Help]** over it, instead
   of going straight to the website; it runs the 🤖's own press,
@@ -91,8 +100,11 @@ the record's chat, family line, related verses, word study).
   history rides EVERY round of the loop.
   - **Tabs** persist whole to `local-storage/chatbot-sessions`
     (`chatSessionHelpers.ts`, 12 tabs × 60 messages, debounced save +
-    `beforeunload` flush). `⋮` or right-click: rename, **lock**, close, _Close
-    other chats…_, _Clear all chats…_ — the last two confirm on a line under
+    `beforeunload` flush), with the files waiting in each tab's box since
+    2026-11-11 (`boxFiles`, `EC-498`, `chatbot-files-report.md`: a file
+    handed over is not lost to a reload). `⋮` or right-click: rename,
+    **lock**, close, _Close other chats…_, _Clear all chats…_ — the last two
+    confirm on a line under
     the strip and `saveChatSessions` at once; a LOCKED tab (`isLocked`) has no
     `×`, is refused by `handleClosingSession`, and both step around it.
     **At the cap `+` is NOT disabled** (2026-10-22, the user with the greyed
@@ -102,6 +114,14 @@ the record's chat, family line, related verses, word study).
     is locked), dropped by render once `canAdd` is true again. Shared with
     the ✨ window (8 tabs). A driver still gets no tab: count tabs, never
     read `disabled`.
+  - **A language installed or changed while the window is open reloads
+    it** (2026-11-09, BN-45, `chatLangReloadHelpers.ts`). The window reads
+    every language's small files once, at load (`chatLangHelpers.ts` and
+    the readers built on its marks), so it listens (`onLangPluginsChanged`)
+    and loads again when its turned-on languages or their versions change
+    -- once nothing is on its way, the tabs saved first -- as Settings >
+    Languages reloads every window. Its own offer to install a language
+    had left the new one unnamed and its shortcuts to a model.
   - **The head row belongs to the tab in front**: three `<select>`s — _asking
     about_ (`BOT_FOCUS_LIST`, following the opener window until picked), the
     assistant, the model. **Which WINDOW the tab works in is NOT in the head**:
@@ -172,29 +192,92 @@ the record's chat, family line, related verses, word study).
     note's address names wins over the opener's -- until a window or a kind
     is picked by hand -- and holds across a reload and a relaunch (the note
     the tab keeps, `findSessionNoteTarget`; the launch focus leaves it).
-    **That note window is held over the MAIN window while the tab in front
-    works in it, under the help and AI Chat windows** (2026-11-08, the user,
-    **Working in** on a note window with an arrow to its **Toggle Always On
-    Top**: _a bible note window that attached to chatbot should toggled for
-    stay on top_, and within the hour, the OS-wide always-on-top tried first:
-    _change the bible note stay on top to be top of the main app window
-    instead and still make chatbot and ai chat be the highest stack_ -- a
-    press in the help or the main window had buried it behind the main
-    window; `toHeldNoteWindowUrl` → `main:app:hold-note-window-on-top` →
-    `electron/noteWindowOnTopHelpers.ts`). Held, the note window is made a
-    CHILD of the main window (`setParentWindow`): above it, over no other
-    program (and, as an owned window, expected to hide while the main window
-    is minimised, like the help window -- not checked live). The help and
-    AI Chat windows are children of the main window too, and the one activated last goes over its siblings, so
-    every visible one is `moveTop()`ped when the note window takes the focus
-    -- seen live on Windows, the order read from the system stayed Chatbot,
-    Bible Note, Reader with the note window in front. The help window says
-    the address only when it CHANGES, so a refreshed window list repeats
-    nothing; main lets go when another window or tab is aimed, the note
-    window closes or the help window is destroyed, giving the window back
-    the parent it had (none). Its own **Toggle Always On Top** is never
-    touched. Note windows only, by the page in the address: a Settings or
-    editor window aimed at is not held.
+    **The window the tab in front works in is held over the MAIN window,
+    under the help and AI Chat windows, and so is an attached file's own
+    window** (first a note window, 2026-11-08, the user, **Working in** on a
+    note window with an arrow to its **Toggle Always On Top**: _a bible note
+    window that attached to chatbot should toggled for stay on top_, and
+    within the hour, the OS-wide always-on-top tried first: _change the bible
+    note stay on top to be top of the main app window instead and still make
+    chatbot and ai chat be the highest stack_ -- a press in the help or the
+    main window had buried it behind the main window; then, 2026-11-10, the
+    Resources 🤖 on a PDF and a Markdown row circled: _like bible note I want
+    behavior of during attached to chatbot the window have to be on top of
+    main window_, and _this behavior should apply to all window types,
+    imagine chatbot working on an attached window but the window is covered
+    by main window that's wrong behavior_). The help window sends
+    `HoldWindowRequestType` (`src/helper/ai/windowOnTopRequestHelpers.ts`, a
+    leaf) over `main:app:hold-window-on-top` to
+    `electron/windowOnTopHelpers.ts`: `url`, the window **Working in** names
+    (`toHeldWindowUrl` -- any kind, never the main window; main takes only a
+    `WATCHED_PAGE_LIST` page), and `filePath`, the tab's newest attached file
+    that has a window of its own (`toHeldPreviewFilePath`: a PDF, a Markdown
+    file -- open in its tab or waiting in the box). Main finds that file's
+    window from its address (`toPreviewWindowFilePath`: the Markdown
+    Preview's `preview-file`, the PDF viewer's `file:` URL), named in
+    **Working in** or not; when it is, `url` names it too
+    (`checkIsWatchedPageUrl` takes a file's window). Held, a window is made a CHILD of
+    the main window (`setParentWindow`): above it, over no other program
+    (and, as an owned window, expected to hide while the main window is
+    minimised, like the help window -- not checked live). The help and AI
+    Chat windows are children of the main window too, and the one activated
+    last goes over its siblings, so every visible one is `moveTop()`ped when
+    a held window takes the focus -- seen live on Windows, the order read
+    from the system stayed Chatbot, Bible Note, Reader with the note window
+    in front -- and once more 300 ms after a window is first held
+    (`RAISE_AGAIN_MILLISECONDS`): a popup is `focus()`ed 100 ms after it is
+    made, Windows puts it on top before activating it, and an activation
+    the OS refuses fires no `focus` (seen live 2026-11-10 on a scratch app
+    in the background: a PDF reopened from its row came up over the help
+    window). The help window says what it wants only when that CHANGES, so
+    main KEEPS the ask and looks again whenever any window finishes loading
+    (`initWindowOnTopWatch`, with AI on; nothing is looked at while nothing
+    is asked): a preview opened or reopened after the ask is held too --
+    seen live 2026-11-10, `1CH.1.pdf` attached and then opened, and closed
+    and opened again, each time owned by the Presenter under the help
+    window. Main lets go when another window, file or tab is aimed, or the
+    help window is destroyed, giving the window back the parent it had; a
+    held window that closes is only forgotten. Its own **Toggle Always On
+    Top** is never touched. Settings, already an `appTopToMain` child, is
+    held as it was. **The Resources 🤖 opens the file's own window too**
+    (the same day; `ResourcesFileRowComp`'s `handleAskingAbout`): a PDF's
+    viewer or a Markdown file's preview, passed as `openChatbotWithFile`'s
+    `beforeOpening` so it opens only once the two questions are answered --
+    unit-tested, and pressed live 2026-11-10 (`EC-478`'s run, the caution
+    put away on that dev profile): the 🤖 on a Markdown row opened its
+    preview window, then the help window.
+    **And the tab WORKS IN that file's window** (the same day, the user,
+    **Working in** naming only the main window after the 🤖 on `JHN.3.pdf`
+    and a Markdown row: _open in chatbot didn't attach the window to the
+    chatbot_, then, a note tab's **Working in** circled: _should behave like
+    what working for bible-note_). The window list holds a file's own window
+    by the file it shows (`toAppWindowList` with the leaf's
+    `toPreviewWindowFilePath`: `focus: null`, no kind, and a `filePath`; a
+    PDF titles itself from inside, so one whose title lacks the file's name
+    is named by it), and every title is read back from the HTML escaping the
+    debugging list gives it (`toUnescapedTitle`: it had read `God&#39;s`).
+    `toTabWindowAim` aims a note's window, then the window of the file held
+    on top (`tabPreviewFilePath` → `toFileWindowAim`, slashes and case
+    alike; of two windows of one file -- a Resources row opens one more on
+    every press, `EC-484` -- the first, the other listed as `… · own window
+    2`), then a chosen window, then the kind's; a window or a kind picked
+    by hand lets the file go for that tab (`fileWindowLetGoMap`) until a file
+    is handed over again, and picking a file's window leaves _asking about_
+    as it was. Only what LOOKS at a window is aimed there: `owa_app_state`
+    and the walkthrough (`APP_LEVEL_TOOL_NAME_SET`) stay with the app's own
+    windows, and `/here` names the main window (`runWhere`). The 📷 there
+    goes through `owa_screenshot`, which pictures a file's window over the
+    debugging connection (`checkIsFileWindowUrl`, `Page.captureScreenshot`):
+    the Markdown Preview is locked down and has no Node to ask main with.
+    Main tells the help window when one comes, goes or is retitled. Seen live
+    on the dev app: both windows named by the window's own code as
+    `Markdown Preview - JHN.3.The New Birth and God's Love.md · own window`
+    and `JHN.3.pdf · own window`, aimed at, and pictured in about 140 ms each;
+    the help window's own line after the 🤖 is unit-tested
+    (`ChatbotAppComp.ut100a.test.tsx`), and was seen 2026-11-10: the 🤖 on
+    a scratch study opened a tab with the file attached and **Working in**
+    reading `Markdown Preview - JHN.3.16-17 zz Robot Love Translated.md ·
+    own window`.
     **And a tab ASKING ABOUT a popup kind works in it** (the same day, the
     user: _chatbot's do it for me appear in wrong page, I ask for setting
     page and appear in main windows_;
@@ -396,12 +479,48 @@ the record's chat, family line, related verses, word study).
     (`checkIsChosenScript`) -- and drops a script neither uses (`请确认…`
     under an English answer); its match key reads every script, or a Khmer
     option was a duplicate of nothing.
+  - **A word or two typed alone is asked about before anything is answered**
+    (2026-11-13, `EC-583`, the user, _lyric_ typed alone and answered with
+    an apology: _when user type only few word, chatbot should follow up,
+    before provide result should confirm_ -- the job meant was a lyric file
+    from a PowerPoint). On a tab's FIRST line, `handleAsking` (after the
+    direct answers and the open files) answers a line `checkIsShortTopicAsk`
+    takes (`topicAskHelpers.ts`: at most two words besides a language's
+    little words, four in all; never a yes, a no, a thank-you, a complaint, a
+    greeting, a number, an address, a quote, a command, or an English
+    instruction verb with what it acts on -- _Fix the cross-references._ had
+    been asked _What would you like to do with_ it, while _clear_ alone is
+    still asked about) and no row as it
+    stands, with NO model: _What would you like to do with “lyric”?_ (the
+    selection card's key) and up to six corpus rows as its options
+    (`genTopicChoices` → `listTopicQuestions`, `agent-knowledge.md`), the
+    echo `isStep`. Fewer than two rows, and it goes on as before. Further
+    down a conversation the line may continue what was said, so the model is
+    told instead (`genTopicAskHint`, on the ask, never for a known row, a
+    dispute, an offered option or a press): answer it when the conversation
+    settles it, else ask which job with the window's choices as options; the
+    prompt's _ASK_ bullet says the same. A focus test driver must find the
+    _asking about_ picker by place, not by its English label: in a French
+    window it is translated and the ask goes to the Reader.
   - **Every answer ends with things to PRESS**: **Copy**, **Ask again**, and
     options from an `OPTIONS:` line that `parseAnswerOptions`
-    (`quickReplyHelpers.ts`) always strips (own line or inline at the end);
+    (`quickReplyHelpers.ts`) always strips (own line or inline at the end,
+    or -- since 2026-11-08, BN-27, a Chinese note answer drawn as four
+    lines of words -- a bare marker with up to five short options listed
+    one a line under it to the end; `Choices:` is the same frame, BN-29,
+    Free's Nemotron writing it as often as `OPTIONS:`); a card button the
+    window does by itself, pressed in any language, is asked in its English
+    (`findWindowDoneCardAsk`, BN-16); an options line under a marker word of the person's OWN language (_Opcje:_) is read by its shape -- the last line, one to three words and a colon, two to five items between `|`, never another frame or a list (2026-11-09, BN-47); a bare `|` line with no marker is options right under a question, or anywhere when every item opens on Add, Write, Move or Make -- a lesson review's fixes (BN-68, BN-74); passages one a line closing an answer that asks are its options (`cutPassageListFrame`, BN-74: the children's lesson's "which passage?" had nothing to press), or followed by ONE question that asks to choose among them, kept above the buttons (BN-97: "Which passage shall we use, or do you have another one in mind?" under three passages had left nothing to press; a yes/no question under cited verses keeps its Yes and No), and an option naming a passage may run to 64 letters, every other to 40 -- a passage whose story runs longer keeps its reference and what of the story fits, never dropped (`toFittedPassageReply`, BN-84: _write an Easter sermon_ was asked "which one?" over three passages and drew one button); a change pressed among several (each opening on Add, Write, Move or Make) leaves the others as the first buttons under its answer (`carryReplies`, BN-77: a lesson review's other fixes had gone with the first press);
     failing that, the answer's trailing yes/no or either-or question, then the
     nearest corpus questions (`genFollowUpQuestions`). LAST message only,
-    never duplicating an action button, both rows capped at 5. An option
+    never duplicating an action button -- an answer that is not an app
+    question (a note's, a song's) too, through `dropActionEchoReplies`
+    (2026-11-09, BN-53: a note answer drew **Undo this change** as its
+    button and again as an option) -- up to five options, three beside
+    buttons of the answer's own, seven buttons in all, and the corpus
+    follow-ups as many as there is room for (2026-11-13, `EC-584`, the
+    user: _keep providing user with maximum amount of options_; it had been
+    three, two and five). An option
     loses the quote marks a model put round it, and two things are not
     options at all (`toReplyList`, 2026-10-12, a local model's chips): one
     that says there is none (_No options available_, drawn as a button
@@ -458,11 +577,36 @@ the record's chat, family line, related verses, word study).
     the app's words. Latin-script languages are told apart by their little
     words (`functionWords`; a French elision `l'` counts at the front of a
     word, 2026-10-29, `EC-446`: an English line with none of English's had
-    been answered in a French window's French). **Any language a person
+    been answered in a French window's French). **A word English writes too
+    names no language by itself** (2026-11-14, `EC-651`,
+    `checkIsOnlySharedWordEvidence`): "a" is in ten packages' lists and not
+    in English's -- counted for English it read 281 of their held-out lines
+    as English with English alone installed -- so beside a few installed
+    languages, _start a stopwatch_ in an English app was named the one that
+    lists it and answered in it; a line whose only sign of a language is
+    such a word (`ENGLISH_SHARED_WORD_SET`) is a doubt, the app's language
+    (`englishSharedWord.test.ts`, each such package installed alone).
+    **English and the language
+    the app is SHOWN in are believed on half the evidence**
+    (`SHOWN_LANGUAGE_PRIOR`, `detectTypedLanguage(text, appLangCode)`), and
+    languages sharing another script that a line fits alike go to the app's
+    language, then one family, else `other` -- answered in the language it
+    was written in (2026-11-08, `BN-33`, the goal _work great for all
+    languages_: the half had gone to every language with an
+    `assistant.json`, French in every app, and a script tie to the first
+    listed, so with every language installed a Dutch, Italian, Haitian or
+    Samoan line in an English app was named French, a Ukrainian or Bulgarian
+    one Russian, a Nepali one Hindi -- and answered in it). A line a
+    language loses is fixed in ITS list: thirteen got their commonest words
+    the same day (Hausa "mai", Kinyarwanda "wa"/"mu" and its `z'` elisions,
+    French "moi"/"tout"/"fait"), and the okina (U+02BB) reads as the
+    apostrophe. `typedEditAsks.test.ts` holds every language's four edit
+    lines to its own language or nothing, in an English app and in its own. **Any language a person
     TYPES is named** (2026-11-03, the user: _no matter what language I type
     it work seamlessly_; `EC-447`..`EC-451`): each language's own
-    `typed.json` (`src/lang/data/online/<code>/`, 84 of them, 47 in a
-    package and 37 in a data-only folder until theirs is made) says its name,
+    `typed.json` (`src/lang/data/online/<code>/`; 84 of them that day, 47 in
+    a package and 37 in a data-only folder -- 85 by 2026-11-10, every one in
+    a package of its own) says its name,
     Unicode script, little words, letters, a family and yes/no, read -- since
     2026-11-04, only for an INSTALLED language (nothing but English ships) --
     as languages with `isPackaged` false and every list empty; a language not
@@ -475,8 +619,9 @@ the record's chat, family line, related verses, word study).
     (`screenLangCode`) -- a Latin-script answer in a window of another
     language keeps its own capitalised words, only a bold or quoted label
     being the window's (`EC-458`: _la Bible_ had become the Khmer for the
-    Bible tab) --, and `anyLanguage.test.ts` holds 469 supported
-    questions in each packaged language to their own. And
+    Bible tab) --, and `anyLanguage.test.ts` holds every supported
+    question (469 that day, 498 by 2026-11-10) in each packaged language to
+    their own. And
     `chatLanguageParity.test.ts` asks every row in each language under each
     other app language. Every language is DATA in
     `src/lang/data/online/<code>/assistant.json`: its script, digits, words for yes
@@ -507,7 +652,7 @@ the record's chat, family line, related verses, word study).
     words as they are. With no Gemma 4 to translate, or when a translation
     fails, the model is asked in their language directly; an answer that
     could not be put into it is shown in English under one sentence saying
-    so. Not for a verse being looked for (it has its own English head start
+    so. A translation that is the English handed back with a word changed counts as not put into it (`checkIsEnglishEcho`), and an answer a model asked in their language wrote in English is translated after the fact (`planForEnglishAnswer`; 2026-11-09, BN-48: Catalan and Xhosa answers had been shown in English with no note). Not for a verse being looked for (it has its own English head start
     and names verses a translation would reword), and an answer the app
     wrote itself, already in their language, is left alone. A pressed chip
     asks its row's ENGLISH (`StarterQuestionType.textEn`, `echoText` for
@@ -556,7 +701,7 @@ the record's chat, family line, related verses, word study).
     banner, drawn into the app's windows, take the page body's face the
     same way — and boot's `*` rule already gives those windows' bodies the
     picked face, so no extra carry is needed there. Named `tran` so
-    `tranKeyCoverage.test.ts` reads every key (Khmer AND French). One rule
+    `tranKeyCoverage.test.ts` reads every key (in every language). One rule
     decides where: words CODE reads back -- an action's label
     (`WALKTHROUGH_ACTION_PATTERN`, `DRAFT_ACTION_PATTERN`, `findTypedPress`),
     a thread's marker -- stay English in what is stored and are translated
@@ -623,6 +768,25 @@ the record's chat, family line, related verses, word study).
   that decides. The arrows stop belonging to the suggestion list the moment the
   draft holds a newline: a caret that cannot get back to the line being fixed is
   worse than a list that needs the mouse.
+- **The box's tools sit behind ONE ⋮ at its left** (2026-11-10, the user's
+  picture with the five icons circled: _put those in vertical 3 dots_, _to
+  save space for input text_; `RenderAskToolsMenuComp`). The paperclip, the
+  📷, the ◎, the foreground session and `/` had taken ~150px of a 412px
+  window from the box; the ⋮ (`.chat-ask-tools`, `aria-label`
+  **[en:tran:More Options]** -- an existing key, so no language package
+  changed) takes ~25.
+  Each row is its icon AND its words (the old `aria-label`s, kept as labels
+  so the corpus `find`s, the tests and `owa_click` name them the same), the
+  `/` row last under a line. The menu is MOUNTED ONLY WHILE OPEN, opens
+  UPWARD (placed by `bottom` off the dots), and reuses the tab strip's
+  `.chat-menu` / `.chat-menu-sheet`: a row's press closes it and does its
+  job WITHOUT giving the dots the focus back (`/` puts the caret in the box),
+  Escape closes it and does (stopping its propagation, so the window's own
+  Escape -- Stop -- never sees it), ↑/↓ walk the rows round. Closed, its
+  rows are not in the DOM: a script or a test opens the ⋮ first
+  (`openAskTool` in the ui2 tests). The assistant's own **Send a picture of
+  my screen** / **Point at the control** / **Attach a file** buttons under
+  an answer are untouched -- they call the same handlers.
 - **Tab finishes the word, the arrows bring their row with them, and the list
   closes when it has nothing left to offer** (2026-10-10, the user's three
   asks, with pictures of `/bt` over a `/btw` row and of `/btw what is` still
@@ -719,7 +883,8 @@ the record's chat, family line, related verses, word study).
   `showAppConfirm` answers `false` when the window mounts no popup host, which
   is indistinguishable from Cancel, and `lwShare` and `lyricEditor` have none
   while still carrying the assistant on Ctrl+Shift+A (only `reader`,
-  `AppLayoutComp`, `PopupLayoutComp`, `setting` and — while no data folder is
+  `AppLayoutComp`, `PopupLayoutComp`, `setting`, `screen-mirror` (2026-11-14,
+  with its header buttons) and — while no data folder is
   in use, in place of the window — `NoDataDirGateComp` mount `HandleAlertComp`) —
   failing closed there would make the shortcut silently do nothing, which
   reads as a broken app rather than as a warning. On the 🤖 the master switch
@@ -727,8 +892,8 @@ the record's chat, family line, related verses, word study).
   window that is not going to open. The Presenting Control's _hand this
   snapshot to the help window_ is NOT gated — that press carries its own
   intent, and a Cancel would strand the snapshot the main process is holding.
-  Its five strings need Khmer keys like any other label outside
-  `src/chatbot/`; a missing one THROWS in dev.
+  Its five strings need a key in every language's dictionary like any other
+  label outside `src/chatbot/`; a missing one THROWS in dev.
   For automated chatbot verification, this caution remains person-only by
   default. A narrow exception applies only when `owa_app_state` confirms a
   development instance and the user explicitly authorizes acceptance in the
@@ -889,7 +1054,7 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   first, and only three lists are**: `getRankedLlmModelList`
   (`isModelListRanked` in `LLM_PROVIDER_MAP`) answers for Claude, ChatGPT and
   Kimi — Bedrock's list is in the order to reach for them (its most capable
-  model is fourth), the keyless three are three makers' models, a custom
+  model is seventh), the keyless three are three makers' models, a custom
   server lists what was loaded — so everywhere else, on Auto, and on the best
   model already, the advice is words and no button. **Ask again with <model>**
   is a pseudo tool (`ASK_SMARTER_TOOL_NAME`, caught in `handleActing`,
@@ -912,6 +1077,87 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   ARRIVES or the tab changes (`lastMessageId`), no longer on every rewrite of
   `messages`: a thumb on an answer further up took the card just pressed out
   of sight.
+- **A reply arrow beside Copy quotes the answer in the box** (2026-11-09,
+  the user, **Copy** circled under three answers: _right next to the copy
+  icon add reply icon, click reply to mention it in input text_; the story
+  _as a user I want to be able to follow up a section_). `.cue-quote`,
+  `aria-label` **Reply**, between **Copy** and the thumbs under every answer
+  (a question has **Ask again** instead). The press writes
+  `toAnswerQuoteText` (`answerQuoteHelpers.ts`, pure): _Replying to your
+  answer:_ and the answer as `> ` lines -- the box's existing quote frame
+  (`checkHasSelectionQuote`: no type-ahead over it; every prompt reads `> `
+  as words pointed at), its words without `#` / `**` mark-up, blank lines
+  left out, cut at `MAX_ANSWER_QUOTE_CHARS` 800 on a whole letter cluster
+  and back to a space, `…` where it stops: the quote rides every round of
+  the ask and the history after it, where the answer already is. Words
+  SELECTED in the answer first are the section: read on the arrow's MOUSE
+  DOWN, before the press can move the selection, and only when both ends
+  are in the answer's own body and in none of its buttons -- then _Replying
+  to this part of your answer:_ and those words alone. It goes under what
+  the box holds, in the tab in front (`handleQuotingAnswer`,
+  `appendSelectionMention`'s rule: the same quote twice is put in once), the
+  caret on the line under it; nothing is asked. Seen live 2026-11-09 on the
+  dev app: a Khmer lesson quoted whole, one double-clicked word quoted alone.
+- **A rotate icon after the reply arrow asks the question again, for a
+  DIFFERENT answer** (2026-11-10, `EC-476`, the user, the spot circled: _add
+  a rotate icon there to ask for retrying_; the goal _try with different
+  approach and different effort get different result_;
+  `answerRetryHelpers.ts`, pure). `.cue-retry`, `aria-label`
+  **[en:tran:Retry]** (a key every language already had), between the reply
+  arrow and 👍, only under an answer whose message right above it -- the
+  window's own follow-ups stepped over -- is the person's own question:
+  never a `/` command's (`/btw` excepted; `/clear` again empties the
+  projector again), a card a button opened, a question with a `note`
+  (asked on their behalf), or words the window answered itself
+  (2026-11-11, `EC-506`: under the answer to a language offer's **Not
+  now**, **Retry** would have asked a model _Not now_ as the question, and
+  under the window's own text size change it asked a model the same words
+  -- seen in a probe with the mark taken away). Such an echo is marked
+  `isStep`, kept when the tab is reopened: a reply to one of the window's
+  steps (a language offer's, pressed or typed; a press on the verse
+  finder's, a lookup's or a Bible import's; a guided demo), and a typed
+  line one of `handleAsking`'s own readers answered -- the report's _yes,
+  thanks_, a study's new name, a lookup card's passage, map or count, a
+  document's card again, the text size on slides or a note, a thank-you
+  under a found verse, and on a server of the person's own a song by its
+  link or title and a screen or slide asked for. A pressed OPTION is a
+  question and keeps its **Retry**, as does a line a reader handed on to
+  a model. The verse finder's Bible pressed to _search again_ is asked
+  through `handleAsking`, its row as the echo, and marked there through
+  `isStepEcho` (`EC-507`): a **Retry** under the search had asked the
+  row's words as the question. A line TYPED to a Bible import or under the
+  verse finder's choices is not marked -- one they do not take goes on to
+  a model as a question, decided after the echo is drawn.
+  Worked out once per list
+  (`listRetryableAnswerIds`, memoised), disabled -- not hidden -- while the
+  tab answers. The press (`handleRetrying`) asks the question's own words
+  with its own attachments (`toReusableAttachments`) through `handleAsking`'s
+  `retry` and `attachments` options: the box and its attachments are NOT
+  touched (`clearAskedDraft`, every road that empties the box), and the
+  waits for a typed line -- a report, a study's new name -- never read it.
+  The question is echoed again and the answer carries the note _A different
+  answer: worked out another way, with more effort._ The try is counted off
+  the transcript (`countRetryAttempt`: how often these words were asked in
+  the tab), so nothing new is stored. APPROACH: `genRetryAskHint` rides the
+  ask last (`genAskedWithHint`) -- a different answer, never a wrong one; an
+  edit already made is still made; the earlier answer quoted only when it is
+  not the tab's newest (the history carries that one); one of three ways in
+  per try, in turn. EFFORT: `AskExtraType.retryAttempt` (`chatbot-llm.md`).
+  WHO, for that one question (the same evening, the user: _user didn't
+  like result from gemma4 then try with another model (but keep the gemma4
+  for the next asking)_): `retry.avoid` is the answer's `answeredBy`, the
+  pickers' own words. On Auto -- and on a tab naming an assistant Auto
+  could pick (`genAutoCandidates`: a no-cost server, OWA Shared, Free),
+  which goes down Auto's line this once (`isRetryElsewhere`) -- the picks
+  are ranked as ever and the one that wrote the answer put LAST
+  (`toRetryPicks`, never out: alone, it still answers); the note says
+  _Auto asked … this time._ (`genAutoAnswerNote`'s own sentence), and the
+  tab's provider, model and Auto pick are NOT written, so the next question
+  is the tab's as before. A paid key is handed another of its own models
+  for the ask alone (`pickRetryModel`: the next one up in a list written
+  best first, else the nearest down; one that cannot see a picture the
+  question carries is stepped over; a list in no order keeps its model) --
+  never another company's key.
 - **A page a PERSON asked to read is shown whole, and without what the page
   tool says to a model** (2026-10-12, `EC-242`). **Read the whole thing**
   under a guide answer presses `owa_help_page`, and what came back was
@@ -955,14 +1201,22 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   read as their first word and stayed English in Khmer answers (seen live:
   _ចុចប៊ូតុង "Its verses"_); `toBoldLabelsShown` and a quoted-label pass now
   translate the span as one, and `restoreEnglishNames` still puts a menu
-  name back. A label the model mixed word by word (_អាន it in another
+  name back. A single quoted word is a button only right after the
+  language's word for one (`buttonWords` in its `assistant.json`,
+  2026-11-13, `EC-562`: _ចុចប៊ូតុង "show"_, the foreground tool's action
+  word, as the way back from taking a clock off), looked up with its first
+  letter a capital; anywhere else it is a word being discussed and stays.
+  A label the model mixed word by word (_អាន it in another
   ព្រះគម្ពីរ_) is not repaired -- `EC-374` is open on it. And the
   letters of a THIRD script, neither the language's own nor Latin, go with
   the signs on them (`dropThirdScriptLetters`, 2026-10-17, `EC-307`: _预览_,
   _పొ_, _কোথায়_, _الخاص_ in Khmer answers and a chip of the whole-corpus
   run, letters the reader cannot even sound out), and so does a lowercase
   Latin word inside the language's own words (`dropStrayLatinWords`,
-  `EC-424`: _គូស podkre_, _អ្នកleថា_). **Never what the answer is ABOUT**
+  `EC-424`: _គូស podkre_, _អ្នកleថា_). Both go by the language the answer
+  was ASKED in, not the window's: an answer to a line typed in such a
+  language is cleaned on an English screen too (`EC-496`,
+  `answerOnEnglishScreen.test.ts`, 37 languages). **Never what the answer is ABOUT**
   (2026-10-23, `EC-429`, `AnswerKeepType`): a passage chat passes its
   passage's text and the letters of every script in it stay -- the Greek
   Bible's verse had been quoted in a Khmer answer as empty guillemets --
@@ -988,7 +1242,12 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   capitalised Latin word alone between the script's letters that the answer
   above never says and that is no key, menu name or label
   (`checkHasUnsaidLatinWord`, 2026-11-04, `EC-459`: the Malay _Kecil_ in a
-  Khmer chip; a name or product the answer says stays). An answer that says to type
+  Khmer chip; a name or product the answer says stays). Under an answer in
+  a language not installed (`other`), a chip goes when it is not in the
+  script most of the ANSWER is in, or is English under an answer that is
+  not; a Latin-script language's chips lose another script's too -- the
+  passage's own script kept (2026-11-13, `EC-598`: a French answer in a
+  Khmer app had drawn English, Khmer and French chips). An answer that says to type
   `/btw` carries **Ask it as a general question** (`GENERAL_ASK_TOOL_NAME`),
   the command written for them. A thank-you under a found verse ends the
   search (`checkIsClosingLine`, `closingWords`) — it was searched as verse

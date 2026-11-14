@@ -61,8 +61,7 @@ async function applyBibleItems(
     if (bibleItemJson === undefined) {
         showAppAlert(
             tran('Fail to get bible item data'),
-            'We were sorry, but we are unable to get bible item data at ' +
-                'the moment please try again later',
+            tran('It did not work. Please try again.'),
         );
         return;
     }

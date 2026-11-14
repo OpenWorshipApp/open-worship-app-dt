@@ -56,6 +56,9 @@ vi.mock('../helper/appHooks', async () => {
 });
 vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
     checkIsExtraBinInstalled: mocks.checkInstalled,
+    // A pack from before the MCP executable; the row it adds has its own
+    // tests in SettingOthersExtraBinComp.test.tsx.
+    findInstalledMcpBinPath: async () => null,
     getExtraBinDirPath: () => state.dirPath,
     getInstalledExtraBinVersion: mocks.getVersion,
     registerExtraBinChangedListener: (listener: () => void) => {
@@ -63,12 +66,25 @@ vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
         return mocks.unregister;
     },
 }));
+// The AI client the MCP row remembers; that row is not drawn here.
+vi.mock('../helper/settingHelpers', async () => {
+    const { useState } = await import('react');
+    return {
+        useStateSettingString: <T extends string>(
+            _settingName: string,
+            defaultString: T,
+        ) => {
+            return useState<string>(defaultString);
+        },
+    };
+});
 vi.mock('../helper/extra-bin/extraBinInstallHelpers', () => ({
     findLocalExtraBinArchive: mocks.findArchive,
     getExtraBinEntry: mocks.getEntry,
     installExtraBin: mocks.install,
 }));
 vi.mock('../server/appHelpers', () => ({
+    copyToClipboard: vi.fn(),
     showFileOrDirExplorer: mocks.reveal,
 }));
 vi.mock('../server/updatingAppHelpers', () => ({

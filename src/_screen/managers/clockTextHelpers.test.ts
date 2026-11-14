@@ -66,8 +66,9 @@ function genAttachedContainer() {
     const container = document.createElement('div');
     container.className = 'foreground-countdown-container';
     container.innerHTML =
-        '<div><span id="sign"></span><div id="hour"></div>' +
-        '<div id="minute"></div><div id="second"></div></div>';
+        '<div><span id="sign"></span><span id="day"></span>' +
+        '<div id="hour"></div><div id="minute"></div>' +
+        '<div id="second"></div></div>';
     document.body.appendChild(container);
     return container;
 }
@@ -77,8 +78,13 @@ function readClock(controller: CountdownController | StopwatchController) {
         controller instanceof CountdownController
             ? (controller.divSign?.textContent ?? '')
             : '';
+    const day =
+        controller instanceof CountdownController
+            ? (controller.divDay?.textContent ?? '')
+            : '';
     return (
         sign +
+        (day === '' ? '' : `${day} `) +
         [
             controller.divHour.textContent,
             controller.divMinute.textContent,
@@ -109,18 +115,28 @@ describe('CountdownController', () => {
         expect(done.divBox.dataset.timeDiff).toBe('0');
     });
 
-    test('shows every hour of a long countdown, never wrapped at 24', () => {
-        // A length of time, not a time of day: 25 h read `01:00:07` once.
+    test('shows the days of a long countdown, then the hours of the last one', () => {
+        // A length of time, not a time of day: 25 h read `01:00:07` once,
+        // then `25:00:07`; since 2026-11-13 (the user's choice) a day or more
+        // reads its days -- 42 days had been `1001:54:52`.
+        const under = CountdownController.init(
+            genAttachedContainer(),
+            new Date(Date.now() + (23 * 3600 + 6) * 1000 + 500),
+        );
+        expect(readClock(under)).toBe('23:00:07');
         const day = CountdownController.init(
             genAttachedContainer(),
             new Date(Date.now() + (25 * 3600 + 6) * 1000 + 500),
         );
-        expect(readClock(day)).toBe('25:00:07');
+        expect(readClock(day)).toBe('1d 01:00:07');
         const long = CountdownController.init(
             genAttachedContainer(),
             new Date(Date.now() + (125 * 3600 + 6) * 1000 + 500),
+            (days) => `${days} days`,
         );
-        expect(readClock(long)).toBe('125:00:07');
+        expect(readClock(long)).toBe('5 days 05:00:07');
+        long.stop();
+        expect(readClock(long)).toBe('00:00:00');
     });
 
     test('counts the time over behind a "+" once the target has passed', () => {

@@ -3,15 +3,15 @@ id: W-40
 title: "Annoter un passage pendant que vous l'étudiez"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: e5070510ea5f119e
+translatedFrom: 9cc81cb4417de565
 ---
 # W-40 — Annoter un passage pendant que vous l'étudiez
 
 **Objectif :** surligner en couleur des mots d'un passage, et attacher une note à une expression, pour que les deux soient encore là la prochaine fois que vous ouvrez l'application.
 
-1. Ouvrez le **Lecteur** (📖) et affichez un passage — par exemple `Genesis 22:1-24`.
+1. Ouvrez le **[en:tran:Bible Reader]** (📖) et affichez un passage — par exemple `Genesis 22:1-24`.
 2. Faites glisser la souris sur quelques mots d'un verset, comme pour les copier. Une petite barre d'outils apparaît juste au-dessus de votre sélection. 📸
-   Elle a six points de couleur, puis une **bulle** et une **gomme**.
+   Elle a six points de couleur, puis une **bulle** et une **gomme** — et, tant que l'IA est activée, un **robot** qui interroge l'assistant sur ces mots (W-29).
 3. Cliquez sur le point **jaune**. Les mots que vous avez sélectionnés — et seulement eux — prennent une légère teinte jaune, et la barre d'outils disparaît.
    > Les couleurs forment un ensemble fixe de six. Elles sont faites pour se lire comme un surligneur sur le texte,
    > de sorte que le verset se lit toujours comme l'Écriture en dessous.

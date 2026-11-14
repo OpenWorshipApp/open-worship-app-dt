@@ -3,7 +3,7 @@ id: W-50
 title: "Présenter sur un autre ordinateur avec Screen Mirror"
 section: "Screen Mirror"
 lang: fr
-translatedFrom: e0b52827da025229
+translatedFrom: 3e3706254b7231eb
 ---
 # W-50 — Présenter sur un autre ordinateur avec Screen Mirror
 
@@ -30,9 +30,12 @@ même réseau, ou Internet une fois que l'hôte s'y ouvre (étape 7).
    avec l'adresse écrite en dessous, pour l'envoyer à la personne qui prépare l'invité.
 2. Sur l'invité, ouvrez la page **[en:tran:Screen Mirror]**. Elle n'a pas d'en-tête
    d'application, seulement une barre en haut : **[en:tran:Presenter]** à sa gauche permet
-   de revenir, et la tasse à sa droite est **[en:tran:Stay Awake]** — activée sauf si vous
-   l'éteignez, elle empêche cet ordinateur de se mettre en veille tant que la page est
-   ouverte, ce dont a besoin un ordinateur qui tient lieu de projecteur. La page
+   de revenir, et à sa droite se trouvent les boutons de l'en-tête du Presenter. La tasse
+   est **[en:tran:Stay Awake]** — activée sauf si vous l'éteignez, elle empêche cet
+   ordinateur de se mettre en veille tant que la page est ouverte, ce dont a besoin un
+   ordinateur qui tient lieu de projecteur — puis la roue dentée des réglages, le 🤖
+   **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** et **[en:tran:Help]**. Le 🤖 ouvert
+   ici répond au sujet de cette page. La page
    cherche des hôtes dès qu'elle s'ouvre et les liste sous
    **[en:tran:Hosts on this network]** ; **[en:tran:Rescan]** cherche de nouveau.
    La recherche interroge chaque réseau auquel cet ordinateur est relié, sur chaque port
@@ -54,6 +57,13 @@ même réseau, ou Internet une fois que l'hôte s'y ouvre (étape 7).
    tel quel. En mode approbation, l'invité affiche
    **[en:tran:Waiting for host approval]** pendant que l'hôte clique sur
    **[en:tran:Allow connection]** dans le panneau flottant.
+   **Quand aucun hôte n'est listé**, la liste affiche
+   **[en:tran:No host found. Open the app on the host and check that both computers are on the same network.]**
+   Un hôte ne peut être trouvé qu'une fois son **[en:tran:Let other computers connect]**
+   activé (étape 1), et la recherche n'atteint que les réseaux où se trouve cet
+   ordinateur : vérifiez les deux, puis cliquez sur **[en:tran:Rescan]**. Un hôte sur un
+   autre réseau se joint en tapant son adresse sous **[en:tran:Connect by address]**,
+   une fois cet hôte ouvert à Internet (étape 7).
 3. L'invité affiche **[en:tran:Connected]**, et sous
    **[en:tran:This computer]** ses moniteurs portent le préfixe sous lequel l'hôte le
    connaît, par exemple a1 — le nom à choisir dans le sélecteur de moniteur de l'hôte.

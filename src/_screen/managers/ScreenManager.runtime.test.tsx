@@ -588,7 +588,7 @@ describe('ScreenManager runtime orchestration', () => {
             {
                 screenId: 3,
                 type: 'foreground',
-                data: { marqueeBottomData: { text: 'hello' } },
+                data: { marqueeBottomDataList: [{ text: 'hello' }] },
             } as any,
             true,
         );
@@ -596,7 +596,7 @@ describe('ScreenManager runtime orchestration', () => {
             screenId: 3,
             stage: 0,
             type: 'foreground',
-            data: { marqueeBottomData: { text: 'hello' } },
+            data: { marqueeBottomDataList: [{ text: 'hello' }] },
             isScreen: false,
         });
         expect(syncSpy).toHaveBeenCalled();
@@ -817,7 +817,7 @@ describe('ScreenManager runtime orchestration', () => {
             {
                 screenId: 7,
                 type: 'foreground',
-                data: { quickTextData: { text: 'Hidden' } },
+                data: { quickTextDataList: [{ text: 'Hidden' }] },
             } as any,
             false,
         );
@@ -827,7 +827,7 @@ describe('ScreenManager runtime orchestration', () => {
             {
                 screenId: 7,
                 type: 'foreground',
-                data: { quickTextData: { text: 'Forced' } },
+                data: { quickTextDataList: [{ text: 'Forced' }] },
             } as any,
             true,
         );
@@ -835,7 +835,7 @@ describe('ScreenManager runtime orchestration', () => {
             screenId: 7,
             stage: 0,
             type: 'foreground',
-            data: { quickTextData: { text: 'Forced' } },
+            data: { quickTextDataList: [{ text: 'Forced' }] },
             isScreen: true,
         });
     });
@@ -924,7 +924,7 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeBottomData: { text: 'ignore' } },
+            data: { marqueeBottomDataList: [{ text: 'ignore' }] },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
 
@@ -933,7 +933,7 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeBottomData: { text: 'blocked' } },
+            data: { marqueeBottomDataList: [{ text: 'blocked' }] },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
 
@@ -941,12 +941,12 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeBottomData: { text: 'allowed' } },
+            data: { marqueeBottomDataList: [{ text: 'allowed' }] },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).toHaveBeenCalledWith({
             screenId: 10,
             type: 'foreground',
-            data: { marqueeBottomData: { text: 'allowed' } },
+            data: { marqueeBottomDataList: [{ text: 'allowed' }] },
         });
         expect(
             sibling.noSyncGroupMap.get(MockForegroundManager.eventNamePrefix),

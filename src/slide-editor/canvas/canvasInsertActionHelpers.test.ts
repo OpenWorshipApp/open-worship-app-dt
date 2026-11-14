@@ -63,8 +63,8 @@ describe('canvasInsertActionHelpers URL prompts', () => {
     });
 
     // `askForURL` translates its subtitle itself (InputUrlComp). Translating
-    // it here too handed Khmer text to `tran`, which throws on a missing key
-    // in dev and blanked the whole editor in Khmer.
+    // it here too handed translated text to `tran`, which throws on a missing
+    // key in dev and blanked the whole editor in a translated window.
     test.each([
         ['media-link', 'Media URL:'],
         ['youtube', 'YouTube URL:'],

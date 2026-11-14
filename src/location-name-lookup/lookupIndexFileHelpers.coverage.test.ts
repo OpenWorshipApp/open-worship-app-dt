@@ -202,26 +202,26 @@ describe('derived lookup files on a session-long module', () => {
     });
 
     test('a needles file is built from the index ids, stamped, then reused', async () => {
-        const needles = await loadLookupTextNeedlesFile('km');
+        const needles = await loadLookupTextNeedlesFile('xx');
         expect(needles).toEqual({
             version: LOOKUP_TEXT_INDEX_VERSION,
-            needles: ['needle-km'],
+            needles: ['needle-xx'],
         });
         // No index on disk yet, so it was built first and its ids handed on.
         expect(h.buildCount).toBe(1);
-        expect(h.needlesCallList).toEqual([['km', ['id-1', 'id-2']]]);
+        expect(h.needlesCallList).toEqual([['xx', ['id-1', 'id-2']]]);
         expect(h.lockKeyList).toEqual([
-            'lookup-verse-text-index-needles-km',
+            'lookup-verse-text-index-needles-xx',
             'lookup-verse-text-index',
         ]);
-        const written = readEnvelope(`${DIR}/verse-text-needles-km.json`);
+        const written = readEnvelope(`${DIR}/verse-text-needles-xx.json`);
         expect(written).toMatchObject({
             _appVersion: '2.0.0',
             _dataVersion: '7-8',
-            value: { needles: ['needle-km'] },
+            value: { needles: ['needle-xx'] },
         });
 
-        expect(await loadLookupTextNeedlesFile('km')).toEqual(needles);
+        expect(await loadLookupTextNeedlesFile('xx')).toEqual(needles);
         expect(h.needlesCallList).toHaveLength(1);
         expect(h.buildCount).toBe(1);
     });
@@ -232,14 +232,14 @@ describe('derived lookup files on a session-long module', () => {
             needles: ['written-by-the-winner'],
         };
         h.beforeLock = (key) => {
-            if (key.endsWith('-needles-fr')) {
+            if (key.endsWith('-needles-yy')) {
                 h.fileMap.set(
-                    `${DIR}/verse-text-needles-fr.json`,
+                    `${DIR}/verse-text-needles-yy.json`,
                     genEnvelope(otherNeedles),
                 );
             }
         };
-        expect(await loadLookupTextNeedlesFile('fr')).toEqual(otherNeedles);
+        expect(await loadLookupTextNeedlesFile('yy')).toEqual(otherNeedles);
         expect(h.needlesCallList).toEqual([]);
         expect(h.buildCount).toBe(0);
     });
@@ -262,7 +262,7 @@ describe('derived lookup files on a session-long module', () => {
         });
         h.createDirError = failure;
         expect(await loadLookupTextIndexFile()).toBeNull();
-        expect(await loadLookupTextNeedlesFile('km')).toBeNull();
+        expect(await loadLookupTextNeedlesFile('xx')).toBeNull();
         expect(h.handleError).toHaveBeenCalledTimes(2);
         expect(h.handleError).toHaveBeenCalledWith(failure);
         expect(h.buildCount).toBe(0);

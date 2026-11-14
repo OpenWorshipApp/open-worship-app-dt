@@ -29,6 +29,16 @@ others, make sure the structure is easy to follow_): every language is a
 folder of DATA, made by one factory, and the layout is written down in
 `src/lang/data/online/README.md` — read it before adding or changing a
 language.
+Then (2026-11-09, the user: _French and Khmer should not be special than any
+other online languages … everything related to khmer should be located in
+lang online km folder, french too_, and _all languages development, except
+english, should be treated the same way_): no code, test, script, dev
+procedure or doc instruction outside a package gives one language a role the
+others lack — no template language, no default pass language. The gate
+(below) holds every language alike and names none. Code finds a language by
+name through English's tables (`en/language-names.json`, `en/locales.json`);
+a language's own facts — its Bible catalog code (`catalogLanguageCodes`), a
+script-mark rule (`scriptMarkLocales`) — live in its own `world.json`.
 
 - **A package is a folder** — `src/lang/data/en/` (the default, always
   there, built in, the one package with an `index.ts`; since 2026-11-06 it
@@ -39,8 +49,8 @@ language.
   `src/lang/data/online/<code>/` for every other language, ALL made the
   same way (below). Required: `meta.json`, `dictionary.json` (what MARKS
   a folder as a package), `flag.svg`; the rest optional, each changing one
-  thing when present. Khmer (every file there is) and French (Latin
-  letters, its own Bible names and assistant) are the templates:
+  thing when present (`ls src/lang/data/online/*/<file>` shows which
+  packages carry one):
   - `meta.json` — the manifest, `{locale, order, name, nativeName,
 version, description}` plus `direction: "rtl"` and `editorLink` where
     they apply: the little the app needs BEFORE the package loads
@@ -64,7 +74,7 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     `src/others/langScriptHelpers.ts`); `words.json` — the little words a
     Bible search uses (stop words, book markers, asking words);
     `bibleReference.json`, `bibleBooks.json`, `bibleKeyMap.json`,
-    `fonts.json` + `fonts/`, `appMenus.json` (Khmer's **Khmer Tools**), the
+    `fonts.json` + `fonts/`, `appMenus.json` (items it adds to the app's menus), the
     cross-ref bundle and the names datasets; `openLyricPlugin.ts` +
     `package.json`, its song plugin, the ONE file of code (below).
   - `chatbot-asks/` — the language's eval sets for the skill scripts;
@@ -78,9 +88,193 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
     (`tests/chatbot/any-language-asks.json`).
   - `typed.json` — how a question TYPED in the language is told apart
     (name, Unicode script, little words, letters, a family, yes/no; read by
-    `src/chatbot/chatLangHelpers.ts`); `bibleSource.json` — what studying a
+    `src/chatbot/chatLangHelpers.ts` -- its little words must hold the
+    language's COMMONEST ones, shared or not: a list without them names a
+    short line in it another installed language, BN-33), and since
+    2026-11-08 (BN-31) how it
+    says the work the help window does with no model -- `textSizeAsks`
+    (larger, smaller) and `noteStyleAsks` (bold for the whole note), the
+    fields an `assistant.json` carries, read by `languageEditAskHelpers.ts`
+    and held one sample a language by `src/lang/data/tests/chatbot/
+    typedEditAsks.json` -- a bold never said with a word that also means a
+    colour or a size (BN-34), a size never said with a phrase that also asks
+    for more or fewer WORDS, a summary or capitals (name the size: BN-40, an
+    independent read of all 87 that found 31 such), the okina read as the
+    apostrophe (BN-39); a language no reader can confirm keeps only the phrases a BLIND reading gives back as their job, a size said in so many words (BN-41: nine trimmed, Oromo left with none); its little words hold what an ASK is made of -- add, at the end, make -- and a word two neighbours share goes into both lists (BN-42: Finnish's _tee_ named Estonian's lines Finnish until Estonian had it);
+    since 2026-11-12 (EC-465) `studyFileAsks` -- ONE pattern for a study
+    file asked for (`readStudyFileAsk`): a making word and a study word, and
+    none of its how-to, folder or note words nor its neighbours', never an
+    English line (held by `tests/chatbot/typedStudyFileAsks.json`, which
+    also holds each such ask to be named its own language in an English
+    app: a study is written, and its passage quoted, in the language its
+    ask is named); and the same day (EC-508) `studyKeepAsks` -- ONE pair
+    for _save that as a study file_ under an answer (`readKeepAnswerAsk`,
+    `checkIsStudyKeepAsk`): `keep`, its keep words, read first, and
+    `pattern`, compiled only for a line they read -- a word pointing at the
+    answer above and a study word, and none of the words asking for more,
+    nor its how-to, folder or note words nor its neighbours' (held by
+    `tests/chatbot/typedStudyKeepAsks.json`; a typed.json entry's last key,
+    or after `studyFileAsks` in an assistant.json). A keep verb that also
+    means _protect_ is read in a prayer only where the word for _this_ also
+    stands before a noun, so such a language says its word for God among
+    the words asking for more;
+    and `changeClaims` (EC-508 too) -- `claim`, `unsaved`, `save` and
+    `file`, the patterns an ANSWER in it claims a change with
+    (`changeClaimHelpers.ts`, compiled for an answer in it alone): the
+    assistant's own report of a change it made (a change word in a
+    finished, first-person form) -- never an offer, a step for the person
+    or what a person of the Bible did --, its "not saved yet" (`unsaved`,
+    apart since 2026-11-14, EC-700: no more than the truth of a new study a
+    card holds, so the reader of a change claimed of one reads `claim`
+    alone), the study card's Save changes as its dictionary words it, and
+    words pointing at the file itself (held by
+    `tests/chatbot/typedChangeClaims.json`; a typed.json entry's last key,
+    or after `studyKeepAsks` in an assistant.json) -- and, since 2026-11-13
+    (EC-607), `foreground`: an answer's report of a change to an overlay on
+    the screens (a countdown started or paused, the clock taken off,
+    everything cleared, a message put up, the screen turned on), first
+    person and finished, never an offer, a step, a denial or _I sent you a
+    message_, read in a foreground ask alone (held by
+    `tests/chatbot/typedForegroundClaims.json`, six claims a language at
+    its floor; optional, the last key of `changeClaims`);
+    and since 2026-11-12 (EC-516) `createAsks` -- word LISTS, not patterns,
+    for a request to MAKE something (`typedCreateAskHelpers.ts`, groups in
+    `CREATE_ASK_WORD_GROUP_LIST`): a running order or slide document,
+    passages to a Bibles list or a new one, a background web page, a video
+    or a track from a link, read into the English readers' shapes and sent
+    to the same routes. The request forms of make, save and fetch, with the
+    language's _I want_ / _give me_ / _get me_ (English's readers take them
+    too), never a past form; `howTo` and `done` (yesterday, already, a past
+    marker) make a line no ask; `*` at an entry's end or start reads a stem
+    or a compound, an ellipsis between parts a noun an adjective splits
+    (_a new order of service_ said _order new of service_). Held by
+    `tests/chatbot/typedCreateAsks.json` -- samples written BLIND by readers
+    never shown the words, each read as its job in an English app and in its
+    own, and the English corpus read as nothing in every language's app
+    (after `changeClaims`);
+    and, in either file, `foregroundAsks` (2026-11-13, EC-563) -- a
+    foreground component named in the language's own words, by its key
+    (`time`, `message`, `stopwatch` …) to a list of entries written as
+    `createAsks` writes them (a word, `stem*`, `*end`, `a … b`) and read
+    with its matcher in the language's own spacing, beside English's, by
+    `readForegroundComponentAsk` for every installed language: the
+    component a typed line is about, which makes it a foreground ask. Name
+    the Time and Message components only by a phrase or a word for a
+    CLOCK, never by an everyday word for "time" or "message"; where the
+    clock word is also the hour or "o'clock" (_jam_, _saat_, _Uhr_,
+    _kello_), only near the screen (`jam … layar`) or with what tells it
+    apart (`die uhr`). An entry weighs its longest part, so a stopwatch
+    whose name holds the clock word needs that name under `stopwatch`.
+    Every package has `time` since 2026-11-13 (EC-564), held to its own
+    dictionary's clock lines and a blind set by
+    `tests/chatbot/foregroundAsks.test.ts`, and `message`, `countdown` and
+    `stopwatch` since EC-605 the same day: its word for a message or an
+    announcement with its word for the screen, a projector or its canvas,
+    both orders (`boodskap* … skerm*`, `*sikrini*` where a prefix or a
+    linker joins it), and its dictionary's two labels with their last word
+    a stem, held to a second blind set at each language's floor
+    (`tests/chatbot/foregroundMessageAsksHeldOut.json`) -- and, where an ask
+    says _count down_ and not the label (EC-620, 23 languages), words
+    written blind and held to a THIRD set written blind after them and
+    never tuned on (`tests/chatbot/foregroundTimerAsksHeldOut.json`: three
+    countdowns, two stopwatches, two messages and three lines asking for
+    none, a floor each), the three sets' lines held to being READ as the
+    language they are typed in, one of its family or a script nobody here
+    names, at a floor each (`tests/chatbot/foregroundAsksLanguage.test.ts`,
+    EC-621: a Yoruba ask was answered in Portuguese, its `letters` lacking
+    the low-tone vowels it writes on nearly every word); `optionalMarks` (EC-640), the marks its writers
+    put in or leave out as they like (a vowel sign over a consonant, a
+    doubling sign, a stretching stroke), left out of a foreground ask's
+    line and of the language's own `foregroundAsks` before they are
+    matched (an Arabic countdown typed with its doubling sign had read as
+    nothing); a stopwatch or a countdown DESCRIBED with the language's word
+    for a clock -- "a clock that counts up from zero" -- said by phrases
+    whose longest part outweighs that word (EC-642: an Irish one had put a
+    clock on the screen), held to a fourth set written blind and never
+    tuned on (`tests/chatbot/foregroundTimerDescribedHeldOut.json`, a floor
+    each); the everyday ways of asking for a countdown, a stopwatch and a
+    message (EC-643: the second set had read most of its asks as nothing),
+    held to a fifth set (`tests/chatbot/foregroundEverydayAsksHeldOut.json`,
+    a floor each); and, in either
+    file, `screenAsks` (2026-11-14, EC-614) -- the screens' own controls
+    asked for in the language's words, as word lists written the way
+    `createAsks` are, one list a group (`SCREEN_ASK_WORD_GROUP_LIST`,
+    `typedScreenAskHelpers.ts`): `howTo` (every how-to the English reader
+    takes, in the language's own grammar: how do I, how to, where do I
+    click, press, find or turn it off, which button, show me or tell me
+    the steps, what are the steps -- a word for _steps_ tied to its show,
+    tell or what word as parts; never a bare _where_, _how many_ or
+    _which_, since _which monitor is screen 1 on?_ is the screens' tool's
+    to answer, nor a _can I_ that _I can't read the verse_ holds too; and
+    any line is a how-to when ANY installed language's `howTo` reads it,
+    whichever language it is taken for, so none may stop another
+    language's ask, nor an English one: the blind
+    second set sent 46 how-tos to the screens, 45 read as a transition,
+    before the third round gave every language the whole inventory),
+    `screen` (the screen, a
+    projector, a TV, a monitor, the app's own Screen and Mini Screen; with
+    no control's words, one or two digits right after an entry -- or an
+    entry that holds its own number, where the bare word is an everyday
+    one, `lau 1` -- read the screens, `checkHasScreenNumber`, EC-623),
+    `bible` (the Bible text, a verse, a passage, and the short names of
+    the Bibles the language reads, also under `versions` -- where one, by
+    itself beside a chapter's or a verse's number with no screen named, is
+    the passage put up in that Bible and reads nothing, `checkIsPassageInBible`:
+    _present Psalm 23 NIV_ had read as versions in 71 languages), one list a
+    control (`style`, `versions`, `lineSync`, `transition`, `display`,
+    `group`, `lock`, `stage`, `select`, `clear`) and `exclude` (a song's
+    words, a note, a foreground extra, the app, a phone, music, a group
+    of PEOPLE, and a countdown, a timer and a chorus: _a 5-minute
+    countdown on the screen_ is a screen's word and a number, and a
+    numbered reading of a line named no language is stopped by ANY
+    installed language's `exclude`). A control reads when its words are in the line with a
+    screen named or, on the Presenter, the Bible; there a transition and
+    Line Sync read alone, so those two lists hold nothing that is also an
+    everyday word: a word for _crossing_ or _change_ (the Red Sea, a
+    passage) or for _fade_ only beside a slide, background or change word,
+    as parts (`x* … y*`). No bare colour (_the Red Sea_), shadow (Psalm 23)
+    or _bigger_ under `style` (a Belarusian _больш*_ read Russian's
+    _большом экране_), and no Bible short name that is also a word
+    of the language. No _empty_ or _blank_ as a STATE under `clear` (_is
+    the projector showing anything, or is it empty?_), only its verbs, and
+    no word there or under `style` that also says a verse goes UP (a verb
+    for both _take off_ and _bring out_; the _big_ of _the big screen_).
+    An `exclude` word that is also part of a Bible book's name (a word for
+    _hymn_ inside _Psalms_) is narrowed to its other forms. A comma or
+    another mark between two parts counts as one of the three words their
+    gap may hold. An entry is in the language's own forms: a stem
+    another language shares (`transici*` took Spanish and Galician lines,
+    `displej*` a Slovak one) is not, because every installed language's
+    lists are tried on every line. Read by `readScreenAsk` for every
+    installed language, the language typed first: a how-to or an excluded
+    subject in the language typed reads nothing, English's reading too (a
+    French how-to naming _la transition_ had gone to the screens). In a
+    script that does not space its words, an entry of the language's own
+    letters matches anywhere and one of other letters (`tv`, `kjv`) as a
+    whole word (`checkHasListWords`: matched anywhere, `niv` was read
+    inside _university_). Every package has it, held by
+    `tests/chatbot/screenAsks.test.ts` to four sets written BLIND by
+    readers never shown the words, each read once before anything was
+    fitted to it (`screenAsksHeldOut.json`, `screenAsksHeldOut2.json`,
+    `screenAsksHeldOut3.json`, `screenAsksHeldOut4.json`): ten
+    asks a language at its floor, in its own app and an English one, and
+    seven lines that only look like them read as none, every language
+    installed; and in an `assistant.json`,
+    `buttonWords` (EC-562) -- the word for a button, after which a quoted
+    English word is a button's name, written in the language;
+    and, in either file, `lookAlikes` -- pairs of letters drawn the same
+    that keyboards and models swap, two sequences of one length, the first
+    kept (two subscripts a script draws alike, say), by which words a model
+    writes into a note are put back to the typed ones (BN-37); `bibleSource.json` — what studying a
     Bible in it needs (Hebrew's chant and joiner marks, a grammar hint, which
-    letters say a word is in it; `wordStudyHelpers.ts`); `world.json` —
+    letters say a word is in it; `wordStudyHelpers.ts`); `churchWords.json` —
+    its Bible's own words for what a Bible study names (_Son of Man_,
+    _eternal life_, Moses), each read off the verses of the Bible its
+    `source` names, never from memory, and `wordsChangeForm` (a sentence
+    changes its words, so the help window's study translator looks for one
+    by its stems; 2026-11-11, EC-491) -- the script its words are written
+    in is the one a study is translated into (EC-493: Serbian's Bible is
+    Cyrillic); `world.json` —
     what the Bible import and the lyric tools know of it in its own words
     (its own name, the word for "language", stop words, letters, marks;
     `tools/owa-devtools-mcp/worldLanguages.mjs`). Each carries `order` where
@@ -133,7 +327,9 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `language-plugins-runtime`). `extra-work/build-lang-plugins.mjs` builds a
   package into a folder (`meta.json` + a factory `<plugin>/index.js` + assets +
   the side JSON files + `tran.json`, the dictionary for the MCP server, +
-  `manual/` with its search index `manual/index.json`) and packs it for the
+  `langFacts.json`, its fonts and lookup flag for windows that only DRAW it
+  (memory `language-fonts-without-loading`, EN-59) + `manual/` with its
+  search index `manual/index.json`) and packs it for the
   catalog; the Languages tab installs it into `<data folder>/lang/<code>@<v>/`.
   `electron-build/lang/` — the read-only home a plugin could ship in — is
   still scanned and gets nothing (`electron:build` no longer runs the
@@ -144,11 +340,11 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   more, then Burmese and (the user: _add all missing translation language_)
   the 36 data-only folders, Azerbaijani to Zulu (2026-11-05) — 87 in all. **In dev nothing is there
   until installed**:
-  `npm run lang:pack -- --pack=km,fr` packs the named languages into the dev
+  `npm run lang:pack -- --pack=<code>[,<code>]` packs the named languages into the dev
   catalog `extra-work/lang/` (bare `npm run lang:pack` packs every one; the
   script is `node extra-work/build-lang-plugins.mjs --pack`, so its flags
   pass after `--`: `-- --bump=he`), then Settings → **Languages** →
-  **Install** — a Khmer pass of a live check starts there.
+  **Install** — a non-English pass of a live check starts there.
   A package's `meta.json` is its manifest:
   `{locale, order, name, nativeName, version, description}`.
 - **Every language is made by ONE factory, `online/onlineLangPackage.ts`**
@@ -180,9 +376,9 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   _everytime language data got modified it have to increase meta version_):
   any change in a language's folder raises `version` in its `meta.json` in
   the same change. The
-  scanner keeps the highest version, a tie goes to the shipped copy, and the
-  catalog keeps one entry per version, so a release under the old number
-  only replaces its pack and no installed copy updates. **And it is packed
+  scanner keeps the highest version, a tie goes to the shipped copy, and a
+  release keeps a version already published (`s3-push-lang.js` skips it,
+  2026-11-11), so a change under the old number reaches no one. **And it is packed
   again in the same change** (the user, 2026-11-05: _make sure run the pack
   everyting language got updated_): `npm run lang:pack -- --pack=<code>[,…]`
   for the languages touched, bare `npm run lang:pack` when a change touches
@@ -193,7 +389,7 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   is reached by deleting the installed copy and installing again). A
   window loads the INSTALLED plugin, not the source folder: an unpacked edit
   is invisible to a live check, and a key the installed copy lacks throws in
-  dev as if it were missing. Memory `language-data-change-bumps-version`.
+  dev as if it were missing. The help window reads a language's small files once, at load, and loads again by itself when the installed languages change while it is open (BN-45). Memory `language-data-change-bumps-version`.
 - **A language brings its own locale and direction**: `meta.json`'s
   `locale` and `direction`. The app's table of the world's locales is
   English's DATA, `en/locales.json` (`locales`, tag -> language code, and
@@ -238,8 +434,8 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `publishAiEndpoints` and again by `republishAiLangDirs` whenever a language
   is installed, deleted or turned on or off). Only where no app says — a unit
   test, a script, an app too old to publish `langDirs` — are the checkout's
-  source packages read, and only those the assistant is written for (an
-  `assistant.json`: Khmer and French): over all fifty the destructive-label
+  source packages read, and only those the assistant is written for (the
+  ones with an `assistant.json`): over all fifty the destructive-label
   rule was ~98 KB on every press and ~4 s to build, against ~4 KB and 0.1 s. The knowledge bundle (`build-knowledge.mjs`) is
   ENGLISH ONLY: `tran.json` with English's facts, English Bible names, and a
   `hash` on each English manual page, which a translation's `translatedFrom`
@@ -253,9 +449,12 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   `extra-work/language-confinement.mjs` fails on (1) any letter, mark, digit
   or sign of a script but Latin/Common/Inherited/Braille, or a Latin letter
   past ASCII, outside `src/lang/data` — in code, data, tests and comments,
-  and a non-Latin SCRIPT written as a `\u` escape too; (2) production code
-  quoting `km` / `fr` / their locales or a `data/km/` path (no exception
-  since the locale table became `en/locales.json`). `*.md`, `.claude` notes and
+  and a non-Latin SCRIPT written as a `\u` escape too; (2) non-test code
+  (comments excluded) naming ANY non-English language, every one alike and
+  none named by the rule (2026-11-09; until then it held `km` / `fr` alone):
+  a quoted non-English locale tag (`'xx-YY'`), a path into a package folder
+  (`data/online/xx/`, or the old `data/xx/`), or a code compared with a
+  lang/locale/code variable (`lang === 'xx'`). `*.md`, `.claude` notes and
   `docs/` are prose and exempt; the skills' scripts and JSON data sets are
   not. `node extra-work/language-confinement.mjs <path>` lists what is left.
   It cannot see ASCII words of another language (`chapitre`) or a font
@@ -288,17 +487,17 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
 - **Adding a language** is a folder in `src/lang/data/online/` with its
   `meta.json` (the next free `order`), `dictionary.json` carrying every key
   (`tranKeyCoverage.test.ts` holds every package to the others) and
-  `flag.svg` — copy `online/fr/` for a language in Latin letters,
-  `online/km/` for one with a script of its own (`README.md` there lists
-  every file) — then `script.json` when its script is not Latin, and
+  `flag.svg` — `README.md` there lists every file, and
+  `ls src/lang/data/online/*/<file>` shows which packages carry one to
+  start from — then `script.json` when its script is not Latin, and
   `assistant.json`, `questions.json` and `manual/` as it grows. Nothing
   outside the folder changes; an Open Lyric plugin is the one dependency,
   bundled into the language's plugin with `open-lyric/internal` left to the
   window (live bindings). **That dependency is the LANGUAGE's** (2026-11-05,
   the user: _for khmer plugin it have to ship with khmer language bundle_):
   declared in the package's own `package.json` (a locale-named
-  `open-lyric-plugin-<code>-<region>`, Khmer's is
-  `open-lyric-plugin-km-kh`), with its `package-lock.json` and an `.npmrc`
+  `open-lyric-plugin-<code>-<region>`;
+  `ls src/lang/data/online/*/package.json` lists the packages with one), with its `package-lock.json` and an `.npmrc`
   of `legacy-peer-deps=true` (the plugin's peer `open-lyric` is the app's
   copy and on no registry), installed into the package's own `node_modules`
   (gitignored) by `extra-work/install-lang-deps.mjs` -- run by the app's

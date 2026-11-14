@@ -12,14 +12,17 @@ vi.mock('./questionHelpers', () => ({
 }));
 
 import {
+    checkIsChangeReply,
     checkIsDraftEcho,
     checkIsWalkthroughEcho,
+    dropActionEchoReplies,
     genMessageReplies,
     genQuickReplies,
     parseAnswerFrames,
     parseAnswerOptions,
     parseAnswerShows,
     parseAttachRequests,
+    readReviewFixHeadings,
 } from './quickReplyHelpers';
 import { setChatTranslator } from './chatTranHelpers';
 
@@ -50,10 +53,304 @@ describe('parseAnswerOptions', () => {
         expect(parsed.text).toBe('Press **F9**.');
     });
 
+    // BN-47: a marker in a word the window does not know, read by the
+    // options' own shape -- and only that shape, only at the end.
+    test('options under a marker word of another language, by their shape', () => {
+        const parsed = parseAnswerOptions(
+            'The first line is bold now.\nXyzzy: Undo it | Make line two bold',
+        );
+        expect(parsed.options).toEqual(['Undo it', 'Make line two bold']);
+        expect(parsed.text).toBe('The first line is bold now.');
+        const inline = parseAnswerOptions(
+            'Done, the line is bold. Xyzzy plugh: Undo it | Bold line two',
+        );
+        expect(inline.options).toEqual(['Undo it', 'Bold line two']);
+        expect(inline.text).toBe('Done, the line is bold.');
+        // One item, a list one a line, or a line before the last: words.
+        for (const answer of [
+            'Done.\nXyzzy: Undo it',
+            'Steps:\n- Open the note\n- Press Save',
+            'Xyzzy: Undo it | Bold line two\nThat is all.',
+        ]) {
+            expect(parseAnswerOptions(answer)).toEqual({
+                text: answer,
+                options: [],
+            });
+        }
+    });
+
     test('an empty options line is removed too', () => {
         const parsed = parseAnswerOptions('Press **F9**.\nOPTIONS:');
         expect(parsed.options).toEqual([]);
         expect(parsed.text).toBe('Press **F9**.');
+    });
+
+    // BN-27 (2026-11-08, seen live): a note answer ended with a bare
+    // `OPTIONS:` and its three options on the lines below it, and all four
+    // lines were drawn as words, with no button.
+    test('options listed one a line under a bare marker are the options', () => {
+        const parsed = parseAnswerOptions(
+            [
+                'Added John 1:1 under the first line.',
+                'OPTIONS:',
+                '',
+                'Make it a heading',
+                '- Add more verses at the end',
+                '2. Change the text size',
+            ].join('\n'),
+        );
+        expect(parsed.options).toEqual([
+            'Make it a heading',
+            'Add more verses at the end',
+            'Change the text size',
+        ]);
+        expect(parsed.text).toBe('Added John 1:1 under the first line.');
+        // One listed option is not left in the text either.
+        expect(parseAnswerOptions('Done.\nOPTIONS:\nUndo it')).toEqual({
+            text: 'Done.',
+            options: ['Undo it'],
+        });
+        // BN-68 (2026-11-10, the empty note card's children's lesson): the
+        // choices as a bare `|` line right under the question asking them.
+        expect(
+            parseAnswerOptions(
+                'Which passage would you like?\n\nLuke 15 | Jonah 1 | Psalm 23',
+            ),
+        ).toEqual({
+            text: 'Which passage would you like?',
+            options: ['Luke 15', 'Jonah 1', 'Psalm 23'],
+        });
+        // Not under a statement, and never a table's row.
+        expect(
+            parseAnswerOptions('Here are the books.\n\nLuke | Jonah').options,
+        ).toEqual([]);
+        // BN-74 (2026-11-10, a lesson review): fixes to make are options
+        // under a statement too, the marker dropped -- every one of them.
+        expect(
+            parseAnswerOptions(
+                'It would make the point more complete.\n\n' +
+                    'Add why David fears losing the Spirit | ' +
+                    'Add meaning of verses 18-19 to Point 3',
+            ),
+        ).toEqual({
+            text: 'It would make the point more complete.',
+            options: [
+                'Add why David fears losing the Spirit',
+                'Add meaning of verses 18-19 to Point 3',
+            ],
+        });
+        expect(
+            parseAnswerOptions(
+                'It is strong.\n\nAdd a story | the good soil is missing',
+            ).options,
+        ).toEqual([]);
+        // BN-74 (the empty note card's children's lesson): passages to
+        // choose, one a line under an answer that asks, no marker -- and a
+        // passage's own name may run past an ordinary button's 40 letters.
+        expect(
+            parseAnswerOptions(
+                'Which Bible passage would you like the lesson to be about?\n\n' +
+                    'If you are not sure yet, here are a few that work well for children:\n\n' +
+                    'The Parable of the Lost Sheep (Luke 15:1-7)\n\n' +
+                    '- David and Goliath (1 Samuel 17)\n\n' +
+                    'Psalm 23 (The Lord is my Shepherd)',
+            ),
+        ).toEqual({
+            text:
+                'Which Bible passage would you like the lesson to be about?\n\n' +
+                'If you are not sure yet, here are a few that work well for children:',
+            options: [
+                'The Parable of the Lost Sheep (Luke 15:1-7)',
+                'David and Goliath (1 Samuel 17)',
+                'Psalm 23 (The Lord is my Shepherd)',
+            ],
+        });
+        // BN-84 (2026-11-11, _write an Easter sermon_): a passage whose
+        // story runs long keeps its reference and what of its story fits,
+        // never dropped -- two of three had been.
+        expect(
+            parseAnswerOptions(
+                'Which one would you like to use?\nOPTIONS: Luke 24:1-12 ' +
+                    '(The women find the empty tomb and hear the angels tell ' +
+                    'them He is risen) | John 20:11-18 (Jesus appearing to ' +
+                    'Mary Magdalene) | The resurrection morning when Mary ' +
+                    'and the other Mary came to the tomb (Matthew 28:1-10)',
+            ).options,
+        ).toEqual([
+            'Luke 24:1-12 (The women find the empty tomb and hear the…)',
+            'John 20:11-18 (Jesus appearing to Mary Magdalene)',
+            'The resurrection morning when Mary and the… (Matthew 28:1-10)',
+        ]);
+        // BN-97 (2026-11-11, the empty note card's preaching lesson): the
+        // passages closed by a question that asks to choose among them.
+        expect(
+            parseAnswerOptions(
+                'I would love to help you prepare this preaching lesson. ' +
+                    'Could you tell me which one you would like to use?\n\n' +
+                    "If you aren't sure yet, here are three options we could work with:\n\n" +
+                    'The Prodigal Son (Luke 15:11-32)\n\n' +
+                    'The Vine and the Branches (John 15:1-11)\n\n' +
+                    'The Armor of God (Ephesians 6:10-18)\n\n' +
+                    'Which passage shall we use, or do you have another one in mind?',
+            ),
+        ).toEqual({
+            text:
+                'I would love to help you prepare this preaching lesson. ' +
+                'Could you tell me which one you would like to use?\n\n' +
+                "If you aren't sure yet, here are three options we could work with:\n\n" +
+                'Which passage shall we use, or do you have another one in mind?',
+            options: [
+                'The Prodigal Son (Luke 15:11-32)',
+                'The Vine and the Branches (John 15:1-11)',
+                'The Armor of God (Ephesians 6:10-18)',
+            ],
+        });
+        // BN-171 (shape42's C-02, twice): closed by a line asking for
+        // another, not a question -- the passages are still its buttons.
+        expect(
+            parseAnswerOptions(
+                "I would love to help you prepare this children's lesson! " +
+                    'Since the note is currently empty, I just need to know ' +
+                    'which Bible passage or subject you would like.\n\n' +
+                    'Would you like a lesson on:\n\n' +
+                    'The Parable of the Lost Sheep (Luke 15:1-7)\n' +
+                    'David and Goliath (1 Samuel 17)\n' +
+                    'Jesus Calms the Storm (Mark 4:35-41)\n\n' +
+                    'Or please let me know if you have another passage in mind!',
+            ).options,
+        ).toEqual([
+            'The Parable of the Lost Sheep (Luke 15:1-7)',
+            'David and Goliath (1 Samuel 17)',
+            'Jesus Calms the Storm (Mark 4:35-41)',
+        ]);
+        // BN-222 (held-out H-07, a topical ask): a lead-in asking to choose,
+        // the passages a blank line apart, closed by what happens once one
+        // is picked -- no question anywhere.
+        const prayerAsk =
+            "Since you didn't specify a passage, I have selected three " +
+            'options for a sermon on prayer. Please choose one:\n\n' +
+            "The Lord's Prayer (Matthew 6:5-15)\n\n" +
+            'The Persistent Widow (Luke 18:1-8)\n\n' +
+            'The Prayer of Jabez (1 Chronicles 4:9-10)\n\n';
+        expect(
+            parseAnswerOptions(
+                prayerAsk +
+                    'Once you pick one, I will write the full lesson directly into your note.',
+            ),
+        ).toEqual({
+            text:
+                "Since you didn't specify a passage, I have selected three " +
+                'options for a sermon on prayer. Please choose one:\n\n' +
+                'Once you pick one, I will write the full lesson directly into your note.',
+            options: [
+                "The Lord's Prayer (Matthew 6:5-15)",
+                'The Persistent Widow (Luke 18:1-8)',
+                'The Prayer of Jabez (1 Chronicles 4:9-10)',
+            ],
+        });
+        // The lead-in alone, nothing under the passages, is enough.
+        expect(parseAnswerOptions(prayerAsk.trimEnd()).options).toHaveLength(3);
+        // A lesson's own words over the verses it used ask nothing.
+        expect(
+            parseAnswerOptions(
+                'I wrote the lesson. It reads these passages:\n\n' +
+                    'Matthew 6:5-15\n\nLuke 18:1-8\n\n' +
+                    'Once you save it, it is kept.',
+            ).options,
+        ).toEqual([]);
+        // A yes/no question under verses an answer cites is no choosing.
+        expect(
+            parseAnswerOptions(
+                'These say it too:\n\nJohn 3:16\nRomans 5:8\n\n' +
+                    'Would you like me to add them to the note?',
+            ).options,
+        ).toEqual([]);
+        // Verses an answer cites ask nothing; steps name no passage.
+        expect(
+            parseAnswerOptions(
+                'Those verses say the same.\n\nJohn 3:16\nRomans 5:8',
+            ).options,
+        ).toEqual([]);
+        expect(
+            parseAnswerOptions(
+                'Do you want it bigger? Here is how:\n\nOpen the menu\nPick Font',
+            ).options,
+        ).toEqual([]);
+        expect(
+            parseAnswerOptions('Which one?\n\n| Luke | Jonah |').options,
+        ).toEqual([]);
+        // BN-67 (2026-11-10, under every finished sermon): the marker in
+        // bold on its own line, its closing marks no words after it.
+        expect(
+            parseAnswerOptions(
+                'Done.\n\n**OPTIONS:**\n- Make the headings blue\n- Add a story',
+            ),
+        ).toEqual({
+            text: 'Done.',
+            options: ['Make the headings blue', 'Add a story'],
+        });
+    });
+
+    // BN-77 (2026-11-10): a review's fixes open on more verbs than the four
+    // asked for, and one with none to press offers the fixes it named.
+    test('a change to make, and the fixes a review named', () => {
+        expect(checkIsChangeReply('Grow Jesus from the river in v. 4')).toBe(
+            true,
+        );
+        expect(checkIsChangeReply('Rewrite Response to gather Big idea')).toBe(
+            true,
+        );
+        expect(checkIsChangeReply('Fix the verses in the three points')).toBe(
+            true,
+        );
+        // Pressed, it is answered in the chat as a question (BN-72).
+        expect(checkIsChangeReply('Explain the hardened heart')).toBe(false);
+        expect(
+            readReviewFixHeadings(
+                [
+                    'A strong lesson.',
+                    'Strengths:',
+                    '- Big Idea: clear and single.',
+                    '1. **Deepen the explanation of verse 3:** the crowd is more',
+                    '2. **Strengthen the "Pointing to Jesus" section:** it tells',
+                    'Response: it repeats the big idea.',
+                ].join('\n'),
+            ),
+        ).toEqual([
+            'Deepen the explanation of verse 3',
+            'Strengthen the "Pointing to Jesus" section',
+        ]);
+    });
+
+    // BN-29 (2026-11-08, seen live on Free's Nemotron): its options line was
+    // "Choices:", which stayed in the answer as words.
+    test('options under "Choices:" are the options', () => {
+        expect(
+            parseAnswerOptions(
+                'Saved.\nChoices: Undo this change | Add a verse',
+            ),
+        ).toEqual({
+            text: 'Saved.',
+            options: ['Undo this change', 'Add a verse'],
+        });
+        expect(parseAnswerOptions('Saved.\nCHOICES:\nUndo it')).toEqual({
+            text: 'Saved.',
+            options: ['Undo it'],
+        });
+    });
+
+    test('a list that is not short options is left as the answer', () => {
+        const longLine = 'word '.repeat(30).trim();
+        const text = ['Done.', 'OPTIONS:', longLine].join('\n');
+        // Too long to be a button: the bare marker alone goes.
+        expect(parseAnswerOptions(text)).toEqual({
+            text: ['Done.', longLine].join('\n'),
+            options: [],
+        });
+        // A marker WITH options keeps reading its own line.
+        expect(
+            parseAnswerOptions('Done.\nOPTIONS: Yes | No\n').options,
+        ).toEqual(['Yes', 'No']);
     });
 
     // Measured live on the first run: GPT-5 wrote the marker at the end of a
@@ -127,13 +424,19 @@ describe('parseAnswerOptions', () => {
         expect(parseAnswerOptions(text)).toEqual({ text, options: [] });
     });
 
-    test('empty, over-long and duplicate options are dropped, capped at 3', () => {
+    test('empty, over-long and duplicate options are dropped, capped at 5', () => {
         const parsed = parseAnswerOptions(
             'Done.\nOPTIONS: Yes |  | yes | ' +
                 'A reply far too long to fit on a button in this window | ' +
-                'Maybe | Later | Never',
+                'Maybe | Later | Never | Soon | Tomorrow',
         );
-        expect(parsed.options).toEqual(['Yes', 'Maybe', 'Later']);
+        expect(parsed.options).toEqual([
+            'Yes',
+            'Maybe',
+            'Later',
+            'Never',
+            'Soon',
+        ]);
     });
 
     test('an answer with no marker is returned untouched', () => {
@@ -328,22 +631,32 @@ describe('genMessageReplies', () => {
         }
     });
 
-    test('two options at most when the answer already has buttons', async () => {
+    // EC-584: five options, three beside buttons of the answer's own.
+    test('five options at most, three when the answer already has buttons', async () => {
+        const options = ['One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+        expect(
+            await genMessageReplies({
+                modelOptions: options,
+                answerText: 'Done.',
+                askedText: 'how do I present a verse?',
+                focus: 'presenter',
+            }),
+        ).toEqual(['One', 'Two', 'Three', 'Four', 'Five']);
         const replies = await genMessageReplies({
-            modelOptions: ['One', 'Two', 'Three'],
+            modelOptions: options,
             answerText: 'Done.',
             askedText: 'how do I present a verse?',
             actionLabels: ['Read the whole thing'],
             focus: 'presenter',
         });
-        expect(replies).toEqual(['One', 'Two']);
+        expect(replies).toEqual(['One', 'Two', 'Three']);
     });
 
-    // Measured live: an offline manual answer carries four buttons of its own,
-    // and two more under them made six under one paragraph.
-    test('the two rows together never pass five buttons', async () => {
+    // An offline manual answer carries four buttons of its own: the options
+    // under them stop at seven buttons in all.
+    test('the two rows together never pass seven buttons', async () => {
         const replies = await genMessageReplies({
-            modelOptions: ['One', 'Two'],
+            modelOptions: ['One', 'Two', 'Three', 'Four'],
             answerText: 'Done.',
             askedText: 'how do I add a background?',
             actionLabels: [
@@ -351,10 +664,11 @@ describe('genMessageReplies', () => {
                 'Do it for me',
                 'Read the whole thing',
                 'Add a background video from a link',
+                'Open the background panel',
             ],
             focus: 'presenter',
         });
-        expect(replies).toEqual(['One']);
+        expect(replies).toEqual(['One', 'Two']);
     });
 
     test('an answer already full of buttons gets none', async () => {
@@ -362,7 +676,7 @@ describe('genMessageReplies', () => {
             modelOptions: ['One', 'Two'],
             answerText: 'Done.',
             askedText: 'anything',
-            actionLabels: ['a', 'b', 'c', 'd', 'e'],
+            actionLabels: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             focus: 'presenter',
         });
         expect(replies).toEqual([]);
@@ -416,10 +730,13 @@ describe('genMessageReplies', () => {
         expect(replies).toEqual([
             'How do I clear the verse off the screen?',
             'How do I change the background?',
+            'How do I add a song?',
         ]);
+        // As many as the row has room for (EC-584).
         expect(genFollowUpQuestions).toHaveBeenCalledWith(
             'how do I present a verse?',
             'presenter',
+            5,
         );
     });
 
@@ -708,5 +1025,26 @@ describe('a removal is never a chip', () => {
             'Done.\n\nOPTIONS: Clear the search box | Show me',
         );
         expect(options).toEqual(['Clear the search box', 'Show me']);
+    });
+});
+
+// BN-53 (2026-11-09, the elder run): a Bible note answer drew **Undo this
+// change** twice -- its button, and the model's option of the same words --
+// because a note answer's options skip `genMessageReplies`.
+describe('dropActionEchoReplies', () => {
+    test('drops an option that repeats an action button, whatever its case', () => {
+        expect(
+            dropActionEchoReplies(
+                [
+                    'Undo this change',
+                    'Make the drawing larger',
+                    'undo this change.',
+                ],
+                ['Undo this change', 'Show it in the list'],
+            ),
+        ).toEqual(['Make the drawing larger']);
+        expect(dropActionEchoReplies(['Add a verse'], [])).toEqual([
+            'Add a verse',
+        ]);
     });
 });

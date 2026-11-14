@@ -135,7 +135,7 @@ describe('the File menu entries', () => {
 
     test('a click on any other menu entry is left alone', async () => {
         await render();
-        await state.listener!(null, { language: 'km-KH' });
+        await state.listener!(null, { language: 'xx-XX' });
         await state.listener!(null, { dataArchive: 'data-archive:other' });
         await state.listener!(null, null);
         expect(mocks.exporting).not.toHaveBeenCalled();

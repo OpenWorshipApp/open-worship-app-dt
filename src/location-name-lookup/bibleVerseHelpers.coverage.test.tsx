@@ -155,12 +155,12 @@ beforeEach(() => {
 
 describe('getLookupVerseBibleKey', () => {
     test('names the reader bible only outside English', () => {
-        expect(getLookupVerseBibleKey('km')).toBe('KJV');
-        mountReader('KHOV');
-        expect(getLookupVerseBibleKey('km')).toBe('KHOV');
+        expect(getLookupVerseBibleKey('xx')).toBe('KJV');
+        mountReader('XXV');
+        expect(getLookupVerseBibleKey('xx')).toBe('XXV');
         expect(getLookupVerseBibleKey()).toBe('KJV');
-        h.langCode = 'km';
-        expect(getLookupVerseBibleKey()).toBe('KHOV');
+        h.langCode = 'xx';
+        expect(getLookupVerseBibleKey()).toBe('XXV');
     });
 });
 
@@ -204,21 +204,21 @@ describe('the hooks a detail panel reads its bible through', () => {
     });
 
     test('follows the reader on its update event and lets go on unmount', () => {
-        h.langCode = 'km';
-        const reader = mountReader('KHOV');
+        h.langCode = 'xx';
+        const reader = mountReader('XXV');
         act(() => {
             root.render(<BibleKeyHostComp revision={1} />);
         });
-        expect(container.textContent).toBe('KHOV');
+        expect(container.textContent).toBe('XXV');
         expect(h.registeredList).toEqual([
             { eventList: ['update'], token: 'events-1' },
         ]);
 
-        reader.selectedBibleItem.bibleKey = 'KHSV';
+        reader.selectedBibleItem.bibleKey = 'XXS';
         act(() => {
             h.listenerList[0]();
         });
-        expect(container.textContent).toBe('KHSV');
+        expect(container.textContent).toBe('XXS');
 
         // English pins the KJV again, and the listener is swapped, not added.
         h.langCode = 'en';
@@ -237,7 +237,7 @@ describe('the hooks a detail panel reads its bible through', () => {
     });
 
     test('with no reader mounted it answers the KJV and listens to nothing', () => {
-        h.langCode = 'km';
+        h.langCode = 'xx';
         act(() => {
             root.render(<BibleKeyHostComp revision={1} />);
         });
@@ -246,14 +246,14 @@ describe('the hooks a detail panel reads its bible through', () => {
     });
 
     test('the font is the bible font, a fixed bible winning over the lookup one', async () => {
-        h.langCode = 'km';
-        mountReader('KHOV');
+        h.langCode = 'xx';
+        mountReader('XXV');
         act(() => {
             root.render(<FontHostComp />);
         });
         expect(container.textContent).toBe('no font yet');
         await flush();
-        expect(container.textContent).toBe('font of KHOV');
+        expect(container.textContent).toBe('font of XXV');
 
         act(() => {
             root.render(<FontHostComp fixedBibleKey="NIV" />);
@@ -280,11 +280,11 @@ describe('reading a reference the bible cannot resolve', () => {
 
 describe('verse data for a panel', () => {
     test('a one-chapter verse is read as plain text in its bible font', async () => {
-        expect(await shortToVerseData('KHOV', 'EZK 27:11')).toEqual({
-            bibleKey: 'KHOV',
-            title: 'EZK 27 in KHOV',
-            text: 'words of EZK in KHOV',
-            style: { fontFamily: 'font of KHOV' },
+        expect(await shortToVerseData('XXV', 'EZK 27:11')).toEqual({
+            bibleKey: 'XXV',
+            title: 'EZK 27 in XXV',
+            text: 'words of EZK in XXV',
+            style: { fontFamily: 'font of XXV' },
             sectionList: null,
             chapterCount: 1,
             shownChapterCount: 1,

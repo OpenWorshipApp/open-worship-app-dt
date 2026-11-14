@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import http from 'node:http';
-import { mkdtemp, writeFile, mkdir, rm, symlink } from 'node:fs/promises';
+import {
+    mkdtemp,
+    writeFile,
+    mkdir,
+    rm,
+    symlink,
+    realpath,
+} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import type * as FsModule from 'node:fs';
@@ -38,7 +45,11 @@ let base: string;
 beforeEach(async () => {
     fsState.failRead = false;
     fsState.reads = 0;
-    directory = await mkdtemp(path.join(os.tmpdir(), 'owa-content-cover-'));
+    // The real path: on macOS the temp folder is behind a link (`/var` ->
+    // `/private/var`), and a file published through a link is refused.
+    directory = await realpath(
+        await mkdtemp(path.join(os.tmpdir(), 'owa-content-cover-')),
+    );
     registry = new MirrorContentRegistry();
     server = http.createServer((req, res) => {
         void registry

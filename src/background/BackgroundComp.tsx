@@ -50,7 +50,7 @@ function RenderTabLabelComp({ labelKey }: Readonly<{ labelKey: string }>) {
 // True while the tabs' full words do not fit beside the Audios tab. The row
 // used to scroll sideways instead, which cut the last tab mid-word ("W" for
 // Webs) at the default width in English. Measured, not guessed from a width:
-// the same panel fits every Khmer label and not every English one.
+// the same panel can fit every translated label and not every English one.
 function useIsTabRowCompact() {
     const headerRef = useRef<HTMLDivElement | null>(null);
     const [isCompact, setIsCompact] = useState(false);

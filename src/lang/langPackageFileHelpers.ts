@@ -21,7 +21,7 @@ export function listBibleBooksLangCodes(): string[] {
 /**
  * Every Bible book name every installed language package writes, each name
  * once: a book named in a language other than the open Bible's still names
- * a book (Matthew's French name, with the KJV open). Read only when asked -- one small
+ * a book (Matthew's name in another language, with the KJV open). Read only when asked -- one small
  * file per package.
  */
 export async function listLangBibleBookNames(): Promise<string[]> {

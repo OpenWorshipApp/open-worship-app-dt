@@ -45,3 +45,40 @@ describe('parseAnswerOptions, a model that changed language', () => {
         expect(options).toEqual(['Yes, walk me through it', 'No thanks']);
     });
 });
+
+// BN-47 (2026-11-09, the 87-language run): the marker put into the person's
+// language -- by the model or by the translator -- is read by the options'
+// shape, whatever the word.
+describe("options under a marker in the answer's own language", () => {
+    test.each([
+        [
+            'Pierwszy wiersz jest pogrubiony.\nOpcje: cofnij tę zmianę | pogrub drugi wiersz',
+            'Pierwszy wiersz jest pogrubiony.',
+            ['cofnij tę zmianę', 'pogrub drugi wiersz'],
+        ],
+        [
+            'La primera línea está en negrita. Opciones: deshacer | otra línea',
+            'La primera línea está en negrita.',
+            ['deshacer', 'otra línea'],
+        ],
+        [
+            'Первая строка выделена.\nВарианты: отменить | выделить вторую строку',
+            'Первая строка выделена.',
+            ['отменить', 'выделить вторую строку'],
+        ],
+        [
+            'Dòng đầu đã được in đậm.\nCác lựa chọn: hoàn tác | in đậm dòng hai',
+            'Dòng đầu đã được in đậm.',
+            ['hoàn tác', 'in đậm dòng hai'],
+        ],
+        [
+            'บรรทัดแรกเป็นตัวหนาแล้ว\nตัวเลือก: เลิกทำ | ทำบรรทัดที่สองให้หนา',
+            'บรรทัดแรกเป็นตัวหนาแล้ว',
+            ['เลิกทำ', 'ทำบรรทัดที่สองให้หนา'],
+        ],
+    ])('%s', (answer, text, options) => {
+        const parsed = parseAnswerOptions(answer);
+        expect(parsed.text).toBe(text);
+        expect(parsed.options).toEqual(options);
+    });
+});

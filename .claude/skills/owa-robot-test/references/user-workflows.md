@@ -21,7 +21,163 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-08g** (**W-60, W-29, W-40 — ask the assistant about words you selected.** The user: _as a user I want to select bible note text then click the agent button then writing a qustion about the selected text_, then _add the agent button for bible selected text as well_, _should provide selection range in the input text for enough context, for bible should include selection range among bible verse_, _should reuse existing (attached window) chatbot tab_ and _for bible note selected text: if user did not ask anything then try to provide options for user, like spell check translation change case do google search_. The bar over selected words — in a Bible Note window, and over a verse in a Bible view — ends with a robot, **[en:tran:Ask the assistant about this]**, shown while AI is on. It opens the chat on that note or verse with the words quoted in the box: _Selected text_, where they are from and, for one line, their first and last character in it, then their line or verse with the selected words between two asterisks each side; the cursor waits on the line under it for the question. The words go into the chat already on that note or verse, else into one working in that window, else into a new one with the note attached or the passage's card read. Under a note's words a card asks _What would you like to do with “…”?_ with seven buttons. Seen live 2026-11-08 on the dev app (the user allowed the caution's **Open** to be pressed there; on that profile it was put away and did not come up): in _Lesson on John 3:16_, _force_ quoted as `Selected text (Lesson on John 3:16, 43-47):` over its line, the note attached, **Working in** the note's window and the card with its seven buttons; a second word of the same note went under the first quote in the same chat, the note attached once and a card of its own; in the Reader, _Son_ in John 3:16 opened a _John 3:16_ chat with the passage's card and `Selected text (John 3:16, 60-62):` over the whole verse; pressed again with another chat in front, the John 3:16 chat came back to the front and nothing was added twice. No question was sent: the card's five asking buttons, its Google search and its copy were not pressed live. CB-170, RD-108.)
+**workflowsVersion: 2026-11-14k** (**W-63 — a new screen, asked for.** The user's goal, _chatbot is very smart to help user control screen_ … _should cover everything in screen control_: the Mini Screen menu's **[en:tran:Add New Screen]** was the one control of the screens no ask could reach (EC-630). Seen live 2026-11-14 on a scratch profile, the Presenter with screen 0 showing John 3:16 and screen 1 off, Auto answering on the shared no-cost assistant: _Add a new screen for the stage_ in the English window, the menu's own Spanish label and an everyday Spanish line in a Spanish window, that Spanish line in the English window, a French line in a French window and the Khmer label and a Khmer line in a Khmer window each added screen 2, off and not ticked, the answer naming it, and **[en:tran:Undo this change]** took it away each time; with no assistant (the hourly limit paused it) _add a new screen_ got **[en:tran:Add New Screen]**, pressed it added screen 2 and its Undo took it away. Step 5 and W-63's last paragraph say so. CB-197.)
+
+Previous: **workflowsVersion: 2026-11-14j** (**W-50 step 2 — the guest’s page carries the Presenter header’s buttons, and the 🤖 opened there answers about it.** The user, with a picture of the Screen Mirror page beside the Presenter’s header: _screen mirror page should has all of this buttons_, the story _as a user I want chatbot help control screen mirror page as well especially ask for help_. Seen live 2026-11-14 on a scratch instance, Screen Mirror page: at the right of its top bar the [en:tran:Stay Awake] cup, the gear, 🤖, ✨ and **?**; **?** opened its menu ([en:tran:Open Online Help], [en:tran:Open Chatbot], [en:tran:Report a Problem]); the 🤖 asked the AI caution first (pressed [en:tran:Cancel] by the run — the caution’s **Open** is a person’s press, so the help window’s own picker on the page was not seen); the guide search asked from the page put this recipe first, its questions came up as the page’s own, and Help → [en:tran:All tips] listed the page’s lesson, which a walkthrough shows in words. A new paragraph says what to check when no host is listed. SP-32.)
+
+Previous: **workflowsVersion: 2026-11-14i** (**W-42 step 20 — the Bibles panel's **[en:tran:Add Bible Item]** asks how, and **[en:tran:Open in Chatbot]** opens a chat with its first line written.** The user, with the button circled: _when click `Add Bible Item` should open a context menu for `Bible Lookup` and `Open in Chatbot`, `Open in Chatbot` should open the chatbot and put pretext prompt to let user continue editing by pasting more bible paragraph_, the story _as a user I want to open chatbot with pre-existing prompt for letting assistant help extract bible items for me_. Seen live 2026-11-14 on a scratch instance, Presenter, no assistant: the button opened a menu of the two under it; **[en:tran:Open in Chatbot]** asked the AI caution first (pressed **[en:tran:Cancel]** by the run, which handed nothing over; the caution's **Open** is a person's press), and the request left as the button leaves it opened a new chat with _Add the Bible passages in this text to my Bibles list:_ in the box and the caret under it; a sermon paragraph pasted under it saved Psalm 23 -- read in the middle of a sentence -- John 3:16-17, Romans 5:8, 1 Corinthians 13:4-7 and Genesis 1:1 to Default; the line sent alone was answered and put back in the box; with the app in Khmer the menu, the line, a Khmer paragraph's passages (saved in the Khmer Bible) and both answers were Khmer (EC-760). PR-20, CB-181.)
+
+Previous: **workflowsVersion: 2026-11-14h** (**W-06 step 7 — a passage the assistant puts up is saved to the Bibles list first.** The user's rule, _the rule is bible verse have to save to list first (if not added) before show on screen_: _show gen 3 on screen_ had put Genesis 3 up, and the list never got it (EC-704). Seen live 2026-11-14 on a scratch instance, Presenter, Auto. `/verse Romans 8:28` saved the passage and put it up, and the answer said it was saved. _show gen 2 on screen_ and _put john 1:1 on the screen_ were each saved once and put up. A passage the list already held was put up and not saved again. Step 7 says so, in French and Khmer too. CB-61.)
+
+Previous: **workflowsVersion: 2026-11-14g** (**W-63 — with no assistant, the change as a button.** The user's goal, _chatbot is very smart to help user control screen_: with no assistant answering, a screen ask was told the setting and that nothing had changed, and nothing in the window could make the change (EC-627). Seen live 2026-11-14 on a scratch profile with the hourly limit paused, the window in English, screen 0 showing John 3:16 (KJV): a bigger verse, a lock, a zoom slide transition, another version (both side by side on the Mini Screen), _Centre it_ typed under the answer, bold and the Bible taken off screen 0 were each offered as a button, each pressed and each put back with **Undo this change**; a Spanish lock in the English window the same. W-63's last paragraph says so. CB-196.)
+
+Previous: **workflowsVersion: 2026-11-14f** (**W-42 step 20 — adding a passage is never showing it.** The user's report, _chatbot confused between adding bible item and showing bible verse on screen_: _add bible items for me for: john 3:16 gen 1_ had put Genesis 1 on the screen and saved nothing. Seen live 2026-11-14 on a scratch instance, Presenter, Auto: that line saved both passages with no assistant and the screen stayed blank; asked for _the verse that says the Lord is my shepherd_, the answer offered **Psalm 23:1** and pressing it saved it (EC-703).)
+
+Previous: **workflowsVersion: 2026-11-14e** (**W-42 step 20 — a list of passages pasted as it is, or inside a paragraph, saved to a Bibles list, and what is unclear asked.** The user's story: _sometime I carry a list of bible verses so I expect chatbot can parse and add those items into to the list_, _parse a messy bible verse_, _extract from a given paragraph, if ambigous bible verse then have to follow up to ask for user input_. Seen live 2026-11-14 on a scratch instance with the KJV and a Khmer Bible, the Bible Reader in front, no assistant: a messy list of four saved two at once and asked about an open range and a Bible not installed, each press saving its passage; a paragraph saved three and asked which book _Ph_ meant; with the app in Khmer the questions and **Skip** were Khmer (EC-626).)
+
+Previous: **workflowsVersion: 2026-11-14d** (**W-06 step 7 — a passage asked for in another language, with no assistant.** The user's goal, _chatbot is very smart to help user control screen_: with no assistant answering, a passage asked for in a language other than English, to put it up or to read it, had been answered with a guide page, because the offline reader knew English words only (EC-622). Seen live 2026-11-14 on a scratch profile with the hourly limit paused, the window in English, a Khmer Bible and the KJV installed: a Khmer line putting John 3:16 on the screen was read from the Khmer Bible, written as it names the book, with one button, which put it on the screen when pressed; a Spanish one, and a Spanish question about John 3:16 in the NVI, with no Spanish Bible installed, said the passage could not be read and offered **[en:tran:Import a Bible for me]**, whose press listed the 31 Spanish Bibles of the free collection; an English one was put up as before. A Spanish how-to is still answered from the wrong guide page (EC-454). Step 7 says so, in French and Khmer too. CB-61.)
+
+Previous: **workflowsVersion: 2026-11-14c** (**W-63 — with no assistant, the setting asked about.** The user's goal, _chatbot is very smart to help user control screen_, _check display_: with no assistant answering (the hourly limit paused it), a screen ask had been answered with what each screen showed — _check the display: which monitor is each screen on?_ named no monitor, and _make the Bible text on screen 1 bigger_ never said that nothing had changed (EC-625). Seen live 2026-11-14 on a scratch profile with the limit paused, the window in English: the monitor each screen is on, the transitions, the lock, the groups, the Bible versions, Line Sync, the Bible text's size, the stage and the tick, each said per screen, then what each screen shows and how to make the change; a Spanish monitor ask in the English window the same. W-63's last paragraph says so. CB-195.)
+
+Previous: **workflowsVersion: 2026-11-14b** (**W-63 — a line typed in another language.** The user's goal, _should cover everything in screen control_: until now only English asks went to the screens. Each installed language reads its own words for the screens' controls (EC-614), and W-63 says so in one paragraph. Seen live 2026-11-14 on a scratch profile, the assistant paused by its hourly limit: in an English window with Spanish installed, a Spanish line making the Bible text on screen 1 bigger and one locking screen 1 were each taken as about the screens and answered with what each screen is showing; a Spanish HOW question and a verse put up were not. The same in Japanese, which does not space its words: its style and lock asks were taken, its how-to and a song's words made bigger were not. Not yet seen with an assistant answering, so no step says what it changes. CB-194.)
+
+Previous: **workflowsVersion: 2026-11-14a** (**New W-63 — change the screens with the assistant.** The user: _chatbot is very smart to help user control screen_ -- _change font-size color or style for bible showing_, _add another bible version to existing showing bible_, _change transition_, _check display_, _group screen_, _should cover everything in screen control_. Typed in the help window on a scratch profile, the Bible text's size, colour, bold and shadow, centring, outline, line spacing and the style back to normal; a second Bible added beside John 3:16, lined up verse by verse and taken off; the slide and background transitions; the stage, the tick and a clear were changed by the assistant (`owa_screen_edit`, EC-611, EC-615), and _Undo that_ put a change back; which display each screen is on, what is showing, the versions and the transitions were read. Only those steps are written: moving a screen to another display, grouping screens and locking one were driven through the tool alone, and pressing **[en:tran:Undo this change]** in the window is not seen yet. CB-192, CB-193.)
+
+Previous: **workflowsVersion: 2026-11-13l** (**W-05 step 15 — a song's `Note` blocks shown, read-only, under its slides.** The user, with the song's `Note` block circled in the Lyric Editor, its slides showing nothing, and a PowerPoint's and a slide document's note boxes beside them: _like pptx I want those are rendered as read-only note, render all note on one whole document note, just make it looks division for each note element_, then _`Note *` is the special element that should be render in slide note_. Every `ol:Note` / `ol:Note N` block is a division of one **[en:tran:Document Note]** box under the Stage Previewer, the Presenter's only, there only for a song that has one. Seen live 2026-11-13 on the dev app in English, on the user's song: the box under the Stage Previewer with its one `Note` division, the collapsed Previewer above left as it was. Not yet seen live: a second note added and the last one removed in the Lyric Editor (held by `LyricHandlerComp.test.tsx`), a non-English pass. Verify: PM-180.)
+
+Previous: **workflowsVersion: 2026-11-13k** (**W-09 — a countdown a day or more away reads its days first.** The user, shown that 42 days read `⏳ 1001:54:52`, chose _41d 17:54:52, translated_. W-09's duration line said 25 h reads `25:00:00`; it reads `1d 01:00:00`, the day in the app's language. Seen live 2026-11-13 on a scratch instance in Khmer: 25 h 0 m 7 s and **[en:tran:Show Countdown]** read `⏳ 1 ថ្ងៃ 01:00:07` in the Mini Screen, and a countdown to Christmas `⏳ 41 ថ្ងៃ 23:16:57`. The French and Khmer pages say it too. Verify: PM-18.)
+
+Previous: **workflowsVersion: 2026-11-13j** (**W-57's "Not there?" — a PDF, PowerPoint or Word row carries **[en:tran:Open in Chatbot]** too.** Since 2026-11-13i a PowerPoint, Word or PDF row in **[en:tran:Documents]** carries the item, and the line still said a slide document only. Seen live 2026-11-13 on a scratch instance of the dev app, in Khmer: the item second in the menu of a PowerPoint, a Word, a PDF and a slide document row; not pressed (it asks the AI caution first). W-57 now says only a slide document has slides the assistant can change, and sends a song from such a file to W-42 step 18. Verify: PL-108.)
+
+Previous: **workflowsVersion: 2026-11-13i** (**W-42 step 18 — a song from a PowerPoint, a slide document, a Word file or a PDF in your Documents list.** The user: _chatbot have to support turning powerpoint to lyric, it related to creating lyric from documents file_, then _it should use the tool pptx-to-html-conv like what the app using, then extract text from the html_, _after powerpoint to lyric then appdocument to lyric_ and _also add other support like docx pdf ..._. _new lyric from powerpoint_ had been answered that the app cannot. Seen live 2026-11-13 on a scratch instance of the dev app holding a copy of the user's eight hymnal decks, a slide document, a Word file and a PDF, in English and in Khmer, no assistant asked: six decks listed as buttons and the way to the other two said; each deck written out under its whole title, all eight; a slide document's song saved through **[en:tran:Create]**; a Word file named in the question, and attached; a PDF's button; the slide document's card's **[en:tran:Make a song from it]**. Not pressed live: a Documents row's **[en:tran:Open in Chatbot]** (it asks the AI caution first) and a Resources file's card. W-42's Verify gains CB-189, which step 6's change named, and CB-190.)
+
+Previous: **workflowsVersion: 2026-11-13h** (**W-62 step 2 — choose your own AI program, and the agent asks which app.** The user: _for mcp connection, let user choose tool specific like chatgpt clause or just binary file path and so on_, _provide maximum options for user_, then _make the mcp to remind agent to check mcp version and app version_ and _this machine running 3 instances of open worship app so the mcp should check and let user pick one to work with_. The **[en:tran:AI agents (MCP)]** line is a picker now: a terminal command, a settings file's text, a plain JSON block or the program's path for the program chosen, one **[en:tran:Copy]**, and **[en:tran:Copy JSON]** gone. Seen live 2026-11-13 on the dev app and a scratch instance in Khmer: Claude Code, Cursor, the Codex config file, Continue and the program path copied exactly as shown, the choice kept; with two and three apps open a fresh server listed them and drove only the one chosen. Verify: ST-93.)
+
+Previous: **workflowsVersion: 2026-11-13g** (**W-42 step 6 — a word or two on its own is asked about first, and up to five buttons under an answer; steps 18 and 19 say which ⋮.** The user, with _lyric_ typed alone and answered with an apology: _when user type only few word, chatbot should follow up, before provide result should confirm_ -- the job in mind was a lyric file made from a PowerPoint -- and _keep providing user with maximum amount of options_. A word or two typed alone in a new chat is answered by the window with no assistant: a question and up to six of its own questions as buttons, a PowerPoint song into a lyric file among them; further down a conversation the assistant asks the same way. An answer ends with up to five buttons (two or three before). And the attach in steps 18 and 19 names the ⋮ at the left of the box -- the assistant had sent people to the TAB's ⋮. Seen live 2026-11-13 on a scratch instance of the dev app (Auto, the shared gemma4:cloud): _lyric_ answered at once with six buttons, the PowerPoint one pressed and answered with the attach steps, _background_ further down answered with a question and five options; in a French window _chant_ answered in French. CB-189.)
+
+Previous: **workflowsVersion: 2026-11-13f** (**W-42 steps 18 and 19 — several songs at once, from their links or their PowerPoint slides.** The user: _it work for only one url, I wish it could create multiple … also multiple files_, with eight PowerPoint decks of a hymnal dropped into their Documents to test with. Three links in one message had offered only the third song, two links were no song link at all, and a PowerPoint file could not be attached. Seen live 2026-11-13 on a scratch instance of the dev app, Auto on gemma4:cloud: four decks attached under _Create lyric files from these_ drafted in 2 s with no assistant asked, and **Create all 4 songs** saved four; three links in one message drafted three in 8 s and **Create all 3 songs** saved them; `/lyric` with two links drafted two in 6 s; all seven valid. A Word file is read the same way and unit-tested, not driven live, so this page names PowerPoint only. Verify: CB-188.)
+
+Previous: **workflowsVersion: 2026-11-13e** (**W-62 added — connect your own AI agent to the app.** The user: _as an ai user I want to install open-worship-app's extra-bin and have the executable mcp binarry file ready_, and _Show it in Settings_. Since pack 0.0.6 the Extra Binaries carry the app's MCP server as one program (`mcp/open-worship-app-mcp`), and the card has an **[en:tran:AI agents (MCP)]** line with **[en:tran:Copy]** and **[en:tran:Copy JSON]**. Seen live 2026-11-13 on a scratch dev profile on a Mac, in English and Khmer: installed, copied, the program finding the app on its own and refusing a destructive press, Claude Code reporting it connected; the line gone with the program's folder moved away. Verify: ST-93.)
+
+Previous: **workflowsVersion: 2026-11-13d** (**W-61 step 5 — clearing everything keeps no Undo, and the answer offers to put back what it took off.** The user's goal: _chatbot will be very smart to help user control foreground_. After _Clear everything from the foreground_ the answer had said nothing of what came off, and _how do I put it back_ offered a clock and a countdown that had never been up (EC-554, EC-555). Seen live 2026-11-13 on a scratch instance of the dev app in French and English, screen 0 off, Auto on gemma4:cloud, the Default Long Text Show holding _Morning Psalm_: the clear named _Morning Psalm_ and offered to put it back; the offer pressed put it back up (French, and one English run in one call; the other English runs asked once first); asked how to put everything back, the answer said to start each again from its panel and promised no Undo. Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-13c** (**W-61 steps 1 and 5 — _Put the long text up_ is done, and Undo takes it off the screen.** The user's goal: _chatbot will be very smart to help user control foreground_. _Put the long text up on the screen_ had been answered with the **[en:tran:Long Text Show]** panel's five steps while the session held a song ready to go up (EC-551), and **[en:tran:Undo this change]** under a Long Text Show the assistant put up had put the session back and left its text on the screen (EC-550). Seen live 2026-11-13 on a scratch instance of the dev app in English, screen 0 off, Auto on gemma4:cloud, the Default session holding _Morning Psalm_: _Put the long text up on the screen_ put it on screen 0 with no panel steps in the answer, which said the screen was off and to press its show button or F5; one press of the Undo took it off screen 0 and the window said _Default_ is back as it was; with John 3:16 put up first through the help window, the long text covered it and the Undo put John 3:16 back on screen 0. Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-13b** (**W-61 step 5 — Undo puts old words back on the screen, and the window names each session.** The user's goal: _chatbot will be very smart to help user control foreground_. **[en:tran:Undo this change]** under new words given to a marquee that was up had put the panel's words back and left the new ones on the screen (EC-546), and after the press the window had said a marquee it took away _is back as it was_, the countdown started beside it not named (EC-545). Seen live 2026-11-13 on a scratch instance of the dev app in English, screen 0 off, Auto on gemma4:cloud: a marquee put up with _Welcome_ and then changed to _Good morning_, the second answer's Undo — screen 0 showed _Welcome_ again and the window said it is back as it was; _Start a 3 minute countdown and put a marquee at the bottom that says Welcome, friends_, one press — both off screen 0, and the window said each of the two is taken away again. Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-13a** (**W-61 step 5 — Undo takes it off the screen.** The user's goal: _chatbot will be very smart to help user control foreground_. **[en:tran:Undo this change]** under a start had put the panel back and left the countdown running on the screen (EC-540). Seen live 2026-11-13 on a scratch instance of the dev app in English, screen 0 off: through the help window on Auto (gemma4:cloud), _Start a 3 minute countdown and put a marquee at the bottom that says Welcome, friends_ put both on screen 0, and one press of the Undo took both off; through the tools, a marquee undone beside a countdown left the countdown up. Not written: the window's sentence after the press (EC-545, open), and a Long Text Show, whose undo was not changed. Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-12q** (**W-42 step 20 — the asks to make a running order, a slide document, a Bibles list or a background work in any installed language.** `EC-516`, the user: _do EC-516_. They were read in English only; each language's words for such a request now come with it when it is installed. Seen live 2026-11-12 on a scratch instance of the dev app in English, Spanish and Khmer installed through Settings → Languages: a Spanish running order and slide document and two Khmer Bible list asks made by the window with no assistant, a Spanish background web page in one free round, and a Spanish how-to answered with steps and nothing made. Not pressed live: the link route, which replaces the system clipboard. Verify: CB-187.)
+
+Previous: **workflowsVersion: 2026-11-12p** (**W-37 step 6 — a Markdown Preview print leaves nothing of the page off.** The user's goal: _print preserve content_. A fold closed on screen prints open, every picture is on the paper however far down the page, and words typed in the editor a moment before **[en:tran:Print]** are printed too. Seen live 2026-11-12 on a scratch instance of the dev app in English, a dark window, against each printout's text and pictures: a closed fold's six words had been missing and were on the paper, marked open; a page printed just after it was drawn had had blank space for its two pictures, and had both; words dropped into the editor 57 ms before **[en:tran:Print]** were on the first sheet; 0 words of the page missing in 9 sheets. And the page stays as it was got ready until the paper is made: a line saved into the file beside it while the question was open was not drawn for 2.5 s, came 60 ms after **[en:tran:Cancel]**, and after **[en:tran:Print Page Only]** was not on the paper and was drawn once it was made. RD-135.)
+
+Previous: **workflowsVersion: 2026-11-12o** (**W-61 steps 1 and 5 — words that go away by themselves, and one Undo for two sessions.** The user's goal: _chatbot will be very smart to help user control foreground_. _Show a message at the bottom of the screen for 15 seconds: …_ had come up in the middle (EC-532), then as a Message, which stays until hidden, with the 15 seconds dropped (EC-538); and **[en:tran:Undo this change]** under a countdown and a marquee started in one answer took back the marquee alone (EC-539). Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: one start of a quick text at the bottom, the app's own answer _a line of text for 15 seconds_; and the one Undo pressed under the countdown and the marquee undid both. Not written: an Undo after a start leaves the overlay on the screen (EC-540, open). Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-12n** (**W-13 step 7 — the sections for a key of your own are named OpenAI (Custom) and Anthropic (Custom), in the window's language** (EN-64). They read _Custom OpenAI_ and _Custom Anthropic_ in English in every language. Read from the code and its unit tests (`BibleCrossRefRendererComp.coverage.test.tsx`), not seen live: the sections appear only with a key of one's own. RD-10.)
+
+Previous: **workflowsVersion: 2026-11-12m** (**W-37 step 6 — the Markdown Preview's editor and page keep together as you scroll.** The user: _when editor manual scrolling stopped then the preview should follow, when preview manual scrolling stopped then editor should follow_. Beside the editor each block of the page is marked with the line of the file it starts at; once the person stops scrolling one side, the other jumps to the same line, and the editor opens where the page is. Seen live 2026-11-12 on a scratch instance of the dev app in English, on the John 3 study: the mouse wheel over the page, then over the editor, and Page Down in the editor, each followed by the other side once it stopped, to the same line within a pixel, and neither followed back; **[en:tran:Edit]** pressed with the page at verse 8 opened the editor at verse 8; with the editor hidden the page carried no marks; nothing in the console. RD-134.)
+
+Previous: **workflowsVersion: 2026-11-12l** (**W-42 step 18 — a song typed on one line, labels and all, is a song.** The user's goal: _chatbot will be very smart to help user create presenter documents_. _Create a song called Morning Praise with these words: Verse 1: We lift our eyes to you this morning, Chorus: Holy, holy, holy Lord._ had been refused as not a song (one line), and once drafted came out "Untitled". Each label with a colon now starts a part, ` / ` starts a line, and the title named is the song's. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: drafted as **Morning Praise**, Verse 1 and Chorus; **[en:tran:Create]** saved it with both parts. Verify: CB-186.)
+
+Previous: **workflowsVersion: 2026-11-12k** (**W-61 steps 4 and 5 — more time on a countdown, everything cleared off the screens, and Undo only where there is one.** The user's goal: _chatbot will be very smart to help user control foreground_. _Add 2 more minutes_ had started the countdown over at 7:00 (the 2026-11-12i entry below says so); it now gives the countdown that is up two minutes more where it stands. _Clear everything from the foreground_ had taken one session off; it now takes every extra off every screen. Answers had offered **[en:tran:Undo this change]** after a show, a hide or a pause, which keep none. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: a paused countdown at 4:49 given two minutes more stood paused at 6:49; _Clear everything from the foreground_ was one step that left screen 0 with no extra on it (only the countdown was up at the time; a second extra on another screen was not tried). Read from the prompt and its unit tests, not asked again live (the scratch assistant was paused by its spend guard): Undo named only after a change that keeps one, and an off screen's holdings named. Verify: CB-183.)
+
+Previous: **workflowsVersion: 2026-11-12j** (**W-42 step 20 — a background web page asked for is made, a video or a song from a link is one press away, and a passage is never saved twice.** The user's goal: _chatbot will be very smart to help user create presenter documents, background resoures, presenting flow, bible item_. Both background asks had been answered with the steps. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: _Make a background web page with a soft blue gradient._ and _… a web background called Calm Sea showing slow waves?_ each made a page in **[en:tran:Webs]**, both thumbnails seen; _Add this video as a background:_ with a YouTube link answered at once with the link copied, **Show me step by step** ringing **[en:tran:Videos]**, and the **[en:tran:Download From URL]** box opening with the link in it (cancelled); the MP3 ask named **[en:tran:Audios]**; John 3:16 asked into a list holding it said so. CB-184, CB-185, CB-181.)
+
+Previous: **workflowsVersion: 2026-11-12i** (**W-61 step 1 — what the assistant put up or changed is held for the next question.** The user's goal: _chatbot will be very smart to help user control foreground_. A follow-up that named no component — _Make it bigger and red_ under _Start a 5 minute countdown_ — had been answered with the steps to open the panel, or had started another one. The session an answer put up or changed is now attached to that answer, so the next question is about it; new words or a time asked to go up are put up in one step in a session of their own, never over the panel's Default. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: a 5-minute countdown started, then made larger and red, paused, set to 7 minutes when asked for 2 more, and taken off the screen, each typed with no name; the time put on the screen, moved to the bottom right and set to 24 hours; a bottom marquee slowed and its words changed. CB-183.)
+
+Previous: **workflowsVersion: 2026-11-12h** (**W-56 step 3 — a part renamed, chords taken out, a chord changed everywhere.** The user's goal: _chatbot will be very smart to help user edit lyric_. _Take the chords out of the chorus_ had written nothing and been answered "done", and a part renamed had taken four changes, four undo steps. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud, on a public-domain hymn: the chorus renamed Refrain in one change, the play order with it; the chords taken out of the chorus, and of the whole song, words kept; every F made Fmaj7 in one change. Moving one chord is fixed in the tool but not yet re-asked live, so it is not in the step. CB-182.)
+
+Previous: **workflowsVersion: 2026-11-12g** (**W-42 step 20 — a running order, a slide document or a Bibles list asked for is made.** The user's goal: _chatbot will be very smart to help user create presenter documents, background resoures, presenting flow, bible item_. Typed in an ordinary chat, each had been answered with the steps to make it by hand. Seen live 2026-11-12 on a scratch instance of the dev app in English, Auto on gemma4:cloud: _Evening Service_ made empty with its card and the file in the box; _Sunday Welcome_ with its two slides; a slide of KJV John 3:16; a running order of a countdown, Amazing Grace and John 3:16; John 3:16 saved to Default; the Easter list made with its two passages; Hezekiah 3:1 named as read in no Bible; **Undo this change** taking a made file or list away. Old step 20 is step 21. CB-180, CB-181.)
+
+Previous: **workflowsVersion: 2026-11-12f** (**W-56 step 3 — a word fixed in a song keeps its chords and the lines under it.** The user's goal: _chatbot will be very smart to help user edit lyric_. Asked to fix one typo, the assistant had retyped the verse and the verse lost its chords and its translation lines under a _corrected_. Seen live 2026-11-12 on a scratch instance of the dev app, Auto on gemma4:cloud, a song with chords and a translation line under every line of its first verse: the typo, a word everywhere (the title named, not changed), a spelling check (_'Twas_ left), one translation line, and the translation lines taken out — each one change, every chord kept. CB-179.)
+
+Previous: **workflowsVersion: 2026-11-12e** (**W-37 step 6 — Ctrl+P and File → Print Without Preview ask first too.** The step said so of the head row's **[en:tran:Print]** only. Seen live 2026-11-12 on a scratch instance of the dev app in English, on the John 3 study: Ctrl+P and **File** → **Print Without Preview**, pressed for real (Win32 key presses, the menu bar opened with Alt), each asked the question, and after **[en:tran:Print Page Only]** Print Without Preview went on to the system's print dialog (closed with Esc, nothing printed). RD-132.)
+
+Previous: **workflowsVersion: 2026-11-12d** (**W-37 step 6 — a passage that begins inside one printed before goes on from that one's Bible.** On the user's John 3 study, **[en:tran:Add and Print]** printed `John 3:31-36` from the KJV, right after the Amplified chapter it begins in, because that chapter stopped at verse 31. A passage that begins within one printed before it from a Bible of its language, and is not held by it, now goes on from that one's Bible. Seen live 2026-11-12 on a scratch instance of the dev app in English (the KJV and the Amplified installed), on that study: `John 3:31-36 (Amplified)` after the Amplified chapter, 22 sheets; and **File > Print** (Ctrl+P) pressed for real in its Markdown Preview asking the same question, **[en:tran:Cancel]** printing nothing. Seen there too for **[en:tran:Sections]**: a page with no heading has none, a heading folded in a closed `<details>` is opened when it is picked, and the arrow takes the page back to its top. Seen in Khmer too, with the Khmer plugin updated: **[en:tran:Sections]** and the arrow named in Khmer, the folded heading opened the same way, nothing in the console. Not yet seen live: the list with the editor open. RD-132, RD-133.)
+
+Previous: **workflowsVersion: 2026-11-12c** (**W-37 step 6 — Sections, a list of a markdown page's headings to jump to, and an arrow back to the top.** The user, with the Markdown Preview of `JHN.3.The New Birth and God's Love.md` and its bottom-right corner circled: _add quick scroll top_; then, with the head row's space before **[en:tran:Edit]** circled: _add an icon there, to open list of titles … so when the markdown content has titles then it should allow doing quick jumping to the title_, as the story _as a user when I'm viewing the markdown that has many titles (sections) I want to jump to the title (section) by open panel of the title list then click to scroll to the section_. On a page with headings the head row gains **[en:tran:Sections]** (the list icon, before **[en:tran:Edit]**): the page's headings under the head row, each set in by its level, the one being read in the link colour; a click jumps there and closes the list. Once the page is scrolled, **[en:tran:Scroll to the top]**, the arrow the app's lists have, sits in its bottom-right corner, clear of the scrollbar. Neither is printed. Seen live 2026-11-12 on the dev app in English, on that study: **[en:tran:Sections]** listed its English and Khmer headings set in by level, the title marked; **Key Themes** pressed brought that heading to the top, closed the list and gave the focus back to the button; opened again after **The Ministry Transition** was jumped to, the list marked that one; the arrow keys, End and Esc moved along it and closed it, and a click on the page closed it; the arrow showed once the page had left its top and took it back there; printed scrolled down (**[en:tran:Print Page Only]**), the 16 sheets carried neither. Not yet seen live: a non-English language. RD-133.)
+
+Previous: **workflowsVersion: 2026-11-12b** (**W-37 step 6 — a reference with a Bible named in brackets after it prints from that Bible.** On the user's John 3 study, **[en:tran:Add and Print]** had printed the chapter headed `John 3:1-36 (Amplified)` in the KJV's words. A reference followed by an installed Bible's name in brackets now prints from that Bible, and a passage already printed holds a later reference from any Bible of its language when that reference names no Bible, from the same Bible when it does. Seen live 2026-11-12 on the dev app in English, on that study: `John 3:1-36` from the Amplified first, the plain English references inside it not again, `John 3:31-36` from the KJV because the Amplified chapter was cut after verse 31, and the Khmer chapter once, from the Bible its heading names, the Khmer references inside it held by it — 23 sheets. RD-132.)
+
+Previous: **workflowsVersion: 2026-11-12a** (**W-37 step 6 — a markdown page's verses, people and places can be added to the end of its printout.** The user: _when print if there bible verses and names, let ask user do they want to print those information. if yes then append to the last page with list of bible and name/location detail_, as the story _as a user I'd like to have bible text and name/location-name detail at the bottom of the pdf_. When the page names a verse, a person or a place, **[en:tran:Print]** first asks **[en:tran:Add the Bible text and the name and place details to the end of the printout?]** with how many of each it found; **[en:tran:Add and Print]** adds the words of each passage, then each person's and place's details, after the page's last line, **[en:tran:Print Page Only]** prints the page alone, **[en:tran:Cancel]** or Esc prints nothing, and a page naming none prints without asking. Seen live 2026-11-12 on the dev app in English, on the user's John 3 study: the question with _Verses: 42 · Names: 7 · Places: 4_; Cancel and Esc printed nothing; Print Page Only printed the 16 pages alone; Add and Print printed 23 — the page's last line, then John 3:1-36 from the KJV and from the Khmer Bible once each with none of its parts again, the other passages the study names, the names and places in Khmer (the language the lookup was set to) with a place's modern site, and _1 more could not be added._; the window held none of it after the print, and its memory went back to where it was before; a page naming nothing printed its one page without asking. In Khmer, with the Khmer plugin updated: the question, its counts and its three buttons in Khmer, its Cancel printing nothing. Not yet seen live: Ctrl+P (File ▸ Print) asking, which needs the app's main process started again. The new paragraph opens on a bold lead of its own, and **To change the file right there:** became one too, so the help window's known questions on this step each ride with their own part: before, the whole Markdown bullet was one passage, and the question about changing the file was handed the step's opening as the part that answers it. RD-132.)
+
+Previous: **workflowsVersion: 2026-11-11c** (**W-37 step 6 — names, places, verses and files in a markdown page are links; W-14 — a Markdown file made in Bible Notes.** The user, with the Reader's Lookup Detail panel for Moses and the Markdown Preview of `JHN.3.The New Birth and God's Love.md`: _bible resource markdown preview have to highlight name/location-name/bible-verse/other-resource and can click to view. for name/location-name/bible-verse have to open the floating panel in reader page and for the resource file referencing have to open its own window_, then, with the Bible Notes panel: _make markdown be the part of bible-note area as well, so user can create either bible-note or markdown file_. In the Markdown Preview, the people and places of the file's chapter, verse references in any installed Bible's book names, and other resource files named in the text are drawn as links; a name, place or verse opens its detail panel in the Bible Reader, a file opens in a window of its own. A link to another file opens it in a window of its own too, so **[en:tran:Back]** is gone. The Bible Notes menu reads **[en:tran:New Bible Note]** and **[en:tran:New Markdown File]** where it read **[en:tran:New File]**, and the list shows Markdown files beside the note files. Seen live 2026-11-11 on the dev app in English: **[en:tran:New Markdown File]** made `JHN.3.Markdown Check.md` in Bible Notes, listed with the markdown icon, its preview opened with the name as its heading; in it Nicodemus, Moses, `Ezek. 36:25-27`, `John 3:16`, `5:8`, `JHN.3.pdf` and `JHN.0.pdf` were links, a Khmer line of the study linked its reference and Nicodemus's name, words in code and a file that does not exist were left as written, and a press on `JHN.3.pdf` opened it in the PDF window. RD-131, PL-111.)
+
+Previous: **workflowsVersion: 2026-11-11b** (**W-37 step 6 — the Markdown Preview's 🤖, and words in its editor asked about.** The user, with the Markdown Preview window of `JHN.3.The New Birth and God's Love.md` and line 7 selected in its editor: _selected text in editor should have option to mention in chatbot input text, on the markdown file preview should have chatbot icon to attach and forcus on chatbot_. The head row ends in **[en:tran:Ask the Assistant About This File]** (the 🤖), which brings the help window forward with the file attached in a chat of its own. The editor's right-click menu offers **[en:tran:Ask the assistant about this]** for the words selected; they are quoted in the help window's box with the file's name and their line number, in the chat that already holds the file. Both only while AI is on. Seen live 2026-11-11 on the dev app in English, on the user's John 3 study: the 🤖, with all twelve chats open, put the file in the chat in front under its opening card, **Working in** naming the window; line 82 selected and asked about was quoted as `Selected text (JHN.3.The New Birth and God's Love.md:82):` in the chat holding the file. Not yet seen live: a selection over two lines, a non-English language. RD-130.)
+
+Previous: **workflowsVersion: 2026-11-11a** (**W-37 step 6 — a markdown file is printed from its own window, always light.** The user, with the Markdown Preview window of `JHN.3.The New Birth and God's Love.md`: _add a printing button to print the document_, the goal _100% printing alike_, then _have to print in light mode_. The head row gains **[en:tran:Print]** (the printer, after **[en:tran:Reload]**): a Print Preview of the page in the light theme whatever the window shows — a dark window's page in the light colours, its diagrams drawn light for the paper — with its fonts and layout, without the head row or the editor. Seen live 2026-11-11 on the dev app in English: the 16-page John 3 study printed from the window dark and from it light came out the same pixel for pixel on every page, its three diagram kinds and its Khmer pages included; while editing, the page alone at full width, the same pixel for pixel. And in Khmer, on a scratch profile with the app started again: the printer's title in Khmer, nothing thrown; a real Ctrl+P (File ▸ Print) in the dark window printed its 17 sheets light, diagrams included, the page in the window's own Khmer face, the same pixel for pixel as the head row's printer and as the window printed light. Set beside the window itself with its page as wide as the paper's, every line of every sheet breaks at the same word and sits within about a pixel of its place on screen, in the same colours; only the edges of the letters differ, drawn by another renderer. RD-129.)
+
+Previous: **workflowsVersion: 2026-11-11c** (**New W-62 — a song made from a PowerPoint, Word, PDF or slide file by the help window.** The user, 2026-11-10: _allow create lyric from non-lyric documents. e.g. user ask to create lyric from powerpoint file then chatbot should list available powerpoint files when user choose then chatbot should user all api to extract text and prepare for the lyric_. Seen live 2026-11-11 in the help window of a scratch dev profile, on Auto, in English: _make a song from my PowerPoint_ listed the one PowerPoint in Documents and no assistant was asked; pressing it, and later naming the file in the question, drew the song card -- title, three parts, both slide headings named as left out, _Every stage shows it in Battambang, the font of its slides_ -- and **Create** saved the song with that font in its file; `/lyric-from` listed both document files and a typed _1_ read the first, a slide document of pictured pages, which offered **[en:tran:Read the words off the pictures]**. Not yet seen live: that press (it sends the pages to an assistant, and nobody had said a slide's pictures may go to one), a Word file, a PDF, a long list, a non-English language. CB-179.)
+
+Previous: **workflowsVersion: 2026-11-11b** (**W-05 step 14 — a song's own font, on every stage.** The user, 2026-11-10, asking for songs made from a PowerPoint file: _preserve font-family in stage setting for the lyric_, and, asked, one font kept in the SONG and drawn on every stage, every other song keeping the app's own. **[en:tran:Song Font]** now heads the **[en:tran:Stage Style]** window, above _[en:tran:Applies to every song]_: the font is picked there or put back with **[en:tran:Use the app font]**, and the change is one of the song's own edits. Seen live 2026-11-11 on a scratch dev profile in English, on a song made from a two-song Khmer PowerPoint with the app's own tools: Song Font read Battambang and all 13 of a stage card's lines were drawn in it while another song stayed in Google Sans; **[en:tran:Use the app font]** drew the cards in the app font; the song's **[en:tran:Undo]** put Battambang back on the cards, **[en:tran:Redo]** took it off again, and with the window open the box followed the Undo (it had kept the font it opened with until this change). Not yet seen live: a non-English language, and the help window making the song (the AI caution is the person's). PM-179.)
+
+Previous: **workflowsVersion: 2026-11-11a** (**Every recipe due a read was read against the code** (`/owa-enhance-agent-docs`, 2026-11-10/11): the 52 whose words or cited code had moved since their last check, step by step against the files their `Verify:` rows cite, every correction then re-read by a second reader told no reason. Twenty recipes changed -- 46 wrong statements, 26 controls now written as templates: W-42 the picture and pointing tools are rows of the ⋮ left of the box; W-09 which panels dock their Show row, the margin link and what each preset sets; W-16 **[en:tran:Path Settings]** sits below **[en:tran:Languages]**; W-29 Jerusalem has 710 verses and an age reads in the lookup's language; W-31 a divider between panels that cannot collapse offers only **[en:tran:Reset Size]**, and a collapsed panel is a grey-striped strip (W-03, W-26 too), not a green one; W-34 a typed language that is not installed is offered for install first; W-56, W-57 and W-60 which language a translate button offers; W-60 the note window's robot sits after **[en:tran:Toggle Always On Top]**; W-23, W-24 an import lands in the folder the list is showing. Kept as written, routed as a possible regression: W-56's band note "never put on the screen" (one placed after a part plays). Not seen live: the Markdown Preview's Find bar (W-17, the code gives it one). Eleven recipes whose code another session had not committed were read against the last commit and wait for their stamp. The French and Khmer pages carry it.)
+
+Previous: **workflowsVersion: 2026-11-10m** (**W-21 — a download installs or updates the media tools itself, once asked.** The user, with a picture of Settings → Others → Extra Binaries reading _Not installed_: _when user attempt to download media the app should check the extra-bin install/update confirm install/update first before proceeding_. The intro: the first download asks **[en:tran:Media Tools Required]** and **[en:tran:Download and Install]** installs them and goes on downloading -- the box used to only offer to open Settings, and the download was lost; a newer published pack is asked about first, **[en:tran:Update Available]** with **[en:tran:Update]** / **[en:tran:Not Now]**. Seen live 2026-11-10 on a scratch development profile: no pack, **Download and Install**, _Installed "0.0.5"_, the video downloaded (100 MB); the pack set to 0.0.4, **Update** reinstalled 0.0.5 and the audio downloaded, **Not Now** downloaded with 0.0.4; the same two boxes in French. The French and Khmer pages carry it. MD-06, MD-08.)
+
+Previous: **workflowsVersion: 2026-11-10l** (**Two computers' work of 2026-11-10 merged.** The entries stamped 2026-11-10e to g further down came from one computer and stand as they were; the other computer's e to h were relabelled h to k. No recipe was changed by the merge.)
+
+Previous: **workflowsVersion: 2026-11-10k** (**W-37 step 6 — the markdown editor opens BESIDE the page.** The user, on the editor that took the page's place: _should edit on the left preview on the right_. **[en:tran:Edit]** now opens the editor on the left and keeps the page on the right, drawing the unsaved words a moment after typing stops; the pencil reads **[en:tran:Hide Editor]** while the editor is open, which gives the window back to the page (unsaved words still drawn there). Ctrl+S saves wherever the focus is. RD-128.)
+
+Previous: **workflowsVersion: 2026-11-10j** (**W-37 step 6 — a markdown file is edited in its own window.** The user, with the Markdown Preview window of `JHN.3.The New Birth and God's Love.md`: _I want the bible markdown preview be editable, let setup toggle editing (with monaco markdown) for bible markdown_; asked, an explicit Save rather than saving as you type, and the editor in place of the page rather than beside it. The head row gains **[en:tran:Edit]** (the pencil, **[en:tran:Preview]** while editing), **[en:tran:Save]** with Ctrl+S, a `*` for **[en:tran:Unsaved changes]** and **[en:tran:Discard unsaved changes]**; **[en:tran:Open in Default App]** is no longer named as the way to edit. RD-128.)
+
+Previous: **workflowsVersion: 2026-11-10i** (**W-37 step 6 — a Resources file opens in one more window on every press.** The user: _like bible-note resource window should be multiple, story: as a user I want to open 2 windows of one resource file so I can read different parts at the same time_. A PDF row and a markdown row, and their **[en:tran:Preview PDF]** / **[en:tran:Preview]**, now open another window on each press, as a Bible note's own window does, each a little below and to the right of the last; the 🤖 beside the row and the assistant's study preview bring forward a window already open on the file instead of adding one. Seen live 2026-11-10 on the dev app in English: `JHN.3.The New Birth and God's Love.md` and `JHN.3.pdf` each pressed twice, two windows of each, one Markdown Preview scrolled to its end while the other stayed on John 3:1-7; the study preview, asked with both open, opened none. Not yet seen live: the 🤖's own press (the AI caution is the person's), a read-only note of a `.own` file opened twice, and a non-English language. RD-118, RD-127.)
+
+Previous: **workflowsVersion: 2026-11-10h** (**W-05 step 9, W-10, W-15 (after step 10), W-19 step 6 — a Presets row in every style panel: Stage Style, a slide's canvas items, and the brush and spotlight of a Mini Screen and of Presenting Control.** The user, with the Stage Style panel beside Marquee Top's Presets row: _like foreground preset I want setting everywhere provide preset_, then _like stage setting, slide's canvas item setting, ..._ and _for slide editing make sure support dark/light preset_. Each panel now opens on the row a foreground component's Properties has: the app's own looks, the ones you saved, and **[en:tran:Save as Preset]**, whose saved chips offer **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]** on a right-click (30 at most). Stage Style: **[en:tran:Full Screen]**, **[en:tran:Center]**, **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]** set the layout and keep the stage's theme and Custom CSS, and one saved list serves every stage. A canvas item: **[en:tran:Plain]**, **[en:tran:Shadow]**, **[en:tran:Glass Effect]** (not on a picture or a video), and on a box of words **[en:tran:Highlight]**, **[en:tran:Urgent Alert]** and a **[en:tran:Dark]** / **[en:tran:Light]** switch that works the colours out for the side the words are on, as a foreground preset's are; one press is one **[en:tran:Undo]**. The brush: **[en:tran:Highlight]**, **[en:tran:Underline]**, **[en:tran:Bold]**; the spotlight: **[en:tran:Haze]**, **[en:tran:Strong]**, **[en:tran:Halo]**, each one list shared by every screen and Presenting Control. W-10 also gains the Mini Screen's own **[en:tran:Drawing]** / **[en:tran:Focusing]** button, which W-19 pointed to and W-10 never described; the looks are described there, and W-19 step 6 only says Presenting Control opens on the same ones — both pages stay under the 6 000 characters a supported question is handed whole (W-19 had 122 to spare). For the same reason W-05's words are few, so its first 6 000 characters still hold steps 10 and 11, and W-15's paragraph comes after its Save step, so every question filed under it is handed what it was before. Seen live 2026-11-10 on the dev app in English: Bottom Banner on Stage 0 kept its Custom CSS; a text box flipped Dark and Light, took Glass Effect, then Highlight, then Plain (the bold went with it), each press undone by one Undo; a picture offered Plain and Shadow and no switch; a Mini Screen's brush took Highlight and its spotlight Haze; Presenting Control's brush took Highlight (28px, 35%, Straight, HQ kept) and its spotlight Haze (Hold and the dim colour kept). Not yet seen live: a preset saved, renamed, replaced or removed (a name typed into the app's own box and a confirm, both the person's), and a non-English language. PM-178, ED-55, SP-35, PC-34.)
+
+Previous: **workflowsVersion: 2026-11-10g** (**W-60 — a devotion keeps to one point, a children's lesson tells its story, and the review can be asked again.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: a short devotion keeps to one point and a children's lesson tells the story in a child's words, printing only the verse or two it turns on; _is this a good sermon?_ may be asked again after a fix is made, for the next. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: eight lessons each drafted, then reviewed and its first fix pressed, twice -- every one of the sixteen reviews ended in buttons and every fix was made in place, 4-5 s a review; a devotion's fixes kept to its one point (_Add verse 10 to the main point_); a children's lesson on Jonah with the story told, two points, something to show and a prayer; the children's button's passages offered as buttons. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10f** (**W-42 step 8 — Retry under an answer, for a different answer.** The user, a picture of an answer's tool row with the spot between the reply arrow and 👍 circled: _add a rotate icon there to ask for retrying_; _as user I'd like to ask chatbot to retry again on the answer, so I can get different result_; the goal _try with different approach and different effort get different result_. The round arrows (**[en:tran:Retry]**) ask the answer's question again with what it was asked with, another way in each press and a step more effort, the new answer at the bottom under _A different answer: worked out another way, with more effort._, the box left as it was. Seen live 2026-11-10 on a scratch development profile's help window, Auto on gemma4:cloud: the arrows between the reply arrow and 👍 under every answer to a question and under none of a card the window wrote; pressed, the question came again, the note on the new answer, _and the colour too_ still in the box, the arrows greyed while it worked; the second press answered _the first way did not help_ with the reading view's **Full** where the first two had given the same Font Size steps. Then, at the user's next word (_try with another model (but keep the gemma4 for the next asking)_), a retry is asked of someone else: pressed under a gemma4:cloud answer it was answered by OWA Shared · Gemma 4 31b under _Auto asked OWA Shared · Gemma 4 31b this time._, AUTO PICK still reading gemma4:cloud, and the next question was gemma4:cloud's again. CB-175.)
+
+Previous: **workflowsVersion: 2026-11-10e** (**W-60 — an empty note offers a lesson, and _finish my sermon_ grows a lesson where it stands.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3's preaching bullet: an empty note opens on three buttons -- **[en:tran:Help me prepare a preaching lesson]**, **[en:tran:Help me prepare a children's lesson]**, **[en:tran:Help me prepare a short devotion]** -- and a lesson may be asked in any language; _finish my sermon_ (or _finish it_) puts each missing part where it belongs, a point of theirs growing under its own line, and loose lines become the lesson around them, none lost or written twice. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: 17 lessons asked or pressed into empty notes, each in one change, 7-12 s, 16 of them every part the standard asks for; the card pressed in Spanish and _Salmo 23_ typed, a whole Spanish lesson in the note in 13 s; four partial sermons finished -- an outline, three listed points, a near-whole sermon and six loose lines -- each every part in order, their words kept and none written twice, one change, 7-12 s. And _is this a good sermon?_ answers as a teacher of preaching would, its two or three fixes each a button: on a sower sermon it named the good soil with no point of its own, and **Add a point on the Good Soil** wrote that point in place in 6 s. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10d** (**W-42 step 7, W-61 step 2 — the help window's attach tools sit behind one ⋮ at the left of the box.** The user, with the five icons left of the box circled: _put those in vertical 3 dots_, _to save space for input text_. The paperclip, the camera, the pointer, the foreground-session button and the **/** button are now the rows of one **⋮** (**[en:tran:More Options]**), each its icon and its name, opening upward; the box takes the width they had. W-18 / W-22 / W-42 step 9 name **[en:tran:Attach a file]** in the **⋮** where they said the paperclip. Seen live 2026-11-10 on the dev help window in English: the ⋮ alone left of the box, the five rows opened above it, Esc closed it and gave the ⋮ the keyboard. CB-26.)
+
+Previous: **workflowsVersion: 2026-11-10c** (**W-60 — a preaching lesson, made and prepared by asking.** The user's goal: _chatbot completely smart enough to help prepare a best preaching lesson_. Step 3 gains a bullet: in a note that is still empty, _help me prepare a sermon on John 10:11-18_ writes a whole lesson into it, ready to preach -- the passage printed from your Bible, the big idea, the background, an introduction, three points each with its verses, an example and how to live it this week, how it points to Jesus, a response, a closing prayer, questions for discussion and a memory verse; beside a note with words in it, or in another chat, the lesson is a new note; with no passage named the assistant asks which one. Then the follow-ups a preacher asks: an illustration, cross references, more questions, a stronger conclusion, an object lesson for the children, a children's version, how long it takes, a review, finishing it, fitting it to 15 minutes, and checking its verses, which reads every verse the note cites and names a line that gives a verse another verse's words. Seen live 2026-11-10 on a scratch development profile, Auto on the shared gemma4:cloud: the sermon written into an empty note in one change, 9-15 s (it had taken 70-134 s through two servers that dropped the call and the free tier); each follow-up one change or an answer, 3-8 s; a planted wrong verse named and fixed; the same asked in Khmer with the Khmer pack installed, the lesson written in Khmer. The French and Khmer pages carry the bullet. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-10b** (**W-09 — Quick Text's Delay, Live and Infinite on one line; a dial that works Live out from the words, Slow → Medium → Fast; a taller box.** The user: _make those to be inline-block_, then _add button to re-calculated the live time (for slow, medium, fast) base on text length. click to get slow click again to get medium again to fast again to slow_, and _make textarea height higher_. The dial after Live (`Live: Slow / Medium / Fast`) shows no pace until pressed, then sets Live from the box's words at 110, 150 or 200 words a minute and names the pace; it greys with Infinite. The box (and its Preview) is 220px, was 120px. Seen live 2026-11-10 on the dev Presenter in English: the three on one line, the dial going Fast 50 → Slow 90 → Medium 65 on a six-verse Khmer passage. PM-177.)
+
+Previous: **workflowsVersion: 2026-11-10a** (**W-06 step 12, W-09 — a Bible Verse quick text stays up as long as its words take to read aloud.** The user, with Create Quick Text circled on a Khmer passage's row menu: _create quick text from bible verse should re-calculate live time base one text length_. The **[en:tran:Bible Verse]** preset wrote two minutes for every passage; it now works the **[en:tran:Live]** seconds out from the words in the box (`genQuickTextReadingSeconds` in `quickTextFormatHelpers.ts`: 150 words a minute plus 5 seconds, rounded up to 5, never under 10; verse numbers not counted; words counted by the browser's word segmenter, so a script written without spaces is counted by its words). Create Quick Text, the preset pressed in the panel and the assistant's verse quick text all go through it. Seen live 2026-11-10 on the dev Presenter in English: Create Quick Text on `(ពគប) សុភាសិត ១៧:១-៦` opened a new session with Live 65. PM-173, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09p** (**W-09 — Quick Text's timing is each session's own, with Infinite.** The user, with the panel's Delay and Live rows circled: _quick text: time control should be per session, and has an option for infinit. story: as a user I want to set timeout differently. default timeout 5 seconds delay 0 and infinite false_. Delay and Live were already kept per session; Live now starts at 5 seconds (was 3) and an **[en:tran:Infinite]** switch under it keeps the session's text up until it is hidden -- no timer runs, the Live box greys and keeps its number for when the switch goes off. The switch rides with the session's Show, a drag into a run sheet, and the assistant's show and read (`infinite`). Seen live 2026-11-09 on the dev Presenter in English: the row under Live, switched on in the `(ពគប) វិវរណៈ ៤:៥-៧ (2)` session with its 120 greyed, Session 6 keeping its own 10 and its switch off, the verse session's switch still on when chosen again, then turned back off. Not put on a screen live (the screen is the person's); unit-tested that an infinite quick text is never taken down by a timer. PM-177.)
+
+Previous: **workflowsVersion: 2026-11-09o** (**W-09 — Quick Text's Markdown Lesson.** The user: _for quick text, add button somewhere to open markdown lesson_, then _provide opening link as well `https://www.markdownguide.org/cheat-sheet/`_. **[en:tran:Markdown Lesson]** beside Edit / Preview opens the marks beside what the screen draws, above the box, with the cheat sheet one press away in the browser. Seen live 2026-11-09 on the dev Presenter in English: the lesson open over the user's own Khmer session, the link row on top, the editor below it; the link not pressed live (it opens the system browser; unit-tested). PM-172.)
+
+Previous: **workflowsVersion: 2026-11-09n** (**W-09 — every foreground preset in Dark or Light; presets of your own; every preset sized.** The user: _all foreground properties preset should support dark/light mode_, then _dark/light just do calculation to make current text and background color contrast_, _do not change background color but make it darker/lighter_, _make text color lighter/darker_, _and apply to the preset_; _foreground properties: allow saving the setting to a new preset_; with a picture of the Time's Bottom Right, its digits past the box: _the preset set shorter width, make sure all preset define well styling_; and _make the properties dark/light same with app theme (if not set by user)_. **Save as Preset** keeps a session's whole Properties under a name, per component (`foregroundSavedPresetHelpers.ts`), with Rename / Replace with Current Look / Remove on its right-click; every preset with words now sets its font size (a corner clock or timer 40px, Center 120px at scale 1 -- it had been scale 2 over the 100px default), the timers' and the clock's box is never narrower than its digits (`min-width: max-content`), and a session nobody has coloured follows the app's theme (read off the page root's `data-bs-theme`). The Presets row of every component with words and a box carries **Dark** / **Light** at its right, the side read off the words' colour; a press keeps each colour's hue and transparency and moves only its lightness, the box one way and the words the other, until the words read at 4.5 : 1 (`foregroundContrastHelpers.ts`), and a preset pressed afterwards goes on in that side. The marquees' own Dark and Light presets became that switch; their presets are Announcement, Bible Verse (slower) and Urgent Alert. Seen live 2026-11-09 on the dev Presenter: Quick Text's Presets row with the switch and each preset's icon in its colours; **Light** turning the session's white words on `#000000B3` into `#000000` on `#FFFFFFB3`, the Colors swatches following, and the assistant's read saying `presetSide: light`. Seen live later the same evening, while the person drove the window: the Time panel's row with Dark / Light and **Save as Preset**, and the clock's box holding `09:10:45 PM` in the mini screen. Not driven live by the agent (the person was pressing in the same panels throughout; each is unit-tested): a preset pressed on the Light side, a preset saved, pressed back, renamed, replaced and removed, the marquees' new presets, the theme default in a light window, and a picture show without the switch. PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09m** (**W-16, W-07 step 7 — the app's own faces (`app-Google-Sans`, `app-Battambang`) at the top of every font list, the Lyric Editor's and the Bible Note editor's too; W-06 step 12 — Create Quick Text sets the Bible's font.** The user: _add all language packages' font-family to all font-family list_, _app's font-family should be on top_, _why I don't see `app-Battambang`_, _it should list all enabled language packages'_, and, with Create Quick Text circled and the new session's Font reading `--`: _then the create Quick Text should set the bible's font-family_ -- _because all related bible text have to use its language font-family_. The `app-…` face a language draws its Bible text in had been left out of the lists; every list now opens on each enabled language's `app-…` face, then the families the languages ship, then the computer's; the Lyric Editor's list has a section per language above the computer's, and the Bible Note editor's two boxes list every package font (its main box sorts by name, which puts the `app-` faces first); a language installed or turned on reaches a window's lists without a reload. Seen live 2026-11-09 on the dev app (English, Khmer installed): Quick Text's _Properties_ Font list reading `--`, `app-Google-Sans`, `app-Battambang`, Google Sans, km-font-Fasthand, Battambang, then Agency FB; **Create Quick Text** on `(ពគប) ម៉ាថាយ ៣:៣-៥` opening the new session `(ពគប) ម៉ាថាយ ៣:៣-៥ (2)` with Font `app-Battambang`. Not opened live: the Lyric Editor's and the Bible Note editor's lists (unit-tested). PM-176, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09l** (**W-09 — every session's overlay is its own on the screen; W-07 step 7, W-16 — the languages' fonts in every font list.** The user: _each session of all foreground components should own it's screen render, e.g. for quick-text, when I show `(ពគប) ម៉ាថាយ ៣:៣-` then `Session 6` it should render both not override the showing one_, and _app's font-family (from language packages) should be available in everywhere of selecting font-family_. Countdown, Stopwatch, Quick Text and the two marquees held one overlay per screen, so a second session's Show took the first one down; each session now has its own up beside the others, its own Hide, its own Start and Pause. And every font list starts with the fonts the app's languages ship (Google Sans, Khmer's Battambang and its sticky-note hand), with the weights each ships. Seen live 2026-11-09 on a scratch English profile with Khmer installed: two Quick Text sessions on screen 0's preview at once, Session 2's Hide taking only its own off; two sessions' countdowns, Session 2 started and moved to the top right by its own preset while Default's waited at 5:00, both back after a reload; and Quick Text's _Properties_ Font list opening on Google Sans, km-font-Fasthand and Battambang, Battambang's weights 100 to 900. PM-175, PM-176.)
+
+Previous: **workflowsVersion: 2026-11-09k** (**W-09 — Quick Text margins in place of width; every component's Show row a docked footer with small buttons; X and Y on one line.** The user: _for quick text only I want to replace the width with margin like in lyric setting_, _move the link icon to the left_, _make the button showing button for every foreground item smaller … and make the footer area sticky footer_, and of the X / Y boxes _this should be inline_. Seen live 2026-11-09 on a scratch English profile: Quick Text's _Properties_ with the two margin rows and the link left of the vertical slider, an emptied box given the Bible Verse example (`### (KJV) John 3:16`, 45px, full width, flush, 120 s), the Round px box kept while emptied, the Show Quick Text and Show Stopwatch rows docked at the panel's bottom with _Properties_ open, and the assistant's `preset: center` on a Countdown. PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09j** (**W-09 / W-06 step 12 — the Bible Verse look is the user's own; an empty box gets an example; the Round px box stays while it is emptied.** The user, pointing at their own Matthew 3:3-5 Quick Text session: _use current setting of ... for default bible preset_, then _bible preset: text 45px, align left with full_ and _title with `### `_ -- the band now full width and, at _remove the vertical gap_, flush on the bottom edge (Y 0), 45px, set left, the reference a `### ` heading, two minutes on screen, smaller only past about three verses. _when the input is empty and preset clicked then use example, e.g. (kjv) john 3:16 for bible example_ -- every Quick Text preset has one. And, with the Round row circled: _not font-size but input value for rounding, when all removed then no input number anymore_ -- emptying the px box had written 0, which is the percentage, and the box vanished; it stays now. Unit-tested; the Round box and the example not pressed live (the user was working in the panel). PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09i** (**W-09 — a Bible Verse look fits a long passage; an upright preset takes italics back; W-61 — the assistant gives any component its own presets.** Seen on the real screen window 2026-11-09 (screen 1 on for 15 s, at the user's word): ពគប Proverbs 17:22-28, seven verses, came up as a band at the bottom at 28px with its reference bold and centred; the verse lines had kept the italics an earlier Sermon Title gave them, which a Bible Verse now takes back. And the user, with the Mini Screen's Matthew 3:3-5 band circled: _check why there a margin at bottom_ -- the Bible Verse look's **Y** of 40px, which reads as a margin once the band is widened to 100%; W-09 says so. The assistant's `preset` now takes every component's own (`read` lists them). PM-173.)
+
+Previous: **workflowsVersion: 2026-11-09h** (**W-09 — Presets in every foreground component's _Properties_; a Quick Text preset sets the markdown too.** The user: _add preset to all properties in all foreground components_, _preset should be part of properties block_, then _for quick-text should have should have the markdown format preset as well_. The Quick Text's own Presets button beside Edit / Preview is gone: **[en:tran:Presets]** is the first row of _Properties_ in every component but Long Text Show, each component with looks of its own; a Quick Text preset also sets its seconds and its markdown (the first line a title, every word kept). Seen live 2026-11-09 on the dev Presenter: Quick Text's six in its _Properties_, **[en:tran:Sermon Title]** setting centre, 75%, 64px, Live 10 and `## ` before the first line; Countdown's four listed. And on a scratch profile in Khmer: the Bible row's **[en:tran:Create Quick Text]**, the six Quick Text presets and Countdown's four in Khmer, **[en:tran:Speaker]** turning the reference into a heading in **[en:tran:Preview]**, Countdown's **[en:tran:Center]** writing scale 2. PM-173 amended.)
+
+Previous: **workflowsVersion: 2026-11-09g** (**New W-61 — change a foreground component with the assistant.** The user: _chatbot can help modify any foreground component_ -- _start a countdown for 5 minutes_, _show top marquee for a given message_, _make a quick-text for a given bible verse_ -- then, with a panel's `Default · Session 2 · +` strip circled: _sessions of opening foreground component should be able to attached to the chatbot for the chat context_. Typed in any chat, a countdown, a marquee, a quick text, a message or a clock goes into a NEW session named after it (or one already holding it), its panel opened on it and put up the panel's own way on the ticked screens; a verse is read from the installed Bible. A session is attached to a chat from its button's menu (**[en:tran:Open in Chatbot]**), the robot in its panel's header, or **[en:tran:Attach a foreground session]** under the box, and then changed in place: words, time, size, colours, place, frame, layer, speed, the timer. Seen live 2026-11-09 on a scratch development profile through a fresh owa-devtools server: a 5-minute countdown started on the Default session that already held 5:00; _Welcome to our service_ on the top marquee as a session of that name; John 3:16 as the quick text session `(KJV) John 3:16` with the Bible Verse preset, its panel opened with the robot in its header; the quick text made larger, gold and top right on the wall and in its panel; the countdown paused (the panel read Resume); a marquee asked to move refused with what it takes; and the undo putting the look back on the wall and in the panel; a right-click on a marquee session opening its menu with **[en:tran:Open in Chatbot]** (not pressed). The help window's own parts -- the attach row's list, the card and a question typed under a chip -- are unit-tested and not yet seen live (the AI caution in front of the window is a person's press). PM-174, CB-172.)
+
+Previous: **workflowsVersion: 2026-11-09f** (**W-09 — Quick Text's Preview and Presets; W-06 step 12 — Create Quick Text from a saved passage.** The user, with the Quick Text panel's markdown box: _update to allow previewing the markdown_; then, with a Bibles-list row's menu and a Quick Text band on the mini screen: _add `Create QuickText` to make a foreground quicktext for the bible verse_; then _add quick text properties preset for me for the use cases like bible verse, speaker, song title, event session, ..._. **[en:tran:Preview]** / **[en:tran:Edit]** above the box; **[en:tran:Presets]** beside them with six looks; the row menu's **[en:tran:Create Quick Text]** under **[en:tran:Create Lyric]**. Seen live 2026-11-09 on the dev Presenter: the sample drawn as a heading, bold and italic; ពគប Proverbs 17:22-28 made the session `(ពគប) សុភាសិត ១៧:២២-២៨`, Live 20, Properties bottom centre, 90%, 44px; **[en:tran:Speaker]** then moved it bottom left, 40%, 40px, blue, Live 10. Not put on a screen live. PM-172, PM-173, CM-103.)
+
+Previous: **workflowsVersion: 2026-11-09e** (**W-42 — reply to an answer; W-29 — a note asked for under a passage.** The user, with **Copy** circled under three answers: _right next to the copy icon add reply icon, click reply to mention it in input text_, _as a user I want to be able to follow up a section_. Step 8: a reply arrow right of **[en:tran:Copy]** writes the answer into the box under _Replying to your answer:_, or, with words of it selected first, only those words under _Replying to this part of your answer:_, for a question typed under it; nothing is sent until **[en:tran:Send]**. And the user, _save to a bible note_ answered with **[en:tran:Save to my Bibles list]**: _bible note referring to bible-note document_. W-29: asked to keep something that is not the passage -- a note, a file, the lesson -- the passage chat names no button and makes a new Bible note. Seen live 2026-11-09 on the dev app's help window, English app, a Khmer chat on ម៉ាថាយ ៣:១-១៧: the arrow under every answer; the lesson quoted; one double-clicked word quoted alone; _save to a bible note_ made the note _មេរៀនពី ម៉ាថាយ ៣:១-១៧_, opened in its own window. A question typed under a quote was not sent live. CB-171, CB-154.)
+
+Previous: **workflowsVersion: 2026-11-09d** (**W-60 — formatting a messy note, drawing, and a lesson prepared by asking.** The card a note opens with offers **[en:tran:Format it so it is neat and easy to read]**: a messy note -- parts written as plain lines, questions run together on one line, a reference written in words, lines in capitals, one long paragraph -- is made a tidy one in one change, its words kept. A drawing (Insert → **Excalidraw**) is described in words and can be laid out across, round a circle or round one box, made bigger, its boxes coloured and drawn again with a box added; asked for a picture of a thing, the assistant says it cannot draw one. A lesson on another subject goes into a new note, never over this one; a hello or a question changes nothing; a worry right after a change is put back with Undo. Seen live 2026-11-09 on scratch development profiles: 600 things an elderly, non-technical church member types while preparing a lesson, 593 of 599 graded done as asked; three messy lessons each formatted in one change. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-09c** (**W-60 — Undo always there, options in any language.** **Undo this change** puts a change back however many were undone just before -- it had been refused after ten in five minutes. The buttons under an answer are buttons in any language, also when the assistant names them in the person's own word for options; and an answer that came back in English when another language was asked for is put into it, or says it could not be. Seen live 2026-11-09 on three scratch development profiles: _make the text bigger_ done by the window in 82 languages, _make the first line bold_ in all 87 -- 81 with the first line bold, nothing else touched and the answer in the language -- and 176 presses of **Undo this change**, every one putting the note back. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-09b** (**W-60 — every language checked live, a line said twice, a language installed mid-conversation.** The same ask -- a line added at the end, in words of the language -- was put in all 87 installed languages on scratch development profiles (the free tier, and the shared gemma4:cloud it handed on to while the free tier's credit was out): every one added the line exactly as typed in one change, and answered in the language once its package knew its own words for _add_, _at the end_ and _make_ (22 languages had lacked them). A line the note already has is added again when asked -- it had been refused, and the assistant had then said it was added. A language installed while the help window is open is taken by it: the window loads again as soon as nothing is on its way, keeping the conversation, so its own shortcuts work at once (Thai _ขยายตัวอักษร_ done by the window right after Thai was installed). Khmer's _ដាក់អ្វីៗទាំងអស់នៅកណ្ដាល_ and _ប្រើ Georgia សម្រាប់កំណត់ត្រាទាំងមូល_ are done by the window, as the page says; and the whole manual is in Khmer and French, every page current. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-09** (**W-60 — the words you typed, letter for letter, and an Undo that stays.** Words you type for the note go in exactly as you typed them, even where the assistant wrote a letter that only looks the same (a Khmer subscript); **Undo this change** puts the note back and it stays back with the note's window open; and the page is in Khmer and French. Seen live 2026-11-09 on a scratch development profile with Khmer, Arabic, Thai, Chinese, Russian, Spanish and Tongan installed, on the free tier's Nemotron: a line added at the end in each of the six languages, twice each -- every time one change, the words exactly as typed, the answer in the language, and **Undo this change** keeping the note put back (Chinese, Russian and Spanish had found their undone line still there on the next ask); in Tongan on Auto, _make the first line bold_ said with the word bold made it bold in one change, answered in Tongan; six more languages on the free tier (Hindi, Korean, Japanese, Vietnamese, Indonesian, Swahili), twice each, the same; and the window's own shortcuts no longer take a phrase that could also mean more or fewer words, a summary or capitals (Swahili _ongeza herufi_, "add letters", went to the assistant; _ongeza ukubwa wa herufi_ was done by the window), nor a bold said with a word for dark. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08j** (**W-60 — every language at once, and a change never hidden.** A question typed in any installed language is answered in that language, also with many languages installed that share its little words or its letters -- a Hausa, Kinyarwanda, Shona, Fijian, Kirundi, Ukrainian, Bulgarian, Macedonian or Nepali line had been answered in Romanian, Hausa, Kirundi, Russian or Hindi. _Make all the text bold_ typed with a language's word for black is no longer made bold by the help window itself (somebody asking for black text would have got bold); the window's own bold takes the word "bold" in those languages, and anything else goes to the assistant. A part of the note given back its own words keeps everything the editor put there -- a comment, a space inside bold, a code block's colours. And when the assistant changes the note and then stops without an answer, the answer says the note was changed, with **Undo this change** and **Show it in the list** under it. Seen live 2026-11-08 on two scratch development profiles holding 84 languages between them, English windows, Auto on the shared gemma4:cloud: _make the text bigger_ done by the window in all 84; _make the first line bold_ asked again in the nine languages that had been answered in another one and in the nine asked with a colour word -- each answered in its own language, every bold one change; on the free tier, a line added in Khmer, Arabic, Thai, Chinese, Russian and Spanish went in as typed each time one was written; with a stand-in model that changes the note and then says nothing, the answer named the note with its two buttons, and **Undo this change** put the note back. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08i** (**W-60 — the shortcuts in Khmer and French, Undo then ask, the typed line kept.** Asked in Khmer or French, _make the text bigger_ and a style for the whole note are done by the help window itself, with no AI key and no internet, as the English lines are; a card button the window does by itself works pressed in any language. After **Undo this change**, the next request reads the note as it was put back. A line typed in another language to be added goes into the note as typed, also on an assistant that works in English behind the scenes. Seen live 2026-11-08 on a second scratch development profile with Khmer 0.0.41 and French 0.0.33 installed, a local stand-in model beside the shared ones: in a Khmer window, _ពង្រីកអក្សរ_ made every part 15 → 19 px and _ធ្វើឱ្យអក្សរទាំងអស់ដិត_ made it all bold, each in 2 s with no assistant asked; **Undo this change** and at once the bold -- one change; three options a model listed one a line drawn as three buttons; on the free tier's Nemotron, _add a line at the end saying ព្រះជាសេចក្ដីស្រឡាញ់_ went in as typed (it had gone in as English, God is love). CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08h** (**W-60 — a note's chat in any language.** The user's goal: _work great for all languages_. Asked in any language, a word named in a note written with no spaces between its words (Khmer, Thai, Chinese) is that word -- not the same letters at the start of a longer word -- and never half of a letter with its marks; a verse put in comes from a Bible in the language asked in when one is installed and the Bible Lookup is on another; the card of a note named in the window's own language offers to put it into English; and a question an English-working assistant is asked in English keeps the person's own words beside it. Seen live 2026-11-08 on a scratch development profile with Khmer, Chinese, Arabic, Thai and French installed and a Bible of each (Khmer, French and the KJV copied in, Chinese, Arabic and Thai downloaded through the Bible import, the Lookup left on the KJV), Auto answering on the shared gemma4:cloud, each one change and undone after: in a Khmer window, _make the word ព្រះ in the first line red_ (asked in Khmer) coloured that word alone and left ព្រះជាម្ចាស់ as it was; _make the text bigger_ 15 → 19 px; a Khmer line added at the end as written; John 1:1 put in under the first line from the Khmer Bible, in Khmer digits -- it had come from the KJV; in Thai, พระ alone and not พระเจ้า; in Chinese, John 1:1 from the Chinese Bible; in an Arabic window, the Arabic note drawn right to left with الله red, and John 1:1 from the Arabic Bible in Arabic digits; French typed in the Arabic window answered in French, John 1:1 from the Louis Segond; on the free tier's Nemotron, asked in English behind the scenes, the Khmer word made bold by its own Khmer letters. The card of a Khmer note in a Khmer window had offered _Replace the words with Khmer_; it offers English now, as the Arabic one does in an Arabic window. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08g** (**W-60, W-29, W-40 — ask the assistant about words you selected.** The user: _as a user I want to select bible note text then click the agent button then writing a qustion about the selected text_, then _add the agent button for bible selected text as well_, _should provide selection range in the input text for enough context, for bible should include selection range among bible verse_, _should reuse existing (attached window) chatbot tab_ and _for bible note selected text: if user did not ask anything then try to provide options for user, like spell check translation change case do google search_. The bar over selected words — in a Bible Note window, and over a verse in a Bible view — ends with a robot, **[en:tran:Ask the assistant about this]**, shown while AI is on. It opens the chat on that note or verse with the words quoted in the box: _Selected text_, where they are from and, for one line, their first and last character in it, then their line or verse with the selected words between two asterisks each side; the cursor waits on the line under it for the question. The words go into the chat already on that note or verse, else into one working in that window, else into a new one with the note attached or the passage's card read. Under a note's words a card asks _What would you like to do with “…”?_ with seven buttons. Seen live 2026-11-08 on the dev app (the user allowed the caution's **Open** to be pressed there; on that profile it was put away and did not come up): in _Lesson on John 3:16_, _force_ quoted as `Selected text (Lesson on John 3:16, 43-47):` over its line, the note attached, **Working in** the note's window and the card with its seven buttons; a second word of the same note went under the first quote in the same chat, the note attached once and a card of its own; in the Reader, _Son_ in John 3:16 opened a _John 3:16_ chat with the passage's card and `Selected text (John 3:16, 60-62):` over the whole verse; pressed again with another chat in front, the John 3:16 chat came back to the front and nothing was added twice. No question was sent: the card's five asking buttons, its Google search and its copy were not pressed live. CB-170, RD-108.)
 
 Previous: **workflowsVersion: 2026-11-08f** (**W-60 — a new note made by the assistant.** The user, with a Bible Reader chat that answered _make a bible note for me_ with a note to copy and paste: _chatbot should be able to create new bible note (not allow delete), after create should open the note and attach to the chatbot session_, then the goal _chatbot can put a lesson to a new bible note for user_. In a Bible Reader chat, a passage's or a person's chat, a Resources file's chat or a note's own, _make a bible note for me_ or _put this lesson in a new note_ makes the note -- headings, lists, bold and the verses it names, read from the Bible on this computer -- opens it in its own window and attaches it to the chat under its card; the assistant never deletes a note. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud, each in one call: after _Summarize Genesis 2_, _make a bible note for me_ made _Summary of Genesis 2_ (a list, Genesis 2:7 as a verse mention with its KJV words), its window opened and the chat read _Asking about: Bible Note_; in that note's chat, _make another note about Genesis 3_ made a second while the first one's window stayed open; after _Teach me the key words of Genesis 2:7_, _put this lesson in a new bible note_ kept all four points; and in the chat of Genesis 1:1 opened from the Bible view's robot, the explanation went into _Lesson on Genesis 1:1_ with **[en:tran:Undo this change]** and **[en:tran:Show it in the list]** beside the passage's own buttons. A new note's window wrote nothing back of its own. And in a note's chat, right after a lesson, _new page_ (the user's picture: it had been answered with which way to translate) put that lesson at the end of the note after a page break, its heading, points and verse as the editor's own, in one change -- _add it_ and _new section_ do the same with no page break. CB-169.)
 
@@ -1852,12 +2008,12 @@ Tips:
   opens **auto-play**: set seconds, press play, and slides advance automatically; the
   red ✕ closes it (W-04).
 - **Pin the document so you cannot lose it by a stray click** — see W-27.
-- **Notes for yourself:** under the slide previews there is a thin green **[en:tran:Note]**
+- **Notes for yourself:** under the slide previews there is a thin grey-striped **[en:tran:Note]**
   strip. Click it and a **[en:tran:Document Note]** box (one for the whole document) and a
   **[en:tran:Slide Note]** box (one per slide) open below the slides. They are saved for you as
   you type and are **never sent to an audience screen**. The panel starts closed, so
   it costs nothing until you want it; to put it away again drag the divider above it
-  down to the bottom edge, or untick **View → Widgets → Note** (W-31).
+  down to the bottom edge, or untick **View** → **[en:tran:Widgets]** → **[en:tran:Note]** (W-31).
 - **A slide that is the wrong shape for the screen.** A slide document keeps its own
   width and height, and one made for another display does not match yours. While a slide
   and the display differ, an amber button with a hammer — **[en:tran:Fix slide dimension]**,
@@ -1976,7 +2132,11 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
-   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
+   **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting
+   layout), **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**, which set the layout and
+   keep the theme and **[en:tran:Custom CSS]**; **[en:tran:Save as Preset]** keeps the whole look
+   for **every** stage (right-click a saved one to rename, replace or remove it). 📸
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
 11. **Edit the words while the song is open and the verses follow by themselves; a verse
@@ -2018,8 +2178,26 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     up write the line in the slide's corner too (`Chorus · 1/8 · 2/7`). It is one switch for
     every song. A song's slide that a screen holds moves to that part's first line when you
     turn it on, and back to the whole part when you turn it off. 📸
+14. **A song can keep a font of its own, on every stage.** At the top of the
+    **[en:tran:Stage Style]** window, above _[en:tran:Applies to every song]_,
+    **[en:tran:Song Font]** — _[en:tran:This song only, on every stage]_ — is the font THIS
+    song is drawn in on every stage, while every other song keeps the app's own font. A
+    song made from a PowerPoint file starts in the font its slides were set in; pick
+    another, or press **[en:tran:Use the app font]** to draw it like every other song. The
+    change is one of the song's own edits, so the song's **[en:tran:Undo]** takes it back,
+    on every stage and in this window. 📸
 
-_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08._
+15. **Notes for yourself in the song — a `Note` block.** In the Lyric Editor, a block
+    named `ol:Note` (or `ol:Note 2`, `ol:Note 3`, …) holds a note for whoever presents the
+    song: _play verses 3 and 4 again_. While the song is selected in the Presenter, every
+    such block shows under the Stage Previewer in one **[en:tran:Document Note]** box, each
+    note its own division headed by its block's name, in the order the song writes them.
+    The box is read-only (change a note in the Lyric Editor, and the box follows), it is
+    **never sent to an audience screen**, and a song with no `Note` block has no box at all.
+    To put it away, drag the divider above it down to the bottom edge, or untick
+    **View → Widgets → Note** (W-31); it stays put away for every song. 📸
+
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-178, PM-179, PM-180, XW-08._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -2077,8 +2255,13 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
-   the answer says what is on the screen now; it is not saved to the **[en:tran:Bibles]**
-   list. 📸
+   the answer says what is on the screen now. Like a double-click in the lookup,
+   it is saved to the **[en:tran:Bibles]** list first, unless the list already
+   holds it, and the answer says so. With no assistant to answer, a passage asked for in another language is
+   read from the installed Bible that names its book, with one button that puts it
+   up; when no installed Bible names the book, the answer says it could not be read,
+   and offers **[en:tran:Import a Bible for me]** when no Bible in that language is
+   installed. 📸
 
 8. To make an editable slide document from a saved passage, first save one if needed:
    press **Ctrl+B**, choose the book, chapter and verse, then point at the passage's title
@@ -2122,8 +2305,24 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
     medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
+12. To put the passage up as a short notice over whatever is on the screen,
+    choose **[en:tran:Create Quick Text]** from the same menu, right under
+    **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
+    **[en:tran:Quick Text]** opens on a NEW session named after the passage,
+    for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
+    words. The box holds the reference as a `### ` heading and the verses after
+    it (one verse without its number, several with `(22): …`), and the session
+    is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
+    full width of the bottom, words at 45px set left (smaller, down to 28px, past about three verses), on screen as long as
+    the passage takes to read aloud (its **[en:tran:Live]** seconds: 20 for
+    one verse like John 3:16, about a minute for six verses), in the
+    Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    reads `app-Battambang` for a Khmer Bible.
+    Press **[en:tran:Preview]** to
+    read it as it will look, then **[en:tran:Show Quick Text]** when it is
+    time. Nothing goes on a screen before that. 📸
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102._
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103._
 
 ### W-07 — Style the on-screen Bible text
 
@@ -2167,7 +2366,12 @@ the edge or shadow that keeps them readable over a picture. A
    opacity low (the band lies under every line of what is selected); the arrow
    beside it puts that side back to its default.
 7. **Change how the words are set.** **[en:tran:Font Family]** is a list of
-   the fonts on this computer: pick one and every verse is drawn in it; pick
+   the app's own fonts and then the fonts on this computer. At the top is each
+   enabled language's own face (`app-Google-Sans`, `app-Battambang` — the
+   face a Bible in that language is drawn in), then the fonts the languages
+   ship under their own names (Google Sans, Battambang, a sticky-note hand).
+   Pick one
+   and every verse is drawn in it; pick
    the first line of the list, `--`, to go back to each Bible's own font. Letters
    the font you picked does not have — Khmer under an English font — stay in
    the Bible's own. **[en:tran:Text Style]** has
@@ -2272,10 +2476,69 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
+  The message is markdown (`## Title`, `**bold**`, `*italic*`): press
+  **[en:tran:Preview]** above the box to read it as the screen will draw it,
+  and **[en:tran:Edit]** to type again. **[en:tran:Markdown Lesson]** beside
+  them opens a short lesson above the box: each mark as you type it next to
+  how the screen draws it — headings, bold, italic, struck-through words,
+  lists, a quote and a dividing line. Three rows show the thing most often
+  missed: one Enter does not start a new line on the screen; end the line
+  with `\` to break it, or leave an empty line for a new paragraph.
+  **[en:tran:Open Link in Browser]** at the top of the lesson opens the full
+  cheat sheet (markdownguide.org) in the computer's browser; press
+  **[en:tran:Markdown Lesson]** again to close it. Its **[en:tran:Presets]** (first row
+  of _Properties_, below) are **[en:tran:Bible Verse]**, **[en:tran:Speaker]**,
+  **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** and **[en:tran:Announcement]**, and each also sets
+  how many seconds the text stays and how its markdown is set: the first line
+  becomes the title — **bold** for a song, a heading for a verse, a speaker,
+  a sermon, a session or an announcement — and a song's or a sermon's lines
+  under it turn *italic* (and upright again with any other preset). With
+  nothing typed yet (the box empty, or still its sample) a preset fills in an
+  example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
+  **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
+  white under black words on the **[en:tran:Light]** side), the
+  words at 45px set left, on screen as long as they take to read aloud;
+  past about three verses it
+  sets the words smaller, down to 28px, so a long passage stays a band
+  instead of covering the slide. Every word you typed is kept; pressing a
+  preset twice changes nothing more. The band sits flush on the bottom edge;
+  **Y** in _Properties_ lifts it.
+- **How long a quick text stays is each session's own.** On one line above
+  the box, **[en:tran:Delay]** is the seconds it waits before it shows (0 to
+  start) and **[en:tran:Live]** the seconds it stays on the screen (5 to
+  start; a preset sets its own; **[en:tran:Bible Verse]** works it out from
+  the words in the box, about 150 a minute read aloud with a few seconds
+  more, never under 10). The dial button after Live works Live out from the
+  words in the box, at the pace it then names: the first press
+  **[en:tran:Slow]**, the next **[en:tran:Medium]**, then
+  **[en:tran:Fast]**, then **[en:tran:Slow]** again — press it again after
+  changing the words. Switch on
+  **[en:tran:Infinite]** beside them and that session's text stays up until
+  you take it down with its **[en:tran:Hide Quick Text]** row or a Clear;
+  the Live box and the dial grey and Live keeps its number for when you
+  switch it off again. Each session keeps its own three, so a verse can stay up while a speaker's
+  name in another session leaves after a few seconds.
+- In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
+  another size: it keeps its place until you type a number, and shows the
+  size in force again if you leave it empty. 0 px is a square corner.
+- Quick Text's _Properties_ has **[en:tran:Horizontal Margin (%)]** and
+  **[en:tran:Vertical Margin (%)]** in place of a width, as a Lyric stage's
+  _Slide Margin_ has them: the side margin is kept on each side, the vertical
+  one above or below the box (whichever edge it is set to), and the link at the
+  left of both sliders moves both together.
+- The Show / Start row is the panel's footer in [en:tran:Messages], the
+  marquees, [en:tran:Quick Text], [en:tran:Stopwatch] and [en:tran:Long Text Show]
+  ([en:tran:Countdown] docks its Start / Pause row there; [en:tran:Time],
+  [en:tran:Camera Show] and [en:tran:Screen Show] their Hide row): it stays at
+  the bottom of the panel while the _Properties_ and the rest scroll under it,
+  and its buttons are small. The **X** and **Y** nudge boxes sit on one line
+  under the position pad.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
-  hours is fine: 25 h reads `25:00:00`) and press
+  hours is fine: a day or more reads its days first, in the app's language —
+  25 h reads `1d 01:00:00`) and press
   **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
   can be put up early and started on the cue. While it is on a screen,
   **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
@@ -2295,7 +2558,9 @@ button:
   of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
-- **[en:tran:Time]** (the clock): same pattern — configure, Show, Hide.
+- **[en:tran:Time]** (the clock): same pattern — configure, then
+  **[en:tran:Show Time]** puts it up, and the **[en:tran:Hide Time]** button
+  under it (one for each screen holding it) takes it down.
   **[en:tran:Choose City]** puts the city's name above the clock in words
   (`Phnom Penh`) with its time; **[en:tran:Use Current Timezone]** goes back to
   this computer's time and takes that name away with it (a name you typed
@@ -2362,14 +2627,21 @@ button:
   what another session has on the wall, and a session with nothing up shows no
   Hide button at all. To take down what another session put up, press the session
   button carrying the on-screen dot and use the Hide button there. Something that
-  went up with no session (a dragged run-sheet row, the assistant) belongs to the
+  went up with no session (a dragged run-sheet row) belongs to the
   first session button, which is **[en:tran:Default]** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
-  thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  thing on a screen **per session**: showing from another session puts its own up
+  **beside** what is already there (a Bible verse band from one Quick Text session
+  and a speaker's name from another, both on the wall), and showing a session again
+  replaces only what that session had up. Each session's dot stays lit while its own
+  is up, its **[en:tran:Start counting]** / **[en:tran:Pause]** run only its own
+  clock, and its Hide row takes only its own down. Two sessions left at the same
+  place cover one another, so give each its own place in _Properties_ (a Countdown's
+  **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
+  **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
   another tile replaces it. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
@@ -2377,6 +2649,43 @@ button:
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
+- **[en:tran:Presets]** — the first row of _Properties_ in every foreground
+  component but [en:tran:Long Text Show] (which has its own looks) — dresses
+  the session in one press for a job: [en:tran:Messages] has
+  **[en:tran:Announcement]**, **[en:tran:Event Session]**,
+  **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**; the marquees
+  **[en:tran:Announcement]**, **[en:tran:Bible Verse]** (a slower scroll) and
+  **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
+  **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (large, in
+  the middle) and **[en:tran:Bottom Banner]**; [en:tran:Time] **[en:tran:Top Left]**, **[en:tran:Top Right]**, **[en:tran:Bottom Right]** and
+  **[en:tran:Center]**; the picture, screen and web shows
+  **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]**, **[en:tran:Center]** and a small corner;
+  the camera **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and **[en:tran:Bottom Left]**.
+  At the right of the _Presets_ name, in every component with words and a box
+  (all but the picture, screen and web shows), is **[en:tran:Dark]** /
+  **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
+  on a light box for a light one. The side lit is read off the words' colour.
+  Pressing the other one keeps both colours and only makes them lighter or
+  darker — the box darker and the words lighter for **[en:tran:Dark]**, the
+  reverse for **[en:tran:Light]** — until the words stand out clearly from the
+  box; a blue box stays blue, only lighter or darker. A preset pressed then goes
+  on in that side, and each preset's icon shows its colours on it. Until you
+  pick a colour yourself, a session's words and box follow the app's theme:
+  their **[en:tran:Light]** side in a light window.
+  Every preset with words but a marquee's sets its own font size too (a clock or timer in a
+  corner 40px, **[en:tran:Center]** 120px), and a clock's, a countdown's or a
+  stopwatch's box is never drawn narrower than its digits, whatever its width.
+  **[en:tran:Save as Preset]**, at the end of the row, keeps the session's whole
+  _Properties_ as a preset of your own under a name you type — place, size,
+  colours, font, Effects, layer and transition (and a marquee's size and speed).
+  It is a button after the app's own in that component's row, on every session;
+  pressing it puts that look back exactly. Right-click it for
+  **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and
+  **[en:tran:Remove Preset]** (asked first). Thirty a component at most.
+  One of the app's presets sets the place, size, colours, frame and Effects the component has,
+  never its words' font, its transition or its layer; _Properties_ shows the
+  new values at once, ready to adjust, and what that session has on a screen
+  takes the new look straight away.
 - **[en:tran:Always on Top]** (every foreground component but [en:tran:Long Text Show], not just these — under
   _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
@@ -2526,8 +2835,8 @@ menu.
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
 8. **Give a language its own font and size.** The whole text is drawn in
-   **[en:tran:Bible/LongText Properties]**, the book and gear beside
-   **[en:tran:Add Language]** (W-07): its colour, boldness, alignment, shadow
+   **[en:tran:Bible/LongText Properties]**, the book and gear at the right
+   end of the row at the top of the panel (W-07): its colour, boldness, alignment, shadow
    and highlight are every language's. Open **[en:tran:Properties]** on a card
    for the two things a language may need of its own: **[en:tran:Font]**, and
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
@@ -2616,8 +2925,17 @@ _Verify: PM-163, PM-164, PM-165, PM-166, PM-167._
   corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.
+- **Draw or spotlight on the screen** (footer, the brush — **[en:tran:Drawing]**): press it to
+  draw on that screen; its settings open in a strip under the card. Its **⋮**
+  (**[en:tran:Choose Drawing or Focusing]**) turns it into **[en:tran:Focusing]**, a spotlight
+  that dims the rest; press the lit button again to stop either. The strip opens on
+  **[en:tran:Presets]**: **[en:tran:Highlight]** (a see-through yellow marker),
+  **[en:tran:Underline]** and **[en:tran:Bold]** for the brush, **[en:tran:Haze]** (light),
+  **[en:tran:Strong]** (dark) and **[en:tran:Halo]** (wide) for the spotlight.
+  **[en:tran:Save as Preset]** keeps the current look; right-click a saved one to rename,
+  replace or remove it. Every screen and Presenting Control (W-19) share the saved ones. 📸
 
-_Verify: PR-04..07, SP-01..09, SP-23, SP-24, KB-03..07, KB-13._
+_Verify: PR-04..07, SP-01..09, SP-23, SP-24, SP-35, KB-03..07, KB-13._
 
 ---
 
@@ -2833,8 +3151,8 @@ _Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146._
    page explaining what that costs you in accuracy. On a translation whose theme headings
    were machine-translated, each heading carries its own **translate** button
    (**[en:tran:Generated using Google Translate.]**) saying so — on an English bible nothing was translated and the mark is absent.
-7. If you have put your own OpenAI or Anthropic key in Settings, **Custom OpenAI** and
-   **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
+7. If you have put your own OpenAI or Anthropic key in Settings, **OpenAI ([en:tran:Custom])** and
+   **Anthropic ([en:tran:Custom])** appear as their own sections below, each collapsing and refreshing
    the same way. The section above them needs no key.
 
 _Verify: RD-10, RD-49, RD-50, RD-51, RD-52, RD-124._
@@ -2847,6 +3165,16 @@ _Verify: RD-10, RD-49, RD-50, RD-51, RD-52, RD-124._
    **[en:tran:Bibles]** (under it when the column is narrow) inside the
    **[en:tran:Bible and Notes]** section — at the top of the right column in the Presenter,
    on the left in the Bible Reader.
+   **Making a new file:** click the **⋮ [en:tran:More Options]** in the panel's title
+   (or right-click the empty space under the files) and pick **[en:tran:New Bible Note]**
+   (a notes file, holding notes) or **[en:tran:New Markdown File]** (a `.md` page of your
+   own). Type a name and press **Enter**. A Markdown file is listed with the markdown icon
+   among the notes files, its first line the name as a heading, and it opens in its own
+   **Markdown Preview** window — click its row to open it again, and press
+   **[en:tran:Edit]** there to write (W-37 step 6). Its row's menu adds
+   **[en:tran:Preview]** and **[en:tran:Open in Default App]** to the usual Rename, Copy
+   Path, Reveal and **[en:tran:Move to Trash]**. A Markdown file dropped on the panel is
+   copied into its folder, as a notes file is. 📸
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸
 3. Type your note. Nothing is written to the note file yet — your typing is kept
    in an editing history, and the row of buttons that appears at the bottom
@@ -2870,7 +3198,7 @@ The help window can change a note for you, or answer how to do something in the
 note editor: **[en:tran:Open in Chatbot]** in a note row's menu, or the robot at
 the bottom of the Bible Note window (W-60).
 
-_Verify: PR-03, PU-03, KB-11, PM-170._
+_Verify: PR-03, PU-03, KB-11, PM-170, PL-111._
 
 ---
 
@@ -2911,7 +3239,8 @@ in the same documents folder. 📸
    page** — only your editing and preview views use the picture.
 
 6. **Blend a box with the ones under it.** Select a box, and under
-   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab pick a
+   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab (inside
+   **[en:tran:Box Properties]** — expand it if it is collapsed) pick a
    **[en:tran:Blend Mode]** — **[en:tran:Multiply]** to darken, **[en:tran:Screen Blend]**
    to drop black out of a clip, **[en:tran:Overlay]** for a texture over a photo. It
    blends with the **canvas items underneath it in the same slide**, so it only shows
@@ -2951,7 +3280,7 @@ in the same documents folder. 📸
    **[en:tran:Text Properties] → [en:tran:Color]**. Type or paste the new hex color,
    then press **Enter** or click away to apply it (step 9). 📸
 9. **Type an exact color.** Select a box, then click the hex value beside
-   **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
+   **[en:tran:Background Color]** (also inside **[en:tran:Box Properties]**) or under **[en:tran:Text Properties] → [en:tran:Color]**.
    Type or paste a hex color, then press **Enter** or click away to apply it.
    Three-, four-, six- and eight-digit hex values work, with or without `#`;
    eight digits include opacity, for example `#2468AC80`. **Escape** cancels the
@@ -2959,6 +3288,17 @@ in the same documents folder. 📸
    without changing the slide. The arrow still opens the swatches and opacity
    slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
 10. Save with **Ctrl+S**.
+
+**A ready-made look for a box:** select it, and **[en:tran:Presets]** at the top of
+**[en:tran:Properties]** offers **[en:tran:Plain]** (no backing, shadow, blend or bold),
+**[en:tran:Shadow]** and **[en:tran:Glass Effect]** (not on a picture or a video). A box of
+words also gets **[en:tran:Highlight]** and **[en:tran:Urgent Alert]** (bold words) and a
+**[en:tran:Dark]** / **[en:tran:Light]** switch: light words for a dark background or dark
+words for a light one — the other side trades the lightness of the words and their backing,
+each keeping its hue. A look never changes the box's size, place, words or font, and one press
+is one **[en:tran:Undo]**. **[en:tran:Save as Preset]** keeps the box's look — from a box of
+words its words' style too, and then it is offered to boxes of words only; right-click a saved
+one to rename, replace or remove it. 📸
 
 **HTML and plain text:** imported HTML keeps its formatting, but scripts, event
 handlers and embedded pages are removed in the editor, previews, screen rendering
@@ -2982,7 +3322,7 @@ folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in i
 its code beside a preview. The Web Editor saves itself as you type, so there is no Save
 to press.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -3037,14 +3377,28 @@ another key — without writing the song's own notation.
      which is what **[en:tran:Long Text Show]** needs to show them side by side (W-53).
    - **Add … under each line** keeps the words and writes the translation under each line:
      one song in two languages.
-   - The language offered is the one the song's name says (`Still khmer`), else the one
-     the app is shown in. With neither, the buttons say _another language_ and the
-     assistant asks which; asked to translate without saying which way, it asks that first.
+   - The language offered is the one the song's name says, if not English (`Still khmer`);
+     else, for a name written in a language other than English, English when the app is
+     shown in that language and the app's when it is not; else the one the app is shown in,
+     unless that is English: then the buttons say _another language_ and the assistant asks
+     which; asked to translate without saying which way, it asks that first.
    - **[en:tran:Add a section]**, **[en:tran:Add chords]**, **[en:tran:Change the key]**:
      the assistant asks for the words or the key when it needs them. A note for the band is
-     a part of its own, never put on the screen.
+     a part of its own, kept out of the play order and so off the screen -- unless the assistant places it after a part (asked for _after verse 1_, say): placed, it is played there, a slide like any other part.
    - Typed, in your own words: _translate it into Khmer_, _add a verse after verse 2: …_,
      _move it to G_, _take out the bridge_.
+   - A word fixed or changed — _fix the typo in verse 1: "grase" should be "grace"_,
+     _change "grace" to "mercy" everywhere_, _check the spelling_ — changes those words
+     and nothing else: every chord stays on its word and a translation line stays under
+     its line. A spelling check leaves an old form such as _'Twas_ alone, and a title that
+     holds the word is named in the answer, not changed. _Change the line under the first
+     line of verse 1 to …_ changes that translation line alone; _take out the translation
+     lines_ takes them all out, the chords kept.
+   - Parts and chords — _rename the chorus to Refrain_ renames that part where it stands,
+     its chords and lines kept, and every place it plays in the order with it. _Take the
+     chords out of the chorus_ (or _remove all the chords from the song_) leaves the words;
+     an Instrumental keeps its chords, and the answer says so. _Change every F chord to
+     Fmaj7_ changes that chord wherever it is played and leaves F# and F/A alone.
 4. The answer says what changed. The change is **not saved yet**: the song shows a red
    **\*** beside its name in **[en:tran:Documents]**. **[en:tran:Undo this change]** under
    the answer puts it back; **[en:tran:Show it in the list]** finds its row.
@@ -3056,11 +3410,11 @@ another key — without writing the song's own notation.
    **[en:tran:The assistant changed this song.]** offers **[en:tran:Load the change]**.
 
 **Not there?** **[en:tran:Open in Chatbot]** is in a song's menu only while AI is on
-(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
-assistant can answer, the chat says so and offers **Open AI settings**: changing a song
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). When no
+assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**: changing a song
 needs one.
 
-_Verify: PL-107, CB-166, PM-168._
+_Verify: PL-107, CB-166, PM-168, CB-179, CB-182._
 
 ### W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)
 
@@ -3081,8 +3435,10 @@ like a picture of slides you like.
    - **Replace the words with …** puts the slides' words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation on the line
      under each line, the words made a little smaller so the box still holds them. The
-     language offered is the one the document's name says, else the one the app is shown in;
-     with neither, the buttons say _another language_ and the assistant asks which. Typed,
+     language offered is the one the document's name says, if not English; else, for a name
+     written in a language other than English, English when the app is shown in that
+     language and the app's when it is not; else the one the app is shown in, unless that is
+     English: then the buttons say _another language_ and the assistant asks which. Typed,
      say the language: _Add Spanish under each line_.
    - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
    - **[en:tran:Make the words larger]** makes every box's words larger in one change, each
@@ -3091,7 +3447,8 @@ like a picture of slides you like.
      help window does by itself, at once — no assistant is needed for them, so they work
      with no AI key and no internet.
    - **[en:tran:Make slides like a picture]**: attach a picture of the slides you want — the
-     📷 under the box attaches a picture of the app, the paperclip a picture file — and say
+     **⋮** at the left of the box has **[en:tran:Attach a picture of the app]** and
+     **[en:tran:Attach a file]** for a picture file — and say
      what the slides should say, e.g. _Add 2 slides that look like slide 2 in this picture:
      one says Welcome, one says Let us pray_ — or send the picture with no words at all.
      Without a picture it asks for one. A photo or video behind the words is the slide's
@@ -3112,10 +3469,11 @@ like a picture of slides you like.
 5. To keep it, press **[en:tran:Save]** in the slides' history row in the Presenter
    (**[en:tran:Undo]** there steps it back too), or in the Slide Editor.
 
-**Not there?** **[en:tran:Open in Chatbot]** is on an Open Worship slide document only — a
-PDF, PowerPoint or Word file has no slides here to change — and only while AI is on
-(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
-assistant can answer, the chat says so and offers **Open AI settings**.
+**Not there?** **[en:tran:Open in Chatbot]** is in a document's menu only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). A PDF,
+PowerPoint or Word file carries it too, but only an Open Worship slide document has slides
+the assistant can change; to make a song from such a file's words, see W-42 step 18. When no
+assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**.
 
 _Verify: PL-108, CB-167._
 
@@ -3134,18 +3492,19 @@ park, colour, pin or arm its lines, countdowns and CC elements.
 2. The help window opens a chat of its own with the presenting flow attached under the box,
    and a card that says what it can change, with four buttons. 📸
 3. Press a button under the card, or type what you want:
-   - **Check the running order** reads every line and says what is wrong or missing — a song
+   - **[en:tran:Check the running order]** reads every line and says what is wrong or missing — a song
      whose file was renamed or deleted, a **[en:tran:Jump to]** with nowhere to go, a
      **[en:tran:Keyboard Event]** with no shortcut — and offers the fixes. It changes
      nothing until you say.
-   - **Build it from my order of service**: paste your order of service into the box, or
-     attach a picture of the printed bulletin (the paperclip), or both, and the assistant
+   - **[en:tran:Build it from my order of service]**: paste your order of service into the box, or
+     attach a picture of the printed bulletin (**[en:tran:Attach a file]** in the **⋮** at
+     the left of the box), or both, and the assistant
      adds every item in order — songs and slide documents by their names in
      **[en:tran:Documents]**, Bible passages, a countdown or a notice where the order says
      one. It says which items had no document to match; it never makes up a song.
-   - **Clear the screen between items** puts a **[en:tran:Clear All]** after every song,
+   - **[en:tran:Clear the screen between items]** puts a **[en:tran:Clear All]** after every song,
      slide document and passage that has none after it.
-   - **Move on by itself** asks how many seconds a slide stays, then gives every song and
+   - **[en:tran:Move on by itself]** asks how many seconds a slide stays, then gives every song and
      slide document a **[en:tran:Next: Timeout]** that rides along with it (a CC element,
      W-22d), so its slides go on by themselves — one timeout line shared by all of them; a
      song that already moves on by itself has its time changed rather than a second one
@@ -3160,8 +3519,8 @@ park, colour, pin or arm its lines, countdowns and CC elements.
    **[en:tran:Presenting Flows]**.
 
 **Not there?** **[en:tran:Open in Chatbot]** is in a presenting flow's menu only while AI is
-on (**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
-assistant can answer, the chat says so and offers **Open AI settings**. A video, a picture,
+on (**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). When no
+assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**. A video, a picture,
 a camera, another screen or a web page on the **[en:tran:Foreground]** is picked in its
 panel and dragged in (W-22) — the assistant does not add those from words.
 
@@ -3185,13 +3544,13 @@ the verses it names with their words read from the Bible on this computer — in
 its own **Bible Note** window and is attached to the chat under the card of step 2, so
 everything from step 2 on works on it. **[en:tran:Undo this change]** under the answer takes
 the new note away again. The assistant never deletes a note or a notes file: that stays the
-row's own **[en:tran:Delete]**.
+row's own **[en:tran:Delete]** (a notes file's **[en:tran:Move to Trash]**).
 
 1. In **[en:tran:Bible Notes]** (W-14), open a notes file, then right-click a note's row, or
    click the faint **⋮** at its right-hand end, and choose **[en:tran:Open in Chatbot]**, right
    under **[en:tran:Open]**. 📸 The note opens in its own **Bible Note** window first, when it
    is not open already. In the **Bible Note** window, the robot button among the buttons
-   at the bottom (beside **[en:tran:Save]**) does the same for the note it shows, after
+   at the bottom (right after **[en:tran:Toggle Always On Top]**) does the same for the note it shows, after
    keeping what was just typed.
 
    **About some words of it:** in the **Bible Note** window, select the words — the bar
@@ -3202,7 +3561,7 @@ row's own **[en:tran:Delete]**.
    name and, when they are on one line, where they sit in it (their first and last
    character, like _43-47_), then that line with the selected words between two
    asterisks. The cursor waits on the line under it: write your question there and
-   press **Send**. If you would rather press than write, the card under it asks _What
+   press **[en:tran:Send]**. If you would rather press than write, the card under it asks _What
    would you like to do with “…”?_: **[en:tran:Explain it in simple words]**,
    **[en:tran:Check the spelling]**, **[en:tran:Replace the words with another language]**,
    **[en:tran:Add another language under each line]** and **[en:tran:Uppercase]** ask the
@@ -3212,7 +3571,7 @@ row's own **[en:tran:Delete]**.
    same chat.
 2. The help window opens a chat of its own with that one note attached under the box, and a
    card that says what it can do, with five buttons. 📸 The chat works in the note's own
-   window: at the top it is asking about **Bible Note**, and **Working in** above the box
+   window: at the top it is asking about **[en:tran:Bible Note]**, and **[en:tran:Working in]** above the box
    names that note's window, so a walkthrough points at the note editor and every change
    shows there as it is made. While the chat works in it, the note's window stays above the
    app's main window, so pressing in the main window or the help window does not hide it;
@@ -3222,40 +3581,95 @@ row's own **[en:tran:Delete]**.
 3. Press a button under the card, or type what you want:
    - **Replace the words with …** puts the note's words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation under them.
-     The language offered is the one the note's title says, else the one the app is shown in;
-     with neither, the buttons say _another language_ and the assistant asks which.
+     The language offered is the one the note's title names, if not English; else, for a
+     title written in a language other than English, English when the app is shown in that
+     language and the app's when it is not (a Khmer note in a Khmer window offers English,
+     an English one Khmer); else the one the app is shown in, unless that is English: then
+     the buttons say _another language_ and the assistant asks which.
    - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
    - **[en:tran:Summarize this note]** sums the note up in the chat; nothing in the note
      changes.
-   - **[en:tran:Tidy it into headings and lists]** makes its points headings and the lines
-     under them list items, its words kept.
+   - **[en:tran:Format it so it is neat and easy to read]** turns a messy note into a
+     tidy one in one change, its words kept: the title a heading, the parts (points,
+     prayer, questions) headings of their own, points or questions run together on
+     one line one item each, a reference written in words (_luke 15 verse 4 to 7_) a
+     verse, lines in capitals in normal case and a reminder in bold. _My note is
+     messy, can you tidy it up?_ does the same.
    - Text size: _Make the words larger_ (or _make text bigger_), _make the words smaller_
      and _make the words 20 px_ change every part of the note at once, each part
      keeping its size against the others (a heading stays larger than its lines). The
-     help window does these by itself, so they work with no AI key and no internet.
+     help window does these by itself, so they work with no AI key and no internet --
+     typed in the language of almost any installed language pack, and pressed as a card's
+     button in any language.
      _Make only the heading bigger_ and other sizes for one part, the assistant does.
    - Anything the note editor's toolbar does, asked in words: _make the word grace red
      and bold_, _use Georgia for the whole note_, _highlight the verse references_,
      _put the second point in capitals_, _clear the formatting of the first line_,
      _centre the title_, _indent the second bullet under the first_. Name some words
-     and only those words change, as a selection in the editor would. The **+** Insert
+     and only those words change, as a selection in the editor would -- in a language
+     written with no spaces (Khmer, Thai, Chinese) too: the word itself, not the same
+     letters at the start of a longer word, and never half of a letter with its marks.
+     Ask in any language: the assistant answers in it. The **+** Insert
      menu too: _add a table of the readings with book and chapter_, _add a pink sticky
      note saying call Tom_, _put today's date at the top_, _add a poll_, an equation,
      two columns, a collapsible part, a page break, a YouTube video or a website by
      its link, a picture or a file by its link or its place on this computer, and a
      person or place from the names lookup (_mention Moses in the first line_). _Undo
      that_ and _redo it_ step back and forward through what the note has kept. A
-     drawing is described in words, a box a line and an arrow as _A -> B_ (_add a drawing:
-     God -> Man, Man -> Sin_); _link the heading to the prayer_ joins the words of two
+     drawing (the Insert menu's **Excalidraw**) is described in words, a box a line and an
+     arrow as _A -> B_ (_make a drawing of my three points with arrows_, _draw a timeline
+     from creation to Jesus_, _a circle drawing: the sheep wanders off, the shepherd goes
+     looking, the sheep is found_); it is drawn top to bottom, or across, round a circle or
+     round one box in the middle when asked. A drawing already in the note can be made
+     bigger or smaller, its boxes coloured (_colour the boxes green_), centred, moved or
+     taken out, and drawn again with a box added or its words changed (_add one more box
+     saying The shepherd finds the lost one_). The board draws boxes, words and arrows --
+     asked for a picture of a thing (a sheep, a cross), the assistant says it cannot draw
+     one and offers a drawing of words. _link the heading to the prayer_ joins the words of two
      parts as the editor's Link block text does; _show the invisible characters_ turns
      on the **¶**; _put the editor's example in_ adds its sample study note; a code block
      takes a language (_make it Python_) and a colour theme. A style for the whole note
-     in a short English line -- _make all the text bold_, _centre everything_, _use
-     Georgia for the whole note_, _clear the formatting_ -- the help window does by
-     itself, with no AI key and no internet, as it does the size.
+     in a short line -- _make all the text bold_, _centre everything_, _use Georgia for
+     the whole note_, _clear the formatting_ -- the help window does by itself, with no
+     AI key and no internet, as it does the size: all of them in English and in a language whose
+     package carries the assistant's words for them, and _make all the text bold_ in most
+     other installed languages -- said
+     with the word _bold_ where the language's own word for it also means black, and
+     left to the assistant where it also means big. The rest, in those languages, the assistant does.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
      words read from the Bible installed on this computer — the assistant never types a
-     verse itself. A verse can also go in the middle of a line as a verse mention.
+     verse itself. A verse can also go in the middle of a line as a verse mention. Asked in
+     another language than English, the verse comes from a Bible in that language when one
+     is installed and the Bible Lookup is on another (asked in Khmer with the Lookup on the
+     KJV, the Khmer Bible's words, in Khmer digits); name a Bible to have another.
+   - A preaching lesson: a note that is still empty opens its conversation with three
+     buttons — **[en:tran:Help me prepare a preaching lesson]**,
+     **[en:tran:Help me prepare a children's lesson]** and
+     **[en:tran:Help me prepare a short devotion]** — and the assistant asks which passage;
+     or type _help me prepare a sermon on John 10:11-18_ (or _I'm preaching on Psalm 23 this
+     Sunday_), in your own language too. It writes a whole lesson into the note,
+     ready to preach — the passage printed from your Bible, the big idea, the background,
+     an introduction, three points each with its verses, an example and how to live it
+     this week, how it points to Jesus, a response, a closing prayer, questions for
+     discussion and a memory verse (a short devotion keeps to one point, and a children's
+     lesson tells the story in a child's words, printing only the verse or two it turns
+     on); beside a note with words in it, or in any other chat,
+     the lesson is a new note. With no passage named, the assistant asks which one. Then
+     ask as you prepare: _add an illustration to point 2_, _give me two cross references
+     for point 1_, _add two more discussion questions_, _write a stronger conclusion with
+     an invitation_, _add a short object lesson for the children_, _make a version for the
+     children's class_ (a new note). _How long will this take to preach?_ is answered; _is
+     this a good sermon?_ is answered as a teacher of preaching would — what is strong, then
+     the two or three changes that would most improve it, each a button that makes that
+     change, nothing changed until you press one (ask it again after, for the next);
+     _finish my sermon_ (or _finish it_)
+     adds the parts it lacks, each where it belongs, and keeps your words: a point you
+     wrote stays where it is and grows under its own line, and a few loose lines become
+     the lesson around them, none of them lost or written twice; _it is too long, make it
+     fit 15 minutes_ tightens the
+     words and takes the extras out first, every point keeping its verse, an example and
+     how to live it; _check that my verses are right_ reads every verse the note cites
+     from your Bible and names any line that gives a verse words it does not have.
    - Put an answer into the note: right after the assistant has answered or taught you
      something in this chat, _add it_, _put it in_ or _new section_ adds that answer at the
      end of the note — its headings, points and verses as the editor's own — and _new page_
@@ -3266,21 +3680,196 @@ row's own **[en:tran:Delete]**.
    - _list me more options_ shows the card and its buttons again.
 4. The answer says what changed. Only the parts asked about are rewritten: the rest of the
    note — its headings, lists, verse mentions, tables, pictures, drawings and sticky notes —
-   stays exactly as it was. A table, picture, drawing, sticky note or passage can be moved or
-   taken out, never rewritten. The change is **not saved yet**; a Bible Note window that is
+   stays exactly as it was. A table, picture, sticky note or passage can be moved or taken
+   out, never rewritten; a drawing the assistant made can also be drawn again, and one you
+   drew by hand only coloured, sized or moved. The change is **not saved yet**; a Bible Note window that is
    open on the note shows it at once. **[en:tran:Undo this change]** under the answer puts it
-   back, and **[en:tran:Show it in the list]** finds its row.
+   back, and **[en:tran:Show it in the list]** finds its row. Words you typed to go into the
+   note go in letter for letter as you typed them. If the assistant changes the note and
+   then stops without an answer, the answer still says the note was changed, with the same
+   two buttons under it.
 5. To keep it, open the note (W-14) and press **[en:tran:Save]** (**Ctrl+S**); a new title
    asked for in the chat is kept at once, as **[en:tran:Edit Title]** does.
 
 **Not there?** **[en:tran:Open in Chatbot]** is on a note only — not on a verse's highlights
 and comments, nor on a note that could not be read — and only while AI is on
-(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
-assistant can answer, the chat says so and offers **Open AI settings**.
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). When no
+assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**.
 
 _Verify: PL-110, CB-169._
 
 ---
+
+### W-61 — Change a foreground component with the assistant (a countdown, a marquee, a quick text for a verse)
+
+**Goal:** have the help window set up and change the **[en:tran:Foreground]** extras (W-09)
+for you: start a countdown for so many minutes, put a message scrolling along the top, make
+a quick text of a Bible verse, and change how one looks or where it sits on the screen.
+
+1. In any chat, type what you want: _Start a countdown for 5 minutes_, _Show the top
+   marquee saying Welcome to our service_, _Make a quick text for John 3:16_. The assistant
+   writes it into a NEW session of that panel, named after what it holds (`5:00`,
+   `Welcome to our service`, `(KJV) John 3:16`). It opens the panel on that session and
+   does what the panel's own Show or Start button does on the ticked screens, with the
+   panel's own look. A session that already holds the same, or already has that name, is
+   used again; what you typed in another session is never written over. A verse is read
+   from the Bible the Bible Lookup is on, never from the assistant's memory. A new verse
+   quick text gets the **[en:tran:Bible Verse]** preset (W-09), and any component can be
+   given one of its own presets by name — _Make the countdown big in the center_, _Use the
+   Speaker look_ (W-09 lists each component's). Words that should go away by themselves
+   are a quick text with its time and place: _Show a message at the bottom of the screen
+   for 15 seconds: the owner of car ABC 123, your lights are on_ puts them up at the bottom
+   for 15 seconds. _Put the long text up_ shows the song or words a
+   **[en:tran:Long Text Show]** session already holds; they go in on its panel (W-53).
+   When the screen is off,
+   the answer says so and offers its show button. The assistant never turns a screen on
+   by itself. The session it put up or changed is attached to its answer, the same chip
+   as step 3, so what you type next is about that one without naming it again: _make it
+   bigger and red_, _pause it_, _take it off the screen_.
+2. To talk about ONE session of a panel, attach it to the chat:
+   - right-click a session's button on the panel's strip (**[en:tran:Default]**,
+     **Session 2**, **＋**), or press the **⋮** on the one you are on, and choose
+     **[en:tran:Open in Chatbot]**; 📸
+   - or press the robot in the panel's own header, beside its transition button: it
+     attaches the session you are on (**[en:tran:Camera Show]** and
+     **[en:tran:Screen Show]** have no sessions, so their robot attaches the panel);
+   - or, in the help window, press the **⋮** at the left of the box and choose
+     **[en:tran:Attach a foreground session]**. It lists the panels open in the Presenter
+     with their sessions. Pick one, or several one after another. When no panel is
+     open, it says to open one from the **[en:tran:Foreground]** tab.
+3. The session is attached under the box as _Quick Text › Session 2_. A card says what the
+   assistant can change, with four buttons: **[en:tran:Show it on the screen]**,
+   **[en:tran:Make the words larger]**, **[en:tran:Move it to the top]** and
+   **[en:tran:Take it off the screen]**. The session goes with every question in that
+   chat until you press the **×** on its **[en:tran:Still asking about]** line. Pressing
+   the chip outlines its session button in the Presenter.
+4. Press a button, or type what you want: _make it red_, _move it to the bottom left_,
+   _make the words smaller_, _put a frame round it_, _put it behind the slide_, _make the
+   marquee slower_, _pause the countdown_, _make it 10 minutes_, _change it to Psalm 23:1_.
+   _Add 2 more minutes_ gives the countdown that is up two minutes more where it stands —
+   running, it keeps running; paused, it stays paused with the time added — and never starts
+   it over. _Clear everything from the foreground_ takes every extra off every screen, as
+   **[en:tran:Clear Foreground]** (F10) does. Asked what is on a screen that is off, the
+   answer names what it holds and says the screen is off.
+   An attached session is changed in place. What it has on a screen changes at once, and
+   its panel shows the new values. A change the component cannot take is refused in a
+   sentence naming what it can. For example, a marquee always runs along its edge, so it
+   cannot be moved.
+5. The answer says what changed. After a session was started, or its words or look were
+   changed, **[en:tran:Undo this change]** under it puts the panel's words and look back, and
+   the screen as it was: a countdown or a Long Text Show it started comes off the screen
+   again (a verse the long text had covered is back up), and a marquee that is up shows
+   its old words again. One press takes back every session that answer
+   changed (a countdown and a marquee started together come off together), and anything
+   else on the screen stays; the window then names each one, saying whether it was taken
+   away or is back as it was. Hiding, pausing, adding time and clearing everything
+   keep no Undo: the answer says how to reverse them instead (_show it again_, _resume
+   it_), and after a clear it names what it took off and offers to put that back. Words
+   already put up come off with the panel's Hide button, or by asking _take it off the screen_.
+
+**Not there?** **[en:tran:Open in Chatbot]** and the robots are there only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). The panels
+belong to the Presenter, so the assistant works on them while the main window is on the
+Presenter. A video, picture or web page is named by a file in that panel's own folder,
+and a camera by its name; the assistant never picks a file from elsewhere on the computer.
+
+_Verify: PM-174, CB-172, CB-183._
+
+---
+
+### W-62 — Make a song from a PowerPoint, Word, PDF or slide file with the assistant
+
+**Goal:** turn the words of a song someone typed into a PowerPoint (or a Word file, a PDF or
+one of the app's slide documents) into a song of your own without typing it again, and keep
+the font its slides were set in.
+
+1. The file must be in the **[en:tran:Documents]** list, in the Presenter's left column: that
+   is the list the help window looks in. 📸
+2. In the help window (the 🤖), type _make a song from my PowerPoint_ and press **Send**. The
+   window answers by itself, with no assistant asked: _Which file should I make the song
+   from? Press its name, or type its number._ over the PowerPoint files in
+   **[en:tran:Documents]**. `/lyric-from` does the same with every PowerPoint, Word, PDF and
+   slide file listed. 📸
+3. Press a file's name, or type its number. A file named in the question (_make a song from
+   Hymns 21&22.pptx_) is read straight away, with no list.
+4. The answer is the song, written out in a box exactly as it will be saved, before anything
+   is written: its title and parts, what had to be guessed, the headings at the top of the
+   slides that were left out of the words, and the font its slides were set in — _Every
+   stage shows it in …, the font of its slides._ 📸
+5. Press **Create "…"** to add it to your songs, or **Copy song text** to paste it into the
+   Lyric Editor yourself. Created, it is in **[en:tran:Documents]** —
+   **[en:tran:Show it in the list]** finds its row — and every stage draws it in the font of
+   its slides; **[en:tran:Song Font]** in Stage Style changes that (W-05 step 14).
+6. A file whose pages are pictures, or whose words are in a font that does not copy, has no
+   words the app can read: the window says so and offers
+   **[en:tran:Read the words off the pictures]** instead. 📸
+
+_Verify: CB-188, PM-179._
+
+---
+
+### W-63 — Change the screens with the assistant (the Bible text's look, another version, a transition, the display)
+
+**Goal:** have the help window change what a screen's Mini Screen card and the Bible text
+panel set — the size, colour and style of the Bible text on the screens, a second Bible
+beside the verse that is up, a transition, the stage, which screens get what you put up, a
+new screen — and tell you which display each screen is on and what it shows, without finding
+the control yourself.
+
+1. Keep the main window on the **[en:tran:Presenter]**: the screens belong to it. With a
+   passage up on a screen (W-06), type in a chat what to change and press
+   **[en:tran:Send]**: _Make the Bible verse on the screen bigger_, _The verse on the
+   projector is too small, people at the back can't read it_, _Give the Bible text a thick
+   black outline_, _Put the lines of the verse closer together_, _Set the Bible text style
+   back to normal_. The assistant reads the screens first, then changes the Bible text the
+   way the Bible text panel's own controls do (W-07). That look is one for every screen.
+   The answer says in a sentence what changed, and **[en:tran:Undo this change]** is under
+   it. 📸
+2. What you type next under that answer is about the screens too, without naming them
+   again: _Change its colour to yellow_, _Make it bold and give it a shadow_, _Centre it_.
+   _Undo that_ puts the change before it back.
+3. A second Bible beside the verse that is up: _Add the … Bible to the verse on the screen so
+   both versions show_, naming a Bible installed here — by its language, for example. It
+   goes after the versions already up, the way Shift+click on the screen card's version
+   menu adds one. Then _Which Bible versions are on the screen now?_, _Line the two
+   versions up verse by verse_, and _Take the … one off again_.
+4. Transitions: _Change the slide transition to zoom_ changes it on the ticked screens and
+   says which screens kept theirs; _Turn the background transition off_; _What transition
+   does each screen use now?_ names each screen's slide, background and foreground
+   transitions (W-48).
+5. The screens themselves (W-10, W-18): _Check the display: which monitor is each screen
+   on?_ and _Is anything showing on the projector right now?_ are answered from the screens
+   as they are, each by its number. _Use stage 1 on screen 1_; _Only work with screen 1 for
+   now_ ticks screen 1 alone, so what you put up next goes there; _Take the Bible off
+   screen 0_ clears that screen's passage. _Add a new screen for the stage_ adds one the way
+   the Mini Screen menu's **[en:tran:Add New Screen]** does: it is off and not ticked, the
+   answer says its number, and **[en:tran:Undo this change]** takes it away again.
+
+**Not there?** The screens belong to the Presenter: ask while the main window is on it.
+Asked HOW to do something (_How do I add a second version?_), the assistant answers with the
+steps, as for any question.
+
+**In another language:** a line like these typed in a language installed on the
+**[en:tran:Languages]** tab is taken as one about the screens too, whichever language the
+app is shown in.
+
+**No assistant just now?** When none can answer (the hourly limit paused it, for example),
+nothing is changed by itself, and a line like these is answered with the setting it is about
+as each screen has it now: the monitor it is on, the transitions, whether it is locked, the
+groups, the Bible versions, Line Sync, the size of the Bible text, the stage or which screens
+are ticked. Then comes what each screen is showing, and under the answer the button that
+makes the change, named the way the screen card and the Bible text panel name it, with the
+screen's number first when there is more than one screen: **[en:tran:Make the words larger]**,
+**[en:tran:Bold]**, **[en:tran:Lock]**, **[en:tran:Slide transition]: zoom**, **Add …** for a
+Bible installed here, **[en:tran:Clear Long Text]**. Press it: the answer says the setting as
+it is now, with **[en:tran:Undo this change]** under it. A line typed under that answer —
+_Centre it_ — gets its button too. _Add a new screen_ gets **[en:tran:Add New Screen]**:
+pressed, the answer says the new screen's number, the display it is on and which screens are
+ticked. A question that names no value, a change that is already
+so, a locked screen's passage and a Bible not installed get no button; then ask again when an
+assistant can answer, or ask how to do it yourself.
+
+_Verify: CB-192, CB-193, CB-194, CB-195, CB-196, CB-197._
 
 ## Configuration
 
@@ -3296,11 +3885,18 @@ _Verify: PL-110, CB-169._
 2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
    tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
-   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
-     configured but not installed on this computer. When the chosen font comes in more
+   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. The list starts
+     with the app's own fonts, which no computer has installed: each enabled language's own face first (`app-Google-Sans`,
+     `app-Battambang` -- the face that language's Bible text is drawn in), then the fonts the languages ship under their own
+     names (Google Sans, Battambang, a sticky-note hand), then the computer's fonts. Every font list in the app starts the same
+     way: the Slide Editor's, the foreground **[en:tran:Properties]**, **[en:tran:Bible/LongText Properties]**, the Lyric
+     Editor's (a section per language, above the computer's) and the Bible Note editor's two font boxes (its main box sorts
+     its fonts by name, which puts the `app-` faces first). A language installed or turned on is in every list the next time
+     a list is opened. A font marked `(Missing)` is
+     configured but neither installed on this computer nor shipped by an installed language. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
-   - **Reset button** (`Clear All Settings`):
+   - **Reset button** (**[en:tran:Clear All Settings]**):
      **this erases configuration; use with care.** It asks for confirmation first.
    - **Help → Factory Reset** in the menu bar is the way back when a setting has
      broken the app so badly that Settings cannot be opened at all: it works with
@@ -3314,7 +3910,7 @@ _Verify: PL-110, CB-169._
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-2a. **[en:tran:Path Settings]** tab (next to **[en:tran:General]**): where everything
+2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
     lives on disk.
    - **Directories:** where documents, lyrics, and bibles are stored on disk. A data
      folder is required: everything you make and set up — songs, slides, Bibles, notes
@@ -3365,7 +3961,7 @@ _Verify: PL-110, CB-169._
      it once. Pictures, videos and songs still pointing at where the folder USED to be
      are pointed at where it is now; a link to something that still exists is left as it
      is. A box says how many links it repaired, and the app reloads to show them. 📸
-   - **Reset button** (`Reset All Child Directories`):
+   - **Reset button** (**[en:tran:Reset All Child Directories]**):
      **this erases configuration; use with care.** It asks for confirmation first.
 3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
    or export/import a **[en:tran:Bible Data]** archive. The old online version list is
@@ -3381,7 +3977,7 @@ _Verify: PL-110, CB-169._
    custom servers — see **W-42**.
 4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
     this computer, turned on or off, and the ones to install (those two — see **W-55**).
-   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+   - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in
@@ -3457,7 +4053,7 @@ _Verify: PM-170, PM-171._
 
 **Goal:** show the app in your own language, or stop offering one you never use.
 
-English is part of the app. Every other language — Khmer and French included — is a
+English is part of the app. Every other language is a
 separate package, installed from the list Open Worship publishes online. An installed
 language is kept in your data folder, under `lang`.
 
@@ -3570,7 +4166,7 @@ _Verify: PU-01, PU-05, PU-07, PU-21, PU-22._
 
 1. **Right-click** an empty area of the mini-screen panel and choose
    **[en:tran:Add New Screen]** — a second preview card appears with its own number and color. 📸
-2. Point the new card at the display it should fill with the **Display** button in its
+2. Point the new card at the display it should fill with the **[en:tran:Display]** button in its
    footer (W-10), then turn it on with its own show/hide button. Every card has its own
    clears, transitions and lock too.
 3. Content goes to every **selected** screen. To stop one screen receiving content
@@ -3639,7 +4235,8 @@ this is the same pair of tools pointed at the app.
    default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
    circle becomes the blocked area instead. Size, dim amount and **edge
-   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming. 📸
+   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming.
+   Brush and spotlight both open on **[en:tran:Presets]**, as on the Mini Screen (W-10). 📸
 7. The **camera** at the end of the title bar takes a picture of the app **as it looks
    right now** — your drawing, your spotlight and all — and asks what to do with it:
    **[en:tran:Ask the assistant about this]** opens the help window with the picture already
@@ -3671,9 +4268,10 @@ this is the same pair of tools pointed at the app.
 > the panel's own sliders and color box. Escape or the arrow tool hands everything
 > straight back. The Undo / Redo / Clear **buttons** work in every tool regardless.
 
-_Verify: CB-30 (the snapshot), PC-33 (every window). The rest is still pending — the matrix
-lives at `docs/test-paths/coverage-matrix.md`, whose `PC-xx` (presenting-control) block
-holds PC-33 alone; add the rest for this workflow._
+_Verify: CB-30 (the snapshot), PC-33 (every window), PC-34 (the brush's and the spotlight's
+Presets). The rest is still pending — the matrix lives at `docs/test-paths/coverage-matrix.md`,
+whose `PC-xx` (presenting-control) block holds PC-33 and PC-34 alone; add the rest for this
+workflow._
 
 ### W-20 — Show the keys you press (Keyboard Screencast)
 
@@ -3714,9 +4312,12 @@ _Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix la
 
 **Goal:** get a video (or its audio as an MP3) from an online link straight into your
 Videos / Audios folder, without leaving the app. The download tools are not built into the
-app: the first time, a **[en:tran:Media Tools Required]** box offers to open
-**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where
-**[en:tran:Download and Install]** installs them once.
+app: the first time, a **[en:tran:Media Tools Required]** box asks before anything is
+downloaded — **[en:tran:Download and Install]** installs them once and the download goes on
+by itself. When a newer version of them has come out, an **[en:tran:Update Available]** box
+asks first: **[en:tran:Update]** updates them and then downloads, **[en:tran:Not Now]**
+downloads with the ones you have. They are also kept up to date in **[en:tran:Setting]** →
+**[en:tran:Others]** → **[en:tran:Extra Binaries]**.
 
 1. Open the **[en:tran:Background]** panel (W-08 step 1) and choose the **[en:tran:Videos]** tab — or the **[en:tran:Audios]** split if you want the sound only.
 2. **Right-click an empty part of the list** (or use the ⋮ [en:tran:More Options] button at
@@ -3761,7 +4362,7 @@ app: the first time, a **[en:tran:Media Tools Required]** box offers to open
 > **[en:tran:Update Available]** with an **[en:tran:Update to]** button. Press it and
 > the dots go away. Tools never installed are never checked.
 
-_Verify: MD-01..03, MD-07, CM-24, PM-102, ST-90._
+_Verify: MD-01..03, MD-06..08, CM-24, PM-102, ST-90._
 
 ---
 
@@ -4388,7 +4989,7 @@ travels as its own bundle, with everything attached to it.
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
    list**, which imports it the same way. A protected bundle asks for its password
    first; an ordinary one never does. 📸
-5. The document appears in that machine's documents folder under its original name, with
+5. The document appears in that machine's documents folder — the one the list is showing (W-58) — under its original name, with
    its background re-attached and its colour note restored, so it is ready to present
    straight away.
 6. If the bundle is on a web server or a machine sharing it over the local network, use
@@ -4479,7 +5080,7 @@ A bible list (the verses you lined up for a service) travels the same way.
    inside.
 3. On the other machine, right-click an empty part of the **[en:tran:Bibles]** panel → **[en:tran:Import]** and pick the file — or **drag the `.owbible.tar.gz` (or `.owbible.enc`) onto
    the Bibles panel**; a protected one asks for its password first. **[en:tran:Import From URL]** works here too. 📸
-4. The list appears in that machine's bibles folder with its verses, their colours and
+4. The list appears in that machine's bibles folder — the one the list is showing (W-58) — with its verses, their colours and
    its background, ready to present. If a list of the same name is already there, the
    verses it does not have yet are added to that list instead of a second one appearing.
 
@@ -4589,7 +5190,7 @@ as well, give it a window of its own.
    thing, no menu — and holding Ctrl again on that row closes the window. The menu
    entry's tooltip reminds you of the shortcut.
 2. It is the full previewer, not a thumbnail strip: the undo / redo / discard / save
-   strip at the top, the slides, the green **[en:tran:Note]** strip (the note boxes start closed — click it to open them), and a zoom slider with the document
+   strip at the top, the slides, the grey-striped **[en:tran:Note]** strip (the note boxes start closed — click it to open them), and a zoom slider with the document
    name at the bottom. Everything you can do in the middle panel you can do here —
    click a slide to put it on the screen, drag a slide to reorder it, drop an image or a
    video onto it, right-click a slide for its menu.
@@ -4721,7 +5322,8 @@ your Bible reading.
    places themselves are written in. It is **green** while that is the language of the
    Bible you are reading and **red** while it is not — `en` beside a Khmer Bible such as
    `ពគប` is red, and its tooltip adds **[en:tran:Not the language of the Bible]** with
-   that Bible's language. Click it and pick another — `km - Khmer
+   that Bible's language. Click it and pick another language the names come
+   in — one installed from Settings → **[en:tran:Languages]** (W-55), such as `km - Khmer
 (ភាសាខ្មែរ)` — and the lookup list and the
    "in your reading" panel switch to it at once, with nothing to reload.
    Person and location windows already open keep their own language. The choice is
@@ -4773,7 +5375,7 @@ your Bible reading.
    > window's robot does (step 13); and **[en:tran:Open Graph Preview]** opens its
    > connection graph (see **W-38**).
 7. **[en:tran:Verses]** starts closed and shows how many there are — some entries have hundreds
-   (Jerusalem has 712). Click it to open, and the references turn into readable
+   (Jerusalem has 710). Click it to open, and the references turn into readable
    titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
@@ -4856,7 +5458,10 @@ your Bible reading.
     passage again when it is already in that language — and on an English passage _show this passage in English_
     repeats the record's own words. _How do I save this?_ and _copy this passage_ name
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
-    button beside the answer. A question about using the app — _how do I put this passage
+    button beside the answer. Ask to keep something that is not the passage itself —
+    _save to a bible note_, _save the preaching lesson to a file_ — and no button is named:
+    the assistant writes it into a new Bible note, which opens in its own window (W-60). A
+    question about using the app — _how do I put this passage
     on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
     **Everything related to it.** As a passage's card opens it also gathers what the
     app's own cross references — the same ones the Reader's
@@ -4900,8 +5505,9 @@ list of names and places and the small buttons on a window's title bar keep thei
 
 **A note on what is translated:** a person's kind and **[en:tran:Gender]** and a place's **[en:tran:Type]**
 come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
-is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown exactly as the
-dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
+is one word out of a short, fixed list. A person's **[en:tran:Age]** comes in it too, its number kept: the datasets write
+every age in one of three set phrases, such as _175 years_. Only a phrase or a word — a gender, a
+place type — a newer dataset adds before the app knows it is shown exactly as the dataset wrote it.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
 RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162._
@@ -5231,6 +5837,66 @@ file held open) and a Mac.
 
 _Verify: ST-20, ST-80, ST-81, ST-82._
 
+### W-62 — Connect your own AI agent to the app (MCP)
+
+**Goal:** let an AI agent you run on this computer — Claude Code, Claude Desktop, Cursor
+or another program that speaks MCP (the Model Context Protocol) — see Open Worship and
+use it the way the app's own assistant does. The program the agent talks to comes with
+the download tools, so the computer needs nothing else installed.
+
+1. Open **[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**. If it
+   reads **[en:tran:Not installed]**, press **[en:tran:Download and Install]** (W-21); if it
+   offers **[en:tran:Update to]**, press that — tools from before version 0.0.6 have no
+   program for an agent. 📸
+2. Once the tools are installed, the card has an **[en:tran:AI agents (MCP)]** picker.
+   Choose your AI program in it: under **[en:tran:Terminal command]** the ones set up by
+   typing a command (Claude Code, Codex — which the ChatGPT desktop app shares —, Gemini
+   CLI, GitHub Copilot CLI …), under **[en:tran:Settings file]** the ones set up in a file
+   (Claude Desktop, Cursor, Windsurf, VS Code, Zed, Cline, Continue …), and under
+   **[en:tran:Others]** a plain JSON block for any other program, or
+   **[en:tran:Program path]**, the program's own path. Under the picker is the text for
+   the program chosen: a command, with **[en:tran:Run this in a terminal.]**, or what goes
+   in its settings file, with **[en:tran:Paste into:]** and that file. Press
+   **[en:tran:Copy]** — a note at the top right says the text has been copied — and paste
+   it there. The picker keeps your choice for next time. 📸
+3. Keep Open Worship open: the agent finds the open app by itself. It needs the app's AI
+   features on (**[en:tran:AI Providers]** → **[en:tran:Enable AI features]**, which is on
+   unless someone turned it off).
+4. Ask the agent about the app, for example _what is on the screen?_ When it presses
+   something, a note at the bottom of the window says the assistant did. Like the app's
+   own assistant it may point at anything and press most things, but a button that
+   cannot be undone — delete, remove, clear all … — stays yours to press.
+5. With more than one Open Worship open on this computer — the installed app and a test
+   copy, say — the agent lists them (each by its data profile, kind and version) and asks
+   you which one to work with; it does nothing in any of them until you answer. It also
+   checks that its program is the same version as the app, and tells you when it is not.
+
+> Notes: the program sits in your data folder under `extra-bin`, in a folder called
+> `mcp` with a `README.md` beside it. Keep that folder whole: the program reads the
+> files beside it. The command puts the program's path in single quotes on a Mac or
+> Linux and in double quotes on Windows, because a data folder's path can have spaces.
+> Tools installed from a file (W-21) carry the program too when the file is from
+> version 0.0.6 or later. ChatGPT in a web browser cannot start a program on this
+> computer; the ChatGPT desktop app reaches it through Codex's settings.
+
+Steps 1–4 were observed live 2026-11-13 on a scratch dev profile on a Mac, in English
+and Khmer: **[en:tran:Download and Install]** put 0.0.6 in, the line showed the command,
+**[en:tran:Copy]** put exactly that command on the clipboard with its note and the
+line's JSON button (gone since) the JSON; the program, started on its own with no setting,
+found the app, took a picture of the Presenter, pressed a Settings tab and refused
+_Delete everything_; Claude Code took the copied command and reported it connected.
+With the program's folder moved away the card still read **[en:tran:Installed]** and
+the line was gone. The picker (step 2) was seen live the same day on the dev app and on
+a scratch instance in Khmer: Claude Code, Cursor, the Codex config file, Continue and
+**[en:tran:Program path]** each put exactly the text shown on the clipboard, Cursor and
+Claude Desktop named their files, and the choice was still there after the tab was left
+and opened again. Step 5 was seen through a fresh copy of the program with two and then
+three apps open: it listed them, answered every press with the list until one was chosen,
+then worked in that one alone, following a switch to another. Not seen live: Claude
+Desktop or Cursor themselves, Windows or Linux, an update from 0.0.5.
+
+_Verify: ST-93, MD-05._
+
 ## Keyboard shortcut reference (tutorial appendix)
 
 Every page lists its own keys, searchable, under **Help → [en:tran:Keyboard Shortcuts]** (W-49). This table is the short version.
@@ -5264,7 +5930,7 @@ _Verify: KB-01..13, SC-03._
 whole layout back the way it shipped.
 
 Every resizable panel in the app is a **widget**. You can already collapse one by
-dragging its divider all the way to the edge — it shrinks to a thin green strip with
+dragging its divider all the way to the edge — it shrinks to a thin grey-striped strip with
 its name on it, and clicking that strip brings it back. The **View** menu on the top
 menu bar does the same thing by name, which is easier when the strip is hard to find.
 And the divider itself has a right-click menu that does it in place (steps 7–9) —
@@ -5281,10 +5947,10 @@ the only way in a popup window, whose menu bar is hidden.
    **[en:tran:Advance Bible Lookup]** binoculars toggle that same Advance Lookup section.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
    - `Note` — the document and slide notes under the slide previews (W-03) — is a
-     panel that **starts unticked**: it ships collapsed to its green strip,
+     panel that **starts unticked**: it ships collapsed to its strip,
      because most services never need it. Tick it, or click the strip, to open it.
      **[en:tran:Advance Lookup]**, which the binoculars open, starts unticked too.
-2. Click a ticked one — that panel collapses to its green strip, and the space goes to
+2. Click a ticked one — that panel collapses to its strip, and the space goes to
    its neighbour. 📸
 3. Click it again — the panel comes straight back. Nothing reloads and nothing you
    were doing is interrupted.
@@ -5308,8 +5974,9 @@ in a popup window:
 
 7. Right-click the **divider between Document List and Presenting Flow List** — the
    thin line between the two panels on the left of the presenter (every divider in the
-   app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
-   the two panels (the left one, or the upper one) collapses to its green strip and the
+   app has this menu, though one between two panels you cannot collapse, as in step 4,
+   offers only **[en:tran:Reset Size]**) — and choose **[en:tran:Close First Widget]**. 📸 The first of
+   the two panels (the left one, or the upper one) collapses to its strip and the
    other takes its space. `Close Second Widget` does the same to the other panel. The
    menu holds those two and **[en:tran:Reset Size]** (step 9), nothing else.
    Hovering the divider shows the same two choices as small arrows, each named for
@@ -5317,7 +5984,7 @@ in a popup window:
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
    divider between an upper and a lower panel. A collapsed panel has no divider — if
    one of the two is already a strip, click the strip first.
-8. Click the green **[en:tran:Document List]** strip — the panel comes straight back.
+8. Click the **[en:tran:Document List]** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
    shipped with. Double-clicking the divider does the same. The View menu's
@@ -5466,17 +6133,26 @@ an XML file already on your computer.
    `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
    import a Bible, the answer has an **[en:tran:Import a Bible for me]** button that starts
    here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. Before that question, a computer with no **KJV** is offered the one Open Worship
+2. Before the language question, a computer with no **KJV** is offered the one Open Worship
    provides: **[en:tran:Create the provided KJV]** writes it from the app's own copy, with no
    internet and no download, and then the import starts again here. (If you only
    wanted the KJV, that is done: the language question that follows needs no answer.) Press
    **[en:tran:Import another Bible anyway]** to go on without it.
    The assistant then asks **Which language do you want the Bible in?** Press
-   **[en:tran:Khmer]**, **[en:tran:English]** or **[en:tran:French]**, or type the language — in English
+   the language the app is shown in, **[en:tran:English]** or another language you installed, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **[en:tran:A file on this computer]** opens the form below instead. A word it cannot find
    (`kmer`) is passed to the assistant to work out the language you meant; with no
-   assistant to ask, the question stays, with its buttons.
+   assistant to ask, the question stays, with its buttons. A language you type that is
+   turned off, or not installed and on the list Open Worship publishes, is offered first:
+   the assistant says so and that it gives the app that language's Bible book names,
+   numbers and search words (for a download, how big it is, and that the language the
+   app is shown in does not change), with **[en:tran:Install it]** —
+   **[en:tran:Enable]** for one turned off — and **[en:tran:Not now]**.
+   **[en:tran:Install it]** says _Done — … is ready_ and goes on to the list;
+   **[en:tran:Not now]** goes on to it without the language. Each language is asked about
+   once in an import: one first met at Step 2 (step 6) is offered there, before the
+   numbers. With no internet nothing is offered.
 3. It lists **every** Bible in that language, up to twelve, from a free collection of about a
    thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
    seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)_. One you have installed is marked **you already have this
@@ -5502,7 +6178,7 @@ an XML file already on your computer.
    the downloaded edition is named after comes first. Hover a key to read its
    full name (Khmer 2023 is **GKHB**, hovering reads _ព្រះគម្ពីរខ្មែរសាកល_).
    A short name a Bible is already installed under is not offered at all. A
-   language this app has no names for — Thai — shows the file's own suggested
+   language this app has no names for — Thai, or one not installed or turned off (W-55) — shows the file's own suggested
    names instead. You can also type your own, letters and numbers with no
    spaces; a name you type that you already have is refused and asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
@@ -5591,7 +6267,7 @@ Open Worship provides it and recommends it, beside the downloaded file's own
    filename provides a hint. `KhmerBible.xml` suggests `km-KH`. You can correct it.
 5. Choose **[en:tran:Number mapping]**. Khmer offers `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` first
    and `0 1 2 3 4 5 6 7 8 9` as an alternative.
-6. Choose **[en:tran:Book name mapping]**. Built-in Khmer naming sets appear first;
+6. Choose **[en:tran:Book name mapping]**. With the Khmer language installed and turned on (W-55), its built-in naming sets appear first;
    online lookup adds complete lists from Bible.com and Wordproject. Each option
    shows its edition/source, and **[en:tran:Preview book names]** expands all 66 names.
    **[en:tran:Keep existing book names]** preserves the names already in the XML.
@@ -5861,24 +6537,96 @@ all count as book-level too.
    - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
      **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
-     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
-     that window forward. 📸
+     to use your own PDF reader instead. Each press opens one more window on the file, a
+     little below and to the right of the last, so two parts of it can be read side by side. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
      block are drawn as diagrams (a diagram with a mistake in it shows the error above its
      code). The window follows the file — save it in your editor and the preview changes.
-     A link to a heading scrolls there; a link to another `.md` opens it in the same window,
-     with **[en:tran:Back]** (the left arrow) to return; a web link opens in your browser; a
-     link to any other file shows it in its folder rather than running it. HTML written
+     A link to a heading scrolls there; a web link opens in your browser; a link to another
+     file opens it in a window of its own, and this window keeps its file: another `.md` in a
+     Markdown Preview of its own (one already open on that file comes forward instead), a
+     PDF in the PDF window, a bible note file on its first note, and any other file is shown
+     in its folder rather than run. HTML written
      inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
      section that folds away — but nothing in it can run: scripts, buttons, forms and styles
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
-     when text is pasted into it; the preview shows what is written. The head row also has
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and
-     **[en:tran:Reveal in File Explorer]**. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Pressing a
-     file whose preview is already open brings that window forward. 📸
+     when text is pasted into it; the preview shows what is written.
+     **People, places, verses and other files named in the page are links too**, drawn in
+     the link colour with a dotted underline, as the names in a Bible Reader verse are: a
+     person or place of the chapter the file is named after (a `JHN.3.…` file links Nicodemus
+     and Moses; a file named after no chapter links only a name one person or place in the
+     whole Bible has), a verse reference written the way an installed Bible names its books
+     (`Ezek. 36:25-27`, `John 3:16; 5:8`, a reference in Khmer), and the name of another
+     resource file (`JHN.3.pdf`, `JHN.0.pdf`) that is beside this file or in one of your
+     Resources folders. Names light up once the Bible Reader has highlighted the names of a
+     verse for the first time. Click a person, place or verse to open its detail panel in
+     the Bible Reader, which comes forward: the main window when it shows the Reader, else a
+     Reader window you have open, else the main window as it is, which stays on the page it
+     is on. Click a file's name to open it in a window of its own, as a link does. Words in
+     code, in a diagram or in a link stay as written, and a file that does not exist is not
+     linked; selecting words across a link opens nothing. The head row also has
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
+     **[en:tran:Reveal in File Explorer]**.
+     **To jump to a part of a long page:** press **[en:tran:Sections]** (the list, first
+     of the head row's buttons, there when the page has headings). The page's headings are
+     listed under the head row, each set in under the one before it by its level (`#`,
+     `##`, `###` …), the one you are reading in the link colour; click one and the page
+     jumps to it. The arrow keys, Home and End move along the list; Esc, a click anywhere
+     else or the button again closes it. Once you scroll down, an arrow in the page's
+     bottom-right corner, **[en:tran:Scroll to the top]**, takes you back to the top.
+     Neither is printed. 📸 **[en:tran:Print]** (the printer) opens a Print
+     Preview of the page in the light theme, whatever the window shows: a dark window prints
+     exactly what it would show in light, its diagrams too, with the same fonts and layout,
+     on as many pages as it needs, without the head row or the editor; print it or save it
+     as a PDF from there. Nothing of the page is left off: a fold closed on screen prints
+     open, every picture is there however far down the page, and words typed in the editor
+     a moment before are printed too.
+     **When the page names a verse, a person or a place, [en:tran:Print] asks first.** The
+     window shows **[en:tran:Add the Bible text and the name and place details to the end of the printout?]**
+     with how many verses, names and places it found. **[en:tran:Add and Print]** adds them
+     after the page's last line: the words of each passage, from the Bible named in
+     brackets right after its reference when that Bible is installed (`John 3:1-36
+     (Amplified)` from the Amplified), else from the Bible whose book names it is written
+     in (a Khmer reference from a Khmer Bible), else the KJV. A passage already printed as
+     part of a longer one is not printed again, and one that begins within it goes on from
+     that one's Bible: a longer one from any Bible of its language holds it, or from its
+     own Bible only when that Bible is named after it. Then each
+     person and place with what the names lookup says of them,
+     in the language that lookup is set to, a place's modern site too. A page that names
+     very many says at the end how many more could not be added.
+     **[en:tran:Print Page Only]** prints the page alone, and **[en:tran:Cancel]** (or Esc)
+     prints nothing. A page that names none prints straight away. Ctrl+P (⌘+P on a Mac)
+     and **File** → **Print Without Preview** in the menu bar (Alt shows it when it is
+     hidden) ask the same question first. What is added is on the paper only: the window
+     never shows it.
+     **[en:tran:Ask the Assistant About This File]** (the 🤖, last in the row, shown while
+     AI is on) brings the help window forward with this file attached in a chat of its own,
+     as the 🤖 on its Resources row does.
+     **To change the file right there:** press **[en:tran:Edit]** (the pencil). An editor
+     of the file's markdown opens on the left, its lines wrapped, and the page stays on the right, drawing what you type a moment
+     after you stop. The editor opens at the part of the page you were reading. Scroll either
+     side and, once you stop, the other jumps to the same line. Nothing is written until you
+     press **[en:tran:Save]** (the disk) or
+     Ctrl+S (⌘+S on a Mac); until then a `*` after the name says there are
+     **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
+     arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
+     whole window back to the page — your unsaved words still drawn there as they will
+     look, still waiting for **[en:tran:Save]**. **To ask the assistant about some of the
+     words**, select them in the editor, right-click them (or press Shift+F10) and choose
+     **[en:tran:Ask the assistant about this]**: the help window comes forward with them
+     quoted in its box under _Selected text_, the file's name and their line number, in the
+     chat that already holds this file, else in a new one with the file attached. Nothing
+     is sent until you type your question under the quote and press **[en:tran:Send]**.
+     While something is unsaved,
+     **[en:tran:Reload]** waits, and closing the window is stopped once with a note to save or discard first (keep trying and it
+     closes anyway). A change saved in your own editor reaches an open editor here that
+     has nothing unsaved; one with unsaved words keeps them, and **[en:tran:Save]** writes
+     them over the file. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Each
+     press opens one more window on the file, as a PDF's does: scroll one to the
+     diagrams and keep the other on the passage. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
      marked in it (the highlighter icon) with its highlights in their colour and its comments
@@ -5973,7 +6721,7 @@ all count as book-level too.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, CM-93._
 
 ---
 
@@ -6143,7 +6891,7 @@ _Verify: RD-107._
 **Goal:** highlight words in a passage in colour, and attach a note to a phrase, so both
 are still there the next time you open the app.
 
-1. Open the **Reader** (📖) and bring up a passage — say `Genesis 22:1-24`.
+1. Open the **[en:tran:Bible Reader]** (📖) and bring up a passage — say `Genesis 22:1-24`.
 2. Drag across a few words inside a verse, the way you would to copy them. A small
    toolbar appears just above what you selected. 📸
    It has six coloured dots, then a **speech bubble** and an **eraser** — and, while AI
@@ -6306,19 +7054,21 @@ it is describing.
    offers the data folder and the language. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
    left out. Another tab can be asking about a different window at the same time.
-   **More than one window of the app open? Choose it on the WORKING IN line above the box.**
+   **More than one window of the app open? Choose it on the [en:tran:WORKING IN] line above the box.**
    That line, just over the box you type in, names each open window — the main
    window, and for example a Slide Editor (by its document's name), Settings or a
    Bible Reader opened in a window of its own — and the help then works with the
    one you choose: it reads what that window shows, outlines buttons in it, walks you
-   through steps there, the 📷 takes a picture of that window and the ◎ points in it.
+   through steps there, **[en:tran:Attach a picture of the app]** in the **⋮** at the left of
+   the box takes a picture of that window and
+   **[en:tran:Point at a control in the app]** points in it.
    Choosing one sets **[en:tran:ASKING ABOUT]** to match and marks the line with a coloured
    bar; choosing the main window goes back to the usual way. The choice belongs to
    that chat tab while the help window stays open; the line appears only while there
    is a second window to choose, and it keeps up by itself: a window you open or
    close, or the main window moving to another page, shows in the list within a
-   second, with nothing to press in the help window. A picture from the 📷 and a
-   control from the ◎ remember the window they came from — rest the mouse on the
+   second, with nothing to press in the help window. A picture from **[en:tran:Attach a picture of the app]** and a
+   control from **[en:tran:Point at a control in the app]** remember the window they came from — rest the mouse on the
    chip to see it — and the assistant is told which window each is of; pressing a
    pointed-at chip outlines that control in its own window, whichever window is
    chosen now. 📸 **[en:tran:ASSISTANT]** is which service answers and **[en:tran:MODEL]** is which of
@@ -6363,7 +7113,7 @@ it is describing.
    narrows itself as you type. **[en:tran:Fewer]** folds it away again. 📸
    **A Bible can be installed from the chat, with no model call.** Ask
    `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`
-   — the **Bible versions** section under **[en:tran:More… — everything it can answer]** contains this editable sample. Asking it
+   — the **Bible versions** section under **[en:tran:More… — everything it can answer]** contains an editable sample like it, for an English Bible. Asking it
    downloads the file, says where it is from and asks you to press **[en:tran:I agree]** (on a
    computer with no KJV yet it offers **[en:tran:Create the provided KJV]** first), then asks a
    few quick questions in the chat, each with buttons to
@@ -6420,14 +7170,23 @@ it is describing.
    off?", and it knows what you mean — you do not have to say the whole thing again.
    Each tab keeps its own thread: a question asked here is never answered out of the
    chat next door.
-   **And you rarely have to type the next thing.** Every answer ends with two or
-   three short buttons in the assistant's own words — _“How do I style the verse
+   **And you rarely have to type the next thing.** Every answer ends with up to
+   five short buttons in the assistant's own words — _“How do I style the verse
    text?”_, _“Which button shows it?”_, _“No thanks”_ — and pressing one says it for
    you, as if you had typed it. A reply that only repeats **[en:tran:Show me step by step]**
    in other words is not offered beside it. They are the round-cornered buttons on the bottom row; the
    square ones above them, in capitals, are the ones that DO something in the app.
    Only the newest answer carries them, so a **Yes** is always a yes to the question
    you were just asked. 📸
+   **A word or two on its own is asked about first.** Type just _lyric_ (or
+   _background_, _bible_) in a new chat and the window answers at once, with no
+   assistant asked: _What would you like to do with “lyric”?_ and up to six of the
+   questions it is ready for as buttons — _How do I make a new song?_, _Can you
+   turn a PowerPoint song into a lyric file?_, _How do I put a song's lyrics on
+   the screen?_ … — so nothing is guessed. Press the one you meant and it is
+   answered; or type more in your own words. Further down a conversation, a word
+   or two that the conversation does not already explain is answered the same
+   way: a short question, with the likely jobs as buttons. 📸
    **It tells you what it is doing while you wait.** Under your question, a
    short list builds up as it works — _Connecting to the app_, _Thinking about
    it_, _Searching the guide for "background"_, _Checking the projector
@@ -6490,8 +7249,8 @@ it is describing.
    **/verse John 3:16** puts that passage on the screen — read by the app's own
    reference parser, in the Bible version the Bible Lookup is on (or another
    installed one that reads it), and read back afterwards: _John 3:16 (KJV) is
-   on the screen now — "For God so loved…"_, with _Turn the screen on_ offered
-   when the screen is off and _Take it off again_ beside it (**F9**). Asking in
+   on the screen now — "For God so loved…"_, with **[en:tran:Turn the screen on]** offered
+   when the screen is off and **[en:tran:Take it off again]** beside it (**F9**). Asking in
    words does the same: _Put John 3:16 on the screen_ puts it up straight away
    with an assistant, and offers one button that does it without one;
    **/countdown 5** starts a five-minute countdown on the screen (**/countdown
@@ -6499,8 +7258,8 @@ it is describing.
    the same command) and **/marquee Please silence your phones** scrolls the
    words along the bottom (**/marquee-top** along the top; **stop** takes either
    off) — each read back afterwards, _a 5 minute countdown, ending at 11:45 AM is
-   on the screen now_, with _Turn the screen on_ offered while the screen is off
-   and _Take it off again_ beside it. Asking in words does the same: _Start a 5
+   on the screen now_, with **[en:tran:Turn the screen on]** offered while the screen is off
+   and **[en:tran:Take it off again]** beside it. Asking in words does the same: _Start a 5
    minute countdown on the screen_ or _Put the time on the screen_ starts it
    straight away with an assistant and offers the screen's own show button, and
    without one the guide offers one button that starts it; the five
@@ -6571,8 +7330,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    tools; and on such a server _Turn off the screen for me_, _Turn the screen
    on_, _show verse 1 on screen for me_ or _put slide 3 on the projector_ are
    answered from the app's own state at once, with ONE button that does it —
-   _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
-   screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
+   _Nothing to turn off_ when no screen is on (never a Clear), **[en:tran:Turn every screen off]** when one is, **Put "(1)-Verse 1" on the screen** for a slide
    the selected song has — and _Show the next slide?_ or _show the previous
    slide_ the same way, naming the slide the arrow keys would go to and
    offering the one button that puts it up — and _Where is the button for
@@ -6584,7 +7342,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
-   commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
+   commands too — **[en:tran:Turn the screen on]** under _nothing is showing_ — and pressing
    one writes the command into the chat as though you had typed it, so the word is
    there for next time. A command with a spelling mistake lists the real ones
    rather than guessing. 📸
@@ -6604,10 +7362,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    back by itself after that. **Want the tips back sooner?
    Type /tips** in the box and ask: the line is back at once, and the answer
    gives you one tip straight away. 📸
-7. **Show it, instead of describing it.** Beside the box are three buttons.
-   **📎** attaches a picture or a file from your computer; **📷** takes a picture
-   of the app as it looks right now; **🎯** lets you POINT — an outline follows
-   your mouse over the app and the control you click is the one you meant.
+7. **Show it, instead of describing it.** Press the **⋮** at the left of the box
+   (**[en:tran:More Options]**): it opens a short menu, each row an icon and its
+   name. **[en:tran:Attach a file]** attaches a picture or a file from your computer;
+   **[en:tran:Attach a picture of the app]** takes a picture of the app as it looks
+   right now; **[en:tran:Point at a control in the app]** lets you POINT — an outline
+   follows your mouse over the app and the control you click is the one you meant.
+   The same menu holds **[en:tran:Attach a foreground session]** and, last,
+   **[en:tran:List every command]**, which puts **/** in the box and lists the
+   commands. **Esc**, or a press anywhere else, closes the menu.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
    an **×** to take it off again, and up to four can ride one question.
@@ -6642,8 +7405,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    window says so before spending anything and offers you one that can, in a
    single press.
    **And it can ask to be shown.** When the assistant cannot answer without
-   seeing your screen it says so and puts the button right there — _Send a picture
-   of my screen_, _Point at the control_, _Attach a file_ — so you never have to
+   seeing your screen it says so and puts the button right there — **[en:tran:Send a picture of my screen]**,
+   **[en:tran:Point at the control]**, **[en:tran:Attach a file]** — so you never have to
    work out how to send it one. 📸
    **Read a study PDF one verse or range at a time.** In the Bible Reader's
    Resources panel, press the 🤖 (**[en:tran:Ask the Assistant About This File]**) beside a chapter PDF
@@ -6672,7 +7435,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
    **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
-   With **ASKING ABOUT** on **Bible Reader**, type the sentence the way you say it —
+   With **[en:tran:ASKING ABOUT]** on **[en:tran:Bible Reader]**, type the sentence the way you say it —
    _summarize Matthew 18_, _show the resources for John 3_, _what does MAT.18.pdf
    say?_ — in English or in your own language, with your Bible's own book names and
    digits. The assistant reads the chapter from your Bible, or the file you named from
@@ -6683,6 +7446,34 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **[en:tran:Ask again]** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **And every answer has a reply arrow beside Copy, to follow up on it.** Press the
+   arrow (**[en:tran:Reply]**) and the answer is written into the box under a line
+   _Replying to your answer:_, each of its lines starting with `>`; type your question
+   under it and send, and the assistant knows which answer you mean, however far up the
+   chat it is. To follow up on one part of it — a section, a sentence, a word — select
+   those words in the answer first, then press the arrow: only they are written in,
+   under _Replying to this part of your answer:_. Nothing is sent until you press
+   **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
+   pressing the arrow twice writes it in once.
+   **And every answer has a Retry beside the reply arrow, for a different answer.**
+   Press the round arrows (**[en:tran:Retry]**) under an answer and the same
+   question is asked again — with the file or picture it was asked with — and
+   the new answer comes at the bottom under _A different answer: worked out
+   another way, with more effort._ Each press tries another way in: another
+   way to do it that the app has (or, when there is only one, it says so and
+   adds what to do when a step does not work), the question read another way,
+   or the answer worked out again step by step — and it thinks harder each
+   time, but keeps every button name right. And where there is another assistant to ask, the press asks it,
+   for that one question: on **[en:tran:Auto]** — or on your own server, OWA Shared or
+   **[en:tran:Free]** — the one that wrote the answer goes to the back of the line and the
+   note says who answered this time (_Auto asked … this time._); with a key of
+   your own for **Claude**, **ChatGPT** or **[en:tran:Kimi]**, the next model up of that
+   same key answers — or, on its best model already, the next one down. The next question
+   goes to the one picked at the top of the window, as before — nothing there
+   changes. Anything you were typing in the box stays there, and the round
+   arrows wait, greyed, while an answer is on its way. An answer to one of the
+   `/` commands has none — pressed again, a command would just do the same
+   thing again.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
@@ -6697,8 +7488,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    pressing it again takes it off; the mark is kept with the chat on this
    computer and is sent nowhere. The first time you press 👎 under an answer the
    help window follows up by itself — no assistant is asked, so it costs nothing:
-   it asks what was wrong, with three things to press (_A button it names is not
-   there_, _The steps did not work_, _That is wrong for the window I am in_), and
+   it asks what was wrong, with three things to press (**[en:tran:A button it names is not there]**,
+   **[en:tran:The steps did not work]**, **[en:tran:That is wrong for the window I am in]**), and
    says what most often helps, a smarter model. When the assistant answering has
    one — **Claude**, **ChatGPT** and **[en:tran:Kimi]** list theirs best first — a button
    **Ask again with …** names the next model up: it asks the same question of
@@ -6724,7 +7515,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    was called, how many tokens went in and came out, how much of that was served
    from the cache. The dollars are an **estimate from the model's list price**, so
    the bill from your provider is the figure that counts; a free service reads
-   **free**, and a model this app has no list price for reads **price not known**
+   **[en:tran:free]**, and a model this app has no list price for reads **[en:tran:price not known]**
    with the tokens still counted. Nothing at all is shown until a question has been
    asked. The assistant itself cannot read these figures — it can only say where
    they are — so for the total in words type **/credit**, which answers from the tab
@@ -6756,7 +7547,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
    **Attach a picture or PDF to a problem report.** In this help window, type what
-   went wrong into the question box, then use its paperclip to choose the picture,
+   went wrong into the question box, then press the **⋮** at its left and
+   **[en:tran:Attach a file]** to choose the picture,
    text file or PDF. Press **[en:tran:Report]** below **[en:tran:Send]**, then
    **[en:tran:Report it]** in the confirmation. Read the prepared report and its
    attachment list, then press **[en:tran:Send report]** when ready to send it.
@@ -6765,7 +7557,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
    **[en:tran:Report]** button on it: type a line, attach a picture or a file if it
-   helps (the paperclip takes pictures, text files and a PDF), and
+   helps (**[en:tran:Attach a file]** in the **⋮** takes pictures, text files and a PDF), and
    press **[en:tran:Send]** or **[en:tran:Report]** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
@@ -7095,7 +7887,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     language**: the one you write in, and the one the app is shown in whenever that
     cannot be told — a "yes", a number, a suggestion you pressed. That is any
     language, not only the ones the app can be shown in: a question written in
-    Spanish, Thai or Swahili is answered in it, the suggestions under the answer
+    Spanish or Thai is answered in it — in a language you have not installed, only when
+    its letters tell which: a script of its own, or a letter English never writes, such
+    as an accent; a question in plain English letters, as Swahili is written, is answered
+    in the language the app is shown in — and the suggestions under the answer
     too, with every button named the way your screen shows it. With the app in
     Khmer the window's own buttons and labels are in Khmer too, drawn in the app's
     Khmer letters, and so is the AI Chat (✨) window. Behind the scenes, an assistant
@@ -7111,7 +7906,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 18. **It can turn words you already have into a song.** Paste the verses of a song
     into the box of this help window, where you type a question (not into the Lyric
     Editor) — from an email, from a hymn sheet, from a page you found — and ask
-    for a song; or attach a `.txt` of the words with the paperclip; or give it the
+    for a song; or attach a `.txt` of the words, or the PowerPoint (`.pptx`) slides
+    a hymn is projected from (the **⋮** at the left of the box → **[en:tran:Attach a file]**); or give it the
     address of a page the words are on. One of the **[en:tran:Try asking]** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
     The answer comes back in plain words — what the song came out as, its parts and
@@ -7129,7 +7925,11 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     saved beside the first with `(1)` after the name. **[en:tran:Copy song text]** puts the same thing on the clipboard, to paste
     straight into the Lyric Editor.
     Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
-    the blocks and it uses them. Without labels each block becomes a verse, and a
+    the blocks and it uses them. Typed on one line works too: _Create a song called
+    Morning Praise with these words: Verse 1: We lift our eyes to you this morning,
+    Chorus: Holy, holy, holy Lord._ — each label with a colon after it starts a part
+    of its own, a ` / ` between words starts a new line, and the title you named is
+    the song's. Without labels each block becomes a verse, and a
     block repeated word for word is written once and sung each time it appears. Chord
     lines above the words are left out — Open Lyric puts chords inside the words —
     and a section it cannot make sense of is kept whole, with your own label above it,
@@ -7149,6 +7949,25 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     written out by the app itself in a second or two, under a note that reads
     _I wrote the song out myself instead_ — with the same **[en:tran:Create]** and
     **[en:tran:Copy song text]** buttons, and nothing searched in this guide for the words. 📸
+    **A song from a file in your Documents list.** With nothing attached, type
+    _new lyric from powerpoint_ — or _make a song from my PDF_, or the file by its
+    name: _make a song from Amazing Grace.docx_ — and the app answers by itself, with
+    no assistant asked: the files of that kind in your Documents list (slide
+    documents, PowerPoint and Word files, PDFs), up to six, each a
+    **Make a song from "<file>"** button, and how to reach the others — name the
+    file in your question. A file you named is written out at once. A button writes
+    its song out in a moment, named by the title slide — for a hymnal, its number,
+    the hymn's name and its English name when the slide carries both — with the
+    verse numbers out of the words, and nothing is written beside your file;
+    **[en:tran:Create]** saves it as above. A PowerPoint or a Word file is read through the same
+    converter the Documents list shows its slides with, a slide document by its text
+    boxes, a PDF by the words in its first eight pages (a scanned PDF has none to
+    read). A slide document or a Word file attached in the box works the same with
+    _make a song from it_, and so does that line with the box empty, for the file
+    the chat last carried; the card of choices the window shows for a slide
+    document carries **[en:tran:Make a song from it]** too. `.ppt` and `.doc` files are not read —
+    save them as `.pptx` or `.docx` first. In a window shown in another language the
+    answer and its buttons are in that language. 📸
 19. **Name a song, or give the address of a song page, and it is written out for
     you.** The fourth **[en:tran:Try asking]** chip is not a question but the start of one:
     _Create a lyric file for song "Amazing Grace"_. Pressing it does not ask
@@ -7209,14 +8028,110 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     "…"_ — and ask again. Everything else is the same as pasting the words yourself:
     the two buttons underneath, and nothing written to disk until you press
     **[en:tran:Create]**.
-20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
+    **Several songs at once.** Put two, three or four addresses in one message —
+    _Create lyric files from_ and the links — or attach up to four PowerPoint files
+    (the **⋮** at the left of the box → **[en:tran:Attach a file]**) and type _Create lyric files from these_.
+    `/lyric` followed by several links does the same. The app reads them one after
+    another by itself, with no assistant asked, and answers with every song at once:
+    a box per song, shut, named by its title, to open and read before anything is
+    made, and under them **Create all N songs** first, then each song's own
+    **Create "<title>"** to make just that one. **Create all N songs** saves every
+    one and answers _Saved N songs: …_ with one file under it for each. A page or a
+    file it finds no song in is named in a sentence of its own, and links past the
+    fourth are left for another message. From a hymnal's slides, the verse numbers
+    are left out of the words, a note for the musicians at the end (_music, then
+    sing verses 3 and 4 again_) is kept in the file but never put on the screen,
+    and a chorus printed after every verse is written once and played after each.
+    📸
+20. **Ask for a new running order, slide document, Bibles list or background,
+    and it is made.** Type what you want in an ordinary chat, the way you would
+    say it: _Create a running order called Evening Service._, _Make a new slide
+    document called Sunday Welcome with a welcome slide and an announcements
+    slide._, _Save John 3:16 to my Bible list._, _Make a new Bible list called
+    Easter with John 20:1-18 and 1 Corinthians 15:3-8._, _Make a background web
+    page with a soft blue gradient._, _Add this video as a background:_ and its
+    link. 📸
+    **In your own language too.** The same asks typed in a language installed
+    in **[en:tran:Settings]** → **[en:tran:Languages]** are made the same way,
+    even with the app in English: _Hazme un orden de culto nuevo para el
+    miércoles, por favor_ makes a running order, and a Khmer request with
+    Khmer numbers saves the verses to your Bibles list. The answer's own
+    sentence (_I made …_) is in the language the app is shown in.
+    **Asked for empty**, the file is made at once and the answer says where:
+    _I made "Evening Service" for you. It is in Presenting Flows now._ Under it
+    is that file's own card, with the file waiting in the box, so the next thing
+    you type is about it — _add Amazing Grace and John 3:16_. A name that is
+    taken gets `(2)` after it; with no name it is called after the day, such as
+    _Slides 2026-11-12_.
+    **Asked for with things in it**, it is made and filled in the same answer:
+    the slides with their words, a verse as your Bible reads it with its
+    reference under it, a running order's songs, passages and countdown. Songs
+    must already be in your Documents; the answer says which it could not find.
+    Nothing goes on a screen.
+    **Passages for a Bibles list** are saved straight away, without the
+    assistant: the answer names each one as the Bible writes it, a list it made
+    (_I made "Easter" for you. It is in Bibles now._), and a reference no
+    installed Bible can read. _My Bible list_ is the list called Default; _the
+    Wedding list_ is one you named. Asked in the Bible Reader, the Reader's own
+    list is used. A passage the list holds already is not saved again: the
+    answer says _… is in your Bibles list already, so it is not saved twice._
+    **A list you carry can be pasted as it is**, one passage a line, the way
+    you keep it: _Add these to my Bibles list:_ and under it _John 3:15 (kjv)_,
+    a passage in another installed Bible's own words and numbers with that
+    Bible's name in brackets, _GEN 1:2-_, and so on. Each one is saved in the
+    Bible written beside it. Passages inside a paragraph are found too: _Last
+    Sunday at 10:30 am we sang 2 hymns, then read Ph 4:13 and Romans 8:28-30,
+    and Pastor preached on John 3:16, 17. Save these to the Easter list._
+    saves Romans 8:28-30, John 3:16 and John 3:17 and leaves the time and the
+    hymns alone. **What is not clear is asked, never guessed**: _Which do you
+    mean by “GEN 1:2-”? Press one and I will save it._ over **Genesis 1:2-31**
+    and **Genesis 1:2**; _Ph_ as each book it could be; and a Bible that is
+    not installed -- _No Bible called “niv” is installed. Which Bible should I
+    save … in?_ -- with one button for each Bible you have. Press one and that
+    passage is saved, with its own **[en:tran:Undo this change]**, and the next
+    question comes; **[en:tran:Skip]** leaves it out. 📸
+    **Adding is never showing**: _add bible items for me for:_ with _john 3:16
+    gen 1_ under it, short names in lower case and all, is saved -- _Saved
+    (KJV) John 3:16, (KJV) Genesis 1:1-31 to your Bibles list._ -- and nothing
+    goes on the screen. Asked for a passage by its words only (_add a bible
+    item for me: the verse that says the Lord is my shepherd_), the answer
+    offers the passage as a button, **Psalm 23:1**; pressing it saves it the
+    same way. To put a passage up, say so: _put John 3:16 on the screen_.
+    **From the Bibles panel**: under the Default list,
+    **[en:tran:Add Bible Item]** asks how -- **[en:tran:Bible Lookup]** opens
+    the lookup as before, and **[en:tran:Open in Chatbot]** opens the
+    assistant in a chat of its own whose box already holds its first line,
+    _Add the Bible passages in this text to my Bibles list:_, in the language
+    the app is shown in, the cursor on the line under it. Paste a list or a
+    paragraph there and press **[en:tran:Send]**: every passage in it is
+    saved to the list called Default -- a whole chapter in the middle of a
+    sentence too (_we will read Psalm 23 together_) -- and what is not clear
+    is asked as above. Sent with nothing under it, the answer says so and
+    the line waits in the box again. With AI features turned off the button
+    opens the lookup straight away. 📸
+    **A background web page** is written by the assistant and saved in
+    **[en:tran:Background]** → **[en:tran:Webs]** under the name you gave (or
+    the day's, such as _Background 2026-11-12_): _I made "Calm Sea" for you. It
+    is in Webs now._ It fills the screen, loads nothing from the internet and,
+    if it moves, only slides or fades, which an old computer can keep up with.
+    **A video or a song's sound from a link** is not downloaded by the chat:
+    the answer copies the link for you and says where to press -- in
+    **[en:tran:Background]** → **[en:tran:Videos]** (or **[en:tran:Audios]**),
+    right-click an empty part of the list, **[en:tran:Download From URL]**; the
+    box already holds the link, so **[en:tran:Ok]** is all that is left (W-21).
+    **Show me step by step** under it rings each control.
+    **[en:tran:Undo this change]** under the answer takes it all back: what was
+    put in, and a file, list or page it made. 📸
+    A question about HOW to make one (_How do I make a new slide document?_) is
+    answered with the steps, and nothing is made.
+21. **[en:tran:Enable AI features]** turns all of this on or off. It is in
     **[en:tran:Settings]** → **[en:tran:AI Providers]**, at the top of the
     section (click the section's title if it is folded). To
     turn the whole feature off, untick it and restart the app: the chatbot, its tools
     and the debugging endpoint they use are then never started. Tick it and restart to
     turn it back on.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, CB-175, CB-180, CB-181, CB-184, CB-185, CB-186, CB-187, CB-188, CB-189, CB-190, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 
@@ -7484,9 +8399,12 @@ internet once the host opens to it (step 7).
    with the address written beneath it, to send to whoever sets up the guest.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
    header, only a top bar: **[en:tran:Presenter]** at its left goes back, and
-   the cup at its right is **[en:tran:Stay Awake]** — on unless you switch it
-   off, it keeps this computer from sleeping for as long as the page is
-   open, which is what a computer standing in for a projector needs. The page
+   at its right are the Presenter header's own buttons. The cup is
+   **[en:tran:Stay Awake]** — on unless you switch it off, it keeps this
+   computer from sleeping for as long as the page is open, which is what a
+   computer standing in for a projector needs — then the gear for Settings,
+   the 🤖 **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** and
+   **[en:tran:Help]**. The 🤖 opened here answers about this page. The page
    looks for hosts as it opens, listing them under
    **[en:tran:Hosts on this network]**; **[en:tran:Rescan]** looks again.
    The scan asks on every network this computer is on, at every port from
@@ -7508,6 +8426,13 @@ internet once the host opens to it (step 7).
    as it was. In approval mode the guest reads
    **[en:tran:Waiting for host approval]** while the host clicks
    **[en:tran:Allow connection]** in the floating panel.
+   **When no host is listed**, the list reads
+   **[en:tran:No host found. Open the app on the host and check that both computers are on the same network.]**
+   A host can be found only once its **[en:tran:Let other computers connect]**
+   is on (step 1), and the scan reaches only the networks this computer is
+   on: check both, then click **[en:tran:Rescan]**. A host on another network
+   is reached by typing its address under **[en:tran:Connect by address]**,
+   once that host is open to the internet (step 7).
 3. The guest reads **[en:tran:Connected]**, and under
    **[en:tran:This computer]** its monitors carry the prefix the host knows
    it by, such as a1 — the name to pick in the host's display picker. The

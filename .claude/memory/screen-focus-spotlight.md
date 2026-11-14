@@ -136,11 +136,14 @@ closed while a Drawing panel reopened.
   "switching to Focusing keeps the on/off state and still disables drawing
   when turned off") lived in `preview.runtime.test.tsx`, deleted in the
   2026-08-24 test prune — the `applyEnabledState` invariants in
-  `ScreenPreviewerFooterComp` are now UNCOVERED; re-verify them live before
-  touching that function.
+  `ScreenPreviewerFooterComp` are covered again —
+  `src/_screen/preview/ScreenPreviewerFooterComp.test.tsx` (2026-10-29) and
+  `src/_screen/preview/components.coverage.test.tsx` (2026-11-06) — all but
+  turning OFF while Focusing shows (both turn it off in Drawing); re-verify that
+  one live before touching that function.
 
-**Panel:** Size (40..1200 native px), Dim colour swatch, Dim (10..100%), Edge
-blur (0..100%, 0 = hard), Contrast toggle, Reset. `resetSettings()` assigns all
+**Panel:** Presets (the built-in looks and the saved ones, `SpotlightPresetsComp`), Size (40..1200 native px), Dim colour swatch, Dim (10..100%), Edge
+blur (0..100%, 0 = hard), Contrast toggle, Reset. `resetSettings()` — like a preset, through `applySettings()` — assigns all
 five fields then does ONE repaint / update broadcast / debounced write — it used
 to run the five setters and pay for each five times. Keyboard: reuses `drawShortcutMap` — `[`/`]`
 `{`/`}` size, `-`/`=` `_`/`+` dim, and NEW `,`/`.` `<`/`>` blur
@@ -197,5 +200,6 @@ release, blur 0 = hard edge, and all three shortcut families. Two CDP-testing tr
   the previous state — it looks exactly like "the stop never propagated". Await
   ~150ms before asserting on a group member.
 
-**Docs debt (inherited):** owa-robot-test `user-workflows.md` +
-`coverage-matrix.md` still cover neither Draw nor Focus.
+**Docs debt (inherited):** since 2026-11-10 owa-robot-test `user-workflows.md`
+describes both (W-10's **Draw or spotlight on the screen**), but
+`coverage-matrix.md` holds only their Presets (SP-35).

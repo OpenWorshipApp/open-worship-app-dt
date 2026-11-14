@@ -108,6 +108,18 @@
       {
         "text": "W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)",
         "link": "/creating-editing-content/w-60-change-a-bible-note-with-the-assistant-translate-it-tidy-it-add-verses-ask-about-the-note-editor"
+      },
+      {
+        "text": "W-61 — Change a foreground component with the assistant (a countdown, a marquee, a quick text for a verse)",
+        "link": "/creating-editing-content/w-61-change-a-foreground-component-with-the-assistant-a-countdown-a-marquee-a-quick-text-for-a-verse"
+      },
+      {
+        "text": "W-62 — Make a song from a PowerPoint, Word, PDF or slide file with the assistant",
+        "link": "/creating-editing-content/w-62-make-a-song-from-a-powerpoint-word-pdf-or-slide-file-with-the-assistant"
+      },
+      {
+        "text": "W-63 — Change the screens with the assistant (the Bible text's look, another version, a transition, the display)",
+        "link": "/creating-editing-content/w-63-change-the-screens-with-the-assistant-the-bible-text-s-look-another-version-a-transition-the-display"
       }
     ]
   },
@@ -234,6 +246,10 @@
       {
         "text": "W-54 — Move your data folder off the Desktop (OneDrive)",
         "link": "/configuration/w-54-move-your-data-folder-off-the-desktop-onedrive"
+      },
+      {
+        "text": "W-62 — Connect your own AI agent to the app (MCP)",
+        "link": "/configuration/w-62-connect-your-own-ai-agent-to-the-app-mcp"
       }
     ]
   },

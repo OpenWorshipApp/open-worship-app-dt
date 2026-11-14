@@ -3,20 +3,25 @@
  * types -- the books, chapters and verses of the Bible being read, and the
  * people and places of the names lookup (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held a Khmer digit one and
+ * Asked for with a picture of a lookup conversation whose box held a digit one of
+ * a script's own and
  * offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The window asks on a debounce (`bibleInputSuggestHelpers.ts`
  * decides WHEN); this reads what the app holds.
  *
  * - A reference is completed in the Bible the READER is on: the lookup's
- *   language's Bible, so a Khmer reader is offered John 3:16 in its own
+ *   language's Bible, so a reader in another language is offered John 3:16 in its own
  *   digits and name. Books come from that Bible's `keyBookMap`, chapters from
  *   the model's chapter count, verses from the chapter itself.
  * - A name or a place comes from the names lookup, taken through
  *   `acquireLookupData` and given back at once, like `owa_lookup_record`. The
  *   dataset is ~34MB, so the WINDOW only asks for a name when the person is
  *   naming one, or the panel already holds it (`checkIsLookupDataHeld`).
+ * - `books` (2026-11-11, EC-497) is every installed Bible's book names in the
+ *   model's order, its locale beside them, and the English ones with the
+ *   book keys: what the help window finds the references a study file cites
+ *   by, in whatever language the study names its books.
  * Reads only; nothing is opened or shown.
  */
 import {
@@ -27,6 +32,7 @@ import {
 import { getLookupVerseBibleKey } from '../location-name-lookup/bibleVerseHelpers';
 import { getSelectedLookupLangCode } from '../location-name-lookup/lookupLangHelpers';
 import { getAllLocalBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
+import { listBibleBookNames } from './bible-helpers/bibleBookNameListHelpers';
 import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
 import {
     getModelChapterCount,
@@ -112,8 +118,8 @@ async function resolveSuggestBible() {
     });
     // The lookup's own Bible is the one the Reader draws, so its names are
     // the ones on screen. Preferring "the first Bible in their language"
-    // picked a DIFFERENT Khmer edition whose book list did not include
-    // Genesis or Psalms: typing Genesis in Khmer offered nothing while
+    // picked a DIFFERENT edition in that language whose book list did not
+    // include Genesis or Psalms: typing Genesis in it offered nothing while
     // Matthew offered chapters (seen live 2026-10-19). `own` stays as the
     // fallback for a lookup Bible in another language.
     const chosen = looked ?? own ?? infoList[0];
@@ -313,6 +319,9 @@ async function suggestNames(
 export async function handleAgentBibleSuggestRequest(
     request: AgentBibleSuggestRequestType,
 ) {
+    if (request.kind === 'books') {
+        return await listBibleBookNames();
+    }
     const limit = toSuggestionLimit(request.limit);
     if (request.kind === 'name') {
         return await suggestNames(request, limit);

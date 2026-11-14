@@ -63,7 +63,8 @@ with a picture of the Reader on _Bible key "KJV" is not available!_: _should
 have instruction for user to import in chatbot and should have button to open
 chatbot to import the bible like kjv_; W-34's last section, RD-123, rule
 `chatbot-window.md`). The card carries
-[en:tran:Let the assistant import this Bible for me] and leaves the sentence
+[en:tran:Let the assistant import this Bible for me] (since 2026-10-19
+[en:tran:Let the assistant import a Bible for me]) and leaves the sentence
 `Import the Bible called "KJV"`; the name rides the import as `wantedKey` and
 is the first short name offered. Non-obvious, learned live:
 - **The name is the point, not the Bible.** Installed as `EK` (the file's own

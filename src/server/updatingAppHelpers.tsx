@@ -381,8 +381,8 @@ export async function checkForAppUpdate(isSilent = true) {
         }
         const isOk = await showAppConfirm(
             tran('Update Available'),
-            `${tran('A new version of the app is available')}, version:"${onlineVersion}" ` +
-                `and commit ID:"${updateData.commitID.substring(0, 7)}". ` +
+            `${tran('A new version of the app is available')} ` +
+                `(${onlineVersion}, ${updateData.commitID.substring(0, 7)}). ` +
                 `${tran('Would you like to download it?')}`,
             {
                 cancelButtonLabel: 'No',

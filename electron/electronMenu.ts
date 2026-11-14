@@ -224,7 +224,7 @@ export function initMenu(appController: ElectronAppController) {
                         _menuItem: unknown,
                         browserWindow?: BrowserWindow,
                     ) => {
-                        printCurrentWindow(browserWindow);
+                        void printCurrentWindow(browserWindow);
                     },
                 },
                 // Renderer-owned entries (Export/Import Data). Same mechanism

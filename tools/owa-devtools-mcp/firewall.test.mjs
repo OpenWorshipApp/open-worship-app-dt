@@ -10,6 +10,7 @@ import {
     findDestructiveLabel,
     findDestructiveUid,
     genPressGuard,
+    genOwnChangeMemory,
     genPressRefusalReason,
     genUidLabelMemory,
     getFirewallLog,
@@ -18,6 +19,7 @@ import {
     redactSecrets,
     resetFirewallState,
 } from './firewall.mjs';
+import { loadTranBundle } from './tran.mjs';
 
 // A real fragment of the presenter's snapshot, kept verbatim: the format is
 // chrome-devtools', not ours, so a made-up one would stop proving anything the
@@ -152,24 +154,44 @@ describe('checkToolCall', () => {
 // Measured 2026-09-14: the label list was English, and every tool that names a
 // control to the model names it in the language the window shows.
 describe('a press that cannot be undone, in the words the window shows', () => {
-    it('refuses it in Khmer', () => {
-        for (const find of [
-        ]) {
-            expect(checkToolCall('owa_click', { find }).rule, find).toBe(
-                'destructive-label',
-            );
+    // Every language this server can read (`tran.mjs`), each in its own
+    // words; a language's own phrasings are its package's tests.
+    const translationsOf = (keyList) => {
+        const { dictionaries } = loadTranBundle();
+        return Object.entries(dictionaries).flatMap(([langCode, words]) => {
+            return keyList
+                .map((key) => words[key])
+                .filter((find) => typeof find === 'string' && find !== '')
+                .map((find) => [langCode, find]);
+        });
+    };
+
+    it('refuses it in every language the app can be shown in', () => {
+        for (const [langCode, find] of translationsOf([
+            'move to trash',
+            'clear all',
+            'discard changed',
+        ])) {
+            expect(
+                checkToolCall('owa_click', { find }).rule,
+                `${langCode}: ${find}`,
+            ).toBe('destructive-label');
         }
     });
 
-    // Clear Background's Khmer is ALSO Remove Background's. The window cannot
-    // tell them apart, so the ordinary move stays pressable and the app's
-    // confirm stands behind the other.
-    it('still presses the ordinary Khmer controls', () => {
-        for (const find of [
-        ]) {
-            expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
-                true,
-            );
+    // A translation may share its words with a destructive one (a "clear"
+    // that is also a "remove"), so only controls with nothing to undo are
+    // held here; the app's confirm stands behind the rest.
+    it('still presses the ordinary controls in every language', () => {
+        for (const [langCode, find] of translationsOf([
+            'bible lookup',
+            'settings',
+            'next',
+        ])) {
+            expect(
+                checkToolCall('owa_click', { find }).isAllowed,
+                `${langCode}: ${find}`,
+            ).toBe(true);
         }
     });
 
@@ -231,12 +253,77 @@ describe('removing something of the user', () => {
             checkIsRemovingCall('owa_lyric_file', { action: 'delete' }),
         ).toBe(true);
         expect(checkIsRemovingCall('owa_undo', { action: 'undo' })).toBe(true);
+        // An id with no action is the undo the tool reads it as (EC-615),
+        // and spends a removal slot like one.
+        expect(checkIsRemovingCall('owa_undo', { id: 'some-change' })).toBe(
+            true,
+        );
+        expect(checkIsRemovingCall('owa_undo', {})).toBe(false);
         expect(checkIsRemovingCall('owa_bible_item', { action: 'list' })).toBe(
             false,
         );
         expect(checkIsRemovingCall('owa_click', { action: 'delete' })).toBe(
             false,
         );
+    });
+
+    // BN-46 (2026-11-09): putting back the session's own change takes
+    // nothing of the user's away -- the help window's Undo this change had
+    // been refused after ten others in five minutes.
+    it("an undo of the session's own change is not charged to the removals", () => {
+        for (let index = 0; index < 10; index += 1) {
+            checkToolCall(
+                'owa_bible_note',
+                { action: 'delete', id: index },
+                { now: 1000 },
+            );
+        }
+        const checkIsOwnChange = (undoId) => {
+            return undoId === 'own-1';
+        };
+        expect(
+            checkToolCall(
+                'owa_undo',
+                { action: 'undo', id: 'own-1' },
+                { now: 1000, checkIsOwnChange },
+            ).isAllowed,
+        ).toBe(true);
+        // Sent with the id alone, it is the same undo (EC-615).
+        expect(
+            checkToolCall(
+                'owa_undo',
+                { id: 'own-1' },
+                { now: 1000, checkIsOwnChange },
+            ).isAllowed,
+        ).toBe(true);
+        // Another id, no id, or a session that remembers nothing: still a
+        // removal, and the budget is spent.
+        for (const args of [{ action: 'undo', id: 'other' }, { action: 'undo' }]) {
+            expect(
+                checkToolCall('owa_undo', args, { now: 1000, checkIsOwnChange })
+                    .isAllowed,
+            ).toBe(false);
+        }
+        expect(
+            checkToolCall(
+                'owa_undo',
+                { action: 'undo', id: 'own-1' },
+                { now: 1000 },
+            ).isAllowed,
+        ).toBe(false);
+    });
+
+    it('remembers the undo ids an answer carries, for a while', () => {
+        const memory = genOwnChangeMemory({ limit: 2, keepMilliseconds: 1000 });
+        memory.remember('{"name":"Sweep","isChanged":true,"undoId":"a-1"}', 0);
+        memory.remember('nothing to remember', 0);
+        memory.remember(JSON.stringify({ undoId: 'b-2' }), 0);
+        memory.remember(JSON.stringify({ undoId: 'c-3' }), 0);
+        // Pushed out by the limit, and forgotten once kept long enough.
+        expect(memory.has('a-1', 10)).toBe(false);
+        expect(memory.has('b-2', 10)).toBe(true);
+        expect(memory.has('c-3', 2000)).toBe(false);
+        expect(memory.size).toBe(2);
     });
 
     it('removing an installed Bible is a removal; reading the list is not', () => {
@@ -472,6 +559,65 @@ describe('guardToolCalls', () => {
             name: 'evaluate_script',
             isAllowed: false,
         });
+    });
+
+    // BN-46: the answer of a change that takes nothing away names its undo,
+    // and the session's undo by that id goes through past the removal budget.
+    it('lets the session put back its own change past the removal budget', () => {
+        const { transport, seen, sent } = genTransport();
+        guardToolCalls(transport, { log: () => {} });
+        for (let index = 0; index < 10; index += 1) {
+            checkToolCall('owa_bible_note', { action: 'delete', id: index });
+        }
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'tools/call',
+            params: {
+                name: 'owa_note_edit',
+                arguments: { action: 'edit', changes: [] },
+            },
+        });
+        transport.send({
+            jsonrpc: '2.0',
+            id: 1,
+            result: {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify({
+                            name: 'Sweep',
+                            isChanged: true,
+                            undoId: 'note-1',
+                        }),
+                    },
+                ],
+            },
+        });
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'tools/call',
+            params: {
+                name: 'owa_undo',
+                arguments: { action: 'undo', id: 'note-1' },
+            },
+        });
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 3,
+            method: 'tools/call',
+            params: {
+                name: 'owa_undo',
+                arguments: { action: 'undo', id: 'someone-else' },
+            },
+        });
+        expect(
+            seen.map((message) => {
+                return message.id;
+            }),
+        ).toEqual([1, 2]);
+        expect(sent.at(-1)).toMatchObject({ id: 3, result: { isError: true } });
     });
 
     it('lets an allowed call through untouched', () => {

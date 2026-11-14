@@ -15,6 +15,7 @@ vi.mock('electron', () => ({
 
 import {
     APP_WINDOWS_CHANGED_CHANNEL,
+    checkIsFileWindowUrl,
     checkIsWatchedPageUrl,
     initAppWindowListWatch,
     listAppWindows,
@@ -169,6 +170,23 @@ describe('initAppWindowListWatch', () => {
             false,
         );
         expect(checkIsWatchedPageUrl('not an address')).toBe(false);
+    });
+
+    // A file's own window is listed for the tab on that file to work in
+    // (2026-11-10): its coming and going is news, a print or capture
+    // window's is not.
+    it("watches a file's own window: a Markdown Preview, a PDF viewer", () => {
+        expect(
+            checkIsWatchedPageUrl(
+                `${HOST}/markdownPreview.html?preview-file=%2Fa%2Fb.md&uuid=preview`,
+            ),
+        ).toBe(true);
+        expect(
+            checkIsWatchedPageUrl('file:///C:/a/JHN.3.pdf?uuid=JHN.3.pdf'),
+        ).toBe(true);
+        expect(checkIsFileWindowUrl('file:///C:/a/notes.txt')).toBe(false);
+        expect(checkIsFileWindowUrl(`${HOST}/a/JHN.3.pdf`)).toBe(false);
+        expect(checkIsFileWindowUrl('not an address')).toBe(false);
     });
 
     it('finds the help windows among every open window by default', () => {

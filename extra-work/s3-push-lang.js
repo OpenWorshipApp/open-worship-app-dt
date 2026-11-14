@@ -16,14 +16,24 @@
 // published catalog stops the release rather than orphaning every language
 // already out there (memory `extra-bin-on-demand`).
 //
-// Same environment as `s3-push-release.js` (RELEASE_AWS_*), and
-// `RELEASE_DRY_RUN=true` writes into `extra-work/fake-s3` instead.
+// A version already published is KEPT, never uploaded again: a pack is rebuilt
+// with fresh file times on every run, so the same version would land as other
+// bytes under the same URL, while the CDN may go on serving the old ones
+// against the new checksum, and every install of it would fail its integrity
+// check. To publish a change, raise the language's `meta.json` version.
+//
+// Credentials: `extra-work/.env`, the file `release.sh` sources (AWS_*), with
+// the RELEASE_AWS_* names `release.sh` exports winning when set -- checked,
+// with the published catalog read, BEFORE the packing, which a missing one
+// would otherwise throw away. `RELEASE_DRY_RUN=true` writes into
+// `extra-work/fake-s3` instead and needs none.
 
 const { execFileSync } = require('node:child_process');
 const { createReadStream, createWriteStream, readFileSync } = require('node:fs');
 const { mkdir, readFile, writeFile } = require('node:fs/promises');
 const { dirname, resolve } = require('node:path');
 const { pipeline } = require('node:stream/promises');
+const { parseEnv } = require('node:util');
 const {
     CloudFrontClient,
     CreateInvalidationCommand,
@@ -36,12 +46,48 @@ const {
 
 const { homepage } = require('../package.json');
 
+const ENV_FILE_PATH = resolve(__dirname, '.env');
+const AWS_SETTING_NAMES = [
+    'ACCESS_KEY_ID',
+    'SECRET_ACCESS_KEY',
+    'REGION',
+    'BUCKET_NAME',
+    'DISTRIBUTION_ID',
+];
+
+function readEnvFile(filePath) {
+    try {
+        return parseEnv(readFileSync(filePath, 'utf-8'));
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return {};
+        }
+        throw error;
+    }
+}
+
+// RELEASE_AWS_<name> from the environment, else the file's AWS_<name>, else
+// AWS_<name> from the environment -- the order `release.sh` gives them.
+function readAwsSettings() {
+    const fileEnv = readEnvFile(ENV_FILE_PATH);
+    const settings = {};
+    for (const name of AWS_SETTING_NAMES) {
+        settings[name] =
+            process.env[`RELEASE_AWS_${name}`] ||
+            fileEnv[`AWS_${name}`] ||
+            process.env[`AWS_${name}`] ||
+            '';
+    }
+    return settings;
+}
+
+const aws = readAwsSettings();
 const instanceInitData = {
     apiVersion: 'latest',
-    region: process.env.RELEASE_AWS_REGION,
+    region: aws.REGION,
     credentials: {
-        accessKeyId: process.env.RELEASE_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.RELEASE_AWS_SECRET_ACCESS_KEY,
+        accessKeyId: aws.ACCESS_KEY_ID,
+        secretAccessKey: aws.SECRET_ACCESS_KEY,
     },
 };
 
@@ -71,7 +117,7 @@ async function upload(client, key, body, contentType) {
         console.log(`*Written to "${filePath}"`);
         return;
     }
-    const bucketName = process.env.RELEASE_AWS_BUCKET_NAME;
+    const bucketName = aws.BUCKET_NAME;
     const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
@@ -112,7 +158,7 @@ async function readRemoteCatalog(client) {
     try {
         const output = await client.send(
             new GetObjectCommand({
-                Bucket: process.env.RELEASE_AWS_BUCKET_NAME,
+                Bucket: aws.BUCKET_NAME,
                 Key: CATALOG_KEY,
             }),
         );
@@ -152,7 +198,7 @@ async function clearCache() {
     const cloudfront = new CloudFrontClient(instanceInitData);
     await cloudfront.send(
         new CreateInvalidationCommand({
-            DistributionId: process.env.RELEASE_AWS_DISTRIBUTION_ID,
+            DistributionId: aws.DISTRIBUTION_ID,
             InvalidationBatch: {
                 CallerReference: `caller-reference-${Date.now()}`,
                 Paths: { Quantity: 1, Items: [item] },
@@ -162,7 +208,30 @@ async function clearCache() {
     console.log('Clear cache done for', item);
 }
 
+function checkIsPublished(catalog, entry) {
+    return (catalog?.languages?.[entry.langCode] ?? []).some((item) => {
+        return (
+            item.version === entry.version &&
+            item.apiVersion === entry.apiVersion
+        );
+    });
+}
+
 async function main() {
+    if (!isDryRun) {
+        const missingNames = AWS_SETTING_NAMES.filter((name) => {
+            return !aws[name];
+        });
+        if (missingNames.length > 0) {
+            throw new Error(
+                `Empty in "${ENV_FILE_PATH}": ` +
+                    missingNames.map((name) => `AWS_${name}`).join(' ') +
+                    ` (copy "${ENV_FILE_PATH}-example" and fill it in)`,
+            );
+        }
+    }
+    const client = isDryRun ? null : new S3Client(instanceInitData);
+    let catalog = await readRemoteCatalog(client);
     execFileSync(
         process.execPath,
         [resolve(__dirname, 'build-lang-plugins.mjs'), '--release'],
@@ -171,10 +240,15 @@ async function main() {
     const localCatalog = JSON.parse(
         readFileSync(resolve(RELEASE_DIR, 'info.json'), 'utf-8'),
     );
-    const client = isDryRun ? null : new S3Client(instanceInitData);
-    let catalog = await readRemoteCatalog(client);
+    const keptList = [];
+    let uploadedCount = 0;
     for (const list of Object.values(localCatalog.languages ?? {})) {
         for (const entry of list) {
+            if (checkIsPublished(catalog, entry)) {
+                keptList.push(`${entry.langCode} ${entry.version}`);
+                continue;
+            }
+            uploadedCount++;
             const key = `${BASE_KEY_PREFIX}/${entry.langCode}/${entry.fileFullName}`;
             await upload(
                 client,
@@ -188,6 +262,17 @@ async function main() {
             });
         }
     }
+    if (keptList.length > 0) {
+        console.log(
+            `Already published, kept as they are (raise a language's ` +
+                `meta.json version to publish a change): ${keptList.join(', ')}`,
+        );
+    }
+    if (uploadedCount === 0) {
+        console.log('No new language version to publish.');
+        return;
+    }
+    console.log(`${uploadedCount} new language version(s) uploaded.`);
     await upload(
         client,
         CATALOG_KEY,

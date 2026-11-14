@@ -4,7 +4,7 @@ description: "Floating widget above a modal: ModalLayerContext for widgets in th
 metadata:
   node_type: memory
   type: project
-  modified: 2026-10-09T03:05:54.344Z
+  modified: 2026-11-11T04:53:41.895Z
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
 ---
 
@@ -33,7 +33,14 @@ resize-actor, full-view).
 
 Also notable: this commit added `src/app-modal/floatingWidgetModalLayer.test.tsx`,
 but the `47053c9d` test prune (2026-08-24, a week later) deleted it again — the
-`ModalLayerContext` route is **unit-untested today** (only the explicit
-`isAboveModal` class is asserted, by
-`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`); verify layering live
-([[appprovider-mock-node-env]]).
+`ModalLayerContext` route has unit tests again, in halves: since 2026-10-29
+its readers raise themselves inside `<ModalLayerContext value={true}>`
+(`src/bible-reader/BibleSelectionToolbarComp.coverage.test.tsx`,
+`VerseCommentHoverToolComp.coverage.test.tsx`), and since 2026-11-06
+`src/app-modal/components.coverage.test.tsx` asserts that a child of the
+modal reads `useIsInModalLayer()` as inside it and one outside does not; the
+floating widget's own read of it is still unasserted (`FloatingWidgetComp.test.tsx`
+mocks `useIsInModalLayer` to `false`)
+(the explicit `isAboveModal` class is asserted by
+`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`); verify the layering
+itself live ([[appprovider-mock-node-env]]).

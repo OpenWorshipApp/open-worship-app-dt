@@ -1,0 +1,2642 @@
+{
+    "af": {
+        "folder": "af",
+        "flow": "Maak asseblief 'n nuwe leë diensorde vir die Woensdagaand-biduur.",
+        "flowContent": "Stel 'n diensorde saam met die lied 'Groot is U trou', Psalm 23:1 en die aankondigings.",
+        "slideNamed": {
+            "line": "Skep vir my 'n nuwe skyfielêer genaamd Oesfees Dankdiens",
+            "name": "Oesfees Dankdiens"
+        },
+        "listSave": {
+            "line": "Stoor Romeine 8:28 en Filippense 4:13 in my Bybellys",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Maak 'n nuwe versielys met die naam Troosverse",
+            "name": "Troosverse"
+        },
+        "webPage": "Ek wil 'n webblad as agtergrond op die projektor hê wat sagte vallende sneeu wys",
+        "video": "Laai asseblief hierdie video af as agtergrond: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Kan jy die liedjie van https://www.youtube.com/watch?v=dQw4w9WgXcQ as MP3 aflaai, net die klank asseblief",
+        "not": [
+            "Hoe maak ek 'n skyfie-aanbieding?",
+            "Waar vind ek die diensorde wat ek gister gemaak het?",
+            "Ek het verlede week 'n Bybellys gemaak, maar dit is leeg.",
+            "Die agtergrondvideo is te hard."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 9
+        }
+    },
+    "am": {
+        "folder": "am",
+        "flow": "ለትንሣኤ ዋዜማ ስብሰባ አዲስ ባዶ የአገልግሎት ቅደም ተከተል ፍጠርልኝ",
+        "flowContent": "'ታላቅ ነህ' የሚለውን መዝሙር፣ ኢሳይያስ 40:31 ንባብ እና ማስታወቂያዎችን የያዘ የአገልግሎት ቅደም ተከተል አዘጋጅልኝ",
+        "slideNamed": {
+            "line": "'የእናቶች ቀን' የሚል ስም ያለው አዲስ የስላይድ ፋይል ፍጠር",
+            "name": "የእናቶች ቀን"
+        },
+        "listSave": {
+            "line": "ዮሐንስ 14 እና ኤፌሶን 2:8 በመጽሐፍ ቅዱስ ዝርዝሬ ውስጥ አስቀምጥልኝ",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'የጸሎት ጥቅሶች' የሚባል አዲስ የጥቅስ ዝርዝር ፍጠር",
+            "name": "የጸሎት ጥቅሶች"
+        },
+        "webPage": "ለፕሮጀክተሩ ስክሪን የሚበሩ ሻማዎችን የሚያሳይ የድረ-ገጽ ዳራ እፈልጋለሁ",
+        "video": "ይህን ቪዲዮ እንደ ዳራ አውርድልኝ https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "ከ https://www.youtube.com/watch?v=dQw4w9WgXcQ ድምፁን ብቻ በMP3 አውርድልኝ",
+        "not": [
+            "የስላይድ ፋይል እንዴት ነው የምሠራው?",
+            "የአገልግሎት ቅደም ተከተሉን የት ማግኘት እችላለሁ?",
+            "ባለፈው ሳምንት የመጽሐፍ ቅዱስ ዝርዝር ሠርቼ ነበር ግን ባዶ ነው",
+            "የዳራ ቪዲዮው ድምፅ በጣም ይጮኻል"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "ar": {
+        "folder": "ar",
+        "flow": "لو سمحت، اعمل لي ترتيب خدمة جديد وفاضي لاجتماع الصلاة مساء الجمعة",
+        "flowContent": "أنشئ ترتيب خدمة فيه ترنيمة «نعمة عجيبة»، وقراءة من رومية 12: 1، وبعدها الإعلانات",
+        "slideNamed": {
+            "line": "اعمل ملف شرائح جديد باسم «مؤتمر الشباب»",
+            "name": "مؤتمر الشباب"
+        },
+        "listSave": {
+            "line": "احفظ مزمور 23 وفيلبي 4: 13 وإشعياء 40: 31 في قائمة الآيات",
+            "references": 3
+        },
+        "listNew": {
+            "line": "أنشئ قائمة آيات جديدة اسمها «آيات الإيمان»",
+            "name": "آيات الإيمان"
+        },
+        "webPage": "أريد صفحة ويب كخلفية لشاشة العرض تظهر شموعاً مضاءة",
+        "video": "نزّل هذا الفيديو واجعله خلفية: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "أريد الصوت فقط بصيغة MP3 من https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "كيف أعمل ملف شرائح؟",
+            "أين أجد ترتيب الخدمة الذي حفظته؟",
+            "عملت قائمة آيات الأسبوع الماضي لكنها فارغة",
+            "صوت فيديو الخلفية عالٍ جداً"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "az": {
+        "folder": "az",
+        "flow": "Cümə axşamı dua görüşü üçün yeni, boş ibadət proqramı yarat",
+        "flowContent": "Mənə ibadət proqramı hazırla: «Amazing Grace» ilahisi, Matta 5:16 oxunuşu və sonda dua",
+        "slideNamed": {
+            "line": "«Pasxa bayramı» adlı yeni slayd faylı yarat",
+            "name": "Pasxa bayramı"
+        },
+        "listSave": {
+            "line": "Yəhya 15 və Efeslilərə 6:10 ayələrini Müqəddəs Kitab siyahımda yadda saxla",
+            "references": 2
+        },
+        "listNew": {
+            "line": "«Səhər oxunuşu» adında yeni ayə siyahısı yarat",
+            "name": "Səhər oxunuşu"
+        },
+        "webPage": "Proyektor ekranı üçün yavaş-yavaş yağan qar göstərən fon veb səhifəsi istəyirəm",
+        "video": "Bu videonu yüklə və fon kimi qoy: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ linkindən yalnız səsi MP3 kimi götür",
+        "not": [
+            "Slayd faylını necə yaradım?",
+            "İbadət proqramını harada tapa bilərəm?",
+            "Keçən həftə ayə siyahısı yaratmışdım, amma boşdur",
+            "Fon videosunun səsi çox yüksəkdir"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "be": {
+        "folder": "be",
+        "flow": "Стварыце, калі ласка, новы пусты парадак служэння для вяселля ў суботу",
+        "flowContent": "Зрабі парадак служэння з гімнам «Вялікі Бог», чытаннем 1 Карынфянаў 13:4 і аб'явамі ў канцы",
+        "slideNamed": {
+            "line": "Ствары новы файл слайдаў з назвай «Моладзевы вечар»",
+            "name": "Моладзевы вечар"
+        },
+        "listSave": {
+            "line": "Захавай у мой спіс Бібліі Псальм 91 і Рымлянаў 8:28",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Ствары новы спіс вершаў пад назвай «Для хворых»",
+            "name": "Для хворых"
+        },
+        "webPage": "Патрэбна вэб-старонка для фону на экране праектара, з мяккім блакітным градыентам",
+        "video": "Спампуй гэта відэа і пастаў як фон: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Вазьмі толькі гук у MP3 з https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Як зрабіць файл слайдаў?",
+            "Ці магу я змяніць парадак служэння пасля захавання?",
+            "Я зрабіў спіс вершаў на мінулым тыдні, але ён пусты",
+            "Фонавае відэа занадта гучнае"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "bg": {
+        "folder": "bg",
+        "flow": "Направи нов празен ред на службата за новогодишната нощ",
+        "flowContent": "Искам ред на службата с песента „Тиха нощ“, четиво от Псалм 90:12 и молитва накрая",
+        "slideNamed": {
+            "line": "Създай нов файл със слайдове на име „Великденска служба“",
+            "name": "Великденска служба"
+        },
+        "listSave": {
+            "line": "Запази Матей 5 и Яков 1:5 в моя списък с библейски стихове",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Създай нов списък със стихове, наречен „Надежда“",
+            "name": "Надежда"
+        },
+        "webPage": "Трябва ми уеб страница за фон на прожекционния екран, която показва падащ сняг",
+        "video": "Изтегли това видео като фон: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Свали само звука като MP3 от https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Как се прави файл със слайдове?",
+            "Къде е редът на службата, който направих вчера?",
+            "Миналата седмица направих списък със стихове, но е празен",
+            "Видеото на фона е твърде силно"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "bn": {
+        "folder": "bn",
+        "flow": "বড়দিনের আগের রাতের অনুষ্ঠানের জন্য একটা নতুন খালি উপাসনা-সূচি তৈরি করো",
+        "flowContent": "একটা উপাসনা-সূচি বানাও যেখানে থাকবে 'Amazing Grace' গানটি, লূক ২:১১ পাঠ, আর শেষে প্রার্থনা",
+        "slideNamed": {
+            "line": "'বিবাহ অনুষ্ঠান' নামে একটা নতুন স্লাইড ফাইল তৈরি করো",
+            "name": "বিবাহ অনুষ্ঠান"
+        },
+        "listSave": {
+            "line": "গীতসংহিতা ২৩ আর রোমীয় ৮:২৮ আমার বাইবেল তালিকায় সেভ করো",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'মুখস্থ পদ' নামে একটা নতুন পদের তালিকা খোলো",
+            "name": "মুখস্থ পদ"
+        },
+        "webPage": "প্রজেক্টরের পর্দার জন্য একটা ওয়েব পেজ ব্যাকগ্রাউন্ড চাই, যেখানে জ্বলন্ত মোমবাতি দেখাবে",
+        "video": "এই ভিডিওটা ডাউনলোড করে ব্যাকগ্রাউন্ডে দাও: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ থেকে শুধু গানটা MP3 করে দাও",
+        "not": [
+            "স্লাইড ফাইল কীভাবে বানাব?",
+            "উপাসনা-সূচিটা কোথায় খুঁজে পাব?",
+            "গত সপ্তাহে একটা বাইবেল তালিকা বানিয়েছিলাম কিন্তু সেটা খালি",
+            "ব্যাকগ্রাউন্ড ভিডিওর আওয়াজ খুব বেশি"
+        ],
+        "floor": {
+            "en": 7,
+            "own": 7
+        }
+    },
+    "bo": {
+        "folder": "bo",
+        "flow": "གཟའ་ཕུར་བུའི་སྨོན་ལམ་ཚོགས་འདུའི་ཆེད་དུ་ཞབས་ཞུའི་གོ་རིམ་གསར་པ་སྟོང་པ་ཞིག་བཟོ་རོགས།",
+        "flowContent": "'Amazing Grace' ཞེས་པའི་གཞས་དང་། ཡོ་ཧ་ནན་ ༣:༡༦ ཀློག་པ། མཐའ་མར་སྨོན་ལམ་བཅས་ཡོད་པའི་ཞབས་ཞུའི་གོ་རིམ་ཞིག་བཟོ་རོགས།",
+        "slideNamed": {
+            "line": "'ལོ་གསར་ཞབས་ཞུ' ཟེར་བའི་མིང་ཅན་གྱི་སྒྲོན་བརྙན་ཡིག་ཆ་གསར་པ་ཞིག་བཟོ་རོགས།",
+            "name": "ལོ་གསར་ཞབས་ཞུ"
+        },
+        "listSave": {
+            "line": "གསུང་མགུར་ ༢༣ དང་ རོ་མ་པ་ ༨:༢༨ ངའི་གསུང་རབ་ཐོ་གཞུང་ནང་ཉར་རོགས།",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'ཉིན་རེའི་ཀློག་པ' ཟེར་བའི་ལུང་ཚིག་ཐོ་གཞུང་གསར་པ་ཞིག་བཟོ་རོགས།",
+            "name": "ཉིན་རེའི་ཀློག་པ"
+        },
+        "webPage": "བརྙན་འཕྲོ་འཕྲུལ་འཁོར་གྱི་ཡོལ་བར་ཁ་བ་འབབ་པ་སྟོན་པའི་དྲ་ངོས་རྒྱབ་ལྗོངས་ཤིག་དགོས།",
+        "video": "བརྙན་འཕྲིན་འདི་ཕབ་ལེན་བྱས་ནས་རྒྱབ་ལྗོངས་ལ་བཞག་རོགས། https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ནས་སྒྲ་ཁོ་ན་ MP3 ལ་བསྒྱུར་ནས་ཕབ་ལེན་བྱེད་རོགས།",
+        "not": [
+            "སྒྲོན་བརྙན་ཡིག་ཆ་ཇི་ལྟར་བཟོ་དགོས་སམ།",
+            "ཞབས་ཞུའི་གོ་རིམ་དེ་གང་དུ་ཡོད་དམ།",
+            "གཟའ་འཁོར་སྔོན་མ་ལ་གསུང་རབ་ཐོ་གཞུང་ཞིག་བཟོས་ཡོད་ཀྱང་དེའི་ནང་ཅི་ཡང་མེད།",
+            "རྒྱབ་ལྗོངས་བརྙན་འཕྲིན་གྱི་སྒྲ་ཧ་ཅང་ཆེ་དྲགས་འདུག"
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "ca": {
+        "folder": "ca",
+        "flow": "Em pots crear un ordre de culte nou i buit per a la vetlla de Pasqua?",
+        "flowContent": "Fes un ordre del culte amb l'himne «Crist ha ressuscitat», la lectura de Lluc 24,6 i els avisos al final",
+        "slideNamed": {
+            "line": "Crea una presentació nova que es digui «Concert de Nadal»",
+            "name": "Concert de Nadal"
+        },
+        "listSave": {
+            "line": "Desa el Salm 121 i Mateu 6,33 a la meva llista de la Bíblia",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Fes una llista de versicles nova anomenada «Lectures d'Advent»",
+            "name": "Lectures d'Advent"
+        },
+        "webPage": "Vull una pàgina web de fons per al projector que mostri un degradat suau de colors càlids",
+        "video": "Descarrega aquest vídeo i posa'l de fons: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Només vull l'àudio en MP3 de https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Com es fa una presentació de diapositives?",
+            "On trobo l'ordre del culte que vaig guardar?",
+            "La setmana passada vaig fer una llista de versicles però està buida",
+            "El vídeo de fons sona massa fort"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ceb": {
+        "folder": "ceb",
+        "flow": "Palihug himo-i kog bag-ong blangko nga han-ay sa pagsimba para sa prayer meeting sa Huwebes",
+        "flowContent": "Himo-i kog han-ay sa pagsimba nga naay kanta nga 'It Is Well With My Soul', Mateo 11:28, ug mga pahibalo sa katapusan",
+        "slideNamed": {
+            "line": "Paghimo ug bag-ong slide file nga ginganlan og 'Pasidungog sa Inahan'",
+            "name": "Pasidungog sa Inahan"
+        },
+        "listSave": {
+            "line": "I-save ang Salmo 23, Juan 14:6 ug Roma 8:28 sa akong Bible list",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Paghimo ug bag-ong lista sa bersikulo, nganli og 'Paglaum'",
+            "name": "Paglaum"
+        },
+        "webPage": "Gusto ko og web page nga background sa projector nga naay mga kandila nga nagdilaab",
+        "video": "I-download palihug ning video ug himoa nga background: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Kuhaa lang ang tingog isip MP3 gikan sa https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Unsaon nako paghimo og slide file?",
+            "Asa nako makit-an ang han-ay sa pagsimba?",
+            "Naghimo ko og Bible list sa miaging semana pero wala kini sulod",
+            "Kusog kaayo ang tingog sa background video"
+        ],
+        "floor": {
+            "en": 8,
+            "own": 9
+        }
+    },
+    "cs": {
+        "folder": "cs",
+        "flow": "Vytvoř nový prázdný pořad na čtvrteční biblickou hodinu",
+        "flowContent": "Potřebuju pořad bohoslužby s písní „Hospodine, pomiluj ny“, čtením ze Žalmu 119,105 a modlitbou na konci",
+        "slideNamed": {
+            "line": "Založ novou prezentaci s názvem „Mládežnický víkend“",
+            "name": "Mládežnický víkend"
+        },
+        "listSave": {
+            "line": "Ulož mi do seznamu Žalm 91 a Izajáš 41,10",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Vytvoř nový seznam veršů s názvem Verše na týden",
+            "name": "Verše na týden"
+        },
+        "webPage": "Chci webovou stránku jako pozadí na projektor, kde bude padat sníh",
+        "video": "Stáhni tohle video a dej ho na pozadí: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Z https://www.youtube.com/watch?v=dQw4w9WgXcQ mi prosím stáhni jen zvuk jako MP3",
+        "not": [
+            "Jak se dělá prezentace se snímky?",
+            "Můžu pořad bohoslužby upravit i po uložení?",
+            "Minulý týden jsem udělal seznam veršů, ale je prázdný",
+            "Video na pozadí je moc hlasité"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "da": {
+        "folder": "da",
+        "flow": "Kan du lave en ny, tom gudstjenesteorden til brylluppet på lørdag?",
+        "flowContent": "Lav en gudstjenesteorden med salmen 'Dejlig er jorden', læsning af 1 Kor 13,4 og kirkekaffe til sidst",
+        "slideNamed": {
+            "line": "Opret en ny præsentation med navnet Konfirmation",
+            "name": "Konfirmation"
+        },
+        "listSave": {
+            "line": "Gem Salme 139 og Joh 14,27 i min bibelliste",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Opret en ny versliste der hedder Trøst",
+            "name": "Trøst"
+        },
+        "webPage": "Jeg vil gerne have en webside som baggrund på projektoren med levende lys",
+        "video": "Hent denne video som baggrund: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Kan du trække lyden ud som MP3 fra https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Hvordan laver jeg en præsentation med dias?",
+            "Hvor finder jeg gudstjenesteordenen fra i går?",
+            "Jeg lavede en bibelliste i sidste uge, men den er tom",
+            "Baggrundsvideoen larmer alt for meget"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "de": {
+        "folder": "de",
+        "flow": "Bitte einen neuen, leeren Gottesdienstablauf für Heiligabend anlegen",
+        "flowContent": "Erstelle einen Ablauf mit dem Lied „Stille Nacht“, der Lesung Lukas 2,11 und den Abkündigungen",
+        "slideNamed": {
+            "line": "Leg eine neue Präsentation namens „Gemeindefest“ an",
+            "name": "Gemeindefest"
+        },
+        "listSave": {
+            "line": "Speichere Psalm 23, Römer 8,28 und Jesaja 40,31 in meiner Bibelliste",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Neue Versliste mit dem Namen Konfirmandenverse erstellen",
+            "name": "Konfirmandenverse"
+        },
+        "webPage": "Ich hätte gern eine Webseite als Hintergrund für den Beamer, mit sanftem Farbverlauf",
+        "video": "Lade das Video herunter und setz es als Hintergrund: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Nur den Ton als MP3 von https://www.youtube.com/watch?v=dQw4w9WgXcQ bitte",
+        "not": [
+            "Wie erstelle ich eine Präsentation mit Folien?",
+            "Wo finde ich den Gottesdienstablauf von letzter Woche?",
+            "Ich habe letzte Woche eine Bibelliste angelegt, aber sie ist leer",
+            "Das Hintergrundvideo ist viel zu laut"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "el": {
+        "folder": "el",
+        "flow": "Φτιάξε μου μια νέα κενή σειρά λατρείας για τη συνάντηση προσευχής της Τετάρτης",
+        "flowContent": "Θέλω πρόγραμμα λατρείας με τον ύμνο «Πόσο μεγάλος είσαι», ανάγνωση Ιωάννη 3:16 και ανακοινώσεις στο τέλος",
+        "slideNamed": {
+            "line": "Δημιούργησε νέα παρουσίαση με όνομα «Κατηχητικό Σχολείο»",
+            "name": "Κατηχητικό Σχολείο"
+        },
+        "listSave": {
+            "line": "Αποθήκευσε τον Ψαλμό 91 και το Ματθαίο 11:28 στη λίστα μου",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Κάνε μια νέα λίστα εδαφίων με το όνομα «Παρηγοριά»",
+            "name": "Παρηγοριά"
+        },
+        "webPage": "Χρειάζομαι μια ιστοσελίδα για φόντο στον προβολέα που να δείχνει χιόνι να πέφτει",
+        "video": "Κατέβασε αυτό το βίντεο για φόντο: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Πάρε μόνο τον ήχο σε MP3 από το https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Πώς φτιάχνω μια παρουσίαση με διαφάνειες;",
+            "Πού βρίσκω το πρόγραμμα λατρείας που αποθήκευσα;",
+            "Έφτιαξα μια λίστα εδαφίων την προηγούμενη εβδομάδα αλλά είναι άδεια",
+            "Το βίντεο στο φόντο έχει πολύ δυνατό ήχο"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "es": {
+        "folder": "es",
+        "flow": "¿Me creas un orden de culto nuevo y vacío para la boda del sábado?",
+        "flowContent": "Arma un orden de culto con el himno «Cuán grande es Él», la lectura de Rut 1:16 y las ofrendas",
+        "slideNamed": {
+            "line": "Crea una presentación nueva llamada «Retiro de Jóvenes»",
+            "name": "Retiro de Jóvenes"
+        },
+        "listSave": {
+            "line": "Guarda Salmos 23 y Filipenses 4:13 en mi lista de versículos",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Haz una lista nueva de versículos que se llame Promesas",
+            "name": "Promesas"
+        },
+        "webPage": "Quiero una página web de fondo para el proyector con velas encendidas",
+        "video": "Descarga este video y ponlo de fondo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Sácame solo el audio en MP3 de https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "¿Cómo hago una presentación de diapositivas?",
+            "¿Dónde quedó el orden de culto que hice ayer?",
+            "La semana pasada hice una lista de versículos pero está vacía",
+            "El video de fondo suena demasiado fuerte"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "et": {
+        "folder": "et",
+        "flow": "Tee palun uus tühi jumalateenistuse kord vana-aasta õhtuks",
+        "flowContent": "Koosta teenistuse kord, kus on laul „Mu süda, ärka üles“, kirjakoht Nutulaulud 3:23 ja teadaanded",
+        "slideNamed": {
+            "line": "Loo uus slaidiesitlus nimega „Jõulukontsert“",
+            "name": "Jõulukontsert"
+        },
+        "listSave": {
+            "line": "Salvesta Jesaja 43 ja Filiplastele 4:6 minu piiblinimekirja",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Loo uus salmide nimekiri nimega Hommikused salmid",
+            "name": "Hommikused salmid"
+        },
+        "webPage": "Tahan projektorile taustaks veebilehte, kus sajab lund",
+        "video": "Laadi see video alla ja pane taustaks: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Võta aadressilt https://www.youtube.com/watch?v=dQw4w9WgXcQ ainult heli MP3-na",
+        "not": [
+            "Kuidas ma teen slaidiesitluse?",
+            "Kus on see teenistuse kord, mille eile tegin?",
+            "Tegin eelmisel nädalal salmide nimekirja, aga see on tühi",
+            "Taustavideo on liiga vali"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "fa": {
+        "folder": "fa",
+        "flow": "لطفاً برای جلسهٔ دعای سه‌شنبه شب یک برنامهٔ خالی جدید درست کن",
+        "flowContent": "یک برنامهٔ جلسه بساز با سرود «خداوند شبان من است»، خواندن متی ۱۸:۲۰ و دعای پایانی",
+        "slideNamed": {
+            "line": "یک فایل اسلاید جدید به اسم «جشن نوروز» درست کن",
+            "name": "جشن نوروز"
+        },
+        "listSave": {
+            "line": "مزمور ۲۳ و رومیان ۸:۲۸ را در لیست کتاب مقدسم ذخیره کن",
+            "references": 2
+        },
+        "listNew": {
+            "line": "یک لیست آیه جدید به اسم «آیات حفظی» بساز",
+            "name": "آیات حفظی"
+        },
+        "webPage": "برای صفحهٔ پروژکتور یک صفحهٔ وب پس‌زمینه می‌خواهم که شمع‌های روشن نشان بدهد",
+        "video": "این ویدیو را دانلود کن و پس‌زمینه بگذار: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "فقط صدایش را به صورت MP3 از https://www.youtube.com/watch?v=dQw4w9WgXcQ بگیر",
+        "not": [
+            "چطور یک فایل اسلاید درست کنم؟",
+            "برنامهٔ جلسه‌ای که ذخیره کردم کجاست؟",
+            "هفتهٔ پیش یک لیست آیه ساختم ولی خالی است",
+            "صدای ویدیوی پس‌زمینه خیلی بلند است"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "fi": {
+        "folder": "fi",
+        "flow": "Tee uusi tyhjä jumalanpalveluksen järjestys helatorstaille",
+        "flowContent": "Tarvitsen tilaisuuden järjestyksen, jossa on virsi ”Oi Herra, jos mä matkamies maan”, raamatunkohta Apostolien teot 1:9 ja tiedotukset",
+        "slideNamed": {
+            "line": "Luo uusi diaesitys nimeltä Nuortenilta",
+            "name": "Nuortenilta"
+        },
+        "listSave": {
+            "line": "Tallenna Psalmi 121 ja Jes. 40:31 raamattulistaani",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Luo uusi jakeiden lista nimellä Lohdutus",
+            "name": "Lohdutus"
+        },
+        "webPage": "Haluaisin projektorille taustaksi verkkosivun, jossa sataa hiljaa lunta",
+        "video": "Lataa tämä video taustaksi: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ota pelkkä ääni MP3:na osoitteesta https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Miten teen diaesityksen?",
+            "Voinko muokata tilaisuuden järjestystä jälkikäteen?",
+            "Tein viime viikolla raamattulistan, mutta se on tyhjä",
+            "Taustavideo on aivan liian kovalla"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "fj": {
+        "folder": "fj",
+        "flow": "Bulia mada e dua na ituvatuva ni lotu vou ka lala me baleta na masu ni Vukelulu",
+        "flowContent": "Bulia e dua na ituvatuva ni lotu e tiko kina na sere 'Rock of Ages', Maciu 6:9, kei na itukutuku ni lotu",
+        "slideNamed": {
+            "line": "Bulia e dua na faile ni slide vou, na yacana 'Soqo ni Cauravou'",
+            "name": "Soqo ni Cauravou"
+        },
+        "listSave": {
+            "line": "Maroroya na Same 46 kei Aisea 40:31 ena noqu lisi ni iVolatabu",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Bulia e dua na lisi ni tikina vou, na yacana 'Inuinui'",
+            "name": "Inuinui"
+        },
+        "webPage": "Au gadreva e dua na web page me daku ni sikirini ni projector, me laurai kina na kadrala e waqa",
+        "video": "Lavetaka mai na vidio oqo me daku ni sikirini: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Kauta mai ga na domona me MP3 mai na https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Au na bulia vakacava e dua na faile ni slide?",
+            "E vei au na raica kina na ituvatuva ni lotu?",
+            "Au a bulia e dua na lisi ni iVolatabu ena macawa sa oti ia e lala",
+            "E rogo levu sara na vidio ena daku"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "fr": {
+        "folder": "fr",
+        "flow": "Tu peux me créer un nouveau déroulé de culte vide pour la veillée de Noël ?",
+        "flowContent": "Prépare un déroulé avec le cantique « À toi la gloire », la lecture de Luc 2.11 et la sainte cène",
+        "slideNamed": {
+            "line": "Crée une nouvelle présentation intitulée « Fête des moissons »",
+            "name": "Fête des moissons"
+        },
+        "listSave": {
+            "line": "Enregistre Psaume 23, Romains 8.28 et Ésaïe 40.31 dans ma liste de versets",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Crée une nouvelle liste de versets appelée « Versets du mariage »",
+            "name": "Versets du mariage"
+        },
+        "webPage": "Je voudrais une page web en fond pour le projecteur avec un dégradé doux",
+        "video": "Télécharge cette vidéo et mets-la en fond : https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Récupère juste le son en MP3 depuis https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Comment je fais une présentation avec des diapositives ?",
+            "Où se trouve le déroulé du culte que j'ai enregistré ?",
+            "J'ai fait une liste de versets la semaine dernière mais elle est vide",
+            "La vidéo de fond est beaucoup trop forte"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "ga": {
+        "folder": "ga",
+        "flow": "Cruthaigh ord seirbhíse nua folamh do chruinniú urnaí Dé Céadaoin, le do thoil",
+        "flowContent": "Déan ord seirbhíse leis an iomann “Bí Thusa 'mo Shúile”, léamh as Matha 5:16 agus fógraí ag an deireadh",
+        "slideNamed": {
+            "line": "Cruthaigh comhad sleamhnán nua darb ainm 'Lá Fhéile Pádraig'",
+            "name": "Lá Fhéile Pádraig"
+        },
+        "listSave": {
+            "line": "Sábháil Salm 23 agus Rómhánaigh 8:28 i mo liosta Bíobla",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Déan liosta véarsaí nua leis an ainm Dóchas",
+            "name": "Dóchas"
+        },
+        "webPage": "Ba mhaith liom leathanach gréasáin mar chúlra ar an teilgeoir a thaispeánann sneachta ag titim",
+        "video": "Íoslódáil an físeán seo mar chúlra: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Faigh an fhuaim amháin mar MP3 ó https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Conas a dhéanaim comhad sleamhnán?",
+            "Cá bhfuil an t-ord seirbhíse a shábháil mé?",
+            "Rinne mé liosta Bíobla an tseachtain seo caite ach tá sé folamh",
+            "Tá an físeán cúlra i bhfad róard"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "gl": {
+        "folder": "gl",
+        "flow": "Crea unha orde de culto nova e baleira para a voda do sábado",
+        "flowContent": "Prepara unha orde de culto co himno «Santo, santo, santo», a lectura de Colosenses 3,14 e a oración final",
+        "slideNamed": {
+            "line": "Crea unha presentación nova chamada «Magosto parroquial»",
+            "name": "Magosto parroquial"
+        },
+        "listSave": {
+            "line": "Garda o Salmo 27 e Mateo 5,9 na miña lista da Biblia",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Fai unha lista nova de versículos chamada «Salmos favoritos»",
+            "name": "Salmos favoritos"
+        },
+        "webPage": "Quero unha páxina web de fondo para o proxector con velas acesas",
+        "video": "Descarga este vídeo e ponno de fondo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Quero só o son en MP3 de https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Como fago unha presentación de diapositivas?",
+            "Onde atopo a orde de culto que gardei onte?",
+            "A semana pasada fixen unha lista de versículos pero está baleira",
+            "O vídeo de fondo soa moi alto"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "gu": {
+        "folder": "gu",
+        "flow": "ગુડ ફ્રાઈડેની સભા માટે એક નવો ખાલી આરાધના-ક્રમ બનાવી આપો",
+        "flowContent": "આરાધના-ક્રમ બનાવો જેમાં 'ઈસુ મારો મિત્ર' ગીત, યશાયા ૫૩:૫નું વાંચન અને અંતે પ્રાર્થના હોય",
+        "slideNamed": {
+            "line": "'બાપ્તિસ્મા સેવા' નામની નવી સ્લાઇડ ફાઇલ બનાવો",
+            "name": "બાપ્તિસ્મા સેવા"
+        },
+        "listSave": {
+            "line": "ગીતશાસ્ત્ર ૨૩ અને રોમનો ૮:૨૮ મારી બાઇબલ યાદીમાં સાચવો",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'આશાનાં વચનો' નામની નવી કલમોની યાદી બનાવો",
+            "name": "આશાનાં વચનો"
+        },
+        "webPage": "પ્રોજેક્ટરની સ્ક્રીન માટે એવું વેબ પેજ બેકગ્રાઉન્ડ જોઈએ જેમાં હળવો રંગીન ગ્રેડિયન્ટ હોય",
+        "video": "આ વિડિયો ડાઉનલોડ કરીને બેકગ્રાઉન્ડમાં મૂકો: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ માંથી ફક્ત ગીતનો અવાજ MP3માં જોઈએ છે",
+        "not": [
+            "સ્લાઇડ ફાઇલ કેવી રીતે બનાવાય?",
+            "આરાધના-ક્રમ ક્યાં મળશે?",
+            "ગયા અઠવાડિયે મેં બાઇબલ યાદી બનાવી હતી પણ તે ખાલી છે",
+            "બેકગ્રાઉન્ડ વિડિયોનો અવાજ બહુ મોટો છે"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ha": {
+        "folder": "ha",
+        "flow": "Don Allah ka yi mini sabon tsarin ibada babu komai a ciki, na taron addu'a na ranar Juma'a",
+        "flowContent": "Ka shirya tsarin ibada da waƙar 'Alheri Mai Ban Mamaki', karatun Filibiyawa 4:6, da sanarwa a ƙarshe",
+        "slideNamed": {
+            "line": "Ka ƙirƙiri sabon fayil na slide mai suna 'Taron Matasa'",
+            "name": "Taron Matasa"
+        },
+        "listSave": {
+            "line": "Ka ajiye Zabura 91 da Ishaya 41:10 a cikin jerin Littafi Mai Tsarki na",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Ka yi sabon jerin ayoyi mai suna “Ayoyin Addu'a”",
+            "name": "Ayoyin Addu'a"
+        },
+        "webPage": "Ina son shafin yanar gizo a matsayin bango a allon majigi, wanda ke nuna kyandirori masu ci",
+        "video": "Ka sauke wannan bidiyo ka sa shi a bango: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ka ɗauko mini sautin kawai a MP3 daga https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Yaya zan yi fayil na slide?",
+            "Ina zan sami tsarin ibadar da na ajiye?",
+            "Na yi jerin ayoyi makon da ya gabata amma babu komai a ciki",
+            "Ƙarar bidiyon bango ta yi yawa"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "he": {
+        "folder": "he",
+        "flow": "אפשר בבקשה סדר שירות חדש וריק לחתונה ביום חמישי?",
+        "flowContent": "תכין סדר שירות עם השיר 'גדול אתה', קריאה משיר השירים 8:7 והודעות בסוף",
+        "slideNamed": {
+            "line": "צור קובץ שקופיות חדש בשם 'מפגש נוער'",
+            "name": "מפגש נוער"
+        },
+        "listSave": {
+            "line": "שמור את תהילים 23 ואת רומים 8:28 ברשימת הפסוקים שלי",
+            "references": 2
+        },
+        "listNew": {
+            "line": "תפתח רשימת פסוקים חדשה בשם 'נחמה'",
+            "name": "נחמה"
+        },
+        "webPage": "אני צריך דף אינטרנט כרקע למסך המקרן, עם שלג יורד",
+        "video": "תוריד את הסרטון הזה ותשים אותו כרקע: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "רק את השמע ב-MP3 מתוך https://www.youtube.com/watch?v=dQw4w9WgXcQ בבקשה",
+        "not": [
+            "איך יוצרים קובץ שקופיות?",
+            "אפשר לשנות את סדר השירות אחרי ששמרתי?",
+            "יצרתי רשימת פסוקים בשבוע שעבר אבל היא ריקה",
+            "הסרטון ברקע רועש מדי"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "hi": {
+        "folder": "hi",
+        "flow": "नए साल की पूर्व संध्या की सभा के लिए नया खाली आराधना क्रम बनाइए",
+        "flowContent": "एक आराधना क्रम बनाओ जिसमें 'येशु मसीह तेरे जैसा है कोई नहीं' गीत, विलापगीत 3:22 का पाठ और घोषणाएँ हों",
+        "slideNamed": {
+            "line": "'महिला संगति' नाम से एक नई स्लाइड फ़ाइल बनाओ",
+            "name": "महिला संगति"
+        },
+        "listSave": {
+            "line": "भजन संहिता 23, यशायाह 41:10 और रोमियों 8:28 मेरी बाइबल सूची में सेव करो",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'शांति के वचन' नाम की एक नई पद सूची बनाओ",
+            "name": "शांति के वचन"
+        },
+        "webPage": "प्रोजेक्टर स्क्रीन के लिए एक वेब पेज बैकग्राउंड चाहिए जिसमें धीरे-धीरे बर्फ़ गिरती दिखे",
+        "video": "यह वीडियो डाउनलोड करके बैकग्राउंड में लगा दो: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ से सिर्फ़ गाने की आवाज़ MP3 में चाहिए",
+        "not": [
+            "स्लाइड फ़ाइल कैसे बनाते हैं?",
+            "आराधना क्रम कहाँ मिलेगा?",
+            "पिछले हफ़्ते मैंने बाइबल सूची बनाई थी लेकिन वह खाली है",
+            "बैकग्राउंड वीडियो की आवाज़ बहुत तेज़ है"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "hr": {
+        "folder": "hr",
+        "flow": "Možeš li napraviti novi, prazan red službe za krštenje u subotu?",
+        "flowContent": "Složi red bogoslužja s pjesmom „Kako si velik“, čitanjem Mt 28,19 i obavijestima na kraju",
+        "slideNamed": {
+            "line": "Napravi novu prezentaciju pod imenom „Dan zahvalnosti“",
+            "name": "Dan zahvalnosti"
+        },
+        "listSave": {
+            "line": "Spremi Psalam 103 i Fil 4,13 u moj popis biblijskih stihova",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Napravi novi popis stihova pod nazivom Stihovi za krizmu",
+            "name": "Stihovi za krizmu"
+        },
+        "webPage": "Treba mi web stranica kao pozadina na projektoru s blagim prijelazom boja",
+        "video": "Skini ovaj video i stavi ga kao pozadinu: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Izvuci samo zvuk u MP3 s https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kako se radi prezentacija sa slajdovima?",
+            "Gdje mogu pronaći red bogoslužja koji sam spremio?",
+            "Prošli tjedan napravio sam popis stihova, ali je prazan",
+            "Video u pozadini je preglasan"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "ht": {
+        "folder": "ht",
+        "flow": "Tanpri, kreye yon nouvo lòd sèvis vid pou reyinyon priyè madi swa a",
+        "flowContent": "Fè yon lòd sèvis ak kantik 'Lapè tankou yon rivyè', lekti Filipyen 4:6 ak anons yo nan fen",
+        "slideNamed": {
+            "line": "Kreye yon nouvo fichye slide ki rele 'Fèt Manman'",
+            "name": "Fèt Manman"
+        },
+        "listSave": {
+            "line": "Sove Sòm 121 ak Ezayi 41:10 nan lis Bib mwen",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Fè yon nouvo lis vèsè ki rele 'Vèsè pou timoun'",
+            "name": "Vèsè pou timoun"
+        },
+        "webPage": "Mwen vle yon paj wèb kòm background sou ekran pwojektè a, ak bouji ki limen",
+        "video": "Telechaje videyo sa a epi mete l kòm background: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Pran sèlman son an an MP3 nan https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kijan pou m fè yon fichye slide?",
+            "Ki kote m ka jwenn lòd sèvis la?",
+            "Mwen te fè yon lis Bib semèn pase a men li vid",
+            "Videyo background lan twò fò"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "hu": {
+        "folder": "hu",
+        "flow": "Kérlek, készíts egy új, üres istentiszteleti sorrendet a pénteki ifialkalomra",
+        "flowContent": "Állíts össze egy sorrendet az „Erős vár a mi Istenünk” énekkel, az 1Tim 4,12 felolvasásával és a hirdetésekkel",
+        "slideNamed": {
+            "line": "Hozz létre egy új diavetítést „Aratási hálaadás” néven",
+            "name": "Aratási hálaadás"
+        },
+        "listSave": {
+            "line": "Mentsd el a 23. zsoltárt és a Róm 8,28-at a bibliai listámba",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Készíts egy új igelistát Vigasztalás néven",
+            "name": "Vigasztalás"
+        },
+        "webPage": "Szeretnék egy weboldalt háttérnek a kivetítőre, amin hullik a hó",
+        "video": "Töltsd le ezt a videót háttérnek: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Csak a hangot kérem MP3-ban innen: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Hogyan készítek diavetítést?",
+            "Hol találom az istentiszteleti sorrendet, amit tegnap mentettem?",
+            "Múlt héten csináltam egy igelistát, de üres",
+            "A háttérvideó túl hangos"
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "hy": {
+        "folder": "hy",
+        "flow": "Խնդրում եմ, ստեղծիր նոր դատարկ ծառայության կարգ Սուրբ Ծննդյան նախօրեի համար",
+        "flowContent": "Պատրաստիր ծառայության կարգ՝ «Հայր մեր» շարականով, Ղուկաս 2:11 ընթերցումով և հայտարարություններով",
+        "slideNamed": {
+            "line": "Ստեղծիր նոր սլայդների ֆայլ «Մանկական երգչախումբ» անունով",
+            "name": "Մանկական երգչախումբ"
+        },
+        "listSave": {
+            "line": "Պահիր Սաղմոս 91-ը և Եսայի 40:31-ը իմ Աստվածաշնչի ցուցակում",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Ստեղծիր նոր համարների ցուցակ «Զատկական համարներ» անունով",
+            "name": "Զատկական համարներ"
+        },
+        "webPage": "Պրոյեկտորի էկրանի համար ուզում եմ ֆոնային վեբ էջ, որտեղ վառվող մոմեր լինեն",
+        "video": "Ներբեռնիր այս տեսանյութը և դիր որպես ֆոն՝ https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Միայն ձայնը MP3-ով վերցրու https://www.youtube.com/watch?v=dQw4w9WgXcQ հղումից",
+        "not": [
+            "Ինչպե՞ս ստեղծեմ սլայդների ֆայլ",
+            "Որտե՞ղ գտնեմ ծառայության կարգը",
+            "Անցյալ շաբաթ Աստվածաշնչի ցուցակ եմ ստեղծել, բայց այն դատարկ է",
+            "Ֆոնային տեսանյութի ձայնը շատ բարձր է"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "id": {
+        "folder": "id",
+        "flow": "Buatin susunan acara ibadah baru, kosong aja, buat ibadah penghiburan hari Jumat",
+        "flowContent": "Buat susunan ibadah berisi lagu 'Selamat di Tangan Yesus', pembacaan Yohanes 11:25, dan persembahan",
+        "slideNamed": {
+            "line": "Buat file slide baru namanya 'Retret Pemuda'",
+            "name": "Retret Pemuda"
+        },
+        "listSave": {
+            "line": "Simpan Mazmur 23 dan Roma 8:28 ke daftar Alkitab saya",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Bikin daftar ayat baru dengan nama Ayat Hafalan",
+            "name": "Ayat Hafalan"
+        },
+        "webPage": "Saya mau halaman web untuk latar layar proyektor yang menampilkan gradasi warna lembut",
+        "video": "Unduh video ini dan jadikan latar: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ambil audionya saja jadi MP3 dari https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Gimana cara bikin file slide?",
+            "Susunan ibadah yang kemarin saya simpan ada di mana?",
+            "Minggu lalu saya bikin daftar ayat tapi isinya kosong",
+            "Suara video latarnya terlalu keras"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "ig": {
+        "folder": "ig",
+        "flow": "Biko mepụta usoro ofufe ọhụrụ, nke na-enweghị ihe ọ bụla n'ime ya, maka nzukọ ekpere nke Tọsdee",
+        "flowContent": "Mee usoro ofufe nwere abụ 'Amazing Grace', ọgụgụ Matiu 6:33, na ọkwa n'ọgwụgwụ",
+        "slideNamed": {
+            "line": "Mepụta faịlụ slide ọhụrụ aha ya bụ 'Ememe Owuwe Ihe Ubi'",
+            "name": "Ememe Owuwe Ihe Ubi"
+        },
+        "listSave": {
+            "line": "Chekwaa Abụ Ọma 23 na Ndị Rom 8:28 n'ime ndepụta Bible m",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Mepụta ndepụta amaokwu ọhụrụ aha ya bụ 'Olileanya'",
+            "name": "Olileanya"
+        },
+        "webPage": "Achọrọ m ibe weebụ dị ka azụ ihuenyo projector, nke na-egosi kandụl na-enwu",
+        "video": "Budata vidiyo a ma tinye ya dị ka azụ ihuenyo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Wepụta naanị ụda ya dị ka MP3 site na https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kedu ka m ga-esi mee faịlụ slide?",
+            "Ebee ka m ga-ahụ usoro ofufe ahụ?",
+            "Emere m ndepụta Bible n'izu gara aga mana ọ tọgbọ chakoo",
+            "Vidiyo azụ ahụ na-eti mkpu nke ukwuu"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "is": {
+        "folder": "is",
+        "flow": "Búðu til nýja, tóma messuskrá fyrir aðfangadagskvöld",
+        "flowContent": "Gerðu messuskrá með sálminum 'Heims um ból', ritningarlestri úr Lúk 2.11 og tilkynningum í lokin",
+        "slideNamed": {
+            "line": "Búðu til nýja glærusýningu sem heitir Fermingarmessa",
+            "name": "Fermingarmessa"
+        },
+        "listSave": {
+            "line": "Vistaðu Sálm 121 og Jóh 14.27 í biblíulistann minn",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Búðu til nýjan versalista sem heitir Jólavers",
+            "name": "Jólavers"
+        },
+        "webPage": "Mig langar í vefsíðu sem bakgrunn á skjávarpann þar sem snjór fellur rólega",
+        "video": "Sæktu þetta myndband og settu það sem bakgrunn: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Náðu bara í hljóðið sem MP3 af https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Hvernig bý ég til glærusýningu?",
+            "Hvar finn ég messuskrána sem ég vistaði?",
+            "Ég bjó til biblíulista í síðustu viku en hann er tómur",
+            "Bakgrunnsmyndbandið er allt of hátt"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "it": {
+        "folder": "it",
+        "flow": "Mi crei un nuovo ordine del culto vuoto per l'incontro di preghiera del giovedì?",
+        "flowContent": "Prepara un ordine del culto con l'inno «Grande sei Tu», la lettura di Filippesi 4,6 e la Santa Cena",
+        "slideNamed": {
+            "line": "Crea una nuova presentazione chiamata «Festa del Raccolto»",
+            "name": "Festa del Raccolto"
+        },
+        "listSave": {
+            "line": "Salva Salmo 23, Giovanni 14,6 e Romani 8,28 nella mia lista di versetti",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Crea una nuova lista di versetti di nome «Versetti per i giovani»",
+            "name": "Versetti per i giovani"
+        },
+        "webPage": "Vorrei una pagina web come sfondo per il proiettore con candele accese",
+        "video": "Scarica questo video e mettilo come sfondo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Estrai solo l'audio in MP3 da https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Come si crea una presentazione con le diapositive?",
+            "Posso modificare l'ordine del culto dopo averlo salvato?",
+            "La settimana scorsa ho fatto una lista di versetti ma è vuota",
+            "Il video di sfondo ha il volume troppo alto"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ja": {
+        "folder": "ja",
+        "flow": "土曜日の結婚式のために、空の式次第を新しく作ってもらえますか",
+        "flowContent": "「いつくしみ深き」の賛美、コリント第一13章4節の朗読、それと報告を入れた式次第を作って",
+        "slideNamed": {
+            "line": "「青年会キャンプ」という名前で新しいスライドファイルを作って",
+            "name": "青年会キャンプ"
+        },
+        "listSave": {
+            "line": "詩篇23篇とローマ8章28節を聖書リストに保存して",
+            "references": 2
+        },
+        "listNew": {
+            "line": "「慰めのみことば」という新しい聖句リストを作成",
+            "name": "慰めのみことば"
+        },
+        "webPage": "プロジェクター画面の背景に、雪が降っているウェブページを使いたいです",
+        "video": "この動画をダウンロードして背景にして https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ の音声だけMP3で欲しい",
+        "not": [
+            "スライドファイルはどうやって作るの？",
+            "式次第はどこで見られますか？",
+            "先週聖書リストを作ったのに中身が空っぽです",
+            "背景の動画の音が大きすぎる"
+        ],
+        "floor": {
+            "en": 6,
+            "own": 6
+        }
+    },
+    "ka": {
+        "folder": "ka",
+        "flow": "გთხოვ, შექმენი ახალი ცარიელი მსახურების გეგმა შაბათის ნათლობისთვის",
+        "flowContent": "შეადგინე მსახურების გეგმა საგალობლით „წმიდაო ღმერთო“, მათე 28:19-ის კითხვით და ბოლოს ლოცვით",
+        "slideNamed": {
+            "line": "შექმენი ახალი სლაიდების ფაილი სახელით „საშობაო კონცერტი“",
+            "name": "საშობაო კონცერტი"
+        },
+        "listSave": {
+            "line": "შეინახე ფსალმუნი 23 და რომაელთა 8:28 ჩემს ბიბლიის სიაში",
+            "references": 2
+        },
+        "listNew": {
+            "line": "შექმენი მუხლების ახალი სია სახელად „საღამოს ლოცვა“",
+            "name": "საღამოს ლოცვა"
+        },
+        "webPage": "პროექტორის ეკრანისთვის მინდა ფონად ვებგვერდი, სადაც თოვლი მოდის",
+        "video": "ჩამოტვირთე ეს ვიდეო და ფონად დააყენე: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "მხოლოდ ხმა მინდა MP3-ად აქედან: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "როგორ შევქმნა სლაიდების ფაილი?",
+            "სად ვიპოვო მსახურების გეგმა, რომელიც შევინახე?",
+            "გასულ კვირას ბიბლიის სია შევქმენი, მაგრამ ცარიელია",
+            "ფონის ვიდეოს ხმა ძალიან მაღალია"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "kk": {
+        "folder": "kk",
+        "flow": "Жұма күнгі дұға кездесуіне жаңа бос қызмет тәртібін жасап берші",
+        "flowContent": "«Құдайым, Сен ұлысың» гимні, Матай 6:33 оқуы және хабарландырулар бар қызмет тәртібін жаса",
+        "slideNamed": {
+            "line": "«Жастар кеші» деген атпен жаңа слайд файлын жаса",
+            "name": "Жастар кеші"
+        },
+        "listSave": {
+            "line": "Забур 23 пен Римдіктерге 8:28-ді Киелі кітап тізіміме сақта",
+            "references": 2
+        },
+        "listNew": {
+            "line": "«Үміт» деген атпен жаңа аяттар тізімін аш",
+            "name": "Үміт"
+        },
+        "webPage": "Проектор экранына жанып тұрған шамдар көрсетілетін фондық веб-бет керек",
+        "video": "Мына видеоны жүктеп, фонға қой: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ сілтемесінен тек дыбысын MP3 етіп ал",
+        "not": [
+            "Слайд файлын қалай жасаймын?",
+            "Қызмет тәртібін қайдан табамын?",
+            "Өткен аптада Киелі кітап тізімін жасадым, бірақ ол бос",
+            "Фондағы видеоның дыбысы тым қатты"
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "km": {
+        "folder": "km",
+        "flow": "សូមបង្កើតរបៀបវារៈថ្វាយបង្គំថ្មីទទេមួយ សម្រាប់កម្មវិធីអធិស្ឋាននៅល្ងាចថ្ងៃព្រហស្បតិ៍",
+        "flowContent": "បង្កើតរបៀបវារៈថ្វាយបង្គំដែលមានបទចម្រៀង 'ព្រះគុណដ៏អស្ចារ្យ' ការអាន យ៉ូហាន ៣:១៦ និងសេចក្ដីប្រកាសនៅចុងក្រោយ",
+        "slideNamed": {
+            "line": "បង្កើតឯកសារស្លាយថ្មីមួយ ដាក់ឈ្មោះថា 'ជំរុំយុវជន'",
+            "name": "ជំរុំយុវជន"
+        },
+        "listSave": {
+            "line": "រក្សាទុក ទំនុកដំកើង ២៣ និង រ៉ូម ៨:២៨ ក្នុងបញ្ជីព្រះគម្ពីររបស់ខ្ញុំ",
+            "references": 2
+        },
+        "listNew": {
+            "line": "បង្កើតបញ្ជីខគម្ពីរថ្មីមួយ ឈ្មោះ 'សេចក្ដីសង្ឃឹម'",
+            "name": "សេចក្ដីសង្ឃឹម"
+        },
+        "webPage": "ខ្ញុំចង់បានគេហទំព័រជាផ្ទៃខាងក្រោយសម្រាប់អេក្រង់ម៉ាស៊ីនបញ្ចាំង ដែលមានទៀនកំពុងឆេះ",
+        "video": "ទាញយកវីដេអូនេះ ហើយដាក់ជាផ្ទៃខាងក្រោយ https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "យកតែសំឡេងជា MP3 ពី https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "តើធ្វើដូចម្ដេចដើម្បីបង្កើតឯកសារស្លាយ?",
+            "តើខ្ញុំអាចរករបៀបវារៈថ្វាយបង្គំនៅឯណា?",
+            "សប្ដាហ៍មុនខ្ញុំបានបង្កើតបញ្ជីព្រះគម្ពីរ ប៉ុន្តែវាទទេ",
+            "សំឡេងវីដេអូផ្ទៃខាងក្រោយខ្លាំងពេក"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "kn": {
+        "folder": "kn",
+        "flow": "ದಯವಿಟ್ಟು ಶುಕ್ರವಾರದ ಉಪವಾಸ ಪ್ರಾರ್ಥನೆಗಾಗಿ ಹೊಸ ಖಾಲಿ ಆರಾಧನಾ ಕ್ರಮ ರಚಿಸಿ",
+        "flowContent": "'Blessed Assurance' ಹಾಡು, ಫಿಲಿಪ್ಪಿ 4:6 ಓದು ಮತ್ತು ಪ್ರಕಟಣೆಗಳು ಇರುವ ಆರಾಧನಾ ಕ್ರಮ ಮಾಡಿ",
+        "slideNamed": {
+            "line": "'ಸಭೆಯ ವಾರ್ಷಿಕೋತ್ಸವ' ಎಂಬ ಹೆಸರಿನಲ್ಲಿ ಹೊಸ ಸ್ಲೈಡ್ ಫೈಲ್ ಮಾಡಿ",
+            "name": "ಸಭೆಯ ವಾರ್ಷಿಕೋತ್ಸವ"
+        },
+        "listSave": {
+            "line": "ಕೀರ್ತನೆ 23 ಮತ್ತು ರೋಮಾ 8:28 ನನ್ನ ಬೈಬಲ್ ಪಟ್ಟಿಯಲ್ಲಿ ಉಳಿಸಿ",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'ಬಲದ ವಚನಗಳು' ಎಂಬ ಹೆಸರಿನ ಹೊಸ ವಚನ ಪಟ್ಟಿ ರಚಿಸಿ",
+            "name": "ಬಲದ ವಚನಗಳು"
+        },
+        "webPage": "ಪ್ರೊಜೆಕ್ಟರ್ ಪರದೆಗೆ ಮೃದುವಾದ ಬಣ್ಣದ ಗ್ರೇಡಿಯಂಟ್ ತೋರಿಸುವ ವೆಬ್ ಪುಟ ಹಿನ್ನೆಲೆ ಬೇಕು",
+        "video": "ಈ ವೀಡಿಯೊ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ ಹಿನ್ನೆಲೆಯಾಗಿ ಹಾಕಿ: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ಇಂದ ಕೇವಲ ಆಡಿಯೋ MP3 ಆಗಿ ಬೇಕು",
+        "not": [
+            "ಸ್ಲೈಡ್ ಫೈಲ್ ಹೇಗೆ ಮಾಡುವುದು?",
+            "ಆರಾಧನಾ ಕ್ರಮ ಎಲ್ಲಿ ಸಿಗುತ್ತದೆ?",
+            "ಕಳೆದ ವಾರ ಬೈಬಲ್ ಪಟ್ಟಿ ಮಾಡಿದ್ದೆ ಆದರೆ ಅದು ಖಾಲಿ ಇದೆ",
+            "ಹಿನ್ನೆಲೆ ವೀಡಿಯೊದ ಶಬ್ದ ತುಂಬಾ ಜೋರಾಗಿದೆ"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "ko": {
+        "folder": "ko",
+        "flow": "수요 기도회용으로 빈 예배 순서를 새로 만들어 주세요",
+        "flowContent": "'내 영혼이 은총 입어' 찬송, 마태복음 5장 14절 봉독, 광고가 들어간 예배 순서 만들어 줘",
+        "slideNamed": {
+            "line": "'청년부 수련회'라는 이름으로 새 슬라이드 파일 만들어 줘",
+            "name": "청년부 수련회"
+        },
+        "listSave": {
+            "line": "시편 23편, 로마서 8장 28절, 이사야 40장 31절을 내 성경 목록에 저장해 줘",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'새벽기도 말씀'이라는 새 구절 목록을 만들어 주세요",
+            "name": "새벽기도 말씀"
+        },
+        "webPage": "프로젝터 화면 배경으로 눈이 내리는 웹페이지를 띄우고 싶어요",
+        "video": "이 영상 다운받아서 배경으로 깔아 줘 https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ 에서 소리만 MP3로 받아 줘",
+        "not": [
+            "슬라이드 파일은 어떻게 만들어요?",
+            "예배 순서는 어디서 볼 수 있나요?",
+            "지난주에 성경 목록을 만들었는데 비어 있어요",
+            "배경 영상 소리가 너무 커요"
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "lo": {
+        "folder": "lo",
+        "flow": "ກະລຸນາສ້າງລຳດັບການນະມັດສະການໃໝ່ທີ່ຫວ່າງເປົ່າ ສຳລັບງານບຸນຄຣິສມາດ",
+        "flowContent": "ສ້າງລຳດັບນະມັດສະການທີ່ມີເພງ 'ພຣະຄຸນອັນໜ້າອັດສະຈັນ', ອ່ານ ລູກາ 2:11 ແລະ ການປະກາດຂ່າວ",
+        "slideNamed": {
+            "line": "ສ້າງໄຟລ໌ສະໄລໃໝ່ ຊື່ວ່າ 'ພິທີບັບຕິສະມາ'",
+            "name": "ພິທີບັບຕິສະມາ"
+        },
+        "listSave": {
+            "line": "ບັນທຶກ ເພງສັນລະເສີນ 23 ແລະ ໂຣມ 8:28 ໄວ້ໃນລາຍການພຣະຄຳພີຂອງຂ້ອຍ",
+            "references": 2
+        },
+        "listNew": {
+            "line": "ສ້າງລາຍການຂໍ້ພຣະຄຳພີໃໝ່ ຊື່ 'ຄວາມຫວັງ'",
+            "name": "ຄວາມຫວັງ"
+        },
+        "webPage": "ຢາກໄດ້ໜ້າເວັບເປັນພື້ນຫຼັງຈໍໂປຣເຈັກເຕີ ທີ່ສະແດງທຽນໄຂກຳລັງລຸກ",
+        "video": "ດາວໂຫຼດວິດີໂອນີ້ ແລ້ວໃຊ້ເປັນພື້ນຫຼັງ https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "ເອົາແຕ່ສຽງເປັນ MP3 ຈາກ https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "ສ້າງໄຟລ໌ສະໄລແນວໃດ?",
+            "ລຳດັບນະມັດສະການຢູ່ໃສ?",
+            "ອາທິດແລ້ວຂ້ອຍສ້າງລາຍການພຣະຄຳພີ ແຕ່ມັນຫວ່າງເປົ່າ",
+            "ສຽງວິດີໂອພື້ນຫຼັງດັງເກີນໄປ"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "lt": {
+        "folder": "lt",
+        "flow": "Sukurk naują tuščią pamaldų eigą Kūčių vakarui",
+        "flowContent": "Sudaryk pamaldų eigą su giesme „Tyli naktis“, skaitiniu Lk 2, 11 ir skelbimais pabaigoje",
+        "slideNamed": {
+            "line": "Sukurk naują skaidrių failą pavadinimu „Jaunimo stovykla“",
+            "name": "Jaunimo stovykla"
+        },
+        "listSave": {
+            "line": "Išsaugok Ps 91 ir Iz 41, 10 mano Biblijos sąraše",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Sukurk naują eilučių sąrašą pavadinimu „Advento skaitiniai“",
+            "name": "Advento skaitiniai"
+        },
+        "webPage": "Norėčiau tinklalapio projektoriaus fonui, kuriame lėtai krinta snaigės",
+        "video": "Atsisiųsk šį vaizdo įrašą ir nustatyk kaip foną: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ištrauk tik garsą MP3 formatu iš https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kaip sukurti skaidrių failą?",
+            "Kur rasti pamaldų eigą, kurią išsaugojau?",
+            "Praėjusią savaitę sukūriau Biblijos sąrašą, bet jis tuščias",
+            "Fono vaizdo įrašas per garsus"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "lv": {
+        "folder": "lv",
+        "flow": "Lūdzu, izveido jaunu, tukšu dievkalpojuma kārtību ceturtdienas lūgšanu vakaram",
+        "flowContent": "Izveido dievkalpojuma kārtību ar dziesmu “Amazing Grace”, lasījumu Mt 11:28 un paziņojumiem beigās",
+        "slideNamed": {
+            "line": "Izveido jaunu slaidu failu ar nosaukumu “Pļaujas svētki”",
+            "name": "Pļaujas svētki"
+        },
+        "listSave": {
+            "line": "Saglabā Psalmu 23, Rom 8:28 un Jes 40:31 manā Bībeles sarakstā",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Izveido jaunu pantu sarakstu ar nosaukumu Mierinājums",
+            "name": "Mierinājums"
+        },
+        "webPage": "Gribu tīmekļa lapu kā fonu projektora ekrānam ar maigu krāsu pāreju",
+        "video": "Lejupielādē šo video un uzliec fonā: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Paņem tikai skaņu MP3 formātā no https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kā izveidot slaidu failu?",
+            "Vai es varu atrast dievkalpojuma kārtību, ko vakar saglabāju?",
+            "Pagājušajā nedēļā izveidoju Bībeles sarakstu, bet tas ir tukšs",
+            "Fona video ir pārāk skaļš"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "mg": {
+        "folder": "mg",
+        "flow": "Azafady, mamorona filaharam-pivavahana vaovao foana ho an'ny fotoam-bavaka amin'ny Alakamisy hariva",
+        "flowContent": "Ataovy filaharam-pivavahana misy ny fihirana “Ry Jesosy Mpamonjy”, famakiana Isaia 41:10, ary filazana any amin'ny farany",
+        "slideNamed": {
+            "line": "Mamorona rakitra slide vaovao antsoina hoe “Fankalazana Paska”",
+            "name": "Fankalazana Paska"
+        },
+        "listSave": {
+            "line": "Tehirizo ao amin'ny lisitry ny Baiboliko ny Salamo 23 sy Romana 8:28",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Mamorona lisitry ny andininy vaovao atao hoe “Teny Fampaherezana”",
+            "name": "Teny Fampaherezana"
+        },
+        "webPage": "Mila pejy web ho ambadika eo amin'ny efijery projecteur aho, misy lanezy milatsaka",
+        "video": "Alaivo ity horonan-tsary ity ary ataovy ambadika: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ny feo ihany no alaivo ho MP3 avy amin'ny https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Ahoana no hamoronako rakitra slide?",
+            "Aiza no ahitako ny filaharam-pivavahana?",
+            "Namorona lisitry ny Baiboly aho tamin'ny herinandro lasa fa foana izy",
+            "Mafy loatra ny feon'ny horonan-tsary ambadika"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "mi": {
+        "folder": "mi",
+        "flow": "Tēnā koa, hangaia mai he raupapa karakia hou, kau noa, mō te hui inoi ā te Wenerei.",
+        "flowContent": "Whakaritea he raupapa mō te karakia, kia uru ko te hīmene 'Tama Ngākau Mārie', ko Matiu 5:9, me ngā pānuitanga.",
+        "slideNamed": {
+            "line": "Hangaia he kōnae whakaaturanga hou, ko 'Te Aroha o te Atua' te ingoa.",
+            "name": "Te Aroha o te Atua"
+        },
+        "listSave": {
+            "line": "Tiakina a Hoani 3:16 me Roma 8:28 ki taku rārangi Paipera.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Hangaia he rārangi irava hou, tapaina ko 'Tumanako'.",
+            "name": "Tumanako"
+        },
+        "webPage": "Hoatu he whārangi tukutuku hei papamuri mō te mata, me te hukarere e taka mārie ana.",
+        "video": "Tikiake te ataata nei hei papamuri: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ko te oro anake e hiahia ana ahau, hei MP3, mai i https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Me pēhea au e hanga ai i tētahi kōnae whakaaturanga?",
+            "Kei hea te raupapa karakia i hangaia e au inanahi?",
+            "I hangaia e au he rārangi Paipera i tērā wiki, engari he kau tonu.",
+            "He nui rawa te oro o te ataata papamuri."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "mk": {
+        "folder": "mk",
+        "flow": "Направи нов празен редослед на богослужбата за венчавката во сабота.",
+        "flowContent": "Ми треба редослед за богослужба со песната „Колку си голем“, читање од Јован 14:6 и објави на крајот.",
+        "slideNamed": {
+            "line": "Создај нов документ со слајдови со име „Велигденска утрина“.",
+            "name": "Велигденска утрина"
+        },
+        "listSave": {
+            "line": "Зачувај ги Римјаните 8:28 и Филипјаните 4:13 во мојата листа со стихови.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Направи нова листа со стихови наречена „Утеха“.",
+            "name": "Утеха"
+        },
+        "webPage": "Сакам веб-страница за позадина на екранот со нежен преод на бои, од сино кон виолетово.",
+        "video": "Симни го ова видео и стави го како позадина: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ми треба само песната во MP3 од https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Како се прави документ со слајдови?",
+            "Каде да го најдам редоследот за богослужбата?",
+            "Минатата недела направив листа со стихови, но е празна.",
+            "Позадинската веб-страница е премногу светла."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "ml": {
+        "folder": "ml",
+        "flow": "ക്രിസ്മസ് രാത്രിയിലെ ആരാധനയ്ക്ക് ഒരു പുതിയ ക്രമം തുടങ്ങാമോ? ഇപ്പോൾ ഒന്നും ചേർക്കേണ്ട.",
+        "flowContent": "'Blessed Assurance' എന്ന ഗാനം, സങ്കീർത്തനം 23:1 വായന, പിന്നെ ഒരു പ്രാർത്ഥന — ഇവ ഉൾപ്പെടുത്തി ഒരു ആരാധനാക്രമം ഉണ്ടാക്കൂ.",
+        "slideNamed": {
+            "line": "'കൊയ്ത്തുത്സവം' എന്ന പേരിൽ ഒരു പുതിയ സ്ലൈഡ് ഡോക്യുമെന്റ് ഉണ്ടാക്കൂ.",
+            "name": "കൊയ്ത്തുത്സവം"
+        },
+        "listSave": {
+            "line": "യോഹന്നാൻ 3:16, റോമർ 8:28, സങ്കീർത്തനം 23 ഇവ എന്റെ ബൈബിൾ ലിസ്റ്റിൽ സേവ് ചെയ്യൂ.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'പ്രത്യാശ' എന്ന പേരിൽ ഒരു പുതിയ വാക്യ ലിസ്റ്റ് ഉണ്ടാക്കൂ.",
+            "name": "പ്രത്യാശ"
+        },
+        "webPage": "പ്രൊജക്ടർ സ്ക്രീനിന് പശ്ചാത്തലമായി കത്തുന്ന മെഴുകുതിരികൾ കാണിക്കുന്ന ഒരു വെബ് പേജ് വേണം.",
+        "video": "ഈ വീഡിയോ ഡൗൺലോഡ് ചെയ്ത് പശ്ചാത്തലമാക്കൂ: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ഇതിലെ പാട്ട് മാത്രം MP3 ആയി വേണം.",
+        "not": [
+            "ഒരു സ്ലൈഡ് ഡോക്യുമെന്റ് എങ്ങനെ ഉണ്ടാക്കാം?",
+            "ആരാധനാക്രമം എവിടെയാണ് കാണുക?",
+            "കഴിഞ്ഞ ആഴ്ച ഞാൻ ഒരു ബൈബിൾ ലിസ്റ്റ് ഉണ്ടാക്കി, പക്ഷേ അത് ശൂന്യമാണ്.",
+            "പശ്ചാത്തല വീഡിയോയുടെ ശബ്ദം വളരെ കൂടുതലാണ്."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "mn": {
+        "folder": "mn",
+        "flow": "Христийн мэндэлсний баярын орой зориулсан шинэ хоосон мөргөлийн хөтөлбөр гаргаад өгөөч.",
+        "flowContent": "'Гайхамшигт нигүүлсэл' магтуу, Дуулал 23:1-ийн уншлага, дараа нь залбирал багтсан мөргөлийн дараалал хийж өгнө үү.",
+        "slideNamed": {
+            "line": "'Талархлын өдөр' нэртэй шинэ слайд файл үүсгэ.",
+            "name": "Талархлын өдөр"
+        },
+        "listSave": {
+            "line": "Иохан 3:16 болон Ром 8:28-ыг миний Библийн жагсаалтад хадгалаарай.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'Итгэл' гэдэг нэртэй шинэ шүлгийн жагсаалт үүсгээрэй.",
+            "name": "Итгэл"
+        },
+        "webPage": "Проектор дэлгэцийн арын дэвсгэрт цас орж байгаа вэб хуудас хэрэгтэй байна.",
+        "video": "Энэ видеог татаж аваад арын дэвсгэр болгооч: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ — эндээс зөвхөн дууг нь MP3 болгож авмаар байна.",
+        "not": [
+            "Слайд файлыг яаж үүсгэдэг вэ?",
+            "Мөргөлийн дараалал хаана байдаг вэ?",
+            "Өнгөрсөн долоо хоногт Библийн жагсаалт үүсгэсэн боловч хоосон байна.",
+            "Арын видеоны дуу хэтэрхий чанга байна."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "mr": {
+        "folder": "mr",
+        "flow": "लग्नाच्या सोहळ्यासाठी नवीन उपासना क्रम बनवा, सध्या त्यात काही टाकू नका.",
+        "flowContent": "'How Great Thou Art' हे गीत, योहान 14:6 चे वाचन आणि शेवटी आशीर्वाद असलेला उपासना क्रम बनवा.",
+        "slideNamed": {
+            "line": "'नाताळ आनंद' नावाचे नवीन स्लाइड डॉक्युमेंट तयार करा.",
+            "name": "नाताळ आनंद"
+        },
+        "listSave": {
+            "line": "रोमकरांस 8:28, फिलिप्पैकरांस 4:13 आणि स्तोत्र 23 माझ्या बायबल यादीत सेव्ह करा.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'आशा' नावाची नवीन वचन यादी बनवा.",
+            "name": "आशा"
+        },
+        "webPage": "प्रोजेक्टर स्क्रीनसाठी हलका निळा-जांभळा ग्रेडियंट दाखवणारे पार्श्वभूमी वेब पेज हवे आहे.",
+        "video": "हा व्हिडिओ डाउनलोड करून पार्श्वभूमी म्हणून लावा: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ मधील फक्त गाणे MP3 मध्ये हवे आहे.",
+        "not": [
+            "स्लाइड डॉक्युमेंट कसे बनवायचे?",
+            "उपासना क्रम कुठे सापडेल?",
+            "मागच्या आठवड्यात मी बायबल यादी बनवली होती पण ती रिकामी आहे.",
+            "पार्श्वभूमी व्हिडिओचा आवाज खूप मोठा आहे."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ms": {
+        "folder": "ms",
+        "flow": "Tolong buatkan susunan ibadah baharu yang kosong untuk persekutuan doa malam Rabu.",
+        "flowContent": "Buat susunan ibadah dengan lagu 'Ajaib Kasih Tuhan', bacaan Mazmur 23:1 dan doa penutup.",
+        "slideNamed": {
+            "line": "Cipta fail slaid baharu bernama 'Krismas Gembira'.",
+            "name": "Krismas Gembira"
+        },
+        "listSave": {
+            "line": "Simpan Yohanes 3:16 dan Roma 8:28 dalam senarai Alkitab saya.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Buat senarai ayat baharu, namakan 'Pengharapan'.",
+            "name": "Pengharapan"
+        },
+        "webPage": "Saya nak latar belakang laman web untuk skrin projektor, salji turun perlahan-lahan.",
+        "video": "Muat turun video ini dan jadikan latar belakang: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ambil audio sahaja dalam MP3 dari https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Macam mana nak buat dokumen slaid?",
+            "Boleh saya ubah susunan ibadah yang dah ada?",
+            "Minggu lepas saya buat senarai Alkitab tapi kosong.",
+            "Video latar belakang terlalu kuat bunyinya."
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "my": {
+        "folder": "my",
+        "flow": "ခရစ္စမတ်အကြိုညအတွက် ဝတ်ပြုအစီအစဉ်အသစ်တစ်ခု လုပ်ပေးပါ၊ အထဲမှာ ဘာမှ မထည့်ပါနဲ့။",
+        "flowContent": "'Amazing Grace' သီချင်း၊ ဆာလံ ၂၃:၁ ကျမ်းဖတ်ခြင်း နဲ့ ဆုတောင်းခြင်း ပါဝင်တဲ့ ဝတ်ပြုအစီအစဉ် ပြုလုပ်ပေးပါ။",
+        "slideNamed": {
+            "line": "'ကျေးဇူးတော်' ဆိုတဲ့ နာမည်နဲ့ စလိုက်ဖိုင်အသစ်တစ်ခု ဖန်တီးပေးပါ။",
+            "name": "ကျေးဇူးတော်"
+        },
+        "listSave": {
+            "line": "ယောဟန် ၃:၁၆ နဲ့ ရောမ ၈:၂၈ ကို ကျွန်တော့် သမ္မာကျမ်းစာ စာရင်းထဲ သိမ်းပေးပါ။",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'မျှော်လင့်ချက်' လို့ အမည်ပေးထားတဲ့ ကျမ်းချက်စာရင်းအသစ် လုပ်ပေးပါ။",
+            "name": "မျှော်လင့်ချက်"
+        },
+        "webPage": "ပရိုဂျက်တာ မျက်နှာပြင်အတွက် ဖယောင်းတိုင်တွေ လင်းနေတဲ့ နောက်ခံ ဝဘ်စာမျက်နှာ လိုချင်ပါတယ်။",
+        "video": "ဒီဗီဒီယိုကို ဒေါင်းလုဒ်လုပ်ပြီး နောက်ခံအဖြစ် ထည့်ပေးပါ: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ထဲက သီချင်းသံကိုပဲ MP3 အဖြစ် လိုချင်ပါတယ်။",
+        "not": [
+            "စလိုက်ဖိုင် ဘယ်လို ဖန်တီးရမလဲ။",
+            "ဝတ်ပြုအစီအစဉ်ကို ဘယ်မှာ ရှာရမလဲ။",
+            "ပြီးခဲ့တဲ့အပတ်က သမ္မာကျမ်းစာ စာရင်း လုပ်ခဲ့ပေမဲ့ ဗလာ ဖြစ်နေတယ်။",
+            "နောက်ခံ ဗီဒီယို အသံ အရမ်းကျယ်နေတယ်။"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ne": {
+        "folder": "ne",
+        "flow": "गुड फ्राइडेको आराधनाका लागि नयाँ खाली आराधना क्रम बनाइदिनुहोस्।",
+        "flowContent": "'Great Is Thy Faithfulness' भजन, मत्ती ५:९ को पढाइ र अन्तमा आशिष् भएको आराधना क्रम बनाउनुहोस्।",
+        "slideNamed": {
+            "line": "'क्रिसमस उत्सव' नामको नयाँ स्लाइड कागजात बनाउनुहोस्।",
+            "name": "क्रिसमस उत्सव"
+        },
+        "listSave": {
+            "line": "यूहन्ना ३:१६, रोमी ८:२८ र फिलिप्पी ४:१३ मेरो बाइबल सूचीमा सेभ गर्नुहोस्।",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'शान्ति' नामको नयाँ पद सूची बनाउनुहोस्।",
+            "name": "शान्ति"
+        },
+        "webPage": "प्रोजेक्टरको पर्दाका लागि हिउँ झरिरहेको पृष्ठभूमि वेब पेज चाहियो।",
+        "video": "यो भिडियो डाउनलोड गरेर पृष्ठभूमिमा राखिदिनुहोस्: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ बाट गीत मात्र MP3 मा चाहियो।",
+        "not": [
+            "स्लाइड कागजात कसरी बनाउने?",
+            "आराधना क्रम कहाँ भेटिन्छ?",
+            "गत हप्ता मैले बाइबल सूची बनाएँ तर त्यो खाली छ।",
+            "पृष्ठभूमि भिडियोको आवाज धेरै ठूलो छ।"
+        ],
+        "floor": {
+            "en": 12,
+            "own": 12
+        }
+    },
+    "nl": {
+        "folder": "nl",
+        "flow": "Kun je een nieuwe, lege liturgie aanmaken voor de kerstnachtdienst?",
+        "flowContent": "Maak een dienstvolgorde met het lied 'Groot is uw trouw', de lezing Psalm 23:1 en een gebed.",
+        "slideNamed": {
+            "line": "Maak een nieuwe presentatie aan met de naam 'Bevestiging ambtsdragers'.",
+            "name": "Bevestiging ambtsdragers"
+        },
+        "listSave": {
+            "line": "Zet Romeinen 8:28 en Jesaja 40:31 in mijn bijbellijst.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Nieuwe tekstenlijst maken, noem hem 'Troost'.",
+            "name": "Troost"
+        },
+        "webPage": "Ik wil een webpagina als achtergrond op de beamer met een rustig kleurverloop van blauw naar paars.",
+        "video": "Download deze video en zet hem als achtergrond: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Alleen het geluid als mp3 graag, van https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Hoe maak ik een presentatie met dia's?",
+            "Waar vind ik de liturgie van vanavond?",
+            "Ik heb vorige week een presentatie gemaakt, maar de dia's zijn leeg.",
+            "De achtergrondvideo staat veel te hard."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "no": {
+        "folder": "nb",
+        "flow": "Lag en ny, tom gudstjenesteplan for bryllupet på lørdag.",
+        "flowContent": "Jeg trenger en gudstjenesteorden med salmen «Deg være ære», lesning fra Joh 3,16 og velsignelsen.",
+        "slideNamed": {
+            "line": "Opprett et nytt lysbildedokument som heter «Julekonsert».",
+            "name": "Julekonsert"
+        },
+        "listSave": {
+            "line": "Lagre Salme 23 og Rom 8,28 i bibellisten min.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Lag en ny bibelvers-liste med navnet «Håp».",
+            "name": "Håp"
+        },
+        "webPage": "Kan du lage en nettside som bakgrunn på lerretet med levende lys?",
+        "video": "Last ned denne videoen og bruk den som bakgrunn: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Bare lyden som MP3 fra https://www.youtube.com/watch?v=dQw4w9WgXcQ takk",
+        "not": [
+            "Hvordan lager jeg et lysbildedokument?",
+            "Kan jeg endre rekkefølgen i gudstjenesteplanen?",
+            "Jeg laget en bibelliste forrige uke, men den er tom.",
+            "Bakgrunnsvideoen er altfor høy."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ny": {
+        "folder": "ny",
+        "flow": "Pangani ndandanda yatsopano yopanda kanthu ya msonkhano wa pemphero Lachitatu.",
+        "flowContent": "Ndikufuna ndandanda ya mapemphero yokhala ndi nyimbo 'Chisomo Chodabwitsa', kuwerenga Masalimo 23:1, ndi pemphero lomaliza.",
+        "slideNamed": {
+            "line": "Pangani fayilo yatsopano ya masilaidi dzina lake 'Chikondwerero cha Khirisimasi'.",
+            "name": "Chikondwerero cha Khirisimasi"
+        },
+        "listSave": {
+            "line": "Sungani Yohane 3:16 ndi Aroma 8:28 mu mndandanda wanga wa Baibulo.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Pangani mndandanda watsopano wa mavesi dzina lake 'Chiyembekezo'.",
+            "name": "Chiyembekezo"
+        },
+        "webPage": "Ndikufuna tsamba la intaneti la kumbuyo kwa sikirini lowonetsa makandulo oyaka.",
+        "video": "Tsitsani kanemayu ndipo muike kumbuyo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ndikufuna mawu okha a nyimbo ngati MP3 kuchokera pa https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kodi ndimapanga bwanji fayilo ya masilaidi?",
+            "Ndandanda ya mapemphero ili kuti?",
+            "Sabata yatha ndinapanga mndandanda wa Baibulo koma ulibe kanthu.",
+            "Kanema wa kumbuyo akulira kwambiri."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "om": {
+        "folder": "om",
+        "flow": "Ayyaana Fasikaatiif tartiiba waaqeffannaa haaraa duwwaa naaf uumi.",
+        "flowContent": "Tartiiba waaqeffannaa faarfannaa 'What a Friend We Have in Jesus', dubbisa Maatewos 5:9 fi kadhannaa xumuraa of keessaa qabu naaf qopheessi.",
+        "slideNamed": {
+            "line": "Galmee islaayidii haaraa maqaa 'Galata Waaqayyoo' jedhu uumi.",
+            "name": "Galata Waaqayyoo"
+        },
+        "listSave": {
+            "line": "Yohaannis 3:16 fi Roomaa 8:28 tarree Macaafa Qulqulluu koo keessatti olkaa'i.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Tarree aayata haaraa maqaa 'Abdii' jedhu uumi.",
+            "name": "Abdii"
+        },
+        "webPage": "Duubbee iskiriinii pirojektarii irratti fuula weebii cabbiin irraa bu'u agarsiisu barbaada.",
+        "video": "Viidiyoo kana buusii akka duubbeetti kaa'i: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Sagalee qofa MP3 tti https://www.youtube.com/watch?v=dQw4w9WgXcQ irraa naaf fidi.",
+        "not": [
+            "Galmee islaayidii akkamittan uuma?",
+            "Tartiibni waaqeffannaa eessa jira?",
+            "Torban darbe tarree Macaafa Qulqulluu uumeen ture, garuu duwwaa dha.",
+            "Sagaleen viidiyoo duubbee baay'ee ol ka'eera."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "or": {
+        "folder": "or",
+        "flow": "ବଡ଼ଦିନ ପୂର୍ବ ସନ୍ଧ୍ୟା ପାଇଁ ଗୋଟିଏ ନୂଆ ଉପାସନା କ୍ରମ ଆରମ୍ଭ କରନ୍ତୁ, ଏବେ କିଛି ରଖନ୍ତୁ ନାହିଁ।",
+        "flowContent": "'Silent Night' ଗୀତ, ଯୋହନ ୧୪:୬ ପାଠ ଓ ଶେଷରେ ଆଶୀର୍ବାଦ ଥିବା ଉପାସନା କ୍ରମ ତିଆରି କରନ୍ତୁ।",
+        "slideNamed": {
+            "line": "'ଧନ୍ୟବାଦ ଉପାସନା' ନାମରେ ଗୋଟିଏ ନୂଆ ସ୍ଲାଇଡ୍ ଡକ୍ୟୁମେଣ୍ଟ ତିଆରି କର।",
+            "name": "ଧନ୍ୟବାଦ ଉପାସନା"
+        },
+        "listSave": {
+            "line": "ଯୋହନ ୩:୧୬ ଓ ରୋମୀୟ ୮:୨୮ ମୋ ବାଇବେଲ ତାଲିକାରେ ସେଭ୍ କରନ୍ତୁ।",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'ଭରସା' ନାମରେ ନୂଆ ପଦ ତାଲିକା ତିଆରି କରନ୍ତୁ।",
+            "name": "ଭରସା"
+        },
+        "webPage": "ପ୍ରୋଜେକ୍ଟର ସ୍କ୍ରିନ୍ ପାଇଁ ମହମବତୀ ଜଳୁଥିବା ପୃଷ୍ଠଭୂମି ୱେବ୍ ପେଜ୍ ଦରକାର।",
+        "video": "ଏହି ଭିଡିଓ ଡାଉନଲୋଡ୍ କରି ପୃଷ୍ଠଭୂମିରେ ଲଗାନ୍ତୁ: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ରୁ କେବଳ ଗୀତଟି MP3 ରେ ଦରକାର।",
+        "not": [
+            "ସ୍ଲାଇଡ୍ ଡକ୍ୟୁମେଣ୍ଟ କିପରି ତିଆରି କରିବି?",
+            "ଉପାସନା କ୍ରମ କେଉଁଠି ମିଳିବ?",
+            "ଗତ ସପ୍ତାହରେ ମୁଁ ଗୋଟିଏ ବାଇବେଲ ତାଲିକା ତିଆରି କରିଥିଲି କିନ୍ତୁ ତାହା ଖାଲି ଅଛି।",
+            "ପୃଷ୍ଠଭୂମି ଭିଡିଓର ଶବ୍ଦ ବହୁତ ଜୋର।"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "pa": {
+        "folder": "pa",
+        "flow": "ਬੁੱਧਵਾਰ ਦੀ ਪ੍ਰਾਰਥਨਾ ਸਭਾ ਲਈ ਨਵਾਂ ਖਾਲੀ ਭਗਤੀ ਕ੍ਰਮ ਬਣਾ ਦਿਓ ਜੀ।",
+        "flowContent": "ਭਜਨ 'Amazing Grace', ਜ਼ਬੂਰ 23:1 ਦਾ ਪਾਠ ਅਤੇ ਅਖੀਰ ਵਿੱਚ ਪ੍ਰਾਰਥਨਾ ਵਾਲਾ ਭਗਤੀ ਕ੍ਰਮ ਬਣਾਓ।",
+        "slideNamed": {
+            "line": "'ਵੱਡਾ ਦਿਨ' ਨਾਮ ਦਾ ਨਵਾਂ ਸਲਾਈਡ ਦਸਤਾਵੇਜ਼ ਬਣਾਓ।",
+            "name": "ਵੱਡਾ ਦਿਨ"
+        },
+        "listSave": {
+            "line": "ਯੂਹੰਨਾ 3:16, ਰੋਮੀਆਂ 8:28 ਅਤੇ ਜ਼ਬੂਰ 23 ਮੇਰੀ ਬਾਈਬਲ ਸੂਚੀ ਵਿੱਚ ਸੇਵ ਕਰੋ।",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'ਆਸ' ਨਾਮ ਦੀ ਨਵੀਂ ਆਇਤਾਂ ਦੀ ਸੂਚੀ ਬਣਾਓ।",
+            "name": "ਆਸ"
+        },
+        "webPage": "ਪ੍ਰੋਜੈਕਟਰ ਸਕ੍ਰੀਨ ਲਈ ਹਲਕੇ ਰੰਗਾਂ ਦੇ ਗ੍ਰੇਡੀਐਂਟ ਵਾਲਾ ਬੈਕਗ੍ਰਾਊਂਡ ਵੈੱਬ ਪੇਜ ਚਾਹੀਦਾ ਹੈ।",
+        "video": "ਇਹ ਵੀਡੀਓ ਡਾਊਨਲੋਡ ਕਰਕੇ ਬੈਕਗ੍ਰਾਊਂਡ ਵਿੱਚ ਲਗਾਓ: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ ਤੋਂ ਸਿਰਫ਼ ਗੀਤ MP3 ਵਿੱਚ ਚਾਹੀਦਾ ਹੈ।",
+        "not": [
+            "ਸਲਾਈਡ ਦਸਤਾਵੇਜ਼ ਕਿਵੇਂ ਬਣਾਈਦਾ ਹੈ?",
+            "ਕੀ ਮੈਂ ਭਗਤੀ ਕ੍ਰਮ ਵਿੱਚ ਤਬਦੀਲੀ ਕਰ ਸਕਦਾ ਹਾਂ?",
+            "ਪਿਛਲੇ ਹਫ਼ਤੇ ਮੈਂ ਬਾਈਬਲ ਸੂਚੀ ਬਣਾਈ ਸੀ ਪਰ ਉਹ ਖਾਲੀ ਹੈ।",
+            "ਬੈਕਗ੍ਰਾਊਂਡ ਵੀਡੀਓ ਦੀ ਆਵਾਜ਼ ਬਹੁਤ ਉੱਚੀ ਹੈ।"
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "pl": {
+        "folder": "pl",
+        "flow": "Utwórz nowy, pusty porządek nabożeństwa na Wigilię.",
+        "flowContent": "Potrzebuję porządku nabożeństwa z pieśnią „Jak wielki jesteś”, czytaniem Ps 23,1 i ogłoszeniami.",
+        "slideNamed": {
+            "line": "Zrób nowy pokaz slajdów o nazwie „Pasterka 2026”.",
+            "name": "Pasterka 2026"
+        },
+        "listSave": {
+            "line": "Zapisz J 3,16 i Rz 8,28 na mojej liście wersetów.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Załóż nową listę wersetów pod nazwą „Pocieszenie”.",
+            "name": "Pocieszenie"
+        },
+        "webPage": "Chciałbym stronę internetową jako tło na rzutnik — padający śnieg.",
+        "video": "Pobierz ten film i ustaw jako tło: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Wyciągnij sam dźwięk w MP3 z https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Jak zrobić nowy dokument ze slajdami?",
+            "Czy mogę skopiować porządek nabożeństwa z zeszłego tygodnia?",
+            "W zeszłym tygodniu zrobiłem listę biblijną, ale jest pusta.",
+            "Film w tle jest za głośny."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "pt": {
+        "folder": "pt",
+        "flow": "Por favor, crie uma ordem de culto nova e vazia para o casamento de sábado.",
+        "flowContent": "Monte uma ordem de culto com o hino 'Castelo Forte', a leitura de Salmos 23:1 e a oração final.",
+        "slideNamed": {
+            "line": "Crie uma nova apresentação de slides chamada \"Santa Ceia\".",
+            "name": "Santa Ceia"
+        },
+        "listSave": {
+            "line": "Salva João 3:16, Romanos 8:28 e Filipenses 4:13 na minha lista bíblica.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Cria uma nova lista de versículos com o nome \"Esperança\".",
+            "name": "Esperança"
+        },
+        "webPage": "Quero uma página web de fundo para o telão com velas acesas.",
+        "video": "Baixa esse vídeo e coloca como fundo: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Só o áudio em MP3 desse link: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Como faço um documento de slides?",
+            "Onde fica a ordem de culto?",
+            "Fiz uma lista bíblica semana passada mas ela tá vazia.",
+            "O áudio que eu baixei ficou cortado no final."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "rn": {
+        "folder": "rn",
+        "flow": "Ndagusavye, nkorera urutonde rushasha rutarimwo ikintu c'amasengesho yo ku wa gatatu.",
+        "flowContent": "Tegura urutonde rw'iteraniro rurimwo indirimbo 'Blessed Assurance', gusoma Zaburi 23:1, n'isengesho ryo gusoza.",
+        "slideNamed": {
+            "line": "Rema dosiye nshasha y'amasilayidi yitwa 'Noeli Nziza'.",
+            "name": "Noeli Nziza"
+        },
+        "listSave": {
+            "line": "Bika Yohani 3:16 na Abaroma 8:28 mu rutonde rwanje rwa Bibiliya.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Rema urutonde rushasha rw'imirongo yitwa 'Icizigiro'.",
+            "name": "Icizigiro"
+        },
+        "webPage": "Ndashaka urupapuro rwa interineti rwo kuba inyuma kuri ekarani, rwerekana amabuji yaka.",
+        "video": "Kurura iyi video uyishire inyuma: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ndashaka ijwi gusa nka MP3 rivuye kuri https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Nigute nkora dosiye y'amasilayidi?",
+            "Urutonde rw'iteraniro ruri hehe?",
+            "Indwi iheze nakoze urutonde rwa Bibiliya ariko ntarimwo ikintu.",
+            "Ijwi rya video y'inyuma riraranguruye cane."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "ro": {
+        "folder": "ro",
+        "flow": "Fă-mi o ordine de slujbă nouă, goală, pentru seara de rugăciune de miercuri.",
+        "flowContent": "Am nevoie de o ordine a serviciului cu cântarea „Măreț ești Tu”, citire din Ioan 14:6 și binecuvântarea la final.",
+        "slideNamed": {
+            "line": "Creează o prezentare nouă cu numele „Nunta Ana și Mihai”.",
+            "name": "Nunta Ana și Mihai"
+        },
+        "listSave": {
+            "line": "Salvează Psalmul 91 și Romani 8:28 în lista mea de versete.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Creează o listă nouă de versete numită „Mângâiere”.",
+            "name": "Mângâiere"
+        },
+        "webPage": "Vreau o pagină web de fundal pentru proiector cu fulgi de zăpadă care cad încet.",
+        "video": "Descarcă videoclipul ăsta și pune-l ca fundal: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Vreau doar sunetul în MP3 de la https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Cum creez un document cu slide-uri?",
+            "Unde găsesc ordinea slujbei?",
+            "Săptămâna trecută am făcut o listă biblică, dar e goală.",
+            "Videoclipul de fundal e prea tare."
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "ru": {
+        "folder": "ru",
+        "flow": "Создай новый пустой порядок служения для молодёжного собрания в пятницу.",
+        "flowContent": "Нужен порядок богослужения: гимн «Чудная благодать», чтение Матфея 5:9 и объявления.",
+        "slideNamed": {
+            "line": "Сделай новую презентацию со слайдами под названием «Праздник Жатвы».",
+            "name": "Праздник Жатвы"
+        },
+        "listSave": {
+            "line": "Сохрани Иоанна 3:16, Римлянам 8:28 и Псалом 22 в мой список стихов.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Создай новый список стихов «Утешение».",
+            "name": "Утешение"
+        },
+        "webPage": "Хочу веб-страницу на фон проектора — горящие свечи.",
+        "video": "Скачай это видео и поставь фоном: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Вытащи только звук в MP3 из https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Как сделать документ со слайдами?",
+            "Где найти порядок служения?",
+            "Вчера сделал порядок служения, а сегодня его не вижу.",
+            "Фоновое видео слишком громкое."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "rw": {
+        "folder": "rw",
+        "flow": "Nkorera gahunda nshya y'amateraniro y'ubukwe, itarimo ikintu.",
+        "flowContent": "Tegura gahunda y'amateraniro irimo indirimbo 'Amazing Grace', gusoma Yohana 3:16, n'isengesho risoza.",
+        "slideNamed": {
+            "line": "Kora dosiye nshya y'amasilayidi yitwa 'Pasika Nziza'.",
+            "name": "Pasika Nziza"
+        },
+        "listSave": {
+            "line": "Bika Zaburi 23 na Abaroma 8:28 mu rutonde rwanjye rwa Bibiliya.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Kora urutonde rushya rw'imirongo yitwa 'Ibyiringiro'.",
+            "name": "Ibyiringiro"
+        },
+        "webPage": "Ndashaka urupapuro rwa interineti rwo kuba inyuma kuri ecran, rufite amabara yoroheje ahinduka buhoro.",
+        "video": "Manura iyi videwo uyishyire inyuma: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Nshaka amajwi gusa muri MP3 avuye kuri https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Nakora nte dosiye y'amasilayidi?",
+            "Gahunda y'amateraniro iri he?",
+            "Icyumweru gishize nakoze urutonde rwa Bibiliya ariko nta kirimo.",
+            "Amajwi ya videwo y'inyuma arasakuza cyane."
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "si": {
+        "folder": "si",
+        "flow": "බදාදා යාච්ඤා රැස්වීමට අලුත් හිස් නමස්කාර පිළිවෙළක් හදන්න.",
+        "flowContent": "'How Great Thou Art' ගීතිකාව, ගීතාවලිය 23:1 කියවීම සහ අවසාන යාච්ඤාව ඇතුළත් නමස්කාර පිළිවෙළක් හදන්න.",
+        "slideNamed": {
+            "line": "'නත්තල් සැමරුම' නමින් අලුත් ස්ලයිඩ් ලේඛනයක් හදන්න.",
+            "name": "නත්තල් සැමරුම"
+        },
+        "listSave": {
+            "line": "යොහන් 3:16 සහ රෝම 8:28 මගේ බයිබල් ලැයිස්තුවට සේව් කරන්න.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'බලාපොරොත්තුව' කියලා අලුත් පද ලැයිස්තුවක් හදන්න.",
+            "name": "බලාපොරොත්තුව"
+        },
+        "webPage": "ප්‍රොජෙක්ටර් තිරයට හිම වැටෙන පසුබිම් වෙබ් පිටුවක් ඕනේ.",
+        "video": "මේ වීඩියෝව බාගෙන පසුබිමට දාන්න: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ එකෙන් සින්දුව විතරක් MP3 විදියට ඕනේ.",
+        "not": [
+            "ස්ලයිඩ් ලේඛනයක් හදන්නේ කොහොමද?",
+            "නමස්කාර පිළිවෙළ තියෙන්නේ කොහෙද?",
+            "ගිය සතියේ මම බයිබල් ලැයිස්තුවක් හැදුවා, ඒත් ඒක හිස්.",
+            "පසුබිම් වීඩියෝවේ සද්දේ වැඩියි."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "sk": {
+        "folder": "sk",
+        "flow": "Vytvor nový prázdny program bohoslužby na Štedrý večer.",
+        "flowContent": "Potrebujem poriadok bohoslužby s piesňou „Aký si veľký“, čítaním Mt 5,9 a ohláškami.",
+        "slideNamed": {
+            "line": "Sprav novú prezentáciu so snímkami s názvom „Svadba Jana a Petra“.",
+            "name": "Svadba Jana a Petra"
+        },
+        "listSave": {
+            "line": "Ulož Rim 8,28 a Ž 23 do môjho zoznamu veršov.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Vytvor nový zoznam veršov s názvom „Útecha“.",
+            "name": "Útecha"
+        },
+        "webPage": "Chcem webovú stránku ako pozadie na projektor, jemný farebný prechod.",
+        "video": "Stiahni toto video a daj ho ako pozadie: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Iba zvuk v MP3 z https://www.youtube.com/watch?v=dQw4w9WgXcQ prosím",
+        "not": [
+            "Ako vytvorím dokument so snímkami?",
+            "Kde nájdem program bohoslužby?",
+            "Minulý týždeň som vytvoril biblický zoznam, ale je prázdny.",
+            "Video v pozadí je príliš hlasné."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "sl": {
+        "folder": "sl",
+        "flow": "Ustvari nov prazen razpored bogoslužja za poročni obred.",
+        "flowContent": "Potrebujem razpored bogoslužja s pesmijo »Kako velik si«, berilom Jn 3,16 in blagoslovom.",
+        "slideNamed": {
+            "line": "Naredi novo predstavitev z diapozitivi z imenom »Velika noč«.",
+            "name": "Velika noč"
+        },
+        "listSave": {
+            "line": "Shrani Rim 8,28, Ps 23 in Iz 40,31 v moj seznam vrstic.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Ustvari nov seznam vrstic z imenom »Upanje«.",
+            "name": "Upanje"
+        },
+        "webPage": "Rad bi spletno stran za ozadje na projektorju, s prižganimi svečami.",
+        "video": "Prenesi ta video in ga nastavi za ozadje: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Samo zvok kot MP3 iz https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Kako naredim dokument z diapozitivi?",
+            "Kje najdem razpored bogoslužja?",
+            "Prejšnji teden sem naredil svetopisemski seznam, a je prazen.",
+            "Video v ozadju je preglasen."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "sm": {
+        "folder": "sm",
+        "flow": "Fai mai se fa'asologa fou o le sauniga mo le sauniga lotu o le Aso Lulu, e leai se mea i totonu.",
+        "flowContent": "Fai se fa'asologa o le sauniga e iai le pese 'Faafetai i le Atua', faitauga Salamo 23:1, ma le tatalo fa'amuta.",
+        "slideNamed": {
+            "line": "Fai se faila fa'aaliga fou e igoa \"Fa'afetai Tele\".",
+            "name": "Fa'afetai Tele"
+        },
+        "listSave": {
+            "line": "Teu Ioane 3:16 ma Roma 8:28 i la'u lisi o le Tusi Paia.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Fai se lisi fou o fuaiupu e igoa 'Faamoemoe'.",
+            "name": "Faamoemoe"
+        },
+        "webPage": "Ou te mana'o i se itulau upega tafa'ilagi e fai ma talaaga i le lau, o moligao o lo'o mumū.",
+        "video": "Download lenei vitio ma tu'u e fai ma talaaga: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Na'o le leo o le pese e fai ma MP3 mai https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "E fa'afefea ona fai se faila fa'aaliga?",
+            "O fea o i ai le fa'asologa o le sauniga?",
+            "Na ou faia se lisi o le Tusi Paia i le vaiaso na te'a, ae e leai se mea i totonu.",
+            "E leo tele tele le vitio i tua."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "sn": {
+        "folder": "sn",
+        "flow": "Ndigadzirireiwo hurongwa hutsva husina chinhu hwemangwanani eIsita.",
+        "flowContent": "Gadzira hurongwa hwekunamata hune rwiyo 'Amazing Grace', kuverenga Mapisarema 23:1, uye munamato wekupedzisa.",
+        "slideNamed": {
+            "line": "Gadzira faira idzva remasiraidhi rinonzi 'Kisimusi Yakanaka'.",
+            "name": "Kisimusi Yakanaka"
+        },
+        "listSave": {
+            "line": "Chengetedza Johane 3:16 naVaRoma 8:28 murondedzero yangu yeBhaibheri.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Gadzira rondedzero itsva yemavhesi inonzi 'Tariro'.",
+            "name": "Tariro"
+        },
+        "webPage": "Ndinoda peji rewebhu rekuseri kweskrini rinoratidza makenduru ari kubvira.",
+        "video": "Dhawunirodha vhidhiyo iyi uiise kumashure: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ndinoda inzwi chete serwiyo rweMP3 kubva pa https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Ndinogadzira sei faira remasiraidhi?",
+            "Hurongwa hwekunamata huri kupi?",
+            "Svondo rapfuura ndakagadzira rondedzero yeBhaibheri asi haina chinhu.",
+            "Vhidhiyo yekumashure iri kurira zvakanyanya."
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "so": {
+        "folder": "so",
+        "flow": "Ii samee jadwal cibaado oo cusub oo madhan oo loogu talagalay kulanka ducada ee Arbacada.",
+        "flowContent": "Samee jadwal cibaado oo ay ku jiraan heesta 'Amazing Grace', akhriska Yooxanaa 3:16, iyo duco gabagabo ah.",
+        "slideNamed": {
+            "line": "Samee fayl cusub oo slides ah oo magaciisu yahay 'Ciidda Dhalashada'.",
+            "name": "Ciidda Dhalashada"
+        },
+        "listSave": {
+            "line": "Ku kaydi Yooxanaa 3:16 iyo Rooma 8:28 liiskayga Kitaabka Quduuska ah.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Samee liis cusub oo aayado ah oo la yiraahdo 'Rajo'.",
+            "name": "Rajo"
+        },
+        "webPage": "Waxaan rabaa bog shabakad ah oo ah gadaasha shaashadda, oo leh midabbo jilicsan oo is beddelaya.",
+        "video": "Soo dejiso fiidiyowgan oo ka dhig gadaal: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Codka kaliya ee MP3 ah iiga soo saar https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Sidee baan u sameeyaa fayl slides ah?",
+            "Xaggee ku yaal jadwalka cibaadada?",
+            "Toddobaadkii hore waxaan sameeyay liis Kitaabka ah laakiin waa madhan yahay.",
+            "Fiidiyowga gadaasha codkiisu aad buu u dheer yahay."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "sq": {
+        "folder": "sq",
+        "flow": "Krijo një rend të ri bosh shërbese për mbrëmjen e lutjes të së mërkurës.",
+        "flowContent": "Më duhet një rend shërbese me himnin 'Sa i madh je', leximin Gjoni 3:16 dhe bekimin në fund.",
+        "slideNamed": {
+            "line": "Krijo një prezantim të ri me sllajde me emrin 'Krishtlindje 2026'.",
+            "name": "Krishtlindje 2026"
+        },
+        "listSave": {
+            "line": "Ruaj Psalmi 23 dhe Romakëve 8:28 në listën time biblike.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Krijo një listë të re vargjesh me emrin 'Shpresa'.",
+            "name": "Shpresa"
+        },
+        "webPage": "Dua një faqe interneti si sfond për projektorin, me borë që bie ngadalë.",
+        "video": "Shkarko këtë video dhe vendose si sfond: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Vetëm zërin në MP3 nga https://www.youtube.com/watch?v=dQw4w9WgXcQ të lutem",
+        "not": [
+            "Si krijoj një dokument me sllajde?",
+            "Ku e gjej rendin e shërbesës?",
+            "Javën e kaluar bëra një listë biblike, por është bosh.",
+            "Videoja e sfondit është shumë e zhurmshme."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "sr": {
+        "folder": "sr",
+        "flow": "Направи нов празан редослед богослужења за Бадње вече.",
+        "flowContent": "Треба ми редослед богослужења са песмом „Тиха ноћ“, читањем Псалам 23:1 и молитвом на крају.",
+        "slideNamed": {
+            "line": "Направи нову презентацију са слајдовима под називом „Венчање“.",
+            "name": "Венчање"
+        },
+        "listSave": {
+            "line": "Сачувај Јован 3:16, Римљанима 8:28 и Филипљанима 4:13 у мој списак стихова.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Направи нову листу стихова под именом „Нада“.",
+            "name": "Нада"
+        },
+        "webPage": "Хоћу веб страницу као позадину на пројектору, са свећама које горе.",
+        "video": "Скини овај видео и стави га као позадину: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Само звук у MP3 са https://www.youtube.com/watch?v=dQw4w9WgXcQ молим",
+        "not": [
+            "Како да направим документ са слајдовима?",
+            "Где могу да нађем редослед богослужења?",
+            "Прошле недеље сам направио библијску листу, али је празна.",
+            "Видео у позадини је прегласан."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "sv": {
+        "folder": "sv",
+        "flow": "Skapa en ny, tom gudstjänstordning för midnattsmässan på julafton.",
+        "flowContent": "Jag behöver en gudstjänstordning med psalmen ”O store Gud”, läsningen Joh 3:16 och välsignelsen.",
+        "slideNamed": {
+            "line": "Skapa ett nytt bildspel som heter ”Konfirmation”.",
+            "name": "Konfirmation"
+        },
+        "listSave": {
+            "line": "Spara Ps 23 och Rom 8:28 i min bibellista.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Gör en ny verslista som heter ”Tröst”.",
+            "name": "Tröst"
+        },
+        "webPage": "Kan du göra en webbsida som bakgrund till projektorn, med en lugn färgtoning?",
+        "video": "Ladda ner den här videon och lägg den som bakgrund: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Bara ljudet som MP3 från https://www.youtube.com/watch?v=dQw4w9WgXcQ tack",
+        "not": [
+            "Hur gör jag ett bildspelsdokument?",
+            "Var hittar jag gudstjänstordningen?",
+            "Jag gjorde en bibellista förra veckan men den är tom.",
+            "Webbsidan i bakgrunden laddar så himla långsamt."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "sw": {
+        "folder": "sw",
+        "flow": "Tafadhali niundie ratiba mpya tupu ya ibada ya maombi ya Jumatano.",
+        "flowContent": "Tengeneza ratiba ya ibada yenye wimbo 'Yesu Kwetu ni Rafiki', somo la Zaburi 23:1, na sala ya mwisho.",
+        "slideNamed": {
+            "line": "Unda faili jipya la slaidi liitwalo 'Harusi ya Neema'.",
+            "name": "Harusi ya Neema"
+        },
+        "listSave": {
+            "line": "Hifadhi Yohana 3:16 na Warumi 8:28 kwenye orodha yangu ya Biblia.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Unda orodha mpya ya mistari iitwayo 'Tumaini'.",
+            "name": "Tumaini"
+        },
+        "webPage": "Nataka ukurasa wa wavuti wa mandhari ya nyuma kwenye skrini, wenye theluji inayoanguka.",
+        "video": "Pakua video hii na uiweke kama mandhari: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Nahitaji sauti tu kama MP3 kutoka https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Ninawezaje kutengeneza faili la slaidi?",
+            "Ratiba ya ibada iko wapi?",
+            "Wiki iliyopita nilitengeneza orodha ya Biblia lakini iko tupu.",
+            "Video ya nyuma ina sauti kubwa mno."
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "ta": {
+        "folder": "ta",
+        "flow": "பெரிய வெள்ளி ஆராதனைக்கு ஒரு புதிய ஆராதனை முறைமை தொடங்குங்கள், இப்போதைக்கு எதுவும் சேர்க்க வேண்டாம்.",
+        "flowContent": "'How Great Thou Art' பாடல், சங்கீதம் 23:1 வாசிப்பு, கடைசியில் ஆசீர்வாதம் — இவை உள்ள ஆராதனை வரிசை ஒன்று செய்யுங்கள்.",
+        "slideNamed": {
+            "line": "'அறுவடை பண்டிகை' என்ற பெயரில் புதிய ஸ்லைடு ஆவணம் உருவாக்குங்கள்.",
+            "name": "அறுவடை பண்டிகை"
+        },
+        "listSave": {
+            "line": "யோவான் 3:16, ரோமர் 8:28, பிலிப்பியர் 4:13 இவற்றை என் வேதாகம பட்டியலில் சேமியுங்கள்.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "'நம்பிக்கை' என்ற பெயரில் புதிய வசனப் பட்டியல் உருவாக்குங்கள்.",
+            "name": "நம்பிக்கை"
+        },
+        "webPage": "ப்ரொஜெக்டர் திரைக்கு மெல்லிய வண்ண மாற்றம் காட்டும் பின்னணி வலைப்பக்கம் வேண்டும்.",
+        "video": "இந்த வீடியோவை டவுன்லோட் செய்து பின்னணியாக வையுங்கள்: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ இதிலிருந்து பாடலை மட்டும் MP3 ஆக வேண்டும்.",
+        "not": [
+            "ஸ்லைடு ஆவணம் எப்படி உருவாக்குவது?",
+            "ஆராதனை வரிசை எங்கே இருக்கிறது?",
+            "போன வாரம் ஒரு வேதாகம பட்டியல் உருவாக்கினேன், ஆனால் அது காலியாக இருக்கிறது.",
+            "பின்னணி வீடியோ சத்தம் ரொம்ப அதிகம்."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "te": {
+        "folder": "te",
+        "flow": "బుధవారం ప్రార్థన కూడికకు కొత్త ఖాళీ ఆరాధన క్రమం తయారు చేయండి.",
+        "flowContent": "'Amazing Grace' పాట, కీర్తనలు 23:1 చదువు, చివర్లో ప్రార్థన ఉండేలా ఆరాధన క్రమం చేయండి.",
+        "slideNamed": {
+            "line": "'క్రిస్మస్ సంబరాలు' అనే పేరుతో కొత్త స్లయిడ్ డాక్యుమెంట్ చేయండి.",
+            "name": "క్రిస్మస్ సంబరాలు"
+        },
+        "listSave": {
+            "line": "యోహాను 3:16 మరియు రోమా 8:28 నా బైబిల్ లిస్ట్‌లో సేవ్ చేయండి.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'నిరీక్షణ' అనే పేరుతో కొత్త వచనాల జాబితా చేయండి.",
+            "name": "నిరీక్షణ"
+        },
+        "webPage": "ప్రొజెక్టర్ స్క్రీన్‌కి మంచు కురుస్తున్నట్టు చూపించే బ్యాక్‌గ్రౌండ్ వెబ్ పేజీ కావాలి.",
+        "video": "ఈ వీడియోని డౌన్‌లోడ్ చేసి బ్యాక్‌గ్రౌండ్‌గా పెట్టండి: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ నుంచి పాట మాత్రమే MP3 గా కావాలి.",
+        "not": [
+            "స్లయిడ్ డాక్యుమెంట్ ఎలా తయారు చేయాలి?",
+            "ఆరాధన క్రమం ఎక్కడ ఉంది?",
+            "పోయిన వారం నేను బైబిల్ లిస్ట్ చేశాను కానీ అది ఖాళీగా ఉంది.",
+            "బ్యాక్‌గ్రౌండ్ వీడియో శబ్దం చాలా ఎక్కువగా ఉంది."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "th": {
+        "folder": "th",
+        "flow": "ช่วยสร้างลำดับนมัสการใหม่แบบว่างๆ สำหรับคืนคริสต์มาสอีฟหน่อยครับ",
+        "flowContent": "สร้างลำดับนมัสการที่มีเพลง 'พระคุณพระเจ้า' อ่านพระคัมภีร์ สดุดี 23:1 และคำอธิษฐานปิด",
+        "slideNamed": {
+            "line": "สร้างไฟล์สไลด์ใหม่ชื่อ 'งานแต่งงาน'",
+            "name": "งานแต่งงาน"
+        },
+        "listSave": {
+            "line": "บันทึก ยอห์น 3:16 กับ โรม 8:28 ลงรายการพระคัมภีร์ของฉัน",
+            "references": 2
+        },
+        "listNew": {
+            "line": "สร้างรายการข้อพระคัมภีร์ใหม่ ชื่อ 'ความหวัง'",
+            "name": "ความหวัง"
+        },
+        "webPage": "อยากได้หน้าเว็บเป็นพื้นหลังจอโปรเจกเตอร์ ที่มีเทียนจุดอยู่",
+        "video": "ดาวน์โหลดวิดีโอนี้แล้วตั้งเป็นพื้นหลัง https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "ขอแค่เสียงเพลงเป็น MP3 จาก https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "ทำไฟล์สไลด์ยังไงครับ",
+            "ลำดับนมัสการอยู่ตรงไหน",
+            "อาทิตย์ที่แล้วฉันสร้างรายการพระคัมภีร์ไว้ แต่มันว่างเปล่า",
+            "วิดีโอพื้นหลังเสียงดังเกินไป"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "tl": {
+        "folder": "fil",
+        "flow": "Gumawa ka ng bagong blangkong pagkakasunod-sunod ng pagsamba para sa Simbang Gabi.",
+        "flowContent": "Gawa ka ng order of service na may kantang 'Dakila Ka, O Diyos', pagbasa ng Mateo 5:9, at panalangin sa dulo.",
+        "slideNamed": {
+            "line": "Gumawa ng bagong slide file na ang pangalan ay 'Kasal nina Ana'.",
+            "name": "Kasal nina Ana"
+        },
+        "listSave": {
+            "line": "I-save mo ang Juan 3:16, Roma 8:28 at Awit 23 sa Bible list ko.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Gumawa ng bagong listahan ng talata na pinangalanang 'Pag-asa'.",
+            "name": "Pag-asa"
+        },
+        "webPage": "Gusto ko ng web page na background sa projector, yung may nahuhulog na snow.",
+        "video": "I-download mo itong video at gawing background: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Audio lang na MP3 galing sa https://www.youtube.com/watch?v=dQw4w9WgXcQ please",
+        "not": [
+            "Paano gumawa ng slide document?",
+            "Saan makikita ang order of service?",
+            "Gumawa ako ng Bible list noong isang linggo pero walang laman.",
+            "Ang lakas ng tunog ng background video."
+        ],
+        "floor": {
+            "en": 8,
+            "own": 8
+        }
+    },
+    "to": {
+        "folder": "to",
+        "flow": "Fakamolemole, fa'u mai ha polokalama lotu fo'ou 'oku 'ikai ha me'a ai ki he houa lotu 'o e Pulelulu.",
+        "flowContent": "Fa'u ha polokalama lotu 'oku 'i ai 'a e hiva 'Amazing Grace', lau Saame 23:1, mo e lotu fakama'opo'opo.",
+        "slideNamed": {
+            "line": "Fa'u ha faile slide fo'ou ko hono hingoa ko \"Kilisimasi Fiefia\".",
+            "name": "Kilisimasi Fiefia"
+        },
+        "listSave": {
+            "line": "Tauhi 'a Sione 3:16 mo Loma 8:28 ki hoku lisi Tohitapu.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Fa'u ha lisi veesi fo'ou ko hono hingoa ko \"Amanaki\".",
+            "name": "Amanaki"
+        },
+        "webPage": "'Oku ou fiema'u ha peesi uepi ke hoko ko e puipuitu'a 'i he sikilini, mo e ngaahi kaneli 'oku ulo.",
+        "video": "Download 'a e vitio ko 'eni pea ngaue'aki ko e puipuitu'a: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ko e le'o pe 'o e hiva 'i he MP3 mei he https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "'E anga fefe ha'aku fa'u ha faile slide?",
+            "'Oku 'i fe 'a e polokalama lotu?",
+            "Na'a ku fa'u ha lisi Tohitapu 'i he uike kuo 'osi ka 'oku 'ikai ha me'a ai.",
+            "'Oku le'o lahi fau 'a e vitio puipuitu'a."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "tr": {
+        "folder": "tr",
+        "flow": "Çarşamba dua toplantısı için yeni ve boş bir ibadet akışı oluşturur musun?",
+        "flowContent": "İçinde 'Ne Büyüksün' ilahisi, Mezmur 23:1 okuması ve duyurular olan bir ibadet sırası hazırla.",
+        "slideNamed": {
+            "line": "'Paskalya Sabahı' adında yeni bir slayt belgesi oluştur.",
+            "name": "Paskalya Sabahı"
+        },
+        "listSave": {
+            "line": "Yuhanna 3:16 ve Romalılar 8:28'i Kutsal Kitap listeme kaydet.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'Teselli' adında yeni bir ayet listesi aç.",
+            "name": "Teselli"
+        },
+        "webPage": "Projeksiyon ekranı için yumuşak renk geçişli bir arka plan web sayfası istiyorum.",
+        "video": "Bu videoyu indirip arka plan yap: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ adresinden sadece sesi MP3 olarak al.",
+        "not": [
+            "Slayt belgesi nasıl oluşturulur?",
+            "İbadet akışını nerede bulabilirim?",
+            "Geçen hafta bir Kutsal Kitap listesi yaptım ama boş görünüyor.",
+            "Arka plan videosunun sesi çok yüksek."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "uk": {
+        "folder": "uk",
+        "flow": "Створи новий порожній порядок служіння на похоронне служіння в четвер.",
+        "flowContent": "Потрібен порядок богослужіння з гімном «Великий Бог», читанням Матвія 5:9 і благословенням.",
+        "slideNamed": {
+            "line": "Зроби нову презентацію зі слайдами з назвою «Свято Жнив».",
+            "name": "Свято Жнив"
+        },
+        "listSave": {
+            "line": "Збережи Римлян 8:28 і Ісаї 40:31 у мій список віршів.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Створи новий список віршів «Надія».",
+            "name": "Надія"
+        },
+        "webPage": "Хочу вебсторінку на фон проєктора з легким кольоровим переходом.",
+        "video": "Завантаж це відео і постав як фон: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Потрібен лише звук у MP3 з https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Як створити документ зі слайдами?",
+            "Де знайти порядок служіння?",
+            "Минулого тижня я створив біблійний список, але він порожній.",
+            "Фонове відео надто гучне."
+        ],
+        "floor": {
+            "en": 9,
+            "own": 9
+        }
+    },
+    "ur": {
+        "folder": "ur",
+        "flow": "شادی کی تقریب کے لیے نیا خالی عبادتی پروگرام بنائیں، ابھی اس میں کچھ نہ ڈالیں۔",
+        "flowContent": "حمد 'Amazing Grace'، زبور 23:1 کی تلاوت اور آخر میں دعا والا عبادتی پروگرام بنائیں۔",
+        "slideNamed": {
+            "line": "'بڑا دن' نام سے نئی سلائیڈ دستاویز بنائیں۔",
+            "name": "بڑا دن"
+        },
+        "listSave": {
+            "line": "یوحنا 3:16 اور رومیوں 8:28 میری بائبل فہرست میں محفوظ کر دیں۔",
+            "references": 2
+        },
+        "listNew": {
+            "line": "'امید' نام کی نئی آیات کی فہرست بنائیں۔",
+            "name": "امید"
+        },
+        "webPage": "پروجیکٹر اسکرین کے لیے پس منظر کا ویب صفحہ چاہیے جس میں برف گرتی ہو۔",
+        "video": "یہ ویڈیو ڈاؤن لوڈ کر کے پس منظر بنا دیں: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "https://www.youtube.com/watch?v=dQw4w9WgXcQ سے صرف گانا MP3 میں چاہیے۔",
+        "not": [
+            "سلائیڈ دستاویز کیسے بناتے ہیں؟",
+            "عبادتی پروگرام کہاں ملے گا؟",
+            "پچھلے ہفتے میں نے بائبل فہرست بنائی تھی لیکن وہ خالی ہے۔",
+            "پس منظر ویڈیو کی آواز بہت زیادہ ہے۔"
+        ],
+        "floor": {
+            "en": 11,
+            "own": 11
+        }
+    },
+    "vi": {
+        "folder": "vi",
+        "flow": "Tạo giúp mình một chương trình thờ phượng mới, để trống, cho buổi cầu nguyện tối thứ Tư.",
+        "flowContent": "Làm chương trình thờ phượng gồm bài thánh ca 'Lớn Bấy Duy Ngài', đọc Giăng 3:16 và lời chúc phước.",
+        "slideNamed": {
+            "line": "Tạo tệp slide mới tên là 'Lễ Tạ Ơn'.",
+            "name": "Lễ Tạ Ơn"
+        },
+        "listSave": {
+            "line": "Lưu Thi Thiên 23 và Rô-ma 8:28 vào danh sách Kinh Thánh của tôi.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Tạo danh sách câu Kinh Thánh mới tên 'Hy Vọng'.",
+            "name": "Hy Vọng"
+        },
+        "webPage": "Mình cần một trang web làm nền cho màn chiếu, có tuyết rơi nhẹ nhàng.",
+        "video": "Tải video này về làm nền: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Chỉ lấy âm thanh MP3 từ https://www.youtube.com/watch?v=dQw4w9WgXcQ thôi",
+        "not": [
+            "Làm sao để tạo tệp slide?",
+            "Mình có thể sắp xếp lại chương trình thờ phượng không?",
+            "Tuần trước tôi đã tạo danh sách Kinh Thánh nhưng nó trống trơn.",
+            "Video nền to tiếng quá."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "xh": {
+        "folder": "xh",
+        "flow": "Ndenzele uluhlu olutsha olungenanto lwenkonzo yomthandazo yangoLwesithathu.",
+        "flowContent": "Yenza ucwangciso lwenkonzo olunengoma ethi “Lizalis' idinga lakho”, ukufundwa kweNdumiso 23:1, nomthandazo wokuvala.",
+        "slideNamed": {
+            "line": "Yenza ifayile entsha yezilayidi egama layo lithi 'Ikrismesi Emnandi'.",
+            "name": "Ikrismesi Emnandi"
+        },
+        "listSave": {
+            "line": "Gcina uYohane 3:16 namaRoma 8:28 kuluhlu lwam lweBhayibhile.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Yenza uluhlu olutsha lweevesi olubizwa ngokuthi 'Ithemba'.",
+            "name": "Ithemba"
+        },
+        "webPage": "Ndifuna iphepha lewebhu lasemva kwiskrini seprojektha, elibonisa amakhandlela avuthayo.",
+        "video": "Khuphela le vidiyo uyibeke ngasemva: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ndifuna isandi kuphela njenge-MP3 ukusuka ku https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Ndenza njani ifayile yezilayidi?",
+            "Luphi ucwangciso lwenkonzo?",
+            "Kwiveki ephelileyo ndenze uluhlu lweBhayibhile kodwa alunanto.",
+            "Isandi sevidiyo yangasemva siphezulu kakhulu."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "yo": {
+        "folder": "yo",
+        "flow": "Jọwọ ṣe eto isin tuntun to ṣofo fun ipade adura Ọjọru.",
+        "flowContent": "Ṣe ètò ìsìn tí ó ní orin 'Amazing Grace', kíkà Orin Dafidi 23:1, àti àdúrà ìparí.",
+        "slideNamed": {
+            "line": "Ṣẹda faili slide tuntun ti a npe ni 'Ayo Keresimesi'.",
+            "name": "Ayo Keresimesi"
+        },
+        "listSave": {
+            "line": "Fi Johanu 3:16 ati Romu 8:28 pamọ sinu akojọ Bibeli mi.",
+            "references": 2
+        },
+        "listNew": {
+            "line": "Ṣe akojọ ẹsẹ tuntun ti orukọ rẹ jẹ 'Ireti'.",
+            "name": "Ireti"
+        },
+        "webPage": "Mo fẹ oju-iwe ayelujara fun ẹhin iboju projector, pẹlu awọ to rọra yipada.",
+        "video": "Ṣe igbasilẹ fidio yii ki o fi si ẹhin: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Mo fẹ ohun nikan ni MP3 lati https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Bawo ni mo ṣe le ṣe faili slide?",
+            "Nibo ni eto isin wa?",
+            "Mo ṣe akojọ Bibeli ni ọsẹ to kọja ṣugbọn ko si nkankan ninu rẹ.",
+            "Ohun fidio ẹhin ti pọ ju."
+        ],
+        "floor": {
+            "en": 6,
+            "own": 6
+        }
+    },
+    "zh": {
+        "folder": "zh",
+        "flow": "帮我新建一个空白的聚会流程，周三祷告会用。",
+        "flowContent": "做一个敬拜流程，里面要有诗歌《奇异恩典》、读经诗篇23:1，还有最后的祝福。",
+        "slideNamed": {
+            "line": "新建一个幻灯片文件，名字叫“圣诞晚会”。",
+            "name": "圣诞晚会"
+        },
+        "listSave": {
+            "line": "把约翰福音3:16和罗马书8:28存到我的经文列表里。",
+            "references": 2
+        },
+        "listNew": {
+            "line": "新建一个经文列表，叫“安慰”。",
+            "name": "安慰"
+        },
+        "webPage": "想要一个投影背景的网页，上面有雪花慢慢飘落。",
+        "video": "把这个视频下载下来当背景：https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "只要这个的音频，转成MP3： https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "怎么做幻灯片文件？",
+            "聚会流程在哪里可以找到？",
+            "我上周建了一个经文列表，但里面是空的。",
+            "背景视频声音太大了。"
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    },
+    "zh-Hant": {
+        "folder": "zh",
+        "flow": "可以幫我建立一個新的空白崇拜程序嗎？是平安夜晚會要用的。",
+        "flowContent": "請建立崇拜程序，包含詩歌《這是天父世界》、讀經 約翰福音 14:6，以及報告事項。",
+        "slideNamed": {
+            "line": "新增一份投影片，名稱是「受洗典禮」。",
+            "name": "受洗典禮"
+        },
+        "listSave": {
+            "line": "把詩篇23篇、羅馬書8:28和以賽亞書40:31存到我的經文清單。",
+            "references": 3
+        },
+        "listNew": {
+            "line": "幫我開一個新的經文清單，叫做「盼望」。",
+            "name": "盼望"
+        },
+        "webPage": "我想要一個投影幕背景網頁，畫面是點著的蠟燭。",
+        "video": "請下載這支影片當背景：https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "我只要 https://www.youtube.com/watch?v=dQw4w9WgXcQ 的聲音，轉成MP3。",
+        "not": [
+            "要怎麼建立投影片檔案？",
+            "我可以修改崇拜程序的順序嗎？",
+            "我上週建了一個經文清單，可是裡面是空的。",
+            "背景影片的聲音太大了。"
+        ],
+        "floor": {
+            "en": 7,
+            "own": 7
+        }
+    },
+    "zu": {
+        "folder": "zu",
+        "flow": "Ngicela ungenzele uhlelo olusha lwenkonzo olungenalutho lomshado ngoMgqibelo.",
+        "flowContent": "Yenza uhlelo lwenkonzo olunengoma ethi 'How Great Thou Art', ukufundwa kukaJohane 14:6, nomthandazo wokuvala.",
+        "slideNamed": {
+            "line": "Dala ifayela elisha lama-slide eligama lalo lithi 'Usuku Lokubonga'.",
+            "name": "Usuku Lokubonga"
+        },
+        "listSave": {
+            "line": "Gcina uJohane 3:16, amaRoma 8:28 neHubo 23 ohlwini lwami lweBhayibheli.",
+            "references": 3
+        },
+        "listNew": {
+            "line": "Yenza uhlu olusha lwamavesi olubizwa ngokuthi 'Induduzo'.",
+            "name": "Induduzo"
+        },
+        "webPage": "Ngifuna ikhasi lewebhu lesizinda sesikrini, elinemibala ethambile eshintsha kancane.",
+        "video": "Landa le vidiyo uyibeke njengesizinda: https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "audio": "Ngidinga umsindo kuphela njenge-MP3 kusuka ku https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "not": [
+            "Ngenza kanjani ifayela lama-slide?",
+            "Ngingaluthola kuphi uhlelo lwenkonzo?",
+            "Ngenze uhlu lweBhayibheli ngesonto eledlule kodwa alunalutho.",
+            "Umsindo wevidiyo yesizinda uphezulu kakhulu."
+        ],
+        "floor": {
+            "en": 10,
+            "own": 10
+        }
+    }
+}

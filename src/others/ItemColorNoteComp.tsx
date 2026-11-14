@@ -113,7 +113,7 @@ export default function ItemColorNoteComp({
     };
     // Says what the control IS before which colour it holds. The colour alone
     // -- `magenta`, a CSS keyword the menu lists as written -- said nothing
-    // of what a press does, and in a Khmer window it was the row's one
+    // of what a press does, and in a translated window it was the row's one
     // English word.
     const title = useMemo(() => {
         const reverseColorMap: Record<string, string> = Object.entries({

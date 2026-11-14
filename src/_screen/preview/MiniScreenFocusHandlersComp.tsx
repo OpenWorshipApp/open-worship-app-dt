@@ -11,6 +11,8 @@ import {
     handleKeepOverlayFocus,
     useOverlayShortcut,
 } from './miniScreenOverlayControlComps';
+import { SpotlightPresetsComp } from './overlayPresetComps';
+import type { SpotlightLookType } from '../managers/screenOverlayHelpers';
 import {
     FOCUS_BLUR_MAX,
     FOCUS_BLUR_MIN,
@@ -72,13 +74,22 @@ export default function MiniScreenFocusHandlersComp() {
         setIsContrast(next);
         screenFocusManager.setIsContrast(next);
     };
-    const handleResetSettings = () => {
-        screenFocusManager.resetSettings();
+    // After a whole look is put on the manager at once (Reset, a preset):
+    // the controls show what it kept, each value checked by it.
+    const syncFromManager = () => {
         setSize(screenFocusManager.size);
         setDimColor(screenFocusManager.dimColor);
         setDimOpacity(screenFocusManager.dimOpacity);
         setEdgeBlur(screenFocusManager.edgeBlur);
         setIsContrast(screenFocusManager.isContrast);
+    };
+    const handleResetSettings = () => {
+        screenFocusManager.resetSettings();
+        syncFromManager();
+    };
+    const handleSpotlightPresetApplying = (look: SpotlightLookType) => {
+        screenFocusManager.applySettings(look);
+        syncFromManager();
     };
     useOverlayShortcut(
         'toggleContrast',
@@ -106,6 +117,18 @@ export default function MiniScreenFocusHandlersComp() {
         <div className="w-100">
             <hr className="w-100 my-1" />
             <div className="d-flex flex-wrap align-items-center gap-2 px-1 pb-1">
+                <SpotlightPresetsComp
+                    readCurrent={() => {
+                        return {
+                            size,
+                            dimColor,
+                            dimOpacity,
+                            edgeBlur,
+                            isContrast,
+                        };
+                    }}
+                    onApply={handleSpotlightPresetApplying}
+                />
                 <OverlayRangeComp
                     icon="bi-circle"
                     label={tran('Spotlight size')}

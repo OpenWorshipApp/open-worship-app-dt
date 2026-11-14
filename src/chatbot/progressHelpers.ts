@@ -458,7 +458,14 @@ function describeDataStep(name: string, args: any) {
         );
     }
     const actionMap = DATA_STEP_MAP[name] ?? {};
-    const action = String(args?.action ?? '');
+    // An undo sent with an id and no action is an undo (`toUndoAction` in
+    // the server's `agentData.mjs`, EC-615).
+    const action =
+        name === 'owa_undo' && args?.action === undefined
+            ? typeof args?.id === 'string' && args.id.trim() !== ''
+                ? 'undo'
+                : 'list'
+            : String(args?.action ?? '');
     const step = Object.hasOwn(actionMap, action)
         ? actionMap[action]
         : DATA_STEP_FALLBACK_MAP[name];
@@ -624,6 +631,22 @@ export function describeToolStep(name: string, args: any): string {
                 tran('Looking at the Bibles installed'),
             );
         case 'owa_resource_file':
+            if (args?.action === 'draft') {
+                return toQuotedStep(
+                    tran('Writing a study file: “{words}”'),
+                    args?.title ?? args?.section,
+                    tran('Writing a study file'),
+                );
+            }
+            // Translated part by part by the window, each part its own step
+            // under this one (EC-478).
+            if (args?.action === 'translate') {
+                return toQuotedStep(
+                    tran('Writing a study file: “{words}”'),
+                    args?.language,
+                    tran('Writing a study file'),
+                );
+            }
             return args?.action === 'read'
                 ? toQuotedStep(
                       tran('Reading “{words}” from Resources'),

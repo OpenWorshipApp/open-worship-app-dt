@@ -165,31 +165,31 @@ describe('the title material', () => {
 
 describe('extra bibles', () => {
     test('each extra bible is a chip that removes itself', async () => {
-        const bibleItem = genBibleItem(['KHM', 'FRE']);
+        const bibleItem = genBibleItem(['TQAM', 'TQFE']);
         await render(bibleItem);
         const chips = Array.from(
             host.querySelectorAll<HTMLSpanElement>('.bible-extra-key'),
         );
-        expect(chips.map((chip) => chip.textContent)).toEqual(['KHM', 'FRE']);
-        const [khmerChip] = chips;
-        expect(khmerChip.getAttribute('role')).toBe('button');
-        expect(khmerChip.tabIndex).toBe(0);
-        expect(khmerChip.getAttribute('aria-label')).toBe(
-            'Click to remove extra Bible KHM',
+        expect(chips.map((chip) => chip.textContent)).toEqual(['TQAM', 'TQFE']);
+        const [firstChip] = chips;
+        expect(firstChip.getAttribute('role')).toBe('button');
+        expect(firstChip.tabIndex).toBe(0);
+        expect(firstChip.getAttribute('aria-label')).toBe(
+            'Click to remove extra Bible TQAM',
         );
         // Each chip in its own bible's face.
-        expect(khmerChip.style.fontFamily).toBe('KHM Font');
+        expect(firstChip.style.fontFamily).toBe('TQAM Font');
         await act(async () => {
-            khmerChip.click();
+            firstChip.click();
         });
         expect(h.viewController.applyTargetOrBibleKey).toHaveBeenCalledWith(
             bibleItem,
-            { extraBibleKeys: ['FRE'] },
+            { extraBibleKeys: ['TQFE'] },
         );
     });
 
     test('a chip answers the keyboard like a button', async () => {
-        await render(genBibleItem(['KHM']));
+        await render(genBibleItem(['TQAM']));
         const chip = host.querySelector<HTMLSpanElement>('.bible-extra-key')!;
         await act(async () => {
             chip.dispatchEvent(

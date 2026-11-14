@@ -23,9 +23,9 @@ export default function VerseCommentEditorComp({
 }>) {
     const [comment, setComment] = useState(target.comment);
     // Both the reference in the title bar and what gets typed under it belong to
-    // one translation: a note on a Khmer verse is written in Khmer, and the
-    // widget rendering it in the UI face while the passage behind it uses the
-    // bible's own is two scripts for one thought.
+    // one translation: a note on a verse is written in the verse's language,
+    // and the widget rendering it in the UI face while the passage behind it
+    // uses the bible's own is two scripts for one thought.
     const fontFamily = useBibleFontFamily(
         toVerseBibleKey(target.verseKey) ?? '',
     );

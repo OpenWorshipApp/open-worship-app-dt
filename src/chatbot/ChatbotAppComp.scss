@@ -799,6 +799,19 @@ button.chat-engine {
   resize: vertical;
 }
 
+// --- the study file a draft would save (EC-464) ------------------------------
+
+.cue-study-line {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+// Markdown is prose, not column work: it wraps.
+.cue-study-text {
+  white-space: pre-wrap;
+}
+
 // --- what you can do about the answer ---------------------------------------
 
 .cue-actions {
@@ -941,10 +954,13 @@ button.chat-engine {
   }
 }
 
-// The two thumbs beside Copy: icons, a little larger than the lettering they
-// stand next to so the hand reads at a glance. The one pressed stays filled
-// and at full strength -- the only colour change in the row, and a steady
-// one (nothing here animates).
+// The reply arrow, Retry and the two thumbs beside Copy: icons, a little
+// larger than the lettering they stand next to so the hand reads at a
+// glance. The thumb pressed stays filled and at full strength -- the only
+// colour change in the row, and a steady one (nothing here animates: the
+// rotate icon does not spin, not even while its answer is coming).
+.cue-quote,
+.cue-retry,
 .cue-rate {
   font-size: 12.5px;
   letter-spacing: 0;
@@ -954,6 +970,12 @@ button.chat-engine {
     opacity: 1;
     color: var(--chat-signal);
   }
+}
+
+// Retry waits while the tab answers something: faded, and no hover.
+.cue-retry:disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 // What the answer above it cost, at the end of the same quiet row as Copy.
@@ -1905,6 +1927,40 @@ button.chat-engine {
   &:hover {
     color: var(--chat-clip-ink);
     background-color: var(--chat-panel);
+  }
+}
+
+// The ⋮ that holds the attach tools and `/` (`RenderAskToolsMenuComp`): one
+// narrow button, so the box keeps the width the five icons had taken.
+.chat-ask-tools {
+  padding-inline: 3px;
+
+  &.is-open {
+    color: var(--chat-clip-ink);
+    background-color: var(--chat-panel);
+  }
+}
+
+// Opened upward from the dots (placed by `bottom`), each row its icon and
+// its words.
+.chat-ask-tools-menu {
+  max-width: calc(100vw - 8px);
+
+  .chat-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    > .bi {
+      width: 14px;
+      color: var(--chat-muted);
+      text-align: center;
+    }
+
+    &:focus-visible {
+      outline: 1px solid var(--chat-clip-ink);
+      outline-offset: -1px;
+    }
   }
 }
 

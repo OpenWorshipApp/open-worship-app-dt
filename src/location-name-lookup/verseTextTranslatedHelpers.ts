@@ -14,13 +14,13 @@ import type {
  *
  * The English matcher works by reading the text: it cuts it into words, requires
  * a capital letter, and looks each run of words up in a map of every surface
- * form in the dataset. None of that survives translation. Khmer writes no spaces
- * between words and has no capitals, so there is nothing to cut on and nothing
+ * form in the dataset. None of that survives translation. A script that
+ * writes no spaces between words and has no capitals, so there is nothing to cut on and nothing
  * that tells a name from an ordinary word — and it is the capital that carries
- * most of the English matcher's precision. Run the same way, the dataset's own
- * Khmer for Jehudijah ("the Jews"), Scythia ("wild"), Mammon ("riches") and
- * Baali ("lord") match ordinary prose: measured over the whole shipped Khmer
- * bible, that fallback added 824 matches of which the visibly wrong ones ran to
+ * most of the English matcher's precision. Run the same way, a translated
+ * dataset's own words for Jehudijah ("the Jews"), Scythia ("wild"), Mammon
+ * ("riches") and Baali ("lord") match ordinary prose: measured over a whole
+ * shipped bible in such a script, that fallback added 824 matches of which the visibly wrong ones ran to
  * dozens of occurrences each.
  *
  * So this matcher runs the other way round. It starts from the handful of
@@ -38,8 +38,8 @@ import type {
  * that does not mention Scythia never puts Scythia among its candidates.
  */
 
-// Zero-width and soft-breaking characters. The Khmer bibles mark word boundaries
-// with U+200B and join clusters with U+200C, and where one falls INSIDE a name
+// Zero-width and soft-breaking characters. Bibles in a script without spaces
+// mark word boundaries with U+200B and join clusters with U+200C, and where one falls INSIDE a name
 // the two spellings differ by an invisible character alone. The builder takes
 // them out of the needle; the matcher skips them in the text, so the offsets it
 // reports stay offsets into the ORIGINAL string and the verse renders back
@@ -94,9 +94,10 @@ function toChapterMap(verseMap: { [shortVerse: string]: number[] }) {
  *
  * One pass over both verse maps, ~9ms for the whole bible, and the result is
  * ~859 chapters averaging 7 records each. Built on the first translated verse
- * rendered and reused for every verse after it.
+ * rendered and reused for every verse after it -- and by the Markdown
+ * Preview for a study written about one chapter.
  */
-function getChapterEvidence(index: LookupTextIndexType) {
+export function getChapterEvidence(index: LookupTextIndexType) {
     let chapterEvidence = chapterEvidenceMap.get(index);
     if (chapterEvidence === undefined) {
         chapterEvidence = {

@@ -95,13 +95,13 @@ describe('verse lookup links', () => {
                 <RenderVerseLookupTextComp
                     text="Moses spoke"
                     kjvShortVerse="EXO 1:1"
-                    lookupLangCode="km"
+                    lookupLangCode="xx"
                 />,
             ),
         );
         expect(host.textContent).toBe('Moses spoke');
         expect(state.findTranslated).not.toHaveBeenCalled();
-        expect(state.needleLangs).toContain('km');
+        expect(state.needleLangs).toContain('xx');
     });
 
     it('opens an English match, keeps the text selectable, and offers graph preview', async () => {
@@ -202,7 +202,7 @@ describe('verse lookup links', () => {
                 <RenderVerseLookupTextComp
                     text="Before Moses after"
                     kjvShortVerse="EXO 1:1"
-                    lookupLangCode="km"
+                    lookupLangCode="xx"
                 />,
             ),
         );
@@ -220,7 +220,7 @@ describe('verse lookup links', () => {
                 <RenderVerseLookupTextComp
                     text="No matches"
                     kjvShortVerse="EXO 1:1"
-                    lookupLangCode="km"
+                    lookupLangCode="xx"
                 />,
             ),
         );
@@ -232,7 +232,7 @@ describe('verse lookup links', () => {
                 <RenderVerseLookupTextComp
                     text=""
                     kjvShortVerse="EXO 1:1"
-                    lookupLangCode="km"
+                    lookupLangCode="xx"
                 />,
             ),
         );

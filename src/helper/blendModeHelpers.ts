@@ -3,7 +3,7 @@
  * widgets (`presenter-foreground/propertiesSettingHelpers.tsx`) and by a
  * slide's canvas items (`slide-editor/canvas/CanvasItem.ts`). A leaf module on
  * purpose -- it imports NOTHING, so the canvas side never pulls the whole
- * foreground panel in to ask what `multiply` is called in Khmer.
+ * foreground panel in to ask what `multiply` is called in another language.
  */
 
 export const DEFAULT_BLEND_MODE = 'normal';

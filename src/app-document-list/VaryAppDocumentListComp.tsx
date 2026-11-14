@@ -216,7 +216,7 @@ async function genContextMenuItems(
             try {
                 showSimpleToast(
                     title,
-                    `Downloading document from "${documentUrl}", please wait...`,
+                    `${tran('Downloading...')} "${documentUrl}"`,
                 );
                 showProgressBar(documentUrl);
                 messageCallback('Downloading file...');

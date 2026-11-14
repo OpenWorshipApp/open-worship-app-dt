@@ -753,7 +753,7 @@ function checkLocales(value, entry, report) {
         report(
             entry,
             'Locales must be a comma-separated list of locales with no empty entry.',
-            'Drop the extra comma, e.g. "en-US, km-KH".',
+            'Drop the extra comma, e.g. "en-US, es-ES".',
         );
         return;
     }
@@ -775,7 +775,7 @@ function checkLocales(value, entry, report) {
             report(
                 entry,
                 `Unknown locale. ${tag} is not one of open-lyric's locale tags.`,
-                'Use a language-region tag such as en-US, km-KH or fr-FR.',
+                'Use a language-region tag such as en-US.',
             );
             return;
         }

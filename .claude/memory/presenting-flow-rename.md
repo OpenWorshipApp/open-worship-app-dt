@@ -27,7 +27,7 @@ password dialog) and `Import Presenting Flow`. All four now read `តារា�
 
 **The lesson outlives the fix:** "the old word appears nowhere" was true of the code and
 false of the translations, and an English-only grep cannot see the difference. Sweep
-`src/lang/data/*/index.ts` for the old TERM in the target language on any future rename.
+`src/lang/data/online/*/` (every language's `dictionary.json`, and its translated `manual/` and `questions.json`) for the old TERM in the target language on any future rename.
 
 **One survivor is NOT the subsystem and must never be renamed:**
 

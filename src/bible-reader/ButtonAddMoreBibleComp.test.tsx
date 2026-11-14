@@ -85,7 +85,7 @@ describe('ButtonAddMoreBibleComp', () => {
             target,
         } as any);
         const second = ReadIdOnlyBibleItem.fromJson({
-            bibleKey: 'FRE',
+            bibleKey: 'TQFE',
             target,
         } as any);
         const { button, applyPresents } = await render([first, second]);
@@ -96,13 +96,13 @@ describe('ButtonAddMoreBibleComp', () => {
         expect(h.showBibleKeyOption).toHaveBeenCalledOnce();
         const [event, onSelect] = h.showBibleKeyOption.mock.calls[0];
         expect(event.type).toBe('click');
-        onSelect('KHM');
+        onSelect('TQAM');
         expect(applyPresents).toHaveBeenCalledOnce();
         const [newItems] = applyPresents.mock.calls[0];
         expect(newItems.slice(0, 2)).toEqual([first, second]);
         expect(newItems[2]).toBeInstanceOf(ReadIdOnlyBibleItem);
         expect(newItems[2]).not.toBe(first);
-        expect(newItems[2].bibleKey).toBe('KHM');
+        expect(newItems[2].bibleKey).toBe('TQAM');
         expect(newItems[2].target).toEqual(target);
         // The first item itself is left in its own bible.
         expect(first.bibleKey).toBe('KJV');

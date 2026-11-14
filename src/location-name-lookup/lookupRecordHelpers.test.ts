@@ -22,7 +22,7 @@ import {
 } from './lookupRecordHelpers';
 
 // Stands in for the lookup language's dictionary.
-const toKhmer = (text: string) => `km:${text}`;
+const toLookupLang = (text: string) => `xx:${text}`;
 
 function genNameRecord(overrides: Record<string, any> = {}): any {
     return {
@@ -113,7 +113,10 @@ describe('detail values', () => {
 
     test('a year range reads as a range, not as a sentence', () => {
         expect(
-            getFormattedYearRange({ type: 'born', start: 1, end: 2 }, toKhmer),
+            getFormattedYearRange(
+                { type: 'born', start: 1, end: 2 },
+                toLookupLang,
+            ),
         ).toBe('born: 1 – 2');
     });
 
@@ -123,12 +126,15 @@ describe('detail values', () => {
         expect(
             getFormattedYearRange(
                 { type: 'reign', start: -1010, end: -970 },
-                toKhmer,
+                toLookupLang,
             ),
-        ).toBe('km:Reign: km:1010 BC – km:970 BC');
+        ).toBe('xx:Reign: xx:1010 BC – xx:970 BC');
         expect(
-            getFormattedYearRange({ type: '', start: -5, end: 30 }, toKhmer),
-        ).toBe('km:5 BC – 30');
+            getFormattedYearRange(
+                { type: '', start: -5, end: 30 },
+                toLookupLang,
+            ),
+        ).toBe('xx:5 BC – 30');
     });
 
     test('capitalizes a link type without touching the rest', () => {

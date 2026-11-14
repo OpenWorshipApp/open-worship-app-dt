@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 
 import type Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
@@ -6,6 +6,8 @@ import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genAddBibleItemContextMenu } from '../helper/ai/bibleListChatbotMenuHelpers';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -16,10 +18,29 @@ export default function RenderBibleItemsComp({
     const items = bible.items;
     const shouldAddBibleItem = bible.isDefault && showBibleLookupPopup !== null;
     const showBibleLookupPopupRef = useAppCurrentRef(showBibleLookupPopup);
-    const handleAddBibleItem = useCallback(() => {
-        showBibleLookupPopupRef.current?.();
+    // The lookup, or the chatbot with a text to read the passages from
+    // (EC-760): a menu while AI is on, the lookup at once while it is off.
+    const handleAddBibleItem = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            const openBibleLookup = () => {
+                showBibleLookupPopupRef.current?.();
+            };
+            const menuItems = genAddBibleItemContextMenu(openBibleLookup);
+            if (menuItems === null) {
+                openBibleLookup();
+                return;
+            }
+            // Hung under the button: a press from the keyboard carries no
+            // coordinates, and the menu would open in the window's corner.
+            const { left, bottom } =
+                event.currentTarget.getBoundingClientRect();
+            showAppContextMenu(event as any, menuItems, {
+                coord: { x: left, y: bottom },
+            });
+        },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        [],
+    );
     return (
         <ul className="list-group">
             {items.map((bibleItem, i1) => {

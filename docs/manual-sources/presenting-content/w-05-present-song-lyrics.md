@@ -2,10 +2,10 @@
 id: W-05
 title: "Present song lyrics"
 section: "Presenting content"
-verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08]
-screenshots: 6
+verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-178, PM-179, PM-180, XW-08]
+screenshots: 9
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-05 — Present song lyrics
 
@@ -74,7 +74,11 @@ workflowsVersion: "2026-11-08"
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
-   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults.
+   Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
+   **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting
+   layout), **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**, which set the layout and
+   keep the theme and **[en:tran:Custom CSS]**; **[en:tran:Save as Preset]** keeps the whole look
+   for **every** stage (right-click a saved one to rename, replace or remove it). 📸
 10. A screen already showing a slide keeps it — present the slide again to push the new
     look out to it.
 11. **Edit the words while the song is open and the verses follow by themselves; a verse
@@ -116,11 +120,29 @@ workflowsVersion: "2026-11-08"
     up write the line in the slide's corner too (`Chorus · 1/8 · 2/7`). It is one switch for
     every song. A song's slide that a screen holds moves to that part's first line when you
     turn it on, and back to the whole part when you turn it off. 📸
+14. **A song can keep a font of its own, on every stage.** At the top of the
+    **[en:tran:Stage Style]** window, above _[en:tran:Applies to every song]_,
+    **[en:tran:Song Font]** — _[en:tran:This song only, on every stage]_ — is the font THIS
+    song is drawn in on every stage, while every other song keeps the app's own font. A
+    song made from a PowerPoint file starts in the font its slides were set in; pick
+    another, or press **[en:tran:Use the app font]** to draw it like every other song. The
+    change is one of the song's own edits, so the song's **[en:tran:Undo]** takes it back,
+    on every stage and in this window. 📸
+
+15. **Notes for yourself in the song — a `Note` block.** In the Lyric Editor, a block
+    named `ol:Note` (or `ol:Note 2`, `ol:Note 3`, …) holds a note for whoever presents the
+    song: _play verses 3 and 4 again_. While the song is selected in the Presenter, every
+    such block shows under the Stage Previewer in one **[en:tran:Document Note]** box, each
+    note its own division headed by its block's name, in the order the song writes them.
+    The box is read-only (change a note in the Lyric Editor, and the box follows), it is
+    **never sent to an audience screen**, and a song with no `Note` block has no box at all.
+    To put it away, drag the divider above it down to the bottom edge, or untick
+    **View → Widgets → Note** (W-31); it stays put away for every song. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `XW-08`
+`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `PM-178` · `PM-179` · `PM-180` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

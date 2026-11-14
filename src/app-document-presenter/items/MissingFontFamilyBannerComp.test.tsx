@@ -127,7 +127,7 @@ test('opened on one document, it starts closed again on the next', async () => {
     await renderFonts(['Calibri']);
     expect(isOpen()).toBe(true);
 
-    await renderFonts(['Khmer OS Battambang']);
+    await renderFonts(['Made Up Sans']);
     expect(isOpen()).toBe(false);
     expect(getBanner()!.textContent).toContain('Missing fonts (1)');
     expect(getBanner()!.textContent).not.toContain('Click a font');

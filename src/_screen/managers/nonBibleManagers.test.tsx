@@ -326,19 +326,24 @@ describe('non-Bible screen managers', () => {
             screenId: 22,
             type: 'foreground',
             data: {
-                countdownData: null,
-                stopwatchData: null,
+                countdownDataList: [],
+                stopwatchDataList: [],
                 timeDataList: [],
-                marqueeBottomData: { text: 'Hello', extraStyle: {} },
-                quickTextData: null,
+                marqueeBottomDataList: [{ text: 'Hello', extraStyle: {} }],
+                quickTextDataList: [],
                 cameraDataList: [],
                 webDataList: [],
             },
         } as any);
-        expect(manager.foregroundData.marqueeBottomData).toEqual({
-            text: 'Hello',
-            extraStyle: {},
-        });
+        expect(manager.foregroundData.marqueeBottomDataList).toEqual([
+            {
+                text: 'Hello',
+                extraStyle: {},
+            },
+        ]);
+        // A list the sync left out, or sent as null, reads as empty.
+        expect(manager.foregroundData.quickTextDataList).toEqual([]);
+        expect(manager.foregroundData.marqueeTopDataList).toEqual([]);
 
         manager.clear();
         expect(manager.isShowing).toBe(false);
@@ -532,7 +537,9 @@ describe('non-Bible screen managers', () => {
             expect(frontRoot.children).toHaveLength(0);
         });
         expect(behindRoot.children).toHaveLength(1);
-        expect(manager.foregroundData.countdownData).toEqual(countdownData);
+        expect(manager.foregroundData.countdownDataList).toEqual([
+            countdownData,
+        ]);
 
         // With no root, a new overlay is kept but not drawn anywhere.
         renderForegroundHelperMock.mockClear();

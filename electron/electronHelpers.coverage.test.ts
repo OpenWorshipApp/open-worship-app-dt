@@ -933,7 +933,7 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
     });
 
-    test('a failed print is reported rather than thrown', () => {
+    test('a failed print is reported rather than thrown', async () => {
         const win = createMockBrowserWindow({
             webContents: createMockWebContents({
                 print: vi.fn(
@@ -947,7 +947,7 @@ describe('electronHelpers coverage', () => {
             }),
         });
 
-        printCurrentWindow(win as any);
+        await printCurrentWindow(win as any);
 
         expect(consoleLogSpy).toHaveBeenCalledWith(
             'Print failed:',

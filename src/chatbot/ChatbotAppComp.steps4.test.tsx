@@ -56,6 +56,11 @@ vi.mock('../server/appProvider', () => {
                 join: (...parts: string[]) => {
                     return parts.join('/');
                 },
+                // A file in the box is read again at the ask, its name
+                // first (`refreshTextAttachment`).
+                basename: (filePath: string) => {
+                    return filePath.split(/[\\/]/).pop() ?? filePath;
+                },
             },
         },
     };
@@ -117,6 +122,7 @@ vi.mock('./fileAttachHelpers', async (importOriginal) => {
 import ChatbotAppComp from './ChatbotAppComp';
 import { genTextAttachment, putAttachmentData } from './attachmentHelpers';
 import { VERSE_FIND_STEP_TOOL_NAME } from './verseFindChatHelpers';
+import { BIBLE_LIST_PASTE_LEAD } from './bibleListPasteHelpers';
 
 const FIND_TOOL = 'owa_find_verse';
 const BIBLE_LIST = {
@@ -483,6 +489,8 @@ describe('finding a verse, and the jobs other windows hand over', () => {
             );
             expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
             expect(hoisted.callToolMock).not.toHaveBeenCalled();
+            // A thank-you is no question for a Retry (EC-506).
+            expect(lastBot().querySelector('.cue-retry')).toBeNull();
         });
     });
 
@@ -591,6 +599,89 @@ describe('finding a verse, and the jobs other windows hand over', () => {
     });
 
     describe('a job handed over by another window', () => {
+        // The Bibles panel's Add Bible Item → Open in Chatbot (EC-760).
+        describe('a text to save Bible passages from', () => {
+            const BOOKS = {
+                kind: 'books',
+                bookKeys: ['GEN', 'JHN', 'ROM'],
+                english: ['Genesis', 'John', 'Romans'],
+                bibles: [
+                    {
+                        keys: ['KJV'],
+                        locale: 'en',
+                        books: ['Genesis', 'John', 'Romans'],
+                    },
+                ],
+            };
+
+            function boxText() {
+                return container.querySelector<HTMLTextAreaElement>(
+                    '.chat-input',
+                )!.value;
+            }
+
+            beforeEach(() => {
+                hoisted.tools.route = (name, args) => {
+                    if (name === 'owa_bible_suggest') {
+                        return BOOKS;
+                    }
+                    if (name === 'owa_bible_item' && args.action === 'list') {
+                        return { list: 'Default', items: [] };
+                    }
+                    if (name === 'owa_bible_item' && args.action === 'add') {
+                        return {
+                            added: args.reference,
+                            undoId: `undo-${args.reference}`,
+                        };
+                    }
+                    return '';
+                };
+            });
+
+            test('opens a tab of its own with the line in the box, nothing asked', async () => {
+                seedTab([
+                    { id: 1, author: 'you', text: 'An earlier question' },
+                ]);
+                leave('chatbot-handoff-bible-list', {});
+                await render();
+                expect(hoisted.settings.has('chatbot-handoff-bible-list')).toBe(
+                    false,
+                );
+                expect(youTexts()).toEqual([]);
+                expect(boxText()).toBe(`${BIBLE_LIST_PASTE_LEAD}\n`);
+                expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
+                expect(hoisted.callToolMock).not.toHaveBeenCalled();
+            });
+
+            test('a paragraph pasted under the line has its passages saved to the Bibles list', async () => {
+                leave('chatbot-handoff-bible-list', {});
+                await render();
+                await send(
+                    `${boxText()}This morning we read John 3:16, and ` +
+                        'Paul reminded us of Romans 8:28 before the prayer.',
+                );
+                expect(callsOf('owa_bible_item')).toEqual([
+                    { action: 'list', list: 'Default' },
+                    { action: 'add', reference: 'JHN 3:16' },
+                    { action: 'add', reference: 'ROM 8:28' },
+                ]);
+                expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
+                expect(boxText()).toBe('');
+            });
+
+            test('the line sent with nothing under it is said, and put back for the text', async () => {
+                leave('chatbot-handoff-bible-list', {});
+                await render();
+                await send(boxText());
+                expect(lastBot().textContent).toContain(
+                    'I found no Bible passage to save in that text.',
+                );
+                expect(boxText()).toBe(`${BIBLE_LIST_PASTE_LEAD}\n`);
+                expect(callsOf('owa_bible_item')).toEqual([]);
+                expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
+            });
+        });
+
         test('a problem the app caught is offered as a report, nothing looked into yet', async () => {
             seedTab([{ id: 1, author: 'you', text: 'An earlier question' }]);
             leave('chatbot-handoff-report', {

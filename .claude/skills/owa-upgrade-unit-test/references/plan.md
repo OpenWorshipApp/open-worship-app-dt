@@ -7,6 +7,171 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
+## Back to 99% again — 2026-11-11 (UT-101)
+
+`done` · **98.19% → 99.50% (99,715 / 100,217)**, +1,386 lines, 0 files at
+0%, measured 2026-11-11 at `d1dd716a8` (`references/baseline.md`); predicted
+~1,380. The user set **99% of the whole source surface** again. Two
+days of feature work (the foreground components, study files, note
+lessons: ~7,600 source lines) had taken the honest figure from 99.58% to
+**98.19% (98,329 / 100,145)**, 1,436 files, 3 at 0%, measured at
+`dedc07bcd` -- 815 lines short. The first measurement on a Mac could not
+run at all: the agent-docs audit was red at HEAD (three doc names of files
+that are not in the repo) and 18 electron tests fail on macOS only (memory
+`macos-test-run-traps`). Six disjoint batches, one agent each, one shared
+brief (UT-100's, plus: hold on Windows AND macOS; a save under
+`tools/owa-devtools-mcp/` restarts the running dev app):
+
+| Batch | Files | Uncovered before | Covered (focused run) | New tests |
+| --- | --- | --- | --- | --- |
+| UT-101a | `agentStudyFileHelpers` (0%), `agentResourcesHelpers`, `studyVerseCheckHelpers`, `agentStudyFileRules` | 301 | 298 | 3 files + 1 extended, 48 |
+| UT-101b | `agentForegroundHelpers`, `agentForegroundSessionHelpers`, `agentForeground.mjs`, `agentForegroundEdit.mjs` | 287 | 280 | 3 files, 108 |
+| UT-101c | `agentForegroundComponentHelpers`, `agentForegroundContentHelpers`, `foregroundComponentRules`, `ScreenForegroundManager` | 280 | 272 | 4 files, 132 |
+| UT-101d | `agentForegroundLookRules`, `ForegroundChatbotButtonComp` (0%), `foregroundChatbotMenuHelpers` (0%), `chatbotHandoff*Helpers`, `propertiesSettingHelpers` | 190 | 188 | 6 files, 173 |
+| UT-101e | `ChatbotAppComp.tsx` | 227 (after a pull) | 169 | 2 files, 34 |
+| UT-101f | `llmBotHelpers`, `noteChatHelpers`, `agentNoteBlockHelpers`, `agentNoteDrawingHelpers`, markdown preview, `RenderAskToolsMenuComp` | 138 (after a pull) | 111 | 7 files, 78 |
+
+No smoke renders in any batch.
+
+**Fixed by the lead**, each with a test that fails without the fix or a
+test made to hold on every OS:
+
+- `tools/owa-devtools-mcp/bibleXmlDraft.mjs` -- a download that broke off
+  while a piece was still being written told the person "The download broke
+  off (Cannot call write after a stream was destroyed)": the destroy's own
+  `ERR_STREAM_DESTROYED` reached the `error` listener before `close`, and
+  the first rejection wins. The listener is taken off before the destroy;
+  the test makes the write slow so the race happens every time.
+- `src/toast/DailyTipComp.test.tsx` -- asserted "no Hide for 30 days" on the
+  whole card's text; the tip is picked at random and one tip's detail
+  carries those words. It looks for the button now.
+- Electron tests for macOS: temp folders on their real path (Screen Mirror
+  refuses a file published through a link, and macOS `/var` is one), a
+  connection reset waited for as a close, the darwin microphone ask granted
+  where the test is about what follows it (memory `macos-test-run-traps`).
+
+**Bugs found, reported and NOT fixed** (no test asserts the wrong
+behaviour; each wants a regression test with its fix):
+
+1. `agentForegroundLookRules.ts` -- a marquee's `size: "auto"` is refused
+   (`checkIsRemoval` has no `auto`) by a sentence that offers "auto", while
+   the tool's own read reports a marquee on Auto as `size: 'auto'`.
+2. `agentForegroundLookRules.ts` -- `speed: "faster"` / `"slower"` refused
+   by a sentence that offers both (`toRelativeFactor` knows larger/smaller).
+3. `agentForegroundHelpers.ts` `handleTimer` -- a countdown up only on a
+   LOCKED screen is "not on a screen ... Put it up first", where
+   `handleStop` says the screen is locked.
+4. `agentForegroundHelpers.ts` `resolveItem` -- `camera: "cam 2"` with
+   "Cam 2 Wide" and "Cam 2 Narrow" silently takes the first; media files
+   name the candidates.
+5. `agentForegroundHelpers.ts` `showTarget` -- a Screen Show whose only
+   ticked screen is its own source answers `did: 'shown'` with nothing put
+   up.
+6. `agentForegroundContentHelpers.ts:748` -- a clock set to UTC+0 reads back
+   as this computer's offset (`Number("0") || ...`); the panel and the wall
+   say 0.
+7. `agentStudyFileHelpers.ts` `planTranslation` -- `bible: "kjv"` against an
+   installed `KJV` passes the check case-blind, then re-quotes with the typed
+   key: empty passages on a case-sensitive disk, `(kjv)` elsewhere.
+8. `agentNoteDrawingHelpers.ts:960` `toNoteDrawingText` -- a hand-drawn
+   drawing with a `null` element throws (the two other element filters guard
+   it).
+9. `llmBotHelpers.ts` ~5444 -- a blank lesson whose "verses before" read
+   failed still tells the model the window read them.
+
+Smaller: locked/off notes for several screens read "Screen 1 and 2 is
+locked"; a smaller size refused below 8 px is called "not a size"; a stored
+Effects JSON array is spread into keys "0", "1"; a note-translate ask whose
+Bible list could not be read says no such Bible is installed.
+
+**Screen Mirror and a link in the path -- the user's decision, not
+changed**: `MirrorContentRegistry.serve` refuses a published file whose
+real path differs from the published one, and two tests hold that a path
+through a junction is refused. On macOS that includes any file under `/var`
+or `/tmp`, and on any OS a data folder reached through a link.
+
+**What no test can reach**, named so the next run does not chase it:
+`agentForegroundLookRules.ts` 307, 824; `agentForegroundHelpers.ts` 531,
+545-547, 661, 1076, 1118, 1661, 2269; `agentForegroundComponentHelpers.ts`
+116; `ScreenForegroundManager.ts` 419, 478, 1870, 1878-1880, 1901, 1931;
+`agentStudyFileHelpers.ts` 379, 787; `agentResourcesHelpers.ts` 329;
+`studyVerseCheckHelpers.ts` 824; `llmBotHelpers.ts` 3958, 6517, 6605-6615,
+8322; `agentNoteBlockHelpers.ts` 1421-1540, 3354; `agentNoteDrawingHelpers.ts`
+407; `MarkdownPreviewAppComp.tsx` 192, 439-445, 475, 513; and
+`ChatbotAppComp.tsx`'s non-English-language and other-script paths, which
+the language-confinement rule keeps out of test files (UT-101e's list).
+Line numbers as of `d1dd716a8`.
+
+## Back to 99% — 2026-11-09 (UT-100)
+
+`done` · **98.32% → 99.58% (92,108 / 92,496)**, +1,163 lines, 0 files at
+0%, measured 2026-11-09 at `7c2ec127` (`references/baseline.md`). Each
+batch's figure below is its own focused run; the whole-surface result is the
+baseline entry. The user set **99% of the whole source surface** again. Five
+days of feature work (the note, slide, presenting-flow and lyric
+conversations, the language plugins: ~38,600 source lines in 469 files) had
+taken the honest figure from 99.63% to **98.32% (90,945 / 92,496)**, 1,379
+files, 4 at 0%, measured at `7c2ec127`. 99% is **91,572** covered lines:
+627 short. The first measurement could not run at all: `node_modules` was
+behind the lockfile (vitest 4 against 5, bible-note 0.4.4-dev against 0.6.0,
+electron 44 against 45, ~20 more), so `questions.test.mjs` failed on the
+note editor's guide pages and no report was written; the reinstall then
+left five package folders EMPTY (`vitest/node_modules/picomatch` among them)
+and npm called the tree up to date until its `node_modules/.package-lock.json`
+was removed. Five disjoint batches, one agent each, one shared brief:
+
+| Batch | Files | Uncovered before | Covered (focused run) | New tests |
+| --- | --- | --- | --- | --- |
+| UT-100a | `src/chatbot/ChatbotAppComp.tsx` | 250 | 227 | `ChatbotAppComp.ut100a/b.test.tsx`, 53 |
+| UT-100b | `agentFlowEditRules`, `agentPresentingFlowEditHelpers`, `agentFlowForegroundRules`, `flowChatHelpers`, `agentPresentingFlowEdit.mjs`, `presentingFlowItemJsonHelpers` | ~245 | 244 | 5 files, 168 |
+| UT-100c | `agentNoteBlockHelpers`, `agentNoteStyleHelpers`, `agentNoteInsertHelpers`, `agentNoteEditHelpers`, `agentNoteBlockLinkHelpers`, `agentNoteDrawingHelpers`, `agentNoteNormalizeHelpers`, `noteChatHelpers` | ~215 | 204 | 8 files, 113 |
+| UT-100d | `openLyricEdit.mjs`, `agentNoteEdit.mjs`, `agentLyricEdit.mjs`, `agentSlideEdit.mjs`, `discovery.mjs`, `owaTools.mjs`, `firewall.mjs` | ~189 | 189 | 7 files, 82 |
+| UT-100e | `llmBotHelpers`, `webLangUtils`, `langPluginInstallHelpers`, `noteSelectionMentionHelpers`, `verseAnnotationActionHelpers`, `LyricEditorChatbotButtonComp` and ten smaller | ~237 | 226 | 16 files, 80 |
+| lead | `langSourceFiles`, `fsServe`, `electronEventListener`, `client/langUtils`, `screenMirrorService` (the language plugin routes), `progressHelpers`, `agentBackupHelpers`, `agentLookupHelpers`, `agentFileHelpers`, `dirWatchingHelpers`, `AiChatAppComp` | ~95 | ~73 (the measured +1,163 less the batches' 1,090) | 11 files |
+
+**Bugs found, reported and NOT fixed** (no test asserts the wrong
+behaviour; each wants a regression test with its fix):
+
+1. `agentNoteBlockHelpers.ts` `blockKindOf` -- a HEADING is never checked
+   for an object among its words, as a paragraph or quote is: a heading
+   holding a picture reads as its words alone, and changing its words
+   rebuilds it without the picture (UT-100c, seen in a probe).
+2. `agentNoteBlockHelpers.ts` `toPlainWords` -- a line break becomes `' '`
+   and the `trim() !== ''` filter then drops it: a passage, table cell or
+   sticky reads `shepherd;I shall not want.`
+3. `agentNoteStyleHelpers.ts:634` `readWordsMarkup` -- `style="…"` is read
+   with `[^"']*`, which stops at a quoted font name:
+   `style="font-family: 'Georgia', serif; font-size: 18px"` loses the
+   font, the size and everything after it.
+4. `agentNoteInsertHelpers.ts` `toNoteInsertText` -- a date chip stored at
+   LOCAL midnight is read back with `toISOString().slice(0, 10)`, the UTC
+   day: east of UTC (Cambodia, UTC+7) a date reads one day early.
+5. `langPluginInstallHelpers.ts` `runLangPackInstall` -- the progress bar is
+   shown before `getLangPluginsDirPath()`, which throws in a window that
+   cannot install languages, outside the `try` whose `finally` hides it:
+   the bar stays up.
+
+Smaller findings, also reported: `firewall.mjs` scrubs a reply's `result`
+and never an `error` (a hardening item); `openLyricEdit.mjs:867-871` and
+`938-942` refuse a translation or chords on an Intro with a sentence that
+says it holds words; `agentFlowForegroundRules.ts` takes a NaN marquee
+`speed` (JSON cannot carry one); `agentFlowEditRules.ts`'s `removedSet` is
+dead.
+
+**What no test can reach**, left uncovered on purpose and named so the next
+run does not chase it: `agentFlowEditRules.ts:980` (`removedSet` is never
+added to: `update-lines` cannot remove) and `:1247` (only Next: Timeout
+can be CC-armed); `agentNoteBlockHelpers.ts:1395-1514` and
+`agentNoteStyleHelpers.ts:718` (guards whose callers already hold the
+case); `agentLookupHelpers.ts` 637, 672, 1002, 1149, 1338, 1576 (a key the
+app writes always parses; the record and search guards repeat their
+caller's); `BibleItemsViewController.ts:184-195` (`checkIsIdentical` is only
+ever handed one item, never a list); `bibleLogicHelpers2.tsx`'s
+`matches.length` guards (a pattern's group count is fixed); `xmlHelpers.ts`
+176, 307-310, 551 (depth never rises above 0; the entity pattern admits
+digits only); and 23 lines of `ChatbotAppComp.tsx` listed in UT-100a's
+report (UI guards whose callers check first).
+
 ## Achieved target — 99%, 2026-11-04 (UT-71 → UT-97; UT-70 is the 95% run)
 
 `done` · **81.75% → 99.63% (83,472 / 83,781)**, 0 files at 0%, measured
@@ -1102,7 +1267,7 @@ editing heads in that order.
 
 `langHelpers` carries a bonus: restoring the translation-completeness check
 that died with `src/lang/data/{en,km}/index.test.ts` closes a real hole, since
-a missing Khmer key **throws in dev and blanks the page**.
+a missing key **throws in dev in any non-English language and blanks the page**.
 `src/lang/tranKeyCoverage.test.ts` catches static keys only.
 
 ### `UT-05` · `tools/owa-devtools-mcp` — 803 uncovered of 3 424 (76.5%)

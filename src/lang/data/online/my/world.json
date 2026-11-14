@@ -15,5 +15,8 @@
     "languageAliases": {
         "myanmar": "burmese",
         "burma": "burmese"
+    },
+    "catalogLanguageCodes": {
+        "my": "mya"
     }
 }

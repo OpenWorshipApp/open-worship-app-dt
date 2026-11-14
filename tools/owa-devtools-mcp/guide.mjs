@@ -253,8 +253,8 @@ const ID_ASIDE_PATTERN =
 // (`NOTICE_RUNTIME_VERSION` in `notify.mjs`): the page keeps the first
 // runtime it is given, and a window first given an older one -- by a server
 // started before the change -- kept its English hints and its OS fallback
-// face in a Khmer window until it was reloaded (2026-10-17).
-const GUIDE_RUNTIME_VERSION = 2;
+// face in a translated window until it was reloaded (2026-10-17).
+const GUIDE_RUNTIME_VERSION = 3;
 
 // Installed once per page; re-sent on every call because a reload wipes it.
 // Kept in a shadow root so the app's stylesheets cannot reach in and the
@@ -344,9 +344,9 @@ const GUIDE_RUNTIME = `
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483646;' +
         'pointer-events:none';
     // The app's own lettering for any script the system face lacks: the
-    // face the page's body is set in (Battambang in a Khmer window, which
-    // the app ships) after the card's own, so Latin keeps the system face
-    // and Khmer is not left to whatever the OS falls back to.
+    // face the page's body is set in (a language's own face, which its
+    // package ships) after the card's own, so Latin keeps the system face
+    // and another script is not left to whatever the OS falls back to.
     const pageFont = getComputedStyle(document.body).fontFamily;
     if (pageFont) {
         host.style.setProperty('--owa-guide-page-font', pageFont);
@@ -752,6 +752,8 @@ const GUIDE_RUNTIME = `
     const HELP_TEXT_MAX = 400;
     let helpToken = 0;
     let helpTimer = null;
+    // The pause after a Do it before the card moves on; a stop cancels it.
+    let advanceTimer = null;
     let askedHelpAt = [];
     const askForHelp = (result) => {
         const step = state.steps[state.index];
@@ -1975,6 +1977,9 @@ const GUIDE_RUNTIME = `
             state.help = null;
             askedHelpAt = [];
             clearTimeout(helpTimer);
+            // Nor may the old card's pause after a Do it move the new one on.
+            clearTimeout(advanceTimer);
+            advanceTimer = null;
             state.isRunning = state.steps.length > 0;
             state.isActing = false;
             state.lastAction = 'started';
@@ -2018,7 +2023,12 @@ const GUIDE_RUNTIME = `
             state.lastAction = reason ?? 'stopped';
             unwatch();
             // Not left to lapse: a guide that is stopped should
-            // leave nothing of itself on the window.
+            // leave nothing of itself on the window -- nor a wait on the
+            // assistant, whose 30 s timer drew the card again after the stop.
+            clearTimeout(helpTimer);
+            clearTimeout(advanceTimer);
+            advanceTimer = null;
+            state.help = null;
             dm.releaseHidden();
             render();
             signal();
@@ -2050,7 +2060,9 @@ const GUIDE_RUNTIME = `
             // stays, and says so.
             if (result.done && result.more === undefined &&
                 result.did !== 'closed') {
-                setTimeout(() => {
+                clearTimeout(advanceTimer);
+                advanceTimer = setTimeout(() => {
+                    advanceTimer = null;
                     if (state.isRunning) {
                         api.next('after-demo');
                     }
@@ -2229,8 +2241,8 @@ const MODIFIER_MAP = {
 
 // The `code` a physical en-US keyboard would report. The app deliberately
 // forces every key back to that layout THROUGH the code before matching it
-// (`toEnUsKey`), so a `key` sent with no `code` matches nothing on a German
-// or Khmer layout -- the exact users this app is for.
+// (`toEnUsKey`), so a `key` sent with no `code` matches nothing on any
+// non-US layout -- the exact users this app is for.
 /** The `code` a key's `key` value implies: `a` is `KeyA`, `5` is `Digit5`. */
 export function toKeyCode(key) {
   if (/^[a-z]$/i.test(key)) {
@@ -2342,9 +2354,9 @@ const ACTION_PATTERN =
 const RIGHT_CLICK_PATTERN = /^\s*(?:\*\*)?right[- ]?click\b/i;
 
 // A bold, plus the word the recipe qualifies it with: "the **Background**
-// (its Khmer twin) panel". Only the CONTAINER nouns are captured -- they are
-// the ones that change which control is meant, where "tab" or "button" only
-// repeat what the label already says. The Khmer twin the manual writes
+// (its translated twin) panel". Only the CONTAINER nouns are captured --
+// they are the ones that change which control is meant, where "tab" or "button" only
+// repeat what the label already says. The translated twin the manual writes
 // between the two is stepped over, not matched: this window is English.
 // That aside must not itself contain a bold: "press **Ctrl+B** (or click
 // **Bible Lookup**)" is one step naming two things, and a parenthesis
@@ -2599,8 +2611,8 @@ export function dropStepsAlreadyDone(steps, pathname = '') {
 
 /**
  * Turns a manual recipe into guide steps: its numbered list, cleaned of the
- * markdown a card cannot show and of the Khmer twin the manual writes beside
- * each English label (this window is English), with every bold phrase kept as
+ * markdown a card cannot show and of the translated twin the manual writes
+ * beside each English label (this window is English), with every bold phrase kept as
  * a candidate control to ring -- the recipes are written as "press **Ctrl+B**
  * (or click **Bible Lookup**)", and it is the second one the user can see.
  */
@@ -2665,7 +2677,7 @@ const BOLD_LED_ANY_PATTERN = /^(?:[-*]\s+)?(\*\*[^*\n]{1,120}\*\*.*)$/;
 
 /**
  * The walkthrough steps of a recipe page. `isTextKept` keeps each step's
- * words as written: a page's own translation (`W-11@km`) is all words
+ * words as written: a page's own translation (`W-11@<code>`) is all words
  * `toEnglishOnly` would take out, and only its text is read
  * (`withLocalStepText` in `owaTools.mjs`) -- the controls come from the
  * English page.
@@ -2792,9 +2804,7 @@ export function toGuideSteps(
         text,
         finds,
         ...(checkIsLookStep(text, finds, keys, action) ? { kind: 'look' } : {}),
-        ...(isFrontKept &&
-        isBulletPage &&
-        !BOLD_LED_STEP_PATTERN.test(step.raw)
+        ...(isFrontKept && isBulletPage && !BOLD_LED_STEP_PATTERN.test(step.raw)
           ? { isFront: true }
           : {}),
       };

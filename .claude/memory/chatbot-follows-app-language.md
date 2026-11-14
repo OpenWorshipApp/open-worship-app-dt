@@ -1,11 +1,11 @@
 ---
 name: chatbot-follows-app-language
-description: "The 🤖 answers in the app's language (Khmer first) or in ANY language typed; every language is data in src/lang/data/online/<code>/assistant.json, a language only typed in its own src/lang/data/online/<code>/typed.json, read once it is installed; the prompt is per APP language, the question's language rides in the user turn"
+description: "The 🤖 answers in the app's language (any installed one) or in ANY language typed; every language is data in src/lang/data/online/<code>/assistant.json, a language only typed in its own src/lang/data/online/<code>/typed.json, read once it is installed; the prompt is per APP language, the question's language rides in the user turn"
 metadata:
   node_type: memory
   type: project
   originSessionId: cceb2542-65df-4852-b7d7-51e364f85d02
-  modified: 2026-11-04T00:01:25.900Z
+  modified: 2026-11-12T12:00:00.000Z
 ---
 
 Since 2026-10-16 the help window speaks the language the app is SHOWN in, at the
@@ -27,7 +27,12 @@ stays English-only" rule.
   takes the language (English keeps one bullet; the others one template filled
   from the facts) — still one cached prefix per window, because the language
   changes only on reload. What a question is in goes at the END of the user
-  turn (`genReplyLanguageLine`): nothing for English in an English app.
+  turn (`genReplyLanguageLine`): nothing for English in an English app --
+  unless an answer the model is shown is in another language, when a typed
+  English line of three words or more is told to be answered in English
+  (`genAskLanguageLine`, 2026-11-12, `EC-510`: the tab's Khmer history had
+  written an English study ask's study in Khmer) -- or the passage it is
+  about is (`EC-496`, a passage chat's first question).
 - **Which language answers** (`pickReplyLanguage`): what they TYPED, else the
   app's — a "yes", a number, a command and anything PRESSED (chip, option,
   suggestion, card rescue: `isPressed` on `handleAsking`) are the app's words.
@@ -36,21 +41,35 @@ stays English-only" rule.
 - **Any language a person TYPES** (2026-11-03, the user: _make chatbot generic
   for language … no matter what language I type it work seamlessly_; `EC-447`
   ..`EC-451`). Each language's own `typed.json`
-  (`src/lang/data/online/<code>/`; 84, 37 of them in data-only folders until
-  they have a package) gives a name, its Unicode script(s), little words and
+  (`src/lang/data/online/<code>/`; 85 of them, for 86 languages -- Chinese's
+  names two -- each in its language's package) gives a name, its Unicode script(s), little words and
   letters, a family, yes/no -- read only for an INSTALLED language since
   2026-11-04, when nothing but English was to ship -- and
   `getAssistantLanguage` returns one as a language with `isPackaged: false` and
   every list empty, so the reply line, the Gemma 4 translation, the cleaner and
   the chips work for it with no code naming it. Detection is script first
   (a Hangul or Han letter weighs three Latin ones), then little words and
-  letters each weighed by 1/(languages sharing it); a packaged language needs
-  half the evidence (`PACKAGED_PRIOR` — French lines of shared words read as
-  nothing otherwise), a tie inside a `family` goes to the first listed, any
-  other tie to the app language. Before, Spanish read as FRENCH (`la`, `de`,
+  letters each weighed by 1/(languages sharing it); English and the language
+  the app is SHOWN in need half the evidence (`SHOWN_LANGUAGE_PRIOR`; French
+  lines of shared words read as nothing otherwise), a Latin tie inside a
+  `family` goes to the first listed, any other Latin tie to the app language;
+  languages sharing another script tie to the app's language, then one
+  family, else `other` (answered in the language it was written in).
+  **Until 2026-11-08 (BN-33)** the half went to every PACKAGED language --
+  French in every app -- and a script tie to the first listed: with every
+  language installed, Dutch, Italian, Haitian and Samoan lines in an English
+  app were named French on one shared word ("de", "il", "la", "le"),
+  Ukrainian and Bulgarian ones Russian, Nepali Hindi, Mongolian Kazakh; and
+  thin word lists named Hausa Romanian ("mai"), Kinyarwanda Hausa ("wa",
+  "mu"), Fijian Swedish -- answered in those. Each language's commonest words
+  went into its list (13 packages), the okina (U+02BB) reads as the
+  apostrophe, and `typedEditAsks.test.ts` holds 86 languages' four lines to
+  their own language or nothing, in an English app and in their own: wrong
+  48 of 351 before, 0 after. A language's list is the fix for a line it
+  loses; never weigh a language by name. Before, Spanish read as FRENCH (`la`, `de`,
   `un`) and was answered in French; Portuguese in a Khmer app in Khmer.
-  **The ratchet is the corpus**: all 469 questions in en/km/fr must keep
-  their language (`anyLanguage.test.ts`), and a language added to the file
+  **The ratchet is the corpus**: every supported question (469 on 2026-11-03, 498 on 2026-11-10) in English and in every package with a
+  `questions.json` must keep their language (`anyLanguage.test.ts`), and a language added to the file
   needs a sample line there. A page is translated only for a package
   (`findPageLanguage` checks `isPackaged`): a typed language reads the English
   page. **The cleaner reads the SCREEN's language** (`screenLangCode`, the
@@ -64,7 +83,7 @@ stays English-only" rule.
   search words through the app's own dictionary reversed plus the glossary
   (`tools/owa-devtools-mcp/queryLanguage.mjs`), longest phrase first, a phrase
   ending only where a letter ends. NOT `Intl.Segmenter` — Electron's ICU cuts
-  Khmer words differently from Node's ([[electron-icu-has-no-khmer]]).
+  Khmer words differently from Node's ([[electron-icu-trimmed-locales]]).
 - **The walkthrough card** is built from the ENGLISH page (every step rule
   reads English) and put into the window's language at `prepareSteps`: the
   step text from the same page read with its templates intact, controls tried
@@ -117,8 +136,17 @@ stays English-only" rule.
   in `autoAssistantSourceHelpers.withLanguageRank`. Gemma 4 supports Khmer
   well; setbacks/busy/an unloaded LM Studio still outrank a tier.
 
+2026-11-09 (BN-41, BN-42, BN-45): a language's `typed.json` holds what an
+ASK is made of (add, at the end, make) and a word two neighbours share goes
+into both lists; a language no reader can confirm keeps only the shortcut
+phrases a blind read gives back as their job; and the help window reads
+the languages' small files once, at load, so it loads again by itself when
+the installed languages change while it is open (`chatLangReloadHelpers.ts`).
+
+And (BN-47, BN-48): options under a marker word of the person's language are read by their shape; a translation that echoes the English is a failed one, and an English answer to another language is translated after the fact.
+
 **Why:** an English sentence is a dead end for the person this app is for.
 
 **How to apply:** a new user-facing string in the chatbot goes through `tran()`
-with Khmer AND French; a new language-specific rule goes into `assistant.json`,
+with its key in every language's dictionary; a new language-specific rule goes into `assistant.json`,
 not into code; never put a per-question line into the system prompt.

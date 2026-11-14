@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-11-05T18:12:01.528Z
+  modified: 2026-11-13T21:00:00.000Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -20,7 +20,13 @@ env -u ELECTRON_RUN_AS_NODE OWA_USER_DATA_PATH="<repo>\release\<scratch>" NODE_E
 
 with `<scratch>\setting.json` seeded
 `{"clientSetting":{"selected-parent-dir":"<scratch>\\data","stay-awake":"false"}}` and
-`<scratch>\data` created.
+`<scratch>\data` created. **The data folder's child folders are ITS settings**
+(2026-11-10): write `<scratch>\data\local-storage\select-dir-bible-notes`
+(`$DATA_DIR_PATH\bible-notes`), `select-dir-app-document` (`…\documents`) and
+`select-dir-bible-presenter` (`…\bibles`) before the launch, or every note call
+answers _No Bible notes folder is set up yet_ (Path Settings is the person's way
+in). A copied `KJV.xml` carries whatever the source had when it was made --
+`kjvBibleBooks.json` fixes reach a fresh install only.
 
 - **Prove a pid is the scratch one by its `userDataPath` before driving or
   killing it** (2026-10-23). A loop taking "the first discovery file that is
@@ -56,8 +62,11 @@ with `<scratch>\setting.json` seeded
   ([[build-kills-running-dev-app]]). `electron .` reuses the compiled `electron-build/`, so `grep`
   the `.js` for a main-process change before counting on it.
 - The userData decides the single-instance lock, so the two run side by side and
-  `prod-app.mjs status` lists both. Newest-first discovery aims `owa_*` (and a chrome-devtools
-  half that reconnects) at the scratch one — prove it with a screenshot of a fresh-profile state
+  `prod-app.mjs status` lists both. **Since 2026-11-13 a stdio server drives NEITHER until told**
+  (`owa_choose_app`, `appChoice.mjs`): with two apps up every tool answers with the list, so
+  choose the scratch one by the pid whose `userDataPath` is the scratch folder, and both tool
+  halves follow it (proven live the same day with three apps up). Scripts that import
+  `discovery.mjs` still take the newest — prove it with a screenshot of a fresh-profile state
   before the first click.
 - **Only the `owa_*` half follows the scratch instance** (2026-10-11).
   `take_screenshot`, `click`, `fill` and `list_pages` stayed on the app that
@@ -130,6 +139,17 @@ with `<scratch>\setting.json` seeded
   a used data folder, so switching to it reloads straight in with no question (2026-10-04). A state the UI cannot reach without a destructive
   press (a missing bible key) can be set in the scratch `data/local-storage/<setting>` file and
   read back after **Apply Settings**, which reloads only the scratch instance's windows.
+- **A non-English pass needs no person either** (2026-11-09):
+  before the launch, extract the packed `extra-work/lang/<code>-<v>.tar.gz`
+  into `<scratch>\data\lang\<code>@<v>\` and put `"language-locale"`
+  (that language's locale, as its `meta.json` says) in the seeded `clientSetting`; copy the user's
+  `bibles-data\KJV.xml` into `<scratch>\data\bibles-data\` so the Reader's
+  _Create the KJV Bible?_ confirm (the person's, refused) never comes; and
+  a list folder is `local-storage\select-dir-bible-presenter` holding
+  `$DATA_DIR_PATH\bibles` (a hand-written `.owb` there is listed). Write
+  every Windows path from node with `path.win32.join` or
+  `String.fromCharCode(92)`: Git Bash halves `\\` even in a quoted
+  `node -e` ([[bash-heredoc-halves-backslashes]]).
 - Stop it by its own pid (`taskkill //PID <pid>` from Git Bash exits it cleanly), then delete the
   scratch folder — after `cd`-ing out of it: a shell whose cwd is inside makes the delete EBUSY.
 

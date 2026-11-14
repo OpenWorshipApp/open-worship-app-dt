@@ -660,7 +660,8 @@ describe('ResourcesRendererComp folder actions', () => {
         expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copy to Data Directory',
-            'Cannot copy folder: disk failed',
+            'Cannot copy folder: It did not work. Please try again.',
+            10e3,
         );
         expect(hideProgressBarMock).toHaveBeenCalledWith(
             'Copy to Data Directory: /a/songs',

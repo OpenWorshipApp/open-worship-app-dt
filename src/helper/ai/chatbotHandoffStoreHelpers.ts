@@ -10,6 +10,8 @@ import type { LookupAskType } from './lookupAskHelpers';
 import { toValidLookupAsk } from './lookupAskHelpers';
 import type { ResourceReadingType } from './resourceReadingAskHelpers';
 import { toValidResourceReading } from './resourceReadingAskHelpers';
+import type { ForegroundAskType } from './foregroundAskHelpers';
+import { toValidForegroundAsk } from './foregroundAskHelpers';
 
 const HANDOFF_KEY = 'chatbot-handoff-ask';
 const HANDOFF_MAX_AGE_MS = 30 * 1000;
@@ -118,7 +120,9 @@ const SELECTION_AROUND_CUT = '…';
 /**
  * Words selected, and where: the words before and after them in their verse
  * or line ('' at its edge), and their first and last character in it,
- * counted from 1 -- null when the selection runs over several lines.
+ * counted from 1 -- null when the selection runs over several lines. Words
+ * selected in a text file's editor (a Markdown Preview's, 2026-11-11) carry
+ * the file's lines they are on, counted from 1, too.
  */
 export type SelectionMentionType = {
     text: string;
@@ -126,6 +130,7 @@ export type SelectionMentionType = {
     after: string;
     start: number | null;
     end: number | null;
+    lines?: { first: number; last: number };
 };
 
 function toSelectedWords(text: unknown) {
@@ -196,12 +201,20 @@ export function toValidSelectionMention(
         Number.isSafeInteger(end) &&
         start >= 1 &&
         end >= start;
+    const first = source.lines?.first;
+    const last = source.lines?.last;
+    const hasLines =
+        Number.isSafeInteger(first) &&
+        Number.isSafeInteger(last) &&
+        first >= 1 &&
+        last >= first;
     return {
         text,
         before: toAroundWords(source.before, 'before'),
         after: toAroundWords(source.after, 'after'),
         start: hasRange ? start : null,
         end: hasRange ? end : null,
+        ...(hasLines ? { lines: { first, last } } : {}),
     };
 }
 
@@ -218,9 +231,9 @@ export function requestChatbotFile(
     // `resourceReadingAskHelpers.ts`), checked on the way in and out.
     const validReading = toValidResourceReading(reading);
     const validNoteId = toValidNoteId(noteId);
-    // Words selected in a note, only beside the note they were selected in.
-    const validMention =
-        validNoteId === null ? null : toValidSelectionMention(mention);
+    // Words selected in a note, or in a text file's editor, beside what they
+    // were selected in.
+    const validMention = toValidSelectionMention(mention);
     setSetting(
         FILE_HANDOFF_KEY,
         JSON.stringify({
@@ -262,13 +275,11 @@ export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
         ) {
             return null;
         }
-        const noteId = toValidNoteId(data.noteId);
         return {
             filePath: data.filePath,
             reading: toValidResourceReading(data.reading),
-            noteId,
-            mention:
-                noteId === null ? null : toValidSelectionMention(data.mention),
+            noteId: toValidNoteId(data.noteId),
+            mention: toValidSelectionMention(data.mention),
         };
     } catch (_error) {
         return null;
@@ -278,6 +289,73 @@ export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
 /** The waiting file's path, once; null when none waits or it is stale. */
 export function takeChatbotFile(): string | null {
     return takeChatbotFileRequest()?.filePath ?? null;
+}
+
+// A fifth kind (2026-11-09, the user, with a foreground panel's sessions
+// strip circled: _sessions of opening foreground component should be able
+// to attached to the chatbot for the chat context_): WHICH session of which
+// component -- a chip's menu or a panel header's 🤖 -- never its words.
+const FOREGROUND_HANDOFF_KEY = 'chatbot-handoff-foreground';
+
+export function requestChatbotForeground(ask: ForegroundAskType) {
+    const valid = toValidForegroundAsk(ask);
+    if (valid === null) {
+        return;
+    }
+    setSetting(
+        FOREGROUND_HANDOFF_KEY,
+        JSON.stringify({ ...valid, at: Date.now() }),
+    );
+}
+
+/** The waiting foreground session, once; null when none waits or it is stale. */
+export function takeChatbotForegroundRequest(): ForegroundAskType | null {
+    const raw = getSettingForce(FOREGROUND_HANDOFF_KEY);
+    if (!raw) {
+        return null;
+    }
+    removeSetting(FOREGROUND_HANDOFF_KEY);
+    try {
+        const data = JSON.parse(raw);
+        if (
+            typeof data?.at !== 'number' ||
+            Math.abs(Date.now() - data.at) > HANDOFF_MAX_AGE_MS
+        ) {
+            return null;
+        }
+        return toValidForegroundAsk(data);
+    } catch (_error) {
+        return null;
+    }
+}
+
+// A sixth kind (2026-11-14, EC-760, the user with the Bibles panel's
+// **Add Bible Item** circled: _`Open in Chatbot` should open the chatbot
+// and put pretext prompt to let user continue editing by pasting more
+// bible paragraph_): the ask alone, no words -- the help window writes the
+// box's first line itself, in its own language, so it reads it back.
+const BIBLE_LIST_HANDOFF_KEY = 'chatbot-handoff-bible-list';
+
+export function requestChatbotBibleListPaste() {
+    setSetting(BIBLE_LIST_HANDOFF_KEY, JSON.stringify({ at: Date.now() }));
+}
+
+/** Whether a Bibles list's paste ask waits, once; false when it is stale. */
+export function takeChatbotBibleListPaste(): boolean {
+    const raw = getSettingForce(BIBLE_LIST_HANDOFF_KEY);
+    if (!raw) {
+        return false;
+    }
+    removeSetting(BIBLE_LIST_HANDOFF_KEY);
+    try {
+        const data = JSON.parse(raw);
+        return (
+            typeof data?.at === 'number' &&
+            Math.abs(Date.now() - data.at) <= HANDOFF_MAX_AGE_MS
+        );
+    } catch (_error) {
+        return false;
+    }
 }
 
 // A fourth kind (2026-10-18, the user, with the robot circled on three

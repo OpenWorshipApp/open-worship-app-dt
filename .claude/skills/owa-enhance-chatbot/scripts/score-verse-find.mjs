@@ -2,9 +2,11 @@
 // Lookup** buttons under its answer names a reference the row expects. The
 // standing set is `../references/verse-find-asks.json` (2026-10-16, the goal
 // _chatbot be smart enough to help user find verses he/she forgot_): exact
-// words, misremembered words, modern paraphrases and descriptions in the KJV;
-// Khmer typed with no spaces, Khmer descriptions and English words under the
-// Khmer Bible; and questions typed in an ordinary chat.
+// words, misremembered words, modern paraphrases and descriptions in the KJV,
+// and questions typed in an ordinary chat. A language's own rows -- typed in
+// its script (with no spaces where it writes none), descriptions in its words,
+// English words under its Bible -- are its package's
+// `src/lang/data/online/<code>/chatbot-asks/verse-find-asks.json`.
 //
 //   node .claude/skills/owa-enhance-chatbot/scripts/corpus-run.mjs \
 //        --server=Auto --asks=.claude/skills/owa-enhance-chatbot/references/verse-find-asks.json \
@@ -14,7 +16,7 @@
 //        test-results/chatbot-quality/verse-find.jsonl [--text] [--data=<dir>]
 //
 // The rows name Bibles by their short names on the dev profile it was made on
-// (KJV and the Khmer one); a row whose Bible is not installed fails for that reason, and
+// (KJV and each language's own); a row whose Bible is not installed fails for that reason, and
 // its answer says so. First run: 20 of 20 (2026-10-16).
 //
 // `../references/bible-find-asks.json` and each language's own
@@ -72,9 +74,9 @@ function checkIsInRange(ref, range) {
     );
 }
 
-// A button is drawn in the window's language (2026-10-22): the Khmer words
-// for Open, the verse as the Khmer Bible writes it, and the words for
-// "in Bible Lookup", for a Khmer reader. The installed Bibles'
+// A button is drawn in the window's language (2026-10-22): that language's
+// words for Open, the verse as its Bible writes it, and the words for
+// "in Bible Lookup", for a reader of that language. The installed Bibles'
 // own book names (`<data folder>/bibles-data/<key>.xml.cache/_info`) read it
 // back into `Genesis 8:11`. --data=<data folder>; the dev one by default.
 const DATA_DIR = (() => {

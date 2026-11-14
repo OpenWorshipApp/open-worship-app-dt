@@ -430,7 +430,7 @@ describe('bibleXMLHelpers', () => {
 
         await expect(readFromUrl(form, vi.fn())).resolves.toBeNull();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
-            'Error occurred during download "https://example.com/kjv"',
+            'Error occurred during download: "https://example.com/kjv"',
             'Error: Error: offline',
         );
     });
@@ -835,7 +835,7 @@ describe('bibleXMLHelpers', () => {
             'Error: Error: connection reset',
         );
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
-            'Error occurred during download "https://example.com/a.xml"',
+            'Error occurred during download: "https://example.com/a.xml"',
             'Error: Error: connection reset',
         );
         expect(mocks.handleErrorMock).toHaveBeenCalledWith(

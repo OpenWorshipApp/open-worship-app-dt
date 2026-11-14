@@ -339,7 +339,7 @@ describe('bibleDownloadHelpers', () => {
             version: 1,
         });
         mocks.getBibleXMLCacheInfoListMock.mockResolvedValueOnce([
-            { key: 'XML', locale: 'km-KH', title: 'Khmer XML', version: 2 },
+            { key: 'XML', locale: 'xx-XX', title: 'Xx XML', version: 2 },
         ]);
 
         expect(await getAllLocalBibleInfoList()).toEqual([
@@ -347,8 +347,8 @@ describe('bibleDownloadHelpers', () => {
             {
                 isXML: true,
                 key: 'XML',
-                locale: 'km-KH',
-                title: 'Khmer XML',
+                locale: 'xx-XX',
+                title: 'Xx XML',
                 version: 2,
             },
         ]);
@@ -358,8 +358,8 @@ describe('bibleDownloadHelpers', () => {
             {
                 isXML: true,
                 key: 'XML',
-                locale: 'km-KH',
-                title: 'Khmer XML',
+                locale: 'xx-XX',
+                title: 'Xx XML',
                 version: 2,
             },
         ]);

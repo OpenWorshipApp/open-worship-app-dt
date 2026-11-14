@@ -1,6 +1,8 @@
 import DOMPurify, { type Config } from 'dompurify';
 import MarkdownIt from 'markdown-it';
 
+import { MARKDOWN_SOURCE_LINE_ATTRIBUTE } from './markdownPreviewParamHelpers';
+
 /**
  * Turning a markdown file into the HTML the Markdown Preview window shows.
  *
@@ -30,6 +32,11 @@ export type MarkdownPreviewRenderEnvType = {
     mermaidSources: string[];
     /** Filled while rendering: heading slugs already handed out. */
     headingSlugCounts: Map<string, number>;
+    /**
+     * Whether each block carries the line it starts at
+     * (`MARKDOWN_SOURCE_LINE_ATTRIBUTE`): only while the editor is shown.
+     */
+    isSourceLineMarked: boolean;
 };
 
 export type MarkdownPreviewRenderResultType = {
@@ -52,7 +59,8 @@ export function toHeadingElementId(slug: string) {
 /**
  * GitHub's rule, which is what people writing `[see](#getting-started)` expect:
  * lower case, punctuation dropped, whitespace to hyphens. Letters, digits and
- * combining marks are kept in every script, so a Khmer heading keeps its words.
+ * combining marks are kept in every script, so a heading in any script keeps
+ * its words.
  */
 export function toHeadingSlug(text: string) {
     return text
@@ -167,8 +175,12 @@ const SANITIZE_CONFIG: Config = {
     ],
     FORBID_ATTR: ['srcset'],
     ALLOW_DATA_ATTR: false,
-    ADD_ATTR: ['data-mermaid-index'],
+    ADD_ATTR: ['data-mermaid-index', MARKDOWN_SOURCE_LINE_ATTRIBUTE],
 };
+
+// A line number and nothing else: the only thing the editor's scrolling reads
+// off it (`markdownScrollFollowHelpers.ts`).
+const SOURCE_LINE_REGEX = /^\d+$/;
 
 /**
  * `style` only as the one declaration markdown-it writes on an aligned table
@@ -209,6 +221,8 @@ function getPurifier() {
             hookEvent.keepAttr = false;
         } else if (attrName === 'style') {
             hookEvent.keepAttr = TEXT_ALIGN_STYLE_REGEX.test(attrValue);
+        } else if (attrName === MARKDOWN_SOURCE_LINE_ATTRIBUTE) {
+            hookEvent.keepAttr = SOURCE_LINE_REGEX.test(attrValue);
         } else if (attrName === 'class') {
             hookEvent.attrValue = attrValue
                 .split(/\s+/)
@@ -260,6 +274,29 @@ function genMarkdownIt() {
         linkify: true,
         typographer: false,
     });
+    // Each block written with the line of the file it starts at, while the
+    // editor is shown: a list's own line is its first item's, which carries
+    // it. A fenced block carries it on its `<code>`, inside the `<pre>`.
+    markdownIt.core.ruler.push('app_source_line', (state) => {
+        if (!(state.env as MarkdownPreviewRenderEnvType).isSourceLineMarked) {
+            return;
+        }
+        for (const token of state.tokens) {
+            if (
+                token.map !== null &&
+                token.nesting !== -1 &&
+                token.type !== 'inline' &&
+                token.type !== 'bullet_list_open' &&
+                token.type !== 'ordered_list_open'
+            ) {
+                token.attrSet(
+                    MARKDOWN_SOURCE_LINE_ATTRIBUTE,
+                    `${token.map[0]}`,
+                );
+            }
+        }
+    });
+
     const { rules } = markdownIt.renderer;
 
     const renderFenceDefault = rules.fence!;
@@ -271,9 +308,10 @@ function genMarkdownIt() {
         }
         const mermaidIndex = env.mermaidSources.push(token.content) - 1;
         // The code, drawn as code, until the diagram replaces it -- which is
-        // also exactly what stays if the diagram cannot be drawn.
+        // also exactly what stays if the diagram cannot be drawn. The box is
+        // kept around the diagram, its line with it.
         return (
-            `<div class="app-markdown-mermaid" ` +
+            `<div class="app-markdown-mermaid"${self.renderAttrs(token)} ` +
             `data-mermaid-index="${mermaidIndex}"><pre><code>` +
             `${markdownIt.utils.escapeHtml(token.content)}` +
             `</code></pre></div>\n`
@@ -303,8 +341,11 @@ function genMarkdownIt() {
         return self.renderToken(tokens, index, options);
     };
 
-    rules.table_open = () => {
-        return '<div class="app-markdown-table"><table>\n';
+    rules.table_open = (tokens, index, _options, _env, self) => {
+        return (
+            `<div class="app-markdown-table"${self.renderAttrs(tokens[index])}>` +
+            '<table>\n'
+        );
     };
     rules.table_close = () => {
         return '</table></div>\n';
@@ -319,11 +360,13 @@ let markdownItInstance: MarkdownIt | null = null;
 export function renderPreviewMarkdown(
     text: string,
     toLocalImageSrc: ToLocalImageSrcType,
+    isSourceLineMarked = false,
 ): MarkdownPreviewRenderResultType {
     markdownItInstance ??= genMarkdownIt();
     const env: MarkdownPreviewRenderEnvType = {
         mermaidSources: [],
         headingSlugCounts: new Map(),
+        isSourceLineMarked,
     };
     const html = sanitizePreviewHtml(
         markdownItInstance.render(text, env),

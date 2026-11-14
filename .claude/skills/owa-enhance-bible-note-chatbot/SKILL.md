@@ -34,8 +34,9 @@ GATE (npm run lint) → PAPER TRAIL (W-60, CB-169, rules, memory, knowledge)
 | `src/helper/agentNoteBlockLinkHelpers.ts` | Link block text: the editor's own link entry (node paths), kept in its storage, not in the note |
 | `src/helper/agentNoteNormalizeHelpers.ts` | A changed block written as Lexical writes it, so an open note window never writes it back as a step of its own |
 | `src/helper/agentNoteEditHelpers.ts` | The app side: reads the editing HEAD, resolves new verses (installed Bible) and names (names lookup, on demand), the font list, undo/redo of the kept history (stepping over an echo), the ¶ (`view`) and block links -- the editor's own keys, backed up as `home-setting` restores -- writes, tells an open note window |
-| `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~878 tokens, a note ask only) |
-| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer |
+| `tools/owa-devtools-mcp/agentNoteEdit.mjs` | `owa_note_edit`: schema, description (~1 190 tokens, a note ask only) |
+| `src/chatbot/noteChatHelpers.ts` | `NOTE_SYSTEM_PROMPT`, the card, the note read into the ask, the window-side size answer, the lesson hints (`genNoteLessonHint`), an empty note filled (`toBlankNoteFillArgs`), the verse check's read (`toNoteVerseReadText`), the empty note's lesson card, what a lesson lacks and where each part goes (`genLessonGapsText`), loose lines made a lesson in their place (`readNoteRewrite`, `withRewrittenLinesRemoved`) |
+| `src/chatbot/noteCreatePromptHelpers.ts` | What a preaching lesson holds (`PREACHING_LESSON_SHAPE`, sent on a lesson ask only) and the English lesson readers; a language's own are `lessonAsks` / `verseCheckAsks` in its `assistant.json` |
 | `src/chatbot/ChatbotAppComp.tsx`, `windowAimHelpers.ts` | The note conversation in the window; the tab works IN the note's own window (`toNoteWindowAim`) |
 | `src/helper/ai/noteChatbotMenuHelpers.ts`, `noteWindowMatchHelpers.ts` | Open in Chatbot: opens the note's window first, the handoff |
 | `extra-work/bibleNoteGuideHelpers.mjs`, `tools/owa-devtools-mcp/help.mjs` | The editor's own guide as a corpus apart (`agent-knowledge.md`) |
@@ -116,6 +117,62 @@ each: tool calls (one is the bar), fields right, the note right on a
 screenshot of the note window, the answer true. A new failure is a BN item
 with what was asked, what the model sent and what the note became.
 
+**The elder corpus** (`references/elder-asks.json`, 600 things an elderly,
+non-technical church member types while preparing a lesson -- written by a
+reader told only the person and the note, never what the tool can do --
+each with a machine-checkable `expect`) is asked whole by
+`scripts/run-elder-asks.mjs` against the lesson note it was written for
+(The Good Shepherd: a title, the lesson line, a Psalm 23:1 chip, prayer,
+three points, John 10:11, two questions, the hymn, a misspelt reminder),
+which puts the note back after every ask and re-attaches it after a new
+note; `scripts/elder-asks-report.mjs <results> --fails` reads what it
+found. A pass is the change asked for in one call (two is `pass-multi`), an
+honest answer, a new note, an undo that put it back; a claim of a change no
+tool made fails whatever was expected. Its block expectations assume the
+note as written -- grade a failure by reading it before calling it the
+model's. Three things a run must hold, each learnt the hard way on its
+first: the window's spend guard pauses a profile at 150 model calls an hour
+and its **Allow more** is the person's press, so split the corpus over
+profiles and pace each (`--every=3 --offset=k --pace=55`, about two calls an
+ask); a new title is kept at once and is no part of the note's hash, so the
+harness puts the title back by name; and an ask with no `owa_note_edit`
+call was not about the note (`not-note-ask`, asked again).
+
+**A preaching lesson is judged against a written standard, never by the
+assistant that built the chatbot** (BN-66). `references/lesson-rubric.md`
+is that standard -- twelve criteria from the homiletics textbooks (Robinson's
+big idea, Chapell's fallen-condition focus and explanation / illustration /
+application, Stott's two worlds), 0-2 each, banded Best / Good / Needs work,
+a factual error about the Bible capping a lesson at Needs work.
+`scripts/run-lesson-asks.mjs <profile part>` makes every row of
+`references/lesson-asks.json` through the real window -- a new note (empty,
+or a preacher's own partial lesson for a `finish` row), its **Open in
+Chatbot**, the ask typed or the empty note's card pressed -- and
+`scripts/lesson-rubric.mjs <results> --text=<dir>` checks the structure by
+machine and writes each lesson as text with the ask and nothing of how it
+was made -- as its note window shows it: a passage over the note read's
+8000 letters, which the read hands back cut with "…", rebuilt from the KJV,
+and a block's line breaks kept as lines (until 2026-11-11 every reader of
+1 Samuel 17:1-58 got it stopping at verse 51, and a children's lesson's
+labels run together -- the harness's doing, scored as the lesson's). Two readers on different models, briefed with the standard and
+the lessons alone, score them; a weakness most lessons share is a change to
+the shape the model is given, never to the standard. **The job is to HELP
+PREPARE, so measure the loop, not only the first draft** (BN-72, BN-74):
+`--review=N` asks _is this a good sermon?_ after the draft and presses the
+review's first fix, N times, and `--fixes=M` presses up to M of each
+review's fixes off the buttons each fix's answer carries (BN-77) -- the
+way an elder prepares with it -- keeping the draft (`blocksBefore`) and
+every review; `scripts/lesson-ab.mjs <results> <prefix>` shuffles each draft and
+its reviewed lesson under neutral ids with a key kept apart, the review's
+presses left out of what the readers are told was asked, for
+`lesson-rubric.mjs --text=<dir>` to write out. A review whose fix could
+not be pressed is a finding, as a wrong lesson is. **A change to the shape
+is measured the same way across two runs** (BN-81): the set drafted before
+and after on identically seeded profiles, `lesson-ab.mjs --before=<a>
+--after=<b> <prefix>` pairing each ask's two lessons, only asks both runs
+wrote. Run-to-run noise is about a point of the mean on eight lessons, so
+read the criteria the change aimed at, not the mean alone.
+
 ### 3. Build
 
 Cheapest gain first, in this order of preference: the tool says why and how
@@ -136,6 +193,8 @@ BN item touched says what changed and what was seen.
 | --- | --- |
 | *(none)* · `measure` | §1, then the cheapest open BN item is proposed |
 | `research` | §1 and §2 only — the asks graded, BN items written, nothing built |
+| `elder` | §2 over the elder corpus (`run-elder-asks.mjs`), then §3–§4 on what failed |
+| `lesson` | The lesson set made live (`run-lesson-asks.mjs`), checked by machine and by two blind readers against `lesson-rubric.md`, then §3–§4 on what most lessons miss |
 | `toolbar` | Parity only: leads triaged, missing controls built and tested |
 | `BN-xx` | That item through §3–§4 |
 | `report` | The scoreboard and the open BN items; nothing run |

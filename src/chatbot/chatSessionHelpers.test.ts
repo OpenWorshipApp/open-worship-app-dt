@@ -23,11 +23,14 @@ import {
     genSessionId,
     loadChatSessions,
     saveChatSessions,
+    splitSavedBoxes,
     toChatSessionTitle,
+    trimSessionMessages,
     MAX_SESSION_COUNT,
     type ChatMessageType,
     type ChatSessionType,
 } from './chatSessionHelpers';
+import type { ChatAttachmentType } from './attachmentHelpers';
 
 const SETTING_NAME = 'chatbot-sessions';
 
@@ -364,6 +367,182 @@ describe('saveChatSessions', () => {
     });
 });
 
+// 2026-11-11, EC-498: a file a Resources 🤖 hands over waits in the box
+// under a card saying it is attached below, and the window held the box in
+// memory alone -- a reload (a language installed, a code edit in dev) or the
+// window closed and opened again dropped it, and the next question went out
+// about nothing.
+describe('a tab keeps what waits in its box', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    const STUDY: ChatAttachmentType = {
+        id: 'box-study',
+        kind: 'text',
+        name: 'JHN.3.study.md',
+        mimeType: 'text/markdown',
+        byteSize: 120,
+        filePath: '/church/Resources/Default/JHN.3.study.md',
+        summary: '# The New Birth',
+        number: 2,
+    };
+    const PDF: ChatAttachmentType = {
+        id: 'box-pdf',
+        kind: 'file',
+        name: 'MAT.18.pdf',
+        mimeType: 'application/pdf',
+        byteSize: 4000,
+        filePath: '/church/Resources/pdf/MAT.18.pdf',
+        pageCount: 6,
+        number: 3,
+    };
+    const QUICK_TEXT: ChatAttachmentType = {
+        id: 'box-quick-text',
+        kind: 'foreground',
+        name: 'Quick Text › Session 2',
+        mimeType: 'text/plain',
+        byteSize: 0,
+        foreground: {
+            widget: 'quick-text',
+            sessionId: 's2',
+            sessionName: 'Session 2',
+        },
+        number: 4,
+    };
+    // A picture of the app: its bytes are the window's alone.
+    const SCREEN: ChatAttachmentType = {
+        id: 'box-screen',
+        kind: 'image',
+        name: 'my screen',
+        mimeType: 'image/png',
+        byteSize: 9000,
+        window: {
+            id: 'w-1',
+            page: 'presenter.html',
+            label: 'Presenter',
+            isMain: true,
+        },
+    };
+    const PASTED: ChatAttachmentType = {
+        id: 'box-pasted',
+        kind: 'image',
+        name: 'pasted picture',
+        mimeType: 'image/png',
+        byteSize: 9000,
+    };
+    const CONTROL: ChatAttachmentType = {
+        id: 'box-control',
+        kind: 'element',
+        name: 'Clear All',
+        mimeType: 'text/plain',
+        byteSize: 0,
+        selector: '#clear-all',
+    };
+
+    test('a file waiting in the box is written with its tab and read back', () => {
+        const session = genSession({ id: 'tab' });
+        saveChatSessions(
+            { sessions: [session], activeId: 'tab' },
+            { tab: [STUDY, PDF] },
+        );
+
+        expect(readStored().sessions[0].boxFiles).toEqual([STUDY, PDF]);
+        const loaded = loadChatSessions('presenter', null, '');
+        expect(loaded.sessions[0].boxFiles).toEqual([STUDY, PDF]);
+    });
+
+    test('a picture of the app and a pointed-at control are not kept; a foreground session is', () => {
+        const session = genSession({ id: 'tab' });
+        saveChatSessions(
+            { sessions: [session], activeId: 'tab' },
+            { tab: [SCREEN, PASTED, CONTROL, STUDY, QUICK_TEXT] },
+        );
+
+        expect(
+            readStored().sessions[0].boxFiles.map((one: any) => {
+                return one.id;
+            }),
+        ).toEqual(['box-study', 'box-quick-text']);
+    });
+
+    test("the window's box is what is written: a chip taken off stays off", () => {
+        const session = genSession({ id: 'tab', boxFiles: [STUDY] });
+        const other = genSession({ id: 'other' });
+        saveChatSessions(
+            { sessions: [session, other], activeId: 'tab' },
+            { tab: [], other: [PDF] },
+        );
+
+        const stored = readStored();
+        expect(stored.sessions[0]).not.toHaveProperty('boxFiles');
+        expect(stored.sessions[1].boxFiles).toEqual([PDF]);
+        // With no box named, a tab keeps what it was read with.
+        saveChatSessions({ sessions: [session], activeId: 'tab' });
+        expect(readStored().sessions[0].boxFiles).toEqual([STUDY]);
+    });
+
+    test('a hand-edited box carries no bytes, nothing a reload cannot keep, and four at most', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                activeId: 'tab',
+                sessions: [
+                    {
+                        ...genSession({ id: 'tab' }),
+                        boxFiles: [
+                            CONTROL,
+                            ...Array.from({ length: 5 }, (_item, index) => {
+                                return {
+                                    ...STUDY,
+                                    id: `box-${index}`,
+                                    dataUrl: 'data:image/png;base64,AAAA',
+                                };
+                            }),
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const boxFiles = loadChatSessions('presenter', null, '').sessions[0]
+            .boxFiles!;
+        expect(
+            boxFiles.map((one) => {
+                return one.id;
+            }),
+        ).toEqual(['box-0', 'box-1', 'box-2']);
+        expect(
+            boxFiles.some((one) => {
+                return 'dataUrl' in one;
+            }),
+        ).toBe(false);
+    });
+
+    test('the boxes are taken off the tabs once, into the window', () => {
+        const withBox = genSession({ id: 'tab', boxFiles: [STUDY] });
+        const without = genSession({ id: 'other' });
+
+        const saved = splitSavedBoxes({
+            sessions: [withBox, without],
+            activeId: 'tab',
+        });
+
+        expect(saved.boxMap).toEqual({ tab: [STUDY] });
+        expect(saved.state.sessions[0]).not.toHaveProperty('boxFiles');
+        expect(saved.state.sessions[0]).toEqual({
+            ...withBox,
+            boxFiles: undefined,
+        });
+        expect(saved.state.sessions[1]).toBe(without);
+        expect(saved.state.activeId).toBe('tab');
+        // No tab with a box: the same state, nothing copied.
+        const plain = { sessions: [without], activeId: 'other' };
+        expect(splitSavedBoxes(plain)).toEqual({ state: plain, boxMap: {} });
+        expect(splitSavedBoxes(plain).state).toBe(plain);
+    });
+});
+
 describe('applyChatLaunchFocus', () => {
     test('the active tab follows the page that launched the chatbot', () => {
         const active = genSession({ id: 'active', focus: 'reader' });
@@ -694,8 +873,8 @@ describe('quick-reply options on a message', () => {
         const state = loadChatSessions('presenter', null, '');
 
         const [message] = state.sessions[0].messages;
-        // A document's card carries five; never forty.
-        expect(message.replies).toHaveLength(5);
+        // A word typed alone is answered with six jobs (EC-583); never forty.
+        expect(message.replies).toHaveLength(6);
         expect(message.replies?.[0]).toHaveLength(120);
     });
 
@@ -927,7 +1106,7 @@ describe('attachments on a message', () => {
             loadOneMessage({
                 id: 1,
                 author: 'you',
-                text: 'in khmer please',
+                text: 'in another language please',
                 isGeneral: true,
             }).isGeneral,
         ).toBe(true);
@@ -991,6 +1170,78 @@ describe('attachments on a message', () => {
         });
         expect(asked.rating).toBeUndefined();
         expect(asked.isFollowUp).toBeUndefined();
+    });
+
+    test('what stood for a failed ask stays marked across a reopen, on an answer only (EC-702)', () => {
+        // Read by the next line's study finder: a card above it still holds
+        // the study the tab was working on.
+        expect(
+            loadOneMessage({
+                id: 2,
+                author: 'bot',
+                text: 'Here is what the guide says.',
+                isAskFailed: true,
+            }).isAskFailed,
+        ).toBe(true);
+        expect(
+            loadOneMessage({
+                id: 2,
+                author: 'bot',
+                text: 'hi',
+                isAskFailed: 'yes',
+            }).isAskFailed,
+        ).toBeUndefined();
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'hello',
+                isAskFailed: true,
+            }).isAskFailed,
+        ).toBeUndefined();
+    });
+
+    test('the window’s own words under an answer survive a reopen, as words the answer holds (EC-494)', () => {
+        // What the history a model is shown cuts out of the answer.
+        const offer =
+            '**Zedo (Zedish) is installed but turned off.** Turn it on first?';
+        expect(
+            loadOneMessage({
+                id: 2,
+                author: 'bot',
+                text: `Zedish is turned off in this app.\n\n${offer}`,
+                windowText: offer,
+            }).windowText,
+        ).toBe(offer);
+        // Words the answer does not hold, none at all, or on a question:
+        // nothing to cut.
+        for (const raw of [
+            { id: 2, author: 'bot', text: 'hi', windowText: offer },
+            { id: 2, author: 'bot', text: 'hi', windowText: '' },
+            { id: 2, author: 'bot', text: 'hi', windowText: 7 },
+            { id: 1, author: 'you', text: offer, windowText: offer },
+        ]) {
+            expect(loadOneMessage(raw).windowText).toBeUndefined();
+        }
+    });
+
+    test('their reply to a step survives a reopen as one, never on an answer (EC-506)', () => {
+        // A reopened tab must not grow a Retry under a step's answer.
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'Not now',
+                isStep: true,
+            }).isStep,
+        ).toBe(true);
+        for (const raw of [
+            { id: 1, author: 'you', text: 'Not now', isStep: 'yes' },
+            { id: 1, author: 'you', text: 'Not now', isStep: 1 },
+            { id: 2, author: 'bot', text: 'Asking again.', isStep: true },
+        ]) {
+            expect(loadOneMessage(raw).isStep).toBeUndefined();
+        }
     });
 
     test('old assistant machinery and dead show chips are cleaned on load', () => {
@@ -1170,5 +1421,74 @@ describe('a tab on Auto', () => {
         expect(state.sessions[1].autoPick?.length).toBeLessThanOrEqual(160);
         expect(state.sessions[2].isAuto).toBeUndefined();
         expect(state.sessions[2].autoPick).toBeUndefined();
+    });
+});
+
+// BN-54 (2026-11-09, the elder run): thirty-odd questions about one Bible
+// note in a tab, then a reload -- the tab came back asking about the Bible
+// Reader, because the question that attached the note had been cut.
+describe('trimSessionMessages', () => {
+    // A note is attached as its words: kind `text`, its id beside the path.
+    const NOTE = {
+        id: 'a1',
+        kind: 'text',
+        name: 'The Good Shepherd',
+        filePath: 'C:/notes/Default.own',
+        noteId: 2,
+    } as any;
+    const genMessages = (count: number, attachedAt: number) => {
+        return Array.from({ length: count }, (_value, index) => {
+            const id = index + 1;
+            return {
+                id,
+                author: index % 2 === 0 ? 'you' : 'bot',
+                text: `message ${id}`,
+                ...(id === attachedAt ? { attachments: [NOTE] } : {}),
+            };
+        });
+    };
+
+    test('keeps the question that attached the open file in place of the oldest', () => {
+        const trimmed = trimSessionMessages(genMessages(70, 1));
+        expect(trimmed).toHaveLength(60);
+        expect(trimmed[0].id).toBe(1);
+        expect(trimmed[0].attachments).toEqual([NOTE]);
+        expect(trimmed[1].id).toBe(12);
+        expect(trimmed.at(-1)!.id).toBe(70);
+    });
+
+    test('cuts as before when the file is closed, kept anyway, or none', () => {
+        expect(trimSessionMessages(genMessages(70, 1), 5)[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(70, 21))[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(70, 0))[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(40, 1))).toHaveLength(40);
+    });
+
+    test('a pointed-at control or a window picture is no open file', () => {
+        const messages = genMessages(70, 0);
+        messages[0] = {
+            ...messages[0],
+            attachments: [
+                { id: 1, kind: 'element', filePath: 'x' },
+                { id: 2, kind: 'screenshot', filePath: 'y', window: {} },
+            ] as any,
+        };
+        expect(trimSessionMessages(messages)[0].id).toBe(11);
+    });
+
+    test('a saved tab keeps its note across a reload', () => {
+        settingMap.clear();
+        const session = genSession({
+            messages: genMessages(70, 1) as unknown as ChatMessageType[],
+        });
+        saveChatSessions({ sessions: [session], activeId: session.id });
+        const stored = JSON.parse(settingMap.get(SETTING_NAME)!);
+        expect(stored.sessions[0].messages).toHaveLength(60);
+        const reloaded = loadChatSessions('presenter', 'anthropic', 'm')
+            .sessions[0];
+        expect(reloaded.messages[0].attachments?.[0]).toMatchObject({
+            name: 'The Good Shepherd',
+            noteId: 2,
+        });
     });
 });

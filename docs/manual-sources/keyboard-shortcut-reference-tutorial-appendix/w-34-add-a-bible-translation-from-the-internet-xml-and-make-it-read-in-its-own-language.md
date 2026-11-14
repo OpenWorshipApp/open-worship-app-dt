@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, ST-91, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
 screenshots: 12
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -29,17 +29,26 @@ an XML file already on your computer.
    `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
    import a Bible, the answer has an **[en:tran:Import a Bible for me]** button that starts
    here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
-2. Before that question, a computer with no **KJV** is offered the one Open Worship
+2. Before the language question, a computer with no **KJV** is offered the one Open Worship
    provides: **[en:tran:Create the provided KJV]** writes it from the app's own copy, with no
    internet and no download, and then the import starts again here. (If you only
    wanted the KJV, that is done: the language question that follows needs no answer.) Press
    **[en:tran:Import another Bible anyway]** to go on without it.
    The assistant then asks **Which language do you want the Bible in?** Press
-   **[en:tran:Khmer]**, **[en:tran:English]** or **[en:tran:French]**, or type the language — in English
+   the language the app is shown in, **[en:tran:English]** or another language you installed, or type the language — in English
    or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
    **[en:tran:A file on this computer]** opens the form below instead. A word it cannot find
    (`kmer`) is passed to the assistant to work out the language you meant; with no
-   assistant to ask, the question stays, with its buttons.
+   assistant to ask, the question stays, with its buttons. A language you type that is
+   turned off, or not installed and on the list Open Worship publishes, is offered first:
+   the assistant says so and that it gives the app that language's Bible book names,
+   numbers and search words (for a download, how big it is, and that the language the
+   app is shown in does not change), with **[en:tran:Install it]** —
+   **[en:tran:Enable]** for one turned off — and **[en:tran:Not now]**.
+   **[en:tran:Install it]** says _Done — … is ready_ and goes on to the list;
+   **[en:tran:Not now]** goes on to it without the language. Each language is asked about
+   once in an import: one first met at Step 2 (step 6) is offered there, before the
+   numbers. With no internet nothing is offered.
 3. It lists **every** Bible in that language, up to twelve, from a free collection of about a
    thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
    seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)_. One you have installed is marked **you already have this
@@ -65,7 +74,7 @@ an XML file already on your computer.
    the downloaded edition is named after comes first. Hover a key to read its
    full name (Khmer 2023 is **GKHB**, hovering reads _ព្រះគម្ពីរខ្មែរសាកល_).
    A short name a Bible is already installed under is not offered at all. A
-   language this app has no names for — Thai — shows the file's own suggested
+   language this app has no names for — Thai, or one not installed or turned off (W-55) — shows the file's own suggested
    names instead. You can also type your own, letters and numbers with no
    spaces; a name you type that you already have is refused and asked again.
 6. **Step 2 — the language**: it says which it looks like and why (_the verses are
@@ -154,7 +163,7 @@ Open Worship provides it and recommends it, beside the downloaded file's own
    filename provides a hint. `KhmerBible.xml` suggests `km-KH`. You can correct it.
 5. Choose **[en:tran:Number mapping]**. Khmer offers `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` first
    and `0 1 2 3 4 5 6 7 8 9` as an alternative.
-6. Choose **[en:tran:Book name mapping]**. Built-in Khmer naming sets appear first;
+6. Choose **[en:tran:Book name mapping]**. With the Khmer language installed and turned on (W-55), its built-in naming sets appear first;
    online lookup adds complete lists from Bible.com and Wordproject. Each option
    shows its edition/source, and **[en:tran:Preview book names]** expands all 66 names.
    **[en:tran:Keep existing book names]** preserves the names already in the XML.
@@ -241,5 +250,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `ST-91` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

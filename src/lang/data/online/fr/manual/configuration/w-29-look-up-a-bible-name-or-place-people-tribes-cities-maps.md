@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: ce464bc863832a9a
+translatedFrom: 463ae437149182b8
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -23,7 +23,9 @@ votre lecture de la Bible.
 2. Le petit **code de langue** à côté de ce bouton (`en`) est la langue dans laquelle les noms et les
    lieux eux-mêmes sont écrits. Il est **vert** tant que c'est la langue de la Bible que vous lisez
    et **rouge** sinon — `en` à côté d'une Bible khmère comme `ពគប` est rouge, et son infobulle ajoute
-   **[en:tran:Not the language of the Bible]** avec la langue de cette Bible. Cliquez dessus et choisissez-en une autre — `km - Khmer
+   **[en:tran:Not the language of the Bible]** avec la langue de cette Bible. Cliquez dessus et choisissez une autre
+   langue dans laquelle les noms sont disponibles — une langue installée depuis
+   Paramètres → **[en:tran:Languages]** (W-55), comme `km - Khmer
 (ភាសាខ្មែរ)` — et la liste de recherche et le panneau « dans votre lecture » passent aussitôt à
    cette langue, sans rien recharger. Les fenêtres de personnes et de lieux déjà ouvertes gardent leur
    propre langue. Le choix est retenu pour la prochaine fois, et il est **indépendant** de la langue de
@@ -75,7 +77,7 @@ votre lecture de la Bible.
    > conversation à son sujet, comme le robot de la fenêtre (étape 13) ; et
    > **[en:tran:Open Graph Preview]** ouvre son graphe de relations (voir **W-38**).
 7. **[en:tran:Verses]** est fermé au départ et indique combien il y en a — certaines fiches en ont des
-   centaines (Jérusalem en a 712). Cliquez dessus pour l'ouvrir, et les références deviennent des titres
+   centaines (Jérusalem en a 710). Cliquez dessus pour l'ouvrir, et les références deviennent des titres
    lisibles comme _Joshua 10:1-43_.
 8. Tout nom ou lieu souligné — dans la description ou dans une liste — s'ouvre dans une autre
    petite fenêtre **à côté** de celle que vous lisez, pour que vous puissiez suivre une famille ou un
@@ -128,7 +130,12 @@ votre lecture de la Bible.
     Un passage que vous lisez s’ouvre de la même façon : le robot au bout de la barre d’outils d’une
     vue de la Bible (la rangée qui apparaît quand la souris est sur son titre), ou faites un clic droit
     sur le texte et choisissez **[en:tran:Ask the Assistant About This Verse]** pour le verset sous la
-    souris, ou **[en:tran:Ask the Assistant About This Passage]** pour tout le passage.
+    souris, ou **[en:tran:Ask the Assistant About This Passage]** pour tout le passage. Ou sélectionnez
+    quelques mots d’un verset : la barre qui apparaît au-dessus d’eux (W-40) se termine par un
+    robot, **[en:tran:Ask the assistant about this]**, qui ouvre la conversation de ce verset — celle
+    déjà ouverte sur lui, s’il y en a une — et place les mots dans la zone de saisie : _Selected text_,
+    le verset et leur premier et leur dernier caractère dans celui-ci, puis le verset entier avec les
+    mots sélectionnés entre deux astérisques. Le curseur attend votre question sur la ligne d’en dessous.
     **Ou ouvrez-le depuis le menu d’un passage.** Partout où un passage a **[en:tran:Open]** dans son menu — une ligne de votre liste de Bibles, une entrée de
     l’historique de recherche en haut, un résultat de la recherche biblique, une référence croisée ou
     un passage cité par un titre — **[en:tran:Open in Chatbot]** se trouve juste en dessous et ouvre la
@@ -151,7 +158,9 @@ votre lecture de la Bible.
     de nouveau le passage lorsqu’il est déjà dans cette langue — et, sur un passage en anglais, _montre ce passage en anglais_
     reprend les mots du relevé. _Comment l’enregistrer ?_ et _copie ce passage_ nomment
     **[en:tran:Save to my Bibles list]** et **[en:tran:Copy the passage]** et placent le
-    bouton près de la réponse. Une question sur l’utilisation de l’application — _comment mettre
+    bouton près de la réponse. Demandez à garder autre chose que le passage lui-même —
+    _enregistre dans une note biblique_, _enregistre la leçon de prédication dans un fichier_ — et aucun bouton n’est nommé :
+    l’assistant l’écrit dans une nouvelle note biblique, qui s’ouvre dans sa propre fenêtre (W-60). Une question sur l’utilisation de l’application — _comment mettre
     ce passage à l’écran ?_ — est traitée par l’aide de l’application, avec la recherche biblique
     de la page Présentation.
     **Tout ce qui s’y rattache.** En s’ouvrant, la carte d’un passage rassemble aussi ce vers
@@ -198,5 +207,7 @@ fenêtre gardent leur taille.
 **À propos de ce qui est traduit :** le type et le **[en:tran:Gender]** d'une personne et le
 **[en:tran:Type]** d'un lieu s'affichent dans la langue de recherche — Jacob est **ប្រុស**, la piscine de
 Siloé un **ស្រះ** — car chacun est un mot pris dans une liste courte et fixe. Pour une personne,
-**[en:tran:Age]** s'affiche exactement comme le jeu de données l'a écrit, de même qu'un type de lieu qu'un jeu
-de données plus récent ajoute avant que l'application ne le connaisse.
+**[en:tran:Age]** s'affiche lui aussi dans cette langue, avec son nombre inchangé : les jeux de données
+écrivent chaque âge selon l'une de trois formules fixes, comme _175 years_. Seul ce qu'un jeu de données
+plus récent ajoute avant que l'application ne le connaisse — une formule, ou un mot pour le sexe d'une
+personne ou le type d'un lieu — s'affiche exactement comme le jeu de données l'a écrit.

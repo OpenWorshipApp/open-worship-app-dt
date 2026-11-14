@@ -86,7 +86,7 @@ function updateModel(
  * Length, the Ollama app has one setting for all, llama.cpp's server is
  * started with `-c`. Nothing at all for a server that says nothing about
  * its models. Every sentence is a literal key, one per program, so each
- * reads naturally in Khmer.
+ * reads naturally in every language.
  */
 function RenderModelInfoComp({
     info,

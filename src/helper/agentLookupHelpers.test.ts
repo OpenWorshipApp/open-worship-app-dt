@@ -41,14 +41,14 @@ vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
     releaseLookupData: mocks.release,
 }));
 vi.mock('../location-name-lookup/lookupLangHelpers', () => ({
-    getLookupLangCodeListAsync: async () => ['en', 'km'],
+    getLookupLangCodeListAsync: async () => ['en', 'xx'],
     getSelectedLookupLangCode: () => 'en',
 }));
 vi.mock('../location-name-lookup/lookupRecordHelpers', () => ({
     resolveLocationReference: mocks.resolveLocation,
 }));
 vi.mock('./bible-helpers/bibleDownloadHelpers', () => ({
-    getAllLocalBibleInfoList: async () => [{ key: 'KJV' }, { key: 'KH' }],
+    getAllLocalBibleInfoList: async () => [{ key: 'KJV' }, { key: 'XXV' }],
 }));
 vi.mock('./bible-helpers/bibleInfoHelpers', () => ({
     getVerses: mocks.verses,
@@ -62,7 +62,7 @@ vi.mock('./bible-helpers/bibleModelHelpers', () => ({
 }));
 vi.mock('./agentBibleFindHelpers', () => ({
     handleAgentBibleFindRequest: mocks.find,
-    pickBibleForRefs: async () => 'KH',
+    pickBibleForRefs: async () => 'XXV',
 }));
 
 import { handleAgentLookupRequest } from './agentLookupHelpers';
@@ -144,10 +144,10 @@ test('the resolved passage keeps its localized title and selected Bible', async 
         ref: '[xx] Matthew 18:1-14',
     });
     expect(result).toMatchObject({
-        bible: 'KH',
+        bible: 'XXV',
         passages: [{ title: '[xx] Matthew 18:1-14', text: fullText }],
     });
-    expect(mocks.copy).toHaveBeenCalledWith('KH', 'MAT 18:1-14');
+    expect(mocks.copy).toHaveBeenCalledWith('XXV', 'MAT 18:1-14');
 });
 
 test('written references retain the existing passage length bound', async () => {
@@ -273,13 +273,13 @@ test('a localized person record carries its related names and namesakes', async 
         name: 'Midian',
         kjvName: null,
     });
-    mocks.shortTitle.mockResolvedValueOnce('Genesis in Khmer');
-    mocks.shortTitle.mockResolvedValueOnce('John in Khmer');
+    mocks.shortTitle.mockResolvedValueOnce('Genesis in Xx');
+    mocks.shortTitle.mockResolvedValueOnce('John in Xx');
 
     const result: any = await handleAgentLookupRequest({
         kind: 'name',
         name: 'Moses',
-        lang: 'km',
+        lang: 'xx',
     });
 
     expect(result).toMatchObject({
@@ -290,18 +290,18 @@ test('a localized person record carries its related names and namesakes', async 
         gender: 'male',
         age: '120 years',
         years: ['life: -1526 – -1406'],
-        summary: 'Genesis in Khmer',
-        description: 'See John in Khmer.',
+        summary: 'Genesis in Xx',
+        description: 'See John in Xx.',
         places: [{ id: 'place-1', name: 'Midian' }],
         parents: [{ id: 'parent-1', name: 'Amram' }],
-        lang: 'km',
+        lang: 'xx',
         bible: 'KJV',
         // The other Moses is named as a namesake on every read, and not
         // twice (2026-10-22).
         sameName: [{ id: 'moses-2', name: 'Moses' }],
     });
     expect(result).not.toHaveProperty('otherMatches');
-    expect(mocks.release).toHaveBeenCalledWith('km');
+    expect(mocks.release).toHaveBeenCalledWith('xx');
 });
 
 test('name and place searches return bounded records with their useful labels', async () => {
@@ -341,12 +341,12 @@ test('name and place searches return bounded records with their useful labels', 
         handleAgentLookupRequest({
             kind: 'name',
             search: '  Mo   ses ',
-            lang: 'km',
+            lang: 'xx',
         }),
     ).resolves.toEqual({
         kind: 'name',
         search: 'Mo ses',
-        lang: 'km',
+        lang: 'xx',
         count: 2,
         records: [
             {
@@ -393,10 +393,10 @@ test('lookup search and record refusals do not load the dataset unnecessarily', 
         reason: expect.stringContaining('Give id'),
     });
     await expect(
-        handleAgentLookupRequest({ kind: 'name', name: 'Moses', lang: 'fr' }),
+        handleAgentLookupRequest({ kind: 'name', name: 'Moses', lang: 'yy' }),
     ).resolves.toMatchObject({
         isError: true,
-        reason: expect.stringContaining('has: en, km'),
+        reason: expect.stringContaining('has: en, xx'),
     });
     await expect(
         handleAgentLookupRequest({ kind: 'location', name: 'Nowhere' }),

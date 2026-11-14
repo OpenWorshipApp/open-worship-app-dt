@@ -9,5 +9,8 @@
     },
     "latinStopWords": {
         "es-ES": "y de la el que en los se no las por con su para del lo al"
+    },
+    "catalogLanguageCodes": {
+        "es": "spa"
     }
 }

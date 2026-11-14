@@ -128,7 +128,7 @@ vi.mock('../location-name-lookup/bibleVerseHelpers', () => ({
         'verse-key': 'verse',
     },
     getLookupVerseBibleKey: (langCode: string) => {
-        return langCode === 'km' ? 'KH' : 'KJV';
+        return langCode === 'xx' ? 'XXV' : 'KJV';
     },
     shortToReferenceTitle: (...args: any[]) => mocks.referenceTitle(...args),
     shortToVerseCopyData: (...args: any[]) => mocks.copy(...args),
@@ -138,7 +138,7 @@ vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
     ensureLangPlugins: async () => [],
-    getSupportedLocales: () => ['en-US', 'km-KH', 'fr-FR'],
+    getSupportedLocales: () => ['en-US', 'xx-XX', 'yy-YY'],
     getLocalBibleCrossRef: (...args: any[]) => mocks.crossRef(...args),
 }));
 vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
@@ -146,7 +146,7 @@ vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
     releaseLookupData: (langCode: string) => mocks.release(langCode),
 }));
 vi.mock('../location-name-lookup/lookupLangHelpers', () => ({
-    getLookupLangCodeListAsync: async () => ['en', 'km'],
+    getLookupLangCodeListAsync: async () => ['en', 'xx'],
     getSelectedLookupLangCode: () => state.selectedLang,
 }));
 vi.mock('../location-name-lookup/lookupRecordHelpers', () => ({
@@ -316,7 +316,7 @@ function genThemeMap(themeMap: Record<string, unknown>) {
 }
 
 beforeEach(() => {
-    state.infoList = [{ key: 'KJV' }, { key: 'KH' }];
+    state.infoList = [{ key: 'KJV' }, { key: 'XXV' }];
     state.selectedLang = 'en';
     state.verseCounts = {};
     state.failedChapters = new Set();
@@ -343,7 +343,7 @@ beforeEach(() => {
             });
         }
         return {
-            title: bibleKey === 'KH' ? `KH ${key}` : model.toEnglish(key),
+            title: bibleKey === 'XXV' ? `XXV ${key}` : model.toEnglish(key),
             text: sections
                 .map((section) => {
                     return section.text;
@@ -357,7 +357,7 @@ beforeEach(() => {
             if (state.untitledKeys.has(key)) {
                 throw new Error('no title');
             }
-            return bibleKey === 'KH' ? `KH ${key}` : model.toEnglish(key);
+            return bibleKey === 'XXV' ? `XXV ${key}` : model.toEnglish(key);
         },
     );
     mocks.referenceTitle.mockResolvedValue(null);
@@ -367,7 +367,7 @@ beforeEach(() => {
         return (
             {
                 KJV: { locale: 'en-US' },
-                KH: { locale: 'km-KH' },
+                XXV: { locale: 'xx-XX' },
                 LUT: { locale: 'de-DE' },
             } as Record<string, { locale: string }>
         )[bibleKey];
@@ -403,7 +403,7 @@ describe('asking', () => {
             lookup({ kind: 'location', search: 'Sinai', lang: 'de' }),
         ).resolves.toEqual({
             isError: true,
-            reason: 'The names lookup has no "de" language. It has: en, km.',
+            reason: 'The names lookup has no "de" language. It has: en, xx.',
         });
         expect(mocks.acquire).not.toHaveBeenCalled();
     });
@@ -445,24 +445,24 @@ describe('which Bible', () => {
             lookup({ kind: 'verse', ref: 'GEN 1:1', bible: 'NIV' }),
         ).resolves.toEqual({
             isError: true,
-            reason: 'No Bible called "NIV" is installed. Installed: KJV, KH.',
+            reason: 'No Bible called "NIV" is installed. Installed: KJV, XXV.',
         });
         await expect(
-            lookup({ kind: 'verse', ref: 'GEN 1:1', bible: 'kh' }),
+            lookup({ kind: 'verse', ref: 'GEN 1:1', bible: 'xxv' }),
         ).resolves.toMatchObject({
-            bible: 'KH',
-            passages: [{ key: 'GEN 1:1', title: 'KH GEN 1:1' }],
+            bible: 'XXV',
+            passages: [{ key: 'GEN 1:1', title: 'XXV GEN 1:1' }],
         });
         // A Bible asked for is the one read: no other is picked for the words.
         expect(mocks.pick).not.toHaveBeenCalled();
     });
 
     test("with none asked, the lookup language's Bible, else the first installed", async () => {
-        state.selectedLang = 'km';
+        state.selectedLang = 'xx';
         await expect(
             lookup({ kind: 'verse', ref: 'GEN 1:1' }),
-        ).resolves.toMatchObject({ bible: 'KH' });
-        expect(mocks.pick).toHaveBeenLastCalledWith('KH', 'GEN 1:1');
+        ).resolves.toMatchObject({ bible: 'XXV' });
+        expect(mocks.pick).toHaveBeenLastCalledWith('XXV', 'GEN 1:1');
         state.infoList = [{ key: 'ESV' }, { key: 'LUT' }];
         await expect(
             lookup({ kind: 'verse', ref: 'GEN 1:1' }),
@@ -779,7 +779,7 @@ describe('names in a passage', () => {
             bible: 'KJV',
             ref: 'JHN 18:39-19:2',
             names: true,
-            lang: 'km',
+            lang: 'xx',
         });
         expect(
             managers.namesLookupManager.searchByShortVerse.mock.calls.map(
@@ -795,8 +795,8 @@ describe('names in a passage', () => {
                 return one.id === 'p44';
             }),
         ).toBe(false);
-        expect(result.lang).toBe('km');
-        expect(mocks.release).toHaveBeenCalledWith('km');
+        expect(result.lang).toBe('xx');
+        expect(mocks.release).toHaveBeenCalledWith('xx');
     });
 
     test('a long passage is looked through for its first two hundred verses', async () => {
@@ -1168,7 +1168,7 @@ describe('what a passage is related to', () => {
     test('the cross references are read in the Bible language, else in English', async () => {
         state.infoList = [
             { key: 'KJV' },
-            { key: 'KH' },
+            { key: 'XXV' },
             { key: 'LUT' },
             { key: 'OLD' },
         ];
@@ -1177,24 +1177,24 @@ describe('what a passage is related to', () => {
                 'GEN 8:21': [{ title: 'Theme', verses: ['GEN 12:7'] }],
             }),
         );
-        const khmer = await lookup({
+        const inOwnLanguage = await lookup({
             kind: 'verse',
-            bible: 'KH',
+            bible: 'XXV',
             ref: 'GEN 8:21',
             related: true,
         });
-        expect(khmer.crossRefs).toMatchObject({
-            language: 'km-KH',
+        expect(inOwnLanguage.crossRefs).toMatchObject({
+            language: 'xx-XX',
             mostCited: [
                 {
                     key: 'GEN 12:7',
-                    title: 'KH GEN 12:7',
+                    title: 'XXV GEN 12:7',
                     text: 'Words of GEN 12.',
                 },
             ],
-            byVerse: [{ verse: '21', themes: [{ refs: ['KH GEN 12:7'] }] }],
+            byVerse: [{ verse: '21', themes: [{ refs: ['XXV GEN 12:7'] }] }],
         });
-        expect(mocks.crossRef).toHaveBeenCalledWith('km-KH', {
+        expect(mocks.crossRef).toHaveBeenCalledWith('xx-XX', {
             bookKey: 'GEN',
             chapter: 8,
             verse: 21,
@@ -1430,9 +1430,13 @@ describe('a person or a place', () => {
             text: 'Words of GEN 6.',
         });
         // Read in the Bible asked for; a Bible that is not there quotes nothing.
-        const khmer = await lookup({ kind: 'name', id: 'noah', bible: 'KH' });
-        expect(khmer.bible).toBe('KH');
-        expect(khmer.quoted[0]).toMatchObject({ title: 'KH GEN 6:8' });
+        const inOwnLanguage = await lookup({
+            kind: 'name',
+            id: 'noah',
+            bible: 'XXV',
+        });
+        expect(inOwnLanguage.bible).toBe('XXV');
+        expect(inOwnLanguage.quoted[0]).toMatchObject({ title: 'XXV GEN 6:8' });
         const missing = await lookup({
             kind: 'name',
             id: 'noah',

@@ -56,7 +56,7 @@ export function downloadImageBase64Data(srcData: SrcData) {
         showSimpleToast(tran('Download'), tran('Failed to save image'));
         return null;
     }
-    showSimpleToast('Download', `Image saved at: ${filePath}`);
+    showSimpleToast(tran('Download'), `${tran('File saved at:')} ${filePath}`);
     showFileOrDirExplorer(filePath);
     return filePath;
 }
@@ -335,7 +335,7 @@ function toYtDlpRuntimeArgs(extraBinPaths: ExtraBinPathsType) {
  */
 async function requireExtraBinPathsLazily() {
     const { requireExtraBinPaths } =
-        await import('../helper/extra-bin/extraBinHelpers');
+        await import('../helper/extra-bin/extraBinGateHelpers');
     return await requireExtraBinPaths();
 }
 

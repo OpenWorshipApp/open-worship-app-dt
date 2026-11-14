@@ -302,4 +302,7 @@ for the screen Draw/Focus panel — not the original Paint panel, not the
 on the app itself (Presenting Control)", but that documents the DIFFERENT
 `src/presenting-control/` feature above, and W-19 forward-references W-10 for
 the mini-screen tools — which W-10 does not deliver — so the gap now also
-reads as a broken cross-reference.
+reads as a broken cross-reference. (Since 2026-11-10 W-10 describes the
+card's brush, its Drawing / Focusing switch and the strip's Presets, and
+`SP-35` covers those Presets; the strip's other controls, the manual eraser
+and the palette shortcuts still have no matrix rows.)

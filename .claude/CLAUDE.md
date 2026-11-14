@@ -66,8 +66,9 @@ scope) with its string in EVERY language's `dictionary.json`
 in dev.
 `src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key a package
 lacks, and on any difference between the packages' key sets — write keys as
-literals so it can read them (EN-20). A dynamic `tran(prop)` still needs the
-live Khmer pass (memory `tran-missing-key-throws-in-dev`).
+literals so it can read them (EN-20). A dynamic `tran(prop)` still needs a
+live pass in an installed non-English language — any of them throws on a
+missing key (memory `tran-missing-key-throws-in-dev`).
 
 ## Every non-English language is a package in `src/lang/data/online/<code>/`
 
@@ -78,16 +79,29 @@ language is its folder — dictionary, `meta.json`, `assistant.json`, corpus
 and code finds packages by folder, naming none. No letter, digit or sign of
 another script (escapes included), no accented Latin, and no non-English
 word lives outside `src/lang/data`, in code, tests or comments; code names no
-`km`/`fr` code or locale. `src/lang/languageConfinement.test.ts` holds it
+non-English language's code, locale or package path.
+`src/lang/languageConfinement.test.ts` holds it
 (`node extra-work/language-confinement.mjs <path>` lists what is left), and
 the suite must pass with every non-English package deleted. Prose (`*.md`,
 `.claude` notes, `docs/`) may quote a language. Layout, loaders, the
 packaged-app path and how to add a language: `.claude/rules/language-packages.md`.
 
+**Every language but English is developed the same way** (2026-11-09, the
+user: _French and Khmer should not be special than any other online
+languages … everything related to khmer should be located in lang online km
+folder, french too_, then _all languages development, except english, should
+be treated the same way_). No code, test, script, dev procedure or doc
+instruction outside a package gives one language a role the others lack. The
+gate holds every language alike, naming none: a quoted non-English locale tag,
+a path into a package, a code compared with a lang/locale/code variable
+(non-test code, comments excluded). Code finds a language by name through
+English's `en/language-names.json` and `en/locales.json`; a language's own
+facts (`catalogLanguageCodes`, `scriptMarkLocales`) live in its `world.json`.
+
 **At runtime only English is built in, and nothing else ships** (2026-11-04,
 the user: _everything related to a language have to be loaded from the
 language data (from language installation catalog), must not ship in the app,
-except english_): every other language — Khmer and French included, all in
+except english_): every other language — all 87, in
 `src/lang/data/online/` — is a PLUGIN packed by
 `extra-work/build-lang-plugins.mjs` and installed from Settings →
 **Languages** into `<data folder>/lang` — one format, one scanner, loaded
@@ -95,8 +109,8 @@ through `appProvider.langUtils`. Its dictionary, corpus, manual and Bible
 names travel IN the plugin: the knowledge bundle is English only and both MCP
 doors read a language from its installed folder (`langPacks.mjs`). App code
 never globs `src/lang/data/*/` (the build check fails on a non-English
-package in `dist/`). **A dev app starts English-only**: for a Khmer pass,
-`npm run lang:pack -- --pack=km` (bare `npm run lang:pack` packs all 87), then
+package in `dist/`). **A dev app starts English-only**: for a non-English
+pass, `npm run lang:pack -- --pack=<code>` (bare `npm run lang:pack` packs all 87), then
 Settings → **Languages** → **Install**. Memory `language-plugins-runtime`.
 
 **Changed language data raises its version, then is packed again** (2026-11-04,
@@ -106,8 +120,8 @@ updated_). Any change to a language's files — a dictionary entry,
 `assistant.json`, the corpus, the manual, script facts, fonts, Bible data —
 raises `version` in its `meta.json` in the SAME change. The scanner keeps the
 highest version, an equal
-one loses to the shipped copy, and a release under an unchanged version only
-REPLACES its catalog entry: an installed copy would never see the new data.
+one loses to the shipped copy, and `npm run release:lang` KEEPS a version
+already published (2026-11-11): an unchanged version never reaches anyone.
 Then, still in that change, run `npm run lang:pack -- --pack=<code>[,<code>]`
 for the languages touched (bare `npm run lang:pack` when a change touches
 many — a new `tran` key touches all 87), and in the dev app press Settings →
@@ -156,13 +170,19 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 `owa_help_page`, `owa_list_questions`, `owa_tran`, `owa_guide_start` / `_step`
 / `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
 `owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
-`owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
-`owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`, `owa_resource_file`,
-`owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
+`owa_present_bible`, `owa_foreground` / `_edit`, `owa_screen_edit` (the
+screens' own controls), `owa_bible_item` / `_note` /
+`_xml`, `owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`,
+`owa_resource_file`,
+`owa_presenting_flow`, `owa_undo`, the one-document editors `owa_lyric_edit` /
+`owa_slide_edit` / `owa_presenting_flow_edit` / `owa_note_edit`, and — the developer's, withheld from the
 chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
 `owa_media_file`, `owa_language` (the help window's own offer to install a
 language, pressed by the person), and on the stdio door alone `owa_drop_files` (real fixture
-files dropped from the disk onto a control; the robot test's drag block).
+files dropped from the disk onto a control; the robot test's drag block) and
+`owa_choose_app` (with several apps running the stdio server drives NONE until
+one is chosen by pid — ask the user which; `owa_app_state`'s `versionCheck`
+says whether the server is the app's version).
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
 `owa_click` / `owa_type` act on a control by its label (`owa_click` right-
@@ -268,9 +288,9 @@ What holds everywhere:
   manual names a control as `[en:tran:Clear Long Text]`, never as an English label.
 - **The chatbot speaks the app's language, and every language is DATA**
   (memory `chatbot-follows-app-language`) -- a question in any OTHER language
-  is answered in it, that language named by its INSTALLED `typed.json`
-  (`src/lang/data/online/<code>/typed.json`; one not installed is answered in
-  its own words unnamed)
+  is answered in it, that language named by its INSTALLED `typed.json` or,
+  in a package with one, `assistant.json` (`src/lang/data/online/<code>/`;
+  one not installed is answered in its own words unnamed)
   (`anyLanguage.test.ts` holds both): `src/lang/data/online/<code>/assistant.json`,
   the corpus's words in `src/lang/data/online/<code>/questions.json` (a new question needs its
   row there in every language — `questions.test.mjs`), the manual's in
@@ -460,7 +480,7 @@ all of them are in `.claude/rules/project-skills.md`.
   focused on one area (a focused run stays in it — memory
   `robot-test-stays-in-the-asked-scope`) presents a real item to a real screen and drives the
   `screen.html?screenId=N` target, and downloads one video AND one audio
-  (`MD-01..06`) — the only product path that runs yt-dlp/ffmpeg/qjs, which are
+  (`MD-01..06`, `MD-08`) — the only product path that runs yt-dlp/ffmpeg/qjs, which are
   NOT bundled but installed on demand (memory `extra-bin-on-demand`); the
   media block deletes what it downloaded. `prod` drives the packaged build;
   `presentingFlow` is a tracked mode.
@@ -488,7 +508,7 @@ all of them are in `.claude/rules/project-skills.md`.
   walkthrough each starts), one window at a time, e.g. `reader.html 99%`:
   coverage of the window's control inventory from `scripts/tip-coverage.mjs`
   (a tip counts when the search finds it by the button's own words), every
-  tip run live in English and Khmer; `TP-xx`.
+  tip run live in English and in an installed non-English language; `TP-xx`.
 - **`owa-enhance-bible-note-chatbot`** — the chatbot on ONE Bible note (W-60):
   `owa_note_edit`, the note conversation, the editor's own guide. Toolbar
   parity is a figure from `scripts/toolbar-coverage.mjs` against an inventory
@@ -497,3 +517,11 @@ all of them are in `.claude/rules/project-skills.md`.
   `BN-xx`.
 - **`review-stagged-change`** / **`review-unstagged-change`** — review only the
   staged diff (the index), or only what is not staged yet; performance first.
+- **`owa-lt`** / **`owa-gi`** — this session's own gate and git interval.
+  `/owa-lt` swaps the full `npm run lint` for the gate on the files THIS
+  session touched (seconds; a PostToolUse hook in `.claude/settings.json`
+  logs them per session); `/owa-gi 10` commits those files every 10 minutes
+  when that gate passes, pulls and pushes, from a detached process that never
+  holds the session. While one runs, the session's last call once it will
+  change nothing more is `git-interval.mjs --finish` (returns at once; the
+  loop makes a last tick and stops); the session's end does the same.

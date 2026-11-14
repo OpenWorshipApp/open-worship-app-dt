@@ -63,9 +63,9 @@ async function render() {
     await act(async () => {
         root.render(
             <BibleXMLInfoComp
-                bibleKey="KSV"
+                bibleKey="TQVS"
                 loadBibleKeys={vi.fn()}
-                filePath="/bibles/KSV.xml"
+                filePath="/bibles/TQVS.xml"
             />,
         );
     });
@@ -87,16 +87,16 @@ describe('BibleXMLInfoComp', () => {
     test('an imported Bible shows the link it came from and its whole note', async () => {
         const note =
             'Imported on 2026-10-15 07:03 UTC by the assistant (Chatbot).\n' +
-            'Downloaded from: https://example.org/KhmerBible.xml\n' +
-            'File link used: https://raw.example.org/KhmerBible.xml';
-        state.info = { title: 'Khmer Standard Version', note };
+            'Downloaded from: https://example.org/MadeUpBible.xml\n' +
+            'File link used: https://raw.example.org/MadeUpBible.xml';
+        state.info = { title: 'Made Up Standard Version', note };
         await render();
         const link = container.querySelector('a') as HTMLAnchorElement;
         expect(link.getAttribute('href')).toBe(
-            'https://example.org/KhmerBible.xml',
+            'https://example.org/MadeUpBible.xml',
         );
         expect(link.target).toBe('_blank');
-        expect(link.textContent).toBe('https://example.org/KhmerBible.xml');
+        expect(link.textContent).toBe('https://example.org/MadeUpBible.xml');
         expect(container.textContent).toContain('translated:Source:');
         const details = container.querySelector('details')!;
         expect(details.open).toBe(false);

@@ -257,16 +257,11 @@ export async function createSingleItemArchive(
  * flow's own title, give back nothing — are what every entry point below does,
  * and a message that drifts between them reads as two different problems.
  */
-function reportArchiveFailure(
-    title: string,
-    verb: 'export' | 'import',
-    config: SingleItemArchiveConfigType,
-    error: any,
-) {
+function reportArchiveFailure(title: string, error: any) {
     handleError(error);
     showSimpleToast(
         tran(title),
-        error?.message ?? `Unable to ${verb} the ${config.itemLabel}`,
+        error?.message ?? tran('It did not work. Please try again.'),
     );
     return null;
 }
@@ -299,12 +294,7 @@ export async function exportSingleItem(
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
     } catch (error: any) {
-        return reportArchiveFailure(
-            config.exportTitle,
-            'export',
-            config,
-            error,
-        );
+        return reportArchiveFailure(config.exportTitle, error);
     } finally {
         hideProgressBar(config.exportTitle);
     }
@@ -486,12 +476,7 @@ async function runSingleItemArchiveImport(
         );
         return itemFilePath;
     } catch (error: any) {
-        return reportArchiveFailure(
-            config.importTitle,
-            'import',
-            config,
-            error,
-        );
+        return reportArchiveFailure(config.importTitle, error);
     } finally {
         hideProgressBar(config.importTitle);
     }
@@ -595,12 +580,7 @@ export async function importDroppedSingleItemArchive(
         }
         return await runSingleItemArchiveImport(archiveFilePath, config);
     } catch (error: any) {
-        return reportArchiveFailure(
-            config.importTitle,
-            'import',
-            config,
-            error,
-        );
+        return reportArchiveFailure(config.importTitle, error);
     } finally {
         if (tempDirPath !== null) {
             await safeDeleteDir(tempDirPath);

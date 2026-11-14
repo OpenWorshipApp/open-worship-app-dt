@@ -156,7 +156,7 @@ export default function BibleXMLImportComp({
                 } catch (error) {
                     showSimpleToast(
                         tran('Format Submit Error'),
-                        `Error: ${error}`,
+                        `${tran('Error')}: ${error}`,
                     );
                 }
             });

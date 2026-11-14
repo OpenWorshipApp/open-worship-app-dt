@@ -24,9 +24,9 @@ const { state, mocks } = vi.hoisted(() => ({
     },
 }));
 
-// English labels to query by, while BOTH real dictionaries are checked: a
-// label missing its Khmer or French string throws here exactly as it would in
-// a dev window.
+// English labels to query by, while every installed package's real
+// dictionary is checked: a label missing its string in any of them throws
+// here exactly as it would in a dev window.
 vi.mock('../lang/langHelpers', () => ({
     tran: (key: string) => {
         for (const dictionary of state.dictionaries) {
@@ -113,7 +113,7 @@ vi.mock('../others/FontFamilyControlComp', () => ({
             <button
                 type="button"
                 onClick={() => {
-                    setFontFamily('Khmer OS');
+                    setFontFamily('Made Up Sans');
                 }}
             >
                 Pick font
@@ -464,15 +464,26 @@ describe('the foreground Properties panel', () => {
         // Pressing px again keeps the size it already has.
         await press('Round px');
         expect(getByLabel<HTMLInputElement>('Round px').value).toBe('9');
-        // Nothing usable typed is 0, which is the percentage again.
+        // Emptied to type another number: nothing is written, and the box
+        // stays -- it used to flip to the % slider and vanish mid-typing.
         await setValue('Round px', '');
         expect(
             state.settings.get('video-setting-show-widget-round-size-px'),
-        ).toBe('0');
-        expect(getUnitButton('Round %').getAttribute('aria-pressed')).toBe(
+        ).toBe('9');
+        expect(getUnitButton('Round px').getAttribute('aria-pressed')).toBe(
             'true',
         );
-        expect(query('[aria-label="Round px"]')).toBeNull();
+        expect(getByLabel<HTMLInputElement>('Round px').value).toBe('');
+        await setValue('Round px', '14');
+        expect(lastChange().style).toMatchObject({ borderRadius: '14px' });
+        // Left empty, it shows the size still in force.
+        await setValue('Round px', '');
+        await act(async () => {
+            getByLabel<HTMLInputElement>('Round px').dispatchEvent(
+                new FocusEvent('focusout', { bubbles: true }),
+            );
+        });
+        expect(getByLabel<HTMLInputElement>('Round px').value).toBe('14');
     });
 
     test('font size and blend mode are only there when the widget asks', async () => {
@@ -533,11 +544,13 @@ describe('the foreground Properties panel', () => {
             false,
         );
         await press('Pick font');
-        expect(state.settings.get(names.fontFamily)).toBe('Khmer OS');
+        expect(state.settings.get(names.fontFamily)).toBe('Made Up Sans');
         // The family stays in the HOOK, so the widget's own preview follows.
-        expect(state.result.fontFamily).toBe('Khmer OS');
+        expect(state.result.fontFamily).toBe('Made Up Sans');
         expect(getRow('Font').classList.contains('fg-prop-engaged')).toBe(true);
-        expect(lastChange().style).toMatchObject({ fontFamily: 'Khmer OS' });
+        expect(lastChange().style).toMatchObject({
+            fontFamily: 'Made Up Sans',
+        });
         await press('Pick weight');
         expect(state.result.fontWeight).toBe('700');
         expect(lastChange().style).toMatchObject({ fontWeight: '700' });

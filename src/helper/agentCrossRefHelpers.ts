@@ -101,10 +101,10 @@ const NAMED_ENTITY_MAP: Record<string, string> = {
 
 /**
  * A theme's title as TEXT. The bundle holds it as the Reader's panel draws
- * it, sanitized HTML (`RenderAIBibleCrossReferenceComp`), and the French one
- * writes an apostrophe as `&#39;` in 56 568 of its 231 890 titles -- shown
- * as it stands in the help window, which draws text, and read so by the
- * model: a French theme title holding an escaped apostrophe (2026-10-23). Tags are dropped and
+ * it, sanitized HTML (`RenderAIBibleCrossReferenceComp`), and one language's
+ * bundle writes an apostrophe as `&#39;` in 56 568 of its 231 890 titles --
+ * shown as it stands in the help window, which draws text, and read so by the
+ * model: a theme title holding an escaped apostrophe (2026-10-23). Tags are dropped and
  * entities read, by hand: a static render must not parse HTML.
  */
 export function toPlainThemeTitle(title: string) {
@@ -122,7 +122,7 @@ export function toPlainThemeTitle(title: string) {
                 if (!Number.isFinite(code) || code <= 0 || code > 0x10ffff) {
                     return entity;
                 }
-                // The apostrophe as French writes it, like the app's own words.
+                // The typographic apostrophe, like the app's own words.
                 return code === 39 ? '’' : String.fromCodePoint(code);
             }
             return NAMED_ENTITY_MAP[body.toLowerCase()] ?? entity;

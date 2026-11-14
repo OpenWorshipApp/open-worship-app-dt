@@ -205,8 +205,8 @@ export function growLyricBoxElements(boxes: HTMLElement[]) {
     }
     // The boxes' own height, and what still scrolls past it: a script's
     // marks above and below its letters ink a few px outside the box they
-    // belong to (Khmer: the Info title's box 112px, its ink 144px), and a
-    // grown box that stopped at the boxes still clipped the subtitle's.
+    // belong to (one measured: the Info title's box 112px, its ink 144px),
+    // and a grown box that stopped at the boxes still clipped the subtitle's.
     // Twice that, because the part is centred in its box: only half of
     // what the box grows by lands under it. Plus a px, since each of the
     // three reads is rounded to a whole px.

@@ -64,7 +64,7 @@ vi.mock('./BibleKeySelectionComp', () => ({
     }) =>
         createElement(
             'button',
-            { type: 'button', onClick: () => onBibleKeyChange('en', 'fr') },
+            { type: 'button', onClick: () => onBibleKeyChange('en', 'XXV') },
             'Bible key',
         ),
 }));
@@ -210,7 +210,7 @@ describe('Bible lookup reference input', () => {
                 .find((button) => button.textContent === 'Bible key')!
                 .click(),
         );
-        expect(onBibleKeyChange).toHaveBeenCalledWith('en', 'fr');
+        expect(onBibleKeyChange).toHaveBeenCalledWith('en', 'XXV');
     });
 
     it('requires its input text context', () => {

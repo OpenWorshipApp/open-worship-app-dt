@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-mcp
-description: 'Make `tools/owa-devtools-mcp` — the MCP server the Open Worship App both SERVES and IS DRIVEN BY — safer, cheaper and better at its two jobs: driving the app for a developer/QA agent over stdio, and answering a volunteer through the in-app chatbot over HTTP. Use when asked to enhance / improve / harden / secure / speed up / slim down the MCP, the owa-devtools tools, the `owa_*` tools, the tool surface, the MCP host or its firewall; to add, sharpen, merge or prune a tool; to cut the tool-schema tokens the chatbot pays on EVERY round of EVERY question; to fix a tool that misfires, returns unusable output, or works for one caller and not the other; to review what an agent driving this app is allowed to do; or to answer "is this safe to ship to a church back room". Covers `tools/owa-devtools-mcp/*` end to end — `server.mjs` (assembly), `firewall.mjs` (the policy layer: denied tools, the destructive-action interlock, the URL allowlist, secret redaction, the rate limit), `owaTools.mjs` (the `owa_*` tools), `domMatch.mjs` (find/click/type), `guide.mjs` (walkthrough cards), `help.mjs` (knowledge search), `questions/*` (the supported-question corpus), `notify.mjs` (the "something is driving your app" banner), `host.mjs` (the in-app HTTP door), `bin.mjs`/`cdp.mjs`/`discovery.mjs` (the stdio door) — plus the app-side surface that door opens onto: `electron/aiHelpers.ts`, `electron/client/rendererLockdown.ts` and the chatbot window CSP. THE SECURITY RULE THAT BINDS EVERY CHANGE: this server drives renderers running with `nodeIntegration: true`, so a tool that can run code, load a foreign page, or read raw memory is arbitrary code execution on the operator machine, reachable by a prompt-injected model reading an attachment the user was handed — see references/threat-model.md, which carries the proven exploit and the harness that re-proves it. Every run MEASURES FIRST (scripts/probe-mcp.mjs for the policy, the chatbot skill audit-mcp-tools.mjs for the token bill), states the before/after numbers, verifies LIVE against the running app — a tool change that only typechecks is not done — and leaves the paper trail: the README tool table, CLAUDE.md Agent access and references/backlog.md MC-xx ids.'
+description: 'Make `tools/owa-devtools-mcp` — the MCP server the Open Worship App both SERVES and IS DRIVEN BY — safer, cheaper and better at its two jobs: driving the app for a developer/QA agent over stdio, and answering a volunteer through the in-app chatbot over HTTP. Use when asked to enhance / improve / harden / secure / speed up / slim down the MCP, the owa-devtools tools, the `owa_*` tools, the tool surface, the MCP host or its firewall, or the two distributions of the server outside the checkout (the npm package `open-worship-app-mcp` with its JavaScript/TypeScript API, and the MCP executable in the extra-bin pack); to add, sharpen, merge or prune a tool; to cut the tool-schema tokens the chatbot pays on EVERY round of EVERY question; to fix a tool that misfires, returns unusable output, or works for one caller and not the other; to review what an agent driving this app is allowed to do; or to answer "is this safe to ship to a church back room". Covers `tools/owa-devtools-mcp/*` end to end — `server.mjs` (assembly), `firewall.mjs` (the policy layer: denied tools, the destructive-action interlock, the URL allowlist, secret redaction, the rate limit), `owaTools.mjs` (the `owa_*` tools), `domMatch.mjs` (find/click/type), `guide.mjs` (walkthrough cards), `help.mjs` (knowledge search), `questions/*` (the supported-question corpus), `notify.mjs` (the "something is driving your app" banner), `host.mjs` (the in-app HTTP door), `bin.mjs`/`cdp.mjs`/`discovery.mjs` (the stdio door), `index.mjs`/`index.d.mts`/`stdio.mjs`/`bridge.mjs` (the public API), `extra-work/build-open-worship-app-mcp.mjs` and `extra-work/mcp-dist/*` (the npm package, the single executable, the parity check that holds them to one behaviour) — plus the app-side surface that door opens onto: `electron/aiHelpers.ts`, `electron/client/rendererLockdown.ts` and the chatbot window CSP. THE SECURITY RULE THAT BINDS EVERY CHANGE: this server drives renderers running with `nodeIntegration: true`, so a tool that can run code, load a foreign page, or read raw memory is arbitrary code execution on the operator machine, reachable by a prompt-injected model reading an attachment the user was handed — see references/threat-model.md, which carries the proven exploit and the harness that re-proves it. Every run MEASURES FIRST (scripts/probe-mcp.mjs for the policy, the chatbot skill audit-mcp-tools.mjs for the token bill), states the before/after numbers, verifies LIVE against the running app — a tool change that only typechecks is not done — and leaves the paper trail: the README tool table, CLAUDE.md Agent access and references/backlog.md MC-xx ids.'
 argument-hint: '[security | perf | tools | dx | chatbot | audit | full — or a plain description of the change]'
 ---
 
@@ -14,6 +14,13 @@ app's own `owa_*` tools, served through **two doors onto the same server**:
 | --- | --- | --- |
 | **stdio** (`bin.mjs`) | a developer's agent — Claude Code, `/owa-robot-test` | `./.mcp.json` spawns it |
 | **HTTP** (`host.mjs`) | the app's own help chatbot, and any client that would rather connect | `startMcpHost()` in `electron/aiHelpers.ts` |
+
+The stdio door also reaches an agent with no checkout, two ways — §E:
+
+| Way | Who | Made by |
+| --- | --- | --- |
+| **npm** `open-worship-app-mcp` | an agent on a machine with Node; a program using the JS/TS API | `npm run build-open-worship-app-mcp` → `../owa-mcp-dist` |
+| **executable** `mcp/open-worship-app-mcp[.exe]` | an agent on a machine with no Node (Settings → Extra Binaries → **AI agents (MCP)**, W-62) | `extra-work/build-extra-bin.mjs`, extra-bin pack 0.0.6+ |
 
 One server, two callers, four properties to hold at once:
 
@@ -64,8 +71,10 @@ Breaking one of these is a regression even when the feature works.
 3. **A tool that acts must announce itself** — `ACTING_TOOLS` in `notify.mjs`,
    or it changes the operator's window with no banner. `audit-mcp-tools.mjs`
    warns you about this.
-4. **A tool that acts must be in `firewall.mjs`'s `ACTING_TOOL_SET`** too, or
-   it is outside the rate limit and a loop can hammer a live service with it.
+4. **A tool that acts must be in `firewall.mjs`'s `ACTING_TOOL_SET`** too — or,
+   when only some of its actions act, in `ACTING_ACTION_MAP` or
+   `READING_ACTION_MAP` (`checkIsActingCall`) — or it is outside the rate limit
+   and a loop can hammer a live service with it.
    The two lists are deliberately separate — one decides what to SAY, one what
    to COUNT — so adding a tool means considering both.
 5. **Never `import()` an app module from an injected page expression.** It
@@ -81,6 +90,14 @@ Breaking one of these is a regression even when the feature works.
    `skills/` whole, into the installer, in plaintext, on every operator's disk.
    No secrets, no keys, no customer names, and keep it lean.
 9. **Anything that changes what a congregation sees is offered, never done.**
+10. **One server, two distributions, no difference** (the user, 2026-11-13:
+    _npm mcp and the single executable have to be no different
+    functionalities_). Both are staged by `stageMcpRuntimeTree` alone — a
+    runtime file is added THERE, never to one output — and the npm build's
+    parity check fails on any difference in `tools/list` or the offline
+    answers. Neither carries a credential, a binary, a git-ignored file, the
+    builder's email or home folder (the gate in `mcpRuntimeTree.mjs`), and the
+    API never hands out `mcpToken`.
 
 ## Procedure
 
@@ -136,6 +153,7 @@ operator is worse than a missing feature.
 | Anything the chatbot touches | Ask a real question in the real window, after an app restart |
 | Anything touching the guide | Start a guide and see the red ring land on the real control |
 | Host / doors | A second session still opens; the idle sweep still closes one |
+| A runtime file, a dependency, the API, `extra-work/mcp-dist/*` | `npm run build-open-worship-app-mcp -- --dry-run` passes its verify — pack, shipped tests, **clean installs** (a user's `npm install` of the tarball answering the handshake, the dist repo's own install running the tests: no repo `node_modules`), **parity**, the API from a scratch consumer (ESM, `require()`, `tsc` on `index.d.mts`); `node extra-work/build-extra-bin.mjs` ends with `hasMcp: true` |
 
 `mcp__owa-devtools__evaluate_script` fails with "DisposableStack is not
 defined" under Node 22 (memory: `evaluate-script-disposablestack`) *and* is now
@@ -158,6 +176,8 @@ body, not the exit code. It only checks, so it is safe beside the running app
 In the SAME change, whatever is true of the work:
 
 - `tools/owa-devtools-mcp/README.md` — the tool table, for any tool change.
+- `extra-work/mcp-dist/README.template.md` — the npm package's README, when
+  what an outside client does or needs changes.
 - `.claude/rules/agent-access.md` / `agent-tools.md` — anything structural: a
   door, a policy, the master switch, the tool list; and `.claude/CLAUDE.md`
   §*Agent access* when it changes a rule that holds everywhere.
@@ -247,8 +267,8 @@ server. What makes it good for them:
   and — through what the model then says — a volunteer about to be acted upon.
 - **Labels are i18n templates.** The knowledge is English, the buttons are not:
   `[en:tran:Clear Long Text]` is filled in with what that key reads as in the
-  language the app is DISPLAYING, so a `find` matches the DOM in a Khmer
-  window. `owa_tran` answers the same question for a label the model wrote.
+  language the app is DISPLAYING, so a `find` matches the DOM in a
+  translated window. `owa_tran` answers the same question for a label the model wrote.
 - **`questions/*.json` changes in the SAME commit as any recipe or UI it
   describes** (memory: `question-corpus-maintenance`).
 - **Drive what you changed.** Two of this skill's own findings — a policy that
@@ -256,7 +276,7 @@ server. What makes it good for them:
   run on Windows — were invisible from reading and obvious from one call. A
   false refusal only shows from the driving seat.
 - **29 tools are registered and withheld from the chatbot's model** (of 53,
-  2026-09-14) by
+  2026-09-14; 39 of 73 in fourteen groups by 2026-11-10) by
   `tools/owa-devtools-mcp/modelTools.mjs` — the window's own three plus
   `take_screenshot`, the uid-aimed acting group, the window openers and the
   developer instruments. That module is the choke point for pruning what the
@@ -264,6 +284,44 @@ server. What makes it good for them:
   two enforcement points the firewall has: the list is filtered AND the call is
   refused, because these tools are named in the app's own manual and a filtered
   list alone is a suggestion.
+
+### E. Outside the checkout — npm and the executable
+
+Memory `mcp-two-distributions` holds the decisions; the short form:
+
+- **What ships.** `stageMcpRuntimeTree` (`extra-work/mcp-dist/mcpRuntimeTree.mjs`)
+  lays out what the server reads at run time in the repo's own layout, so
+  `REPO_ROOT` resolves unchanged: this folder minus tests, `.d.mts` and
+  `probe-mcp.mjs`; the knowledge built fresh (`build-knowledge.mjs --out`, never
+  the repo's `electron-build/`); `docs/manual-sources/`; English's lang data and
+  every package's TEXT (no fonts, no `.gz.bundle`). The npm package adds the
+  tests that run without the app checkout, the `.d.mts`, the robot-test skill
+  and the coverage matrix.
+- **The gate, on every file of both.** Git-tracked (or untracked, not
+  ignored) text only; home paths turned to `~` in prose and refused in code or
+  data; a secret scan with the firewall's shapes and more, whose baseline
+  (`secret-fixtures.json`) holds SHA-256 prefixes of the firewall tests' made-up
+  values, never the values — read the line before adding one; the git user's
+  email refused; relative imports must resolve inside the tree and bare ones be
+  builtins or declared dependencies.
+- **The executable** (`mcpSea.mjs`) is the Node that ran the build, an
+  official nodejs.org build only (`readNodeSeaSupport`), 22.12 or later; its
+  bootstrap only loads the launcher written beside it (`MCP_LAUNCH_FILE_NAME`), which imports `bin.mjs`
+  from disk — the same code as npm. `--build-sea` where Node has it, else
+  `postject`; on macOS the copy is cleared of extended attributes (a
+  quarantined copy hung Gatekeeper) and signed ad hoc. Each OS's pack is built
+  on that OS; the build's arch picks the pack (`mac` / `mac-int`).
+- **The API** is `index.mjs`, typed by the hand-written `index.d.mts` and held
+  to it by `src/test-setup/owaMcpPublicApi.test.ts`; `index.test.mjs` holds
+  that no export leaks `mcpToken`. No top-level await, so `require()` works on
+  Node 22.12+.
+- **Versions.** npm follows the app (`2026.11.02` → `2026.11.2`, `--version`
+  overrides). The pack reaches people who installed it only when
+  `extra-work/experiment-building/info.json` goes UP; `release.sh` refuses a
+  pack without `hasMcp`.
+- **The build publishes nothing.** It writes `../owa-mcp-dist` (a `git init`
+  on the first run, only its own paths replaced after), and the person
+  publishes from there.
 
 ## What counts as an improvement
 
@@ -293,4 +351,9 @@ capability only reachable by someone who already knows the internals.
   — tool catalogue and authoring checklist.
 - [`../owa-enhance-chatbot/scripts/audit-mcp-tools.mjs`](../owa-enhance-chatbot/scripts/audit-mcp-tools.mjs)
   — the token bill.
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-163`.
+- [`../../../extra-work/build-open-worship-app-mcp.mjs`](../../../extra-work/build-open-worship-app-mcp.mjs)
+  — the npm package build and its verify (`--dry-run`, `--live=dev`);
+  `extra-work/mcp-dist/` — the shared tree, the executable, the handshake and
+  their tests.
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-178`; W-62 /
+  `ST-93` for the executable from Settings.

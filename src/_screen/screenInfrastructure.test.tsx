@@ -306,6 +306,41 @@ describe('screen infrastructure', () => {
         expect(stopwatch.divSecond.textContent).toBe('00');
     });
 
+    // 2026-11-13, the user's choice: a countdown a day or more away shows its
+    // days -- 42 days had read 1001:54:52 on the wall.
+    test('a countdown a day or more away shows its days', async () => {
+        const { default: CountdownController } =
+            await import('./managers/CountdownController');
+        const container = document.createElement('div');
+        container.className = 'foreground-countdown-container';
+        container.innerHTML =
+            '<div><span id="sign"></span><span id="day"></span>' +
+            '<div id="hour"></div><div id="minute"></div>' +
+            '<div id="second"></div></div>';
+        document.body.appendChild(container);
+        const far = new CountdownController(
+            container,
+            new Date(
+                Date.now() + (41 * 24 * 3600 + 17 * 3600 + 54 * 60 + 52) * 1000,
+            ),
+        );
+        expect(far.days).toBe(41);
+        expect(far.divDay?.textContent).toBe('41d');
+        expect(far.divHour.textContent).toBe('17');
+        expect(far.divMinute.textContent).toBe('54');
+        expect(far.divSecond.textContent).toBe('52');
+        far.stop();
+        expect(far.divDay?.textContent).toBe('');
+
+        const near = new CountdownController(
+            container,
+            new Date(Date.now() + (23 * 3600 + 59 * 60 + 59) * 1000),
+        );
+        expect(near.divDay?.textContent).toBe('');
+        expect(near.divHour.textContent).toBe('23');
+        near.dispose();
+    });
+
     test('reads screen settings, sizes media, and decorates scroll containers', async () => {
         const { screenManagerSettingNames } =
             await import('../helper/constants');
@@ -319,11 +354,11 @@ describe('screen infrastructure', () => {
             if (key === screenManagerSettingNames.FOREGROUND) {
                 return JSON.stringify({
                     1: {
-                        marqueeBottomData: { text: 'hello' },
+                        marqueeBottomDataList: [{ text: 'hello' }],
                         timeDataList: [],
                     },
                     9: {
-                        marqueeBottomData: { text: 'skip' },
+                        marqueeBottomDataList: [{ text: 'skip' }],
                         timeDataList: [],
                     },
                 });
@@ -409,7 +444,7 @@ describe('screen infrastructure', () => {
         expect(createMouseEventMock).toHaveBeenCalledWith(12, 24);
 
         expect(screenHelpers.getForegroundDataListOnScreenSetting()).toEqual({
-            1: { marqueeBottomData: { text: 'hello' }, timeDataList: [] },
+            1: { marqueeBottomDataList: [{ text: 'hello' }], timeDataList: [] },
         });
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({
             1: { type: 'color', src: '#fff' },

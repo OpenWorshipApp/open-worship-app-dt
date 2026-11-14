@@ -383,6 +383,7 @@ export default function LyricSlidesPreviewerComp() {
             </div>
             <LyricStageStyleFloatingComp
                 ownerId={ownerId}
+                songFilePath={lyricManager.filePath}
                 onChanged={handleStyleChanged}
                 genStageBuiltInCss={genStageBuiltInCss}
             />

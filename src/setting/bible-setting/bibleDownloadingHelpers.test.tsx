@@ -9,7 +9,7 @@ const { state, mocks } = vi.hoisted(() => ({
         // What the last `downloadBible` was given, so a case can play the
         // download's own callbacks.
         options: null as any,
-        bibleInfo: { locale: 'km' } as object | null,
+        bibleInfo: { locale: 'xx' } as object | null,
         isExtracted: true,
     },
     mocks: {
@@ -81,7 +81,7 @@ async function finish(error: unknown, filePath?: string) {
 
 beforeEach(async () => {
     state.options = null;
-    state.bibleInfo = { locale: 'km' };
+    state.bibleInfo = { locale: 'xx' };
     state.isExtracted = true;
     mocks.clear.mockResolvedValue(undefined);
     mocks.download.mockImplementation(({ options }: any) => {
@@ -129,7 +129,7 @@ describe('downloading a Bible', () => {
         state.options.onStart(12.789);
         expect(mocks.toast).toHaveBeenCalledWith(
             'Bible Download',
-            'Start downloading "KJV". File size 12mb',
+            'Downloading... "KJV" (12 MB)',
         );
     });
 
@@ -138,7 +138,7 @@ describe('downloading a Bible', () => {
         await finish(null, '/downloads/KJV.zip');
         expect(mocks.extract).toHaveBeenCalledWith('/downloads/KJV.zip');
         expect(mocks.getBibleInfo).toHaveBeenCalledWith('KJV', true);
-        expect(mocks.getLangDataAsync).toHaveBeenCalledWith('km');
+        expect(mocks.getLangDataAsync).toHaveBeenCalledWith('xx');
         expect(mocks.onDownloaded).toHaveBeenCalledOnce();
         expect(mocks.toast).not.toHaveBeenCalled();
         expect(container.textContent).toBe('idle');

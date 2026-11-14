@@ -6,12 +6,16 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
 import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    FILE_ERROR_TOAST_TIMEOUT,
+    toFileErrorText,
+} from '../server/fileErrorTextHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
@@ -42,6 +46,7 @@ import {
     setResourcesFolderList,
 } from './resourcesFolderHelpers';
 import type { ResourceTargetType } from './resourcesScanHelpers';
+import { RESOURCES_CHANGED_EVENT } from './resourcesChangedEvent';
 import {
     invalidateResourcesScanCache,
     toResourceMatchPatterns,
@@ -126,7 +131,7 @@ export default function ResourcesRendererComp({
     const handleRemovingFolder = useCallback(async (dirPath: string) => {
         const isOk = await showAppConfirm(
             tran('Remove Folder'),
-            `Remove "${escapeHtmlText(dirPath)}"?`,
+            `${tran('Remove')} "${escapeHtmlText(dirPath)}"?`,
             { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
         if (!isOk) {
@@ -197,9 +202,8 @@ export default function ResourcesRendererComp({
                 handleError(error);
                 showSimpleToast(
                     title,
-                    tran('Cannot copy folder') +
-                        ': ' +
-                        (error as Error).message,
+                    tran('Cannot copy folder') + ': ' + toFileErrorText(error),
+                    FILE_ERROR_TOAST_TIMEOUT,
                 );
             } finally {
                 copyingDirPathsRef.current.delete(dirPath);
@@ -324,6 +328,16 @@ export default function ResourcesRendererComp({
     );
     const handleAddingFolderRef = useAppCurrentRef(handleAddingFolder);
     const handleReloadingRef = useAppCurrentRef(handleReloading);
+    useAppEffect(() => {
+        // A study file the help window just saved (EC-464).
+        const listener = () => {
+            handleReloadingRef.current();
+        };
+        window.addEventListener(RESOURCES_CHANGED_EVENT, listener);
+        return () => {
+            window.removeEventListener(RESOURCES_CHANGED_EVENT, listener);
+        };
+    }, []);
     const handleContextMenuOpening = useCallback((event: any) => {
         const menuItems: ContextMenuItemType[] = [
             {

@@ -11,6 +11,8 @@ const h = vi.hoisted(() => ({
     settings: new Map<string, string>(),
     setSetting: vi.fn(),
     removeSetting: vi.fn(),
+    // What the panel last handed its Presets row.
+    presetsRow: null as any,
 }));
 
 vi.mock('../helper/settingHelpers', () => ({
@@ -19,15 +21,60 @@ vi.mock('../helper/settingHelpers', () => ({
     removeSetting: h.removeSetting,
 }));
 vi.mock('../helper/appHooks', async () => {
-    const { useRef } = await import('react');
+    const { useEffect, useRef } = await import('react');
     return {
         useAppCurrentRef: <T,>(value: T) => {
             const ref = useRef(value);
             ref.current = value;
             return ref;
         },
+        useAppEffect: (effect: () => void | (() => void), deps: unknown[]) => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            useEffect(effect, deps);
+        },
     };
 });
+
+// The song's own font (`songFilePath` given): its file, the file's update
+// event, and the font picker, each a stand-in the test can read or fire.
+const song = vi.hoisted(() => ({
+    stageSetting: null as { fontFamily?: string } | null,
+    setStageSetting: vi.fn(),
+    readCount: 0,
+    listeners: [] as (() => void)[],
+    unregister: vi.fn(),
+    picker: null as any,
+}));
+vi.mock('./Lyric', () => ({
+    default: {
+        getInstance: () => ({
+            getStageSetting: async () => {
+                song.readCount += 1;
+                return song.stageSetting;
+            },
+            setStageSetting: song.setStageSetting,
+        }),
+    },
+}));
+vi.mock('../helper/FileSource', () => ({
+    default: {
+        getInstance: () => ({
+            registerEventListener: (events: string[], listener: () => void) => {
+                expect(events).toEqual(['update']);
+                song.listeners.push(listener);
+                return ['registered'];
+            },
+            unregisterEventListener: song.unregister,
+        }),
+    },
+}));
+vi.mock('../others/FontFamilyControlComp', () => ({
+    default: (props: any) => {
+        song.picker = props;
+        return createElement('span', { 'data-song-font': props.fontFamily });
+    },
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
 vi.mock('../others/AppRangeComp', () => ({
     default: ({ value, title, setValue, defaultSize }: any) =>
@@ -44,8 +91,41 @@ vi.mock('../others/AppRangeComp', () => ({
         }),
 }));
 
+// The row has its own suite (`PresetsRowComp`); here only what the panel
+// hands it, each of the app's looks a button a test can press.
+vi.mock('../others/PresetsRowComp', () => ({
+    default: (props: any) => {
+        h.presetsRow = props;
+        return createElement(
+            'div',
+            { 'data-presets': props.savedSettingName },
+            ...props.builtIns.map((preset: any) => {
+                return createElement(
+                    'button',
+                    {
+                        key: preset.id,
+                        type: 'button',
+                        title: `Presets: ${preset.label}`,
+                        onClick: preset.onPick,
+                    },
+                    preset.label,
+                );
+            }),
+        );
+    },
+}));
+
 import LyricStageStyleComp, { toReadableCss } from './LyricStageStyleComp';
-import { toLyricStageStyleSettingName } from './lyricStageStyleHelpers';
+import {
+    LYRIC_STAGE_STYLE_DEFAULT,
+    toLyricStageStyleSettingName,
+    type LyricStageStyleType,
+} from './lyricStageStyleHelpers';
+import {
+    genLyricStageStylePresetPatch,
+    LYRIC_STAGE_STYLE_PRESET_LIST,
+    toLyricStageStyleSavedPreset,
+} from './lyricStageStylePresetHelpers';
 
 const MARGIN_X = 'Horizontal Margin (%)';
 const MARGIN_Y = 'Vertical Margin (%)';
@@ -528,6 +608,170 @@ describe('reset', () => {
     });
 });
 
+describe('presets', () => {
+    // A stage somebody styled by hand: a theme and rules of their own.
+    const STYLED: LyricStageStyleType = {
+        marginHorizontalPercentage: 12,
+        marginVerticalPercentage: 30,
+        isMarginLinked: false,
+        boxVerticalAlignment: 'end',
+        boxHorizontalAlignment: 'right',
+        backgroundAlphaPercentage: 80,
+        extraFontSize: 10,
+        theme: 'dark',
+        customCss: '.ol-preview-line { color: gold; }',
+    };
+
+    function getPresetButton(stage: number, label: string) {
+        return getButtonByTitle(stage, `Presets: ${label}`);
+    }
+
+    function findLook(id: string) {
+        return LYRIC_STAGE_STYLE_PRESET_LIST.find((preset) => {
+            return preset.id === id;
+        })!;
+    }
+
+    test('the row offers the four stage looks over one list for every stage', async () => {
+        await renderPanels(genPanel(2, vi.fn()));
+        expect(h.presetsRow.savedSettingName).toBe(
+            'lyric-stage-style-saved-presets',
+        );
+        expect(h.presetsRow.toSavedPreset).toBe(toLyricStageStyleSavedPreset);
+        expect(
+            h.presetsRow.builtIns.map((preset: any) => {
+                return [preset.id, preset.label];
+            }),
+        ).toEqual([
+            ['full-screen', 'Full Screen'],
+            ['center', 'Center'],
+            ['top-banner', 'Top Banner'],
+            ['bottom-banner', 'Bottom Banner'],
+        ]);
+
+        await act(async () => {
+            root.render(genPanel(4, vi.fn()));
+        });
+        expect(h.presetsRow.savedSettingName).toBe(
+            'lyric-stage-style-saved-presets',
+        );
+        // Opening a panel writes nothing.
+        expect(h.setSetting).not.toHaveBeenCalled();
+    });
+
+    test('a look is written at once and moves only the layout', async () => {
+        h.settings.set(toLyricStageStyleSettingName(2), JSON.stringify(STYLED));
+        const onChanged = vi.fn();
+        await renderPanels(genPanel(2, onChanged));
+
+        await press(getPresetButton(2, 'Bottom Banner'));
+        // No timer: a press is not a drag.
+        expect(h.setSetting).toHaveBeenCalledTimes(1);
+        expect(lastWritten(2)).toEqual({
+            ...STYLED,
+            ...genLyricStageStylePresetPatch(findLook('bottom-banner')),
+        });
+        // The stage's own theme and rules are still its own.
+        expect(lastWritten(2).theme).toBe('dark');
+        expect(lastWritten(2).customCss).toBe(STYLED.customCss);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+        // The controls show the look.
+        expect(getRange(2, MARGIN_Y).dataset.value).toBe('70');
+        expect(getLinkButton(2).getAttribute('aria-pressed')).toBe('false');
+        expect(getLitCellTitles(2)).toEqual(['Bottom center']);
+        expect(getCssBox(2).value).toBe(STYLED.customCss);
+        expect(getThemeButton(2, 'Dark').getAttribute('aria-pressed')).toBe(
+            'true',
+        );
+        // Nothing is left pending to write it a second time.
+        await advance(2000);
+        expect(h.setSetting).toHaveBeenCalledTimes(1);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    test('a look takes a drag still in flight with it, its own layout winning', async () => {
+        const onChanged = vi.fn();
+        await renderPanels(genPanel(0, onChanged));
+        await slide(0, OPACITY, 20);
+        await slide(0, FONT, 120);
+
+        await press(getPresetButton(0, 'Full Screen'));
+        expect(h.setSetting).toHaveBeenCalledTimes(1);
+        expect(lastWritten(0)).toEqual({
+            ...LYRIC_STAGE_STYLE_DEFAULT,
+            marginHorizontalPercentage: 0,
+            marginVerticalPercentage: 0,
+        });
+        // The drag's trailing write never comes back over it.
+        await advance(1000);
+        expect(h.setSetting).toHaveBeenCalledTimes(1);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+        expect(getRange(0, OPACITY).dataset.value).toBe('50');
+    });
+
+    test('css still being typed survives a look', async () => {
+        await renderPanels(genPanel(0, vi.fn()));
+        await typeCss(0, '.typed { color: red; }');
+
+        await press(getPresetButton(0, 'Top Banner'));
+        expect(lastWritten(0)).toMatchObject({
+            customCss: '.typed { color: red; }',
+            boxVerticalAlignment: 'start',
+        });
+        await advance(2000);
+        expect(lastWritten(0)).toMatchObject({
+            customCss: '.typed { color: red; }',
+            boxVerticalAlignment: 'start',
+        });
+        expect(getCssBox(0).value).toBe('.typed { color: red; }');
+    });
+
+    test('Save keeps the whole style in front, a drag not yet written included', async () => {
+        h.settings.set(toLyricStageStyleSettingName(1), JSON.stringify(STYLED));
+        await renderPanels(genPanel(1, vi.fn()));
+        await slide(1, FONT, 90);
+
+        const current = h.presetsRow.readCurrent();
+        expect(current).toEqual({ values: { ...STYLED, extraFontSize: 90 } });
+        // A copy: what Save keeps cannot change the panel, nor the panel it.
+        current.values.theme = 'light';
+        await advance(500);
+        expect(lastWritten(1)).toEqual({ ...STYLED, extraFontSize: 90 });
+        expect(h.presetsRow.readCurrent()).toEqual({
+            values: { ...STYLED, extraFontSize: 90 },
+        });
+    });
+
+    test('a saved look puts the whole record back at once', async () => {
+        const onChanged = vi.fn();
+        await renderPanels(genPanel(0, onChanged));
+        const saved = { id: 'p1', name: 'Mine', values: { ...STYLED } };
+
+        await act(async () => {
+            h.presetsRow.onSavedPick(saved);
+        });
+        expect(h.setSetting).toHaveBeenCalledTimes(1);
+        expect(lastWritten(0)).toEqual(STYLED);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+        expect(getRange(0, MARGIN_X).dataset.value).toBe('12');
+        expect(getRange(0, MARGIN_Y).dataset.value).toBe('30');
+        expect(getLinkButton(0).getAttribute('aria-pressed')).toBe('false');
+        expect(getLitCellTitles(0)).toEqual(['Bottom right']);
+        expect(getRange(0, OPACITY).dataset.value).toBe('80');
+        expect(getRange(0, FONT).dataset.value).toBe('10');
+        expect(getThemeButton(0, 'Dark').getAttribute('aria-pressed')).toBe(
+            'true',
+        );
+        expect(getCssBox(0).value).toBe(STYLED.customCss);
+
+        // The panel works on a copy: a drag afterwards leaves the list alone.
+        await slide(0, OPACITY, 10);
+        await advance(500);
+        expect(lastWritten(0).backgroundAlphaPercentage).toBe(10);
+        expect(saved.values).toEqual(STYLED);
+    });
+});
+
 test('two open panels keep their own timers, so neither write is lost', async () => {
     // A module-level timer here would let the second drag `clearTimeout` the
     // first panel's pending write — the multi-instance debounce bug class.
@@ -544,4 +788,140 @@ test('two open panels keep their own timers, so neither write is lost', async ()
     expect(lastWritten(1).marginHorizontalPercentage).toBe(9);
     expect(onChangedA).toHaveBeenCalledTimes(1);
     expect(onChangedB).toHaveBeenCalledTimes(1);
+});
+
+describe("the song's own font", () => {
+    function genSongPanel(onChanged: () => void) {
+        return createElement(LyricStageStyleComp, {
+            stage: 0,
+            onChanged,
+            songFilePath: 'C:/songs/A Song.owl',
+        });
+    }
+
+    // The box reads the song through a lazy import, so a press or an event
+    // settles once the imports have and React has drawn what they set.
+    async function settle() {
+        await act(async () => {
+            await vi.dynamicImportSettled();
+        });
+        await act(async () => {
+            await Promise.resolve();
+        });
+    }
+
+    function getShownFont() {
+        return (
+            container
+                .querySelector('[data-song-font]')
+                ?.getAttribute('data-song-font') ?? null
+        );
+    }
+
+    function getAppFontButton() {
+        return (
+            [...container.querySelectorAll('button')].find((button) => {
+                return button.textContent === 'Use the app font';
+            }) ?? null
+        );
+    }
+
+    beforeEach(() => {
+        song.stageSetting = null;
+        song.setStageSetting.mockReset();
+        song.readCount = 0;
+        song.listeners.length = 0;
+        song.unregister.mockReset();
+        song.picker = null;
+    });
+
+    test('shows the font the song carries, and Use the app font clears it', async () => {
+        song.stageSetting = { fontFamily: 'Battambang' };
+        const onChanged = vi.fn();
+        await act(async () => {
+            root.render(genSongPanel(onChanged));
+        });
+        await settle();
+        expect(getShownFont()).toBe('Battambang');
+
+        await act(async () => {
+            getAppFontButton()!.click();
+        });
+        await settle();
+        expect(song.setStageSetting).toHaveBeenCalledWith(null);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+        expect(getShownFont()).toBe('');
+        expect(getAppFontButton()).toBeNull();
+    });
+
+    test('a font picked is written to the song alone', async () => {
+        const onChanged = vi.fn();
+        await act(async () => {
+            root.render(genSongPanel(onChanged));
+        });
+        await settle();
+        await act(async () => {
+            await song.picker.setFontFamily('Moul');
+        });
+        await settle();
+        expect(song.setStageSetting).toHaveBeenCalledWith({
+            fontFamily: 'Moul',
+        });
+        expect(h.setSetting).not.toHaveBeenCalled();
+        expect(onChanged).toHaveBeenCalledTimes(1);
+        expect(getShownFont()).toBe('Moul');
+    });
+
+    // Seen live 2026-11-11: with the panel open, the song's Undo put its
+    // own font back on every stage while the picker still read the app font.
+    test('an Undo or an edit elsewhere is read again, once for a burst', async () => {
+        await act(async () => {
+            root.render(genSongPanel(vi.fn()));
+        });
+        await settle();
+        expect(getShownFont()).toBe('');
+        expect(song.listeners).toHaveLength(1);
+        const readsBefore = song.readCount;
+
+        song.stageSetting = { fontFamily: 'Battambang' };
+        act(() => {
+            song.listeners[0]();
+            song.listeners[0]();
+            song.listeners[0]();
+        });
+        await advance(499);
+        expect(song.readCount).toBe(readsBefore);
+        await advance(1);
+        await settle();
+        expect(song.readCount).toBe(readsBefore + 1);
+        expect(getShownFont()).toBe('Battambang');
+        expect(getAppFontButton()).not.toBeNull();
+    });
+
+    test('closing the panel stops listening to the song', async () => {
+        await act(async () => {
+            root.render(genSongPanel(vi.fn()));
+        });
+        await settle();
+        expect(song.listeners).toHaveLength(1);
+        await act(async () => {
+            root.render(createElement('div'));
+        });
+        expect(song.unregister).toHaveBeenCalledWith(['registered']);
+    });
+
+    test('a panel with no song shows no song font and reads nothing', async () => {
+        await act(async () => {
+            root.render(
+                createElement(LyricStageStyleComp, {
+                    stage: 0,
+                    onChanged: vi.fn(),
+                }),
+            );
+        });
+        await settle();
+        expect(getShownFont()).toBeNull();
+        expect(song.readCount).toBe(0);
+        expect(song.listeners).toHaveLength(0);
+    });
 });

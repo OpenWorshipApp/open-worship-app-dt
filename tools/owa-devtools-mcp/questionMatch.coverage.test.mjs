@@ -125,6 +125,25 @@ describe('toEnglishTemplateAsk', () => {
     ];
     expect(toEnglishTemplateAsk(`${LOCAL_IMPORT_SONG} ✦`, rows)).toBeNull();
   });
+
+  // EC-563: the verse row's gap took "the time", and the clock went up as
+  // words. A reference gap is filled only by words with a number in them.
+  it('fills a reference gap only with words that carry a number', () => {
+    const rows = [
+      {
+        isTemplate: true,
+        text: '⇡ John 3:16 ⇣',
+        textEn: 'Put John 3:16 on the screen',
+      },
+    ];
+    expect(toEnglishTemplateAsk('⇡ the time ⇣', rows)).toBeNull();
+    expect(toEnglishTemplateAsk('⇡ Psalm 23 ⇣', rows)).toBe(
+      'Put Psalm 23 on the screen',
+    );
+    expect(toEnglishTemplateAsk('⇡ Romans 8:28 ⇣', rows)).toBe(
+      'Put Romans 8:28 on the screen',
+    );
+  });
 });
 
 // A question typed in a script without spaces is in each package's tests.

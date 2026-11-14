@@ -21,6 +21,7 @@ import { useAppCurrentRef, useAppEffect } from '../../../helper/appHooks';
 import { registerPendingEditFlusher } from '../../../editing-manager/pendingEditFlushHelpers';
 import { useCanvasControllerEvents } from '../canvasEventHelpers';
 import CanvasItemTransitionComp from './CanvasItemTransitionComp';
+import CanvasItemPresetsComp from './CanvasItemPresetsComp';
 
 export default function CanvasItemPropsEditorComp({
     canvasItem,
@@ -173,6 +174,20 @@ export default function CanvasItemPropsEditorComp({
                             </div>
                         ) : (
                             <CanvasItemContext value={canvasItem}>
+                                {canvasItem.type === 'error' ? null : (
+                                    <div
+                                        // The first row, across the panel:
+                                        // a whole look a press, and every
+                                        // row under it is what it set.
+                                        className="pb-1"
+                                        style={{
+                                            flexBasis: '100%',
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        <CanvasItemPresetsComp />
+                                    </div>
+                                )}
                                 <div style={{ flexBasis: '100%', minWidth: 0 }}>
                                     <CanvasItemTransitionComp />
                                 </div>

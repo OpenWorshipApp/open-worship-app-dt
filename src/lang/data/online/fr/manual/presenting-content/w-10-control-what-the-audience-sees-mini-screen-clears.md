@@ -3,7 +3,7 @@ id: W-10
 title: "Contrôler ce que voit l'assemblée (mini-écran + effacements)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 6f92badb1023ce4d
+translatedFrom: ea84574304edda0a
 ---
 # W-10 — Contrôler ce que voit l'assemblée (mini-écran + effacements)
 
@@ -73,3 +73,13 @@ translatedFrom: 6f92badb1023ce4d
   au-dessus de 0 règle aussi sa transition **[en:tran:Slide]:** sur **aucune**, et une note dans le coin le signale ; vous pouvez en choisir une autre
   ensuite, et revenir à la scène 0 laisse la transition telle quelle. La transition propre d'un document
   ou d'une diapositive (W-48) l'emporte toujours sur elle.
+- **Dessiner ou mettre un spot sur l'écran** (pied, le pinceau — **[en:tran:Drawing]**) : appuyez dessus
+  pour dessiner sur cet écran ; ses réglages s'ouvrent dans une bande sous la carte. Son **⋮**
+  (**[en:tran:Choose Drawing or Focusing]**) le transforme en **[en:tran:Focusing]**, un spot
+  qui assombrit le reste ; appuyez de nouveau sur le bouton allumé pour arrêter l'un ou l'autre.
+  La bande s'ouvre sur **[en:tran:Presets]** : **[en:tran:Highlight]** (un surligneur jaune
+  transparent), **[en:tran:Underline]** et **[en:tran:Bold]** pour le pinceau, **[en:tran:Haze]**
+  (léger), **[en:tran:Strong]** (sombre) et **[en:tran:Halo]** (large) pour le spot.
+  **[en:tran:Save as Preset]** garde le style actuel ; faites un clic droit sur un préréglage
+  enregistré pour le renommer, le remplacer ou le supprimer. Tous les écrans et le Contrôle de
+  présentation (W-19) partagent ceux que vous avez enregistrés. 📸

@@ -20,7 +20,8 @@ measured without restarting the operator's app (the in-app host caches
 
 **`--ratchet` is the thing that makes this table binding** (`MC-14`, 2026-09-17).
 It exits 1 when the MODEL's bill crosses `MODEL_TOKEN_CEILING`, recorded in the
-script at **8 350** since `MC-50` (2026-10-10, against a measured 8 273; it
+script at **8 480** since 2026-11-09 (against a measured 8 478, `owa_foreground`
+learning every component; 8 350 from `MC-50`, 2026-10-10, against a measured 8 273; it
 was 7 800 before that (`EC-196`), and 7 450 against a measured 7 253 after
 being lowered from 8 200 on 2026-09-18, when `MC-07`'s cut would otherwise have left ~950 tokens of room
 nobody chose to spend) — one small tool of headroom, not a budget to spend down to. The
@@ -51,6 +52,7 @@ that matters for a question is the model's. The audit reports both.
 | 2026-09-18, `MC-07` — the descriptions cut, two contradictions out | 53 (27 owa) / ~12 863 | 24 / **~7 253** | ~72 530 |
 | 2026-10-09, baseline before `MC-50` (`owa_bible_xml` and drift since) | 54 (28 owa) / ~13 399 | 25 / ~7 789 | ~77 890 |
 | 2026-10-10, `MC-50` — `owa_presenting_flow`, `owa_click` `button`/`clicks`; `owa_press_key`, `owa_drag`, `owa_menu` withheld | 60 (34 owa) / ~15 243 | 26 / **~8 316** | ~83 160 |
+| 2026-11-09, `owa_foreground` learns every component, the panel's own look and a verse `ref` (+136); `owa_foreground_edit` (~780) to a foreground ask alone | — | 26 / **~8 478** | ~84 780 |
 
 Each of those last two rows is what one deliberate addition costs, paid by
 every volunteer whether or not they ever ask about a web page or a song:
@@ -120,7 +122,7 @@ after an edit (memory: `mcp-tool-edit-two-processes`).
 
 ### 1. Fewer tools
 
-29 of the 67 the chatbot's door registers are chrome-devtools', and the chatbot's model cannot usefully
+32 of the 76 the chatbot's door turns on are chrome-devtools', and the chatbot's model cannot usefully
 drive most of them. Three are already gone: the firewall's denials remove
 `evaluate_script`, `take_heapsnapshot` and `upload_file` from the list for both
 callers, worth ~668 tokens/round.
@@ -129,7 +131,7 @@ The cut that does **not** take anything from the developer is
 `tools/owa-devtools-mcp/modelTools.mjs`: it filters what the MODEL sees while
 the server keeps serving everything. `MC-06` took it from 3 names to 19 —
 −3 217 tokens/round, −32 170 on a worst-case question — and the groups it
-withholds (thirteen now) are documented in that file next to the reason each gets told.
+withholds (fourteen now) are documented in that file next to the reason each gets told.
 
 Two lessons from doing it, both worth more than the tokens:
 
@@ -171,7 +173,7 @@ one will do.
 
 The biggest now (2026-10-29, `--stdio`) are `owa_slide_file` (~639, mostly its `items` schema — the
 cost of editing a text box's style), `owa_guide_start` (~573) and
-`owa_foreground` (~445).
+`owa_foreground` (~445; ~581 since 2026-11-09).
 
 ### 3. Fewer rounds
 
@@ -227,7 +229,7 @@ Ask, in this order:
 4. Does the model actually reach for it, or is it a tool for a case you
    imagined? A tool nothing calls is worse than no tool.
 5. Does it have to reach the MODEL, or only the developer? `modelTools.mjs`
-   withholds 35 of the 64 the chatbot's door lists and costs the developer nothing.
+   withholds 39 of the 73 the chatbot's door lists and costs the developer nothing.
 
 Then run `--ratchet`. If it fails, either the tool is worth raising
 `MODEL_TOKEN_CEILING` for — say so in the same change — or it is not.

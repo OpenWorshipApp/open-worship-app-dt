@@ -33,8 +33,8 @@ export function genNoConnectionMessage() {
 /**
  * A record's name, with its English one beside it.
  *
- * Records are written in the lookup language, and a list of eight Khmer names
- * that all begin the same way is not something anyone can pick from — the
+ * Records are written in the lookup language, and a list of eight translated
+ * names that all begin the same way is not something anyone can pick from — the
  * lookup list and the graph boxes both show `<the name> (David)` for exactly
  * that reason, so the picker has to as well.
  *

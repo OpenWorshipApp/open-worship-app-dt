@@ -1,0 +1,57 @@
+// The light theme's own values, kept in one place: `theme-override-light.scss`
+// gives them to every light window, and a sheet that has to show the light
+// theme inside a dark window -- the Markdown Preview's print, which is always
+// light -- takes the same ones, so the two can never drift apart.
+
+// See the matching block in `theme-override-dark.scss` for why the app keeps
+// its semantics under `--app-*` instead of overriding open-lyric's `:root`
+// tokens: those are the plugin's LIGHT slide palette and are correct as-is.
+@mixin app-light-theme-tokens {
+  --app-ink: #212529;
+  --app-muted: #495057;
+  --app-line: #ced4da;
+  --app-surface: #ffffff;
+
+  --app-accent: #0f766e;
+  --app-accent-halo: #0f766e33;
+
+  // THE reserved hue -- on-air only. See the dark theme for the full note.
+  --app-on-air: #a3007f;
+  --app-on-air-halo: #a3007f40;
+
+  --app-color-presenter: #212529;
+  --app-color-reader: #212529;
+  --app-yellow-green: rgb(118, 178, 0);
+
+  // #6c757d is 3.79:1 on gray-200; #495057 is 6.3:1.
+  --bs-secondary-color: #495057;
+}
+
+// Every property Bootstrap's CSS gives a different value under
+// `[data-bs-theme=dark]` (bootstrap.css). Its light values are on `:root`,
+// and `<html>` carries no theme, so `inherit` reads them back.
+// `themeLightTokens.test.ts` holds this list to Bootstrap's.
+$bootstrap-dark-properties: body-color body-color-rgb body-bg body-bg-rgb
+  emphasis-color emphasis-color-rgb secondary-color secondary-color-rgb
+  secondary-bg secondary-bg-rgb tertiary-color tertiary-color-rgb tertiary-bg
+  tertiary-bg-rgb primary-text-emphasis secondary-text-emphasis
+  success-text-emphasis info-text-emphasis warning-text-emphasis
+  danger-text-emphasis light-text-emphasis dark-text-emphasis primary-bg-subtle
+  secondary-bg-subtle success-bg-subtle info-bg-subtle warning-bg-subtle
+  danger-bg-subtle light-bg-subtle dark-bg-subtle primary-border-subtle
+  secondary-border-subtle success-border-subtle info-border-subtle
+  warning-border-subtle danger-border-subtle light-border-subtle
+  dark-border-subtle heading-color link-color link-hover-color link-color-rgb
+  link-hover-color-rgb code-color highlight-color highlight-bg border-color
+  border-color-translucent form-valid-color form-valid-border-color
+  form-invalid-color form-invalid-border-color;
+
+// The light theme on an element whose window is dark: Bootstrap's values
+// back to its light ones, then the app's own light tokens.
+@mixin app-light-theme-in-dark {
+  color-scheme: light;
+  @each $name in $bootstrap-dark-properties {
+    --bs-#{$name}: inherit;
+  }
+  @include app-light-theme-tokens;
+}

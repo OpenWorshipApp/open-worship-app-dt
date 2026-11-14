@@ -11,5 +11,8 @@
     ],
     "languageAliases": {
         "greece": "greek"
+    },
+    "catalogLanguageCodes": {
+        "el": "ell"
     }
 }

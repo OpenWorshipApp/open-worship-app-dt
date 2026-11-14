@@ -7,7 +7,7 @@
 // (no answer landed in another tab), and how the waiting grows with K.
 //
 //   node stress-tabs.mjs --server="Ollam super-mac" --model="gemma4:cloud" \
-//        [--lang=km] [--tabs=4] [--waves=5] [--timeout=420] [--out=<file>]
+//        [--lang=<code>] [--tabs=4] [--waves=5] [--timeout=420] [--out=<file>]
 //        [--allow-more]
 //
 // The questions are the corpus's Presenter rows that need nothing on screen

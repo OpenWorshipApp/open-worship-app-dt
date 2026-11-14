@@ -118,7 +118,7 @@ describe('getCrossRefs (OpenAI)', () => {
         );
         expect(h.showSimpleToast).toHaveBeenCalledWith(
             'Cross References',
-            expect.stringContaining('check your OpenAI API Key'),
+            'Check your OpenAI API key and the internet connection.',
         );
         expect(h.handleError).toHaveBeenCalledWith(error);
     });

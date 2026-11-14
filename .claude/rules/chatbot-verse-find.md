@@ -79,14 +79,23 @@ window as a whole — tabs, pickers, its language, the caution — is in
   the open Bible names no such book by every language package's own names,
   `listLangBibleBookNames` -- `EC-461`: _Résume Matthieu 18_ with the KJV
   open had gone to the ordinary assistant), or a
-  Resources file by name (`MAT.18.pdf`) -- and not a how-to or the app's own
+  Resources file by name (`MAT.18.pdf`) -- and not a how-to, a study file asked for (`readStudyFileAsk`, `chatbot-llm.md`) or the app's own
   work, is a `bible-reader` ask: the names lookup, the Resources reader and the verse
   reader are offered together (`AskExtraType.bibleReader`) -- and, since
   2026-11-08, `owa_bible_note` to MAKE a note of what they read
   (`chatbot-llm.md`, a NEW note) -- the installed
   Bibles are read once so a Khmer ask is quoted from the Khmer Bible, and
   the answer is marked `isBibleReaderAnswer` so the next plain line ("and
-  chapter 5?") stays in the conversation. The cue words are DATA
+  chapter 5?") stays in the conversation. An English question keeps the
+  Lookup's Bible, whatever its language: it is what they are reading. **When
+  that Bible is not in the language the model answers in, the ask says so**
+  (2026-11-11, `EC-495`, `toBibleReaderAnswerLanguage`): _Answer in
+  English, quoting that Bible's words as they read._ English in an English
+  app carries no language line, and with the Lookup on a Khmer Bible,
+  gemma4:cloud explained John 3:16 in Khmer to an English question, 2 asks
+  of 2. After the change, 2 of 2 were in English with the Khmer verse quoted
+  (gemma4:cloud, and Gemma 4 31b on a Retry). An ask whose Bible is in the
+  answer's language is unchanged, byte for byte. The cue words are DATA
   (`bibleReaderWords` in `assistant.json`); English reads in code. A
   **Presenter** tab is left alone -- it keeps `owa_present_bible` -- so
   "show John 3:16" on a projector still puts it up. Under a Resources
@@ -104,7 +113,8 @@ window as a whole — tabs, pickers, its language, the caution — is in
   auto-complete_). `useBibleInputSuggestions` (`ChatbotAppComp.tsx`) calls
   the hidden `owa_bible_suggest` on a **350 ms debounce per window**, for a
   passage box (a Reader tab, or a `lookupAwaits` line) and a name
-  (`Who was …`, every language's `nameAsk`, a bare non-Latin name); a bare
+  (`Who was …`, every language's `nameAsk`, a bare non-Latin name in a
+  Reader tab -- off it a bare word is a command, `EC-587`); a bare
   Latin word is only searched against a dataset a lookup panel already holds,
   so nothing fetches the 34MB speculatively. The rows sit first in the one
   suggestion list and are DATA (`isData`: drawn untranslated); choosing one
@@ -156,8 +166,10 @@ window as a whole — tabs, pickers, its language, the caution — is in
   (key + ref, read again at the press, `toVerseFindCarry`). A Bible picked
   with verses quotes them from itself by `refs`, no model
   (`genVersesInBibleAnswer`); with words alone the window asks the one line
-  for them (`toVerseFindSearchAgainAsk`, echoed as the pick), so the head
-  start, the assistant and the window's own search all run. Either way the
+  for them (`toVerseFindSearchAgainAsk`, echoed as the pick -- a step's
+  press, so no **Retry** under its answer, which had asked the pick's words,
+  `EC-507`), so the head start, the assistant and the window's own search
+  all run. Either way the
   tab searches the new Bible from then on; with no other Bible the answer
   offers the import. **Nothing found** -- no verse the answer
   names, or the guide's own search empty -- ends with a Google link written

@@ -66,8 +66,8 @@ export function useDownloadBible(
                     const fileSize = Number.parseInt(total.toFixed(2));
                     showSimpleToast(
                         tran(BIBLE_DOWNLOAD_TOAST_TITLE),
-                        `Start downloading "${bibleInfo.key}". ` +
-                            `File size ${fileSize}mb`,
+                        `${tran('Downloading...')} "${bibleInfo.key}" ` +
+                            `(${fileSize} MB)`,
                     );
                 },
                 onProgress: (percentage) => {

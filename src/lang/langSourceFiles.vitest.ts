@@ -46,7 +46,11 @@ const INLINE_FILE_MAP = import.meta.glob<unknown>(
     { eager: true, import: 'default' },
 );
 const LAZY_FILE_LOADER_MAP = import.meta.glob<unknown>(
-    ['./data/online/*/bibleBooks.json', './data/online/*/questions.json'],
+    [
+        './data/online/*/bibleBooks.json',
+        './data/online/*/questions.json',
+        './data/online/*/churchWords.json',
+    ],
     { import: 'default' },
 );
 

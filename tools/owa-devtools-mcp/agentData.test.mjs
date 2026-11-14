@@ -10,6 +10,7 @@ import {
     AGENT_UNDO_TEXT,
     formatAgentDataResult,
     genAgentDataExpression,
+    toUndoAction,
 } from './agentData.mjs';
 import { AGENT_FILE_ACTIONS, AGENT_SLIDE_ACTIONS } from './agentFile.mjs';
 import { LYRIC_EDIT_ACTIONS } from './openLyricEdit.mjs';
@@ -80,6 +81,23 @@ describe('formatAgentDataResult', () => {
         for (const value of [undefined, null, 'x', 42]) {
             expect(formatAgentDataResult(value).isError).toBe(true);
         }
+    });
+});
+
+// EC-615: asked _Undo that_, the shared gemma4:cloud sent the id alone,
+// five times running.
+describe('toUndoAction', () => {
+    it('reads an id with no action as an undo, nothing as the list', () => {
+        expect(toUndoAction({ id: '20261114-044317690-lw9u' })).toBe('undo');
+        expect(toUndoAction({ id: '  ' })).toBe('list');
+        expect(toUndoAction({})).toBe('list');
+        expect(toUndoAction(undefined)).toBe('list');
+    });
+
+    it('keeps an action that was sent, to be judged as sent', () => {
+        expect(toUndoAction({ action: 'list', id: 'x' })).toBe('list');
+        expect(toUndoAction({ action: 'undo' })).toBe('undo');
+        expect(toUndoAction({ action: 'redo', id: 'x' })).toBe('redo');
     });
 });
 

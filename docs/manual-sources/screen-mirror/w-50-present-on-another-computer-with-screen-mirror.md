@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-25, SP-26, SP-27, SP-28, SP-29, SP-32]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-50 — Present on another computer with Screen Mirror
 
@@ -32,9 +32,12 @@ internet once the host opens to it (step 7).
    with the address written beneath it, to send to whoever sets up the guest.
 2. On the guest, open the **[en:tran:Screen Mirror]** page. It has no app
    header, only a top bar: **[en:tran:Presenter]** at its left goes back, and
-   the cup at its right is **[en:tran:Stay Awake]** — on unless you switch it
-   off, it keeps this computer from sleeping for as long as the page is
-   open, which is what a computer standing in for a projector needs. The page
+   at its right are the Presenter header's own buttons. The cup is
+   **[en:tran:Stay Awake]** — on unless you switch it off, it keeps this
+   computer from sleeping for as long as the page is open, which is what a
+   computer standing in for a projector needs — then the gear for Settings,
+   the 🤖 **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** and
+   **[en:tran:Help]**. The 🤖 opened here answers about this page. The page
    looks for hosts as it opens, listing them under
    **[en:tran:Hosts on this network]**; **[en:tran:Rescan]** looks again.
    The scan asks on every network this computer is on, at every port from
@@ -56,6 +59,13 @@ internet once the host opens to it (step 7).
    as it was. In approval mode the guest reads
    **[en:tran:Waiting for host approval]** while the host clicks
    **[en:tran:Allow connection]** in the floating panel.
+   **When no host is listed**, the list reads
+   **[en:tran:No host found. Open the app on the host and check that both computers are on the same network.]**
+   A host can be found only once its **[en:tran:Let other computers connect]**
+   is on (step 1), and the scan reaches only the networks this computer is
+   on: check both, then click **[en:tran:Rescan]**. A host on another network
+   is reached by typing its address under **[en:tran:Connect by address]**,
+   once that host is open to the internet (step 7).
 3. The guest reads **[en:tran:Connected]**, and under
    **[en:tran:This computer]** its monitors carry the prefix the host knows
    it by, such as a1 — the name to pick in the host's display picker. The
@@ -134,5 +144,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-25` · `SP-26` · `SP-27` · `SP-28` · `SP-29` · `SP-32`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

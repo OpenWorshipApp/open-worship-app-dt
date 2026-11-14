@@ -96,9 +96,10 @@ export default function ResourcesFileRowComp({
     const isNotesShowingRef = useAppCurrentRef(isNotesShowing);
     const isPdfRef = useAppCurrentRef(isPdf);
     // The 🤖: a file the assistant can be HANDED -- a PDF's pages, a
-    // picture, a note's words, a text file -- and only while AI is on, as
-    // the toolbar's own 🤖 goes with the switch. Never on a file the help
-    // window would then refuse (a `.docx`, a video).
+    // picture, a note's words, a text file, a Word or PowerPoint file's
+    // words -- and only while AI is on, as the toolbar's own 🤖 goes with
+    // the switch. Never on a file the help window would then refuse (a
+    // video).
     const canAskAbout =
         getIsAIEnabled() && checkCanAttachFileName(fileFullName);
     useAppEffect(() => {
@@ -126,18 +127,28 @@ export default function ResourcesFileRowComp({
         appProvider.systemUtils.openFile(filePathRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handlePreviewing = useCallback(async () => {
+    // `isAnother`: the row's own press opens one more window on the file
+    // every time, as a Bible note's Open does, so two parts of it can be read
+    // side by side (2026-11-10); the 🤖 brings forward one already open.
+    const handlePreviewing = useCallback(async (isAnother: boolean) => {
         // Loaded at the press: the lookup panel carries no window helpers for
         // a file nobody opens.
         const { openMarkdownPreview } =
             await import('./resourcePreviewOpenHelpers');
-        openMarkdownPreview(filePathRef.current);
+        openMarkdownPreview(filePathRef.current, { isAnother });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handlePdfPreviewing = useCallback(async () => {
+    const handlePdfPreviewing = useCallback(async (isAnother: boolean) => {
         // Loaded at the press, like the markdown preview above.
         const { openPdfPreview } = await import('../helper/pdfPreviewHelpers');
-        openPdfPreview(filePathRef.current);
+        openPdfPreview(filePathRef.current, { isAnother });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleCopyingToBibleNotes = useCallback(async () => {
+        // Loaded at the press, like the previews above.
+        const { copyResourceToBibleNotes } =
+            await import('./resourceBibleNotesCopyHelpers');
+        await copyResourceToBibleNotes(filePathRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleClicking = useCallback(async () => {
@@ -146,13 +157,13 @@ export default function ResourcesFileRowComp({
             return;
         }
         if (previewKindRef.current === 'markdown') {
-            await handlePreviewing();
+            await handlePreviewing(true);
             return;
         }
         // The app's own viewer rather than whatever the machine opens a PDF
         // with; the menu keeps Open for that.
         if (isPdfRef.current) {
-            await handlePdfPreviewing();
+            await handlePdfPreviewing(true);
             return;
         }
         if (!isLinksCandidateRef.current) {
@@ -200,11 +211,34 @@ export default function ResourcesFileRowComp({
                       pathBasename(filePathRef.current),
                       getReadingPaneListRef.current(),
                   );
+        // A file the app shows in a window of its own opens there first, as
+        // a Bible note's own window does, once the assistant's two questions
+        // are answered -- and stays over the main window while the chat is
+        // on it (2026-11-10, the user, this 🤖 circled: _like bible note I
+        // want behavior of during attached to chatbot the window have to be
+        // on top of main window_; `electron/windowOnTopHelpers.ts`). A window
+        // already open on the file, whichever press opened it, is the one
+        // brought forward: the chat works in it, and a second 🤖 adds none.
+        const openOwnWindow =
+            previewKindRef.current === 'markdown'
+                ? () => handlePreviewing(false)
+                : isPdfRef.current
+                  ? () => handlePdfPreviewing(false)
+                  : null;
         // Loaded at the press: the dialogs the assistant asks first and the
         // window opener are nothing a shelf of rows needs until then.
         const { openChatbotWithFile } =
             await import('../helper/ai/chatbotHandoffHelpers');
-        await openChatbotWithFile(filePathRef.current, reading);
+        if (openOwnWindow === null) {
+            await openChatbotWithFile(filePathRef.current, reading);
+            return;
+        }
+        await openChatbotWithFile(
+            filePathRef.current,
+            reading,
+            null,
+            openOwnWindow,
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const canAskAboutRef = useAppCurrentRef(canAskAbout);
@@ -224,7 +258,7 @@ export default function ResourcesFileRowComp({
                 childBefore: genContextMenuItemIcon('eye'),
                 menuElement: tran('Preview'),
                 onSelect: () => {
-                    void handlePreviewing();
+                    void handlePreviewing(true);
                 },
             });
         }
@@ -235,7 +269,7 @@ export default function ResourcesFileRowComp({
                 childBefore: genContextMenuItemIcon('file-earmark-pdf'),
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
-                    void handlePdfPreviewing();
+                    void handlePdfPreviewing(true);
                 },
             });
         }
@@ -250,6 +284,19 @@ export default function ResourcesFileRowComp({
                 menuElement: tran('Open'),
                 onSelect: () => {
                     handleOpening();
+                },
+            });
+        }
+        // A Markdown study kept in Bible Notes too, where its list draws it
+        // as one of its own rows (2026-11-13, the user: _context menu of
+        // markdown study file should have `Copy to Bible-Note` to copy the
+        // file to bible note area_).
+        if (previewKindRef.current === 'markdown') {
+            menuItems.push({
+                childBefore: genContextMenuItemIcon('journal-arrow-down'),
+                menuElement: tran('Copy to Bible Notes'),
+                onSelect: () => {
+                    void handleCopyingToBibleNotes();
                 },
             });
         }

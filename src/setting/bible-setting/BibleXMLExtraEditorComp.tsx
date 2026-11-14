@@ -25,7 +25,7 @@ async function handleSaving(bibleKey: string, newJsonData: BibleXMLExtraType) {
     if (!xmlBibleData) {
         showSimpleToast(
             tran('Saving Bible Data'),
-            `Bible Data not found for key ${bibleKey}`,
+            `${tran('Bible XML data not found')}: "${bibleKey}"`,
         );
         return;
     }
@@ -66,7 +66,7 @@ export default function BibleXMLExtraEditorComp({
         if (newJsonData.bibleKey !== bibleKeyRef.current) {
             showSimpleToast(
                 tran('Saving Bible Data'),
-                `Invalid Bible Key ${newJsonData.bibleKey}`,
+                `${tran('Invalid Bible key')}: ${newJsonData.bibleKey}`,
             );
             return;
         }

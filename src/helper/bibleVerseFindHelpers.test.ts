@@ -24,6 +24,12 @@ import {
     toNeededHits,
     toPassageRunName,
     toPassageRuns,
+    toReadPassageTextLimit,
+    findNamedPassageRef,
+    findVersesBeforeRef,
+    pickVersesBeforePassage,
+    splitChapterSpan,
+    toLastVersesRead,
     toTermWeight,
     toVerseKey,
     withExactCounts,
@@ -146,10 +152,16 @@ describe('words, not letters that meet across a space', () => {
         expect(toEnglishStem('his')).toBe('his');
     });
 
-    it('reads Khmer and its neighbours run together', () => {
+    // Written without spaces is a property of the SCRIPT, whatever the
+    // language: a made-up language in a script that has no spaces reads run
+    // together, in a Latin one apart. A language's own case is its
+    // package's test.
+    it('reads a script written without spaces run together', () => {
         expect(checkIsSpacedLocale('en-US')).toBe(true);
-        expect(checkIsSpacedLocale('fr')).toBe(true);
-        expect(checkIsSpacedLocale('km-KH')).toBe(false);
+        expect(checkIsSpacedLocale('xx-Latn')).toBe(true);
+        expect(checkIsSpacedLocale('xx')).toBe(true);
+        expect(checkIsSpacedLocale('xx-Thai')).toBe(false);
+        expect(checkIsSpacedLocale('xx_Hans')).toBe(false);
         expect(checkIsSpacedLocale('th')).toBe(false);
     });
 });
@@ -176,6 +188,168 @@ describe('a found row', () => {
         expect(cut.length).toBeLessThanOrEqual(21);
         expect(cut.endsWith('…')).toBe(true);
         expect(cutFoundText('  short\n verse ')).toBe('short verse');
+    });
+
+    // BN-86 (2026-11-11): a passage read by its reference is given whole,
+    // within letters its call shares -- never a found verse's 300.
+    it('gives a passage read by its reference the letters its call shares', () => {
+        expect(toReadPassageTextLimit(1)).toBe(6000);
+        expect(toReadPassageTextLimit(2)).toBe(3000);
+        expect(toReadPassageTextLimit(8)).toBe(750);
+        // Never below a found verse's line; nothing read is one.
+        expect(toReadPassageTextLimit(40)).toBe(300);
+        expect(toReadPassageTextLimit(0)).toBe(6000);
+    });
+
+    // BN-89 (2026-11-11): read with a new lesson's passage, for its
+    // background -- "the simple faith of women" had been made up for Luke 10.
+    it('names the verses just before one passage', () => {
+        expect(findVersesBeforeRef('Luke 10:25-37')).toBe('Luke 10:15-24');
+        expect(findVersesBeforeRef('John 3:16')).toBe('John 3:6-15');
+        expect(findVersesBeforeRef('Philippians 4:4-13')).toBe(
+            'Philippians 4:1-3',
+        );
+        expect(findVersesBeforeRef('Matthew 18:2-5')).toBe('Matthew 18:1');
+        // A passage starting a chapter, or a whole one: the chapter before.
+        expect(findVersesBeforeRef('1 Samuel 17:1-58')).toBe('1 Samuel 16');
+        expect(findVersesBeforeRef('(KJV) Revelation 21:1-7')).toBe(
+            'Revelation 20',
+        );
+        // A list, a range over chapters, the first chapter's start, words.
+        for (const refs of [
+            'Jonah 1:1-4, 1:17',
+            'Luke 10:25-37; John 3:16',
+            'Jonah 1:17-2:10',
+            'Genesis 1:1-5',
+            'the good shepherd',
+        ]) {
+            expect(findVersesBeforeRef(refs), refs).toBe(null);
+        }
+    });
+
+    // BN-100 (2026-11-11): the chapter before a passage that starts one is
+    // kept to its last verses -- read whole it was cut from its END.
+    it('keeps the last verses of a chapter read whole, or names them', () => {
+        const chapter = Array.from({ length: 12 }, (_, index) => {
+            return `(${index + 1}): v${index + 1}`;
+        }).join(' ');
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 14:1-12', ref: 'Luke 14:1-12', text: chapter },
+                10,
+            ),
+        ).toEqual({
+            entry: {
+                key: 'LUK 14:3-12',
+                ref: 'Luke 14:3-12',
+                text: chapter.slice(chapter.indexOf('(3): ')),
+            },
+        });
+        // Cut before its end: the last ten are read on their own.
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 14:1-35', ref: 'Luke 14:1-35', text: '(1): a…' },
+                10,
+            ),
+        ).toEqual({ ref: 'Luke 14:26-35' });
+        // Ten or fewer, or no range: nothing to cut.
+        expect(
+            toLastVersesRead(
+                { key: 'LUK 10:15-24', ref: 'Luke 10:15-24', text: '(15): x' },
+                10,
+            ),
+        ).toBe(null);
+        expect(toLastVersesRead(null, 10)).toBe(null);
+    });
+
+    // BN-99 (2026-11-11): a passage over chapters, read as one reference,
+    // came back as one verse of its first chapter.
+    it('reads a passage written over chapters, and only that', () => {
+        expect(splitChapterSpan('Revelation 20:11-21:7')).toEqual({
+            book: 'Revelation',
+            fromChapter: 20,
+            fromVerse: 11,
+            toChapter: 21,
+            toVerse: 7,
+        });
+        expect(splitChapterSpan('1 Samuel 16:23 - 17:58')?.book).toBe(
+            '1 Samuel',
+        );
+        for (const ref of [
+            'Revelation 21:1-7',
+            'Revelation 21:7-20:11',
+            'Genesis 1:1-50:26',
+            'John 3',
+            'Revelation 20:11-21',
+        ]) {
+            expect(splitChapterSpan(ref), ref).toBe(null);
+        }
+    });
+
+    // BN-96 (2026-11-11): read before Psalms 23, 46 and 51, Psalms 22, 45
+    // and 50 were told as their background ("Psalm 50, general praise").
+    it('reads no psalm before a psalm, only the verses before in it', () => {
+        for (const refs of ['Psalm 46', 'Psalms 51:1-19', 'Ps 23', 'PSA 1']) {
+            expect(findVersesBeforeRef(refs), refs).toBe(null);
+        }
+        expect(findVersesBeforeRef('Psalm 23:4-6')).toBe('Psalm 23:1-3');
+        // Proverbs' chapters are one father's teaching, read in a row.
+        expect(findVersesBeforeRef('Proverbs 3:1-6')).toBe('Proverbs 2');
+    });
+
+    // BN-105 (2026-11-11): asked for Proverbs 3:5-6, the model read Proverbs
+    // 3 whole, and Proverbs 2's strange woman was told as "the verses just
+    // before this passage".
+    it('reads the verses before the passage the person named', () => {
+        const named = findNamedPassageRef(
+            'Help me prepare a sermon on Proverbs 3:5-6',
+        );
+        expect(named).toBe('Proverbs 3:5-6');
+        expect(pickVersesBeforePassage(named, 'Proverbs 3')).toBe(
+            'Proverbs 3:5-6',
+        );
+        expect(
+            findVersesBeforeRef(pickVersesBeforePassage(named, 'Prov 3:1-12')),
+        ).toBe('Proverbs 3:1-4');
+        expect(
+            pickVersesBeforePassage(
+                findNamedPassageRef('a 15 minute sermon on John 3:16'),
+                '(KJV) John 3:1-21',
+            ),
+        ).toBe('John 3:16');
+        expect(
+            findNamedPassageRef('Luke 15:11 – 32 (the son who came home)'),
+        ).toBe('Luke 15:11-32');
+        expect(findNamedPassageRef('a lesson on 1 John 4:7-21')).toBe(
+            '1 John 4:7-21',
+        );
+        expect(findNamedPassageRef('Song of Solomon 2:1, please')).toBe(
+            'Song of Solomon 2:1',
+        );
+        // Over chapters, its first verse is where it starts.
+        expect(findNamedPassageRef('from Jonah 1:17-2:10')).toBe('Jonah 1:17');
+    });
+
+    it('keeps the read when the words name no one passage of its book', () => {
+        for (const text of [
+            'a short devotion on Psalm 46 for our prayer meeting',
+            'I need to preach about forgiveness this Sunday',
+            'compare John 3:16 with Romans 5:8',
+            'sermon on the good samaritan at 10:30',
+        ]) {
+            const named = findNamedPassageRef(text);
+            expect(pickVersesBeforePassage(named, 'Luke 10:25-37'), text).toBe(
+                'Luke 10:25-37',
+            );
+        }
+        // A time is no passage of the book read.
+        expect(
+            pickVersesBeforePassage(
+                findNamedPassageRef('a sermon on Psalm 46 for Sunday 10:30'),
+                'Psalms 46:1-11',
+            ),
+        ).toBe('Psalms 46:1-11');
+        expect(findNamedPassageRef('')).toBe(null);
     });
 });
 
@@ -207,6 +381,20 @@ describe('references as they are written', () => {
             'Philippians 4:6-7',
             'John 3:16, 17',
             '1 John 4:18',
+        ]);
+        // BN-81: a chapter and verse with no book is the book before it's.
+        expect(splitRefList('Jonah 1:1-4, 1:17, 2:1, 3:1-5, 4:10-11')).toEqual([
+            'Jonah 1:1-4',
+            'Jonah 1:17',
+            'Jonah 2:1',
+            'Jonah 3:1-5',
+            'Jonah 4:10-11',
+        ]);
+        expect(splitRefList('1 Samuel 17:1, 18:5; Jonah 1:1, 10:5')).toEqual([
+            '1 Samuel 17:1',
+            '1 Samuel 18:5',
+            'Jonah 1:1',
+            'Jonah 10:5',
         ]);
         expect(
             splitRefList(

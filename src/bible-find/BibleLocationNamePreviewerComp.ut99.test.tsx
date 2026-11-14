@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => {
         // re-run the effect that lists them on every render, for good.
         index: {},
         recordLabels: {},
-        langCode: 'km',
+        langCode: 'xx',
         paneList: [] as {
             bibleKey: string;
             target: {
@@ -152,7 +152,7 @@ beforeEach(() => {
             },
         },
         {
-            bibleKey: 'KH54',
+            bibleKey: 'XX54',
             target: { bookKey: 'GEN', chapter: 4, verseStart: 1, verseEnd: 1 },
         },
     ];
@@ -191,16 +191,16 @@ async function renderPreviewer() {
 }
 
 describe('BibleLocationNamePreviewerComp headings', () => {
-    // Every section was named in the EDITING pane's bible, so a KH54 pane's
+    // Every section was named in the EDITING pane's bible, so a XX54 pane's
     // reading was headed `(NIV) Genesis 3:20`.
     test('a non-English lookup names each passage in its own pane bible', async () => {
-        mocks.langCode = 'km';
+        mocks.langCode = 'xx';
 
         const { headingList, header } = await renderPreviewer();
 
         expect(headingList).toEqual([
             '(KJV) Genesis 3:20',
-            '(KH54) Genesis 4:1',
+            '(XX54) Genesis 4:1',
         ]);
         // The headings are not all KJV any more, so the header must not say so.
         expect(header).not.toContain('(KJV)');
@@ -290,11 +290,11 @@ describe('BibleLocationNamePreviewerComp for a passage crossing chapters', () =>
     });
 
     test('counts an open chapter in the pane bible when the KJV is missing', async () => {
-        mocks.langCode = 'km';
+        mocks.langCode = 'xx';
         mocks.isKjvMissing = true;
         mocks.paneList = [
             {
-                bibleKey: 'KH54',
+                bibleKey: 'XX54',
                 target: {
                     bookKey: 'GEN',
                     chapter: 1,
@@ -310,7 +310,7 @@ describe('BibleLocationNamePreviewerComp for a passage crossing chapters', () =>
         // Only the chapter with an open end needs counting.
         expect(mocks.verseReadList).toEqual([
             ['KJV', 'GEN', 1],
-            ['KH54', 'GEN', 1],
+            ['XX54', 'GEN', 1],
             ['KJV', 'GEN', 2],
         ]);
         expect(mocks.collectedTargetList).toEqual([
@@ -400,7 +400,7 @@ describe('BibleLocationNamePreviewerComp records and rebuilds', () => {
     });
 
     test('drops a rebuild that a newer one overtook while its chapter was read', async () => {
-        mocks.langCode = 'km';
+        mocks.langCode = 'xx';
         let openGate: () => void = () => {};
         mocks.versesGate = new Promise<void>((resolve) => {
             openGate = resolve;

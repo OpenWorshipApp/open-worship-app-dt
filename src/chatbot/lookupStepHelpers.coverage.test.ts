@@ -9,7 +9,7 @@ import {
 // The lookup card's buttons where the record repeats itself or is missing a
 // part: two places of one name, a quoted verse with no key, and a reference
 // both cited and "around". (An installed Bible with nothing to tell its
-// language by is in the Khmer package's own tests.)
+// language by is in a language package's own tests.)
 
 const RUTH = {
     kind: 'name' as const,

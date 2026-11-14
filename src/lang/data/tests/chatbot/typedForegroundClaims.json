@@ -1,0 +1,1935 @@
+{
+    "af": {
+        "folder": "af",
+        "floor": 6,
+        "claims": [
+            "Ek het 'n aftelling van 5 minute op die skerm begin.",
+            "Ek het die horlosie van die skerm afgehaal.",
+            "Ek het alles van die skerm verwyder.",
+            "Ek het die boodskap \"Welkom\" op die skerm gesit.",
+            "Ek het die aftelling onderbreek.",
+            "Ek het die skerm aangeskakel."
+        ],
+        "notClaims": [
+            "Moet ek 'n aftelling van 5 minute op die skerm begin?",
+            "Ek kan die horlosie vir jou van die skerm afhaal.",
+            "Ek sal die aftelling onderbreek wanneer jy vir my sê.",
+            "Druk Begin om die aftelling te begin."
+        ],
+        "negated": [
+            "Ek het nie die aftelling begin nie: die skerm is af.",
+            "Ek kon nie die horlosie van die skerm afhaal nie."
+        ]
+    },
+    "am": {
+        "folder": "am",
+        "floor": 6,
+        "claims": [
+            "በማያ ገጹ ላይ የ5 ደቂቃ ቆጠራ ጀምሬያለሁ።",
+            "ሰዓቱን ከማያ ገጹ ላይ አንስቻለሁ።",
+            "ሁሉንም ነገር ከማያ ገጹ ላይ አጽድቻለሁ።",
+            "\"እንኳን ደህና መጡ\" የሚለውን መልእክት በማያ ገጹ ላይ አስቀምጫለሁ።",
+            "ቆጠራውን ለአፍታ አቁሜያለሁ።",
+            "ማያ ገጹን አብርቻለሁ።"
+        ],
+        "notClaims": [
+            "በማያ ገጹ ላይ የ5 ደቂቃ ቆጠራ ልጀምር?",
+            "ሰዓቱን ከማያ ገጹ ላይ ላነሳልዎ እችላለሁ።",
+            "ሲነግሩኝ ቆጠራውን ለአፍታ አቆማለሁ።",
+            "ቆጠራውን ለመጀመር \"ጀምር\"ን ይጫኑ።"
+        ],
+        "negated": ["ቆጠራውን አልጀመርኩም፦ ማያ ገጹ ጠፍቷል።", "ሰዓቱን ከማያ ገጹ ላይ ማንሳት አልቻልኩም።"]
+    },
+    "ar": {
+        "folder": "ar",
+        "floor": 6,
+        "claims": [
+            "لقد بدأت عدًّا تنازليًا لمدة 5 دقائق على الشاشة.",
+            "لقد أزلت الساعة من الشاشة.",
+            "لقد مسحت كل شيء من الشاشة.",
+            "لقد وضعت الرسالة \"مرحبًا بكم\" على الشاشة.",
+            "لقد أوقفت العد التنازلي مؤقتًا.",
+            "لقد شغّلت الشاشة."
+        ],
+        "notClaims": [
+            "هل تريد أن أبدأ عدًّا تنازليًا لمدة 5 دقائق على الشاشة؟",
+            "يمكنني إزالة الساعة من الشاشة من أجلك.",
+            "سأوقف العد التنازلي مؤقتًا عندما تطلب مني ذلك.",
+            "اضغط على \"ابدأ\" لبدء العد التنازلي."
+        ],
+        "negated": [
+            "لم أبدأ العد التنازلي: الشاشة مطفأة.",
+            "لم أتمكن من إزالة الساعة من الشاشة."
+        ]
+    },
+    "az": {
+        "folder": "az",
+        "floor": 6,
+        "claims": [
+            "Ekranda 5 dəqiqəlik geri sayımı başlatdım.",
+            "Saatı ekrandan götürdüm.",
+            "Ekrandakı hər şeyi təmizlədim.",
+            "\"Xoş gəlmisiniz\" mesajını ekrana çıxardım.",
+            "Geri sayıma fasilə verdim.",
+            "Ekranı yandırdım."
+        ],
+        "notClaims": [
+            "Ekranda 5 dəqiqəlik geri sayımı başlatmağımı istəyirsiniz?",
+            "Sizin üçün saatı ekrandan götürə bilərəm.",
+            "Siz deyəndə geri sayıma fasilə verəcəyəm.",
+            "Geri sayımı başlatmaq üçün \"Başlat\" düyməsini basın."
+        ],
+        "negated": [
+            "Geri sayımı başlatmadım: ekran söndürülüb.",
+            "Saatı ekrandan götürə bilmədim."
+        ]
+    },
+    "be": {
+        "folder": "be",
+        "floor": 6,
+        "claims": [
+            "Я запусціў на экране зваротны адлік на 5 хвілін.",
+            "Я прыбраў гадзіннік з экрана.",
+            "Я прыбраў з экрана ўсё.",
+            "Я вывеў на экран паведамленне \"Вітаем\".",
+            "Я прыпыніў зваротны адлік.",
+            "Я ўключыў экран."
+        ],
+        "notClaims": [
+            "Запусціць на экране зваротны адлік на 5 хвілін?",
+            "Я магу прыбраць гадзіннік з экрана для вас.",
+            "Я прыпыню зваротны адлік, калі вы скажаце.",
+            "Націсніце \"Пачаць\", каб запусціць зваротны адлік."
+        ],
+        "negated": [
+            "Я не запусціў зваротны адлік: экран выключаны.",
+            "Мне не ўдалося прыбраць гадзіннік з экрана."
+        ]
+    },
+    "bg": {
+        "folder": "bg",
+        "floor": 6,
+        "claims": [
+            "Пуснах на екрана 5-минутно обратно отброяване.",
+            "Премахнах часовника от екрана.",
+            "Изчистих всичко от екрана.",
+            "Показах съобщението \"Добре дошли\" на екрана.",
+            "Поставих обратното отброяване на пауза.",
+            "Включих екрана."
+        ],
+        "notClaims": [
+            "Да пусна ли на екрана 5-минутно обратно отброяване?",
+            "Мога да премахна часовника от екрана вместо вас.",
+            "Ще поставя обратното отброяване на пауза, когато ми кажете.",
+            "Натиснете \"Старт\", за да започне обратното отброяване."
+        ],
+        "negated": [
+            "Не пуснах обратното отброяване: екранът е изключен.",
+            "Не успях да премахна часовника от екрана."
+        ]
+    },
+    "bn": {
+        "folder": "bn",
+        "floor": 6,
+        "claims": [
+            "আমি পর্দায় ৫ মিনিটের একটি ক্ষণগণনা শুরু করেছি।",
+            "আমি পর্দা থেকে ঘড়িটি সরিয়ে দিয়েছি।",
+            "আমি পর্দা থেকে সবকিছু মুছে দিয়েছি।",
+            "আমি পর্দায় \"স্বাগতম\" বার্তাটি দেখিয়েছি।",
+            "আমি ক্ষণগণনাটি সাময়িকভাবে থামিয়েছি।",
+            "আমি পর্দাটি চালু করেছি।"
+        ],
+        "notClaims": [
+            "আমি কি পর্দায় ৫ মিনিটের একটি ক্ষণগণনা শুরু করব?",
+            "আমি আপনার জন্য পর্দা থেকে ঘড়িটি সরিয়ে দিতে পারি।",
+            "আপনি বললে আমি ক্ষণগণনাটি সাময়িকভাবে থামাব।",
+            "ক্ষণগণনা শুরু করতে \"শুরু\" চাপুন।"
+        ],
+        "negated": [
+            "আমি ক্ষণগণনাটি শুরু করিনি: পর্দা বন্ধ আছে।",
+            "আমি পর্দা থেকে ঘড়িটি সরাতে পারিনি।"
+        ]
+    },
+    "bo": {
+        "folder": "bo",
+        "floor": 6,
+        "claims": [
+            "ངས་བརྙན་ཡོལ་ཐོག་ཏུ་སྐར་མ་ལྔའི་དུས་ཚོད་ཕྱིར་བགྲང་འགོ་བཙུགས་ཡོད།",
+            "ངས་ཆུ་ཚོད་བརྙན་ཡོལ་ཐོག་ནས་བསལ་ཡོད།",
+            "ངས་བརྙན་ཡོལ་ཐོག་གི་ཡོངས་རྫོགས་གཙང་སེལ་བྱས་ཡོད།",
+            "ངས་\"ཕེབས་པར་དགའ་བསུ་ཞུ\"ཞེས་པའི་འཕྲིན་ཐུང་བརྙན་ཡོལ་ཐོག་ཏུ་བཀོད་ཡོད།",
+            "ངས་དུས་ཚོད་ཕྱིར་བགྲང་གནས་སྐབས་མཚམས་བཞག་ཡོད།",
+            "ངས་བརྙན་ཡོལ་ཁ་ཕྱེ་ཡོད།"
+        ],
+        "notClaims": [
+            "ངས་བརྙན་ཡོལ་ཐོག་ཏུ་སྐར་མ་ལྔའི་དུས་ཚོད་ཕྱིར་བགྲང་འགོ་འཛུགས་དགོས་སམ།",
+            "ཁྱེད་རང་གི་ཆེད་དུ་ངས་ཆུ་ཚོད་བརྙན་ཡོལ་ཐོག་ནས་སེལ་ཐུབ།",
+            "ཁྱེད་རང་གིས་གསུངས་དུས་ངས་དུས་ཚོད་ཕྱིར་བགྲང་གནས་སྐབས་མཚམས་འཇོག་གི་ཡིན།",
+            "དུས་ཚོད་ཕྱིར་བགྲང་འགོ་འཛུགས་ཆེད་\"འགོ་འཛུགས\"ལ་མནན་རོགས།"
+        ],
+        "negated": [
+            "བརྙན་ཡོལ་བཀག་ཡོད་པས་ངས་དུས་ཚོད་ཕྱིར་བགྲང་འགོ་བཙུགས་མེད།",
+            "ངས་ཆུ་ཚོད་བརྙན་ཡོལ་ཐོག་ནས་སེལ་མ་ཐུབ།"
+        ]
+    },
+    "ca": {
+        "folder": "ca",
+        "floor": 6,
+        "claims": [
+            "He iniciat un compte enrere de 5 minuts a la pantalla.",
+            "He tret el rellotge de la pantalla.",
+            "He esborrat tot el que hi havia a la pantalla.",
+            "He posat el missatge \"Benvinguts\" a la pantalla.",
+            "He posat en pausa el compte enrere.",
+            "He encès la pantalla."
+        ],
+        "notClaims": [
+            "Vols que iniciï un compte enrere de 5 minuts a la pantalla?",
+            "Puc treure el rellotge de la pantalla per tu.",
+            "Posaré en pausa el compte enrere quan m'ho diguis.",
+            "Prem Inicia per començar el compte enrere."
+        ],
+        "negated": [
+            "No he iniciat el compte enrere: la pantalla està apagada.",
+            "No he pogut treure el rellotge de la pantalla."
+        ]
+    },
+    "ceb": {
+        "folder": "ceb",
+        "floor": 6,
+        "claims": [
+            "Gisugdan nako ang 5 ka minuto nga pag-ihap pabalik sa tabil.",
+            "Gitangtang nako ang orasan sa tabil.",
+            "Gikuha nako ang tanan sa tabil.",
+            "Gibutang nako ang mensahe nga \"Maayong pag-abot\" sa tabil.",
+            "Gihunong nako kadiyot ang pag-ihap pabalik.",
+            "Gipasiga nako ang tabil."
+        ],
+        "notClaims": [
+            "Sugdan ba nako ang 5 ka minuto nga pag-ihap pabalik sa tabil?",
+            "Mahimo nakong tangtangon ang orasan sa tabil para nimo.",
+            "Hunongon nako kadiyot ang pag-ihap pabalik kung moingon ka na.",
+            "Pindota ang Sugdi aron masugdan ang pag-ihap pabalik."
+        ],
+        "negated": [
+            "Wala nako sugdi ang pag-ihap pabalik: patay ang tabil.",
+            "Wala nako matangtang ang orasan sa tabil."
+        ]
+    },
+    "cs": {
+        "folder": "cs",
+        "floor": 6,
+        "claims": [
+            "Spustil jsem na obrazovce odpočet na 5 minut.",
+            "Odstranil jsem z obrazovky hodiny.",
+            "Vymazal jsem z obrazovky všechno.",
+            "Zobrazil jsem na obrazovce zprávu \"Vítejte\".",
+            "Pozastavil jsem odpočet.",
+            "Zapnul jsem obrazovku."
+        ],
+        "notClaims": [
+            "Mám na obrazovce spustit odpočet na 5 minut?",
+            "Mohu vám odstranit hodiny z obrazovky.",
+            "Pozastavím odpočet, až mi řeknete.",
+            "Stiskněte Spustit, abyste zahájili odpočet."
+        ],
+        "negated": [
+            "Odpočet jsem nespustil: obrazovka je vypnutá.",
+            "Nepodařilo se mi odstranit hodiny z obrazovky."
+        ]
+    },
+    "da": {
+        "folder": "da",
+        "floor": 6,
+        "claims": [
+            "Jeg har startet en nedtælling på 5 minutter på skærmen.",
+            "Jeg har fjernet uret fra skærmen.",
+            "Jeg har ryddet alt fra skærmen.",
+            "Jeg har sat beskeden \"Velkommen\" op på skærmen.",
+            "Jeg har sat nedtællingen på pause.",
+            "Jeg har tændt skærmen."
+        ],
+        "notClaims": [
+            "Skal jeg starte en nedtælling på 5 minutter på skærmen?",
+            "Jeg kan fjerne uret fra skærmen for dig.",
+            "Jeg sætter nedtællingen på pause, når du siger til.",
+            "Tryk på Start for at begynde nedtællingen."
+        ],
+        "negated": [
+            "Jeg har ikke startet nedtællingen: skærmen er slukket.",
+            "Jeg kunne ikke fjerne uret fra skærmen."
+        ]
+    },
+    "de": {
+        "folder": "de",
+        "floor": 6,
+        "claims": [
+            "Ich habe auf dem Bildschirm eine Rückwärtszählung von 5 Minuten gestartet.",
+            "Ich habe die Uhr vom Bildschirm entfernt.",
+            "Ich habe den Bildschirm komplett geleert.",
+            "Ich habe die Nachricht \"Willkommen\" auf dem Bildschirm angezeigt.",
+            "Ich habe die Rückwärtszählung pausiert.",
+            "Ich habe den Bildschirm eingeschaltet."
+        ],
+        "notClaims": [
+            "Soll ich auf dem Bildschirm eine Rückwärtszählung von 5 Minuten starten?",
+            "Ich kann die Uhr für Sie vom Bildschirm entfernen.",
+            "Ich pausiere die Rückwärtszählung, sobald Sie es mir sagen.",
+            "Drücken Sie auf Starten, um die Rückwärtszählung zu beginnen."
+        ],
+        "negated": [
+            "Ich habe die Rückwärtszählung nicht gestartet: Der Bildschirm ist aus.",
+            "Ich konnte die Uhr nicht vom Bildschirm entfernen."
+        ]
+    },
+    "el": {
+        "folder": "el",
+        "floor": 6,
+        "claims": [
+            "Ξεκίνησα αντίστροφη μέτρηση 5 λεπτών στην οθόνη.",
+            "Αφαίρεσα το ρολόι από την οθόνη.",
+            "Καθάρισα τα πάντα από την οθόνη.",
+            "Έβαλα το μήνυμα \"Καλώς ήρθατε\" στην οθόνη.",
+            "Έβαλα σε παύση την αντίστροφη μέτρηση.",
+            "Άναψα την οθόνη."
+        ],
+        "notClaims": [
+            "Να ξεκινήσω αντίστροφη μέτρηση 5 λεπτών στην οθόνη;",
+            "Μπορώ να αφαιρέσω το ρολόι από την οθόνη για εσάς.",
+            "Θα βάλω σε παύση την αντίστροφη μέτρηση όταν μου το πείτε.",
+            "Πατήστε Έναρξη για να ξεκινήσει η αντίστροφη μέτρηση."
+        ],
+        "negated": [
+            "Δεν ξεκίνησα την αντίστροφη μέτρηση: η οθόνη είναι σβηστή.",
+            "Δεν μπόρεσα να αφαιρέσω το ρολόι από την οθόνη."
+        ]
+    },
+    "es": {
+        "folder": "es",
+        "floor": 6,
+        "claims": [
+            "He iniciado una cuenta regresiva de 5 minutos en la pantalla.",
+            "He quitado el reloj de la pantalla.",
+            "He borrado todo de la pantalla.",
+            "He puesto el mensaje \"Bienvenidos\" en la pantalla.",
+            "He pausado la cuenta regresiva.",
+            "He encendido la pantalla."
+        ],
+        "notClaims": [
+            "¿Quieres que inicie una cuenta regresiva de 5 minutos en la pantalla?",
+            "Puedo quitar el reloj de la pantalla por ti.",
+            "Pausaré la cuenta regresiva cuando me lo digas.",
+            "Pulsa Iniciar para comenzar la cuenta regresiva."
+        ],
+        "negated": [
+            "No inicié la cuenta regresiva: la pantalla está apagada.",
+            "No pude quitar el reloj de la pantalla."
+        ]
+    },
+    "et": {
+        "folder": "et",
+        "floor": 6,
+        "claims": [
+            "Käivitasin ekraanil 5-minutilise tagasiloenduse.",
+            "Eemaldasin kella ekraanilt.",
+            "Eemaldasin ekraanilt kõik.",
+            "Panin ekraanile sõnumi \"Tere tulemast\".",
+            "Peatasin tagasiloenduse ajutiselt.",
+            "Lülitasin ekraani sisse."
+        ],
+        "notClaims": [
+            "Kas käivitan ekraanil 5-minutilise tagasiloenduse?",
+            "Võin teie eest kella ekraanilt eemaldada.",
+            "Peatan tagasiloenduse ajutiselt, kui te mulle ütlete.",
+            "Tagasiloenduse alustamiseks vajutage Alusta."
+        ],
+        "negated": [
+            "Ma ei käivitanud tagasiloendust: ekraan on välja lülitatud.",
+            "Ma ei saanud kella ekraanilt eemaldada."
+        ]
+    },
+    "fa": {
+        "folder": "fa",
+        "floor": 6,
+        "claims": [
+            "یک شمارش معکوس ۵ دقیقه‌ای روی صفحه شروع کردم.",
+            "ساعت را از روی صفحه برداشتم.",
+            "همه‌چیز را از روی صفحه پاک کردم.",
+            "پیام \"خوش آمدید\" را روی صفحه نمایش دادم.",
+            "شمارش معکوس را موقتاً متوقف کردم.",
+            "صفحه را روشن کردم."
+        ],
+        "notClaims": [
+            "آیا یک شمارش معکوس ۵ دقیقه‌ای روی صفحه شروع کنم؟",
+            "می‌توانم ساعت را برایتان از روی صفحه بردارم.",
+            "هر وقت بگویید، شمارش معکوس را موقتاً متوقف می‌کنم.",
+            "برای شروع شمارش معکوس، روی \"شروع\" بزنید."
+        ],
+        "negated": [
+            "شمارش معکوس را شروع نکردم: صفحه خاموش است.",
+            "نتوانستم ساعت را از روی صفحه بردارم."
+        ]
+    },
+    "fi": {
+        "folder": "fi",
+        "floor": 6,
+        "claims": [
+            "Käynnistin näytölle 5 minuutin lähtölaskennan.",
+            "Poistin kellon näytöltä.",
+            "Tyhjensin näytön kokonaan.",
+            "Laitoin näytölle viestin \"Tervetuloa\".",
+            "Laitoin lähtölaskennan tauolle.",
+            "Kytkin näytön päälle."
+        ],
+        "notClaims": [
+            "Käynnistänkö näytölle 5 minuutin lähtölaskennan?",
+            "Voin poistaa kellon näytöltä puolestasi.",
+            "Laitan lähtölaskennan tauolle, kun sanot.",
+            "Aloita lähtölaskenta painamalla Käynnistä."
+        ],
+        "negated": [
+            "En käynnistänyt lähtölaskentaa: näyttö on pois päältä.",
+            "En pystynyt poistamaan kelloa näytöltä."
+        ]
+    },
+    "fj": {
+        "folder": "fj",
+        "floor": 6,
+        "claims": [
+            "Au sa tekivuna e na sikirini e dua na wiliwili lesu ni 5 na miniti.",
+            "Au sa kauta tani na kaloko mai na sikirini.",
+            "Au sa vakasavasavataka na ka kece mai na sikirini.",
+            "Au sa biuta e na sikirini na itukutuku \"Bula vinaka\".",
+            "Au sa vakatikora vakalailai na wiliwili lesu.",
+            "Au sa dola na sikirini."
+        ],
+        "notClaims": [
+            "Me'u tekivuna beka e na sikirini e dua na wiliwili lesu ni 5 na miniti?",
+            "E rawa niu kauta tani na kaloko mai na sikirini me baleti iko.",
+            "Au na vakatikora vakalailai na wiliwili lesu ni o sa tukuna mai.",
+            "Tabaka na Tekivu me tekivu kina na wiliwili lesu."
+        ],
+        "negated": [
+            "Au sega ni tekivuna na wiliwili lesu: sa sogo tu na sikirini.",
+            "Au sega ni rawa ni kauta tani na kaloko mai na sikirini."
+        ]
+    },
+    "fr": {
+        "folder": "fr",
+        "floor": 6,
+        "claims": [
+            "J'ai lancé un compte à rebours de 5 minutes à l'écran.",
+            "J'ai retiré l'horloge de l'écran.",
+            "J'ai tout effacé de l'écran.",
+            "J'ai affiché le message \"Bienvenue\" à l'écran.",
+            "J'ai mis le compte à rebours en pause.",
+            "J'ai allumé l'écran."
+        ],
+        "notClaims": [
+            "Voulez-vous que je lance un compte à rebours de 5 minutes à l'écran ?",
+            "Je peux retirer l'horloge de l'écran pour vous.",
+            "Je mettrai le compte à rebours en pause quand vous me le direz.",
+            "Appuyez sur Démarrer pour lancer le compte à rebours."
+        ],
+        "negated": [
+            "Je n'ai pas lancé le compte à rebours : l'écran est éteint.",
+            "Je n'ai pas pu retirer l'horloge de l'écran."
+        ]
+    },
+    "ga": {
+        "folder": "ga",
+        "floor": 6,
+        "claims": [
+            "Thosaigh mé comhaireamh síos 5 nóiméad ar an scáileán.",
+            "Bhain mé an clog den scáileán.",
+            "Ghlan mé gach rud den scáileán.",
+            "Chuir mé an teachtaireacht \"Fáilte\" suas ar an scáileán.",
+            "Chuir mé an comhaireamh síos ar sos.",
+            "Chuir mé an scáileán ar siúl."
+        ],
+        "notClaims": [
+            "An dtosóidh mé comhaireamh síos 5 nóiméad ar an scáileán?",
+            "Is féidir liom an clog a bhaint den scáileán duit.",
+            "Cuirfidh mé an comhaireamh síos ar sos nuair a déarfaidh tú liom.",
+            "Brúigh Tosaigh chun an comhaireamh síos a thosú."
+        ],
+        "negated": [
+            "Níor thosaigh mé an comhaireamh síos: tá an scáileán múchta.",
+            "Ní raibh mé in ann an clog a bhaint den scáileán."
+        ]
+    },
+    "gl": {
+        "folder": "gl",
+        "floor": 6,
+        "claims": [
+            "Iniciei unha conta atrás de 5 minutos na pantalla.",
+            "Quitei o reloxo da pantalla.",
+            "Borrei todo da pantalla.",
+            "Puxen a mensaxe \"Benvidos\" na pantalla.",
+            "Puxen a conta atrás en pausa.",
+            "Acendín a pantalla."
+        ],
+        "notClaims": [
+            "Queres que inicie unha conta atrás de 5 minutos na pantalla?",
+            "Podo quitarche o reloxo da pantalla.",
+            "Poñerei a conta atrás en pausa cando mo digas.",
+            "Preme Iniciar para comezar a conta atrás."
+        ],
+        "negated": [
+            "Non iniciei a conta atrás: a pantalla está apagada.",
+            "Non puiden quitar o reloxo da pantalla."
+        ]
+    },
+    "gu": {
+        "folder": "gu",
+        "floor": 6,
+        "claims": [
+            "મેં પડદા પર ૫ મિનિટની ઊલટી ગણતરી શરૂ કરી છે.",
+            "મેં પડદા પરથી ઘડિયાળ હટાવી દીધી છે.",
+            "મેં પડદા પરથી બધું સાફ કરી દીધું છે.",
+            "મેં પડદા પર \"સ્વાગત છે\" સંદેશ મૂક્યો છે.",
+            "મેં ઊલટી ગણતરી થોભાવી છે.",
+            "મેં પડદો ચાલુ કર્યો છે."
+        ],
+        "notClaims": [
+            "શું હું પડદા પર ૫ મિનિટની ઊલટી ગણતરી શરૂ કરું?",
+            "હું તમારા માટે પડદા પરથી ઘડિયાળ હટાવી શકું છું.",
+            "તમે કહેશો ત્યારે હું ઊલટી ગણતરી થોભાવીશ.",
+            "ઊલટી ગણતરી શરૂ કરવા માટે \"શરૂ કરો\" દબાવો."
+        ],
+        "negated": [
+            "મેં ઊલટી ગણતરી શરૂ કરી નથી: પડદો બંધ છે.",
+            "હું પડદા પરથી ઘડિયાળ હટાવી શક્યો નહીં."
+        ]
+    },
+    "ha": {
+        "folder": "ha",
+        "floor": 6,
+        "claims": [
+            "Na fara ƙidayar baya ta minti 5 a kan allo.",
+            "Na cire agogo daga allo.",
+            "Na share komai daga allo.",
+            "Na sanya saƙon \"Barka da zuwa\" a kan allo.",
+            "Na dakatar da ƙidayar baya na ɗan lokaci.",
+            "Na kunna allo."
+        ],
+        "notClaims": [
+            "Shin in fara ƙidayar baya ta minti 5 a kan allo?",
+            "Zan iya cire maka agogo daga allo.",
+            "Zan dakatar da ƙidayar baya na ɗan lokaci idan ka gaya mini.",
+            "Danna Fara don fara ƙidayar baya."
+        ],
+        "negated": [
+            "Ban fara ƙidayar baya ba: allo a kashe yake.",
+            "Ban iya cire agogo daga allo ba."
+        ]
+    },
+    "he": {
+        "folder": "he",
+        "floor": 6,
+        "claims": [
+            "הפעלתי על המסך ספירה לאחור של 5 דקות.",
+            "הסרתי את השעון מהמסך.",
+            "ניקיתי את כל מה שהיה על המסך.",
+            "הצגתי על המסך את ההודעה \"ברוכים הבאים\".",
+            "השהיתי את הספירה לאחור.",
+            "הדלקתי את המסך."
+        ],
+        "notClaims": [
+            "להפעיל על המסך ספירה לאחור של 5 דקות?",
+            "אני יכול להסיר בשבילך את השעון מהמסך.",
+            "אשהה את הספירה לאחור כשתגיד לי.",
+            "לחץ על \"התחל\" כדי להתחיל את הספירה לאחור."
+        ],
+        "negated": [
+            "לא הפעלתי את הספירה לאחור: המסך כבוי.",
+            "לא הצלחתי להסיר את השעון מהמסך."
+        ]
+    },
+    "hi": {
+        "folder": "hi",
+        "floor": 6,
+        "claims": [
+            "मैंने परदे पर 5 मिनट की उलटी गिनती शुरू कर दी है।",
+            "मैंने परदे से घड़ी हटा दी है।",
+            "मैंने परदे से सब कुछ साफ़ कर दिया है।",
+            "मैंने परदे पर \"स्वागत है\" संदेश लगा दिया है।",
+            "मैंने उलटी गिनती को अस्थायी रूप से रोक दिया है।",
+            "मैंने परदा चालू कर दिया है।"
+        ],
+        "notClaims": [
+            "क्या मैं परदे पर 5 मिनट की उलटी गिनती शुरू करूँ?",
+            "मैं आपके लिए परदे से घड़ी हटा सकता हूँ।",
+            "आप जब कहेंगे, मैं उलटी गिनती को अस्थायी रूप से रोक दूँगा।",
+            "उलटी गिनती शुरू करने के लिए \"शुरू करें\" दबाएँ।"
+        ],
+        "negated": [
+            "मैंने उलटी गिनती शुरू नहीं की: परदा बंद है।",
+            "मैं परदे से घड़ी नहीं हटा सका।"
+        ]
+    },
+    "hr": {
+        "folder": "hr",
+        "floor": 6,
+        "claims": [
+            "Pokrenuo sam na zaslonu odbrojavanje od 5 minuta.",
+            "Uklonio sam sat sa zaslona.",
+            "Očistio sam sve sa zaslona.",
+            "Postavio sam na zaslon poruku \"Dobro došli\".",
+            "Pauzirao sam odbrojavanje.",
+            "Uključio sam zaslon."
+        ],
+        "notClaims": [
+            "Želite li da pokrenem na zaslonu odbrojavanje od 5 minuta?",
+            "Mogu vam ukloniti sat sa zaslona.",
+            "Pauzirat ću odbrojavanje kada mi kažete.",
+            "Pritisnite Pokreni da biste započeli odbrojavanje."
+        ],
+        "negated": [
+            "Nisam pokrenuo odbrojavanje: zaslon je isključen.",
+            "Nisam uspio ukloniti sat sa zaslona."
+        ]
+    },
+    "ht": {
+        "folder": "ht",
+        "floor": 6,
+        "claims": [
+            "Mwen kòmanse yon dekont 5 minit sou ekran an.",
+            "Mwen retire revèy la sou ekran an.",
+            "Mwen efase tout bagay sou ekran an.",
+            "Mwen mete mesaj \"Byenvini\" an sou ekran an.",
+            "Mwen mete dekont lan an poz.",
+            "Mwen limen ekran an."
+        ],
+        "notClaims": [
+            "Èske ou vle m kòmanse yon dekont 5 minit sou ekran an?",
+            "Mwen ka retire revèy la sou ekran an pou ou.",
+            "M ap mete dekont lan an poz lè ou di m.",
+            "Peze Kòmanse pou w kòmanse dekont lan."
+        ],
+        "negated": [
+            "Mwen pa t kòmanse dekont lan: ekran an etenn.",
+            "Mwen pa t kapab retire revèy la sou ekran an."
+        ]
+    },
+    "hu": {
+        "folder": "hu",
+        "floor": 6,
+        "claims": [
+            "Elindítottam a képernyőn egy 5 perces visszaszámlálást.",
+            "Levettem az órát a képernyőről.",
+            "Mindent letöröltem a képernyőről.",
+            "Kitettem a képernyőre az \"Üdvözöljük\" üzenetet.",
+            "Szüneteltettem a visszaszámlálást.",
+            "Bekapcsoltam a képernyőt."
+        ],
+        "notClaims": [
+            "Elindítsak a képernyőn egy 5 perces visszaszámlálást?",
+            "Le tudom venni önnek az órát a képernyőről.",
+            "Szüneteltetem a visszaszámlálást, amikor szól.",
+            "A visszaszámlálás indításához nyomja meg az Indítás gombot."
+        ],
+        "negated": [
+            "Nem indítottam el a visszaszámlálást: a képernyő ki van kapcsolva.",
+            "Nem sikerült levennem az órát a képernyőről."
+        ]
+    },
+    "hy": {
+        "folder": "hy",
+        "floor": 6,
+        "claims": [
+            "Ես էկրանին մեկնարկեցի 5 րոպեանոց հետհաշվարկ։",
+            "Ես ժամացույցը հանեցի էկրանից։",
+            "Ես ամեն ինչ մաքրեցի էկրանից։",
+            "Ես էկրանին տեղադրեցի \"Բարի գալուստ\" հաղորդագրությունը։",
+            "Ես ժամանակավորապես կանգնեցրի հետհաշվարկը։",
+            "Ես միացրի էկրանը։"
+        ],
+        "notClaims": [
+            "Էկրանին մեկնարկե՞մ 5 րոպեանոց հետհաշվարկ։",
+            "Կարող եմ ձեզ համար ժամացույցը հանել էկրանից։",
+            "Ես ժամանակավորապես կկանգնեցնեմ հետհաշվարկը, երբ ասեք։",
+            "Հետհաշվարկը սկսելու համար սեղմեք \"Սկսել\"։"
+        ],
+        "negated": [
+            "Ես չմեկնարկեցի հետհաշվարկը, քանի որ էկրանն անջատված է։",
+            "Ես չկարողացա ժամացույցը հանել էկրանից։"
+        ]
+    },
+    "id": {
+        "folder": "id",
+        "floor": 6,
+        "claims": [
+            "Saya telah memulai hitung mundur 5 menit di layar.",
+            "Saya telah menghapus jam dari layar.",
+            "Saya telah membersihkan semuanya dari layar.",
+            "Saya telah menampilkan pesan “Selamat datang” di layar.",
+            "Saya telah menjeda hitung mundur.",
+            "Saya telah menyalakan layar."
+        ],
+        "notClaims": [
+            "Apakah saya perlu memulai hitung mundur 5 menit di layar?",
+            "Saya bisa menghapus jam dari layar untuk Anda.",
+            "Saya akan menjeda hitung mundur saat Anda memintanya.",
+            "Tekan “Mulai” untuk memulai hitung mundur."
+        ],
+        "negated": [
+            "Saya tidak memulai hitung mundur: layarnya mati.",
+            "Saya tidak dapat menghapus jam dari layar."
+        ]
+    },
+    "ig": {
+        "folder": "ig",
+        "floor": 6,
+        "claims": [
+            "Amalitela m ngụkọ oge azụ nke nkeji ise na ihuenyo.",
+            "Ewepụla m elekere na ihuenyo.",
+            "Ehichapụla m ihe niile dị na ihuenyo.",
+            "Etinyela m ozi “Nnọọ” na ihuenyo.",
+            "Akwụsịtụla m ngụkọ oge azụ.",
+            "Agbanyela m ihuenyo."
+        ],
+        "notClaims": [
+            "Ka m malite ngụkọ oge azụ nke nkeji ise na ihuenyo?",
+            "Enwere m ike iwepụrụ gị elekere na ihuenyo.",
+            "Aga m akwụsịtụ ngụkọ oge azụ ozugbo ị gwara m.",
+            "Pịa “Malite” ka ịmalite ngụkọ oge azụ."
+        ],
+        "negated": [
+            "Amalitighị m ngụkọ oge azụ: ihuenyo agbanyụọla.",
+            "Enweghị m ike iwepụ elekere na ihuenyo."
+        ]
+    },
+    "is": {
+        "folder": "is",
+        "floor": 6,
+        "claims": [
+            "Ég hef ræst 5 mínútna niðurtalningu á skjánum.",
+            "Ég hef fjarlægt klukkuna af skjánum.",
+            "Ég hef hreinsað allt af skjánum.",
+            "Ég hef sett skilaboðin „Velkomin“ upp á skjáinn.",
+            "Ég hef gert hlé á niðurtalningunni.",
+            "Ég hef kveikt á skjánum."
+        ],
+        "notClaims": [
+            "Á ég að ræsa 5 mínútna niðurtalningu á skjánum?",
+            "Ég get fjarlægt klukkuna af skjánum fyrir þig.",
+            "Ég mun gera hlé á niðurtalningunni þegar þú segir mér það.",
+            "Ýttu á „Byrja“ til að hefja niðurtalninguna."
+        ],
+        "negated": [
+            "Ég ræsti ekki niðurtalninguna: það er slökkt á skjánum.",
+            "Ég gat ekki fjarlægt klukkuna af skjánum."
+        ]
+    },
+    "it": {
+        "folder": "it",
+        "floor": 6,
+        "claims": [
+            "Ho avviato un conto alla rovescia di 5 minuti sullo schermo.",
+            "Ho tolto l'orologio dallo schermo.",
+            "Ho rimosso tutto dallo schermo.",
+            "Ho mostrato il messaggio «Benvenuti» sullo schermo.",
+            "Ho messo in pausa il conto alla rovescia.",
+            "Ho acceso lo schermo."
+        ],
+        "notClaims": [
+            "Vuoi che avvii un conto alla rovescia di 5 minuti sullo schermo?",
+            "Posso togliere l'orologio dallo schermo per te.",
+            "Metterò in pausa il conto alla rovescia quando me lo dirai.",
+            "Premi «Avvia» per iniziare il conto alla rovescia."
+        ],
+        "negated": [
+            "Non ho avviato il conto alla rovescia: lo schermo è spento.",
+            "Non sono riuscito a togliere l'orologio dallo schermo."
+        ]
+    },
+    "ja": {
+        "folder": "ja",
+        "floor": 6,
+        "claims": [
+            "画面で5分間のカウントダウンを開始しました。",
+            "画面から時計を消しました。",
+            "画面からすべてを消去しました。",
+            "画面に「ようこそ」というメッセージを表示しました。",
+            "カウントダウンを一時停止しました。",
+            "画面をつけました。"
+        ],
+        "notClaims": [
+            "画面で5分間のカウントダウンを開始しましょうか？",
+            "画面から時計を消すことができます。",
+            "言っていただければ、カウントダウンを一時停止します。",
+            "「開始」を押してカウントダウンを始めてください。"
+        ],
+        "negated": [
+            "カウントダウンは開始していません：画面が消えています。",
+            "画面から時計を消すことができませんでした。"
+        ]
+    },
+    "ka": {
+        "folder": "ka",
+        "floor": 6,
+        "claims": [
+            "ეკრანზე 5-წუთიანი უკუთვლა დავიწყე.",
+            "საათი ეკრანიდან მოვხსენი.",
+            "ეკრანიდან ყველაფერი მოვაშორე.",
+            "ეკრანზე გამოვიტანე შეტყობინება „კეთილი იყოს თქვენი მობრძანება“.",
+            "უკუთვლა დროებით შევაჩერე.",
+            "ეკრანი ჩავრთე."
+        ],
+        "notClaims": [
+            "დავიწყო ეკრანზე 5-წუთიანი უკუთვლა?",
+            "შემიძლია საათი ეკრანიდან მოგიხსნათ.",
+            "უკუთვლას დროებით შევაჩერებ, როცა მეტყვით.",
+            "უკუთვლის დასაწყებად დააჭირეთ „დაწყებას“."
+        ],
+        "negated": [
+            "უკუთვლა არ დამიწყია: ეკრანი გამორთულია.",
+            "საათი ეკრანიდან ვერ მოვხსენი."
+        ]
+    },
+    "kk": {
+        "folder": "kk",
+        "floor": 6,
+        "claims": [
+            "Экранда 5 минуттық кері санақты бастадым.",
+            "Сағатты экраннан алып тастадым.",
+            "Экраннан бәрін тазаладым.",
+            "Экранға «Қош келдіңіздер» хабарламасын шығардым.",
+            "Кері санақты кідірттім.",
+            "Экранды қостым."
+        ],
+        "notClaims": [
+            "Экранда 5 минуттық кері санақты бастайын ба?",
+            "Сіз үшін сағатты экраннан алып тастай аламын.",
+            "Сіз айтқан кезде кері санақты кідіртемін.",
+            "Кері санақты бастау үшін «Бастау» түймесін басыңыз."
+        ],
+        "negated": [
+            "Кері санақты бастамадым: экран өшірулі.",
+            "Сағатты экраннан алып тастай алмадым."
+        ]
+    },
+    "km": {
+        "folder": "km",
+        "floor": 6,
+        "claims": [
+            "ខ្ញុំបានចាប់ផ្ដើមការរាប់ថយក្រោយ ៥ នាទីនៅលើអេក្រង់ហើយ។",
+            "ខ្ញុំបានដកនាឡិកាចេញពីអេក្រង់ហើយ។",
+            "ខ្ញុំបានសម្អាតអ្វីៗទាំងអស់ចេញពីអេក្រង់ហើយ។",
+            "ខ្ញុំបានបង្ហាញសារ «សូមស្វាគមន៍» នៅលើអេក្រង់ហើយ។",
+            "ខ្ញុំបានផ្អាកការរាប់ថយក្រោយហើយ។",
+            "ខ្ញុំបានបើកអេក្រង់ហើយ។"
+        ],
+        "notClaims": [
+            "តើឲ្យខ្ញុំចាប់ផ្ដើមការរាប់ថយក្រោយ ៥ នាទីនៅលើអេក្រង់ទេ?",
+            "ខ្ញុំអាចដកនាឡិកាចេញពីអេក្រង់ជូនអ្នកបាន។",
+            "ខ្ញុំនឹងផ្អាកការរាប់ថយក្រោយ នៅពេលអ្នកប្រាប់ខ្ញុំ។",
+            "សូមចុច «ចាប់ផ្ដើម» ដើម្បីចាប់ផ្ដើមការរាប់ថយក្រោយ។"
+        ],
+        "negated": [
+            "ខ្ញុំមិនបានចាប់ផ្ដើមការរាប់ថយក្រោយទេ៖ អេក្រង់បិទ។",
+            "ខ្ញុំមិនអាចដកនាឡិកាចេញពីអេក្រង់បានទេ។"
+        ]
+    },
+    "kn": {
+        "folder": "kn",
+        "floor": 6,
+        "claims": [
+            "ನಾನು ಪರದೆಯ ಮೇಲೆ 5 ನಿಮಿಷಗಳ ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿದ್ದೇನೆ.",
+            "ನಾನು ಪರದೆಯಿಂದ ಗಡಿಯಾರವನ್ನು ತೆಗೆದುಹಾಕಿದ್ದೇನೆ.",
+            "ನಾನು ಪರದೆಯಿಂದ ಎಲ್ಲವನ್ನೂ ತೆರವುಗೊಳಿಸಿದ್ದೇನೆ.",
+            "ನಾನು ಪರದೆಯ ಮೇಲೆ “ಸ್ವಾಗತ” ಎಂಬ ಸಂದೇಶವನ್ನು ಹಾಕಿದ್ದೇನೆ.",
+            "ನಾನು ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ವಿರಾಮಗೊಳಿಸಿದ್ದೇನೆ.",
+            "ನಾನು ಪರದೆಯನ್ನು ಚಾಲೂ ಮಾಡಿದ್ದೇನೆ."
+        ],
+        "notClaims": [
+            "ಪರದೆಯ ಮೇಲೆ 5 ನಿಮಿಷಗಳ ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲೇ?",
+            "ನಾನು ನಿಮಗಾಗಿ ಪರದೆಯಿಂದ ಗಡಿಯಾರವನ್ನು ತೆಗೆದುಹಾಕಬಲ್ಲೆ.",
+            "ನೀವು ಹೇಳಿದಾಗ ನಾನು ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ವಿರಾಮಗೊಳಿಸುತ್ತೇನೆ.",
+            "ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ಆರಂಭಿಸಲು “ಪ್ರಾರಂಭಿಸಿ” ಒತ್ತಿರಿ."
+        ],
+        "negated": [
+            "ನಾನು ಹಿಮ್ಮುಖ ಎಣಿಕೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲಿಲ್ಲ: ಪರದೆ ಬಂದ್ ಆಗಿದೆ.",
+            "ನನಗೆ ಪರದೆಯಿಂದ ಗಡಿಯಾರವನ್ನು ತೆಗೆದುಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
+        ]
+    },
+    "ko": {
+        "folder": "ko",
+        "floor": 6,
+        "claims": [
+            "화면에 5분 초읽기를 시작했습니다.",
+            "화면에서 시계를 지웠습니다.",
+            "화면에서 모든 것을 지웠습니다.",
+            "화면에 “환영합니다”라는 문구를 띄웠습니다.",
+            "초읽기를 일시 정지했습니다.",
+            "화면을 켰습니다."
+        ],
+        "notClaims": [
+            "화면에 5분 초읽기를 시작할까요?",
+            "원하시면 화면에서 시계를 지워 드릴 수 있습니다.",
+            "말씀하시면 초읽기를 일시 정지하겠습니다.",
+            "초읽기를 시작하려면 “시작”을 누르세요."
+        ],
+        "negated": [
+            "초읽기를 시작하지 않았습니다: 화면이 꺼져 있습니다.",
+            "화면에서 시계를 지우지 못했습니다."
+        ]
+    },
+    "lo": {
+        "folder": "lo",
+        "floor": 6,
+        "claims": [
+            "ຂ້ອຍໄດ້ເລີ່ມການນັບຖອຍຫຼັງ 5 ນາທີຢູ່ໜ້າຈໍແລ້ວ.",
+            "ຂ້ອຍໄດ້ເອົາໂມງອອກຈາກໜ້າຈໍແລ້ວ.",
+            "ຂ້ອຍໄດ້ລຶບທຸກຢ່າງອອກຈາກໜ້າຈໍແລ້ວ.",
+            "ຂ້ອຍໄດ້ສະແດງຂໍ້ຄວາມ “ຍິນດີຕ້ອນຮັບ” ຢູ່ໜ້າຈໍແລ້ວ.",
+            "ຂ້ອຍໄດ້ຢຸດການນັບຖອຍຫຼັງຊົ່ວຄາວແລ້ວ.",
+            "ຂ້ອຍໄດ້ເປີດໜ້າຈໍແລ້ວ."
+        ],
+        "notClaims": [
+            "ໃຫ້ຂ້ອຍເລີ່ມການນັບຖອຍຫຼັງ 5 ນາທີຢູ່ໜ້າຈໍບໍ?",
+            "ຂ້ອຍສາມາດເອົາໂມງອອກຈາກໜ້າຈໍໃຫ້ທ່ານໄດ້.",
+            "ຂ້ອຍຈະຢຸດການນັບຖອຍຫຼັງຊົ່ວຄາວ ເມື່ອທ່ານບອກ.",
+            "ກົດ “ເລີ່ມ” ເພື່ອເລີ່ມການນັບຖອຍຫຼັງ."
+        ],
+        "negated": [
+            "ຂ້ອຍບໍ່ໄດ້ເລີ່ມການນັບຖອຍຫຼັງ: ໜ້າຈໍປິດຢູ່.",
+            "ຂ້ອຍບໍ່ສາມາດເອົາໂມງອອກຈາກໜ້າຈໍໄດ້."
+        ]
+    },
+    "lt": {
+        "folder": "lt",
+        "floor": 6,
+        "claims": [
+            "Ekrane pradėjau 5 minučių atgalinį skaičiavimą.",
+            "Pašalinau laikrodį iš ekrano.",
+            "Pašalinau viską iš ekrano.",
+            "Ekrane parodžiau pranešimą „Sveiki atvykę“.",
+            "Pristabdžiau atgalinį skaičiavimą.",
+            "Įjungiau ekraną."
+        ],
+        "notClaims": [
+            "Ar pradėti 5 minučių atgalinį skaičiavimą ekrane?",
+            "Galiu jums pašalinti laikrodį iš ekrano.",
+            "Pristabdysiu atgalinį skaičiavimą, kai man pasakysite.",
+            "Paspauskite „Pradėti“, kad pradėtumėte atgalinį skaičiavimą."
+        ],
+        "negated": [
+            "Nepradėjau atgalinio skaičiavimo: ekranas išjungtas.",
+            "Man nepavyko pašalinti laikrodžio iš ekrano."
+        ]
+    },
+    "lv": {
+        "folder": "lv",
+        "floor": 6,
+        "claims": [
+            "Esmu sācis uz ekrāna 5 minūšu atpakaļskaitīšanu.",
+            "Esmu noņēmis pulksteni no ekrāna.",
+            "Esmu notīrījis visu no ekrāna.",
+            "Esmu parādījis uz ekrāna ziņojumu “Laipni lūdzam”.",
+            "Esmu uz laiku apturējis atpakaļskaitīšanu.",
+            "Esmu ieslēdzis ekrānu."
+        ],
+        "notClaims": [
+            "Vai sākt 5 minūšu atpakaļskaitīšanu uz ekrāna?",
+            "Es varu noņemt pulksteni no ekrāna jūsu vietā.",
+            "Es uz laiku apturēšu atpakaļskaitīšanu, kad jūs man teiksiet.",
+            "Nospiediet “Sākt”, lai sāktu atpakaļskaitīšanu."
+        ],
+        "negated": [
+            "Es nesāku atpakaļskaitīšanu: ekrāns ir izslēgts.",
+            "Es nevarēju noņemt pulksteni no ekrāna."
+        ]
+    },
+    "mg": {
+        "folder": "mg",
+        "floor": 6,
+        "claims": [
+            "Nanomboka fanisana mihemotra 5 minitra teo amin'ny efijery aho.",
+            "Nesoriko teo amin'ny efijery ny famantaranandro.",
+            "Nofafako avokoa ny zava-drehetra teo amin'ny efijery.",
+            "Napetrako teo amin'ny efijery ny hafatra hoe “Tongasoa”.",
+            "Natsahatro vetivety ny fanisana mihemotra.",
+            "Navelomiko ny efijery."
+        ],
+        "notClaims": [
+            "Hanomboka fanisana mihemotra 5 minitra eo amin'ny efijery ve aho?",
+            "Afaka manala ny famantaranandro eo amin'ny efijery ho anao aho.",
+            "Hampiato vetivety ny fanisana mihemotra aho rehefa milaza amiko ianao.",
+            "Tsindrio ny “Atombohy” mba hanombohana ny fanisana mihemotra."
+        ],
+        "negated": [
+            "Tsy nanomboka ny fanisana mihemotra aho: maty ny efijery.",
+            "Tsy nahavita nanala ny famantaranandro teo amin'ny efijery aho."
+        ]
+    },
+    "mi": {
+        "folder": "mi",
+        "floor": 6,
+        "claims": [
+            "Kua tīmatahia e au he tatau whakamuri e rima meneti ki te mata.",
+            "Kua tangohia e au te karaka i te mata.",
+            "Kua whakawāteahia e au ngā mea katoa i te mata.",
+            "Kua whakaaturia e au te karere “Nau mai” ki te mata.",
+            "Kua whakatārewatia e au te tatau whakamuri.",
+            "Kua whakakāngia e au te mata."
+        ],
+        "notClaims": [
+            "Me tīmata au i tētahi tatau whakamuri e rima meneti ki te mata?",
+            "Ka taea e au te tango i te karaka i te mata mōu.",
+            "Ka whakatārewa au i te tatau whakamuri ina kī mai koe.",
+            "Pēhia te “Tīmata” kia tīmata ai te tatau whakamuri."
+        ],
+        "negated": [
+            "Kāore au i tīmata i te tatau whakamuri: kua weto te mata.",
+            "Kāore i taea e au te tango i te karaka i te mata."
+        ]
+    },
+    "mk": {
+        "folder": "mk",
+        "floor": 6,
+        "claims": [
+            "Започнав одбројување од 5 минути на екранот.",
+            "Го тргнав часовникот од екранот.",
+            "Исчистив сè од екранот.",
+            "Ја поставив пораката „Добредојдовте“ на екранот.",
+            "Го паузирав одбројувањето.",
+            "Го вклучив екранот."
+        ],
+        "notClaims": [
+            "Да започнам одбројување од 5 минути на екранот?",
+            "Можам да го тргнам часовникот од екранот наместо вас.",
+            "Ќе го паузирам одбројувањето кога ќе ми кажете.",
+            "Притиснете „Започни“ за да започне одбројувањето."
+        ],
+        "negated": [
+            "Не го започнав одбројувањето: екранот е исклучен.",
+            "Не можев да го тргнам часовникот од екранот."
+        ]
+    },
+    "ml": {
+        "folder": "ml",
+        "floor": 6,
+        "claims": [
+            "ഞാൻ തിരശ്ശീലയിൽ 5 മിനിറ്റിന്റെ പിന്നോട്ടുള്ള എണ്ണൽ ആരംഭിച്ചിട്ടുണ്ട്.",
+            "ഞാൻ തിരശ്ശീലയിൽ നിന്ന് ഘടികാരം നീക്കം ചെയ്തിട്ടുണ്ട്.",
+            "ഞാൻ തിരശ്ശീലയിൽ നിന്ന് എല്ലാം മായ്ച്ചിട്ടുണ്ട്.",
+            "ഞാൻ തിരശ്ശീലയിൽ “സ്വാഗതം” എന്ന സന്ദേശം പ്രദർശിപ്പിച്ചിട്ടുണ്ട്.",
+            "ഞാൻ പിന്നോട്ടുള്ള എണ്ണൽ താൽക്കാലികമായി നിർത്തിയിട്ടുണ്ട്.",
+            "ഞാൻ തിരശ്ശീല പ്രവർത്തിപ്പിച്ചിട്ടുണ്ട്."
+        ],
+        "notClaims": [
+            "തിരശ്ശീലയിൽ 5 മിനിറ്റിന്റെ പിന്നോട്ടുള്ള എണ്ണൽ ആരംഭിക്കട്ടെ?",
+            "എനിക്ക് നിങ്ങൾക്കായി തിരശ്ശീലയിൽ നിന്ന് ഘടികാരം നീക്കം ചെയ്യാൻ കഴിയും.",
+            "നിങ്ങൾ പറയുമ്പോൾ ഞാൻ പിന്നോട്ടുള്ള എണ്ണൽ താൽക്കാലികമായി നിർത്തും.",
+            "പിന്നോട്ടുള്ള എണ്ണൽ തുടങ്ങാൻ “ആരംഭിക്കുക” അമർത്തുക."
+        ],
+        "negated": [
+            "ഞാൻ പിന്നോട്ടുള്ള എണ്ണൽ ആരംഭിച്ചില്ല: തിരശ്ശീല പ്രവർത്തനരഹിതമാണ്.",
+            "എനിക്ക് തിരശ്ശീലയിൽ നിന്ന് ഘടികാരം നീക്കം ചെയ്യാൻ കഴിഞ്ഞില്ല."
+        ]
+    },
+    "mn": {
+        "folder": "mn",
+        "floor": 6,
+        "claims": [
+            "Би дэлгэц дээр 5 минутын урвуу тоолол эхлүүллээ.",
+            "Би цагийг дэлгэцээс авлаа.",
+            "Би дэлгэцээс бүх зүйлийг арилгалаа.",
+            "Би дэлгэц дээр «Тавтай морил» гэсэн зурвасыг гаргалаа.",
+            "Би урвуу тооллыг түр зогсоолоо.",
+            "Би дэлгэцийг асаалаа."
+        ],
+        "notClaims": [
+            "Дэлгэц дээр 5 минутын урвуу тоолол эхлүүлэх үү?",
+            "Би танд зориулж цагийг дэлгэцээс авч чадна.",
+            "Та хэлэхэд би урвуу тооллыг түр зогсооно.",
+            "Урвуу тооллыг эхлүүлэхийн тулд «Эхлүүлэх» товчийг дарна уу."
+        ],
+        "negated": [
+            "Би урвуу тооллыг эхлүүлээгүй: дэлгэц унтарсан байна.",
+            "Би цагийг дэлгэцээс авч чадсангүй."
+        ]
+    },
+    "mr": {
+        "folder": "mr",
+        "floor": 6,
+        "claims": [
+            "मी पडद्यावर ५ मिनिटांची उलटगणती सुरू केली आहे.",
+            "मी पडद्यावरून घड्याळ काढले आहे.",
+            "मी पडद्यावरून सर्व काही काढून टाकले आहे.",
+            "मी पडद्यावर “स्वागत” हा संदेश दाखवला आहे.",
+            "मी उलटगणती तात्पुरती थांबवली आहे.",
+            "मी पडदा सुरू केला आहे."
+        ],
+        "notClaims": [
+            "मी पडद्यावर ५ मिनिटांची उलटगणती सुरू करू का?",
+            "मी तुमच्यासाठी पडद्यावरून घड्याळ काढू शकतो.",
+            "तुम्ही सांगाल तेव्हा मी उलटगणती तात्पुरती थांबवेन.",
+            "उलटगणती सुरू करण्यासाठी “सुरू करा” दाबा."
+        ],
+        "negated": [
+            "मी उलटगणती सुरू केली नाही: पडदा बंद आहे.",
+            "मला पडद्यावरून घड्याळ काढता आले नाही."
+        ]
+    },
+    "ms": {
+        "folder": "ms",
+        "floor": 6,
+        "claims": [
+            "Saya telah memulakan kiraan detik 5 minit pada skrin.",
+            "Saya telah mengalihkan jam daripada skrin.",
+            "Saya telah mengosongkan semuanya daripada skrin.",
+            "Saya telah memaparkan mesej “Selamat datang” pada skrin.",
+            "Saya telah menjeda kiraan detik.",
+            "Saya telah menghidupkan skrin."
+        ],
+        "notClaims": [
+            "Adakah anda mahu saya memulakan kiraan detik 5 minit pada skrin?",
+            "Saya boleh mengalihkan jam daripada skrin untuk anda.",
+            "Saya akan menjeda kiraan detik apabila anda menyuruh saya.",
+            "Tekan “Mula” untuk memulakan kiraan detik."
+        ],
+        "negated": [
+            "Saya tidak memulakan kiraan detik: skrin dimatikan.",
+            "Saya tidak dapat mengalihkan jam daripada skrin."
+        ]
+    },
+    "my": {
+        "folder": "my",
+        "floor": 6,
+        "claims": [
+            "မျက်နှာပြင်ပေါ်တွင် ၅ မိနစ် နောက်ပြန်ရေတွက်ခြင်းကို ကျွန်ုပ် စတင်ပြီးပါပြီ။",
+            "မျက်နှာပြင်ပေါ်မှ နာရီကို ကျွန်ုပ် ဖယ်ရှားပြီးပါပြီ။",
+            "မျက်နှာပြင်ပေါ်ရှိ အရာအားလုံးကို ကျွန်ုပ် ရှင်းလင်းပြီးပါပြီ။",
+            "မျက်နှာပြင်ပေါ်တွင် “ကြိုဆိုပါသည်” ဆိုသည့် သတင်းစကားကို ကျွန်ုပ် ပြသပြီးပါပြီ။",
+            "နောက်ပြန်ရေတွက်ခြင်းကို ကျွန်ုပ် ခေတ္တရပ်ထားပြီးပါပြီ။",
+            "မျက်နှာပြင်ကို ကျွန်ုပ် ဖွင့်ပြီးပါပြီ။"
+        ],
+        "notClaims": [
+            "မျက်နှာပြင်ပေါ်တွင် ၅ မိနစ် နောက်ပြန်ရေတွက်ခြင်းကို စတင်ပေးရမလား။",
+            "မျက်နှာပြင်ပေါ်မှ နာရီကို ကျွန်ုပ် ဖယ်ရှားပေးနိုင်ပါသည်။",
+            "သင်ပြောသည့်အခါ နောက်ပြန်ရေတွက်ခြင်းကို ကျွန်ုပ် ခေတ္တရပ်ပေးပါမည်။",
+            "နောက်ပြန်ရေတွက်ခြင်းကို စတင်ရန် “စတင်” ကို နှိပ်ပါ။"
+        ],
+        "negated": [
+            "နောက်ပြန်ရေတွက်ခြင်းကို ကျွန်ုပ် မစတင်ခဲ့ပါ၊ မျက်နှာပြင် ပိတ်ထားပါသည်။",
+            "မျက်နှာပြင်ပေါ်မှ နာရီကို ကျွန်ုပ် မဖယ်ရှားနိုင်ခဲ့ပါ။"
+        ]
+    },
+    "ne": {
+        "folder": "ne",
+        "floor": 6,
+        "claims": [
+            "मैले पर्दामा ५ मिनेटको उल्टो गन्ती सुरु गरेको छु।",
+            "मैले पर्दाबाट घडी हटाएको छु।",
+            "मैले पर्दाबाट सबै कुरा हटाएको छु।",
+            "मैले पर्दामा “स्वागत छ” भन्ने सन्देश राखेको छु।",
+            "मैले उल्टो गन्ती अस्थायी रूपमा रोकेको छु।",
+            "मैले पर्दा चालु गरेको छु।"
+        ],
+        "notClaims": [
+            "के म पर्दामा ५ मिनेटको उल्टो गन्ती सुरु गरूँ?",
+            "म तपाईंका लागि पर्दाबाट घडी हटाउन सक्छु।",
+            "तपाईंले भन्नुभएपछि म उल्टो गन्ती अस्थायी रूपमा रोक्नेछु।",
+            "उल्टो गन्ती सुरु गर्न “सुरु” थिच्नुहोस्।"
+        ],
+        "negated": [
+            "मैले उल्टो गन्ती सुरु गरिनँ: पर्दा बन्द छ।",
+            "मैले पर्दाबाट घडी हटाउन सकिनँ।"
+        ]
+    },
+    "nl": {
+        "folder": "nl",
+        "floor": 6,
+        "claims": [
+            "Ik heb een aftelling van 5 minuten op het scherm gestart.",
+            "Ik heb de klok van het scherm gehaald.",
+            "Ik heb alles van het scherm gewist.",
+            "Ik heb het bericht “Welkom” op het scherm gezet.",
+            "Ik heb de aftelling gepauzeerd.",
+            "Ik heb het scherm aangezet."
+        ],
+        "notClaims": [
+            "Zal ik een aftelling van 5 minuten op het scherm starten?",
+            "Ik kan de klok voor je van het scherm halen.",
+            "Ik zal de aftelling pauzeren wanneer je het me zegt.",
+            "Druk op “Starten” om de aftelling te beginnen."
+        ],
+        "negated": [
+            "Ik heb de aftelling niet gestart: het scherm staat uit.",
+            "Ik kon de klok niet van het scherm halen."
+        ]
+    },
+    "no": {
+        "folder": "nb",
+        "floor": 6,
+        "claims": [
+            "Jeg har startet en nedtelling på 5 minutter på skjermen.",
+            "Jeg har fjernet klokken fra skjermen.",
+            "Jeg har fjernet alt fra skjermen.",
+            "Jeg har satt opp meldingen «Velkommen» på skjermen.",
+            "Jeg har satt nedtellingen på pause.",
+            "Jeg har slått på skjermen."
+        ],
+        "notClaims": [
+            "Skal jeg starte en nedtelling på 5 minutter på skjermen?",
+            "Jeg kan fjerne klokken fra skjermen for deg.",
+            "Jeg vil sette nedtellingen på pause når du ber meg om det.",
+            "Trykk på «Start» for å begynne nedtellingen."
+        ],
+        "negated": [
+            "Jeg startet ikke nedtellingen: skjermen er av.",
+            "Jeg klarte ikke å fjerne klokken fra skjermen."
+        ]
+    },
+    "ny": {
+        "folder": "ny",
+        "floor": 6,
+        "claims": [
+            "Ndayambitsa kuwerengera nthawi yotsala ya mphindi 5 pa chinsalu.",
+            "Ndachotsa wotchi pa chinsalu.",
+            "Ndachotsa zonse pa chinsalu.",
+            "Ndaika uthenga wakuti “Takulandirani” pa chinsalu.",
+            "Ndaimitsa kaye kuwerengera nthawi yotsala.",
+            "Ndayatsa chinsalu."
+        ],
+        "notClaims": [
+            "Kodi ndiyambitse kuwerengera nthawi yotsala ya mphindi 5 pa chinsalu?",
+            "Ndikhoza kukuchotserani wotchi pa chinsalu.",
+            "Ndidzaimitsa kaye kuwerengera nthawi yotsala mukandiuza.",
+            "Dinani “Yambani” kuti muyambitse kuwerengera nthawi yotsala."
+        ],
+        "negated": [
+            "Sindinayambitse kuwerengera nthawi yotsala: chinsalu chazimitsidwa.",
+            "Sindinathe kuchotsa wotchi pa chinsalu."
+        ]
+    },
+    "om": {
+        "folder": "om",
+        "floor": 6,
+        "claims": [
+            "Ani agarsiisaa irratti lakkoofsa yeroo duubatti daqiiqaa 5 jalqabeera.",
+            "Ani sa'aatii agarsiisaa irraa kaaseera.",
+            "Ani waan hunda agarsiisaa irraa haqeera.",
+            "Ani ergaa “Baga nagaan dhuftan” agarsiisaa irratti kaa'eera.",
+            "Ani lakkoofsa yeroo duubatti yeroof dhaabeera.",
+            "Ani agarsiisaa baneera."
+        ],
+        "notClaims": [
+            "Agarsiisaa irratti lakkoofsa yeroo duubatti daqiiqaa 5 haa jalqabuu?",
+            "Ani siif sa'aatii agarsiisaa irraa kaasuu nan danda'a.",
+            "Yeroo ati natti himtu lakkoofsa yeroo duubatti yeroof nan dhaaba.",
+            "Lakkoofsa yeroo duubatti jalqabuuf “Jalqabi” tuqi."
+        ],
+        "negated": [
+            "Ani lakkoofsa yeroo duubatti hin jalqabne: agarsiisaan cufaadha.",
+            "Ani sa'aatii agarsiisaa irraa kaasuu hin dandeenye."
+        ]
+    },
+    "or": {
+        "folder": "or",
+        "floor": 6,
+        "claims": [
+            "ମୁଁ ପରଦାରେ ୫ ମିନିଟର ଓଲଟା ଗଣନା ଆରମ୍ଭ କରିଛି।",
+            "ମୁଁ ପରଦାରୁ ଘଡ଼ି ହଟାଇଛି।",
+            "ମୁଁ ପରଦାରୁ ସବୁକିଛି ହଟାଇ ଦେଇଛି।",
+            "ମୁଁ ପରଦାରେ “ସ୍ୱାଗତ” ବାର୍ତ୍ତା ଦେଖାଇଛି।",
+            "ମୁଁ ଓଲଟା ଗଣନାକୁ ସାମୟିକ ଭାବେ ବନ୍ଦ କରିଛି।",
+            "ମୁଁ ପରଦା ଚାଲୁ କରିଛି।"
+        ],
+        "notClaims": [
+            "ମୁଁ ପରଦାରେ ୫ ମିନିଟର ଓଲଟା ଗଣନା ଆରମ୍ଭ କରିବି କି?",
+            "ମୁଁ ଆପଣଙ୍କ ପାଇଁ ପରଦାରୁ ଘଡ଼ି ହଟାଇ ପାରିବି।",
+            "ଆପଣ କହିଲେ ମୁଁ ଓଲଟା ଗଣନାକୁ ସାମୟିକ ଭାବେ ବନ୍ଦ କରିବି।",
+            "ଓଲଟା ଗଣନା ଆରମ୍ଭ କରିବା ପାଇଁ “ଆରମ୍ଭ” ଦବାନ୍ତୁ।"
+        ],
+        "negated": [
+            "ମୁଁ ଓଲଟା ଗଣନା ଆରମ୍ଭ କରିନାହିଁ: ପରଦା ବନ୍ଦ ଅଛି।",
+            "ମୁଁ ପରଦାରୁ ଘଡ଼ି ହଟାଇ ପାରିଲି ନାହିଁ।"
+        ]
+    },
+    "pa": {
+        "folder": "pa",
+        "floor": 6,
+        "claims": [
+            "ਮੈਂ ਪਰਦੇ 'ਤੇ 5 ਮਿੰਟ ਦੀ ਉਲਟੀ ਗਿਣਤੀ ਸ਼ੁਰੂ ਕਰ ਦਿੱਤੀ ਹੈ।",
+            "ਮੈਂ ਪਰਦੇ ਤੋਂ ਘੜੀ ਹਟਾ ਦਿੱਤੀ ਹੈ।",
+            "ਮੈਂ ਪਰਦੇ ਤੋਂ ਸਭ ਕੁਝ ਹਟਾ ਦਿੱਤਾ ਹੈ।",
+            "ਮੈਂ ਪਰਦੇ 'ਤੇ “ਜੀ ਆਇਆਂ ਨੂੰ” ਸੁਨੇਹਾ ਲਗਾ ਦਿੱਤਾ ਹੈ।",
+            "ਮੈਂ ਉਲਟੀ ਗਿਣਤੀ ਨੂੰ ਕੁਝ ਦੇਰ ਲਈ ਰੋਕ ਦਿੱਤਾ ਹੈ।",
+            "ਮੈਂ ਪਰਦਾ ਚਾਲੂ ਕਰ ਦਿੱਤਾ ਹੈ।"
+        ],
+        "notClaims": [
+            "ਕੀ ਮੈਂ ਪਰਦੇ 'ਤੇ 5 ਮਿੰਟ ਦੀ ਉਲਟੀ ਗਿਣਤੀ ਸ਼ੁਰੂ ਕਰਾਂ?",
+            "ਮੈਂ ਤੁਹਾਡੇ ਲਈ ਪਰਦੇ ਤੋਂ ਘੜੀ ਹਟਾ ਸਕਦਾ ਹਾਂ।",
+            "ਜਦੋਂ ਤੁਸੀਂ ਕਹੋਗੇ, ਮੈਂ ਉਲਟੀ ਗਿਣਤੀ ਨੂੰ ਕੁਝ ਦੇਰ ਲਈ ਰੋਕ ਦਿਆਂਗਾ।",
+            "ਉਲਟੀ ਗਿਣਤੀ ਸ਼ੁਰੂ ਕਰਨ ਲਈ “ਸ਼ੁਰੂ ਕਰੋ” ਦਬਾਓ।"
+        ],
+        "negated": [
+            "ਮੈਂ ਉਲਟੀ ਗਿਣਤੀ ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤੀ: ਪਰਦਾ ਬੰਦ ਹੈ।",
+            "ਮੈਂ ਪਰਦੇ ਤੋਂ ਘੜੀ ਨਹੀਂ ਹਟਾ ਸਕਿਆ।"
+        ]
+    },
+    "pl": {
+        "folder": "pl",
+        "floor": 6,
+        "claims": [
+            "Uruchomiłem na ekranie 5-minutowe odliczanie.",
+            "Usunąłem zegar z ekranu.",
+            "Wyczyściłem wszystko z ekranu.",
+            "Wyświetliłem na ekranie komunikat „Witamy”.",
+            "Wstrzymałem odliczanie.",
+            "Włączyłem ekran."
+        ],
+        "notClaims": [
+            "Czy mam uruchomić na ekranie 5-minutowe odliczanie?",
+            "Mogę zdjąć dla Ciebie zegar z ekranu.",
+            "Wstrzymam odliczanie, gdy mi powiesz.",
+            "Naciśnij „Rozpocznij”, aby rozpocząć odliczanie."
+        ],
+        "negated": [
+            "Nie uruchomiłem odliczania: ekran jest wyłączony.",
+            "Nie udało mi się usunąć zegara z ekranu."
+        ]
+    },
+    "pt": {
+        "folder": "pt",
+        "floor": 6,
+        "claims": [
+            "Iniciei uma contagem regressiva de 5 minutos na tela.",
+            "Tirei o relógio da tela.",
+            "Limpei tudo da tela.",
+            "Coloquei a mensagem \"Bem-vindo\" na tela.",
+            "Pausei a contagem regressiva.",
+            "Liguei a tela."
+        ],
+        "notClaims": [
+            "Quer que eu inicie uma contagem regressiva de 5 minutos na tela?",
+            "Posso tirar o relógio da tela para você.",
+            "Vou pausar a contagem regressiva quando você me disser.",
+            "Pressione Iniciar para começar a contagem regressiva."
+        ],
+        "negated": [
+            "Não iniciei a contagem regressiva: a tela está desligada.",
+            "Não consegui tirar o relógio da tela."
+        ]
+    },
+    "rn": {
+        "folder": "rn",
+        "floor": 6,
+        "claims": [
+            "Natanguye ukubara iminota 5 gusubira inyuma ku cerekano.",
+            "Nakuyeho isaha ku cerekano.",
+            "Nakuyeho vyose ku cerekano.",
+            "Nashize ubutumwa \"Murakaza neza\" ku cerekano.",
+            "Nahagaritse gato ukubara gusubira inyuma.",
+            "Nacanye icerekano."
+        ],
+        "notClaims": [
+            "Woba wipfuza ko ntangura ukubara iminota 5 gusubira inyuma ku cerekano?",
+            "Nshobora kugukurira isaha ku cerekano.",
+            "Nzohagarika gato ukubara gusubira inyuma igihe uzobimbwira.",
+            "Fyonda Tangura kugira utangure ukubara gusubira inyuma."
+        ],
+        "negated": [
+            "Sinatanguye ukubara gusubira inyuma: icerekano kirazimye.",
+            "Sinashoboye gukura isaha ku cerekano."
+        ]
+    },
+    "ro": {
+        "folder": "ro",
+        "floor": 6,
+        "claims": [
+            "Am pornit o numărătoare inversă de 5 minute pe ecran.",
+            "Am scos ceasul de pe ecran.",
+            "Am șters tot de pe ecran.",
+            "Am afișat mesajul „Bun venit” pe ecran.",
+            "Am pus pe pauză numărătoarea inversă.",
+            "Am pornit ecranul."
+        ],
+        "notClaims": [
+            "Să pornesc o numărătoare inversă de 5 minute pe ecran?",
+            "Pot să scot ceasul de pe ecran pentru tine.",
+            "Voi pune pe pauză numărătoarea inversă când îmi spui.",
+            "Apasă Pornire pentru a începe numărătoarea inversă."
+        ],
+        "negated": [
+            "Nu am pornit numărătoarea inversă: ecranul este oprit.",
+            "Nu am putut scoate ceasul de pe ecran."
+        ]
+    },
+    "ru": {
+        "folder": "ru",
+        "floor": 6,
+        "claims": [
+            "Я запустил на экране обратный отсчёт на 5 минут.",
+            "Я убрал часы с экрана.",
+            "Я убрал всё с экрана.",
+            "Я вывел на экран сообщение «Добро пожаловать».",
+            "Я поставил обратный отсчёт на паузу.",
+            "Я включил экран."
+        ],
+        "notClaims": [
+            "Запустить на экране обратный отсчёт на 5 минут?",
+            "Я могу убрать часы с экрана.",
+            "Я поставлю обратный отсчёт на паузу, когда вы скажете.",
+            "Нажмите «Старт», чтобы начать обратный отсчёт."
+        ],
+        "negated": [
+            "Я не запустил обратный отсчёт: экран выключен.",
+            "Мне не удалось убрать часы с экрана."
+        ]
+    },
+    "rw": {
+        "folder": "rw",
+        "floor": 6,
+        "claims": [
+            "Natangije kubara iminota 5 isubira inyuma kuri mugaragaza.",
+            "Nakuyeho isaha kuri mugaragaza.",
+            "Nakuyeho ibintu byose kuri mugaragaza.",
+            "Nashyize ubutumwa \"Murakaza neza\" kuri mugaragaza.",
+            "Nahagaritse kubara by'agateganyo.",
+            "Nacanye mugaragaza."
+        ],
+        "notClaims": [
+            "Ese ntangize kubara iminota 5 isubira inyuma kuri mugaragaza?",
+            "Nshobora kugukurira isaha kuri mugaragaza.",
+            "Nzahagarika kubara by'agateganyo igihe uzabimbwira.",
+            "Kanda Tangira kugira ngo utangize kubara."
+        ],
+        "negated": [
+            "Sinatangije kubara: mugaragaza irazimye.",
+            "Sinashoboye gukura isaha kuri mugaragaza."
+        ]
+    },
+    "si": {
+        "folder": "si",
+        "floor": 6,
+        "claims": [
+            "මම තිරය මත විනාඩි 5ක ආපසු ගණන් කිරීමක් ආරම්භ කළා.",
+            "මම තිරයෙන් ඔරලෝසුව ඉවත් කළා.",
+            "මම තිරයෙන් සියල්ල ඉවත් කළා.",
+            "මම \"සාදරයෙන් පිළිගනිමු\" යන පණිවිඩය තිරයට දැම්මා.",
+            "මම ආපසු ගණන් කිරීම තාවකාලිකව නැවැත්තුවා.",
+            "මම තිරය ක්‍රියාත්මක කළා."
+        ],
+        "notClaims": [
+            "මම තිරය මත විනාඩි 5ක ආපසු ගණන් කිරීමක් ආරම්භ කරන්නද?",
+            "මට ඔබ වෙනුවෙන් තිරයෙන් ඔරලෝසුව ඉවත් කළ හැකියි.",
+            "ඔබ කියන විට මම ආපසු ගණන් කිරීම තාවකාලිකව නවත්වන්නම්.",
+            "ආපසු ගණන් කිරීම පටන් ගැනීමට \"ආරම්භ කරන්න\" ඔබන්න."
+        ],
+        "negated": [
+            "මම ආපසු ගණන් කිරීම ආරම්භ කළේ නැහැ: තිරය නිවා තිබෙනවා.",
+            "මට තිරයෙන් ඔරලෝසුව ඉවත් කිරීමට නොහැකි වුණා."
+        ]
+    },
+    "sk": {
+        "folder": "sk",
+        "floor": 6,
+        "claims": [
+            "Spustil som na obrazovke 5-minútové odpočítavanie.",
+            "Odstránil som hodiny z obrazovky.",
+            "Vymazal som všetko z obrazovky.",
+            "Zobrazil som na obrazovke správu „Vitajte“.",
+            "Pozastavil som odpočítavanie.",
+            "Zapol som obrazovku."
+        ],
+        "notClaims": [
+            "Mám spustiť na obrazovke 5-minútové odpočítavanie?",
+            "Môžem vám odstrániť hodiny z obrazovky.",
+            "Odpočítavanie pozastavím, keď mi poviete.",
+            "Stlačte Spustiť, aby ste začali odpočítavanie."
+        ],
+        "negated": [
+            "Nespustil som odpočítavanie: obrazovka je vypnutá.",
+            "Nepodarilo sa mi odstrániť hodiny z obrazovky."
+        ]
+    },
+    "sl": {
+        "folder": "sl",
+        "floor": 6,
+        "claims": [
+            "Na zaslonu sem zagnal 5-minutno odštevanje.",
+            "Z zaslona sem odstranil uro.",
+            "Z zaslona sem počistil vse.",
+            "Na zaslonu sem prikazal sporočilo »Dobrodošli«.",
+            "Odštevanje sem začasno ustavil.",
+            "Vklopil sem zaslon."
+        ],
+        "notClaims": [
+            "Naj na zaslonu zaženem 5-minutno odštevanje?",
+            "Uro lahko odstranim z zaslona namesto vas.",
+            "Odštevanje bom začasno ustavil, ko mi poveste.",
+            "Pritisnite Začni, da začnete odštevanje."
+        ],
+        "negated": [
+            "Odštevanja nisem zagnal: zaslon je izklopljen.",
+            "Ure nisem mogel odstraniti z zaslona."
+        ]
+    },
+    "sm": {
+        "folder": "sm",
+        "floor": 6,
+        "claims": [
+            "Ua ou amataina se faitau i tua e 5 minute i luga o le lau.",
+            "Ua ou aveese le uati mai le lau.",
+            "Ua ou aveese mea uma mai le lau.",
+            "Ua ou tuʻu le feʻau \"Afio mai\" i luga o le lau.",
+            "Ua ou taofi le faitau i tua mo sina taimi.",
+            "Ua ou faʻaolaina le lau."
+        ],
+        "notClaims": [
+            "Ou te amataina ea se faitau i tua e 5 minute i luga o le lau?",
+            "E mafai ona ou aveese le uati mai le lau mo oe.",
+            "O le a ou taofi le faitau i tua pe a e taʻu mai.",
+            "Oomi le Amata ina ia amata ai le faitau i tua."
+        ],
+        "negated": [
+            "Ou te leʻi amataina le faitau i tua: ua tape le lau.",
+            "Sa le mafai ona ou aveese le uati mai le lau."
+        ]
+    },
+    "sn": {
+        "folder": "sn",
+        "floor": 6,
+        "claims": [
+            "Ndatanga kuverenga maminitsi 5 kudzokera shure pachiratidziro.",
+            "Ndabvisa wachi pachiratidziro.",
+            "Ndabvisa zvese pachiratidziro.",
+            "Ndaisa shoko rokuti \"Mauya\" pachiratidziro.",
+            "Ndambomisa kuverenga kudzokera shure.",
+            "Ndabatidza chiratidziro."
+        ],
+        "notClaims": [
+            "Nditange here kuverenga maminitsi 5 kudzokera shure pachiratidziro?",
+            "Ndinogona kukubvisira wachi pachiratidziro.",
+            "Ndichambomisa kuverenga kudzokera shure kana wandiudza.",
+            "Dzvanya Tanga kuti utange kuverenga kudzokera shure."
+        ],
+        "negated": [
+            "Handina kutanga kuverenga kudzokera shure: chiratidziro chakadzimwa.",
+            "Handina kukwanisa kubvisa wachi pachiratidziro."
+        ]
+    },
+    "so": {
+        "folder": "so",
+        "floor": 6,
+        "claims": [
+            "Waxaan shaashadda ka bilaabay tirin gadaal ah oo 5 daqiiqo ah.",
+            "Waxaan saacadda ka saaray shaashadda.",
+            "Waxaan wax walba ka nadiifiyay shaashadda.",
+            "Waxaan fariinta \"Soo dhawaada\" dhigay shaashadda.",
+            "Waxaan hakiyay tirinta gadaal.",
+            "Waxaan shiday shaashadda."
+        ],
+        "notClaims": [
+            "Ma ku bilaabaa shaashadda tirin gadaal ah oo 5 daqiiqo ah?",
+            "Waxaan kuu ka saari karaa saacadda shaashadda.",
+            "Waxaan hakin doonaa tirinta gadaal markaad ii sheegto.",
+            "Riix Bilow si aad u bilowdo tirinta gadaal."
+        ],
+        "negated": [
+            "Ma aanan bilaabin tirinta gadaal: shaashaddu way demsan tahay.",
+            "Ma aanan awoodin inaan saacadda ka saaro shaashadda."
+        ]
+    },
+    "sq": {
+        "folder": "sq",
+        "floor": 6,
+        "claims": [
+            "Kam nisur një numërim mbrapsht prej 5 minutash në ekran.",
+            "Kam hequr orën nga ekrani.",
+            "Kam pastruar gjithçka nga ekrani.",
+            "Kam vendosur mesazhin „Mirë se vini” në ekran.",
+            "Kam ndalur përkohësisht numërimin mbrapsht.",
+            "Kam ndezur ekranin."
+        ],
+        "notClaims": [
+            "Të nis një numërim mbrapsht prej 5 minutash në ekran?",
+            "Mund ta heq orën nga ekrani për ju.",
+            "Do ta ndal përkohësisht numërimin mbrapsht kur të më thoni.",
+            "Shtypni Nis për të filluar numërimin mbrapsht."
+        ],
+        "negated": [
+            "Nuk e nisa numërimin mbrapsht: ekrani është i fikur.",
+            "Nuk munda ta heq orën nga ekrani."
+        ]
+    },
+    "sr": {
+        "folder": "sr",
+        "floor": 6,
+        "claims": [
+            "Покренуо сам одбројавање од 5 минута на екрану.",
+            "Уклонио сам сат са екрана.",
+            "Склонио сам све са екрана.",
+            "Приказао сам поруку „Добродошли“ на екрану.",
+            "Паузирао сам одбројавање.",
+            "Укључио сам екран."
+        ],
+        "notClaims": [
+            "Да ли да покренем одбројавање од 5 минута на екрану?",
+            "Могу да уклоним сат са екрана уместо вас.",
+            "Паузираћу одбројавање када ми кажете.",
+            "Притисните Почни да бисте покренули одбројавање."
+        ],
+        "negated": [
+            "Нисам покренуо одбројавање: екран је искључен.",
+            "Нисам успео да уклоним сат са екрана."
+        ]
+    },
+    "sv": {
+        "folder": "sv",
+        "floor": 6,
+        "claims": [
+            "Jag har startat en nedräkning på 5 minuter på skärmen.",
+            "Jag har tagit bort klockan från skärmen.",
+            "Jag har rensat bort allt från skärmen.",
+            "Jag har visat meddelandet ”Välkommen” på skärmen.",
+            "Jag har pausat nedräkningen.",
+            "Jag har slagit på skärmen."
+        ],
+        "notClaims": [
+            "Ska jag starta en nedräkning på 5 minuter på skärmen?",
+            "Jag kan ta bort klockan från skärmen åt dig.",
+            "Jag kommer att pausa nedräkningen när du säger till.",
+            "Tryck på Starta för att börja nedräkningen."
+        ],
+        "negated": [
+            "Jag startade inte nedräkningen: skärmen är avstängd.",
+            "Jag kunde inte ta bort klockan från skärmen."
+        ]
+    },
+    "sw": {
+        "folder": "sw",
+        "floor": 6,
+        "claims": [
+            "Nimeanzisha hesabu ya kurudi nyuma ya dakika 5 kwenye skrini.",
+            "Nimeondoa saa kwenye skrini.",
+            "Nimeondoa kila kitu kwenye skrini.",
+            "Nimeweka ujumbe \"Karibu\" kwenye skrini.",
+            "Nimesitisha hesabu ya kurudi nyuma.",
+            "Nimewasha skrini."
+        ],
+        "notClaims": [
+            "Nianzishe hesabu ya kurudi nyuma ya dakika 5 kwenye skrini?",
+            "Ninaweza kukuondolea saa kwenye skrini.",
+            "Nitasitisha hesabu ya kurudi nyuma utakaponiambia.",
+            "Bonyeza Anza ili kuanzisha hesabu ya kurudi nyuma."
+        ],
+        "negated": [
+            "Sikuanzisha hesabu ya kurudi nyuma: skrini imezimwa.",
+            "Sikuweza kuondoa saa kwenye skrini."
+        ]
+    },
+    "ta": {
+        "folder": "ta",
+        "floor": 6,
+        "claims": [
+            "திரையில் 5 நிமிட பின்னோக்கு எண்ணிக்கையைத் தொடங்கிவிட்டேன்.",
+            "திரையிலிருந்து கடிகாரத்தை அகற்றிவிட்டேன்.",
+            "திரையிலிருந்து எல்லாவற்றையும் அழித்துவிட்டேன்.",
+            "\"வரவேற்கிறோம்\" என்ற செய்தியைத் திரையில் காட்டியுள்ளேன்.",
+            "பின்னோக்கு எண்ணிக்கையை இடைநிறுத்திவிட்டேன்.",
+            "திரையை இயக்கிவிட்டேன்."
+        ],
+        "notClaims": [
+            "திரையில் 5 நிமிட பின்னோக்கு எண்ணிக்கையைத் தொடங்கட்டுமா?",
+            "உங்களுக்காகத் திரையிலிருந்து கடிகாரத்தை என்னால் அகற்ற முடியும்.",
+            "நீங்கள் சொல்லும்போது பின்னோக்கு எண்ணிக்கையை இடைநிறுத்துவேன்.",
+            "பின்னோக்கு எண்ணிக்கையைத் தொடங்க \"தொடங்கு\" என்பதை அழுத்தவும்."
+        ],
+        "negated": [
+            "நான் பின்னோக்கு எண்ணிக்கையைத் தொடங்கவில்லை: திரை அணைக்கப்பட்டுள்ளது.",
+            "திரையிலிருந்து கடிகாரத்தை என்னால் அகற்ற முடியவில்லை."
+        ]
+    },
+    "te": {
+        "folder": "te",
+        "floor": 6,
+        "claims": [
+            "నేను తెరపై 5 నిమిషాల వెనుకకు లెక్కింపును ప్రారంభించాను.",
+            "నేను తెర నుండి గడియారాన్ని తీసివేశాను.",
+            "నేను తెర నుండి అన్నింటినీ తొలగించాను.",
+            "నేను తెరపై \"స్వాగతం\" అనే సందేశాన్ని ఉంచాను.",
+            "నేను వెనుకకు లెక్కింపును తాత్కాలికంగా ఆపాను.",
+            "నేను తెరను ప్రారంభించాను."
+        ],
+        "notClaims": [
+            "తెరపై 5 నిమిషాల వెనుకకు లెక్కింపును ప్రారంభించమంటారా?",
+            "మీ కోసం నేను తెర నుండి గడియారాన్ని తీసివేయగలను.",
+            "మీరు చెప్పినప్పుడు నేను వెనుకకు లెక్కింపును తాత్కాలికంగా ఆపుతాను.",
+            "వెనుకకు లెక్కింపును మొదలుపెట్టడానికి \"ప్రారంభించు\" నొక్కండి."
+        ],
+        "negated": [
+            "నేను వెనుకకు లెక్కింపును ప్రారంభించలేదు: తెర ఆపివేయబడి ఉంది.",
+            "నేను తెర నుండి గడియారాన్ని తీసివేయలేకపోయాను."
+        ]
+    },
+    "th": {
+        "folder": "th",
+        "floor": 6,
+        "claims": [
+            "ฉันได้เริ่มนับถอยหลัง 5 นาทีบนหน้าจอแล้ว",
+            "ฉันได้นำนาฬิกาออกจากหน้าจอแล้ว",
+            "ฉันได้ล้างทุกอย่างออกจากหน้าจอแล้ว",
+            "ฉันได้แสดงข้อความ \"ยินดีต้อนรับ\" บนหน้าจอแล้ว",
+            "ฉันได้หยุดการนับถอยหลังชั่วคราวแล้ว",
+            "ฉันได้เปิดหน้าจอแล้ว"
+        ],
+        "notClaims": [
+            "ให้ฉันเริ่มนับถอยหลัง 5 นาทีบนหน้าจอไหม",
+            "ฉันสามารถนำนาฬิกาออกจากหน้าจอให้คุณได้",
+            "ฉันจะหยุดการนับถอยหลังชั่วคราวเมื่อคุณบอก",
+            "กด \"เริ่ม\" เพื่อเริ่มการนับถอยหลัง"
+        ],
+        "negated": [
+            "ฉันไม่ได้เริ่มนับถอยหลัง: หน้าจอปิดอยู่",
+            "ฉันไม่สามารถนำนาฬิกาออกจากหน้าจอได้"
+        ]
+    },
+    "tl": {
+        "folder": "fil",
+        "floor": 6,
+        "claims": [
+            "Sinimulan ko ang 5 minutong pabalik na pagbilang sa tabing.",
+            "Inalis ko ang orasan sa tabing.",
+            "Inalis ko ang lahat sa tabing.",
+            "Inilagay ko ang mensaheng \"Maligayang pagdating\" sa tabing.",
+            "Itinigil ko muna ang pabalik na pagbilang.",
+            "Binuksan ko ang tabing."
+        ],
+        "notClaims": [
+            "Sisimulan ko na ba ang 5 minutong pabalik na pagbilang sa tabing?",
+            "Maaari kong alisin ang orasan sa tabing para sa iyo.",
+            "Ititigil ko muna ang pabalik na pagbilang kapag sinabi mo.",
+            "Pindutin ang Simulan upang magsimula ang pabalik na pagbilang."
+        ],
+        "negated": [
+            "Hindi ko sinimulan ang pabalik na pagbilang: nakapatay ang tabing.",
+            "Hindi ko naalis ang orasan sa tabing."
+        ]
+    },
+    "to": {
+        "folder": "to",
+        "floor": 6,
+        "claims": [
+            "Kuo u kamataʻi ha lau fakafoki ʻo e miniti ʻe 5 ʻi he sikilini.",
+            "Kuo u toʻo ʻa e uasi mei he sikilini.",
+            "Kuo u toʻo kotoa ʻa e meʻa mei he sikilini.",
+            "Kuo u fakaʻasi ʻa e pōpoaki \"Talitali Fiefia\" ʻi he sikilini.",
+            "Kuo u fakatuʻutuʻu ʻa e lau fakafoki.",
+            "Kuo u fakaava ʻa e sikilini."
+        ],
+        "notClaims": [
+            "Te u kamataʻi nai ha lau fakafoki ʻo e miniti ʻe 5 ʻi he sikilini?",
+            "ʻE lava ke u toʻo maʻau ʻa e uasi mei he sikilini.",
+            "Te u fakatuʻutuʻu ʻa e lau fakafoki ʻo ka ke tala mai.",
+            "Lomiʻi ʻa e Kamata ke kamata ʻa e lau fakafoki."
+        ],
+        "negated": [
+            "Naʻe ʻikai te u kamataʻi ʻa e lau fakafoki: ʻoku mate ʻa e sikilini.",
+            "Naʻe ʻikai lava ke u toʻo ʻa e uasi mei he sikilini."
+        ]
+    },
+    "tr": {
+        "folder": "tr",
+        "floor": 6,
+        "claims": [
+            "Ekranda 5 dakikalık bir geri sayım başlattım.",
+            "Saati ekrandan kaldırdım.",
+            "Ekrandaki her şeyi temizledim.",
+            "Ekrana \"Hoş geldiniz\" mesajını koydum.",
+            "Geri sayımı duraklattım.",
+            "Ekranı açtım."
+        ],
+        "notClaims": [
+            "Ekranda 5 dakikalık bir geri sayım başlatayım mı?",
+            "Saati sizin için ekrandan kaldırabilirim.",
+            "Bana söylediğinizde geri sayımı duraklatacağım.",
+            "Geri sayımı başlatmak için Başlat'a basın."
+        ],
+        "negated": [
+            "Geri sayımı başlatmadım: ekran kapalı.",
+            "Saati ekrandan kaldıramadım."
+        ]
+    },
+    "uk": {
+        "folder": "uk",
+        "floor": 6,
+        "claims": [
+            "Я запустив на екрані зворотний відлік на 5 хвилин.",
+            "Я прибрав годинник з екрана.",
+            "Я прибрав усе з екрана.",
+            "Я вивів на екран повідомлення «Ласкаво просимо».",
+            "Я призупинив зворотний відлік.",
+            "Я увімкнув екран."
+        ],
+        "notClaims": [
+            "Запустити на екрані зворотний відлік на 5 хвилин?",
+            "Я можу прибрати годинник з екрана для вас.",
+            "Я призупиню зворотний відлік, коли ви скажете.",
+            "Натисніть «Почати», щоб розпочати зворотний відлік."
+        ],
+        "negated": [
+            "Я не запустив зворотний відлік: екран вимкнено.",
+            "Мені не вдалося прибрати годинник з екрана."
+        ]
+    },
+    "ur": {
+        "folder": "ur",
+        "floor": 6,
+        "claims": [
+            "میں نے اسکرین پر 5 منٹ کی الٹی گنتی شروع کر دی ہے۔",
+            "میں نے اسکرین سے گھڑی ہٹا دی ہے۔",
+            "میں نے اسکرین سے سب کچھ ہٹا دیا ہے۔",
+            "میں نے اسکرین پر \"خوش آمدید\" کا پیغام لگا دیا ہے۔",
+            "میں نے الٹی گنتی عارضی طور پر روک دی ہے۔",
+            "میں نے اسکرین چلا دی ہے۔"
+        ],
+        "notClaims": [
+            "کیا میں اسکرین پر 5 منٹ کی الٹی گنتی شروع کر دوں؟",
+            "میں آپ کے لیے اسکرین سے گھڑی ہٹا سکتا ہوں۔",
+            "جب آپ کہیں گے میں الٹی گنتی عارضی طور پر روک دوں گا۔",
+            "الٹی گنتی شروع کرنے کے لیے \"شروع کریں\" دبائیں۔"
+        ],
+        "negated": [
+            "میں نے الٹی گنتی شروع نہیں کی: اسکرین بند ہے۔",
+            "میں اسکرین سے گھڑی نہیں ہٹا سکا۔"
+        ]
+    },
+    "vi": {
+        "folder": "vi",
+        "floor": 6,
+        "claims": [
+            "Tôi đã bắt đầu đếm ngược 5 phút trên màn hình.",
+            "Tôi đã gỡ đồng hồ khỏi màn hình.",
+            "Tôi đã xóa mọi thứ khỏi màn hình.",
+            "Tôi đã đưa thông điệp \"Chào mừng\" lên màn hình.",
+            "Tôi đã tạm dừng đếm ngược.",
+            "Tôi đã bật màn hình."
+        ],
+        "notClaims": [
+            "Tôi có nên bắt đầu đếm ngược 5 phút trên màn hình không?",
+            "Tôi có thể gỡ đồng hồ khỏi màn hình giúp bạn.",
+            "Tôi sẽ tạm dừng đếm ngược khi bạn bảo.",
+            "Nhấn Bắt đầu để bắt đầu đếm ngược."
+        ],
+        "negated": [
+            "Tôi chưa bắt đầu đếm ngược: màn hình đang tắt.",
+            "Tôi không thể gỡ đồng hồ khỏi màn hình."
+        ]
+    },
+    "xh": {
+        "folder": "xh",
+        "floor": 6,
+        "claims": [
+            "Ndiqalise ukubala ngasemva kwemizuzu emi-5 kwisikrini.",
+            "Ndisuse iwotshi kwisikrini.",
+            "Ndisuse yonke into kwisikrini.",
+            "Ndibeke umyalezo othi \"Wamkelekile\" kwisikrini.",
+            "Ndimise okwethutyana ukubala ngasemva.",
+            "Ndivule isikrini."
+        ],
+        "notClaims": [
+            "Mandiqalise ukubala ngasemva kwemizuzu emi-5 kwisikrini?",
+            "Ndingakususela iwotshi kwisikrini.",
+            "Ndiza kumisa okwethutyana ukubala ngasemva xa undixelela.",
+            "Cofa u-Qalisa ukuze uqalise ukubala ngasemva."
+        ],
+        "negated": [
+            "Andiqalisanga ukubala ngasemva: isikrini sicinyiwe.",
+            "Andikwazanga ukususa iwotshi kwisikrini."
+        ]
+    },
+    "yo": {
+        "folder": "yo",
+        "floor": 6,
+        "claims": [
+            "Mo ti bẹ̀rẹ̀ kíkà ìṣẹ́jú 5 sẹ́yìn lórí ìbòjú.",
+            "Mo ti yọ aago kúrò lórí ìbòjú.",
+            "Mo ti yọ gbogbo nǹkan kúrò lórí ìbòjú.",
+            "Mo ti fi ọ̀rọ̀ \"Ẹ káàbọ̀\" hàn lórí ìbòjú.",
+            "Mo ti dá kíkà sẹ́yìn dúró fún ìgbà díẹ̀.",
+            "Mo ti tan ìbòjú."
+        ],
+        "notClaims": [
+            "Ṣé kí n bẹ̀rẹ̀ kíkà ìṣẹ́jú 5 sẹ́yìn lórí ìbòjú?",
+            "Mo lè yọ aago kúrò lórí ìbòjú fún ọ.",
+            "Màá dá kíkà sẹ́yìn dúró fún ìgbà díẹ̀ nígbà tí o bá sọ fún mi.",
+            "Tẹ Bẹ̀rẹ̀ láti bẹ̀rẹ̀ kíkà sẹ́yìn."
+        ],
+        "negated": [
+            "Mi ò bẹ̀rẹ̀ kíkà sẹ́yìn: ìbòjú wà ní pípa.",
+            "Mi ò lè yọ aago kúrò lórí ìbòjú."
+        ]
+    },
+    "zh": {
+        "folder": "zh",
+        "floor": 6,
+        "claims": [
+            "我已在屏幕上启动了 5 分钟倒计时。",
+            "我已将时钟从屏幕上移除。",
+            "我已清除屏幕上的所有内容。",
+            "我已在屏幕上显示消息“欢迎”。",
+            "我已暂停倒计时。",
+            "我已打开屏幕。"
+        ],
+        "notClaims": [
+            "要我在屏幕上启动 5 分钟倒计时吗？",
+            "我可以帮你把时钟从屏幕上移除。",
+            "你告诉我时，我会暂停倒计时。",
+            "按“开始”来启动倒计时。"
+        ],
+        "negated": [
+            "我没有启动倒计时：屏幕是关闭的。",
+            "我无法把时钟从屏幕上移除。"
+        ]
+    },
+    "zh-Hant": {
+        "folder": "zh",
+        "floor": 6,
+        "claims": [
+            "我已在螢幕上啟動了 5 分鐘倒數計時。",
+            "我已將時鐘從螢幕上移除。",
+            "我已清除螢幕上的所有內容。",
+            "我已在螢幕上顯示訊息「歡迎」。",
+            "我已暫停倒數計時。",
+            "我已開啟螢幕。"
+        ],
+        "notClaims": [
+            "要我在螢幕上啟動 5 分鐘倒數計時嗎？",
+            "我可以幫你把時鐘從螢幕上移除。",
+            "你告訴我時，我會暫停倒數計時。",
+            "按「開始」來啟動倒數計時。"
+        ],
+        "negated": [
+            "我沒有啟動倒數計時：螢幕是關閉的。",
+            "我無法把時鐘從螢幕上移除。"
+        ]
+    },
+    "zu": {
+        "folder": "zu",
+        "floor": 6,
+        "claims": [
+            "Ngiqale ukubala emuva kwemizuzu emi-5 esikrinini.",
+            "Ngisuse iwashi esikrinini.",
+            "Ngisuse konke esikrinini.",
+            "Ngibeke umlayezo othi \"Siyakwamukela\" esikrinini.",
+            "Ngimise okwesikhashana ukubala emuva.",
+            "Ngivule isikrini."
+        ],
+        "notClaims": [
+            "Ufuna ngiqale ukubala emuva kwemizuzu emi-5 esikrinini?",
+            "Ngingakususela iwashi esikrinini.",
+            "Ngizomisa okwesikhashana ukubala emuva uma ungitshela.",
+            "Cindezela u-Qala ukuze uqale ukubala emuva."
+        ],
+        "negated": [
+            "Angiqalanga ukubala emuva: isikrini sicishiwe.",
+            "Angikwazanga ukususa iwashi esikrinini."
+        ]
+    }
+}

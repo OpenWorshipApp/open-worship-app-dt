@@ -25,6 +25,8 @@ const h = vi.hoisted(() => ({
     importDroppedBibleNoteArchive: vi.fn(),
     selectAndImportBibleNoteArchive: vi.fn(),
     askAndImportBibleNoteArchiveFromUrl: vi.fn(),
+    createNewFileDetail: vi.fn(),
+    openMarkdownNoteFile: vi.fn(),
 }));
 
 vi.mock('../../others/FileListHandlerComp', () => ({
@@ -43,6 +45,14 @@ vi.mock('./NoteFileComp', () => ({
         </div>
     ),
 }));
+vi.mock('./MarkdownNoteFileComp', () => ({
+    default: ({ index, filePath }: { index: number; filePath: string }) => (
+        <div className="markdown-note-file" data-index={index}>
+            {filePath}
+        </div>
+    ),
+    openMarkdownNoteFile: h.openMarkdownNoteFile,
+}));
 vi.mock('../../helper/dirSourceHelpers', () => ({
     useGenDirSourceReload: h.useGenDirSourceReload,
 }));
@@ -54,6 +64,7 @@ vi.mock('../../context-menu/contextMenuIconHelpers', () => ({
 }));
 vi.mock('../../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../../server/fileHelpers', () => ({
+    createNewFileDetail: h.createNewFileDetail,
     getFileFullName: h.getFileFullName,
 }));
 vi.mock('./bibleNoteArchiveHelpers', () => ({
@@ -116,11 +127,91 @@ describe('the Bible Notes list panel', () => {
         expect(h.listProps).toMatchObject({
             className: 'note-list app-cue-list',
             mimetypeName: 'note',
+            extraMimetypeNames: ['markdown'],
             defaultFolderName: defaultDataDirNames.BIBLE_NOTES,
             dirSource: h.dirSource,
             userClassName: 'p-0',
             sortFilePaths: h.sortNoteFilePaths,
         });
+    });
+
+    // 2026-11-11, the user: _make markdown be the part of bible-note area as
+    // well, so user can create either bible-note or markdown file_.
+    test('draws a note row for a note file and a Markdown row for a Markdown file', async () => {
+        await renderList();
+        await act(async () => {
+            root.render(
+                <div>
+                    {h.listProps.bodyHandler([
+                        '/n/Default.own',
+                        '/n/Study.md',
+                        '/n/Old.MARKDOWN',
+                        '/n/Easter.own',
+                    ])}
+                </div>,
+            );
+        });
+        const rows = [
+            ...host.querySelectorAll<HTMLElement>(
+                '.note-file, .markdown-note-file',
+            ),
+        ];
+        expect(
+            rows.map((row) => [
+                row.className,
+                row.dataset.index,
+                row.textContent,
+            ]),
+        ).toEqual([
+            ['note-file', '0', '/n/Default.own'],
+            ['markdown-note-file', '1', '/n/Study.md'],
+            ['markdown-note-file', '2', '/n/Old.MARKDOWN'],
+            ['note-file', '3', '/n/Easter.own'],
+        ]);
+    });
+
+    test('its menu makes either a Bible note or a Markdown file', async () => {
+        await renderList();
+        expect(h.listProps.newFileKinds).toEqual([
+            { key: 'note', title: 'New Bible Note', iconName: 'journal-text' },
+            {
+                key: 'markdown',
+                title: 'New Markdown File',
+                iconName: 'markdown',
+            },
+        ]);
+    });
+
+    test('a new Markdown file starts with its name as its heading and opens', async () => {
+        await renderList();
+        h.createNewFileDetail.mockResolvedValue('/n/Easter Study.md');
+        expect(
+            await h.listProps.onNewFile('/n', 'Easter Study', 'markdown'),
+        ).toBe(false);
+        expect(h.createNewFileDetail).toHaveBeenCalledWith(
+            '/n',
+            'Easter Study',
+            '# Easter Study\n',
+            'markdown',
+        );
+        expect(h.openMarkdownNoteFile).toHaveBeenCalledExactlyOnceWith(
+            '/n/Easter Study.md',
+        );
+        expect(h.create).not.toHaveBeenCalled();
+        // A name refused or taken leaves the name box open, and opens nothing.
+        h.createNewFileDetail.mockResolvedValue(null);
+        expect(
+            await h.listProps.onNewFile('/n', 'Easter Study', 'markdown'),
+        ).toBe(true);
+        expect(h.openMarkdownNoteFile).toHaveBeenCalledTimes(1);
+    });
+
+    test('a dropped Markdown file is copied in as a note file is', async () => {
+        await renderList();
+        expect(h.listProps.checkExtraFile('Study.md')).toBe(true);
+        expect(h.listProps.checkExtraFile('Study.mkdn')).toBe(true);
+        expect(h.listProps.checkExtraFile('Study.pdf')).toBe(false);
+        expect(h.listProps.checkExtraFile('Study.md.exe')).toBe(false);
     });
 
     test('draws one row per note file', async () => {
@@ -147,10 +238,11 @@ describe('the Bible Notes list panel', () => {
     test('a new file is a new note file, and a failed create says so', async () => {
         await renderList();
         h.create.mockResolvedValue({ filePath: '/n/New.own' });
-        expect(await h.listProps.onNewFile('/n', 'New')).toBe(false);
+        expect(await h.listProps.onNewFile('/n', 'New', 'note')).toBe(false);
         expect(h.create).toHaveBeenCalledWith('/n', 'New');
         h.create.mockResolvedValue(null);
-        expect(await h.listProps.onNewFile('/n', 'New')).toBe(true);
+        expect(await h.listProps.onNewFile('/n', 'New', 'note')).toBe(true);
+        expect(h.createNewFileDetail).not.toHaveBeenCalled();
     });
 
     test('its menu imports a whole note file from a file or from a link', async () => {

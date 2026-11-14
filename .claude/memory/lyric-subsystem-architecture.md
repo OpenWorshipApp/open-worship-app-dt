@@ -126,6 +126,24 @@ Things that bite:
   The key is deliberately **unprefixed** (no `getSettingPrefix()`) so presenter,
   reader and screen resolve one key — same reason as
   `open-lyric-previewer-setting`; a divergent key is the SC-08 bug class.
+- **A song can carry its OWN font, beside the stages' (2026-11-10, `EC-488`).**
+  `stageSetting: {fontFamily}` in the `.owl` file next to `content`, written
+  through the editing history (Undo takes it back) and drawn on EVERY stage
+  as `"<face>", <app font>`; every other song keeps the app-wide font. Read
+  SYNCHRONOUSLY by the `basicOpenLyricOptions` getter, so it lands in
+  `genCacheKey` / `genWarmDeckKey` by itself, through
+  `lyricSongStageSettingHelpers.ts` -- a leaf with NO imports, for the same
+  cycle and the same node-env test stub as above, fed by a reader `Lyric.ts`
+  registers -- which each async entry awaits once (`getStageSlides`,
+  `getSlides` after the warm generation and BEFORE the deck key,
+  `getSlideById`, the look-ahead mixin) and `clearCache` marks stale. Two
+  traps: the `OpenLyric` instance's `fontFamily` setter SAVES the app-wide
+  setting, so the song face never goes on the instance; and a prototype-
+  method test calls those entries on plain objects, so the await is the
+  module function `ensureLyricStageSetting(this.filePath)`, not a method.
+  Shown and changed in Stage Style's **Song Font** box, which reads the song
+  again on its file's `update` (an Undo with the box open had left it
+  naming the old face). Rules: `.claude/rules/agent-songs.md`.
 - **Stage resolution used to happen only in the presenter — FIXED 2026-08-03.**
   Two bugs, one root cause (the presented slide is derived for one specific stage
   and nothing re-derived it), both found by robot runs 20260803-1030/-1151:

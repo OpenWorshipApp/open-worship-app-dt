@@ -31,8 +31,15 @@ export const LANG_PLUGIN_ENTRY_FILE_NAME = 'index.js';
 // Where a page fetches a plugin's assets: `owa://local/@lang/<code>/<path>`
 // (and `/@lang/<code>/<path>` on the Screen Mirror server).
 export const LANG_PLUGIN_ROUTE_SEGMENT = '@lang';
+// What the plugin build says of a language WITHOUT loading it (EN-59): its
+// fonts (`fonts.json` with each file's built asset path) and whether it ships
+// a names-lookup dataset. A window that only draws a language -- every screen,
+// a song previewer, a font list -- registers its faces from this and never
+// loads its dictionary (`src/lang/langFontDataHelpers.ts`). A plugin built
+// before it existed has none and is loaded as before.
+export const LANG_PLUGIN_FACTS_FILE_NAME = 'langFacts.json';
 // Small enough to ride along with the plugin list, so the code that reads them
-// at module scope stays synchronous once the list is in (well under 1 KB each).
+// at module scope stays synchronous once the list is in (about 1 KB each).
 export const LANG_PLUGIN_INLINE_FILE_NAMES = [
     'appMenus.json',
     'bibleKeyMap.json',
@@ -41,6 +48,7 @@ export const LANG_PLUGIN_INLINE_FILE_NAMES = [
     // What the Bible import, in any window, knows of the language in its own
     // words (`tools/owa-devtools-mcp/worldLanguages.mjs`): a few hundred bytes.
     'world.json',
+    LANG_PLUGIN_FACTS_FILE_NAME,
 ] as const;
 
 export type LangPluginMetaType = {

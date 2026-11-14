@@ -62,7 +62,7 @@ for a reader who loads it and remembers it.
   - Every `*Comp` name → an eslint rule or a test over the component files.
   - Knowledge rebuilt after `.claude/` edits → a test comparing
     `index.json`'s inputs, or a hook (ask).
-  - `tran()` keys with km and fr → already `tranKeyCoverage.test.ts`. This is
+  - `tran()` keys in every language → already `tranKeyCoverage.test.ts`. This is
     the pattern to copy.
   - Quoted `**` globs → already `lintGateScripts.test.ts`.
 - **Proposal.** The enforcing artifact, where it runs (the gate, a hook, the

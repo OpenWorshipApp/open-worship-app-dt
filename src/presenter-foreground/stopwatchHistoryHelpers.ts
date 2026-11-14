@@ -83,16 +83,16 @@ function padTwo(value: number) {
 
 /**
  * `10:42 AM` today, `Oct 3, 10:42 AM` on another day -- in `locale`, the
- * app's own language. Left to the system (`[]`), a Khmer panel read
- * "Oct 4, 7:57 AM" under Khmer headings, because the system is English on
+ * app's own language. Left to the system (`[]`), a translated panel read
+ * "Oct 4, 7:57 AM" under its own headings, because the system is English on
  * most of the machines it runs on. A taken param, not read here, so this file
  * stays free of the language module and its settings store.
  *
  * A locale `Intl` cannot format gets NUMBERS only -- `07:57` today,
  * `04/10 07:57` on another day, day first and a 24-hour clock -- which read
- * the same in any language. That is Khmer in the app: Electron ships
- * Chromium's trimmed ICU data, which has none, and asked for the Khmer locale
- * it quietly answers in English (Node, which runs the tests, has it all).
+ * the same in any language. Some app languages are such a locale: Electron
+ * ships Chromium's trimmed ICU data, which lacks them, and asked for one it
+ * quietly answers in English (Node, which runs the tests, has it all).
  */
 export function toStopwatchHistoryWhenText(
     endedAt: number,

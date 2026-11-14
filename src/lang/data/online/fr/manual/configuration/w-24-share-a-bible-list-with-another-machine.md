@@ -3,7 +3,7 @@ id: W-24
 title: "Partager une liste biblique avec une autre machine"
 section: "Configuration"
 lang: fr
-translatedFrom: f1fe663ce5d183f7
+translatedFrom: 4e369fa273c66967
 ---
 # W-24 — Partager une liste biblique avec une autre machine
 
@@ -19,7 +19,7 @@ Une liste biblique (les versets que vous avez préparés pour un culte) voyage d
    dedans.
 3. Sur l'autre machine, faites un clic droit sur une partie vide du panneau **[en:tran:Bibles]** → **[en:tran:Import]** et choisissez le fichier — ou **faites glisser le `.owbible.tar.gz` (ou le `.owbible.enc`) sur
    le panneau Bibles** ; un paquet protégé demande d'abord son mot de passe. **[en:tran:Import From URL]** fonctionne aussi ici. 📸
-4. La liste apparaît dans le dossier des bibles de cette machine avec ses versets, leurs couleurs et
+4. La liste apparaît dans le dossier des bibles de cette machine — celui que la liste affiche (W-58) — avec ses versets, leurs couleurs et
    son arrière-plan, prête à être présentée. Si une liste du même nom s'y trouve déjà, les
    versets qu'elle n'a pas encore sont ajoutés à cette liste, au lieu qu'une deuxième liste apparaisse.
 

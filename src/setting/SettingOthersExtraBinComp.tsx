@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import {
     useAppCurrentRef,
@@ -8,6 +8,7 @@ import {
 } from '../helper/appHooks';
 import {
     checkIsExtraBinInstalled,
+    findInstalledMcpBinPath,
     getExtraBinDirPath,
     getInstalledExtraBinVersion,
     registerExtraBinChangedListener,
@@ -20,9 +21,22 @@ import {
     importExtraBinFromFile,
     installExtraBin,
 } from '../helper/extra-bin/extraBinInstallHelpers';
+import type {
+    McpClientGroupType,
+    McpClientType,
+} from '../helper/extra-bin/mcpClientHelpers';
+import {
+    genMcpClientText,
+    getMcpPlatform,
+    groupMcpClientList,
+    MCP_CLIENT_DEFAULT_KEY,
+    MCP_CLIENT_PATH_KEY,
+    MCP_CLIENT_SETTING_NAME,
+} from '../helper/extra-bin/mcpClientHelpers';
 import { reportPackageUpdates } from '../helper/packageUpdateHelpers';
+import { useStateSettingString } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
-import { showFileOrDirExplorer } from '../server/appHelpers';
+import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
 import { checkIsVersionOutdated } from '../server/updatingAppHelpers';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
 
@@ -32,20 +46,23 @@ type LocalStateType = {
     missingNames: string[];
     installedVersion: string | null;
     archiveFileFullName: string | null;
+    // The MCP executable, when the installed pack carries one (0.0.6+).
+    mcpBinPath: string | null;
 };
 
 /**
- * Everything the panel can answer WITHOUT a network call: three file stats, one
+ * Everything the panel can answer WITHOUT a network call: a few file stats, one
  * tiny json read and one directory listing. Cheap enough to re-run after every
  * action, which is why the panel needs no polling.
  */
 async function readExtraBinLocalState(): Promise<LocalStateType> {
     const dirPath = getExtraBinDirPath();
-    const [{ isInstalled, missingNames }, installedVersion, archive] =
+    const [{ isInstalled, missingNames }, installedVersion, archive, mcpBin] =
         await Promise.all([
             checkIsExtraBinInstalled(),
             getInstalledExtraBinVersion(),
             findLocalExtraBinArchive(dirPath),
+            findInstalledMcpBinPath(),
         ]);
     return {
         dirPath,
@@ -53,6 +70,7 @@ async function readExtraBinLocalState(): Promise<LocalStateType> {
         missingNames,
         installedVersion,
         archiveFileFullName: archive,
+        mcpBinPath: mcpBin,
     };
 }
 
@@ -94,6 +112,148 @@ function RenderDetailComp({
         >
             <span className="app-setting-others-label">{tran(label)}</span>
             <span className="app-ellipsis app-data">{children}</span>
+        </div>
+    );
+}
+
+// The picker's names: a product is called by its own name in every language
+// (as the AI Chat window's site list does); only the program's own path and
+// the three groups are words of the app's.
+function toMcpClientLabel(client: McpClientType) {
+    if (client.key === MCP_CLIENT_PATH_KEY) {
+        return tran('Program path');
+    }
+    return client.name;
+}
+
+function toMcpClientGroupLabel(group: McpClientGroupType) {
+    if (group === 'command') {
+        return tran('Terminal command');
+    }
+    if (group === 'file') {
+        return tran('Settings file');
+    }
+    return tran('Others');
+}
+
+function RenderMcpClientWhereComp({
+    client,
+    where,
+}: Readonly<{ client: McpClientType; where: string | null }>) {
+    if (client.group === 'command') {
+        return (
+            <span className="form-text m-0">
+                {tran('Run this in a terminal.')}
+            </span>
+        );
+    }
+    if (where === null) {
+        return null;
+    }
+    return (
+        <span className="form-text m-0 app-ellipsis" title={where}>
+            {tran('Paste into:')} <code>{where}</code>
+        </span>
+    );
+}
+
+/**
+ * The pack's MCP server as an AI client takes it (2026-11-13, the user: _as an
+ * ai user I want to install open-worship-app's extra-bin and have the
+ * executable mcp binary file ready_), for whichever client the person uses
+ * (the same day: _let user choose tool specific like chatgpt clause or just
+ * binary file path and so on_, _provide maximum options for user_, and the
+ * story _as a user I want to copy mcp connection for my tool beside claude_):
+ * a terminal command, a settings file's text with where it goes, or the bare
+ * program path, one press from the clipboard. The choice is remembered. The
+ * same server as the npm package `open-worship-app-mcp`.
+ */
+function RenderMcpClientComp({ mcpBinPath }: Readonly<{ mcpBinPath: string }>) {
+    const [clientKey, setClientKey] = useStateSettingString(
+        MCP_CLIENT_SETTING_NAME,
+        MCP_CLIENT_DEFAULT_KEY,
+    );
+    const platform = getMcpPlatform();
+    const { client, text, where } = genMcpClientText(
+        clientKey,
+        mcpBinPath,
+        platform,
+    );
+    const selectId = useId();
+    const textRef = useAppCurrentRef(text);
+    const handleCopying = useCallback(() => {
+        copyToClipboard(textRef.current, tran('AI agents (MCP)'));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClientChanging = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            setClientKey(event.target.value);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    return (
+        <div className="app-setting-others-detail app-setting-others-detail-wide">
+            <label className="app-setting-others-label" htmlFor={selectId}>
+                {tran('AI agents (MCP)')}
+            </label>
+            {/*
+             * Named on the picker itself too: a `<label for>` names it for a
+             * screen reader, and the app's own walkthroughs and agents find a
+             * picker by its title or aria-label.
+             */}
+            <select
+                id={selectId}
+                aria-label={tran('AI agents (MCP)')}
+                className="form-select form-select-sm app-setting-others-mcp-client"
+                value={client.key}
+                onChange={handleClientChanging}
+            >
+                {groupMcpClientList(platform).map(({ group, clientList }) => {
+                    return (
+                        <optgroup
+                            key={group}
+                            label={toMcpClientGroupLabel(group)}
+                        >
+                            {clientList.map((item) => {
+                                return (
+                                    <option key={item.key} value={item.key}>
+                                        {toMcpClientLabel(item)}
+                                    </option>
+                                );
+                            })}
+                        </optgroup>
+                    );
+                })}
+            </select>
+            {/* A command or a path is one line cut to the panel's width, the
+                whole of it in the title; a settings file's text is shown
+                whole. Copy puts exactly this text on the clipboard. */}
+            {text.includes('\n') ? (
+                <pre className="app-data app-setting-others-mcp-text">
+                    <code>{text}</code>
+                </pre>
+            ) : (
+                <span className="app-ellipsis app-data mt-1" title={text}>
+                    <code>{text}</code>
+                </span>
+            )}
+            <RenderMcpClientWhereComp client={client} where={where} />
+            <span className="d-flex flex-wrap align-items-center gap-1 mt-1">
+                <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={handleCopying}
+                >
+                    <i className="bi bi-clipboard me-1" />
+                    {tran('Copy')}
+                </button>
+                <span className="form-text m-0">
+                    {tran(
+                        'Paste this into your AI client. It needs this app ' +
+                            'open with AI features on to act.',
+                    )}
+                </span>
+            </span>
         </div>
     );
 }
@@ -232,6 +392,7 @@ export default function SettingOthersExtraBinComp() {
         missingNames,
         installedVersion,
         archiveFileFullName,
+        mcpBinPath,
     } = localState;
     const isOutdated = isOutdatedAnswer === true && !!onlineEntry;
     const primaryAction = isOutdated ? (
@@ -342,6 +503,9 @@ ${tran('Reveal Folder')}`}
                             <i className="bi bi-info-circle ms-1" />
                         </span>
                     </RenderDetailComp>
+                ) : null}
+                {mcpBinPath !== null ? (
+                    <RenderMcpClientComp mcpBinPath={mcpBinPath} />
                 ) : null}
             </div>
             {/* The repair actions, secondary to whichever primary button sits

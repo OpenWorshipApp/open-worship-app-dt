@@ -84,6 +84,9 @@ vi.mock('../media-sessions/MediaSessionsComp', async () => {
         },
     };
 });
+vi.mock('../helper/ai/foregroundChatbotMenuHelpers', () => ({
+    genForegroundOpenInChatbotContextMenu: () => [],
+}));
 vi.mock('./propertiesSettingHelpers', () => ({
     genPropsSettingNames: (prefix: string) => ({
         width: `${prefix}-width`,

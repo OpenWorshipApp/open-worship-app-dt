@@ -555,7 +555,9 @@ function ForegroundTimeItemComp({
                     }
                     showingScreenIdDataList={showingScreenIdDataList}
                 />
-                {showingScreenIdDataList.length > 0 ? (
+            </div>
+            {showingScreenIdDataList.length > 0 ? (
+                <div className="fg-actions-dock">
                     <div className="fg-actions">
                         <ScreensRendererComp
                             showingScreenIdDataList={showingScreenIdDataList}
@@ -564,8 +566,8 @@ function ForegroundTimeItemComp({
                             isMini={false}
                         />
                     </div>
-                ) : null}
-            </div>
+                </div>
+            ) : null}
         </ForegroundLayoutComp>
     );
 }

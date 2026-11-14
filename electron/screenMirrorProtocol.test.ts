@@ -111,7 +111,7 @@ describe('mirror wire validation', () => {
                 'bible-font-family': 'Serif',
                 // Never a presentation setting: secrets and switches stay home.
                 'ai-enabled': 'true',
-                'language-locale': 'km-KH',
+                'language-locale': 'xx-YY',
                 // Neither a string nor null: ignored.
                 'pdf-full-width': 1,
             },
@@ -140,6 +140,20 @@ describe('mirror wire validation', () => {
         expect(checkIsMirrorPresentationSetting('pdf-full-width-x')).toBe(
             false,
         );
+        // A saved list of looks, named like a screen's, is the presenter's.
+        for (const key of [
+            'screen-bible--style-presets',
+            'screen-focus-saved-presets',
+            'foreground-countdown-saved-presets',
+        ]) {
+            expect(checkIsMirrorPresentationSetting(key)).toBe(false);
+        }
+        expect(
+            applyMirrorSettingPatch(settings, {
+                settings: { 'screen-bible--style-presets': '[]' },
+            }),
+        ).toBeUndefined();
+        expect(settings).not.toHaveProperty('screen-bible--style-presets');
     });
     test('rejects malformed and duplicate display records and strips extra fields', () => {
         const display = {

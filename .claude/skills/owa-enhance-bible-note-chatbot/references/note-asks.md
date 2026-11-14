@@ -37,3 +37,94 @@ asks (**Undo this change** or _undo that_).
 
 21. _Undo that_ — action `undo`; _redo it_ — action `redo`
 22. _How do I draw a diagram in this note?_ — the editor's guide (Excalidraw), no change
+
+## Every language (2026-11-08, the goal _work great for all languages_)
+
+On a scratch profile with each language installed (`npm run lang:pack --
+--pack=<codes>`, then `owa_language install`) and a Bible of each (the Bible
+import's `check` and `import` over a fresh stdio server, or a copy of the
+person's own `bibles-data/<key>.xml`), the Lookup left on another Bible, one
+note per language (`owa_bible_note add` with mark-up and a verse token naming
+its Bible). Ask in the language; grade as above, plus: the answer in the
+language typed, the button names as the window shows them.
+
+23. Colour ONE word that also starts a longer word, in a script with no
+    spaces -- Khmer _ព្រះ_ beside _ព្រះជាម្ចាស់_, Thai _พระ_ beside _พระเจ้า_:
+    that word alone (`words`, BN-24)
+24. _Make the text bigger_ in the language -- every block `size: "larger"`
+25. _Add a line at the end: …_ with words in the language -- written as given
+26. _Put John 1:1 under the first line_ in the language -- `passage`, read
+    from that language's Bible (`bible` filled in by the window, BN-26), in
+    its own digits
+27. The note's card in a window of the note's own language -- the translate
+    pair offers English (BN-25)
+28. On an assistant that is not a Gemma 4 (Free's Nemotron): a word of the
+    note named in the language -- `words` in the note's own letters (BN-23)
+29. _Make the text bigger_ / _make all the letters bold_ typed in a language
+    whose `assistant.json` says them (Khmer, French) -- done by the WINDOW,
+    no model (point the tab at a stand-in model and count its requests: 0)
+30. **Undo this change**, then at once another change -- one edit, the read
+    carrying the restored note (BN-28)
+31. _Make the text bigger_ and _make the first line bold_ in EVERY installed
+    language at once (two scratch copies, 42 languages each; the lines in
+    `src/lang/data/tests/chatbot/typedEditAsks.json`, the first-line one
+    with the loanword "bold" where the language's own word is a colour) --
+    the size done by the window, the bold in one edit, and the answer in the
+    language TYPED, never a neighbour sharing its little words or its script
+    (BN-31, BN-33, BN-34)
+32. On Free: _add a line at the end saying …_ typed in Khmer, Arabic, Thai,
+    Chinese, Russian and Spanish, twice each -- the words go in exactly as
+    typed, the answer in the language (BN-23, BN-30)
+
+## Messy notes and drawings (2026-11-09, BN-51, BN-58)
+
+On notes written the way a person types -- parts as plain lines
+(_points_, _prayer_), three questions on one line, a reference in words
+(_luke 15 verse 4 to 7_), a note all in capitals, and one run-on paragraph
+-- press the card's **Format it so it is neat and easy to read**: one edit,
+the title h1, each part h2 in normal case, items split one a line, the
+reference a verse mention, every word kept but the joining ones
+(`scratchpad note-words` compare: lost and added words).
+
+33. _Format it so it is neat and easy to read_ on each messy note -- one call
+34. _my note is messy can you tidy it up_ -- the same
+35. _make a drawing of my three points_, then _make the drawing bigger_,
+    _colour the boxes green_, _draw it going across_, _add one more box
+    saying …_ -- each one edit of the drawing block
+36. _draw me a sheep_ -- no change, said it cannot draw a picture
+
+The whole elder corpus (600 asks) is `elder-asks.json`, run by
+`run-elder-asks.mjs` (SKILL.md §2).
+
+## A preaching lesson (2026-11-10, BN-60..BN-63)
+
+Made through a note row's **Open in Chatbot** on an EMPTY note (the panel's
+**+**), then asked on, in order, in the same tab. Grade the lesson against
+`PREACHING_LESSON_SHAPE`: the passage printed whole first, Big idea,
+Background, Introduction, three points each with a verse chip, an example
+and how to live it, Pointing to Jesus, Response, a written prayer,
+questions, a memory verse; no empty line left; one call.
+
+37. _help me prepare a sermon on John 10:11-18 for Sunday_ -- written INTO
+    the empty note (an `owa_bible_note add` turned into one edit by the
+    window, or an `owa_note_edit` edit), one call
+38. _help me prepare a sermon_ with no passage -- asks which, OPTIONS of three
+39. _add an illustration to point 2_ -- one add after point 2's last block
+40. _give me two cross references for point 1_ -- two items, ONE list
+41. _add two more discussion questions_ -- after the last question, one list
+42. _write a stronger conclusion with an invitation to follow Jesus_ -- the
+    response rewritten
+43. _how long will this take to preach?_ -- an answer by part, no change
+44. _is this a good sermon?_ -- a review against the shape, no change,
+    the missing parts as options
+45. _check that my verses are right_ -- the window reads every cited verse
+    first (`owa_find_verse`); plant a wrong gloss (53:5's words on Isaiah
+    53:6) and it is named
+46. _it is too long, make it fit 15 minutes_ -- one edit, the shape kept,
+    every point keeping its verse, an example and how to live it
+47. _finish my sermon_ on a lesson that has only its points -- the parts it
+    lacks added, their words kept
+48. _make a version for the children's class_ -- a new note, opened and
+    attached
+49. In a Bible Reader tab with no note: _make a sermon on Romans 8:28-39_ --
+    a new note in the shape, opened and attached

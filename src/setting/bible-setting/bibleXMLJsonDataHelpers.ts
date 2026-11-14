@@ -428,7 +428,7 @@ async function guessingBibleKey(xmlElementOrText: Element | string) {
         const isConfirm = await showAppConfirm(
             tran('Confirm Key for Bible'),
             bibleKey
-                ? `${tran('Do you want to continue with')} key="${bibleKey}"?`
+                ? `${tran('Do you want to continue with')} "${bibleKey}"?`
                 : tran('Are you sure you want to quit?'),
             {
                 cancelButtonLabel: 'No',

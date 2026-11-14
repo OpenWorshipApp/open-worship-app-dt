@@ -1,0 +1,16 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write|NotebookEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node \"$CLAUDE_PROJECT_DIR/.claude/skills/owa-lt/scripts/touched-files.mjs\" hook",
+                        "timeout": 10
+                    }
+                ]
+            }
+        ]
+    }
+}

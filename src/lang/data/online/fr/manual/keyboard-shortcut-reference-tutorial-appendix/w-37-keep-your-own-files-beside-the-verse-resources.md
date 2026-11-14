@@ -3,7 +3,7 @@ id: W-37
 title: "Garder vos propres fichiers à côté du verset (Ressources)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: e6a8845c945ff84b
+translatedFrom: 91841ab03e7eb0ec
 ---
 # W-37 — Garder vos propres fichiers à côté du verset (Ressources)
 
@@ -110,24 +110,99 @@ comptent tous aussi au niveau du livre.
    - **Un PDF** (`.pdf`) s'ouvre dans la fenêtre de visionneuse PDF de l'application elle-même — la même que celle
      qu'ouvre **[en:tran:Preview PDF]** depuis un PDF de la liste Documents — avec ses pages sur
      le côté, le zoom et l'impression. Faites un clic droit sur la ligne pour **[en:tran:Preview PDF]**, ou **[en:tran:Open]**
-     pour utiliser votre propre lecteur PDF à la place. Appuyer sur un PDF dont l'aperçu est déjà ouvert met
-     cette fenêtre au premier plan. 📸
+     pour utiliser votre propre lecteur PDF à la place. Chaque appui ouvre une fenêtre de plus sur le fichier,
+     un peu plus bas et à droite de la précédente, pour en lire deux parties côte à côte. 📸
    - **Un fichier markdown** (`.md`, `.markdown`, affiché avec l'icône markdown) s'ouvre dans sa
      propre fenêtre **Markdown Preview**, comme le fait une note biblique : titres, listes, tableaux, citations,
      code, images gardées à côté du fichier, et les **diagrammes Mermaid** écrits dans un bloc ` ```mermaid `
      sont dessinés comme des diagrammes (un diagramme qui contient une erreur affiche l'erreur au-dessus de son
      code). La fenêtre suit le fichier — enregistrez-le dans votre éditeur et l'aperçu change.
-     Un lien vers un titre fait défiler jusqu'à ce titre ; un lien vers un autre `.md` l'ouvre dans la même fenêtre,
-     avec **[en:tran:Back]** (la flèche gauche) pour revenir ; un lien web s'ouvre dans votre navigateur ; un
-     lien vers tout autre fichier le montre dans son dossier au lieu de l'exécuter. Le HTML écrit
+     Un lien vers un titre fait défiler jusqu'à ce titre ; un lien web s'ouvre dans votre navigateur ; un lien
+     vers un autre fichier l'ouvre dans une fenêtre à lui, et cette fenêtre-ci garde son fichier : un autre
+     `.md` dans sa propre Markdown Preview (celle déjà ouverte sur ce fichier passe devant à la place), un
+     PDF dans la fenêtre PDF, un fichier de notes bibliques sur sa première note, et tout autre fichier est
+     montré dans son dossier au lieu d'être exécuté. Le HTML écrit
      dans le fichier est dessiné comme GitHub affiche un README — une image centrée, un tableau, une
      section qui se replie — mais rien ne peut s'y exécuter : les scripts, boutons, formulaires et styles
      sont retirés. Si un fichier affiche `#` et `**` au lieu d'un titre et de texte en gras, c'est que le fichier lui-même
      a été enregistré avec ces signes échappés (`\#`, `\*\*`), ce que fait la vue mise en forme de certains éditeurs
-     quand on y colle du texte ; l'aperçu montre ce qui est écrit. La ligne d'en-tête a aussi
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (pour le modifier) et
-     **[en:tran:Reveal in File Explorer]**. Faites un clic droit sur la ligne pour **[en:tran:Preview]** ou **[en:tran:Open]**. Appuyer sur un
-     fichier dont l'aperçu est déjà ouvert met cette fenêtre au premier plan. 📸
+     quand on y colle du texte ; l'aperçu montre ce qui est écrit.
+     **Les personnes, les lieux, les versets et les autres fichiers nommés dans la page sont aussi des liens**,
+     dessinés dans la couleur des liens et soulignés en pointillé, comme les noms dans un verset du Lecteur
+     biblique : une personne ou un lieu du chapitre dont le fichier porte le nom (un fichier `JHN.3.…` lie
+     Nicodème et Moïse ; un fichier qui ne porte le nom d'aucun chapitre ne lie qu'un nom qu'une seule
+     personne ou un seul lieu porte dans toute la Bible), une référence de verset écrite comme une Bible
+     installée nomme ses livres (`Ezek. 36:25-27`, `John 3:16; 5:8`, une référence en khmer), et le nom d'un
+     autre fichier de ressources (`JHN.3.pdf`, `JHN.0.pdf`) qui se trouve à côté de ce fichier ou dans un de
+     vos dossiers de Ressources. Les noms s'allument une fois que le Lecteur biblique a surligné les noms
+     d'un verset pour la première fois. Cliquez sur une personne, un lieu ou un verset pour ouvrir son
+     panneau de détails dans le Lecteur biblique, qui passe devant : la fenêtre principale quand elle montre
+     le Lecteur, sinon une fenêtre du Lecteur que vous avez ouverte, sinon la fenêtre principale telle
+     qu'elle est, qui reste sur la page où elle se trouve. Cliquez sur le nom d'un fichier pour l'ouvrir
+     dans une fenêtre à lui, comme le fait un lien. Les mots dans du code, dans un diagramme ou dans un lien
+     restent tels qu'ils sont écrits, et un fichier qui n'existe pas n'est pas lié ; sélectionner des mots à
+     travers un lien n'ouvre rien. La ligne d'en-tête a aussi
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** et
+     **[en:tran:Reveal in File Explorer]**.
+     **Pour aller à une partie d'une longue page :** appuyez sur **[en:tran:Sections]** (la liste, le
+     premier des boutons de la ligne d'en-tête, présent quand la page a des titres). Les titres de la page
+     sont listés sous la ligne d'en-tête, chacun en retrait sous celui d'avant selon son niveau (`#`,
+     `##`, `###` …), celui que vous lisez dans la couleur des liens ; cliquez sur l'un d'eux et la page
+     saute jusqu'à lui. Les flèches, Home et End se déplacent dans la liste ; Esc, un clic n'importe où
+     ailleurs ou de nouveau le bouton la ferme. Une fois que vous avez fait défiler vers le bas, une flèche
+     dans le coin inférieur droit de la page, **[en:tran:Scroll to the top]**, vous ramène en haut.
+     Ni l'une ni l'autre n'est imprimée. 📸 **[en:tran:Print]** (l'imprimante) ouvre un Print Preview
+     de la page dans le thème clair, quoi que montre la fenêtre : une fenêtre sombre imprime exactement ce
+     qu'elle montrerait en clair, ses diagrammes aussi, avec les mêmes polices et la même mise en page, sur
+     autant de pages qu'il en faut, sans la ligne d'en-tête ni l'éditeur ; imprimez-le ou enregistrez-le en
+     PDF à partir de là. Rien de la page n'est laissé de côté : une partie repliée à l'écran
+     s'imprime dépliée, chaque image y est, si loin qu'elle soit dans la page, et les mots
+     tapés dans l'éditeur un instant plus tôt sont imprimés aussi.
+     **Quand la page nomme un verset, une personne ou un lieu, [en:tran:Print] demande d'abord.** La
+     fenêtre affiche **[en:tran:Add the Bible text and the name and place details to the end of the printout?]**
+     avec le nombre de versets, de noms et de lieux qu'elle a trouvés. **[en:tran:Add and Print]** les ajoute
+     après la dernière ligne de la page : le texte de chaque passage, tiré de la Bible nommée entre
+     parenthèses juste après sa référence quand cette Bible est installée (`John 3:1-36
+     (Amplified)` tiré de l'Amplified), sinon de la Bible dans les noms de livres de laquelle elle est
+     écrite (une référence en khmer, d'une Bible en khmer), sinon de la KJV. Un passage déjà imprimé dans
+     un passage plus long n'est pas imprimé de nouveau, et celui qui commence à l'intérieur se poursuit
+     dans la Bible de ce passage plus long : un passage plus long tiré de n'importe quelle Bible de sa
+     langue le contient, ou tiré
+     de sa propre Bible seulement quand cette Bible est nommée après lui. Puis chaque personne et chaque
+     lieu avec ce qu'en dit la recherche de noms, dans la langue où cette recherche est réglée, et pour un
+     lieu son site actuel aussi. Une page qui en nomme un très grand nombre indique à la fin combien
+     d'autres n'ont pas pu être ajoutés.
+     **[en:tran:Print Page Only]** imprime la page seule, et **[en:tran:Cancel]** (ou Esc)
+     n'imprime rien. Une page qui n'en nomme aucun s'imprime tout de suite. Ctrl+P (⌘+P sur
+     un Mac) et **File** → **Print Without Preview** dans la barre de menus (Alt l'affiche
+     quand elle est masquée) posent d'abord la même question. Ce qui est ajouté n'est que
+     sur le papier : la fenêtre ne le montre jamais.
+     **[en:tran:Ask the Assistant About This File]** (le 🤖, le dernier de la ligne, affiché tant que
+     l'IA est activée) amène la fenêtre d'aide au premier plan avec ce fichier joint dans une discussion
+     à lui, comme le fait le 🤖 sur sa ligne des Ressources.
+     **Pour modifier le fichier sur place :** appuyez sur **[en:tran:Edit]** (le crayon). Un éditeur du
+     markdown du fichier s'ouvre à gauche, le texte renvoyé à la ligne, et la page reste à droite, où ce
+     que vous tapez est dessiné un instant après que vous vous arrêtez. L'éditeur s'ouvre à l'endroit de
+     la page que vous lisiez. Faites défiler l'un des deux côtés et, dès que vous vous arrêtez, l'autre
+     saute à la même ligne. Rien n'est écrit avant que vous
+     appuyiez sur **[en:tran:Save]** (la disquette) ou Ctrl+S (⌘+S sur un Mac) ; d'ici là, un `*` après
+     le nom signale des **[en:tran:Unsaved changes]**, et **[en:tran:Discard unsaved changes]** (la flèche
+     ronde) remet ce qui est enregistré. **[en:tran:Hide Editor]** (de nouveau le crayon) rend toute
+     la fenêtre à la page — vos mots non enregistrés y restent dessinés tels qu'ils apparaîtront,
+     toujours en attente de **[en:tran:Save]**. **Pour interroger l'assistant sur une partie des mots**,
+     sélectionnez-les dans l'éditeur, faites un clic droit dessus (ou appuyez sur Shift+F10) et choisissez
+     **[en:tran:Ask the assistant about this]** : la fenêtre d'aide passe au premier plan avec ces mots
+     cités dans sa zone sous _Texte sélectionné_, le nom du fichier et leur numéro de ligne, dans la
+     discussion qui contient déjà ce fichier, sinon dans une nouvelle, avec le fichier joint. Rien n'est
+     envoyé avant que vous tapiez votre question sous la citation et appuyiez sur **[en:tran:Send]**.
+     Tant que quelque chose n'est pas enregistré, **[en:tran:Reload]** attend, et la fermeture de la
+     fenêtre est arrêtée une fois, avec une note invitant à enregistrer ou à abandonner d'abord
+     (insistez et elle se ferme quand même). Une modification enregistrée dans votre propre éditeur
+     arrive dans un éditeur ouvert ici qui n'a rien de non enregistré ; celui qui a des mots non
+     enregistrés les garde, et **[en:tran:Save]** les écrit par-dessus le fichier. Faites un clic
+     droit sur la ligne pour **[en:tran:Preview]** ou **[en:tran:Open]**. Chaque appui ouvre une
+     fenêtre de plus sur le fichier, comme pour un PDF : faites défiler l'une jusqu'aux diagrammes
+     et gardez l'autre sur le passage. 📸
    - **Un fichier de notes bibliques** (`.own`) reçoit un chevron : cliquez dessus et tout ce qu'il contient est
      listé en dessous, comme le panneau **[en:tran:Bible Notes]** le liste — ses notes, et chaque verset
      marqué dedans (l'icône de surligneur) avec ses surlignages dans leur couleur et ses commentaires

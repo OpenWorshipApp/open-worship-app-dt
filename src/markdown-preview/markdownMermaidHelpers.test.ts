@@ -17,11 +17,30 @@ vi.mock('mermaid', () => ({
         if (state.loadError !== null) {
             throw state.loadError;
         }
-        return { initialize: state.initialize, render: state.render };
+        return {
+            initialize: state.initialize,
+            render: state.render,
+            mermaidAPI: {
+                defaultConfig: {
+                    fontFamily: 'trebuchet ms',
+                    theme: 'default',
+                    flowchart: { htmlLabels: true },
+                    timeline: { taskFontFamily: 'Open Sans', padding: 5 },
+                    sequence: {
+                        actorFontFamily: 'Open Sans',
+                        noteFontFamily: 'trebuchet ms',
+                    },
+                },
+            },
+        };
     },
 }));
 
-import { renderMermaidDiagrams } from './markdownMermaidHelpers';
+import {
+    putBackDrawnDiagrams,
+    renderMermaidDiagrams,
+    takeDrawnDiagrams,
+} from './markdownMermaidHelpers';
 
 // A fresh module: the loaded mermaid is kept for the window's life.
 async function importFresh() {
@@ -167,6 +186,9 @@ describe('drawing the mermaid blocks of a markdown file', () => {
             isDark: false,
             checkIsStale: () => false,
         });
+        // A later diagram comes in a page of its own: one already drawn is
+        // never drawn again.
+        genContainer(['0']);
         await render(container, ['b'], {
             isDark: true,
             checkIsStale: () => false,
@@ -231,5 +253,193 @@ describe('drawing the mermaid blocks of a markdown file', () => {
         expect(
             first.querySelector('.app-markdown-mermaid-error')?.textContent,
         ).toBe('bad diagram');
+    });
+
+    test('lays a timeline out with a break hint between touching words, and draws it without one', async () => {
+        const [timeline, flowchart] = genContainer(['0', '1']);
+        // Two words a zero width space alone holds apart: mermaid's timeline
+        // breaks a label at whitespace only.
+        const timelineSource = 'timeline\n    Then : Alpha\u200BBeta';
+        const flowchartSource = 'graph TD; Alpha\u200BBeta-->C';
+
+        await renderMermaidDiagrams(
+            container,
+            [timelineSource, flowchartSource],
+            { isDark: false, checkIsStale: () => false },
+        );
+
+        expect(
+            state.render.mock.calls.map(([, source]) => {
+                return source as string;
+            }),
+        ).toEqual([
+            'timeline\n    Then : Alpha\u200B \u2060Beta',
+            flowchartSource,
+        ]);
+        // The stand-in draws its source: the picture holds the file's words.
+        expect(timeline.querySelector('text')?.textContent).toBe(
+            timelineSource,
+        );
+        expect(flowchart.querySelector('text')?.textContent).toBe(
+            flowchartSource,
+        );
+    });
+});
+
+describe('drawing a diagram in the face of the page around it', () => {
+    function stubFonts(ready: Promise<unknown>) {
+        Object.defineProperty(document, 'fonts', {
+            configurable: true,
+            value: { ready },
+        });
+    }
+
+    // jsdom computes no `font-family`: the page's face is stood in for.
+    function stubPageFont(fontFamily: string) {
+        vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
+            fontFamily,
+        } as CSSStyleDeclaration);
+    }
+
+    afterEach(() => {
+        // jsdom has none: the stand-in goes with its test.
+        delete (document as { fonts?: unknown }).fonts;
+    });
+
+    test('every face mermaid names, the ones a diagram type keeps included, is the page face', async () => {
+        const [first] = genContainer(['0']);
+        stubPageFont('app-Xx-Face, app-Google-Sans, sans-serif');
+
+        await renderMermaidDiagrams(container, ['graph TD; A-->B'], {
+            isDark: false,
+            checkIsStale: () => false,
+        });
+
+        const fontFamily = 'app-Xx-Face, app-Google-Sans, sans-serif';
+        expect(state.initialize).toHaveBeenLastCalledWith({
+            fontFamily,
+            timeline: { taskFontFamily: fontFamily },
+            sequence: {
+                actorFontFamily: fontFamily,
+                noteFontFamily: fontFamily,
+            },
+            startOnLoad: false,
+            securityLevel: 'strict',
+            suppressErrorRendering: true,
+            theme: 'default',
+        });
+        expect(first.classList.contains('app-markdown-mermaid--rendered')).toBe(
+            true,
+        );
+    });
+
+    test('lays the words out unseen and draws once their faces are loaded', async () => {
+        const [first, second] = genContainer(['0', '1']);
+        stubPageFont('app-Xx-Face');
+        let resolveReady = () => {};
+        stubFonts(
+            new Promise<void>((resolve) => {
+                resolveReady = resolve;
+            }),
+        );
+
+        const drawing = renderMermaidDiagrams(
+            container,
+            ['graph TD; A["word"]', 'graph LR; B["other"]'],
+            { isDark: false, checkIsStale: () => false },
+        );
+        // Past mermaid's load, waiting on the faces.
+        await vi.waitFor(() => {
+            expect(first.querySelector('span')).not.toBeNull();
+        });
+        const probe = first.querySelector('span')!;
+        expect(probe.textContent).toBe(
+            'graph TD; A["word"]\ngraph LR; B["other"]',
+        );
+        expect(probe.style.visibility).toBe('hidden');
+        expect(state.render).not.toHaveBeenCalled();
+
+        resolveReady();
+        await drawing;
+
+        expect(first.querySelector('span')).toBeNull();
+        expect(state.render).toHaveBeenCalledTimes(2);
+        expect(
+            second.classList.contains('app-markdown-mermaid--rendered'),
+        ).toBe(true);
+    });
+
+    test('a page gone while its faces load is never drawn into', async () => {
+        const [first] = genContainer(['0']);
+        stubPageFont('app-Xx-Face');
+        let isStale = false;
+        stubFonts(
+            Promise.resolve().then(() => {
+                isStale = true;
+            }),
+        );
+
+        await renderMermaidDiagrams(container, ['graph TD; A'], {
+            isDark: false,
+            checkIsStale: () => isStale,
+        });
+
+        expect(state.initialize).not.toHaveBeenCalled();
+        expect(state.render).not.toHaveBeenCalled();
+        expect(first.querySelector('span')).toBeNull();
+        expect(first.textContent).toBe('code 0');
+    });
+});
+
+describe('keeping the diagrams already drawn when the page is drawn again', () => {
+    test('a diagram whose source did not change is put back, each picture once, and only the rest are drawn', async () => {
+        genContainer(['0', '1', '2']);
+        await renderMermaidDiagrams(container, ['graph A', 'graph B', 'bad'], {
+            isDark: false,
+            checkIsStale: () => false,
+        });
+        // The third failed: it is not a drawing to keep.
+        container
+            .querySelector('[data-mermaid-index="2"]')!
+            .classList.remove('app-markdown-mermaid--rendered');
+        const drawnMap = takeDrawnDiagrams(container, [
+            'graph A',
+            'graph B',
+            'bad',
+        ]);
+        expect([...drawnMap.keys()]).toEqual(['graph A', 'graph B']);
+
+        // The new page: B moved first, A twice, and a new diagram.
+        const [first, second, third, fourth] = genContainer([
+            '0',
+            '1',
+            '2',
+            '3',
+        ]);
+        const newSources = ['graph B', 'graph A', 'graph A', 'graph C'];
+        putBackDrawnDiagrams(container, newSources, drawnMap);
+        expect(first.innerHTML).toContain('graph B');
+        expect(second.innerHTML).toContain('graph A');
+        // One picture of A was taken: the second A is drawn anew.
+        expect(third.textContent).toBe('code 2');
+        expect(fourth.textContent).toBe('code 3');
+
+        const renderCount = state.render.mock.calls.length;
+        await renderMermaidDiagrams(container, newSources, {
+            isDark: false,
+            checkIsStale: () => false,
+        });
+        expect(
+            state.render.mock.calls
+                .slice(renderCount)
+                .map(([, source]) => source as string),
+        ).toEqual(['graph A', 'graph C']);
+    });
+
+    test('nothing drawn, nothing put back', () => {
+        const [first] = genContainer(['0']);
+        expect(takeDrawnDiagrams(container, ['graph A']).size).toBe(0);
+        putBackDrawnDiagrams(container, ['graph A'], new Map());
+        expect(first.textContent).toBe('code 0');
     });
 });

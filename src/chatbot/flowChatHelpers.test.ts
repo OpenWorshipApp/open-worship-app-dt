@@ -148,7 +148,9 @@ describe('the sheet as the model reads it', () => {
             'Line 1: "Amazing Grace" (document; document "Amazing Grace"; color blue)',
         );
         expect(text).toContain(
-            '  CC (shown with this line): 1. "Next: Timeout (8)" (its element is line 2, 4 seconds)',
+            '  CC (shown with this line): 1. "Next: Timeout (8)" (its element ' +
+                'is line 2, run with this line -- not a jump to line 2, 4 ' +
+                'seconds)',
         );
         expect(text).toContain('  Slides: 5 slides; parked slides 3');
         expect(text).toContain('  PROBLEM: it goes nowhere yet');

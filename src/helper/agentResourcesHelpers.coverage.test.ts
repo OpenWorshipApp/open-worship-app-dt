@@ -19,6 +19,8 @@ const { state, mocks } = vi.hoisted(() => ({
         pdfResult: null as any,
         imageResult: null as any,
         noteText: null as null | string,
+        // The Bible Notes folder of the session in front (EC-509).
+        bibleNotesDir: null as null | string,
     },
     mocks: {
         scan: vi.fn(),
@@ -31,6 +33,7 @@ const { state, mocks } = vi.hoisted(() => ({
         getBibleInfo: vi.fn(),
         getAllBibles: vi.fn(),
         toNoteFileText: vi.fn(),
+        handleStudy: vi.fn(),
     },
 }));
 
@@ -43,6 +46,9 @@ vi.mock('../chatbot/noteFileTextHelpers', () => ({
 vi.mock('../resources/resourcesFolderHelpers', () => ({
     getResourcesFolderList: () => state.folders,
 }));
+vi.mock('../bible-list/note/bibleNotesDirHelpers', () => ({
+    getActiveBibleNotesDirPath: () => state.bibleNotesDir,
+}));
 vi.mock('../resources/resourcesScanHelpers', () => ({
     MAX_SCAN_DEPTH: 2,
     MAX_SCAN_ENTRIES: 100,
@@ -54,6 +60,7 @@ vi.mock('../server/electronSendHelpers', () => ({
 vi.mock('../server/fileHelpers', () => ({
     checkIsHiddenName: (name: string) => name.startsWith('.'),
     checkIsSystemFileName: (name: string) => name.toLowerCase() === 'thumbs.db',
+    fsCheckFileExist: async (path: string) => Object.hasOwn(state.sizes, path),
     fsGetFileSize: (...args: unknown[]) => mocks.getSize(...args),
     fsListDirents: (...args: unknown[]) => mocks.listDirents(...args),
     fsReadFile: (...args: unknown[]) => mocks.readText(...args),
@@ -133,6 +140,10 @@ vi.mock('./bible-helpers/bibleDownloadHelpers', () => ({
 vi.mock('./bible-helpers/bibleInfoHelpers', () => ({
     getBibleInfo: (...args: unknown[]) => mocks.getBibleInfo(...args),
 }));
+// The study-file worker: loaded only for its own four actions.
+vi.mock('./agentStudyFileHelpers', () => ({
+    handleAgentStudyRequest: (...args: unknown[]) => mocks.handleStudy(...args),
+}));
 
 import { handleAgentResourcesRequest } from './agentResourcesHelpers';
 
@@ -185,6 +196,7 @@ beforeEach(() => {
     state.pdfResult = null;
     state.imageResult = null;
     state.noteText = null;
+    state.bibleNotesDir = null;
 
     mocks.scan.mockImplementation(async (folder: string) => {
         if (state.scanErrors.includes(folder)) throw new Error('scan failed');
@@ -484,8 +496,8 @@ test('a picture is normalized before it is returned as an image', async () => {
 });
 
 test('a book named in another installed Bible’s language is found past a Bible that cannot be read', async () => {
-    state.bibleList = [{ key: 'KJV' }, { key: 'FR' }];
-    state.bibleMaps = { FR: { JHN: 'Jean' } };
+    state.bibleList = [{ key: 'KJV' }, { key: 'XXV' }];
+    state.bibleMaps = { XXV: { JHN: 'Xjhn' } };
     mocks.getBibleInfo.mockImplementation(async (key: string) => {
         if (key === 'KJV') {
             throw new Error('unreadable Bible');
@@ -495,12 +507,12 @@ test('a book named in another installed Bible’s language is found past a Bible
     state.scanResults['/resources'] = { filePaths: ['/resources/JHN.3.pdf'] };
 
     await expect(
-        handleAgentResourcesRequest({ action: 'list', book: 'Jean' }),
+        handleAgentResourcesRequest({ action: 'list', book: 'Xjhn' }),
     ).resolves.toMatchObject({
         files: [{ file: 'resources/JHN.3.pdf', kind: 'pdf' }],
     });
     expect(mocks.scan).toHaveBeenCalledWith('/resources', [], 'JHN.');
-    expect(mocks.getBibleInfo).toHaveBeenCalledWith('FR');
+    expect(mocks.getBibleInfo).toHaveBeenCalledWith('XXV');
 });
 
 test('an overview passes over a folder it cannot open, and says a shelf too big to walk was cut', async () => {
@@ -550,6 +562,88 @@ test('a listing stops at sixty files and says there are more', async () => {
         kind: 'pdf',
     });
     expect(result.note).toContain('There are more');
+});
+
+// EC-509: a study the person kept in the Bible Notes list is read by the
+// name the help window gives it, `Bible Notes/<name>`.
+test('a study kept in Bible Notes is read as `Bible Notes/<name>`', async () => {
+    state.folders = [];
+    state.bibleNotesDir = '/data/notes';
+    const filePath = '/data/notes/JHN.3.16 Love.md';
+    state.sizes[filePath] = 14;
+    state.texts[filePath] = '# Love\n\nWords.';
+
+    const result: any = await handleAgentResourcesRequest({
+        action: 'read',
+        file: 'Bible Notes/JHN.3.16 Love.md',
+    });
+    expect(result.file).toBe('Bible Notes/JHN.3.16 Love.md');
+    expect(result.kind).toBe('text');
+    expect(result.text).toBe('# Love\n\nWords.');
+
+    // Not a step out of it, and nothing while no folder is set.
+    await expect(
+        handleAgentResourcesRequest({
+            action: 'read',
+            file: 'Bible Notes/../secret.md',
+        }),
+    ).resolves.toMatchObject({ isError: true });
+    state.bibleNotesDir = null;
+    await expect(
+        handleAgentResourcesRequest({
+            action: 'read',
+            file: 'Bible Notes/JHN.3.16 Love.md',
+        }),
+    ).resolves.toMatchObject({ isError: true });
+});
+
+// EC-706: the bare name of a study attached from Bible Notes had read its
+// Resources copy, and the model told the person it was all Khmer.
+test('a bare study name counts the one kept in Bible Notes, and two are named back', async () => {
+    const name = 'PSA.100.Joy.md';
+    const notesPath = `/data/notes/${name}`;
+    state.bibleNotesDir = '/data/notes';
+    state.sizes[notesPath] = 5;
+    state.texts[notesPath] = 'notes';
+
+    const notesOnly: any = await handleAgentResourcesRequest({
+        action: 'read',
+        file: name,
+    });
+    expect(notesOnly.file).toBe(`Bible Notes/${name}`);
+    expect(notesOnly.text).toBe('notes');
+
+    const defaultPath = `/resources/Default/${name}`;
+    state.scanResults['/resources'] = { filePaths: [defaultPath] };
+    state.sizes[defaultPath] = 7;
+    await expect(
+        handleAgentResourcesRequest({ action: 'read', file: name }),
+    ).resolves.toEqual({
+        isError: true,
+        reason:
+            `More than one Resources file is called "${name}": ` +
+            `resources/Default/${name}, Bible Notes/${name}. Name the one ` +
+            'you mean.',
+    });
+
+    // Only a Markdown study is looked for there.
+    state.sizes['/data/notes/JHN.3.pdf'] = 9;
+    await expect(
+        handleAgentResourcesRequest({ action: 'read', file: 'JHN.3.pdf' }),
+    ).resolves.toMatchObject({ isError: true });
+});
+
+test('a Resources folder called Bible Notes is asked before the list', async () => {
+    state.folders = ['/stick/Bible Notes'];
+    state.bibleNotesDir = '/data/notes';
+    const filePath = '/stick/Bible Notes/JHN.3.16 Love.md';
+    state.sizes[filePath] = 5;
+    state.texts[filePath] = 'stick';
+    const result: any = await handleAgentResourcesRequest({
+        action: 'read',
+        file: 'Bible Notes/JHN.3.16 Love.md',
+    });
+    expect(result.text).toBe('stick');
 });
 
 test('a read naming a folder that is not a Resources folder is refused without a scan', async () => {
@@ -607,5 +701,137 @@ test('missing files and images that cannot be normalized are refused', async () 
     ).resolves.toMatchObject({
         isError: true,
         reason: expect.stringContaining('could not be read as a picture'),
+    });
+});
+
+test('a study file’s four actions go to its own worker, the request whole', async () => {
+    mocks.handleStudy.mockImplementation(async (request: any) => ({
+        handled: request.action,
+    }));
+    for (const action of ['draft', 'translate', 'save', 'preview']) {
+        const request = {
+            action,
+            file: 'Default/JHN.3.16 Notes.md',
+            hash: 'h',
+        };
+        await expect(handleAgentResourcesRequest(request)).resolves.toEqual({
+            handled: action,
+        });
+        expect(mocks.handleStudy).toHaveBeenLastCalledWith(request);
+    }
+    expect(mocks.handleStudy).toHaveBeenCalledTimes(4);
+    expect(mocks.scan).not.toHaveBeenCalled();
+});
+
+function genLongStudy() {
+    return [
+        '# The New Birth',
+        '',
+        '## Background',
+        '',
+        'b'.repeat(10_000),
+        '',
+        '## Translation',
+        '',
+        'Xx words.',
+        '',
+        '### Part one',
+        '',
+        't'.repeat(17_000),
+        '',
+        '---',
+        '',
+        '*Drafted with the app assistant. Check it against your Bible.*',
+        '',
+    ].join('\n');
+}
+
+test('a long Markdown file is read in part, its headings named so a change goes by section', async () => {
+    const filePath = '/resources/Default/JHN.3.study.md';
+    const text = genLongStudy();
+    state.sizes[filePath] = text.length;
+    state.texts[filePath] = text;
+
+    const result: any = await handleAgentResourcesRequest({
+        action: 'read',
+        file: 'resources/Default/JHN.3.study.md',
+    });
+
+    expect(result.text).toBe(text.slice(0, 16 * 1024));
+    expect(result.note).toBe(
+        `Only the start of it is here: it is ${text.length} characters. ` +
+            'Read one part with `section` (one of its headings); change it ' +
+            'with `draft`, `file` and `section`, or `append` -- never by ' +
+            'writing back the part read. Its headings:\n' +
+            '# The New Birth\n## Background\n## Translation\n### Part one',
+    );
+
+    // With no heading there is nothing to name.
+    state.texts[filePath] = 'p'.repeat(20_000);
+    const plain: any = await handleAgentResourcesRequest({
+        action: 'read',
+        file: 'resources/Default/JHN.3.study.md',
+    });
+    expect(plain.note).toBe(
+        'Only the start of it is here: it is 20000 characters. Read one ' +
+            'part with `section` (one of its headings); change it with ' +
+            '`draft`, `file` and `section`, or `append` -- never by writing ' +
+            'back the part read.',
+    );
+});
+
+test('a section of a text file is read by its heading’s words, whole or with its own headings named', async () => {
+    const filePath = '/resources/Default/JHN.3.study.md';
+    const text = genLongStudy();
+    state.sizes[filePath] = text.length;
+    state.texts[filePath] = text;
+    const read = (section: string) => {
+        return handleAgentResourcesRequest({
+            action: 'read',
+            file: 'resources/Default/JHN.3.study.md',
+            section,
+        }) as Promise<any>;
+    };
+
+    await expect(read('  background ')).resolves.toEqual({
+        file: 'resources/Default/JHN.3.study.md',
+        kind: 'text',
+        section: 'Background',
+        text: `## Background\n\n${'b'.repeat(10_000)}`,
+    });
+
+    // Past 16 KB the section says which headings inside it to read.
+    const translation = await read('Translation');
+    expect(translation.section).toBe('Translation');
+    expect(translation.text).toHaveLength(16 * 1024);
+    expect(translation.text.startsWith('## Translation\n\nXx words.')).toBe(
+        true,
+    );
+    expect(translation.note).toBe(
+        'Only the start of this section is here. Read a heading inside it ' +
+            'with `section`:\n## Translation\n### Part one',
+    );
+
+    const missing = await read('Prayer');
+    expect(missing.isError).toBe(true);
+    expect(missing.reason).toContain('The file has no section “Prayer”.');
+});
+
+test('a section is read only from a text file; a note is read whole', async () => {
+    const notePath = '/resources/notes.own';
+    state.sizes[notePath] = 50;
+    state.noteText = '## Heading\nnote item text';
+    state.scanResults['/resources'] = { filePaths: [notePath] };
+
+    await expect(
+        handleAgentResourcesRequest({
+            action: 'read',
+            file: 'resources/notes.own',
+            section: 'Heading',
+        }),
+    ).resolves.toEqual({
+        file: 'resources/notes.own',
+        kind: 'note',
+        text: '## Heading\nnote item text',
     });
 });

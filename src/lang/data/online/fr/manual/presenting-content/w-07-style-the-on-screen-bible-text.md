@@ -3,7 +3,7 @@ id: W-07
 title: "Mettre en forme le texte biblique à l'écran"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 2c13254f4291c066
+translatedFrom: 46075c5e04d8b3ed
 ---
 # W-07 — Mettre en forme le texte biblique à l'écran
 
@@ -47,7 +47,11 @@ le contour ou l'ombre qui les garde lisibles par-dessus une image. Un
    du sélecteur basse (la bande passe sous chaque ligne de ce qui est sélectionné) ; la
    flèche à côté remet ce côté à sa valeur par défaut.
 7. **Changez la présentation des mots.** **[en:tran:Font Family]** est une liste des
-   polices de cet ordinateur : choisissez-en une et chaque verset est dessiné avec elle ; choisissez
+   polices propres à l'application, puis des polices de cet ordinateur. En tête vient la
+   police de chaque langue activée (`app-Google-Sans`, `app-Battambang` — la police dans
+   laquelle est dessinée une Bible dans cette langue), puis les polices que les langues
+   livrent sous leur propre nom (Google Sans, Battambang, une écriture manuscrite de
+   pense-bête). Choisissez-en une et chaque verset est dessiné avec elle ; choisissez
    la première ligne de la liste, `--`, pour revenir à la police propre à chaque Bible. Les lettres
    que la police choisie n'a pas — du khmer sous une police anglaise — restent dans
    celle de la Bible. **[en:tran:Text Style]** propose

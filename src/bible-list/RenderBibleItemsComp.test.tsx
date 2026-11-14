@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     showBibleLookupPopup: null as null | (() => void),
     genDuplicatedMessage: vi.fn(),
+    isAIEnabled: false,
+    showAppContextMenu: vi.fn(),
+    openChatbotForBibleListPaste: vi.fn(async () => true),
 }));
 
 vi.mock('./BibleItemRenderComp', () => ({
@@ -38,6 +41,19 @@ vi.mock('../others/commonButtons', () => ({
     useToggleBibleLookupPopupContext: () => h.showBibleLookupPopup,
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+vi.mock('../context-menu/appContextMenuHelpers', () => ({
+    showAppContextMenu: h.showAppContextMenu,
+}));
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
+    genContextMenuItemIcon: (name: string) => `icon:${name}`,
+}));
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => h.isAIEnabled,
+}));
+vi.mock('../helper/ai/chatbotHandoffHelpers', () => ({
+    openChatbotForBibleListPaste: h.openChatbotForBibleListPaste,
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('../helper/appHooks', async () => {
     const { useRef } = await import('react');
     return {
@@ -75,6 +91,9 @@ function getAddButton() {
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.showBibleLookupPopup = null;
+    h.isAIEnabled = false;
+    h.showAppContextMenu.mockClear();
+    h.openChatbotForBibleListPaste.mockClear();
     h.genDuplicatedMessage.mockImplementation(
         (_items: unknown[], item: { id: number }) =>
             item.id === 2 ? 'Duplicated with item 1' : '',
@@ -111,7 +130,7 @@ describe('the passages of one bible list', () => {
         expect(getAddButton()).toBeNull();
     });
 
-    test('the default list offers to add a passage through the lookup', async () => {
+    test('with AI off, the default list adds a passage through the lookup at once', async () => {
         const showLookup = vi.fn();
         h.showBibleLookupPopup = showLookup;
         await renderItems(genBible(true));
@@ -119,6 +138,35 @@ describe('the passages of one bible list', () => {
         expect(add.textContent).toBe(' Add Bible Item');
         await act(async () => add.click());
         expect(showLookup).toHaveBeenCalledTimes(1);
+        expect(h.showAppContextMenu).not.toHaveBeenCalled();
+    });
+
+    // EC-760: the lookup, or the chatbot to read the passages out of a text.
+    test('with AI on, it asks how: the lookup or the chatbot, under the button', async () => {
+        h.isAIEnabled = true;
+        const showLookup = vi.fn();
+        h.showBibleLookupPopup = showLookup;
+        await renderItems(genBible(true));
+        const add = getAddButton()!;
+        add.getBoundingClientRect = () => {
+            return { left: 40, bottom: 120 } as DOMRect;
+        };
+        await act(async () => add.click());
+        expect(showLookup).not.toHaveBeenCalled();
+        expect(h.showAppContextMenu).toHaveBeenCalledTimes(1);
+        const [, items, options] = h.showAppContextMenu.mock.calls[0];
+        expect(
+            items.map((item: any) => {
+                return item.menuElement;
+            }),
+        ).toEqual(['Bible Lookup', 'Open in Chatbot']);
+        expect(options).toEqual({ coord: { x: 40, y: 120 } });
+        items[0].onSelect({});
+        expect(showLookup).toHaveBeenCalledTimes(1);
+        items[1].onSelect({});
+        await vi.waitFor(() => {
+            expect(h.openChatbotForBibleListPaste).toHaveBeenCalledTimes(1);
+        });
     });
 
     test('no lookup to open, no add button', async () => {

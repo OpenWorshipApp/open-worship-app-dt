@@ -31,7 +31,7 @@ describe('findQuestionLanguage with facts that cannot be used', () => {
   it('skips a language with no facts or no pattern', () => {
     const languages = [
       { code: 'en' },
-      { code: 'fr', assistant: { glossary: {} } },
+      { code: 'yy', assistant: { glossary: {} } },
       null,
       { code: 'xx', assistant: { scriptPattern: SIGN_SCRIPT } },
     ];

@@ -13,7 +13,14 @@ const started = {
     did: 'started',
     widget: 'countdown',
     detail: 'a 5 minute countdown, ending at 11:45 AM',
-    screens: [{ screenId: 0, isShowing: false, isLocked: false, foreground: ['countdown to 11:45:03 AM'] }],
+    screens: [
+        {
+            screenId: 0,
+            isShowing: false,
+            isLocked: false,
+            foreground: ['countdown to 11:45:03 AM'],
+        },
+    ],
     isAnyShowing: false,
 };
 
@@ -39,6 +46,13 @@ describe('genForegroundExpression', () => {
             'marquee-top',
             'marquee-bottom',
             'quick-text',
+            'message',
+            'long-text',
+            'video',
+            'image',
+            'camera',
+            'screen',
+            'web',
             'all',
         ]);
         expect(AGENT_FOREGROUND_ACTIONS).toEqual(['start', 'stop', 'check']);
@@ -89,7 +103,14 @@ describe('describeForeground', () => {
             describeForeground({
                 ...started,
                 isAnyShowing: true,
-                screens: [{ screenId: 0, isShowing: true, isLocked: false, foreground: [] }],
+                screens: [
+                    {
+                        screenId: 0,
+                        isShowing: true,
+                        isLocked: false,
+                        foreground: [],
+                    },
+                ],
             }),
         ).toBe(
             'A 5 minute countdown, ending at 11:45 AM is on the screen now. ' +
@@ -101,9 +122,18 @@ describe('describeForeground', () => {
         expect(
             describeForeground({
                 ...started,
-                screens: [{ screenId: 1, isShowing: false, isLocked: true, foreground: [] }],
+                screens: [
+                    {
+                        screenId: 1,
+                        isShowing: false,
+                        isLocked: true,
+                        foreground: [],
+                    },
+                ],
             }),
-        ).toBe('A 5 minute countdown, ending at 11:45 AM is on the screen now.');
+        ).toBe(
+            'A 5 minute countdown, ending at 11:45 AM is on the screen now.',
+        );
     });
 
     it('a stop carries its note, and a check its detail', () => {
@@ -132,7 +162,9 @@ describe('describeForeground', () => {
     });
 
     it('repeats a refusal, and says when the app did not answer', () => {
-        expect(describeForeground({ isError: true, reason: 'Nope.' })).toBe('Nope.');
+        expect(describeForeground({ isError: true, reason: 'Nope.' })).toBe(
+            'Nope.',
+        );
         expect(describeForeground(null)).toBe('The app did not answer.');
     });
 });

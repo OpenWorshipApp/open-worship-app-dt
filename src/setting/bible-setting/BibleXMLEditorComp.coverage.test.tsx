@@ -21,11 +21,11 @@ vi.mock('monaco-editor', () => ({
     Uri: { parse: (value: string) => ({ toString: () => value }) },
 }));
 vi.mock('../../lang/langHelpers', () => ({
-    allLocalesMap: { 'en-US': 'en', 'km-KH': 'km' },
+    allLocalesMap: { 'en-US': 'en', 'yy-YY': 'yy' },
     DEFAULT_LANG_CODE: 'en',
-    getLangCode: (locale: string) => (locale === 'km-KH' ? 'km' : null),
+    getLangCode: (locale: string) => (locale === 'yy-YY' ? 'yy' : null),
     getLangDataAsync: async () => h.languageData,
-    languageNameMap: { en: 'English', km: 'Khmer' },
+    languageNameMap: { en: 'English', yy: 'Yyish' },
     tran: (text: string) => text,
 }));
 vi.mock('../../helper/monacoEditorHelpers', () => ({
@@ -160,7 +160,7 @@ describe('BibleXMLEditorComp save', () => {
 });
 
 describe('genBibleBooksMapXMLInput', () => {
-    async function renderBooksMap(onChange = vi.fn(), locale = 'km-KH') {
+    async function renderBooksMap(onChange = vi.fn(), locale = 'yy-YY') {
         await act(async () =>
             root.render(
                 genBibleBooksMapXMLInput(
@@ -195,10 +195,10 @@ describe('genBibleBooksMapXMLInput', () => {
     });
 
     test('links the translation of the book names for the locale', async () => {
-        await renderBooksMap(vi.fn(), 'km-KH');
+        await renderBooksMap(vi.fn(), 'yy-YY');
         expect(
             (container.querySelector('a') as HTMLAnchorElement).href,
-        ).toContain('tl=km&');
+        ).toContain('tl=yy&');
         await renderBooksMap(vi.fn(), 'xx-XX');
         expect(container.querySelector('a')!.textContent).toBe(
             'Translate (en)',

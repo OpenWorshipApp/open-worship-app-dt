@@ -1,0 +1,174 @@
+{
+    "scenarios": [
+        {
+            "id": "countdown",
+            "asks": [
+                {
+                    "id": "C1",
+                    "text": "Start a 5 minute countdown on the screen",
+                    "expect": "countdown 5:00 started on screen 0 (off): says held, offers show, does not press it; 1-2 rounds"
+                },
+                {
+                    "id": "C2",
+                    "text": "What is on the screen right now?",
+                    "expect": "names the countdown held on screen 0, screen off"
+                },
+                {
+                    "id": "C3",
+                    "text": "Make it bigger and red",
+                    "expect": "the countdown's look: size larger, color red, ONE change, undo offered"
+                },
+                {
+                    "id": "C4",
+                    "text": "Pause it",
+                    "expect": "timer pause on the countdown"
+                },
+                {
+                    "id": "C5",
+                    "text": "Add 2 more minutes to it",
+                    "expect": "the countdown's time +2 minutes (7:00 or remaining+2), or an honest way"
+                },
+                {
+                    "id": "C6",
+                    "text": "Take it off the screen",
+                    "expect": "countdown hidden/stopped, nothing else touched"
+                }
+            ]
+        },
+        {
+            "id": "clock",
+            "asks": [
+                {
+                    "id": "K1",
+                    "text": "Put the time on the screen",
+                    "expect": "clock started, held on off screen"
+                },
+                {
+                    "id": "K2",
+                    "text": "Move the clock to the bottom right corner",
+                    "expect": "look position bottom right on the clock session"
+                },
+                {
+                    "id": "K3",
+                    "text": "Show it in 24 hour format",
+                    "expect": "is24Hour true"
+                }
+            ]
+        },
+        {
+            "id": "marquee",
+            "asks": [
+                {
+                    "id": "M1",
+                    "text": "Show 'Welcome to our church, we are glad you are here' scrolling at the bottom",
+                    "expect": "marquee-bottom with those words"
+                },
+                {
+                    "id": "M2",
+                    "text": "The scrolling text is too fast, slow it down",
+                    "expect": "marquee speed slower"
+                },
+                {
+                    "id": "M3",
+                    "text": "Change the words to 'Fellowship lunch after service in the hall'",
+                    "expect": "marquee text changed (same session or new, not a second marquee left behind)"
+                }
+            ]
+        },
+        {
+            "id": "verse",
+            "asks": [
+                {
+                    "id": "V1",
+                    "text": "Put John 3:16 on the screen as a quick text",
+                    "expect": "quick-text ref John 3:16 read from Bible"
+                },
+                {
+                    "id": "V2",
+                    "text": "Make the text smaller and put it at the top",
+                    "expect": "look size smaller + position top in one call"
+                }
+            ]
+        },
+        {
+            "id": "at-time",
+            "asks": [
+                {
+                    "id": "T1",
+                    "text": "Count down until the service starts at 11:45 pm",
+                    "expect": "countdown at 23:45"
+                }
+            ]
+        },
+        {
+            "id": "multi",
+            "asks": [
+                {
+                    "id": "X1",
+                    "text": "Put a 3 minute countdown and a welcome message along the top",
+                    "expect": "countdown 3 min AND marquee-top 'Welcome' (both)"
+                }
+            ]
+        },
+        {
+            "id": "stopwatch",
+            "asks": [
+                {
+                    "id": "W1",
+                    "text": "Start a stopwatch for the sermon",
+                    "expect": "stopwatch started"
+                },
+                {
+                    "id": "W2",
+                    "text": "Stop the stopwatch",
+                    "expect": "stopwatch paused or taken off; says which"
+                }
+            ]
+        },
+        {
+            "id": "elder",
+            "asks": [
+                {
+                    "id": "E1",
+                    "text": "please make clock come big screen",
+                    "expect": "clock started (held), offer show"
+                }
+            ]
+        },
+        {
+            "id": "honest",
+            "asks": [
+                {
+                    "id": "H1",
+                    "text": "Can you show a countdown to Christmas day?",
+                    "expect": "honest: a countdown runs to a time today / in minutes; offers what it can"
+                }
+            ]
+        },
+        {
+            "id": "clear",
+            "asks": [
+                {
+                    "id": "L1",
+                    "text": "Start a 2 minute countdown",
+                    "expect": "countdown 2:00"
+                },
+                {
+                    "id": "L2",
+                    "text": "Clear everything from the foreground",
+                    "expect": "stop all (F10's job), nothing else cleared"
+                }
+            ]
+        },
+        {
+            "id": "announce",
+            "asks": [
+                {
+                    "id": "N1",
+                    "text": "Show a message at the bottom of the screen for 15 seconds: the owner of car ABC 123, your lights are on",
+                    "expect": "quick text 15 s with those words (or marquee), held"
+                }
+            ]
+        }
+    ]
+}

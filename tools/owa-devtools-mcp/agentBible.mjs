@@ -29,8 +29,8 @@ export const AGENT_BIBLE_ACTIONS = ['present', 'check'];
  * disk, so the wait is generous.
  */
 export function genPresentBibleExpression(request) {
-    const payload = JSON.stringify(request ?? {});
-    return `(() => {
+  const payload = JSON.stringify(request ?? {});
+  return `(() => {
         const request = Object.assign(${payload}, {
             token: Math.random().toString(36).slice(2),
         });
@@ -69,24 +69,24 @@ export function genPresentBibleExpression(request) {
  * becomes an apology.
  */
 export function formatPresentBibleResult(result) {
-    if (result === null || typeof result !== 'object') {
-        return { isError: true, text: 'The app did not answer.' };
-    }
-    if (result.isError === true) {
-        const versions = Array.isArray(result.versions)
-            ? ` Installed versions: ${result.versions.join(', ')}.`
-            : '';
-        return {
-            isError: true,
-            text: `${String(result.reason ?? 'That could not be done.')}${versions}`,
-        };
-    }
-    // Compact: see `toTextResult` in owaTools.mjs.
-    return { isError: false, text: JSON.stringify(result) };
+  if (result === null || typeof result !== 'object') {
+    return { isError: true, text: 'The app did not answer.' };
+  }
+  if (result.isError === true) {
+    const versions = Array.isArray(result.versions)
+      ? ` Installed versions: ${result.versions.join(', ')}.`
+      : '';
+    return {
+      isError: true,
+      text: `${String(result.reason ?? 'That could not be done.')}${versions}`,
+    };
+  }
+  // Compact: see `toTextResult` in owaTools.mjs.
+  return { isError: false, text: JSON.stringify(result) };
 }
 
 function quote(text) {
-    return typeof text === 'string' && text.length > 0 ? ` -- "${text}"` : '';
+  return typeof text === 'string' && text.length > 0 ? ` -- "${text}"` : '';
 }
 
 /**
@@ -98,42 +98,47 @@ function quote(text) {
  * exactly as `agentScreens.mjs` is.
  */
 export function describePresentedBible(result) {
-    if (result === null || typeof result !== 'object') {
-        return 'The app did not answer.';
-    }
-    if (result.isError === true) {
-        return String(result.reason ?? 'That could not be done.');
-    }
-    const where = `${result.reference} (${result.version})`;
-    if (result.isPresented !== true) {
-        return `${where} reads${quote(result.text)}. It is not on a screen.`;
-    }
-    const screens = Array.isArray(result.screens) ? result.screens : [];
-    const onIds = screens
-        .filter((screen) => screen.isShowing === true)
-        .map((screen) => screen.screenId);
-    const offIds = screens
-        .filter((screen) => screen.isShowing !== true && screen.isLocked !== true)
-        .map((screen) => screen.screenId);
-    const parts = [`${where} is on the screen now${quote(result.text)}.`];
-    if (onIds.length > 0) {
-        parts.push(
-            `Screen ${onIds.join(' and ')} ${onIds.length === 1 ? 'is' : 'are'} ` +
-                'showing it to the projector.',
-        );
-    }
-    if (offIds.length > 0) {
-        parts.push(
-            `Screen ${offIds.join(' and ')} ${offIds.length === 1 ? 'is' : 'are'} ` +
-                'off, so the projector is not showing it yet.',
-        );
-    }
-    const question = result.pendingQuestion;
-    if (question && typeof question === 'object') {
-        const words = [question.title, question.text]
-            .filter((part) => typeof part === 'string' && part.length > 0)
-            .join(': ');
-        parts.push(`The app is asking you something -- "${words}".`);
-    }
-    return parts.join(' ');
+  if (result === null || typeof result !== 'object') {
+    return 'The app did not answer.';
+  }
+  if (result.isError === true) {
+    return String(result.reason ?? 'That could not be done.');
+  }
+  const where = `${result.reference} (${result.version})`;
+  if (result.isPresented !== true) {
+    return `${where} reads${quote(result.text)}. It is not on a screen.`;
+  }
+  const screens = Array.isArray(result.screens) ? result.screens : [];
+  const onIds = screens
+    .filter((screen) => screen.isShowing === true)
+    .map((screen) => screen.screenId);
+  const offIds = screens
+    .filter((screen) => screen.isShowing !== true && screen.isLocked !== true)
+    .map((screen) => screen.screenId);
+  const parts = [`${where} is on the screen now${quote(result.text)}.`];
+  // Saved into the Bibles list first, as the Bible Lookup does (EC-704).
+  const listed = result.listed;
+  if (listed && typeof listed === 'object' && listed.isNew === true) {
+    parts.push(`It is saved in your Bibles list "${listed.list}" too.`);
+  }
+  if (onIds.length > 0) {
+    parts.push(
+      `Screen ${onIds.join(' and ')} ${onIds.length === 1 ? 'is' : 'are'} ` +
+        'showing it to the projector.',
+    );
+  }
+  if (offIds.length > 0) {
+    parts.push(
+      `Screen ${offIds.join(' and ')} ${offIds.length === 1 ? 'is' : 'are'} ` +
+        'off, so the projector is not showing it yet.',
+    );
+  }
+  const question = result.pendingQuestion;
+  if (question && typeof question === 'object') {
+    const words = [question.title, question.text]
+      .filter((part) => typeof part === 'string' && part.length > 0)
+      .join(': ');
+    parts.push(`The app is asking you something -- "${words}".`);
+  }
+  return parts.join(' ');
 }

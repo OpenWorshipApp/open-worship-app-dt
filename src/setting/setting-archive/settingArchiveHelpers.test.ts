@@ -184,7 +184,7 @@ import {
 } from './settingArchiveHelpers';
 
 function seedComputer() {
-    h.home.set('language-locale', 'km');
+    h.home.set('language-locale', 'xx');
     // What an older version left in the data folder: not the one in use.
     h.local.set('language-locale', 'en-US');
     h.local.set('foreground-marquee-top-setting', '{"speed":3}');
@@ -454,7 +454,7 @@ describe('validating a file', () => {
     });
 
     test('refuses a duplicate and an oversized file', () => {
-        const entry = { store: 'local', key: 'language-locale', value: 'km' };
+        const entry = { store: 'local', key: 'language-locale', value: 'xx' };
         expect(() =>
             validateSettingManifest(
                 genManifest(['general.language'], [entry, entry]),
@@ -513,7 +513,7 @@ describe('validating a file', () => {
                     7,
                 ],
                 [
-                    { store: 'local', key: 'language-locale', value: 'km' },
+                    { store: 'local', key: 'language-locale', value: 'xx' },
                     // Outside every section the file lists.
                     { store: 'local', key: 'pdf-full-width', value: 'true' },
                     // Excluded since.
@@ -535,7 +535,7 @@ describe('validating a file', () => {
         expect(manifest.settings).toEqual([
             // Made while the language was the data folder's: it is this
             // computer's now.
-            { store: 'home', key: 'language-locale', value: 'km' },
+            { store: 'home', key: 'language-locale', value: 'xx' },
             { store: 'home', key: 'ai-setting', value: '{}' },
         ]);
         expect(manifest).not.toHaveProperty('dataDirPath');
@@ -613,7 +613,7 @@ describe('importing replaces each chosen section', () => {
                     'secrets.aiKeys',
                 ],
                 [
-                    { store: 'home', key: 'language-locale', value: 'fr' },
+                    { store: 'home', key: 'language-locale', value: 'yy' },
                     {
                         store: 'local',
                         key: 'select-dir-video-bg',
@@ -651,7 +651,7 @@ describe('importing replaces each chosen section', () => {
             true,
         );
 
-        expect(h.home.get('language-locale')).toBe('fr');
+        expect(h.home.get('language-locale')).toBe('yy');
         // Expanded for this computer, stored portable again.
         expect(h.local.get('select-dir-video-bg')).toBe(
             '$DATA_DIR_PATH/videos',
@@ -690,7 +690,7 @@ describe('importing replaces each chosen section', () => {
             true,
         );
 
-        expect(h.home.get('language-locale')).toBe('fr');
+        expect(h.home.get('language-locale')).toBe('yy');
         expect(h.local.get('select-dir-image-bg')).toBe(
             '$DATA_DIR_PATH/images',
         );
@@ -706,7 +706,7 @@ describe('importing replaces each chosen section', () => {
     });
 
     test('writes nothing that is already the same', async () => {
-        h.home.set('language-locale', 'fr');
+        h.home.set('language-locale', 'yy');
         h.theme.value = 'system';
         const result = await importSettingSections(
             genImportManifest(),
@@ -723,7 +723,7 @@ describe('importing replaces each chosen section', () => {
         const manifest = validateSettingManifest(
             genManifest(
                 ['general.language'],
-                [{ store: 'local', key: 'language-locale', value: 'fr-FR' }],
+                [{ store: 'local', key: 'language-locale', value: 'yy-YY' }],
             ),
             false,
         );
@@ -732,7 +732,7 @@ describe('importing replaces each chosen section', () => {
             ['general.language'],
             false,
         );
-        expect(h.home.get('language-locale')).toBe('fr-FR');
+        expect(h.home.get('language-locale')).toBe('yy-YY');
         expect(h.local.get('language-locale')).toBe('en-US');
         expect(result).toEqual({
             writtenCount: 1,
@@ -771,7 +771,7 @@ describe('importing replaces each chosen section', () => {
     });
 
     test('a section the file holds empty puts a home setting back to default', async () => {
-        h.home.set('language-locale', 'km');
+        h.home.set('language-locale', 'xx');
         h.home.set('ai-setting', '{"isAutoPlay":true}');
         const manifest = validateSettingManifest(
             genManifest(['general.language'], []),

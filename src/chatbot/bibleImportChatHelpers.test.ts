@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -40,6 +43,7 @@ vi.mock('../server/appProvider', () => {
     };
 });
 
+import { BIBLE_XML_CATALOG_URL } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
 import {
     BIBLE_IMPORT_MANUAL_ID,
     BIBLE_IMPORT_STEP_TOOL_NAME,
@@ -48,7 +52,9 @@ import {
     checkBibleImportReplyNeedsHelp,
     readBibleImportHelpState,
     genBibleImportCheckAnswer,
+    genBibleImportLanguageOfferAction,
     genBibleImportOfferAction,
+    listLanguageChoiceNames,
     readBibleImportLanguageAsk,
     readBibleImportLinkAsk,
     readBibleImportTypedReply,
@@ -58,10 +64,32 @@ import {
     toFileLabel,
     type BibleImportStateType,
 } from './bibleImportChatHelpers';
-import { checkHasLangPackage } from '../test-setup/langPackageDirs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
+
+// Every country or people a package on disk names its language by, with
+// the catalog word it stands for.
+function listPackageLanguageAliases(): [string, string][] {
+    return listLangPackageCodes({
+        isEnglishIncluded: false,
+        fileName: 'world.json',
+    }).flatMap((langCode) => {
+        const world = JSON.parse(
+            readFileSync(
+                path.join(toLangPackageDir(langCode), 'world.json'),
+                'utf8',
+            ),
+        );
+        return Object.entries(
+            (world.languageAliases ?? {}) as Record<string, string>,
+        );
+    });
+}
 
 const LINK =
-    'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml';
+    'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/SampleBible.xml';
 
 function pressByLabel(
     answer: { actions?: { label: string; args?: any }[] },
@@ -94,7 +122,7 @@ describe('readBibleImportLinkAsk', () => {
         ).toEqual({ url: LINK, find: 'Import bible from xml url' });
         expect(
             readBibleImportLinkAsk(
-                'please add the Khmer bible from https://github.com/Beblia/Holy-Bible-XML-Format.',
+                'please add the new bible from https://github.com/Beblia/Holy-Bible-XML-Format.',
             )?.url,
         ).toBe('https://github.com/Beblia/Holy-Bible-XML-Format');
     });
@@ -137,21 +165,21 @@ describe('a step by step import, pressed through', () => {
         const step = await runBibleImportStep({
             step: 'key',
             draftId: 'he10paxbbz64',
-            keys: ['KSV', 'KM1954', 'KHMER'],
-            takenKeys: ['ksv'],
+            keys: ['TQVS', 'XX1954', 'SAMPLE'],
+            takenKeys: ['tqvs'],
         });
-        // Case does not make it a different name, so `ksv` hides `KSV`.
+        // Case does not make it a different name, so `tqvs` hides `TQVS`.
         expect(step.actions?.map((one) => one.label)).toEqual([
-            'KM1954 (suggested)',
-            'KHMER',
+            'XX1954 (suggested)',
+            'SAMPLE',
             'Cancel',
         ]);
 
         const none = await runBibleImportStep({
             step: 'key',
             draftId: 'he10paxbbz64',
-            keys: ['KSV'],
-            takenKeys: ['KSV'],
+            keys: ['TQVS'],
+            takenKeys: ['TQVS'],
         });
         expect(none.text).toContain(
             'Type one (letters and numbers, no spaces)',
@@ -166,9 +194,9 @@ describe('a step by step import, pressed through', () => {
         const answer = await runBibleImportStep({
             step: 'import',
             draftId: 'he10paxbbz64',
-            key: 'KSV',
-            keys: ['KSV'],
-            locale: 'km-KH',
+            key: 'TQVS',
+            keys: ['TQVS'],
+            locale: 'xx-XX',
         });
         expect(answer.text).toContain('already have a Bible by that name');
         expect(answer.text).toContain('Step 1');
@@ -182,15 +210,15 @@ describe('links that do not lead to a Bible', () => {
                 kind: 'page',
                 total: 998,
                 matched: 7,
-                searchedFor: ['khmer'],
+                searchedFor: ['sample'],
                 files: [
                     {
-                        name: 'KhmerBible.xml',
+                        name: 'SampleBible.xml',
                         url: LINK,
-                        title: 'Khmer Standard Version 1954 = Hammond Version',
+                        title: 'Sample Standard Version 1954 = First Edition',
                     },
                     {
-                        name: 'Khmer2005Bible.xml',
+                        name: 'Sample2005Bible.xml',
                         url: LINK.replace('Bible', '2005Bible'),
                     },
                 ],
@@ -200,20 +228,20 @@ describe('links that do not lead to a Bible', () => {
         const answer = await runBibleImportStep({
             step: 'check',
             url: 'https://github.com/Beblia/Holy-Bible-XML-Format',
-            find: 'khmer',
+            find: 'sample',
         });
         expect(answer.text).toContain(
-            'Of its **998** Bibles, **7** have “khmer” in the name.',
+            'Of its **998** Bibles, **7** have “sample” in the name.',
         );
         // The file's own title, then its name; a file with no title its name.
         expect(answer.text).toContain(
-            '1. Khmer Standard Version 1954 = Hammond Version — Khmer Bible',
+            '1. Sample Standard Version 1954 = First Edition — Sample Bible',
         );
-        expect(answer.text).toContain('2. Khmer 2005 Bible');
+        expect(answer.text).toContain('2. Sample 2005 Bible');
         expect(answer.text).not.toContain('call check');
         expect(answer.actions?.map((one) => one.label)).toEqual([
-            '1. Khmer Standard Version 1954 = Hammond Version',
-            '2. Khmer 2005 Bible',
+            '1. Sample Standard Version 1954 = First Edition',
+            '2. Sample 2005 Bible',
             'Cancel',
         ]);
         expect(answer.actions?.[0].args.url).toBe(LINK);
@@ -261,6 +289,11 @@ describe('what is, and is not, somebody asking for a Bible', () => {
             // "add" and "want" beside no language: about something else.
             'get bible commentary',
             'I need a bible for sunday',
+            // A note's conversation, 2026-11-08: answered "You already have
+            // the KJV" with the internet copy offered.
+            'I want to change bible of english lines to be kjv',
+            'switch the english bible lines to kjv',
+            'I want to convert the bible verses to kjv',
         ]) {
             expect([text, readBibleImportLanguageAsk(text)]).toEqual([
                 text,
@@ -270,17 +303,17 @@ describe('what is, and is not, somebody asking for a Bible', () => {
     });
 
     it('a language beside "want", "need" or "add" is a Bible to look for', () => {
-        expect(readBibleImportLanguageAsk('I want a Khmer bible')).toEqual({
+        expect(readBibleImportLanguageAsk('I want a Swahili bible')).toEqual({
             step: 'check',
             url: CATALOG,
-            find: 'khmer',
+            find: 'swahili',
         });
         expect(readBibleImportLanguageAsk('need thai bible')?.find).toBe(
             'thai',
         );
         expect(
-            readBibleImportLanguageAsk('please add the French bible')?.find,
-        ).toBe('french');
+            readBibleImportLanguageAsk('please add the Tagalog bible')?.find,
+        ).toBe('tagalog');
         // Nothing else said at all: which language?
         expect(readBibleImportLanguageAsk('add a bible')).toEqual({
             step: 'language',
@@ -302,30 +335,26 @@ describe('what is, and is not, somebody asking for a Bible', () => {
         );
     });
 
-    // A country names its language through that language's own package
-    // (`world.json`), so each runs while the package is on disk.
-    it.runIf(checkHasLangPackage('km'))(
-        'a country finds the language its package says it speaks',
-        () => {
-            expect(
-                readBibleImportLanguageAsk('Import a Bible in Cambodia')?.find,
-            ).toBe('khmer');
-        },
-    );
-
-    it.runIf(checkHasLangPackage('zh'))(
-        'a people finds the language its package says it speaks',
-        () => {
-            expect(
-                readBibleImportLanguageAsk('install bible for China')?.find,
-            ).toBe('chinese');
-        },
-    );
+    // A country or a people names its language through that language's own
+    // package (`world.json`'s `languageAliases`): every package on disk is
+    // held to its own, none named here, and none when only English is there.
+    it('a country or a people finds the language its package says it speaks', () => {
+        for (const [alias, word] of listPackageLanguageAliases()) {
+            expect([
+                alias,
+                readBibleImportLanguageAsk(`Import a Bible in ${alias}`)?.find,
+            ]).toEqual([alias, word]);
+            expect([
+                alias,
+                readBibleImportLanguageAsk(`install bible for ${alias}`)?.find,
+            ]).toEqual([alias, word]);
+        }
+    });
 
     it('"is there a Korean bible?" is a request; "is there a way…" a question', () => {
         expect(
-            readBibleImportLanguageAsk('Do you have a Khmer bible?')?.find,
-        ).toBe('khmer');
+            readBibleImportLanguageAsk('Do you have a Swahili bible?')?.find,
+        ).toBe('swahili');
         expect(
             readBibleImportLanguageAsk('Are there any Thai bibles?')?.find,
         ).toBe('thai');
@@ -352,6 +381,16 @@ describe('a Bible asked for by the name the app is looking for', () => {
         });
         // The way the window starts it: with no conversation yet.
         expect(findBibleImportState([], ASK)?.wantedKey).toBe('KJV');
+        // In a conversation about one Bible note a typed line starts no
+        // import, link or not: it is about the note.
+        expect(findBibleImportState([], ASK, { isNoteAsk: true })).toBeNull();
+        expect(
+            findBibleImportState(
+                [],
+                'import bible from https://example.com/kjv.xml',
+                { isNoteAsk: true },
+            ),
+        ).toBeNull();
         // A name the collection files nothing under is searched as it is.
         expect(
             readBibleImportLanguageAsk('Import the Bible called "NIV"'),
@@ -397,9 +436,11 @@ describe('a Bible asked for by the name the app is looking for', () => {
         expect(none.text).toContain('None of them has “niv” in its name');
         // A language typed under that, a link pasted under it, and a dead
         // link's own two buttons all keep the name.
-        expect(readBibleImportTypedReply(none.actions, 'Khmer')).toMatchObject({
+        expect(
+            readBibleImportTypedReply(none.actions, 'Swahili'),
+        ).toMatchObject({
             step: 'check',
-            find: 'Khmer',
+            find: 'Swahili',
             wantedKey: 'NIV',
         });
         expect(readBibleImportTypedReply(none.actions, LINK)).toEqual({
@@ -421,11 +462,17 @@ describe('a Bible asked for by the name the app is looking for', () => {
             'NIV',
         ]);
         const asked = await pressByLabel(dead, 'Look for a Bible by language');
-        expect(
-            asked.actions
-                ?.filter((one) => one.args.step === 'check')
-                .map((one) => one.args.wantedKey),
-        ).toEqual(['NIV', 'NIV', 'NIV']);
+        // Every language the question offers keeps it: as many as are
+        // installed, English always among them.
+        const languageList = listLanguageChoiceNames();
+        expect(languageList).toContain('English');
+        const checkList = (asked.actions ?? []).filter((one) => {
+            return one.args.step === 'check';
+        });
+        expect(checkList.map((one) => one.label)).toEqual(languageList);
+        expect(checkList.map((one) => one.args.wantedKey)).toEqual(
+            languageList.map(() => 'NIV'),
+        );
     });
 });
 
@@ -453,7 +500,7 @@ describe('typed instead of pressed', () => {
             find: '',
         });
         // Words under "paste the link" are not a link.
-        expect(readBibleImportTypedReply(dead.actions, 'Khmer')).toBeNull();
+        expect(readBibleImportTypedReply(dead.actions, 'Swahili')).toBeNull();
         expect(
             readBibleImportTypedReply(
                 dead.actions,
@@ -470,8 +517,8 @@ describe('a word the collection has no file for', () => {
                 kind: 'page',
                 total: 998,
                 matched: 0,
-                searchedFor: ['kmer'],
-                suggestions: ['Khmer'],
+                searchedFor: ['sampel'],
+                suggestions: ['Sample'],
                 files: [],
             }),
         );
@@ -479,20 +526,20 @@ describe('a word the collection has no file for', () => {
         const answer = await runBibleImportStep({
             step: 'check',
             url,
-            find: 'kmer',
+            find: 'sampel',
         });
-        expect(answer.text).toContain('None of them has “kmer”');
+        expect(answer.text).toContain('None of them has “sampel”');
         expect(answer.text).toContain('Did you mean');
         expect(answer.actions?.map((one) => one.label)).toEqual([
-            'Khmer',
+            'Sample',
             'Cancel',
         ]);
         expect(answer.actions?.[0].args).toMatchObject({
             step: 'check',
             url,
-            find: 'Khmer',
+            find: 'Sample',
         });
-        // Typing a language instead searches afresh, without "kmer".
+        // Typing a language instead searches afresh, without "sampel".
         expect(readBibleImportTypedReply(answer.actions, 'Thai')).toMatchObject(
             { step: 'check', url, find: 'Thai' },
         );
@@ -528,15 +575,31 @@ it('an answer about importing a Bible offers to do it', () => {
     expect(BIBLE_IMPORT_MANUAL_ID).toBe('W-34');
 });
 
+it('a passage typed in a language no Bible is in offers one in it', () => {
+    // EC-622: the language the line was typed in is searched for at once,
+    // as the Reader's missing-Bible card asks it.
+    expect(genBibleImportLanguageOfferAction('xx')).toEqual({
+        label: 'Import a Bible for me',
+        toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+        args: { step: 'check', url: BIBLE_XML_CATALOG_URL, find: 'xx' },
+    });
+    // A line whose words cannot tell its language asks which.
+    for (const langCode of [null, 'other', '', 'x-y']) {
+        expect(genBibleImportLanguageOfferAction(langCode)).toEqual(
+            genBibleImportOfferAction(),
+        );
+    }
+});
+
 it('shows a file name as words', () => {
-    expect(toFileLabel('Khmer2005Bible.xml')).toBe('Khmer 2005 Bible');
+    expect(toFileLabel('Sample2005Bible.xml')).toBe('Sample 2005 Bible');
     expect(toFileLabel('EnglishKJBible.xml')).toBe('English KJ Bible');
     expect(toFileLabel('kjv_1611.xml')).toBe('kjv 1611');
 });
 
 it('echoes a choice without "(suggested)"', () => {
-    expect(toBibleImportEcho('KSV (suggested)')).toBe('KSV');
-    expect(toBibleImportEcho('KM1954')).toBe('KM1954');
+    expect(toBibleImportEcho('TQVS (suggested)')).toBe('TQVS');
+    expect(toBibleImportEcho('XX1954')).toBe('XX1954');
 });
 
 describe('ordinary replies keep the waiting import state', () => {
@@ -595,7 +658,7 @@ describe('ordinary replies keep the waiting import state', () => {
                 {
                     label: 'List 1',
                     toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-                    args: { step: 'confirm', locale: 'km-KH' },
+                    args: { step: 'confirm', locale: 'xx-XX' },
                 },
             ];
             expect(
@@ -812,8 +875,8 @@ describe('when the tool answers otherwise', () => {
             step: 'import',
             url: LINK,
             draftId: 'd1',
-            key: 'KSV',
-            locale: 'km-KH',
+            key: 'TQVS',
+            locale: 'xx-XX',
             digits: 'local',
             kjvChecked: true,
         } as BibleImportStateType;
@@ -856,24 +919,24 @@ describe('when the tool answers otherwise', () => {
         const findAction = {
             label: 'Cancel',
             toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-            args: { step: 'cancel', awaits: 'find', wantedKey: 'KSV' },
+            args: { step: 'cancel', awaits: 'find', wantedKey: 'TQVS' },
         };
         expect(
             readBibleImportHelpState([findAction], {
                 kind: 'value',
                 value: 'Thai',
             }),
-        ).toMatchObject({ step: 'check', find: 'Thai', wantedKey: 'KSV' });
+        ).toMatchObject({ step: 'check', find: 'Thai', wantedKey: 'TQVS' });
         const linkAction = {
             ...findAction,
-            args: { step: 'cancel', awaits: 'link', wantedKey: 'KSV' },
+            args: { step: 'cancel', awaits: 'link', wantedKey: 'TQVS' },
         };
         expect(
             readBibleImportHelpState([linkAction], {
                 kind: 'value',
                 value: LINK,
             }),
-        ).toEqual({ step: 'check', url: LINK, wantedKey: 'KSV' });
+        ).toEqual({ step: 'check', url: LINK, wantedKey: 'TQVS' });
         // Nothing waits for a value: there is no step to put it into.
         expect(
             readBibleImportHelpState(
@@ -907,14 +970,14 @@ describe('when the tool answers otherwise', () => {
         );
         const answer = await runBibleImportStep({
             step: 'more-names',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             draftId: 'd1',
             kjvChecked: true,
             nameLists: [{ id: 'n1', label: 'Known', first: ['Genesis'] }],
         } as BibleImportStateType);
         expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
             action: 'names',
-            locale: 'km-KH',
+            locale: 'xx-XX',
             draftId: 'd1',
         });
         expect(answer.text).toContain('I found 1 more online.');
@@ -928,8 +991,8 @@ describe('when the tool answers otherwise', () => {
     });
 });
 
-// 2026-11-05, the user: _user input for french so chatbot should take a
-// moment to help user install french first before proceed further step_.
+// 2026-11-05, the user's ask: a Bible's language typed in the chat that is
+// not installed is offered for install before the import goes further.
 describe("the Bible's language, installed first", () => {
     const CATALOG = 'https://github.com/Beblia/Holy-Bible-XML-Format';
     const MISSING = {
@@ -1131,7 +1194,11 @@ describe('the KJV offer, answered once', () => {
             step: 'language',
             kjvChecked: true,
         });
-        for (const action of (answer.actions ?? []).slice(0, 3)) {
+        const languageActions = (answer.actions ?? []).filter((action) => {
+            return action.args.step === 'check';
+        });
+        expect(languageActions.length).toBeGreaterThan(0);
+        for (const action of languageActions) {
             expect(action.args.kjvChecked, action.label).toBe(true);
         }
         const fresh = await runBibleImportStep({

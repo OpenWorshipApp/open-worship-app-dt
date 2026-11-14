@@ -162,7 +162,8 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   Title matches `/Setting/`.
 - `General` + `Apply Settings` visible and clickable. (`Set Default Data` from older builds is
   gone — the current General tab has `Reset All Child Directories` /
-  `Clear All Settings`; the `English`/`Khmer`/`French` language buttons live here too.
+  `Clear All Settings`; the language buttons (one per installed language) are on the
+  **Languages** tab since 2026-11-04.
   `Reset Widgets Size` is **not** here any more — it is a native View-menu entry,
   covered by NAV-20/NAV-21, so "Other General Options" must show a single button.)
 - Full coverage: theme + font pickers (restore after); destructive resets → confirm
@@ -254,32 +255,35 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 ### S15 — Locale switch `[LT-01..02]` — **MANDATORY in every run not focused on one area** — + theme `[LT-03..05]`
 
 **Why it is mandatory.** `tran()` returns early on `en-US` (`DEFAULT_LOCALE`) without
-touching the dictionary; in `km-KH` the same call **throws** on a missing key and, with
+touching the dictionary; in any other locale the same call **throws** on a missing key and, with
 no error boundary, blanks the whole subtree. So an English-only run **structurally
 cannot** see a missing translation, and `npm run lint` stays green while a screen is
-broken in Khmer. Observed 2026-07-26: `tran("X:")` in `PositionSizeFieldComp` blanked the
+broken in every other language. Observed 2026-07-26: `tran("X:")` in `PositionSizeFieldComp` blanked the
 entire slide-editor tools panel. Run this block in every run not focused on one area —
 see SKILL.md §6d.
 
 Recipe (≈3 min, self-restoring):
 
-1. **Read the starting locale** from Settings → Language (which button is active). Do
+1. **Read the starting locale** from Settings → **Languages** → Language (which button is
+   active). Do
    **not** read `localStorage['language-locale']` — stale key (KB §1). You restore this.
-2. **Switch to the other locale** — the press itself calls
+2. **Switch to an installed non-English language** (SKILL.md §6d says which and how to
+   install it) — the press itself calls
    `forceReloadAppWindows()` (no `Apply Settings` since 2026-11-05): every window
    reloads, so re-`list_pages` / `select_page` and re-run the readiness check. All
    previous snapshot `uid`s are dead.
 3. **Re-walk every screen the run touched**, plus the presenter baseline. Per screen:
    `take_screenshot` + `list_console_messages`.
 4. **Assert:**
-   - No `Translation for text "…" not found in locale km-KH` → **Critical** finding per
+   - No `Translation for text "…" not found in locale <locale>` → **Critical** finding per
      occurrence; name the key and the component (the React warning right after it names
      the component).
    - No blank/empty panel that had content in the other locale (visible symptom of the
      throw above).
-   - Labels translate (KB §1 map), no raw i18n keys, no clipped/overflowing Khmer text
-     (Khmer glyphs are taller — check buttons, tabs, table cells).
-   - Hardcoded English left in a Khmer screen = **Low/Info** (untranslated UI), a
+   - Labels translate (`owa_tran`, KB §1), no raw i18n keys, no clipped/overflowing text
+     (a script with taller glyphs or no spaces shows it first — check buttons, tabs, table
+     cells).
+   - Hardcoded English left in a translated screen = **Low/Info** (untranslated UI), a
      different and much less severe finding than the throw. Name the file.
 5. **Restore** the starting locale (another reload of every window).
 
@@ -292,7 +296,7 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
-### S19 — Media download `[MD-01..06]` — **MANDATORY in every run not focused on one area** (needs network)
+### S19 — Media download `[MD-01..06, MD-08]` — **MANDATORY in every run not focused on one area** (needs network)
 
 The only flow that runs the external binaries (`extra-bin/<platform>/yt/yt-dlp` +
 `extra-bin/<platform>/ffmpeg/bin` + `extra-bin/<platform>/qjs/qjs`, installed on demand -- NOT copied in by
@@ -310,9 +314,12 @@ kept on disk on purpose. In dev this copies
 missing, the panel names the command — run it rather than filing a bug.
 0b. **MD-06 the guard** — rename `<data parent>\extra-bin\<platform>\yt` aside and start MD-01's
 **Download From URL**: a **Media Tools Required** confirm must appear naming the missing
-binaries, `No` must cancel with **no second "download failed" toast**, `Yes` must open
-Settings on **Others**, and **no yt-dlp process may spawn** either way. Restore the folder
-before continuing.
+binaries; `Cancel` must download nothing, with **no second "download failed" toast** and
+**no yt-dlp process**; `Download and Install` must install the pack right there and the
+download must go on by itself. Restore the folder before continuing.
+0c. **MD-08 the update offer** — set the installed `info.json` `version` below the published
+one and start a download: **Update Available** `(<installed> → <latest>)` must appear;
+`Update` reinstalls then downloads, `Not Now` downloads at once with the installed pack.
 0. **MD-04 sweep (before downloading anything)** — list the videos and audios dirs and
    delete leftovers from earlier runs: files carrying the **canonical video's page title**
    (`*Flowers by*Official Music Video - YouTube*`, including the ` (N)` copies) and any
@@ -416,14 +423,14 @@ Documents-list rows outside deep-mode scope, and `GL-24` is the app-wide `⋮` b
     `.owpf` files, a collapsed document releases its slides, and a row click does not
     repaint every file row in the window. `[PL-63, PL-70]`
 11. **P10 locale + restore** — §S15 over this panel and its widget (KB §14.8 lists the
-    strings; a missing Khmer key blanks the menu). Then delete the fixture, remove what the
+    strings; a missing key blanks the menu in the pass language). Then delete the fixture, remove what the
     import created, unpark/unpin, stop any interval, hide the screen — and name in the
     report anything you could not remove.
 
 **Severity guidance:** a row that reaches the wrong screen, a present that raises a second
 screen question, or a run that steps over a line it should stop on are **High** — they put
 the wrong thing in front of a congregation. A stale label or an untranslated string is
-**Low**, a blank Khmer menu is **Critical** (it is the `tran()` throw).
+**Low**, a blank translated menu is **Critical** (it is the `tran()` throw).
 
 ### S16 — Edge & empty states (opportunistic)
 - `Slide Editor` with no document → alert, no navigation (NAV-03).

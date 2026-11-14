@@ -3,6 +3,7 @@ paths:
   - "tools/owa-devtools-mcp/**"
   - "electron/aiHelpers.ts"
   - "electron/webCaptureHelpers.ts"
+  - "electron/documentCaptureHelpers.ts"
   - "electron/webPageHelpers.ts"
   - "electron/client/rendererLockdown.ts"
   - "electron/index.ts"
@@ -49,6 +50,29 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   dev window. Both resolution paths read the pin — chrome-devtools'
   `browserUrl` getter AND `cdp.mjs`'s `requireLivePort`, which every `owa_*`
   tool uses; fixing only the first left the `owa_*` tools on the dev window.
+- **The stdio door also ships outside this checkout, two ways, one server**
+  (2026-11-13). `npm run build-open-worship-app-mcp` writes the npm package
+  `open-worship-app-mcp` into `../owa-mcp-dist` (a separate repo; nothing is
+  published, committed or pushed by the script), and the extra-bin pack from
+  0.0.6 carries `mcp/open-worship-app-mcp[.exe]`, a Node single executable.
+  Both are staged by ONE function, `stageMcpRuntimeTree`
+  (`extra-work/mcp-dist/mcpRuntimeTree.mjs`): the repo's own layout
+  (`REPO_ROOT` resolves unchanged), git-tracked text only, home paths
+  rewritten in prose, a secret scan with a hashed fixture baseline
+  (`secret-fixtures.json`), and the git user's email refused. The executable's
+  bootstrap only loads the launcher written beside it
+  (`MCP_LAUNCH_FILE_NAME`), which imports `bin.mjs`
+  from disk, so it runs the same code as npm. **The user's rule: npm and the
+  executable may not differ in what they do** — the npm build's verify step
+  builds a single executable from the same staged tree and fails on any
+  difference in `tools/list` (names, descriptions, schemas) or the offline
+  answers (`mcpHandshake.mjs`). The firewall is part of the server, so both
+  get it unchanged; nothing in either may switch it off but
+  `OWA_MCP_FIREWALL=off`. The npm package alone adds a JS/TS API
+  (`index.mjs` + `index.d.mts`, `stdio.mjs` holding what `bin.mjs` ran):
+  `listOwaAppInstances()` and `findDrivenInstance()` strip `mcpToken` from
+  every instance they return — the API must never hand out the HTTP door's
+  capability. See [[mcp-two-distributions]].
 - **Firewall**: `tools/owa-devtools-mcp/firewall.mjs` sits on the one seam both
   doors share (`transport.onmessage`, wrapped AFTER `watchToolCalls` so it is
   outermost and runs FIRST — a refused call must not also raise a banner saying
@@ -105,7 +129,7 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   Tools) are the MAIN process's (`electron/appMenuAgentHelpers.ts`), not the
   firewall's: a menu item has no DOM for the page half to read;
   acting calls are capped at 25 per rolling minute ACROSS sessions because the
-  thing protected is one window; **`owa_read_website` inverts the URL rule and
+  thing protected is one window; **an `owa_undo` putting back, by its own id, a change THIS session made with a tool that takes nothing away is an acting call and no removal** (2026-11-09, BN-46, `genOwnChangeMemory`: per transport, the `undoId` each such answer carries, 200 at most for half an hour); kept at the user's word when asked the same day -- the help window's own **Undo this change** goes through this door, and after ten in five minutes it had been refused with the change left in place; an undo of a removal, one naming no id and a redo (an undo's own id, never remembered) stay counted; **`owa_read_website` inverts the URL rule and
   gets a budget of its own** (10 per 5 minutes — a separate counter, because
   the thing protected there is the one network rather than the one window);
   and provider keys, bearer tokens and JWTs are
@@ -141,8 +165,22 @@ version, userDataPath, startedAt}` — one file per live instance, swept when a 
   server follows restarts without reaching the other kind. Both tool groups
   and the bridge honor it; unknown kinds and legacy fallback ports are never
   candidates. Invalid nonempty values fail explicitly. The host's own port
-  and `OWA_CDP_PORT` take priority. This selects a kind, not a data profile;
-  several matches still follow newest-first discovery, read afresh each time.
+  and `OWA_CDP_PORT` take priority. This selects a kind, not a data profile.
+  **Several apps and none chosen: the stdio server drives NONE** (2026-11-13,
+  the user: _this machine running 3 instances of open worship app so the mcp
+  should check and let user pick one to work with_). `server.mjs` turns
+  `requireAppChoice(true)` on for the stdio door only; every `owa_*` tool then
+  answers with the list through `describeDeadPin`, every chrome-devtools tool
+  through `appChoice.mjs`'s transport gate (after the banner, before the
+  firewall), and `owa_choose_app` (stdio only, withheld from the model)
+  chooses by pid. A choice drops chrome-devtools' browser
+  (`abandonPendingAttempt`) so both halves follow it; the chosen app is
+  followed across a restart on its own profile and kind, and one that quit
+  is never replaced. Scripts importing `discovery.mjs` and the pinned in-app
+  host keep their old rule. The server also says whether it is the app's
+  version (`mcpVersion.mjs`: `mcp-version.json` in the npm package and the
+  pack's executable; `owa_app_state` `versionCheck` on stdio; the
+  `initialize` instructions).
 - **Master switch**: Settings → AI Providers → _Enable AI features_ writes
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the
@@ -186,7 +224,11 @@ version, userDataPath, startedAt}` — one file per live instance, swept when a 
   anywhere in `src/chatbot/` and there must never be one. The same list holds
   `aichat.html` and `markdownPreview.html` (2026-09-17, a markdown file from
   any folder, its HTML parsed and then DOMPurify-sanitized — memory
-  `markdown-preview-window`). **Nothing a preload reaches may evaluate a
+  `markdown-preview-window`; since 2026-11-10 its **Edit** writes the file
+  back on the person's Save, through the provider bridge like the read). With no Node there to ask main for a picture,
+  `owa_screenshot` takes a FILE's own window — that preview, a PDF viewer —
+  over the debugging connection (`Page.captureScreenshot`, 2026-11-10); the
+  help and AI Chat windows are never pictured that way. **Nothing a preload reaches may evaluate a
   string at load** (2026-09-18, `MC-32`): every preload requires
   `electronHelpers`, which reaches `aiHelpers` through `webCaptureHelpers`,
   and that tighter CSP has no 'unsafe-eval' — nor does EVERY page's in a
@@ -332,3 +374,23 @@ outside client: with DevTools open, `Network.enable` timed out and
 in a renderer with Node, the reach `evaluate_script` is refused for and
 `owa_menu` refuses Toggle Developer Tools for. The `owa_*` tools already
 skipped it (`listPageTargets`, the same `checkIsDevToolsUrl`).
+- **A DOCUMENT's page is drawn in a box of its own** (2026-11-10,
+  `EC-488`, `electron/documentCaptureHelpers.ts`,
+  `main:app:capture-document-pages`). To read a song off a PowerPoint or
+  Word page, or a slide, whose words do not copy, the page the app already
+  converted to HTML (`<name>.pptx-htmls/slideN.html`, its fonts beside it)
+  or a slide built the way printing builds it (staged as files in a temp
+  folder, never a `data:` URL) is drawn in a hidden window and pictured. It
+  is NOT the website capture's window above: the page is the person's own,
+  but its HTML came out of a converter, so nothing in it runs and nothing
+  leaves -- `sandbox: true`, no Node, no preload, `javascript: false`,
+  `contextIsolation`, a memory-only partition of its own
+  (`owa-capture-document`), popups and navigation refused, and every request
+  refused but `data:`, `blob:` and a `file:` INSIDE the one folder asked for
+  (`checkIsDocumentRequestAllowed`; that folder must be a converter's
+  `.pptx-htmls` / `.docx-htmls`, `findCapturePathsProblem`). The window is
+  1024 pixels on its long edge at most, the page zoomed to fit
+  (`toCaptureLayout`, `setZoomFactor`): a 1920-pixel hidden window was
+  shrunk by Windows and pictured only the slide's top-left quarter. One
+  capture at a time, 15 s at most each, JPEG at 85; the temp pages are
+  removed.

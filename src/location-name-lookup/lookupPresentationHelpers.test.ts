@@ -21,28 +21,34 @@ import {
 } from './lookupPresentationHelpers';
 
 // Stands in for the lookup language's dictionary.
-const toKhmer = (text: string) => `km:${text}`;
+const toLookupLang = (text: string) => `xx:${text}`;
 
 describe('record enum labels (gender, location type)', () => {
-    // The datasets store these in English in every package, so a Khmer record
-    // read `Male` and `Pool` beside a translated type chip.
+    // The datasets store these in English in every package, so a record in
+    // another language read `Male` and `Pool` beside a translated type chip.
     test('translates a known value through the lookup language', () => {
-        expect(toRecordEnumLabel('male', GENDER_LABEL, toKhmer)).toBe(
-            'km:Male',
-        );
-        expect(toRecordEnumLabel(' Pool ', LOCATION_TYPE_LABEL, toKhmer)).toBe(
-            'km:Pool',
+        expect(toRecordEnumLabel('male', GENDER_LABEL, toLookupLang)).toBe(
+            'xx:Male',
         );
         expect(
-            toRecordEnumLabel('memorial place', LOCATION_TYPE_LABEL, toKhmer),
-        ).toBe('km:Memorial place');
+            toRecordEnumLabel(' Pool ', LOCATION_TYPE_LABEL, toLookupLang),
+        ).toBe('xx:Pool');
+        expect(
+            toRecordEnumLabel(
+                'memorial place',
+                LOCATION_TYPE_LABEL,
+                toLookupLang,
+            ),
+        ).toBe('xx:Memorial place');
     });
 
     // Decided on the English value: a translated "unknown" could no longer be
     // recognized and dropped, and the record would grow a chip it does not have.
     test('drops unknown and empty values before translating', () => {
         for (const value of ['unknown', 'UNKNOWN', '', '  ', null, undefined]) {
-            expect(toRecordEnumLabel(value, GENDER_LABEL, toKhmer)).toBe('');
+            expect(toRecordEnumLabel(value, GENDER_LABEL, toLookupLang)).toBe(
+                '',
+            );
         }
     });
 
@@ -50,30 +56,33 @@ describe('record enum labels (gender, location type)', () => {
     // to `translate` it could match an unrelated app label instead.
     test('shows a value the list does not know as written, untranslated', () => {
         expect(
-            toRecordEnumLabel('fortress', LOCATION_TYPE_LABEL, toKhmer),
+            toRecordEnumLabel('fortress', LOCATION_TYPE_LABEL, toLookupLang),
         ).toBe('fortress');
         expect(
-            toRecordEnumLabel('constructor', LOCATION_TYPE_LABEL, toKhmer),
+            toRecordEnumLabel('constructor', LOCATION_TYPE_LABEL, toLookupLang),
         ).toBe('constructor');
     });
 
-    // Abraham under the Khmer lookup read `175 years` beside its words for human and male.
+    // Abraham under a non-English lookup read `175 years` beside its words
+    // for human and male.
     test('translates every age shape the datasets use, number kept', () => {
-        expect(toRecordAgeLabel('175 years', toKhmer)).toBe('km:175 years');
-        expect(toRecordAgeLabel(' 20 at accession ', toKhmer)).toBe(
-            'km:20 at accession',
+        expect(toRecordAgeLabel('175 years', toLookupLang)).toBe(
+            'xx:175 years',
         );
-        expect(toRecordAgeLabel('About 30 at start of ministry', toKhmer)).toBe(
-            'km:about 30 at start of ministry',
+        expect(toRecordAgeLabel(' 20 at accession ', toLookupLang)).toBe(
+            'xx:20 at accession',
         );
+        expect(
+            toRecordAgeLabel('About 30 at start of ministry', toLookupLang),
+        ).toBe('xx:about 30 at start of ministry');
     });
 
     test('drops an unknown age, shows an unlisted one as written', () => {
         for (const value of ['unknown', 'Unknown', '', ' ', null, undefined]) {
-            expect(toRecordAgeLabel(value, toKhmer)).toBe('');
+            expect(toRecordAgeLabel(value, toLookupLang)).toBe('');
         }
-        expect(toRecordAgeLabel('120', toKhmer)).toBe('120');
-        expect(toRecordAgeLabel('old and full of days', toKhmer)).toBe(
+        expect(toRecordAgeLabel('120', toLookupLang)).toBe('120');
+        expect(toRecordAgeLabel('old and full of days', toLookupLang)).toBe(
             'old and full of days',
         );
     });
@@ -117,7 +126,7 @@ describe('name-type presentation', () => {
         expect(getNameTypeIconClass('place')).toBe(LOCATION_ICON_CLASS);
     });
 
-    // `tran` runs on these at the call site, and a key with no Khmer entry
+    // `tran` runs on these at the call site, and a key a language package lacks
     // THROWS and blanks the page. Bare English literals are what makes the
     // dictionary check possible at all.
     test('labels are plain English literals, not pre-translated', () => {

@@ -4,6 +4,7 @@ import {
     learnPageTitles,
     scrubAnswerRecipeIds,
     scrubAnswerToolFields,
+    scrubAnswerUndoIds,
 } from './recipeIdHelpers';
 
 const TITLES = {
@@ -174,5 +175,68 @@ describe('scrubAnswerToolFields', () => {
         }
         expect(scrubAnswerToolFields('')).toBe('');
         expect(scrubAnswerToolFields(undefined as any)).toBe('');
+    });
+});
+
+describe('scrubAnswerUndoIds (EC-539)', () => {
+    it("takes a change's undo id out of the words, the sentence kept", () => {
+        expect(
+            scrubAnswerUndoIds(
+                'A 3 minute countdown and a "Welcome!" marquee are now ready.\n\n' +
+                    'Undo this change puts the countdown back: 20261113-034803869-schh\n' +
+                    'Undo this change puts the marquee back: 20261113-034804356-p69w',
+            ),
+        ).toBe(
+            'A 3 minute countdown and a "Welcome!" marquee are now ready.\n\n' +
+                'Undo this change puts the countdown back\n' +
+                'Undo this change puts the marquee back',
+        );
+        expect(
+            scrubAnswerUndoIds(
+                'It is started (undo id `20261109-151623456-k3x9`). Show it?',
+            ),
+        ).toBe('It is started. Show it?');
+        expect(
+            scrubAnswerUndoIds('Undo it with 20261109-151623456-k3x9.'),
+        ).toBe('Undo it with.');
+    });
+
+    it('takes the owa_undo call it came in with it, quoted or not', () => {
+        // Verbatim, gemma4:cloud through the help window, 2026-11-13: the
+        // ids went and `owa_undo with id ""` reached the volunteer.
+        expect(
+            scrubAnswerUndoIds(
+                'Undo this countdown change puts it back: owa_undo with id ' +
+                    '"20261113-062205338-k2x1".\n' +
+                    'Undo this marquee change puts it back: owa_undo with id ' +
+                    '“20261113-062206004-p0q9”.',
+            ),
+        ).toBe(
+            'Undo this countdown change puts it back.\n' +
+                'Undo this marquee change puts it back.',
+        );
+        expect(
+            scrubAnswerUndoIds(
+                'It is up (`owa_undo` with the id `20261113-062205338-k2x1`). ' +
+                    'Show it?',
+            ),
+        ).toBe('It is up. Show it?');
+        expect(
+            scrubAnswerUndoIds(
+                'Undo this change puts it back: owa_undo with id "".',
+            ),
+        ).toBe('Undo this change puts it back.');
+    });
+
+    it('leaves every other number alone', () => {
+        for (const text of [
+            'A countdown to 11:45 PM, ending at 10:36:39 PM.',
+            'Call 555-1234 or read John 3:16-18.',
+            'Saved on 2026-11-13 as 20261113.',
+        ]) {
+            expect(scrubAnswerUndoIds(text)).toBe(text);
+        }
+        expect(scrubAnswerUndoIds('')).toBe('');
+        expect(scrubAnswerUndoIds(undefined as any)).toBe('');
     });
 });

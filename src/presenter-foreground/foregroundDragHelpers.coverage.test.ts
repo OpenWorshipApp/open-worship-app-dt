@@ -117,7 +117,7 @@ describe('a foreground row in the run sheet', () => {
         expect(toForegroundDragLabel({ target: 'stopwatch', data: {} })).toBe(
             'Stopwatch',
         );
-        // Not a dictionary key: translating it would throw in a Khmer window.
+        // Not a dictionary key: translating it would throw in a non-English window.
         const translateKnown = vi.fn(translate);
         expect(
             toForegroundDragLabel(

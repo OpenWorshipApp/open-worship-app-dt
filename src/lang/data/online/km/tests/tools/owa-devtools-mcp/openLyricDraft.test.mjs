@@ -29,6 +29,7 @@ import {
     draftOpenLyricText,
     parseSectionLabel,
     stripWebsiteWrapper,
+    toHeadingTitle,
     toSafeLyricLine,
     toStructureText,
 } from '../../../../../../../../tools/owa-devtools-mcp/openLyricDraft.mjs';
@@ -132,6 +133,47 @@ describe('a song read off a page', () => {
             header: 'Verse',
             index: 4,
         });
+    });
+});
+
+describe("a hymnal deck's title slide", () => {
+    // What the deck reader gives for a hymnal deck (EC-590): a title slide
+    // of three lines -- the hymn's number as a lead-in, its name, its
+    // English name -- over numbered stanzas, each a slide. Made-up words on
+    // the user's deck's pattern (`documentTextHelpers.test.ts`).
+    const TITLE_SLIDE = ['លេខ ១ ថ្មី​ :', 'ចង្កៀង​ពណ៌​ខៀវ?', 'The Blue Lantern?'];
+    const STANZAS = [
+        '១- ចង្កៀង​មួយ​នៅ​លើ​ទឹក',
+        'គ្មាន​អ្នក​ណា​ចែវ​ទូក​ទៅ​ផ្ទះ',
+        'វា​ភ្លឺ​ពេញ​មួយ​យប់',
+        'រហូត​ដល់​ពេល​ព្រឹក',
+        '',
+        '២- ពេល​ព្រឹក​ឃើញ​ចង្កៀង',
+        'នៅ​តែ​ភ្លឺ​លើ​រលក',
+        'ទូក​ទាំង​អស់​ដែល​ឆ្លង​កាត់',
+        'ក៏​អរ​សប្បាយ​ដែរ',
+    ];
+
+    test('the number, the name and the English name are the title', () => {
+        expect(toHeadingTitle(TITLE_SLIDE)).toBe(
+            'លេខ ១ ថ្មី​ : ចង្កៀង​ពណ៌​ខៀវ? The Blue Lantern?',
+        );
+    });
+
+    test('a second line in the same script is not the title translated', () => {
+        expect(
+            toHeadingTitle(['លេខ ១ ថ្មី :', 'ចង្កៀង​ពណ៌​ខៀវ', 'ពី​សៀវភៅ​ចម្រៀង']),
+        ).toBe('លេខ ១ ថ្មី : ចង្កៀង​ពណ៌​ខៀវ');
+    });
+
+    test('the deck is drafted under it, its stanzas whole', () => {
+        const draft = draftOpenLyric([...TITLE_SLIDE, '', ...STANZAS].join('\n'));
+        expectValid(draft);
+        expect(draft.markdown).toContain(
+            '- Title: លេខ ១ ថ្មី​ : ចង្កៀង​ពណ៌​ខៀវ? The Blue Lantern?',
+        );
+        expect(toPartNames(draft.markdown)).toEqual(['Verse 1', 'Verse 2']);
+        expect(draft.markdown).toContain('ចង្កៀង​មួយ​នៅ​លើ​ទឹក');
     });
 });
 

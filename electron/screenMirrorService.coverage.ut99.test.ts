@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { EventEmitter, once } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import dgram from 'node:dgram';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile, realpath } from 'node:fs/promises';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
@@ -374,7 +374,9 @@ beforeEach(async () => {
     fixture.mediaAccess = true;
     fixture.viteUrl = '';
     fixture.genCertificate = null;
-    directory = await mkdtemp(path.join(os.tmpdir(), 'owa-'));
+    // The real path: on macOS the temp folder is behind a link (`/var` ->
+    // `/private/var`), and a file published through a link is refused.
+    directory = await realpath(await mkdtemp(path.join(os.tmpdir(), 'owa-')));
     fixture.appPath = path.join(directory, 'app');
     fixture.userDataPath = path.join(directory, 'profile');
     vi.mocked(findRouterGateway).mockResolvedValue(null);
@@ -655,7 +657,13 @@ describe('the port', () => {
         expect(udpSockets).toEqual([]);
         const held = net.connect({ host: '127.0.0.1', port });
         await once(held, 'connect');
-        const heldClosed = once(held, 'close');
+        // Ended by the service: a FIN on Windows and Linux, a reset
+        // (`ECONNRESET`) on macOS -- closed either way, and `once` would
+        // reject on the reset's `error`.
+        held.on('error', () => {});
+        const heldClosed = new Promise((resolve) => {
+            held.once('close', resolve);
+        });
 
         await service.setHostEnabled(true);
 

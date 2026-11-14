@@ -2,18 +2,21 @@
 id: W-21
 title: "Add a background video or song from a link"
 section: "Configuration"
-verify: [MD-01, MD-02, MD-03, MD-07, CM-24, PM-102, ST-90]
+verify: [MD-01, MD-02, MD-03, MD-06, MD-07, MD-08, CM-24, PM-102, ST-90]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-21 — Add a background video or song from a link
 
 **Goal:** get a video (or its audio as an MP3) from an online link straight into your
 Videos / Audios folder, without leaving the app. The download tools are not built into the
-app: the first time, a **[en:tran:Media Tools Required]** box offers to open
-**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, where
-**[en:tran:Download and Install]** installs them once.
+app: the first time, a **[en:tran:Media Tools Required]** box asks before anything is
+downloaded — **[en:tran:Download and Install]** installs them once and the download goes on
+by itself. When a newer version of them has come out, an **[en:tran:Update Available]** box
+asks first: **[en:tran:Update]** updates them and then downloads, **[en:tran:Not Now]**
+downloads with the ones you have. They are also kept up to date in **[en:tran:Setting]** →
+**[en:tran:Others]** → **[en:tran:Extra Binaries]**.
 
 1. Open the **[en:tran:Background]** panel (W-08 step 1) and choose the **[en:tran:Videos]** tab — or the **[en:tran:Audios]** split if you want the sound only.
 2. **Right-click an empty part of the list** (or use the ⋮ [en:tran:More Options] button at
@@ -61,7 +64,7 @@ app: the first time, a **[en:tran:Media Tools Required]** box offers to open
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`MD-01` · `MD-02` · `MD-03` · `MD-07` · `CM-24` · `PM-102` · `ST-90`
+`MD-01` · `MD-02` · `MD-03` · `MD-06` · `MD-07` · `MD-08` · `CM-24` · `PM-102` · `ST-90`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

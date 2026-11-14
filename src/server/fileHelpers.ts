@@ -22,6 +22,11 @@ import {
 import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    FILE_ERROR_TOAST_TIMEOUT,
+    genCodedError,
+    toFileErrorText,
+} from './fileErrorTextHelpers';
 import { DATA_DIR_PATH_ALIAS } from './dataDirAliasHelpers';
 import { OWA_HOME_FOLDER_NAME } from './appHomeStorage';
 import {
@@ -711,7 +716,12 @@ export const createNewFileDetail = async (
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
-        showSimpleToast(tran('Creating File'), error.message);
+        handleError(error);
+        showSimpleToast(
+            tran('Creating File'),
+            toFileErrorText(error),
+            FILE_ERROR_TOAST_TIMEOUT,
+        );
     }
     return null;
 };
@@ -1245,7 +1255,7 @@ export async function fsCreateFile(
         if (isOverride) {
             await fsDeleteFile(filePath);
         } else {
-            throw new Error('File exist');
+            throw genCodedError('File exist', 'EEXIST');
         }
     }
     await _fsWriteFile(filePath, txt);
@@ -1260,9 +1270,9 @@ export async function fsRenameFile(
     const oldFilePath = pathJoin(basePath, oldFileName);
     const newFilePath = pathJoin(basePath, newFileName);
     if (!(await fsCheckFileExist(oldFilePath))) {
-        throw new Error('File not exist');
+        throw genCodedError('File not exist', 'ENOENT');
     } else if (await fsCheckFileExist(newFilePath)) {
-        throw new Error('File exist');
+        throw genCodedError('File exist', 'EEXIST');
     }
     return fsMove(oldFilePath, newFilePath);
 }
@@ -1362,7 +1372,10 @@ export async function fsCopyFilePathToPath(
         handleError(error);
         showSimpleToast(
             progressKey,
-            tran('Error occurred during copying file') + ': ' + error.message,
+            tran('Error occurred during copying file') +
+                ': ' +
+                toFileErrorText(error),
+            FILE_ERROR_TOAST_TIMEOUT,
         );
         return null;
     } finally {

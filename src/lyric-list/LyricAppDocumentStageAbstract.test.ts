@@ -312,7 +312,7 @@ describe('LyricAppDocumentStage1.genSlideHtml', () => {
 describe('stage slide and rendering options', () => {
     test('saved font and stage settings determine off-screen render options', () => {
         vi.mocked(getOpenLyricFontSetting).mockReturnValue({
-            fontFamily: 'Noto Sans Khmer',
+            fontFamily: 'Made Up Sans',
             fontSize: 42,
         } as any);
         const getOptions = Object.getOwnPropertyDescriptor(
@@ -335,9 +335,9 @@ describe('stage slide and rendering options', () => {
             height: 450,
             backgroundAlpha: 0.35,
             fontSize: 45,
-            fontFamily: 'Noto Sans Khmer',
+            fontFamily: 'Made Up Sans',
         });
-        expect(saved.css).toContain('Noto Sans Khmer, sans-serif');
+        expect(saved.css).toContain('Made Up Sans, sans-serif');
         // The box's frame keeps its laid-out size and its rounded corners:
         // squeezed by the item's padding it cut the box off on the right.
         expect(saved.css).toMatch(

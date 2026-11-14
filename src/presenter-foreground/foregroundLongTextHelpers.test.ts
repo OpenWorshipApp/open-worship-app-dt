@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import type { LocaleType } from '../lang/langHelpers';
 import type {
     LongTextOutlineType,
     LongTextResolvedLanguageType,
@@ -80,10 +81,10 @@ describe('a Long Text Show session', () => {
         const session = {
             languages: [
                 {
-                    ...genLongTextLanguage('km'),
+                    ...genLongTextLanguage('xx'),
                     title: '✝✝✝✝',
                     sections: ['✝✝✝♪', '✝✝✝☀'],
-                    style: { fontFamily: 'Battambang', fontSizeScale: 1.2 },
+                    style: { fontFamily: 'Made Up Sans', fontSizeScale: 1.2 },
                 },
                 {
                     ...genLongTextLanguage('en'),
@@ -117,13 +118,13 @@ describe('a Long Text Show session', () => {
             session,
         );
         expect(
-            genLyricLongTextSession('/docs/still.owl', 'km').languages[0]
+            genLyricLongTextSession('/docs/still.owl', 'xx').languages[0]
                 .langCode,
-        ).toBe('km');
+        ).toBe('xx');
     });
 
     test('starts a new language as text cards, and keeps a stored one as it was', () => {
-        expect(genLongTextLanguage('km').sectionView).toBe('cards');
+        expect(genLongTextLanguage('xx').sectionView).toBe('cards');
         // Stored before the default changed, or switched back to buttons:
         // either way no view is written, and the buttons are kept.
         const stored = parseLongTextSession(
@@ -144,14 +145,14 @@ describe('a Long Text Show session', () => {
         const session = parseLongTextSession(
             JSON.stringify({
                 languages: [
-                    { langCode: 'km', title: 'first', sections: ['a', 5, 'b'] },
-                    { langCode: 'km', title: 'second' },
+                    { langCode: 'xx', title: 'first', sections: ['a', 5, 'b'] },
+                    { langCode: 'xx', title: 'second' },
                     { langCode: 'EN' },
                     { langCode: 'x' },
                     'en',
                     null,
                     {
-                        langCode: 'fr',
+                        langCode: 'yy',
                         // Not a view there is: the parts stay buttons.
                         sectionView: 'grid',
                         source: 'nonsense',
@@ -166,14 +167,14 @@ describe('a Long Text Show session', () => {
         );
         expect(session.languages).toEqual([
             {
-                langCode: 'km',
+                langCode: 'xx',
                 source: 'raw',
                 title: 'first',
                 sections: ['a', 'b'],
                 lyricFilePath: '',
             },
             {
-                langCode: 'fr',
+                langCode: 'yy',
                 source: 'raw',
                 title: '',
                 sections: [],
@@ -236,13 +237,13 @@ describe('a Long Text Show session', () => {
             genLongTextStyleByCode({
                 languages: [
                     {
-                        ...genLongTextLanguage('km'),
+                        ...genLongTextLanguage('xx'),
                         style: { fontSizeScale: 0.8 },
                     },
                     genLongTextLanguage('en'),
                 ],
             }),
-        ).toEqual({ KM: { fontSizeScale: 0.8 }, EN: undefined });
+        ).toEqual({ XX: { fontSizeScale: 0.8 }, EN: undefined });
     });
 });
 
@@ -288,7 +289,7 @@ describe('checking the languages of a long text against each other', () => {
         });
         expect(
             verifyLongText([
-                genRawOutline('km', [false]),
+                genRawOutline('xx', [false]),
                 {
                     ...genLyricOutline('en', []),
                     readProblem: { kind: 'missing-part', partName: 'Bridge' },
@@ -313,7 +314,7 @@ describe('checking the languages of a long text against each other', () => {
         ];
         expect(
             verifyLongText([
-                genLyricOutline('km', parts),
+                genLyricOutline('xx', parts),
                 genLyricOutline('en', parts),
             ]),
         ).toEqual(genPlainResult([0, 1, 2, 3]));
@@ -322,13 +323,13 @@ describe('checking the languages of a long text against each other', () => {
     test('a different part at the same step is named, and nothing goes up', () => {
         expect(
             verifyLongText([
-                genLyricOutline('km', [['Verse 1'], ['Chorus'], ['Verse 2']]),
+                genLyricOutline('xx', [['Verse 1'], ['Chorus'], ['Verse 2']]),
                 genLyricOutline('en', [['Verse 1'], ['Bridge'], ['Verse 2']]),
             ]),
         ).toEqual({
             problem: {
                 kind: 'structure',
-                langCode: 'km',
+                langCode: 'xx',
                 otherLangCode: 'en',
                 index: 1,
                 partName: 'Chorus',
@@ -340,13 +341,13 @@ describe('checking the languages of a long text against each other', () => {
     test('a song that ends a step early is a different structure too', () => {
         expect(
             verifyLongText([
-                genLyricOutline('km', [['Verse 1'], ['Chorus']]),
+                genLyricOutline('xx', [['Verse 1'], ['Chorus']]),
                 genLyricOutline('en', [['Verse 1']]),
             ]),
         ).toEqual({
             problem: {
                 kind: 'structure',
-                langCode: 'km',
+                langCode: 'xx',
                 otherLangCode: 'en',
                 index: 1,
                 partName: 'Chorus',
@@ -357,7 +358,7 @@ describe('checking the languages of a long text against each other', () => {
     test('a part nobody has words for is no row; one only some have is kept', () => {
         expect(
             verifyLongText([
-                genLyricOutline('km', [
+                genLyricOutline('xx', [
                     ['Intro', true],
                     ['Verse 1'],
                     ['Outro', true],
@@ -365,7 +366,7 @@ describe('checking the languages of a long text against each other', () => {
                 genLyricOutline('en', [
                     ['Intro', true],
                     ['Verse 1'],
-                    // The English has a sung outro, the Khmer has none.
+                    // The English has a sung outro, the other language has none.
                     ['Outro'],
                 ]),
             ]),
@@ -384,13 +385,13 @@ describe('checking the languages of a long text against each other', () => {
     test('typed languages need the same number of sections, none of them empty', () => {
         expect(
             verifyLongText([
-                genRawOutline('km', [false, false]),
+                genRawOutline('xx', [false, false]),
                 genRawOutline('en', [false, false]),
             ]),
         ).toEqual(genPlainResult([0, 1]));
         expect(
             verifyLongText([
-                genRawOutline('km', [false, false]),
+                genRawOutline('xx', [false, false]),
                 genRawOutline('en', [false]),
             ]),
         ).toEqual({
@@ -403,14 +404,14 @@ describe('checking the languages of a long text against each other', () => {
         });
         expect(
             verifyLongText([
-                genRawOutline('km', [false, true]),
+                genRawOutline('xx', [false, true]),
                 genRawOutline('en', [false, false]),
             ]),
-        ).toEqual({ problem: { kind: 'empty', langCode: 'km', index: 1 } });
+        ).toEqual({ problem: { kind: 'empty', langCode: 'xx', index: 1 } });
     });
 
     test('a typed language beside a lyric file has one section per row of the song', () => {
-        const lyric = genLyricOutline('km', [
+        const lyric = genLyricOutline('xx', [
             ['Intro', true],
             ['Verse 1'],
             ['Chorus'],
@@ -440,7 +441,7 @@ describe('checking a long text in Atom mode', () => {
         ];
         expect(
             verifyLongText(
-                [genLyricOutline('km', parts), genLyricOutline('en', parts)],
+                [genLyricOutline('xx', parts), genLyricOutline('en', parts)],
                 true,
             ),
         ).toEqual({
@@ -465,7 +466,7 @@ describe('checking a long text in Atom mode', () => {
                         ['Verse 1', false, 4],
                         ['Chorus', false, 2],
                     ]),
-                    genLyricOutline('km', [
+                    genLyricOutline('xx', [
                         ['Verse 1', false, 4],
                         ['Chorus', false, 3],
                     ]),
@@ -479,7 +480,7 @@ describe('checking a long text in Atom mode', () => {
                 partName: 'Chorus',
                 langCode: 'en',
                 count: 2,
-                otherLangCode: 'km',
+                otherLangCode: 'xx',
                 otherCount: 3,
             },
         });
@@ -488,7 +489,7 @@ describe('checking a long text in Atom mode', () => {
             verifyLongText(
                 [
                     genRawOutline('en', [false, false], [1, 2]),
-                    genRawOutline('km', [false, false], [1, 1]),
+                    genRawOutline('xx', [false, false], [1, 1]),
                 ],
                 true,
             ),
@@ -498,7 +499,7 @@ describe('checking a long text in Atom mode', () => {
                 index: 1,
                 langCode: 'en',
                 count: 2,
-                otherLangCode: 'km',
+                otherLangCode: 'xx',
                 otherCount: 1,
             },
         });
@@ -506,7 +507,7 @@ describe('checking a long text in Atom mode', () => {
         expect(
             verifyLongText([
                 genRawOutline('en', [false, false], [1, 2]),
-                genRawOutline('km', [false, false], [1, 1]),
+                genRawOutline('xx', [false, false], [1, 1]),
             ]),
         ).toEqual(genPlainResult([0, 1]));
     });
@@ -516,8 +517,8 @@ describe('checking a long text in Atom mode', () => {
             verifyLongText(
                 [
                     genLyricOutline('en', [['Outro', false, 3]]),
-                    genLyricOutline('km', [['Outro', true]]),
-                    genRawOutline('fr', [false], [3]),
+                    genLyricOutline('xx', [['Outro', true]]),
+                    genRawOutline('yy', [false], [3]),
                 ],
                 true,
             ),
@@ -537,7 +538,7 @@ describe('checking a long text in Atom mode', () => {
             verifyLongText(
                 [
                     genRawOutline('en', [false, true], [1, 2]),
-                    genRawOutline('km', [false, false], [3, 1]),
+                    genRawOutline('xx', [false, false], [3, 1]),
                 ],
                 true,
             ),
@@ -576,7 +577,7 @@ describe('the mark when a text goes up again in rows of another kind', () => {
 
 describe('building what goes to a screen', () => {
     const lyric: LongTextResolvedLanguageType = {
-        langCode: 'km',
+        langCode: 'xx',
         source: 'lyric',
         title: '✝✝✝✝',
         sections: [
@@ -588,7 +589,7 @@ describe('building what goes to a screen', () => {
 
     test('an outline keeps the parts and whether each has words, not the words', () => {
         expect(toLongTextOutline(lyric)).toEqual({
-            langCode: 'km',
+            langCode: 'xx',
             source: 'lyric',
             title: '✝✝✝✝',
             steps: [
@@ -695,8 +696,8 @@ describe('building what goes to a screen', () => {
     test('a row has one key for all its languages, and a style only where one is set', () => {
         const data = genLongTextItemData('long-text-s1', [
             {
-                langCode: 'km',
-                locale: 'km-KH',
+                langCode: 'xx',
+                locale: 'xx-XX' as LocaleType,
                 title: '✝✝✝✝',
                 texts: ['✝✝✝♥ １', '✝✝✝★'],
                 nums: ['１', '２'],
@@ -716,21 +717,21 @@ describe('building what goes to a screen', () => {
             },
         ]);
         expect(data.type).toBe('long-text');
-        expect(data.locale).toBe('km-KH');
+        expect(data.locale).toBe('xx-XX');
         expect(data.scroll).toBe(0);
         expect(data.selectedKJVVerseKey).toBeNull();
         expect(data.longTextData.sourceId).toBe('long-text-s1');
-        const [km, en] = data.longTextData.renderedList;
-        expect(km).toEqual({
-            locale: 'km-KH',
-            code: 'KM',
+        const [xx, en] = data.longTextData.renderedList;
+        expect(xx).toEqual({
+            locale: 'xx-XX',
+            code: 'XX',
             title: '✝✝✝✝',
             sections: [
                 { num: '１', text: '✝✝✝♥ １', key: 'lt-1' },
                 { num: '２', text: '✝✝✝★', key: 'lt-2' },
             ],
         });
-        expect('style' in km).toBe(false);
+        expect('style' in xx).toBe(false);
         expect(en.sections.map(({ key }) => key)).toEqual(['lt-1', 'lt-2']);
         // Only the family and the size a column may have leave the panel.
         expect(en.style).toEqual({ fontSizeScale: 0.8 });

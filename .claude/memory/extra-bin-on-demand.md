@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 7cc13309-067b-48ac-94f6-322589474419
-  modified: 2026-11-04T20:27:37.312Z
+  modified: 2026-11-13T21:00:00.000Z
 ---
 
 As of refactor27 (2026-08-10) the three media binaries are **no longer bundled**.
@@ -25,6 +25,23 @@ app whose whole point is running on weak church hardware.
   `EXTRA_BIN_MEDIA_NAMES` so an older pack still downloads video. Each platform dir in
   `experiment-building` must hold a `cloudflared-*` file or `build-extra-bin.mjs`
   throws on that host -- it is built for all six from one host (pure Go).
+- **The app's MCP server is in the pack since 0.0.6 (2026-11-13)**:
+  `mcp/open-worship-app-mcp[.exe]`, a Node single executable BUILT by
+  `build-extra-bin.mjs` at pack time (never committed like the media binaries) from the
+  same runtime tree as the npm package `open-worship-app-mcp`
+  (`extra-work/mcp-dist/`, see [[mcp-two-distributions]]). Settings → Extra Binaries
+  shows an **AI agents (MCP)** row only when that file exists
+  (`findInstalledMcpBinPath`) -- since the same day a picker of ~40 AI clients
+  (`src/helper/extra-bin/mcpClientHelpers.ts`, a leaf: a terminal command, a
+  settings file's JSON / TOML / YAML with the file it goes in, a plain
+  `mcpServers` block, the program's path) and one **Copy**, the choice kept in
+  `extra-bin-mcp-client` (the user: _let user choose tool specific like
+  chatgpt clause or just binary file path_, _provide maximum options_); it is deliberately NOT in `EXTRA_BIN_ALL_NAMES`, so a
+  0.0.5 install still reads Installed and is offered **Update to**. The pack's Node is
+  the Node that ran the build (official nodejs.org build only; its arch picks
+  `mac`/`mac-int`). `OWA_EXTRA_BIN_NO_MCP=1`, an unusable Node or a failed check
+  builds without it (`hasMcp: false` in `release/bin-info.json`), and `release.sh`
+  refuses to publish that. Recipe W-62, matrix ST-93.
 - **One folder per OS since 2026-09-19 (`EN-29`):**
   `<data parent>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs,info.json,bin-*.tar.gz}`,
   `<platform>` named exactly as `extra-work/buildPlatformHelpers.mjs` names packs (`win`,
@@ -39,10 +56,18 @@ app whose whole point is running on weak church hardware.
   hands the yt-dlp path to `appProvider.ytUtils.getYTHelper(path)` —
   `electron/client/ytUtils.ts` resolves nothing any more and caches keyed on the path.
   Anything reaching for `bin-helper/yt|ffmpeg|qjs` is stale by definition.
-- Every yt-dlp caller goes through `requireExtraBinPaths()` first (lazy `import()`, so
-  `appHelpers` stays off the storage/popup graph). It returns `null` after offering the
-  Settings jump; callers reject with `EXTRA_BIN_MISSING_ERROR_MESSAGE`
-  (`extraBinErrors.ts`, a leaf module) and the Background comps stay quiet for it.
+- Every yt-dlp caller goes through `requireExtraBinPaths()` first
+  (`extraBinGateHelpers.ts`, lazy `import()`, so `appHelpers` stays off the
+  storage/popup/install graph). Since 2026-11-10 (the user: _check the extra-bin
+  install/update confirm install/update first before proceeding_) it INSTALLS a missing
+  pack in place once confirmed (**Download and Install**) and offers a newer published
+  pack as an update (**Update** / **Not Now**; offline or slower than 6 s asks nothing),
+  then the download goes on; it re-checks the three media tools after any install,
+  because `installExtraBin`'s own check also wants cloudflared. It returns `null` only
+  when declined or the install failed (the install toasts why); callers reject with
+  `EXTRA_BIN_MISSING_ERROR_MESSAGE` (`extraBinErrors.ts`, a leaf module) and the
+  Background comps stay quiet for it. Before, it only offered to open Settings and the
+  download was lost.
 - **The downloaded `bin-*.tar.gz` is deliberately kept** inside `extra-bin` so Re-extract
   works offline. `extractDownloadedBible` is the tempting model and it deletes in its
   `finally` — do not copy that. Since 2026-11-04 it is also what **Export** hands a

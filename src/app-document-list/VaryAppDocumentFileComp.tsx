@@ -139,11 +139,17 @@ function genContextMenuItems(
     }
     menuItems.unshift(
         genOpenSlidesPreviewContextMenu(varyAppDocument.filePath, isSelected),
-        // An Open Worship slide document only: the help window with it
-        // attached, ready to change its slides -- words, a translation,
-        // sizes and colors, slides drawn after a picture. A PDF, a PPTX and
-        // a DOCX are their own files, with no slides here to change.
-        ...(AppDocument.checkIsThisType(varyAppDocument)
+        // An Open Worship slide document: the help window with it attached,
+        // ready to change its slides -- words, a translation, sizes and
+        // colors, slides drawn after a picture -- or to be made into a song.
+        // A PowerPoint, Word file or PDF: attached as its words or pages,
+        // ready to be asked about or made into a song (EC-590, the user:
+        // _chatbot have to support turning powerpoint to lyric_, then _also
+        // add other support like docx pdf ..._).
+        ...(AppDocument.checkIsThisType(varyAppDocument) ||
+        PptxAppDocument.checkIsThisType(varyAppDocument) ||
+        DocxAppDocument.checkIsThisType(varyAppDocument) ||
+        PdfAppDocument.checkIsThisType(varyAppDocument)
             ? genDocumentOpenInChatbotContextMenu(varyAppDocument.filePath)
             : []),
     );

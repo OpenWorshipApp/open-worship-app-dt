@@ -34,77 +34,96 @@
  *   window opened instead of an apology. For a page of the main window it is
  *   only what gets ringed if navigating there fails: `owa_goto_page` is the
  *   way across, and it waits for the arrival that a click cannot.
+ * @property {string} [alsoSurface] Another window whose manual pages answer
+ *   from this one too (`applyFocus` in `help.mjs`), for a page whose recipe
+ *   the manual files under that window.
  */
 
 /** @type {BotFocusDescriptorType[]} */
 export const BOT_FOCUS_LIST = [
-    {
-        key: 'presenter',
-        label: 'Presenter',
-        window: 'presenter.html',
-        isMainWindow: true,
-        howToOpen:
-            'from the Bible Reader it is the 🖥️ button at the top right; ' +
-            'from the Document Editor it is the Presenter tab at the top',
-        openFind: 'Go Back to Presenter',
-    },
-    {
-        key: 'reader',
-        label: 'Bible Reader',
-        window: 'reader.html',
-        isMainWindow: true,
-        howToOpen: 'the 📖 Bible Reader tab at the top of the window',
-        openFind: 'Bible Reader',
-    },
-    {
-        key: 'appDocumentEditor',
-        label: 'Document Editor',
-        window: 'appDocumentEditor.html',
-        isMainWindow: true,
-        howToOpen: 'the ✏️ Editor tab at the top of the window',
-        openFind: 'Slide Editor',
-    },
-    {
-        key: 'bibleNote',
-        label: 'Bible Note',
-        window: 'bibleNote.html',
-        isMainWindow: false,
-        howToOpen: 'double-click a note in the Bible Notes panel',
-        openFind: null,
-    },
-    {
-        key: 'setting',
-        label: 'Settings',
-        window: 'setting.html',
-        isMainWindow: false,
-        howToOpen: 'the ⚙️ button at the top right of the window',
-        openFind: 'Setting',
-    },
-    {
-        key: 'webEditor',
-        label: 'Web Editor',
-        window: 'webEditor.html',
-        isMainWindow: false,
-        howToOpen:
-            'in the Background panel, open Web and double-click a web page',
-        openFind: null,
-    },
-    {
-        key: 'lyricEditor',
-        label: 'Lyric Editor',
-        window: 'lyricEditor.html',
-        isMainWindow: false,
-        howToOpen: 'open a song from the Documents panel and press Edit',
-        openFind: null,
-    },
-    {
-        key: 'lwShare',
-        label: 'Local Web Share',
-        window: 'lwShare.html',
-        isMainWindow: false,
-        howToOpen: 'the Tools menu → Local Web Share',
-        openFind: null,
-    },
+  {
+    key: 'presenter',
+    label: 'Presenter',
+    window: 'presenter.html',
+    isMainWindow: true,
+    howToOpen:
+      'from the Bible Reader it is the 🖥️ button at the top right; ' +
+      'from the Document Editor it is the Presenter tab at the top',
+    openFind: 'Go Back to Presenter',
+  },
+  {
+    key: 'reader',
+    label: 'Bible Reader',
+    window: 'reader.html',
+    isMainWindow: true,
+    howToOpen: 'the 📖 Bible Reader tab at the top of the window',
+    openFind: 'Bible Reader',
+  },
+  {
+    key: 'appDocumentEditor',
+    label: 'Document Editor',
+    window: 'appDocumentEditor.html',
+    isMainWindow: true,
+    howToOpen: 'the ✏️ Editor tab at the top of the window',
+    openFind: 'Slide Editor',
+  },
+  // The guest's connection page (W-50 step 2): a page of the main window,
+  // reached by its tab in the Presenter's header, with the header's own
+  // assistant, AI Chat and Help buttons in its top bar since 2026-11-14 (the
+  // user: _as a user I want chatbot help control screen mirror page as
+  // well_). Without it a question asked there was answered as the
+  // Presenter's, and every control the page draws was looked for in a
+  // Presenter that was not on screen. W-50 is filed under the Presenter
+  // (the host's half is done there), so its pages are this one's too.
+  {
+    key: 'screen-mirror',
+    label: 'Screen Mirror',
+    window: 'screen-mirror.html',
+    isMainWindow: true,
+    howToOpen: 'the Screen Mirror tab at the top of the window',
+    openFind: 'Screen Mirror',
+    alsoSurface: 'presenter',
+  },
+  {
+    key: 'bibleNote',
+    label: 'Bible Note',
+    window: 'bibleNote.html',
+    isMainWindow: false,
+    howToOpen: 'double-click a note in the Bible Notes panel',
+    openFind: null,
+  },
+  {
+    key: 'setting',
+    label: 'Settings',
+    window: 'setting.html',
+    isMainWindow: false,
+    howToOpen: 'the ⚙️ button at the top right of the window',
+    openFind: 'Setting',
+  },
+  {
+    key: 'webEditor',
+    label: 'Web Editor',
+    window: 'webEditor.html',
+    isMainWindow: false,
+    howToOpen: 'in the Background panel, open Web and double-click a web page',
+    openFind: null,
+  },
+  {
+    key: 'lyricEditor',
+    label: 'Lyric Editor',
+    window: 'lyricEditor.html',
+    isMainWindow: false,
+    howToOpen: 'open a song from the Documents panel and press Edit',
+    openFind: null,
+  },
+  {
+    key: 'lwShare',
+    label: 'Local Web Share',
+    window: 'lwShare.html',
+    isMainWindow: false,
+    howToOpen: 'the Tools menu → Local Web Share',
+    openFind: null,
+  },
 ];
 
 /**
@@ -117,25 +136,25 @@ export const BOT_FOCUS_LIST = [
  * the tool the prompt had just told the model to use.
  */
 export const BOT_MAIN_WINDOW_PAGES = BOT_FOCUS_LIST.filter((item) => {
-    return item.isMainWindow;
+  return item.isMainWindow;
 }).map((item) => {
-    return item.window;
+  return item.window;
 });
 
 /** Every focus key, in picker order. Handy for a zod enum or a test loop. */
 export const BOT_FOCUS_KEYS = BOT_FOCUS_LIST.map((item) => {
-    return item.key;
+  return item.key;
 });
 
 const FOCUS_MAP = new Map(
-    BOT_FOCUS_LIST.map((item) => {
-        return [item.key, item];
-    }),
+  BOT_FOCUS_LIST.map((item) => {
+    return [item.key, item];
+  }),
 );
 
 /** The descriptor for a key, or `null` when nothing declares it. */
 export function getBotFocus(key) {
-    return FOCUS_MAP.get(key) ?? null;
+  return FOCUS_MAP.get(key) ?? null;
 }
 
 /** The focus every unknown or missing one falls back to. */
@@ -147,7 +166,7 @@ export const DEFAULT_BOT_FOCUS = 'presenter';
  * as the presenter rather than as nothing at all.
  */
 export function toBotFocus(value) {
-    return FOCUS_MAP.has(value) ? value : DEFAULT_BOT_FOCUS;
+  return FOCUS_MAP.has(value) ? value : DEFAULT_BOT_FOCUS;
 }
 
 /**
@@ -159,17 +178,17 @@ export function toBotFocus(value) {
  * be taken by nothing at all while `bibleNote.html` is fine either way.
  */
 export function detectBotFocus(pathname) {
-    if (typeof pathname !== 'string' || pathname.length === 0) {
-        return null;
+  if (typeof pathname !== 'string' || pathname.length === 0) {
+    return null;
+  }
+  let found = null;
+  for (const item of BOT_FOCUS_LIST) {
+    if (
+      pathname.includes(item.window) &&
+      (found === null || item.window.length > found.window.length)
+    ) {
+      found = item;
     }
-    let found = null;
-    for (const item of BOT_FOCUS_LIST) {
-        if (
-            pathname.includes(item.window) &&
-            (found === null || item.window.length > found.window.length)
-        ) {
-            found = item;
-        }
-    }
-    return found === null ? null : found.key;
+  }
+  return found === null ? null : found.key;
 }

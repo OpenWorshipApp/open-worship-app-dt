@@ -406,7 +406,7 @@ describe('bibleXMLHelpers', () => {
 
         await expect(readFromUrl(form, vi.fn())).resolves.toBeNull();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
-            'Error occurred during download "https://example.com/kjv"',
+            'Error occurred during download: "https://example.com/kjv"',
             'Error: Error: offline',
         );
     });

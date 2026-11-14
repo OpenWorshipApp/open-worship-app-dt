@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-10, RD-49, RD-50, RD-51, RD-52, RD-124]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-13 — Cross references
 
@@ -44,8 +44,8 @@ workflowsVersion: "2026-11-08"
    page explaining what that costs you in accuracy. On a translation whose theme headings
    were machine-translated, each heading carries its own **translate** button
    (**[en:tran:Generated using Google Translate.]**) saying so — on an English bible nothing was translated and the mark is absent.
-7. If you have put your own OpenAI or Anthropic key in Settings, **Custom OpenAI** and
-   **Custom Anthropic** appear as their own sections below, each collapsing and refreshing
+7. If you have put your own OpenAI or Anthropic key in Settings, **OpenAI ([en:tran:Custom])** and
+   **Anthropic ([en:tran:Custom])** appear as their own sections below, each collapsing and refreshing
    the same way. The section above them needs no key.
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -53,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52` · `RD-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

@@ -58,24 +58,24 @@ describe('parseWin32FontList', () => {
         const stdout =
             '\uFEFFSegoe UI\t400,700,300,400\r\n' +
             'arial\t400,700,abc,0\r\n' +
-            'Battambang\t100,900\r\n' +
-            'Battambang\t400,100\r\n' +
+            'Candara\t100,900\r\n' +
+            'Candara\t400,100\r\n' +
             'WARNING: a line with no tab\r\n' +
             '\r\n' +
-            'Khmer OS Muol\t\r\n';
+            'Old English Text MT\t\r\n';
 
         const fontListMap = parseWin32FontList(stdout);
 
         expect(fontListMap).toEqual({
             arial: ['400', '700'],
-            Battambang: ['100', '400', '900'],
-            'Khmer OS Muol': [],
+            Candara: ['100', '400', '900'],
+            'Old English Text MT': [],
             'Segoe UI': ['300', '400', '700'],
         });
         expect(Object.keys(fontListMap)).toEqual([
             'arial',
-            'Battambang',
-            'Khmer OS Muol',
+            'Candara',
+            'Old English Text MT',
             'Segoe UI',
         ]);
     });
@@ -163,13 +163,13 @@ describe('parseDarwinFontList', () => {
     test('skips a face it cannot read, keeping the family readable ones', () => {
         const stdout = JSON.stringify([
             [
-                'Khmer Sangam MN',
+                'Example Display',
                 ['Regular', null, ['Mystery', 'heavy'], ['Bold', 9], 42],
             ],
         ]);
 
         expect(parseDarwinFontList(stdout)).toEqual({
-            'Khmer Sangam MN': ['700'],
+            'Example Display': ['700'],
         });
     });
 });

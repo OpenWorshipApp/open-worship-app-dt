@@ -630,6 +630,9 @@ export type PopupWindowFeaturesType = {
     // `+`-joined Blink runtime feature names, see `PopupWindowFeaturesType` in
     // `src/helper/domHelpers.ts`.
     appBlinkFeatures?: string;
+    // A window open on the same page and file under ANY url id is the one
+    // this open wants: it is brought forward and none is opened.
+    appReuseOpen?: boolean;
 };
 
 // features: 'popup,width=700,height=435,appCenter,appFollowScale'
@@ -1328,7 +1331,17 @@ function handlePopupWindowOpen(
             }
         }, 0);
     }
-    if (selfWindows.length > 0 || (isAiChat && !isOpeningAnotherAiChat)) {
+    // An open that asked to reuse (`appReuseOpen`) takes a window of the same
+    // page and file opened under another url id too -- the group just raised:
+    // a Resources file's 🤖 brings forward the window a row press opened,
+    // where every press of the row itself opens one more (2026-11-10).
+    const isReusingGroup =
+        featuresRecord.appReuseOpen === true && groupWindows.length > 0;
+    if (
+        selfWindows.length > 0 ||
+        isReusingGroup ||
+        (isAiChat && !isOpeningAnotherAiChat)
+    ) {
         return { action: 'deny' };
     }
     if (groupWindows.length === 0) {
@@ -1486,13 +1499,77 @@ function getPrintableWindow(browserWindow?: BrowserWindow | null) {
     return win;
 }
 
-export function printCurrentWindow(browserWindow?: BrowserWindow | null) {
+// The page may first ask the person what goes on the paper, and bounds every
+// wait of its own (`MarkdownPreviewAppComp`'s 10 s a diagram, 5 minutes a
+// question): this is only for a page that never answers at all.
+const PAGE_PRINT_PREPARATION_MILLISECONDS = 10 * 60_000;
+
+/**
+ * A window printed AS ITSELF may get its page ready for paper first: the
+ * Markdown Preview prints light, a dark one draws its diagrams' light
+ * pictures, and a page naming verses, people or places asks whether their
+ * Bible text and details go at its end (`appPreparePrint`,
+ * `src/markdown-preview/markdownPrintHelpers.ts`). False when the page
+ * answers `false` -- the person said Cancel -- and nothing is printed. A page
+ * without one is printed at once, one that fails as it stands, and one that
+ * has not answered in `PAGE_PRINT_PREPARATION_MILLISECONDS` as it stands.
+ * One that went away while main waited -- reloaded, navigated elsewhere, its
+ * renderer gone -- is not printed: its question went with it (2026-11-12, a
+ * dev reload under an open question had main print the NEW page, unasked
+ * and not made light; Settings' Apply reloads every window the same way).
+ */
+async function waitForPagePrintPreparation(win: BrowserWindow) {
+    const { webContents } = win;
+    let isPageGone = false;
+    const handleNavigation = (
+        details: Electron.Event<Electron.WebContentsDidStartNavigationEventParams>,
+    ) => {
+        // A jump to a heading stays on the same page.
+        if (details.isMainFrame && !details.isSameDocument) {
+            isPageGone = true;
+        }
+    };
+    const handleRendererGone = () => {
+        isPageGone = true;
+    };
+    webContents.on('did-start-navigation', handleNavigation);
+    webContents.on('render-process-gone', handleRendererGone);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+        const answer = await Promise.race([
+            webContents.executeJavaScript('globalThis.appPreparePrint?.()'),
+            new Promise((resolve) => {
+                timeout = setTimeout(
+                    resolve,
+                    PAGE_PRINT_PREPARATION_MILLISECONDS,
+                );
+            }),
+        ]);
+        return answer !== false && !isPageGone;
+    } catch (error) {
+        if (isPageGone) {
+            return false;
+        }
+        console.log('Print preparation failed:', error);
+        return true;
+    } finally {
+        clearTimeout(timeout);
+        webContents.removeListener('did-start-navigation', handleNavigation);
+        webContents.removeListener('render-process-gone', handleRendererGone);
+    }
+}
+
+export async function printCurrentWindow(browserWindow?: BrowserWindow | null) {
     const win = getPrintableWindow(browserWindow);
 
     if (!win) {
         return;
     }
 
+    const isReady = await waitForPagePrintPreparation(win);
+    if (!isReady || win.isDestroyed()) {
+        return;
+    }
     win.webContents.print({ printBackground: true }, (success, errorType) => {
         if (!success) {
             console.log('Print failed:', errorType);
@@ -1509,6 +1586,15 @@ export async function previewPrintCurrentWindow(
         return null;
     }
 
+    const isReady = await waitForPagePrintPreparation(win);
+    if (!isReady || win.isDestroyed()) {
+        return null;
+    }
+    return await previewPrintWindow(win);
+}
+
+// The window's own pages as a PDF, opened in a Print Preview window.
+async function previewPrintWindow(win: BrowserWindow) {
     const pdfData = await win.webContents.printToPDF({
         printBackground: true,
         preferCSSPageSize: true,
@@ -1586,7 +1672,7 @@ export async function printHTMLContent(htmlText: string) {
                     setTimeout(resolve, 10_000);
                 }),
             ]);
-            await previewPrintCurrentWindow(printWin);
+            await previewPrintWindow(printWin);
         } catch (error) {
             console.log('Print preview failed:', error);
         }

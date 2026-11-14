@@ -248,7 +248,7 @@ const CASE_LIST = [
     [
         'good locales',
         genDoc(
-            ['- Structure: V1', '- Locales: en-US, km-KH'],
+            ['- Structure: V1', '- Locales: en-US, en-GB'],
             ['```ol:Verse 1', 'hi', '```'],
         ),
         true,

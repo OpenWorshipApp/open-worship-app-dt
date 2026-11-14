@@ -1,11 +1,13 @@
-// @vitest-environment jsdom
-
 import { describe, expect, it } from 'vitest';
 
-import type { LanguageDataType } from '../lang/langHelpers';
 import { PRESENTER_DEMO_LIST } from '../../tools/owa-devtools-mcp/presenterDemos.mjs';
 import { READER_DEMO_LIST } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 import { PAGE_DEMO_LIST } from '../../tools/owa-devtools-mcp/pageDemos.mjs';
+import {
+    listAssistantLangPackages,
+    listLangPackageCodes,
+    readLangPackageDictionary,
+} from '../test-setup/langPackageDirs';
 
 const CATALOG_TEXT = [
     'Search tips',
@@ -26,46 +28,54 @@ const CATALOG_TEXT = [
     ...PAGE_DEMO_LIST.flatMap(({ label, detail }) => [label, detail]),
 ];
 
-// Every hand-made language package but English (the key language, whose
-// package brings the app's hooks along), found by its folder: one the
-// assistant is written for (an `assistant.json`). A machine-translated one
-// may rightly keep a loanword -- Filipino's "Slide Editor" -- that this test
-// reads as a tip left in English.
-const ASSISTANT_FILE_MAP = import.meta.glob(
-    '../lang/data/online/*/assistant.json',
+// Every language package but English, read from its `dictionary.json` the
+// way `tran()` looks a label up. It used to look for each package's
+// `index.ts`, which no package has had since languages became plugins, so
+// it found none and checked nothing: on 2026-11-12 a Reader tip's detail was
+// reworded with no string in any language, and every translated Reader
+// threw on load in dev (`getReaderTips` translates every tip as it mounts).
+const LANG_CODE_LIST = listLangPackageCodes({ isEnglishIncluded: false });
+
+// The packages written by hand, the ones the assistant is written for (an
+// `assistant.json`). Only there is a string equal to its English a tip left
+// untranslated: a machine-translated one may rightly keep a loanword --
+// Filipino's "Slide Editor".
+const HAND_MADE_SET = new Set(
+    listAssistantLangPackages().map(({ langCode }) => {
+        return langCode;
+    }),
 );
-const LANGUAGE_MAP = import.meta.glob<LanguageDataType>(
-    '../lang/data/online/*/index.ts',
-    { eager: true, import: 'default' },
-);
-const LANGUAGE_LIST = Object.entries(LANGUAGE_MAP)
-    .filter(([filePath]) => {
-        return (
-            filePath.replace(/index\.ts$/, 'assistant.json') in
-            ASSISTANT_FILE_MAP
-        );
-    })
-    .map(([, language]) => {
-        return [language.name, language] as const;
-    });
+
+function toLookupKey(text: string) {
+    return text.trim().toLowerCase();
+}
 
 describe('tip translations in every language package', () => {
-    // An English-only tree has none, and holds nothing to translate.
-    it('finds the packages there are', () => {
-        expect(Array.isArray(LANGUAGE_LIST)).toBe(true);
+    // None when only English is in the checkout, and the suite still runs.
+    it('reads the packages there are, so a green run means something', () => {
+        for (const langCode of LANG_CODE_LIST) {
+            expect(
+                Object.keys(readLangPackageDictionary(langCode)).length,
+                langCode,
+            ).toBeGreaterThan(1000);
+        }
     });
 });
 
-describe.each(LANGUAGE_LIST)('%s tip translations', (_name, language) => {
+describe.each(LANG_CODE_LIST)('%s tip translations', (langCode) => {
     it('translates every title, description, category and search label', () => {
-        for (const text of CATALOG_TEXT) {
-            const key = language.sanitizeTranKey(text);
-            expect(language.dictionary[key], text).toBeTypeOf('string');
-            expect(
-                language.dictionary[key].trim().length,
-                text,
-            ).toBeGreaterThan(0);
-            expect(language.dictionary[key], text).not.toBe(text);
+        const dictionary = readLangPackageDictionary(langCode);
+        const missingList = CATALOG_TEXT.filter((text) => {
+            const value = dictionary[toLookupKey(text)];
+            return typeof value !== 'string' || value.trim().length === 0;
+        });
+        expect(missingList).toEqual([]);
+        if (!HAND_MADE_SET.has(langCode)) {
+            return;
         }
+        const englishList = CATALOG_TEXT.filter((text) => {
+            return dictionary[toLookupKey(text)] === text;
+        });
+        expect(englishList).toEqual([]);
     });
 });

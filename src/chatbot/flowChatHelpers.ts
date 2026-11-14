@@ -196,7 +196,11 @@ function toCcText(cc: any) {
     const facts = [
         cc?.follows === null || cc?.follows === undefined
             ? 'its element is a line that is gone'
-            : `its element is line ${cc.follows}`,
+            : // "line 9" alone was read as where it goes (EC-474: a
+              // check called four timed songs broken, each "skipping to
+              // line 9").
+              `its element is line ${cc.follows}, run with this line -- ` +
+              `not a jump to line ${cc.follows}`,
         Array.isArray(cc?.screenIds)
             ? `screen ${cc.screenIds.join(', ')}`
             : null,
@@ -337,15 +341,21 @@ export const FLOW_CLEAR_ASK = 'Clear the screen between items';
 export const FLOW_AUTO_NEXT_ASK = 'Move on by itself';
 
 // Said to the model under a pressed button, so the job is never its guess.
+// The check names a CC's element as no fault (2026-11-10, EC-474: a sheet
+// of four timed songs was reported "skipping to line 9", then "redundant").
 const FLOW_BUTTON_HINT_MAP: Record<string, string> = {
     [FLOW_CHECK_ASK]:
         "(Check it: read every line's PROBLEM first, then what looks out of " +
         'place for a service -- a song right after a passage with no clear ' +
-        'between them, a Next: Timeout with nothing after it, a Jump to with ' +
-        'no target, a document parked by mistake. Change NOTHING yet: say ' +
-        'what you found in a short list, and end with one line that starts ' +
-        'OPTIONS: and names each fix in a few words, the fixes separated by ' +
-        '|.)',
+        'between them, a Next: Timeout with nothing after it that no CC ' +
+        'names, a Jump to with ' +
+        'no target, a document parked by mistake. A CC and the line it ' +
+        'names as its element are how a CC works -- that line is needed, ' +
+        'never a problem, a duplicate or a jump. Report only what is ' +
+        'wrong; when nothing is, say the running order looks ready. ' +
+        'Change NOTHING yet: say what you found in a short list, and end ' +
+        'with one line that starts OPTIONS: and names each fix in a few ' +
+        'words, the fixes separated by |.)',
     [FLOW_BUILD_ASK]:
         '(Build the running order from their order of service. When their ' +
         'message, a pasted list or an attached picture of a bulletin gives ' +

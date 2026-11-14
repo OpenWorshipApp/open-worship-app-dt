@@ -34,6 +34,10 @@ import type { AnyObjectType } from './typeHelpers';
 import CacheManager from '../others/CacheManager';
 import { tran } from '../lang/langHelpers';
 import {
+    FILE_ERROR_TOAST_TIMEOUT,
+    toFileErrorText,
+} from '../server/fileErrorTextHelpers';
+import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
@@ -240,7 +244,12 @@ export default class FileSource
                     this.fireUpdateEvent();
                     return true;
                 } catch (error: any) {
-                    showSimpleToast(tran('Saving File'), error.message);
+                    handleError(error);
+                    showSimpleToast(
+                        tran('Saving File'),
+                        toFileErrorText(error),
+                        FILE_ERROR_TOAST_TIMEOUT,
+                    );
                 }
                 return false;
             },
@@ -347,7 +356,8 @@ export default class FileSource
             handleError(error);
             showSimpleToast(
                 tran('Renaming File'),
-                `${tran('Unable to rename file')}: ${error.message}`,
+                `${tran('Unable to rename file')}: ${toFileErrorText(error)}`,
+                FILE_ERROR_TOAST_TIMEOUT,
             );
         }
         return null;

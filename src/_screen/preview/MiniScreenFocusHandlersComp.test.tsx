@@ -23,10 +23,15 @@ const h = vi.hoisted(() => {
         setIsContrast: vi.fn(),
         setIsArmed: vi.fn(),
         resetSettings: vi.fn(),
+        applySettings: vi.fn(),
     };
     return {
         defaults,
         manager,
+        spotlightPresets: null as null | {
+            readCurrent: () => unknown;
+            onApply: (look: unknown) => void;
+        },
         shortcuts: new Map<string, (event?: any) => void>(),
         focusEventNames: [] as string[][],
     };
@@ -80,6 +85,14 @@ vi.mock('../managers/ScreenFocusManager', () => ({
     FOCUS_BLUR_MAX: 100,
 }));
 
+vi.mock('./overlayPresetComps', () => ({
+    // The row has its own suite; here only what the panel hands it.
+    SpotlightPresetsComp: (props: NonNullable<typeof h.spotlightPresets>) => {
+        h.spotlightPresets = props;
+        return null;
+    },
+}));
+
 import MiniScreenFocusHandlersComp from './MiniScreenFocusHandlersComp';
 
 let container: HTMLDivElement;
@@ -126,6 +139,9 @@ beforeEach(() => {
     });
     h.manager.resetSettings.mockImplementation(() => {
         Object.assign(h.manager, h.defaults);
+    });
+    h.manager.applySettings.mockImplementation((look: object) => {
+        Object.assign(h.manager, look);
     });
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -294,6 +310,30 @@ describe('MiniScreenFocusHandlersComp', () => {
             h.shortcuts.get('resetSettings')!({ repeat: false });
         });
         expect(h.manager.resetSettings).toHaveBeenCalledTimes(2);
+    });
+
+    test('a spotlight preset goes on the manager whole, and the controls follow', async () => {
+        await renderComp();
+        expect(h.spotlightPresets!.readCurrent()).toEqual(h.defaults);
+        const look = {
+            size: 360,
+            dimColor: '#102030',
+            dimOpacity: 45,
+            edgeBlur: 70,
+            isContrast: true,
+        };
+        await act(async () => {
+            h.spotlightPresets!.onApply(look);
+        });
+        // One call -- the manager commits once -- never the five setters.
+        expect(h.manager.applySettings).toHaveBeenCalledExactlyOnceWith(look);
+        expect(h.manager.setSize).not.toHaveBeenCalled();
+        expect(h.manager.setDimColor).not.toHaveBeenCalled();
+        expect(getInput('Spotlight size').value).toBe('360');
+        expect(getInput('Dim the rest of the screen').value).toBe('45');
+        expect(getInput('Dim color').value).toBe('#102030');
+        expect(getButton('Contrast').getAttribute('aria-pressed')).toBe('true');
+        expect(h.spotlightPresets!.readCurrent()).toEqual(look);
     });
 
     test('the hint follows whether the spotlight is held', async () => {

@@ -13,7 +13,9 @@ with a picture of the reader on Genesis 4 in two columns — the KJV one marking
 **Adam**, **Eve**, **Cain**, **Abel**, the Khmer one beside it marking nothing —
 `getVerseTextLookupLangCode` (was `checkCanLookupVerseText`) now answers with a
 LANGUAGE CODE per column: `en` for the KJV and only the KJV, the bible's own
-language code when that language ships a lookup package, null otherwise.
+language code when that language is installed and on (`checkIsValidLangCode`;
+only a package that ships the lookup dataset has needles to draw), null
+otherwise.
 
 **Why the English matcher cannot simply be pointed at Khmer.** It reads the
 TEXT: cuts it into `[A-Za-z]` tokens, requires an initial capital, probes each

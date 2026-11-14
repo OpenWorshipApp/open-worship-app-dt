@@ -115,19 +115,21 @@ describe('BibleXMLImportComp', () => {
         ) as HTMLInputElement;
         Object.defineProperty(input, 'files', {
             configurable: true,
-            value: [new File(['<bible />'], 'khmer.xml', { type: 'text/xml' })],
+            value: [
+                new File(['<bible />'], 'made-up.xml', { type: 'text/xml' }),
+            ],
         });
         await act(async () => {
             input.dispatchEvent(new Event('change', { bubbles: true }));
         });
-        expect(container.textContent).toContain('khmer.xml');
+        expect(container.textContent).toContain('made-up.xml');
 
         const cancelButton = container.querySelector(
             'button[title="translated:Cancel selection"]',
         ) as HTMLButtonElement;
         await act(async () => cancelButton.click());
         expect(container.textContent).toContain('translated:No file chosen');
-        expect(container.textContent).not.toContain('khmer.xml');
+        expect(container.textContent).not.toContain('made-up.xml');
     });
 
     test('the assistant button starts an import in the chat, with the typed link', async () => {
@@ -153,7 +155,7 @@ describe('BibleXMLImportComp', () => {
             'value',
         )?.set;
         await act(async () => {
-            setter?.call(urlInput, 'https://example.com/KhmerBible.xml');
+            setter?.call(urlInput, 'https://example.com/MadeUpBible.xml');
             urlInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
         expect(container.textContent).toContain(
@@ -161,12 +163,12 @@ describe('BibleXMLImportComp', () => {
         );
         await act(async () => button.click());
         expect(openChatbotAsking).toHaveBeenLastCalledWith(
-            'Import bible from https://example.com/KhmerBible.xml',
+            'Import bible from https://example.com/MadeUpBible.xml',
         );
     });
 
     test('a link the assistant handed over reaches the review with where it came from', async () => {
-        const url = 'https://example.com/bibles/Khmer%201954.xml';
+        const url = 'https://example.com/bibles/Made%20Up%201954.xml';
         importMocks.takeRequest.mockReturnValueOnce(url);
         importMocks.readFromUrl.mockResolvedValue('<bible>✝</bible>');
         importMocks.toJson.mockResolvedValue({ info: {}, books: {} });
@@ -186,7 +188,7 @@ describe('BibleXMLImportComp', () => {
                     by: 'settings',
                     isLinkFromChatbot: true,
                     url,
-                    fileName: 'Khmer 1954.xml',
+                    fileName: 'Made Up 1954.xml',
                     // `<bible>` and `</bible>` plus one 3-byte character.
                     bytes: 18,
                 },

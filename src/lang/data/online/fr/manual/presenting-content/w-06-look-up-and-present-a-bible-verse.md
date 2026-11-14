@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 45c5ea9804e88c2c
+translatedFrom: 87ef1fa05479e0c8
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -61,7 +61,12 @@ translatedFrom: 45c5ea9804e88c2c
 7. Si vous êtes pressé, demandez plutôt à l'application : ouvrez l'assistant (**🤖**, W-42) et tapez
    _Mettez John 3:16 à l'écran_ — ou la commande **/verse John 3:16**, qui
    n'a besoin d'aucun assistant. Le passage s'affiche dans la version sur laquelle se trouve la recherche, et
-   la réponse dit ce qui est à l'écran maintenant ; il n'est pas enregistré dans la liste **[en:tran:Bibles]**. 📸
+   la réponse dit ce qui est à l'écran maintenant. Comme un double-clic dans la recherche, il est d'abord
+   enregistré dans la liste **[en:tran:Bibles]**, sauf si la liste le contient déjà, et la réponse le dit.
+   Quand aucun assistant ne peut répondre, un passage demandé dans une autre langue est lu dans la Bible
+   installée qui nomme son livre, avec un seul bouton qui l'affiche à l'écran ; quand aucune Bible installée
+   ne nomme le livre, la réponse dit qu'il n'a pas pu être lu, et propose **[en:tran:Import a Bible for me]**
+   quand aucune Bible dans cette langue n'est installée. 📸
 
 8. Pour créer un document de diapositives modifiable à partir d'un passage enregistré, enregistrez-en d'abord un si nécessaire :
    appuyez sur **Ctrl+B**, choisissez le livre, le chapitre et le verset, puis pointez le titre du passage
@@ -102,3 +107,17 @@ translatedFrom: 45c5ea9804e88c2c
     numéro du verset en premier — `22: A cheerful heart is good medicine …` — dans les chiffres de
     cette version. Modifiez-le comme tout autre chant (W-05) ; avec **[en:tran:Atom Mode]** activé,
     la ligne de chaque version est une diapositive à elle seule. 📸
+12. Pour afficher le passage comme une courte annonce par-dessus ce qui est à l'écran, choisissez
+    **[en:tran:Create Quick Text]** dans le même menu, juste sous **[en:tran:Create Lyric]**. Le
+    **[en:tran:Quick Text]** du panneau **[en:tran:Foreground]** s'ouvre sur une NOUVELLE session
+    nommée d'après le passage, par exemple `(ពគប) សុភាសិត ១៧:២២-២៨` — la session que vous aviez
+    ouverte garde ses mots. La zone contient la référence en titre `### ` et les versets ensuite
+    (un seul verset sans son numéro, plusieurs avec `(22): …`), et la session est déjà habillée
+    par le préréglage **[en:tran:Bible Verse]** : un bandeau sombre sur toute la largeur du bas,
+    des mots de 45px alignés à gauche (plus petits, jusqu'à 28px, au-delà de trois versets environ),
+    à l'écran le temps qu'il faut pour lire le passage à voix haute (son réglage **[en:tran:Live]**,
+    en secondes : 20 pour un verset comme John 3:16, environ une minute pour six versets), dans
+    la police propre à la Bible — **[en:tran:Properties]** → **[en:tran:Font]** indique
+    `app-Battambang` pour une Bible khmère. Appuyez sur **[en:tran:Preview]**
+    pour le lire tel qu'il apparaîtra, puis sur **[en:tran:Show Quick Text]** le moment venu.
+    Rien ne va à l'écran avant cela. 📸

@@ -71,14 +71,14 @@ export function RenderNameDetailComp({
     }
     // The datasets keep `type`, `gender`, `age` and each year range's type in
     // English whatever language the record itself is in, so they are keys to
-    // translate rather than text to show -- a Khmer record read `Male`, then
+    // translate rather than text to show -- a translated record read `Male`, then
     // `175 years`, beside a translated word for a human being.
     const nameTypeKey = getNameTypeSingularLabel(record.type);
     // Decided on the ENGLISH key and only THEN translated. Both this guard and
     // `checkHasDetailValue` inside the row below drop an `unknown` type by
     // comparing the string to `'unknown'`, and neither would recognize it once
-    // it reads as the Khmer word for it — an untyped record would grow a chip
-    // in Khmer that it does not have in English.
+    // it reads as the translated word for it — an untyped record would grow
+    // a chip in another language that it does not have in English.
     const isNameTypeShown =
         nameTypeKey !== '' && nameTypeKey.toLowerCase() !== 'unknown';
     const nameTypeLabel = isNameTypeShown ? translate(nameTypeKey) : '';
@@ -234,7 +234,7 @@ export function RenderLocationDetailComp({
     }
     // A location's `type` is English in every package too, and a closed set
     // (`city`, `pool`, `region`... 31 words), so it is translated like a name's
-    // -- a Khmer record read `Pool`. A word the list does not know yet is shown
+    // -- a translated record read `Pool`. A word the list does not know yet is shown
     // as the dataset wrote it.
     const typeLabel = toRecordEnumLabel(
         record.type,

@@ -399,8 +399,9 @@ export function checkIsMixedSafe(lines) {
  * Three things a lyrics page writes that a person typing does not:
  *
  *   - the number in the script the song is printed in, which is why every
- *     numeral goes through `toAsciiDigits` first. A Khmer hymnal numbers its
- *     verses in Khmer digits, and unread they are not labels, so the whole
+ *     numeral goes through `toAsciiDigits` first. A hymnal in a script with
+ *     digits of its own numbers its verses in them, and unread they are not
+ *     labels, so the whole
  *     song arrives as one undivided verse.
  *   - how many times to sing it, in a trailing `(2x)`. That is the Structure,
  *     not the name, and it is thrown away by anything that only reads names.
@@ -409,6 +410,10 @@ export function checkIsMixedSafe(lines) {
  *     it and the chorus goes missing from the play order.
  */
 export function parseSectionLabel(line) {
+  const hymnal = parseHymnalMark(line);
+  if (hymnal !== null) {
+    return hymnal;
+  }
   let bare = toAsciiDigits(line).trim();
   let repeat = 1;
   // Trailing parentheticals, innermost last: `(2x)` says how many times,
@@ -472,6 +477,76 @@ export function parseSectionLabel(line) {
   };
 }
 
+const ROMAN_DIGIT_MAP = { I: 1, V: 5, X: 10 };
+
+/** `IV` as 4, or null for anything not written the usual way (`IIII`). */
+function readRomanNumber(text) {
+  let total = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const value = ROMAN_DIGIT_MAP[text[index]];
+    const after = ROMAN_DIGIT_MAP[text[index + 1]] ?? 0;
+    total += value < after ? -value : value;
+  }
+  const back = [
+    ['X', 10],
+    ['IX', 9],
+    ['V', 5],
+    ['IV', 4],
+    ['I', 1],
+  ].reduce(
+    (state, [mark, value]) => {
+      let { rest, written } = state;
+      while (rest >= value) {
+        written += mark;
+        rest -= value;
+      }
+      return { rest, written };
+    },
+    { rest: total, written: '' },
+  ).written;
+  return back === text && total >= 1 && total <= 20 ? total : null;
+}
+
+/**
+ * A hymnal's own marks over its stanzas (2026-11-13, EC-589): `I.`, `II.`,
+ * `III.` for the verses and `R.` for the refrain, the way hymn books in
+ * many languages number them -- unread, a whole song came out as one part
+ * with the marks sung as words. Only WITH the full stop (or a colon), and
+ * alone on the line: a bare `I` is a word, and `R` on its own is nothing.
+ */
+function parseHymnalMark(line) {
+  const matched =
+    /^\s*([IVX]{1,5}|R|Ref)\s*[.:]\s*(?:\((\d{1,2})\s*x\))?\s*$/i.exec(
+      toAsciiDigits(line),
+    );
+  if (matched === null) {
+    return null;
+  }
+  const repeat = matched[2] === undefined ? 1 : Number(matched[2]);
+  const mark = matched[1];
+  if (/^r(?:ef)?$/i.test(mark)) {
+    return {
+      header: 'Refrain',
+      index: null,
+      label: mark,
+      repeat,
+      isReference: false,
+    };
+  }
+  // Upper case only: a hymnal writes its numerals in capitals, and `i.`,
+  // `v.` or `x.` are a fingering or a list mark.
+  const number = mark === mark.toUpperCase() ? readRomanNumber(mark) : null;
+  return number === null
+    ? null
+    : {
+        header: 'Verse',
+        index: number,
+        label: mark,
+        repeat,
+        isReference: false,
+      };
+}
+
 /**
  * Hands out part names nobody else has, and slides a colliding index up rather
  * than emitting a duplicate -- two parts with one name is an error, and two
@@ -522,6 +597,75 @@ class PartNamer {
   }
 }
 
+// The labels a person types IN a line: `Verse 1: We lift our eyes…, Chorus:
+// Holy, holy`. Fewer words than `LABEL_HEADER_MAP` on purpose -- a line
+// opening `Music: …` or `Note: …` is a credit or a remark far more often than
+// a part of the song, and `Break:` or `Lift:` can start a sung line.
+const INLINE_LABEL_SOURCE =
+  '(?:verse|stanza|chorus|refrain|pre[ -]?chorus|post[ -]?chorus|' +
+  'final[ -]?chorus|last[ -]?chorus|bridge|tag|intro|outro|ending|vamp)' +
+  '(?:[ \\t]*[1-9]\\d?)?|[vc][ \\t]*[1-9]\\d?';
+const INLINE_LABEL_PATTERN = new RegExp(
+  `(^|[,;][ \\t]*|[.!?][ \\t]+|[ \\t]+[-–—][ \\t]+)(${INLINE_LABEL_SOURCE})` +
+    '[ \\t]*:[ \\t]*(?=\\S)',
+  'gi',
+);
+
+/**
+ * A song typed with its labels INSIDE the lines, put back as the lines it
+ * would have been on paper: `Verse 1` on a line of its own, then its words.
+ *
+ * 2026-11-12, `EC-517`: _Create a song called Morning Praise with these words:
+ * Verse 1: We lift our eyes to you this morning, Chorus: Holy, holy, holy
+ * Lord._ is a song as a chat box gets it -- one line -- and was refused as
+ * "not a song", one line being under the two a song needs. A label counts only
+ * with a colon after it and words after that; inside a line it must follow a
+ * comma, a semicolon, a sentence's end or a dash, and start with a capital
+ * (`…the bridge: …` is sung). In such a line ` / ` is a line break, the way
+ * lyrics are written on one line. Never for a page that was read: a site's
+ * `Tag: worship` is not a part of the song.
+ */
+export function splitInlineLabels(lines) {
+  const result = [];
+  for (const line of lines) {
+    const found = [];
+    for (const matched of line.matchAll(INLINE_LABEL_PATTERN)) {
+      const labelStart = matched.index + matched[1].length;
+      const isLineStart = line.slice(0, labelStart).trim() === '';
+      if (!isLineStart && !/^[A-Z]/.test(matched[2])) {
+        continue;
+      }
+      found.push({
+        // A sentence's own stop stays with the words before the label.
+        start: matched.index + (/^[.!?]/.test(matched[1]) ? 1 : 0),
+        end: matched.index + matched[0].length,
+        label: matched[2],
+      });
+    }
+    if (found.length === 0) {
+      result.push(line);
+      continue;
+    }
+    const pushWords = (words) => {
+      for (const one of words.split(/[ \t]+\/[ \t]+/)) {
+        const trimmed = one.replace(/[ \t]*[,;]+[ \t]*$/, '').trim();
+        if (trimmed !== '') {
+          result.push(trimmed);
+        }
+      }
+    };
+    pushWords(line.slice(0, found[0].start));
+    found.forEach((one, index) => {
+      const next = found[index + 1];
+      result.push(one.label.replace(/[ \t]+/g, ' '));
+      pushWords(
+        line.slice(one.end, next === undefined ? undefined : next.start),
+      );
+    });
+  }
+  return result;
+}
+
 /**
  * Split the cleaned lines into `{label, lines}` blocks -- by explicit labels
  * where the text has them, and by blank lines where it does not.
@@ -560,8 +704,13 @@ export function toRawBlocks(lines) {
   return toNumberedBlocks(blocks);
 }
 
-/** `1 ` at the head of a stanza's first line, as printed in a hymn book. */
-const STANZA_NUMBER_PATTERN = /^\s*([1-9]\d?)[ .)\]]\s*(\S.*)$/;
+/**
+ * `1 ` at the head of a stanza's first line, as printed in a hymn book --
+ * or `1. `, `1) `, `1] `, or `1- ` with a space after the dash (EC-589: a
+ * hymnal's slide deck numbers its verses so; `1-2-3` stays words).
+ */
+const STANZA_NUMBER_PATTERN =
+  /^[\s\p{Cf}]*([1-9]\d?)(?:[ .)\]]|-(?=[\s\p{Cf}]))[\s\p{Cf}]*(\S.*)$/u;
 
 /**
  * Stanzas numbered in line, rather than above.
@@ -618,6 +767,41 @@ function toNumberedBlocks(blocks) {
 const MAX_HEADING_BLOCK_LINES = 3;
 
 /**
+ * A line starting with `*` at the end of the song is a note for the
+ * musicians -- a hymnal's _*Music, then sing verses 3 and 4 again_ (EC-589,
+ * a real slide deck) -- and no words to sing. It becomes a `Note` part the
+ * play order leaves out, so it is in the file and never on the projector.
+ */
+export function splitPerformerNotes(blocks) {
+  const last = blocks[blocks.length - 1];
+  if (last === undefined || last.label?.isReference === true) {
+    return blocks;
+  }
+  let at = last.lines.length;
+  while (at > 0 && /^\s*\*/.test(last.lines[at - 1])) {
+    at -= 1;
+  }
+  if (at === last.lines.length) {
+    return blocks;
+  }
+  const note = {
+    label: {
+      header: 'Note',
+      index: null,
+      label: 'Note',
+      repeat: 1,
+      isReference: false,
+      isUnplayed: true,
+    },
+    lines: last.lines.slice(at).map((line) => {
+      return line.replace(/^\s*\*+\s*/, '');
+    }),
+  };
+  const kept = at === 0 ? [] : [{ ...last, lines: last.lines.slice(0, at) }];
+  return [...blocks.slice(0, -1), ...kept, note];
+}
+
+/**
  * A short unlabelled block ABOVE a run of numbered stanzas is the hymn's
  * heading, not its first verse.
  *
@@ -663,6 +847,47 @@ export function dropHeadingAboveNumberedStanzas(blocks) {
     droppedLines: heading.length,
     heading,
   };
+}
+
+// Whether a line's letters are all Latin, all of other scripts, or both.
+function toLetterKind(line) {
+  const hasLatin = /\p{Script=Latin}/u.test(line);
+  const hasOther = /(?!\p{Script=Latin})\p{L}/u.test(line);
+  if (hasLatin === hasOther) {
+    return hasLatin ? 'mixed' : 'none';
+  }
+  return hasLatin ? 'latin' : 'other';
+}
+
+/**
+ * The title the heading above stanza 1 gives: its first line, cut at the
+ * ` | Site name` a page's own title line carries. A first line ending in a
+ * colon only introduces the title, so the line under it is read with it,
+ * and the line under THAT too when it is in another script -- the same
+ * title translated (2026-11-13, EC-590: a hymnal deck's title slide reads
+ * `No. 1 new :`, then the hymn's name, then its English name, and the song
+ * had been called by its number alone).
+ */
+export function toHeadingTitle(heading) {
+  const first = (heading[0] ?? '').split(/\s+[|–—-]\s+/)[0].trim();
+  const [, named = '', translated = ''] = heading;
+  if (!/[:：]$/.test(first) || named === '' || /[:：]$/.test(named)) {
+    return first.slice(0, MAX_TITLE_LENGTH);
+  }
+  const parts = [first, named];
+  const namedKind = toLetterKind(named);
+  const translatedKind = toLetterKind(translated);
+  if (
+    ['latin', 'other'].includes(namedKind) &&
+    ['latin', 'other'].includes(translatedKind) &&
+    namedKind !== translatedKind
+  ) {
+    parts.push(translated);
+  }
+  const whole = parts.join(' ');
+  return whole.length <= MAX_TITLE_LENGTH
+    ? whole
+    : `${first} ${named}`.slice(0, MAX_TITLE_LENGTH);
 }
 
 /** Everything the Config block can be told by the text itself. */
@@ -835,6 +1060,27 @@ function toBodies(blocks) {
  * validation error -- it is a wrong word on the presenter's section list,
  * which nothing would ever catch.
  */
+/**
+ * What makes two stanzas the SAME stanza: their words, whatever full stop a
+ * line ends on, whatever invisible mark was typed into one copy, however
+ * many spaces stand between words. A hymnal's slides print the chorus
+ * after every verse and end the last copy with the closing mark instead of
+ * the full stop (EC-589, a real deck), and each copy then read as a new
+ * verse.
+ */
+function toBodyKey(body) {
+  return body
+    .map((line) => {
+      return line
+        .replace(/\p{Cf}+/gu, '')
+        .replace(/[\s\p{P}]+$/u, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    })
+    .join('\n')
+    .toLowerCase();
+}
+
 function genRepeatHeader(body, count, isFirst) {
   if (count < 2 || isFirst) {
     return 'Verse';
@@ -857,7 +1103,7 @@ function planTierOne(blocks, bodies, notes) {
   const bodyCount = new Map();
   for (const body of bodies) {
     if (body.length > 0) {
-      const key = body.join('\n').toLowerCase();
+      const key = toBodyKey(body);
       bodyCount.set(key, (bodyCount.get(key) ?? 0) + 1);
     }
   }
@@ -874,7 +1120,7 @@ function planTierOne(blocks, bodies, notes) {
       planned.push(null);
       continue;
     }
-    const bodyKey = body.join('\n').toLowerCase();
+    const bodyKey = toBodyKey(body);
     if (seenKeys.has(bodyKey)) {
       // Sung again, not written again.
       planned.push({ bodyKey, header: null, block, body });
@@ -979,7 +1225,10 @@ function genTierOne(blocks, config) {
     if (block.label?.index != null) {
       namedByLabel.set(`${one.header} ${block.label.index}`, named.partName);
     }
-    pushOccurrences(named.partName, block.label?.repeat ?? 1);
+    // A musicians' note is written and never played (`splitPerformerNotes`).
+    if (block.label?.isUnplayed !== true) {
+      pushOccurrences(named.partName, block.label?.repeat ?? 1);
+    }
   }
   if (parts.length === 0) {
     return null;
@@ -1156,7 +1405,10 @@ export function draftOpenLyric(rawText, known = {}) {
     from: known.from,
     to: known.to,
   });
-  const lines = page.lines;
+  const lines =
+    stripWebsiteWrapper(text) === text
+      ? splitInlineLabels(page.lines)
+      : page.lines;
   const titleRead = readTitle(lines);
   const configRead = readConfigFromText(lines);
   // What the page itself said, under what a plain `Name: value` line says
@@ -1172,20 +1424,17 @@ export function draftOpenLyric(rawText, known = {}) {
     return genRefusal('not-a-song');
   }
   const guessed = [];
-  const { blocks, droppedLines, heading } = dropHeadingAboveNumberedStanzas(
-    toRawBlocks(bodyLines),
-  );
+  const headed = dropHeadingAboveNumberedStanzas(toRawBlocks(bodyLines));
+  const { droppedLines, heading } = headed;
+  const blocks = splitPerformerNotes(headed.blocks);
   const title =
     toSafeConfigValue(known.title) ||
     configRead.found.Title ||
     titleRead.title ||
     toSafeConfigValue(pageFound.Title) ||
     // The heading left out above stanza 1 names the hymn when nothing
-    // else did -- its first line, cut at the ` | Site name` a page's own
-    // title line carries.
-    toSafeConfigValue(
-      (heading[0] ?? '').split(/\s+[|–—-]\s+/)[0].slice(0, MAX_TITLE_LENGTH),
-    ) ||
+    // else did (`toHeadingTitle`).
+    toSafeConfigValue(toHeadingTitle(heading)) ||
     '';
   if (title === '') {
     guessed.push('there was no title in the text, so it is "Untitled"');

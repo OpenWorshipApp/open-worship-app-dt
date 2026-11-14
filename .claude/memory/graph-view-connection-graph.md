@@ -197,7 +197,7 @@ column translated labels need — a bare `<i>` sits flush against the text.
 
 `graphTextExportHelpers.ts` is a SECOND pure serializer beside
 `buildGraphSvg`, feeding the `📋` button's **Copy as Markdown** and
-**Copy as Mermaid Diagram**. It takes the same `GraphExportNodeType` list
+its five diagram rows (**Copy as Mermaid (across)** … **Copy as PlantUML**). It takes the same `GraphExportNodeType` list
 `readExportModel` builds for the picture, so a copy can never disagree with
 what is on the canvas, and it imports nothing from the app (both imports are
 types).
@@ -209,7 +209,7 @@ types).
   canvas has, so the tables read as the detail behind a picture rather than as
   a substitute for one. The fence GROWS past any run of backticks inside the
   diagram, and a graph with no records writes no diagram rather than fencing an
-  empty `flowchart`, which fails to parse. **Copy as Mermaid Diagram** is kept
+  empty `flowchart`, which fails to parse. The diagram rows are kept
   for the narrower job: the drawing alone, for a tool that wants only that.
 - **FIVE diagram languages, declared once** in `GRAPH_DIAGRAM_FORMAT_LIST`
   (the user asked for the variety: which language is right depends on what it
@@ -283,8 +283,9 @@ types).
 
 `graphPresetHelpers.ts` stores **record ids and positions, never record
 content**, so a saved graph survives a dataset update or a lookup-language
-change and can never pin the 34MB dataset through a settings string. The
-"last session" slot is restored **when the record is next opened**, not at
+change and can never pin the 34MB dataset through a settings string. There is
+no "last session" slot (see **Opening a record starts FRESH** above): the
+presets are read only when the toolbar's **Presets** menu opens, never at
 launch — restoring at startup would force the lookup dataset to load in every
 window on every launch.
 

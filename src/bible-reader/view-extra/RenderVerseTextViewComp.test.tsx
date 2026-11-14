@@ -148,12 +148,12 @@ describe('the verse text', () => {
     });
 
     test('text with a lookup index is decorated in its language', async () => {
-        h.getVerseTextLookupLangCode.mockReturnValue('km');
+        h.getVerseTextLookupLangCode.mockReturnValue('xx');
         await render();
         const lookup = getAnchor().querySelector('.test-lookup')!;
         expect(lookup.textContent).toBe('In the beginning');
         expect(lookup.getAttribute('data-kjv')).toBe('GEN 1:1');
-        expect(lookup.getAttribute('data-lang')).toBe('km');
+        expect(lookup.getAttribute('data-lang')).toBe('xx');
     });
 
     test('custom verse html renders as custom html', async () => {
@@ -181,7 +181,7 @@ describe('the verse text', () => {
 describe('a verse among compared bibles', () => {
     test('the bible key label stays out of the marked text', async () => {
         await render({
-            verseInfo: genVerseInfo({ bibleKey: 'KHM', isRtl: true }),
+            verseInfo: genVerseInfo({ bibleKey: 'TQAM', isRtl: true }),
             isExtraVerses: true,
         });
         const row = host.querySelector<HTMLDivElement>('.text.d-flex')!;
@@ -192,7 +192,7 @@ describe('a verse among compared bibles', () => {
         // Marks are offsets into the anchor's text: the label is not in it.
         expect(getAnchor().textContent).toBe('In the beginning');
         const label = getAnchor().nextElementSibling as HTMLSpanElement;
-        expect(label.textContent).toBe('KHM');
+        expect(label.textContent).toBe('TQAM');
         expect(label.className).toBe(
             'text-muted px-1 app-low-hover-visible-10',
         );

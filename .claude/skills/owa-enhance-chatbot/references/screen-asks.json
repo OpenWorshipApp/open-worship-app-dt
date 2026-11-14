@@ -1,0 +1,198 @@
+{
+  "about": "The screen-control ask set (2026-11-13, the user's goal: _chatbot is very smart to help user control screen_ -- font size, colour or style of the Bible showing, another version added to it, a transition, the display checked, screens grouped, _everything in screen control_). Asked by scripts/screen-run.mjs through the real help window of a SCRATCH development instance whose screens are all on VIRTUAL displays (a screen shown there draws on no monitor). Set up first: John 3:16 (KJV) on screen 0 and shown; screen 1 hidden, on a second virtual display; a second Bible installed -- `{otherBible}` in an ask is its language, the English name the screen tool's `read` gives the first installed Bible that is not the KJV, so the set names no language of its own. `check` is a JavaScript expression over `b` (the screen state before the ask) and `a` (after) -- `style`, `effects[id]`, `screens[id]`, `count` -- that is true when the ask was DONE; a read has none and is graded by its words. Each scenario is a tab of its own, its asks follow-ups in it.",
+  "scenarios": [
+    {
+      "id": "style",
+      "asks": [
+        {
+          "id": "S1",
+          "text": "Make the Bible verse on the screen bigger",
+          "expect": "the on-screen Bible text's font size goes up, said in a sentence",
+          "check": "a.style.fontSize > b.style.fontSize"
+        },
+        {
+          "id": "S2",
+          "text": "Change its colour to yellow",
+          "expect": "the Bible text colour becomes a yellow",
+          "check": "isYellow(a.style.color)"
+        },
+        {
+          "id": "S3",
+          "text": "Make it bold and give it a shadow",
+          "expect": "bold on and a shadow drawn",
+          "check": "a.style.isBold && a.style.textShadow !== 'none'"
+        },
+        {
+          "id": "S4",
+          "text": "Centre it",
+          "expect": "the Bible text is centred",
+          "check": "a.style.textAlign === 'center'"
+        },
+        {
+          "id": "S5",
+          "text": "Undo that",
+          "expect": "the centring is taken back, the rest kept",
+          "check": "a.style.textAlign !== 'center' && a.style.isBold"
+        }
+      ]
+    },
+    {
+      "id": "style-more",
+      "asks": [
+        {
+          "id": "S6",
+          "text": "The verse on the projector is too small, people at the back can't read it",
+          "expect": "the font size goes up (a complaint is an ask)",
+          "check": "a.style.fontSize > b.style.fontSize"
+        },
+        {
+          "id": "S7",
+          "text": "Give the Bible text a thick black outline",
+          "expect": "an outline, dark, thicker than before",
+          "check": "(a.style.effect?.outlineWidth ?? 0) > (b.style.effect?.outlineWidth ?? 0)"
+        },
+        {
+          "id": "S8",
+          "text": "Put the lines of the verse closer together",
+          "expect": "the line height goes down",
+          "check": "a.style.lineHeight < b.style.lineHeight"
+        },
+        {
+          "id": "S9",
+          "text": "Set the Bible text style back to normal",
+          "expect": "the style is plain again (the panel's Reset keeps the size)",
+          "check": "a.styleIsPlain"
+        }
+      ]
+    },
+    {
+      "id": "versions",
+      "asks": [
+        {
+          "id": "V1",
+          "text": "Add the {otherBible} Bible to the verse on the screen so both versions show",
+          "expect": "the passage on screen 0 shows KJV and the second Bible",
+          "check": "a.screens['0'].bibleKeys.length === 2"
+        },
+        {
+          "id": "V2",
+          "text": "Which Bible versions are on the screen now?",
+          "expect": "names both versions, read off the screens"
+        },
+        {
+          "id": "V3",
+          "text": "Line the two versions up verse by verse",
+          "expect": "Line Sync on for screen 0",
+          "check": "a.screens['0'].lineSync === true"
+        },
+        {
+          "id": "V4",
+          "text": "Take the {otherBible} one off again",
+          "expect": "only the KJV left on screen 0",
+          "check": "a.screens['0'].bibleKeys.length === 1 && a.screens['0'].bibleKeys[0] === 'KJV'"
+        }
+      ]
+    },
+    {
+      "id": "transition",
+      "asks": [
+        {
+          "id": "T1",
+          "text": "Change the slide transition to zoom",
+          "expect": "the Slide transition of the screen(s) is zoom",
+          "check": "a.effects['0'].slide === 'zoom'"
+        },
+        {
+          "id": "T2",
+          "text": "Turn the background transition off",
+          "expect": "the Background transition is none",
+          "check": "a.effects['0'].background === 'none'"
+        },
+        {
+          "id": "T3",
+          "text": "What transition does each screen use now?",
+          "expect": "per screen, the three transitions, read and not guessed"
+        }
+      ]
+    },
+    {
+      "id": "display",
+      "asks": [
+        {
+          "id": "D1",
+          "text": "Check the display: which monitor is each screen on?",
+          "expect": "screen 0 on Virtual Display 1, screen 1 on Virtual Display 2"
+        },
+        {
+          "id": "D2",
+          "text": "Move screen 1 to Virtual Display 1",
+          "expect": "screen 1's display is Virtual Display 1",
+          "check": "a.screens['1'].display === -500001"
+        },
+        {
+          "id": "D3",
+          "text": "Is anything showing on the projector right now?",
+          "expect": "screen 0 showing John 3:16, screen 1 off"
+        }
+      ]
+    },
+    {
+      "id": "group",
+      "asks": [
+        {
+          "id": "G1",
+          "text": "Group screen 0 and screen 1 together",
+          "expect": "both screens share a colour note",
+          "check": "a.screens['0'].group !== null && a.screens['0'].group === a.screens['1'].group"
+        },
+        {
+          "id": "G2",
+          "text": "Lock screen 0 so nothing can change it by accident",
+          "expect": "screen 0 locked (its group with it)",
+          "check": "a.screens['0'].locked === true"
+        },
+        {
+          "id": "G3",
+          "text": "Unlock it",
+          "expect": "screen 0 unlocked",
+          "check": "a.screens['0'].locked === false"
+        },
+        {
+          "id": "G4",
+          "text": "Take screen 1 out of the group",
+          "expect": "screen 1 has no colour note",
+          "check": "a.screens['1'].group === null"
+        }
+      ]
+    },
+    {
+      "id": "screens",
+      "asks": [
+        {
+          "id": "M1",
+          "text": "Use stage 1 on screen 1",
+          "expect": "screen 1's stage number is 1",
+          "check": "a.screens['1'].stage === 1"
+        },
+        {
+          "id": "M2",
+          "text": "Only work with screen 1 for now",
+          "expect": "screen 1 selected alone (Solo)",
+          "check": "a.screens['1'].selected === true && a.screens['0'].selected === false"
+        },
+        {
+          "id": "M3",
+          "text": "Select both screens again",
+          "expect": "both screens selected",
+          "check": "a.screens['0'].selected === true && a.screens['1'].selected === true"
+        },
+        {
+          "id": "M4",
+          "text": "Take the Bible off screen 0",
+          "expect": "the long-text layer of screen 0 cleared, the screen still on",
+          "check": "a.screens['0'].ref === null"
+        }
+      ]
+    }
+  ]
+}

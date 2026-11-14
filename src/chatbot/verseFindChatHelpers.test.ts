@@ -52,8 +52,8 @@ const BIBLES = {
     bible: 'KJV',
     bibles: [
         { key: 'KJV', title: 'King James Version' },
-        { key: 'KHOV', title: 'Khmer Old Version' },
-        { key: 'LSG', title: 'Louis Segond 1910' },
+        { key: 'SMOV', title: 'Sample Old Version' },
+        { key: 'OTV', title: 'Other Test Version 1910' },
     ],
 };
 
@@ -70,7 +70,7 @@ describe('which Bible', () => {
     it('lists the Bibles, the one in Find first and marked', async () => {
         const call = genCall(BIBLES);
         const answer = await runVerseFindStep(
-            { step: 'bible', preferred: 'KHOV', isFromFind: true },
+            { step: 'bible', preferred: 'SMOV', isFromFind: true },
             call,
         );
         expect(call).toHaveBeenCalledWith(VERSE_FIND_TOOL_NAME, {});
@@ -81,13 +81,13 @@ describe('which Bible', () => {
                 return action.label;
             }),
         ).toEqual([
-            'KHOV — Khmer Old Version (the one in Find)',
+            'SMOV — Sample Old Version (the one in Find)',
             'KJV — King James Version',
-            'LSG — Louis Segond 1910',
+            'OTV — Other Test Version 1910',
         ]);
         expect(answer.actions?.[0]).toMatchObject({
             toolName: VERSE_FIND_STEP_TOOL_NAME,
-            args: { step: 'remember', bible: 'KHOV' },
+            args: { step: 'remember', bible: 'SMOV' },
         });
     });
 
@@ -167,10 +167,10 @@ describe('which Bible', () => {
 
     it('marks nothing when Find did not ask', async () => {
         const answer = await runVerseFindStep(
-            { step: 'bible', preferred: 'LSG' },
+            { step: 'bible', preferred: 'OTV' },
             genCall(BIBLES),
         );
-        expect(answer.actions?.[0].label).toBe('LSG — Louis Segond 1910');
+        expect(answer.actions?.[0].label).toBe('OTV — Other Test Version 1910');
     });
 
     it('goes straight on with the only Bible there is', async () => {
@@ -256,9 +256,9 @@ describe('what they remember', () => {
     });
 
     it('asks the model with the Bible named in the ask', () => {
-        const ask = toVerseFindAsk('  love enemies ', 'KHOV');
+        const ask = toVerseFindAsk('  love enemies ', 'SMOV');
         expect(ask.startsWith('love enemies\n\n')).toBe(true);
-        expect(ask).toContain('"KHOV"');
+        expect(ask).toContain('"SMOV"');
         expect(ask).toContain(VERSE_FIND_TOOL_NAME);
     });
 });
@@ -344,8 +344,8 @@ describe('with no assistant', () => {
     });
 });
 
-// The user's ask, 2026-10-17: "I'm looking in khmer then I should be able to
-// change to english".
+// The user's ask, 2026-10-17: searching a Bible in one language, they should
+// be able to change to English.
 describe('changing the Bible', () => {
     const FOUND = [
         { key: 'JHN 14:6', ref: 'John 14:6' },
@@ -376,7 +376,7 @@ describe('changing the Bible', () => {
         const answer = await runVerseFindStep(
             {
                 step: 'bible',
-                current: 'KHOV',
+                current: 'SMOV',
                 words: 'the way',
                 verses: [FOUND[0]],
             },
@@ -398,26 +398,26 @@ describe('changing the Bible', () => {
                 },
             },
             {
-                label: 'LSG — Louis Segond 1910',
+                label: 'OTV — Other Test Version 1910',
                 toolName: VERSE_FIND_STEP_TOOL_NAME,
                 args: {
                     step: 'remember',
-                    bible: 'LSG',
-                    title: 'Louis Segond 1910',
+                    bible: 'OTV',
+                    title: 'Other Test Version 1910',
                     words: 'the way',
                     verses: [FOUND[0]],
                 },
             },
         ]);
-        // Words typed instead of a pick go on searching the Khmer one.
-        expect(answer.verseFind).toBe('KHOV');
+        // Words typed instead of a pick go on searching the one searched.
+        expect(answer.verseFind).toBe('SMOV');
         // And a typed pick carries the same.
         expect(
             readVerseFindTypedPick(
                 [{ author: 'bot' as const, actions: answer.actions }],
-                'lsg',
+                'otv',
             ),
-        ).toMatchObject({ bible: 'LSG', verses: [FOUND[0]] });
+        ).toMatchObject({ bible: 'OTV', verses: [FOUND[0]] });
         const several = await runVerseFindStep(
             { step: 'bible', current: 'KJV', verses: FOUND },
             genCall(BIBLES),
@@ -450,12 +450,12 @@ describe('changing the Bible', () => {
 
     it('asks what they remember when the verses cannot be read', async () => {
         const answer = await runVerseFindStep(
-            { step: 'remember', bible: 'LSG', verses: FOUND },
+            { step: 'remember', bible: 'OTV', verses: FOUND },
             genCall(new Error('The app did not answer.')),
         );
-        expect(answer.text).toContain('I could not read those verses in LSG.');
+        expect(answer.text).toContain('I could not read those verses in OTV.');
         expect(answer.text).toContain('What do you remember');
-        expect(answer.verseFind).toBe('LSG');
+        expect(answer.verseFind).toBe('OTV');
     });
 });
 

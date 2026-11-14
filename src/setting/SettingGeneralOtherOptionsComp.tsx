@@ -71,8 +71,8 @@ function genHiddenItemRows(now = Date.now()) {
     });
 }
 
-// The day, plain and unambiguous: Electron's ICU answers a Khmer date in
-// English anyway (memory `electron-icu-has-no-khmer`).
+// The day, plain and unambiguous: Electron's ICU answers some languages' dates
+// in English anyway (memory `electron-icu-trimmed-locales`).
 function toHiddenDateText(until: number) {
     return new Date(until).toISOString().slice(0, 10);
 }

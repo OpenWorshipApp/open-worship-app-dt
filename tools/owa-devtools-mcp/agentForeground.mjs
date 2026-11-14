@@ -21,6 +21,8 @@
 // fires a DOM event, the app relays it to a lazily imported worker, and the
 // answer comes back on a second event. Nothing here imports an app module.
 
+// Every foreground component (2026-11-09: _chatbot can help modify any
+// foreground component_). `clock` is what people call the Time component.
 export const AGENT_FOREGROUND_WIDGETS = [
     'countdown',
     'stopwatch',
@@ -28,6 +30,13 @@ export const AGENT_FOREGROUND_WIDGETS = [
     'marquee-top',
     'marquee-bottom',
     'quick-text',
+    'message',
+    'long-text',
+    'video',
+    'image',
+    'camera',
+    'screen',
+    'web',
     // `stop` only: every extra at once, the way F10 (Clear Foreground) does.
     'all',
 ];
@@ -41,6 +50,13 @@ const WIDGET_NOUN_MAP = {
     'marquee-top': 'scrolling message along the top',
     'marquee-bottom': 'scrolling message along the bottom',
     'quick-text': 'line of text',
+    message: 'message',
+    'long-text': 'long text',
+    video: 'video',
+    image: 'picture',
+    camera: 'camera',
+    screen: 'picture of another screen',
+    web: 'web page',
     all: 'foreground extras',
 };
 
@@ -113,7 +129,9 @@ function describeScreens(result) {
         .filter((screen) => screen.isShowing === true)
         .map((screen) => screen.screenId);
     const offIds = screens
-        .filter((screen) => screen.isShowing !== true && screen.isLocked !== true)
+        .filter(
+            (screen) => screen.isShowing !== true && screen.isLocked !== true,
+        )
         .map((screen) => screen.screenId);
     const parts = [];
     if (onIds.length > 0) {
@@ -150,7 +168,17 @@ export function describeForeground(result) {
     if (result.did === 'checked') {
         return detail || 'No foreground extra is on any screen.';
     }
-    if (result.did === 'stopped') {
+    if (result.did === 'read' || result.did === 'timer') {
+        return detail || 'Done.';
+    }
+    if (result.did === 'changed' || result.did === 'created') {
+        const parts = [detail || 'Changed.'];
+        if (typeof result.note === 'string' && result.note !== '') {
+            parts.push(result.note);
+        }
+        return parts.join(' ');
+    }
+    if (result.did === 'stopped' || result.did === 'hidden') {
         const parts = [detail || 'It is off the screen now.'];
         if (typeof result.note === 'string' && result.note !== '') {
             parts.push(result.note);

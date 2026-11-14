@@ -1158,7 +1158,7 @@ describe('untrusted lists are capped and their bad rows skipped', () => {
     });
 
     it('picks no note from an empty one', () => {
-        expect(pickRegistryNote({}, 'km')).toBe('');
+        expect(pickRegistryNote({}, 'xx')).toBe('');
     });
 
     it('finds no model for an id that is not one', () => {

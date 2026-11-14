@@ -406,15 +406,15 @@ describe('appDocumentHelpers coverage', () => {
         );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Converting to PDF',
-            'Document with 4 slides is being converted. Do not close application',
+            'Converting <b>sermon.docx</b> to PDF. Do not close the app until it is done.',
         );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Converting to PDF',
-            'Warning: Slides count mismatch. Original: 4, Converted: 3',
+            'Something wrong during converting, please check converted file (4 → 3)',
         );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Converting to PDF',
-            '<b>sermon.docx</b> is converted to PDF "/docs/sermon-1.pdf"',
+            '<b>sermon.docx</b> — File saved at: "/docs/sermon-1.pdf"',
         );
         expect(hideProgressBarMock).toHaveBeenCalledWith('Converting to PDF');
     });
@@ -598,11 +598,11 @@ describe('appDocumentHelpers coverage', () => {
         // An unreadable count is not an error of its own.
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Converting to PDF',
-            'Document with unknown slides count is being converted. Do not close application',
+            'Converting <b>sermon.docx</b> to PDF. Do not close the app until it is done.',
         );
         expect(showSimpleToastMock).toHaveBeenLastCalledWith(
             'Converting to PDF',
-            'Failed to convert <b>sermon.docx</b> to PDF. Error: bad page 3',
+            '<b>sermon.docx</b>: Something wrong during converting, please try again. (bad page 3)',
         );
         // Nothing was converted, so the PDF is neither counted nor announced.
         expect(getSlidesCountMock).toHaveBeenCalledOnce();

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import http from 'node:http';
@@ -37,6 +37,9 @@ vi.mock('electron', () => ({
             fixture.ipc.set(name, [...(fixture.ipc.get(name) ?? []), handler]);
         },
     },
+    // On macOS the intercom asks for the microphone first; these tests are
+    // about what happens once the person has allowed it.
+    systemPreferences: { askForMediaAccess: async () => true },
 }));
 vi.mock('./screenMirrorRouter', async (importOriginal) => ({
     ...(await importOriginal<typeof RouterModule>()),
@@ -143,7 +146,11 @@ beforeEach(async () => {
     vi.mocked(probeRouterPort).mockReset().mockResolvedValue('unknown');
     vi.mocked(lookUpPublicAddress).mockReset().mockResolvedValue('');
     vi.mocked(closeRouterPort).mockReset().mockResolvedValue(undefined);
-    directory = await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-service-'));
+    // The real path: on macOS the temp folder is behind a link (`/var` ->
+    // `/private/var`), and a file published through a link is refused.
+    directory = await realpath(
+        await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-service-')),
+    );
     // Hosting is off by default; these tests are about a host.
     fixture.client.set('screen-mirror-host', 'true');
     await useFreePort();
@@ -1392,7 +1399,8 @@ test('a running clock reaches a guest with its start time', async () => {
     answerBootstraps(service, [
         {
             type: 'foreground',
-            data: { stopwatchData: { dateTime: startedAt } },
+            // Each session's stopwatch is an item of the list.
+            data: { stopwatchDataList: [{ dateTime: startedAt }] },
         },
     ]);
     await service.prepareOutput(0, service.displays()[0].id);
@@ -1402,7 +1410,7 @@ test('a running clock reaches a guest with its start time', async () => {
         ),
     );
     const { dateTime } = client.packets.find((packet) => packet.type === 'show')
-        .context.messages[0].data.stopwatchData;
+        .context.messages[0].data.stopwatchDataList[0];
     expect(new Date(dateTime).getTime()).toBe(startedAt.getTime());
 });
 

@@ -8,5 +8,8 @@
             "locales": ["hi-IN"],
             "order": 1200
         }
-    ]
+    ],
+    "catalogLanguageCodes": {
+        "hi": "hin"
+    }
 }

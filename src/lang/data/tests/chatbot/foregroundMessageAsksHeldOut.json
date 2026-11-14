@@ -1,0 +1,1410 @@
+{
+    "af": {
+        "put": [
+            "Sit 'n boodskap op die skerm: Welkom, almal",
+            "Wys 'n aankondiging op die skerm: die kollekte is nou",
+            "Kan jy asseblief hierdie boodskap op die projektorskerm vertoon: Sit julle fone stil"
+        ],
+        "take": "Haal die boodskap van die skerm af",
+        "countdown": "Begin 'n aftelling van 5 minute op die skerm",
+        "sent": "Ek het gister vir jou 'n boodskap gestuur.",
+        "bright": "Die skerm is te helder.",
+        "bulletin": "Het jy die aankondiging in die kerkbrief gelees?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "am": {
+        "put": [
+            "በስክሪኑ ላይ መልዕክት አስቀምጥ: እንኳን ደህና መጣችሁ ሁላችሁም",
+            "በስክሪኑ ላይ ማስታወቂያ አሳይ: አሁን የመባ ሰዓት ነው",
+            "ይህንን መልዕክት በፕሮጀክተሩ ስክሪን ላይ ማቅረብ ትችላለህ: እባካችሁ ስልኮቻችሁን ጸጥ አድርጉ"
+        ],
+        "take": "መልዕክቱን ከስክሪኑ ላይ አንሳ",
+        "countdown": "በስክሪኑ ላይ የ5 ደቂቃ የኋሊት ቆጠራ ጀምር",
+        "sent": "ትናንት መልዕክት ልኬልህ ነበር።",
+        "bright": "ስክሪኑ በጣም ያበራል።",
+        "bulletin": "በቤተክርስቲያኑ በራሪ ወረቀት ላይ ያለውን ማስታወቂያ አነበብከው?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ar": {
+        "put": [
+            "ضع رسالة على الشاشة: أهلاً وسهلاً بالجميع",
+            "اعرض إعلاناً على الشاشة: حان الآن وقت التقدمة",
+            "هل يمكنك أن تُظهر هذه الرسالة على شاشة البروجكتر: يرجى كتم صوت هواتفكم"
+        ],
+        "take": "أزل الرسالة من الشاشة",
+        "countdown": "ابدأ عدّاً تنازلياً لمدة 5 دقائق على الشاشة",
+        "sent": "أرسلت لك رسالة أمس.",
+        "bright": "الشاشة ساطعة جداً.",
+        "bulletin": "هل قرأت الإعلان في نشرة الكنيسة؟",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "az": {
+        "put": [
+            "Ekrana mesaj qoy: Hamınız xoş gəlmisiniz",
+            "Ekranda elan göstər: indi ianə vaxtıdır",
+            "Bu mesajı proyektor ekranına çıxara bilərsənmi: Lütfən telefonları səssizə qoyun"
+        ],
+        "take": "Mesajı ekrandan götür",
+        "countdown": "Ekranda 5 dəqiqəlik geri sayım başlat",
+        "sent": "Dünən sənə mesaj göndərmişdim.",
+        "bright": "Ekran çox parlaqdır.",
+        "bulletin": "Kilsə bülletenindəki elanı oxudunmu?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "be": {
+        "put": [
+            "Пастаў паведамленне на экран: Вітаем усіх",
+            "Пакажы аб'яву на экране: зараз збор ахвяраванняў",
+            "Ці можаш вывесці гэта паведамленне на экран праектара: Калі ласка, выключыце гук"
+        ],
+        "take": "Прыбяры паведамленне з экрана",
+        "countdown": "Запусці на экране зваротны адлік на 5 хвілін",
+        "sent": "Я ўчора даслаў табе паведамленне.",
+        "bright": "Экран занадта яркі.",
+        "bulletin": "Ты чытаў аб'яву ў царкоўным бюлетэні?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "bg": {
+        "put": [
+            "Сложи съобщение на екрана: Добре дошли на всички",
+            "Покажи обявление на екрана: сега е времето за дарения",
+            "Можеш ли да изведеш това съобщение на екрана на проектора: Моля, заглушете телефоните"
+        ],
+        "take": "Махни съобщението от екрана",
+        "countdown": "Пусни 5-минутно обратно броене на екрана",
+        "sent": "Вчера ти изпратих съобщение.",
+        "bright": "Екранът е прекалено ярък.",
+        "bulletin": "Прочете ли обявлението в църковния бюлетин?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "bn": {
+        "put": [
+            "স্ক্রিনে একটা মেসেজ দাও: সবাইকে স্বাগতম",
+            "স্ক্রিনে একটি ঘোষণা দেখাও: এখন দান সংগ্রহের সময়",
+            "এই মেসেজটা কি প্রজেক্টরের পর্দায় তুলে দিতে পারবেন: দয়া করে ফোন সাইলেন্ট করুন"
+        ],
+        "take": "স্ক্রিন থেকে মেসেজটা সরিয়ে দাও",
+        "countdown": "স্ক্রিনে ৫ মিনিটের কাউন্টডাউন শুরু করো",
+        "sent": "আমি গতকাল তোমাকে একটা মেসেজ পাঠিয়েছিলাম।",
+        "bright": "স্ক্রিনটা খুব বেশি উজ্জ্বল।",
+        "bulletin": "তুমি কি চার্চের বুলেটিনে ঘোষণাটা পড়েছ?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "bo": {
+        "put": [
+            "བརྙན་ཡོལ་སྟེང་དུ་བརྡ་འཕྲིན་ཞིག་འཇོག་རོགས་: ཚང་མ་ཕེབས་པར་དགའ་བསུ་ཞུ།",
+            "བརྙན་ཡོལ་སྟེང་དུ་གསལ་བསྒྲགས་ཤིག་སྟོན་རོགས་: ད་ལྟ་འབུལ་བ་ཕུལ་རྒྱུའི་དུས་ཚོད་རེད།",
+            "བརྡ་འཕྲིན་འདི་བརྙན་འཕེན་གྱི་བརྙན་ཡོལ་དུ་འཆར་ཐུབ་བམ་: ཁ་པར་སྒྲ་མེད་དུ་བཏང་རོགས།"
+        ],
+        "take": "བརྙན་ཡོལ་སྟེང་གི་བརྡ་འཕྲིན་དེ་ཕྱིར་ལེན་རོགས།",
+        "countdown": "བརྙན་ཡོལ་སྟེང་དུ་སྐར་མ་༥ ཀྱི་ཕྱིར་བགྲང་འགོ་འཛུགས་རོགས།",
+        "sent": "ངས་ཁ་སང་ཁྱེད་ལ་བརྡ་འཕྲིན་ཞིག་བཏང་ཡོད།",
+        "bright": "བརྙན་ཡོལ་གྱི་འོད་ཆེ་དྲགས་འདུག",
+        "bulletin": "ཁྱེད་ཀྱིས་ཆོས་ཚོགས་ཀྱི་ཤོག་བྱང་ནང་གི་གསལ་བསྒྲགས་དེ་བཀླགས་སོང་ངམ།",
+        "floor": {
+            "message": 0,
+            "countdown": 1
+        }
+    },
+    "ca": {
+        "put": [
+            "Posa un missatge a la pantalla: Benvinguts a tothom",
+            "Mostra un anunci a la pantalla: ara és el moment de l'ofrena",
+            "Em pots projectar aquest missatge a la pantalla del projector: Silencieu els mòbils"
+        ],
+        "take": "Treu el missatge de la pantalla",
+        "countdown": "Inicia un compte enrere de 5 minuts a la pantalla",
+        "sent": "Ahir et vaig enviar un missatge.",
+        "bright": "La pantalla és massa brillant.",
+        "bulletin": "Has llegit l'avís al butlletí de l'església?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ceb": {
+        "put": [
+            "Ibutang ang mensahe sa screen: Maayong pag-abot sa tanan",
+            "Ipakita ang usa ka pahibalo sa screen: panahon na sa paghalad",
+            "Pwede ba nimo i-project kining mensahe sa projector: Palihug i-silent ang mga cellphone"
+        ],
+        "take": "Kuhaa ang mensahe sa screen",
+        "countdown": "Sugdi ang 5 minutos nga countdown sa screen",
+        "sent": "Nagpadala ko nimo og mensahe gahapon.",
+        "bright": "Hayag kaayo ang screen.",
+        "bulletin": "Nabasa ba nimo ang pahibalo sa bulletin sa simbahan?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "cs": {
+        "put": [
+            "Dej na plátno zprávu: Vítáme vás všechny",
+            "Zobraz na plátně oznámení: teď je sbírka",
+            "Mohl bys prosím promítnout tuhle zprávu na projektor: Prosíme, ztlumte si mobily"
+        ],
+        "take": "Dej tu zprávu z plátna pryč",
+        "countdown": "Spusť na plátně odpočet 5 minut",
+        "sent": "Včera jsem ti poslal zprávu.",
+        "bright": "Obrazovka je příliš jasná.",
+        "bulletin": "Četl jsi to oznámení ve sborovém zpravodaji?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "da": {
+        "put": [
+            "Sæt en besked op på skærmen: Velkommen til alle",
+            "Vis en meddelelse på skærmen: nu er der kollekt",
+            "Kan du lægge den her besked op på projektorlærredet: Sæt venligst telefonerne på lydløs"
+        ],
+        "take": "Tag beskeden af skærmen",
+        "countdown": "Start en nedtælling på 5 minutter på skærmen",
+        "sent": "Jeg sendte dig en besked i går.",
+        "bright": "Skærmen er for lys.",
+        "bulletin": "Har du læst meddelelsen i kirkebladet?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "de": {
+        "put": [
+            "Setz eine Nachricht auf die Leinwand: Herzlich willkommen euch allen",
+            "Zeig eine Ankündigung auf der Leinwand: Jetzt ist die Kollekte",
+            "Kannst du diese Nachricht bitte am Beamer einblenden: Bitte schaltet eure Handys stumm"
+        ],
+        "take": "Nimm die Nachricht von der Leinwand",
+        "countdown": "Starte einen 5-Minuten-Countdown auf der Leinwand",
+        "sent": "Ich habe dir gestern eine Nachricht geschickt.",
+        "bright": "Der Bildschirm ist zu hell.",
+        "bulletin": "Hast du die Ankündigung im Gemeindebrief gelesen?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "el": {
+        "put": [
+            "Βάλε ένα μήνυμα στην οθόνη: Καλώς ήρθατε όλοι",
+            "Δείξε μια ανακοίνωση στην οθόνη: τώρα είναι η ώρα της προσφοράς",
+            "Μπορείς να προβάλεις αυτό το μήνυμα στον προβολέα: Παρακαλούμε, κλείστε τα κινητά"
+        ],
+        "take": "Βγάλε το μήνυμα από την οθόνη",
+        "countdown": "Ξεκίνα μια αντίστροφη μέτρηση 5 λεπτών στην οθόνη",
+        "sent": "Σου έστειλα ένα μήνυμα χθες.",
+        "bright": "Η οθόνη είναι πολύ φωτεινή.",
+        "bulletin": "Διάβασες την ανακοίνωση στο ενημερωτικό φυλλάδιο της εκκλησίας;",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "es": {
+        "put": [
+            "Pon un mensaje en la pantalla: Bienvenidos a todos",
+            "Muestra un anuncio en la pantalla: ahora es el momento de la ofrenda",
+            "Podrías proyectar este mensaje en la pantalla: Por favor, silencien sus celulares"
+        ],
+        "take": "Quita el mensaje de la pantalla",
+        "countdown": "Inicia una cuenta regresiva de 5 minutos en la pantalla",
+        "sent": "Ayer te mandé un mensaje.",
+        "bright": "La pantalla está demasiado brillante.",
+        "bulletin": "¿Leíste el anuncio en el boletín de la iglesia?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "et": {
+        "put": [
+            "Pane ekraanile sõnum: Tere tulemast kõigile",
+            "Näita ekraanil teadaannet: nüüd korjame kollekti",
+            "Kas saaksid selle sõnumi projektori ekraanile kuvada: Palun pange telefonid hääletuks"
+        ],
+        "take": "Võta sõnum ekraanilt maha",
+        "countdown": "Käivita ekraanil 5-minutiline tagasiloendus",
+        "sent": "Saatsin sulle eile sõnumi.",
+        "bright": "Ekraan on liiga hele.",
+        "bulletin": "Kas sa lugesid seda teadet koguduse infolehest?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "fa": {
+        "put": [
+            "یک پیام روی صفحه بگذار: به همه خوش آمدید",
+            "یک اطلاعیه روی صفحه نشان بده: الان زمان جمع‌آوری هدایاست",
+            "می‌تونی این پیام رو روی پرده پروژکتور بندازی: لطفاً گوشی‌هاتون رو بی‌صدا کنید"
+        ],
+        "take": "پیام رو از روی صفحه بردار",
+        "countdown": "یک شمارش معکوس ۵ دقیقه‌ای روی صفحه شروع کن",
+        "sent": "دیروز برات یه پیام فرستادم.",
+        "bright": "صفحه خیلی روشنه.",
+        "bulletin": "اطلاعیه‌ی خبرنامه‌ی کلیسا رو خوندی؟",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "fi": {
+        "put": [
+            "Laita valkokankaalle viesti: Tervetuloa kaikille",
+            "Näytä ilmoitus valkokankaalla: nyt kerätään kolehti",
+            "Voisitko heijastaa tämän viestin videotykin kankaalle: Laittakaa puhelimet äänettömälle"
+        ],
+        "take": "Ota viesti pois valkokankaalta",
+        "countdown": "Käynnistä 5 minuutin lähtölaskenta valkokankaalle",
+        "sent": "Lähetin sinulle eilen viestin.",
+        "bright": "Näyttö on liian kirkas.",
+        "bulletin": "Luitko sen ilmoituksen seurakunnan tiedotteesta?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "fil": {
+        "put": [
+            "Maglagay ka ng mensahe sa screen: Maligayang pagdating sa inyong lahat",
+            "Ipakita ang isang anunsyo sa screen: oras na ng paghahandog",
+            "Puwede mo bang i-project ang mensaheng ito sa projector: Paki-silent po ang mga cellphone"
+        ],
+        "take": "Alisin mo ang mensahe sa screen",
+        "countdown": "Simulan mo ang 5 minutong countdown sa screen",
+        "sent": "Nagpadala ako sa iyo ng mensahe kahapon.",
+        "bright": "Masyadong maliwanag ang screen.",
+        "bulletin": "Nabasa mo ba ang anunsyo sa bulletin ng simbahan?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "fj": {
+        "put": [
+            "Biuta e dua na itukutuku ena sikirini: Ni sa bula vinaka kemuni kece",
+            "Vakaraitaka e dua na kacivaka ena sikirini: sa gauna oqo ni isoli",
+            "E rawa beka mo vakatakila na itukutuku oqo ena sikirini: Ni vakagalugalutaka na talevoni"
+        ],
+        "take": "Kauta tani na itukutuku mai na sikirini",
+        "countdown": "Tekivuna na wiliwili lesu ni 5 na miniti ena sikirini",
+        "sent": "Au a vakauta vei iko e dua na itukutuku ena noa.",
+        "bright": "E rarama sivia na sikirini.",
+        "bulletin": "O a wilika beka na kacivaka ena ivola ni itukutuku ni lotu?",
+        "floor": {
+            "message": 3,
+            "countdown": 0
+        }
+    },
+    "fr": {
+        "put": [
+            "Mets un message à l'écran : Bienvenue à tous",
+            "Affiche une annonce à l'écran : c'est le moment de l'offrande",
+            "Pourrais-tu projeter ce message sur l'écran du projecteur : Éteignez vos portables, merci"
+        ],
+        "take": "Enlève le message de l'écran",
+        "countdown": "Lance un compte à rebours de 5 minutes à l'écran",
+        "sent": "Je t'ai envoyé un message hier.",
+        "bright": "L'écran est trop lumineux.",
+        "bulletin": "As-tu lu l'annonce dans le bulletin de l'église ?",
+        "floor": {
+            "message": 3,
+            "countdown": 1
+        }
+    },
+    "ga": {
+        "put": [
+            "Cuir teachtaireacht ar an scáileán: Fáilte romhaibh go léir",
+            "Taispeáin fógra ar an scáileán: tá sé in am don bhailiúchán anois",
+            "An bhféadfá an teachtaireacht seo a theilgean ar an scáileán: Múchaigí bhur bhfóin"
+        ],
+        "take": "Bain an teachtaireacht den scáileán",
+        "countdown": "Tosaigh comhaireamh síos 5 nóiméad ar an scáileán",
+        "sent": "Chuir mé teachtaireacht chugat inné.",
+        "bright": "Tá an scáileán rógheal.",
+        "bulletin": "Ar léigh tú an fógra i nuachtlitir an pharóiste?",
+        "floor": {
+            "message": 3,
+            "countdown": 1
+        }
+    },
+    "gl": {
+        "put": [
+            "Pon unha mensaxe na pantalla: Benvidos a todos",
+            "Amosa un anuncio na pantalla: agora é o momento da ofrenda",
+            "Poderías proxectar esta mensaxe na pantalla do proxector: Silenciade os móbiles"
+        ],
+        "take": "Quita a mensaxe da pantalla",
+        "countdown": "Inicia unha conta atrás de 5 minutos na pantalla",
+        "sent": "Onte mandeiche unha mensaxe.",
+        "bright": "A pantalla está demasiado brillante.",
+        "bulletin": "Liches o anuncio no boletín da igrexa?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "gu": {
+        "put": [
+            "સ્ક્રીન પર એક મેસેજ મૂકો: સૌનું સ્વાગત છે",
+            "સ્ક્રીન પર એક જાહેરાત બતાવો: હવે અર્પણનો સમય છે",
+            "શું તમે આ મેસેજ પ્રોજેક્ટરની સ્ક્રીન પર દર્શાવી શકો: કૃપા કરીને તમારા ફોન સાયલન્ટ કરો"
+        ],
+        "take": "સ્ક્રીન પરથી મેસેજ હટાવી દો",
+        "countdown": "સ્ક્રીન પર 5 મિનિટનું કાઉન્ટડાઉન શરૂ કરો",
+        "sent": "મેં તમને ગઈકાલે એક મેસેજ મોકલ્યો હતો.",
+        "bright": "સ્ક્રીન ખૂબ જ તેજસ્વી છે.",
+        "bulletin": "તમે ચર્ચના બુલેટિનમાં જાહેરાત વાંચી?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ha": {
+        "put": [
+            "Sa saƙo a kan sikirin: Barka da zuwa, ku duka",
+            "Nuna sanarwa a kan sikirin: yanzu lokacin baiko ne",
+            "Za ka iya fito da wannan saƙon a allon majigi: Don Allah ku rufe sautin wayoyinku"
+        ],
+        "take": "Cire saƙon daga kan sikirin",
+        "countdown": "Fara ƙidayar minti 5 a kan sikirin",
+        "sent": "Na aiko maka da saƙo jiya.",
+        "bright": "Hasken sikirin ya yi yawa.",
+        "bulletin": "Ka karanta sanarwar da ke cikin takardar labaran coci?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "he": {
+        "put": [
+            "שים הודעה על המסך: ברוכים הבאים לכולם",
+            "הצג הכרזה על המסך: עכשיו זמן התרומות",
+            "תוכל להקרין את ההודעה הזאת על מסך המקרן: נא להשתיק את הטלפונים"
+        ],
+        "take": "תוריד את ההודעה מהמסך",
+        "countdown": "תפעיל ספירה לאחור של 5 דקות על המסך",
+        "sent": "שלחתי לך הודעה אתמול.",
+        "bright": "המסך בהיר מדי.",
+        "bulletin": "קראת את ההודעה בעלון של הקהילה?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "hi": {
+        "put": [
+            "स्क्रीन पर एक मैसेज डालो: आप सभी का स्वागत है",
+            "स्क्रीन पर एक घोषणा दिखाओ: अब भेंट का समय है",
+            "क्या आप यह संदेश प्रोजेक्टर की स्क्रीन पर लगा सकते हैं: कृपया अपने फ़ोन साइलेंट कर लें"
+        ],
+        "take": "स्क्रीन से मैसेज हटा दो",
+        "countdown": "स्क्रीन पर 5 मिनट का काउंटडाउन शुरू करो",
+        "sent": "मैंने कल तुम्हें एक मैसेज भेजा था।",
+        "bright": "स्क्रीन बहुत ज़्यादा चमकीली है।",
+        "bulletin": "क्या तुमने चर्च के बुलेटिन में घोषणा पढ़ी?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "hr": {
+        "put": [
+            "Stavi poruku na platno: Dobro došli svima",
+            "Prikaži obavijest na platnu: sada je sakupljanje milodara",
+            "Možeš li projicirati ovu poruku na platno projektora: Molimo, utišajte mobitele"
+        ],
+        "take": "Makni poruku s platna",
+        "countdown": "Pokreni odbrojavanje od 5 minuta na platnu",
+        "sent": "Jučer sam ti poslao poruku.",
+        "bright": "Ekran je presvijetao.",
+        "bulletin": "Jesi li pročitao obavijest u crkvenom biltenu?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ht": {
+        "put": [
+            "Mete yon mesaj sou ekran an: Byenveni a tout moun",
+            "Montre yon anons sou ekran an: kounye a se moman ofrann lan",
+            "Èske ou ka pwojte mesaj sa a sou ekran pwojektè a: Tanpri fèmen son telefòn nou"
+        ],
+        "take": "Retire mesaj la sou ekran an",
+        "countdown": "Lanse yon dekont 5 minit sou ekran an",
+        "sent": "Mwen te voye yon mesaj ba ou yè.",
+        "bright": "Ekran an twò klere.",
+        "bulletin": "Èske ou te li anons ki nan bilten legliz la?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "hu": {
+        "put": [
+            "Rakj ki egy üzenetet a kivetítőre: Szeretettel köszöntünk mindenkit",
+            "Jeleníts meg egy hirdetést a kivetítőn: most lesz a gyűjtés",
+            "Ki tudnád vetíteni ezt az üzenetet a projektor vásznára: Kérjük, némítsák le a mobiljukat"
+        ],
+        "take": "Vedd le az üzenetet a kivetítőről",
+        "countdown": "Indíts egy 5 perces visszaszámlálást a kivetítőn",
+        "sent": "Tegnap küldtem neked egy üzenetet.",
+        "bright": "Túl világos a képernyő.",
+        "bulletin": "Olvastad a hirdetést a gyülekezeti hírlevélben?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "hy": {
+        "put": [
+            "Էկրանին հաղորդագրություն դիր: Բարի գալուստ բոլորին",
+            "Էկրանին հայտարարություն ցույց տուր: Հիմա նվիրատվության ժամանակն է",
+            "Կարո՞ղ եք պրոյեկտորով ցուցադրել այս հաղորդագրությունը: Խնդրում ենք անջատել հեռախոսները"
+        ],
+        "take": "Հաղորդագրությունը հանիր էկրանից",
+        "countdown": "Էկրանին 5 րոպեանոց հետհաշվարկ սկսիր",
+        "sent": "Երեկ քեզ հաղորդագրություն եմ ուղարկել։",
+        "bright": "Էկրանը չափազանց պայծառ է։",
+        "bulletin": "Կարդացե՞լ ես եկեղեցու տեղեկագրի հայտարարությունը։",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "id": {
+        "put": [
+            "Pasang pesan di layar: Selamat datang, semuanya",
+            "Tampilkan pengumuman di layar: sekarang waktunya persembahan",
+            "Bisa tolong tayangkan pesan ini di layar proyektor: Mohon matikan HP Anda"
+        ],
+        "take": "Hapus pesan itu dari layar",
+        "countdown": "Mulai hitung mundur 5 menit di layar",
+        "sent": "Kemarin saya mengirimi Anda pesan.",
+        "bright": "Layarnya terlalu terang.",
+        "bulletin": "Sudah baca pengumuman di warta jemaat?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ig": {
+        "put": [
+            "Tinye ozi n'ihuenyo: Nnọọ, unu niile",
+            "Gosi ọkwa n'ihuenyo: Ugbu a bụ oge onyinye",
+            "Ị nwere ike ime ka ozi a pụta n'ihuenyo projector: Biko gbanyụọ ekwentị unu"
+        ],
+        "take": "Wepụ ozi ahụ n'ihuenyo",
+        "countdown": "Malite ịgụ oge azụ nkeji 5 n'ihuenyo",
+        "sent": "Ezigaara m gị ozi ụnyaahụ.",
+        "bright": "Ihuenyo a na-enwu oke ọkụ.",
+        "bulletin": "Ị gụrụ ọkwa dị n'akwụkwọ ọkwa nke ụka?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "is": {
+        "put": [
+            "Settu skilaboð á skjáinn: Verið öll velkomin",
+            "Sýndu tilkynningu á skjánum: Nú er tekið við samskotum",
+            "Gætirðu varpað þessum skilaboðum á tjaldið: Vinsamlegast slökkvið á símunum"
+        ],
+        "take": "Taktu skilaboðin af skjánum",
+        "countdown": "Byrjaðu 5 mínútna niðurtalningu á skjánum",
+        "sent": "Ég sendi þér skilaboð í gær.",
+        "bright": "Skjárinn er of bjartur.",
+        "bulletin": "Lastu tilkynninguna í safnaðarblaðinu?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "it": {
+        "put": [
+            "Metti un messaggio sullo schermo: Benvenuti a tutti",
+            "Mostra un avviso sullo schermo: ora c'è la raccolta delle offerte",
+            "Potresti proiettare questo messaggio sul telo: Per favore, spegnete i cellulari"
+        ],
+        "take": "Togli il messaggio dallo schermo",
+        "countdown": "Avvia un conto alla rovescia di 5 minuti sullo schermo",
+        "sent": "Ieri ti ho mandato un messaggio.",
+        "bright": "Lo schermo è troppo luminoso.",
+        "bulletin": "Hai letto l'avviso nel bollettino della chiesa?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ja": {
+        "put": [
+            "スクリーンにメッセージを出して：皆さん、ようこそ",
+            "スクリーンにお知らせを表示して：ただいまより献金の時間です",
+            "プロジェクターのスクリーンにこのメッセージを映してもらえますか：携帯電話の電源をお切りください"
+        ],
+        "take": "スクリーンからメッセージを消して",
+        "countdown": "スクリーンで5分のカウントダウンを始めて",
+        "sent": "昨日あなたにメッセージを送りました。",
+        "bright": "スクリーンが明るすぎます。",
+        "bulletin": "週報のお知らせは読みましたか？",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ka": {
+        "put": [
+            "ეკრანზე შეტყობინება გამოიტანე: კეთილი იყოს თქვენი მობრძანება",
+            "ეკრანზე განცხადება აჩვენე: ახლა შესაწირის დროა",
+            "შეგიძლია ეს შეტყობინება პროექტორის ეკრანზე გამოაჩინო: გთხოვთ, გამორთოთ ტელეფონები"
+        ],
+        "take": "ეკრანიდან შეტყობინება მოაშორე",
+        "countdown": "დაიწყე 5-წუთიანი უკუთვლა ეკრანზე",
+        "sent": "გუშინ შეტყობინება გამოგიგზავნე.",
+        "bright": "ეკრანი ზედმეტად კაშკაშაა.",
+        "bulletin": "ეკლესიის ბიულეტენში განცხადება წაიკითხე?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "kk": {
+        "put": [
+            "Экранға хабарлама қой: Баршаңызға қош келдіңіздер",
+            "Экранда хабарландыру көрсет: қазір құрбандық жинау уақыты",
+            "Осы хабарламаны проектор экранына шығарып бере аласыз ба: Телефондарыңызды өшіріңіз"
+        ],
+        "take": "Хабарламаны экраннан алып таста",
+        "countdown": "Экранда 5 минуттық кері санақты баста",
+        "sent": "Кеше саған хабарлама жібердім.",
+        "bright": "Экран тым жарық.",
+        "bulletin": "Шіркеу бюллетеніндегі хабарландыруды оқыдың ба?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "km": {
+        "put": [
+            "ដាក់សារលើអេក្រង់៖ សូមស្វាគមន៍ទាំងអស់គ្នា",
+            "បង្ហាញសេចក្តីប្រកាសលើអេក្រង់៖ ឥឡូវនេះជាពេលថ្វាយតង្វាយ",
+            "តើអាចបញ្ចាំងសារនេះលើអេក្រង់បញ្ចាំងបានទេ៖ សូមបិទសំឡេងទូរស័ព្ទរបស់អ្នក"
+        ],
+        "take": "ដកសារចេញពីអេក្រង់",
+        "countdown": "ចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទីលើអេក្រង់",
+        "sent": "ខ្ញុំបានផ្ញើសារទៅអ្នកកាលពីម្សិលមិញ។",
+        "bright": "អេក្រង់ភ្លឺពេក។",
+        "bulletin": "តើអ្នកបានអានសេចក្តីប្រកាសក្នុងព្រឹត្តិបត្រព្រះវិហារទេ?",
+        "floor": {
+            "message": 3,
+            "countdown": 1
+        }
+    },
+    "kn": {
+        "put": [
+            "ಪರದೆಯ ಮೇಲೆ ಒಂದು ಸಂದೇಶ ಹಾಕಿ: ಎಲ್ಲರಿಗೂ ಸ್ವಾಗತ",
+            "ಪರದೆಯ ಮೇಲೆ ಪ್ರಕಟಣೆ ತೋರಿಸಿ: ಈಗ ಕಾಣಿಕೆಯ ಸಮಯ",
+            "ಈ ಸಂದೇಶವನ್ನು ಪ್ರೊಜೆಕ್ಟರ್ ಪರದೆಯಲ್ಲಿ ಪ್ರದರ್ಶಿಸಬಹುದೇ: ದಯವಿಟ್ಟು ಫೋನ್ ಸೈಲೆಂಟ್ ಮಾಡಿ"
+        ],
+        "take": "ಪರದೆಯಿಂದ ಸಂದೇಶವನ್ನು ತೆಗೆಯಿರಿ",
+        "countdown": "ಪರದೆಯ ಮೇಲೆ 5 ನಿಮಿಷದ ಕೌಂಟ್‌ಡೌನ್ ಪ್ರಾರಂಭಿಸಿ",
+        "sent": "ನಾನು ನಿನ್ನೆ ನಿಮಗೆ ಒಂದು ಸಂದೇಶ ಕಳುಹಿಸಿದ್ದೆ.",
+        "bright": "ಪರದೆ ತುಂಬಾ ಪ್ರಕಾಶಮಾನವಾಗಿದೆ.",
+        "bulletin": "ಚರ್ಚ್ ಬುಲೆಟಿನ್‌ನಲ್ಲಿದ್ದ ಪ್ರಕಟಣೆಯನ್ನು ಓದಿದಿರಾ?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ko": {
+        "put": [
+            "화면에 메시지 띄워 줘: 모두 환영합니다",
+            "화면에 광고 좀 보여 줘: 지금은 헌금 시간입니다",
+            "이 메시지를 프로젝터 화면에 표시해 주실 수 있나요: 휴대폰은 무음으로 해 주세요"
+        ],
+        "take": "화면에서 메시지 내려 줘",
+        "countdown": "화면에 5분 카운트다운 시작해 줘",
+        "sent": "어제 제가 메시지 보냈어요.",
+        "bright": "화면이 너무 밝아요.",
+        "bulletin": "주보에 있는 광고 읽어 보셨어요?",
+        "floor": {
+            "message": 3,
+            "countdown": 1
+        }
+    },
+    "lo": {
+        "put": [
+            "ໃສ່ຂໍ້ຄວາມຂຶ້ນໜ້າຈໍ: ຍິນດີຕ້ອນຮັບທຸກຄົນ",
+            "ສະແດງແຈ້ງການຢູ່ໜ້າຈໍ: ຕອນນີ້ເປັນເວລາຖວາຍ",
+            "ຊ່ວຍສາຍຂໍ້ຄວາມນີ້ຂຶ້ນຈໍໂປເຈັກເຕີໄດ້ບໍ່: ກະລຸນາປິດສຽງໂທລະສັບ"
+        ],
+        "take": "ເອົາຂໍ້ຄວາມອອກຈາກໜ້າຈໍ",
+        "countdown": "ເລີ່ມນັບຖອຍຫຼັງ 5 ນາທີຢູ່ໜ້າຈໍ",
+        "sent": "ມື້ວານນີ້ຂ້ອຍສົ່ງຂໍ້ຄວາມຫາເຈົ້າແລ້ວ.",
+        "bright": "ໜ້າຈໍແຈ້ງເກີນໄປ.",
+        "bulletin": "ເຈົ້າໄດ້ອ່ານແຈ້ງການໃນຈົດໝາຍຂ່າວຂອງໂບດແລ້ວບໍ່?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "lt": {
+        "put": [
+            "Išvesk į ekraną žinutę: Sveiki visi atvykę",
+            "Parodyk ekrane skelbimą: dabar renkamos aukos",
+            "Ar galėtumėte šią žinutę suprojektuoti ant ekrano: Prašome išjungti telefonus"
+        ],
+        "take": "Nuimk žinutę nuo ekrano",
+        "countdown": "Pradėk ekrane 5 minučių atgalinį skaičiavimą",
+        "sent": "Vakar tau išsiunčiau žinutę.",
+        "bright": "Ekranas per ryškus.",
+        "bulletin": "Ar skaitei skelbimą bažnyčios biuletenyje?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "lv": {
+        "put": [
+            "Uzliec ekrānā ziņu: Esiet visi sirsnīgi gaidīti",
+            "Parādi ekrānā paziņojumu: tagad notiek ziedojumu vākšana",
+            "Vai tu varētu izvadīt šo ziņu uz projektora ekrāna: Lūdzu, izslēdziet telefonus"
+        ],
+        "take": "Noņem ziņu no ekrāna",
+        "countdown": "Sāc ekrānā 5 minūšu atpakaļskaitīšanu",
+        "sent": "Es tev vakar nosūtīju ziņu.",
+        "bright": "Ekrāns ir pārāk spilgts.",
+        "bulletin": "Vai tu izlasīji paziņojumu draudzes biļetenā?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "mg": {
+        "put": [
+            "Apetraho amin'ny efijery ny hafatra: Tongasoa daholo ianareo",
+            "Asehoy amin'ny efijery ny filazana: fotoanan'ny fanatitra izao",
+            "Azonao atao ve ny mandefa ity hafatra ity amin'ny efijery: Vonoy azafady ny finday"
+        ],
+        "take": "Esory amin'ny efijery ilay hafatra",
+        "countdown": "Atombohy amin'ny efijery ny fanisana mihemotra 5 minitra",
+        "sent": "Nandefa hafatra taminao aho omaly.",
+        "bright": "Mamirapiratra loatra ilay efijery.",
+        "bulletin": "Novakianao ve ilay filazana tao amin'ny taratasy filazan'ny fiangonana?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "mi": {
+        "put": [
+            "Whakaurua he karere ki te mata: Nau mai, haere mai koutou katoa",
+            "Whakaaturia he pānui ki te mata: Kua tae ki te wā o te kohinga moni",
+            "Ka taea e koe tēnei karere te tuku ki te mata whakaata: Tēnā koa, whakangūtia ō waea"
+        ],
+        "take": "Tangohia te karere i te mata",
+        "countdown": "Tīmatahia he tatau whakamuri 5 meneti ki te mata",
+        "sent": "I tukuna e au he karere ki a koe inanahi.",
+        "bright": "He kanapa rawa te mata.",
+        "bulletin": "I kite koe i te pānui i roto i te pānui-ā-wiki o te hāhi?",
+        "floor": {
+            "message": 3,
+            "countdown": 1
+        }
+    },
+    "mk": {
+        "put": [
+            "Стави порака на екранот: Добредојдовте сите",
+            "Прикажи соопштение на екранот: сега е време за дарување",
+            "Може ли да ја проектираш оваа порака на платното: Ве молиме, исклучете ги телефоните"
+        ],
+        "take": "Тргни ја пораката од екранот",
+        "countdown": "Започни одбројување од 5 минути на екранот",
+        "sent": "Вчера ти пратив порака.",
+        "bright": "Екранот е премногу светол.",
+        "bulletin": "Го прочита ли соопштението во црковниот билтен?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ml": {
+        "put": [
+            "സ്ക്രീനിൽ ഒരു മെസേജ് ഇടൂ: എല്ലാവർക്കും സ്വാഗതം",
+            "സ്ക്രീനിൽ ഒരു അറിയിപ്പ് കാണിക്കൂ: ഇപ്പോൾ സ്തോത്രകാഴ്ച സമയമാണ്",
+            "ഈ സന്ദേശം പ്രൊജക്ടർ സ്ക്രീനിൽ പ്രദർശിപ്പിക്കാമോ: ദയവായി ഫോണുകൾ സൈലന്റ് ആക്കുക"
+        ],
+        "take": "സ്ക്രീനിൽ നിന്ന് മെസേജ് മാറ്റൂ",
+        "countdown": "സ്ക്രീനിൽ 5 മിനിറ്റ് കൗണ്ട്ഡൗൺ തുടങ്ങൂ",
+        "sent": "ഇന്നലെ ഞാൻ നിങ്ങൾക്ക് ഒരു മെസേജ് അയച്ചിരുന്നു.",
+        "bright": "സ്ക്രീനിന് വെളിച്ചം കൂടുതലാണ്.",
+        "bulletin": "പള്ളി ബുള്ളറ്റിനിലെ അറിയിപ്പ് നിങ്ങൾ വായിച്ചോ?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "mn": {
+        "put": [
+            "Дэлгэцэн дээр мессеж гаргаач: Бүгдээрээ тавтай морилно уу",
+            "Дэлгэц дээр зар харуулаач: одоо өргөл өргөх цаг боллоо",
+            "Энэ зурвасыг проекторын дэлгэцэнд тусгаж өгч болох уу: Утсаа чимээгүй болгоно уу"
+        ],
+        "take": "Дэлгэцнээс мессежийг арилгаач",
+        "countdown": "Дэлгэц дээр 5 минутын урвуу тоолол эхлүүлээч",
+        "sent": "Би чамд өчигдөр мессеж явуулсан.",
+        "bright": "Дэлгэц хэтэрхий гэрэлтэй байна.",
+        "bulletin": "Чуулганы мэдээллийн хуудсан дээрх зарыг уншсан уу?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "mr": {
+        "put": [
+            "स्क्रीनवर एक मेसेज टाका: सर्वांचे स्वागत आहे",
+            "स्क्रीनवर घोषणा दाखवा: आता अर्पणाची वेळ आहे",
+            "हा संदेश प्रोजेक्टरच्या स्क्रीनवर झळकवू शकाल का: कृपया आपले फोन सायलेंट करा"
+        ],
+        "take": "स्क्रीनवरून मेसेज काढा",
+        "countdown": "स्क्रीनवर 5 मिनिटांचा काउंटडाउन सुरू करा",
+        "sent": "मी तुम्हाला काल एक मेसेज पाठवला होता.",
+        "bright": "स्क्रीन खूपच प्रखर आहे.",
+        "bulletin": "चर्चच्या बुलेटिनमधली सूचना वाचलीत का?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ms": {
+        "put": [
+            "Letak mesej di skrin: Selamat datang semua",
+            "Paparkan pengumuman di skrin: sekarang masa kutipan persembahan",
+            "Boleh tolong tayangkan mesej ini di skrin projektor: Sila senyapkan telefon anda"
+        ],
+        "take": "Keluarkan mesej itu dari skrin",
+        "countdown": "Mulakan kiraan detik 5 minit di skrin",
+        "sent": "Saya dah hantar mesej kepada awak semalam.",
+        "bright": "Skrin ni terlalu terang.",
+        "bulletin": "Dah baca pengumuman dalam buletin gereja?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "my": {
+        "put": [
+            "စခရင်ပေါ်မှာ စာတစ်ခု တင်ပေးပါ: အားလုံးကို ကြိုဆိုပါတယ်",
+            "စခရင်ပေါ်မှာ ကြေညာချက် ပြပေးပါ: အခု အလှူငွေ ထည့်ဝင်ချိန်ပါ",
+            "ဒီစာကို ပရိုဂျက်တာ စခရင်ပေါ် ထိုးပြပေးလို့ ရမလား: ဖုန်းတွေကို အသံပိတ်ထားပေးပါ"
+        ],
+        "take": "စခရင်ပေါ်က စာကို ဖြုတ်ပေးပါ",
+        "countdown": "စခရင်ပေါ်မှာ ၅ မိနစ် နောက်ပြန်ရေတွက်ချိန် စပေးပါ",
+        "sent": "မနေ့က ခင်ဗျားဆီ မက်ဆေ့ချ် ပို့ခဲ့တယ်။",
+        "bright": "စခရင်က အရမ်းလင်းနေတယ်။",
+        "bulletin": "အသင်းတော် သတင်းလွှာထဲက ကြေညာချက်ကို ဖတ်ပြီးပြီလား။",
+        "floor": {
+            "message": 1,
+            "countdown": 1
+        }
+    },
+    "nb": {
+        "put": [
+            "Legg en melding på skjermen: Velkommen alle sammen",
+            "Vis en kunngjøring på skjermen: Nå tar vi opp kollekt",
+            "Kan du projisere denne meldingen på lerretet: Vennligst sett telefonen på lydløs"
+        ],
+        "take": "Ta meldingen av skjermen",
+        "countdown": "Start en nedtelling på 5 minutter på skjermen",
+        "sent": "Jeg sendte deg en melding i går.",
+        "bright": "Skjermen er for lys.",
+        "bulletin": "Leste du kunngjøringen i menighetsbladet?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ne": {
+        "put": [
+            "स्क्रिनमा एउटा सन्देश राखिदिनुस्: सबैलाई स्वागत छ",
+            "स्क्रिनमा सूचना देखाइदिनुस्: अब भेटीको समय हो",
+            "यो सन्देश प्रोजेक्टरको स्क्रिनमा प्रदर्शन गर्न सक्नुहुन्छ: कृपया फोन साइलेन्ट गर्नुहोस्"
+        ],
+        "take": "स्क्रिनबाट सन्देश हटाइदिनुस्",
+        "countdown": "स्क्रिनमा ५ मिनेटको काउन्टडाउन सुरु गर्नुस्",
+        "sent": "मैले हिजो तपाईंलाई एउटा सन्देश पठाएको थिएँ।",
+        "bright": "स्क्रिन धेरै चम्किलो छ।",
+        "bulletin": "मण्डलीको बुलेटिनमा भएको सूचना पढ्नुभयो?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "nl": {
+        "put": [
+            "Zet een bericht op het scherm: Welkom allemaal",
+            "Toon een mededeling op het scherm: Nu is de collecte",
+            "Zou je dit bericht op de beamer kunnen laten zien: Zet uw telefoon op stil a.u.b."
+        ],
+        "take": "Haal het bericht van het scherm",
+        "countdown": "Start op het scherm een aftelling van 5 minuten",
+        "sent": "Ik heb je gisteren een bericht gestuurd.",
+        "bright": "Het scherm is te fel.",
+        "bulletin": "Heb je de mededeling in de kerkbode gelezen?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ny": {
+        "put": [
+            "Ika uthenga pa sikirini: Takulandirani nonse",
+            "Onetsa chilengezo pa sikirini: Ino ndi nthawi ya zopereka",
+            "Kodi mungathe kutulutsa uthengawu pa sikirini ya purojekita: Chonde tsekani mafoni anu"
+        ],
+        "take": "Chotsa uthenga pa sikirini",
+        "countdown": "Yambitsa kuwerengera motsika kwa mphindi 5 pa sikirini",
+        "sent": "Ndinakutumizira uthenga dzulo.",
+        "bright": "Sikirini ikuwala kwambiri.",
+        "bulletin": "Kodi munawerenga chilengezo cha mu kalata ya mpingo?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "om": {
+        "put": [
+            "Ergaa iskiriinii irra kaa'i: Hundi keessan baga nagaan dhuftan",
+            "Beeksisa iskiriinii irratti agarsiisi: Amma yeroon kennaa ga'eera",
+            "Ergaa kana iskiriinii pirojektarii irratti mul'isuu ni dandeessaa: Maaloo bilbila cufaa"
+        ],
+        "take": "Ergaa sana iskiriinii irraa kaasi",
+        "countdown": "Iskiriinii irratti lakkoofsa duubatti daqiiqaa 5 jalqabi",
+        "sent": "Kaleessa ergaa siif ergeera.",
+        "bright": "Iskiriiniin kun baay'ee ifa.",
+        "bulletin": "Beeksisa barruu waldaa keessa jiru dubbistee?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "or": {
+        "put": [
+            "ସ୍କ୍ରିନରେ ଗୋଟିଏ ମେସେଜ୍ ରଖନ୍ତୁ: ସମସ୍ତଙ୍କୁ ସ୍ୱାଗତ",
+            "ସ୍କ୍ରିନରେ ଘୋଷଣା ଦେଖାନ୍ତୁ: ଏବେ ଦାନ ଅର୍ପଣର ସମୟ",
+            "ଏହି ସନ୍ଦେଶକୁ ପ୍ରୋଜେକ୍ଟର ସ୍କ୍ରିନରେ ପ୍ରଦର୍ଶନ କରିପାରିବେ କି: ଦୟାକରି ଫୋନ୍ ସାଇଲେଣ୍ଟ କରନ୍ତୁ"
+        ],
+        "take": "ସ୍କ୍ରିନରୁ ମେସେଜ୍ ହଟାନ୍ତୁ",
+        "countdown": "ସ୍କ୍ରିନରେ 5 ମିନିଟର କାଉଣ୍ଟଡାଉନ୍ ଆରମ୍ଭ କରନ୍ତୁ",
+        "sent": "ମୁଁ ଗତକାଲି ଆପଣଙ୍କୁ ଗୋଟିଏ ମେସେଜ୍ ପଠାଇଥିଲି।",
+        "bright": "ସ୍କ୍ରିନ୍ ବହୁତ ଉଜ୍ଜ୍ୱଳ ହେଉଛି।",
+        "bulletin": "ଚର୍ଚ୍ଚ ବୁଲେଟିନରେ ଥିବା ଘୋଷଣା ପଢ଼ିଲେ କି?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "pa": {
+        "put": [
+            "ਸਕਰੀਨ 'ਤੇ ਇੱਕ ਸੁਨੇਹਾ ਲਾ ਦਿਓ: ਸਭ ਦਾ ਸੁਆਗਤ ਹੈ",
+            "ਸਕਰੀਨ 'ਤੇ ਐਲਾਨ ਦਿਖਾਓ: ਹੁਣ ਭੇਟ ਦਾ ਸਮਾਂ ਹੈ",
+            "ਕੀ ਤੁਸੀਂ ਇਹ ਸੁਨੇਹਾ ਪ੍ਰੋਜੈਕਟਰ ਸਕਰੀਨ 'ਤੇ ਪ੍ਰਦਰਸ਼ਿਤ ਕਰ ਸਕਦੇ ਹੋ: ਕਿਰਪਾ ਕਰਕੇ ਫ਼ੋਨ ਬੰਦ ਕਰ ਦਿਓ"
+        ],
+        "take": "ਸਕਰੀਨ ਤੋਂ ਸੁਨੇਹਾ ਹਟਾ ਦਿਓ",
+        "countdown": "ਸਕਰੀਨ 'ਤੇ 5 ਮਿੰਟ ਦੀ ਉਲਟੀ ਗਿਣਤੀ ਸ਼ੁਰੂ ਕਰੋ",
+        "sent": "ਮੈਂ ਕੱਲ੍ਹ ਤੁਹਾਨੂੰ ਇੱਕ ਸੁਨੇਹਾ ਭੇਜਿਆ ਸੀ।",
+        "bright": "ਸਕਰੀਨ ਬਹੁਤ ਜ਼ਿਆਦਾ ਚਮਕਦਾਰ ਹੈ।",
+        "bulletin": "ਕੀ ਤੁਸੀਂ ਚਰਚ ਦੇ ਬੁਲੇਟਿਨ ਵਿੱਚ ਐਲਾਨ ਪੜ੍ਹਿਆ?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "pl": {
+        "put": [
+            "Wrzuć wiadomość na ekran: Witamy wszystkich serdecznie",
+            "Wyświetl ogłoszenie na ekranie: teraz czas na ofiarę",
+            "Czy mógłbyś pokazać tę wiadomość na ekranie rzutnika: Prosimy wyciszyć telefony"
+        ],
+        "take": "Zdejmij wiadomość z ekranu",
+        "countdown": "Włącz na ekranie odliczanie 5 minut",
+        "sent": "Wczoraj wysłałem ci wiadomość.",
+        "bright": "Ekran jest za jasny.",
+        "bulletin": "Czytałeś ogłoszenie w biuletynie kościelnym?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "pt": {
+        "put": [
+            "Coloca uma mensagem no telão: Sejam todos bem-vindos",
+            "Mostra um aviso na tela: agora é o momento da oferta",
+            "Você pode exibir esta mensagem no telão: Por favor, silenciem seus celulares"
+        ],
+        "take": "Tira a mensagem da tela",
+        "countdown": "Inicia uma contagem regressiva de 5 minutos no telão",
+        "sent": "Eu te mandei uma mensagem ontem.",
+        "bright": "A tela está clara demais.",
+        "bulletin": "Você leu o aviso no boletim da igreja?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "rn": {
+        "put": [
+            "Shira ubutumwa kuri ekarani: Murakaza neza mwese",
+            "Erekana itangazo kuri ekarani: ubu ni igihe co gutanga amaturo",
+            "Woshobora kumurika ubu butumwa kuri ekarani: Turabasavye muzimye amajwi ya terefone"
+        ],
+        "take": "Kura ubutumwa kuri ekarani",
+        "countdown": "Tangura guharura iminota itanu isigaye kuri ekarani",
+        "sent": "Nakurungikiye ubutumwa ejo hashize.",
+        "bright": "Ekarani ifise umuco mwinshi cane.",
+        "bulletin": "Wasomye itangazo riri mu kinyamakuru c'ishengero?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "ro": {
+        "put": [
+            "Pune un mesaj pe ecran: Bun venit tuturor",
+            "Afișează un anunț pe ecran: acum este momentul colectei",
+            "Poți să proiectezi mesajul acesta pe ecran: Vă rugăm să puneți telefoanele pe silențios"
+        ],
+        "take": "Scoate mesajul de pe ecran",
+        "countdown": "Pornește o numărătoare inversă de 5 minute pe ecran",
+        "sent": "Ți-am trimis un mesaj ieri.",
+        "bright": "Ecranul este prea luminos.",
+        "bulletin": "Ai citit anunțul din buletinul bisericii?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ru": {
+        "put": [
+            "Выведи сообщение на экран: Добро пожаловать всем",
+            "Покажи объявление на экране: сейчас будет сбор пожертвований",
+            "Можешь отобразить это сообщение на проекторе: Пожалуйста, выключите звук телефонов"
+        ],
+        "take": "Убери сообщение с экрана",
+        "countdown": "Запусти на экране обратный отсчёт на 5 минут",
+        "sent": "Я вчера отправил тебе сообщение.",
+        "bright": "Экран слишком яркий.",
+        "bulletin": "Ты читал объявление в церковном бюллетене?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "rw": {
+        "put": [
+            "Shyira ubutumwa kuri ecran: Murakaza neza mwese",
+            "Erekana itangazo kuri ecran: ubu ni igihe cyo gutura amaturo",
+            "Ese wamurika ubu butumwa kuri ecran: Turabasaba kuzimya amajwi ya telefoni zanyu"
+        ],
+        "take": "Kuraho ubutumwa kuri ecran",
+        "countdown": "Tangiza kubara iminota 5 isigaye kuri ecran",
+        "sent": "Ejo hashize nakoherereje ubutumwa.",
+        "bright": "Ecran ifite urumuri rwinshi cyane.",
+        "bulletin": "Wasomye itangazo riri mu rupapuro rw'amatangazo rw'itorero?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "si": {
+        "put": [
+            "තිරයේ පණිවිඩයක් දාන්න: හැමෝටම සාදරයෙන් පිළිගනිමු",
+            "තිරයේ නිවේදනයක් පෙන්වන්න: දැන් පරිත්‍යාග එකතු කරන වෙලාවයි",
+            "මේ පණිවිඩය ප්‍රොජෙක්ටර් තිරයේ ප්‍රදර්ශනය කරන්න පුළුවන්ද: කරුණාකර ඔබේ ෆෝන් නිශ්ශබ්ද කරන්න"
+        ],
+        "take": "තිරයෙන් පණිවිඩය අයින් කරන්න",
+        "countdown": "තිරයේ විනාඩි 5ක ආපසු ගණන් කිරීමක් පටන් ගන්න",
+        "sent": "මම ඊයේ ඔයාට පණිවිඩයක් එව්වා.",
+        "bright": "තිරයේ එළිය වැඩියි.",
+        "bulletin": "පල්ලියේ පත්‍රිකාවේ තිබුණ නිවේදනය ඔයා කියෙව්වද?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sk": {
+        "put": [
+            "Daj na obrazovku správu: Vitajte všetci",
+            "Zobraz na plátne oznam: teraz bude zbierka",
+            "Mohol by si premietnuť túto správu na plátno: Prosíme, stíšte si mobily"
+        ],
+        "take": "Daj tú správu preč z obrazovky",
+        "countdown": "Spusti na obrazovke odpočítavanie 5 minút",
+        "sent": "Včera som ti poslal správu.",
+        "bright": "Obrazovka je príliš jasná.",
+        "bulletin": "Čítal si ten oznam vo farskom liste?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sl": {
+        "put": [
+            "Daj na zaslon sporočilo: Dobrodošli vsi",
+            "Prikaži obvestilo na zaslonu: zdaj je nabirka",
+            "Ali lahko to sporočilo projiciraš na platno: Prosimo, utišajte telefone"
+        ],
+        "take": "Umakni sporočilo z zaslona",
+        "countdown": "Zaženi 5-minutno odštevanje na zaslonu",
+        "sent": "Včeraj sem ti poslal sporočilo.",
+        "bright": "Zaslon je presvetel.",
+        "bulletin": "Si prebral obvestilo v župnijskem listu?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sm": {
+        "put": [
+            "Tu'u se fe'au i luga o le sikirini: Afio mai outou uma",
+            "Fa'aali se fa'asilasilaga i luga o le sikirini: o le taimi nei o le taulaga",
+            "E mafai ona e lafo lenei fe'au i le sikirini: Fa'amolemole fa'afilemu a outou telefoni"
+        ],
+        "take": "Aveese le fe'au mai le sikirini",
+        "countdown": "Amata se faitau i tua e 5 minute i luga o le sikirini",
+        "sent": "Na ou lafo atu se fe'au ia te oe ananafi.",
+        "bright": "E susulu tele le sikirini.",
+        "bulletin": "Na e faitau le fa'asilasilaga i le pepa a le lotu?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "sn": {
+        "put": [
+            "Isa meseji pascreen: Mauya mose",
+            "Ratidza chiziviso pascreen: ikozvino inguva yemupiro",
+            "Unogona here kuburitsa meseji iyi pascreen yeprojector: Ndapota nyararidzai mafoni enyu"
+        ],
+        "take": "Bvisa meseji pascreen",
+        "countdown": "Tanga kuverenga kwekudzokera shure kwemaminitsi mashanu pascreen",
+        "sent": "Ndakakutumira meseji nezuro.",
+        "bright": "Screen iyi inopenya zvakanyanya.",
+        "bulletin": "Wakaverenga chiziviso chiri mubepa rechechi here?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "so": {
+        "put": [
+            "Fariin ku dhig shaashadda: Ku soo dhawaada dhammaantiin",
+            "Ogeysiis ku soo bandhig shaashadda: hadda waa waqtiga deeqda",
+            "Ma muujin kartaa fariintan shaashadda borojektarka: Fadlan aamusiya taleefannadiinna"
+        ],
+        "take": "Fariinta ka saar shaashadda",
+        "countdown": "Shaashadda ka bilow tirin dib-u-tirin ah oo 5 daqiiqo ah",
+        "sent": "Shalay fariin ayaan kuu diray.",
+        "bright": "Shaashaddu aad bay u iftiimaysaa.",
+        "bulletin": "Ma akhriday ogeysiiska ku qoran warqadda kaniisadda?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "sq": {
+        "put": [
+            "Vendos një mesazh në ekran: Mirë se vini të gjithë",
+            "Shfaq një njoftim në ekran: tani është koha e ofertës",
+            "A mund ta projektosh këtë mesazh në ekran: Ju lutemi, vendosni telefonat në heshtje"
+        ],
+        "take": "Hiqe mesazhin nga ekrani",
+        "countdown": "Nis një numërim mbrapsht prej 5 minutash në ekran",
+        "sent": "Të dërgova një mesazh dje.",
+        "bright": "Ekrani është shumë i ndritshëm.",
+        "bulletin": "E lexove njoftimin në buletinin e kishës?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sr": {
+        "put": [
+            "Стави поруку на екран: Добро дошли сви",
+            "Прикажи обавештење на екрану: сада скупљамо прилоге",
+            "Можеш ли да пројектујеш ову поруку на платно: Молимо вас, утишајте телефоне"
+        ],
+        "take": "Скини поруку са екрана",
+        "countdown": "Покрени одбројавање од 5 минута на екрану",
+        "sent": "Јуче сам ти послао поруку.",
+        "bright": "Екран је превише светао.",
+        "bulletin": "Да ли си прочитао обавештење у црквеном билтену?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sv": {
+        "put": [
+            "Lägg upp ett meddelande på skärmen: Välkomna allihop",
+            "Visa en kungörelse på skärmen: nu tar vi upp kollekten",
+            "Kan du projicera det här meddelandet på duken: Vänligen sätt mobilen på ljudlöst"
+        ],
+        "take": "Ta bort meddelandet från skärmen",
+        "countdown": "Starta en nedräkning på 5 minuter på skärmen",
+        "sent": "Jag skickade ett meddelande till dig igår.",
+        "bright": "Skärmen är för ljus.",
+        "bulletin": "Läste du kungörelsen i församlingsbladet?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "sw": {
+        "put": [
+            "Weka ujumbe kwenye skrini: Karibuni nyote",
+            "Onyesha tangazo kwenye skrini: sasa ni wakati wa sadaka",
+            "Unaweza kurusha ujumbe huu kwenye skrini ya projekta: Tafadhali wekeni simu zenu kimya"
+        ],
+        "take": "Ondoa ujumbe kwenye skrini",
+        "countdown": "Anzisha hesabu ya kurudi nyuma ya dakika 5 kwenye skrini",
+        "sent": "Nilikutumia ujumbe jana.",
+        "bright": "Skrini ina mwanga mwingi sana.",
+        "bulletin": "Ulisoma tangazo kwenye jarida la kanisa?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ta": {
+        "put": [
+            "திரையில் ஒரு செய்தியைப் போடுங்கள்: அனைவரையும் வரவேற்கிறோம்",
+            "திரையில் ஒரு அறிவிப்பைக் காட்டுங்கள்: இப்போது காணிக்கை நேரம்",
+            "இந்தச் செய்தியை புரொஜெக்டரில் திரையிட முடியுமா: தயவுசெய்து போனை சைலண்ட் செய்யுங்கள்"
+        ],
+        "take": "திரையிலிருந்து செய்தியை எடுத்துவிடுங்கள்",
+        "countdown": "திரையில் 5 நிமிட கவுண்ட்டவுனைத் தொடங்குங்கள்",
+        "sent": "நேற்று நான் உங்களுக்கு ஒரு செய்தி அனுப்பினேன்.",
+        "bright": "திரை ரொம்ப பிரகாசமாக இருக்கிறது.",
+        "bulletin": "சபையின் செய்தி மடலில் உள்ள அறிவிப்பைப் படித்தீர்களா?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "te": {
+        "put": [
+            "స్క్రీన్ మీద ఒక మెసేజ్ పెట్టండి: అందరికీ స్వాగతం",
+            "స్క్రీన్ మీద ఒక ప్రకటన చూపించండి: ఇప్పుడు కానుకల సమయం",
+            "ఈ సందేశాన్ని ప్రొజెక్టర్ స్క్రీన్‌పై ప్రదర్శించగలరా: దయచేసి ఫోన్లు సైలెంట్‌లో పెట్టండి"
+        ],
+        "take": "స్క్రీన్ మీద నుంచి మెసేజ్ తీసేయండి",
+        "countdown": "స్క్రీన్ మీద 5 నిమిషాల కౌంట్‌డౌన్ మొదలుపెట్టండి",
+        "sent": "నిన్న నేను మీకు ఒక మెసేజ్ పంపాను.",
+        "bright": "స్క్రీన్ చాలా ప్రకాశవంతంగా ఉంది.",
+        "bulletin": "చర్చి బులెటిన్‌లో ఉన్న ప్రకటన చదివారా?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "th": {
+        "put": [
+            "เอาข้อความขึ้นจอ: ยินดีต้อนรับทุกท่าน",
+            "แสดงประกาศบนจอ: ขณะนี้เป็นเวลาถวายทรัพย์",
+            "ช่วยฉายข้อความนี้บนจอโปรเจกเตอร์ได้ไหม: กรุณาปิดเสียงโทรศัพท์ของท่าน"
+        ],
+        "take": "เอาข้อความออกจากจอ",
+        "countdown": "เริ่มนับถอยหลัง 5 นาทีบนจอ",
+        "sent": "เมื่อวานฉันส่งข้อความหาคุณ",
+        "bright": "จอสว่างเกินไป",
+        "bulletin": "คุณอ่านประกาศในจุลสารของคริสตจักรแล้วหรือยัง",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "to": {
+        "put": [
+            "Tuku ha pōpoaki ki he sikilini: Talitali fiefia kimoutolu kotoa",
+            "Fakahā ha fanongonongo ʻi he sikilini: ko e taimi ʻeni ki he foaki",
+            "ʻE lava ke ke fakaʻasi ʻa e pōpoaki ni ʻi he sikilini: Kātaki ʻo fakalongo e telefoní"
+        ],
+        "take": "Toʻo ʻa e pōpoaki mei he sikilini",
+        "countdown": "Kamata ha lau hifo ʻo e miniti ʻe 5 ʻi he sikilini",
+        "sent": "Naʻá ku ʻave atu ha pōpoaki kiate koe ʻaneafi.",
+        "bright": "ʻOku fuʻu ulo ʻa e sikilini.",
+        "bulletin": "Naʻá ke lau ʻa e fanongonongo ʻi he tohi fanongonongo ʻa e siasí?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "tr": {
+        "put": [
+            "Ekrana bir mesaj koy: Hepiniz hoş geldiniz",
+            "Ekranda bir duyuru göster: şimdi bağış zamanı",
+            "Bu mesajı projeksiyon perdesine yansıtabilir misin: Lütfen telefonlarınızı sessize alın"
+        ],
+        "take": "Mesajı ekrandan kaldır",
+        "countdown": "Ekranda 5 dakikalık bir geri sayım başlat",
+        "sent": "Sana dün bir mesaj gönderdim.",
+        "bright": "Ekran çok parlak.",
+        "bulletin": "Kilise bültenindeki duyuruyu okudun mu?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "uk": {
+        "put": [
+            "Виведи повідомлення на екран: Ласкаво просимо всіх",
+            "Покажи оголошення на екрані: зараз буде збір пожертв",
+            "Можеш відобразити це повідомлення на проекторі: Будь ласка, вимкніть звук телефонів"
+        ],
+        "take": "Прибери повідомлення з екрана",
+        "countdown": "Запусти на екрані зворотний відлік на 5 хвилин",
+        "sent": "Я вчора надіслав тобі повідомлення.",
+        "bright": "Екран занадто яскравий.",
+        "bulletin": "Ти читав оголошення в церковному бюлетені?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "ur": {
+        "put": [
+            "اسکرین پر ایک پیغام لگا دیں: سب کو خوش آمدید",
+            "اسکرین پر ایک اعلان دکھائیں: اب ہدیہ کا وقت ہے",
+            "کیا آپ یہ پیغام پروجیکٹر کی اسکرین پر ظاہر کر سکتے ہیں: براہ کرم اپنے فون خاموش کر دیں"
+        ],
+        "take": "اسکرین سے پیغام ہٹا دیں",
+        "countdown": "اسکرین پر 5 منٹ کی الٹی گنتی شروع کریں",
+        "sent": "میں نے کل آپ کو ایک پیغام بھیجا تھا۔",
+        "bright": "اسکرین بہت زیادہ روشن ہے۔",
+        "bulletin": "کیا آپ نے چرچ کے بلیٹن میں اعلان پڑھا؟",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "vi": {
+        "put": [
+            "Đưa một thông điệp lên màn hình: Chào mừng mọi người",
+            "Hiển thị một thông báo trên màn hình: bây giờ là giờ dâng hiến",
+            "Bạn chiếu giúp tin nhắn này lên màn chiếu được không: Vui lòng tắt chuông điện thoại"
+        ],
+        "take": "Gỡ thông điệp khỏi màn hình",
+        "countdown": "Bắt đầu đếm ngược 5 phút trên màn hình",
+        "sent": "Hôm qua tôi đã gửi cho bạn một tin nhắn.",
+        "bright": "Màn hình sáng quá.",
+        "bulletin": "Bạn đã đọc thông báo trong bản tin của hội thánh chưa?",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "xh": {
+        "put": [
+            "Beka umyalezo kwisikrini: Namkelekile nonke",
+            "Bonisa isaziso kwisikrini: ngoku lixesha lomnikelo",
+            "Ungawuveza lo myalezo kwisikrini seprojektha: Nceda nithulise iifowuni zenu"
+        ],
+        "take": "Susa umyalezo kwisikrini",
+        "countdown": "Qalisa ukubala ngokubuya umva imizuzu emi-5 kwisikrini",
+        "sent": "Ndikuthumelele umyalezo izolo.",
+        "bright": "Isikrini sikhanya kakhulu.",
+        "bulletin": "Usifundile isaziso esikwincwadana yecawa?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    },
+    "yo": {
+        "put": [
+            "Fi ọ̀rọ̀ kan sórí ìbòjú: Ẹ káàbọ̀, gbogbo yín",
+            "Ṣàfihàn ìkéde kan lórí ìbòjú: àkókò ọrẹ ló kàn báyìí",
+            "Ṣé o lè gbé ọ̀rọ̀ yìí jáde lórí ìbòjú: Ẹ jọ̀ọ́, ẹ pa fóònù yín lẹ́nu mọ́"
+        ],
+        "take": "Yọ ọ̀rọ̀ náà kúrò lórí ìbòjú",
+        "countdown": "Bẹ̀rẹ̀ kíka ìṣẹ́jú márùn-ún sẹ́yìn lórí ìbòjú",
+        "sent": "Mo fi ọ̀rọ̀ ránṣẹ́ sí ọ lánàá.",
+        "bright": "Ìmọ́lẹ̀ ìbòjú náà ti pọ̀ jù.",
+        "bulletin": "Ṣé o ka ìkéde tó wà nínú ìwé ìròyìn ṣọ́ọ̀ṣì?",
+        "floor": {
+            "message": 1,
+            "countdown": 0
+        }
+    },
+    "zh": {
+        "put": [
+            "在屏幕上放一条消息：欢迎大家",
+            "在屏幕上显示一则公告：现在是奉献时间",
+            "能帮我把这条消息投到投影幕布上吗：请大家把手机调成静音"
+        ],
+        "take": "把屏幕上的消息撤下来",
+        "countdown": "在屏幕上开始5分钟倒计时",
+        "sent": "我昨天给你发了一条消息。",
+        "bright": "屏幕太亮了。",
+        "bulletin": "你看过教会周报上的公告了吗？",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "zh-Hant": {
+        "put": [
+            "在螢幕上放一則訊息：歡迎大家",
+            "在螢幕上顯示一則公告：現在是奉獻時間",
+            "可以幫我把這則訊息投影到布幕上嗎：請大家將手機調成靜音"
+        ],
+        "take": "把螢幕上的訊息撤下來",
+        "countdown": "在螢幕上開始5分鐘倒數計時",
+        "sent": "我昨天傳了一則訊息給你。",
+        "bright": "螢幕太亮了。",
+        "bulletin": "你有看到週報上的公告嗎？",
+        "floor": {
+            "message": 4,
+            "countdown": 1
+        }
+    },
+    "zu": {
+        "put": [
+            "Beka umlayezo esikrinini: Siyanamukela nonke",
+            "Khombisa isimemezelo esikrinini: manje yisikhathi somnikelo",
+            "Ungawuveza lo mlayezo esikrinini seprojektha: Sicela nithulise amafoni enu"
+        ],
+        "take": "Susa umlayezo esikrinini",
+        "countdown": "Qala ukubala emuva kwemizuzu emi-5 esikrinini",
+        "sent": "Ngikuthumelele umlayezo izolo.",
+        "bright": "Isikrini sikhanya kakhulu.",
+        "bulletin": "Usifundile isimemezelo esisephepheni lebandla?",
+        "floor": {
+            "message": 4,
+            "countdown": 0
+        }
+    }
+}

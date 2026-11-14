@@ -4,5 +4,8 @@
     },
     "latinStopWords": {
         "vi-VN": "và của người là không thì đã có cho các những trong"
+    },
+    "catalogLanguageCodes": {
+        "vi": "vie"
     }
 }

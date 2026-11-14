@@ -31,7 +31,8 @@ camera of this computer for any foreground or background. VP8 by
 `window:<webContents id>` (IPC `vd:camera-watch`) or a browser's screen page
 `screen:<viewer>:<screen>` (its socket's `camera-watch`, only for a camera that
 screen shows) -- the same frames passed on, never encoded twice. Decoded into a
-`MediaStreamTrackGenerator`, or a canvas stream where there is none.
+`MediaStreamTrackGenerator`, or straight into canvases where there is none
+(`createCanvasSink`).
 
 - **A watch outlives the sharing.** Not shared (tab reloading -- it keeps its
   id -- or camera turned off) pauses every watcher (`vd:camera-end`); sharing

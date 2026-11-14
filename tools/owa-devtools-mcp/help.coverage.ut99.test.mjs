@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +30,10 @@ import {
   searchHelp,
   toPageParts,
 } from './help.mjs';
+import {
+  listPackageCodes,
+  toPackageDir,
+} from '../../extra-work/language-packages.mjs';
 import { configureLangPacks } from './langPacks.mjs';
 import { hashManualPage } from './manualI18n.mjs';
 
@@ -364,8 +374,15 @@ describe('readHelpPage', () => {
 describe('listTranslatedEntries', () => {
   it('lists nothing for a language not installed, with no index or a broken one', () => {
     // Not installed: a checkout's own source packages are not read while
-    // the app says what is installed.
-    expect(listTranslatedEntries('fr')).toEqual([]);
+    // the app says what is installed -- not one with a manual of its own.
+    const checkoutCodeList = listPackageCodes({
+      isEnglishIncluded: false,
+    }).filter((code) => {
+      return existsSync(path.join(toPackageDir(code), 'manual'));
+    });
+    for (const code of ['zz', ...checkoutCodeList]) {
+      expect(listTranslatedEntries(code), code).toEqual([]);
+    }
     // Installed, its manual index broken.
     expect(listTranslatedEntries('xx')).toEqual([]);
     // Installed, with no manual at all.

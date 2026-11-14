@@ -5,31 +5,36 @@
 // module.
 
 export type BotFocusType =
-    | 'presenter'
-    | 'reader'
-    | 'appDocumentEditor'
-    | 'bibleNote'
-    | 'setting'
-    | 'webEditor'
-    | 'lyricEditor'
-    | 'lwShare';
+  | 'presenter'
+  | 'reader'
+  | 'appDocumentEditor'
+  | 'screen-mirror'
+  | 'bibleNote'
+  | 'setting'
+  | 'webEditor'
+  | 'lyricEditor'
+  | 'lwShare';
 
 export type BotFocusDescriptorType = {
-    /** The html base name -- spliced into `page: "<key>.html"` by the tools. */
-    key: BotFocusType;
-    /** What a volunteer calls this window. */
-    label: string;
-    /** The page file, e.g. `bibleNote.html`. */
-    window: string;
-    /** Whether the ONE main window navigates to it, rather than it being its
-     * own window that has to be opened. */
-    isMainWindow: boolean;
-    /** How the user gets there, in the words on the controls. */
-    howToOpen: string;
-    /** The words on the ONE control that reaches this window, or `null` where
-     * no single control does. Pressed by the app for a window of its own;
-     * only ringed for a page of the main window, which is navigated to. */
-    openFind: string | null;
+  /** The html base name -- spliced into `page: "<key>.html"` by the tools. */
+  key: BotFocusType;
+  /** What a volunteer calls this window. */
+  label: string;
+  /** The page file, e.g. `bibleNote.html`. */
+  window: string;
+  /** Whether the ONE main window navigates to it, rather than it being its
+   * own window that has to be opened. */
+  isMainWindow: boolean;
+  /** How the user gets there, in the words on the controls. */
+  howToOpen: string;
+  /** The words on the ONE control that reaches this window, or `null` where
+   * no single control does. Pressed by the app for a window of its own;
+   * only ringed for a page of the main window, which is navigated to. */
+  openFind: string | null;
+  /** Another window whose manual pages answer from this one too
+   * (`applyFocus` in `help.mjs`): the Screen Mirror page's recipe is
+   * filed under the Presenter. */
+  alsoSurface?: BotFocusType;
 };
 
 export const BOT_FOCUS_LIST: BotFocusDescriptorType[];

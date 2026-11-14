@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 export type MockWebContents = {
     on: ReturnType<typeof vi.fn>;
     once: ReturnType<typeof vi.fn>;
+    removeListener: ReturnType<typeof vi.fn>;
     send: ReturnType<typeof vi.fn>;
     loadURL: ReturnType<typeof vi.fn>;
     getURL: ReturnType<typeof vi.fn>;
@@ -76,6 +77,7 @@ export function createMockWebContents(
     return {
         on: vi.fn(),
         once: vi.fn(),
+        removeListener: vi.fn(),
         send: vi.fn(),
         loadURL: vi.fn(),
         getURL: vi.fn(() => 'https://localhost:3000/presenter.html'),

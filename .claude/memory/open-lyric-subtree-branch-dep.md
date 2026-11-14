@@ -1,6 +1,6 @@
 ---
 name: open-lyric-subtree-branch-dep
-description: "open-lyric is consumed as a pre-built dist repo pinned to a version tag (open-lyric-dist#0.1.71 in the app's package.json); Khmer's song plugin is pinned in the Khmer folder's own package.json; the old git subtree-split branch is history"
+description: "open-lyric is consumed from the npm registry since 2026-11-06 (open-lyric ^0.1.79 in the app's package.json, ^0.1.72 that day; before that a pre-built dist repo pinned to a version tag, open-lyric-dist#0.1.71); Khmer's song plugin is pinned in the Khmer folder's own package.json; the old git subtree-split branch is history"
 metadata:
   node_type: memory
   type: project
@@ -19,13 +19,15 @@ previous spec `…/open-lyric.git/tree/main/packages/open-lyric` was a GitHub
 27 MB library (`open-lyric@0.1.0`, main `./dist/index.cjs`). It failed silently,
 not loudly. That constraint is the reason the dist repos below exist.
 
-**How to apply:** Superseded 2026-08. The dep is a pre-built dist repo pinned to
-a tag: `"open-lyric": "https://github.com/raksa/open-lyric-dist#0.1.71"` in the
-app's `package.json` (2026-11-05; it was `#0.1.55` when this was written). To
-ship an upstream change, publish a new dist tag and bump the `#<tag>` in
-package.json, then `npm i` — npm re-resolves on a changed ref. Same shape for
-`bible-note-dist` and `open-lyric-plugin-player-dist`. **The Khmer song
-plugin, `open-lyric-plugin-km-kh-dist#0.1.10`, is no longer the app's**
+**How to apply:** Superseded 2026-08 by a pre-built dist repo pinned to a tag
+(`"open-lyric": "https://github.com/raksa/open-lyric-dist#0.1.71"` on
+2026-11-05; it was `#0.1.55` when this was written), and that on 2026-11-06
+by the npm registry: `"open-lyric": "^0.1.79"` in the app's `package.json`,
+resolved from `registry.npmjs.org` in `package-lock.json`. To ship an
+upstream change, publish a new version and raise that range in package.json,
+then `npm i`. Same shape for `bible-note` and `open-lyric-plugin-player`. **The Khmer song
+plugin, `open-lyric-plugin-km-kh` (`^0.1.17` from the registry; it was
+`open-lyric-plugin-km-kh-dist#0.1.10`), is no longer the app's**
 (2026-11-05): it is pinned in `src/lang/data/online/km/package.json` and
 installed into that folder's own `node_modules` (`extra-work/install-lang-deps.mjs`);
 bump it there, `npm install --allow-git=all` in that folder, and raise

@@ -18,7 +18,7 @@ and 148 notes whose named code moved since their last edit.
 
 - **Reads.** Backticked tokens under a known root (`src/`, `electron/`,
   `tools/`, `extra-work/`, `docs/`, `html/`, `e2e/`, `public/`, `resources/`,
-  `.claude/`). It also reads `scripts/…` and
+  `.claude/`, `.vscode/`). It also reads `scripts/…` and
   `references/…` relative to the skill a doc sits in, and markdown links
   relative to the doc. `file:120`, `file:12-20` and `#L12` anchors are checked
   against the file's length. A bare **code** file name (`boot.ts`) must be
@@ -67,11 +67,16 @@ and 148 notes whose named code moved since their last edit.
 
 ### `tools` — the `owa_*` surface
 
-- **Reads.** Tools registered by `server.registerTool('owa_…'` or by
-  `name: 'owa_…'` in `tools/owa-devtools-mcp/*.mjs`. Every `owa_*` a doc
+- **Reads.** Tools registered by `server.registerTool('owa_…'`, by
+  `name: 'owa_…'`, or by a constant holding the name
+  (`registerTool(NOTE_EDIT_TOOL_NAME, …)`, since 2026-11-11, `AD-27`: the
+  five one-document editors had been invisible, 40 of 45) in
+  `tools/owa-devtools-mcp/*.mjs`; `agentDocsAudit.test.ts` holds the count
+  to what the server really registers. Every `owa_*` a doc
   names must be registered or appear in the code. Three listings are held to
   completeness: CLAUDE.md, `rules/agent-tools.md`, and the MCP README. A
-  family written `owa_guide_start` / `_step` counts as listing `_step`.
+  family written `owa_guide_start` / `_step` counts as listing `_step`, and
+  `owa_foreground` / `_edit` as listing `owa_foreground_edit`.
 - **Confirm.** Read the listing's own framing. CLAUDE.md says *"PLUS app-level
   ones —"* followed by a list, so it claims completeness, and the 7 missing at
   calibration (`owa_bible_*`, `owa_foreground`, `owa_list_questions`,
@@ -98,7 +103,7 @@ and 148 notes whose named code moved since their last edit.
   override. Agents set these, so a dead one silently does nothing. Usually
   **fix**.
 
-### `ids` — `EN/EC/MC/AC/AD/UT-xx`, `W-xx`, matrix ids
+### `ids` — `EN/EC/MC/AC/AD/UT/TP-xx`, `W-xx`, matrix ids
 
 - **Reads.** Each id must appear in its owning ledger. `W-xx` must be a `###`
   heading in `user-workflows.md`, and matrix prefixes (`CB`, `PL`, `MD`, `SC`
@@ -209,7 +214,7 @@ and a run is not done while one is above 0; the gate holds the first two
   pass for a re-read. Only a note edited to name OTHER files goes back to the
   commit rule: whoever edited it wrote that against the day's code. *Fix:* read it against
   the code (the reading checks below), fix it, `--stamp-notes=<path>`. Hot
-  data files (`src/lang/data/**`, `package*.json`) are ignored.
+  data files (`src/lang/data/**`, `package*.json`, `docs/test-manifest.json`) are ignored.
   **Due only because of an uncommitted file** is a line of its own (`AD-18`,
   2026-10-11; the manual's *recipes due* has the same one): read with every
   uncommitted file as the last commit has it, the note's code is what it was

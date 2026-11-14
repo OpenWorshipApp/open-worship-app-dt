@@ -8,7 +8,7 @@
  * IPC from the main process, and nothing about the content -- and a model
  * handed "showing: true" for a screen with a verse on it and nothing else
  * INFERS the rest. Measured 2026-09-09 on the standing corpus, with the
- * projector showing a Khmer verse: asked *the words no come out big screen*
+ * projector showing a verse in another language: asked *the words no come out big screen*
  * the assistant took nine rounds and 36 seconds to conclude, confidently,
  * that "nothing has actually been sent to it yet: turning the screen on just
  * gives you a blank canvas" -- to a volunteer standing in front of a
@@ -130,7 +130,7 @@ const BLOCK_TAG_PATTERN = /<(div|p|br|li|h[1-6]|section|tr|td|th)\b/gi;
 
 /**
  * The words in a slide's markup, as sung. A song slide from open-lyric
- * renders its chords INTO the words -- a chord box landing between a Khmer
+ * renders its chords INTO the words -- a chord box landing between a
  * letter and its vowel sign, mid-word as chords do -- which is right on a projector and noise in a
  * sentence about what is on it. The chord boxes (every one is marked
  * aria-hidden, and carries the segment-chord class) come out of the tree
@@ -243,7 +243,7 @@ export function toBibleSummary(
 ): AgentScreenBibleSummaryType | null {
     // A long text sits in the same layer and is no passage: it is said
     // among the foreground extras (`toLongTextSummary`), where its panel
-    // is, so nothing reads `KM` as a Bible version.
+    // is, so nothing reads a language's code (`XX`) as a Bible version.
     if (
         viewData === null ||
         typeof viewData !== 'object' ||
@@ -337,31 +337,31 @@ export function toForegroundSummary(
     }
     // What each clock READS -- paused, not started, counting the time over --
     // because "a countdown" alone describes a wall the room is not looking at.
-    if (foregroundData.countdownData) {
-        items.push(describeCountdown(foregroundData.countdownData));
+    for (const countdown of foregroundData.countdownDataList ?? []) {
+        items.push(describeCountdown(countdown));
     }
-    if (foregroundData.stopwatchData) {
-        items.push(describeStopwatch(foregroundData.stopwatchData));
+    for (const stopwatch of foregroundData.stopwatchDataList ?? []) {
+        items.push(describeStopwatch(stopwatch));
     }
     for (const time of foregroundData.timeDataList ?? []) {
         items.push(time.title ? `clock "${time.title}"` : 'clock');
     }
-    if (foregroundData.marqueeTopData) {
+    for (const marquee of foregroundData.marqueeTopDataList ?? []) {
         items.push(
-            `marquee at the top: "${cutText(toPlainText(foregroundData.marqueeTopData.text ?? ''))}"`,
+            `marquee at the top: "${cutText(toPlainText(marquee.text ?? ''))}"`,
         );
     }
-    if (foregroundData.marqueeBottomData) {
+    for (const marquee of foregroundData.marqueeBottomDataList ?? []) {
         items.push(
-            `marquee at the bottom: "${cutText(toPlainText(foregroundData.marqueeBottomData.text ?? ''))}"`,
+            `marquee at the bottom: "${cutText(toPlainText(marquee.text ?? ''))}"`,
         );
     }
     // A quick text is MARKUP (its editor writes `<p>…</p>`), unlike a message
     // or a marquee, so it is read for its words -- it was handed to the model
     // as `quick text: "<p>zz robot test</p>"`.
-    if (foregroundData.quickTextData) {
+    for (const quickText of foregroundData.quickTextDataList ?? []) {
         items.push(
-            `quick text: "${cutText(toSungText(foregroundData.quickTextData.htmlText ?? ''))}"`,
+            `quick text: "${cutText(toSungText(quickText.htmlText ?? ''))}"`,
         );
     }
     for (const _camera of foregroundData.cameraDataList ?? []) {

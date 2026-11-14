@@ -1,0 +1,590 @@
+{
+    "af": {
+        "folder": "af",
+        "make": "Maak 'n studielêer vir Johannes 3:16",
+        "resource": "Skep 'n bybelstudie oor Romeine 8",
+        "howTo": "Hoe skep ek 'n studielêer?",
+        "note": "Skryf 'n nota by my bybelstudie oor Johannes 3"
+    },
+    "am": {
+        "folder": "am",
+        "make": "ለዮሐንስ 3:16 የጥናት ፋይል ፍጠር",
+        "resource": "በሮሜ 8 ላይ የመጽሐፍ ቅዱስ ጥናት አዘጋጅልኝ",
+        "howTo": "የጥናት ፋይል እንዴት መፍጠር እችላለሁ?",
+        "note": "በመጽሐፍ ቅዱስ ጥናቴ ላይ ማስታወሻ ጻፍ"
+    },
+    "ar": {
+        "folder": "ar",
+        "make": "أنشئ ملف دراسة ليوحنا 3:16",
+        "resource": "اكتب دراسة كتابية عن رومية 8",
+        "howTo": "كيف أنشئ ملف دراسة؟",
+        "note": "اكتب ملاحظة عن دراسة يوحنا 3"
+    },
+    "az": {
+        "folder": "az",
+        "make": "Yəhya 3:16 üçün öyrənmə faylı yarat",
+        "resource": "Romalılara 8 haqqında Bibliya araşdırması hazırla",
+        "howTo": "Öyrənmə faylını necə yaradım?",
+        "note": "Bibliya araşdırmama qeyd yaz"
+    },
+    "be": {
+        "folder": "be",
+        "make": "Зрабі вучэбны файл для Яна 3:16",
+        "resource": "Падрыхтуй вывучэнне Бібліі па Рымлянам 8",
+        "howTo": "Як стварыць вучэбны файл?",
+        "note": "Напішы нататку пра вывучэнне Яна 3"
+    },
+    "bg": {
+        "folder": "bg",
+        "make": "Направи учебен файл за Йоан 3:16",
+        "resource": "Подготви библейско изучаване върху Римляни 8",
+        "howTo": "Как да създам учебен файл?",
+        "note": "Напиши бележка за изучаването на Йоан 3"
+    },
+    "bn": {
+        "folder": "bn",
+        "make": "যোহন ৩:১৬ এর জন্য একটি অধ্যয়ন ফাইল তৈরি করুন",
+        "resource": "রোমীয় ৮ নিয়ে একটি বাইবেল অধ্যয়ন লিখুন",
+        "howTo": "আমি কীভাবে একটি অধ্যয়ন ফাইল তৈরি করব?",
+        "note": "আমার বাইবেল অধ্যয়নের জন্য একটি নোট লিখুন"
+    },
+    "bo": {
+        "folder": "bo",
+        "make": "ཡོ་ཧ་ནན་ 3:16 ཆེད་དུ་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བཟོ་རོགས།",
+        "resource": "རོ་མ་པ་ 8 སྐོར་གྱི་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བྲིས་རོགས།",
+        "howTo": "སློབ་སྦྱོང་ཡིག་ཆ་ག་འདྲ་བྱས་ནས་བཟོ་དགོས་སམ།"
+    },
+    "ca": {
+        "folder": "ca",
+        "make": "Fes un fitxer d'estudi per a Joan 3:16",
+        "resource": "Prepara un estudi bíblic sobre Romans 8",
+        "howTo": "Com puc crear un fitxer d'estudi?",
+        "note": "Escriu una nota per al meu estudi bíblic de Joan 3"
+    },
+    "ceb": {
+        "folder": "ceb",
+        "make": "Paghimo og file sa pagtuon para sa Juan 3:16",
+        "resource": "Andama ang usa ka pagtuon sa Bibliya bahin sa Roma 8",
+        "howTo": "Unsaon nako paghimo og file sa pagtuon?",
+        "note": "Isulat ang usa ka nota sa akong pagtuon sa Bibliya"
+    },
+    "cs": {
+        "folder": "cs",
+        "make": "Vytvoř studijní soubor pro Jana 3:16",
+        "resource": "Připrav biblické studium o Římanům 8",
+        "howTo": "Jak vytvořím studijní soubor?",
+        "note": "Napiš poznámku k mému biblickému studiu Jana 3"
+    },
+    "da": {
+        "folder": "da",
+        "make": "Lav en studiefil til Johannes 3,16",
+        "resource": "Skriv et bibelstudie om Romerbrevet 8",
+        "howTo": "Hvordan opretter jeg en studiefil?",
+        "note": "Skriv en note til mit bibelstudie om Johannes 3"
+    },
+    "de": {
+        "folder": "de",
+        "make": "Erstelle eine Studiendatei für Johannes 3,16",
+        "resource": "Schreib ein Bibelstudium über Römer 8",
+        "howTo": "Wie erstelle ich eine Studiendatei?",
+        "note": "Schreib eine Notiz zu meinem Bibelstudium über Johannes 3"
+    },
+    "el": {
+        "folder": "el",
+        "make": "Φτιάξε ένα αρχείο μελέτης για το Ιωάννης 3:16",
+        "resource": "Γράψε μια βιβλική μελέτη για τους Ρωμαίους 8",
+        "howTo": "Πώς δημιουργώ ένα αρχείο μελέτης;",
+        "note": "Γράψε μια σημείωση για τη μελέτη μου στο Ιωάννης 3"
+    },
+    "es": {
+        "folder": "es",
+        "make": "Haz un archivo de estudio para Juan 3:16",
+        "resource": "Prepara un estudio bíblico sobre Romanos 8",
+        "howTo": "¿Cómo puedo crear un archivo de estudio?",
+        "note": "Escribe una nota para mi estudio bíblico de Juan 3"
+    },
+    "et": {
+        "folder": "et",
+        "make": "Tee Johannese 3:16 jaoks uurimisfail",
+        "resource": "Koosta piibliuurimine Roomlastele 8 kohta",
+        "howTo": "Kuidas ma saan uurimisfaili luua?",
+        "note": "Kirjuta märkus minu piibliuurimise kohta"
+    },
+    "fa": {
+        "folder": "fa",
+        "make": "یک فایل مطالعه برای یوحنا ۳:۱۶ بساز",
+        "resource": "یک مطالعه کتاب مقدس درباره رومیان ۸ بنویس",
+        "howTo": "چطور یک فایل مطالعه بسازم؟",
+        "note": "یک یادداشت برای مطالعه یوحنا ۳ بنویس"
+    },
+    "fi": {
+        "folder": "fi",
+        "make": "Tee opiskelutiedosto Johanneksen 3:16 jakeesta",
+        "resource": "Laadi raamattuopiskelu Roomalaiskirjeen 8 luvusta",
+        "howTo": "Miten voin tehdä opiskelutiedoston?",
+        "note": "Kirjoita muistiinpano raamattuopiskeluuni"
+    },
+    "fj": {
+        "folder": "fj",
+        "make": "Bulia e dua na faile ni vuli me baleta na Joni 3:16",
+        "resource": "Cakava e dua na faile ni vuli me baleta na Roma 8",
+        "howTo": "Au na bulia vakacava e dua na faile ni vuli?"
+    },
+    "ga": {
+        "folder": "ga",
+        "make": "Déan comhad staidéir do Eoin 3:16",
+        "resource": "Ullmhaigh treoir staidéir ar Rómhánaigh 8",
+        "howTo": "Conas a chruthaím comhad staidéir?",
+        "note": "Scríobh nóta i mo chomhad staidéir"
+    },
+    "gl": {
+        "folder": "gl",
+        "make": "Fai un ficheiro de estudo para Xoán 3:16",
+        "resource": "Prepara un estudo bíblico sobre Romanos 8",
+        "howTo": "Como podo crear un ficheiro de estudo?",
+        "note": "Escribe unha nota para o meu estudo bíblico de Xoán 3"
+    },
+    "gu": {
+        "folder": "gu",
+        "make": "યોહાન 3:16 માટે અભ્યાસ ફાઇલ બનાવો",
+        "resource": "રોમનો 8 પર બાઇબલ અભ્યાસ લખો",
+        "howTo": "હું અભ્યાસ ફાઇલ કેવી રીતે બનાવું?",
+        "note": "મારા બાઇબલ અભ્યાસ માટે નોંધ લખો"
+    },
+    "ha": {
+        "folder": "ha",
+        "make": "Yi min fayil na nazari don Yahaya 3:16",
+        "resource": "Shirya nazarin Littafi Mai Tsarki akan Romawa 8",
+        "howTo": "Yaya zan ƙirƙiri fayil na nazari?"
+    },
+    "he": {
+        "folder": "he",
+        "make": "צור קובץ לימוד ליוחנן 3:16",
+        "resource": "הכן לימוד מקרא על הרומים 8",
+        "howTo": "איך ליצור קובץ לימוד?",
+        "note": "כתוב הערה על הלימוד שלי ביוחנן 3"
+    },
+    "hi": {
+        "folder": "hi",
+        "make": "यूहन्ना 3:16 के लिए एक अध्ययन फ़ाइल बनाओ",
+        "resource": "रोमियों 8 पर एक बाइबल अध्ययन लिखिए",
+        "howTo": "मैं अध्ययन फ़ाइल कैसे बनाऊँ?",
+        "note": "मेरे बाइबल अध्ययन के लिए एक नोट लिखो"
+    },
+    "hr": {
+        "folder": "hr",
+        "make": "Napravi datoteku za proučavanje za Ivan 3:16",
+        "resource": "Pripremi biblijski studij o Rimljanima 8",
+        "howTo": "Kako da napravim datoteku za proučavanje?",
+        "note": "Napiši bilješku za moje proučavanje Ivana 3"
+    },
+    "ht": {
+        "folder": "ht",
+        "make": "Fè yon fichye etid pou Jan 3:16",
+        "resource": "Prepare yon etid biblik sou Women 8",
+        "howTo": "Kijan pou m kreye yon fichye etid?",
+        "note": "Ekri yon nòt pou etid biblik mwen sou Jan 3"
+    },
+    "hu": {
+        "folder": "hu",
+        "make": "Készíts egy tanulmányi fájlt a János 3:16-hoz",
+        "resource": "Írj egy bibliatanulmányt a Róma 8-ról",
+        "howTo": "Hogyan készítsek tanulmányi fájlt?",
+        "note": "Írj egy jegyzetet a bibliatanulmányomhoz"
+    },
+    "hy": {
+        "folder": "hy",
+        "make": "Ստեղծիր ուսումնասիրության ֆայլ Հովհաննես 3:16-ի համար",
+        "resource": "Պատրաստիր Աստվածաշնչի ուսումնասիրություն Հռոմեացիներ 8-ի մասին",
+        "howTo": "Ինչպե՞ս ստեղծել ուսումնասիրության ֆայլ",
+        "note": "Գրիր նշում իմ Աստվածաշնչի ուսումնասիրության մասին"
+    },
+    "id": {
+        "folder": "id",
+        "make": "Buat file studi untuk Yohanes 3:16",
+        "resource": "Siapkan pendalaman Alkitab tentang Roma 8",
+        "howTo": "Bagaimana cara membuat file studi?",
+        "note": "Tulis catatan untuk studi Alkitab saya tentang Yohanes 3"
+    },
+    "ig": {
+        "folder": "ig",
+        "make": "Mepụta faịlụ ọmụmụ maka Jọn 3:16",
+        "resource": "Kwadebe ọmụmụ Baịbụl banyere Ndị Rom 8",
+        "howTo": "Kedu ka m ga-esi mepụta faịlụ ọmụmụ?"
+    },
+    "is": {
+        "folder": "is",
+        "make": "Búðu til skrá fyrir biblíulestur um Jóhannes 3:16",
+        "resource": "Undirbúðu biblíulestur um Rómverjabréfið 8",
+        "howTo": "Hvernig get ég búið til skrá fyrir biblíulestur?",
+        "note": "Skrifaðu athugasemd við biblíulesturinn minn"
+    },
+    "it": {
+        "folder": "it",
+        "make": "Crea un file di studio per Giovanni 3:16",
+        "resource": "Prepara uno studio biblico su Romani 8",
+        "howTo": "Come posso creare un file di studio?",
+        "note": "Scrivi una nota per il mio studio biblico su Giovanni 3"
+    },
+    "ja": {
+        "folder": "ja",
+        "make": "ヨハネ3:16の学習ファイルを作って",
+        "resource": "ローマ人への手紙8章の聖書研究を書いてください",
+        "howTo": "学習ファイルはどうやって作りますか？",
+        "note": "ヨハネ3章の聖書研究についてメモを書いて"
+    },
+    "ka": {
+        "folder": "ka",
+        "make": "შექმენი შესასწავლი ფაილი იოანე 3:16-სთვის",
+        "resource": "მოამზადე ბიბლიის შესწავლა რომაელთა 8-ზე",
+        "howTo": "როგორ შევქმნა შესასწავლი ფაილი?",
+        "note": "დაწერე შენიშვნა ჩემი ბიბლიის შესწავლისთვის"
+    },
+    "kk": {
+        "folder": "kk",
+        "make": "Жохан 3:16 үшін зерттеу файлын жаса",
+        "resource": "Римдіктерге 8 туралы Киелі кітапты зерттеу дайында",
+        "howTo": "Зерттеу файлын қалай жасаймын?",
+        "note": "Киелі кітапты зерттеуім үшін жазба жаз"
+    },
+    "kn": {
+        "folder": "kn",
+        "make": "ಯೋಹಾನ 3:16 ಗಾಗಿ ಅಧ್ಯಯನ ಫೈಲ್ ರಚಿಸಿ",
+        "resource": "ರೋಮಾಪುರದವರಿಗೆ 8 ರ ಬಗ್ಗೆ ಬೈಬಲ್ ಅಧ್ಯಯನವನ್ನು ಬರೆಯಿರಿ",
+        "howTo": "ಅಧ್ಯಯನ ಫೈಲ್ ಅನ್ನು ಹೇಗೆ ರಚಿಸುವುದು?",
+        "note": "ನನ್ನ ಬೈಬಲ್ ಅಧ್ಯಯನಕ್ಕಾಗಿ ಟಿಪ್ಪಣಿ ಬರೆಯಿರಿ"
+    },
+    "ko": {
+        "folder": "ko",
+        "make": "요한복음 3:16 학습 파일을 만들어 줘",
+        "resource": "로마서 8장에 대한 성경 공부를 작성해 주세요",
+        "howTo": "학습 파일은 어떻게 만들어요?",
+        "note": "요한복음 3장 성경 공부에 대한 메모를 작성해 줘"
+    },
+    "lo": {
+        "folder": "lo",
+        "make": "ສ້າງໄຟລ໌ສຶກສາສຳລັບໂຢຮັນ 3:16",
+        "resource": "ກະກຽມການສຶກສາພຣະຄຳພີກ່ຽວກັບໂຣມ 8",
+        "howTo": "ຂ້ອຍຈະສ້າງໄຟລ໌ສຶກສາແນວໃດ?",
+        "note": "ຂຽນໂນດສຳລັບການສຶກສາພຣະຄຳພີຂອງຂ້ອຍ"
+    },
+    "lt": {
+        "folder": "lt",
+        "make": "Sukurk studijų failą Jono 3:16",
+        "resource": "Paruošk Biblijos studiją apie Romiečiams 8",
+        "howTo": "Kaip sukurti studijų failą?",
+        "note": "Parašyk pastabą mano Biblijos studijai apie Jono 3"
+    },
+    "lv": {
+        "folder": "lv",
+        "make": "Izveido studiju failu Jāņa 3:16",
+        "resource": "Sagatavo Bībeles studiju par Romiešiem 8",
+        "howTo": "Kā izveidot studiju failu?",
+        "note": "Uzraksti piezīmi manai Bībeles studijai par Jāņa 3"
+    },
+    "mg": {
+        "folder": "mg",
+        "make": "Mamorona rakitra fandalinana ho an'i Jaona 3:16",
+        "resource": "Manomana fandalinana Baiboly momba ny Romana 8",
+        "howTo": "Ahoana no hamoronako rakitra fandalinana?"
+    },
+    "mi": {
+        "folder": "mi",
+        "make": "Waihangatia he kōnae ako mō Hoani 3:16",
+        "resource": "Whakaritea he akoranga Paipera mō Roma 8",
+        "howTo": "Me pēhea au e waihanga ai i tētahi kōnae ako?"
+    },
+    "mk": {
+        "folder": "mk",
+        "make": "Направи датотека за проучување за Јован 3:16",
+        "resource": "Подготви библиско проучување за Римјаните 8",
+        "howTo": "Како да создадам датотека за проучување?",
+        "note": "Напиши белешка за моето проучување на Јован 3"
+    },
+    "ml": {
+        "folder": "ml",
+        "make": "യോഹന്നാൻ 3:16 നായി ഒരു പഠന ഫയൽ ഉണ്ടാക്കുക",
+        "resource": "റോമർ 8 നെക്കുറിച്ച് ഒരു ബൈബിൾ പഠനം തയ്യാറാക്കുക",
+        "howTo": "ഒരു പഠന ഫയൽ എങ്ങനെ ഉണ്ടാക്കാം?",
+        "note": "എന്റെ ബൈബിൾ പഠനത്തിനായി ഒരു കുറിപ്പ് എഴുതുക"
+    },
+    "mn": {
+        "folder": "mn",
+        "make": "Иохан 3:16-д зориулж судалгааны файл үүсгэ",
+        "resource": "Ром 8-ын тухай Библийн судалгаа бэлтгэ",
+        "howTo": "Судалгааны файлыг яаж үүсгэх вэ?",
+        "note": "Миний Библийн судалгаанд тэмдэглэл бич"
+    },
+    "mr": {
+        "folder": "mr",
+        "make": "योहान 3:16 साठी अभ्यास फाइल बनवा",
+        "resource": "रोमकरांस 8 वर बायबल अभ्यास तयार करा",
+        "howTo": "मी अभ्यास फाइल कशी बनवू?",
+        "note": "माझ्या बायबल अभ्यासासाठी एक नोंद लिहा"
+    },
+    "ms": {
+        "folder": "ms",
+        "make": "Buat fail kajian untuk Yohanes 3:16",
+        "resource": "Sediakan kajian Bible tentang Roma 8",
+        "howTo": "Bagaimana saya boleh membuat fail kajian?",
+        "note": "Tulis nota untuk kajian Bible saya tentang Yohanes 3"
+    },
+    "my": {
+        "folder": "my",
+        "make": "ယောဟန် 3:16 အတွက် လေ့လာရေး ဖိုင် တစ်ခု ဖန်တီးပေးပါ",
+        "resource": "ရောမ 8 အကြောင်း ကျမ်းစာလေ့လာမှု တစ်ခု ရေးပေးပါ",
+        "howTo": "လေ့လာရေး ဖိုင်ကို ဘယ်လို ဖန်တီးရမလဲ?",
+        "note": "ကျွန်ုပ်၏ ကျမ်းစာလေ့လာမှုအတွက် မှတ်စု ရေးပေးပါ"
+    },
+    "ne": {
+        "folder": "ne",
+        "make": "यूहन्ना ३:१६ को लागि अध्ययन फाइल बनाउनुहोस्",
+        "resource": "रोमी ८ बारे बाइबल अध्ययन तयार गर्नुहोस्",
+        "howTo": "म अध्ययन फाइल कसरी बनाउँ?",
+        "note": "मेरो बाइबल अध्ययनको लागि एउटा नोट लेख्नुहोस्"
+    },
+    "nl": {
+        "folder": "nl",
+        "make": "Maak een studiebestand voor Johannes 3:16",
+        "resource": "Schrijf een bijbelstudie over Romeinen 8",
+        "howTo": "Hoe maak ik een studiebestand?",
+        "note": "Schrijf een notitie bij mijn bijbelstudie over Johannes 3"
+    },
+    "no": {
+        "folder": "nb",
+        "make": "Lag en studiefil for Johannes 3,16",
+        "resource": "Skriv et bibelstudium om Romerne 8",
+        "howTo": "Hvordan oppretter jeg en studiefil?",
+        "note": "Skriv et notat til bibelstudiet mitt om Johannes 3"
+    },
+    "ny": {
+        "folder": "ny",
+        "make": "Pangani fayilo yophunzirira ya Yohane 3:16",
+        "resource": "Konzani phunziro la Baibulo pa Aroma 8",
+        "howTo": "Kodi ndingathe bwanji kupanga fayilo yophunzirira?"
+    },
+    "om": {
+        "folder": "om",
+        "make": "Yohannis 3:16f faayilii qorannoo uumi",
+        "resource": "Waa'ee Roomaa 8 qo'annoo Macaafa Qulqulluu qopheessi",
+        "howTo": "Faayilii qorannoo akkamitti uumuu danda'a?"
+    },
+    "or": {
+        "folder": "or",
+        "make": "ଯୋହନ 3:16 ପାଇଁ ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ତିଆରି କରନ୍ତୁ",
+        "resource": "ରୋମୀୟ 8 ଉପରେ ଏକ ବାଇବେଲ ଅଧ୍ୟୟନ ଲେଖନ୍ତୁ",
+        "howTo": "ମୁଁ କିପରି ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ତିଆରି କରିବି?",
+        "note": "ମୋ ବାଇବେଲ ଅଧ୍ୟୟନ ପାଇଁ ଏକ ନୋଟ୍ ଲେଖନ୍ତୁ"
+    },
+    "pa": {
+        "folder": "pa",
+        "make": "ਯੂਹੰਨਾ 3:16 ਲਈ ਇੱਕ ਅਧਿਐਨ ਫ਼ਾਈਲ ਬਣਾਓ",
+        "resource": "ਰੋਮੀਆਂ 8 ਬਾਰੇ ਇੱਕ ਬਾਈਬਲ ਅਧਿਐਨ ਲਿਖੋ",
+        "howTo": "ਮੈਂ ਅਧਿਐਨ ਫ਼ਾਈਲ ਕਿਵੇਂ ਬਣਾਵਾਂ?",
+        "note": "ਮੇਰੇ ਬਾਈਬਲ ਅਧਿਐਨ ਲਈ ਇੱਕ ਨੋਟ ਲਿਖੋ"
+    },
+    "pl": {
+        "folder": "pl",
+        "make": "Zrób plik do studiowania dla Jana 3:16",
+        "resource": "Przygotuj studium biblijne o Rzymian 8",
+        "howTo": "Jak utworzyć plik do studiowania?",
+        "note": "Napisz notatkę do mojego studium biblijnego o Jana 3"
+    },
+    "pt": {
+        "folder": "pt",
+        "make": "Faça um arquivo de estudo para João 3:16",
+        "resource": "Prepare um estudo bíblico sobre Romanos 8",
+        "howTo": "Como posso criar um arquivo de estudo?",
+        "note": "Escreva uma nota para o meu estudo bíblico de João 3"
+    },
+    "rn": {
+        "folder": "rn",
+        "make": "Rema idosiye yo kwiga ya Yohana 3:16",
+        "resource": "Tegura inyigisho ya Bibiliya ku Baroma 8",
+        "howTo": "Nshobora gute kurema idosiye yo kwiga?"
+    },
+    "ro": {
+        "folder": "ro",
+        "make": "Fă un fișier de studiu pentru Ioan 3:16",
+        "resource": "Pregătește un studiu biblic despre Romani 8",
+        "howTo": "Cum pot crea un fișier de studiu?",
+        "note": "Scrie o notiță pentru studiul meu biblic despre Ioan 3"
+    },
+    "ru": {
+        "folder": "ru",
+        "make": "Сделай учебный файл для Иоанна 3:16",
+        "resource": "Подготовь изучение Библии по Римлянам 8",
+        "howTo": "Как создать учебный файл?",
+        "note": "Напиши заметку к моему изучению Иоанна 3"
+    },
+    "rw": {
+        "folder": "rw",
+        "make": "Kora dosiye yo kwiga ya Yohana 3:16",
+        "resource": "Tegura inyigisho ya Bibiliya ku Baroma 8",
+        "howTo": "Nshobora gute gukora dosiye yo kwiga?"
+    },
+    "si": {
+        "folder": "si",
+        "make": "යොහන් 3:16 සඳහා අධ්‍යයන ගොනුවක් සාදන්න",
+        "resource": "රෝම 8 ගැන බයිබල් අධ්‍යයනයක් ලියන්න",
+        "howTo": "මම අධ්‍යයන ගොනුවක් සාදන්නේ කොහොමද?",
+        "note": "මගේ බයිබල් අධ්‍යයනය සඳහා සටහනක් ලියන්න"
+    },
+    "sk": {
+        "folder": "sk",
+        "make": "Urob študijný súbor pre Jána 3:16",
+        "resource": "Priprav biblické štúdium o Rimanom 8",
+        "howTo": "Ako vytvorím študijný súbor?",
+        "note": "Napíš poznámku k môjmu biblickému štúdiu o Jánovi 3"
+    },
+    "sl": {
+        "folder": "sl",
+        "make": "Naredi študijsko datoteko za Janez 3:16",
+        "resource": "Pripravi svetopisemski študij o Rimljanih 8",
+        "howTo": "Kako ustvarim študijsko datoteko?",
+        "note": "Napiši opombo k mojemu študiju Janeza 3"
+    },
+    "sm": {
+        "folder": "sm",
+        "make": "Fausia se faila su'esu'e mo Ioane 3:16",
+        "resource": "Saunia se su'esu'ega o le Tusi Paia e uiga i Roma 8",
+        "howTo": "E fa'apefea ona ou fausia se faila su'esu'e?"
+    },
+    "sn": {
+        "folder": "sn",
+        "make": "Gadzira faira rekudzidza raJohani 3:16",
+        "resource": "Gadzirira chidzidzo cheBhaibheri pamusoro paVaRoma 8",
+        "howTo": "Ndingaita sei kugadzira faira rekudzidza?"
+    },
+    "so": {
+        "folder": "so",
+        "make": "Samee fayl barasho ah oo ku saabsan Yooxanaa 3:16",
+        "resource": "Diyaari daraasad Kitaabka Quduuska ah oo ku saabsan Rooma 8",
+        "howTo": "Sidee baan u sameeyaa fayl barasho ah?"
+    },
+    "sq": {
+        "folder": "sq",
+        "make": "Krijo një skedar studimi për Gjonin 3:16",
+        "resource": "Përgatit një studim biblik për Romakëve 8",
+        "howTo": "Si mund të krijoj një skedar studimi?",
+        "note": "Shkruaj një shënim për studimin tim biblik për Gjonin 3"
+    },
+    "sr": {
+        "folder": "sr",
+        "make": "Направи датотеку за проучавање за Јована 3:16",
+        "resource": "Припреми библијско проучавање о Римљанима 8",
+        "more": ["Pripremi biblijsko proučavanje o Rimljanima 8"],
+        "howTo": "Како да направим датотеку за проучавање?",
+        "note": "Напиши белешку за моје проучавање Јована 3"
+    },
+    "sv": {
+        "folder": "sv",
+        "make": "Gör en studiefil för Johannes 3:16",
+        "resource": "Skriv ett bibelstudium om Romarbrevet 8",
+        "howTo": "Hur skapar jag en studiefil?",
+        "note": "Skriv en anteckning till mitt bibelstudium om Johannes 3"
+    },
+    "sw": {
+        "folder": "sw",
+        "make": "Tengeneza faili ya kujifunza kwa Yohana 3:16",
+        "resource": "Andaa somo la Biblia kuhusu Warumi 8",
+        "howTo": "Jinsi ya kutengeneza faili ya kujifunza?",
+        "note": "Andika dokezo kwa somo langu la Biblia"
+    },
+    "ta": {
+        "folder": "ta",
+        "make": "யோவான் 3:16 க்கு ஒரு படிப்புக் கோப்பை உருவாக்கு",
+        "resource": "ரோமர் 8 பற்றி ஒரு வேதாகம ஆய்வு எழுதுங்கள்",
+        "howTo": "படிப்புக் கோப்பை எப்படி உருவாக்குவது?",
+        "note": "என் வேதாகம ஆய்வுக்கு ஒரு குறிப்பு எழுது"
+    },
+    "te": {
+        "folder": "te",
+        "make": "యోహాను 3:16 కోసం అధ్యయన ఫైల్ సృష్టించండి",
+        "resource": "రోమీయులు 8 పై బైబిల్ అధ్యయనం రాయండి",
+        "howTo": "అధ్యయన ఫైల్ ఎలా సృష్టించాలి?",
+        "note": "నా బైబిల్ అధ్యయనం కోసం ఒక గమనిక రాయండి"
+    },
+    "th": {
+        "folder": "th",
+        "make": "สร้างไฟล์ศึกษาสำหรับยอห์น 3:16",
+        "resource": "ช่วยเตรียมการศึกษาพระคัมภีร์เรื่องโรม 8",
+        "howTo": "จะสร้างไฟล์ศึกษาได้อย่างไร?",
+        "note": "เขียนโน้ตสำหรับการศึกษาพระคัมภีร์ของฉัน"
+    },
+    "tl": {
+        "folder": "fil",
+        "make": "Gumawa ng file sa pag-aaral para sa Juan 3:16",
+        "resource": "Ihanda ang isang pag-aaral ng Bibliya tungkol sa Roma 8",
+        "howTo": "Paano gumawa ng file sa pag-aaral?",
+        "note": "Isulat ang isang tala sa aking pag-aaral ng Bibliya"
+    },
+    "to": {
+        "folder": "to",
+        "make": "Fa'u ha faile ako ki he Sione 3:16",
+        "resource": "Teuteu ha ako Tohitapu ki he Loma 8",
+        "howTo": "'E fēfē 'eku fa'u ha faile ako?"
+    },
+    "tr": {
+        "folder": "tr",
+        "make": "Yuhanna 3:16 için bir çalışma dosyası oluştur",
+        "resource": "Romalılar 8 hakkında bir Kutsal Kitap çalışması hazırla",
+        "howTo": "Çalışma dosyasını nasıl oluşturabilirim?",
+        "note": "Kutsal Kitap çalışmam için bir not yaz"
+    },
+    "uk": {
+        "folder": "uk",
+        "make": "Зроби файл для вивчення Івана 3:16",
+        "resource": "Підготуй біблійне дослідження про Римлян 8",
+        "howTo": "Як створити файл для вивчення?",
+        "note": "Напиши нотатку до мого вивчення Івана 3"
+    },
+    "ur": {
+        "folder": "ur",
+        "make": "یوحنا 3:16 کے لیے ایک مطالعاتی فائل بنائیں",
+        "resource": "رومیوں 8 پر بائبل کا مطالعہ لکھیں",
+        "howTo": "میں مطالعاتی فائل کیسے بناؤں؟",
+        "note": "میرے بائبل مطالعہ کے لیے ایک نوٹ لکھیں"
+    },
+    "vi": {
+        "folder": "vi",
+        "make": "Tạo tệp nghiên cứu cho Giăng 3:16",
+        "resource": "Soạn một bài nghiên cứu Kinh Thánh về Rô-ma 8",
+        "howTo": "Làm thế nào để tạo tệp nghiên cứu?",
+        "note": "Viết ghi chú cho bài nghiên cứu Kinh Thánh của tôi"
+    },
+    "xh": {
+        "folder": "xh",
+        "make": "Yenza ifayile yokufunda kaYohane 3:16",
+        "resource": "Lungiselela isifundo seBhayibhile malunga namaRoma 8",
+        "howTo": "Ndingakwazi njani ukwenza ifayile yokufunda?"
+    },
+    "yo": {
+        "folder": "yo",
+        "make": "Ṣẹ̀dá fáìlì ẹ̀kọ́ fún Jòhánù 3:16",
+        "resource": "Pèsè ìkẹ́kọ̀ọ́ Bíbélì nípa Róòmù 8",
+        "howTo": "Báwo ni mo ṣe lè ṣẹ̀dá fáìlì ẹ̀kọ́?",
+        "note": "Kọ àkọsílẹ̀ kan fún ẹ̀kọ́ Bíbélì mi"
+    },
+    "zh": {
+        "folder": "zh",
+        "make": "为约翰福音3:16创建一个研读文件",
+        "resource": "帮我准备一份关于罗马书8章的查经资料",
+        "howTo": "怎么创建研读文件？",
+        "note": "为我的约翰福音3章研读写一条笔记"
+    },
+    "zh-Hant": {
+        "folder": "zh",
+        "make": "為約翰福音3:16建立一個研讀檔案",
+        "resource": "幫我準備一份關於羅馬書8章的查經資料",
+        "howTo": "怎麼建立研讀檔案？",
+        "note": "為我的約翰福音3章研讀寫一則筆記"
+    },
+    "zu": {
+        "folder": "zu",
+        "make": "Yenza ifayela lokutadisha likaJohane 3:16",
+        "resource": "Lungiselela isifundo seBhayibheli ngamaRoma 8",
+        "howTo": "Ngingakwazi kanjani ukwenza ifayela lokutadisha?",
+        "note": "Bhala inothi esifundweni sami seBhayibheli"
+    }
+}

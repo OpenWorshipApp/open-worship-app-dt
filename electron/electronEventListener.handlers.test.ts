@@ -99,6 +99,7 @@ vi.mock('./consoleLogHelpers', () => ({
 }));
 vi.mock('./appWindowListHelpers', () => ({
     listAppWindows: mocks.listAppWindows,
+    checkIsWatchedPageUrl: () => false,
 }));
 vi.mock('./aiChatGuestHelpers', () => ({
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL: 'main:app:ai-chat-microphone-answer',

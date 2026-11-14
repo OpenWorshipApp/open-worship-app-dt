@@ -67,6 +67,29 @@ describe('what the input aid asks for', () => {
         });
     });
 
+    // 2026-11-13, EC-587: "pause it" typed in a Presenter tab loaded the
+    // names dataset into the Presenter. A bare word off the Reader is a
+    // command; a name asked about is still a name anywhere.
+    test('a bare word off the Reader asks for no name', () => {
+        for (const focus of ['presenter', 'editor', 'setting']) {
+            for (const line of ['ផ្អាកវា', 'ម៉ូសេ', 'Moses']) {
+                expect(
+                    readBibleInputSuggestAskList(line, focus, false),
+                ).toEqual([]);
+            }
+            expect(
+                readBibleInputSuggestAskList('តើម៉ូសេជានរណា?', focus, false),
+            ).toEqual([
+                {
+                    kind: 'name',
+                    prefix: 'ម៉ូសេ',
+                    allowLoad: true,
+                    fillPrefix: '',
+                },
+            ]);
+        }
+    });
+
     // 2026-10-23: Khmer writes a sentence with no space, so a whole question
     // read as ONE bare name and loaded the names dataset to complete it.
     test('a Khmer question typed as one run is no name', () => {

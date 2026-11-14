@@ -37,6 +37,23 @@ export const AGENT_NOTE_ACTIONS = [
 export const AGENT_UNDO_ACTIONS = ['list', 'undo'];
 
 /**
+ * The action an `owa_undo` call means. A call that names none is an undo when
+ * it names a change, else the list (2026-11-14, EC-615): asked _Undo that_
+ * through the help window, the shared gemma4:cloud sent `{"id": "…"}` five
+ * times running, each refused for the missing `action`, and the change
+ * stayed. The tool, the firewall and the banner all read it here, so an undo
+ * sent with no action is announced and judged like one that says so.
+ */
+export function toUndoAction(args) {
+    if (args?.action !== undefined) {
+        return args.action;
+    }
+    return typeof args?.id === 'string' && args.id.trim() !== ''
+        ? 'undo'
+        : 'list';
+}
+
+/**
  * `owa_language` (2026-11-05): the installed languages and the catalog's
  * (`list`), whether the language some words name is installed (`check`), and
  * installing it from the catalog or turning it back on (`install`). Only
@@ -98,6 +115,11 @@ export const AGENT_REMOVING_ACTIONS = [
     // A part of a song (`owa_lyric_edit`): backed up and unsaved like every
     // song edit, and a loop taking a song apart part by part is still one.
     'remove-section',
+    // Every translation line of a song or of one part (`owa_lyric_edit`,
+    // 2026-11-12): words a person may have typed by hand, so a removal too;
+    // and its chords, the same way (EC-527).
+    'remove-translations',
+    'remove-chords',
     // Lines of a presenting flow (`owa_presenting_flow_edit`): many in one
     // call and one undo, but a call that empties a run sheet is still one.
     'remove-lines',

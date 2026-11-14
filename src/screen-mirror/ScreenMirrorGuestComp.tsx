@@ -24,6 +24,12 @@ import { findImageFile, readQrTextFromImage } from './mirrorQrHelpers';
 import { layoutMirrorMonitors } from './mirrorMonitorLayout';
 import MirrorIntercomComp from './MirrorIntercomComp';
 import StayAwakeButtonComp from '../others/StayAwakeButtonComp';
+import {
+    AiChatButtonComp,
+    ChatbotButtonComp,
+    HelpButtonComp,
+    SettingButtonComp,
+} from '../others/commonButtons';
 import { isVirtualDisplayId } from '../../electron/virtualDisplayProtocol';
 
 // `idle` is the patch drawn before any host is linked.
@@ -233,8 +239,15 @@ function MirrorHostNodeComp({
     );
 }
 
-// The page's whole frame: one way out, back to the Presenter, the switch that
-// keeps this computer awake while the page is open, and the column.
+// The page's whole frame: one way out, back to the Presenter, the header's own
+// group at the right, and the column. That group is the Presenter header's,
+// button for button (2026-11-14, the user, this bar beside the header's group:
+// _screen mirror page should has all of this buttons_, the story _as a user I
+// want chatbot help control screen mirror page as well especially ask for
+// help_): the switch that keeps this computer awake while the page is open,
+// Settings, the assistant, AI Chat and Help. Until then the bar held the cup
+// alone, and a guest stuck on a connection had no way to ask the assistant
+// that page by page answers how to make one.
 function MirrorPageComp({ children }: Readonly<{ children: ReactNode }>) {
     return (
         <div className="app-mirror-guest">
@@ -249,7 +262,13 @@ function MirrorPageComp({ children }: Readonly<{ children: ReactNode }>) {
                     <i className="bi bi-arrow-left" aria-hidden />{' '}
                     {tran('Presenter')}
                 </button>
-                <StayAwakeButtonComp className="btn-sm ms-auto" />
+                <div className="btn-group ms-auto" role="group">
+                    <StayAwakeButtonComp />
+                    <SettingButtonComp />
+                    <ChatbotButtonComp />
+                    <AiChatButtonComp />
+                    <HelpButtonComp />
+                </div>
             </nav>
             <main className="app-mirror-guest-scroll">
                 <div className="app-mirror-guest-column">{children}</div>

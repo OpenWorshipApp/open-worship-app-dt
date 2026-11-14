@@ -33,8 +33,8 @@ vi.mock('./bible-helpers/BibleDataReader', () => ({
 vi.mock('../lang/langHelpers', () => ({
     allLocalesMap: {
         'en-US': {},
-        'km-KH': {},
-        'fr-FR': {},
+        'yy-YY': {},
+        'zz-ZZ': {},
         'pt-BR': {},
     },
 }));
@@ -471,17 +471,17 @@ describe('Bible XML agent installation and lifecycle', () => {
         await handleAgentBibleXMLRequest({
             action: 'import',
             xmlPath: DRAFT,
-            sourceName: 'KhmerBible.xml',
-            key: 'KSV',
-            locale: 'km-KH',
+            sourceName: 'YyBible.xml',
+            key: 'TQVS',
+            locale: 'yy-YY',
             numbers: DIGITS,
             origin: {
                 by: 'chatbot',
-                url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
+                url: 'https://github.com/o/r/blob/main/YyBible.xml',
                 downloadUrl:
-                    'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+                    'https://raw.githubusercontent.com/o/r/main/YyBible.xml',
                 bytes: 1048576,
-                bookNames: { label: 'Khmer names', source: 'built in' },
+                bookNames: { label: 'Yy names', source: 'built in' },
                 unknownField: 'dropped',
             },
         });
@@ -490,16 +490,16 @@ describe('Bible XML agent installation and lifecycle', () => {
             /^Imported on .+ UTC by the assistant \(Chatbot\) in Open Worship app 2026\.10\.15\.$/m,
         );
         expect(note).toContain(
-            'Downloaded from: https://github.com/o/r/blob/main/KhmerBible.xml',
+            'Downloaded from: https://github.com/o/r/blob/main/YyBible.xml',
         );
         expect(note).toContain(
-            'File link used: https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+            'File link used: https://raw.githubusercontent.com/o/r/main/YyBible.xml',
         );
-        expect(note).toContain('File: KhmerBible.xml, 1.0 MB');
+        expect(note).toContain('File: YyBible.xml, 1.0 MB');
         expect(note).toContain('Contents: 1 books, 1 chapters, 2 verses.');
         expect(note).toContain('Key in the file: KJV');
         expect(note).toContain(
-            'Chosen: key KSV, language km-KH, book names "Khmer names".',
+            'Chosen: key TQVS, language yy-YY, book names "Yy names".',
         );
         expect(note).toMatch(
             /\nEarlier note: Exported from the church laptop\.$/,
@@ -712,7 +712,7 @@ describe('Bible XML agent installation and lifecycle', () => {
             action: 'update',
             key: 'KJV',
             title: ' Revised ',
-            locale: 'fr-FR',
+            locale: 'zz-ZZ',
             bookNames: { GEN: '[xx] Genesis' },
         });
         expect(result).toMatchObject({
@@ -723,7 +723,7 @@ describe('Bible XML agent installation and lifecycle', () => {
         expect(mocks.write.mock.calls[0][0]).toBe('/bibles/custom-name.xml');
         expect(JSON.parse(mocks.write.mock.calls[0][1]).info).toMatchObject({
             title: 'Revised',
-            locale: 'fr-FR',
+            locale: 'zz-ZZ',
             keyBookMap: { GEN: '[xx] Genesis' },
         });
         expect(mocks.clearCache).toHaveBeenCalledWith('KJV');

@@ -312,6 +312,15 @@ copy_extra_bin() {
     if [[ "$expected_checksum" != "$actual_checksum" ]]; then
         fail "\"$tar_path\" does not match the checksum in \"$info_file\"; re-run \`node ./extra-work/build-extra-bin.mjs\`."
     fi
+    # Since pack 0.0.6 every pack carries the MCP executable (`mcp/`). One
+    # built without it -- a Node that could not be its runtime, or
+    # OWA_EXTRA_BIN_NO_MCP=1 -- would reach every user who updates, so it is
+    # never published.
+    local has_mcp
+    has_mcp=$(node -p "require('$info_file').hasMcp === true")
+    if [[ "$has_mcp" != "true" ]]; then
+        fail "\"$info_file\" says the pack has no MCP executable. Rebuild it with an official Node from nodejs.org: \`node ./extra-work/build-extra-bin.mjs\` (extra-work/experiment-building/README.md)."
+    fi
     mkdir -p "$target_dir/$extra_bin_dir_name"
     cp "$tar_path" "$target_dir/$extra_bin_dir_name/"
     cp "$info_file" "$target_dir/$extra_bin_dir_name/"

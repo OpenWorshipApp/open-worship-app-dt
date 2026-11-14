@@ -1,11 +1,11 @@
 ---
 name: corpus-run-in-a-shared-dev-app
-description: "A script that asks the help window many questions must own its tab, type nothing, undo only its own doing, stop by its STOP file and pace under the spend guard — a run on 2026-10-12 emptied the user's own chat tab, filled their Alt+Up history and hid another session's test screen four times"
+description: "A script that asks the help window many questions must own its tab, type nothing, undo only its own doing, stop by its STOP file, pace under the spend guard and read each undo's result (the firewall's 25 acting calls a minute turn undos away) — a run on 2026-10-12 emptied the user's own chat tab, filled their Alt+Up history and hid another session's test screen four times"
 metadata:
   node_type: memory
   type: feedback
   originSessionId: 5b07f182-3f35-46de-a795-58cdc0a98502
-  modified: 2026-10-13T16:16:04.815Z
+  modified: 2026-11-14T05:56:36.000Z
 ---
 
 Rules for any driver that asks the corpus through the real 🤖 window — the
@@ -54,6 +54,18 @@ user's dev app and a second session's live test on the same machine.
   paused, so a no-model pass can use the wait; the lock makes a second
   driver exit at once, so that pass has to leave (a STOP file) before the
   model pass is started, not find out from it.
+- **The firewall's pace is shared, and it turns a driver's undos away.**
+  The in-app server rations acting calls to 25 a rolling minute and
+  removals to 10 per five minutes, one count for every session it holds:
+  the model's calls inside an answer spend the same budget as the
+  driver's cleanup after it, and an undo of a change is an acting call.
+  A refused `owa_undo` comes back as a result whose text starts _Too many
+  actions_, so a driver that does not read the result believes the change
+  is gone. On 2026-11-14 the screen run's first pass lost three undos that
+  way, and the asks after them started from a Bible style nobody had put
+  back. Read every undo's result, wait 20 s and ask again (up to four
+  times), report the ones still refused, and leave a gap between asks:
+  `.claude/skills/owa-enhance-chatbot/scripts/screen-run.mjs` waits 45 s.
 - **A reload of the window under a question takes the ask with it.** A save
   under `src/chatbot` by ANY session hot-reloads the help window: the
   question stays in its tab, no answer ever comes, nothing is busy, and a run
@@ -63,6 +75,10 @@ user's dev app and a second session's live test on the same machine.
   reload that lands between two questions changes the tab in front instead,
   and the run stops on its own rule. Ask the other session to say when it is
   done saving, and hold your own saves and the knowledge rebuild for a gap.
+  A `git pull`, checkout or merge that writes such a file is a save too
+  (2026-11-13: a pull took a foreground run's ask, and four "hangs" had been
+  filed as the free service going silent, `EC-577`, with none checked for
+  a reload -- check before blaming the provider).
 - **Grade the answers, not the bill.** The first change of that day halved a
   local model's tokens on the same questions, and its graded answers were no
   better; the questions about one long page were worse. Rounds, tokens and

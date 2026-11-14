@@ -29,6 +29,12 @@ describe('the translator asks', () => {
             true,
         );
         expect(ask).toContain('from Khmer into English');
+        // BN-23 (2026-11-08): a line to add to a note came to the model as
+        // its English, and was written into the Khmer note in English.
+        expect(ask).toContain(
+            'words they want WRITTEN somewhere (a line to add, a title to ' +
+                'give) exactly as written, in their language',
+        );
         const answerAsk = toAnswerTranslationAsk('Press **Show**.', KHMER);
         expect(answerAsk).toContain('into Khmer (ខ្មែរ)');
         expect(answerAsk).toContain('keep OPTIONS:');

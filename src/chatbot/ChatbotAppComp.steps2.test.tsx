@@ -819,6 +819,8 @@ describe('typing in a lookup conversation', () => {
             );
             expect(answer.textContent).toContain('And God remembered Noah.');
             expect(labelsIn(answer)).toEqual(['Read it in another Bible']);
+            // The card answered it, no model: no Retry (EC-506).
+            expect(answer.querySelector('.cue-retry')).toBeNull();
         });
 
         test("a line asking for one of the card's buttons names it and offers it", async () => {
@@ -848,6 +850,7 @@ describe('typing in a lookup conversation', () => {
             );
             expect(labelsIn(lastBot())).toEqual(['Show it on a map']);
             expect(hoisted.openExternalURLMock).not.toHaveBeenCalled();
+            expect(lastBot().querySelector('.cue-retry')).toBeNull();
         });
 
         test('a family line asked for in words reads the genealogy', async () => {
@@ -884,6 +887,7 @@ describe('typing in a lookup conversation', () => {
                 'The record names 3 children of Noah: Shem, Ham, Japheth.',
             );
             expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
+            expect(lastBot().querySelector('.cue-retry')).toBeNull();
         });
     });
 

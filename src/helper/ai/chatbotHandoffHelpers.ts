@@ -22,11 +22,14 @@ import { getIsAIEnabled } from './aiHelpers';
 import { openChatbotPage } from '../domHelpers';
 import {
     requestChatbotAsk,
+    requestChatbotBibleListPaste,
     requestChatbotFile,
+    requestChatbotForeground,
     requestChatbotLookup,
     requestChatbotReport,
     type SelectionMentionType,
 } from './chatbotHandoffStoreHelpers';
+import type { ForegroundAskType } from './foregroundAskHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
 import type { ResourceReadingType } from './resourceReadingAskHelpers';
 
@@ -105,6 +108,36 @@ export async function openChatbotWithLookup(
         return false;
     }
     requestChatbotLookup(ask, mention);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant to save passages to the Bibles list from a text --
+ * the Bibles panel's **Add Bible Item** → **Open in Chatbot**: a tab of its
+ * own whose box already says what to do with the text pasted under it.
+ * The same two questions first.
+ */
+export async function openChatbotForBibleListPaste() {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotBibleListPaste();
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant on ONE session of a foreground component -- a chip's
+ * **Open in Chatbot** or a panel header's 🤖: a tab of its own with the
+ * session attached as its context, ready to be asked to change it. The same
+ * two questions first.
+ */
+export async function openChatbotWithForeground(ask: ForegroundAskType) {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotForeground(ask);
     openChatbotPage();
     return true;
 }

@@ -505,7 +505,16 @@ describe('FileSource', () => {
     test('writes text and base64 data and reports save failures', async () => {
         setFile('/docs/cached.txt', 'old');
         setFile('/docs/fail.txt', 'before');
-        state.writeErrors.set('/docs/fail.txt', new Error('cannot save'));
+        // What a save onto a read-only drive raises (EN-62).
+        state.writeErrors.set(
+            '/docs/fail.txt',
+            Object.assign(
+                new Error(
+                    "EROFS: read-only file system, open '/docs/fail.txt'",
+                ),
+                { code: 'EROFS' },
+            ),
+        );
         state.base64WriteErrors.set(
             '/docs/base64-fail.txt',
             new Error('bad base64'),
@@ -555,9 +564,15 @@ describe('FileSource', () => {
                 'nope',
             ),
         ).toBe(false);
+        // Said in words with what to do, held long enough to read; the raw
+        // message goes to the log only.
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Saving File',
-            'cannot save',
+            'This drive is read-only. Choose a folder on another drive.',
+            10e3,
+        );
+        expect(handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({ code: 'EROFS' }),
         );
     });
 
@@ -600,7 +615,8 @@ describe('FileSource', () => {
         );
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Renaming File',
-            'Unable to rename file: rename failed',
+            'Unable to rename file: It did not work. Please try again.',
+            10e3,
         );
     });
 

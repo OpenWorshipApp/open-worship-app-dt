@@ -8,13 +8,13 @@ metadata:
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
 ---
 
-`src/experiments/html-in-canvas/` (24 files, ~6.4k LOC) is a scratch/demo
+`src/experiments/html-in-canvas/` (25 files, ~6.4k LOC) is a scratch/demo
 harness — `benchmarkDemo`, `snapshotDemo`, `youtubeMirrorDemo`,
 `transitionEffects`, with its own `README.md`. Entry page is
 `html/experiment.html`.
 
-**It is dev-only and build-excluded by construction:** `vite.config.ts:45-66`
-has a custom `exclude-experiments` plugin — `excludedHtmlFileNames =
+**It is dev-only and build-excluded by construction:** `vite.config.ts`
+has a custom `exclude-experiments` plugin (`excludeExperimentsPlugin`) — `excludedHtmlFileNames =
 ['experiment.html']` and `excludedSrcDirPattern = /[\\/]src[\\/]experiments[\\/]/`
 — that throws if product code imports from `src/experiments/` ("Move shared code
 out of "src/experiments" instead."). The dev server still serves the page as usual.
@@ -27,7 +27,7 @@ absent from a packaged build.
   `src/experiments/` fails the build — that IS a finding.
 - It is the second runner of the extra-bin binaries: `youtubeDemo.tsx` calls
   `resolveMediaStreamUrl` (`src/server/appHelpers.ts`), which runs yt-dlp
-  with the shipped ffmpeg/qjs — the reason CLAUDE.md says
+  with the ffmpeg/qjs installed on demand — the reason `.claude/rules/project-skills.md` says
   `downloadVideoOrAudio` is the only *product* flow, not the only flow.
 - The `ELECTRON_RUN_AS_NODE` note in `src/experiments/html-in-canvas/README.md`
   duplicates CLAUDE.md's dev-launch trap; the README is experiments-local

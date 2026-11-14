@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 62ddc243312625e8
+translatedFrom: 4065a6e9dae47e9d
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -15,13 +15,15 @@ translatedFrom: 62ddc243312625e8
    liste est mis en surbrillance à la fois, donc choisir un chant libère ce qui était sélectionné avant.
    Ces deux vues montrent à quoi ressemblera le chant à l'écran ; rien n'arrive à l'écran
    tant que vous ne cliquez pas sur un couplet. 📸
-2. **Cliquez** sur un couplet pour l'envoyer à l'écran.
+2. **Cliquez** sur un couplet pour l'envoyer à l'écran. Après le dernier couplet du chant vient une
+   diapositive **None** vide, comme celle qui suit son titre : cliquez dessus quand le chant se termine,
+   et les paroles quittent l'écran.
 3. Appuyez sur **F8** / le bouton d'effacement pour le retirer.
 4. Pour joindre des liens à un chant — des adresses web, ou des fichiers de cet ordinateur écrits
    `file:///C:/…` — ouvrez-le dans l'**Éditeur de paroles** (clic droit sur le chant →
    **[en:tran:Edit]**) et ajoutez un champ **`- Attachments:`** à son bloc `ol:Config`, un lien
    par ligne. Chaque lien devient aussi **sa propre diapositive à la fin** de l'Aperçu des scènes,
-   nommée d'après le lien. Un lien YouTube devient une vidéo que l'on peut lire, un lien d'image / de
+   placée après cette diapositive vide finale et nommée d'après le lien. Un lien YouTube devient une vidéo que l'on peut lire, un lien d'image / de
    vidéo / d'audio devient ce média, et toute autre adresse web devient la page elle-même ;
    chacun remplit toute la diapositive. Présentez-en un de la même façon qu'un couplet. Un lien vers
    un fichier de cet ordinateur fonctionne aussi (écrit `file:///C:/…`), et c'est ainsi qu'une grille
@@ -48,7 +50,10 @@ translatedFrom: 62ddc243312625e8
    paroles ; en dessous, **[en:tran:Position]** est un pavé de neuf points pour l'endroit où se place cette
    boîte : **[en:tran:Middle center]**, allumé au départ, répartit la marge également ; tout autre point
    déplace la même boîte jusqu'à ce qu'elle touche les bords qu'il nomme — **[en:tran:Bottom center]** avec
-   ↕ à 77 met les paroles dans une bande sur le quart inférieur de l'écran. Puis
+   ↕ à 77 met les paroles dans une bande sur le quart inférieur de l'écran. Un couplet — ou la diapositive
+   de titre du chant — qui a besoin de plus de place que cette boîte n'est **jamais coupé** : sa boîte
+   s'agrandit dans la marge, vers le haut pour une boîte en bas, vers le bas pour une boîte en haut, dans
+   les deux sens pour une boîte au milieu, jusqu'au bord de l'écran. Puis
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, un thème **[en:tran:Light]/[en:tran:Dark]**, et une
    zone **[en:tran:Custom CSS]** pour tout le reste — vide, elle montre en gris le CSS que la scène utilise
    déjà, et le ✎ à côté de son nom (**[en:tran:Edit a copy of the stage's CSS]**) en met une copie dans la
@@ -69,7 +74,12 @@ translatedFrom: 62ddc243312625e8
    juste en dessous, le touchant — sans marge autour ni espace entre eux, quoi qu'indique **[en:tran:Slide Margin (%)]** (la marge
    reste à l'intérieur de la boîte de chaque couplet). Un écran passé à une scène au-dessus de 0 voit sa
    transition **[en:tran:Slide]:** réglée sur **none** (W-10).
-9. Dans cette fenêtre **[en:tran:Stage Style]** — le **⚙** de la pastille de la scène, dans l'Aperçu des scènes du Présentateur — **[en:tran:Reset]** remet cette scène aux valeurs par défaut.
+9. Dans cette fenêtre **[en:tran:Stage Style]** — le **⚙** de la pastille de la scène, dans l'Aperçu des scènes du Présentateur — **[en:tran:Reset]** remet cette scène aux valeurs par défaut. En haut de la fenêtre,
+   **[en:tran:Presets]** propose **[en:tran:Full Screen]**, **[en:tran:Center]** (la disposition de
+   départ), **[en:tran:Top Banner]** et **[en:tran:Bottom Banner]**, qui règlent la disposition et
+   gardent le thème et le **[en:tran:Custom CSS]** ; **[en:tran:Save as Preset]** garde toute l'apparence,
+   à la disposition de **toutes** les scènes (faites un clic droit sur un préréglage enregistré pour le
+   renommer, le remplacer ou le supprimer). 📸
 10. Un écran qui affiche déjà une diapositive la garde — présentez de nouveau la diapositive pour lui
     envoyer la nouvelle apparence.
 11. **Modifiez les paroles pendant que le chant est ouvert, et les couplets suivent d'eux-mêmes ; un couplet
@@ -111,3 +121,12 @@ translatedFrom: 62ddc243312625e8
     ligne dans le coin de la diapositive (`Chorus · 1/8 · 2/7`). C'est un seul interrupteur pour
     tous les chants. Une diapositive de chant qu'un écran tient passe à la première ligne de sa partie
     quand vous l'activez, et revient à la partie entière quand vous le désactivez. 📸
+14. **Un chant peut garder sa propre police, sur toutes les scènes.** En haut de la fenêtre
+    **[en:tran:Stage Style]**, au-dessus de _[en:tran:Applies to every song]_,
+    **[en:tran:Song Font]** — _[en:tran:This song only, on every stage]_ — est la police dans
+    laquelle CE chant est dessiné sur toutes les scènes, tandis que tous les autres chants gardent
+    la police de l'application. Un chant fait à partir d'un fichier PowerPoint commence dans la
+    police de ses diapositives ; choisissez-en une autre, ou appuyez sur
+    **[en:tran:Use the app font]** pour le dessiner comme tous les autres chants. Ce changement est
+    une modification du chant lui-même : le **[en:tran:Undo]** du chant le défait, sur toutes les
+    scènes et dans cette fenêtre. 📸

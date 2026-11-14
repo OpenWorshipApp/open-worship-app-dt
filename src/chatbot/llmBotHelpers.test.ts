@@ -150,8 +150,11 @@ vi.mock('./mcpClient', () => ({
     },
 }));
 
-import { listAssistantLanguages } from './chatLangHelpers';
-import { checkHasLangPackage } from '../test-setup/langPackageDirs';
+import {
+    checkIsEnglishAfterOtherLanguage,
+    listAssistantLanguages,
+    listTypedLanguages,
+} from './chatLangHelpers';
 import { AskCancelledError } from './cancelHelpers';
 import { CustomServerError } from '../../electron/customLlmProtocol';
 import {
@@ -179,6 +182,7 @@ import {
     checkIsProviderFault,
     checkIsStepsWithoutPage,
     checkIsDoneWithoutTool,
+    checkIsCompletenessDue,
     genDoToolNudge,
     checkIsReasoningOffRemembered,
     rememberReasoningOff,
@@ -200,12 +204,16 @@ import {
     genGuideRescueQuestion,
     genGuideRescueSummary,
     genReplyLanguageLine,
+    genAskLanguageLine,
     findUnreadVerseNudge,
     genCreatedNoteUnder,
     genToolWatch,
     checkIsWrongScriptAnswer,
     findAnswerShapeNudge,
     genWrongLanguageNudge,
+    checkClaimsUnmadeNoteChange,
+    NOTE_CLAIM_NUDGE,
+    NOTE_REVIEW_OPTIONS_NUDGE,
     toAnswerScript,
     toGuideRescueAnswer,
     checkIsToolLeftOut,
@@ -776,8 +784,11 @@ describe('the watch catches a drafted song', () => {
             { mode: 'draft' },
             genDraftResult(true),
         );
-        expect(watch.draftedLyric).toContain('- Title: Lantern On The Water');
-        expect(watch.draftedLyric).toContain('ol:Verse 1');
+        expect(watch.draftedLyrics).toHaveLength(1);
+        expect(watch.draftedLyrics[0].content).toContain(
+            '- Title: Lantern On The Water',
+        );
+        expect(watch.draftedLyrics[0].content).toContain('ol:Verse 1');
     });
 
     test('ignores a draft that did not come out valid', () => {
@@ -790,7 +801,7 @@ describe('the watch catches a drafted song', () => {
             { mode: 'draft' },
             genDraftResult(false),
         );
-        expect(watch.draftedLyric).toBeNull();
+        expect(watch.draftedLyrics).toEqual([]);
     });
 
     test('ignores an ordinary check of a song they already had', () => {
@@ -801,31 +812,85 @@ describe('the watch catches a drafted song', () => {
             {},
             'Valid Open Lyric. No problems found.',
         );
-        expect(watch.draftedLyric).toBeNull();
+        expect(watch.draftedLyrics).toEqual([]);
     });
 
-    test('a second draft wins, and a failed one does not undo the first', () => {
+    const readTitles = (watch: ReturnType<typeof genToolWatch>) => {
+        return watch.draftedLyrics.map((one) => {
+            return /- Title: (.+)/.exec(one.content)?.[1];
+        });
+    };
+
+    test('the same page drafted again wins, and a failed one undoes nothing', () => {
         const watch = genToolWatch();
+        const url = 'https://example.com/songs/lantern';
         applyToolWatch(
             watch,
             'owa_lyric_validate',
-            { mode: 'draft' },
+            { mode: 'draft', url },
+            genDraftResult(true),
+        );
+        // Told the first area was wrong, the model reads the page again.
+        applyToolWatch(
+            watch,
+            'owa_lyric_validate',
+            { mode: 'draft', url, from: 'Verse 1' },
+            genDraftResult(true).replace('Lantern On The Water', 'Second Try'),
+        );
+        expect(readTitles(watch)).toEqual(['Second Try']);
+        applyToolWatch(
+            watch,
+            'owa_lyric_validate',
+            { mode: 'draft', url },
+            genDraftResult(false),
+        );
+        expect(readTitles(watch)).toEqual(['Second Try']);
+    });
+
+    // EC-589: three links in one ask had offered the third song alone.
+    test('another page or another song is another draft, four at most', () => {
+        const watch = genToolWatch();
+        for (const [index, title] of [
+            'One',
+            'Two',
+            'Three',
+            'Four',
+            'Five',
+        ].entries()) {
+            applyToolWatch(
+                watch,
+                'owa_lyric_validate',
+                { mode: 'draft', url: `https://example.com/song-${index}` },
+                genDraftResult(true).replace('Lantern On The Water', title),
+            );
+        }
+        expect(readTitles(watch)).toEqual(['One', 'Two', 'Three', 'Four']);
+        // Words with no page: told apart by the title they came out with,
+        // and the same title drafted again is a correction.
+        const words = genToolWatch();
+        applyToolWatch(
+            words,
+            'owa_lyric_validate',
+            { mode: 'draft', text: 'a' },
             genDraftResult(true),
         );
         applyToolWatch(
-            watch,
+            words,
             'owa_lyric_validate',
-            { mode: 'draft' },
+            { mode: 'draft', text: 'b' },
             genDraftResult(true).replace('Lantern On The Water', 'Second Song'),
         );
-        expect(watch.draftedLyric).toContain('Second Song');
         applyToolWatch(
-            watch,
+            words,
             'owa_lyric_validate',
-            { mode: 'draft' },
-            genDraftResult(false),
+            { mode: 'draft', text: 'c' },
+            genDraftResult(true).replace('Verse 1', 'Verse 2'),
         );
-        expect(watch.draftedLyric).toContain('Second Song');
+        expect(readTitles(words)).toEqual([
+            'Lantern On The Water',
+            'Second Song',
+        ]);
+        expect(words.draftedLyrics[0].content).toContain('ol:Verse 2');
     });
 
     // Measured 2026-09-10: asked "Create a lyric file from <address>", the
@@ -854,7 +919,7 @@ describe('the watch catches a drafted song', () => {
             filePath: 'C:\\songs\\Lantern On The Water.owl',
         });
         // The draft is still held: Copy song text is still honest.
-        expect(watch.draftedLyric).toContain('Lantern On The Water');
+        expect(readTitles(watch)).toEqual(['Lantern On The Water']);
     });
 
     test('a Bible note the model MADE is kept off the result, and ends the ask', () => {
@@ -1926,7 +1991,7 @@ describe('the request is cache-shaped', () => {
         });
         useFakeAnthropic(createMock);
         const typed =
-            'My Khmer Bible will not take John 3:16. Use the book buttons.';
+            'My Bible in another language will not take John 3:16. Use the book buttons.';
 
         const answer = await askLlmBot(
             `${typed}\n\n(This is one of the app's supported questions.)`,
@@ -2145,9 +2210,9 @@ describe('steps written without opening the page', () => {
     const STEPS =
         'Not from here.\n\n1. In the **Documents** list, pick it.\n2. Click **Slide Editor**.';
 
-    // The whole list asked in Khmer (EC-325): told to call owa_foreground
-    // for "Can you start a 5 minute countdown?", gemma4:cloud wrote that it
-    // had started one having called nothing.
+    // The whole list asked in another language (EC-325): told to call
+    // owa_foreground for "Can you start a 5 minute countdown?", gemma4:cloud
+    // wrote that it had started one having called nothing.
     test('an ask to do something that ends without its tool goes back once', () => {
         const watch = genToolWatch();
         expect(checkIsDoneWithoutTool(watch)).toBe(false);
@@ -2169,6 +2234,46 @@ describe('steps written without opening the page', () => {
             '{"did":"refused"}',
         );
         expect(checkIsDoneWithoutTool(called)).toBe(false);
+    });
+
+    // EC-551: "Put the long text up", asked after a verse, was done by its
+    // tool and then asked "is a step missing?" -- and came back with the
+    // panel's steps to put it up by hand under "now ready on the screen".
+    test('a do-ask its tool did is not asked for the steps it left out', () => {
+        const done = genToolWatch();
+        done.doTool = 'owa_foreground';
+        done.canCheckCompleteness = true;
+        expect(checkIsCompletenessDue(done)).toBe(true);
+        applyToolWatch(
+            done,
+            'owa_foreground',
+            { widget: 'long-text' },
+            '{"did":"started","widget":"long-text"}',
+        );
+        expect(checkIsCompletenessDue(done)).toBe(false);
+        // Refused or failed: the way by hand may be the answer.
+        for (const result of [
+            '{"did":"refused","reason":"no text yet"}',
+            '{"isError":true,"reason":"That session holds no text yet."}',
+            'ERROR: not reachable',
+        ]) {
+            const refused = genToolWatch();
+            refused.doTool = 'owa_foreground';
+            refused.canCheckCompleteness = true;
+            applyToolWatch(
+                refused,
+                'owa_foreground',
+                { widget: 'long-text' },
+                result,
+            );
+            expect(checkIsCompletenessDue(refused)).toBe(true);
+        }
+        // Another tool's success is not the job done.
+        const other = genToolWatch();
+        other.doTool = 'owa_foreground';
+        other.canCheckCompleteness = true;
+        applyToolWatch(other, 'owa_app_state', {}, '{"did":"read"}');
+        expect(checkIsCompletenessDue(other)).toBe(true);
     });
 
     test('a numbered list after a search with no page opened is caught', () => {
@@ -2218,8 +2323,9 @@ describe('steps written without opening the page', () => {
         expect(checkIsStepsWithoutPage(STEPS, watch)).toBe(false);
     });
 
-    // The Khmer stress run on gemma4:cloud (2026-10-17): under a pasted
-    // story and down a ten-turn chat it wrote every list with no tool called.
+    // A stress run in another language on gemma4:cloud (2026-10-17): under
+    // a pasted story and down a ten-turn chat it wrote every list with no
+    // tool called.
     test('steps written with nothing looked up at all are caught too', () => {
         const memory = genToolWatch();
         memory.canSearchGuide = true;
@@ -3040,6 +3146,55 @@ describe('the custom servers', () => {
         expect(request).toMatchObject({ temperature: 0 });
     });
 
+    // 2026-11-10, the goal _chatbot completely smart enough to help prepare
+    // a best preaching lesson_: a whole sermon written into one tool call is
+    // longer than a help answer's 2 000 tokens, and what a lesson holds rides
+    // on that ask alone.
+    test('a lesson ask carries what a lesson holds and room to write it', async () => {
+        fake.lmStudioInfoMap = new Map();
+        fake.toolList = [{ name: 'owa_bible_note' }];
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        try {
+            await askLlmBot(
+                'help me prepare a sermon on John 10',
+                'presenter',
+                'custom',
+                PHI_MODEL,
+            );
+            await askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'custom',
+                PHI_MODEL,
+            );
+        } finally {
+            fake.toolList = [];
+        }
+        const [lesson, plain] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(lesson.max_tokens).toBe(6000);
+        expect(JSON.stringify(lesson.messages)).toContain(
+            'WHAT A LESSON HOLDS',
+        );
+        // The lean list a server of the user's own gets keeps the tool
+        // that makes the note -- for this ask only.
+        const toToolNames = (request: any) => {
+            return (request.tools ?? []).map((tool: any) => {
+                return tool.function.name;
+            });
+        };
+        expect(toToolNames(lesson)).toContain('owa_bible_note');
+        expect(toToolNames(plain)).not.toContain('owa_bible_note');
+        expect(plain.max_tokens).toBe(2000);
+        expect(JSON.stringify(plain.messages)).not.toContain(
+            'WHAT A LESSON HOLDS',
+        );
+    });
+
     test('prices a server elsewhere as not known', async () => {
         fake.customServers = [
             genServer({ baseUrl: 'https://llm.example.org/v1' }),
@@ -3401,8 +3556,9 @@ describe('the custom servers', () => {
         expect(bare.actions).toBeUndefined();
     });
 
-    // Passes 6-8 of the whole list asked in Khmer of gemma4:cloud (EC-330):
-    // ~30 answers stopped before the job's last step with that step quoted.
+    // Passes 6-8 of the whole list asked in another language of
+    // gemma4:cloud (EC-330): ~30 answers stopped before the job's last step
+    // with that step quoted.
     test('an answer to a named part is checked once for the steps that finish the job', async () => {
         const first = '1. Open **View**.';
         const replies = [first, 'KEEP'];
@@ -3748,18 +3904,18 @@ describe('the custom servers', () => {
     // tries to install it itself is refused before the tool is called.
     test('a Bible the model downloaded is agreed to by the person, never installed by it', async () => {
         const link =
-            'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml';
+            'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/SampleBible.xml';
         fake.toolList = [{ name: 'owa_bible_xml' }];
         fake.toolResultMap = {
             owa_bible_xml: JSON.stringify({
                 kind: 'xml',
                 draftId: 'he10paxbbz64',
-                title: 'Khmer Standard Version 1954',
+                title: 'Sample Standard Version 1954',
                 source: link,
                 books: 66,
                 chapters: 1189,
                 verses: 31102,
-                keys: ['KSV'],
+                keys: ['TQVS'],
                 takenKeys: [],
                 locales: [],
                 nameLists: [],
@@ -3778,14 +3934,14 @@ describe('the custom servers', () => {
                 return genCallResponse('owa_bible_xml', {
                     action: 'import',
                     draftId: 'he10paxbbz64',
-                    key: 'KSV',
+                    key: 'TQVS',
                 });
             }
             return genTextResponse();
         });
         fake.custom = { chat: { completions: { create } } };
         const answer = await askLlmBot(
-            'Install the Khmer Bible from ' + link,
+            'Install the Bible from ' + link,
             'presenter',
             'custom',
             PHI_MODEL,
@@ -4548,8 +4704,8 @@ describe('askLlmBot, guarding the bill', () => {
     });
 });
 
-// The app is shown in Khmer for many of the people this window is for, and
-// they read only that. The prompt is built per APP language (a cached prefix:
+// The app is shown in a language other than English for many of the people
+// this window is for, and they read only that. The prompt is built per APP language (a cached prefix:
 // the language changes only when the window reloads), and the language of a
 // QUESTION rides at the end of the ask.
 describe('the answer is in their language', () => {
@@ -4619,9 +4775,10 @@ describe('the answer is in their language', () => {
     });
 });
 
-// The whole corpus asked in Khmer of gemma-4-12b on the user's LM Studio
-// (2026-10-17): every question thought its budget away and was asked again
-// with thinking off, and one step read a Khmer letter, then _<audio|> View_.
+// The whole corpus asked in another language of gemma-4-12b on the user's
+// LM Studio (2026-10-17): every question thought its budget away and was
+// asked again with thinking off, and one step read a letter of that
+// language's script, then _<audio|> View_.
 describe('a local Gemma 4, round by round', () => {
     test('a model that thought its budget away starts with thinking off, for a while', () => {
         const now = 1_000_000;
@@ -4646,6 +4803,79 @@ describe('a local Gemma 4, round by round', () => {
                 'gemma-4-12b',
                 now + 30 * 60 * 1000,
             ),
+        ).toBe(false);
+    });
+});
+
+// EC-510 (2026-11-12): English asked in an English app is told so only when
+// an answer the model is shown is in another language. That check is
+// `checkIsEnglishAfterOtherLanguage`, held for every language in
+// `src/lang/data/tests/chatbot/englishAfterOtherLanguage.test.ts`; here, what
+// the line does with its answer.
+describe('genAskLanguageLine', () => {
+    const englishAsk = 'Make a short study file on Philippians 4:6-7.';
+    const toYes = () => {
+        return true;
+    };
+    const toNo = () => {
+        return false;
+    };
+
+    test('English after answers in another language is told so', () => {
+        expect(
+            genAskLanguageLine(
+                { askedText: englishAsk, replyLang: 'en' },
+                'en',
+                toYes,
+            ),
+        ).toContain('They wrote in English: answer this one in English');
+        expect(
+            genAskLanguageLine(
+                { askedText: englishAsk, replyLang: 'en' },
+                'en',
+                toNo,
+            ),
+        ).toBe('');
+    });
+
+    test('a translation and a waiting reply keep their own', () => {
+        for (const extra of [
+            { askedText: englishAsk, replyLang: 'en', isTranslation: true },
+            { askedText: englishAsk, replyLang: 'en', isWaitingInput: true },
+        ]) {
+            expect(genAskLanguageLine(extra, 'en', toYes)).toBe('');
+        }
+    });
+
+    test('an ask with no words of theirs adds nothing', () => {
+        expect(genAskLanguageLine(undefined, 'en', toYes)).toBe('');
+        expect(genAskLanguageLine({}, 'en', toYes)).toBe('');
+    });
+
+    test('a reply language already said is said as before, unread', () => {
+        const checkIsAfter = vi.fn(toYes);
+        expect(
+            genAskLanguageLine(
+                { askedText: englishAsk, replyLang: 'other' },
+                'en',
+                checkIsAfter,
+            ),
+        ).toBe(genReplyLanguageLine('other', 'en'));
+        expect(checkIsAfter).not.toHaveBeenCalled();
+    });
+
+    test('after answers in English, nothing is said', () => {
+        expect(
+            checkIsEnglishAfterOtherLanguage(englishAsk, [
+                { author: 'you', text: 'Explain John 3:16 in simple words' },
+                {
+                    author: 'bot',
+                    text:
+                        'God loved the whole world so much that He gave His ' +
+                        'only Son, so that everyone who believes in Him will ' +
+                        'not be lost but will have life that never ends.',
+                },
+            ]),
         ).toBe(false);
     });
 });
@@ -4692,32 +4922,30 @@ describe('genReplyLanguageLine', () => {
     });
 
     // Any language a person may type is named (2026-11-03): a Spanish line
-    // had been told "They wrote in French" and answered in French, its
-    // Font Size slider renamed in French on an English screen.
-    // A language is named from its package (`typed.json`), so each case runs
-    // while that package is on disk.
-    test.runIf(checkHasLangPackage('es'))(
-        'a language only typed is named, its buttons as the screen shows',
-        () => {
-            const spanish = genReplyLanguageLine('es', 'en');
-            expect(spanish).toContain(
-                'They wrote in Spanish: answer in Spanish',
-            );
-            expect(spanish).toContain(
+    // had been told it was written in another Latin-script language and
+    // answered in that one, its Font Size slider renamed in it on an
+    // English screen. A language is named from its package (`typed.json`,
+    // one code a row -- a script of a language, `zh-Hant`, a row of its
+    // own), so every language on disk is held to its own name, none picked
+    // out, and none when only English is there.
+    test('a language only typed is named, its buttons as the screen shows', () => {
+        for (const { code, name } of listTypedLanguages()) {
+            if (code === 'en') {
+                continue;
+            }
+            const line = genReplyLanguageLine(code, 'en');
+            expect([code, line]).toEqual([
+                code,
+                expect.stringContaining(
+                    `They wrote in ${name}: answer in ${name}`,
+                ),
+            ]);
+            expect(line).toContain(
                 'exactly as the tools and the guide give it',
             );
-            expect(spanish).toContain('write what follows them in Spanish');
-        },
-    );
-
-    test.runIf(checkHasLangPackage('zh'))(
-        'a script of a typed language is named by it',
-        () => {
-            expect(genReplyLanguageLine('zh-Hant', 'en')).toContain(
-                'answer in Chinese (Traditional)',
-            );
-        },
-    );
+            expect(line).toContain(`write what follows them in ${name}`);
+        }
+    });
 });
 
 // One removal an answer (2026-10-17, EC-299): the free model moved ten of
@@ -4765,9 +4993,138 @@ describe('genGeneralAskAction', () => {
     });
 });
 
+// BN-74 (2026-11-10): a review of a Zacchaeus sermon named two things to
+// improve and offered nothing to press. A lesson review with no options goes
+// back once; a review with them, or any other note answer, does not.
+describe('a lesson review offers its fixes as buttons', () => {
+    const REVIEW =
+        'This is a strong lesson.\n\nImprovements:\n\nResponse: it could ' +
+        'first ask the hearer to let Jesus abide in their own house.';
+    const reviewWatch = () => {
+        const watch = genToolWatch();
+        watch.noteFiles = [{ name: 'Zacchaeus' } as any];
+        watch.isLessonReview = true;
+        return watch;
+    };
+
+    test('a review with no options is handed back once', () => {
+        const watch = reviewWatch();
+        expect(findAnswerShapeNudge(REVIEW, watch)?.nudge).toBe(
+            NOTE_REVIEW_OPTIONS_NUDGE,
+        );
+        watch.isShapeNudged = true;
+        expect(findAnswerShapeNudge(REVIEW, watch)).toBeNull();
+    });
+
+    test('options, marked or a bare change line, are enough', () => {
+        expect(
+            findAnswerShapeNudge(
+                `${REVIEW}\nOPTIONS: Add a stronger response | Write what the press means`,
+                reviewWatch(),
+            ),
+        ).toBeNull();
+        expect(
+            findAnswerShapeNudge(
+                `${REVIEW}\n\nAdd a stronger response | Write what the press means`,
+                reviewWatch(),
+            ),
+        ).toBeNull();
+        const notReview = reviewWatch();
+        notReview.isLessonReview = false;
+        expect(findAnswerShapeNudge(REVIEW, notReview)).toBeNull();
+    });
+});
+
+// BN-53 (2026-11-09, the elder run): asked to "draw a big star next to the
+// important bits", Free's Nemotron called no tool and answered that it had
+// added a gold star drawing. A note answer that says the note changed while
+// nothing did goes back once.
+describe('a note change claimed and never made', () => {
+    const CLAIM =
+        'I have added a big star drawing after the Main points heading. ' +
+        'It is not saved yet: Save in the note window keeps it, and Undo ' +
+        'this change puts it back.';
+    const noteWatch = () => {
+        const watch = genToolWatch();
+        watch.noteFiles = [{ name: 'The Good Shepherd' } as any];
+        return watch;
+    };
+
+    test('is handed back once, saying to make it or say it was not done', () => {
+        const watch = noteWatch();
+        expect(checkClaimsUnmadeNoteChange(CLAIM, watch)).toBe(true);
+        // The elder run's 2-19: a new note said to be made, none made.
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'I\'ve created a new note for you called "Ruth and Naomi Outline".',
+                noteWatch(),
+            ),
+        ).toBe(true);
+        expect(findAnswerShapeNudge(CLAIM, watch)?.nudge).toBe(
+            NOTE_CLAIM_NUDGE,
+        );
+        watch.isShapeNudged = true;
+        expect(findAnswerShapeNudge(CLAIM, watch)).toBeNull();
+    });
+
+    test('is no claim when a change, a new note or an undo was made', () => {
+        const changed = noteWatch();
+        applyToolWatch(
+            changed,
+            'owa_note_edit',
+            { action: 'edit' },
+            JSON.stringify({
+                name: 'The Good Shepherd',
+                isChanged: true,
+                undoId: '20261109-1',
+                summary: 'blocks: 1 added',
+            }),
+        );
+        expect(checkClaimsUnmadeNoteChange(CLAIM, changed)).toBe(false);
+        const stepped = noteWatch();
+        applyToolWatch(
+            stepped,
+            'owa_note_edit',
+            { action: 'undo' },
+            JSON.stringify({ isChanged: true, summary: 'one step back' }),
+        );
+        expect(
+            checkClaimsUnmadeNoteChange("I've put it back as it was.", stepped),
+        ).toBe(false);
+        // An undo that was refused stepped nothing.
+        const refused = noteWatch();
+        applyToolWatch(
+            refused,
+            'owa_note_edit',
+            { action: 'undo' },
+            'Nothing to undo.',
+        );
+        expect(
+            checkClaimsUnmadeNoteChange("I've put it back as it was.", refused),
+        ).toBe(true);
+    });
+
+    test('is no claim in an answer that only offers, or outside a note', () => {
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'I cannot draw a picture of a sheep: the board draws boxes, ' +
+                    'words and arrows. Would you like a drawing of words?',
+                noteWatch(),
+            ),
+        ).toBe(false);
+        expect(checkClaimsUnmadeNoteChange(CLAIM, genToolWatch())).toBe(false);
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'Shall I put the prayer at the end of the note?',
+                noteWatch(),
+            ),
+        ).toBe(false);
+    });
+});
+
 // EC-460, 2026-11-04: an answer that holds not one letter of the script it
 // was asked in is in the wrong language; a Latin-script language is never
-// checked (English and French share it), and a short line never is.
+// checked (English shares it with many), and a short line never is.
 describe('the wrong-language check', () => {
     const LONG_ENGLISH =
         'Click the small dots at the bottom left, then drag the slider.';
@@ -4800,5 +5157,147 @@ describe('the wrong-language check', () => {
         expect(toAnswerScript('en')).toBeNull();
         expect(toAnswerScript(null)).toBeNull();
         expect(toAnswerScript('xx')).toBeNull();
+    });
+});
+
+// 2026-11-10, the user's goal: _when user ask for retrying chatbot have to
+// try with different approach and different effort get different result_.
+// What each provider's client is HANDED -- the request as it goes out -- on
+// an ordinary ask, a first Retry and a second.
+describe('a Retry asks a step harder, on the wire', () => {
+    const RETRY_SERVER_ID = 'retry-server';
+    const RETRY_MODEL = `${RETRY_SERVER_ID}/row-gemma`;
+
+    function genOpenAiText() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        resetSpendGuardForTests();
+        resetReasoningOffMemoryForTests();
+    });
+    afterEach(() => {
+        fake.anthropic = null;
+        fake.openai = null;
+        fake.custom = null;
+        fake.customServers = [];
+        fake.lmStudioInfoMap = null;
+    });
+
+    test('ChatGPT thinks a level harder each try, with room for it', async () => {
+        const create = vi.fn(async () => {
+            return genOpenAiText();
+        });
+        fake.openai = { chat: { completions: { create } } };
+        for (const retryAttempt of [undefined, 1, 2, 3]) {
+            await askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'openai',
+                'gpt-5',
+                [],
+                null,
+                retryAttempt === undefined ? {} : { retryAttempt },
+            );
+        }
+        const sent = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(
+            sent.map((request: any) => {
+                return [
+                    request.reasoning_effort,
+                    request.max_completion_tokens,
+                ];
+            }),
+        ).toEqual([
+            ['low', 6000],
+            ['medium', 12000],
+            ['high', 12000],
+            ['high', 12000],
+        ]);
+    });
+
+    test('Claude 5 is asked one effort level above its default, never max; Haiku 4.5 none', async () => {
+        const create = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'Press F5.' }] };
+        });
+        fake.anthropic = { messages: { create } };
+        const ask = (model: string, retryAttempt?: number) => {
+            return askLlmBot(
+                'How do I show the screen?',
+                'presenter',
+                'anthropic',
+                model,
+                [],
+                null,
+                retryAttempt === undefined ? {} : { retryAttempt },
+            );
+        };
+        await ask('claude-sonnet-5');
+        await ask('claude-sonnet-5', 1);
+        await ask('claude-opus-5', 3);
+        await ask('claude-haiku-4-5', 1);
+        const [plain, sonnet, opus, haiku] = create.mock.calls.map(
+            (call: any[]) => {
+                return call[0];
+            },
+        );
+        // An ordinary ask sends no effort: the default the corpus was
+        // graded at, and the cached prefix it reads.
+        expect(plain).not.toHaveProperty('output_config');
+        expect(plain.max_tokens).toBe(6000);
+        expect(sonnet.output_config).toEqual({ effort: 'xhigh' });
+        expect(sonnet.max_tokens).toBe(12000);
+        expect(opus.output_config).toEqual({ effort: 'xhigh' });
+        expect(haiku).not.toHaveProperty('output_config');
+        expect(haiku.max_tokens).toBe(12000);
+    });
+
+    test('a local program is sampled on a Retry, and a general one may think', async () => {
+        fake.customServers = [
+            {
+                id: RETRY_SERVER_ID,
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [{ id: 'row-gemma', model: 'gemma-4-12b', name: '' }],
+            },
+        ];
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async () => {
+            return genOpenAiText();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        for (const retryAttempt of [undefined, 1, 2]) {
+            await askLlmBot(
+                'What is the Bible?',
+                'presenter',
+                'custom',
+                RETRY_MODEL,
+                [],
+                null,
+                {
+                    isGeneral: true,
+                    ...(retryAttempt === undefined ? {} : { retryAttempt }),
+                },
+            );
+        }
+        const [plain, first, second] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        expect(plain).toMatchObject({
+            temperature: 0,
+            reasoning_effort: 'none',
+        });
+        expect(plain.max_tokens).toBe(2000);
+        expect(first.temperature).toBe(0.7);
+        expect(first.max_tokens).toBe(4000);
+        expect(first).not.toHaveProperty('reasoning_effort');
+        expect(second.temperature).toBe(1);
     });
 });

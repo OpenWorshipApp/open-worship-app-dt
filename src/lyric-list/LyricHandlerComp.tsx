@@ -1,4 +1,4 @@
-import { lazy, useMemo, useRef } from 'react';
+import { lazy, useMemo, useRef, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
@@ -6,7 +6,11 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import Lyric from './Lyric';
 import { applyOpenLyricTheme, initOpenLyric } from './lyricHelpers';
 import LyricManager, { LyricManagerContext } from './LyricManager';
-import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
+import {
+    useAppCurrentRef,
+    useAppEffect,
+    useAppStateAsync,
+} from '../helper/appHooks';
 import { useIsDarkMode } from '../others/themeHelpers';
 import LyricSlide, { INDEX_CLASSNAME_PREFIX } from './LyricSlide';
 import EventHandler from '../event/EventHandler';
@@ -14,6 +18,13 @@ import {
     ON_SLIDE_ITEM_SELECTED_EVENT,
     type OnSlideItemSelectedEventDataType,
 } from '../app-document-presenter/items/varyAppDocumentHelpers';
+import appProvider from '../server/appProvider';
+import {
+    checkIsSameLyricNoteList,
+    getLyricNoteList,
+    type LyricNoteType,
+} from './lyricNoteHelpers';
+import LyricNotesComp from './LyricNotesComp';
 
 /**
  * The song-structure index a slide card stands for, or null when the card is
@@ -72,6 +83,27 @@ export default function LyricHandlerComp({
     const isDarkMode = useIsDarkMode();
     applyOpenLyricTheme(lyricManager?.openLyricPreviewer ?? null, isDarkMode);
 
+    // The song's `Note` sections, for the read-only note pane. Read off the
+    // text the previewer already holds, so a manager that has just arrived
+    // has its notes on its FIRST render — the pane wraps the song's own panes,
+    // and finding the notes a render later would mount those panes twice.
+    // `noteState` only answers for the manager it was read for: an update
+    // stores what it read, and a new song starts from its own text again.
+    const [noteState, setNoteState] = useState<{
+        owner: LyricManager;
+        noteList: LyricNoteType[];
+    } | null>(null);
+    const noteList = useMemo(() => {
+        if (!lyricManager) {
+            return [];
+        }
+        if (noteState?.owner === lyricManager) {
+            return noteState.noteList;
+        }
+        return getLyricNoteList(lyricManager.openLyricPreviewer.value);
+    }, [lyricManager, noteState]);
+    const noteListRef = useAppCurrentRef(noteList);
+
     useAppEffect(() => {
         if (!lyricManager) {
             return;
@@ -80,6 +112,18 @@ export default function LyricHandlerComp({
             ['update'],
             async () => {
                 await lyricManager.refreshOpenLyricContent();
+                // A line scan of the text just re-fed, on the listener that
+                // already runs: and a re-render only when the notes changed,
+                // since this fires on every keystroke in the Lyric Editor.
+                const newNoteList = getLyricNoteList(
+                    lyricManager.openLyricPreviewer.value,
+                );
+                if (
+                    checkIsSameLyricNoteList(noteListRef.current, newNoteList)
+                ) {
+                    return;
+                }
+                setNoteState({ owner: lyricManager, noteList: newNoteList });
             },
         );
         lyricManager.containerElement = containerRef.current;
@@ -126,29 +170,79 @@ export default function LyricHandlerComp({
         );
     }
 
+    const lyricPanes = (
+        <ResizeActorComp
+            flexSizeName={`${flexSizeNamePrefix}lyric-previewer`}
+            isHorizontal={false}
+            flexSizeDefault={{
+                v1: ['1'],
+                v2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: LazyLyricRenderPreviewBodyComp,
+                    key: 'v1',
+                    ...toWidgetLabel('Previewer'),
+                },
+                {
+                    children: LazyLyricSlidesPreviewerComp,
+                    key: 'v2',
+                    ...toWidgetLabel('Slides'),
+                },
+            ]}
+        />
+    );
+    // The note pane is the Presenter's, as a slide document's is, and only for
+    // a song that HAS a note: most have none, and an empty box would take
+    // room from the slides on a small screen. It WRAPS the song's panes rather
+    // than joining them as a `v3`: a stored size whose keys differ from the
+    // defaults is thrown away (`getFlexSizeSetting`), so a third pane that comes
+    // and goes with the song would reset the Previewer / Slides split every
+    // time a song with notes and one without took turns. Open from the start,
+    // since it is only there when there is something to read.
+    const isShowingNotes = appProvider.isPagePresenter && noteList.length > 0;
+
     return (
         <div className="w-100 h-100 app-overflow-hidden" ref={containerRef}>
             <LyricManagerContext value={lyricManager}>
-                <ResizeActorComp
-                    flexSizeName={`${flexSizeNamePrefix}lyric-previewer`}
-                    isHorizontal={false}
-                    flexSizeDefault={{
-                        v1: ['1'],
-                        v2: ['1'],
-                    }}
-                    dataInput={[
-                        {
-                            children: LazyLyricRenderPreviewBodyComp,
-                            key: 'v1',
-                            ...toWidgetLabel('Previewer'),
-                        },
-                        {
-                            children: LazyLyricSlidesPreviewerComp,
-                            key: 'v2',
-                            ...toWidgetLabel('Slides'),
-                        },
-                    ]}
-                />
+                {isShowingNotes ? (
+                    <ResizeActorComp
+                        flexSizeName={`${flexSizeNamePrefix}lyric-previewer-note`}
+                        isHorizontal={false}
+                        flexSizeDefault={{
+                            v1: ['6'],
+                            v2: ['1'],
+                        }}
+                        dataInput={[
+                            {
+                                children: {
+                                    render: () => {
+                                        return lyricPanes;
+                                    },
+                                },
+                                key: 'v1',
+                                ...toWidgetLabel('Lyrics'),
+                                className: 'app-flex-item',
+                            },
+                            {
+                                children: {
+                                    render: () => {
+                                        return (
+                                            <LyricNotesComp
+                                                noteList={noteList}
+                                            />
+                                        );
+                                    },
+                                },
+                                key: 'v2',
+                                ...toWidgetLabel('Note'),
+                                className: 'app-flex-item',
+                            },
+                        ]}
+                    />
+                ) : (
+                    lyricPanes
+                )}
             </LyricManagerContext>
         </div>
     );

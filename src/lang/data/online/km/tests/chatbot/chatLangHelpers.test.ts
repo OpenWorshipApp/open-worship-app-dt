@@ -10,8 +10,10 @@ import {
     listFrameAliases,
     pickReplyLanguage,
     toAsciiDigits,
+    toChangeClaimWords,
     toShownDigits,
 } from '../../../../../../chatbot/chatLangHelpers';
+import { checkHasForegroundClaim } from '../../../../../../chatbot/changeClaimHelpers';
 
 afterEach(() => {
     vi.unstubAllGlobals();
@@ -142,4 +144,35 @@ test('a walkthrough said again in Khmer is an echo', () => {
     expect(checkIsWalkthroughEchoWord('បង្ហាញខ្ញុំម្តងមួយៗ')).toBe(true);
     expect(checkIsWalkthroughEchoWord('បាទ')).toBe(true);
     expect(checkIsWalkthroughEchoWord('ប្តូរពណ៌អក្សរ')).toBe(false);
+});
+
+// EC-558 (2026-11-13): "I have taken the clock off the screen", the verb
+// split round its object, claimed a change no call made and was not read
+// as a claim -- only the verb written whole was.
+describe('a change claimed with the verb split round its object', () => {
+    const claimWords = toChangeClaimWords('km');
+
+    test('taking something off is a claim, the clock between the words', () => {
+        for (const words of [
+            'ខ្ញុំបានដកនាឡិកាចេញពីអេក្រង់រួចរាល់ហើយ។',
+            'ខ្ញុំបានយកសារចេញពីអេក្រង់ហើយ។',
+        ]) {
+            expect(checkHasForegroundClaim(words, claimWords), words).toBe(
+                true,
+            );
+        }
+    });
+
+    test('an offer, a can, a not and a step for the person are none', () => {
+        for (const words of [
+            'តើអ្នកចង់ឱ្យខ្ញុំដកនាឡិកាចេញពីអេក្រង់ទេ?',
+            'ខ្ញុំអាចដកនាឡិកាចេញបាន ប្រសិនបើអ្នកចង់។',
+            'ខ្ញុំមិនបានដកនាឡិកាចេញទេ។',
+            'ដើម្បីដកនាឡិកាចេញ សូមចុចប៊ូតុងលាក់។',
+        ]) {
+            expect(checkHasForegroundClaim(words, claimWords), words).toBe(
+                false,
+            );
+        }
+    });
 });

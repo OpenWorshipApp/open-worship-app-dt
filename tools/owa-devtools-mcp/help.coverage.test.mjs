@@ -14,7 +14,7 @@ import {
   vi,
 } from 'vitest';
 
-// The knowledge reader against a fixture bundle with a Khmer translation,
+// The knowledge reader against a fixture bundle with a translation,
 // against a broken bundle, and against a checkout with no bundle at all --
 // the last one by hiding the built folder from `existsSync`, everything else
 // on the disk left as it is.

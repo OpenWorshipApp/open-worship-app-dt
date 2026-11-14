@@ -6,13 +6,21 @@ import {
     readBibleReaderAsk,
     readBibleReaderBookCandidate,
     readBibleReaderThread,
+    toBibleReaderAsk,
 } from './bibleReaderChatHelpers';
+import { listLangPackageCodes } from '../test-setup/langPackageDirs';
 
 // The corpus is read in the language the window is SHOWN in, and the row the
-// regression came from is translated. Load it as a Khmer window does, before
-// anything reads the corpus (it is cached on first use).
+// regression came from is translated. Load it as a window shown in a
+// language with its own corpus does -- the first package on disk that has
+// one, English when none is there -- before anything reads the corpus (it
+// is cached on first use).
 beforeAll(() => {
-    document.documentElement.lang = 'km';
+    document.documentElement.lang =
+        listLangPackageCodes({
+            isEnglishIncluded: false,
+            fileName: 'questions.json',
+        })[0] ?? 'en';
 });
 
 describe('a typed Bible-Reader question', () => {
@@ -94,9 +102,10 @@ describe('a typed Bible-Reader question', () => {
     });
 });
 
-// The Reader's own how-to row, W-11. Round 23's Khmer pass found the
-// Bible-Reader ask taking it: the verse was opened and the answer never said
-// where to type it. The row wins, in both languages.
+// The Reader's own how-to row, W-11. Round 23's pass in a non-English window
+// found the Bible-Reader ask taking it: the verse was opened and the answer
+// never said where to type it. The row wins, in English here and in each
+// language's own words in its package's tests.
 describe('a supported question is not a Bible-Reader ask', () => {
     test.each(['Where do I type John 3:16?'])('%s', async (asked) => {
         // The words LOOK like the ask kind...
@@ -164,5 +173,28 @@ describe('a plain line under a Bible-Reader answer', () => {
                 'and chapter 5?',
             ),
         ).toBeNull();
+    });
+});
+
+describe('what a Bible-Reader ask tells the model', () => {
+    const asked = 'Explain John 3:16 in simple words';
+
+    test('names the Bible to quote, and no language of its own', () => {
+        const text = toBibleReaderAsk(asked, { intent: 'reference' }, 'XX1');
+        expect(text.startsWith(asked)).toBe(true);
+        expect(text).toContain('Quote a passage from the Bible "XX1"');
+        expect(text).not.toContain('Answer in');
+    });
+
+    test('says what to answer in when that Bible is in another language (EC-495)', () => {
+        expect(
+            toBibleReaderAsk(asked, { intent: 'reference' }, 'XX1', 'English'),
+        ).toContain(
+            "Answer in English, quoting that Bible's words as they read.",
+        );
+        // With no Bible named there is none to quote.
+        expect(
+            toBibleReaderAsk(asked, { intent: 'reference' }, null, 'English'),
+        ).not.toContain('Answer in');
     });
 });

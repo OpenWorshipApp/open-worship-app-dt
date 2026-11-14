@@ -5,13 +5,13 @@ section: "Configuration"
 verify: [ST-87, ST-88, ST-89, ST-90]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-55 — Find and install a language (Settings → Languages)
 
 **Goal:** show the app in your own language, or stop offering one you never use.
 
-English is part of the app. Every other language — Khmer and French included — is a
+English is part of the app. Every other language is a
 separate package, installed from the list Open Worship publishes online. An installed
 language is kept in your data folder, under `lang`.
 
@@ -94,5 +94,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-87` · `ST-88` · `ST-89` · `ST-90`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

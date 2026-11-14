@@ -33,12 +33,14 @@ slide-editor/canvas 4, setting/bible-setting 3, app-modal 3, helper 3, plus
 `src/lang/data/{en,km}/index.test.ts` and `src/lang/langHelpers.test.ts` — so the
 km-translation completeness tests are gone, which matters given `tran()` throws on a
 missing key. (Since rebuilt: `c24d3a43`, 2026-09-26, put a presenting-flow suite
-back, and `src/lang/tranKeyCoverage.test.ts` now gates km keys.) What survived: tests that mock appProvider in-file, and every
+back, and `src/lang/tranKeyCoverage.test.ts` gates every language package's keys — km's alone until 2026-09-21, then km's with fr held to the same set until 2026-11-06.) What survived: tests that mock appProvider in-file, and every
 `electron/*.test.ts` (separate config, never used the fake). Even a freshly written
 test isn't safe from it: `src/app-modal/floatingWidgetModalLayer.test.tsx` was added
 2026-08-16 (`3f7253ac`) and the prune deleted it a week later — of the modal-layer
-invariants only the explicit `isAboveModal` class is unit-tested today
-(`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`, since 2026-10-05). The same commit added
+invariants the explicit `isAboveModal` class is unit-tested
+(`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`, since 2026-10-05), as is a modal
+telling its contents they are in it (`src/app-modal/components.coverage.test.tsx`, since
+2026-11-06); a floating widget reading that context still is not. The same commit added
 `server.deps.inline: ['open-lyric', /monaco-editor/]` to `vitest.config.ts`;
 `package.json` test scripts were unchanged.
 

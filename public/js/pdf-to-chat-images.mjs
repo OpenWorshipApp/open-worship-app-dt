@@ -7,9 +7,9 @@ import { openPdfFile } from './pdf-stream.mjs';
 
 // Pages of a PDF for the help window's assistant to READ, as pictures.
 //
-// Pictures rather than the text layer on purpose: a Khmer PDF is as often
-// as not set in a legacy font whose "text" is Latin letters a font draws as
-// Khmer, so the words pulled out of it are nonsense -- and a scan has no
+// Pictures rather than the text layer on purpose: a PDF in a script of its
+// own is as often as not set in a legacy font whose "text" is Latin letters
+// a font draws as that script, so the words pulled out of it are nonsense -- and a scan has no
 // text at all. A picture is what the page LOOKS like, which is what the
 // person is asking about.
 //
@@ -68,7 +68,7 @@ function renderPage(page, longEdge) {
 
 // Keep the PDF's own text beside the picture when it has one. It is a useful
 // exact transcript for ordinary Unicode PDFs, but never a replacement for the
-// picture: scans have no text layer and legacy Khmer fonts can map unrelated
+// picture: scans have no text layer and legacy script fonts can map unrelated
 // Latin characters to the glyphs a reader sees.
 function readPageText(page) {
   let structuredText;

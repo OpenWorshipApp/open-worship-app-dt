@@ -16,33 +16,29 @@ import {
   toBibleXmlDownloadUrl,
   toGithubListingUrl,
 } from './bibleXmlAdvice.mjs';
-import {
-  listPackageCodes,
-  readPackageWorldParts,
-} from '../../extra-work/language-packages.mjs';
+import { readPackageWorldParts } from '../../extra-work/language-packages.mjs';
 import { configureWorldLanguageParts } from './worldLanguages.mjs';
 
 // What a language's own words are is ITS data, there when it is installed
-// (`worldLanguages.mjs`): these cases are about languages, so every package
-// of the checkout is installed for them -- and a case that leans on one
-// language's words runs while that package is on disk.
+// (`worldLanguages.mjs`): every package of the checkout is installed for
+// these cases, and each holds whichever packages are there -- English's
+// alone included. A case about one language is in that package's tests.
+// `Xxlang` is a made-up language: a file name is matched by its words.
 configureWorldLanguageParts(readPackageWorldParts);
-const packageCodeSet = new Set(listPackageCodes({ isEnglishIncluded: false }));
-const checkHasPackage = (code) => packageCodeSet.has(code);
 
 const REPO = 'https://github.com/Beblia/Holy-Bible-XML-Format';
 
 describe('the address a volunteer pasted', () => {
   test('a GitHub file PAGE becomes its download address, and says so', () => {
-    expect(toBibleXmlDownloadUrl(`${REPO}/blob/master/KhmerBible.xml`)).toEqual(
-      {
-        url: 'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/KhmerBible.xml',
-        note: 'I used the download address of the file instead of its GitHub page.',
-      },
-    );
+    expect(
+      toBibleXmlDownloadUrl(`${REPO}/blob/master/XxlangBible.xml`),
+    ).toEqual({
+      url: 'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/XxlangBible.xml',
+      note: 'I used the download address of the file instead of its GitHub page.',
+    });
   });
   test('an address that already downloads is left alone', () => {
-    const raw = `${REPO}/raw/refs/heads/master/KhmerBible.xml`;
+    const raw = `${REPO}/raw/refs/heads/master/XxlangBible.xml`;
     expect(toBibleXmlDownloadUrl(raw)).toEqual({ url: raw, note: null });
     expect(toBibleXmlDownloadUrl(`<${raw}>.`).url).toBe(raw);
   });
@@ -66,7 +62,9 @@ describe('the address a volunteer pasted', () => {
     expect(toGithubListingUrl(`${REPO}/tree/master/sub dir`)).toBe(
       'https://api.github.com/repos/Beblia/Holy-Bible-XML-Format/contents/sub%20dir?ref=master',
     );
-    expect(toGithubListingUrl(`${REPO}/blob/master/KhmerBible.xml`)).toBeNull();
+    expect(
+      toGithubListingUrl(`${REPO}/blob/master/XxlangBible.xml`),
+    ).toBeNull();
     expect(toGithubListingUrl('https://example.com/a/b')).toBeNull();
   });
 });
@@ -75,11 +73,11 @@ describe('picking the Bible off a page of files', () => {
   const listing = JSON.stringify([
     {
       download_url:
-        'https://raw.githubusercontent.com/Beblia/x/master/KhmerBible.xml',
+        'https://raw.githubusercontent.com/Beblia/x/master/XxlangBible.xml',
     },
     {
       download_url:
-        'https://raw.githubusercontent.com/Beblia/x/master/Khmer2005Bible.xml',
+        'https://raw.githubusercontent.com/Beblia/x/master/Xxlang2005Bible.xml',
     },
     {
       download_url:
@@ -96,8 +94,8 @@ describe('picking the Bible off a page of files', () => {
       'https://api.github.com/repos/Beblia/x/contents/',
     );
     expect(links.map((one) => one.name)).toEqual([
-      'KhmerBible.xml',
-      'Khmer2005Bible.xml',
+      'XxlangBible.xml',
+      'Xxlang2005Bible.xml',
       'EnglishKJBible.xml',
     ]);
     expect(
@@ -116,31 +114,31 @@ describe('picking the Bible off a page of files', () => {
     const links = extractBibleXmlLinks(listing, 'https://api.github.com/x');
     const ranked = rankBibleXmlLinks(
       links,
-      'please import the Khmer bible from github',
+      'please import the Xxlang bible from github',
     );
-    expect(ranked.words).toEqual(['khmer']);
+    expect(ranked.words).toEqual(['xxlang']);
     expect(ranked.matched).toBe(2);
-    expect(ranked.links[0].name).toBe('KhmerBible.xml');
+    expect(ranked.links[0].name).toBe('XxlangBible.xml');
     expect(rankBibleXmlLinks(links, 'Swahili').matched).toBe(0);
     // Every word, when a file has them all: one Bible, not two lists.
-    expect(rankBibleXmlLinks(links, 'Khmer 2005').links).toEqual([links[1]]);
-    expect(rankBibleXmlLinks(links, 'Khmer 1611').matched).toBe(2);
+    expect(rankBibleXmlLinks(links, 'Xxlang 2005').links).toEqual([links[1]]);
+    expect(rankBibleXmlLinks(links, 'Xxlang 1611').matched).toBe(2);
     expect(rankBibleXmlLinks(links, '').matched).toBe(3);
   });
   test('a year no file of that language has only narrows, it never widens', () => {
     const links = [
-      'KhmerBible.xml',
-      'Khmer2016Bible.xml',
+      'XxlangBible.xml',
+      'Xxlang2016Bible.xml',
       'Polish2016Bible.xml',
       'Chewa2016Bible.xml',
     ].map((name) => ({ name, url: `https://x.example/${name}` }));
-    // No Khmer Bible of 1999: the Khmer ones, said as what they matched on.
-    const ranked = rankBibleXmlLinks(links, 'Khmer 1999');
+    // No Xxlang Bible of 1999: the Xxlang ones, said as what they matched on.
+    const ranked = rankBibleXmlLinks(links, 'Xxlang 1999');
     expect(ranked.links.map((one) => one.name)).toEqual([
-      'KhmerBible.xml',
-      'Khmer2016Bible.xml',
+      'XxlangBible.xml',
+      'Xxlang2016Bible.xml',
     ]);
-    expect(ranked.words).toEqual(['khmer']);
+    expect(ranked.words).toEqual(['xxlang']);
     // A number out of a verse reference is not a Bible from that year.
     expect(rankBibleXmlLinks(links, 'verse john 2016 list').matched).toBe(0);
     // A year alone is still a search.
@@ -148,8 +146,8 @@ describe('picking the Bible off a page of files', () => {
   });
   test('a word nothing matched is answered with the languages it is close to', () => {
     const links = [
-      'KhmerBible.xml',
-      'Khmer2005Bible.xml',
+      'XxlangBible.xml',
+      'Xxlang2005Bible.xml',
       'KoreanBible.xml',
       'PortugueseBible.xml',
       'TurkishBible.xml',
@@ -157,7 +155,7 @@ describe('picking the Bible off a page of files', () => {
       'Turkish2001Bible.xml',
       'LaoBible.xml',
     ].map((name) => ({ name, url: `https://x.example/${name}` }));
-    expect(rankBibleXmlLinks(links, 'kmer').suggestions).toEqual(['Khmer']);
+    expect(rankBibleXmlLinks(links, 'xxlng').suggestions).toEqual(['Xxlang']);
     expect(rankBibleXmlLinks(links, 'portugese').suggestions).toEqual([
       'Portuguese',
     ]);
@@ -171,7 +169,7 @@ describe('picking the Bible off a page of files', () => {
     expect(suggestBibleLanguages(links, ['laotians'])).toEqual(['Lao']);
     // Nothing near is nothing offered, and a match offers nothing either.
     expect(rankBibleXmlLinks(links, 'vietnamese').suggestions).toBeUndefined();
-    expect(rankBibleXmlLinks(links, 'khmer').suggestions).toBeUndefined();
+    expect(rankBibleXmlLinks(links, 'xxlang').suggestions).toBeUndefined();
   });
   test('tells a page from an XML file by its first bytes', () => {
     expect(checkIsLikelyHtml('<!DOCTYPE html><html>')).toBe(true);
@@ -180,40 +178,30 @@ describe('picking the Bible off a page of files', () => {
   });
 });
 
+// A language in its own words is in that language's package's tests.
 describe('a language typed by name', () => {
-  test.runIf(checkHasPackage('de'))(
-    'in its own words, with or without "language" in front',
-    () => {
-      // Electron's ICU has no Khmer display names: the table must answer.
-      expect(toCatalogLanguageWord('Deutsch')).toBe('german');
-    },
-  );
   test('a code only when it is the whole answer', () => {
-    expect(toBibleSearchWords('km')).toEqual(['khmer']);
-    expect(toBibleSearchWords('Khmer 2019')).toEqual(['khmer', '2019']);
-    expect(toCatalogLanguageWord('khmer')).toBeNull();
+    expect(toBibleSearchWords('en')).toEqual(['english']);
+    expect(toBibleSearchWords('en 2019')).toEqual(['en', '2019']);
+    expect(toBibleSearchWords('English 2019')).toEqual(['english', '2019']);
+    expect(toCatalogLanguageWord('english')).toBeNull();
   });
-  // Each country or people is told by its language's own package.
-  test.each([
-    ['km', 'Import a Bible in Cambodia', ['khmer']],
-    ['zh', 'import bible in China', ['chinese']],
-    ['th', 'a bible for Thailand please', ['thai']],
-    ['es', 'import bible espanol', ['spanish']],
-  ].filter(([code]) => checkHasPackage(code)))(
-    'by its country or its people (%s): %s',
-    (_code, request, words) => {
-      expect(toBibleSearchWords(request)).toEqual(words);
-    },
-  );
   test('by its country or its people, as readily as by its name', () => {
     // Already the start of the catalog's own word: left as typed.
     expect(toBibleSearchWords('Import a Bible in "korea"')).toEqual(['korea']);
-    // Every one of them leads to a language the catalog has files for.
-    for (const [alias, language] of Object.entries(readLanguageAliases())) {
-      expect([alias, checkIsBibleLanguageWord(language)]).toEqual([
+    // English's own, there with no language installed.
+    expect(toBibleSearchWords('import bible in America')).toEqual(['english']);
+    // Every one of them -- English's and each installed language's own --
+    // is read as its language and leads to one the catalog has files for.
+    const aliasList = Object.entries(readLanguageAliases());
+    expect(aliasList.length).toBeGreaterThan(0);
+    for (const [alias, language] of aliasList) {
+      expect([
         alias,
-        true,
-      ]);
+        toBibleSearchWords(`Import a Bible in ${alias}`),
+        checkIsBibleLanguageWord(alias),
+        checkIsBibleLanguageWord(language),
+      ]).toEqual([alias, [language], true, true]);
     }
   });
   test('the English Bibles named by their letters are filed under others', () => {
@@ -221,18 +209,21 @@ describe('a language typed by name', () => {
     expect(toBibleSearchWords('nkjv')).toEqual(['english', 'nkj']);
     // Beside a language it is that language's own.
     expect(toBibleSearchWords('Thai KJV')).toEqual(['thai', 'kjv']);
-    const links = ['EnglishKJBible.xml', 'EnglishNKJBible.xml', 'ThaiKJVBible.xml']
-      .map((name) => ({ name, url: `https://x.example/${name}` }));
+    const links = [
+      'EnglishKJBible.xml',
+      'EnglishNKJBible.xml',
+      'ThaiKJVBible.xml',
+    ].map((name) => ({ name, url: `https://x.example/${name}` }));
     expect(
       rankBibleXmlLinks(links, 'import KJV bible').links.map((one) => one.name),
     ).toEqual(['EnglishKJBible.xml', 'EnglishNKJBible.xml']);
   });
   test('which words of a request name a language with Bibles', () => {
-    expect(checkIsBibleLanguageWord('Khmer')).toBe(true);
-    if (checkHasPackage('km')) {
-      // A country, through its language's own package.
-      expect(checkIsBibleLanguageWord('cambodia')).toBe(true);
-    }
+    expect(checkIsBibleLanguageWord('English')).toBe(true);
+    expect(checkIsBibleLanguageWord('Swahili')).toBe(true);
+    // A country, through English's own names for it.
+    expect(checkIsBibleLanguageWord('england')).toBe(true);
+    expect(checkIsBibleLanguageWord('Xxlang')).toBe(false);
     expect(checkIsBibleLanguageWord('verse')).toBe(false);
     expect(checkIsBibleLanguageWord('commentary')).toBe(false);
   });
@@ -245,24 +236,32 @@ describe('which language the verses are in', () => {
       locales: [],
     });
   });
+  test("English is told by English's own little words", () => {
+    expect(
+      guessBibleLocalesFromText(
+        'In the beginning God created the heaven and the earth. And the ' +
+          'earth was without form, and void; and darkness was upon the deep.',
+      ).locales[0],
+    ).toBe('en-US');
+  });
 });
 
 describe('the short names offered', () => {
   test('initials, language and year, file name -- never a taken one', () => {
     expect(
       genBibleKeyChoices({
-        title: 'Khmer Standard Version 1954 = Hammond Version',
-        sourceName: `${REPO}/raw/refs/heads/master/KhmerBible.xml`,
-        locale: 'km-KH',
+        title: 'Xxlang Standard Version 1954 = Hammond Version',
+        sourceName: `${REPO}/raw/refs/heads/master/XxlangBible.xml`,
+        locale: 'xx-XX',
       }),
-    ).toEqual(['KSV', 'KM1954', 'KHMER', 'KM-BIBLE']);
+    ).toEqual(['XSV', 'XX1954', 'XXLANG', 'XX-BIBLE']);
     expect(
       genBibleKeyChoices({
-        title: 'Khmer Standard Version 1954',
-        locale: 'km-KH',
-        isTaken: (key) => key === 'KSV',
+        title: 'Xxlang Standard Version 1954',
+        locale: 'xx-XX',
+        isTaken: (key) => key === 'XSV',
       })[0],
-    ).toBe('KSV2');
+    ).toBe('XSV2');
   });
   test("the file's own key comes first, and invalid names never appear", () => {
     expect(

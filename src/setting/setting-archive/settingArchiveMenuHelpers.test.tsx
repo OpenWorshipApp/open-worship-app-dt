@@ -285,7 +285,7 @@ describe('Settings archive menu flows', () => {
         await handleSettingsImporting('/downloads/settings.tar');
         expect(mocks.toast).toHaveBeenCalledExactlyOnceWith(
             'Import Settings',
-            'This file holds no settings this version can import',
+            'There is nothing in this file to import.',
         );
         expect(mocks.input).not.toHaveBeenCalled();
         expect(mocks.import).not.toHaveBeenCalled();

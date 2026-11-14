@@ -69,6 +69,26 @@ describe('describePresentedBible', () => {
         );
     });
 
+    // EC-704: a passage goes into the Bibles list before it goes up.
+    it('says the passage was saved to the Bibles list, only when it was new', () => {
+        expect(
+            describePresentedBible({
+                ...presented,
+                listed: { list: 'Default', isNew: true, id: 3, undoId: 'u-1' },
+            }),
+        ).toBe(
+            'John 3:16 (KJV) is on the screen now -- "(16): For God so loved the world". ' +
+                'It is saved in your Bibles list "Default" too. ' +
+                'Screen 0 is off, so the projector is not showing it yet.',
+        );
+        expect(
+            describePresentedBible({
+                ...presented,
+                listed: { list: 'Default', isNew: false, id: 3 },
+            }),
+        ).toBe(describePresentedBible(presented));
+    });
+
     it('says when the app was left asking the operator something', () => {
         expect(
             describePresentedBible({

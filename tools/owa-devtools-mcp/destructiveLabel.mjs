@@ -6,12 +6,12 @@
 // `firewall.mjs`, read against a call's `find` argument. Measured 2026-09-14,
 // three ways past it:
 //
-//  - **It could not read Khmer.** Every destructive label in the app's own
-//    dictionary has a Khmer translation -- 41 of them -- and not one was
-//    caught. `owa_list_ui`, `owa_list_screens` and the manual all hand the
-//    model the words AS DISPLAYED, so in a Khmer window the model is given
-//    the Khmer words for Move to Trash and for Clear All, and `owa_click`
-//    pressed either one by those words.
+//  - **It could not read a translation.** Every destructive label in the
+//    app's own dictionary had a translation in an installed language -- 41 of
+//    them -- and not one was caught. `owa_list_ui`, `owa_list_screens` and
+//    the manual all hand the model the words AS DISPLAYED, so in a window
+//    shown in that language the model is given its words for Move to Trash
+//    and for Clear All, and `owa_click` pressed either one by those words.
 //  - **It read the words, not the control.** The matcher collapses whitespace
 //    before it compares and the patterns did not, so `Clear All` or
 //    `Clear  All` matched no pattern and pressed Clear All [F6].
@@ -97,7 +97,7 @@ export function toComparableLabel(text) {
  * `rule` is `genDestructiveLabelRule`'s answer. English is read by pattern;
  * a translation by phrase. A phrase is found INSIDE a label only where it is
  * not glued to a letter of a script written with spaces between its words --
- * Khmer is written without them, so its phrases stand wherever they fall, and
+ * a script written without them has its phrases stand wherever they fall, and
  * a Latin-script word must never be caught inside a longer one ("Undelete").
  *
  * Shipped into the page beside `toComparableLabel`: self-contained apart from
@@ -276,14 +276,15 @@ function checkIsEnglishDestructive(text) {
  * The rule, derived from the app's own `tran()` dictionary rather than
  * written by hand: every translation of a key the English patterns call
  * destructive becomes a phrase, so a label added to the app in English is
- * refused in Khmer the day its translation lands, with nothing here to edit.
+ * refused in every language the day its translation lands, with nothing here
+ * to edit.
  *
  * Two things keep it from refusing ordinary work, both read off the same
  * dictionary:
  *
  *  - **A translation the dictionary ALSO uses for an allowed control is not a
  *    phrase at all.** The window cannot tell the two apart, so neither can
- *    this. On the Khmer dictionary there are two: one word is both Delete and
+ *    this. One installed dictionary had two: one word is both Delete and
  *    Clear, one phrase both Remove Background and Clear Background. (Three
  *    until 2026-10-13: one phrase was Delete Bible and Clear Bible. That
  *    button is Clear Long Text now, with words of its own, so
@@ -293,8 +294,8 @@ function checkIsEnglishDestructive(text) {
  *    behind the destructive reading is the app's own confirm, which
  *    `findPressRefusal` never lets anyone answer.
  *  - **A phrase found inside any allowed translation is matched whole, never
- *    inside a longer label**: Sign Out's Khmer sits inside the toast that says
- *    SongSelect signed you out, and that sentence must not become unpressable.
+ *    inside a longer label**: one language's Sign Out sits inside the toast
+ *    that says SongSelect signed you out, and that sentence must not become unpressable.
  *
  * English is left to the patterns: its words are separated by spaces, and a
  * phrase matched inside a label would catch "delete" in "Undelete".

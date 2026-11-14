@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-29",
+    "updated": "2026-11-12",
     "sections": [
         {
             "id": "reading",
@@ -602,7 +602,7 @@
                         "other bible",
                         "change bible",
                         "english",
-                        "khmer",
+                        "my language",
                         "show in another bible"
                     ],
                     "resources": {
@@ -943,6 +943,25 @@
                     }
                 },
                 {
+                    "id": "notes-markdown-file",
+                    "text": "How do I make a Markdown file in Bible Notes?",
+                    "kind": "howto",
+                    "keywords": [
+                        "markdown",
+                        "md file",
+                        "new markdown file",
+                        "new bible note",
+                        "new file",
+                        "study page",
+                        "write markdown"
+                    ],
+                    "resources": {
+                        "recipe": "W-14",
+                        "passage": "Making a new file",
+                        "find": "Bible Notes"
+                    }
+                },
+                {
                     "id": "bible-list-add",
                     "text": "How do I add a verse to a Bible list?",
                     "kind": "howto",
@@ -1031,7 +1050,7 @@
                     "keywords": [
                         "detail language",
                         "compare languages",
-                        "English and Khmer",
+                        "English and my language",
                         "person panel",
                         "location panel"
                     ],
@@ -1166,7 +1185,7 @@
                     "keywords": [
                         "another bible",
                         "other language",
-                        "read in khmer",
+                        "read in my language",
                         "read in english",
                         "passage card"
                     ],
@@ -1421,11 +1440,38 @@
                         "reveal",
                         "file explorer",
                         "double click",
-                        "view"
+                        "view",
+                        "file twice",
+                        "pdf twice",
+                        "file in two windows",
+                        "file in another window"
                     ],
                     "resources": {
                         "recipe": "W-37",
+                        "passage": "Click a file to open it",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "resources-edit-markdown",
+                    "text": "How do I change a markdown file from Resources?",
+                    "kind": "howto",
+                    "keywords": [
+                        "edit",
+                        "markdown",
+                        "md file",
+                        "fix a typo",
+                        "save",
+                        "unsaved",
+                        "discard",
+                        "mention in chatbot",
+                        "ask about words in the markdown editor",
+                        "scroll together",
+                        "editor follows the page"
+                    ],
+                    "resources": {
+                        "recipe": "W-37",
+                        "passage": "To change the file right there"
                     }
                 },
                 {
@@ -1546,7 +1592,24 @@
                         "preview",
                         "mermaid",
                         "diagram",
-                        "readme"
+                        "readme",
+                        "print",
+                        "print markdown",
+                        "print verses",
+                        "print names",
+                        "print folds",
+                        "print pictures",
+                        "print what i typed",
+                        "markdown in the chatbot",
+                        "attach markdown to the chatbot",
+                        "click a name",
+                        "click a verse",
+                        "linked names",
+                        "open linked file",
+                        "headings",
+                        "markdown headings",
+                        "markdown sections",
+                        "markdown table of contents"
                     ],
                     "resources": {
                         "recipe": "W-37"
@@ -1641,7 +1704,7 @@
                         "numbers map",
                         "books map",
                         "wrong language",
-                        "khmer",
+                        "my language",
                         "book names"
                     ],
                     "resources": {

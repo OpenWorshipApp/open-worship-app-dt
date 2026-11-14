@@ -75,6 +75,9 @@ vi.mock('./SlideEditorToolsCameraComp', () => ({
 vi.mock('./CanvasItemPreviewComp', () => ({
     default: () => createElement('span', {}, 'Item preview'),
 }));
+vi.mock('./CanvasItemPresetsComp', () => ({
+    default: () => createElement('span', {}, 'Item presets'),
+}));
 vi.mock('../CanvasItem', async () => {
     const react = await import('react');
     return {

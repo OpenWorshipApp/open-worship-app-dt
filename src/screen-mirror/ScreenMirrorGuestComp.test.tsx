@@ -92,6 +92,12 @@ vi.mock('./MirrorIntercomComp', () => ({
 vi.mock('../others/StayAwakeButtonComp', () => ({
     default: () => createElement('span', {}, 'Stay awake'),
 }));
+vi.mock('../others/commonButtons', () => ({
+    SettingButtonComp: () => createElement('span', {}, 'Setting'),
+    ChatbotButtonComp: () => createElement('span', {}, 'App Assistant'),
+    AiChatButtonComp: () => createElement('span', {}, 'AI Chat'),
+    HelpButtonComp: () => createElement('span', {}, 'Help'),
+}));
 vi.mock('../../electron/virtualDisplayProtocol', () => ({
     isVirtualDisplayId: (id: number) => id < 0,
 }));
@@ -220,6 +226,26 @@ describe('Screen Mirror guest page', () => {
         );
         await click('Presenter');
         expect(h.goToPath).toHaveBeenCalledWith('/presenter.html');
+    });
+
+    // The Presenter header's own group, in its order, so the assistant and
+    // Help are a press away on the page a stuck guest is looking at.
+    test('carries the Presenter header buttons at the right of its top bar', async () => {
+        await render();
+        const group = container.querySelector(
+            '.app-mirror-topbar [role="group"]',
+        );
+        expect(
+            [...(group?.children ?? [])].map((element) => {
+                return element.textContent;
+            }),
+        ).toEqual([
+            'Stay awake',
+            'Setting',
+            'App Assistant',
+            'AI Chat',
+            'Help',
+        ]);
     });
 
     test('scans on open, fills the best unlinked host, and connects with the code', async () => {

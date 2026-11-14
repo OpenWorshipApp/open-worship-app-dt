@@ -4,7 +4,7 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-10-18",
+    "updated": "2026-11-10",
     "sections": [
         {
             "id": "slides",
@@ -404,7 +404,8 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "find": "Shadow",
+                        "passage": "Give a box a shadow.",
+                        "find": "Shape Properties > Shadow",
                         "guide": true
                     }
                 }

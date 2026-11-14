@@ -9,6 +9,10 @@
  * own name, made unique when two share one (`pdf`, `pdf#2`).
  */
 import kjvBibleConfigJson from './bible-helpers/kjvBibleConfig.json';
+import {
+    STUDY_BIBLE_NOTES_LABEL,
+    STUDY_FILE_EXTENSION,
+} from './agentStudyFileRules';
 
 export type ResourceFileKindType = 'pdf' | 'note' | 'text' | 'picture';
 
@@ -45,7 +49,9 @@ export function toResourceFileName(
     const fileKey = rules.toCompareKey(filePath);
     for (let index = 0; index < dirPaths.length; index++) {
         const dirPath = dirPaths[index].replace(/[\\/]+$/, '');
-        const dirKey = rules.toCompareKey(dirPath) + rules.separator;
+        // The separator through the key too: on Windows a forward slash is
+        // the backslash (BN-38).
+        const dirKey = rules.toCompareKey(dirPath + rules.separator);
         if (fileKey.startsWith(dirKey)) {
             const inner = filePath
                 .slice(dirPath.length)
@@ -55,6 +61,42 @@ export function toResourceFileName(
         }
     }
     return null;
+}
+
+/**
+ * A study file kept straight in the Bible Notes folder of the session in
+ * front, named as the study tools take it (`Bible Notes/JHN.3.16 Love.md`,
+ * EC-509); null for anything else -- a notes file, a file in a folder
+ * inside it, no Bible Notes folder. The path rules are handed in, as
+ * above.
+ */
+export function toBibleNotesStudyName(
+    filePath: string,
+    dirPath: string | null,
+    rules: {
+        toCompareKey: (path: string) => string;
+        separator: string;
+    },
+) {
+    if (
+        dirPath === null ||
+        !filePath.toLowerCase().endsWith(STUDY_FILE_EXTENSION)
+    ) {
+        return null;
+    }
+    const trimmedDirPath = dirPath.replace(/[\\/]+$/, '');
+    const dirKey = rules.toCompareKey(trimmedDirPath + rules.separator);
+    if (!rules.toCompareKey(filePath).startsWith(dirKey)) {
+        return null;
+    }
+    const inner = filePath
+        .slice(trimmedDirPath.length)
+        .replaceAll('\\', '/')
+        .replace(/^\/+/, '');
+    if (inner === '' || inner.includes('/')) {
+        return null;
+    }
+    return `${STUDY_BIBLE_NOTES_LABEL}/${inner}`;
 }
 
 /**
@@ -170,9 +212,9 @@ export function resolveResourceFileName(
 
 /**
  * A book's key from a name in ANY installed Bible's own language (JHN for
- * the Khmer Bible's own name for John), after the code and the English name. The Resources panel's
- * files are named by the KJV's codes, but the person asking is reading a
- * Khmer Bible and says John in it (seen live 2026-10-18).
+ * a Bible's own name for John in its language), after the code and the English name. The
+ * Resources panel's files are named by the KJV's codes, but the person asking is
+ * reading a Bible in another language and says John in it (seen live 2026-10-18).
  */
 export function resolveResourceBookKeyFromMaps(
     book: unknown,

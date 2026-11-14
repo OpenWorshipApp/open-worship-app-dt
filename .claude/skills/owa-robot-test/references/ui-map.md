@@ -55,8 +55,11 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 
 ## Readiness signals
 
-- `#root` initially contains `<img class="loading" src="/loading.gif">`. When React
-  mounts, that image is removed. A persistent `.loading` image = bug.
+- `#root` initially contains the boot loader, a `<span class="app-loading-spinner
+  app-boot-loading" role="img" aria-label="Loading">` (put there by the Vite HTML
+  transform `vite-plugin-boot-loading.ts`, from the page's `<!-- boot-loading -->`;
+  shown from the first paint). When React mounts,
+  `getReactRoot` empties `#root` and it is gone. A persistent `.app-boot-loading` = bug.
 - **Ready check**: `wait_for` a name the page draws once mounted — it matches accessible
   names (a title, an `aria-label`) as well as visible text. The old `evaluate_script`
   probe of `#root` is refused by the MCP firewall; SKILL §3 lists a name per page.
@@ -201,7 +204,8 @@ Title matches `/Setting/`. **Five** tabs — `General` / `Path Settings` / `Bibl
 only `General` / `Path Settings` / `AI Providers` while no data folder is in use — in a
 vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fixed
 `Apply Settings` button (bottom-left). The General tab holds:
-`English`/`Khmer`/`French` language buttons (each in its own script: `ខ្មែរ`, `Français`), theme and, with a data folder in use, font family and the destructive
+theme (the language buttons, one per installed language in its own script, are on the
+**Languages** tab since 2026-11-04) and, with a data folder in use, font family and the destructive
 `Clear All Settings`; the directory paths and the destructive `Reset All Child Directories`
 are on `Path Settings` (the old `Set Default Data` button
 is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
@@ -230,7 +234,7 @@ follow). Keys are saved **on blur**, not per keystroke, and then flag
 `pendingApply`. Once an OpenAI key is saved, its provider group also shows the
 translated **Auto Play Audio AI when available** switch; it writes immediately and
 used to be a megaphone in the Reader's Bible Reference toolbar. The AI card's key
-labels are hardcoded English so they do **not** translate in Khmer — untranslated
+labels are hardcoded English so they do **not** translate in any other language — untranslated
 UI, not the `tran()` throw. The ST section now runs to **ST-86** and covers these
 tabs' contents — route from the matrix.
 

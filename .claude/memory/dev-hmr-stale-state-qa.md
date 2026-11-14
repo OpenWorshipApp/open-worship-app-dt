@@ -1,11 +1,11 @@
 ---
 name: dev-hmr-stale-state-qa
-description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays, can blank the page on an import cycle, and Vite can serve the save before the last one — re-verify after a full reload (and curl the served module) before calling it a regression
+description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays, can blank the page on an import cycle, and Vite can serve the save before the last one or keep answering 404 for a new module the page asked for early (a file added and removed under html/ clears it) — re-verify after a full reload (and curl the served module) before calling it a regression
 metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-11-07T00:38:03.592Z
+  modified: 2026-11-14T05:56:36.000Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -74,6 +74,20 @@ font row):
   new answer, and the tool still answered the old one -- until **View >
   Reload** of that window (`owa_menu`). A tool whose code lives in the
   renderer is checked live only after a reload of the window it runs in.
+- **A NEW module still answers 404 after it is written** (2026-11-14,
+  `owa_screen_edit`'s restore helper, Vite 8). The undo runner that imports
+  it was saved first, so the page asked for the file before it existed and
+  the dev server's resolver remembered it as missing. The server's watcher
+  sees `html/` (its root) and the files it has already served, so a new
+  file written under `src/` sends it no event and the 404 stays: the
+  restore helper answered 404 while other files in the same folders that
+  the page had never loaded answered 200. Check with
+  `curl -sk -o /dev/null -w '%{http_code}' https://localhost:3000/src/<path>`.
+  A file added and removed under `html/` makes the server drop that cache:
+  `echo x > html/.owa-nudge.tmp`, wait a second, then `rm` it. Both
+  modules answered 200 at once, with no restart of a server other sessions
+  share. Prevention, as above: write the imported file first, then the
+  import.
 
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent

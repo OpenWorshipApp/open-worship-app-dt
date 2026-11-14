@@ -378,7 +378,7 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             '/@id/__x00__vite/dynamic-import-helper.js',
             '/assets/transparency-cursor.svg',
             `${fs}/src/screen.tsx?t=1791402796655`,
-            `${fs}/src/lang/data/online/km/location-name-map-data/namesMap.json?import&url`,
+            `${fs}/src/lang/data/online/xx/location-name-map-data/namesMap.json?import&url`,
             `${fs}/node_modules/.vite/deps/react.js?v=1a2b3c4d`,
             `${fs}/node_modules/open-lyric/dist/index.js`,
             `${fs}/tools/owa-devtools-mcp/agentFileName.mjs`,
@@ -400,8 +400,14 @@ describe('checkIsVirtualDisplayDevViewerFile', () => {
             return readdirSync(dirPath, { withFileTypes: true }).flatMap(
                 (entry) => {
                     const entryPath = path.join(dirPath, entry.name);
+                    // A language package's own dependencies
+                    // (`src/lang/data/online/<code>/node_modules`) are no
+                    // source of the app's: walking their typings took the
+                    // test past its 5 s under load (2026-11-08).
                     if (entry.isDirectory()) {
-                        return listSources(entryPath);
+                        return entry.name === 'node_modules'
+                            ? []
+                            : listSources(entryPath);
                     }
                     return /\.tsx?$/.test(entry.name) &&
                         !/\.test\.tsx?$/.test(entry.name)

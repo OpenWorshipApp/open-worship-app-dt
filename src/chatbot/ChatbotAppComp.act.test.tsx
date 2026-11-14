@@ -226,6 +226,12 @@ describe('pressing a button under an answer', () => {
         return [...container.querySelectorAll('.cue-bot')].at(-1)!;
     }
 
+    // **Retry** under an answer (EC-476): drawn only where the message
+    // above it is a question of theirs.
+    function checkHasRetry(cue: Element) {
+        return cue.querySelector('.cue-retry') !== null;
+    }
+
     function askedTexts() {
         return [...container.querySelectorAll('.cue-you .cue-said')].map(
             (one) => {
@@ -426,6 +432,13 @@ describe('pressing a button under an answer', () => {
                 'What would you like to do with Genesis 8:20?',
             );
             expect(h.askLlmBot).not.toHaveBeenCalled();
+            // The press is the step's reply, no question to ask a model
+            // again: the step's answer has no Retry, the answer to their
+            // own question above it keeps its one (EC-506).
+            expect(checkHasRetry(lastBot())).toBe(false);
+            expect(checkHasRetry(container.querySelector('.cue-bot')!)).toBe(
+                true,
+            );
         });
 
         test('a lookup step a hand-edited file broke does nothing at all', async () => {
@@ -454,6 +467,7 @@ describe('pressing a button under an answer', () => {
             await press('Search another Bible');
             expect(askedTexts().at(-1)).toBe('Search another Bible');
             expect(h.askLlmBot).not.toHaveBeenCalled();
+            expect(checkHasRetry(lastBot())).toBe(false);
         });
 
         test('a Bible import step echoes the press as the person’s words', async () => {
@@ -468,6 +482,7 @@ describe('pressing a button under an answer', () => {
             await press('Cancel');
             expect(askedTexts().at(-1)).toBe('Cancel');
             expect(h.askLlmBot).not.toHaveBeenCalled();
+            expect(checkHasRetry(lastBot())).toBe(false);
         });
 
         test('Search Google for it opens a search the window wrote from their words, and keeps the search going', async () => {
@@ -875,6 +890,9 @@ describe('pressing a button under an answer', () => {
             expect(lastBot().textContent).toContain(
                 'I put a card on the app window.',
             );
+            // Asked again, the demo's name would go to a model as a
+            // question (EC-506).
+            expect(checkHasRetry(lastBot())).toBe(false);
         });
     });
 });

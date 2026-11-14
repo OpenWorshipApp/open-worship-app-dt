@@ -201,7 +201,7 @@ export async function relayFetch(
  * its computer went to sleep mid-question, it took too long. Whole sentences,
  * so a translation never stitches a phrase together (EC-385: _nothing
  * answered at http://localhost:11434/v1 — check that its server is running_
- * in English under a Khmer note). The rarer ones stay English, as Settings
+ * in English under a note in another language). The rarer ones stay English, as Settings
  * says them.
  */
 function describeRelayFailure(

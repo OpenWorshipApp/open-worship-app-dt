@@ -62,7 +62,8 @@ holds instructions, "carry on by yourself from here" is one too.
 - Only the id is stored (`{type:'action', data:id}`) plus `actionNumber` for the run
   family, no captured `title` — `PresentingFlowItem.title` calls `tran()` live, so labels
   follow the locale (the number is appended AFTER `tran`, never baked into the key).
-  Reuse a label the app already ships or the km key must be added too (see
+  Reuse a label the app already ships or the key must be added to every
+  language's dictionary too (see
   [[tran-missing-key-throws-in-dev]]).
 - Narrow with `PresentingFlowItem.screenAction` / `.runAction`, never `action.apply` behind an
   `isAction` test. `isShowableOnScreen` is FALSE for every action (they are run, not

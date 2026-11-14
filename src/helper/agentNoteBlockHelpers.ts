@@ -17,11 +17,19 @@
  * `[@Moses]`, `[#Jerusalem]`. Written back, a mention token it kept is the
  * ORIGINAL node with its data (a verse mention's words, a person's id), a run
  * of words it did not change keeps its own colour, font and size, and new
- * words take the block's own style -- a Khmer note's font included.
+ * words take the block's own style -- a note's language font included.
  *
  * Verse words are never a model's: a NEW verse (`[^Romans 8:28]`, or a
  * `passage` block) is resolved by the app from an installed Bible
  * (`agentNoteEditHelpers.ts`) and handed in here as `verseMap`.
+ *
+ * A verse mention says which Bible it is read from, as the editor names it:
+ * `[^(KJV) John 3:16]` (2026-11-08, the user, asking a note conversation to
+ * make the English lines' verses KJV: every verse it wrote came back in the
+ * Bible the lookup was on, the token having said no Bible and a kept token
+ * matching the old chip by its words alone). A token
+ * kept as read is the ORIGINAL chip; one naming another Bible is a NEW verse
+ * read from that Bible; one naming none matches a chip by its words.
  *
  * Pure on purpose -- no app, no editor package (heavy, and loaded only in a
  * note window) -- so every rule is tested against a real note's nodes.
@@ -55,7 +63,21 @@ import {
     type NoteStyleNameType,
 } from './agentNoteStyleHelpers';
 import { normalizeNoteNode } from './agentNoteNormalizeHelpers';
-import { expandSectionAdds } from './agentNoteMarkupHelpers';
+import { toEmoticonSafeText } from './noteEmoticonHelpers';
+import {
+    chainListAdds,
+    chainRewriteAdds,
+    chainSectionAdds,
+    expandPassageChanges,
+    expandPassageRepoints,
+    readHeadingMarks,
+    readPassageLineRef,
+    checkHasBlockMarkup,
+    checkIsPassageRef,
+    expandBlockSplits,
+    expandSectionAdds,
+    withVerseTokensSplit,
+} from './agentNoteMarkupHelpers';
 import {
     genNoteBlockLink,
     type NoteBlockLinkType,
@@ -66,6 +88,12 @@ import {
     toNoteInsertText,
     type NoteInsertKindType,
 } from './agentNoteInsertHelpers';
+import {
+    changeNoteDrawingNode,
+    readNoteDrawingLines,
+    readNoteDrawingScene,
+    toNoteDrawingText,
+} from './agentNoteDrawingHelpers';
 
 export {
     NOTE_TEXT_SIZE_LARGER,
@@ -133,7 +161,7 @@ export type NoteVerseType = {
     shownText: string;
     // "(16): For God so loved …" -- the verse words, a line a chapter.
     verseText: string;
-    // "font-family: app-Battambang;" for a Bible written in another script.
+    // "font-family: app-<Family>;" for a Bible written in another script.
     style: string;
 };
 
@@ -144,6 +172,9 @@ export type NoteEditChangeType = {
     text?: string;
     checked?: boolean;
     remove?: boolean;
+    // An added block whose words another block has already, added on
+    // purpose -- a refrain, a closing "Amen" (BN-44).
+    again?: boolean;
     ref?: string;
     // The block's text size: px, or "larger" / "smaller" -- each run of
     // words scaled from its own size, so a heading stays above its lines.
@@ -168,7 +199,157 @@ export type NoteEditChangeType = {
     linkTo?: number;
     linkToWords?: string;
     linkKind?: string;
+    // Set by the app, never by a model: every line of a block made several
+    // (`expandBlockSplits`), for the check that it keeps its own words.
+    splitText?: string;
+    // Set by the app, never by a model: a new block of a note rewritten as
+    // blocks numbered as they will stand, placed after the new block before
+    // it (`chainRewriteAdds`).
+    chain?: boolean;
 };
+
+/**
+ * A change with neither `block` nor `after` right after a block this call
+ * adds goes after the same block, in the order given -- the rule a model is
+ * told for several new blocks (BN-164, shape38's L-07: a lesson written
+ * whole as new blocks, one of them with no place, was refused, and the ask
+ * ran out of rounds with nothing written). Only a change that brings words
+ * or a kind: a style with no block is still refused.
+ */
+export function placeUnplacedAdds(
+    changes: readonly NoteEditChangeType[],
+): NoteEditChangeType[] {
+    // The newest add before it, whatever came between (BN-168, shape40's
+    // L-05: refused twice with BN-164 in place).
+    let lastAdd: NoteEditChangeType | null = null;
+    return changes.map((change) => {
+        let placed = change;
+        if (
+            typeof change === 'object' &&
+            change !== null &&
+            change.block === undefined &&
+            change.after === undefined &&
+            change.remove !== true &&
+            (typeof change.text === 'string' ||
+                typeof change.kind === 'string') &&
+            lastAdd !== null
+        ) {
+            placed = { ...change, after: lastAdd.after };
+        }
+        if (
+            typeof placed === 'object' &&
+            placed !== null &&
+            placed.block === undefined &&
+            Number.isInteger(placed.after)
+        ) {
+            lastAdd = placed;
+        }
+        return placed;
+    });
+}
+
+// A heading's words at most, and a line that is a verse token alone.
+const MAX_HEADING_WORDS = 20;
+const LONE_VERSE_TOKEN_PATTERN = /^\s*\[\^[^\]\n]+\]\s*$/;
+
+/**
+ * Why a change to a heading that stays a heading is refused: words a
+ * paragraph's length, or a verse token alone -- the block under it, aimed
+ * one short; null when it reads as a heading (BN-176).
+ */
+function readHeadingWordsReason(
+    ref: BlockRefType,
+    change: NoteEditChangeType,
+    blockNumber: number,
+    count: number,
+) {
+    if (
+        !/^h[1-6]$/.test(ref.kind) ||
+        change.kind !== undefined ||
+        typeof change.text !== 'string'
+    ) {
+        return null;
+    }
+    const isToken = LONE_VERSE_TOKEN_PATTERN.test(change.text);
+    const wordCount = change.text.split(/\s+/).filter((word) => {
+        return word !== '';
+    }).length;
+    if (!isToken && wordCount <= MAX_HEADING_WORDS) {
+        return null;
+    }
+    const heading = toBlockText(ref).slice(0, 40);
+    const below =
+        blockNumber < count
+            ? ` -- the block under it is ${blockNumber + 1}`
+            : '';
+    return (
+        `Block ${blockNumber} is the heading "${heading}": ` +
+        (isToken
+            ? 'a verse token alone is a verse, never a heading'
+            : `these ${wordCount} words are a paragraph's`) +
+        `${below}. Change that block, or give \`kind\` to make this one ` +
+        'another kind.'
+    );
+}
+
+// The call's own fields, never a change's.
+const CALL_FIELD_SET = new Set([
+    'action',
+    'bible',
+    'file',
+    'hash',
+    'id',
+    'note',
+    'page',
+    'title',
+]);
+
+/**
+ * `changes` without an item that holds only the call's own fields -- a
+ * model wrote `{hash, note}` as the last change of a whole lesson, and the
+ * edit was refused for a change with no place, then the ask ran out of
+ * rounds (BN-169, shape41's L-04) -- and a `title` such an item carried.
+ */
+export function takeMisplacedCallFields(
+    changes: readonly NoteEditChangeType[],
+) {
+    let title: string | null = null;
+    const kept = changes.filter((change) => {
+        if (typeof change !== 'object' || change === null) {
+            return true;
+        }
+        // An item with nothing in it asks for nothing (BN-180: a door that
+        // dropped the fields it does not list had left the call's `title`
+        // so, and the edit was refused for a change with no place).
+        const keyList = Object.keys(change).filter((key) => {
+            return (change as Record<string, unknown>)[key] !== undefined;
+        });
+        const isCallFields = keyList.every((key) => {
+            return CALL_FIELD_SET.has(key);
+        });
+        if (isCallFields) {
+            const { title: misplacedTitle } = change as { title?: unknown };
+            if (typeof misplacedTitle === 'string' && title === null) {
+                title = misplacedTitle;
+            }
+        }
+        return !isCallFields;
+    });
+    return { changes: kept, title: title as string | null };
+}
+
+// A change as the refusal names it, by its first words, so the next call
+// can give THAT one a place (BN-168: told only "a change needs", a model
+// sent the same call again). Not by its number: a section is several
+// changes by then.
+function toChangeLabel(change: NoteEditChangeType) {
+    const words = String(change.text ?? change.ref ?? change.kind ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return words === ''
+        ? ''
+        : ` -- the one starting "${words.slice(0, 40)}" has neither`;
+}
 
 /**
  * A code block's languages -- what its picker lists, the Prism list and the
@@ -513,6 +694,55 @@ const MENTION_SIGN_MAP: Record<string, string> = {
     location: '#',
 };
 
+// "(KJV) John 3:16": the Bible a verse is read from, in front of it -- how
+// the editor names a verse mention (`mentionName`) and how a token may.
+const VERSE_BIBLE_PREFIX_PATTERN = /^\(([^()\s]{1,40})\)\s+(\S.*)$/u;
+
+/** A verse token's Bible, when it names one, and its reference. */
+export function splitNoteVerseRef(text: string): {
+    bibleKey: string | null;
+    ref: string;
+} {
+    const trimmed = text.trim();
+    const match = VERSE_BIBLE_PREFIX_PATTERN.exec(trimmed);
+    return match === null
+        ? { bibleKey: null, ref: trimmed }
+        : { bibleKey: match[1], ref: match[2].trim() };
+}
+
+/** The Bible a verse mention was read from, off its `mentionName`. */
+function readVerseMentionBibleKey(node: NodeType): string | null {
+    return typeof node.mentionName === 'string'
+        ? splitNoteVerseRef(node.mentionName).bibleKey
+        : null;
+}
+
+/** A verse mention as a token's words: its Bible in front when it has one. */
+function toVerseTokenText(node: NodeType) {
+    const text = String(node.text ?? '').replace(/]/g, '');
+    const bibleKey = readVerseMentionBibleKey(node);
+    return bibleKey === null ? text : `(${bibleKey}) ${text}`;
+}
+
+/**
+ * Whether a token's words name this verse mention: the same reference, and
+ * -- when the token names a Bible -- the same Bible.
+ */
+function checkIsVerseToken(node: NodeType, tokenText: string) {
+    const { bibleKey, ref } = splitNoteVerseRef(tokenText);
+    if (String(node.text ?? '').trim() !== ref) {
+        return false;
+    }
+    if (bibleKey === null) {
+        return true;
+    }
+    const nodeBibleKey = readVerseMentionBibleKey(node);
+    return (
+        nodeBibleKey !== null &&
+        nodeBibleKey.toLowerCase() === bibleKey.toLowerCase()
+    );
+}
+
 function toInlineMarkup(nodes: NodeType[]): string {
     return nodes
         .map((node) => {
@@ -526,6 +756,9 @@ function toInlineMarkup(nodes: NodeType[]): string {
                 return '\t';
             }
             if (node.type === 'mention') {
+                if (node.mentionKind === 'bible-verse') {
+                    return `[^${toVerseTokenText(node)}]`;
+                }
                 const sign = MENTION_SIGN_MAP[node.mentionKind] ?? '@';
                 return `[${sign}${String(node.text ?? '').replace(/]/g, '')}]`;
             }
@@ -1058,10 +1291,13 @@ function buildInlineNodes(runs: RunType[], context: BuildContextType) {
                   ? 'location'
                   : 'mention';
         const isSame = (one: NodeType) => {
-            return (
-                one.mentionKind === mentionKind &&
-                String(one.text ?? '').trim() === run.text
-            );
+            if (one.mentionKind !== mentionKind) {
+                return false;
+            }
+            // A verse by its words and, when the token names one, its Bible.
+            return mentionKind === 'bible-verse'
+                ? checkIsVerseToken(one, run.text)
+                : String(one.text ?? '').trim() === run.text;
         };
         const kept =
             takeFrom(context.mentionPool, isSame) ??
@@ -1267,7 +1503,12 @@ function genPassageNode(verse: NoteVerseType): NodeType {
             },
             {
                 children: lines.map((line) => {
-                    return genParagraphOfText(line, verse.style);
+                    // The editor's EmojisPlugin turns the KJV's ":)" into a
+                    // smiley (BN-240): the Bible's words, parted unseen.
+                    return genParagraphOfText(
+                        toEmoticonSafeText(line),
+                        verse.style,
+                    );
                 }),
                 direction: null,
                 format: '',
@@ -1511,13 +1752,120 @@ function toReason(reason: string): { reason: string } {
     return { reason };
 }
 
+/**
+ * A lesson's title sent LAST, at the top (BN-250, 2026-11-13, blind read
+ * ab85: "the title sits at the very end of the note"). Writing a whole
+ * lesson into an empty note, a model now and then left the call's `title`
+ * out and sent the name as a heading 1 after everything else, `after: 0`
+ * or `after: 1` -- the top, by its numbering -- and adds at one place go
+ * in the order given, so the heading closed the lesson: 5 of the 381
+ * lessons made in the held-out runs, in five batches. In a note that holds
+ * nothing, the call's LAST change, its only heading 1, put at the top with
+ * at least two other adds there and none further down, is put first.
+ */
+function withTrailingTitleFirst(
+    changes: readonly NoteEditChangeType[],
+    blankCount: number,
+): NoteEditChangeType[] {
+    const last = changes.at(-1);
+    const toIsTopAdd = (change: NoteEditChangeType) => {
+        return (
+            typeof change === 'object' &&
+            change !== null &&
+            change.block === undefined &&
+            Number.isInteger(change.after) &&
+            (change.after as number) >= 0 &&
+            (change.after as number) <= blankCount
+        );
+    };
+    if (last === undefined || last.kind !== 'h1' || !toIsTopAdd(last)) {
+        return [...changes];
+    }
+    const rest = changes.slice(0, -1);
+    const restAdds = rest.filter((change) => {
+        return (
+            typeof change === 'object' &&
+            change !== null &&
+            change.block === undefined
+        );
+    });
+    const isTitle =
+        restAdds.length >= 2 &&
+        restAdds.every((change) => {
+            return toIsTopAdd(change) && change.kind !== 'h1';
+        });
+    if (!isTitle) {
+        return [...changes];
+    }
+    const firstAddIndex = rest.indexOf(restAdds[0]);
+    return [
+        ...rest.slice(0, firstAddIndex),
+        { ...last, after: 0 },
+        ...rest.slice(firstAddIndex),
+    ];
+}
+
+/**
+ * New blocks put into a note that holds NOTHING -- only empty paragraphs,
+ * the line a new note opens with -- take those lines' place (2026-11-10, a
+ * sermon written into an empty note): the adds after them go at the top,
+ * in the order given, and the empty lines go. A change that names any
+ * block keeps the note as read, and a note with anything in it is left as
+ * it is.
+ */
+export function withBlankNoteFilled(
+    content: string,
+    askedChanges: readonly NoteEditChangeType[],
+): NoteEditChangeType[] {
+    const blocks = readNoteBlocks(content)?.blocks ?? [];
+    const isBlank =
+        blocks.length > 0 &&
+        blocks.every((block) => {
+            return (
+                block.kind === 'paragraph' &&
+                block.isFixed !== true &&
+                block.text.trim() === ''
+            );
+        });
+    const changes = isBlank
+        ? withTrailingTitleFirst(askedChanges, blocks.length)
+        : askedChanges;
+    const isOnlyAdds =
+        changes.length > 0 &&
+        changes.every((change) => {
+            return (
+                typeof change === 'object' &&
+                change !== null &&
+                change.block === undefined
+            );
+        });
+    if (!isBlank || !isOnlyAdds) {
+        return [...changes];
+    }
+    return [
+        ...blocks.map((block) => {
+            return { block: block.n, remove: true };
+        }),
+        ...changes.map((change) => {
+            const after = change.after as number;
+            return Number.isInteger(after) &&
+                after >= 1 &&
+                after <= blocks.length
+                ? { ...change, after: 0 }
+                : change;
+        }),
+    ];
+}
+
 /** Every verse a change would add that is not in the note already. */
 export function collectNewNoteVerseRefs(
     content: string,
     changes: readonly NoteEditChangeType[],
 ) {
+    // A token naming several references is several (BN-81).
+    changes = withVerseTokensSplit(changes);
     const state = readState(content);
-    const known = new Set(
+    const knownVerses =
         state === null
             ? []
             : collectNodes(state.root, (one) => {
@@ -1525,13 +1873,23 @@ export function collectNewNoteVerseRefs(
                       one.type === 'mention' &&
                       one.mentionKind === 'bible-verse'
                   );
-              }).map((one) => {
-                  return String(one.text ?? '').trim();
-              }),
-    );
+              });
     const refs = new Set<string>();
+    // A block's words as read, for the few changes that need them.
+    let readBlocks: NoteBlockType[] | null = null;
+    const ownTextOf = (block: unknown) => {
+        readBlocks ??= readNoteBlocks(content)?.blocks ?? [];
+        const found = readBlocks.find((one) => one.n === block);
+        return found === undefined ? null : found.text.trim();
+    };
     for (const change of changes) {
-        if (change.kind === 'passage' && typeof change.ref === 'string') {
+        // A passage added, or a passage block given another reference
+        // (BN-72, `expandPassageRepoints`).
+        if (
+            typeof change.ref === 'string' &&
+            (change.kind === 'passage' ||
+                (change.kind === undefined && typeof change.block === 'number'))
+        ) {
             refs.add(change.ref.trim());
         }
         if (typeof change.text !== 'string') {
@@ -1539,7 +1897,40 @@ export function collectNewNoteVerseRefs(
         }
         for (const match of change.text.matchAll(/\[\^([^\]\n]+)\]/g)) {
             const ref = match[1].trim();
-            if (!known.has(ref)) {
+            // A chip the note has -- in the Bible the token names, if it
+            // names one -- is kept, never read again.
+            const isKnown = knownVerses.some((one) => {
+                return checkIsVerseToken(one, ref);
+            });
+            if (!isKnown) {
+                refs.add(ref);
+            }
+        }
+        // A token alone on its line of a section -- or alone in a paragraph,
+        // naming a range -- is a PASSAGE printed whole, which no chip of the
+        // note stands in for (BN-67: finishing an outline whose points
+        // carried Luke 15:4, 5 and 7, a section opening each point on its
+        // verse was refused -- "no installed Bible could read" them).
+        const isParagraph =
+            change.kind === undefined || change.kind === 'paragraph';
+        const isSection =
+            change.kind === 'section' ||
+            (change.block === undefined &&
+                isParagraph &&
+                checkHasBlockMarkup(change.text));
+        const lines = change.text.split(/\r?\n|\\n/);
+        for (const line of lines) {
+            const ref = readPassageLineRef(line);
+            if (
+                ref !== null &&
+                (isSection ||
+                    (lines.length === 1 &&
+                        isParagraph &&
+                        checkIsPassageRef(ref) &&
+                        // A block's own range chip given back stays the chip.
+                        (change.block === undefined ||
+                            ownTextOf(change.block) !== change.text.trim())))
+            ) {
                 refs.add(ref);
             }
         }
@@ -1598,16 +1989,40 @@ function checkIsBlockNumber(value: unknown, count: number) {
     );
 }
 
-// The words of a block worth keeping: three letters or more, any script.
+/**
+ * A word worth counting: three letters or more ("a", "of" are in any text),
+ * or two in a script with no capitals, whose words are short -- two
+ * characters are a word of their own in Chinese.
+ */
+function checkIsCountedWord(word: string) {
+    const size = [...word].length;
+    return size >= 3 || (size === 2 && !/\p{Cased}/u.test(word));
+}
+
+/**
+ * The words of a block worth keeping, any script: cut by the segmenter, so
+ * a script written with no spaces is words too (2026-11-08: split at the
+ * spaces, a paragraph in a script without spaces was one or two "words", and the
+ * guard below never held a heading off it); split at what is not a letter
+ * where there is no segmenter.
+ */
 function toWordSet(text: string) {
-    return new Set(
-        text
-            .toLowerCase()
-            .split(/[^\p{L}\p{M}\p{N}]+/u)
-            .filter((word) => {
-                return word.length >= 3;
-            }),
-    );
+    const lower = text.toLowerCase();
+    const words =
+        typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+            ? [
+                  ...new Intl.Segmenter(undefined, {
+                      granularity: 'word',
+                  }).segment(lower),
+              ]
+                  .filter((one) => {
+                      return one.isWordLike === true;
+                  })
+                  .map((one) => {
+                      return one.segment;
+                  })
+            : lower.split(/[^\p{L}\p{M}\p{N}]+/u);
+    return new Set(words.filter(checkIsCountedWord));
 }
 
 /**
@@ -1860,6 +2275,34 @@ function applyCodeFields(node: NodeType, change: NoteEditChangeType) {
  * A change whose `words` came with HTML round them: the words alone, and
  * what the HTML asked for in the fields (a field the change gives wins).
  */
+// BN-238 (2026-11-13): a list item given words that open on a list mark --
+// "- What does the woman's request for the living water show?" -- drew the
+// dash as words, the item being a bullet already. Three lessons of 217
+// ended so, each a discussion question rewritten after a correction. The
+// mark of the item's own kind is taken off its first line.
+const BULLET_MARK_PATTERN = /^[ \t]*[-*•][ \t]+(?=\S)/;
+const NUMBER_MARK_PATTERN = /^[ \t]*\d{1,3}[.)][ \t]+(?=\S)/;
+function withoutListMark(
+    change: NoteEditChangeType,
+    refs: readonly BlockRefType[],
+): NoteEditChangeType {
+    if (typeof change.text !== 'string') {
+        return change;
+    }
+    const kind =
+        change.kind ??
+        (change.block === undefined ? undefined : refs[change.block - 1]?.kind);
+    if (kind === undefined || !checkIsListKind(kind)) {
+        return change;
+    }
+    const pattern =
+        kind === 'number' ? NUMBER_MARK_PATTERN : BULLET_MARK_PATTERN;
+    if (!pattern.test(change.text)) {
+        return change;
+    }
+    return { ...change, text: change.text.replace(pattern, '') };
+}
+
 function toPlainWordsChange(change: NoteEditChangeType): NoteEditChangeType {
     if (typeof change.words !== 'string') {
         return change;
@@ -1890,16 +2333,158 @@ function toPlainWordsChange(change: NoteEditChangeType): NoteEditChangeType {
 
 const MAX_DONE_TEXT_CHARS = 600;
 
+// --- a drawing (BN-51) -------------------------------------------------------
+//
+// A drawing is a paragraph holding the board's `excalidraw` node: a size or a
+// colour on the paragraph reached no words and changed nothing, while the
+// summary listed it -- asked to make a drawing larger, gemma4:cloud sent
+// `size` on its block and told the person it was larger (2026-11-09). So a
+// drawing takes what changes IT: new lines (drawn again), `background` (its
+// boxes), `color` (its lines), `size` larger or smaller (how large the board
+// draws it) and `align`; anything else is refused, saying so.
+
+const DRAWING_FIELDS_TEXT =
+    'new lines in `text` (a line a box, "A -> B" an arrow, a first line ' +
+    '"layout: across", "circle" or "center"), `background` (its boxes), ' +
+    '`color` (its lines), `size` "larger" or "smaller", and `align`';
+
+/** Why a change cannot be made to (or as) a drawing, or null. */
+function readDrawingChangeReason(
+    change: NoteEditChangeType,
+    blockName: string,
+    drawingNode: NodeType | null,
+) {
+    if (
+        change.font !== undefined ||
+        change.styles !== undefined ||
+        change.stylesOff !== undefined ||
+        change.clear !== undefined ||
+        change.words !== undefined ||
+        (change.size !== undefined &&
+            change.size !== 'larger' &&
+            change.size !== 'smaller')
+    ) {
+        return `${blockName} is a drawing: it takes ${DRAWING_FIELDS_TEXT}.`;
+    }
+    if (change.text !== undefined && drawingNode !== null) {
+        if (!readNoteDrawingScene(drawingNode).isOwn) {
+            return (
+                `${blockName} is a drawing drawn by hand: drawing it again ` +
+                'from lines would lose what was drawn. Add a new drawing ' +
+                '({after, kind: "drawing", text}), or give it `background`, ' +
+                '`color`, `size` or `align` only.'
+            );
+        }
+        const read = readNoteDrawingLines(toRealLineBreaks(change.text));
+        if (read.reason !== undefined) {
+            return read.reason;
+        }
+    }
+    return null;
+}
+
+/** The fill and line colours a change gives a drawing, as the board takes. */
+function toDrawingColors(style: ChangeStyleType) {
+    const { background, color } = style.run;
+    return {
+        fill:
+            background === undefined
+                ? undefined
+                : background === null
+                  ? 'transparent'
+                  : background,
+        stroke: color === undefined || color === null ? undefined : color,
+    };
+}
+
+/** Puts `newNode` where `oldNode` sits, anywhere inside `owner`. */
+function replaceInlineNode(
+    owner: NodeType,
+    oldNode: NodeType,
+    newNode: NodeType,
+): boolean {
+    const children = childrenOf(owner);
+    const index = children.indexOf(oldNode);
+    if (index >= 0) {
+        owner.children = children.map((child) => {
+            return child === oldNode ? newNode : child;
+        });
+        return true;
+    }
+    return children.some((child) => {
+        return checkIsNode(child) && replaceInlineNode(child, oldNode, newNode);
+    });
+}
+
+/**
+ * A drawing block changed in place: null when done (`drawnAgainSet` given
+ * the change when its lines drew it anew), else why not.
+ */
+function applyDrawingChange(
+    blockNode: NodeType,
+    change: NoteEditChangeType,
+    style: ChangeStyleType,
+    context: { now?: Date; genId?: () => string },
+    drawnAgainSet: Set<NoteEditChangeType>,
+): string | null {
+    const drawingNode = findFixedInline(blockNode);
+    if (drawingNode === null || drawingNode.type !== 'excalidraw') {
+        return 'That drawing could not be read.';
+    }
+    const { fill, stroke } = toDrawingColors(style);
+    // Its own lines given back (with a colour, say) are no new drawing.
+    const text =
+        change.text === undefined ||
+        toRealLineBreaks(change.text).trim() ===
+            toNoteDrawingText(drawingNode).trim()
+            ? undefined
+            : toRealLineBreaks(change.text);
+    if (
+        text === undefined &&
+        fill === undefined &&
+        stroke === undefined &&
+        change.size === undefined
+    ) {
+        return null;
+    }
+    const changed = changeNoteDrawingNode(
+        drawingNode,
+        {
+            text,
+            fill,
+            stroke,
+            size:
+                change.size === 'larger' || change.size === 'smaller'
+                    ? change.size
+                    : undefined,
+        },
+        context,
+    );
+    if ('reason' in changed) {
+        return changed.reason;
+    }
+    replaceInlineNode(blockNode, drawingNode, changed.node);
+    if (text !== undefined) {
+        drawnAgainSet.add(change);
+    }
+    return null;
+}
+
 /** One change's effect in a few words: "block 5 "fas": color red, bold on". */
 function describeDoneChange(
     change: NoteEditChangeType,
     style: ChangeStyleType,
+    isOwnWords: boolean,
+    isDrawing = false,
 ) {
+    if (isDrawing) {
+        return describeDoneDrawing(change, style, isOwnWords);
+    }
     const done: string[] = [];
     if (change.block === undefined) {
         done.push(`added ${change.kind ?? 'paragraph'}`);
     } else {
-        if (change.text !== undefined) {
+        if (change.text !== undefined && !isOwnWords) {
             done.push('new words');
         }
         if (change.kind !== undefined) {
@@ -1953,6 +2538,38 @@ function describeDoneChange(
     const words =
         typeof change.words === 'string' ? ` "${change.words.trim()}"` : '';
     return `${where}${words}: ${done.join(', ')}`;
+}
+
+/** A drawing's change in a few words: "block 10: drawn again, boxes green". */
+function describeDoneDrawing(
+    change: NoteEditChangeType,
+    style: ChangeStyleType,
+    isDrawnAgain: boolean,
+) {
+    const done: string[] = [];
+    if (change.block === undefined) {
+        done.push('added drawing');
+    } else if (isDrawnAgain) {
+        done.push('drawing drawn again from the new lines');
+    }
+    const { fill, stroke } = toDrawingColors(style);
+    if (fill !== undefined) {
+        done.push(`boxes ${fill}`);
+    }
+    if (stroke !== undefined) {
+        done.push(`lines ${stroke}`);
+    }
+    if (change.size !== undefined) {
+        done.push(`drawing made ${change.size}`);
+    }
+    if (style.align !== null) {
+        done.push(`aligned ${style.align}`);
+    }
+    const where =
+        change.block === undefined
+            ? `after block ${change.after}`
+            : `block ${change.block}`;
+    return `${where}: ${done.length > 0 ? done.join(', ') : 'nothing changed'}`;
 }
 
 /**
@@ -2071,8 +2688,17 @@ export function applyNoteEdit({
                 'brings it up to date.',
         );
     }
-    // A section is the blocks its lines spell (`expandSectionAdds`).
-    changes = expandSectionAdds(changes);
+    // The call's own fields written as one more change are the call's
+    // (BN-169), a token naming several references is several (BN-81), and a
+    // section is the blocks its lines spell (`expandSectionAdds`) -- a new
+    // block given no place first put after the one added before it (BN-164).
+    const misplaced = takeMisplacedCallFields(changes);
+    if (title === null && misplaced.title !== null) {
+        title = misplaced.title;
+    }
+    changes = expandSectionAdds(
+        withVerseTokensSplit(placeUnplacedAdds(misplaced.changes)),
+    );
     if (changes.length > NOTE_EDIT_MAX_CHANGES) {
         return toReason(
             `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +
@@ -2098,23 +2724,95 @@ export function applyNoteEdit({
     );
     const refs = collectBlockRefs(root);
     const count = refs.length;
+    const toOwnText = (block: number) => {
+        const ref = refs[block - 1];
+        return ref === undefined || ref.isFixed
+            ? null
+            : toBlockText(ref).trim();
+    };
+    // A passage given another reference is that passage, in its place
+    // (BN-72).
+    changes = expandPassageRepoints(changes, (block) => {
+        return refs[block - 1]?.kind ?? null;
+    });
+    // A block given its words as lines with a list kind or `section` is made
+    // several, a block a line (BN-58); a block changed into a passage's token
+    // is that passage (BN-67).
+    changes = expandPassageChanges(
+        expandBlockSplits(
+            // The app's own marks, never a model's.
+            changes.map((change) => {
+                if (typeof change !== 'object' || change === null) {
+                    return change;
+                }
+                const {
+                    splitText: _splitText,
+                    chain: _chain,
+                    ...rest
+                } = change;
+                // A heading's marks written into its words (BN-67).
+                const ref =
+                    typeof rest.block === 'number'
+                        ? refs[rest.block - 1]
+                        : undefined;
+                return readHeadingMarks(
+                    rest,
+                    ref === undefined || ref.isFixed ? null : ref.kind,
+                );
+            }),
+            toOwnText,
+        ),
+        toOwnText,
+    );
+    // A note rewritten as new blocks numbered as they will stand (BN-58).
+    changes = chainRewriteAdds(changes, count);
+    // List items added in a row, numbered as they will stand: one list.
+    changes = chainListAdds(changes, (block) => {
+        return refs[block - 1]?.kind ?? null;
+    });
+    // A heading added with its words numbered as they will stand (BN-67).
+    changes = chainSectionAdds(changes);
     const touched = new Set<number>();
     const updates: NoteEditChangeType[] = [];
     const removes: number[] = [];
     const moves: NoteEditChangeType[] = [];
     const adds: NoteEditChangeType[] = [];
     const styleMap = new Map<NoteEditChangeType, ChangeStyleType>();
+    // Changes giving a block its OWN words back, as read: its nodes are kept.
+    // The light mark-up cannot say a space inside a bold run, a comment's
+    // mark or a code block's colouring, and rebuilding from it had moved the
+    // space out of the bold, dropped the comment and flattened the code
+    // (2026-11-08, BN-35, three blocks of a note in the dev data folder) --
+    // a model sends a block's words back with a style or a kind all the time.
+    const ownWordsChangeSet = new Set<NoteEditChangeType>();
+    // Drawings drawn anew from new lines (BN-51), for the summary.
+    const drawnAgainSet = new Set<NoteEditChangeType>();
+    // Blocks given another kind and other words, checked for losing their
+    // own once the call's adds are known.
+    const kindWordsCheckList: {
+        blockNumber: number;
+        change: NoteEditChangeType;
+        ref: BlockRefType;
+    }[] = [];
+    const checkIsDrawingChange = (change: NoteEditChangeType) => {
+        if (change.block === undefined) {
+            return change.kind === 'drawing';
+        }
+        const ref = refs[(change.block as number) - 1];
+        return ref !== undefined && ref.isFixed && ref.kind === 'drawing';
+    };
     for (const askedChange of changes) {
         if (!checkIsNode(askedChange)) {
             return toReason('Each change is an object.');
         }
-        let change = toPlainWordsChange(askedChange);
+        let change = withoutListMark(toPlainWordsChange(askedChange), refs);
         // A block this call adds, named by the number it would have: after
         // that new block, in the order given. Seen live 2026-11-08: asked
         // for a table and a sticky note at the end of an 8-block note,
         // gemma4:cloud put the sticky "after: 9" twice running.
         if (
             change.block === undefined &&
+            change.chain !== true &&
             Number.isInteger(change.after) &&
             (change.after as number) > count &&
             (change.after as number) <= count + adds.length
@@ -2150,12 +2848,14 @@ export function applyNoteEdit({
             if (change.after === undefined) {
                 return toReason(
                     'A change needs `block` (the block to change, remove or ' +
-                        'move) or `after` (where a new block goes; 0 is the top).',
+                        'move) or `after` (where a new block goes; 0 is the ' +
+                        `top)${toChangeLabel(change)}.`,
                 );
             }
-            if (!(
-                change.after === 0 || checkIsBlockNumber(change.after, count)
-            )) {
+            if (
+                change.chain !== true &&
+                !(change.after === 0 || checkIsBlockNumber(change.after, count))
+            ) {
                 // Seen live 2026-11-08: gemma4:cloud put a sticky note
                 // "after: 7" -- the table it was adding in the same call --
                 // in a note of six blocks, twice.
@@ -2183,6 +2883,24 @@ export function applyNoteEdit({
                             'yourself.',
                     );
                 }
+                // BN-72 (2026-11-10): "Matthew 13:5-6, 20-21" was read as one
+                // span, 13:5-21 -- the very passage already there -- and the
+                // edit answered that nothing had changed.
+                if (/[,;]/.test(change.ref)) {
+                    const [first, ...rest] = change.ref
+                        .split(/[,;]/)
+                        .map((part) => part.trim());
+                    const book = /^(.*?\d+:)\d/.exec(first)?.[1] ?? '';
+                    const next = rest[0] ?? '';
+                    const second = /\p{L}/u.test(next)
+                        ? next
+                        : `${book}${next}`;
+                    return toReason(
+                        `A passage is ONE reference, and "${change.ref}" is ` +
+                            'several: add a passage for each, in the order ' +
+                            `they go ("${first}", then "${second}").`,
+                    );
+                }
             } else if (
                 kind !== 'rule' &&
                 kind !== 'page-break' &&
@@ -2198,6 +2916,16 @@ export function applyNoteEdit({
             const addCodeReason = readCodeReason(change, kind, null);
             if (addCodeReason !== null) {
                 return toReason(addCodeReason);
+            }
+            if (kind === 'drawing') {
+                const drawingReason = readDrawingChangeReason(
+                    { ...change, text: undefined },
+                    'A new drawing',
+                    null,
+                );
+                if (drawingReason !== null) {
+                    return toReason(drawingReason);
+                }
             }
             if (change.linkTo !== undefined) {
                 return toReason(
@@ -2243,17 +2971,69 @@ export function applyNoteEdit({
             moves.push(change);
             continue;
         }
+        // "Tick the first question" on a numbered or bulleted item, or a
+        // line: only a check item has a tick, and a tick asked for on another
+        // had changed nothing while the answer said it was already ticked
+        // (BN-56, 2026-11-09, the elder run) -- it is made a check item,
+        // ticked.
+        if (
+            change.checked !== undefined &&
+            change.kind === undefined &&
+            !ref.isFixed &&
+            ref.kind !== 'check'
+        ) {
+            const checkedStyle = styleMap.get(change)!;
+            change = { ...change, kind: 'check' };
+            styleMap.set(change, checkedStyle);
+        }
+        const isDrawing = ref.isFixed && ref.kind === 'drawing';
         if (
             ref.isFixed &&
-            (change.text !== undefined ||
+            ((change.text !== undefined && !isDrawing) ||
                 change.kind !== undefined ||
                 change.checked !== undefined)
         ) {
             return toReason(
-                `Block ${blockNumber} is a ${ref.kind}: it can be moved, ` +
-                    'removed, styled, sized or aligned, never given words or ' +
-                    'another kind.',
+                isDrawing
+                    ? `Block ${blockNumber} is a drawing: it can be moved, ` +
+                          `removed, or given ${DRAWING_FIELDS_TEXT} -- never ` +
+                          'another kind.'
+                    : `Block ${blockNumber} is a ${ref.kind}: it can be moved, ` +
+                          'removed, styled, sized or aligned, never given ' +
+                          'words or another kind.',
             );
+        }
+        // A heading kept a heading but given a paragraph's words or a verse
+        // token alone is the block under it, aimed one short (BN-176,
+        // shape44's children's Jonah: the Pointing to Jesus heading took its
+        // paragraph, the Memory verse heading its verse).
+        const headingReason = readHeadingWordsReason(
+            ref,
+            change,
+            blockNumber,
+            count,
+        );
+        if (headingReason !== null) {
+            return toReason(headingReason);
+        }
+        if (isDrawing) {
+            const drawingReason = readDrawingChangeReason(
+                change,
+                `Block ${blockNumber}`,
+                findFixedInline(ref.node),
+            );
+            if (drawingReason !== null) {
+                return toReason(drawingReason);
+            }
+        }
+        if (change.text !== undefined && !ref.isFixed) {
+            const ownText = toBlockText(ref);
+            if (
+                change.text === ownText ||
+                toRealLineBreaks(change.text) === ownText
+            ) {
+                ownWordsChangeSet.add(change);
+            }
         }
         if (
             change.text !== undefined &&
@@ -2288,19 +3068,15 @@ export function applyNoteEdit({
         // turned a paragraph into the heading "The nature of grace" and the
         // paragraph was lost (seen live 2026-11-08). A new heading is a new
         // block; the paragraph keeps its words.
+        // Judged once every add of the call is known: the new blocks put
+        // right after it may carry the rest of its words (BN-58, a run-on
+        // paragraph made a title with its parts as blocks after it).
         if (
             change.kind !== undefined &&
             change.kind !== ref.kind &&
-            change.text !== undefined &&
-            checkLosesWords(toBlockText(ref), change.text)
+            change.text !== undefined
         ) {
-            return toReason(
-                `Making block ${blockNumber} a ${change.kind} with other words ` +
-                    'would lose its own words. Add the new words as a NEW ' +
-                    `block ({after: ${blockNumber - 1}, kind: "${change.kind}", ` +
-                    `text}) and leave block ${blockNumber}'s words as they are ` +
-                    `(give \`kind\` alone to change only its kind).`,
-            );
+            kindWordsCheckList.push({ blockNumber, change, ref });
         }
         const codeReason = readCodeReason(
             change,
@@ -2338,10 +3114,39 @@ export function applyNoteEdit({
         updates.push(change);
     }
 
+    // A block given another kind and other words keeps its own words --
+    // counting the new blocks this call puts right after it, and the run of
+    // blocks numbered as they will stand (`chain`), which carry the rest.
+    for (const { blockNumber, change, ref } of kindWordsCheckList) {
+        const followingText = adds
+            .filter((add) => {
+                return add.after === blockNumber || add.chain === true;
+            })
+            .map((add) => add.text ?? '')
+            .join(' ');
+        const keptText = `${change.splitText ?? change.text ?? ''} ${followingText}`;
+        if (checkLosesWords(toBlockText(ref), keptText)) {
+            return toReason(
+                `Making block ${blockNumber} a ${change.kind} with other words ` +
+                    'would lose its own words. Add the new words as a NEW ' +
+                    `block ({after: ${blockNumber - 1}, kind: "${change.kind}", ` +
+                    `text}) and leave block ${blockNumber}'s words as they are ` +
+                    `(give \`kind\` alone to change only its kind), or make it ` +
+                    `several: {block: ${blockNumber}, kind: "section", text: ` +
+                    '"## A heading\\n- a point"} with all its words.',
+            );
+        }
+    }
+
     // A model "adding" a block that is already there, untouched by this
-    // change: the words were meant as a change to that block.
+    // change: the words were meant as a change to that block -- unless it
+    // says `again`. BN-44 (2026-11-09): _add a line at the end saying
+    // Fitiavana Andriamanitra_ to a note that had that line already was
+    // refused twice with no way to add it, and the model then told the
+    // person, in Malagasy, that the line was added.
     for (const change of adds) {
         if (
+            change.again === true ||
             change.kind === 'passage' ||
             change.kind === 'rule' ||
             (NOTE_INSERT_KIND_LIST as readonly string[]).includes(
@@ -2361,8 +3166,47 @@ export function applyNoteEdit({
         if (twin >= 0) {
             return toReason(
                 `Those are block ${twin + 1}'s words already. To change ` +
-                    `block ${twin + 1}, give \`block: ${twin + 1}\`; a change ` +
-                    'without `block` adds a new one.',
+                    `block ${twin + 1}, give \`block: ${twin + 1}\`; to add ` +
+                    'the same words again as a new block, give `again: true`.',
+            );
+        }
+        // A new block whose words are PART of a block this call keeps: a
+        // block being split by hand, its parts added while it keeps them all
+        // (BN-58: three questions on one line made a bullet whole, two of
+        // them added again beside it).
+        // Words alone, any case: a model capitalises the part it copies.
+        const toLooseWords = (value: string) => {
+            return (value.toLowerCase().match(/[\p{L}\p{M}\p{N}']+/gu) ?? [])
+                .join(' ')
+                .trim();
+        };
+        const looseWords = toLooseWords(change.text ?? '');
+        if (
+            /^h[1-6]$/.test(change.kind ?? '') ||
+            looseWords.split(' ').length < 4
+        ) {
+            continue;
+        }
+        const holder = refs.findIndex((ref, index) => {
+            const blockNumber = index + 1;
+            if (ref.isFixed || removes.includes(blockNumber)) {
+                return false;
+            }
+            const update = updates.find((one) => one.block === blockNumber);
+            const kept = toLooseWords(
+                update?.text !== undefined ? update.text : toBlockText(ref),
+            );
+            return (
+                kept !== looseWords && ` ${kept} `.includes(` ${looseWords} `)
+            );
+        });
+        if (holder >= 0) {
+            return toReason(
+                `Block ${holder + 1} already holds the words "${change.text}". ` +
+                    `To make block ${holder + 1} several blocks, give it its ` +
+                    `kind and its lines: {block: ${holder + 1}, kind: ` +
+                    '"bullet", text: "first line\\nsecond line"} -- a block a ' +
+                    'line, every word kept.',
             );
         }
     }
@@ -2401,15 +3245,30 @@ export function applyNoteEdit({
         const blockNumber = change.block as number;
         const ref = refs[blockNumber - 1];
         if (ref.isFixed) {
-            // Styled, sized or aligned below; never given words.
+            // A drawing is changed here, its own way; any other fixed block
+            // is styled, sized or aligned below and never given words.
+            if (ref.kind === 'drawing') {
+                const failure = applyDrawingChange(
+                    nodeOf.get(blockNumber)!,
+                    change,
+                    styleMap.get(change)!,
+                    { now, genId },
+                    drawnAgainSet,
+                );
+                if (failure !== null) {
+                    return toReason(failure);
+                }
+            }
             continue;
         }
         const node = nodeOf.get(blockNumber)!;
         const kind = kindOfChange(change) as NoteEditableKindType;
         const style = findFirstStyle(node);
+        const hasNewWords =
+            change.text !== undefined && !ownWordsChangeSet.has(change);
         let children: NodeType[];
-        if (change.text !== undefined) {
-            const text = toRealLineBreaks(change.text);
+        if (hasNewWords) {
+            const text = toRealLineBreaks(change.text as string);
             if (kind === 'code') {
                 children = text.split('\n').flatMap((line, index) => {
                     const lineNodes =
@@ -2444,11 +3303,7 @@ export function applyNoteEdit({
         } else {
             children = childrenOf(node);
         }
-        if (
-            checkIsQuoteOfParagraphs(node) &&
-            kind === 'quote' &&
-            change.text !== undefined
-        ) {
+        if (checkIsQuoteOfParagraphs(node) && kind === 'quote' && hasNewWords) {
             // Written back the way this quote holds its words: a paragraph a
             // line.
             const firstParagraph = childrenOf(node)[0];
@@ -2519,7 +3374,7 @@ export function applyNoteEdit({
             nodeOf.set(blockNumber, item);
             continue;
         }
-        if (kind === ref.kind && change.text !== undefined) {
+        if (kind === ref.kind && hasNewWords) {
             node.children = children;
             continue;
         }
@@ -2536,7 +3391,11 @@ export function applyNoteEdit({
     // Sizes last, on the block as the change left it: a heading made of a
     // paragraph is sized as a heading.
     for (const change of updates) {
-        if (change.size === undefined || change.words !== undefined) {
+        if (
+            change.size === undefined ||
+            change.words !== undefined ||
+            checkIsDrawingChange(change)
+        ) {
             continue;
         }
         const blockNumber = change.block as number;
@@ -2547,8 +3406,12 @@ export function applyNoteEdit({
         );
     }
     // Then the rest of the toolbar: font, colours, styles, alignment, indent.
+    // A drawing's colours went to its boxes and lines; only its alignment is
+    // the paragraph's.
     for (const change of updates) {
-        const style = styleMap.get(change)!;
+        const style = checkIsDrawingChange(change)
+            ? { ...styleMap.get(change)!, hasRunStyle: false }
+            : styleMap.get(change)!;
         if (
             !style.hasRunStyle &&
             style.align === null &&
@@ -2586,9 +3449,8 @@ export function applyNoteEdit({
         }
         return after === 0 ? null : nodeOf.get(after)!;
     };
-    for (const blockNumber of removes) {
-        removeBlockNode(root, nodeOf.get(blockNumber)!);
-    }
+    // Removes come LAST (BN-58): a new block put after a block this call
+    // removes takes that block's place, as a model writes a rewrite.
     for (const change of moves) {
         const blockNumber = change.block as number;
         const node = nodeOf.get(blockNumber)!;
@@ -2609,15 +3471,24 @@ export function applyNoteEdit({
         insertBlockNode(root, anchor, node, listKind, findFirstStyle(node));
         lastPlacedMap.set(after, node);
     }
+    // The last new block placed: a chained one goes after it (BN-58).
+    let lastAddedNode: NodeType | null = null;
+    // Where a chain grows from: a chained block counts as placed after THAT
+    // block, never after the number it was given, which is a block of the
+    // note too -- or a new block meant for that one would land after the
+    // chain (BN-67: a point's words went under the background before it).
+    let chainSlot: number | null = null;
     for (const change of adds) {
         const after = change.after as number;
-        if (removes.includes(after)) {
-            return toReason(
-                `Block ${after} is removed in this change: put the new block ` +
-                    'after another one.',
-            );
+        const isChained: boolean =
+            change.chain === true && lastAddedNode !== null;
+        const anchor: NodeType | null = isChained
+            ? lastAddedNode
+            : anchorOf(after);
+        const slot = isChained && chainSlot !== null ? chainSlot : after;
+        if (!isChained) {
+            chainSlot = after;
         }
-        const anchor = anchorOf(after);
         const kind = (change.kind ?? 'paragraph') as NoteAddKindType;
         const style =
             anchor === null ? findFirstStyle(root) : findFirstStyle(anchor);
@@ -2661,6 +3532,9 @@ export function applyNoteEdit({
                     now,
                     genId,
                     exampleNodes,
+                    ...(kind === 'drawing'
+                        ? { drawing: toDrawingColors(styleMap.get(change)!) }
+                        : {}),
                 },
             );
             missingVerses.push(...context.missingVerses);
@@ -2669,7 +3543,7 @@ export function applyNoteEdit({
             }
             if ('nodes' in result) {
                 // The editor's Default Example: its blocks, in order.
-                let exampleAnchor = anchor;
+                let exampleAnchor: NodeType | null = anchor;
                 for (const exampleNode of result.nodes) {
                     insertBlockNode(
                         root,
@@ -2680,7 +3554,8 @@ export function applyNoteEdit({
                     );
                     exampleAnchor = exampleNode;
                 }
-                lastPlacedMap.set(after, exampleAnchor);
+                lastPlacedMap.set(slot, exampleAnchor);
+                lastAddedNode = exampleAnchor;
                 continue;
             }
             node = result.node;
@@ -2719,7 +3594,22 @@ export function applyNoteEdit({
                 );
             }
         }
-        if (
+        if (kind === 'drawing') {
+            // Its colours went into the drawing; a size is how large the
+            // board draws it.
+            if (change.size === 'larger' || change.size === 'smaller') {
+                const failure = applyDrawingChange(
+                    node,
+                    { size: change.size },
+                    { ...styleMap.get(change)!, run: {} },
+                    { now, genId },
+                    drawnAgainSet,
+                );
+                if (failure !== null) {
+                    return toReason(failure);
+                }
+            }
+        } else if (
             change.size !== undefined &&
             change.words === undefined &&
             kind !== 'rule'
@@ -2728,10 +3618,14 @@ export function applyNoteEdit({
         }
         applyCodeFields(node, change);
         insertBlockNode(root, anchor, node, listKind, style);
-        lastPlacedMap.set(after, node);
+        lastPlacedMap.set(slot, node);
+        lastAddedNode = node;
         // The toolbar on the new block, where it now sits (a list item
         // nests under the one before it).
-        const addStyle = styleMap.get(change)!;
+        const addStyle =
+            kind === 'drawing'
+                ? { ...styleMap.get(change)!, hasRunStyle: false }
+                : styleMap.get(change)!;
         if (
             addStyle.hasRunStyle ||
             addStyle.align !== null ||
@@ -2751,6 +3645,9 @@ export function applyNoteEdit({
                 return toReason(failure);
             }
         }
+    }
+    for (const blockNumber of removes) {
+        removeBlockNode(root, nodeOf.get(blockNumber)!);
     }
     if (missingVerses.length > 0) {
         return toReason(
@@ -2810,7 +3707,15 @@ export function applyNoteEdit({
     // never more (a model had said a word was made red with no colour sent).
     const doneText = [...updates, ...adds]
         .map((change) => {
-            return describeDoneChange(change, styleMap.get(change)!);
+            const isDrawing = checkIsDrawingChange(change);
+            return describeDoneChange(
+                change,
+                styleMap.get(change)!,
+                isDrawing
+                    ? drawnAgainSet.has(change)
+                    : ownWordsChangeSet.has(change),
+                isDrawing,
+            );
         })
         .join('; ');
     const summary =

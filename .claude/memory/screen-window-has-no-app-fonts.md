@@ -21,7 +21,7 @@ Battambang, so the frozen boxes no longer fit the text. Two windows hit it:
    the operator's preview looked perfect. `src/screen.tsx` calls
    `void initAllLangCss()` after `main()`.
 2. **`presenter.html` — fixed 2026-09-12.** An English UI registers only its own
-   locale's CSS (en's `genCss` is empty); the Khmer faces arrived only when an
+   locale's CSS (en's `genCss` was empty then; since 2026-11-06 it registers Google Sans); the Khmer faces arrived only when an
    unrelated panel (a Khmer bible item, a note) asked for them. The Stage
    Previewer, built first after a Reader → Presenter switch, was measured in
    Times New Roman, and Battambang's Latin letters run ~19% wider (measured off

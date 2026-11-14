@@ -44,7 +44,7 @@ const APP_MENU_DEMO_LIST = [
     suffix: 'menu-tools',
     label: 'Learn the Tools menu',
     detail:
-      'Learn Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.',
+      'Learn Local Web Share, Google Fonts, App Assistant, AI Chat, and Start Controlling.',
     steps: [
       {
         text: 'Local Web Share opens the sharing window. Google Fonts opens the font catalog in your browser.',
@@ -53,7 +53,7 @@ const APP_MENU_DEMO_LIST = [
         text: 'App Assistant opens help that understands this app. AI Chat opens supported chat websites in a separate sandboxed window.',
       },
       {
-        text: 'Khmer Tools opens the Khmer Editor, Open Lyric, or BibleNote websites. Start Controlling (Ctrl+Shift+P, or Command+Shift+P on macOS) opens the drawing, spotlight, and keyboard-display overlay for the window in front.',
+        text: 'Start Controlling (Ctrl+Shift+P, or Command+Shift+P on macOS) opens the drawing, spotlight, and keyboard-display overlay for the window in front.',
       },
     ],
   },

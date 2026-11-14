@@ -5,14 +5,14 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-108, RD-109, RD-110, RD-111, RD-112]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-40 — Mark up a passage while you study it
 
 **Goal:** highlight words in a passage in colour, and attach a note to a phrase, so both
 are still there the next time you open the app.
 
-1. Open the **Reader** (📖) and bring up a passage — say `Genesis 22:1-24`.
+1. Open the **[en:tran:Bible Reader]** (📖) and bring up a passage — say `Genesis 22:1-24`.
 2. Drag across a few words inside a verse, the way you would to copy them. A small
    toolbar appears just above what you selected. 📸
    It has six coloured dots, then a **speech bubble** and an **eraser** — and, while AI
@@ -72,5 +72,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-108` · `RD-109` · `RD-110` · `RD-111` · `RD-112`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

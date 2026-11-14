@@ -7,7 +7,10 @@ const state = vi.hoisted(() => ({
     files: new Map<string, string>(),
     sizes: new Map<string, number>(),
     readFile: vi.fn(),
+    writeFile: vi.fn(),
     renderError: null as Error | null,
+    // Whether each render was asked to mark its blocks' lines.
+    markedList: [] as boolean[],
 }));
 
 vi.mock('../server/fileHelpers', async () => {
@@ -17,6 +20,8 @@ vi.mock('../server/fileHelpers', async () => {
         fsGetFileSize: async (filePath: string) =>
             state.sizes.get(filePath) ?? state.files.get(filePath)!.length,
         fsReadFile: (filePath: string) => state.readFile(filePath),
+        fsWriteFile: (filePath: string, text: string) =>
+            state.writeFile(filePath, text),
         pathDirname: path.posix.dirname,
         pathResolve: path.posix.resolve,
     };
@@ -28,7 +33,9 @@ vi.mock('./markdownPreviewRenderHelpers', () => ({
     renderPreviewMarkdown: (
         text: string,
         resolveImage: (imagePath: string) => string,
+        isSourceLineMarked?: boolean,
     ) => {
+        state.markedList.push(isSourceLineMarked === true);
         if (state.renderError !== null) {
             throw state.renderError;
         }
@@ -42,6 +49,9 @@ vi.mock('./markdownPreviewRenderHelpers', () => ({
 import {
     loadMarkdownPreviewFile,
     MAX_MARKDOWN_PREVIEW_FILE_SIZE,
+    readMarkdownPreviewText,
+    renderMarkdownPreviewText,
+    saveMarkdownPreviewFile,
     toMarkdownPreviewTargetPath,
 } from './markdownPreviewFileHelpers';
 
@@ -49,8 +59,16 @@ beforeEach(() => {
     state.files = new Map([['/docs/guide/readme.md', '# Hello']]);
     state.sizes = new Map();
     state.renderError = null;
+    state.markedList = [];
     state.readFile.mockImplementation(async (filePath: string) =>
         state.files.get(filePath)!,
+    );
+    state.writeFile.mockReset();
+    state.writeFile.mockImplementation(
+        async (filePath: string, text: string) => {
+            state.files.set(filePath, text);
+            return filePath;
+        },
     );
 });
 
@@ -114,5 +132,74 @@ describe('loading a markdown file for preview', () => {
                 'steps/one.md',
             ),
         ).toBe('/docs/guide/steps/one.md');
+    });
+});
+
+describe('reading and saving a markdown file for its editor', () => {
+    test('reads the text the editor starts from, under the same size cap', async () => {
+        await expect(
+            readMarkdownPreviewText('/docs/guide/readme.md'),
+        ).resolves.toEqual({ status: 'ready', text: '# Hello' });
+
+        await expect(
+            readMarkdownPreviewText('/docs/missing.md'),
+        ).resolves.toEqual({ status: 'not-found' });
+
+        state.readFile.mockClear();
+        state.sizes.set(
+            '/docs/guide/readme.md',
+            MAX_MARKDOWN_PREVIEW_FILE_SIZE + 1,
+        );
+        await expect(
+            readMarkdownPreviewText('/docs/guide/readme.md'),
+        ).resolves.toEqual({ status: 'too-large' });
+        expect(state.readFile).not.toHaveBeenCalled();
+
+        state.sizes.clear();
+        state.readFile.mockRejectedValueOnce(new Error('EACCES'));
+        await expect(
+            readMarkdownPreviewText('/docs/guide/readme.md'),
+        ).resolves.toEqual({ status: 'unreadable' });
+    });
+
+    test('draws a draft that is not saved as the file on disk would be drawn', () => {
+        expect(
+            renderMarkdownPreviewText('/docs/guide/readme.md', '# Draft'),
+        ).toEqual({
+            status: 'ready',
+            html: '<p># Draft</p>',
+            image: 'file:///docs/guide/images/map.png',
+        });
+
+        state.renderError = new Error('bad markdown');
+        expect(
+            renderMarkdownPreviewText('/docs/guide/readme.md', '# Draft'),
+        ).toEqual({ status: 'unreadable' });
+    });
+
+    test("marks each block's line only when the editor beside it asks", async () => {
+        renderMarkdownPreviewText('/docs/guide/readme.md', '# Draft', true);
+        renderMarkdownPreviewText('/docs/guide/readme.md', '# Draft');
+        await loadMarkdownPreviewFile('/docs/guide/readme.md');
+        expect(state.markedList).toEqual([true, false, false]);
+    });
+
+    test('saves the text over the file and says whether it was written', async () => {
+        await expect(
+            saveMarkdownPreviewFile('/docs/guide/readme.md', '# Changed'),
+        ).resolves.toBe(true);
+        expect(state.writeFile).toHaveBeenCalledWith(
+            '/docs/guide/readme.md',
+            '# Changed',
+        );
+        await expect(
+            readMarkdownPreviewText('/docs/guide/readme.md'),
+        ).resolves.toEqual({ status: 'ready', text: '# Changed' });
+
+        state.writeFile.mockRejectedValueOnce(new Error('EPERM'));
+        await expect(
+            saveMarkdownPreviewFile('/docs/guide/readme.md', '# Lost'),
+        ).resolves.toBe(false);
+        expect(state.files.get('/docs/guide/readme.md')).toBe('# Changed');
     });
 });

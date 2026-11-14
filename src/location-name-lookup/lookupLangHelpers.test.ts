@@ -14,7 +14,7 @@ vi.mock('../helper/settingHelpers', () => ({
 }));
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
-    checkIsValidLangCode: (text: string) => ['en', 'km'].includes(text),
+    checkIsValidLangCode: (text: string) => ['en', 'xx'].includes(text),
     getAllLangsAsync: async () => {
         h.getAllLangsCount += 1;
         return h.langDataList;
@@ -45,10 +45,10 @@ beforeEach(() => {
     h.getAllLangsCount = 0;
     h.langDataList = [
         { langCode: 'en', getLookupData: async () => null },
-        { langCode: 'km', getLookupData: async () => null },
+        { langCode: 'xx', getLookupData: async () => null },
         // Ships translations but no lookup dataset — offering it would only lead
         // to a failed load.
-        { langCode: 'xx' },
+        { langCode: 'yy' },
     ];
 });
 
@@ -63,13 +63,13 @@ describe('the selected lookup language', () => {
         const { getSelectedLookupLangCode, setSelectedLookupLangCode } =
             await importFresh();
 
-        setSelectedLookupLangCode('km');
+        setSelectedLookupLangCode('xx');
 
-        expect(getSelectedLookupLangCode()).toBe('km');
-        expect(h.settingMap.get('location-name-lookup-lang-code')).toBe('km');
+        expect(getSelectedLookupLangCode()).toBe('xx');
+        expect(h.settingMap.get('location-name-lookup-lang-code')).toBe('xx');
 
         const reloaded = await importFresh();
-        expect(reloaded.getSelectedLookupLangCode()).toBe('km');
+        expect(reloaded.getSelectedLookupLangCode()).toBe('xx');
     });
 
     // A code a later build stopped shipping would otherwise fail every load with
@@ -92,9 +92,9 @@ describe('the selected lookup language', () => {
             seen.push(getSelectedLookupLangCode());
         });
 
-        setSelectedLookupLangCode('km');
+        setSelectedLookupLangCode('xx');
 
-        expect(seen).toStrictEqual(['km']);
+        expect(seen).toStrictEqual(['xx']);
     });
 
     // Every subscriber drops a resident copy of a ~34MB dataset, so a set that
@@ -116,7 +116,7 @@ describe('the selected lookup language', () => {
         const listener = vi.fn();
         subscribeLookupLangCode(listener)();
 
-        setSelectedLookupLangCode('km');
+        setSelectedLookupLangCode('xx');
 
         expect(listener).not.toHaveBeenCalled();
     });
@@ -126,7 +126,7 @@ describe('the languages on offer', () => {
     test('lists only packages that ship a lookup dataset', async () => {
         const { getLookupLangCodeListAsync } = await importFresh();
 
-        expect(await getLookupLangCodeListAsync()).toStrictEqual(['en', 'km']);
+        expect(await getLookupLangCodeListAsync()).toStrictEqual(['en', 'xx']);
     });
 
     // Answering it imports every language module, and the button that asks sits

@@ -111,11 +111,11 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   package's notes for developers, is not shipped.
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Long Text]`, never as an English
-  label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in
+  label with a hand-written translation beside it, and `tran.mjs` fills it in
   with what that key reads as in the language the app is DISPLAYING — so
   `owa_help_search`, `owa_help_page` and a guide card built from a recipe all
   come back already in the user's own language, and a guide's `find` matches the
-  DOM instead of missing every control in a Khmer window. `owa_tran` answers the
+  DOM instead of missing every control in a non-English window. `owa_tran` answers the
   same question for a label the model wrote itself, and `owa_find_ui` /
   `owa_click` / `owa_type` try the translation when the English label matches
   nothing. The key must be a real `tran()` key: an unknown one silently falls
@@ -143,7 +143,10 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   asked as the row's English with the person's part in it
   (`toEnglishTemplateAsk`, `findTemplateAsk` in the window; shown as typed,
   answered in the language typed, that part never translated), so every
-  reader that knows only English still reads it.
+  reader that knows only English still reads it. A reference example's gap
+  takes only words with a number in them (2026-11-13, `EC-563`): Khmer
+  writes "on" two ways, and _put the time on the screen_ had filled the
+  verse row's gap with _the time_ and gone up as words.
   `applyQuestionOverlay` (`questionMatch.mjs`) puts a row's translation in
   `text` and keeps its English in `textEn` -- applied in the WINDOW only, so
   chips, suggestions and More… read in the language while the model and the
@@ -174,7 +177,8 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   The model is handed the English page: it reads it and writes in theirs.
 - **Questions**: `tools/owa-devtools-mcp/questions/*.json` is the curated list of
   questions the assistant is prepared to be asked — one file per page
-  (`presenter`, `reader`, `editor`, `settings`, `screen`, `presenting-flow`,
+  (`presenter`, `reader`, `editor`, `settings`, `screen`, `screen-mirror` (the
+  guest's page, 2026-11-14), `presenting-flow`,
   `bible-note`, `lyric-editor`, `web-editor`, `troubleshooting`, and `common`
   for what is true everywhere), split into
   sections
@@ -217,6 +221,24 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `FALLBACK_STARTERS` in `questionHelpers.ts` is a hand-written copy of each
   window's opening four for when the corpus fails to load; a test holds the two
   together, because nothing in normal use would ever show it had gone stale.
+- **A word typed alone is offered the corpus's MAIN jobs, not its closest
+  rows** (2026-11-13, `EC-583`, `listTopicQuestions` in `questionMatch.mjs`,
+  beside `matchQuestions` and reading the same scores through
+  `scoreQuestionRows`). The type-ahead wants the row most like the words,
+  and for _lyric_ that was exporting a song's stages to PowerPoint and the
+  Lyric Editor -- the rows that SAY "lyric" -- never _How do I make a new
+  song?_. A topic keeps every row scoring at least half the best and at
+  least a whole keyword (`TOPIC_MIN_SCORE`: _hi_ is inside _hide_), no
+  fill-in and no `state` row, then takes them in the CORPUS's order, a
+  window's own pages before the pages true everywhere: each section lists
+  its main jobs first, so the order of rows in a section is now read, and a
+  row put first in its section is offered first for its subject. `lyric`
+  and `lyrics` are aliases of `song` (`QUERY_ALIASES`). _Can you turn a
+  PowerPoint song into a lyric file?_ (`presenter.making.song-from-powerpoint`)
+  sits right after _How do I make a new song?_ for that reason, and names no
+  `tools`: with the drafting tools named, the no-cost shared server, which is
+  not sent them, was told to say it cannot -- and a deck attached under
+  _Create lyric files from these_ is made into songs by the window itself.
 - **A supported question is a LABEL, not a search** (2026-09-03,
   `findKnownQuestionRecipe` in `help.mjs`). Measured on all 258 corpus
   questions that name a recipe: `owa_help_search` put that recipe first for
@@ -239,7 +261,29 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   Free model had been answered with Windows power settings, because the
   ranking put _make a song_ first on the word _make_ and nothing told the
   model the app has a Stay Awake cup; told the page, it
-  opens it (5 rounds → 2 on the panic chip). **Since 2026-10-10 the page
+  opens it (5 rounds → 2 on the panic chip). **A phrase that names nothing claims no
+  line** (2026-11-14, `EC-650`, `checkIsSubjectlessPhrase`): question words,
+  pronouns and the verbs that take them (_how much_, _where is_, _show it_,
+  _do it for me_) or a length of time (_five minutes_, _30 days_, _per hour_).
+  _count back from five minutes on the screen_ had been handed the Tips of
+  the Day page by its row's _five minutes_, and _show how much time has
+  passed since the sermon started_ the chat-cost page by _how much_: the
+  model put no timer up and once said it had. The phrase still ranks. And
+  a phrase that names a THING anyone may ask to show claims every line
+  that carries it (`EC-657`): the report row's _email address_ answered
+  _put up the pastor's email address_ from the bug-report page 2 of 2, and
+  the address was never asked for; it is _report email address_ now. A
+  keyword phrase names the row's own subject, not a thing of the person's. **Never for an option the
+  answer above offered** (2026-11-13, `EC-555`, `checkIsOfferedReply` →
+  `isExactOnly`): **Put it back** under a clear of the foreground carried
+  the undo row's _put it back_, and the hint for a missing `owa_undo` had
+  it answer _use another assistant_; an option means what its answer was
+  about, and is a row only as the row stands. Such an ask also carries
+  `OFFERED_REPLY_HINT` (`genOfferedReplyHint`, `EC-566`, the user's
+  answer _Restore at once_): it is their yes to that offer, so something
+  to go up, come back, start or be set is done in one call without a
+  confirming question; taking content off or hiding a screen still waits
+  for their own words. **Since 2026-10-10 the page
   itself rides with the hint and a row filed under another window still
   counts**: the Reader's own chip _Where do I type John 3:16?_ typed under
   the Presenter matched nothing (the lookup was per focus), so a local model

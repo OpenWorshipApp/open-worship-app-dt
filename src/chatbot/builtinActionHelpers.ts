@@ -38,17 +38,31 @@ import {
     BUILTIN_TOOL_NAME,
     answerFromManual,
     answerLyricLink,
+    answerLyricLinks,
     answerLyricPaste,
     answerLyricTitle,
     answerWhereIs,
     type BotActionType,
     type BotAnswerType,
 } from './helpBotHelpers';
-import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
-import { callTool, parseToolJson } from './mcpClient';
+import {
+    countWordsBesideAddresses,
+    readSongAddress,
+    readSongAddressList,
+    readSongTitleArgument,
+} from './lyricDraftHelpers';
+import {
+    genLyricDocumentListState,
+    runLyricDocumentStep,
+} from './lyricDocumentChatHelpers';
+import { callTool, callToolWithPictures, parseToolJson } from './mcpClient';
 import { checkIsChatTipHidden, pickChatTip, showChatTips } from './tipHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
-import { listAssistantLanguages } from './chatLangHelpers';
+import {
+    listAssistantLanguages,
+    listTypedLanguages,
+    toShownLanguageName,
+} from './chatLangHelpers';
 import {
     checkIsMainWindowUrl,
     getCurrentWindowAim,
@@ -659,8 +673,11 @@ async function runWhere({ report }: BuiltinRunContextType) {
         const version = state?.instances?.[0]?.version;
         // A window of its own chosen in the window picker: the read above was
         // of THAT window (`windowAimHelpers.ts`), so it is named as the one
-        // this tab works with, and the main window is told apart from it.
-        if (getCurrentWindowAim() !== null) {
+        // this tab works with, and the main window is told apart from it. A
+        // file's own window is not read (`APP_LEVEL_TOOL_NAME_SET`): the read
+        // was the main window's, said as such.
+        const aim = getCurrentWindowAim();
+        if (aim !== null && aim.filePath === undefined) {
             const mainEntry = (state.windows ?? []).find((one: any) => {
                 return (
                     typeof one?.url === 'string' &&
@@ -748,14 +765,20 @@ function genVersionLine(version: unknown) {
         : '';
 }
 
-// A language the app has a package for, by its English name (a dictionary
-// key) in the window's words; any other by its code. No language is named
-// in code.
+// A language the app has a package for -- any installed one, with an
+// `assistant.json` or not -- by its name in the window's words
+// (`toShownLanguageName`, every language the same way); any other by its
+// code. No language is named in code.
 function languageName(code: string) {
-    const language = listAssistantLanguages().find((one) => {
+    const language = [
+        ...listAssistantLanguages(),
+        ...listTypedLanguages(),
+    ].find((one) => {
         return one.code === code;
     });
-    return language === undefined ? code : tranLabel(language.name);
+    return language === undefined
+        ? code
+        : toShownLanguageName(language.code, language.name);
 }
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {
@@ -1151,6 +1174,10 @@ async function runSlide({ argument, report }: BuiltinRunContextType) {
 // screen are the slide; "how" anywhere is a how-do-I and not this.
 const SLIDE_SHOW_ASK_PATTERN =
     /^(?:please\s+)?(?:can\s+you\s+|could\s+you\s+)?(?:show|put|display|present)\s+(?:me\s+)?(?:the\s+)?(?:slide\s+(?:of\s+)?)?(?!how\b)(.+?)\s+(?:on|onto|up\s+on|to)\s+(?:the\s+)?(?:screen|screens|projector|wall)(?:\s+for\s+me)?(?:\s+please)?[.!?]*$/i;
+// Words that can only be a slide: a part of a song or a slide by number,
+// "(1)-Verse 1" as a card names it.
+const SLIDE_PART_WORDS_PATTERN =
+    /^(?:\(\d{1,3}\)\s*-?\s*)?(?:slide|verse|chorus|pre-?chorus|bridge|intro|outro|tag|refrain|ending)\b/i;
 const SLIDE_SHORT_ASK_PATTERN =
     /^(?:please\s+)?(?:show|put\s+up|display|present)\s+((?:slide|verse|chorus|bridge|intro|outro|tag)\s*\d{1,3}|slide\s+.+?)(?:\s+for\s+me)?[.!?]*$/i;
 
@@ -1204,7 +1231,13 @@ export async function answerSlideShowAsk(
     }
     const selected = read.selected;
     if (selected === null) {
-        return { text: tran(NOTHING_SELECTED_ASK_AGAIN_TEXT) };
+        // Only words that name a slide wait for a song: "put the time on
+        // the screen", a verse or a countdown is somebody else's to answer
+        // (2026-11-12, EC-521: the clock asked for was told to select a
+        // song first).
+        return SLIDE_PART_WORDS_PATTERN.test(words)
+            ? { text: tran(NOTHING_SELECTED_ASK_AGAIN_TEXT) }
+            : null;
     }
     const target = findSlideByWords(selected.slides, words);
     if (target === null) {
@@ -1770,8 +1803,35 @@ function genMarqueeRunner(
  * breath, 3 rounds and 18 s). This is one command, no rounds, and the file
  * waits on the button.
  */
-async function runLyric({ argument, report }: BuiltinRunContextType) {
+// What may stand beside several links in `/lyric` -- "and" between them,
+// a word or two of what they are -- before it reads as a paste.
+const MAX_LYRIC_LINKS_EXTRA_WORDS = 12;
+
+/**
+ * A song made out of a document already in the Documents list
+ * (`lyricDocumentChatHelpers.ts`): `/lyric-from` lists the PowerPoint, Word,
+ * PDF and slide files, `/lyric-from powerpoint` only the PowerPoints, and a
+ * file's name reads that file. Pictures are read by the button under the
+ * answer, which the window runs with an assistant that sees.
+ */
+async function runLyricFrom({ argument }: BuiltinRunContextType) {
+    return await runLyricDocumentStep(genLyricDocumentListState(argument), {
+        callTool,
+        callToolWithPictures,
+        transcribe: async () => {
+            return null;
+        },
+    });
+}
+
+async function runLyric(context: BuiltinRunContextType) {
+    const { argument, report } = context;
     const words = argument.trim();
+    // A document's name is no song title: `/lyric Hymns.pptx` is a song
+    // made out of that file.
+    if (/\.(?:pptx|docx|pdf|ows)\s*$/i.test(words)) {
+        return await runLyricFrom(context);
+    }
     if (words.length === 0) {
         return {
             text: tran(
@@ -1783,6 +1843,16 @@ async function runLyric({ argument, report }: BuiltinRunContextType) {
                     'you press it.',
             ),
         };
+    }
+    // Several addresses and little else, `/lyric https://… https://…`:
+    // each page read in turn and offered under one Create all (EC-589).
+    // Words of a song with links in them are still a paste.
+    const addressList = readSongAddressList(words);
+    if (
+        addressList.length > 1 &&
+        countWordsBesideAddresses(words) <= MAX_LYRIC_LINKS_EXTRA_WORDS
+    ) {
+        return await answerLyricLinks(addressList, report);
     }
     const address = readSongAddress(words);
     if (address !== null) {
@@ -2160,6 +2230,19 @@ export const BUILTIN_ACTION_LIST: BuiltinActionType[] = [
         run: runLyric,
     },
     {
+        // A song made out of a document already in the Documents list. Not
+        // `song-from-*` (it sits under `/lyric`'s `song-from`), not
+        // `document*` (`/document` is `/selected`'s).
+        name: 'lyric-from',
+        aliases: ['lyrics-from', 'lyric-from-file'],
+        hint: 'Make a song from a PowerPoint, Word, PDF or slide file',
+        takesArgument: true,
+        // It reads a file and writes nothing: what it drafts waits on the
+        // Create button.
+        isActing: false,
+        run: runLyricFrom,
+    },
+    {
         // The one command that DOES go to a model: see `readGeneralQuestion`.
         // Listed here so `/` offers it and `/commands` names it; this `run`
         // only answers the bare `/btw` with how to use it.
@@ -2322,7 +2405,7 @@ export function readGeneralQuestion(text: string): string | null {
 
 /**
  * A plain follow-up under a general question is a general question too:
- * "in Khmer please" typed under "/btw what is the Bible?" is about the
+ * "in my language please" typed under "/btw what is the Bible?" is about the
  * Bible, not about the app -- measured 2026-10-10 on the user's LM Studio
  * (gemma-4-e4b), it went the app road, cost 10.2k tokens, and the model
  * declined it as its helper "for the Open Worship App". The user's ask,

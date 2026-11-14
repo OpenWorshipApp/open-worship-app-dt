@@ -188,7 +188,7 @@ export default class BibleDataReader {
             if (xmlText === null) {
                 showSimpleToast(
                     tran('Failed to convert KJV Bible data to XML text.'),
-                    'error',
+                    tran('Error'),
                 );
                 return;
             }

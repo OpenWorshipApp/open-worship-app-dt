@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
+import languageNameMap from '../lang/data/en/language-names.json';
 import type { ChatAttachmentType } from './attachmentHelpers';
+import { setChatTranslator } from './chatTranHelpers';
 import {
     SLIDE_EDIT_TOOL_NAME,
     SLIDE_PLACEMENT_HINT_MAP,
@@ -10,6 +12,7 @@ import {
     checkIsSlideFileName,
     findOpenSlideAttachments,
     findSlideAskFiles,
+    findWindowDoneCardAsk,
     genSlideOpeningAnswer,
     genSlideSizeChanges,
     genSlideSizeDoneText,
@@ -332,7 +335,8 @@ describe('the prompt', () => {
         expect(SLIDE_SYSTEM_PROMPT).toContain('ONE add-slides call');
         expect(SLIDE_SYSTEM_PROMPT).toContain('A PICTURE of slides');
         // A translation is words taken from the slides: done, not asked for
-        // (2026-11-07, "add above the khmer text" answered with a question).
+        // (2026-11-07, an ask to add English above the other language's text
+        // was answered with a question).
         expect(SLIDE_SYSTEM_PROMPT).toContain('never ask them for the words');
         expect(SLIDE_SYSTEM_PROMPT).toContain('NEEDS: file');
     });
@@ -352,6 +356,7 @@ describe('the card a slide document opens its tab with', () => {
             'Check the spelling',
             'Make the words larger',
             'Make slides like a picture',
+            'Make a song from it',
         ]);
         expect(opening.translateLanguage).toBe(null);
     });
@@ -384,7 +389,7 @@ describe('asking for the buttons again', () => {
         }
         for (const asked of [
             'more options for the colors',
-            'add above the khmer text',
+            'add above the other text',
             'make the words larger',
             'help me translate slide 2',
             '',
@@ -397,27 +402,43 @@ describe('asking for the buttons again', () => {
 describe('where a typed translation puts its lines', () => {
     it('reads under or above, only beside a translation', () => {
         expect(
-            readSlidePlacement(
-                'Add the English under the Khmer line on slide 3',
-            ),
+            readSlidePlacement('Add the English under each line on slide 3'),
         ).toBe('under');
-        expect(readSlidePlacement('Put English above each Khmer line')).toBe(
-            'above',
-        );
+        expect(readSlidePlacement('Put English above each line')).toBe('above');
         expect(
             readSlidePlacement('translate it and put it below the words'),
         ).toBe('under');
         // Not a translation, or both ways at once: nothing said.
         expect(readSlidePlacement('Put a box under the title')).toBe(null);
         expect(
-            readSlidePlacement('English above and Khmer under, swap them'),
+            readSlidePlacement('English above and the rest under, swap them'),
         ).toBe(null);
+    });
+
+    // 2026-11-07: "add above the <language> text", the language the slides
+    // are in named alone, was read as no translation. Any language English's
+    // table names is one, every one found the same way.
+    it('takes any language named by its English name as a translation', () => {
+        const nameList = Object.values(
+            languageNameMap as Record<string, string>,
+        ).map((name) => {
+            return name.split(/[,;(]/)[0].trim();
+        });
+        expect(nameList.length).toBeGreaterThan(100);
+        for (const name of nameList) {
+            expect([
+                name,
+                readSlidePlacement(`add above the ${name} text`),
+                readSlidePlacement(`Put it under each ${name} line`),
+                readSlidePlacement(`${name} above and the rest under`),
+            ]).toEqual([name, 'above', 'under', null]);
+        }
     });
 
     it('rides beside a typed ask, and never beside a pressed button', () => {
         const docs = [{ name: 'Talk', text: 'Slides: 1' }];
         expect(
-            toSlideAsk('Add the English under the Khmer line on slide 3', docs),
+            toSlideAsk('Add the English under each line on slide 3', docs),
         ).toContain(SLIDE_PLACEMENT_HINT_MAP.under);
         expect(
             toSlideAsk('Add Spanish under each line', docs, 'under'),
@@ -542,5 +563,51 @@ describe('sizes the window changes by itself', () => {
         expect(text).toContain('3 boxes of “Talk”');
         expect(text).toContain('(70 → 88, 90 → 113)');
         expect(text).toMatch(/not saved yet.*Undo this change/);
+    });
+});
+
+// BN-16 (2026-11-08): a card keeps its buttons as the window shows them, so
+// Make the words larger pressed in another language had reached the
+// assistant; the window asks it in its English, which its reader reads.
+describe('a card button the window does by itself, pressed in any language', () => {
+    afterEach(() => {
+        setChatTranslator(
+            (text) => text,
+            (text) => text,
+        );
+    });
+
+    it('is asked in its English', () => {
+        const shown: Record<string, string> = {
+            'Make the words larger': 'Xx larger',
+            'Make the words smaller': 'Xx smaller',
+        };
+        setChatTranslator(
+            (text) => shown[text] ?? text,
+            (text) => shown[text] ?? text,
+        );
+        expect(findWindowDoneCardAsk('Xx larger')).toBe(
+            'Make the words larger',
+        );
+        expect(findWindowDoneCardAsk(' Xx smaller ')).toBe(
+            'Make the words smaller',
+        );
+        expect(readSlideSizeAsk(findWindowDoneCardAsk('Xx larger')!)).toEqual({
+            kind: 'scale',
+            factor: 1.25,
+        });
+        // Already English, or another button: asked as it is.
+        expect(findWindowDoneCardAsk('Make the words larger')).toBeNull();
+        expect(findWindowDoneCardAsk('Check the spelling')).toBeNull();
+    });
+
+    // EC-590: an attached deck's card. Its English is the song file ask the
+    // window drafts by itself (`checkIsSongFileAsk`).
+    it("is an attached deck's song too", () => {
+        setChatTranslator(
+            (text) => (text === 'Make a song from it' ? 'Yy song' : text),
+            (text) => (text === 'Make a song from it' ? 'Yy song' : text),
+        );
+        expect(findWindowDoneCardAsk('Yy song')).toBe('Make a song from it');
     });
 });

@@ -6,18 +6,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => {
     return {
         isPagePresenter: true,
-        installed: [{ key: 'KJV' }, { key: 'KHM' }] as any[],
+        installed: [{ key: 'KJV' }, { key: 'XXV' }] as any[],
         lookupKey: 'KJV' as string | null,
         // What each version can read: bibleKey -> reference -> item.
         parseMap: {} as Record<string, Record<string, any>>,
+        // What a verse key reads in each version, for a reference the
+        // parser refused and the loose reader read: bibleKey -> key -> item.
+        verseKeyMap: {} as Record<string, Record<string, any>>,
+        // Verses a chapter has, by book; a book not here is not counted.
+        verseCounts: { PSA: 6 } as Record<string, number>,
         managers: [] as any[],
         viewData: {} as Record<number, any>,
         presentCalls: [] as any[],
         pendingQuestion: null as { title: string; text: string } | null,
         // What else happens while the verse goes up.
         onPresent: null as null | (() => void),
+        // What saving it into the Bibles list first answers (EC-704).
+        savedFirst: { list: 'Default', isNew: false } as any,
+        saveCalls: [] as any[],
     };
 });
+
+vi.mock('./agentBibleListHelpers', () => ({
+    saveAgentBibleItemFirst: async (bibleItem: any) => {
+        h.saveCalls.push({ bibleItem, presentedBefore: h.presentCalls.length });
+        return h.savedFirst;
+    },
+}));
 
 // The real one polls the DOM for up to 600 ms after every present; here each
 // test says whether the app was left asking something.
@@ -83,6 +98,9 @@ vi.mock('../bible-list/BibleItem', () => ({
         fromTitleText: async (bibleKey: string, reference: string) => {
             return h.parseMap[bibleKey]?.[reference] ?? null;
         },
+        fromVerseKey: async (bibleKey: string, verseKey: string) => {
+            return h.verseKeyMap[bibleKey]?.[verseKey] ?? null;
+        },
     },
 }));
 vi.mock('../bible-reader/LookupBibleItemController', () => ({
@@ -98,9 +116,15 @@ vi.mock('../bible-reader/LookupBibleItemController', () => ({
 vi.mock('./bible-helpers/bibleDownloadHelpers', () => ({
     getAllLocalBibleInfoList: async () => h.installed,
 }));
+// A version's own book names are in its info file; with none read, a
+// reference the parser refused is read by the KJV's names, as for a version
+// whose info cannot be read.
+vi.mock('./bible-helpers/bibleInfoHelpers', () => ({
+    getBibleInfo: async () => null,
+}));
 vi.mock('./bible-helpers/bibleLogicHelpers2', () => ({
     getVersesCount: async (_bibleKey: string, bookKey: string) => {
-        return bookKey === 'PSA' ? 6 : null;
+        return h.verseCounts[bookKey] ?? null;
     },
 }));
 
@@ -135,14 +159,18 @@ const JOHN = genItem(
 
 beforeEach(() => {
     h.isPagePresenter = true;
-    h.installed = [{ key: 'KJV' }, { key: 'KHM' }];
+    h.installed = [{ key: 'KJV' }, { key: 'XXV' }];
     h.lookupKey = 'KJV';
     h.parseMap = { KJV: { 'John 3:16': JOHN } };
+    h.verseKeyMap = {};
+    h.verseCounts = { PSA: 6 };
     h.managers = [genManager(0)];
     h.viewData = {};
     h.presentCalls = [];
     h.pendingQuestion = null;
     h.onPresent = null;
+    h.savedFirst = { list: 'Default', isNew: false };
+    h.saveCalls = [];
 });
 
 describe('handleAgentBibleRequest', () => {
@@ -187,9 +215,10 @@ describe('handleAgentBibleRequest', () => {
         // event, so the ticked screens are the target.
         expect(h.presentCalls[0].event).toBeNull();
         // An off screen holds the verse and shows nothing: said, with the
-        // instruction to OFFER the show button rather than press it.
-        expect((result as any).note).toContain('OFF');
-        expect((result as any).note).toContain('do not press it unasked');
+        // instruction to OFFER to turn it on rather than do it unasked.
+        expect((result as any).note).toContain('is turned off');
+        expect((result as any).note).toContain('Never turn it on unasked');
+        expect((result as any).note).toContain('you can: on a yes');
     });
 
     it('says nothing about an off screen once it is showing', async () => {
@@ -199,6 +228,40 @@ describe('handleAgentBibleRequest', () => {
         });
         expect(result).toMatchObject({ isPresented: true, isAnyShowing: true });
         expect((result as any).note).toBeUndefined();
+    });
+
+    // 2026-11-14, EC-704, the user: _the rule is bible verse have to save to
+    // list first (if not added) before show on screen_.
+    it('saves the passage into the Bibles list before it goes up', async () => {
+        h.managers = [genManager(0, { isShowing: true })];
+        h.savedFirst = { list: 'Default', isNew: true, id: 3, undoId: 'u-9' };
+        const result = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+        });
+        expect(h.saveCalls).toEqual([{ bibleItem: JOHN, presentedBefore: 0 }]);
+        expect(h.presentCalls).toHaveLength(1);
+        expect(result).toMatchObject({
+            isPresented: true,
+            listed: { list: 'Default', isNew: true, undoId: 'u-9' },
+        });
+        expect((result as any).note).toContain(
+            'saved to the Bibles list "Default" first',
+        );
+    });
+
+    it('puts nothing up when the save fails', async () => {
+        h.savedFirst = { isError: true, reason: 'No Bibles folder is set up.' };
+        const result = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+        });
+        expect(result).toEqual({
+            isError: true,
+            reason:
+                'Nothing was put on a screen: a passage is saved to the ' +
+                'Bibles list before it is shown, and saving it failed. No ' +
+                'Bibles folder is set up.',
+        });
+        expect(h.presentCalls).toHaveLength(0);
     });
 
     it('checks a reference without touching a screen', async () => {
@@ -212,6 +275,7 @@ describe('handleAgentBibleRequest', () => {
             version: 'KJV',
         });
         expect(h.presentCalls).toHaveLength(0);
+        expect(h.saveCalls).toHaveLength(0);
         expect((result as any).note).toContain('Nothing was put on a screen');
     });
 
@@ -242,11 +306,11 @@ describe('handleAgentBibleRequest', () => {
     });
 
     it('reads the reference under the lookup version first', async () => {
-        h.lookupKey = 'KHM';
+        h.lookupKey = 'XXV';
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: {
-                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            XXV: {
+                'John 3:16': genItem('XXV', '[xx] John 3:16', 'other words'),
             },
         };
         const result = await handleAgentBibleRequest({
@@ -254,15 +318,16 @@ describe('handleAgentBibleRequest', () => {
             action: 'check',
         });
         expect(result).toMatchObject({
-            version: 'KHM',
+            version: 'XXV',
             reference: '[xx] John 3:16',
         });
     });
 
-    // "John 3:16" does not parse under a Khmer version's book names, and a
-    // volunteer who typed it in English wants the verse, not a refusal.
+    // "John 3:16" does not parse under the book names of a version in
+    // another language, and a volunteer who typed it in English wants the
+    // verse, not a refusal.
     it('falls through to another installed version when the lookup one cannot read it', async () => {
-        h.lookupKey = 'KHM';
+        h.lookupKey = 'XXV';
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
             action: 'check',
@@ -276,23 +341,23 @@ describe('handleAgentBibleRequest', () => {
     it('uses the version asked for and only that one', async () => {
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: {
-                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            XXV: {
+                'John 3:16': genItem('XXV', '[xx] John 3:16', 'other words'),
             },
         };
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
-            version: 'khm',
+            version: 'xxv',
             action: 'check',
         });
-        expect(result).toMatchObject({ version: 'KHM' });
+        expect(result).toMatchObject({ version: 'XXV' });
         const missing = await handleAgentBibleRequest({
             reference: 'John 3:16',
             version: 'NIV',
         });
         expect(missing).toMatchObject({
             isError: true,
-            versions: ['KJV', 'KHM'],
+            versions: ['KJV', 'XXV'],
         });
         expect((missing as any).reason).toContain(
             'No Bible version called "NIV"',
@@ -306,7 +371,7 @@ describe('handleAgentBibleRequest', () => {
         });
         expect(result).toMatchObject({
             isError: true,
-            versions: ['KJV', 'KHM'],
+            versions: ['KJV', 'XXV'],
         });
         expect((result as any).reason).toContain(
             '"Jhn 99:99" could not be read as a passage',
@@ -454,19 +519,58 @@ describe('handleAgentBibleRequest', () => {
         });
     });
 
+    // EC-151: "Jn 3:16" and "I Cor 13:4" are how a book is written short;
+    // the app's parser reads neither, so the loose reader does, by the
+    // book's key. A form two books share stays refused.
+    it('reads a book written the usual short way', async () => {
+        h.verseCounts.JHN = 36;
+        h.verseCounts['1CO'] = 13;
+        h.verseKeyMap = {
+            KJV: {
+                'JHN 3:16': JOHN,
+                '1CO 13:4': genItem(
+                    'KJV',
+                    '1 Corinthians 13:4',
+                    '(4): Charity suffereth long, and is kind',
+                ),
+            },
+        };
+        await expect(
+            handleAgentBibleRequest({ reference: 'Jn 3:16', action: 'check' }),
+        ).resolves.toMatchObject({ reference: 'John 3:16', version: 'KJV' });
+        await expect(
+            handleAgentBibleRequest({
+                reference: 'I Cor 13:4',
+                action: 'check',
+            }),
+        ).resolves.toMatchObject({
+            reference: '1 Corinthians 13:4',
+            version: 'KJV',
+        });
+        const shared = await handleAgentBibleRequest({
+            reference: 'Jo 3:16',
+            action: 'check',
+        });
+        expect(shared).toMatchObject({ isError: true });
+        expect((shared as any).reason).toContain(
+            'a short form several books share, like "Jo", names no book',
+        );
+        expect(h.presentCalls).toHaveLength(0);
+    });
+
     it('reads in the installed order when the Bible Lookup cannot be read', async () => {
         h.lookupKey = null;
-        h.installed = [{ key: 'KHM' }, { key: 'KJV' }];
+        h.installed = [{ key: 'XXV' }, { key: 'KJV' }];
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: { 'John 3:16': genItem('KHM', '✝ 3:16', 'its own words') },
+            XXV: { 'John 3:16': genItem('XXV', '✝ 3:16', 'its own words') },
         };
         await expect(
             handleAgentBibleRequest({
                 reference: 'John 3:16',
                 action: 'check',
             }),
-        ).resolves.toMatchObject({ version: 'KHM' });
+        ).resolves.toMatchObject({ version: 'XXV' });
     });
 
     it('leaves out a screen that was removed while the verse went up', async () => {

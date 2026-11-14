@@ -3,7 +3,7 @@
  * a Documents row's **Open in Chatbot**, the Lyric Editor's 🤖, the
  * paperclip or a drop.
  *
- * Asked for 2026-11-06 (the user, with `Still khmer` circled in the
+ * Asked for 2026-11-06 (the user, with `Still <language>` circled in the
  * Documents list: _add lyric context menu `Open In Chatbot`, make chatbot to
  * support lyric files attached, when lyric files attached the chatbot should
  * provide all operations related to lyric modification_ -- add a section,
@@ -25,6 +25,8 @@
 import type { ChatAttachmentType } from './attachmentHelpers';
 import {
     DEFAULT_CHAT_LANG_CODE,
+    detectTypedLanguage,
+    getAssistantLanguage,
     type AssistantLanguageType,
 } from './chatLangHelpers';
 import { fillWords, tran } from './chatTranHelpers';
@@ -94,6 +96,23 @@ export function findLyricAskFiles(
         out.push({ name: toSongName(filePath), filePath });
     }
     return out.slice(0, MAX_LYRIC_ASK_FILES);
+}
+
+/**
+ * Whether a tab is a song's conversation: a song waiting in its box, or
+ * among the files its newest question was asked with (and not closed since
+ * -- the caller passes `findOpenFileAttachments`' answer). Such a tab keeps
+ * the window it was opened from as what it asks about, the Reader too, and
+ * a short line typed there is about the song, never a passage being typed
+ * (2026-11-12, EC-512).
+ */
+export function checkIsSongConversation(
+    boxAttachments: readonly ChatAttachmentType[],
+    openAttachments: readonly ChatAttachmentType[],
+) {
+    return (
+        findLyricAskFiles([...boxAttachments, ...openAttachments]).length > 0
+    );
 }
 
 /**
@@ -354,12 +373,24 @@ export const LYRIC_SYSTEM_PROMPT =
     'fences, no ol: headers, no Structure codes -- the app writes it and ' +
     'refuses a change that would break the song. Make the change asked for, ' +
     'all of it in one call where one call can do it: every part in ONE ' +
-    'set-lines or add-translation call. TRANSLATING has two ways and the ' +
+    'set-lines or add-translation call. WORDS: a spelling fixed, or a word ' +
+    'or a phrase changed, in one place or everywhere, is replace -- every ' +
+    'fix in ONE call, each {find, with} with `find` written as the song ' +
+    'has it, `part` only when the change is for one part; the app keeps ' +
+    'every chord where it stood and every line under it. Never retype a ' +
+    "part for that. A line said another way, or a part's new words, is " +
+    'set-lines, every line not asked about given exactly as it reads, its ' +
+    'punctuation too. A line under a sung line (a translation) is changed with ' +
+    'add-translation ("" for every line to leave) or replace with `in` ' +
+    '"translations"; remove-translations takes them out. Fix only real ' +
+    "mistakes: an old form such as 'Twas or thee is the song's own. " +
+    'TRANSLATING has two ways and the ' +
     'person chooses: REPLACE the words with the translation (set-lines, ' +
-    'every sung part, with `locales` naming that language, e.g. ' +
-    '["es-ES"]) or ADD the translation as a line under each line, keeping ' +
-    'the words (add-translation, with `locales` naming both, e.g. ' +
-    '["en-US","es-ES"]). Unless their words already say which ("replace", ' +
+    'every sung part, with `locales` naming that language by its ' +
+    'language-region tag) or ADD the translation as a line under each line, ' +
+    'keeping the words (add-translation, with `locales` naming both, the ' +
+    "song's first). Unless their words already say which (" +
+    '"replace", ' +
     '"instead of" is replace; "under each line", "bilingual", "keep the ' +
     'English" is add), ask which way first and end with OPTIONS: Replace ' +
     'the words | Add it under each line. Once the way is known and the ' +
@@ -373,25 +404,32 @@ export const LYRIC_SYSTEM_PROMPT =
     'Subtitle the same way when the song has one. Parts that hold chords ' +
     'and bars only take no translation. CHORDS: set-chords gives the same ' +
     'words with [chords] ' +
-    'placed before syllables, e.g. "[G]Amazing [C]grace"; an Instrumental ' +
+    'placed before syllables, e.g. "[G]Amazing [C]grace" -- a chord left ' +
+    'out of a line stays where it was, so to move one give its line with ' +
+    'it in the new place; replace {find "[F]", with "[Fmaj7]"} changes a ' +
+    'chord everywhere; remove-chords takes them out (`part`, else the ' +
+    'whole song); an Instrumental ' +
     'part takes chords and bars only, e.g. "| G | D | Em | C |". KEY: to ' +
     'change the key of a song with chords, transpose; with no chords, ' +
     'set-config Key. A key is one of C Db D Eb E F F# Gb G Ab A Bb B or a ' +
     'minor such as Am. A NEW PART: add-section with `part` "Verse" (it takes ' +
     'the next number), "Chorus", "Bridge" ... and its `lines`, `after` the ' +
-    'part it follows; a note for the band is part "Note". Ask for the words ' +
+    'part it follows; a note for the band is part "Note". A part called ' +
+    'something else (the Chorus as Refrain) is ONE rename-section, `to` its ' +
+    'new name. Ask for the words ' +
     'when they gave none -- never invent the words of a song. Remove at ' +
     'most one part in an answer, and only one they named. When the tool ' +
     'refuses, read its reason, fix the call and try once more; then say ' +
     'plainly what went wrong. After a change, say in a sentence or two what ' +
     'changed, that it is NOT saved yet (a * shows beside its name; Save in ' +
-    'the Lyric Editor keeps it) and that Undo this change puts it back. ' +
+    'the Lyric Editor keeps it) and that Undo this change puts it back; ' +
+    'say any warning the tool gave. ' +
     'Never write the song or its notation out in your answer. End with ' +
     'OPTIONS: two or three next changes they might want.';
 
 /**
- * The language a song's NAME says it is for -- `Still khmer` is the copy of
- * `Still` to be put into Khmer -- among the languages this computer knows.
+ * The language a song's NAME says it is for -- `Still thai` is the copy of
+ * `Still` to be put into Thai -- among the languages this computer knows.
  */
 export function findSongLanguage(
     songName: string,
@@ -415,19 +453,51 @@ export function findSongLanguage(
 }
 
 /**
- * The language a translation chip offers: the one the song's name says, or
- * the language the app is shown in -- never English, which is what most of
- * the songs here are already in. Null: offer "another language".
+ * The language a translation chip offers: the one the song's name says; for
+ * a name WRITTEN in a language other than English, the other one of the two
+ * -- English for a name in the window's own language, else the window's
+ * (2026-11-08, BN-25: a note named in the window's own language offered to
+ * put its words "into" that same language); else the language the app is shown in --
+ * never English, which is what most of the songs here are already in. A
+ * name too short to tell (one Latin word) is the last case. Null: offer
+ * "another language".
  */
 export function pickTranslateLanguage(
     songName: string,
     appLanguage: AssistantLanguageType,
     languages: readonly AssistantLanguageType[],
 ) {
-    return (
-        findSongLanguage(songName, languages) ??
-        (appLanguage.code === DEFAULT_CHAT_LANG_CODE ? null : appLanguage)
+    const named = findSongLanguage(songName, languages);
+    if (named !== null) {
+        return named;
+    }
+    return toTranslateTarget(
+        detectTypedLanguage(toSongName(songName), appLanguage.code),
+        appLanguage,
     );
+}
+
+/**
+ * The language a translate button offers for words WRITTEN in `writtenIn`
+ * (a language's code, `other`, or null when they cannot say): the other one
+ * of the two for words in a language other than English -- English for
+ * words in the window's own language, else the window's -- and the window's
+ * for any other words, never English. Null: offer "another language". The
+ * song, slide and note cards read it off a name, a study's off its words.
+ */
+export function toTranslateTarget(
+    writtenIn: string | null,
+    appLanguage: AssistantLanguageType,
+) {
+    // A name in a language no installed one can be told from (`other`)
+    // is not English either (2026-11-08, BN-33: a Macedonian name).
+    if (writtenIn !== null && writtenIn !== DEFAULT_CHAT_LANG_CODE) {
+        return writtenIn === appLanguage.code ||
+            appLanguage.code === DEFAULT_CHAT_LANG_CODE
+            ? getAssistantLanguage(DEFAULT_CHAT_LANG_CODE)
+            : appLanguage;
+    }
+    return appLanguage.code === DEFAULT_CHAT_LANG_CODE ? null : appLanguage;
 }
 
 /**
@@ -501,7 +571,30 @@ export type EditedLyricType = {
      * `Presenting Flow List` for a presenting flow (2026-11-07).
      */
     listName?: string;
+    /**
+     * A foreground answer's sessions, by the name on their strip, and
+     * whether one of its changes MADE the session (2026-11-13, EC-545): an
+     * undo takes such a session away again with what it put on the
+     * screens, and the window had said it "is back as it was".
+     */
+    undoParts?: ForegroundUndoPartType[];
+    /**
+     * A foreground change put up while every screen was off (2026-11-13,
+     * EC-599): an answer that stops before saying so gets **Turn the screen
+     * on**, the `/countdown` command's own offer.
+     */
+    isScreenOff?: boolean;
+    /**
+     * A foreground session as its strip shows it, in the person's language
+     * (`Time › Default`): what an answer that stopped before saying names
+     * (2026-11-13, EC-601 -- it had said _“Default” was changed_ over a
+     * clock just put up). `name` stays the session's own, the key the undo
+     * and **Show it in the list** read.
+     */
+    shownName?: string;
 };
+
+export type ForegroundUndoPartType = { name: string; isMade: boolean };
 
 /** Where **Show it in the list** rings a changed document's row. */
 export function toEditedDocumentListValue(edited: EditedLyricType) {
@@ -576,6 +669,9 @@ export function genLyricUndoAction(edited: EditedLyricType) {
                   ...(edited.undoIdList === undefined
                       ? {}
                       : { ids: edited.undoIdList }),
+                  ...(edited.undoParts === undefined
+                      ? {}
+                      : { parts: edited.undoParts }),
               },
           };
 }

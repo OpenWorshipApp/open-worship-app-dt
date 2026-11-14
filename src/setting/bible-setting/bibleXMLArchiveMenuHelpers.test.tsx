@@ -188,7 +188,7 @@ describe('Bible XML archive menu flows', () => {
         expect(mocks.callback).toHaveBeenCalledOnce();
         expect(mocks.toast).toHaveBeenCalledWith(
             'Import Bible Data',
-            'Imported 1 bible(s); 1 skipped',
+            'Imported 1 Bible(s); 1 skipped',
         );
         expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/import');
         expect(mocks.open).toHaveBeenCalledOnce();
@@ -229,7 +229,7 @@ describe('Bible XML archive menu flows', () => {
         await handleBibleXMLImporting('/downloads/empty.tar', mocks.callback);
         expect(mocks.toast).toHaveBeenCalledWith(
             'Import Bible Data',
-            'This archive holds no bible',
+            'There is nothing in this file to import.',
         );
         expect(mocks.input).not.toHaveBeenCalled();
         expect(mocks.imported).not.toHaveBeenCalled();

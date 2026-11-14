@@ -2,10 +2,10 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
-screenshots: 16
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, CM-93]
+screenshots: 17
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -112,24 +112,96 @@ all count as book-level too.
    - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
      **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
      the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
-     to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
-     that window forward. 📸
+     to use your own PDF reader instead. Each press opens one more window on the file, a
+     little below and to the right of the last, so two parts of it can be read side by side. 📸
    - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
      block are drawn as diagrams (a diagram with a mistake in it shows the error above its
      code). The window follows the file — save it in your editor and the preview changes.
-     A link to a heading scrolls there; a link to another `.md` opens it in the same window,
-     with **[en:tran:Back]** (the left arrow) to return; a web link opens in your browser; a
-     link to any other file shows it in its folder rather than running it. HTML written
+     A link to a heading scrolls there; a web link opens in your browser; a link to another
+     file opens it in a window of its own, and this window keeps its file: another `.md` in a
+     Markdown Preview of its own (one already open on that file comes forward instead), a
+     PDF in the PDF window, a bible note file on its first note, and any other file is shown
+     in its folder rather than run. HTML written
      inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
      section that folds away — but nothing in it can run: scripts, buttons, forms and styles
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
-     when text is pasted into it; the preview shows what is written. The head row also has
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and
-     **[en:tran:Reveal in File Explorer]**. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Pressing a
-     file whose preview is already open brings that window forward. 📸
+     when text is pasted into it; the preview shows what is written.
+     **People, places, verses and other files named in the page are links too**, drawn in
+     the link colour with a dotted underline, as the names in a Bible Reader verse are: a
+     person or place of the chapter the file is named after (a `JHN.3.…` file links Nicodemus
+     and Moses; a file named after no chapter links only a name one person or place in the
+     whole Bible has), a verse reference written the way an installed Bible names its books
+     (`Ezek. 36:25-27`, `John 3:16; 5:8`, a reference in Khmer), and the name of another
+     resource file (`JHN.3.pdf`, `JHN.0.pdf`) that is beside this file or in one of your
+     Resources folders. Names light up once the Bible Reader has highlighted the names of a
+     verse for the first time. Click a person, place or verse to open its detail panel in
+     the Bible Reader, which comes forward: the main window when it shows the Reader, else a
+     Reader window you have open, else the main window as it is, which stays on the page it
+     is on. Click a file's name to open it in a window of its own, as a link does. Words in
+     code, in a diagram or in a link stay as written, and a file that does not exist is not
+     linked; selecting words across a link opens nothing. The head row also has
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** and
+     **[en:tran:Reveal in File Explorer]**.
+     **To jump to a part of a long page:** press **[en:tran:Sections]** (the list, first
+     of the head row's buttons, there when the page has headings). The page's headings are
+     listed under the head row, each set in under the one before it by its level (`#`,
+     `##`, `###` …), the one you are reading in the link colour; click one and the page
+     jumps to it. The arrow keys, Home and End move along the list; Esc, a click anywhere
+     else or the button again closes it. Once you scroll down, an arrow in the page's
+     bottom-right corner, **[en:tran:Scroll to the top]**, takes you back to the top.
+     Neither is printed. 📸 **[en:tran:Print]** (the printer) opens a Print
+     Preview of the page in the light theme, whatever the window shows: a dark window prints
+     exactly what it would show in light, its diagrams too, with the same fonts and layout,
+     on as many pages as it needs, without the head row or the editor; print it or save it
+     as a PDF from there. Nothing of the page is left off: a fold closed on screen prints
+     open, every picture is there however far down the page, and words typed in the editor
+     a moment before are printed too.
+     **When the page names a verse, a person or a place, [en:tran:Print] asks first.** The
+     window shows **[en:tran:Add the Bible text and the name and place details to the end of the printout?]**
+     with how many verses, names and places it found. **[en:tran:Add and Print]** adds them
+     after the page's last line: the words of each passage, from the Bible named in
+     brackets right after its reference when that Bible is installed (`John 3:1-36
+     (Amplified)` from the Amplified), else from the Bible whose book names it is written
+     in (a Khmer reference from a Khmer Bible), else the KJV. A passage already printed as
+     part of a longer one is not printed again, and one that begins within it goes on from
+     that one's Bible: a longer one from any Bible of its language holds it, or from its
+     own Bible only when that Bible is named after it. Then each
+     person and place with what the names lookup says of them,
+     in the language that lookup is set to, a place's modern site too. A page that names
+     very many says at the end how many more could not be added.
+     **[en:tran:Print Page Only]** prints the page alone, and **[en:tran:Cancel]** (or Esc)
+     prints nothing. A page that names none prints straight away. Ctrl+P (⌘+P on a Mac)
+     and **File** → **Print Without Preview** in the menu bar (Alt shows it when it is
+     hidden) ask the same question first. What is added is on the paper only: the window
+     never shows it.
+     **[en:tran:Ask the Assistant About This File]** (the 🤖, last in the row, shown while
+     AI is on) brings the help window forward with this file attached in a chat of its own,
+     as the 🤖 on its Resources row does.
+     **To change the file right there:** press **[en:tran:Edit]** (the pencil). An editor
+     of the file's markdown opens on the left, its lines wrapped, and the page stays on the right, drawing what you type a moment
+     after you stop. The editor opens at the part of the page you were reading. Scroll either
+     side and, once you stop, the other jumps to the same line. Nothing is written until you
+     press **[en:tran:Save]** (the disk) or
+     Ctrl+S (⌘+S on a Mac); until then a `*` after the name says there are
+     **[en:tran:Unsaved changes]**, and **[en:tran:Discard unsaved changes]** (the round
+     arrow) puts back what is saved. **[en:tran:Hide Editor]** (the pencil again) gives the
+     whole window back to the page — your unsaved words still drawn there as they will
+     look, still waiting for **[en:tran:Save]**. **To ask the assistant about some of the
+     words**, select them in the editor, right-click them (or press Shift+F10) and choose
+     **[en:tran:Ask the assistant about this]**: the help window comes forward with them
+     quoted in its box under _Selected text_, the file's name and their line number, in the
+     chat that already holds this file, else in a new one with the file attached. Nothing
+     is sent until you type your question under the quote and press **[en:tran:Send]**.
+     While something is unsaved,
+     **[en:tran:Reload]** waits, and closing the window is stopped once with a note to save or discard first (keep trying and it
+     closes anyway). A change saved in your own editor reaches an open editor here that
+     has nothing unsaved; one with unsaved words keeps them, and **[en:tran:Save]** writes
+     them over the file. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Each
+     press opens one more window on the file, as a PDF's does: scroll one to the
+     diagrams and keep the other on the passage. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
      listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
      marked in it (the highlighter icon) with its highlights in their colour and its comments
@@ -227,7 +299,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `RD-129` · `RD-130` · `RD-131` · `RD-132` · `RD-133` · `RD-134` · `RD-135` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

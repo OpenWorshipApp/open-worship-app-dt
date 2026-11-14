@@ -23,10 +23,19 @@ export default function ScreenPreviewerHeaderComp({
     const screenManagerBase = useScreenManagerBaseContext();
     const [isLocked, setIsLocked] = useState(screenManagerBase.isLocked);
     // A group member's lock is toggled from a sibling; re-sync from the
-    // instance event that its setter fires.
-    useScreenManagerEvents(['instance'], screenManagerBase, () => {
-        setIsLocked(screenManagerBase.isLocked);
-    });
+    // instance event that its setter fires. The colour note's event
+    // re-renders the header too: the swatch below seeds its colour once, at
+    // mount, so a group made or put back anywhere but its own menu (the
+    // help window's screen tool, an undo) left it reading "No Color" over
+    // two grouped screens (2026-11-14, EC-612). It is keyed by the note, so
+    // a changed note remounts it with the screen's own colour.
+    useScreenManagerEvents(
+        ['instance', 'color-note-update'],
+        screenManagerBase,
+        () => {
+            setIsLocked(screenManagerBase.isLocked);
+        },
+    );
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
     const handleToggleLock = useCallback(() => {
         const screenManagerBase = screenManagerBaseRef.current;
@@ -99,7 +108,10 @@ export default function ScreenPreviewerHeaderComp({
                         screenId={screenManagerBase.screenId}
                     />
                     <div className="ms-2">
-                        <ItemColorNoteComp item={screenManagerBase} />
+                        <ItemColorNoteComp
+                            key={screenManagerBase.colorNote ?? ''}
+                            item={screenManagerBase}
+                        />
                     </div>
                     <div className="ms-2">
                         {/* Named, focusable and key-operable on purpose: this

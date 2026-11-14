@@ -224,6 +224,23 @@ describe('searchHelp ranking', () => {
     expect(hits[0].id).toBe('W-10');
   });
 
+  it('answers from the Screen Mirror page with the pages filed under the Presenter', () => {
+    // The page's own recipe is filed under the Presenter, where the host's
+    // half of it is done. Asked from the page, those pages fit as they do in
+    // the Presenter, and the Reader's own page still does not.
+    const hits = searchHelp('screen', 5, 'auto', 'screen-mirror');
+    expect(
+      hits.map((hit) => {
+        return hit.id;
+      }),
+    ).toContain('W-10');
+    expect(
+      hits.every((hit) => {
+        return hit.surface !== 'reader';
+      }),
+    ).toBe(true);
+  });
+
   it('answers nothing rather than guessing when no word matches', () => {
     expect(searchHelp('zzzz', 3, 'auto', 'presenter')).toEqual([]);
   });
@@ -312,15 +329,18 @@ describe('readHelpPage', () => {
     expect(whole.body).toContain('30. Lorem 30 ');
     expect(whole.body).not.toContain('This page goes on');
     expect(
-      [first.body.slice(0, first.body.indexOf('\n\n[This page goes on')), last.body].join('\n'),
+      [
+        first.body.slice(0, first.body.indexOf('\n\n[This page goes on')),
+        last.body,
+      ].join('\n'),
     ).toBe(whole.body);
   });
 
   // A question in a language with a page of its own, asked in a window
   // shown in another, rode with that page -- and its button names in the
   // PAGE's language, a control no screen of that window is called
-  // (2026-11-04, the robot run: a Khmer question in an English window was
-  // answered with the slider by its Khmer name).
+  // (2026-11-04, the robot run: a question in another language asked in an
+  // English window was answered with the slider by its translated name).
   it('names the buttons of a translated page as the window shows them', () => {
     const inEnglishWindow = readHelpPage('W-10@xx', 'en');
     expect(inEnglishWindow.title).toBe('[xx] Control what the audience sees');
@@ -377,8 +397,8 @@ describe('toPageParts', () => {
 });
 
 // Two bolds side by side are two bolds. Only a pair left EMPTY (a label that
-// was Khmer and nothing else) goes: W-53 read `**Take it down.Hide Long
-// Text**` in every language.
+// was another script and nothing else) goes: W-53 read `**Take it
+// down.Hide Long Text**` in every language.
 describe('toEnglishOnly and neighbouring bolds', () => {
   it('keeps two bolds apart', () => {
     const text = '**Take it down.** **Hide Long Text** clears it.';
@@ -386,7 +406,7 @@ describe('toEnglishOnly and neighbouring bolds', () => {
   });
 });
 
-describe('the Khmer twin the manual writes beside every label', () => {
+describe('the twin in another script the manual writes beside every label', () => {
   it('leaves a bracket that is all English alone', () => {
     const text = 'Click **Add URL** (or right-click the empty list).';
     expect(toEnglishOnly(text)).toBe(text);
@@ -457,9 +477,9 @@ describe('scrubRecipeIds', () => {
       return one.id === 'W-10';
     });
     expect(hit).toBeDefined();
-    expect(hit.excerpt.startsWith('Show or hide the screen, or press F5. ')).toBe(
-      true,
-    );
+    expect(
+      hit.excerpt.startsWith('Show or hide the screen, or press F5. '),
+    ).toBe(true);
     expect(hit.excerpt).not.toContain('\n');
     expect(hit.excerpt).not.toContain('#');
   });

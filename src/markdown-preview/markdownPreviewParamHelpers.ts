@@ -10,7 +10,20 @@
  */
 export const MARKDOWN_PREVIEW_FILE_PARAM_NAME = 'preview-file';
 
-const MARKDOWN_DOT_EXTENSIONS = ['.md', '.markdown'];
+// A name, place, verse or file the page mentions, made a link
+// (`markdownPreviewReferenceHelpers.ts`). Here so the window can tell a press
+// on one without loading the helpers that make them.
+export const MARKDOWN_REF_CLASS = 'app-markdown-ref';
+
+// The line of the file a block on the page starts at, counted from 0. Written
+// on the blocks only while the editor is shown beside the page, so each side
+// can follow the other's scrolling (`markdownScrollFollowHelpers.ts`).
+export const MARKDOWN_SOURCE_LINE_ATTRIBUTE = 'data-source-line';
+
+// Every name `src/server/mime/markdown-types.json` lists, written out rather
+// than read from it so this module stays import-free; a test holds the two
+// alike. The Bible Notes list shows each of them, and a row pressed opens here.
+const MARKDOWN_DOT_EXTENSIONS = ['.md', '.markdown', '.mdown', '.mkd', '.mkdn'];
 
 export function checkIsMarkdownPreviewFileName(fileFullName: string) {
     const lowerName = fileFullName.toLowerCase();

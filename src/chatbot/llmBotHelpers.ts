@@ -50,6 +50,7 @@ import {
     checkIsCustomServerError,
     checkIsLocalNetworkUrl,
     checkIsLoopbackUrl,
+    checkIsRegistryServerId,
     encodeCustomModel,
     findCustomModel,
     getUsableCustomModels,
@@ -63,7 +64,15 @@ import {
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
-import { resolveBookKey } from '../helper/bibleVerseFindHelpers';
+import {
+    findNamedPassageRef,
+    findVersesBeforeRef,
+    MAX_FIND_REFS,
+    MAX_VERSES_BEFORE,
+    pickVersesBeforePassage,
+    resolveBookKey,
+    toLastVersesRead,
+} from '../helper/bibleVerseFindHelpers';
 import {
     ATTACHMENT_ONLY_QUESTION,
     type BotImageType,
@@ -74,18 +83,41 @@ import {
     toRepliesShownInLanguage,
     type AnswerKeepType,
 } from './answerLanguageHelpers';
+import {
+    toAnthropicRetryEffort,
+    toRetryMaxTokens,
+    toRetryReasoningEffort,
+    toRetryTemperature,
+} from './answerRetryHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { findPageLanguage } from './chatTranslateHelpers';
 import {
+    checkHasChangeClaim,
+    checkHasForegroundClaim,
+    checkHasMadeChangeClaim,
+    findStudyChangeReport,
+} from './changeClaimHelpers';
+import {
+    checkIsEnglishAfterOtherLanguage,
     DEFAULT_CHAT_LANG_CODE,
     OTHER_CHAT_LANG_CODE,
     getAppLangCode,
     getAssistantLanguage,
     listAssistantLanguages,
+    listLookAlikePairs,
     pickReplyLanguage,
     SENTENCE_END_MARKS,
     toAsciiDigits,
+    toChangeClaimWords,
+    toPackageLangCode,
+    type ChangeClaimWordsType,
 } from './chatLangHelpers';
+import { listLangFileCodes, loadLangFile } from '../lang/langFileStore';
+import {
+    checkChatLanguage,
+    checkIsLangOffer,
+    type StudyLangOfferType,
+} from './langInstallChatHelpers';
 import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
 import {
     checkIsSpendLimitError,
@@ -108,7 +140,7 @@ import {
     genReaderButtonReferenceAnswer,
     getBotFocus,
 } from './helpBotHelpers';
-import { parseTextToolCalls } from './textToolCallHelpers';
+import { parseTextToolCalls, toListArgsRead } from './textToolCallHelpers';
 import type {
     BotActionType,
     BotAnswerType,
@@ -178,14 +210,297 @@ import {
 import {
     NOTE_ASK_KIND,
     NOTE_EDIT_TOOL_NAME,
+    NOTE_BLANK_DROPPED_NUDGE,
+    NOTE_BLANK_LESSON_HINT,
+    NOTE_DROPPED_NUDGE,
+    NOTE_LESSON_CHANGE_HINT,
+    NOTE_LESSON_REVIEW_HINT,
+    NOTE_LESSON_MAX_TOOL_ROUNDS,
     NOTE_MAX_TOOL_ROUNDS,
+    NOTE_REWRITE_DROPPED_NUDGE,
     NOTE_SYSTEM_PROMPT,
+    checkAddsNoteVerse,
+    checkIsLanguageLessonAsk,
+    findBlankFillProblem,
+    findLessonPointsProblem,
+    findMissingLessonParts,
+    genMissingLessonPartsNote,
+    findLostNoteLines,
+    findLessonChangeSurgery,
+    findHearerAnswerLeft,
+    findHearerQuestionTurned,
+    withBlankFillInOrder,
+    withLessonLabelsBold,
+    withLessonLabelsKept,
+    readNoteReadBlocks,
+    type LessonReadBlockType,
+    findFinishOwnWordsLoss,
+    findPointQuoteMisplacements,
+    findRewriteLineLoss,
+    readFinishOwnBlocks,
+    type FinishOwnBlockType,
+    findCitedMisattributions,
+    findCitedMisquotes,
+    findCitedQuotes,
+    findNoteMisquotes,
+    genCitedMisattributionNote,
+    pickMisattributionCandidates,
+    type CitedMisattributionType,
+    findTestamentSlips,
+    findTokenAsWords,
+    findMemoryVerseRef,
+    findSwappedVerseRef,
+    countVerseWords,
+    dropRepeatedLessonPassages,
+    withLongPointPassagesNamed,
+    findNoteTranslateLeft,
+    genNoteTranslateLeftNote,
+    genNoteTranslateNoBibleNote,
+    pickCitedQuotesToRead,
+    pickTranslateBibleKey,
+    type NoteReadBlockType,
+    withNoteVersesInBible,
+    MAX_CHILD_MEMORY_VERSE_REFUSALS,
+    MAX_CHILD_MEMORY_VERSE_WORDS,
+    genChildMemoryVerseNote,
+    listShortReadVerses,
+    findMemoryVerseBlock,
+    withMemoryVerseBlock,
+    readPassageVerseWords,
+    readLessonBigIdea,
+    genCitedMisquoteRefusal,
+    genLessonFormWriteLine,
+    genTestamentSlipRefusal,
+    genTokenAsWordsRefusal,
+    genLessonPointsRefusal,
+    genLostNoteLinesRefusal,
+    genNoteMisquoteRefusal,
+    genVersesBeforeNote,
     readCreatedNote,
     resolveNoteEditTarget,
+    restoreNoteTypedWords,
+    toBlankNoteFillArgs,
+    toCitedVerseKey,
+    toLessonChangeText,
+    toLessonVerseLines,
+    withRewrittenLinesRemoved,
     type CreatedNoteType,
     type NoteAskFileType,
+    type NoteRewriteType,
 } from './noteChatHelpers';
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import {
+    findLessonWordGlosses,
+    genLessonWordGlossNote,
+} from './lessonWordGlossHelpers';
+import {
+    genKjvWordingNote,
+    type KjvWordingFixType,
+    withKjvWording,
+} from './lessonKjvWordingHelpers';
+import {
+    findLessonLegends,
+    findLessonLegendsLeft,
+    findLessonLegendsNew,
+    genLessonLegendNote,
+    type LessonLegendFoundType,
+} from './lessonLegendHelpers';
+import {
+    FACT_CHECK_SYSTEM_PROMPT,
+    checkHasPassageRead,
+    genLessonFactCheckAsk,
+    readLessonFactFindings,
+} from './lessonFactCheckHelpers';
+import {
+    checkIsFuneralAsk,
+    checkKeepsBlockWords,
+    findBlockNumbers,
+    findHospitalExamples,
+    genHospitalExampleNote,
+    genLineFixRefusal,
+    genWholeBlockNote,
+    toLineFixBlock,
+    type LineFixBlockType,
+} from './lessonStockSceneHelpers';
+import {
+    findStretchedChristWords,
+    findUnquotedChristVerses,
+    genChristVerseNote,
+    readLessonPassageRef,
+    type ChristVerseType,
+} from './lessonChristVerseHelpers';
+import {
+    genPreviousPsalmReadNote,
+    genPsalmOwnSettingNote,
+    genPsalmTitleNote,
+    loadPsalmTitles,
+    readPsalmChapters,
+} from './lessonPsalmTitleHelpers';
+import {
+    FOREGROUND_ASK_KIND,
+    FOREGROUND_EDIT_TOOL_NAME,
+    FOREGROUND_MAX_TOOL_ROUNDS,
+    FOREGROUND_SYSTEM_PROMPT,
+    checkIsRunningOrderLine,
+    findForegroundBlank,
+    findForegroundEchoedWords,
+    genForegroundBlankRefusal,
+    genForegroundEchoQuestion,
+    mergeEditedForeground,
+    readEditedForeground,
+    readForegroundComponentAsk,
+    readHeldForeground,
+    toForegroundEditArgs,
+} from './foregroundChatHelpers';
+import { checkIsBibleListSaveFollowUp } from './bibleListAskHelpers';
+import {
+    SCREEN_ASK_KIND,
+    SCREEN_EDIT_TOOL_NAME,
+    SCREEN_MAX_TOOL_ROUNDS,
+    SCREEN_CLAIM_PATTERN,
+    SCREEN_SYSTEM_PROMPT,
+    checkIsScreenEdited,
+    genScreenUndoAction,
+    mergeEditedScreen,
+    readEditedScreen,
+} from './screenChatHelpers';
+import {
+    type ForegroundAskType,
+    checkIsSameForegroundAsk,
+} from '../helper/ai/foregroundAskHelpers';
+import { pickBibleInLanguage } from './verseAskLanguageHelpers';
+import {
+    LESSON_MAKE_HINT,
+    NOTE_CREATE_PROMPT,
+    STUDY_FILE_PROMPT,
+    checkIsLessonWriteAsk,
+    genLessonLengthLine,
+} from './noteCreatePromptHelpers';
+import {
+    STUDY_ASK_KIND,
+    STUDY_KEEP_ANSWER_HINT,
+    STUDY_MAX_TOOL_ROUNDS,
+    STUDY_NO_ANSWER_REFUSAL,
+    STUDY_SAVE_MODEL_REFUSAL,
+    STUDY_CHANGE_STOPPED_TEXT,
+    STUDY_STOPPED_TEXT,
+    STUDY_SYSTEM_PROMPT,
+    type DraftedStudyType,
+    type HeldStudyEditType,
+    type StudyShownBlockType,
+    chainHeldNewStudyEdit,
+    chainStudyPartEdit,
+    checkHasStudyReplace,
+    checkIsStudyAnswerMarker,
+    checkIsStudyPartShown,
+    checkIsWholeStudyRewrite,
+    findHeldStudyToTranslate,
+    findOpenStudyFiles,
+    genHeldStudyAskHint,
+    genHeldStudyBeforeActions,
+    genHeldStudyClaimNudge,
+    genHeldStudyCopyRefusal,
+    genHeldStudyQuestionNudge,
+    genHeldStudyKeepHint,
+    genHeldStudyTranslatedNote,
+    genOpenStudyDraftRefusal,
+    genStudyClaimNudge,
+    genStudyDraftActions,
+    genStudyReplaceDiagramRefusal,
+    genStudyReportRefusal,
+    genUnreadStudyPartRefusal,
+    keepDraftedStudy,
+    listWrittenDiagramIndexes,
+    pinOpenStudyFile,
+    readDraftedStudy,
+    readHeldNewStudy,
+    readStudyReplacedDiagrams,
+    redraftHeldNewStudy,
+    routeOpenStudyDraft,
+    routeWholeStudyRewrite,
+    toAskedStudyBlocks,
+    toHeldStudyTranslateDraftArgs,
+    toHeldStudyTranslatePlanArgs,
+    toKeptAnswerDraftArgs,
+    toModelDraftText,
+    toReadStudyBlock,
+    toStudyContentFromAnswer,
+    toStudyPartDraft,
+    toStudyReadShape,
+    toStudyReplaceArgs,
+    toHeldStudyBefore,
+    toNoteFromStudy,
+    toStudyArgsFromNote,
+    withHeldStudyTool,
+    NOTE_BESIDE_DRAFT_REFUSAL,
+    NOTE_HELD_CHOICE_NOTE,
+    NOTE_HELD_MARKDOWN_NOTE,
+    NOTE_MARKDOWN_NO_PASSAGE_REFUSAL,
+    NOTE_TEXT_MAX_CHARS,
+    NOTE_TITLE_MAX_CHARS,
+    type HeldNoteType,
+} from './studyFileChatHelpers';
+import type { CreateKindType } from './createKindHelpers';
+import {
+    checkStudyDiagram,
+    dropStudyDiagrams,
+    lintStudyContent,
+    toStudyDiagramBlock,
+} from '../helper/agentStudyFileRules';
+import {
+    keepStudySequenceIds,
+    listStudyDiagramLabels,
+    listStudyDiagramLeftLabels,
+} from './studyDiagramWordHelpers';
+import {
+    type StudyBookNameSlipType,
+    type StudyBookNameTableType,
+    checkHasStudyRefNumbers,
+    listStudyBookNameSlips,
+    repairStudyBookNames,
+    toStudyBookNameTable,
+    toStudyBookNamesText,
+} from './studyBookNameHelpers';
+import {
+    type StudyNameGuideType,
+    type StudyNameSlipType,
+    listStudyNameSlips,
+    listStudyNameSpellings,
+    repairStudyNameSpellings,
+    toStudyNameGuide,
+    toStudyNameVersesText,
+} from './studyNameHelpers';
+import { genStudyBookNames } from './studyVerseCheckHelpers';
+import {
+    STUDY_CHURCH_WORDS_FILE_NAME,
+    STUDY_LABEL_FILE_NAME,
+    STUDY_TRANSLATE_CHUNK_CHARS,
+    STUDY_TRANSLATE_TRIES,
+    type StudyTranslateLanguageType,
+    applyStudyHeadingTerms,
+    assembleStudyTranslation,
+    checkIsStudyDiagramTranslated,
+    checkIsStudyTextTranslated,
+    cleanStudyTranslation,
+    describeStudyNothingTranslated,
+    describeStudyTranslation,
+    findStudyTranslationsInLanguage,
+    genStudyAppendInLanguageRefusal,
+    joinStudyTextPieces,
+    listMissingStudyTerms,
+    listStudyStrayLetters,
+    listStudyStrayWords,
+    planStudyTranslateJobs,
+    readStudyTranslatePlace,
+    readStudyTranslatePlan,
+    resolveStudyTranslateLanguage,
+    toStudyDiagramTranslationAsk,
+    toStudyOriginalBody,
+    toStudyTextTranslationAsk,
+    toStudyTranslateDraftArgs,
+    withStudyChurchWords,
+    withStudyLabelTerms,
+} from './studyTranslateHelpers';
+import { toStudyTranslationLeftNote } from './studyTranslationCheckHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -201,17 +516,25 @@ import {
     genBibleImportUnderAnswer,
 } from './bibleImportChatHelpers';
 import {
-    LYRIC_COPY_TOOL_NAME,
-    LYRIC_CREATE_TOOL_NAME,
+    type DraftedSourceType,
+    genLyricDraftActions,
     keepDraftedLyric,
     readDraftedLyric,
+    toDraftedSourceKey,
+    withDraftedSource,
+    readSongTitleNamed,
 } from './lyricDraftHelpers';
 import {
     learnPageTitles,
     scrubAnswerRecipeIds,
     scrubAnswerToolFields,
+    scrubAnswerUndoIds,
 } from './recipeIdHelpers';
-import { parseAnswerFrames, type ShowRefType } from './quickReplyHelpers';
+import {
+    parseAnswerFrames,
+    readReviewFixHeadings,
+    type ShowRefType,
+} from './quickReplyHelpers';
 import {
     describeToolStep,
     genProgressReporter,
@@ -576,8 +899,29 @@ export function getLlmModelNotice(
 }
 // A help answer is a paragraph and a couple of steps, not an essay.
 const MAX_TOKENS = 2000;
-// A whole answer put into Khmer is several times the English's tokens: a
-// 300-word answer is ~400 tokens in English and well over 1 500 in Khmer, so
+// How long a round of a SHARED server (the registry's, gemma4:cloud the one
+// Auto asks first) may say nothing before it is sent once more (EC-524). Its
+// rounds come back in 2-5 s; 2 000 tokens at a slow 30 a second is about a
+// minute. Not for a long write, a translation or a Retry, which may write
+// more, nor for a server of the user's own, which may be a slow computer.
+const SHARED_STALL_MILLISECONDS = 90 * 1000;
+
+/** Whether a round failed on the client's own clock, not on the server. */
+export function checkIsRoundTimeout(error: any) {
+    return (
+        error?.constructor?.name === 'APIConnectionTimeoutError' ||
+        /request timed out/i.test(String(error?.message ?? ''))
+    );
+}
+// ...but a lesson IS one, written whole into a tool call: big idea,
+// background, three points with their verses, examples and applications,
+// a prayer and questions run 1 200-1 800 words, about 1 700-2 600 tokens
+// with the call's JSON round them -- past 2 000, so the call came back cut
+// (`AskExtraType.isLongWrite`). The same room the paid providers have.
+const LONG_WRITE_MAX_TOKENS = 6000;
+// A whole answer put into a script of its own is several times the English's
+// tokens: a 300-word answer is ~400 tokens in English and well over 1 500 in
+// such a script, so
 // the translator's round on a server of the user's own gets twice the room.
 const TRANSLATION_MAX_TOKENS = 4000;
 // ...but Claude THINKS out of the same budget. Sonnet 5 and Opus 5 run
@@ -1202,6 +1546,24 @@ export type LlmBotAnswerType = BotAnswerType & {
      * row's Open in Chatbot does (`ChatbotAppComp.tsx`).
      */
     createdNote?: CreatedNoteType;
+    /**
+     * The foreground sessions the answer put up or changed, newest first:
+     * the window holds them on the answer as chips, so the next question
+     * is about them (EC-520).
+     */
+    heldForeground?: ForegroundAskType[];
+    /**
+     * The answer still says the note or the study open in the tab was
+     * changed, and this ask changed nothing (`checkClaimsUnmadeChange`):
+     * the window says so over it (`UNMADE_CHANGE_TEXT`, EC-501).
+     */
+    isChangeUnmade?: boolean;
+    /**
+     * A study translation that waits for its language (EC-494): turned off
+     * or not installed, so the window offers Enable / Install it under the
+     * answer and asks the question again after it (`genStudyLangOffer`).
+     */
+    langOffer?: StudyLangOfferType;
     standIn?: {
         provider: LlmProviderType;
         model: string;
@@ -1696,7 +2058,7 @@ Rules:
   step can drive it. When they asked for the verse to go UP, do it, then
   say what its answer reports: the passage, the version, and whether the
   screen is on -- an off screen holds the verse and shows nothing, so
-  offer its show button. When they only asked HOW, answer from the manual
+  offer to turn that screen on. When they only asked HOW, answer from the manual
   and offer to put it up for them. \`action: "check"\` reads a reference
   without touching a screen.
 - **A Bible from a link is \`owa_bible_xml\`, never Settings -- and the
@@ -1716,12 +2078,35 @@ Rules:
 - **A countdown, stopwatch, clock, scrolling message or quick text is ONE
   call too**: \`owa_foreground\` with the widget and its \`minutes\`, \`at\`
   (a clock time) or \`text\` -- "start a 5 minute countdown", "count down to
-  10:30", "scroll 'please silence your phones' along the bottom". Never the
+  10:30", "scroll 'please silence your phones' along the bottom", "put the
+  time on the screen" (\`widget: "clock"\`, never its words as text) -- and
+  "put the long text up" is \`widget: "long-text"\` with nothing else: its
+  panel already holds the words, and one that holds none says so. A
+  notice to stay up -- a welcome, "show on the projector: the car park is
+  full", "put this announcement up: …" -- is \`widget: "message"\`, up until
+  it is taken off: a quick text goes off by itself after some seconds and a
+  marquee scrolls, so those only when they ask for one. A clock or a
+  timer that counts UP -- from zero, the time since the sermon started,
+  how long it has run -- is \`widget: "stopwatch"\`, started like the
+  others; one that counts DOWN is the countdown. Never the
   Foreground tab's own boxes: that tab TOGGLES (a second press closes it) and
   its boxes are a form for a person. When they asked for it to START, do it
   and say what the answer reports -- the screen holds it, and an off screen
-  shows nothing, so offer its show button; \`action: "stop"\` takes it off
-  when they ask. When they only asked HOW, answer from the manual and offer.
+  shows nothing, so offer to turn that screen on; \`action: "stop"\` takes it off
+  when they ask, and "clear everything from the foreground" is
+  \`action: "stop", widget: "all"\` (F10, every screen, the long text too;
+  it keeps no Undo, so name what it took off and offer to start that again).
+  A command in ANY language -- "show the time", "put the clock up", said
+  in their own words, no screen named -- asks for it to START. Only a
+  question -- how do I, where is, can I learn -- asks HOW: then answer
+  from the manual and offer. A line that only TELLS you something -- the
+  sermon took 40 minutes, the service started late -- asks for nothing:
+  answer it, put nothing up and offer no timer. What they did not give is
+  asked for, never made up. Asked to show a thing by what it is and not
+  the thing itself ("show the door code", "put up who is preaching"), ask
+  them for it: its name alone on the screen shows nothing. A countdown TO
+  something they gave no time for ("count down to the wedding") asks what
+  time it is. Never a blank to fill in, or a length they did not say.
 - **Never guess what a control is called.** "It may be labelled something like
   ..." is not an answer: \`owa_list_ui\` and \`owa_find_ui\` say what is really
   on their screen -- look it up, then say it exactly. \`highlight\` points at
@@ -1737,7 +2122,10 @@ Rules:
   built-in guide was behind.
 - **When two answers are possible and you cannot tell which they mean, ASK.**
   One confident wrong answer mid-service costs more than a question does. Put
-  the question last and let the options below name the two choices.
+  the question last and let the options below name the choices. A message of
+  a word or two ("lyric", "background") names a subject, not a job: unless
+  the conversation settles it, ask which job they want before answering --
+  one short question, the likely jobs as the options.
 - A picture they attached IS their screen. Read it and answer from what is in
   it; never narrate it back to them.
 - To do ONE thing for them right away -- press a button, fill in the
@@ -1775,9 +2163,9 @@ Rules:
   For a link, give the address as \`url\` and nothing as \`text\`, without
   reading the page first: the drafter reads it itself, whole, and writes every
   chord on it into the words -- a copy you type out has no chords in it. It
-  finds the song among the menus and charts and tells you which part of the
-  page it used. Read that line: if it took in the site's own furniture or
+  says which part of the page it used: if that took in the site's menus or
   stopped before the last verse, say \`from\` and \`to\` and call it again.
+  Several links, files or songs: one draft call each, up to four.
   A song asked for by its NAME and nothing else ("make a lyric file for
   Amazing Grace"): \`mode: "find"\` with its \`title\`. It looks in their own
   songs and the app's public-domain hymns; if it finds nothing, say so and ask
@@ -1801,8 +2189,9 @@ Rules:
   particular takes content off a live projector.
 
 END EVERY ANSWER WITH OPTIONS, on a line of its OWN at the very end:
-OPTIONS: <reply> | <reply> | <reply>
-Two or three, at most six words each, in the USER's voice: "Yes, turn it
+OPTIONS: <reply> | <reply> | <reply> | <reply> | <reply>
+Up to five -- as many as are really worth pressing, never padding -- at most
+six words each, in the USER's voice: "Yes, turn it
 on", "How do I clear it again?", "No thanks". They must fit THIS answer --
 after a question, its answers; after steps, the sensible next thing. The
 window adds **Show me step by step** and **Do it for me** itself whenever a
@@ -1870,7 +2259,12 @@ type OpenAiCompatProviderType = {
     // model to its own. None is today -- the keyless one was, until its LLM7
     // half was dropped (2026-09-12) -- so every descriptor ignores it.
     getInstance: (model: string) => OpenAI | null;
-    genRequestExtra: (model: string) => Record<string, any>;
+    // `retryAttempt`: which try of a **Retry** this is, 0 for an ordinary
+    // ask -- each try asks a step harder (`answerRetryHelpers`).
+    genRequestExtra: (
+        model: string,
+        retryAttempt?: number,
+    ) => Record<string, any>;
     /**
      * How many times this provider is worth asking before the loop gives up.
      * Unset means `MAX_TOOL_ROUNDS`.
@@ -1934,6 +2328,12 @@ type OpenAiCompatProviderType = {
     // about it" -- a model the server has yet to load spends its first round
     // loading, and a volunteer watching a minute of "thinking" presses Stop.
     describeRound?: (round: number) => string | null;
+    /**
+     * How long one round may say nothing before it is sent once more, for a
+     * server that answers in seconds (EC-524). Unset waits the client's own
+     * clock, which a model on a slow computer needs.
+     */
+    stallMilliseconds?: number;
 };
 
 async function listRemoteOpenAiCompatModels(
@@ -2104,12 +2504,74 @@ type ToolWatchType = {
      */
     isActedOn: boolean;
     /**
-     * The Open Lyric document the last successful draft produced. Lifted from
-     * the tool RESULT rather than from anything the model wrote: a song asked
-     * for a second time costs the whole song again in tokens, and a model
-     * retyping notation is a model that can retype it wrong.
+     * Each screen's show/hide control as `owa_list_screens` named it, in the
+     * window's language (EC-603): pressed in the answer that changed what
+     * the screens hold, it is refused and offered instead.
      */
-    draftedLyric: string | null;
+    screenToggleLabels?: string[];
+    /**
+     * The Open Lyric documents the ask's successful drafts produced, one per
+     * SOURCE (`withDraftedSource`: a page's address, else the song's title),
+     * `MAX_SONGS_PER_ASK` at most. Lifted from the tool RESULT rather than
+     * from anything the model wrote: a song asked for a second time costs
+     * the whole song again in tokens, and a model retyping notation is a
+     * model that can retype it wrong.
+     */
+    draftedLyrics: DraftedSourceType[];
+    /**
+     * The study file the last good `owa_resource_file draft` answered
+     * (EC-464): held by the window and offered under the answer as Create,
+     * Preview and Change the name. Off the RESULT, like a drafted song.
+     */
+    draftedStudy: Omit<DraftedStudyType, 'reference'> | null;
+    /**
+     * The NEW study the card right above this ask holds (EC-606,
+     * `AskExtraType.heldStudy`): not saved, so a part of it is changed as
+     * one this ask drafted is (`draftedStudy` first), into a card of its own.
+     */
+    heldStudyBefore: DraftedStudyType | null;
+    /** A call reached that study: the answer carries its card again. */
+    isHeldStudyBeforeUsed: boolean;
+    /**
+     * What the person PRESSED for -- a Bible note or a Markdown file
+     * (`readPressedCreateKind`, EC-581) -- or null, when a new note is
+     * held for them to choose under the answer.
+     */
+    createKind: CreateKindType | null;
+    /** A draft's diagrams sent back once already to be fixed. */
+    isStudyDiagramRetried: boolean;
+    /**
+     * The study files the tab has open, as `draft` names them
+     * (`Default/<name>.md`, EC-499): a draft naming no file goes to the one
+     * open or is told how to change it, and an answer saying it changed
+     * one with no draft made is handed back.
+     */
+    openStudyFiles: string[];
+    /**
+     * What of the study files the model has been shown this ask (EC-500):
+     * the ask's words of each, and every `read` of one since. A part drafted
+     * by its `section` that none of them shows is read by the window and the
+     * draft sent back with its words.
+     */
+    shownStudyBlocks: StudyShownBlockType[];
+    /**
+     * The tab's newest answer, as the person read it (`AskExtraType.
+     * answerAbove`): what a draft's `@answer` is (EC-466).
+     */
+    answerAbove: string | null;
+    /** The person's line that answer answered (EC-704), its heading. */
+    answerAboveQuestion: string | null;
+    /**
+     * The ask was read as keeping that answer as a study file
+     * (`AskExtraType.keepAnswer`): a draft gets it whatever the model wrote.
+     */
+    isKeepAnswerAsk: boolean;
+    /**
+     * The window's translator for a study file (EC-478), handed in by the
+     * ask (`AskExtraType.translateText`), and where its steps are said.
+     */
+    translateText: StudyTextTranslatorType | null;
+    onProgress: BotProgressCallbackType | null;
     /**
      * A song the model CREATED itself in this ask, name and path off the
      * `owa_lyric_file` result. Measured 2026-09-10: asked *Create a lyric
@@ -2148,6 +2610,40 @@ type ToolWatchType = {
      */
     flowFiles: FlowAskFileType[] | null;
     /**
+     * The foreground sessions attached to the tab, when this is a question
+     * about the foreground -- what a `session` the model gives
+     * `owa_foreground_edit` is turned into (`resolveForegroundSession`).
+     * Null outside such a question, where that tool is not the model's.
+     */
+    foregroundAsks: ForegroundAskType[] | null;
+    /**
+     * The foreground sessions this ask put up or changed, newest first
+     * (`readHeldForeground`): the answer holds them as chips, so the next
+     * question is about them (EC-520).
+     */
+    heldForeground: ForegroundAskType[];
+    /**
+     * A call this ask made that is no read and no foreground tool -- a
+     * press, an undo: it may have changed what is up, so a foreground
+     * answer saying so is believed (`checkClaimsUnmadeForegroundChange`).
+     */
+    isOtherCallMade: boolean;
+    /**
+     * A call this ask made that is no read and no study tool -- a press, a
+     * verse added to a list: a change claimed may be about it, so an answer
+     * under a card holding a new study saying so is believed
+     * (`checkClaimsUnmadeHeldStudyChange`, EC-700).
+     */
+    isNonStudyCallMade: boolean;
+    /** `AskExtraType.foreground.isCurrentOnly`: nothing was attached. */
+    isForegroundCurrentOnly: boolean;
+    /**
+     * This is a question about the screens' own controls
+     * (`AskExtraType.screen`): an answer that says it changed them while no
+     * call did goes back once (`checkClaimsUnmadeScreenChange`).
+     */
+    isScreenAsk: boolean;
+    /**
      * The Bible notes attached to the tab, when this is a question about
      * them -- what a `note` the model gives `owa_note_edit` is turned into
      * (`resolveNoteEditTarget`). Null outside such a question, where
@@ -2155,10 +2651,133 @@ type ToolWatchType = {
      */
     noteFiles: NoteAskFileType[] | null;
     /**
+     * The language a note question was asked in, when not English: a NEW
+     * verse with no Bible named comes from an installed Bible in it when
+     * the Bible Lookup's is not one (BN-26) -- `noteVerseBible`, looked up
+     * at the first edit that adds a verse and kept for the ask (`null`: the
+     * Lookup's stands).
+     */
+    noteVerseLang: string | null;
+    // What the person TYPED in a note ask, the words a model writes into the
+    // note are put back to where only look-alike letters differ (BN-37).
+    noteTyped: string | null;
+    /**
+     * How many empty blocks the ONE attached note holds when it holds
+     * nothing: a new note the model makes is written into it instead
+     * (`toBlankNoteFillArgs`), once. Null for a note with anything in it.
+     */
+    blankNoteBlockCount?: number | null;
+    /**
+     * The ONE attached note is loose lines a _finish my sermon_ makes a
+     * lesson of: a new note the model makes, holding every one of them, is
+     * written in their place (BN-67). Null once it went in.
+     */
+    noteRewrite?: NoteRewriteType | null;
+    noteVerseBible?: string | null;
+    /**
+     * In a note ask, what the model has read -- the ask itself, every verse
+     * `owa_find_verse` returned, every read of the note -- for a quote in a
+     * change to be the passage's words; a change misquoting it is refused
+     * once an ask (BN-76, `findNoteMisquotes`).
+     */
+    noteQuoteSources?: string[] | null;
+    isNoteQuoteChecked?: boolean;
+    // A quote given its chapter and verse was held to that verse, read by
+    // the window (BN-110, `findCitedMisquotes`): once an ask.
+    isNoteCitedQuoteChecked?: boolean;
+    // A sentence putting a verse in the other Testament was sent back
+    // (BN-114, `findTestamentSlips`): once an ask.
+    isNoteTestamentChecked?: boolean;
+    // A verse token standing in for a sentence's words was sent back
+    // (BN-120, `findTokenAsWords`): once an ask.
+    isNoteTokenWordsChecked?: boolean;
+    // A new lesson written as a children's one -- the window's own form
+    // line rides the ask (BN-129) -- and its memory verse held to a length
+    // a child can say: sent back twice an ask at most (BN-132: once, the
+    // model swapped Luke 15:7's 28 words for 1 John 4:16's 29).
+    isChildrenLesson?: boolean;
+    childMemoryVerseRefusals?: number;
+    // Said under the change made, for one more edit (BN-143).
+    childMemoryVerseText?: string | null;
+    // The note's words are being REPLACED with this language (BN-133), the
+    // Bible in it its verses are read from (undefined: not yet looked up;
+    // null: none installed), and whether the model was told there is none.
+    noteTranslate?: { code: string; name: string } | null;
+    noteTranslateBible?: string | null;
+    isNoteTranslateNoBibleSaid?: boolean;
+    // Its words were held to the language (BN-134,
+    // `findNoteTranslateLeft`): what the change being made left out of it,
+    // said under that change's result, once an ask.
+    noteTranslateLeftText?: string | null;
+    isNoteTranslateChecked?: boolean;
+    // A verse the change being made quoted in a modern translation's words,
+    // given the KJV's by the window (BN-137): said under its result.
+    kjvWordingText?: string | null;
+    // A sermon's detail no verse gives, found in the change being made
+    // (BN-142, `findLessonLegends`): said under its result, once an ask.
+    lessonLegendList?: LessonLegendFoundType[] | null;
+    isLessonLegendSaid?: boolean;
+    // The lines that note named, and whether the edit after it was read
+    // for any it left (BN-191, `findLessonLegendsLeft`): said once more.
+    lessonLegendSaidLines?: string[] | null;
+    isLessonLegendLeftChecked?: boolean;
+    // A new lesson's first write read for the parts it left out (BN-197,
+    // `findMissingLessonParts`): said under it, once an ask.
+    isLessonPartsChecked?: boolean;
+    // A new lesson's example set in a hospital (BN-150,
+    // `findHospitalExamples`): said under its result, once an ask; never a
+    // funeral message's (`isFuneralAsk`). Each is said with the block it is
+    // in, the note read by the window once the change is made (BN-152).
+    hospitalExampleList?: string[] | null;
+    isHospitalExampleSaid?: boolean;
+    isFuneralAsk?: boolean;
+    // A new lesson's Pointing to Jesus line naming a verse of another book
+    // with none of its words (BN-154, `findUnquotedChristVerses`): said
+    // under its result with the verse read, once an ask.
+    christVerseList?: ChristVerseType[] | null;
+    isChristVerseSaid?: boolean;
+    // A line named for one more edit inside a longer block keeps the rest
+    // of it (BN-157): an edit that would leave the block little but that
+    // line is refused once an ask.
+    lineFixBlocks?: LineFixBlockType[] | null;
+    isLineFixRefused?: boolean;
+    // A quotation of the passage given another verse's name (BN-160,
+    // `findCitedMisattributions`): said under its result, once an ask.
+    citedMisattributionList?:
+        (CitedMisattributionType & { sentence: string })[] | null;
+    isCitedMisattributionSaid?: boolean;
+    // A new lesson's points were held to its passage, its order and its end
+    // (BN-83, `findLessonPointsProblem`): refused once an ask at most.
+    isLessonPointsChecked?: boolean;
+    // A hearer's question was given new words with its answer left as it
+    // was (BN-259, `findHearerAnswerLeft`): refused once an ask.
+    isHearerAnswerRefused?: boolean;
+    // A statement was written over a hearer's question (BN-280,
+    // `findHearerQuestionTurned`): refused once an ask.
+    isHearerQuestionKept?: boolean;
+    // The note as an `owa_note_edit` read last answered, null once a write
+    // changed it (BN-265, `withLessonLabelsKept`).
+    noteReadBlocks?: LessonReadBlockType[] | null;
+    // A new lesson's first passage read took the verses before it too
+    // (BN-89, `findVersesBeforeRef`): once an ask.
+    isLessonBeforeRead?: boolean;
+    // A new lesson written with its passage never read was given the
+    // passage's words by the window before the quote checks (BN-274): the
+    // reference and its text, once an ask, for the misquote refusal.
+    lessonPassageWindowRead?: { ref: string; text: string } | null;
+    // The one passage a new lesson's ask NAMED with its chapter and verse,
+    // the verses before are read for (BN-105, `pickVersesBeforePassage`).
+    lessonNamedPassage?: string | null;
+    // The passage a new lesson's first read took, for what a later read
+    // of the psalm before it is told (BN-279, `genPreviousPsalmReadNote`).
+    lessonReadPassage?: string | null;
+    /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
      */
     editedLyric: EditedLyricType | null;
+    // A note's undo or redo that changed it, in this ask (BN-53).
+    isNoteStepped?: boolean;
     /**
      * The last `owa_bible_xml` check that found Bibles: a download or a page
      * of files. Off the RESULT, like the song draft above -- the answer then
@@ -2166,6 +2785,14 @@ type ToolWatchType = {
      * instead of a model asking four questions over four paid rounds.
      */
     bibleImportCheck: { result: any; url: string; find: string } | null;
+    /**
+     * A study's translation asked into a language turned off or not
+     * installed (EC-494): nothing translated, and the window offers to turn
+     * it on or install it under the answer (`genStudyLangOffer`).
+     */
+    langOffer: StudyLangOfferType | null;
+    // The package **Not now** declined: asked again, translated without it.
+    skipLangOffer: string | null;
     /**
      * The title of every page a tool result named in this ask, by id -- what
      * an id the model writes anyway is replaced WITH. Per ask, never kept.
@@ -2198,6 +2825,13 @@ type ToolWatchType = {
      */
     answerScript: { name: string; pattern: RegExp } | null;
     /**
+     * The "I have changed it" words of the language this answer is written
+     * in, beside English's (`toChangeClaimWords`, EC-508): compiled only in
+     * an ask about a note, the foreground (EC-558) or with a study open,
+     * else null.
+     */
+    changeClaimWords: ChangeClaimWordsType | null;
+    /**
      * A verse search's Bible (null for any other ask), and whether its answer
      * went back once for quoting a verse nothing returned -- see
      * `findUnreadVerseNudge`.
@@ -2224,18 +2858,20 @@ type ToolWatchType = {
      * and whether an answer that skipped it went back once. Told to call
      * `owa_foreground` for _Can you start a 5 minute countdown?_,
      * gemma4:cloud wrote "I have started a 5-minute countdown on the screen"
-     * having called nothing (the whole list asked in Khmer, 2026-10-17,
+     * having called nothing (the whole list asked in a non-English language, 2026-10-17,
      * EC-325) -- a thing said done that is not.
      */
     doTool: string | null;
     isDoToolCalled: boolean;
+    /** It was called and did it: not refused, no error (EC-551). */
+    isDoToolDone: boolean;
     isDoNudged: boolean;
     /**
      * An answer to a known question whose hint named the part that answers
      * is read once more by the model against that part: the steps it took
      * for granted and the ones that finish the job, added -- or KEEP, and
      * the first answer stands (`genCompletenessNudge`). Over passes 6-8 of
-     * the whole list asked in Khmer of gemma4:cloud, ~30 answers stopped
+     * the whole list asked in a non-English language of gemma4:cloud, ~30 answers stopped
      * before the job's last step with that step quoted in front of them,
      * whatever the hint said (EC-330). No-cost assistants only: a round
      * more on a paid key is a bill nobody chose.
@@ -2245,6 +2881,63 @@ type ToolWatchType = {
     completenessKept: string | null;
     partControls: string[];
     isWhatAsk: boolean;
+    /**
+     * What the person typed is about the running order (EC-475): its items
+     * are lines to add, and nothing is put on a screen while it is answered
+     * -- `owa_present_bible` and `owa_foreground` may only check.
+     */
+    isRunningOrderAsk: boolean;
+    /**
+     * What the person typed asks to save passages as Bible items (EC-703):
+     * `owa_present_bible` may only check while it is answered.
+     */
+    isBibleListAsk: boolean;
+    /**
+     * The words the person typed (`AskExtraType.askedText`), for what a call
+     * must not make up for them (`findForegroundBlank`, EC-652).
+     */
+    askedText: string;
+    /**
+     * Words a call was going to put up that were only the person's own,
+     * sent back once to be asked about (`findForegroundEchoedWords`).
+     */
+    foregroundEchoList: string[];
+    /**
+     * The title the person named for a song whose words they typed
+     * (`readSongTitleNamed`, EC-517): a draft the model sends with no
+     * `title` is given it, or the song is "Untitled".
+     */
+    songTitleNamed: string | null;
+    /**
+     * A note ask carrying `NOTE_LESSON_REVIEW_HINT`: its fixes are the
+     * buttons, and a review with none goes back once (BN-74,
+     * `findAnswerShapeNudge`).
+     */
+    isLessonReview: boolean;
+    /**
+     * A note ask carrying `NOTE_LESSON_CHANGE_HINT`: a fix to their lesson,
+     * which adds and rewords -- a block moved or taken out is refused unless
+     * their words ask for it (BN-80).
+     */
+    isLessonChange: boolean;
+    /**
+     * A note ask carrying `NOTE_LESSON_FINISH_HINT`: their own blocks, an
+     * edit that writes over or takes out one refused once an ask (BN-223).
+     */
+    finishOwnBlocks?: FinishOwnBlockType[] | null;
+    isFinishOwnRefused?: boolean;
+    /**
+     * A new lesson's second look (BN-226): asks the model that wrote it,
+     * fresh, which sentences say of the passage what the verses read do
+     * not; once an ask, after its first write.
+     */
+    checkLessonFacts?: ((ask: string) => Promise<string>) | null;
+    isFactChecked?: boolean;
+    /**
+     * A note ask carrying `NOTE_BLANK_LESSON_HINT`: while the note is still
+     * empty, an edit writing a question into it is refused (BN-81).
+     */
+    isBlankLesson: boolean;
     /**
      * A tool answered that the question needs the main window on the
      * Presenter page (`needsPage` on `owa_list_screens` / `owa_app_state`:
@@ -2295,10 +2988,10 @@ type ToolWatchType = {
      */
     windowAim: WindowAimType | null;
     /**
-     * The language a guide page the model opens is read in (`W-31@km`), or
-     * null for the English page: the language this answer is written in when
-     * no translator stands between (`findPageLanguage`). Handed the English
-     * page, a model writing Khmer put its English sentences into the answer
+     * The language a guide page the model opens is read in (`W-31@<code>`),
+     * or null for the English page: the language this answer is written in
+     * when no translator stands between (`findPageLanguage`). Handed the
+     * English page, a model writing another language put its English sentences into the answer
      * (`runMcpToolCall`).
      */
     pageLang: string | null;
@@ -2370,21 +3063,44 @@ export function genToolWatch(): ToolWatchType {
         searchedId: null,
         isGuideStarted: false,
         isActedOn: false,
-        draftedLyric: null,
+        draftedLyrics: [],
+        draftedStudy: null,
+        heldStudyBefore: null,
+        isHeldStudyBeforeUsed: false,
+        createKind: null,
+        isStudyDiagramRetried: false,
+        openStudyFiles: [],
+        shownStudyBlocks: [],
+        answerAbove: null,
+        answerAboveQuestion: null,
+        isKeepAnswerAsk: false,
+        translateText: null,
+        onProgress: null,
         createdLyric: null,
         createdNote: null,
         lyricFiles: null,
         slideFiles: null,
         flowFiles: null,
+        foregroundAsks: null,
+        heldForeground: [],
+        isOtherCallMade: false,
+        isNonStudyCallMade: false,
+        isForegroundCurrentOnly: false,
+        isScreenAsk: false,
         noteFiles: null,
+        noteVerseLang: null,
+        noteTyped: null,
         editedLyric: null,
         bibleImportCheck: null,
+        langOffer: null,
+        skipLangOffer: null,
         pageTitles: {},
         isPageNudged: false,
         toolCallCount: 0,
         canSearchGuide: false,
         isShapeNudged: false,
         answerScript: null,
+        changeClaimWords: null,
         verseFindBible: null,
         isVerseNudged: false,
         quoteSources: null,
@@ -2393,12 +3109,21 @@ export function genToolWatch(): ToolWatchType {
         isNotStatedNudged: false,
         doTool: null,
         isDoToolCalled: false,
+        isDoToolDone: false,
         isDoNudged: false,
         canCheckCompleteness: false,
         isCompletenessChecked: false,
         completenessKept: null,
         partControls: [],
         isWhatAsk: false,
+        isRunningOrderAsk: false,
+        isBibleListAsk: false,
+        askedText: '',
+        foregroundEchoList: [],
+        songTitleNamed: null,
+        isLessonReview: false,
+        isLessonChange: false,
+        isBlankLesson: false,
         needsPage: null,
         needsPageBy: null,
         verifiedControlNames: new Set<string>(),
@@ -2434,7 +3159,7 @@ export function genToolWatch(): ToolWatchType {
  * number.
  *
  * **And steps written with NOTHING looked up at all** (2026-10-17, the
- * Khmer stress run on gemma4:cloud): under a pasted story and down a
+ * non-English stress run on gemma4:cloud): under a pasted story and down a
  * ten-turn chat about a song it wrote every list from memory with no tool
  * called -- _the show button with an eye on it_, _it saves by itself when you
  * press Apply_ -- because this rule waited for a search that never came.
@@ -2483,7 +3208,31 @@ export function genDoToolNudge(watch: ToolWatchType) {
 
 /** Whether an answer goes back once to be checked for the job's steps. */
 export function checkIsCompletenessDue(watch: ToolWatchType) {
+    // Asked to DO it, and its tool did: the page's steps are the way by
+    // hand, and "is a step missing?" put them back under the answer --
+    // _Put the long text up_, asked after a verse, came back "now ready on
+    // the screen" and then "To put it up: 1. tick the screen 2. press Show
+    // Long Text" (EC-551, gemma4:cloud). Refused, the steps may be the
+    // answer, and the pass stays.
+    if (watch.isDoToolDone) {
+        return false;
+    }
     return watch.canCheckCompleteness && !watch.isCompletenessChecked;
+}
+
+/** Whether a tool's result says it did what it was asked. */
+function checkIsToolResultDone(text: string) {
+    let result: unknown;
+    try {
+        result = JSON.parse(text);
+    } catch (_error) {
+        return false;
+    }
+    if (typeof result !== 'object' || result === null) {
+        return false;
+    }
+    const { isError, did } = result as { isError?: unknown; did?: unknown };
+    return isError !== true && did !== 'refused';
 }
 
 export const COMPLETENESS_KEEP_WORD = 'KEEP';
@@ -2599,15 +3348,15 @@ export function cutRunawayAnswer(text: string) {
     return match === null ? text : text.slice(0, match.index).trimEnd();
 }
 
-// A model's own control tokens printed as words: a Khmer letter, then
-// _<audio|> View_, in the middle of a Khmer step (gemma-4-12b on LM Studio,
+// A model's own control tokens printed as words: a letter of the answer's
+// script, then _<audio|> View_, in the middle of a translated step (gemma-4-12b on LM Studio,
 // 2026-10-17). A `<` or a
 // `>` with a pipe against it is no word of any language and no markdown.
 const MODEL_TOKEN_PATTERN =
     /<\|?[A-Za-z_][\w-]{0,30}\|>|<\|[A-Za-z_][\w-]{0,30}>|<(?:start_of_turn|end_of_turn|eos|bos)>/g;
 
-// And a LaTeX arrow where a menu path's arrow belongs: the Khmer for Tools,
-// then _$\rightarrow$ …_ (gemma4:cloud, twice in the Khmer corpus run).
+// And a LaTeX arrow where a menu path's arrow belongs: the translated Tools,
+// then _$\rightarrow$ …_ (gemma4:cloud, twice in a non-English corpus run).
 // Nothing here draws math.
 const LATEX_ARROW_PATTERN =
     /\$\s*\\(?:rightarrow|Rightarrow|longrightarrow|to)\s*\$|\\(?:rightarrow|Rightarrow)\b/g;
@@ -2637,14 +3386,14 @@ export const RUNAWAY_ANSWER_NUDGE =
  * again (`isShapeNudged`), the way `checkIsStepsWithoutPage` hands back steps
  * written off an excerpt -- with what it is told and the part of the reply
  * worth keeping in the conversation. Both measured 2026-10-17, the whole
- * corpus asked in Khmer of gemma4:cloud:
+ * corpus asked in a non-English language of gemma4:cloud:
  *
  * - **Only its frames** (`OPTIONS:`, `SHOWS:`): _Can you start a 5 minute
  *   countdown on the screen?_ started one on two screens that were OFF and
  *   came back as two chips under no words at all -- not that it had started,
  *   not that nobody could see it.
  * - **Ran away**: _Does the help still work with no internet?_ became
- *   the Khmer for "service" and then one Khmer letter nineteen hundred
+ *   the translated "service" and then one letter of it nineteen hundred
  *   times, until the round's 2 000
  *   tokens were spent. Kept up to where it broke, so the broken run is not
  *   what the model reads back.
@@ -2672,8 +3421,327 @@ export function findAnswerShapeNudge(
             kept: text,
         };
     }
+    if (checkClaimsUnmadeNoteChange(words, watch)) {
+        return { nudge: NOTE_CLAIM_NUDGE, kept: text };
+    }
+    if (checkIsBlankLessonUnwritten(text, watch)) {
+        return { nudge: NOTE_BLANK_UNWRITTEN_NUDGE, kept: text };
+    }
+    if (checkClaimsUnmadeStudyChange(words, watch)) {
+        return { nudge: genStudyClaimNudge(watch.openStudyFiles), kept: text };
+    }
+    // The card above's new study (EC-700): the answer is about it, so its
+    // card comes back under the answer whatever is written again.
+    if (
+        watch.heldStudyBefore !== null &&
+        checkClaimsUnmadeHeldStudyChange(words, watch)
+    ) {
+        markHeldStudyBeforeReached(watch);
+        return {
+            nudge: genHeldStudyClaimNudge(watch.heldStudyBefore),
+            kept: text,
+        };
+    }
+    // A question under it is about its passage, never one for /btw (EC-703).
+    if (
+        watch.heldStudyBefore !== null &&
+        watch.canSearchGuide &&
+        GENERAL_ADVICE_PATTERN.test(words)
+    ) {
+        return {
+            nudge: genHeldStudyQuestionNudge(watch.heldStudyBefore),
+            kept: text,
+        };
+    }
+    if (checkClaimsUnmadeForegroundChange(words, watch)) {
+        return { nudge: FOREGROUND_CLAIM_NUDGE, kept: text };
+    }
+    if (checkClaimsUnmadeScreenChange(words, watch)) {
+        return { nudge: SCREEN_CLAIM_NUDGE, kept: text };
+    }
+    if (watch.isLessonReview && parseAnswerFrames(text).options.length === 0) {
+        return { nudge: NOTE_REVIEW_OPTIONS_NUDGE, kept: text };
+    }
     return null;
 }
+
+/**
+ * What the model is told when its review of a lesson offered no fix to
+ * press (BN-74, 2026-11-10: the second review of a Zacchaeus sermon named
+ * two things to improve, the response and verse 3's crowd, and ended with
+ * no OPTIONS -- an elder reading it has nothing to press).
+ */
+export const NOTE_REVIEW_OPTIONS_NUDGE =
+    'Not yet: the review offers no change to press. Write the whole review ' +
+    'again, ending with the OPTIONS line -- the two or three changes it ' +
+    'names, a short button each that says the change, opening on Add, ' +
+    'Write, Move or Make ("OPTIONS: Add … | Write …").';
+
+/**
+ * What the model is told when a lesson asked for in their EMPTY note ended
+ * with nothing written and nothing asked (BN-227, 2026-11-13, a held-out
+ * _I need to preach about prayer this Sunday_ on gemma4:cloud: "FileNotFound:
+ * owa_bible_note "add" is not a valid action for owa_note_edit. I will use
+ * owa_note_edit "edit" to replace the block 1." -- the tool's words to the
+ * person, the note still empty).
+ */
+export const NOTE_BLANK_UNWRITTEN_NUDGE =
+    'Not yet: their note is still empty -- nothing was written, and this ' +
+    'reply asks them nothing. Write the whole lesson now as ONE ' +
+    'owa_bible_note action "add" -- its title, and the lesson in mark-up as ' +
+    'its text -- and the window puts it into their empty note. Never write ' +
+    'a tool, an action or an error to them.';
+
+/**
+ * Whether an answer to a lesson asked for in the empty note leaves it
+ * empty and asks them nothing -- no question, no options to press (a
+ * "which passage?" is an answer that asks, and stands).
+ */
+export function checkIsBlankLessonUnwritten(
+    text: string,
+    watch: ToolWatchType,
+) {
+    if (
+        watch.isBlankLesson !== true ||
+        typeof watch.blankNoteBlockCount !== 'number' ||
+        watch.editedLyric !== null ||
+        watch.createdNote !== null
+    ) {
+        return false;
+    }
+    const frames = parseAnswerFrames(text);
+    return frames.options.length === 0 && !/[?？]/u.test(frames.text);
+}
+
+/** What the model is told when it said the note changed and nothing did. */
+export const NOTE_CLAIM_NUDGE =
+    'Not yet: nothing in the note changed -- no owa_note_edit call made that ' +
+    'change. Make it now with owa_note_edit (every change in one call), or, ' +
+    'when it cannot be done, say so plainly. Never say the note was changed ' +
+    'when the tool did not list the change.';
+
+/**
+ * Whether an answer about an attached note says it changed the note while
+ * no tool changed anything in this ask (BN-53, 2026-11-09, the elder run:
+ * asked to _draw a big star next to the important bits_, Free's Nemotron
+ * called no tool and answered that it had added a gold star drawing,
+ * centred and larger). Handed back once, as a broken answer shape is.
+ */
+export function checkClaimsUnmadeNoteChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.noteFiles !== null &&
+        watch.editedLyric === null &&
+        watch.createdNote === null &&
+        watch.isNoteStepped !== true &&
+        checkHasChangeClaim(words, watch.changeClaimWords, false)
+    );
+}
+
+/**
+ * Whether an answer in a tab with a study file open says it changed the
+ * study while no draft went through in this ask (2026-11-11, EC-499:
+ * gemma4:cloud, every draft refused, answered "I have fixed the
+ * cross-references in the study file"). Handed back once, as a note's is.
+ */
+export function checkClaimsUnmadeStudyChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.openStudyFiles.length > 0 &&
+        watch.draftedStudy === null &&
+        watch.createdNote === null &&
+        checkHasChangeClaim(words, watch.changeClaimWords, true)
+    );
+}
+
+/**
+ * Whether an answer under a card holding a NEW study (EC-606), with no
+ * study open in the tab, says it changed that study while no draft went
+ * through in this ask (2026-11-14, EC-700): the card still holds the words
+ * it had, and its Create would keep them. Only a change reported MADE
+ * counts (`checkHasMadeChangeClaim`): such a study is not saved yet, and
+ * an answer about it says so. And only when the ask did nothing else -- a
+ * later line may be about anything, and "I've put it on the screen" over
+ * a passage put up is no claim about the study. Handed back once, as an
+ * open study's is.
+ */
+export function checkClaimsUnmadeHeldStudyChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.heldStudyBefore !== null &&
+        watch.openStudyFiles.length === 0 &&
+        watch.draftedStudy === null &&
+        watch.createdNote === null &&
+        !watch.isActedOn &&
+        !watch.isNonStudyCallMade &&
+        watch.editedLyric === null &&
+        watch.createdLyric === null &&
+        watch.draftedLyrics.length === 0 &&
+        checkHasMadeChangeClaim(words, watch.changeClaimWords)
+    );
+}
+
+// The calls that change nothing on a screen, beside the two foreground
+// tools, whose own results say whether they did (`isActedOn`). Anything
+// else -- a press, an undo -- may have, and the claim reader keeps quiet.
+const FOREGROUND_CLAIM_READ_TOOL_SET = new Set([
+    'owa_foreground',
+    FOREGROUND_EDIT_TOOL_NAME,
+    // Its result says whether it changed anything, as theirs do.
+    SCREEN_EDIT_TOOL_NAME,
+    'owa_list_screens',
+    'owa_app_state',
+    'owa_help_search',
+    'owa_help_page',
+    'owa_find_ui',
+    'owa_list_ui',
+    'owa_list_questions',
+    'owa_tran',
+    VERSE_FIND_TOOL_NAME,
+]);
+
+// And beside them, what an ask uses on a study (EC-700): a change claimed
+// after any other call -- a press, a verse added to a list -- may be about
+// that, never the new study the card above holds.
+const HELD_STUDY_CLAIM_READ_TOOL_SET = new Set([
+    ...FOREGROUND_CLAIM_READ_TOOL_SET,
+    RESOURCES_TOOL_NAME,
+    LOOKUP_TOOL_NAME,
+    'owa_read_website',
+]);
+
+/** What the model is told when it said the screen changed and nothing did. */
+export const FOREGROUND_CLAIM_NUDGE =
+    'Not yet: nothing on the screen changed -- no owa_foreground or ' +
+    'owa_foreground_edit call in this answer made a change (a read or a ' +
+    'check changes nothing, and a refused call did nothing). When they asked ' +
+    'for that change, make it now with the tool; when it cannot be done, or ' +
+    'they did not ask for one, answer without saying it was done.';
+
+/**
+ * Whether an answer about the foreground says it changed what is up while
+ * no call of this ask changed anything (2026-11-13, EC-558: asked in Khmer
+ * to take the clock off the screen, gemma4:cloud made one
+ * `owa_foreground_edit read` and answered that the clock was off, once in
+ * three -- it was still up). Handed back once, as a note's claim is; a
+ * press or an undo made beside it is believed. An ordinary question's
+ * answer too (`checkIsOrdinaryForegroundClaim`, EC-649).
+ */
+export function checkClaimsUnmadeForegroundChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        !watch.isActedOn &&
+        !watch.isOtherCallMade &&
+        watch.editedLyric === null &&
+        checkHasForegroundClaim(words, watch.changeClaimWords) &&
+        (watch.foregroundAsks !== null ||
+            checkIsOrdinaryForegroundClaim(words, watch))
+    );
+}
+
+// "I have shown you how …" is a how-to's, never a change.
+const SHOWN_YOU_PATTERN = /\bshown you\b/i;
+
+/**
+ * Whether an ORDINARY question's claim -- no note, song, slides, running
+ * order or study open in its tab -- is about the foreground (2026-11-14,
+ * EC-649: "count back from five minutes on the screen", asked the general
+ * way, was answered "I have started a 5 minute countdown on the screen"
+ * over one guide page read; nothing went up). Only when the answer names a
+ * component as a typed line would (`readForegroundComponentAsk`): "I have
+ * shown you the button" after a ring claims nothing up.
+ */
+function checkIsOrdinaryForegroundClaim(words: string, watch: ToolWatchType) {
+    return (
+        watch.noteFiles === null &&
+        watch.lyricFiles === null &&
+        watch.slideFiles === null &&
+        watch.flowFiles === null &&
+        watch.openStudyFiles.length === 0 &&
+        watch.createdNote === null &&
+        !SHOWN_YOU_PATTERN.test(words) &&
+        readForegroundComponentAsk(words) !== null
+    );
+}
+
+/** What the model is told when it said the screens changed and none did. */
+export const SCREEN_CLAIM_NUDGE =
+    'Not yet: nothing on the screens changed -- no call in this answer ' +
+    'made a change (a read changes nothing, "already so" changed nothing, ' +
+    'and a refused call did nothing). When they asked for that change, ' +
+    'make it now with owa_screen_edit action "set" (an undo with ' +
+    'owa_undo); when it cannot be done, or they did not ask for one, ' +
+    'answer without saying it was done.';
+
+/**
+ * Whether an answer about the screens says it changed them while no call of
+ * this ask did (2026-11-13): the foreground's rule (EC-558), its words and
+ * the screens' own -- locked, grouped, switched, and since 2026-11-14
+ * undone (_I have undone the last change_ after five refused undos: a
+ * refused call never reaches `applyToolWatch`, so nothing was put back).
+ * Marked over a finished answer as well (`checkClaimsUnmadeChange`).
+ */
+export function checkClaimsUnmadeScreenChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.isScreenAsk &&
+        !watch.isActedOn &&
+        !watch.isOtherCallMade &&
+        watch.editedLyric === null &&
+        (checkHasForegroundClaim(words, watch.changeClaimWords) ||
+            SCREEN_CLAIM_PATTERN.test(words))
+    );
+}
+
+/**
+ * What the window says over an answer that still claims such a change
+ * (EC-501). One literal, so `tran(UNMADE_CHANGE_TEXT)` where it is written
+ * is a key the coverage test can read.
+ */
+export const UNMADE_CHANGE_TEXT =
+    'No change was made, though the answer below may say so. Ask again to try once more.';
+
+/**
+ * Whether a FINISHED answer still says the attached note or the study open
+ * in the tab was changed -- or the new study the card above holds (EC-700),
+ * the foreground, or the screens -- and this ask changed nothing (2026-11-11,
+ * EC-501). The two readers above hand such a claim back once, never on the
+ * last round -- there is no round left to answer -- so a claim written
+ * there, or written again after its hand-back, reaches the person. Nothing
+ * else the ask did may be what the words are about: a press, a screen, a
+ * document edited, a song made or drafted.
+ */
+export function checkClaimsUnmadeChange(words: string, watch: ToolWatchType) {
+    if (
+        watch.isActedOn ||
+        watch.editedLyric !== null ||
+        watch.createdLyric !== null ||
+        watch.draftedLyrics.length > 0
+    ) {
+        return false;
+    }
+    return (
+        checkClaimsUnmadeNoteChange(words, watch) ||
+        checkClaimsUnmadeStudyChange(words, watch) ||
+        checkClaimsUnmadeHeldStudyChange(words, watch) ||
+        checkClaimsUnmadeForegroundChange(words, watch) ||
+        checkClaimsUnmadeScreenChange(words, watch)
+    );
+}
+
+// The claim's words and the report written into a study live in a leaf of
+// their own (`changeClaimHelpers.ts`); the report is read from here too.
+export { findStudyChangeReport };
 
 // Enough letters to be an answer and not a name or a key cap.
 const MIN_WRONG_SCRIPT_LETTERS = 30;
@@ -2682,8 +3750,8 @@ const MIN_WRONG_SCRIPT_LETTERS = 30;
  * Whether an answer that must be in a language with a script of its own
  * holds not one letter of it, and is long enough to be an answer: written in
  * another language altogether (2026-11-04, `EC-460`: a Thai question in a
- * Khmer window, the language line saying _answer in Thai_, came back wholly
- * in Khmer once of twice). A button named as the screen shows it is a few
+ * window of another script, the language line saying _answer in Thai_, came
+ * back wholly in the window's language once of twice). A button named as the screen shows it is a few
  * letters inside the language's own, never the whole answer.
  */
 export function checkIsWrongScriptAnswer(words: string, scriptPattern: RegExp) {
@@ -2738,9 +3806,9 @@ function toNamedVerseRef(match: RegExpMatchArray) {
 /**
  * The verses a verse-search answer QUOTES that no search or read of this ask
  * returned, handed back once to be read first (2026-10-22, `EC-391`). Seen
- * live through Bible Find's 🤖 with `shepherd` over the Khmer Bible: the
+ * live through Bible Find's 🤖 with `shepherd` over a non-English Bible: the
  * answer quoted John 10:11 in one round with no tool call -- "I am the good
- * shepherd … gives his own life" in Khmer of its own, where the Khmer Bible
+ * shepherd … gives his own life" in a wording of its own, where that Bible
  * words it otherwise -- shown as scripture, with no button.
  * The prompt had forbidden it since the first day; a small model reads a
  * sentence, and this reads the answer. Never on the last round.
@@ -2774,7 +3842,7 @@ export function findUnreadVerseNudge(text: string, watch: ToolWatchType) {
 }
 
 // What is compared of a quote and of what was read: the letters and their
-// marks alone -- a model drops the Khmer Bible's zero-width spaces, a
+// marks alone -- a model drops a Bible's zero-width spaces, a
 // verse's "(4):" in the Bible's own digits, a quote mark, and joins two
 // verses into one.
 export function toQuoteKey(text: string) {
@@ -2791,6 +3859,39 @@ const MIN_QUOTE_KEY_LENGTH = 24;
 // The words kept of what a conversation was given, newest last.
 const MAX_QUOTE_SOURCES = 24;
 
+// What a note ask keeps of its reads for its quotes (BN-76): a whole
+// chapter of the KJV is about 6 000 characters, and nothing is kept past
+// the ask.
+const MAX_NOTE_QUOTE_SOURCES = 12;
+const MAX_NOTE_QUOTE_SOURCE_LENGTH = 40_000;
+
+/**
+ * Whether a note edit quotes the KJV (BN-137): its verses named so, or this
+ * ask's reads of the note or of a passage from it -- and the edit names no
+ * other Bible. A note in another Bible keeps its own wording.
+ */
+function checkIsKjvNoteEdit(args: any, sources: readonly string[]) {
+    if (typeof args?.bible === 'string' && args.bible !== 'KJV') {
+        return false;
+    }
+    const pattern = /\(KJV\)|"bible"\s*:\s*"KJV"/;
+    return (
+        pattern.test(JSON.stringify(args?.changes ?? [])) ||
+        sources.some((source) => {
+            return pattern.test(source);
+        })
+    );
+}
+
+/** The words a note change writes: each change's `text`. */
+function toNoteChangeWords(args: any) {
+    return (Array.isArray(args?.changes) ? args.changes : [])
+        .map((change: any) => {
+            return typeof change?.text === 'string' ? change.text : '';
+        })
+        .join('\n');
+}
+
 /** Fold a read's words into what the answer may quote from. */
 export function addQuoteSource(watch: ToolWatchType, text: string) {
     if (watch.quoteSources === null) {
@@ -2806,7 +3907,7 @@ export function addQuoteSource(watch: ToolWatchType, text: string) {
  * nothing it was given holds -- not the record, not a verse it read --
  * handed back once to read the verse and quote it as it came back, or to
  * leave the quote out (2026-10-22). Asked under Noah's card _where did the
- * ark come to rest?_, gemma4:cloud answered Genesis 8:4 with Khmer words
+ * ark come to rest?_, gemma4:cloud answered Genesis 8:4 with translated words
  * of its own and the wrong month, twice in two passes, the record holding
  * neither the verse nor its words. The prompt forbade it from the first
  * day; a small model reads a sentence, and this reads the answer. A quote
@@ -2858,7 +3959,7 @@ export function findMisquoteNudge(text: string, watch: ToolWatchType) {
  * gives the day the flood began, and the record's own cross references
  * named it. Said with a read behind it, it stands. The words are DATA per
  * language (`lookupWords.notStated`), read in every language: a model
- * working in English for a Khmer reader writes English.
+ * working in English for a non-English reader writes English.
  */
 export function findNotStatedNudge(text: string, watch: ToolWatchType) {
     if (
@@ -2919,6 +4020,132 @@ function readCreatedFile(text: string) {
 }
 
 /**
+ * A change the tools MADE before the assistant failed -- it wrote no answer,
+ * or the service failed on its next round -- said, with the press that puts
+ * it back and the row it is on, in place of the failure; null when nothing
+ * was changed. Measured 2026-11-08 (BN-36) on Free's Nemotron adding a
+ * typed line to a note in six languages, twice each: three of twelve added
+ * it (once with a stray "Test line" of the model's own) and then ended in
+ * "Free could not answer", no button to take the change back and not a
+ * word of it. Auto hands no such ask on (a round came back), so the change
+ * is never made twice.
+ */
+export function genChangedWithoutAnswer(
+    edited: EditedLyricType | null,
+): BotAnswerType | null {
+    if (edited === null) {
+        return null;
+    }
+    const isScreens = checkIsScreenEdited(edited);
+    const undoAction = isScreens
+        ? genScreenUndoAction(edited)
+        : genLyricUndoAction(edited);
+    // A foreground change put up while every screen was off: the projector
+    // shows nothing of it yet, so the window says so and offers the press
+    // (EC-599, the `/countdown` command's own button; a press by the person).
+    const isScreenOff = edited.isScreenOff === true;
+    const changedText = fillWords(
+        tran(
+            '“{name}” was changed, but the assistant stopped before ' +
+                'saying what it did. Undo this change puts it back.',
+        ),
+        // A foreground session by its strip's words (EC-601).
+        { name: edited.shownName ?? edited.name },
+    );
+    return {
+        text: isScreenOff
+            ? `${changedText}\n\n${tran(
+                  'The screen itself is off, so the projector is not ' +
+                      'showing it yet.',
+              )}`
+            : changedText,
+        actions: [
+            ...(undoAction === null ? [] : [undoAction]),
+            ...(isScreenOff
+                ? [
+                      {
+                          label: 'Turn the screen on',
+                          toolName: BUILTIN_TOOL_NAME,
+                          args: { command: '/screen-show' },
+                      },
+                  ]
+                : []),
+        ],
+        // The screens are no document: no row to ring.
+        ...(isScreens
+            ? {}
+            : {
+                  shows: [
+                      {
+                          kind: 'control' as const,
+                          value: toEditedDocumentListValue(edited),
+                          name: 'Show it in the list',
+                      },
+                  ],
+              }),
+    };
+}
+
+/**
+ * A drafted study file's card under an answer: the draft held by the window
+ * and its three buttons (`genStudyDraftActions`).
+ */
+function withStudyDraftUnder<T extends BotAnswerType>(
+    answer: T,
+    drafted: Omit<DraftedStudyType, 'reference'>,
+): T {
+    answer.actions = genStudyDraftActions(keepDraftedStudy(drafted));
+    return answer;
+}
+
+/**
+ * What stands for the answer when the assistant stopped with a study held
+ * -- a failure after the draft, or the rounds run out (EC-504): the card's
+ * own sentence, Create for a new study, Preview then Save changes for a
+ * change.
+ */
+function genStudyStoppedText(drafted: { isChange: boolean }) {
+    return drafted.isChange
+        ? tran(STUDY_CHANGE_STOPPED_TEXT)
+        : tran(STUDY_STOPPED_TEXT);
+}
+
+/**
+ * The answer when the last round still asked for tools. With a study held
+ * it is the card's sentence (EC-504): seen live, a change taking out 29 of
+ * a study's 30 parts came under "could not settle on an answer", with Save
+ * changes the one thing to press.
+ */
+function genOutOfRoundsAnswer(watch: ToolWatchType): BotAnswerType {
+    if (watch.draftedStudy !== null) {
+        return { text: genStudyStoppedText(watch.draftedStudy) };
+    }
+    // A note, song or document this ask changed is said so (BN-153): a
+    // lesson written whole had read "could not settle on an answer" over
+    // its own Undo button when the one more edit a note asked for ran the
+    // rounds out.
+    if (watch.editedLyric !== null) {
+        return {
+            text: fillWords(
+                tran(
+                    '“{name}” was changed, but the assistant stopped before ' +
+                        'saying what it did. Undo this change puts it back.',
+                ),
+                {
+                    name: watch.editedLyric.shownName ?? watch.editedLyric.name,
+                },
+            ),
+        };
+    }
+    return {
+        text: tran(
+            'I looked several things up but could not settle on an answer. ' +
+                'Try asking about one step at a time.',
+        ),
+    };
+}
+
+/**
  * What goes under an answer that MADE a Bible note: **Undo this change**
  * (the add's own backup -- the person's press, never the model's) and
  * **Show it in the list**, ringing its row in the Bible Notes panel. The
@@ -2973,8 +4200,37 @@ export function applyToolWatch(
     text: string,
 ) {
     watch.toolCallCount += 1;
+    if (!FOREGROUND_CLAIM_READ_TOOL_SET.has(name)) {
+        watch.isOtherCallMade = true;
+    }
+    if (!HELD_STUDY_CLAIM_READ_TOOL_SET.has(name)) {
+        watch.isNonStudyCallMade = true;
+    }
     if (name === watch.doTool) {
         watch.isDoToolCalled = true;
+        watch.isDoToolDone = watch.isDoToolDone || checkIsToolResultDone(text);
+    }
+    // What a note ask read: a quote in its changes must be in it (BN-76).
+    if (
+        watch.noteQuoteSources !== null &&
+        watch.noteQuoteSources !== undefined &&
+        (name === VERSE_FIND_TOOL_NAME ||
+            (name === NOTE_EDIT_TOOL_NAME && args?.action === 'read')) &&
+        !text.startsWith('Tool refused')
+    ) {
+        watch.noteQuoteSources = [
+            ...watch.noteQuoteSources,
+            text.slice(0, MAX_NOTE_QUOTE_SOURCE_LENGTH),
+        ].slice(-MAX_NOTE_QUOTE_SOURCES);
+    }
+    // The note as last read, for a label a change drops (BN-265); a write
+    // makes it stale.
+    if (name === NOTE_EDIT_TOOL_NAME && !text.startsWith('Tool refused')) {
+        if (args?.action === 'read') {
+            watch.noteReadBlocks = readNoteReadBlocks(text);
+        } else if (/"isChanged"\s*:\s*true/.test(text)) {
+            watch.noteReadBlocks = null;
+        }
     }
     if (name === 'owa_find_ui' || name === 'owa_list_ui') {
         try {
@@ -3038,6 +4294,30 @@ export function applyToolWatch(
     // where the main window is, and the offer would send them away from the
     // window they asked about (seen live 2026-10-15, a Reader window chosen
     // and the main window already on the Presenter).
+    // Each screen's show/hide control by the words the reader gave it, so a
+    // press of it is known before it is made (EC-603).
+    if (name === 'owa_list_screens') {
+        try {
+            const read = JSON.parse(text);
+            const labelList = (Array.isArray(read?.screens) ? read.screens : [])
+                .map((screen: any) => {
+                    return screen?.controls?.showHide;
+                })
+                .filter((label: unknown): label is string => {
+                    return typeof label === 'string' && label !== '';
+                });
+            if (labelList.length > 0) {
+                watch.screenToggleLabels = [
+                    ...new Set([
+                        ...(watch.screenToggleLabels ?? []),
+                        ...labelList,
+                    ]),
+                ];
+            }
+        } catch (_error) {
+            // A refusal is a sentence, not JSON.
+        }
+    }
     if (
         (name === 'owa_list_screens' ||
             (name === 'owa_app_state' && watch.windowAim === null)) &&
@@ -3074,14 +4354,63 @@ export function applyToolWatch(
     ) {
         watch.isActedOn = true;
     }
+    if (
+        name === FOREGROUND_EDIT_TOOL_NAME &&
+        /"did":\s*"(started|changed|shown|hidden|timer|created)"/.test(text)
+    ) {
+        watch.isActedOn = true;
+    }
+    // A foreground session changed by either door carries `undoId`: the
+    // answer gets **Undo this change** and **Show it in the list**, which
+    // rings the session's chip in its own panel.
+    if (name === 'owa_foreground' || name === FOREGROUND_EDIT_TOOL_NAME) {
+        const edited = readEditedForeground(text);
+        if (edited !== null) {
+            // Every session the answer changed, under its one Undo (EC-539).
+            watch.editedLyric = mergeEditedForeground(
+                watch.editedLyric,
+                edited,
+            );
+        }
+        // And the session it put up or changed is HELD by the answer, so
+        // "pause it" next is about it (EC-520).
+        const held = readHeldForeground(text);
+        if (held !== null) {
+            watch.heldForeground = [
+                held,
+                ...watch.heldForeground.filter((one) => {
+                    return !checkIsSameForegroundAsk(one, held);
+                }),
+            ].slice(0, 3);
+        }
+    }
+    // A screen control changed carries `undoId`: the ask is done, and the
+    // answer gets **Undo this change** -- every change of the answer under
+    // its one press. A read, an "already so" and a refusal changed nothing.
+    if (name === SCREEN_EDIT_TOOL_NAME) {
+        const edited = readEditedScreen(text);
+        if (edited !== null) {
+            watch.isActedOn = true;
+            watch.editedLyric = mergeEditedScreen(watch.editedLyric, edited);
+        }
+    }
     learnPageTitles(watch.pageTitles, name, args, text);
     if (name === 'owa_lyric_validate') {
-        // Last one wins, like `readId`: a model that drafts twice has been
-        // told the first one was wrong. Any mode: `readDraftedLyric` keys on
-        // the drafter's own first line, which a check never writes -- and a
-        // draft the model sent with NO mode (plain words default to one) or
-        // a song found by its title (`mode: "find"`) is a draft all the same.
-        watch.draftedLyric = readDraftedLyric(text) ?? watch.draftedLyric;
+        // One per source: the same page or title drafted again wins, like
+        // `readId` -- a model that drafts it twice has been told the first
+        // one was wrong -- and ANOTHER page, file or title is another song
+        // (EC-589: three links in one ask had offered the third's Create
+        // alone). Any mode: `readDraftedLyric` keys on the drafter's own
+        // first line, which a check never writes -- and a draft the model
+        // sent with NO mode (plain words default to one) or a song found by
+        // its title (`mode: "find"`) is a draft all the same.
+        const content = readDraftedLyric(text);
+        if (content !== null) {
+            watch.draftedLyrics = withDraftedSource(watch.draftedLyrics, {
+                key: toDraftedSourceKey(content, args?.url),
+                content,
+            });
+        }
     }
     if (name === 'owa_bible_xml') {
         const result = parseBibleImportResult(text);
@@ -3117,6 +4446,31 @@ export function applyToolWatch(
             watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
             watch.isActedOn = true;
         }
+    }
+    if (
+        name === NOTE_EDIT_TOOL_NAME &&
+        (args?.action === 'undo' || args?.action === 'redo')
+    ) {
+        // A step of the note's own history taken: "I've put it back" is
+        // then no claim of a change nothing made (BN-53).
+        try {
+            if (JSON.parse(text)?.isChanged === true) {
+                watch.isNoteStepped = true;
+            }
+        } catch (_error) {
+            // a refusal, in words
+        }
+    }
+    // Loose lines made a lesson are loose lines no more (BN-67): no later
+    // edit of this ask takes a line out as written twice.
+    if (
+        name === NOTE_EDIT_TOOL_NAME &&
+        args?.action === 'edit' &&
+        /"isChanged"\s*:\s*true/.test(text)
+    ) {
+        watch.noteRewrite = null;
+        // An empty note with words in it is empty no more (BN-81).
+        watch.blankNoteBlockCount = null;
     }
     if (
         name === NOTE_EDIT_TOOL_NAME &&
@@ -3204,7 +4558,9 @@ async function runMcpTool(
 ) {
     const finishStep = reportStep?.(describeToolStep(name, args));
     try {
-        return await runMcpToolCall(name, args, watch, signal);
+        // A list the model wrote as JSON text is read as the list
+        // (`toListArgsRead`): refused, it was sent the same way again.
+        return await runMcpToolCall(name, toListArgsRead(args), watch, signal);
     } finally {
         finishStep?.();
     }
@@ -3238,17 +4594,1564 @@ export const NOTE_REMOVAL_MODEL_REFUSAL =
     "Removing a Bible note or a notes file is the person's to do, never " +
     "yours. Remove nothing: tell them to open the note's menu (its three " +
     'dots) in the Bible Notes panel and choose Delete there.';
+export const SCREEN_TOGGLE_REFUSAL =
+    'Not pressed: this answer already changed what the screens hold, and ' +
+    'turning a screen on or off changes what the room sees -- that is the ' +
+    "person's to say. Press nothing more. Say what is ready and whether " +
+    'the screen is on, and offer "Yes, turn it on" as an OPTION.';
+
+// A control's words without the shortcut its label ends in (`… [F5]`).
+function toToggleKey(label: unknown) {
+    return String(label ?? '')
+        .replace(/\s*\[[^\]]{1,20}\]\s*$/, '')
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * Whether an `owa_click` names a screen's show/hide control: one the
+ * screens' reader named this ask, or its English words, with or without
+ * the shortcut after them.
+ */
+export function checkIsScreenToggleFind(find: unknown, watch: ToolWatchType) {
+    const key = toToggleKey(find);
+    if (key === '') {
+        return false;
+    }
+    return [...(watch.screenToggleLabels ?? []), 'Toggle showing screen'].some(
+        (label) => {
+            return toToggleKey(label) === key;
+        },
+    );
+}
+
+export const RUNNING_ORDER_SCREEN_REFUSAL =
+    'They asked about a running order (a presenting flow): its songs, ' +
+    'verses and countdowns are LINES to add to it, not things to put on ' +
+    'the screen now. Put nothing up. Say how to add them to the running ' +
+    'order, and offer to put one up only if they ask for it.';
+export const BIBLE_LIST_SCREEN_REFUSAL =
+    'They asked to SAVE passages as Bible items (the Bibles list), not to ' +
+    'put them on the screen. Put nothing up: save each passage with ' +
+    'owa_bible_item action "add" (its reference; list only when they named ' +
+    'one), and offer to put one up only if they ask for it.';
 export const NOTE_ASK_BIBLE_NOTE_REFUSAL =
     'Here owa_bible_note only makes a NEW note (action "add"). Change the ' +
     'attached note with owa_note_edit action "edit", which keeps its ' +
     'headings, lists and verses.';
+
+/**
+ * The Bible a NEW verse in a note comes from when the question was asked in
+ * another language than English and the call names none: an installed
+ * Bible in that language, when the Bible Lookup's is not one -- the rule a
+ * Lookup record's verses already follow (`pickBibleInLanguage`). Asked of
+ * the app once an ask, at the first edit that adds a verse; null leaves the
+ * Lookup's.
+ */
+async function findNoteVerseBible(
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (watch.noteVerseLang === null) {
+        return null;
+    }
+    if (watch.noteVerseBible === undefined) {
+        try {
+            const listed = JSON.parse(
+                await callTool(
+                    VERSE_FIND_TOOL_NAME,
+                    {},
+                    signal,
+                    watch.windowAim,
+                ),
+            );
+            watch.noteVerseBible = pickBibleInLanguage(
+                listed,
+                typeof listed?.bible === 'string' ? listed.bible : null,
+                watch.noteVerseLang,
+            );
+        } catch (_error) {
+            // No list: the Lookup's Bible, as before.
+            watch.noteVerseBible = null;
+        }
+    }
+    return watch.noteVerseBible;
+}
+
+/**
+ * The installed Bible a note put into another language reads its verses
+ * from (BN-133), looked up once an ask; null when none in it is installed
+ * or the list could not be read.
+ */
+async function findNoteTranslateBible(
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (watch.noteTranslate === null || watch.noteTranslate === undefined) {
+        return null;
+    }
+    if (watch.noteTranslateBible === undefined) {
+        try {
+            watch.noteTranslateBible = pickTranslateBibleKey(
+                JSON.parse(
+                    await callTool(
+                        VERSE_FIND_TOOL_NAME,
+                        {},
+                        signal,
+                        watch.windowAim,
+                    ),
+                ),
+                watch.noteTranslate.code,
+            );
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error;
+            }
+            watch.noteTranslateBible = null;
+        }
+    }
+    return watch.noteTranslateBible;
+}
+
+/** A note's blocks as they read now, every part of a long one; null unread. */
+async function readNoteBlocks(
+    file: unknown,
+    id: unknown,
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+) {
+    const blocks: NoteReadBlockType[] = [];
+    let from = 1;
+    for (let part = 0; part < 10; part++) {
+        try {
+            const data = JSON.parse(
+                await callTool(
+                    NOTE_EDIT_TOOL_NAME,
+                    { action: 'read', file, id, ...(from > 1 ? { from } : {}) },
+                    signal,
+                    watch.windowAim,
+                ),
+            );
+            if (!Array.isArray(data?.blocks)) {
+                return null;
+            }
+            blocks.push(...data.blocks);
+            if (typeof data.nextFrom !== 'number') {
+                // The note as the window last read it, for a label a later
+                // change drops (BN-265) and a question it turns (BN-280):
+                // the model's own reads were the only ones kept, and after
+                // a write the model seldom reads again.
+                watch.noteReadBlocks = blocks.map((block) => {
+                    return { n: block.n, text: String(block.text ?? '') };
+                });
+                return blocks;
+            }
+            from = data.nextFrom;
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error;
+            }
+            return null;
+        }
+    }
+    return blocks;
+}
+
+/**
+ * The Bible a study file asked for from any tab quotes its passage from:
+ * one in the language of the ask -- English too, unlike a note's verse --
+ * when the Lookup's is not in it. Null keeps the Lookup's: no study ask (a
+ * Bible Reader or Resources chat quotes the Bible being read), no such
+ * Bible installed, or no list. Not kept on the watch: a draft is asked for
+ * once or twice an ask.
+ */
+async function findStudyVerseBible(
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    if (watch.noteVerseLang === null) {
+        return null;
+    }
+    try {
+        const listed = JSON.parse(
+            await callTool(VERSE_FIND_TOOL_NAME, {}, signal, watch.windowAim),
+        );
+        return pickBibleInLanguage(
+            listed,
+            typeof listed?.bible === 'string' ? listed.bible : null,
+            watch.noteVerseLang,
+            true,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+}
+
+/**
+ * A study file drafted (`owa_resource_file draft`, EC-464). Its passage is
+ * quoted from a Bible in the language asked in when the model named none;
+ * its diagrams are PARSED here with mermaid itself -- the one check the
+ * developer's door lacks -- a failing one sent back once to be fixed and
+ * dropped after; and the draft is held by the window, the model shown it
+ * without the study it wrote. A `content` or `append` of `@answer` is the
+ * tab's newest answer, put in by the window word for word -- and on an ask
+ * read as keeping that answer it goes in whatever the model wrote (EC-466).
+ */
+async function runStudyDraft(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+    // A draft the WINDOW wrote (a translation): its diagrams were parsed
+    // as it went, and a diagram of the file as it was is not the model's
+    // to fix, nor the window's to drop.
+    isWindowMade = false,
+    // Kept a Markdown file, as the held study it translates was (EC-609).
+    isMarkdownKept = false,
+) {
+    // A translation that waits for its language (EC-494) is not written by
+    // the model instead.
+    if (watch.langOffer !== null && !isWindowMade) {
+        return (
+            'Tool refused: The translation waits for the language the ' +
+            'window offers under your answer. Draft nothing now; tell them ' +
+            'so in one sentence.'
+        );
+    }
+    let draftArgs = toStudyReplaceArgs({ ...(args ?? {}) });
+    // No `file` and no `ref` while the tab has a study open (EC-499): a
+    // part of it goes to the study open, and the whole study written again
+    // is told how to change it instead -- with its headings, which the
+    // first 16 KB of a long file in the ask do not all show.
+    if (!isWindowMade) {
+        const routed = routeOpenStudyDraft(draftArgs, watch.openStudyFiles);
+        if (routed !== null && 'isRefused' in routed) {
+            const outline =
+                watch.openStudyFiles.length === 1
+                    ? ((
+                          await readStudyFileShape(
+                              watch.openStudyFiles[0],
+                              watch,
+                              signal,
+                          )
+                      )?.outline ?? '')
+                    : '';
+            return `Tool refused: ${genOpenStudyDraftRefusal(
+                watch.openStudyFiles,
+                outline,
+            )}`;
+        }
+        if (routed !== null) {
+            draftArgs = routed.args;
+        }
+    }
+    // Asked to keep the answer above (`readKeepAnswerAsk`): it goes in
+    // whatever the model wrote -- told the marker in the prompt alone,
+    // gemma4:cloud drafted a study of its own again (EC-466).
+    const keptAnswer =
+        watch.isKeepAnswerAsk && !isWindowMade ? watch.answerAbove : null;
+    if (keptAnswer !== null) {
+        draftArgs = toKeptAnswerDraftArgs(
+            draftArgs,
+            keptAnswer,
+            watch.answerAboveQuestion,
+        );
+    }
+    for (const field of ['content', 'append'] as const) {
+        if (!checkIsStudyAnswerMarker(draftArgs[field])) {
+            continue;
+        }
+        if (watch.answerAbove === null) {
+            return `Tool refused: ${STUDY_NO_ANSWER_REFUSAL}`;
+        }
+        draftArgs = {
+            ...draftArgs,
+            [field]: toStudyContentFromAnswer(watch.answerAbove),
+        };
+    }
+    // A part of the NEW study this ask holds (EC-604), or the card above it
+    // (EC-606): it has no file to change, so the change is made in the held
+    // words and the study drafted again as a new one, into a card -- once
+    // its words are read for a report of a change (below), as a saved
+    // study's are. An answer kept INTO it too (EC-701): named by its `file`,
+    // the kept answer is an `append` there; with no `file` it is a study of
+    // its own, which no held study is changed by.
+    const heldStudy = toReachableNewStudy(watch);
+    const heldEdit = !isWindowMade
+        ? chainHeldNewStudyEdit(
+              draftArgs,
+              heldStudy,
+              watch.openStudyFiles,
+              watch.shownStudyBlocks,
+          )
+        : null;
+    const heldName = heldEdit === null ? null : (heldStudy?.name ?? null);
+    if (heldEdit !== null) {
+        markHeldStudyBeforeReached(watch);
+    }
+    // A report of a change written INTO the study (EC-505): asked to fix one
+    // Khmer line, gemma4:cloud sent its earlier "I have fixed the
+    // cross-references in the study file …" as the new English discussion
+    // questions. Read after `@answer` is put in, so a marker bringing that
+    // answer in is caught too; refused with the file's headings -- a held
+    // new study's read off its held words, a call to it naming no file read
+    // as one naming it.
+    if (!isWindowMade && keptAnswer === null) {
+        const report = findStudyChangeReport(
+            heldName === null ? draftArgs : { ...draftArgs, file: heldName },
+            watch.changeClaimWords,
+        );
+        if (report !== null) {
+            const shape =
+                heldName === null
+                    ? await readStudyFileShape(draftArgs.file, watch, signal)
+                    : toStudyReadShape(
+                          readHeldNewStudy({ file: heldName }, heldStudy) ?? '',
+                      );
+            return `Tool refused: ${genStudyReportRefusal(
+                report,
+                shape?.outline ?? '',
+            )}`;
+        }
+    }
+    if (heldEdit !== null && 'reason' in heldEdit) {
+        if (heldEdit.shown !== undefined) {
+            watch.shownStudyBlocks.push(heldEdit.shown);
+        }
+        return `Tool refused: ${heldEdit.reason}`;
+    }
+    if (heldEdit !== null) {
+        return await runHeldNewStudyEdit(
+            heldEdit,
+            watch,
+            signal,
+            keptAnswer !== null,
+        );
+    }
+    // The WHOLE text of a study written again with its file named (EC-502):
+    // seen live, one part of a 44 KB study sent as all of it, and a Save
+    // changes card that would have kept that part alone. One part is drafted
+    // as that part; a text losing parts the ask never showed, or most of
+    // them, is refused with the file's headings.
+    if (
+        !isWindowMade &&
+        keptAnswer === null &&
+        checkIsWholeStudyRewrite(draftArgs)
+    ) {
+        const routed = routeWholeStudyRewrite(
+            draftArgs,
+            await readStudyFileShape(draftArgs.file, watch, signal),
+        );
+        if (routed !== null && 'reason' in routed) {
+            return `Tool refused: ${routed.reason}`;
+        }
+        if (routed !== null) {
+            draftArgs = routed.args;
+        }
+    }
+    // A part written by its `section` with no words of it in front of the
+    // model (EC-500): seen live, two labels of a part past the 16 KB the ask
+    // shows of a 44 KB study were written anew, and wrong. Sent back with
+    // the part's own words, read by the window.
+    if (!isWindowMade && keptAnswer === null) {
+        const refusal = await findUnreadStudyPartRefusal(
+            draftArgs,
+            watch,
+            signal,
+        );
+        if (refusal !== null) {
+            return `Tool refused: ${refusal}`;
+        }
+    }
+    // Words written anew where they stand (EC-537): every diagram they
+    // change is the person's, so one that no longer draws refuses the call.
+    const isReplace = checkHasStudyReplace(draftArgs);
+    // What this call writes into the file, before a part is put into the
+    // whole: a change parses only the diagrams in these words (EC-503).
+    let writtenText = (['content', 'append'] as const)
+        .map((field) => {
+            return typeof draftArgs[field] === 'string' ? draftArgs[field] : '';
+        })
+        .join('\n');
+    // A second part of the study whose change is already held (EC-499):
+    // drafted on top of that change, never over it. A part chained so
+    // reaches the tool as a whole text, so what the window put right of a
+    // replace's pairs (EC-541), or the parts it kept under a part's new
+    // words (EC-544), is said here.
+    let noteText = '';
+    if (!isWindowMade) {
+        const chained = chainStudyPartEdit(draftArgs, watch.draftedStudy);
+        if (chained !== null && 'reason' in chained) {
+            return `Tool refused: ${chained.reason}`;
+        }
+        if (chained !== null) {
+            draftArgs = chained.args;
+            writtenText = chained.writtenText ?? writtenText;
+            noteText = chained.noteText ?? '';
+        }
+    }
+    if (
+        (typeof args?.bible !== 'string' || args.bible === '') &&
+        (typeof draftArgs.file !== 'string' || draftArgs.file === '')
+    ) {
+        const verseBible = await findStudyVerseBible(watch, signal);
+        if (verseBible !== null) {
+            draftArgs = { ...draftArgs, bible: verseBible };
+        }
+    }
+    let text: string;
+    try {
+        text = await callTool(
+            RESOURCES_TOOL_NAME,
+            draftArgs,
+            signal,
+            watch.windowAim,
+        );
+    } catch (error: any) {
+        throwIfCancelled(signal);
+        return `Tool error: ${error.message}`;
+    }
+    const drafted = readDraftedStudy(text, draftArgs);
+    if (drafted === null) {
+        return text;
+    }
+    const { diagrams } = lintStudyContent(drafted.content);
+    // A change parses only the diagrams it writes (EC-503): the file's own
+    // are the person's, neither the model's to fix nor the window's to drop.
+    // A replace's own are those its words changed, which the tool names.
+    const checkedIndexes = drafted.isChange
+        ? ((isReplace ? readStudyReplacedDiagrams(text) : null) ??
+          listWrittenDiagramIndexes(diagrams, writtenText))
+        : diagrams.map((_diagram, index) => {
+              return index;
+          });
+    if (checkedIndexes.length > 0 && !isWindowMade) {
+        let errors: (string | null)[] = [];
+        try {
+            const { findMermaidParseErrors } =
+                await import('../markdown-preview/markdownMermaidHelpers');
+            errors = await findMermaidParseErrors(
+                checkedIndexes.map((index) => {
+                    return diagrams[index];
+                }),
+            );
+        } catch (_error) {
+            // Mermaid did not load: the preview window shows a diagram it
+            // cannot draw as its code, with the parser's words above it.
+        }
+        throwIfCancelled(signal);
+        // Numbered among the diagrams this call wrote, dropped by their
+        // place in the file.
+        const failed = errors.flatMap((error, at) => {
+            return error === null
+                ? []
+                : [{ at, index: checkedIndexes[at], error }];
+        });
+        // A diagram of the file a replace broke is never dropped: the
+        // change is refused, every time.
+        if (failed.length > 0 && isReplace) {
+            return `Tool refused: ${genStudyReplaceDiagramRefusal(failed)}`;
+        }
+        // A kept answer's diagram is not the model's to fix: dropped at once.
+        if (
+            failed.length > 0 &&
+            !watch.isStudyDiagramRetried &&
+            keptAnswer === null
+        ) {
+            watch.isStudyDiagramRetried = true;
+            return (
+                'Tool refused: ' +
+                failed
+                    .map(({ at, error }) => {
+                        return `Diagram ${at + 1} does not draw: ${error}`;
+                    })
+                    .join(' ') +
+                (drafted.isChange
+                    ? ' Fix it and call draft again with the same change.'
+                    : ' Fix it and call draft again with the whole study.')
+            );
+        }
+        if (failed.length > 0) {
+            drafted.content = dropStudyDiagrams(
+                drafted.content,
+                failed.map(({ index }) => {
+                    return index;
+                }),
+            );
+            drafted.diagramCount -= failed.length;
+        }
+    }
+    // A Bible note PRESSED for (EC-581): the study is made that note now,
+    // and no card asks again what it is kept as.
+    if (watch.createKind === 'note' && !drafted.isChange && !isWindowMade) {
+        const made = await makeStudyNote(drafted, watch, signal);
+        if (made !== null) {
+            return made;
+        }
+    }
+    const isMarkdownOnly =
+        (watch.createKind === 'markdown' || isMarkdownKept) &&
+        !drafted.isChange;
+    if (isMarkdownOnly) {
+        drafted.isMarkdownOnly = true;
+    }
+    if (isWindowMade) {
+        drafted.isWindowMade = true;
+    }
+    watch.draftedStudy = drafted;
+    watch.isActedOn = true;
+    return toModelDraftText(
+        text,
+        keptAnswer !== null,
+        noteText,
+        isMarkdownOnly,
+    );
+}
+
+/**
+ * A part of the new study this ask holds, changed (EC-604): drafted again
+ * with the change as a new study (`redraftHeldNewStudy`), the diagrams it
+ * writes parsed with mermaid, loaded only now, and the card's draft made
+ * the new one -- or the held study left as it was, the model told why.
+ */
+async function runHeldNewStudyEdit(
+    edit: HeldStudyEditType,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+    // The change is the answer above, put in by the window (EC-701).
+    isAnswerKept = false,
+) {
+    const held = toReachableNewStudy(watch);
+    if (held === null) {
+        return 'Tool refused: No new study is held to change.';
+    }
+    try {
+        const redrafted = await redraftHeldNewStudy(
+            edit,
+            held,
+            {
+                callDraft: (draftArgs) => {
+                    return callTool(
+                        RESOURCES_TOOL_NAME,
+                        draftArgs,
+                        signal,
+                        watch.windowAim,
+                    );
+                },
+                parseDiagrams: async (sources) => {
+                    try {
+                        const { findMermaidParseErrors } =
+                            await import('../markdown-preview/markdownMermaidHelpers');
+                        return await findMermaidParseErrors(sources);
+                    } catch (_error) {
+                        // Not loaded: the preview shows such a diagram as
+                        // its code, with the parser's words above it.
+                        return [];
+                    }
+                },
+            },
+            watch.isStudyDiagramRetried,
+            isAnswerKept,
+        );
+        throwIfCancelled(signal);
+        if (redrafted.isDiagramRetry) {
+            watch.isStudyDiagramRetried = true;
+        }
+        if (redrafted.drafted !== null) {
+            watch.draftedStudy = redrafted.drafted;
+            watch.isActedOn = true;
+        }
+        return redrafted.text;
+    } catch (error: any) {
+        throwIfCancelled(signal);
+        return `Tool error: ${error.message}`;
+    }
+}
+
+/**
+ * The NEW study a call may reach (EC-604, EC-606): the one this ask
+ * drafted, else the one the card right above the ask holds.
+ */
+function toReachableNewStudy(watch: ToolWatchType) {
+    return watch.draftedStudy ?? watch.heldStudyBefore;
+}
+
+/** A call reached the card above's study: its card comes back (EC-606). */
+function markHeldStudyBeforeReached(watch: ToolWatchType) {
+    if (watch.draftedStudy === null && watch.heldStudyBefore !== null) {
+        watch.isHeldStudyBeforeUsed = true;
+    }
+}
+
+/**
+ * A NEW Bible note a model makes, held for the person to choose what it is
+ * kept as (2026-11-13, EC-581, the user: _whenever creating bible-note or
+ * resource study file should always let user choose between bible-note or
+ * markdown file_): the window drafts the same words as a study file
+ * (`toStudyArgsFromNote`), and that draft, the note its twin, is the
+ * answer's card -- **New Bible Note**, or **Create "<name>.md"** in
+ * Resources or in Bible Notes. Null to make it as asked: a note citing no
+ * passage (no study file is made of one), a draft the app refused, or
+ * words the tool refuses itself (no title, too long). Pressed for a
+ * Markdown file, those are refused instead, so a note is never made.
+ */
+async function holdNewNote(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+): Promise<string | null> {
+    const title = typeof args?.title === 'string' ? args.title.trim() : '';
+    const text = typeof args?.text === 'string' ? args.text : '';
+    if (
+        title === '' ||
+        title.length > NOTE_TITLE_MAX_CHARS ||
+        text.length > NOTE_TEXT_MAX_CHARS
+    ) {
+        return null;
+    }
+    const file = typeof args?.file === 'string' ? args.file.trim() : '';
+    const note: HeldNoteType = {
+        title,
+        text,
+        ...(file === '' ? {} : { file }),
+    };
+    const isMarkdownOnly = watch.createKind === 'markdown';
+    const studyArgs = toStudyArgsFromNote(note);
+    if (studyArgs === null) {
+        return isMarkdownOnly
+            ? `Tool refused: ${NOTE_MARKDOWN_NO_PASSAGE_REFUSAL}`
+            : null;
+    }
+    let result: string;
+    try {
+        result = await callTool(
+            RESOURCES_TOOL_NAME,
+            { action: 'draft', ...studyArgs },
+            signal,
+            watch.windowAim,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+    const drafted = readDraftedStudy(result, studyArgs);
+    if (drafted === null) {
+        return isMarkdownOnly
+            ? 'Tool refused: They chose a Markdown file, and none could be ' +
+                  `drafted from this note: ${result}`
+            : null;
+    }
+    watch.draftedStudy = {
+        ...drafted,
+        note,
+        ...(isMarkdownOnly ? { isMarkdownOnly: true as const } : {}),
+    };
+    watch.isActedOn = true;
+    const held = JSON.stringify({
+        held: true,
+        title,
+        markdownFile: drafted.name,
+        note: isMarkdownOnly ? NOTE_HELD_MARKDOWN_NOTE : NOTE_HELD_CHOICE_NOTE,
+    });
+    applyToolWatch(watch, 'owa_bible_note', args, held);
+    return held;
+}
+
+/**
+ * A NEW study drafted when the person PRESSED for a Bible note (EC-581):
+ * made that note at once (`toNoteFromStudy`) -- the window opens it and
+ * attaches it to the tab -- and the model told so. Null when it cannot be
+ * one (longer than a note holds) or the add failed: the study's card then
+ * stands.
+ */
+async function makeStudyNote(
+    drafted: Omit<DraftedStudyType, 'reference'>,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+): Promise<string | null> {
+    const note = toNoteFromStudy(drafted);
+    if (note === null) {
+        return null;
+    }
+    const made = await runMcpToolCall(
+        'owa_bible_note',
+        { action: 'add', title: note.title, text: note.text },
+        watch,
+        signal,
+    );
+    if (readCreatedNote(made) === null) {
+        return null;
+    }
+    const left =
+        note.diagramCount === 0
+            ? ''
+            : `; its ${
+                  note.diagramCount === 1
+                      ? 'diagram was'
+                      : `${note.diagramCount} diagrams were`
+              } left out, since a note draws none -- say that too`;
+    return (
+        '(They chose a Bible note, so the window made this study the Bible ' +
+        `note "${note.title}" and opens it for them -- say so; never call it ` +
+        `a study file or tell them to press Create${left}.)\n${made}`
+    );
+}
+
+/**
+ * A study file's headings and whether the ask could show it whole, off a
+ * read of it (`toStudyReadShape`); null when it cannot be read. Asked only
+ * for a draft refused for naming no file, or one writing a file whole.
+ */
+async function readStudyFileShape(
+    file: string,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    try {
+        return toStudyReadShape(
+            await callTool(
+                RESOURCES_TOOL_NAME,
+                { action: 'read', file },
+                signal,
+                watch.windowAim,
+            ),
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+}
+
+/**
+ * Why a draft of one part of a study goes back (EC-500): nothing the model
+ * was shown this ask holds the part, so the window reads it and hands its
+ * words over. Null to draft it -- no part named, one shown, one too long to
+ * hand over, or a read that failed. What the read showed counts as shown,
+ * so the next draft of that part goes through.
+ */
+async function findUnreadStudyPartRefusal(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    const part = toStudyPartDraft(args);
+    if (
+        part === null ||
+        checkIsStudyPartShown(watch.shownStudyBlocks, part.file, part.section)
+    ) {
+        return null;
+    }
+    let readText: string;
+    try {
+        readText = await callTool(
+            RESOURCES_TOOL_NAME,
+            { action: 'read', file: part.file, section: part.section },
+            signal,
+            watch.windowAim,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+    // Judged before the read is kept, or its own words would count as shown.
+    const refusal = genUnreadStudyPartRefusal(
+        watch.shownStudyBlocks,
+        part.file,
+        readText,
+    );
+    const block = toReadStudyBlock(readText);
+    if (block !== null) {
+        watch.shownStudyBlocks.push(block);
+    }
+    return refusal;
+}
+
+/** The window's translator: an ask in, its answer and who answered out. */
+export type StudyTextTranslatorType = (
+    ask: string,
+    signal?: AbortSignal | null,
+) => Promise<{ text: string; by: string }>;
+
+/**
+ * An installed Bible in a language, off `owa_find_verse` with no arguments
+ * (`pickBibleInLanguage`, English looked for too), or null -- and, when it
+ * has none, an English one off the same list (`englishBible`): the Bible
+ * that names a translation's verse references (EC-489).
+ */
+async function findBibleInLanguage(
+    langCode: string,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+): Promise<{ bible: string | null; englishBible: string | null }> {
+    if (langCode === '') {
+        return { bible: null, englishBible: null };
+    }
+    try {
+        const listed = JSON.parse(
+            await callTool(VERSE_FIND_TOOL_NAME, {}, signal, watch.windowAim),
+        );
+        const current = typeof listed?.bible === 'string' ? listed.bible : null;
+        const pick = (code: string) => {
+            const picked = pickBibleInLanguage(listed, current, code, true);
+            if (picked !== null) {
+                return picked;
+            }
+            // Null with the Lookup's own Bible named: that one is in the
+            // language -- the Bible the person reads -- or no Bible is.
+            return current !== null &&
+                pickBibleInLanguage(listed, null, code, true) !== null
+                ? current
+                : null;
+        };
+        const bible = pick(langCode);
+        return {
+            bible,
+            englishBible:
+                bible === null && langCode !== DEFAULT_CHAT_LANG_CODE
+                    ? pick(DEFAULT_CHAT_LANG_CODE)
+                    : null,
+        };
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return { bible: null, englishBible: null };
+    }
+}
+
+/**
+ * Whether a diagram source DRAWS: mermaid's own parse, loaded only now. Not
+ * loaded, it is taken: the preview shows one it cannot draw as its code.
+ */
+async function checkDiagramDraws(source: string) {
+    try {
+        const { findMermaidParseErrors } =
+            await import('../markdown-preview/markdownMermaidHelpers');
+        const [error] = await findMermaidParseErrors([source]);
+        return error === null || error === undefined;
+    } catch (_error) {
+        return true;
+    }
+}
+
+/**
+ * Some of a study's words, or one diagram, put into the language by the
+ * window's translator -- asked again once when the answer is not the part
+ * translated (`checkIsStudyTextTranslated`), null after that. A heading that
+ * is one of the language's church words is written as that word
+ * (`applyStudyHeadingTerms`), and words translated that say such a word
+ * another way are asked once more, naming it (`listMissingStudyTerms`,
+ * EC-486) -- the first kept when the second is no better, never a stop.
+ * English words left between the script's (`listStudyStrayWords`) and a
+ * diagram's labels left as they were (`listStudyDiagramLeftLabels`) are
+ * asked about the same way (EC-533); a diagram whose every label came back
+ * as it was is no translation. With `books`, the translator is told how the
+ * language's Bible names each book the part cites, a book named as another
+ * language does is written so in code, and one named as no Bible does is
+ * asked about once more (EC-534). With `names`, a name the passages quoted
+ * give in a verse or two is shown with its verse, a church word for a name
+ * written with another vowel sign than the Bible quoted is written so in
+ * code, and a word of a verse shown written so is asked about once more
+ * (EC-535).
+ */
+async function translateStudyPart(
+    translateText: StudyTextTranslatorType,
+    source: string,
+    kind: 'text' | 'diagram',
+    language: StudyTranslateLanguageType,
+    books: StudyBookNameTableType | null,
+    names: StudyNameGuideType | null,
+    signal?: AbortSignal | null,
+) {
+    let by = '';
+    let kept: { text: string; problemCount: number } | null = null;
+    let missingTerms: [string, string][] = [];
+    let strayLetters: string[] = [];
+    let strayWords: string[] = [];
+    let leftLabels: string[] = [];
+    let bookSlips: StudyBookNameSlipType[] = [];
+    let nameSlips: StudyNameSlipType[] = [];
+    const nameSpellings = listStudyNameSpellings(source, names);
+    // The book and name repairs every answer gets, in that order.
+    const repairNames = (translated: string) => {
+        return repairStudyNameSpellings(
+            repairStudyBookNames(source, translated, books).text,
+            nameSpellings,
+        ).text;
+    };
+    for (let attempt = 0; attempt < STUDY_TRANSLATE_TRIES; attempt++) {
+        throwIfCancelled(signal);
+        const bookText = toStudyBookNamesText(
+            source,
+            books,
+            language.name,
+            bookSlips,
+        );
+        const nameText = toStudyNameVersesText(
+            source,
+            names,
+            language.name,
+            nameSlips,
+        );
+        const ask =
+            kind === 'text'
+                ? toStudyTextTranslationAsk(
+                      source,
+                      language,
+                      missingTerms,
+                      strayLetters,
+                      strayWords,
+                      bookText,
+                      nameText,
+                  )
+                : toStudyDiagramTranslationAsk(
+                      source,
+                      language,
+                      leftLabels,
+                      bookText,
+                      nameText,
+                  );
+        let answer: { text: string; by: string };
+        try {
+            answer = await translateText(ask, signal);
+        } catch (error) {
+            if (
+                checkIsCancelError(error, signal) ||
+                checkIsSpendLimitError(error)
+            ) {
+                throw error;
+            }
+            continue;
+        }
+        by = answer.by;
+        const translated = cleanStudyTranslation(answer.text);
+        if (kind === 'diagram') {
+            // A participant's id written in the language is put back
+            // (EC-582): the arrows name it as it was.
+            const booked = repairNames(
+                keepStudySequenceIds(source, translated),
+            );
+            if (
+                !checkIsStudyDiagramTranslated(source, booked) ||
+                checkStudyDiagram(booked) !== null ||
+                !(await checkDiagramDraws(booked))
+            ) {
+                continue;
+            }
+            const leftNow = listStudyDiagramLeftLabels(
+                source,
+                booked,
+                language.scriptPattern,
+            );
+            const slipsNow = listStudyBookNameSlips(source, booked, books);
+            const nameSlipsNow = listStudyNameSlips(source, booked, names);
+            const problemCount =
+                leftNow.length + slipsNow.length + nameSlipsNow.length;
+            if (problemCount === 0) {
+                return { text: booked, by };
+            }
+            leftLabels = leftNow;
+            bookSlips = slipsNow;
+            nameSlips = nameSlipsNow;
+            if (
+                leftNow.length < listStudyDiagramLabels(booked).length &&
+                (kept === null || problemCount < kept.problemCount)
+            ) {
+                kept = { text: booked, problemCount };
+            }
+            continue;
+        }
+        if (!checkIsStudyTextTranslated(source, translated, language)) {
+            continue;
+        }
+        const termed = repairNames(
+            applyStudyHeadingTerms(source, translated, language),
+        );
+        const missingNow = listMissingStudyTerms(source, termed, language);
+        // A letter of a third script slipped into a word (EC-490), an
+        // English word left between the script's (EC-533), a book named as
+        // no Bible of the language does (EC-534) and a shown verse's word
+        // written with another vowel sign (EC-535) are asked about once
+        // more the same way, and count the same way.
+        const strayNow = listStudyStrayLetters(source, termed);
+        const strayWordsNow = listStudyStrayWords(termed, language);
+        const slipsNow = listStudyBookNameSlips(source, termed, books);
+        const nameSlipsNow = listStudyNameSlips(source, termed, names);
+        const problemCount =
+            missingNow.length +
+            strayNow.length +
+            strayWordsNow.length +
+            slipsNow.length +
+            nameSlipsNow.length;
+        if (problemCount === 0) {
+            return { text: termed, by };
+        }
+        if (kept === null || problemCount < kept.problemCount) {
+            kept = { text: termed, problemCount };
+        }
+        missingTerms = missingNow;
+        strayLetters = strayNow;
+        strayWords = strayWordsNow;
+        bookSlips = slipsNow;
+        nameSlips = nameSlipsNow;
+    }
+    return { text: kept?.text ?? null, by };
+}
+
+/**
+ * The book names a translation into the language of `bible` is held to
+ * (EC-534): every installed Bible's, read once for the job and let go with
+ * it. Null when they cannot be read -- the translation goes on without.
+ */
+async function readStudyBookNameTable(
+    bible: string,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+) {
+    try {
+        const listed = await callTool(
+            'owa_bible_suggest',
+            { kind: 'books', prefix: '' },
+            signal,
+            watch.windowAim,
+        );
+        return toStudyBookNameTable(
+            genStudyBookNames(JSON.parse(listed)),
+            bible,
+        );
+    } catch (_error) {
+        throwIfCancelled(signal);
+        return null;
+    }
+}
+
+/**
+ * The language a study is to be translated into, when it is one to OFFER
+ * first (EC-494): turned off or not installed, and the catalog has it. Null
+ * when this window has it, when **Not now** declined it for this ask, and
+ * when the check cannot be made -- an offer never stops the translation the
+ * person came for.
+ */
+async function findStudyLangOffer(
+    packageCode: string,
+    watch: ToolWatchType,
+): Promise<StudyLangOfferType | null> {
+    if (
+        watch.skipLangOffer === packageCode ||
+        listLangFileCodes().includes(packageCode)
+    ) {
+        return null;
+    }
+    // Asked again in the same answer: already offered, not checked twice.
+    if (watch.langOffer?.packageCode === packageCode) {
+        return watch.langOffer;
+    }
+    const check = await checkChatLanguage(packageCode);
+    return checkIsLangOffer(check) ? { check, packageCode } : null;
+}
+
+// What the model is told: nothing translated, the window asks, one sentence
+// from it and no translation of its own. Its language and the way on are
+// said outright: seen live, gemma4:cloud wrote that sentence in German in an
+// English window, and sent them to Settings past the buttons under it.
+function genStudyLangOfferRefusal(name: string, offer: StudyLangOfferType) {
+    const isTurnOn = offer.check.state === 'turned-off';
+    return (
+        `Tool refused: ${name} is ` +
+        (isTurnOn ? 'turned off in this app' : 'not installed in this app') +
+        ', so the window cannot translate into it yet. Nothing was ' +
+        'translated. Under your answer the window asks them, with buttons ' +
+        'of its own, whether to ' +
+        (isTurnOn ? 'turn it on' : 'install it') +
+        ' first. Tell them so in one short sentence, written in the ' +
+        `language of their question, not in ${name}. Give no steps, ` +
+        'buttons or options of your own. Do not translate the study ' +
+        'yourself, and draft nothing.'
+    );
+}
+
+/**
+ * `owa_resource_file translate` from the help window's model (EC-478): the
+ * WINDOW translates the study file -- the model only names it, the language
+ * and where the translation goes, which is all one 2 000-token round on a
+ * server of the user's own can be trusted to carry. The app splits the file
+ * and quotes its passages again from a Bible in that language; the words go
+ * to the translator a part at a time and each diagram's labels on their
+ * own, parsed before they are taken (one that will not draw stays as it
+ * was); and the result is drafted like any change, held for the person's
+ * **Save changes**. Words the translator gets wrong twice stop the job with
+ * nothing drafted: half a translation saved over a study is worse than none.
+ * What is in the language already is kept as it was and never asked, and a
+ * study that would come out as it was is drafted not at all (EC-589). A new
+ * study the window holds, not saved yet (`held`), is planned from its held
+ * words and drafted as a new study into a card of its own (EC-609).
+ */
+async function runStudyTranslate(
+    args: any,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+    held: Omit<DraftedStudyType, 'reference'> | null = null,
+) {
+    const place = readStudyTranslatePlace(args?.place);
+    if (place === null) {
+        return (
+            'Tool refused: Say where the translation goes in `place`: ' +
+            '"append" (added after the file as it is -- add, under it, ' +
+            'after it, new pages, both languages), "replace" (in place of ' +
+            'its words) or "new" (a copy of its own). When their words do ' +
+            'not say, ask which, with OPTIONS.'
+        );
+    }
+    const copyRefusal =
+        held === null
+            ? null
+            : genHeldStudyCopyRefusal(held, place, watch.draftedStudy === held);
+    if (copyRefusal !== null) {
+        return `Tool refused: ${copyRefusal}`;
+    }
+    const named = resolveStudyTranslateLanguage(args?.language);
+    if (named === null) {
+        return (
+            'Tool refused: Name the language in `language`, e.g. "Khmer" ' +
+            'or "French". When they did not say, ask which, with OPTIONS.'
+        );
+    }
+    const translateText = watch.translateText;
+    if (translateText === null) {
+        return (
+            'Tool refused: No assistant can translate a file from here. ' +
+            'Tell them to ask in the help window.'
+        );
+    }
+    // The church words its Bible writes (EC-491) and the ones the app's own
+    // labels already say in that language (EC-488): two files of an
+    // installed language, read for this job and let go with it.
+    const packageCode =
+        named.code === '' || named.code === DEFAULT_CHAT_LANG_CODE
+            ? null
+            : toPackageLangCode(named.code);
+    // A language turned off in Settings, or not installed, is not in this
+    // window: the translation would get none of its words, labels or script
+    // -- Serbian came back in Latin letters (EC-494). It is offered first,
+    // as a Bible import offers its language; its files are never read
+    // behind the person's back, since turned off means not used.
+    const langOffer =
+        packageCode === null
+            ? null
+            : await findStudyLangOffer(packageCode, watch);
+    if (langOffer !== null) {
+        watch.langOffer = langOffer;
+        return genStudyLangOfferRefusal(named.name, langOffer);
+    }
+    const [labelFile, churchWordFile] =
+        packageCode === null
+            ? [null, null]
+            : await Promise.all([
+                  loadLangFile<Record<string, unknown>>(
+                      packageCode,
+                      STUDY_LABEL_FILE_NAME,
+                  ),
+                  loadLangFile<unknown>(
+                      packageCode,
+                      STUDY_CHURCH_WORDS_FILE_NAME,
+                  ),
+              ]);
+    const language = withStudyLabelTerms(
+        withStudyChurchWords(named, churchWordFile),
+        labelFile,
+    );
+    const { bible, englishBible } = await findBibleInLanguage(
+        language.code,
+        watch,
+        signal,
+    );
+    let planText: string;
+    try {
+        planText = await callTool(
+            RESOURCES_TOOL_NAME,
+            held === null
+                ? {
+                      action: 'translate',
+                      file: args?.file,
+                      ...(bible === null ? {} : { bible }),
+                  }
+                : toHeldStudyTranslatePlanArgs(held, bible),
+            signal,
+            watch.windowAim,
+        );
+    } catch (error: any) {
+        throwIfCancelled(signal);
+        return `Tool error: ${error.message}`;
+    }
+    const plan = readStudyTranslatePlan(planText);
+    if (plan === null) {
+        return planText;
+    }
+    // What is in the language already is kept as it was and never asked
+    // (EC-589): a study written in it, asked again because its dialogue's
+    // boxes were left English, had every part handed over, came back as it
+    // was, and stopped with nothing drafted. A sequence diagram's
+    // participant drawn by its id is given that id as a name to translate
+    // (EC-582); a diagram is kept as it was when its translation is not
+    // taken.
+    const { jobs, inLanguage } = planStudyTranslateJobs(
+        plan,
+        language,
+        STUDY_TRANSLATE_CHUNK_CHARS,
+    );
+    if (
+        place === 'append' &&
+        inLanguage.textCount > 0 &&
+        !jobs.some((job) => {
+            return job.kind === 'text';
+        })
+    ) {
+        return genStudyAppendInLanguageRefusal(plan, language);
+    }
+    // How a Bible in the language names the books the parts cite (EC-534):
+    // read only when its passages are quoted from one and some words to
+    // translate cite a chapter and verse.
+    const books =
+        bible !== null &&
+        jobs.some((job) => {
+            return job.chunks.some((chunk) => {
+                return checkHasStudyRefNumbers(chunk);
+            });
+        })
+            ? await readStudyBookNameTable(bible, watch, signal)
+            : null;
+    // The names the passages quoted in the language give, and its church
+    // words as that Bible writes them (EC-535): read off the plan, no call.
+    const names = toStudyNameGuide(plan.parts, language.terms);
+    const quotedLanguage = { ...language, terms: names.terms };
+    const total = jobs.reduce((sum, job) => {
+        return sum + job.chunks.length;
+    }, 0);
+    const reportStep = genProgressReporter(watch.onProgress ?? undefined);
+    const textByPart = new Map<number, string>();
+    const diagramByPart = new Map<number, string | null>();
+    let done = 0;
+    let translatorName = '';
+    for (const job of jobs) {
+        const outChunks: string[] = [];
+        for (const chunk of job.chunks) {
+            done += 1;
+            const finishStep = reportStep(
+                fillWords(tran('Writing a study file: “{words}”'), {
+                    words: `${language.nativeName} ${done}/${total}`,
+                }),
+            );
+            let translated: { text: string | null; by: string };
+            try {
+                translated = await translateStudyPart(
+                    translateText,
+                    chunk,
+                    job.kind,
+                    quotedLanguage,
+                    books,
+                    names,
+                    signal,
+                );
+            } finally {
+                finishStep();
+            }
+            translatorName = translated.by || translatorName;
+            if (translated.text === null && job.kind === 'text') {
+                return (
+                    `Tool refused: The translation of ${plan.name} into ` +
+                    `${language.name} stopped at part ${done} of ${total}: ` +
+                    'the translator did not give it back translated, twice. ' +
+                    'Nothing was drafted. Tell them so in a sentence and ' +
+                    'offer to try again, or to choose another assistant.'
+                );
+            }
+            outChunks.push(translated.text ?? '');
+        }
+        if (job.kind === 'text') {
+            textByPart.set(
+                job.index,
+                joinStudyTextPieces(job.pieces, outChunks),
+            );
+            continue;
+        }
+        diagramByPart.set(
+            job.index,
+            outChunks[0] === ''
+                ? null
+                : toStudyDiagramBlock(plan.parts[job.index].text, outChunks[0]),
+        );
+    }
+    throwIfCancelled(signal);
+    const result = assembleStudyTranslation(
+        plan,
+        textByPart,
+        diagramByPart,
+        inLanguage,
+    );
+    // Come out as it was (EC-589): every part in the language already, or
+    // what is not could not be translated. Added after the file, it would
+    // be the study again; in its place, a change that changes nothing.
+    if (result.body === toStudyOriginalBody(plan)) {
+        return describeStudyNothingTranslated(plan, result, language);
+    }
+    // A translation already in that language (EC-547): the new one takes
+    // its place, never a second one after it.
+    const taken =
+        place === 'new'
+            ? []
+            : findStudyTranslationsInLanguage(
+                  plan.translations,
+                  language,
+                  result.body,
+              );
+    const draftArgs =
+        held === null
+            ? toStudyTranslateDraftArgs(
+                  plan,
+                  result.body,
+                  place,
+                  language,
+                  taken,
+              )
+            : toHeldStudyTranslateDraftArgs(held, {
+                  plan,
+                  body: result.body,
+                  place,
+                  language,
+                  taken,
+              });
+    if ('reason' in draftArgs) {
+        return `Tool refused: ${draftArgs.reason}`;
+    }
+    // No Bible in that language: its verse references are named as an
+    // English Bible names them, as its passage stays -- never in the
+    // language the Lookup happens to be on (EC-489: a Burmese study's
+    // references came out in Khmer letters).
+    const drafted = await runStudyDraft(
+        'bible' in draftArgs || englishBible === null
+            ? draftArgs
+            : { ...draftArgs, bible: englishBible },
+        watch,
+        signal,
+        true,
+        held?.isMarkdownOnly === true,
+    );
+    if (watch.draftedStudy === null || watch.draftedStudy === held) {
+        return drafted;
+    }
+    // What the translation still leaves once each part was asked about
+    // twice (EC-600): read as a saved translation is, and told to the
+    // model before the person saves it, with the words a `replace` takes
+    // -- on the change the card holds, or on the new copy it holds (EC-604).
+    const leftText = toStudyTranslationLeftNote(
+        toStudyOriginalBody(plan),
+        result.body,
+        language,
+        place === 'new' || held !== null
+            ? { file: watch.draftedStudy.name, isNew: true }
+            : { file: watch.draftedStudy.file ?? plan.file, isNew: false },
+    );
+    return (
+        describeStudyTranslation(
+            plan,
+            result,
+            language,
+            place,
+            translatorName || 'the translator',
+            taken.length,
+        ) +
+        (held === null
+            ? ''
+            : ` ${genHeldStudyTranslatedNote(held.name, place)}`) +
+        (leftText === null ? '' : `\n${leftText}`) +
+        `\n${drafted}`
+    );
+}
+
+type VerseReadEntryType = { key: string; ref: string; text: string };
+
+/**
+ * The verses just before a new lesson's passage, read in a call of their own
+ * (BN-100, 2026-11-11): of a chapter before, its last ten -- read whole with
+ * the passage, that chapter had been cut from its END, and a lesson on Luke
+ * 15 told the Pharisee's dinner of 14:1 as what came "just before". Null
+ * when they cannot be read; the lesson goes on without them.
+ */
+async function readVersesBefore(
+    ref: string,
+    args: any,
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+): Promise<VerseReadEntryType | null> {
+    const readEntry = async (refs: string) => {
+        try {
+            const read = await callTool(
+                VERSE_FIND_TOOL_NAME,
+                { ...(args ?? {}), refs },
+                signal,
+                watch.windowAim,
+            );
+            const entry = JSON.parse(read)?.verses?.[0];
+            return typeof entry?.text === 'string' ? entry : null;
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error;
+            }
+            return null;
+        }
+    };
+    const entry: VerseReadEntryType | null = await readEntry(ref);
+    const last = toLastVersesRead(entry, MAX_VERSES_BEFORE);
+    if (last === null) {
+        return entry;
+    }
+    return 'entry' in last ? last.entry : await readEntry(last.ref);
+}
+
+/**
+ * The verses a change quotes BY their chapter and verse, each read on its
+ * own (BN-110): the tool leaves out a reference it cannot read, so one call
+ * for all of them could not say which text is whose. Eight at most, read by
+ * the window from the installed Bible, no model.
+ */
+async function readCitedVerseTexts(
+    refList: readonly string[],
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+) {
+    const verseTextMap = new Map<string, string>();
+    const readVerseList = async (refs: string): Promise<any[]> => {
+        try {
+            const read = await callTool(
+                VERSE_FIND_TOOL_NAME,
+                { refs },
+                signal,
+                watch.windowAim,
+            );
+            const verses = JSON.parse(read)?.verses;
+            return Array.isArray(verses) ? verses : [];
+        } catch (error) {
+            if (signal?.aborted) {
+                throw error;
+            }
+            return [];
+        }
+    };
+    // The single verses in ONE read, matched back by their keys (BN-148):
+    // every read is one of the firewall's 25 acting calls a minute, and a
+    // lesson's eight at once had left the ask after it refused. A range
+    // keeps a read, and the whole passage's letters, of its own.
+    const keyedList = refList.flatMap((ref) => {
+        const key = toCitedVerseKey(ref);
+        return key === null ? [] : [{ ref, key }];
+    });
+    const groupList: { ref: string; key: string }[][] = [];
+    if (keyedList.length > 1) {
+        for (let i = 0; i < keyedList.length; i += MAX_FIND_REFS) {
+            groupList.push(keyedList.slice(i, i + MAX_FIND_REFS));
+        }
+    }
+    const aloneList =
+        groupList.length > 0
+            ? refList.filter((ref) => toCitedVerseKey(ref) === null)
+            : refList;
+    await Promise.all([
+        ...groupList.map(async (group) => {
+            const verses = await readVerseList(
+                group.map((item) => item.ref).join('; '),
+            );
+            for (const { ref, key } of group) {
+                const entry = verses.find((verse) => verse?.key === key);
+                if (typeof entry?.text === 'string') {
+                    verseTextMap.set(ref, entry.text);
+                }
+            }
+        }),
+        ...aloneList.map(async (ref) => {
+            const entry = (await readVerseList(ref))[0];
+            if (typeof entry?.text === 'string') {
+                verseTextMap.set(ref, entry.text);
+            }
+        }),
+    ]);
+    return verseTextMap;
+}
+
+/**
+ * A new lesson's passage, read by the window when the model wrote the lesson
+ * without reading it (BN-274): what the read answers joins what the quote
+ * checks hold the lesson to, as the model's own read would have, so a
+ * quotation from memory meets the passage's words. Once an ask; a read that
+ * fails leaves the checks as they were.
+ */
+function readFirstVerseText(read: string) {
+    try {
+        const entry = JSON.parse(read)?.verses?.[0];
+        return typeof entry?.text === 'string' ? entry.text : '';
+    } catch {
+        return '';
+    }
+}
+
+async function readUnreadLessonPassage(
+    args: any,
+    signal: AbortSignal | null | undefined,
+    watch: ToolWatchType,
+) {
+    if (
+        args?.action !== 'edit' ||
+        watch.isBlankLesson !== true ||
+        watch.isLessonBeforeRead === true ||
+        watch.lessonPassageWindowRead !== undefined ||
+        watch.noteQuoteSources === null ||
+        watch.noteQuoteSources === undefined
+    ) {
+        return;
+    }
+    const ref = readLessonPassageRef(args.changes);
+    watch.lessonPassageWindowRead = null;
+    if (ref === null) {
+        return;
+    }
+    const read = await callTool(
+        VERSE_FIND_TOOL_NAME,
+        { refs: ref },
+        signal,
+        watch.windowAim,
+    ).catch((error) => {
+        if (signal?.aborted) {
+            throw error;
+        }
+        return '';
+    });
+    const text = readFirstVerseText(read);
+    if (text === '') {
+        return;
+    }
+    watch.noteQuoteSources = [
+        ...watch.noteQuoteSources,
+        read.slice(0, MAX_NOTE_QUOTE_SOURCE_LENGTH),
+    ].slice(-MAX_NOTE_QUOTE_SOURCES);
+    watch.lessonPassageWindowRead = { ref, text };
+}
+
+/** A read's answer with one more passage after its own. */
+function withVerseReadEntry(text: string, entry: VerseReadEntryType) {
+    try {
+        const read = JSON.parse(text);
+        if (!Array.isArray(read?.verses)) {
+            return text;
+        }
+        return JSON.stringify({ ...read, verses: [...read.verses, entry] });
+    } catch {
+        return text;
+    }
+}
 
 async function runMcpToolCall(
     name: string,
     args: any,
     watch: ToolWatchType,
     signal?: AbortSignal | null,
-) {
+): Promise<string> {
     // The other half of `modelTools.mjs`: a tool is only really withheld if
     // naming it does not work either. These are documented in the app's own
     // manual, which the model can read, so a filtered list is a suggestion on
@@ -3274,6 +6177,74 @@ async function runMcpToolCall(
     if (name === 'owa_bible_note' && checkIsModelRemoval(args)) {
         return `Tool refused: ${NOTE_REMOVAL_MODEL_REFUSAL}`;
     }
+    // A song drafted from words the person typed under a title they named:
+    // the model hands over the words and leaves the title out (EC-517).
+    if (
+        name === 'owa_lyric_validate' &&
+        args?.mode !== 'check' &&
+        args?.mode !== 'find' &&
+        watch.songTitleNamed !== null &&
+        String(args?.title ?? '').trim() === ''
+    ) {
+        args = { ...args, title: watch.songTitleNamed };
+    }
+    // A screen turned on in the same answer that put something on it
+    // (2026-11-13, EC-603, seen on Free: "show a message on the screen" put
+    // a Quick Text up and then pressed Toggle showing screen, unasked --
+    // the projector came on with the Bible passage it held). The prompt
+    // says to offer it; a slip of a model is not the room's to see. A
+    // "yes" asked next is an answer that has changed nothing yet.
+    if (
+        name === 'owa_click' &&
+        watch.isActedOn &&
+        checkIsScreenToggleFind(args?.find, watch)
+    ) {
+        return `Tool refused: ${SCREEN_TOGGLE_REFUSAL}`;
+    }
+    // A running order's items are lines to add, never things to put up now
+    // (2026-11-10, EC-475: "Make a new running order for Sunday: a welcome
+    // countdown, Doxology, Psalm 23" started the countdown and put Psalm 23
+    // on screen 0, then answered with the steps to build the order).
+    if (
+        watch.isRunningOrderAsk &&
+        (name === 'owa_present_bible' || name === 'owa_foreground') &&
+        args?.action !== 'check'
+    ) {
+        return `Tool refused: ${RUNNING_ORDER_SCREEN_REFUSAL}`;
+    }
+    // Passages to SAVE are never put up (2026-11-14, EC-703: "add bible
+    // items for me for: john 3:16 gen 1" put Genesis 1 on the screen and
+    // left the Bibles list empty).
+    if (
+        watch.isBibleListAsk &&
+        name === 'owa_present_bible' &&
+        args?.action !== 'check'
+    ) {
+        return `Tool refused: ${BIBLE_LIST_SCREEN_REFUSAL}`;
+    }
+    // A blank to fill in never goes up (2026-11-14, EC-652): "show the
+    // church wifi password on the screen" put up "Church WiFi Password:
+    // [Insert Password Here]", and the answer said the password was up.
+    const foregroundBlank =
+        name === 'owa_foreground' || name === FOREGROUND_EDIT_TOOL_NAME
+            ? findForegroundBlank(args, watch.askedText)
+            : null;
+    if (foregroundBlank !== null) {
+        return `Tool refused: ${genForegroundBlankRefusal(foregroundBlank)}`;
+    }
+    // And words that are only the person's own go back once to be asked
+    // about: the name of what to show went up as if it were it (EC-652).
+    const foregroundEcho =
+        name === 'owa_foreground' && args?.action !== 'stop'
+            ? findForegroundEchoedWords(args, watch.askedText)
+            : null;
+    if (
+        foregroundEcho !== null &&
+        !watch.foregroundEchoList.includes(foregroundEcho)
+    ) {
+        watch.foregroundEchoList.push(foregroundEcho);
+        return `Tool refused: ${genForegroundEchoQuestion(foregroundEcho)}`;
+    }
     // In a conversation about an attached note, owa_bible_note only MAKES a
     // new one: its `update` writes a note back as plain paragraphs, losing
     // headings, lists and verse mentions, which owa_note_edit keeps.
@@ -3283,6 +6254,88 @@ async function runMcpToolCall(
         !['add', 'list', 'read'].includes(String(args?.action ?? ''))
     ) {
         return `Tool refused: ${NOTE_ASK_BIBLE_NOTE_REFUSAL}`;
+    }
+    // A new note asked for in a conversation about ONE note that holds
+    // nothing goes INTO that note (2026-11-10, the goal _chatbot completely
+    // smart enough to help prepare a best preaching lesson_): the person
+    // made the empty note to hold it. Through `owa_note_edit` and the
+    // note's own editor -- one step of its Undo, the title kept at once.
+    if (
+        name === 'owa_bible_note' &&
+        watch.noteFiles?.length === 1 &&
+        typeof watch.blankNoteBlockCount === 'number'
+    ) {
+        const fill = toBlankNoteFillArgs(
+            args,
+            watch.noteFiles[0].name,
+            watch.blankNoteBlockCount,
+        );
+        if (fill !== null) {
+            // A question for them is said, never written into their note.
+            const problem = findBlankFillProblem(String(args?.text ?? ''));
+            if (problem !== null) {
+                return `Tool refused: ${problem}`;
+            }
+            const filled = await runMcpToolCall(
+                NOTE_EDIT_TOOL_NAME,
+                fill,
+                watch,
+                signal,
+            );
+            // Once it went in. A fill refused -- a verse no installed Bible
+            // reads -- leaves the note empty, and the model's next try goes
+            // into it too (BN-67, seen live in Spanish: "Salmos 23" refused,
+            // the corrected add made a second, new note); and it is said as
+            // it came back, never as a lesson written (BN-76).
+            if (!/"isChanged"\s*:\s*true/.test(filled)) {
+                return filled;
+            }
+            watch.blankNoteBlockCount = null;
+            return (
+                `(The attached note "${watch.noteFiles[0].name}" was empty, ` +
+                'so the lesson was written INTO it, not into a new note -- ' +
+                `say so.)\n${filled}`
+            );
+        }
+    }
+    // Loose lines made a whole lesson (BN-67): the lesson, holding every
+    // line of theirs, goes in their place -- or nothing is changed and the
+    // model is told which lines it left out.
+    if (
+        name === 'owa_bible_note' &&
+        watch.noteFiles?.length === 1 &&
+        watch.noteRewrite !== null &&
+        watch.noteRewrite !== undefined
+    ) {
+        const fill = toBlankNoteFillArgs(
+            args,
+            watch.noteFiles[0].name,
+            watch.noteRewrite.blockCount,
+        );
+        if (fill !== null) {
+            const lost = findLostNoteLines(
+                watch.noteRewrite.lines,
+                String(args?.text ?? ''),
+            );
+            if (lost.length > 0) {
+                return `Tool refused: ${genLostNoteLinesRefusal(lost)}`;
+            }
+            const filled = await runMcpToolCall(
+                NOTE_EDIT_TOOL_NAME,
+                fill,
+                watch,
+                signal,
+            );
+            if (!/"isChanged"\s*:\s*true/.test(filled)) {
+                return filled;
+            }
+            watch.noteRewrite = null;
+            return (
+                `(Their lines in "${watch.noteFiles[0].name}" were made the ` +
+                'whole lesson IN that note, in their place, every one of them ' +
+                `kept -- say so.)\n${filled}`
+            );
+        }
     }
     // A song is changed only in a conversation about one the person
     // attached, and named by its NAME: the window puts the attached file's
@@ -3328,6 +6381,25 @@ async function runMcpToolCall(
             file: 'filePath' in resolved ? resolved.filePath : resolved.name,
         };
     }
+    // A foreground session the same way: changed only in a foreground
+    // conversation, an attached session named by its name -- the window puts
+    // its id in (`resolveForegroundSession`).
+    if (name === FOREGROUND_EDIT_TOOL_NAME) {
+        if (watch.foregroundAsks === null) {
+            return (
+                `Tool refused: ${FOREGROUND_EDIT_TOOL_NAME} changes a ` +
+                'foreground component in a conversation about one. Use ' +
+                'owa_foreground to start or stop one.'
+            );
+        }
+        // A `start` naming a session nobody attached loses it: new words go
+        // into a session of their own (EC-523).
+        lyricEditArgs = toForegroundEditArgs(
+            args,
+            watch.foregroundAsks,
+            !watch.isForegroundCurrentOnly,
+        );
+    }
     // A slide document the same way: changed only in a conversation about
     // one the person attached, named by its NAME -- the window puts its path
     // in (`resolveSlideEditFile`), and a path the model writes is refused.
@@ -3366,7 +6438,541 @@ async function runMcpToolCall(
         if ('reason' in resolved) {
             return `Tool refused: ${resolved.reason}`;
         }
-        lyricEditArgs = { ...(args ?? {}), ...resolved };
+        // The changes sent under the action's own name, `{edit: [...]}`
+        // with no action (BN-203, shape60: refused by the tool's schema,
+        // the ask ended with a line the window named left in the lesson).
+        const { edit: namedChangeList, ...argsWithoutEdit } = args ?? {};
+        const isEditNamed =
+            args?.action === undefined &&
+            args?.changes === undefined &&
+            Array.isArray(namedChangeList);
+        lyricEditArgs = {
+            ...(isEditNamed ? argsWithoutEdit : (args ?? {})),
+            ...resolved,
+            // Changes with no action are an edit (2026-11-10: "make the
+            // three point headings bold" came as `changes` alone, refused,
+            // then sent again with it).
+            ...(isEditNamed
+                ? { action: 'edit', changes: namedChangeList }
+                : args?.action === undefined &&
+                    (args?.changes !== undefined || args?.title !== undefined)
+                  ? { action: 'edit' }
+                  : {}),
+        };
+        // Words they typed to be written go in as they typed them, where a
+        // model wrote a look-alike letter (BN-37).
+        if (watch.noteTyped !== null) {
+            lyricEditArgs = restoreNoteTypedWords(
+                lyricEditArgs,
+                watch.noteTyped,
+                listLookAlikePairs(),
+            );
+        }
+        // A verse asked for in their language is read from a Bible in it
+        // (BN-26, 2026-11-08: asked in a non-English language under a note
+        // in it, John 1:1 came from the KJV the Lookup was on, Bibles of
+        // that language installed).
+        if (args?.bible === undefined && checkAddsNoteVerse(args)) {
+            const verseBible = await findNoteVerseBible(watch, signal);
+            if (verseBible !== null) {
+                lyricEditArgs = { ...lyricEditArgs, bible: verseBible };
+            }
+        }
+        // Loose lines made a lesson by an edit (BN-67): a line of theirs
+        // the edit's new words hold is not left beside them.
+        if (watch.noteRewrite !== null && watch.noteRewrite !== undefined) {
+            // One of their lines taken out or written over by the edit
+            // itself, its words nowhere in the new ones (BN-223): sent back
+            // once an ask.
+            const lineLoss =
+                watch.isFinishOwnRefused === true
+                    ? null
+                    : findRewriteLineLoss(lyricEditArgs, watch.noteRewrite);
+            if (lineLoss !== null) {
+                watch.isFinishOwnRefused = true;
+                return `Tool refused: ${lineLoss}`;
+            }
+            lyricEditArgs = withRewrittenLinesRemoved(
+                lyricEditArgs,
+                watch.noteRewrite,
+            );
+        }
+        // A note put into another language has its verses read from that
+        // language's Bible (BN-133): its chips named it, its passages read
+        // again from it -- by the window, never the model's words -- and
+        // its words held to the language, once an ask (BN-134: a heading
+        // left in English, Thai letters in a Khmer line).
+        if (
+            watch.noteTranslate !== null &&
+            watch.noteTranslate !== undefined &&
+            lyricEditArgs.action === 'edit'
+        ) {
+            const bibleKey = await findNoteTranslateBible(watch, signal);
+            const blocks = await readNoteBlocks(
+                lyricEditArgs.file,
+                lyricEditArgs.id,
+                signal,
+                watch,
+            );
+            watch.noteTranslateLeftText = null;
+            if (blocks !== null && watch.isNoteTranslateChecked !== true) {
+                const left = findNoteTranslateLeft(
+                    lyricEditArgs,
+                    blocks,
+                    resolveStudyTranslateLanguage(watch.noteTranslate.code)
+                        ?.scriptPattern ?? null,
+                );
+                watch.noteTranslateLeftText =
+                    left === null
+                        ? null
+                        : genNoteTranslateLeftNote(
+                              left,
+                              watch.noteTranslate.name,
+                          );
+            }
+            if (bibleKey !== null && blocks !== null) {
+                lyricEditArgs = withNoteVersesInBible(
+                    lyricEditArgs,
+                    blocks,
+                    bibleKey,
+                );
+            }
+        }
+        // A question for them is never written into their EMPTY note, by
+        // either tool (BN-81, 2026-11-10: the children's card pressed,
+        // gemma4:cloud wrote "Please tell me which Bible passage..." into the
+        // note with this tool; the guard had been on the add's redirect).
+        if (
+            watch.isBlankLesson &&
+            typeof watch.blankNoteBlockCount === 'number' &&
+            lyricEditArgs.action === 'edit'
+        ) {
+            // Its adds numbered as they will stand are the lesson in order
+            // (BN-268): one number skipped had the whole lesson refused.
+            lyricEditArgs = withBlankFillInOrder(
+                lyricEditArgs,
+                watch.blankNoteBlockCount,
+            );
+            // A line of the new lesson that is one verse token is that
+            // verse printed (BN-112): its memory verse, given as a change of
+            // its own, had stayed a chip with no words.
+            lyricEditArgs = toLessonVerseLines(lyricEditArgs);
+            // ...and its passage printed once (BN-130): again after the
+            // memory verse, or under a point whose lines carry their own
+            // verses, it is taken out by the window.
+            lyricEditArgs = dropRepeatedLessonPassages(lyricEditArgs);
+            // ...and a point's long printing of verses the top already
+            // prints made a line naming them (BN-220: 1 Samuel 17 printed
+            // whole twice, the shape's words not holding it).
+            lyricEditArgs = withLongPointPassagesNamed(lyricEditArgs);
+            const problem = findBlankFillProblem(
+                toNoteChangeWords(lyricEditArgs),
+            );
+            if (problem !== null) {
+                return `Tool refused: ${problem}`;
+            }
+            // Its points follow its passage in order and cover it whole
+            // (BN-83, 2026-11-11: five lessons of thirteen stopped before
+            // its end -- the sower at the thorns, two devotions at verse 3
+            // -- and David's armour came after his speech), once an ask.
+            const pointsProblem =
+                watch.isLessonPointsChecked === true
+                    ? null
+                    : findLessonPointsProblem(
+                          toLessonChangeText(lyricEditArgs),
+                      );
+            if (pointsProblem !== null) {
+                watch.isLessonPointsChecked = true;
+                return `Tool refused: ${genLessonPointsRefusal(pointsProblem)}`;
+            }
+            // A child's memory verse is one a child can say (BN-129): told
+            // twenty words twice, Luke 15:7's 28 kept coming back. The lesson
+            // goes in and the line is named under it, with short verses of
+            // the passage read (BN-143: sent back whole, a Lost Sheep lesson
+            // searched for a shorter verse until its rounds ran out).
+            watch.childMemoryVerseText = null;
+            const memoryRef =
+                watch.isChildrenLesson === true &&
+                (watch.childMemoryVerseRefusals ?? 0) <
+                    MAX_CHILD_MEMORY_VERSE_REFUSALS
+                    ? findMemoryVerseRef(toLessonChangeText(lyricEditArgs))
+                    : null;
+            if (memoryRef !== null) {
+                const verseText = (
+                    await readCitedVerseTexts([memoryRef], signal, watch)
+                ).get(memoryRef);
+                const wordCount =
+                    verseText === undefined ? 0 : countVerseWords(verseText);
+                if (wordCount > MAX_CHILD_MEMORY_VERSE_WORDS) {
+                    watch.childMemoryVerseText = genChildMemoryVerseNote(
+                        memoryRef,
+                        wordCount,
+                        listShortReadVerses(
+                            watch.noteQuoteSources ?? [],
+                            readLessonBigIdea(
+                                toLessonChangeText(lyricEditArgs),
+                            ),
+                            // Its own passage's verses only (BN-155).
+                            readLessonPassageRef(lyricEditArgs.changes),
+                        ),
+                    );
+                }
+            }
+        }
+        // ...and the verse put in its place once it was named (BN-208,
+        // shape62: the swap came as `{block: 39, ref: "Jonah 4:2"}` -- the
+        // note no longer empty, no Memory verse heading in the change --
+        // and sixty words went in unread). Read only after a naming, so an
+        // ordinary edit of a children's lesson reads nothing.
+        else if (
+            watch.isChildrenLesson === true &&
+            lyricEditArgs.action === 'edit' &&
+            (watch.childMemoryVerseRefusals ?? 0) > 0 &&
+            (watch.childMemoryVerseRefusals ?? 0) <
+                MAX_CHILD_MEMORY_VERSE_REFUSALS
+        ) {
+            watch.childMemoryVerseText = null;
+            const swappedRef = findSwappedVerseRef(lyricEditArgs.changes);
+            if (swappedRef !== null) {
+                const verseText = (
+                    await readCitedVerseTexts([swappedRef], signal, watch)
+                ).get(swappedRef);
+                const wordCount =
+                    verseText === undefined ? 0 : countVerseWords(verseText);
+                if (wordCount > MAX_CHILD_MEMORY_VERSE_WORDS) {
+                    watch.childMemoryVerseText = genChildMemoryVerseNote(
+                        swappedRef,
+                        wordCount,
+                        [],
+                    );
+                }
+            }
+        }
+        // A fix to their lesson adds and rewords (BN-80, 2026-11-10: _Add a
+        // point on why Jesus uses parables_ came as fifteen blocks moved and
+        // left the path's verses under the wrong point; _Fix point
+        // numbering_ took the Pointing to Jesus heading out). A move or a
+        // removal goes only where their words ask for one.
+        if (watch.isLessonChange && lyricEditArgs.action === 'edit') {
+            const refusal = findLessonChangeSurgery(
+                lyricEditArgs,
+                watch.noteTyped ?? '',
+            );
+            if (refusal !== null) {
+                return `Tool refused: ${refusal}`;
+            }
+        }
+        // A statement written over a hearer's question (BN-280) goes back
+        // once an ask -- before its label is kept, which would leave it a
+        // statement under "A hearer asks".
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.isHearerQuestionKept !== true
+        ) {
+            const refusal = findHearerQuestionTurned(
+                lyricEditArgs,
+                watch.noteReadBlocks ?? null,
+            );
+            if (refusal !== null) {
+                watch.isHearerQuestionKept = true;
+                return `Tool refused: ${refusal}`;
+            }
+        }
+        // A point's label a change dropped is kept (BN-265), and labels
+        // written plain in a lesson ask get their bold back (BN-263).
+        if (
+            lyricEditArgs.action === 'edit' &&
+            (watch.isBlankLesson === true ||
+                watch.isLessonChange ||
+                watch.isLessonReview === true ||
+                Array.isArray(watch.finishOwnBlocks))
+        ) {
+            lyricEditArgs = withLessonLabelsBold(
+                withLessonLabelsKept(
+                    lyricEditArgs,
+                    watch.noteReadBlocks ?? null,
+                ),
+            );
+        }
+        // A hearer's question goes with its answer (BN-259): rewritten
+        // alone, the old answer stands under a question it does not answer.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.isHearerAnswerRefused !== true
+        ) {
+            const refusal = findHearerAnswerLeft(lyricEditArgs);
+            if (refusal !== null) {
+                watch.isHearerAnswerRefused = true;
+                return `Tool refused: ${refusal}`;
+            }
+        }
+        // A finish keeps their own words (BN-223): an edit writing over or
+        // taking out a block of theirs goes back once an ask.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            Array.isArray(watch.finishOwnBlocks) &&
+            watch.isFinishOwnRefused !== true
+        ) {
+            const refusal = findFinishOwnWordsLoss(
+                lyricEditArgs,
+                watch.finishOwnBlocks,
+            );
+            if (refusal !== null) {
+                watch.isFinishOwnRefused = true;
+                return `Tool refused: ${refusal}`;
+            }
+        }
+        // A verse quoted in a modern translation's words is given the KJV's
+        // (BN-137: Philippians 2:7 as "emptied himself", John 1:14 as
+        // "became flesh" -- verses outside the passage, quoted from memory
+        // with no reference, so no check read them), in a note whose verses
+        // are the KJV's. Said under the change, for the model's next words.
+        // A new lesson whose passage was never read is read by the window
+        // first (BN-274, 2026-11-14, set 5's communion message: written
+        // twice with no verse read, 1 Corinthians 11 quoted in a modern
+        // translation's words -- "received from the Lord", "proclaim the
+        // Lord's death until he comes" -- and nothing read to hold them to).
+        await readUnreadLessonPassage(lyricEditArgs, signal, watch);
+        watch.kjvWordingText = null;
+        if (
+            lyricEditArgs.action === 'edit' &&
+            Array.isArray(lyricEditArgs.changes) &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            checkIsKjvNoteEdit(lyricEditArgs, watch.noteQuoteSources)
+        ) {
+            const fixList: KjvWordingFixType[] = [];
+            const changes = lyricEditArgs.changes.map((change: any) => {
+                if (typeof change?.text !== 'string') {
+                    return change;
+                }
+                const { text: kjvText, fixes } = withKjvWording(change.text);
+                fixList.push(...fixes);
+                return fixes.length === 0
+                    ? change
+                    : { ...change, text: kjvText };
+            });
+            if (fixList.length > 0) {
+                lyricEditArgs = { ...lyricEditArgs, changes };
+                watch.kjvWordingText = genKjvWordingNote(fixList);
+            }
+        }
+        // A line named for one more edit keeps the rest of its block
+        // (BN-157): told to fix one sentence of a children's Jonah's story
+        // block, the model sent the block back as that sentence alone and
+        // the lesson lost its story. Refused once an ask, with the block.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            (watch.lineFixBlocks?.length ?? 0) > 0 &&
+            watch.isLineFixRefused !== true
+        ) {
+            const lostList = (
+                Array.isArray(lyricEditArgs.changes)
+                    ? lyricEditArgs.changes
+                    : []
+            ).flatMap((change: any) => {
+                const fix = (watch.lineFixBlocks ?? []).find((item) => {
+                    return item.n === change?.block;
+                });
+                return fix !== undefined &&
+                    typeof change?.text === 'string' &&
+                    !checkKeepsBlockWords(change.text, fix)
+                    ? [fix]
+                    : [];
+            });
+            if (lostList.length > 0) {
+                watch.isLineFixRefused = true;
+                return `Tool refused: ${genLineFixRefusal(lostList)}`;
+            }
+        }
+        // A sermon's detail no verse gives (BN-142: "the stone found the
+        // only gap in the giant's armour", Jesus "had just spoken to the
+        // people of Capernaum" with the word table's correction in front of
+        // the model) is named under the change, once an ask, for one more
+        // edit.
+        watch.lessonLegendList = null;
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isLessonLegendSaid !== true
+        ) {
+            const changeWords = toNoteChangeWords(lyricEditArgs);
+            // A word of the passage, quoted, put on Christ (BN-163) is
+            // named the same way.
+            const legends = [
+                ...findLessonLegends(changeWords),
+                // A point quoting a verse that is not its own (BN-230).
+                ...findPointQuoteMisplacements(
+                    changeWords,
+                    watch.noteQuoteSources,
+                ),
+                ...findStretchedChristWords(
+                    changeWords,
+                    readPassageVerseWords(
+                        watch.noteQuoteSources,
+                        readLessonPassageRef(lyricEditArgs.changes),
+                    ),
+                ),
+            ];
+            if (legends.length > 0) {
+                watch.lessonLegendList = legends;
+            }
+        }
+        // An example set in a hospital -- the scene the lessons reach for
+        // most, stock to both blind readers (BN-150) -- is named under a NEW
+        // lesson, once an ask, for one more edit; a funeral message keeps it.
+        watch.hospitalExampleList = null;
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.isBlankLesson === true &&
+            watch.isFuneralAsk !== true &&
+            watch.isHospitalExampleSaid !== true
+        ) {
+            const examples = findHospitalExamples(
+                toNoteChangeWords(lyricEditArgs),
+            );
+            if (examples.length > 0) {
+                watch.hospitalExampleList = examples;
+            }
+        }
+        // A verse of another book told in Pointing to Jesus with none of its
+        // own words (BN-154: "whoever abides in Him will find rest [^Matthew
+        // 11:28]") is named under a NEW lesson with the verse read, once an
+        // ask, for one more edit.
+        watch.christVerseList = null;
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.isBlankLesson === true &&
+            watch.isChristVerseSaid !== true
+        ) {
+            const verses = findUnquotedChristVerses(
+                toNoteChangeWords(lyricEditArgs),
+                readLessonPassageRef(lyricEditArgs.changes),
+            );
+            if (verses.length > 0) {
+                watch.christVerseList = verses;
+            }
+        }
+        // A quote of the passage is its words (BN-76): a change that
+        // misquotes what this ask read is refused, once an ask -- a whole
+        // lesson sent again is a round, a loop of them is not.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteQuoteChecked !== true
+        ) {
+            const misquotes = findNoteMisquotes(
+                toNoteChangeWords(lyricEditArgs),
+                watch.noteQuoteSources,
+            );
+            if (misquotes.length > 0) {
+                watch.isNoteQuoteChecked = true;
+                return `Tool refused: ${genNoteMisquoteRefusal(
+                    misquotes,
+                    watch.lessonPassageWindowRead ?? null,
+                )}`;
+            }
+        }
+        // A verse is in the Testament its book is in (BN-114): "The New
+        // Testament tells us ... [Isaiah 53:5]", the quote itself right.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteTestamentChecked !== true
+        ) {
+            const slips = findTestamentSlips(toNoteChangeWords(lyricEditArgs));
+            if (slips.length > 0) {
+                watch.isNoteTestamentChecked = true;
+                return `Tool refused: ${genTestamentSlipRefusal(slips)}`;
+            }
+        }
+        // A token is never a sentence's words (BN-120): "Jesus, who
+        // [^John 1:14]." was left with nothing where the verse's words were
+        // meant to be.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteTokenWordsChecked !== true
+        ) {
+            const found = findTokenAsWords(toNoteChangeWords(lyricEditArgs));
+            if (found.length > 0) {
+                watch.isNoteTokenWordsChecked = true;
+                return `Tool refused: ${genTokenAsWordsRefusal(found)}`;
+            }
+        }
+        // ...and a quote given its own chapter and verse is that verse's
+        // words, read now (BN-110): Matthew 11:28 had been quoted from
+        // memory as "weary and heavy laden", John 5:30's words as 6:38.
+        if (
+            lyricEditArgs.action === 'edit' &&
+            watch.noteQuoteSources !== null &&
+            watch.noteQuoteSources !== undefined &&
+            watch.isNoteCitedQuoteChecked !== true
+        ) {
+            // The quotes written from memory first, never cut at the
+            // lesson's eighth (BN-132).
+            const changeWords: string = toNoteChangeWords(lyricEditArgs);
+            const allCitedList = findCitedQuotes(changeWords);
+            const citedList = pickCitedQuotesToRead(
+                allCitedList,
+                watch.noteQuoteSources,
+            );
+            // ...and the passage's own words given another verse's name,
+            // which BN-113 lets be as quotes (BN-160: "the water of life
+            // freely [John 4:14]" in a Revelation 21 funeral message).
+            const candidateList =
+                watch.isCitedMisattributionSaid === true
+                    ? []
+                    : pickMisattributionCandidates(
+                          allCitedList,
+                          watch.noteQuoteSources,
+                      );
+            if (citedList.length > 0 || candidateList.length > 0) {
+                const verseTextMap = await readCitedVerseTexts(
+                    [
+                        ...new Set(
+                            [...citedList, ...candidateList].map((cited) => {
+                                return cited.ref;
+                            }),
+                        ),
+                    ],
+                    signal,
+                    watch,
+                );
+                const misquotes = findCitedMisquotes(
+                    citedList,
+                    verseTextMap,
+                    // A quote of what this ask read is that text's words
+                    // (BN-113), whatever it names beside it.
+                    watch.noteQuoteSources,
+                );
+                if (misquotes.length > 0) {
+                    watch.isNoteCitedQuoteChecked = true;
+                    return `Tool refused: ${genCitedMisquoteRefusal(misquotes)}`;
+                }
+                const sentenceList = changeWords
+                    .split(/\n+|(?<=[.!?]|[.!?]["”»])\s+/)
+                    .map((sentence) => {
+                        return sentence.trim();
+                    });
+                watch.citedMisattributionList = findCitedMisattributions(
+                    candidateList,
+                    verseTextMap,
+                    watch.noteQuoteSources,
+                ).flatMap((item) => {
+                    const sentence = sentenceList.find((one) => {
+                        return one.includes(item.quote);
+                    });
+                    return sentence === undefined
+                        ? []
+                        : [{ ...item, sentence }];
+                });
+            }
+        }
     }
     // In a note conversation, how the note EDITOR works is its own guide's,
     // whose pages answer only a search aimed at the Bible Note window.
@@ -3378,6 +6984,30 @@ async function runMcpToolCall(
             return `Tool refused: ${MODEL_REMOVAL_REFUSAL}`;
         }
         watch.removalCount += 1;
+    }
+    // A new lesson's first read of its passage reads the verses just before
+    // it too, for the background (BN-89, 2026-11-11): told to, the model did
+    // in about half the lessons, and the rest made their background up.
+    let versesBeforeRef: string | null = null;
+    let lessonPassage: string | null = null;
+    let isLessonPassageRead = false;
+    if (
+        name === VERSE_FIND_TOOL_NAME &&
+        watch.isBlankLesson &&
+        watch.isLessonBeforeRead !== true &&
+        typeof args?.refs === 'string'
+    ) {
+        watch.isLessonBeforeRead = true;
+        isLessonPassageRead = true;
+        // Read on their own once the passage is (BN-100), so the passage
+        // keeps its whole budget and they theirs -- before the passage they
+        // NAMED, when this read is in its book (BN-105).
+        lessonPassage = pickVersesBeforePassage(
+            watch.lessonNamedPassage ?? null,
+            args.refs,
+        );
+        versesBeforeRef = findVersesBeforeRef(lessonPassage);
+        watch.lessonReadPassage = lessonPassage;
     }
     // The page in the language the answer is written in (`pageLang`). The
     // watch keeps the id as the model gave it: it names the recipe.
@@ -3392,19 +7022,81 @@ async function runMcpToolCall(
               : checkReadsInRecordBible(watch, name, args)
                 ? { ...args, bible: watch.quoteBible }
                 : (args ?? {});
+    // What the watch reads the call by: the model's own args, with the
+    // action the window filled in (a note edit sent with `changes` alone
+    // was done and then not counted, and the answer was sent back as a
+    // claim of a change nothing made -- 2026-11-10).
+    const watchedArgs =
+        lyricEditArgs !== null &&
+        args?.action === undefined &&
+        lyricEditArgs.action !== undefined
+            ? { ...(args ?? {}), action: lyricEditArgs.action }
+            : args;
     // A Resources file comes back with its pages as PICTURES, which go to
     // the model after this round's tool results (`watch.pictures`) -- or,
     // to a model that cannot see them, are left out with a sentence saying
     // so rather than sent and refused with a 400.
     if (name === RESOURCES_TOOL_NAME) {
+        // A study file is saved, and previewed, by the person's press on the
+        // card the window draws under the answer -- never by the model.
+        if (args?.action === 'save' || args?.action === 'preview') {
+            return `Tool refused: ${STUDY_SAVE_MODEL_REFUSAL}`;
+        }
+        // A study named by its file name alone is the one the tab has open,
+        // never a copy of that name in the other folder (EC-706).
+        const studyArgs = pinOpenStudyFile(
+            args,
+            watch.openStudyFiles,
+            toReachableNewStudy(watch),
+        );
+        if (args?.action === 'draft') {
+            return await runStudyDraft(studyArgs, watch, signal);
+        }
+        if (args?.action === 'translate') {
+            // A new study the card holds, not saved yet, is translated from
+            // its held words into a card of its own (EC-606, EC-609).
+            const held = findHeldStudyToTranslate(
+                studyArgs,
+                toReachableNewStudy(watch),
+                watch.openStudyFiles,
+            );
+            if (held !== null) {
+                markHeldStudyBeforeReached(watch);
+            }
+            return await runStudyTranslate(studyArgs, watch, signal, held);
+        }
+        // The new study the card holds is read off its words (EC-604, and
+        // the card above the ask's, EC-606).
+        const heldRead =
+            args?.action === 'read'
+                ? readHeldNewStudy(
+                      studyArgs,
+                      toReachableNewStudy(watch),
+                      watch.openStudyFiles,
+                  )
+                : null;
+        if (heldRead !== null) {
+            markHeldStudyBeforeReached(watch);
+            const heldBlock = toReadStudyBlock(heldRead);
+            if (heldBlock !== null) {
+                watch.shownStudyBlocks.push(heldBlock);
+            }
+            return heldRead;
+        }
         try {
             const { text, pictures } = await callToolWithPictures(
                 name,
-                calledArgs,
+                studyArgs === args ? calledArgs : studyArgs,
                 signal,
                 watch.windowAim,
             );
             applyToolWatch(watch, name, args, text);
+            // A study file read is a part of it the model has seen (EC-500).
+            const readBlock =
+                args?.action === 'read' ? toReadStudyBlock(text) : null;
+            if (readBlock !== null) {
+                watch.shownStudyBlocks.push(readBlock);
+            }
             if (pictures.length === 0) {
                 return text;
             }
@@ -3420,6 +7112,23 @@ async function runMcpToolCall(
         } catch (error: any) {
             throwIfCancelled(signal);
             return `Tool error: ${error.message}`;
+        }
+    }
+    // A NEW Bible note is held for the person to choose what it is kept as
+    // -- a Bible note or a Markdown file (EC-581) -- unless they pressed for
+    // one, or the ask is about a note they attached.
+    if (
+        name === 'owa_bible_note' &&
+        args?.action === 'add' &&
+        watch.noteFiles === null &&
+        watch.createKind !== 'note'
+    ) {
+        if (watch.draftedStudy !== null && !watch.draftedStudy.isChange) {
+            return `Tool refused: ${NOTE_BESIDE_DRAFT_REFUSAL}`;
+        }
+        const held = await holdNewNote(args, watch, signal);
+        if (held !== null) {
+            return held;
         }
     }
     // A record is read in the window its panel is in, where the dataset is
@@ -3446,8 +7155,384 @@ async function runMcpToolCall(
             throwIfCancelled(signal);
             text = await callTool(name, calledArgs, signal, watch.windowAim);
         }
-        applyToolWatch(watch, name, args, text);
-        return text;
+        if (versesBeforeRef !== null && !text.startsWith('Tool ')) {
+            const before = await readVersesBefore(
+                versesBeforeRef,
+                args,
+                signal,
+                watch,
+            );
+            versesBeforeRef = before?.ref ?? null;
+            text = before === null ? text : withVerseReadEntry(text, before);
+        }
+        applyToolWatch(watch, name, watchedArgs, text);
+        // The note as this change left it, read once for every note said
+        // under it (BN-226: the second look reads it too).
+        let changedBlocks: Awaited<ReturnType<typeof readNoteBlocks>> = null;
+        const readChangedBlocks = async () => {
+            changedBlocks ??= await readNoteBlocks(
+                lyricEditArgs?.file,
+                lyricEditArgs?.id,
+                signal,
+                watch,
+            );
+            return changedBlocks ?? [];
+        };
+        // Put into a language no installed Bible is in, the verses stayed
+        // where they were: the answer says so, once (BN-133).
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            watch.noteTranslate !== null &&
+            watch.noteTranslate !== undefined &&
+            watch.noteTranslateBible === null &&
+            watch.isNoteTranslateNoBibleSaid !== true &&
+            /"isChanged"\s*:\s*true/.test(text)
+        ) {
+            watch.isNoteTranslateNoBibleSaid = true;
+            text = `${text}\n${genNoteTranslateNoBibleNote(watch.noteTranslate.name)}`;
+        }
+        // ...and what the change left out of the language is said under it,
+        // for one more edit (BN-134).
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            typeof watch.noteTranslateLeftText === 'string' &&
+            /"isChanged"\s*:\s*true/.test(text)
+        ) {
+            text = `${text}\n${watch.noteTranslateLeftText}`;
+            watch.noteTranslateLeftText = null;
+            watch.isNoteTranslateChecked = true;
+        }
+        // ...and the KJV's words the window put in a quotation (BN-137).
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            typeof watch.kjvWordingText === 'string' &&
+            /"isChanged"\s*:\s*true/.test(text)
+        ) {
+            text = `${text}\n${watch.kjvWordingText}`;
+            watch.kjvWordingText = null;
+        }
+        // ...and a child's memory verse too long to say (BN-143), twice an
+        // ask at most.
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            typeof watch.childMemoryVerseText === 'string' &&
+            /"isChanged"\s*:\s*true/.test(text)
+        ) {
+            // By the block it is in now, read off the note (BN-175).
+            const memoryBlock = findMemoryVerseBlock(await readChangedBlocks());
+            text = `${text}\n${withMemoryVerseBlock(
+                watch.childMemoryVerseText,
+                memoryBlock,
+            )}`;
+            watch.childMemoryVerseText = null;
+            watch.childMemoryVerseRefusals =
+                (watch.childMemoryVerseRefusals ?? 0) + 1;
+        }
+        // ...and a sermon's detail it holds (BN-142) and an example set in a
+        // hospital (BN-150), each by the block it is in now, the note read
+        // once by the window (BN-152: told only the words, the model counted
+        // its own lines and wrote its new scene over the line above).
+        // A new lesson's first write read once more, by the model in an ask
+        // of its own, against the verses this ask read (BN-226): what it
+        // finds is named the way a legend is, for one more edit. A look that
+        // fails is no answer -- the lesson is as written.
+        let factList: LessonLegendFoundType[] = [];
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            /"isChanged"\s*:\s*true/.test(text) &&
+            watch.isBlankLesson === true &&
+            watch.isFactChecked !== true &&
+            typeof watch.checkLessonFacts === 'function' &&
+            checkHasPassageRead(
+                watch.noteQuoteSources ?? [],
+                Array.isArray(lyricEditArgs?.changes)
+                    ? readLessonPassageRef(lyricEditArgs.changes)
+                    : null,
+            )
+        ) {
+            watch.isFactChecked = true;
+            const factBlocks = await readChangedBlocks();
+            const factAsk = genLessonFactCheckAsk(
+                factBlocks,
+                watch.noteQuoteSources ?? [],
+            );
+            if (factAsk !== null) {
+                try {
+                    factList = readLessonFactFindings(
+                        await watch.checkLessonFacts(factAsk),
+                        factBlocks,
+                    );
+                } catch (error) {
+                    if (signal?.aborted || checkIsSpendLimitError(error)) {
+                        throw error;
+                    }
+                }
+            }
+        }
+        const legendList =
+            name === NOTE_EDIT_TOOL_NAME && /"isChanged"\s*:\s*true/.test(text)
+                ? [
+                      ...(watch.lessonLegendList ?? []),
+                      ...factList.filter((fact) => {
+                          return !(watch.lessonLegendList ?? []).some(
+                              (legend) => legend.sentence === fact.sentence,
+                          );
+                      }),
+                  ]
+                : [];
+        const hospitalList =
+            name === NOTE_EDIT_TOOL_NAME && /"isChanged"\s*:\s*true/.test(text)
+                ? (watch.hospitalExampleList ?? [])
+                : [];
+        const christList =
+            name === NOTE_EDIT_TOOL_NAME && /"isChanged"\s*:\s*true/.test(text)
+                ? (watch.christVerseList ?? [])
+                : [];
+        const misattributionList =
+            name === NOTE_EDIT_TOOL_NAME && /"isChanged"\s*:\s*true/.test(text)
+                ? (watch.citedMisattributionList ?? [])
+                : [];
+        watch.lessonLegendList = null;
+        watch.hospitalExampleList = null;
+        watch.christVerseList = null;
+        watch.citedMisattributionList = null;
+        if (
+            legendList.length > 0 ||
+            hospitalList.length > 0 ||
+            christList.length > 0 ||
+            misattributionList.length > 0
+        ) {
+            const blocks = await readChangedBlocks();
+            // A named line in a block that holds more: the note quotes the
+            // block, and a fix that leaves only the line is refused (BN-157).
+            const fixList: LineFixBlockType[] = [];
+            const addLineFixes = (
+                lineList: readonly string[],
+                numberList: readonly (number | null)[],
+            ) => {
+                lineList.forEach((line, index) => {
+                    const fix = toLineFixBlock(
+                        blocks,
+                        numberList[index] ?? null,
+                        line,
+                    );
+                    if (
+                        fix !== null &&
+                        !fixList.some((item) => {
+                            return item.n === fix.n;
+                        })
+                    ) {
+                        fixList.push(fix);
+                    }
+                });
+            };
+            if (legendList.length > 0) {
+                const lineList = legendList.map((legend) => {
+                    return legend.sentence;
+                });
+                const numberList = findBlockNumbers(blocks, lineList);
+                text =
+                    `${text}\n` + genLessonLegendNote(legendList, numberList);
+                addLineFixes(lineList, numberList);
+                watch.isLessonLegendSaid = true;
+                watch.lessonLegendSaidLines = lineList;
+            }
+            if (hospitalList.length > 0) {
+                text =
+                    `${text}\n` +
+                    genHospitalExampleNote(
+                        hospitalList,
+                        findBlockNumbers(blocks, hospitalList),
+                    );
+                watch.isHospitalExampleSaid = true;
+            }
+            if (christList.length > 0) {
+                // The verses read in one call (BN-148); one that cannot be
+                // read is not named.
+                const verseTextMap = await readCitedVerseTexts(
+                    [
+                        ...new Set(
+                            christList.map((item) => {
+                                return item.ref;
+                            }),
+                        ),
+                    ],
+                    signal,
+                    watch,
+                );
+                const withVerseList = christList.flatMap((item) => {
+                    const verse = verseTextMap.get(item.ref);
+                    return verse === undefined ? [] : [{ ...item, verse }];
+                });
+                const lineList = withVerseList.map((item) => {
+                    return item.sentence;
+                });
+                const numberList = findBlockNumbers(blocks, lineList);
+                const note = genChristVerseNote(withVerseList, numberList);
+                if (note !== null) {
+                    text = `${text}\n${note}`;
+                    addLineFixes(lineList, numberList);
+                }
+                watch.isChristVerseSaid = true;
+            }
+            if (misattributionList.length > 0) {
+                const lineList = misattributionList.map((item) => {
+                    return item.sentence;
+                });
+                const numberList = findBlockNumbers(blocks, lineList);
+                const note = genCitedMisattributionNote(
+                    misattributionList,
+                    numberList,
+                );
+                if (note !== null) {
+                    text = `${text}\n${note}`;
+                    addLineFixes(lineList, numberList);
+                }
+                watch.isCitedMisattributionSaid = true;
+            }
+            for (const fix of fixList) {
+                text = `${text}\n${genWholeBlockNote(fix)}`;
+            }
+            if (fixList.length > 0) {
+                watch.lineFixBlocks = [
+                    ...(watch.lineFixBlocks ?? []),
+                    ...fixList,
+                ];
+            }
+        } else if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            /"isChanged"\s*:\s*true/.test(text) &&
+            watch.isLessonLegendSaid === true &&
+            watch.isLessonLegendLeftChecked !== true &&
+            (watch.lessonLegendSaidLines?.length ?? 0) > 0
+        ) {
+            // The edit after a legend's note, read once more: a line it
+            // named and left is named again, once an ask (BN-191, ab52).
+            watch.isLessonLegendLeftChecked = true;
+            const blocks =
+                (await readNoteBlocks(
+                    lyricEditArgs?.file,
+                    lyricEditArgs?.id,
+                    signal,
+                    watch,
+                )) ?? [];
+            const noteText = blocks
+                .map((block) => {
+                    return block.text;
+                })
+                .join('\n');
+            const leftList = findLessonLegendsLeft(
+                noteText,
+                watch.lessonLegendSaidLines ?? [],
+            );
+            if (leftList.length > 0) {
+                text =
+                    `${text}\n` +
+                    genLessonLegendNote(
+                        leftList,
+                        findBlockNumbers(
+                            blocks,
+                            leftList.map((item) => {
+                                return item.sentence;
+                            }),
+                        ),
+                        true,
+                    );
+            }
+            // ...and a line the edit wrote in a named one's place (BN-288).
+            const newList = findLessonLegendsNew(
+                noteText,
+                watch.lessonLegendSaidLines ?? [],
+            );
+            if (newList.length > 0) {
+                text =
+                    `${text}\n` +
+                    genLessonLegendNote(
+                        newList,
+                        findBlockNumbers(
+                            blocks,
+                            newList.map((item) => {
+                                return item.sentence;
+                            }),
+                        ),
+                    );
+            }
+        }
+        // A new lesson's first write read for the parts it left out
+        // (BN-197, ab54: a children's lost sheep ended at its memory verse,
+        // no Pointing to Jesus, response, prayer or questions), named with
+        // the block each goes after, once an ask.
+        if (
+            name === NOTE_EDIT_TOOL_NAME &&
+            /"isChanged"\s*:\s*true/.test(text) &&
+            watch.isBlankLesson === true &&
+            watch.isLessonPartsChecked !== true &&
+            // Read off the change first: the note is read for the blocks
+            // only when the change itself left a part out.
+            findMissingLessonParts(
+                String(toLessonChangeText(lyricEditArgs))
+                    .split('\n')
+                    .map((line: string, index: number) => {
+                        const heading = /^\s*#{1,6}\s+(.*)$/.exec(line);
+                        return {
+                            n: index + 1,
+                            kind: heading === null ? 'paragraph' : 'h2',
+                            text: heading === null ? line : heading[1],
+                        };
+                    }),
+            ).length > 0
+        ) {
+            watch.isLessonPartsChecked = true;
+            const gapList = findMissingLessonParts(
+                (await readNoteBlocks(
+                    lyricEditArgs?.file,
+                    lyricEditArgs?.id,
+                    signal,
+                    watch,
+                )) ?? [],
+            );
+            if (gapList.length > 0) {
+                text = `${text}\n${genMissingLessonPartsNote(gapList)}`;
+            }
+        }
+        // A later read, in a new lesson on a psalm from its first verse, of
+        // the psalm before it (BN-279): never the Background.
+        if (
+            !isLessonPassageRead &&
+            name === VERSE_FIND_TOOL_NAME &&
+            watch.isBlankLesson &&
+            typeof args?.refs === 'string' &&
+            !text.startsWith('Tool ')
+        ) {
+            const note = genPreviousPsalmReadNote(
+                args.refs,
+                watch.lessonReadPassage ?? null,
+            );
+            if (note !== null) {
+                return `${note}\n${text}`;
+            }
+        }
+        if (!isLessonPassageRead || text.startsWith('Tool ')) {
+            return text;
+        }
+        // What the verses before are for, and the words of the passage
+        // Scripture itself explains (BN-91: the hundred pence had been "a
+        // day's wage" from memory in three runs of four).
+        // ...and a psalm's title, which no read shows (BN-147): its
+        // background told from Scripture's words, never from memory.
+        const psalmTitles = /"bible"\s*:\s*"KJV"/.test(text)
+            ? await loadPsalmTitles(readPsalmChapters(lessonPassage ?? ''))
+            : [];
+        const lessonNotes = [
+            versesBeforeRef === null
+                ? genPsalmOwnSettingNote(lessonPassage)
+                : genVersesBeforeNote(versesBeforeRef, lessonPassage),
+            genPsalmTitleNote(psalmTitles),
+            genLessonWordGlossNote(findLessonWordGlosses(text)),
+        ].filter((note) => note !== null);
+        return lessonNotes.length === 0
+            ? text
+            : `${lessonNotes.join('\n')}\n${text}`;
     } catch (error: any) {
         // ...except a stop, which is not a lookup the model can route around.
         // Handed back as text it would answer around it, spending another
@@ -3537,6 +7622,14 @@ export function getFirstImageCapableModel(provider: LlmProviderType | null) {
  * `null` is which.
  */
 export type AskExtraType = {
+    /**
+     * Which try of a **Retry** under an answer this ask is (1 for the first
+     * retry), unset for every other ask. The window puts the different
+     * APPROACH on the ask's words; here it is the EFFORT -- a step up each
+     * provider's own dial (`answerRetryHelpers`). The window's own sub-asks
+     * (a translation) never carry it.
+     */
+    retryAttempt?: number;
     // Pictures the USER attached. Never fetched by the model -- there is no
     // screenshot tool in its list -- so this is the only way an image enters
     // the conversation, which is what keeps a question that needs no picture
@@ -3626,7 +7719,7 @@ export type AskExtraType = {
     // line at the end of the ask. Given by a caller that knows what the
     // person said; otherwise read off `askedText`, and with neither the ask
     // is left as it is -- a question the window composed itself (a verse put
-    // into English) must not be told to come back in Khmer.
+    // into English) must not be told to come back in another language.
     replyLang?: string;
     /**
      * Told what each model round USED, the moment its response lands --
@@ -3658,6 +7751,41 @@ export type AskExtraType = {
      * room for a whole answer in a script that costs several tokens a word.
      */
     isTranslation?: boolean;
+    /**
+     * Words read off PICTURES of a document's pages, for a song made from it
+     * (`lyricDocumentChatHelpers.ts`): asked with `isGeneral` and
+     * `isTranslation` too -- one round, no tools, and none of the cleaning
+     * an answer shown to a person gets, since these words go to the song
+     * drafter as they are -- under `TRANSCRIPTION_SYSTEM_PROMPT`.
+     */
+    isTranscription?: boolean;
+    /**
+     * A new lesson read against the verses its ask read (BN-226,
+     * `lessonFactCheckHelpers.ts`): one round, no tools, no history, under
+     * `FACT_CHECK_SYSTEM_PROMPT`, its JSON answer returned as written.
+     */
+    isFactCheck?: boolean;
+    /**
+     * An ask that may WRITE a whole document in one call -- a note
+     * conversation, or a lesson asked for anywhere (2026-11-10, the goal
+     * _chatbot completely smart enough to help prepare a best preaching
+     * lesson_). Set by `askLlmBot` itself. A server of the user's own (the
+     * shared gemma4:cloud Auto asks first among them) answers within
+     * `MAX_TOKENS`, a help answer's 2 000, and a sermon written into a tool
+     * call is longer than that: it gets `LONG_WRITE_MAX_TOKENS`.
+     */
+    isLongWrite?: boolean;
+    /**
+     * The window's translator, for a study file translated part by part
+     * (EC-478): one round, no tools, a Gemma 4 when one answers at no cost.
+     * Offered to every ask; used only by `owa_resource_file translate`.
+     */
+    translateText?: StudyTextTranslatorType;
+    /**
+     * The language package whose offer was declined with **Not now**
+     * (EC-494): this ask translates into it without its words, as before.
+     */
+    skipLangOffer?: string;
     /**
      * A verse somebody half-remembers, looked for in the installed Bible
      * `bible` (`verseFindChatHelpers.ts`): asked under a short prompt of its
@@ -3698,7 +7826,7 @@ export type AskExtraType = {
     // verse and needs nothing looked up -- ONE round, the tools withheld
     // (2026-10-23: three lessons in fifteen read the verse again anyway,
     // three rounds and ~16k tokens where one round is ~5k, and two of them
-    // quoted the tool's English reference into a Khmer answer).
+    // quoted the tool's English reference into a translated answer).
     lookup?: {
         page: string | null;
         record?: string;
@@ -3769,6 +7897,74 @@ export type AskExtraType = {
         files: FlowAskFileType[];
     };
     /**
+     * A question about the FOREGROUND (`foregroundChatHelpers.ts`): a
+     * session of a component attached to the tab, or a typed question naming
+     * a component. The ask carries each attached session as it reads now,
+     * and it goes out under `FOREGROUND_SYSTEM_PROMPT` with
+     * `owa_foreground_edit` -- offered to no other question. `asks`: what
+     * a `session` the model names is turned into.
+     */
+    foreground?: {
+        asks: ForegroundAskType[];
+        /**
+         * The asks are the panels' CURRENT sessions read for a line naming
+         * a component, none of them attached: a `start` then names none of
+         * them, so new words never go over what a person typed (EC-523).
+         */
+        isCurrentOnly?: boolean;
+    };
+    /**
+     * A question about the SCREENS' own controls (`screenChatHelpers.ts`):
+     * words about one, or a line under a screen answer (`isThread`). The
+     * ask carries the screens as they read now, and it goes out under
+     * `SCREEN_SYSTEM_PROMPT` with `owa_screen_edit` -- offered to no other
+     * question.
+     */
+    screen?: {
+        isThread?: boolean;
+    };
+    /**
+     * An ask for a STUDY FILE (`studyFileChatHelpers.ts`, EC-464), from any
+     * tab: under `STUDY_SYSTEM_PROMPT` with the `study` tools. `verseLang`:
+     * the language asked in, when not English -- the passage and its verses
+     * are quoted from an installed Bible in it (`findNoteVerseBible`).
+     */
+    study?: {
+        verseLang?: string;
+    };
+    /**
+     * The kind of thing the person PRESSED for -- an option or a chip
+     * naming a Bible note or a Markdown file (`readPressedCreateKind`,
+     * EC-581): what the model makes new is made as that, with no card
+     * asking again. Unset, a new note is held for them to choose.
+     */
+    createKind?: CreateKindType;
+    /**
+     * The tab's newest answer as the person read it
+     * (`findStudyAnswerAbove`): asked to keep it as a study file, the model
+     * drafts with `content` (or `append`) `@answer` and this goes in, word
+     * for word (EC-466) -- never sent to the model.
+     */
+    answerAbove?: string;
+    /**
+     * The person's own line that answer answered (`findStudyAnswerQuestion`):
+     * an answer kept at a study's end goes under it as a heading (EC-704).
+     */
+    answerAboveQuestion?: string;
+    /**
+     * The words were read as keeping that answer as a study file, as it is
+     * (`readKeepAnswerAsk`): the ask carries `STUDY_KEEP_ANSWER_HINT`, and
+     * a draft gets the answer whatever the model wrote as its text.
+     */
+    keepAnswer?: boolean;
+    /**
+     * The NEW study the card right above the question holds
+     * (`findHeldStudyAbove`, EC-606): the ask is offered the study tool and
+     * told its name and headings, a part of it is changed into a card of its
+     * own, and a read of it brings its card back under the answer.
+     */
+    heldStudy?: DraftedStudyType;
+    /**
      * A question about a BIBLE NOTE attached to the tab
      * (`noteChatHelpers.ts`): the ask carries each note as it reads now, as
      * numbered blocks, and it goes out under `NOTE_SYSTEM_PROMPT` with
@@ -3778,6 +7974,21 @@ export type AskExtraType = {
      */
     note?: {
         files: NoteAskFileType[];
+        // The language the question was asked in, when not English
+        // (`ToolWatchType.noteVerseLang`).
+        verseLang?: string;
+        // What they typed, as typed (`ToolWatchType.noteTyped`).
+        typed?: string;
+        // The ONE attached note holds nothing: its empty blocks
+        // (`ToolWatchType.blankNoteBlockCount`).
+        blankBlockCount?: number;
+        // The ONE attached note is loose lines to finish as a lesson:
+        // their words and how many blocks they are (`readNoteRewrite`).
+        rewrite?: NoteRewriteType;
+        // Its words are being REPLACED with this language (BN-133): its
+        // verses are read from an installed Bible in it
+        // (`ToolWatchType.noteTranslate`).
+        translate?: { code: string; name: string };
     };
 };
 
@@ -3943,7 +8154,8 @@ const LOOKUP_SYSTEM_PROMPT =
     'only as the record or a tool read returned it: never translate one ' +
     'yourself, and never write one from memory. When they ask what they can ' +
     'do with the record, name the button under it that does it and say ' +
-    `pressing it is theirs. ${NOTE_CREATE_PROMPT} Answer in the language ` +
+    `pressing it is theirs. ${NOTE_CREATE_PROMPT} ${STUDY_FILE_PROMPT} ` +
+    'Answer in the language ' +
     'they write in; do not describe any other part of the app or offer a ' +
     'walkthrough.';
 
@@ -3956,8 +8168,31 @@ const TRANSLATION_SYSTEM_PROMPT =
     'and answer with the translation alone: no greeting, no explanation, no ' +
     'notes, no quote marks round it.';
 
+/**
+ * Reading a song's words off pictures of a document's pages, for a song made
+ * from it (2026-11-10, the user: _for document that unable to extract text
+ * the mcp should convert to image then send image to llm to extract text_).
+ * The words go to the song drafter as they come back, so the answer is the
+ * words alone, in the script printed -- never translated, never tidied.
+ */
+export const TRANSCRIPTION_SYSTEM_PROMPT =
+    'You read the words of a song off pictures of its slides or pages, for ' +
+    'Open Worship, a church presentation app. Copy every sung line exactly ' +
+    'as printed, in the letters it is printed in: never translate, correct, ' +
+    'explain or add a word. One line of the song per line, a blank line ' +
+    'between stanzas. Leave out titles, slide numbers, page numbers and ' +
+    'copyright lines. Before the words of each picture write its marker ' +
+    'line, === picture N ===, and nothing else. A picture with no words: ' +
+    'its marker line and nothing under it.';
+
 /** The system prompt an ask goes out with: the app's, or one of its own. */
 function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
+    if (extra?.isTranscription) {
+        return TRANSCRIPTION_SYSTEM_PROMPT;
+    }
+    if (extra?.isFactCheck) {
+        return FACT_CHECK_SYSTEM_PROMPT;
+    }
     if (extra?.isWaitingInput) {
         return (
             'Interpret the person’s reply to the app’s waiting question. ' +
@@ -3995,8 +8230,17 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     if (extra?.flow !== undefined) {
         return FLOW_SYSTEM_PROMPT;
     }
+    if (extra?.foreground !== undefined) {
+        return FOREGROUND_SYSTEM_PROMPT;
+    }
+    if (extra?.screen !== undefined) {
+        return SCREEN_SYSTEM_PROMPT;
+    }
     if (extra?.note !== undefined) {
         return NOTE_SYSTEM_PROMPT;
+    }
+    if (extra?.study !== undefined) {
+        return STUDY_SYSTEM_PROMPT;
     }
     return genSystemPrompt(
         focus,
@@ -4017,16 +8261,23 @@ function genKeepMarkersText(languageName: string) {
 const SEARCH_IN_ENGLISH_TEXT =
     'The guide is in English: search it with English words.';
 // The screen is in the APP's language, whatever they wrote in: told to answer
-// a Spanish question in French, a model renamed the Font Size slider in
-// French, a name nothing on that English screen carries (2026-11-03).
+// a Spanish question in another Latin-script language, a model renamed the
+// Font Size slider in it, a name nothing on that English screen carries
+// (2026-11-03).
 const BUTTON_NAMES_TEXT =
     'Name every button and menu exactly as the tools and the guide give ' +
     'it: that is how their screen shows it.';
+// A question in English where the app, or the tab's answers, are in another
+// language (`genAskLanguageLine`).
+const ENGLISH_REPLY_LINE =
+    '(They wrote in English: answer this one in English, with the ' +
+    'button names exactly as the tools give them.)';
 
 /**
  * The line at the very end of an ask that says which language to answer in.
  * Nothing at all for English asked in an English app, so that request is
- * the one it always was. In the USER turn and never the system prompt: the
+ * the one it always was -- unless the tab's answers are in another language
+ * (`genAskLanguageLine`). In the USER turn and never the system prompt: the
  * prompt is a cached prefix, and the language of a question changes from one
  * question to the next. Any language a person may type is named
  * (an installed language's `typed.json`); a script nobody here knows is "the language they
@@ -4048,10 +8299,7 @@ export function genReplyLanguageLine(replyLang: string, appLang: string) {
         return `(Answer in ${name}.)`;
     }
     if (replyLang === DEFAULT_CHAT_LANG_CODE) {
-        return (
-            '(They wrote in English: answer this one in English, with the ' +
-            'button names exactly as the tools give them.)'
-        );
+        return ENGLISH_REPLY_LINE;
     }
     return (
         `(They wrote in ${name}: answer in ${name}. ${BUTTON_NAMES_TEXT} ` +
@@ -4059,18 +8307,51 @@ export function genReplyLanguageLine(replyLang: string, appLang: string) {
     );
 }
 
-function toAskWithLanguage(
-    asked: string,
+/**
+ * The language line an ask ends with (`genReplyLanguageLine`). English
+ * asked in an English app is told so when an answer the model is shown
+ * with it, or the passage it is about, is in another language (EC-510,
+ * EC-496): `checkIsAfterOtherLanguage`, asked only then. Never on a
+ * translation's sub-ask or a waiting reply, whose language the window sets
+ * itself.
+ */
+export function genAskLanguageLine(
     extra: AskExtraType | undefined,
     appLang: string,
+    checkIsAfterOtherLanguage: () => boolean,
 ) {
     if (extra?.replyLang === undefined && extra?.askedText === undefined) {
-        return asked;
+        return '';
     }
     const replyLang =
         extra?.replyLang ??
         pickReplyLanguage(extra?.askedText ?? '', { appLangCode: appLang });
     const line = genReplyLanguageLine(replyLang, appLang);
+    if (
+        line.length > 0 ||
+        extra?.isTranslation === true ||
+        extra?.isWaitingInput === true
+    ) {
+        return line;
+    }
+    return checkIsAfterOtherLanguage() ? ENGLISH_REPLY_LINE : '';
+}
+
+function toAskWithLanguage(
+    asked: string,
+    extra: AskExtraType | undefined,
+    appLang: string,
+    historyTurns: ChatTurnType[],
+) {
+    const line = genAskLanguageLine(extra, appLang, () => {
+        // A passage chat's or a word study's passage, as its own Bible
+        // writes it (`AnswerKeepType`).
+        return checkIsEnglishAfterOtherLanguage(
+            extra?.askedText ?? '',
+            historyTurns,
+            extra?.answerKeep?.scriptText,
+        );
+    });
     return line.length === 0 ? asked : `${asked}\n\n${line}`;
 }
 
@@ -4199,6 +8480,7 @@ async function askAnthropicCompatible(
     if (anthropic === null) {
         throw new Error(`${provider.label} is not available`);
     }
+    const retryEffort = toAnthropicRetryEffort(model, extra?.retryAttempt);
     const anthropicTools = tools.map((tool) => {
         return {
             name: tool.name,
@@ -4273,11 +8555,19 @@ async function askAnthropicCompatible(
                       ? LYRIC_MAX_TOOL_ROUNDS
                       : extra?.flow !== undefined
                         ? FLOW_MAX_TOOL_ROUNDS
-                        : extra?.slide !== undefined
-                          ? SLIDE_MAX_TOOL_ROUNDS
-                          : extra?.note !== undefined
-                            ? NOTE_MAX_TOOL_ROUNDS
-                            : MAX_TOOL_ROUNDS;
+                        : extra?.foreground !== undefined
+                          ? FOREGROUND_MAX_TOOL_ROUNDS
+                          : extra?.screen !== undefined
+                            ? SCREEN_MAX_TOOL_ROUNDS
+                            : extra?.slide !== undefined
+                              ? SLIDE_MAX_TOOL_ROUNDS
+                              : extra?.note !== undefined
+                                ? watch.isBlankLesson === true
+                                    ? NOTE_LESSON_MAX_TOOL_ROUNDS
+                                    : NOTE_MAX_TOOL_ROUNDS
+                                : extra?.study !== undefined
+                                  ? STUDY_MAX_TOOL_ROUNDS
+                                  : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4294,7 +8584,18 @@ async function askAnthropicCompatible(
             response = await anthropic.messages.create(
                 {
                     model,
-                    max_tokens: ANTHROPIC_MAX_TOKENS,
+                    max_tokens: toRetryMaxTokens(
+                        ANTHROPIC_MAX_TOKENS,
+                        extra?.retryAttempt,
+                    ),
+                    // A Retry only: one step above the model's default
+                    // effort a try (`toAnthropicRetryEffort`). An ordinary
+                    // ask sends none -- the default is what the corpus was
+                    // graded at. The tools and system blocks it reads from
+                    // the cache are unchanged by it.
+                    ...(retryEffort === null
+                        ? {}
+                        : { output_config: { effort: retryEffort } }),
                     cache_control: { type: 'ephemeral' },
                     system: systemBlockList,
                     // Nothing left to look up: answer with what you have. The
@@ -4515,12 +8816,7 @@ async function askAnthropicCompatible(
         }
         messages.push({ role: 'user', content: toolResults });
     }
-    return {
-        text: tran(
-            'I looked several things up but could not settle on an answer. ' +
-                'Try asking about one step at a time.',
-        ),
-    };
+    return genOutOfRoundsAnswer(watch);
 }
 
 /**
@@ -4528,7 +8824,7 @@ async function askAnthropicCompatible(
  * (EC-211), by provider and model, with when that stops being assumed. Every
  * one of them is then asked with thinking off from its FIRST round, for half
  * an hour: measured 2026-10-17 on the user's LM Studio, the whole corpus
- * asked in Khmer of gemma-4-12b ran out of budget thinking on every question
+ * asked in a non-English language of gemma-4-12b ran out of budget thinking on every question
  * and was asked again with it off -- two rounds of ~12 000 tokens and ~95 s
  * a question for the one answer the second round wrote. Half an hour, then
  * the model is trusted to think again; a handful of entries at most, the
@@ -4625,7 +8921,7 @@ async function askOpenAiCompatible(
     });
     // Worked out ONCE, like the system prompt: it is a function of the model,
     // and the model does not change while a question is being answered.
-    const requestExtra = provider.genRequestExtra(model);
+    const requestExtra = provider.genRequestExtra(model, extra?.retryAttempt);
     const toolRequest = provider.checkIsOneToolCallPerTurn?.(model)
         ? { tools: openAITools, parallel_tool_calls: false }
         : { tools: openAITools };
@@ -4662,11 +8958,19 @@ async function askOpenAiCompatible(
                               ? LYRIC_MAX_TOOL_ROUNDS
                               : extra?.flow !== undefined
                                 ? FLOW_MAX_TOOL_ROUNDS
-                                : extra?.slide !== undefined
-                                  ? SLIDE_MAX_TOOL_ROUNDS
-                                  : extra?.note !== undefined
-                                    ? NOTE_MAX_TOOL_ROUNDS
-                                    : MAX_TOOL_ROUNDS,
+                                : extra?.foreground !== undefined
+                                  ? FOREGROUND_MAX_TOOL_ROUNDS
+                                  : extra?.screen !== undefined
+                                    ? SCREEN_MAX_TOOL_ROUNDS
+                                    : extra?.slide !== undefined
+                                      ? SLIDE_MAX_TOOL_ROUNDS
+                                      : extra?.note !== undefined
+                                        ? watch.isBlankLesson === true
+                                            ? NOTE_LESSON_MAX_TOOL_ROUNDS
+                                            : NOTE_MAX_TOOL_ROUNDS
+                                        : extra?.study !== undefined
+                                          ? STUDY_MAX_TOOL_ROUNDS
+                                          : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -4684,6 +8988,15 @@ async function askOpenAiCompatible(
         checkIsReasoningOffRemembered(provider.label, model);
     // A reply the server dropped is asked for once more (below).
     let isDroppedReplyRetried = false;
+    // ...and once more after the ask has CHANGED something (BN-255): a
+    // lesson's whole first write is the long call the server drops most,
+    // so the one retry was spent on it, and the one more edit the window
+    // names under the lesson -- a legend, the memory verse -- dropped next
+    // ended the ask "changed, but the assistant stopped": two children's
+    // Samuel lessons of three asked with the stop logged, the fix lost.
+    let isDroppedReplyRetriedAfterChange = false;
+    // A round the server went quiet on is sent once more (below).
+    let isStallRetried = false;
     const reportStep = genProgressReporter(extra?.onProgress);
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back -- and the
@@ -4720,9 +9033,35 @@ async function askOpenAiCompatible(
                 // Anthropic loop keeps the SDK default, because a 429 on a
                 // live Claude key is nearly always a rate limit that honours
                 // `retry-after`.
-                { signal: signal ?? undefined, maxRetries: 0 },
+                {
+                    signal: signal ?? undefined,
+                    maxRetries: 0,
+                    ...(provider.stallMilliseconds === undefined
+                        ? {}
+                        : { timeout: provider.stallMilliseconds }),
+                },
             );
         } catch (error: any) {
+            // The server went quiet on a round it answers in seconds
+            // (EC-524). Measured 2026-11-12 on the shared gemma4:cloud: 2 of
+            // 23 foreground asks did what was asked and then sat past four
+            // minutes on the round that writes the answer -- the window
+            // would have waited ten. The SAME round goes once more: what the
+            // tools did is in `messages` and runs no second time.
+            if (
+                provider.stallMilliseconds !== undefined &&
+                checkIsRoundTimeout(error) &&
+                !checkIsCancelError(error)
+            ) {
+                if (isStallRetried) {
+                    throw new CustomServerError(
+                        tran('the server took too long to answer'),
+                    );
+                }
+                isStallRetried = true;
+                round -= 1;
+                continue;
+            }
             // A server that refuses the TOOLS has not refused the question.
             // GPT4All's API server answers 400 "'tools' is not supported" to
             // every request that carries them (measured 2026-10-10 on the
@@ -4845,13 +9184,44 @@ async function askOpenAiCompatible(
                 // and on the user's own server as on the shared one. The
                 // same round asked again answers. Once an ask, only while
                 // tools are on offer: a second empty reply is the model's.
+                const isAfterChange = watch.editedLyric !== null;
                 if (
-                    !isDroppedReplyRetried &&
+                    !(isAfterChange
+                        ? isDroppedReplyRetriedAfterChange
+                        : isDroppedReplyRetried) &&
                     !isLastRound &&
                     providerTools.length > 0 &&
                     Number(completion.usage?.completion_tokens ?? 0) > 0
                 ) {
-                    isDroppedReplyRetried = true;
+                    if (isAfterChange) {
+                        isDroppedReplyRetriedAfterChange = true;
+                    } else {
+                        isDroppedReplyRetried = true;
+                    }
+                    // A whole lesson for an EMPTY note is the long call a
+                    // server drops (BN-61): the retry asks for the flat one.
+                    // A note with words in it takes the change in parts
+                    // (BN-67: a sermon of loose lines finished in one edit
+                    // was dropped twice, the question unanswered at 111 s).
+                    if (typeof watch.blankNoteBlockCount === 'number') {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_BLANK_DROPPED_NUDGE,
+                        });
+                    } else if (
+                        watch.noteRewrite !== null &&
+                        watch.noteRewrite !== undefined
+                    ) {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_REWRITE_DROPPED_NUDGE,
+                        });
+                    } else if (watch.noteFiles !== null) {
+                        messages.push({
+                            role: 'user',
+                            content: NOTE_DROPPED_NUDGE,
+                        });
+                    }
                     round -= 1;
                     continue;
                 }
@@ -4959,6 +9329,12 @@ async function askOpenAiCompatible(
             };
         }
         messages.push(choice);
+        // The SAME document edit twice in one reply is done once, its answer
+        // given to both (2026-11-10: "make it fit 15 minutes" came back as one
+        // edit sent twice -- the first cut the note, the second was refused as
+        // made on a note that had changed, and the answer apologised for a
+        // change that had been made). A press is not: Zoom In twice is meant.
+        const roundResultMap = new Map<string, string>();
         for (const toolCall of toolCalls) {
             const call = toolCall as any;
             let args = {};
@@ -4968,16 +9344,20 @@ async function askOpenAiCompatible(
                 // A malformed argument string is the model's problem to fix on
                 // the next round; an empty object gets it a usable error back.
             }
+            const callName = toCleanToolName(call.function?.name);
+            const callKey = DOCUMENT_EDIT_TOOL_NAME_SET.has(callName)
+                ? `${callName} ${call.function?.arguments ?? ''}`
+                : null;
+            const content =
+                (callKey === null ? undefined : roundResultMap.get(callKey)) ??
+                (await runMcpTool(callName, args, watch, signal, reportStep));
+            if (callKey !== null) {
+                roundResultMap.set(callKey, content);
+            }
             messages.push({
                 role: 'tool',
                 tool_call_id: call.id,
-                content: await runMcpTool(
-                    toCleanToolName(call.function?.name),
-                    args,
-                    watch,
-                    signal,
-                    reportStep,
-                ),
+                content,
             });
         }
         // The same guarantee as in `askAnthropic`: a tool was called, so tools
@@ -5004,12 +9384,7 @@ async function askOpenAiCompatible(
             messages.push({ role: 'user', content: additionText });
         }
     }
-    return {
-        text: tran(
-            'I looked several things up but could not settle on an answer. ' +
-                'Try asking about one step at a time.',
-        ),
-    };
+    return genOutOfRoundsAnswer(watch);
 }
 
 /**
@@ -5073,15 +9448,22 @@ const OPENAI_PROVIDER: OpenAiCompatProviderType = {
     key: 'openai',
     label: 'ChatGPT',
     getInstance: getOpenAIInstance,
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         // Only the reasoning models take an effort setting -- and only they
         // need the bigger budget, because only they spend it on thinking
         // first. An older chat model rejects the parameter outright, which
         // matters because the user can pick one from their own key's list.
+        // A Retry thinks a step harder, with room for it.
         return OPENAI_REASONING_MODEL_PATTERN.test(model)
             ? {
-                  max_completion_tokens: OPENAI_MAX_TOKENS,
-                  reasoning_effort: OPENAI_REASONING_EFFORT,
+                  max_completion_tokens: toRetryMaxTokens(
+                      OPENAI_MAX_TOKENS,
+                      retryAttempt,
+                  ),
+                  reasoning_effort: toRetryReasoningEffort(
+                      OPENAI_REASONING_EFFORT,
+                      retryAttempt,
+                  ),
               }
             : { max_completion_tokens: MAX_TOKENS };
     },
@@ -5097,14 +9479,22 @@ const KIMI_PROVIDER: OpenAiCompatProviderType = {
     key: 'kimi',
     label: 'Kimi',
     getInstance: getKimiInstance,
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         // The bigger budget for every Kimi model, not just the one that can be
         // told to think less: see KIMI_EFFORT_MODEL_PATTERN. No
         // `checkIsChatModel` either -- Moonshot lists chat models only.
         return {
-            max_completion_tokens: OPENAI_MAX_TOKENS,
+            max_completion_tokens: toRetryMaxTokens(
+                OPENAI_MAX_TOKENS,
+                retryAttempt,
+            ),
             ...(KIMI_EFFORT_MODEL_PATTERN.test(model)
-                ? { reasoning_effort: KIMI_REASONING_EFFORT }
+                ? {
+                      reasoning_effort: toRetryReasoningEffort(
+                          KIMI_REASONING_EFFORT,
+                          retryAttempt,
+                      ),
+                  }
                 : {}),
         };
     },
@@ -5154,14 +9544,21 @@ const BEDROCK_PROVIDER: OpenAiCompatProviderType = {
     getInstance: getBedrockInstance,
     // The bigger budget for every family: each of them reasons out of the
     // same allowance, and it is a cap, not a spend.
-    genRequestExtra: (model) => {
+    genRequestExtra: (model, retryAttempt) => {
         if (BEDROCK_OPENAI_PATTERN.test(model)) {
             // OpenAI's reasoning models refuse `max_tokens`, and a help
             // lookup is not worth more than a little thinking -- the same
-            // two settings the ChatGPT descriptor sends its GPT-5 models.
+            // two settings the ChatGPT descriptor sends its GPT-5 models,
+            // a step harder on a Retry.
             return {
-                max_completion_tokens: OPENAI_MAX_TOKENS,
-                reasoning_effort: OPENAI_REASONING_EFFORT,
+                max_completion_tokens: toRetryMaxTokens(
+                    OPENAI_MAX_TOKENS,
+                    retryAttempt,
+                ),
+                reasoning_effort: toRetryReasoningEffort(
+                    OPENAI_REASONING_EFFORT,
+                    retryAttempt,
+                ),
             };
         }
         if (BEDROCK_XAI_PATTERN.test(model)) {
@@ -5222,6 +9619,31 @@ const FREE_PROVIDER: OpenAiCompatProviderType = {
 };
 
 /**
+ * How long one round on the free service may say nothing before it is sent
+ * once more (EC-577, EC-524's guard). Measured 2026-11-13 through the help
+ * window on a scratch profile, the foreground set on Nemotron Super VL: 2 of
+ * 22 asks read the session and then sat past four minutes on the next round,
+ * and the client's own clock is ten. The slowest round that answered took
+ * under a minute, the window's own work before it included.
+ */
+const FREE_STALL_MILLISECONDS = 90 * 1000;
+
+/**
+ * The free service as one ask needs it: the stall guard on an ordinary
+ * question, never on a long write, a translation or a Retry -- each of those
+ * may think past the minute on purpose, as on the shared server.
+ */
+function genFreeProvider(extra?: AskExtraType): OpenAiCompatProviderType {
+    const isStallWatched =
+        extra?.isLongWrite !== true &&
+        extra?.isTranslation !== true &&
+        (extra?.retryAttempt ?? 0) === 0;
+    return isStallWatched
+        ? { ...FREE_PROVIDER, stallMilliseconds: FREE_STALL_MILLISECONDS }
+        : FREE_PROVIDER;
+}
+
+/**
  * The tools a custom server is sent: the ones a how-do-I, a "what is on the
  * screen", a press, a walkthrough, a verse and a foreground extra need --
  * and not the eleven that write files, import Bibles, read web pages or
@@ -5259,10 +9681,23 @@ const LOCAL_TOOL_NAME_LIST = [
     SLIDE_EDIT_TOOL_NAME,
     // ...and about a presenting flow attached to the tab.
     FLOW_EDIT_TOOL_NAME,
+    // ...and about a foreground session.
+    FOREGROUND_EDIT_TOOL_NAME,
     // ...and about a Bible note attached to the tab.
     NOTE_EDIT_TOOL_NAME,
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
+
+// The tools that change a document the person keeps: the same call twice in
+// one reply is a mistake for these, never a wish (a press twice may be one).
+const DOCUMENT_EDIT_TOOL_NAME_SET = new Set([
+    NOTE_EDIT_TOOL_NAME,
+    SLIDE_EDIT_TOOL_NAME,
+    LYRIC_EDIT_TOOL_NAME,
+    FLOW_EDIT_TOOL_NAME,
+    FOREGROUND_EDIT_TOOL_NAME,
+    'owa_bible_note',
+]);
 
 /**
  * Whether a tool the app's own model list carries is left OUT of what this
@@ -5342,6 +9777,8 @@ function genCustomProvider(
         kind?: CustomServerKindType;
         isGeneral?: boolean;
         isTranslation?: boolean;
+        isLongWrite?: boolean;
+        retryAttempt?: number;
     } = {},
 ): OpenAiCompatProviderType {
     const { server, row } = findCustomModelOrThrow(model);
@@ -5350,18 +9787,38 @@ function genCustomProvider(
         kind = 'other',
         isGeneral = false,
         isTranslation = false,
+        isLongWrite = false,
+        retryAttempt = 0,
     } = options;
+    // A Retry is sampled, or at 0 it is the same answer word for word.
+    const retryTemperature = toRetryTemperature(retryAttempt);
+    const isStallWatched =
+        checkIsRegistryServerId(server.id) &&
+        !isLongWrite &&
+        !isTranslation &&
+        retryAttempt === 0;
     return {
         key: 'custom',
         label: server.name,
+        ...(isStallWatched
+            ? { stallMilliseconds: SHARED_STALL_MILLISECONDS }
+            : {}),
         getInstance: () => {
             return getCustomServerInstance(server.id);
         },
         genRequestExtra: () => {
             return {
-                max_tokens: isTranslation ? TRANSLATION_MAX_TOKENS : MAX_TOKENS,
+                // A Retry is let think more, with the room for it.
+                max_tokens: toRetryMaxTokens(
+                    isTranslation
+                        ? TRANSLATION_MAX_TOKENS
+                        : isLongWrite
+                          ? LONG_WRITE_MAX_TOKENS
+                          : MAX_TOKENS,
+                    retryAttempt,
+                ),
                 ...(LOCAL_TEMPERATURE_KIND_SET.has(kind)
-                    ? { temperature: LOCAL_TEMPERATURE }
+                    ? { temperature: retryTemperature ?? LOCAL_TEMPERATURE }
                     : {}),
                 // A general question goes out with its thinking OFF on the
                 // two programs measured to honour the field (LM Studio and
@@ -5373,7 +9830,10 @@ function genCustomProvider(
                 // model the day before. Not in the tool loop, where the same
                 // model reasons 30-120 tokens a round and a call may need
                 // them; not to llama.cpp or an unknown server, unmeasured.
-                ...(isGeneral && (kind === 'lm-studio' || kind === 'ollama')
+                // A Retry is let think: that is the more effort it is for.
+                ...(isGeneral &&
+                retryTemperature === null &&
+                (kind === 'lm-studio' || kind === 'ollama')
                     ? { reasoning_effort: 'none' }
                     : {}),
             };
@@ -5386,7 +9846,19 @@ function genCustomProvider(
         // A registry server says itself whether it is metered (`isFree`);
         // one on this machine or the church's network never is.
         isPricedAtZero: checkIsNoCostCustomServer(server),
-        filterTools: filterLocalToolList,
+        // An ask that may write a whole note keeps the tool that MAKES
+        // one (`isLongWrite`): without it a lesson asked for on Auto
+        // reached owa_bible_note only when the model guessed its name.
+        filterTools: isLongWrite
+            ? (tools) => {
+                  return tools.filter((tool) => {
+                      return (
+                          LOCAL_TOOL_NAME_SET.has(tool.name) ||
+                          tool.name === 'owa_bible_note'
+                      );
+                  });
+              }
+            : filterLocalToolList,
         describeRound: (round) => {
             if (round !== 0) {
                 return null;
@@ -5487,6 +9959,8 @@ const askCustomServer: LlmProviderRuntimeType['ask'] = async (
         kind,
         isGeneral: extra?.isGeneral === true,
         isTranslation: extra?.isTranslation === true,
+        isLongWrite: extra?.isLongWrite === true,
+        retryAttempt: extra?.retryAttempt ?? 0,
     });
     try {
         const answer = await askOpenAiCompatible(
@@ -5624,7 +10098,8 @@ const LLM_PROVIDER_RUNTIME_MAP: Record<
     },
     free: {
         ask: (...args) => {
-            return askOpenAiCompatible(FREE_PROVIDER, ...args);
+            const [, , , , , , , extra] = args;
+            return askOpenAiCompatible(genFreeProvider(extra), ...args);
         },
         // Deliberately nothing to add. The free host DOES answer `models.list`
         // -- 377 names on 2026-09-12, of which 21 are free, and of those some
@@ -5900,6 +10375,7 @@ export function genGeneralAskAction(
         extra?.lookup !== undefined ||
         extra?.resources !== undefined ||
         extra?.bibleReader !== undefined ||
+        extra?.study !== undefined ||
         !GENERAL_ADVICE_PATTERN.test(answer.text) ||
         (answer.actions ?? []).some((action) => {
             return action.toolName === GENERAL_ASK_TOOL_NAME;
@@ -5918,7 +10394,7 @@ export function genGeneralAskAction(
  * The language an answer is SHOWN in, for `toAnswerShownInLanguage`: the one
  * the ask was told to answer in (`toAskWithLanguage`), and null where nobody
  * reads it as it stands -- a translator's round (its English is a question
- * for another model, its Khmer is cleaned where it is drawn) and an ask told
+ * for another model, its translation is cleaned where it is drawn) and an ask told
  * no language at all.
  */
 function toShownAnswerLanguage(extra: AskExtraType | undefined) {
@@ -5938,7 +10414,7 @@ function toShownAnswerLanguage(extra: AskExtraType | undefined) {
 
 /**
  * The script an answer in `langCode` must be written in, when the language
- * has one of its own (never Latin: French and English share it, and a button
+ * has one of its own (never Latin: many languages share it with English, and a button
  * named in English inside an answer is right), for the wrong-language check
  * of `findAnswerShapeNudge`.
  */
@@ -5957,7 +10433,7 @@ export function toAnswerScript(langCode: string | null) {
  * record names no Bible, and so goes to the record's (`quoteBible`): with
  * none named, the reader picks one by the reference's language, and `MAT
  * 18:18-35` -- a code -- was read from the KJV and quoted in English inside
- * a Khmer answer under a passage of a Khmer Bible (2026-10-23).
+ * a translated answer under a passage of a Bible in that language (2026-10-23).
  */
 export function checkReadsInRecordBible(
     watch: { quoteSources: string[] | null; quoteBible: string | null },
@@ -6074,19 +10550,19 @@ async function askLlmBotAsWritten(
         }
         asked = ATTACHMENT_ONLY_QUESTION;
     }
-    if (extra?.isWaitingInput) {
+    if (extra?.isWaitingInput || extra?.isFactCheck) {
         extra = { ...extra, isGeneral: true };
     }
     const isGeneral = extra?.isGeneral === true;
     // This one has a complete local solution and exact live-safe controls.
     // Letting a small model improvise it was measured asking a senior to read
-    // and type back the Khmer button label -- precisely the task they could
+    // and type back the translated button label -- precisely the task they could
     // not do. It needs neither the network nor a model round. Not for a
     // general question, which is about nothing in this app.
     //
     // Read off the words the person TYPED, never the ask: a supported
     // question carries its guide page under it, and three of the Reader's
-    // pages say "non-English" or "Khmer" beside a reference of their own.
+    // pages say "non-English" or name a language beside a reference of their own.
     // Measured 2026-10-12 over the whole corpus: seventeen of the Reader's
     // seventy-one supported questions -- "The words are too small", "What
     // are verse marks?", "How do I put two Bible versions side by side?" --
@@ -6102,8 +10578,11 @@ async function askLlmBotAsWritten(
         extra?.bibleReader !== undefined ||
         extra?.lyric !== undefined ||
         extra?.flow !== undefined ||
+        extra?.foreground !== undefined ||
+        extra?.screen !== undefined ||
         extra?.slide !== undefined ||
-        extra?.note !== undefined
+        extra?.note !== undefined ||
+        extra?.study !== undefined
             ? null
             : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
@@ -6125,6 +10604,8 @@ async function askLlmBotAsWritten(
             finishConnecting();
         }
     }
+    // What of each study file the ask itself shows (EC-500), read once.
+    const askedStudyBlocks = toAskedStudyBlocks(asked);
     // The known recipe, when there is one, is the search hit the model
     // would have had (`searchedId`: a guess the page it opens overrides).
     const genSeededWatch = (askedProvider: LlmProviderType = provider) => {
@@ -6148,10 +10629,60 @@ async function askLlmBotAsWritten(
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
             extra?.flow === undefined &&
+            extra?.foreground === undefined &&
+            extra?.screen === undefined &&
             extra?.slide === undefined &&
-            extra?.note === undefined;
+            extra?.note === undefined &&
+            extra?.study === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
+        seeded.isRunningOrderAsk = checkIsRunningOrderLine(
+            extra?.askedText ?? '',
+        );
+        seeded.isBibleListAsk = checkIsBibleListSaveFollowUp(
+            extra?.askedText ?? '',
+            [...priorTurns].reverse().find((turn) => {
+                return turn.author === 'you';
+            })?.text ?? null,
+        );
+        seeded.askedText = extra?.askedText ?? '';
+        seeded.songTitleNamed = readSongTitleNamed(extra?.askedText ?? '');
+        seeded.isLessonReview =
+            extra?.note !== undefined &&
+            asked.includes(NOTE_LESSON_REVIEW_HINT);
+        seeded.isLessonChange =
+            extra?.note !== undefined &&
+            asked.includes(NOTE_LESSON_CHANGE_HINT);
+        seeded.finishOwnBlocks =
+            extra?.note !== undefined ? readFinishOwnBlocks(asked) : null;
+        seeded.isBlankLesson =
+            extra?.note !== undefined && asked.includes(NOTE_BLANK_LESSON_HINT);
+        // The second look is asked of the model that answers this ask, in
+        // an ask of its own: no history, no tools, its rounds in the cost
+        // and under the spend guard like any other (BN-226).
+        seeded.checkLessonFacts = seeded.isBlankLesson
+            ? async (ask: string) => {
+                  const checked = await askLlmBot(
+                      ask,
+                      focus,
+                      askedProvider,
+                      askedProvider === provider
+                          ? model
+                          : getLlmModel(askedProvider),
+                      [],
+                      signal,
+                      { isFactCheck: true, onUsage: extra?.onUsage },
+                  );
+                  return checked.text;
+              }
+            : null;
+        seeded.lessonNamedPassage = seeded.isBlankLesson
+            ? findNamedPassageRef(extra?.askedText ?? '')
+            : null;
+        seeded.isChildrenLesson =
+            seeded.isBlankLesson &&
+            asked.includes(genLessonFormWriteLine('children'));
+        seeded.isFuneralAsk = checkIsFuneralAsk(extra?.askedText ?? '');
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
         seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =
@@ -6161,14 +10692,42 @@ async function askLlmBotAsWritten(
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
             extra?.flow === undefined &&
+            extra?.foreground === undefined &&
+            extra?.screen === undefined &&
             extra?.slide === undefined &&
             extra?.note === undefined &&
+            extra?.study === undefined &&
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.lyricFiles = extra?.lyric?.files ?? null;
+        seeded.translateText = extra?.translateText ?? null;
+        seeded.skipLangOffer = extra?.skipLangOffer ?? null;
+        seeded.onProgress = extra?.onProgress ?? null;
         seeded.slideFiles = extra?.slide?.files ?? null;
         seeded.flowFiles = extra?.flow?.files ?? null;
+        seeded.foregroundAsks = extra?.foreground?.asks ?? null;
+        seeded.isForegroundCurrentOnly =
+            extra?.foreground?.isCurrentOnly === true;
+        seeded.isScreenAsk = extra?.screen !== undefined;
         seeded.noteFiles = extra?.note?.files ?? null;
+        seeded.createKind = extra?.createKind ?? null;
+        seeded.answerAbove = extra?.answerAbove ?? null;
+        seeded.answerAboveQuestion = extra?.answerAboveQuestion ?? null;
+        seeded.heldStudyBefore =
+            extra?.isTranslation === true
+                ? null
+                : toHeldStudyBefore(extra?.heldStudy);
+        seeded.isKeepAnswerAsk =
+            extra?.keepAnswer === true &&
+            seeded.answerAbove !== null &&
+            extra?.isTranslation !== true;
+        seeded.noteVerseLang =
+            extra?.note?.verseLang ?? extra?.study?.verseLang ?? null;
+        seeded.noteTyped = extra?.note?.typed ?? null;
+        seeded.blankNoteBlockCount = extra?.note?.blankBlockCount ?? null;
+        seeded.noteRewrite = extra?.note?.rewrite ?? null;
+        seeded.noteTranslate = extra?.note?.translate ?? null;
+        seeded.noteQuoteSources = extra?.note === undefined ? null : [asked];
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -6188,7 +10747,7 @@ async function askLlmBotAsWritten(
                 null;
             // Read by the window for this question: nothing to send back.
             // G3 under Genesis 8 had its people named from the names
-            // lookup and called Noah's family, in Khmer, "people whose names
+            // lookup and called Noah's family, in a non-English answer, "people whose names
             // are not stated"; the nudge took that
             // for "the Bible does not say", and the model, handed a note
             // instead of a question, asked what the question was
@@ -6197,6 +10756,19 @@ async function askLlmBotAsWritten(
                 seeded.isNotStatedNudged = true;
             }
         }
+        seeded.openStudyFiles = findOpenStudyFiles(
+            extra?.resources?.openFiles ?? [],
+        );
+        // What the claim readers need, in an ask that can claim a change --
+        // under a card holding a new study too (EC-700).
+        seeded.changeClaimWords =
+            seeded.noteFiles !== null ||
+            seeded.openStudyFiles.length > 0 ||
+            seeded.foregroundAsks !== null ||
+            seeded.heldStudyBefore !== null
+                ? toChangeClaimWords(toShownAnswerLanguage(extra))
+                : null;
+        seeded.shownStudyBlocks = [...askedStudyBlocks];
         seeded.canSeePictures =
             extra?.resources?.canSeePictures === true ||
             extra?.bibleReader?.canSeePictures === true;
@@ -6210,10 +10782,8 @@ async function askLlmBotAsWritten(
         return seeded;
     };
     let watch = genSeededWatch();
-    const history = withRecordTurn(
-        toHistoryTurns(priorTurns),
-        extra?.lookup?.record,
-    );
+    const historyTurns = toHistoryTurns(priorTurns);
+    const history = withRecordTurn(historyTurns, extra?.lookup?.record);
     // A verse-finding ask is sent its own tool and nothing else, and so is
     // a question about a Lookup Detail panel's record; every other ask the
     // ordinary list, which never carries either.
@@ -6230,11 +10800,23 @@ async function askLlmBotAsWritten(
                     ? pickAskToolList(tools, LYRIC_ASK_KIND)
                     : extra?.flow !== undefined
                       ? pickAskToolList(tools, FLOW_ASK_KIND)
-                      : extra?.slide !== undefined
-                        ? pickAskToolList(tools, SLIDE_ASK_KIND)
-                        : extra?.note !== undefined
-                          ? pickAskToolList(tools, NOTE_ASK_KIND)
-                          : filterModelToolList(tools);
+                      : extra?.foreground !== undefined
+                        ? pickAskToolList(tools, FOREGROUND_ASK_KIND)
+                        : extra?.screen !== undefined
+                          ? pickAskToolList(tools, SCREEN_ASK_KIND)
+                          : extra?.slide !== undefined
+                            ? pickAskToolList(tools, SLIDE_ASK_KIND)
+                            : extra?.note !== undefined
+                              ? pickAskToolList(tools, NOTE_ASK_KIND)
+                              : extra?.study !== undefined
+                                ? pickAskToolList(tools, STUDY_ASK_KIND)
+                                : // With the study tool while the card above
+                                  // holds a new study (EC-606).
+                                  withHeldStudyTool(
+                                      filterModelToolList(tools),
+                                      tools,
+                                      watch.heldStudyBefore,
+                                  );
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one
@@ -6244,10 +10826,56 @@ async function askLlmBotAsWritten(
     // end of the ask (`genReplyLanguageLine`). One reading for every round
     // and a stand-in alike.
     const appLang = extra?.appLang ?? getAppLangCode();
-    asked = toAskWithLanguage(asked, extra, appLang);
+    // A lesson asked for where no note is attached -- a Bible Reader, a
+    // lookup, a Resources file, an ordinary tab -- with the tool that makes
+    // one in the list (2026-11-10): what a lesson holds rides on that ask
+    // alone. A note conversation carries its own (`toNoteAsk`).
+    const isLessonAsked =
+        extra?.note === undefined &&
+        extra?.study === undefined &&
+        extra?.isTranslation !== true &&
+        modelTools.some((tool) => tool.name === 'owa_bible_note') &&
+        (checkIsLessonWriteAsk(extra?.askedText ?? '') ||
+            checkIsLanguageLessonAsk(extra?.askedText ?? '') ||
+            checkIsLessonWriteAsk(asked.split(/\n\s*\n/)[0] ?? ''));
+    if (isLessonAsked) {
+        const lengthLine = genLessonLengthLine(extra?.askedText ?? asked);
+        asked =
+            `${asked}\n\n${LESSON_MAKE_HINT}` +
+            (lengthLine === null ? '' : `\n${lengthLine}`);
+    }
+    // "Save that as a study file" (EC-466): said on the ask itself, where a
+    // tool can draft one -- the prompt's rule alone was passed over.
+    if (
+        watch.isKeepAnswerAsk &&
+        modelTools.some((tool) => tool.name === RESOURCES_TOOL_NAME)
+    ) {
+        asked = `${asked}\n\n${STUDY_KEEP_ANSWER_HINT}`;
+    }
+    // A new study the card above holds (EC-606): its name and headings, and
+    // how a change reaches it, where a tool can draft one.
+    if (
+        watch.heldStudyBefore !== null &&
+        modelTools.some((tool) => tool.name === RESOURCES_TOOL_NAME)
+    ) {
+        asked = `${asked}\n\n${genHeldStudyAskHint(watch.heldStudyBefore)}`;
+        // An answer kept under it may go INTO it (EC-701).
+        if (watch.isKeepAnswerAsk) {
+            asked = `${asked}\n\n${genHeldStudyKeepHint(watch.heldStudyBefore)}`;
+        }
+    }
+    asked = toAskWithLanguage(asked, extra, appLang, historyTurns);
     const guardedExtra: AskExtraType = {
         ...extra,
         appLang,
+        // A study file is written whole into one call too, and a change to
+        // one by section (EC-480): the 2 000 of a help answer cut a study
+        // off on the shared gemma4:cloud.
+        isLongWrite:
+            extra?.note !== undefined ||
+            isLessonAsked ||
+            extra?.study !== undefined ||
+            extra?.resources !== undefined,
         onUsage: (round) => {
             recordSpendRound(round);
             extra?.onUsage?.(round);
@@ -6344,7 +10972,7 @@ async function askLlmBotAsWritten(
         // rides the same call, is cleaned too.
         // The waiting-input parser owns this JSON. Prose cleanup must not
         // remove a field or a literal frame inside its quoted help text.
-        if (extra?.isWaitingInput) {
+        if (extra?.isWaitingInput || extra?.isFactCheck) {
             return answer;
         }
         const frames = parseAnswerFrames(answer.text);
@@ -6353,6 +10981,13 @@ async function askLlmBotAsWritten(
         answer.text = dropModelTokens(cutRunawayAnswer(frames.text));
         if (frames.options.length > 0) {
             answer.replies = frames.options.map(dropModelTokens);
+        } else if (watch.isLessonReview) {
+            // A review with no fix to press even once asked for them: the
+            // fixes it named are the buttons (BN-77).
+            const namedFixes = readReviewFixHeadings(frames.text);
+            if (namedFixes.length > 0) {
+                answer.replies = namedFixes;
+            }
         }
         if (frames.requests.length > 0) {
             answer.attachRequests = frames.requests;
@@ -6372,10 +11007,43 @@ async function askLlmBotAsWritten(
         // and which arrived twice in two asks the day the symptom rule asked
         // the model to say which fault it found.
         answer.text = scrubAnswerToolFields(answer.text);
+        // And a change's undo id, the handle its button presses (EC-539).
+        answer.text = scrubAnswerUndoIds(answer.text);
+        // A change still claimed and never made -- written on the last
+        // round, or again after its hand-back: the window says so (EC-501).
+        if (checkClaimsUnmadeChange(answer.text, watch)) {
+            answer.isChangeUnmade = true;
+            // About the card above's new study (EC-700): its card again,
+            // so the next line reaches it.
+            if (checkClaimsUnmadeHeldStudyChange(answer.text, watch)) {
+                markHeldStudyBeforeReached(watch);
+            }
+        }
         // A note the model made: the window opens it and attaches it to the
         // tab once the answer is in (`ChatbotAppComp.tsx`).
         if (watch.createdNote !== null) {
             answer.createdNote = watch.createdNote;
+        }
+        // The foreground sessions it put up or changed: the window holds
+        // them on the answer as chips (EC-520).
+        if (watch.heldForeground.length > 0) {
+            answer.heldForeground = watch.heldForeground;
+        }
+        // A translation that waits for its language: the window offers it
+        // under the answer, with the question to ask again (EC-494).
+        if (watch.langOffer !== null) {
+            answer.langOffer = watch.langOffer;
+        }
+        // A study file drafted: its card is the whole of what goes under the
+        // answer -- Create, Preview, Change the name -- whatever the ask.
+        if (watch.draftedStudy !== null) {
+            return withStudyDraftUnder(answer, watch.draftedStudy);
+        }
+        // The card above's study read, or a change to it refused (EC-606):
+        // its card again, the newest answer, which the next line reaches.
+        if (watch.isHeldStudyBeforeUsed && watch.heldStudyBefore !== null) {
+            answer.actions = genHeldStudyBeforeActions(watch.heldStudyBefore);
+            return answer;
         }
         // A verse search: a button for each found verse the answer names,
         // and the change of Bible -- no walkthrough, no page to go to.
@@ -6485,6 +11153,17 @@ async function askLlmBotAsWritten(
             const under = genCreatedNoteUnder(watch.createdNote);
             answer.actions = under.actions;
             answer.shows = [...(answer.shows ?? []), ...under.shows];
+        } else if (
+            answer.actions === undefined &&
+            checkIsScreenEdited(watch.editedLyric)
+        ) {
+            // The screens changed: the press that puts them back, and no
+            // row to ring -- they are no document.
+            const undoAction =
+                watch.editedLyric === null
+                    ? null
+                    : genScreenUndoAction(watch.editedLyric);
+            answer.actions = undoAction === null ? [] : [undoAction];
         } else if (answer.actions === undefined && watch.editedLyric !== null) {
             // A song the model changed: the press that puts it back, and the
             // row it is on -- no walkthrough, the ask has been done.
@@ -6500,21 +11179,15 @@ async function askLlmBotAsWritten(
             ];
         } else if (
             answer.actions === undefined &&
-            watch.draftedLyric !== null
+            watch.draftedLyrics.length > 0
         ) {
-            const drafted = keepDraftedLyric(watch.draftedLyric);
-            answer.actions = [
-                {
-                    label: `Create "${drafted.name}"`,
-                    toolName: LYRIC_CREATE_TOOL_NAME,
-                    args: { reference: drafted.reference },
-                },
-                {
-                    label: 'Copy song text',
-                    toolName: LYRIC_COPY_TOOL_NAME,
-                    args: { reference: drafted.reference },
-                },
-            ];
+            // One song: Create and Copy. Several: Create all, then each
+            // song's own Create (`genLyricDraftActions`).
+            answer.actions = genLyricDraftActions(
+                watch.draftedLyrics.map((one) => {
+                    return keepDraftedLyric(one.content);
+                }),
+            );
         }
         // A Bible the model downloaded (or a page of them): the import's
         // own buttons, the same ones a pasted link gets with no model --
@@ -6577,6 +11250,20 @@ async function askLlmBotAsWritten(
         // and the window reads the class to draw the button that lifts it.
         if (checkIsSpendLimitError(error)) {
             throw error;
+        }
+        // A change the tools already made stays made: said, and offered
+        // back, instead of a failure that hides it (BN-36).
+        const changed = genChangedWithoutAnswer(watch.editedLyric);
+        if (changed !== null) {
+            return changed;
+        }
+        // A study file drafted and THEN a failure: the card all the same,
+        // since the person saves it, not the model.
+        if (watch.draftedStudy !== null) {
+            return withStudyDraftUnder(
+                { text: genStudyStoppedText(watch.draftedStudy) },
+                watch.draftedStudy,
+            );
         }
         // Re-thrown as one readable line; the caller shows it beside the
         // answer it fell back to.

@@ -12,8 +12,8 @@ import {
 
 describe('the index address a link is read through', () => {
   test('a bible.com page with no edition in it is read on www, without its fragment', () => {
-    expect(toBibleBookIndexUrl('https://bible.com/languages/khm#top')).toBe(
-      'https://www.bible.com/languages/khm',
+    expect(toBibleBookIndexUrl('https://bible.com/languages/xxx#top')).toBe(
+      'https://www.bible.com/languages/xxx',
     );
   });
 });

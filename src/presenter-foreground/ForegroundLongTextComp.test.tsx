@@ -403,7 +403,7 @@ describe('Long Text Show', () => {
         expect(container.textContent).toContain('No language yet');
         expect(getButton('Show Long Text').disabled).toBe(true);
 
-        mocks.chooseLongTextLangCode.mockResolvedValueOnce('km');
+        mocks.chooseLongTextLangCode.mockResolvedValueOnce('xx');
         await click('Add Language');
         // Nothing of the session is in use yet, so nothing is left out.
         expect(mocks.chooseLongTextLangCode).toHaveBeenCalledWith(
@@ -411,13 +411,13 @@ describe('Long Text Show', () => {
             [],
         );
         expect(container.textContent).not.toContain('No language yet');
-        expect(queryButton('Add Section KM')).not.toBeNull();
+        expect(queryButton('Add Section XX')).not.toBeNull();
 
         // The next pick is offered without the language already there.
         await click('Add Language');
         expect(mocks.chooseLongTextLangCode).toHaveBeenLastCalledWith(
             expect.anything(),
-            ['km'],
+            ['xx'],
         );
     });
 
@@ -433,7 +433,7 @@ describe('Long Text Show', () => {
 
     test('typed languages that do not line up are refused, in words, until they do', async () => {
         setSession([
-            genLanguage('km', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
+            genLanguage('xx', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
             genLanguage('en', { sections: ['one'] }),
         ]);
         await render();
@@ -465,7 +465,7 @@ describe('Long Text Show', () => {
             }),
         ).toEqual([
             [
-                'KM',
+                'XX',
                 [
                     { num: '1', text: '✝✝✝✝', key: 'lt-1' },
                     { num: '2', text: '✝✝✝♪', key: 'lt-2' },
@@ -483,24 +483,24 @@ describe('Long Text Show', () => {
 
     test('a section can be removed and moved, and a language taken out', async () => {
         setSession([
-            genLanguage('km', { sections: ['a', 'b', 'c'] }),
+            genLanguage('xx', { sections: ['a', 'b', 'c'] }),
             genLanguage('en', { sections: ['x'] }),
         ]);
         await render();
         const readSections = () => {
             return Array.from(
                 container.querySelectorAll<HTMLTextAreaElement>(
-                    'textarea[aria-label$=" KM"]',
+                    'textarea[aria-label$=" XX"]',
                 ),
             ).map((box) => box.value);
         };
         expect(readSections()).toEqual(['a', 'b', 'c']);
-        await click('Move down 1 KM');
+        await click('Move down 1 XX');
         expect(readSections()).toEqual(['b', 'a', 'c']);
-        await click('Remove Section 2 KM');
+        await click('Remove Section 2 XX');
         expect(readSections()).toEqual(['b', 'c']);
-        expect(getButton('Move up 1 KM').disabled).toBe(true);
-        expect(getButton('Move down 2 KM').disabled).toBe(true);
+        expect(getButton('Move up 1 XX').disabled).toBe(true);
+        expect(getButton('Move down 2 XX').disabled).toBe(true);
 
         await click('Remove Language EN');
         expect(queryButton('Add Section EN')).toBeNull();
@@ -509,7 +509,7 @@ describe('Long Text Show', () => {
     });
 
     test('two lyric files sung in another order are named, and nothing goes up', async () => {
-        state.lyricMap.set('/docs/km.owl', {
+        state.lyricMap.set('/docs/xx.owl', {
             title: '✝✝✝☀',
             parts: ['Verse 1', 'Chorus'],
         });
@@ -518,9 +518,9 @@ describe('Long Text Show', () => {
             parts: ['Verse 1', 'Bridge 1'],
         });
         setSession([
-            genLanguage('km', {
+            genLanguage('xx', {
                 source: 'lyric',
-                lyricFilePath: '/docs/km.owl',
+                lyricFilePath: '/docs/xx.owl',
             }),
             genLanguage('en', {
                 source: 'lyric',
@@ -530,7 +530,7 @@ describe('Long Text Show', () => {
         await render();
         expect(getProblemText()).toBe(
             'The songs do not have the same structure: ' +
-                '2. KM Chorus ≠ EN Bridge 1',
+                '2. XX Chorus ≠ EN Bridge 1',
         );
         expect(getButton('Show Long Text').disabled).toBe(true);
         // Each card says what its file came to.
@@ -556,7 +556,7 @@ describe('Long Text Show', () => {
 
     test('what goes up is checked against the files as they ARE when Show is pressed', async () => {
         const matchingParts = ['Verse 1', 'Chorus'];
-        state.lyricMap.set('/docs/km.owl', {
+        state.lyricMap.set('/docs/xx.owl', {
             title: '✝✝✝☀',
             parts: matchingParts,
         });
@@ -565,9 +565,9 @@ describe('Long Text Show', () => {
             parts: matchingParts,
         });
         setSession([
-            genLanguage('km', {
+            genLanguage('xx', {
                 source: 'lyric',
-                lyricFilePath: '/docs/km.owl',
+                lyricFilePath: '/docs/xx.owl',
             }),
             genLanguage('en', {
                 source: 'lyric',
@@ -586,7 +586,7 @@ describe('Long Text Show', () => {
         expect(mocks.handleLongTextShowing).not.toHaveBeenCalled();
         expect(mocks.showSimpleToast).toHaveBeenCalledWith(
             'Long Text Show',
-            'The songs do not have the same structure: ' + '3. KM — ≠ EN Outro',
+            'The songs do not have the same structure: ' + '3. XX — ≠ EN Outro',
         );
 
         // And once it lines up again, the lyric's own title and parts go up.
@@ -612,10 +612,10 @@ describe('Long Text Show', () => {
 
     test('a key press is not a file write: the session is saved when the typing stops', async () => {
         vi.useFakeTimers();
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         await render();
-        await type('Title KM', '✝✝✝♥');
-        await type('Section 1 KM', 'ab');
+        await type('Title XX', '✝✝✝♥');
+        await type('Section 1 XX', 'ab');
         expect(mocks.setSetting).not.toHaveBeenCalled();
 
         await act(async () => {
@@ -625,7 +625,7 @@ describe('Long Text Show', () => {
         const [name, value] = mocks.setSetting.mock.calls[0];
         expect(name).toBe(SETTING_NAME);
         expect(JSON.parse(value).languages[0]).toMatchObject({
-            langCode: 'km',
+            langCode: 'xx',
             title: '✝✝✝♥',
             sections: ['ab'],
         });
@@ -633,9 +633,9 @@ describe('Long Text Show', () => {
 
     test('closing the panel inside that half second still saves what was typed', async () => {
         vi.useFakeTimers();
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         await render();
-        await type('Section 1 KM', 'last words');
+        await type('Section 1 XX', 'last words');
         expect(mocks.setSetting).not.toHaveBeenCalled();
         act(() => root.unmount());
         expect(mocks.setSetting).toHaveBeenCalledTimes(1);
@@ -653,7 +653,7 @@ describe('Long Text Show', () => {
     test("a card's Properties are mounted only while open, and reach a showing text after the hand stops", async () => {
         vi.useFakeTimers();
         setSession([
-            genLanguage('km', { sections: ['a'] }),
+            genLanguage('xx', { sections: ['a'] }),
             genLanguage('en', { sections: ['x'] }),
         ]);
         await render();
@@ -669,7 +669,7 @@ describe('Long Text Show', () => {
         });
         expect(mocks.restyleLongText).toHaveBeenCalledTimes(1);
         expect(mocks.restyleLongText).toHaveBeenCalledWith('long-text', {
-            KM: undefined,
+            XX: undefined,
             EN: { color: '#ff0000' },
         });
         // The words are not what changed, so typing restyles nothing.
@@ -686,12 +686,12 @@ describe('Long Text Show', () => {
 
     test('a lyric card offers its sung parts as buttons that bring a row to the middle', async () => {
         const parts = ['Intro', 'Verse 1', 'Chorus', 'Verse 2', 'Chorus'];
-        state.lyricMap.set('/docs/km.owl', { title: '✝✝✝☀', parts });
+        state.lyricMap.set('/docs/xx.owl', { title: '✝✝✝☀', parts });
         state.lyricMap.set('/docs/en.owl', { title: 'Song', parts });
         setSession([
-            genLanguage('km', {
+            genLanguage('xx', {
                 source: 'lyric',
-                lyricFilePath: '/docs/km.owl',
+                lyricFilePath: '/docs/xx.owl',
             }),
             genLanguage('en', {
                 source: 'lyric',
@@ -712,11 +712,11 @@ describe('Long Text Show', () => {
         // The Intro has no words, so it is no row and has no button; the
         // Chorus is sung twice and has two, numbered as the screen is.
         expect(
-            readPartButtons('KM').map((button) => button.textContent),
+            readPartButtons('XX').map((button) => button.textContent),
         ).toEqual(['1 Verse 1', '2 Chorus', '3 Verse 2', '4 Chorus']);
         expect(readPartButtons('EN')).toHaveLength(4);
         // On no screen yet: there is nothing to bring anywhere.
-        expect(readPartButtons('KM').every((button) => button.disabled)).toBe(
+        expect(readPartButtons('XX').every((button) => button.disabled)).toBe(
             true,
         );
 
@@ -724,7 +724,7 @@ describe('Long Text Show', () => {
             [0, { longTextData: { sourceId: 'long-text', renderedList: [] } }],
         ];
         await render();
-        expect(readPartButtons('KM').some((button) => button.disabled)).toBe(
+        expect(readPartButtons('XX').some((button) => button.disabled)).toBe(
             false,
         );
         // The second Chorus is the FOURTH row, not the second.
@@ -737,12 +737,12 @@ describe('Long Text Show', () => {
 
     test('a lyric card switches its parts between buttons and text cards', async () => {
         const parts = ['Intro', 'Verse 1', 'Chorus'];
-        state.lyricMap.set('/docs/km.owl', { title: '✝✝✝☀', parts });
+        state.lyricMap.set('/docs/xx.owl', { title: '✝✝✝☀', parts });
         state.lyricMap.set('/docs/en.owl', { title: 'Song', parts });
         setSession([
-            genLanguage('km', {
+            genLanguage('xx', {
                 source: 'lyric',
-                lyricFilePath: '/docs/km.owl',
+                lyricFilePath: '/docs/xx.owl',
             }),
             genLanguage('en', {
                 source: 'lyric',
@@ -756,22 +756,22 @@ describe('Long Text Show', () => {
         // As buttons, the card holds the names of the parts and none of
         // their words.
         expect(
-            getButton('View as Text Cards KM').getAttribute('aria-pressed'),
+            getButton('View as Text Cards XX').getAttribute('aria-pressed'),
         ).toBe('false');
         expect(container.textContent).not.toContain('Verse 1 of ✝✝✝☀');
 
-        await click('View as Text Cards KM');
+        await click('View as Text Cards XX');
         await act(async () => {
             await Promise.resolve();
         });
         expect(
-            getButton('View as Text Cards KM').getAttribute('aria-pressed'),
+            getButton('View as Text Cards XX').getAttribute('aria-pressed'),
         ).toBe('true');
         // Each part's words are on its button now -- the sung parts only,
         // so not the Intro -- and for THIS language only. The whole card
         // IS the button: the words are what an operator presses.
         expect(container.textContent).toContain('Verse 1 of ✝✝✝☀');
-        expect(getButton('Bring to Middle 1 Verse 1 KM').textContent).toBe(
+        expect(getButton('Bring to Middle 1 Verse 1 XX').textContent).toBe(
             '1 Verse 1 Verse 1 of ✝✝✝☀',
         );
         expect(getButton('Bring to Middle 1 Verse 1 EN').textContent).toBe(
@@ -780,7 +780,7 @@ describe('Long Text Show', () => {
         expect(container.textContent).toContain('Chorus of ✝✝✝☀');
         expect(container.textContent).not.toContain('Verse 1 of Song');
         // A card still brings its row to the middle.
-        await click('Bring to Middle 2 Chorus KM');
+        await click('Bring to Middle 2 Chorus XX');
         expect(mocks.bringLongTextRowToMiddle).toHaveBeenCalledWith(
             'long-text',
             1,
@@ -797,43 +797,43 @@ describe('Long Text Show', () => {
 
         // Back to buttons, and the words are let go of.
         await render();
-        await click('View as Text Cards KM');
+        await click('View as Text Cards XX');
         expect(container.textContent).toContain('Verse 1 of ✝✝✝☀');
-        await click('View as Text Cards KM');
+        await click('View as Text Cards XX');
         expect(container.textContent).not.toContain('Verse 1 of ✝✝✝☀');
-        expect(queryButton('Bring to Middle 1 Verse 1 KM')).not.toBeNull();
+        expect(queryButton('Bring to Middle 1 Verse 1 XX')).not.toBeNull();
     });
 
     test("a typed section's number is its button, and there are none while the languages do not line up", async () => {
         setSession([
-            genLanguage('km', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
+            genLanguage('xx', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
             genLanguage('en', { sections: ['one', 'two'] }),
         ]);
         state.showingList = [
             [0, { longTextData: { sourceId: 'long-text', renderedList: [] } }],
         ];
         await render();
-        expect(getButton('Bring to Middle 2 KM').textContent).toBe('2');
-        await click('Bring to Middle 2 KM');
+        expect(getButton('Bring to Middle 2 XX').textContent).toBe('2');
+        await click('Bring to Middle 2 XX');
         expect(mocks.bringLongTextRowToMiddle).toHaveBeenCalledWith(
             'long-text',
             1,
         );
 
-        // A third Khmer section with no English one: the rows of the
+        // A third section in one language with no English one: the rows of the
         // panel are no longer the rows on the screen.
-        await click('Add Section KM');
-        expect(getButton('Bring to Middle 2 KM').disabled).toBe(true);
+        await click('Add Section XX');
+        expect(getButton('Bring to Middle 2 XX').disabled).toBe(true);
         expect(getButton('Bring to Middle 1 EN').disabled).toBe(true);
     });
 
     test('the row marked on a screen is lit on its button in every language, and only while the text is up', async () => {
         const parts = ['Intro', 'Verse 1', 'Chorus'];
-        state.lyricMap.set('/docs/km.owl', { title: '✝✝✝☀', parts });
+        state.lyricMap.set('/docs/xx.owl', { title: '✝✝✝☀', parts });
         setSession([
-            genLanguage('km', {
+            genLanguage('xx', {
                 source: 'lyric',
-                lyricFilePath: '/docs/km.owl',
+                lyricFilePath: '/docs/xx.owl',
             }),
             genLanguage('en', { sections: ['one', 'two'] }),
         ]);
@@ -862,16 +862,16 @@ describe('Long Text Show', () => {
         state.selectedKeyMap.set('long-text', ['lt-2']);
         await render();
         expect(readLit()).toEqual([
-            'Bring to Middle 2 Chorus KM',
+            'Bring to Middle 2 Chorus XX',
             'Bring to Middle 2 EN',
         ]);
         expect(
-            getButton('Bring to Middle 2 Chorus KM').getAttribute(
+            getButton('Bring to Middle 2 Chorus XX').getAttribute(
                 'aria-current',
             ),
         ).toBe('true');
         expect(
-            getButton('Bring to Middle 1 Verse 1 KM').hasAttribute(
+            getButton('Bring to Middle 1 Verse 1 XX').hasAttribute(
                 'aria-current',
             ),
         ).toBe(false);
@@ -880,16 +880,16 @@ describe('Long Text Show', () => {
         state.selectedKeyMap.set('long-text', ['lt-1']);
         await render();
         expect(readLit()).toEqual([
-            'Bring to Middle 1 Verse 1 KM',
+            'Bring to Middle 1 Verse 1 XX',
             'Bring to Middle 1 EN',
         ]);
         // ...as a text card it is the card that is lit...
-        await click('View as Text Cards KM');
+        await click('View as Text Cards XX');
         await act(async () => {
             await Promise.resolve();
         });
         expect(readLit()).toEqual([
-            'Bring to Middle 1 Verse 1 KM',
+            'Bring to Middle 1 Verse 1 XX',
             'Bring to Middle 1 EN',
         ]);
 
@@ -900,7 +900,7 @@ describe('Long Text Show', () => {
     });
 
     test("a screen holding this session's text has a Hide chip that takes down only its own", async () => {
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         state.showingList = [
             [2, { longTextData: { sourceId: 'long-text', renderedList: [] } }],
             // Another session's text is not this panel's to hide.
@@ -944,12 +944,12 @@ describe('Long Text Show', () => {
             // The Intro has no words, so the rows are Verse 1, Chorus,
             // Verse 2.
             const parts = ['Intro', 'Verse 1', 'Chorus', 'Verse 2'];
-            state.lyricMap.set('/docs/km.owl', { title: '✝✝✝☀', parts });
+            state.lyricMap.set('/docs/xx.owl', { title: '✝✝✝☀', parts });
             state.lyricMap.set('/docs/en.owl', { title: 'Song', parts });
             setSession([
-                genLanguage('km', {
+                genLanguage('xx', {
                     source: 'lyric',
-                    lyricFilePath: '/docs/km.owl',
+                    lyricFilePath: '/docs/xx.owl',
                 }),
                 genLanguage('en', {
                     source: 'lyric',
@@ -986,7 +986,7 @@ describe('Long Text Show', () => {
                 'long-text',
                 2,
             );
-            // The EN card's button, not the KM one above it.
+            // The EN card's button, not the XX one above it.
             const nextButton = getButton('Bring to Middle 3 Verse 2 EN');
             expect(document.activeElement).toBe(nextButton);
             expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
@@ -1009,7 +1009,7 @@ describe('Long Text Show', () => {
             await renderSong();
             state.selectedKeyMap.set('long-text', ['lt-3']);
             await render();
-            const lastButton = getButton('Bring to Middle 3 Verse 2 KM');
+            const lastButton = getButton('Bring to Middle 3 Verse 2 XX');
             lastButton.focus();
             for (const key of [' ', 'ArrowRight', 'ArrowDown', 'PageDown']) {
                 // Still the panel's key: Space must not press the last part
@@ -1021,7 +1021,7 @@ describe('Long Text Show', () => {
 
             state.selectedKeyMap.set('long-text', ['lt-1']);
             await render();
-            getButton('Bring to Middle 1 Verse 1 KM').focus();
+            getButton('Bring to Middle 1 Verse 1 XX').focus();
             press('ArrowLeft');
             press('PageUp');
             expect(mocks.bringLongTextRowToMiddle).not.toHaveBeenCalled();
@@ -1032,7 +1032,7 @@ describe('Long Text Show', () => {
             state.selectedKeyMap.set('long-text', ['lt-2']);
             await render();
             // A part that is not lit: Space is left to press THAT one.
-            getButton('Bring to Middle 1 Verse 1 KM').focus();
+            getButton('Bring to Middle 1 Verse 1 XX').focus();
             expect(press(' ').preventDefault).not.toHaveBeenCalled();
             // Anything else in the panel.
             getButton('Show Long Text').focus();
@@ -1042,7 +1042,7 @@ describe('Long Text Show', () => {
 
         test("a typed language's numbers step the same way", async () => {
             setSession([
-                genLanguage('km', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
+                genLanguage('xx', { sections: ['✝✝✝✝', '✝✝✝♪'] }),
                 genLanguage('en', { sections: ['one', 'two'] }),
             ]);
             state.showingList = [
@@ -1058,14 +1058,14 @@ describe('Long Text Show', () => {
             ];
             state.selectedKeyMap.set('long-text', ['lt-1']);
             await render();
-            getButton('Bring to Middle 1 KM').focus();
+            getButton('Bring to Middle 1 XX').focus();
             press('ArrowDown');
             expect(mocks.bringLongTextRowToMiddle).toHaveBeenCalledWith(
                 'long-text',
                 1,
             );
             expect(document.activeElement).toBe(
-                getButton('Bring to Middle 2 KM'),
+                getButton('Bring to Middle 2 XX'),
             );
         });
 
@@ -1082,7 +1082,7 @@ describe('Long Text Show', () => {
             expect(keyingArea.checkHasSelected()).toBe(true);
             // The first card's lit part, with the focus anywhere else...
             expect(keyingArea.getElement()).toBe(
-                getButton('Bring to Middle 2 Chorus KM'),
+                getButton('Bring to Middle 2 Chorus XX'),
             );
             // ...and the part that has it, so stepping from the second card
             // is never counted as a remote going unanswered.
@@ -1127,16 +1127,16 @@ function genShowing(screenId: number, sourceId: string, titles: string[] = []) {
 
 describe('Long Text Show cards', () => {
     test('a card with no file, a file that is gone and a part the song lacks each say so', async () => {
-        setSession([genLyricLanguage('km', '')]);
+        setSession([genLyricLanguage('xx', '')]);
         await render();
-        expect(getProblemText()).toBe('KM: No lyric file chosen');
+        expect(getProblemText()).toBe('XX: No lyric file chosen');
         // Nothing to follow on the disk yet.
         expect(state.fileListeners.size).toBe(0);
 
         mocks.chooseLyricFilePath.mockResolvedValueOnce('/docs/gone.owl');
-        await click('Choose Lyric KM');
+        await click('Choose Lyric XX');
         await settle();
-        expect(getProblemText()).toBe('KM: This lyric file could not be read');
+        expect(getProblemText()).toBe('XX: This lyric file could not be read');
         expect(container.querySelector('small.text-warning')!.textContent).toBe(
             'This lyric file could not be read',
         );
@@ -1147,16 +1147,16 @@ describe('Long Text Show cards', () => {
             missingPart: 'Bridge',
         });
         mocks.chooseLyricFilePath.mockResolvedValueOnce('/docs/odd.owl');
-        await click('Choose Lyric KM');
+        await click('Choose Lyric XX');
         await settle();
         expect(getProblemText()).toBe(
-            'KM: This lyric file names a part it does not have (Bridge)',
+            'XX: This lyric file names a part it does not have (Bridge)',
         );
         expect(getButton('Show Long Text').disabled).toBe(true);
     });
 
     test('a typed language with no section cannot go up, by any button', async () => {
-        setSession([genLanguage('km')]);
+        setSession([genLanguage('xx')]);
         await render();
         expect(getProblemText()).toBe('No section yet');
         expect(getButton('Show Long Text').disabled).toBe(true);
@@ -1174,7 +1174,7 @@ describe('Long Text Show cards', () => {
     });
 
     test('right-click on Show or its dots choose the screens', async () => {
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         await render();
         const event = new MouseEvent('contextmenu', {
             bubbles: true,
@@ -1198,7 +1198,7 @@ describe('Long Text Show cards', () => {
     });
 
     test('Show waits while a text is going up, and a screen that refuses it is reported', async () => {
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         await render();
         let refuse!: (error: Error) => void;
         mocks.handleLongTextShowing.mockImplementationOnce(() => {
@@ -1222,7 +1222,7 @@ describe('Long Text Show cards', () => {
     });
 
     test('a card switches between typed text and a lyric file', async () => {
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         await render();
         expect(getButton('Raw Text').getAttribute('aria-pressed')).toBe('true');
         await click('Lyric File');
@@ -1230,15 +1230,15 @@ describe('Long Text Show cards', () => {
         expect(getButton('Lyric File').getAttribute('aria-pressed')).toBe(
             'true',
         );
-        expect(queryButton('Add Section KM')).toBeNull();
-        expect(queryButton('Choose Lyric KM')).not.toBeNull();
-        expect(getProblemText()).toBe('KM: No lyric file chosen');
+        expect(queryButton('Add Section XX')).toBeNull();
+        expect(queryButton('Choose Lyric XX')).not.toBeNull();
+        expect(getProblemText()).toBe('XX: No lyric file chosen');
 
         await click('Raw Text');
         // The typed words were kept for the way back.
         expect(
             container.querySelector<HTMLTextAreaElement>(
-                'textarea[aria-label="Section 1 KM"]',
+                'textarea[aria-label="Section 1 XX"]',
             )!.value,
         ).toBe('a');
         expect(getProblemText()).toBeUndefined();
@@ -1246,7 +1246,7 @@ describe('Long Text Show cards', () => {
 
     test('a card changes its language, never to one the session already has', async () => {
         setSession([
-            genLanguage('km', { sections: ['a'] }),
+            genLanguage('xx', { sections: ['a'] }),
             genLanguage('en', { sections: ['x'] }),
         ]);
         await render();
@@ -1255,26 +1255,26 @@ describe('Long Text Show cards', () => {
         await settle();
         expect(mocks.chooseLongTextLangCode).toHaveBeenCalledWith(
             expect.anything(),
-            ['km', 'en'],
+            ['xx', 'en'],
         );
         // Put away unpicked: the card is what it was.
         expect(queryButton('Add Section EN')).not.toBeNull();
 
-        mocks.chooseLongTextLangCode.mockResolvedValueOnce('fr');
+        mocks.chooseLongTextLangCode.mockResolvedValueOnce('yy');
         await click('Choose Language: en');
         await settle();
         expect(queryButton('Add Section EN')).toBeNull();
         // The same card, its words kept, under its new language.
         expect(
             container.querySelector<HTMLTextAreaElement>(
-                'textarea[aria-label="Section 1 FR"]',
+                'textarea[aria-label="Section 1 YY"]',
             )!.value,
         ).toBe('x');
     });
 
     test('whole languages move as columns, a section moves up, and the order is saved', async () => {
         setSession([
-            genLanguage('km', { sections: ['a', 'b'] }),
+            genLanguage('xx', { sections: ['a', 'b'] }),
             genLanguage('en', { sections: ['x', 'y'] }),
         ]);
         await render();
@@ -1288,23 +1288,23 @@ describe('Long Text Show cards', () => {
             });
         };
         expect(readOrder()).toEqual([
-            'Choose Language: km',
+            'Choose Language: xx',
             'Choose Language: en',
         ]);
         // Neither end moves further.
-        expect(getButton('Move up KM').disabled).toBe(true);
+        expect(getButton('Move up XX').disabled).toBe(true);
         expect(getButton('Move down EN').disabled).toBe(true);
 
-        await click('Move down KM');
+        await click('Move down XX');
         expect(readOrder()).toEqual([
             'Choose Language: en',
-            'Choose Language: km',
+            'Choose Language: xx',
         ]);
-        await click('Move up KM');
-        await click('Move down KM');
+        await click('Move up XX');
+        await click('Move down XX');
         expect(readOrder()).toEqual([
             'Choose Language: en',
-            'Choose Language: km',
+            'Choose Language: xx',
         ]);
 
         await click('Move up 2 EN');
@@ -1326,20 +1326,20 @@ describe('Long Text Show cards', () => {
             }),
         ).toEqual([
             ['en', ['y', 'x']],
-            ['km', ['a', 'b']],
+            ['xx', ['a', 'b']],
         ]);
         root = createRoot(container);
     });
 
     test('a choice of file put away unpicked changes and writes nothing', async () => {
-        state.lyricMap.set('/docs/km.owl', {
+        state.lyricMap.set('/docs/xx.owl', {
             title: '♪ Hymn ♪',
             parts: ['Verse 1'],
         });
-        setSession([genLyricLanguage('km', '/docs/km.owl')]);
+        setSession([genLyricLanguage('xx', '/docs/xx.owl')]);
         await render();
         mocks.chooseLyricFilePath.mockResolvedValueOnce(null);
-        await click('Choose Lyric KM');
+        await click('Choose Lyric XX');
         await settle();
         expect(container.textContent).toContain('♪ Hymn ♪ · Sections: 1');
         act(() => root.unmount());
@@ -1360,35 +1360,35 @@ describe('Long Text Show cards', () => {
             },
         );
         const parts = ['Verse 1', 'Chorus'];
-        state.lyricMap.set('/docs/km.owl', { title: '♪ Hymn ♪', parts });
+        state.lyricMap.set('/docs/xx.owl', { title: '♪ Hymn ♪', parts });
         state.lyricMap.set('/docs/en.owl', { title: 'Song', parts });
         setSession([
-            genLyricLanguage('km', '/docs/km.owl'),
+            genLyricLanguage('xx', '/docs/xx.owl'),
             genLyricLanguage('en', '/docs/en.owl'),
             // A typed card has no file to follow.
-            genLanguage('fr', { sections: ['one', 'two'] }),
+            genLanguage('yy', { sections: ['one', 'two'] }),
         ]);
         await render();
         expect(mocks.useFileSourceEvents).toHaveBeenCalledWith(
             ['update', 'delete'],
             expect.any(Function),
             [],
-            '/docs/km.owl',
+            '/docs/xx.owl',
         );
         expect([...state.fileListeners.keys()].sort()).toEqual([
             '/docs/en.owl',
-            '/docs/km.owl',
+            '/docs/xx.owl',
         ]);
         expect(container.textContent).toContain('♪ Hymn ♪ · Sections: 2');
 
         const newParts = ['Verse 1', 'Chorus', 'Verse 2'];
-        state.lyricMap.set('/docs/km.owl', {
+        state.lyricMap.set('/docs/xx.owl', {
             title: '♪ Hymn ♪',
             parts: newParts,
         });
         state.lyricMap.set('/docs/en.owl', { title: 'Song', parts: newParts });
         act(() => {
-            state.fileListeners.get('/docs/km.owl')!();
+            state.fileListeners.get('/docs/xx.owl')!();
         });
         await act(async () => {
             await vi.advanceTimersByTimeAsync(200);
@@ -1426,18 +1426,18 @@ describe('Long Text Show cards', () => {
             title: 'Slow song',
             parts: ['Verse 1'],
         });
-        state.lyricMap.set('/docs/km.owl', {
+        state.lyricMap.set('/docs/xx.owl', {
             title: '♪ Hymn ♪',
             parts: ['Verse 1', 'Chorus'],
         });
-        setSession([genLyricLanguage('km', '/docs/slow.owl')]);
+        setSession([genLyricLanguage('xx', '/docs/slow.owl')]);
         await render();
         // A file not read yet is neither right nor wrong.
         expect(container.textContent).toContain('Loading...');
         expect(getButton('Show Long Text').disabled).toBe(true);
 
-        mocks.chooseLyricFilePath.mockResolvedValueOnce('/docs/km.owl');
-        await click('Choose Lyric KM');
+        mocks.chooseLyricFilePath.mockResolvedValueOnce('/docs/xx.owl');
+        await click('Choose Lyric XX');
         await settle();
         expect(container.textContent).toContain('♪ Hymn ♪ · Sections: 2');
 
@@ -1452,7 +1452,7 @@ describe('Long Text Show cards', () => {
 
     test('a read that fails is reported, and a text that could not be checked cannot go up', async () => {
         state.failingPaths.add('/docs/broken.owl');
-        setSession([genLyricLanguage('km', '/docs/broken.owl')]);
+        setSession([genLyricLanguage('xx', '/docs/broken.owl')]);
         await render();
         await settle();
         expect(mocks.handleError).toHaveBeenCalledWith(
@@ -1464,7 +1464,7 @@ describe('Long Text Show cards', () => {
     });
 
     test('a Hide chip is titled with the text it takes down', async () => {
-        setSession([genLanguage('km', { sections: ['a'] })]);
+        setSession([genLanguage('xx', { sections: ['a'] })]);
         state.showingList = [
             genShowing(1, 'long-text', ['Song', '♪ Hymn ♪']),
             genShowing(2, 'long-text'),
@@ -1481,7 +1481,7 @@ describe('Long Text Show cards', () => {
         state.settingMap.set(
             'long-text-setting-s2',
             JSON.stringify({
-                languages: [genLanguage('km', { sections: ['session two'] })],
+                languages: [genLanguage('xx', { sections: ['session two'] })],
             }),
         );
         state.showingList = [
@@ -1491,7 +1491,7 @@ describe('Long Text Show cards', () => {
         await render();
         expect(
             container.querySelector<HTMLTextAreaElement>(
-                'textarea[aria-label="Section 1 KM"]',
+                'textarea[aria-label="Section 1 XX"]',
             )!.value,
         ).toBe('session two');
         // Only the screen holding THIS session's text has its Hide chip.
@@ -1669,17 +1669,17 @@ describe('Long Text Show in Atom mode', () => {
         setSession(
             [
                 genLanguage('en', { sections: ['one\n\nthree', 'four'] }),
-                genLanguage('km', { sections: ['1\n2\n3', '4'] }),
+                genLanguage('xx', { sections: ['1\n2\n3', '4'] }),
             ],
             true,
         );
         await render();
         // A typed section has a numbered button per line.
         expect(getButton('Bring to Middle 2 EN').textContent).toBe('2');
-        expect(getButton('Bring to Middle 4 KM').textContent).toBe('4');
+        expect(getButton('Bring to Middle 4 XX').textContent).toBe('4');
         await click('Show Long Text');
         await settle();
-        const [en, km] =
+        const [en, xx] =
             mocks.handleLongTextShowing.mock.calls[0][1].longTextData
                 .renderedList;
         expect(en.sections.map(({ text }: { text: string }) => text)).toEqual([
@@ -1689,7 +1689,7 @@ describe('Long Text Show in Atom mode', () => {
             'four',
         ]);
         expect(
-            km.sections.map(({ num, key }: { num: string; key: string }) => {
+            xx.sections.map(({ num, key }: { num: string; key: string }) => {
                 return `${num} ${key}`;
             }),
         ).toEqual(['1 lt-1', '2 lt-2', '3 lt-3', '4 lt-4']);
@@ -1699,14 +1699,14 @@ describe('Long Text Show in Atom mode', () => {
         setSession(
             [
                 genLanguage('en', { sections: ['one\ntwo', 'three'] }),
-                genLanguage('km', { sections: ['1', '2'] }),
+                genLanguage('xx', { sections: ['1', '2'] }),
             ],
             true,
         );
         state.showingList = [genShowing(0, 'long-text')];
         await render();
         expect(getProblemText()).toBe(
-            'Every language needs the same number of lines: Section 1 — EN 2 ≠ KM 1',
+            'Every language needs the same number of lines: Section 1 — EN 2 ≠ XX 1',
         );
         expect(getButton('Show Long Text').disabled).toBe(true);
         // The rows do not line up, so no number is a button to press.
@@ -1755,7 +1755,7 @@ describe('Long Text Show in Atom mode', () => {
         setSession(
             [
                 genLanguage('en', { sections: ['one\ntwo', 'three'] }),
-                genLanguage('km', { sections: ['1\n2', '3'] }),
+                genLanguage('xx', { sections: ['1\n2', '3'] }),
             ],
             true,
         );
@@ -1797,7 +1797,7 @@ describe('Long Text Show in Atom mode', () => {
             JSON.stringify({
                 languages: [
                     genLanguage('en', { sections: ['one'] }),
-                    genLanguage('km', { sections: ['1'] }),
+                    genLanguage('xx', { sections: ['1'] }),
                 ],
                 isStacked: true,
             }),
@@ -1806,7 +1806,7 @@ describe('Long Text Show in Atom mode', () => {
         expect(getButton('Stack').disabled).toBe(false);
         expect(getButton('Stack').getAttribute('aria-pressed')).toBe('true');
 
-        await click('Remove Language KM');
+        await click('Remove Language XX');
         expect(getButton('Stack').disabled).toBe(true);
         expect(getButton('Stack').getAttribute('aria-pressed')).toBe('false');
         await click('Show Long Text');
@@ -1814,7 +1814,7 @@ describe('Long Text Show in Atom mode', () => {
         const { longTextData } = mocks.handleLongTextShowing.mock.calls[0][1];
         expect(longTextData).not.toHaveProperty('isStacked');
 
-        mocks.chooseLongTextLangCode.mockResolvedValueOnce('km');
+        mocks.chooseLongTextLangCode.mockResolvedValueOnce('xx');
         await click('Add Language');
         await settle();
         expect(getButton('Stack').disabled).toBe(false);
@@ -1852,7 +1852,7 @@ describe('Long Text Show in Atom mode', () => {
     test('pressed while the text is down, or into a text that cannot go up, no screen is touched', async () => {
         setSession([
             genLanguage('en', { sections: ['one\ntwo'] }),
-            genLanguage('km', { sections: ['1'] }),
+            genLanguage('xx', { sections: ['1'] }),
         ]);
         await render();
         await click('Atom Mode');
@@ -1870,7 +1870,7 @@ describe('Long Text Show in Atom mode', () => {
         expect(mocks.replaceLongText).not.toHaveBeenCalled();
         expect(mocks.showSimpleToast).toHaveBeenLastCalledWith(
             'Long Text Show',
-            'Every language needs the same number of lines: Section 1 — EN 2 ≠ KM 1',
+            'Every language needs the same number of lines: Section 1 — EN 2 ≠ XX 1',
         );
     });
 });

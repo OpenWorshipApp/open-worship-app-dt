@@ -360,6 +360,13 @@ async function press(element: Element | null) {
     await flush();
 }
 
+// The ask row's tools sit behind its ⋮ (`RenderAskToolsMenuComp`): open it,
+// then hand back the row named.
+async function openAskTool(label: string) {
+    await press($('button.chat-ask-tools'));
+    return $(`[role="menu"] [aria-label="${label}"]`);
+}
+
 async function typeQuestion(value: string) {
     const box = $<HTMLTextAreaElement>('.chat-input')!;
     const setter = Object.getOwnPropertyDescriptor(
@@ -586,7 +593,7 @@ describe('the suggestions under the box', () => {
 
 describe('the Bible input aid', () => {
     test('a Reader tab completes a passage in the Reader’s own words', async () => {
-        plugTestTranslator({ Book: 'BOOK-IN-KHMER' });
+        plugTestTranslator({ Book: 'BOOK-IN-XX' });
         h.callTool.mockImplementation(async (name: string, args: any) => {
             if (name === 'owa_bible_suggest' && args.kind === 'reference') {
                 return JSON.stringify({
@@ -1009,7 +1016,7 @@ describe('what a message draws', () => {
         h.secret = { anthropicAPIKey: 'sk-ant-test' };
         plugTestTranslator({
             'Open {provider} billing': 'OPEN-BILLING {provider}',
-            'Show me step by step': 'STEP-BY-STEP-KM',
+            'Show me step by step': 'STEP-BY-STEP-XX',
         });
         seedSessions([
             genSession({
@@ -1062,7 +1069,7 @@ describe('what a message draws', () => {
         expect(page.querySelector('.bi-box-arrow-up-right')).not.toBeNull();
         expect(guide.className).toBe('cue-act cue-act-guide');
         // A label the dictionary has whole is drawn as the dictionary says.
-        expect(guide.textContent).toBe('STEP-BY-STEP-KM');
+        expect(guide.textContent).toBe('STEP-BY-STEP-XX');
         expect(demo.className).toBe('cue-act cue-act-demo');
         expect(data.className).toBe('cue-act cue-act-data');
         expect(data.textContent).toBe('GEN 4:1');
@@ -1395,11 +1402,11 @@ describe('attaching to the next question', () => {
         await renderWindow();
         await dropFiles([
             genFile('Hello words', 'notes.txt', 'text/plain'),
-            genFile('{}', 'report.docx', 'application/msword'),
+            genFile('{}', 'report.doc', 'application/msword'),
         ]);
         expect(draftChipNames()).toEqual(['notes.txt']);
         expect(attachError()).toBe(
-            'I cannot read report.docx — try a picture of it instead.',
+            'I cannot read report.doc — try a picture of it instead.',
         );
         await press($('[aria-label="Remove notes.txt"]'));
         expect(draftChipNames()).toEqual([]);
@@ -1529,8 +1536,10 @@ describe('the camera and the pointer', () => {
         plugTestTranslator({ 'my screen': 'MY-SCREEN' });
         seedSessions([genSession()]);
         await renderWindow();
-        const camera = $('[aria-label="Attach a picture of the app"]')!;
-        await press(camera);
+        const camera = () => {
+            return openAskTool('Attach a picture of the app');
+        };
+        await press(await camera());
         await flush();
         expect(draftChipNames()).toEqual(['MY-SCREEN']);
         // The main window it was of, said on its hover.
@@ -1538,11 +1547,11 @@ describe('the camera and the pointer', () => {
             $('.chat-ask > .chat-clips .chat-clip')!.getAttribute('title'),
         ).toBe('MY-SCREEN (main window, Presenter) — press to see it bigger');
         captured = 'data:text/plain;base64,aGk=';
-        await press(camera);
+        await press(await camera());
         await flush();
         expect(attachError()).toBe('I could not take a picture of the app.');
         captured = new Error('the window is hidden');
-        await press(camera);
+        await press(await camera());
         await flush();
         expect(attachError()).toBe(
             'I could not take a picture: the window is hidden',
@@ -1566,12 +1575,12 @@ describe('the camera and the pointer', () => {
         h.callToolPicture.mockResolvedValue(PNG_DATA_URL);
         plugTestTranslator({
             'my {window} window': 'WINDOW-OF {window}',
-            Settings: 'SETTINGS-KM',
+            Settings: 'SETTINGS-XX',
         });
         seedSessions([genSession()]);
         await renderWindow();
         await chooseOption(getSelect('Which window'), 'W2');
-        await press($('[aria-label="Attach a picture of the app"]'));
+        await press(await openAskTool('Attach a picture of the app'));
         await flush();
         expect(h.callToolPicture).toHaveBeenCalledWith(
             'owa_screenshot',
@@ -1579,7 +1588,7 @@ describe('the camera and the pointer', () => {
             null,
             { windowId: 'W2', focus: 'setting', isSeparateWindow: false },
         );
-        expect(draftChipNames()).toEqual(['WINDOW-OF SETTINGS-KM']);
+        expect(draftChipNames()).toEqual(['WINDOW-OF SETTINGS-XX']);
     });
 
     test('the ◎ says to point first, then attaches what was pointed at', async () => {
@@ -1589,7 +1598,7 @@ describe('the camera and the pointer', () => {
         });
         seedSessions([genSession()]);
         await renderWindow();
-        await press($('[aria-label="Point at a control in the app"]'));
+        await press(await openAskTool('Point at a control in the app'));
         expect(attachError()).toBe(
             'Point at the control you mean in the app window…',
         );
@@ -1643,14 +1652,16 @@ describe('the camera and the pointer', () => {
         ];
         seedSessions([genSession()]);
         await renderWindow();
-        const pointer = $('[aria-label="Point at a control in the app"]')!;
-        await press(pointer);
+        const pointer = () => {
+            return openAskTool('Point at a control in the app');
+        };
+        await press(await pointer());
         expect(attachError()).toBe('You pressed Escape.');
         answer = JSON.stringify({ picked: false });
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe('Nothing was picked in the app window.');
         answer = new Error('host down');
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe(
             'I could not do that just now. Try again in a moment.',
         );
@@ -1660,7 +1671,7 @@ describe('the camera and the pointer', () => {
         h.callTool.mockImplementation(async () => {
             return waiting.promise;
         });
-        await press(pointer);
+        await press(await pointer());
         expect(attachError()).toBe(
             'Point at the control you mean in the Settings window…',
         );
@@ -1837,7 +1848,7 @@ describe('pressing a chip under a message', () => {
             }
             return JSON.stringify({ shownCount });
         });
-        plugTestTranslator({ 'Clear All': 'CLEAR-ALL-KM' });
+        plugTestTranslator({ 'Clear All': 'CLEAR-ALL-XX' });
         seedChips(
             [],
             [
@@ -1846,9 +1857,9 @@ describe('pressing a chip under a message', () => {
             ],
         );
         await renderWindow();
-        const chip = chipTitled('CLEAR-ALL-KM');
+        const chip = chipTitled('CLEAR-ALL-XX');
         expect(chip.getAttribute('title')).toBe(
-            'CLEAR-ALL-KM — press to ring it in the app',
+            'CLEAR-ALL-XX — press to ring it in the app',
         );
         expect(chip.querySelector('i')?.className).toBe('bi bi-bullseye');
         await press(chip);
@@ -1977,7 +1988,7 @@ describe('pressing a chip under a message', () => {
         plugTestTranslator({
             'app screen': 'APP-SCREEN',
             'my {window} window': 'WINDOW-OF {window}',
-            Settings: 'SETTINGS-KM',
+            Settings: 'SETTINGS-XX',
         });
         seedChips([
             {
@@ -2009,8 +2020,8 @@ describe('pressing a chip under a message', () => {
             'APP-SCREEN — not attached any more',
         );
         // A name that says its window already is not told it twice.
-        expect(chipTitled('WINDOW-OF SETTINGS-KM').getAttribute('title')).toBe(
-            'WINDOW-OF SETTINGS-KM — not attached any more',
+        expect(chipTitled('WINDOW-OF SETTINGS-XX').getAttribute('title')).toBe(
+            'WINDOW-OF SETTINGS-XX — not attached any more',
         );
         expect(chipTitled('holiday.jpg').querySelector('i')?.className).toBe(
             'bi bi-image',

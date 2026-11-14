@@ -216,3 +216,96 @@ describe('classifyMarkdownHref', () => {
         }
     });
 });
+
+// Beside the editor, the page's blocks carry the lines they start at, which
+// each side reads to follow the other's scrolling
+// (`markdownScrollFollowHelpers.ts`).
+describe("renderPreviewMarkdown: each block's line, beside the editor", () => {
+    function renderMarked(text: string) {
+        const { html } = renderPreviewMarkdown(
+            text,
+            (filePath) => {
+                return `file:///base/${filePath}`;
+            },
+            true,
+        );
+        return new DOMParser().parseFromString(html, 'text/html');
+    }
+
+    function lineOf(element: Element | null | undefined) {
+        return element?.getAttribute('data-source-line') ?? null;
+    }
+
+    test('a block carries the line it starts at, counted from 0', () => {
+        const page = renderMarked(
+            [
+                '# Title',
+                '',
+                'Some words',
+                'on two lines',
+                '',
+                '- one',
+                '- two',
+                '',
+                '> quoted',
+                '',
+                '```js',
+                'let a = 1;',
+                '```',
+                '',
+                '    indented code',
+                '',
+                '---',
+                '',
+                '| a | b |',
+                '| - | - |',
+                '| 1 | 2 |',
+                '',
+                '```mermaid',
+                'graph TD',
+                '```',
+            ].join('\n'),
+        );
+        expect(lineOf(page.querySelector('h1'))).toBe('0');
+        expect(lineOf(page.querySelector('body > p'))).toBe('2');
+        expect(
+            Array.from(page.querySelectorAll('li')).map((element) => {
+                return lineOf(element);
+            }),
+        ).toEqual(['5', '6']);
+        // A list's own line is its first item's, which carries it.
+        expect(lineOf(page.querySelector('ul'))).toBeNull();
+        expect(lineOf(page.querySelector('blockquote'))).toBe('8');
+        expect(lineOf(page.querySelector('blockquote > p'))).toBe('8');
+        // A fence's on its `<code>`, an indented block's on its `<pre>`.
+        expect(lineOf(page.querySelector('code.language-js'))).toBe('10');
+        expect(lineOf(page.querySelectorAll('pre')[1])).toBe('14');
+        expect(lineOf(page.querySelector('hr'))).toBe('16');
+        // A table's on the box it scrolls in, and each row's on the row.
+        expect(lineOf(page.querySelector('.app-markdown-table'))).toBe('18');
+        expect(lineOf(page.querySelector('tbody > tr'))).toBe('20');
+        // A diagram's on the box kept around it once drawn.
+        const diagram = page.querySelector('.app-markdown-mermaid');
+        expect(lineOf(diagram)).toBe('22');
+        expect(diagram?.getAttribute('data-mermaid-index')).toBe('0');
+    });
+
+    test('a page that is only read carries none', () => {
+        const { html } = render('# Title\n\nWords\n\n- one');
+        expect(html).not.toContain('data-source-line');
+    });
+
+    test("the file's own HTML keeps it only as a line number", () => {
+        const page = new DOMParser().parseFromString(
+            render(
+                '<p data-source-line="7" data-other="1">kept</p>\n\n' +
+                    '<p data-source-line="7;x">dropped</p>',
+            ).html,
+            'text/html',
+        );
+        const [kept, dropped] = Array.from(page.querySelectorAll('p'));
+        expect(lineOf(kept)).toBe('7');
+        expect(kept.hasAttribute('data-other')).toBe(false);
+        expect(lineOf(dropped)).toBeNull();
+    });
+});

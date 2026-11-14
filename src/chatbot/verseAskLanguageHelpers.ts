@@ -3,11 +3,12 @@
  * the elder-persona run). The readers that route a verse to the verse finder
  * -- `readVerseFindAsk` ("Help me find a Bible verse in "KJV": …") and
  * `readBibleContentAsk` ("which verse says …") -- read English, so in a
- * Khmer window every verse asked for in Khmer went to the ordinary
- * assistant, which has no Bible search: asked in Khmer to help find a verse
- * about loving one's enemies, all three models named Matthew 5:44 and QUOTED a Khmer text
- * of their own making (the installed Bible says otherwise), with no button to
- * open it; one invented the book's Khmer name; one sent an elderly user to
+ * window shown in another language every verse asked for in it went to the
+ * ordinary assistant, which has no Bible search: asked in that language to
+ * help find a verse about loving one's enemies, all three models named
+ * Matthew 5:44 and QUOTED a translated text of their own making (the
+ * installed Bible says otherwise), with no button to open it; one invented
+ * the book's translated name; one sent an elderly user to
  * type `/btw`. Typed in English the same asks found the verse 20 of 20.
  *
  * Every language is data (`chatLangHelpers.ts`): its `assistant.json` lists
@@ -17,7 +18,7 @@
  * work instead (`verseAskExcludeWords`: the screen, a slide, a song). English
  * keeps its readers; this adds every other language's.
  *
- * Pure. Zero-width spaces, which Khmer keyboards put between words, are
+ * Pure. Zero-width spaces, which some keyboards put between words, are
  * taken out before reading.
  */
 
@@ -30,6 +31,7 @@ import { checkHasWord, checkIsAppWork } from './bibleReaderChatHelpers';
 import {
     checkIsInLanguageScript,
     COLON_MARKS,
+    getAssistantLanguage,
     listAssistantLanguages,
     SENTENCE_END_MARKS,
     toAsciiDigits,
@@ -58,8 +60,9 @@ function toPlainAsk(text: string) {
     return text.replace(ZERO_WIDTH_PATTERN, '').replace(/\s+/g, ' ').trim();
 }
 
-// A Latin word whole, as `checkHasWord` reads it: French "song" is not in
-// a French verse that says "sing to the Lord".
+// A Latin word whole, as `checkHasWord` reads it: a language's word for
+// "song" is not found inside its longer "sing" in a verse that says "sing to
+// the Lord".
 function checkHasExcludedWord(text: string, language: AssistantLanguageType) {
     return checkHasWord(text, language.verseAskExcludeWords);
 }
@@ -68,10 +71,10 @@ function checkHasExcludedWord(text: string, language: AssistantLanguageType) {
  * Whether the words name the app's own work in some language's own words --
  * the screen, a slide, a song (`verseAskExcludeWords`) -- which ends a verse
  * search as `VERSE_FIND_EXIT_PATTERN` does for English: "put it on the
- * screen", in Khmer, under a found verse is not more words of the verse. A verse asked FOR is
+ * screen", translated, under a found verse is not more words of the verse. A verse asked FOR is
  * read by `checkIsAppWork` instead (2026-10-29): a word the Bible uses too
  * -- a song, a size -- starts a search unless it is a how-do-I, so
- * _which verse says sing a new song_, asked in Khmer, is searched, as its
+ * _which verse says sing a new song_, asked in another language, is searched, as its
  * English is.
  */
 export function checkIsAppWorkAsk(text: string) {
@@ -95,7 +98,7 @@ const MAX_CLOSING_LENGTH = 40;
  * Whether the line is a thank-you or a goodbye, in English or in any
  * language's own words (`closingWords`). Under a verse search such a line
  * was searched as more words of the verse (2026-10-17, the elder-persona
- * run: a Khmer "thank you very much 🙏" came back with a Google search for
+ * run: a translated "thank you very much 🙏" came back with a Google search for
  * "thank you").
  */
 export function checkIsClosingLine(text: string) {
@@ -166,7 +169,7 @@ export function readTypedVerseFindAsk(
  * with no arguments (`{bible, bibles: [{key, locale}]}`): the Bible Lookup's,
  * unless they write in a language other than English and the lookup's Bible
  * is not in it while an installed one is -- then that one (2026-10-17: asked
- * in Khmer, Matthew 5:44 was found and quoted in the King James' English to
+ * in another language, Matthew 5:44 was found and quoted in the King James' English to
  * a person who reads none, the Reader's lookup being on KJV that day). Null
  * when there is no Bible at all.
  */
@@ -185,14 +188,21 @@ export function pickVerseFindBible(
  * (`{bibles: [{key, locale, books?}]}`), a whole Bible before one that holds
  * `books` of them only (a New Testament had been picked for Genesis,
  * 2026-10-29). Null to keep `currentKey`: English, no language, a Bible
- * already in it, or none in it installed.
+ * already in it, or none in it installed. `isEnglishPicked`: English is
+ * looked for too -- a study file written in English quotes an English
+ * Bible, whatever the Lookup is on (EC-464).
  */
 export function pickBibleInLanguage(
     listed: unknown,
     currentKey: string | null,
     langCode: string,
+    isEnglishPicked = false,
 ): string | null {
-    if (langCode === 'en' || langCode === 'other' || langCode.length === 0) {
+    if (
+        (langCode === 'en' && !isEnglishPicked) ||
+        langCode === 'other' ||
+        langCode.length === 0
+    ) {
         return null;
     }
     const result = listed as {
@@ -232,8 +242,52 @@ export function pickBibleInLanguage(
 }
 
 /**
+ * Whether the Bible `key` names is in a language other than `langCode`, off
+ * `owa_find_verse` with no arguments (`{bibles: [{key, locale}]}`). False
+ * when it is in it, or when either cannot be told: no such Bible, no
+ * locale, no language (`other`).
+ */
+export function checkIsBibleInOtherLanguage(
+    listed: unknown,
+    key: string | null,
+    langCode: string,
+): boolean {
+    if (key === null || langCode === 'other' || langCode.length === 0) {
+        return false;
+    }
+    const result = listed as {
+        bibles?: { key?: unknown; locale?: unknown }[];
+    } | null;
+    const bible = (Array.isArray(result?.bibles) ? result.bibles : []).find(
+        (one) => {
+            return one?.key === key;
+        },
+    );
+    const locale = String(bible?.locale ?? '').toLowerCase();
+    return (
+        locale.length > 0 &&
+        !locale.startsWith(langCode.toLowerCase().split('-')[0])
+    );
+}
+
+/**
+ * The language a Bible Reader answer is told to be written in (EC-495), by
+ * name: only when the Bible it quotes is in another one, so an ask whose
+ * Bible is in the answer's language is the one it always was.
+ */
+export function toBibleReaderAnswerLanguage(
+    listed: unknown,
+    bibleKey: string | null,
+    answerLangCode: string,
+): string | null {
+    return checkIsBibleInOtherLanguage(listed, bibleKey, answerLangCode)
+        ? getAssistantLanguage(answerLangCode).name
+        : null;
+}
+
+/**
  * Knowledge ABOUT the Bible asked in a language other than English --
- * _who wrote the book of Psalms?_ asked in Khmer or in French -- read as
+ * _who wrote the book of Psalms?_ asked in any installed language -- read as
  * `readBibleContentAsk` reads English (2026-10-29,
  * `EC-444`): a question word and a Bible word, not a who-was / where-is,
  * nothing the person has open, nothing of the app's work. With no

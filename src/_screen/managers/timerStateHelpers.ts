@@ -81,6 +81,22 @@ export function toTimerClockText(totalSecond: number) {
         .join(':');
 }
 
+const SECOND_A_DAY = 24 * 3600;
+
+/**
+ * `41d 17:54:52` -- a countdown's digits as the wall shows them, the days in
+ * front from one full day out (2026-11-13). The wall writes the day in the
+ * app's language; this is English, for the assistant's read.
+ */
+export function toCountdownClockText(totalSecond: number) {
+    const second = Math.max(0, Math.floor(totalSecond));
+    const days = Math.floor(second / SECOND_A_DAY);
+    if (days === 0) {
+        return toTimerClockText(second);
+    }
+    return `${days}d ${toTimerClockText(second % SECOND_A_DAY)}`;
+}
+
 // ---------------------------------------------------------------- countdown
 
 /** What a countdown reads now, in milliseconds; negative once it is over. */
@@ -153,6 +169,43 @@ export function toPausedCountdownData<T extends CountdownTimingType>(
     };
 }
 
+/**
+ * More time on a countdown that is up (EC-526, "add 2 more minutes"): a
+ * running one reaches zero that much later -- one already over counts down
+ * again from now -- a paused one reads that much more, and one counting to a
+ * date & time moves that time. Only the timing changes, so the clock is
+ * changed in place on the wall; a countdown not started yet is made that
+ * much longer, Reset winding back to the new length.
+ */
+export function toLongerCountdownData<T extends CountdownTimingType>(
+    data: T,
+    addMillisecond: number,
+    now = Date.now(),
+): T {
+    if (getCountdownState(data) === 'not-started') {
+        const durationMillisecond =
+            (data.durationMillisecond as number) + addMillisecond;
+        return {
+            ...data,
+            dateTime: new Date(now + durationMillisecond),
+            durationMillisecond,
+            pausedMillisecond: durationMillisecond,
+        };
+    }
+    if (checkIsTimerStopped(data)) {
+        return {
+            ...data,
+            pausedMillisecond:
+                Math.max(0, data.pausedMillisecond as number) + addMillisecond,
+        };
+    }
+    const remaining = Math.max(0, toCountdownRemainingMillisecond(data, now));
+    return {
+        ...data,
+        dateTime: new Date(now + remaining + addMillisecond),
+    };
+}
+
 /** Back to the full length, stopped -- Start runs it again. */
 export function toResetCountdownData<T extends CountdownTimingType>(
     data: T,
@@ -209,7 +262,7 @@ export function describeCountdown(data: CountdownTimingType, now = Date.now()) {
             ? toCountdownRemainingMillisecond(data, now)
             : 0;
     const { isOver, second } = toCountdownShownSecond(remaining);
-    const shown = `${isOver && second > 0 ? '+' : ''}${toTimerClockText(second)}`;
+    const shown = `${isOver && second > 0 ? '+' : ''}${toCountdownClockText(second)}`;
     switch (getCountdownState(data)) {
         case 'not-started':
             return `countdown of ${shown}, shown but not started`;
@@ -219,7 +272,12 @@ export function describeCountdown(data: CountdownTimingType, now = Date.now()) {
             if (!isValid) {
                 return 'countdown';
             }
-            const target = ` to ${data.dateTime.toLocaleTimeString()}`;
+            // A day not today is named: a countdown to Christmas morning
+            // read as "to 9:00:00 AM" says it ends today (EC-580).
+            const day = data.dateTime.toDateString();
+            const target =
+                ` to ${data.dateTime.toLocaleTimeString()}` +
+                (day === new Date(now).toDateString() ? '' : ` on ${day}`);
             return isOver
                 ? `countdown${target} (time is up, now counting the time over)`
                 : `countdown${target}`;

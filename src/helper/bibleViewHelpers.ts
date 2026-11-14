@@ -103,7 +103,7 @@ const PANEL_BASE_FONT_SIZE = 13.5;
 
 // The panels are narrow floating widgets laid OVER the scripture, so their text
 // runs a step under the bible text's size rather than matching it: at full size
-// a Khmer record's two-line description held barely a phrase per line
+// a translated record's two-line description held barely a phrase per line
 // (2026-09-21, asked for with a picture).
 const PANEL_TO_BIBLE_TEXT_RATIO = 0.85;
 

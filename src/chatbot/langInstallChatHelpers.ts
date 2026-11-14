@@ -1,10 +1,11 @@
 /**
  * A language the conversation is about, installed first -- with the person's
- * say-so (2026-11-05, the user, over a Bible import in a Khmer window where
- * "French" had been pressed and the French Bibles listed at once: _chatbot
- * must ask user permission to install any language package that related to
- * chatting session, e.g. user input for french so chatbot should take a
- * moment to help user install french first before proceed further step_).
+ * say-so (2026-11-05, the user, over a Bible import in a non-English window
+ * where another language had been pressed and its Bibles listed at once:
+ * _chatbot must ask user permission to install any language package that
+ * related to chatting session, e.g. user input for <a language> so chatbot
+ * should take a moment to help user install <it> first before proceed
+ * further step_).
  *
  * Only English ships; every other language is a plugin
  * (`language-plugins-runtime`), and a Bible in it gets its book names,
@@ -35,6 +36,8 @@ export const LANG_INSTALL_STEP_TOOL_NAME = 'owa-lang-install-step';
 export const LANG_INSTALL_LABEL = 'Install it';
 export const LANG_ENABLE_LABEL = 'Enable';
 export const LANG_SKIP_LABEL = 'Not now';
+// Under "ready" when a question waits for the language (EC-494).
+export const LANG_ASK_AGAIN_LABEL = 'Ask again';
 
 export type ChatLangCheckType = {
     state:
@@ -189,7 +192,8 @@ export function describeLangInstall(language: string) {
 
 // --- a language asked for in so many words --------------------------------
 
-export type LangInstallStepType = 'check' | 'install' | 'skip';
+// `ask`: the question the language was offered for, asked again (EC-494).
+export type LangInstallStepType = 'check' | 'install' | 'skip' | 'ask';
 
 export type LangInstallStateType = {
     step: LangInstallStepType;
@@ -198,9 +202,16 @@ export type LangInstallStateType = {
     langCode?: string;
     label?: string;
     isTurnOn?: boolean;
+    // A question that waits for the language -- a study's translation into
+    // it (EC-494): asked again after **Not now** at once, and after the
+    // install by **Ask again**, once the window has loaded the language.
+    question?: string;
+    // The package **Not now** declined: asked again, the translation goes
+    // on without it rather than offering it again.
+    skipLangOffer?: string;
 };
 
-// "Install the French language", "can you add Spanish language pack for
+// "Install the German language", "can you add Spanish language pack for
 // me?", "download the language Thai". A question about HOW is the guide's
 // (W-55), and a Bible in a language is the Bible import's.
 const INSTALL_WORD_PATTERN =
@@ -219,7 +230,7 @@ const FILLER_PATTERN =
  * words ahead of any model -- the window offers the install with its own
  * buttons, which no model could: English's words here, and every installed
  * language's own (`langInstallAsks` in its `assistant.json`, group
- * `language`). Asked in Khmer, it had gone to a model that wrote the steps
+ * `language`). Asked in another language, it had gone to a model that wrote the steps
  * out with nothing to press (2026-11-05).
  */
 export function readLangInstallAsk(text: string): LangInstallStateType | null {
@@ -343,7 +354,7 @@ async function runInstall(state: LangInstallStateType): Promise<BotAnswerType> {
         typeof state.langCode === 'string' &&
         (await installChatLanguage(state.langCode))
     ) {
-        return { text: genLangReadyText(label) };
+        return genReadyAnswer(state, label);
     }
     return {
         text: genLangFailedText(label, state.isTurnOn === true),
@@ -354,13 +365,179 @@ async function runInstall(state: LangInstallStateType): Promise<BotAnswerType> {
                     : LANG_INSTALL_LABEL,
                 state,
             ),
-            toAction(LANG_SKIP_LABEL, {
-                step: 'skip',
-                language: state.language,
-            }),
+            toAction(LANG_SKIP_LABEL, toSkipState(state)),
         ],
     };
 }
+
+// **Not now**: nothing installed, and a question waiting for the language
+// asked again without it.
+function toSkipState(state: LangInstallStateType): LangInstallStateType {
+    return {
+        step: 'skip',
+        language: state.language,
+        ...(state.question === undefined ? {} : { question: state.question }),
+        ...(state.skipLangOffer === undefined
+            ? {}
+            : { skipLangOffer: state.skipLangOffer }),
+    };
+}
+
+/**
+ * The window refreshes to take a new language in (BN-45), and a study
+ * drafted before that would be lost with it: the question that waited is
+ * asked again by **Ask again**, once it has.
+ */
+export function genLangAskAgainAnswer(
+    language: string,
+    question: string,
+): BotAnswerType {
+    return {
+        text: fillWords(
+            tran(
+                'This window refreshes in a moment. Then press ' +
+                    '**{button}** to translate the study.',
+            ),
+            { button: tran(LANG_ASK_AGAIN_LABEL) },
+        ),
+        actions: [
+            toAction(LANG_ASK_AGAIN_LABEL, { step: 'ask', language, question }),
+        ],
+    };
+}
+
+// Ready, and a question that waited for it asked again by a press.
+function genReadyAnswer(
+    state: LangInstallStateType,
+    label: string,
+): BotAnswerType {
+    const question = state.question?.trim() ?? '';
+    if (question === '') {
+        return { text: genLangReadyText(label) };
+    }
+    const askAgain = genLangAskAgainAnswer(state.language, question);
+    return {
+        text: `${genLangReadyText(label)} ${askAgain.text}`,
+        actions: askAgain.actions,
+    };
+}
+
+/**
+ * What a press under a study's language offer asks again (EC-494): the
+ * question, and for **Not now** the package to go on without. Null for a
+ * press with no question waiting -- a language asked for in so many words.
+ */
+export function readLangOfferReask(
+    state: LangInstallStateType,
+): { question: string; skipLangOffer?: string } | null {
+    const question = state.question?.trim() ?? '';
+    if (question === '' || (state.step !== 'skip' && state.step !== 'ask')) {
+        return null;
+    }
+    return state.step === 'skip' && state.skipLangOffer !== undefined
+        ? { question, skipLangOffer: state.skipLangOffer }
+        : { question };
+}
+
+/** The offer of a study translation's language, as the model sees it. */
+export type StudyLangOfferType = {
+    check: ChatLangCheckType & { langCode: string };
+    // The package the translation reads its words from (`toPackageLangCode`).
+    packageCode: string;
+};
+
+/**
+ * A study's translation into a language turned off or not installed
+ * (EC-494): what the window says under the model's answer, and **Enable** /
+ * **Install it** and **Not now**, each carrying the question to ask again.
+ * Its own words, not the Bible import's: what the language gives a
+ * translation is its Bible's words, not book names and search words.
+ */
+export function genStudyLangOffer(
+    offer: StudyLangOfferType,
+    question: string,
+): BotAnswerType {
+    const { check } = offer;
+    const isTurnOn = check.state === 'turned-off';
+    const language = toChatLangLabel(check);
+    const size = isTurnOn ? null : toDownloadSizeText(check.size);
+    const text = [
+        isTurnOn
+            ? fillWords(
+                  tran(
+                      '**{language} is installed but turned off.** Turn it ' +
+                          'on first? Then the translation uses the words of ' +
+                          'the {language} Bible.',
+                  ),
+                  { language },
+              )
+            : fillWords(
+                  tran(
+                      '**{language} is not installed in this app yet.** ' +
+                          'Install it first? Then the translation uses the ' +
+                          'words of the {language} Bible.',
+                  ),
+                  { language },
+              ),
+        ...(size === null
+            ? []
+            : [
+                  fillWords(
+                      tran(
+                          'It is a download of {size} from Open Worship. It ' +
+                              'does not change the language the app is shown ' +
+                              'in.',
+                      ),
+                      { size },
+                  ),
+              ]),
+    ].join(' ');
+    const install: LangInstallStateType = {
+        step: 'install',
+        language: check.name ?? check.langCode,
+        langCode: check.langCode,
+        label: language,
+        ...(isTurnOn ? { isTurnOn: true } : {}),
+        question,
+        skipLangOffer: offer.packageCode,
+    };
+    return {
+        text,
+        actions: [
+            toAction(
+                isTurnOn ? LANG_ENABLE_LABEL : LANG_INSTALL_LABEL,
+                install,
+            ),
+            toAction(LANG_SKIP_LABEL, toSkipState(install)),
+        ],
+    };
+}
+
+// The longest the one short sentence a model is asked for over an offer runs.
+const MAX_LANG_OFFER_SENTENCE_LENGTH = 300;
+
+/**
+ * Whether a model's words over a study's language offer say more than the
+ * one short sentence it was asked for (EC-494): more than one paragraph, or
+ * longer than that sentence runs. Only then are they drawn over the offer.
+ * The sentence says less than the offer under it, and seen live it said it
+ * wrong: _not yet installed … install it first_ over **Enable**, copied
+ * from the model's own answer to the language before.
+ */
+export function checkSaysMoreThanLangOffer(text: string) {
+    const trimmed = text.trim();
+    return (
+        /\n\s*\n/.test(trimmed) ||
+        trimmed.length > MAX_LANG_OFFER_SENTENCE_LENGTH
+    );
+}
+
+/**
+ * What a model is shown of an answer that was the offer alone, in place of
+ * the window's words: no language, no state and no button to copy.
+ */
+export const LANG_OFFER_HISTORY_TEXT =
+    '(Nothing was translated: the window asked them about the language first.)';
 
 /** One step of a language asked for: never throws, never shows a tool's words. */
 export async function runLangInstallStep(
@@ -435,7 +612,7 @@ export function findLangInstallTypedPress(
         return byLabel.args as LangInstallStateType;
     }
     const wanted = checkIsYesWord(said)
-        ? [LANG_INSTALL_LABEL, LANG_ENABLE_LABEL]
+        ? [LANG_INSTALL_LABEL, LANG_ENABLE_LABEL, LANG_ASK_AGAIN_LABEL]
         : checkIsNoWord(said)
           ? [LANG_SKIP_LABEL]
           : [];

@@ -2,6 +2,7 @@ import {
     buildSpotlightBackground,
     clampNumber,
     genFrameScheduler,
+    type SpotlightLookType,
 } from '../_screen/managers/screenOverlayHelpers';
 import { setSetting } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -310,6 +311,27 @@ export default class PresentingFocusManager {
         if (isHoldMode) {
             this.stop();
         }
+        this.commitSettingChange();
+    }
+
+    // A Presets press: the five look values in one go -- ONE repaint, one
+    // panel update, one debounced write -- each checked as its own setter
+    // checks it. Hold / Follow is how the tool behaves, not how it looks, so a
+    // look leaves it as it is.
+    applyLook(look: SpotlightLookType) {
+        this.size = clampNumber(look.size, FOCUS_SIZE_MIN, FOCUS_SIZE_MAX);
+        this.dimColor = toValidHexColor(look.dimColor, DEFAULT_FOCUS_COLOR);
+        this.dimOpacity = clampNumber(
+            look.dimOpacity,
+            FOCUS_DIM_MIN,
+            FOCUS_DIM_MAX,
+        );
+        this.edgeBlur = clampNumber(
+            look.edgeBlur,
+            FOCUS_BLUR_MIN,
+            FOCUS_BLUR_MAX,
+        );
+        this.isContrast = look.isContrast === true;
         this.commitSettingChange();
     }
 

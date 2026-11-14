@@ -148,7 +148,7 @@ describe('factoryResetHelpers', () => {
             'kept',
         );
         const songPath = path.join(dataDirPath, 'lyrics', 'song.md');
-        const languagePath = path.join(userDataPath, 'lang', 'km', 'meta.json');
+        const languagePath = path.join(userDataPath, 'lang', 'xx', 'meta.json');
         for (const filePath of [
             ownSettingPath,
             folderSettingPath,

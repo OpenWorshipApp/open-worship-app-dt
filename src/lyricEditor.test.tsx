@@ -23,6 +23,25 @@ const state = vi.hoisted(() => ({
     slides: [] as { id: number; openLyricKey: string }[],
     lyricAppDocument: { openLyric: null as unknown, getSlidesQuick: vi.fn() },
     getDocument: vi.fn(),
+    slot: null as HTMLElement | null,
+    slotRoots: [] as {
+        container: Element;
+        render: ReturnType<typeof vi.fn>;
+    }[],
+}));
+
+// The 🤖 left of Reset / Save is mounted with `createRoot` into the
+// dashboard's slot. A real root here commits, then flushes its effects on a
+// later scheduler tick -- which, with the whole suite loading the machine,
+// came after this file's jsdom was gone: "window is not defined", three
+// unhandled errors failing a run whose every test passed (2026-11-12). The
+// roots are captured instead, and what goes into them is asserted.
+vi.mock('react-dom/client', () => ({
+    createRoot: (container: Element) => {
+        const root = { container, render: vi.fn(), unmount: vi.fn() };
+        state.slotRoots.push(root);
+        return root;
+    },
 }));
 
 vi.mock('./bootstrapCss', () => ({}));
@@ -86,11 +105,13 @@ beforeEach(() => {
         getSlidesQuick: vi.fn(async () => state.slides),
     };
     state.getDocument.mockImplementation(() => state.lyricAppDocument);
+    state.slot = document.createElement('div');
+    state.slotRoots = [];
     state.dashboard = {
         isEditorOpened: false,
         loadValue: null,
         saveValue: null,
-        getSlot: () => document.createElement('div'),
+        getSlot: vi.fn(() => state.slot),
         mount: vi.fn(async () => {
             if (state.mountError !== null) {
                 throw state.mountError;
@@ -135,6 +156,16 @@ describe('lyric editor window', () => {
         expect(renderToStaticMarkup(state.render.mock.calls[0][0])).toBe(
             '<i>WindowTools</i>',
         );
+
+        // The 🤖 goes into the dashboard's first slot, once it is mounted.
+        await vi.waitFor(() => {
+            expect(state.slotRoots).toHaveLength(1);
+        });
+        expect(state.dashboard.getSlot).toHaveBeenCalledWith(0);
+        expect(state.slotRoots[0].container).toBe(state.slot);
+        expect(
+            renderToStaticMarkup(state.slotRoots[0].render.mock.calls[0][0]),
+        ).toBe('<i>Chatbot</i>');
     });
 
     test('opens no slide when none was asked for or it no longer exists', async () => {
@@ -176,5 +207,7 @@ describe('lyric editor window', () => {
             state.mountError,
         );
         expect(state.render).not.toHaveBeenCalled();
+        // A dashboard that failed to mount has no slot for the 🤖.
+        expect(state.slotRoots).toEqual([]);
     });
 });

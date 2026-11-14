@@ -319,8 +319,13 @@ describe('entries that await init before run()', () => {
         await importAfterInit(() => import('./screen-mirror'));
         const tree = h.run.mock.calls[0][0];
         expect(tree.type).toBe(Fragment);
+        // The toast, menu and alert hosts are what its header buttons and
+        // Help -> Tips of the Day open into.
         expect(typesOf(tree)).toEqual([
             C.ScreenMirrorGuestComp,
+            C.ToastComp,
+            C.AppContextMenuComp,
+            C.HandleAlertComp,
             C.AppWindowToolsComp,
         ]);
     });

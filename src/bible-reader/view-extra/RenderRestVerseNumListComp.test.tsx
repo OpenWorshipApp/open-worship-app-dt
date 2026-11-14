@@ -39,7 +39,7 @@ async function render(restVerseList: any[], onSelect = vi.fn()) {
     await act(async () => {
         root.render(
             <RenderRestVerseNumListComp
-                bibleItem={{ bibleKey: 'KHM' } as any}
+                bibleItem={{ bibleKey: 'TQAM' } as any}
                 restVerseList={restVerseList}
                 onSelect={onSelect}
                 toTitle={(verse) => `John 3:${verse}`}
@@ -73,7 +73,7 @@ describe('RenderRestVerseNumListComp', () => {
         const label =
             numbers[0].querySelector<HTMLDivElement>('.verse-number-rest')!;
         expect(label.style.fontSize).toBe('14px');
-        expect(label.style.fontFamily).toBe('KHM Font');
+        expect(label.style.fontFamily).toBe('TQAM Font');
     });
 
     test('a double-click selects that verse', async () => {

@@ -83,7 +83,8 @@ export async function toInputText(
  * The digits the Bible's OWN data asks for — highest priority, above the
  * language's digits and then English. `null` when it has none, or when they are
  * the plain 0→0 … 9→9 an XML import fills in by default, so a Bible that never
- * set its digits still reads in its language's (a Khmer Bible in Khmer).
+ * set its digits still reads in its language's (a Bible in a script with
+ * digits of its own, in those digits).
  */
 export function getBibleNumList(bibleInfo: BibleInfoType | null) {
     if (bibleInfo === null) {
@@ -229,7 +230,8 @@ export async function getVersesCount(
     });
 }
 
-// "Psalm 23:1" typed into a Khmer Bible: no Khmer book is called "Psalm",
+// "Psalm 23:1" typed into a Bible in another language: no book of its is
+// called "Psalm",
 // but the model's own (English) name is, and every Bible shares the model's
 // book keys. Tried LAST, so a Bible's own names always win.
 function modelBookToKey(book: string) {
@@ -248,7 +250,7 @@ function modelBookToKey(book: string) {
 // "Psalms 23:1" (no such book) => "23:1": the part of an input no book
 // matched that was already a chapter, or a chapter and verses, so picking the
 // book it was meant to be does not throw that part away. Digits of any
-// script (`\p{Nd}`), so `23:1` in Khmer digits is kept too, and a range across
+// script (`\p{Nd}`), so `23:1` in a script's own digits is kept too, and a range across
 // chapters (`23:1-24:3`) whole.
 const TRAILING_REFERENCE_REGEX =
     /\s(\p{Nd}+(?::\p{Nd}*)?(?:-(?:\p{Nd}+(?::\p{Nd}*)?)?)?)$/u;

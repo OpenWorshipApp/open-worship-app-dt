@@ -43,9 +43,9 @@ const READING = { bookKey: 'MAT', chapter: 18, title: 'Matthew 18' };
 const CASES = [
     {
         name: 'openChatbotAsking',
-        open: () => openChatbotAsking('Import a Khmer Bible'),
+        open: () => openChatbotAsking('Import an Xxish Bible'),
         request: () => h.requestChatbotAsk,
-        args: ['Import a Khmer Bible'],
+        args: ['Import an Xxish Bible'],
     },
     {
         name: 'openChatbotReporting',

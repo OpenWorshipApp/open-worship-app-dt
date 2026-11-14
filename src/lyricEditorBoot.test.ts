@@ -203,7 +203,7 @@ describe('lyric editor dashboard', () => {
     test('installs every shell, wires the plugins and mounts on the app container', async () => {
         const initPlugins = vi.fn();
         state.langDataList = [
-            { locale: 'km', initOpenLyricPlugins: initPlugins },
+            { locale: 'xx', initOpenLyricPlugins: initPlugins },
             { locale: 'en' },
         ];
 

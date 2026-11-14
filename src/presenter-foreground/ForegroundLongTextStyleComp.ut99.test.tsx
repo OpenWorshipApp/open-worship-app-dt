@@ -37,7 +37,7 @@ vi.mock('../others/FontFamilyControlComp', () => ({
             <button
                 type="button"
                 onClick={() => {
-                    setFontFamily('Battambang');
+                    setFontFamily('Made Up Serif');
                 }}
             >
                 Pick font
@@ -157,7 +157,7 @@ describe('a Long Text language font and size', () => {
         );
         await press('Pick font');
         expect(mocks.onChange).toHaveBeenLastCalledWith({
-            fontFamily: 'Battambang',
+            fontFamily: 'Made Up Serif',
             fontSizeScale: 0.8,
         });
         await press('Pick no font');

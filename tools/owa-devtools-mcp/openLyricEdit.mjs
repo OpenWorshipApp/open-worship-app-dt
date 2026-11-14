@@ -1,10 +1,10 @@
 // `owa_lyric_edit`: one change to a song, made by code from the WORDS a
 // caller gives -- never from notation the caller wrote.
 //
-// Asked for 2026-11-06 (the user, with `Still khmer` -- a copy of `Still`
-// whose every line was still English -- circled in the Documents list: _I
-// want to translate all english in `Still khmer` to khmer, so chatbot should
-// be able to help doing this_; and the operations: _add section: verse 1,
+// Asked for 2026-11-06 (the user, with a copy of `Still` named for another
+// language -- every line still English -- circled in the Documents list,
+// asking that the chatbot help translate all its English into that language;
+// and the operations: _add section: verse 1,
 // verse 2 ...; translate text to another language; change text; add keynote_).
 //
 // WHY WORDS AND NOT A DOCUMENT. `owa_lyric_file update` takes the whole Open
@@ -45,8 +45,12 @@ export const LYRIC_EDIT_ACTIONS = [
     'set-lines',
     'add-translation',
     'set-chords',
+    'replace',
+    'remove-translations',
+    'remove-chords',
     'add-section',
     'remove-section',
+    'rename-section',
     'set-order',
     'set-config',
     'transpose',
@@ -791,6 +795,576 @@ function applyLocales(state, locales) {
 }
 
 // ---------------------------------------------------------------------------
+// Words changed in place (2026-11-12, EC-511)
+// ---------------------------------------------------------------------------
+//
+// A song's WORDS are changed far more often than its parts -- a misspelt
+// word, "thee" made "you" all through, one line said another way -- and
+// `set-lines` alone did that: it wrote each part back as the lines it was
+// given, so a one-letter fix took the translation line from under every
+// line of the verse, and its chords too unless the model copied every `[G]`
+// back exactly. Asked live on the free model, _Check the whole song for
+// spelling mistakes and fix them_ was answered "I have corrected the
+// spelling" over a verse that had lost 11 chords and 4 translation lines;
+// the warning saying so reached the model, which offered to "restore" them
+// -- there was no way to, short of retyping. So the words are the caller's
+// and the rest stays the song's: a line given back keeps the lines under it,
+// and its chords when it comes with none, carried word for word onto the
+// words that stayed and by place onto the ones that changed -- when it is
+// recognisably the same line (half its words or more). A line rewritten
+// whole is new words, and what went with the old one is said, as before.
+// And `replace` changes a word or a phrase where it stands, however often
+// the song sings it, with nothing else touched.
+
+// Words as the browser's word breaker draws them: a script written with no
+// spaces between its words is cut by its dictionary, so "a whole word" means
+// the same thing in every language a song is written in.
+const WORD_SEGMENTER =
+    typeof Intl?.Segmenter === 'function'
+        ? new Intl.Segmenter(undefined, { granularity: 'word' })
+        : null;
+
+// A line is "the same line" given back when at least this share of its
+// words is still there, in order.
+const SAME_LINE_SHARE = 0.5;
+const MAX_REPLACEMENTS = 40;
+const MAX_FIND_CHARS = 200;
+
+/** A line's words with its chords taken out, and where each chord stood. */
+function splitChords(line) {
+    const chords = [];
+    let bare = '';
+    let last = 0;
+    for (const match of String(line).matchAll(CHORD_ANNOTATION_PATTERN)) {
+        if (!checkIsOpenLyricChord(match[1])) {
+            continue;
+        }
+        bare += line.slice(last, match.index);
+        chords.push({ at: bare.length, token: match[0] });
+        last = match.index + match[0].length;
+    }
+    bare += String(line).slice(last);
+    return { bare, chords };
+}
+
+/** The line again: each chord put back in front of the letter at `at`. */
+function joinChords(bare, chords) {
+    const sorted = chords
+        .map((one, order) => {
+            return { ...one, order };
+        })
+        .sort((a, b) => {
+            return a.at - b.at || a.order - b.order;
+        });
+    let out = '';
+    let last = 0;
+    for (const chord of sorted) {
+        const at = Math.max(last, Math.min(chord.at, bare.length));
+        out += bare.slice(last, at) + chord.token;
+        last = at;
+    }
+    return out + bare.slice(last);
+}
+
+/** Every word of a text: where it starts and ends, and a key to compare. */
+function listWords(text) {
+    const value = String(text ?? '');
+    if (WORD_SEGMENTER === null) {
+        return [...value.matchAll(/[\p{L}\p{M}\p{N}]+/gu)].map((match) => {
+            return {
+                start: match.index,
+                end: match.index + match[0].length,
+                key: match[0].toLowerCase(),
+            };
+        });
+    }
+    const words = [];
+    for (const one of WORD_SEGMENTER.segment(value)) {
+        if (one.isWordLike) {
+            words.push({
+                start: one.index,
+                end: one.index + one.segment.length,
+                key: one.segment.toLowerCase(),
+            });
+        }
+    }
+    return words;
+}
+
+/**
+ * For each word of `oldKeys`, the index of the same word in `newKeys` -- the
+ * longest run of words the two share, in order -- or -1.
+ */
+function matchWordIndexes(oldKeys, newKeys) {
+    const rows = oldKeys.length;
+    const columns = newKeys.length;
+    const table = Array.from({ length: rows + 1 }, () => {
+        return new Array(columns + 1).fill(0);
+    });
+    for (let i = rows - 1; i >= 0; i -= 1) {
+        for (let j = columns - 1; j >= 0; j -= 1) {
+            table[i][j] =
+                oldKeys[i] === newKeys[j]
+                    ? table[i + 1][j + 1] + 1
+                    : Math.max(table[i + 1][j], table[i][j + 1]);
+        }
+    }
+    const map = new Array(rows).fill(-1);
+    let i = 0;
+    let j = 0;
+    while (i < rows && j < columns) {
+        if (oldKeys[i] === newKeys[j]) {
+            map[i] = j;
+            i += 1;
+            j += 1;
+        } else if (table[i + 1][j] >= table[i][j + 1]) {
+            i += 1;
+        } else {
+            j += 1;
+        }
+    }
+    return map;
+}
+
+/** How much of the old line the new one still says: 0 to 1. */
+function toSameLineShare(oldLine, newLine) {
+    const oldKeys = listWords(splitChords(oldLine).bare).map((one) => {
+        return one.key;
+    });
+    const newKeys = listWords(splitChords(newLine).bare).map((one) => {
+        return one.key;
+    });
+    const most = Math.max(oldKeys.length, newKeys.length);
+    if (most === 0) {
+        return 0;
+    }
+    const matched = matchWordIndexes(oldKeys, newKeys).filter((one) => {
+        return one !== -1;
+    }).length;
+    return matched / most;
+}
+
+/** Where an unmatched old word sits among the new ones, by its neighbours. */
+function placeByNeighbours(map, index, newCount) {
+    let before = index - 1;
+    while (before >= 0 && map[before] === -1) {
+        before -= 1;
+    }
+    let after = index + 1;
+    while (after < map.length && map[after] === -1) {
+        after += 1;
+    }
+    let target;
+    if (before >= 0 && after < map.length) {
+        target =
+            map[before] +
+            Math.round(
+                ((index - before) * (map[after] - map[before])) /
+                    (after - before),
+            );
+    } else if (before >= 0) {
+        target = map[before] + (index - before);
+    } else if (after < map.length) {
+        target = map[after] - (after - index);
+    } else {
+        target = Math.round(
+            (index * (newCount - 1)) / Math.max(1, map.length - 1),
+        );
+    }
+    return Math.max(0, Math.min(newCount - 1, target));
+}
+
+/**
+ * A chord's place kept after the one before it: two chords on one letter
+ * is no chart, and chords keep their order, so a chord that would land on
+ * or before the last goes on to the next word -- past the last word, to
+ * the end of the line, where nothing is lost.
+ */
+function toFreeChordAt(at, lastAt, words, endAt) {
+    if (at > lastAt || at >= endAt) {
+        return at;
+    }
+    const next = words.find((word) => {
+        return word.start > lastAt;
+    });
+    return next === undefined ? endAt : next.start;
+}
+
+/**
+ * The old line's chords on the new line's words: a chord on a word still
+ * there goes on that word (mid-word as it was, when the word is long
+ * enough), one on a changed word on the word now in its place. Null when
+ * there is nothing to carry -- the new line has chords of its own, or the
+ * old one had none.
+ */
+function carryChords(oldLine, newLine) {
+    const old = splitChords(oldLine);
+    if (old.chords.length === 0 || splitChords(newLine).chords.length > 0) {
+        return null;
+    }
+    const oldWords = listWords(old.bare);
+    const newWords = listWords(newLine);
+    if (newWords.length === 0) {
+        return null;
+    }
+    const map = matchWordIndexes(
+        oldWords.map((one) => {
+            return one.key;
+        }),
+        newWords.map((one) => {
+            return one.key;
+        }),
+    );
+    const placed = [];
+    let lastAt = -1;
+    for (const chord of old.chords) {
+        const index = oldWords.findIndex((word) => {
+            return chord.at < word.end;
+        });
+        let at = newLine.length;
+        if (index !== -1) {
+            const into = Math.max(0, chord.at - oldWords[index].start);
+            const target =
+                map[index] === -1
+                    ? placeByNeighbours(map, index, newWords.length)
+                    : map[index];
+            const word = newWords[target];
+            at = word.start + Math.min(into, word.end - word.start - 1);
+        }
+        at = toFreeChordAt(at, lastAt, newWords, newLine.length);
+        lastAt = at;
+        placed.push({ at, token: chord.token });
+    }
+    return joinChords(newLine, placed);
+}
+
+/** A part's sung lines, each with the lines (translations) under it. */
+function readSungEntries(fence) {
+    const entries = [];
+    for (const line of fence.body) {
+        if (checkIsSungLine(line)) {
+            entries.push({ line, under: [] });
+        } else if (checkIsTranslationLine(line) && entries.length > 0) {
+            entries[entries.length - 1].under.push(line);
+        }
+    }
+    return entries;
+}
+
+/**
+ * Which old line each new line gives back, or -1 for a new one: the same
+ * line wins, then the most like it (half its words or more), the nearest
+ * when two are alike -- so lines swapped or one added keep what is theirs.
+ */
+function pairGivenLines(oldLines, newLines) {
+    const pairs = new Array(newLines.length).fill(-1);
+    const usedSet = new Set();
+    const candidates = [];
+    newLines.forEach((newLine, j) => {
+        oldLines.forEach((oldLine, i) => {
+            const share = toSameLineShare(oldLine, newLine);
+            if (share >= SAME_LINE_SHARE) {
+                candidates.push({ i, j, share });
+            }
+        });
+    });
+    candidates.sort((a, b) => {
+        return (
+            b.share - a.share ||
+            Math.abs(a.i - a.j) - Math.abs(b.i - b.j) ||
+            a.j - b.j
+        );
+    });
+    for (const one of candidates) {
+        if (pairs[one.j] !== -1 || usedSet.has(one.i)) {
+            continue;
+        }
+        pairs[one.j] = one.i;
+        usedSet.add(one.i);
+    }
+    return pairs;
+}
+
+/**
+ * A lyric part's new body from the lines given: each line that gives back
+ * an old one keeps that line's translation lines, and its chords when it
+ * came with none. Says what it kept and what went.
+ */
+function rebuildKeepingLines(fence, lines) {
+    const entries = readSungEntries(fence);
+    const toKey = (line) => {
+        return toBareWords(line).toLowerCase();
+    };
+    // A model shown a line and its translation side by side gives both back
+    // as lines: a given line that IS one of the part's translation lines (and
+    // none of its sung ones) stays a translation line, where it was given.
+    const sungKeySet = new Set(
+        entries.map((one) => {
+            return toKey(one.line);
+        }),
+    );
+    const underKeySet = new Set(
+        entries.flatMap((one) => {
+            return one.under.map(toKey);
+        }),
+    );
+    const checkIsGivenBack = (line) => {
+        const key = toKey(line);
+        return underKeySet.has(key) && !sungKeySet.has(key);
+    };
+    const given = lines.filter((line) => {
+        return line !== '' && !checkIsGivenBack(line);
+    });
+    const pairs = pairGivenLines(
+        entries.map((one) => {
+            return one.line;
+        }),
+        given,
+    );
+    const report = { chordLines: 0, underLines: 0 };
+    const body = [];
+    const writtenUnderSet = new Set();
+    let givenAt = 0;
+    for (const line of lines) {
+        if (line === '') {
+            body.push(line);
+            continue;
+        }
+        if (checkIsGivenBack(line)) {
+            if (!writtenUnderSet.has(toKey(line))) {
+                writtenUnderSet.add(toKey(line));
+                body.push(`\t${line}`);
+            }
+            continue;
+        }
+        const oldIndex = pairs[givenAt];
+        givenAt += 1;
+        if (oldIndex === -1) {
+            body.push(line);
+            continue;
+        }
+        const entry = entries[oldIndex];
+        const carried = carryChords(entry.line, line);
+        if (carried !== null) {
+            report.chordLines += 1;
+        }
+        const written = carried ?? line;
+        body.push(written);
+        const writtenKey = toKey(written);
+        const under = entry.under.filter((one) => {
+            // The words promoted to the line itself are not its translation,
+            // and a translation the caller gives back is written where given.
+            const key = toKey(one);
+            return (
+                key !== writtenKey &&
+                !writtenUnderSet.has(key) &&
+                !lines.some((given) => {
+                    return toKey(given) === key;
+                })
+            );
+        });
+        if (entry.under.length > 0) {
+            report.underLines += 1;
+        }
+        for (const one of under) {
+            writtenUnderSet.add(toKey(one));
+            body.push(one);
+        }
+    }
+    const usedSet = new Set(pairs);
+    const gone = entries.filter((_one, index) => {
+        return !usedSet.has(index);
+    });
+    report.lostChordLines = gone.filter((one) => {
+        return checkHasChord(one.line);
+    }).length;
+    report.lostUnderLines = gone.filter((one) => {
+        return one.under.some((line) => {
+            return !writtenUnderSet.has(toKey(line));
+        });
+    }).length;
+    return { body, report };
+}
+
+function genLineCount(count) {
+    return `${count} line${count === 1 ? '' : 's'}`;
+}
+
+/** Text with `find` in it, as one regular expression (smart case). */
+function genFindPattern(find) {
+    const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Written all in small letters, it matches any case; with a capital,
+    // only as written.
+    return new RegExp(escaped, find === find.toLowerCase() ? 'giu' : 'gu');
+}
+
+/** The replacement in the case of the words it replaces. */
+function toMatchedCase(found, replacement, find) {
+    if (find !== find.toLowerCase()) {
+        return replacement;
+    }
+    const letters = found.replace(/[^\p{L}]/gu, '');
+    if (
+        letters.length > 1 &&
+        letters === letters.toUpperCase() &&
+        letters !== letters.toLowerCase()
+    ) {
+        return replacement.toUpperCase();
+    }
+    const first = found.match(/\p{L}/u)?.[0] ?? '';
+    if (first !== '' && first !== first.toLowerCase()) {
+        return replacement.replace(/\p{L}/u, (letter) => {
+            return letter.toUpperCase();
+        });
+    }
+    return replacement;
+}
+
+const WORD_LETTER_PATTERN = /[\p{L}\p{M}\p{N}]/u;
+const APOSTROPHE_PATTERN = /['’]/;
+
+/**
+ * Whether `at` cuts a word in two. A word the breaker drew that is the
+ * whole run of letters between spaces (`disgrace`) is a word, and "grace"
+ * is not a word inside it; one run holding SEVERAL drawn words is a script
+ * written without spaces, where the breaker's dictionary may draw an edge
+ * the singer would not -- an edge there is the caller's to choose. An
+ * apostrophe ends a word (`God's`, `'Twas`).
+ */
+function checkIsInsideWord(bare, words, at) {
+    const word = words.find((one) => {
+        return one.start < at && at < one.end;
+    });
+    if (word === undefined) {
+        return false;
+    }
+    if (
+        APOSTROPHE_PATTERN.test(bare[at] ?? '') ||
+        APOSTROPHE_PATTERN.test(bare[at - 1] ?? '')
+    ) {
+        return false;
+    }
+    let runStart = word.start;
+    while (runStart > 0 && WORD_LETTER_PATTERN.test(bare[runStart - 1])) {
+        runStart -= 1;
+    }
+    let runEnd = word.end;
+    while (runEnd < bare.length && WORD_LETTER_PATTERN.test(bare[runEnd])) {
+        runEnd += 1;
+    }
+    return runStart === word.start && runEnd === word.end;
+}
+
+/** Where a chord inside replaced words goes in the words put there. */
+function toChordInHit(bare, hit, chordAt, newStart) {
+    const oldWords = listWords(bare.slice(hit.start, hit.end));
+    const newWords = listWords(hit.text);
+    if (newWords.length === 0) {
+        return newStart + hit.text.length;
+    }
+    const inHit = chordAt - hit.start;
+    let index = oldWords.findIndex((word) => {
+        return inHit < word.end;
+    });
+    if (index === -1) {
+        return newStart + hit.text.length;
+    }
+    const into = Math.max(0, inHit - oldWords[index].start);
+    index = Math.min(index, newWords.length - 1);
+    const word = newWords[index];
+    return newStart + word.start + Math.min(into, word.end - word.start - 1);
+}
+
+/**
+ * `find` replaced in one text (the words of a line, its chords taken out):
+ * whole words only, the chords kept where they stood -- one inside the
+ * words replaced stays as far in, never past their end. Counts the
+ * replacements, and the longer words it was found inside.
+ */
+function replaceInLine(line, find, replacement) {
+    const indent = line.match(/^\s*/)[0];
+    const { bare, chords } = splitChords(line.slice(indent.length));
+    const words = listWords(bare);
+    const pattern = genFindPattern(find);
+    const hits = [];
+    const insideList = [];
+    for (const match of bare.matchAll(pattern)) {
+        const start = match.index;
+        const end = start + match[0].length;
+        if (
+            checkIsInsideWord(bare, words, start) ||
+            checkIsInsideWord(bare, words, end)
+        ) {
+            const first = words.find((one) => {
+                return one.end > start;
+            });
+            const last = [...words].reverse().find((one) => {
+                return one.start < end;
+            });
+            insideList.push(
+                first === undefined || last === undefined
+                    ? match[0]
+                    : bare.slice(first.start, last.end),
+            );
+            continue;
+        }
+        const text = toMatchedCase(match[0], replacement, find);
+        // A word taken out takes one space with it.
+        let from = start;
+        let to = end;
+        if (text === '' && bare[to] === ' ') {
+            to += 1;
+        } else if (text === '' && bare[from - 1] === ' ') {
+            from -= 1;
+        }
+        hits.push({ start: from, end: to, text });
+    }
+    if (hits.length === 0) {
+        return { line, count: 0, insideList };
+    }
+    let out = '';
+    let last = 0;
+    for (const hit of hits) {
+        out += bare.slice(last, hit.start) + hit.text;
+        last = hit.end;
+    }
+    out += bare.slice(last);
+    // Each chord where it stood: after a hit by the length the hit grew,
+    // inside one on the same word of the new words (as far in, never past
+    // its end), and never on or before the chord before it.
+    const newWords = listWords(out);
+    const moved = [];
+    let lastAt = -1;
+    for (const chord of chords) {
+        let shift = 0;
+        let at = null;
+        for (const hit of hits) {
+            if (chord.at >= hit.end) {
+                shift += hit.text.length - (hit.end - hit.start);
+                continue;
+            }
+            if (chord.at > hit.start) {
+                at = toChordInHit(bare, hit, chord.at, hit.start + shift);
+            }
+            break;
+        }
+        at = toFreeChordAt(
+            at ?? chord.at + shift,
+            lastAt,
+            newWords,
+            out.length,
+        );
+        lastAt = at;
+        moved.push({ ...chord, at });
+    }
+    return {
+        line: indent + joinChords(out, moved),
+        count: hits.length,
+        insideList,
+    };
+}
+
+// ---------------------------------------------------------------------------
 // The actions
 // ---------------------------------------------------------------------------
 
@@ -825,26 +1399,45 @@ function applySetLines(state, request) {
                 'song, use remove-section.'
             );
         }
-        const oldSung = listSungIndexes(fence).map((index) => {
-            return fence.body[index];
-        });
-        if (
-            fence.bodyRule !== 'progression' &&
-            oldSung.some(checkHasChord) &&
-            !cleaned.lines.some(checkHasChord)
-        ) {
+        if (fence.bodyRule !== 'lyric') {
+            fence.body = [...takeLeadingComments(fence.body), ...cleaned.lines];
+            state.changes.push(`new words for ${name}`);
+            continue;
+        }
+        if (checkIsChordsDropped(fence, cleaned.lines)) {
+            state.chordsDroppedParts.push(name);
+        }
+        const { body, report } = rebuildKeepingLines(fence, cleaned.lines);
+        if (report.lostChordLines > 0) {
             state.warnings.push(
-                `${name}: its chords were not carried into the new words -- ` +
-                    'add them back with set-chords if the band needs them.',
+                `${name}: the chords were not carried onto ` +
+                    `${genLineCount(report.lostChordLines)} rewritten or ` +
+                    'taken out -- add them back with set-chords if the band ' +
+                    'needs them.',
             );
         }
-        if (fence.body.some(checkIsTranslationLine)) {
+        if (report.lostUnderLines > 0) {
             state.warnings.push(
-                `${name}: its translation lines went with the old words.`,
+                `${name}: the translation under ` +
+                    `${genLineCount(report.lostUnderLines)} rewritten or ` +
+                    'taken out went with the old words.',
             );
         }
-        fence.body = [...takeLeadingComments(fence.body), ...cleaned.lines];
-        state.changes.push(`new words for ${name}`);
+        fence.body = [...takeLeadingComments(fence.body), ...body];
+        const keptList = [
+            report.chordLines > 0
+                ? `the chords of ${genLineCount(report.chordLines)}`
+                : null,
+            report.underLines > 0
+                ? `the translation under ${genLineCount(report.underLines)}`
+                : null,
+        ].filter(Boolean);
+        state.changes.push(
+            `new words for ${name}` +
+                (keptList.length > 0
+                    ? ` (kept ${keptList.join(' and ')})`
+                    : ''),
+        );
     }
     const configReason = applyOptionalConfig(state, request.config);
     if (configReason !== null) {
@@ -953,21 +1546,625 @@ function applySetChords(state, request) {
                 'order, with [chords] in it.'
             );
         }
+        let keptCount = 0;
         for (let index = 0; index < sungIndexes.length; index += 1) {
             const before = fence.body[sungIndexes[index]];
-            const after = cleaned.lines[index];
-            if (toBareWords(before) !== toBareWords(after)) {
+            const given = cleaned.lines[index];
+            if (toBareWords(before) !== toBareWords(given)) {
                 return (
                     `Line ${index + 1} of ${name} changes the words ` +
-                    `("${toBareWords(before)}" became "${toBareWords(after)}"). ` +
+                    `("${toBareWords(before)}" became "${toBareWords(given)}"). ` +
                     'set-chords only adds or moves chords: give the same words ' +
                     'with [chords] in them, or change words with set-lines.'
                 );
             }
-            fence.body[sungIndexes[index]] = after;
+            const merged = mergeGivenChords(before, given);
+            keptCount += merged.keptCount;
+            fence.body[sungIndexes[index]] = merged.line;
         }
-        state.changes.push(`the chords of ${name}`);
+        state.changes.push(
+            `the chords of ${name}` +
+                (keptCount > 0
+                    ? ` (${keptCount} chord${keptCount === 1 ? '' : 's'} ` +
+                      'not given kept where they were)'
+                    : ''),
+        );
     }
+    return null;
+}
+
+/**
+ * A set-chords line: the chords given, and every chord of the old line the
+ * caller did not account for (2026-11-12, EC-527). Asked to move one chord,
+ * a model gave the verse with that chord alone and twelve went. So set-chords
+ * adds and moves and never takes away (remove-chords does): a line given
+ * plain keeps its own; in a line given with chords, an old chord stays
+ * unless a given chord stands in its place, or one of its name stands
+ * elsewhere (it moved) -- each given chord accounts for one old one.
+ */
+function mergeGivenChords(oldLine, givenLine) {
+    const given = splitChords(givenLine);
+    const carried = carryChords(oldLine, given.bare);
+    if (carried === null) {
+        return { line: givenLine, keptCount: 0 };
+    }
+    if (given.chords.length === 0) {
+        return { line: carried, keptCount: splitChords(carried).chords.length };
+    }
+    const toName = (token) => {
+        return token.slice(1, -1);
+    };
+    const leftMap = new Map();
+    for (const chord of given.chords) {
+        const name = toName(chord.token);
+        leftMap.set(name, (leftMap.get(name) ?? 0) + 1);
+    }
+    const takeOne = (name) => {
+        const left = leftMap.get(name) ?? 0;
+        if (left > 0) {
+            leftMap.set(name, left - 1);
+            return true;
+        }
+        return false;
+    };
+    const givenAtMap = new Map(
+        given.chords.map((chord) => {
+            return [chord.at, toName(chord.token)];
+        }),
+    );
+    const oldChords = splitChords(carried).chords;
+    const loose = [];
+    for (const chord of oldChords) {
+        const givenName = givenAtMap.get(chord.at);
+        if (givenName === undefined) {
+            loose.push(chord);
+        } else {
+            // Its place is taken: the same chord, or another in its stead.
+            takeOne(givenName);
+        }
+    }
+    const kept = loose.filter((chord) => {
+        return !takeOne(toName(chord.token));
+    });
+    return {
+        line:
+            kept.length === 0
+                ? givenLine
+                : joinChords(given.bare, [...given.chords, ...kept]),
+        keptCount: kept.length,
+    };
+}
+
+const REPLACE_PLACE_LIST = ['words', 'translations', 'both'];
+
+/** The lines a replacement may change in one part, by index. */
+function listReplaceIndexes(fence, place) {
+    if (fence.bodyRule !== 'lyric' && fence.bodyRule !== 'mixed') {
+        return [];
+    }
+    const indexes = [];
+    fence.body.forEach((line, index) => {
+        if (
+            fence.bodyRule === 'mixed' &&
+            (checkIsProgressionLine(line) || /^\s/.test(line))
+        ) {
+            return;
+        }
+        const isSung = checkIsSungLine(line);
+        const isUnder = checkIsTranslationLine(line);
+        if (
+            (isSung && place !== 'translations') ||
+            (isUnder && place !== 'words')
+        ) {
+            indexes.push(index);
+        }
+    });
+    return indexes;
+}
+
+/** `[F]` as the chord `F`; null for anything else. */
+function toBracketChord(text) {
+    const match = /^\[([^\]\s]+)\]$/.exec(String(text ?? '').trim());
+    return match !== null && checkIsOpenLyricChord(match[1]) ? match[1] : null;
+}
+
+/** One chord changed in a line, bracketed in words or bare in a progression. */
+function replaceChordInLine(line, find, replacement, isProgression) {
+    let count = 0;
+    if (isProgression) {
+        const out = line
+            .split(/(\s+)/)
+            .map((token) => {
+                if (token === find) {
+                    count += 1;
+                    return replacement;
+                }
+                return token;
+            })
+            .join('');
+        return { line: out, count };
+    }
+    const out = line.replace(CHORD_ANNOTATION_PATTERN, (whole, inner) => {
+        if (inner === find) {
+            count += 1;
+            return `[${replacement}]`;
+        }
+        return whole;
+    });
+    return { line: out, count };
+}
+
+/** A chord replacement across `fences`: how often, and in which parts. */
+function applyChordReplacement(fences, one) {
+    let count = 0;
+    const partNameSet = new Set();
+    for (const fence of fences) {
+        if (!['lyric', 'mixed', 'progression'].includes(fence.bodyRule)) {
+            continue;
+        }
+        fence.body = fence.body.map((line) => {
+            if (line.trim() === '' || COMMENT_PATTERN.test(line)) {
+                return line;
+            }
+            const isProgression =
+                fence.bodyRule === 'progression' ||
+                (fence.bodyRule === 'mixed' && checkIsProgressionLine(line));
+            if (!isProgression && !checkIsSungLine(line)) {
+                return line;
+            }
+            const done = replaceChordInLine(
+                line,
+                one.find,
+                one.replacement,
+                isProgression,
+            );
+            if (done.count > 0) {
+                count += done.count;
+                partNameSet.add(fence.partName);
+            }
+            return done.line;
+        });
+    }
+    return { count, partNameList: [...partNameSet] };
+}
+
+/** A replacement as given, checked; or the reason it cannot be one. */
+function toReplacement(raw, index) {
+    const label = `Replacement ${index + 1}`;
+    if (raw === null || typeof raw !== 'object') {
+        return fail(`${label} must be {find, with}.`);
+    }
+    // `[F]` -> `[Fmaj7]`: a chord changed wherever it is played, the way a
+    // model first asks for it (2026-11-12, EC-527).
+    const chordFind = toBracketChord(raw.find);
+    const chordWith = toBracketChord(raw.with);
+    if (chordFind !== null || chordWith !== null) {
+        if (chordFind === null || chordWith === null) {
+            return fail(
+                `${label}: a chord is changed into a chord, both in ` +
+                    'brackets -- {"find": "[F]", "with": "[Fmaj7]"}.',
+            );
+        }
+        return {
+            isChord: true,
+            find: chordFind,
+            replacement: chordWith,
+            part: typeof raw.part === 'string' ? raw.part.trim() : '',
+        };
+    }
+    // The words are matched with the chords taken out, so a find copied
+    // with its chords (`re[D]lieved`) is the same find; each chord stays
+    // where the song has it.
+    const find =
+        typeof raw.find === 'string' ? splitChords(raw.find).bare.trim() : '';
+    const replacement =
+        typeof raw.with === 'string' ? splitChords(raw.with).bare.trim() : null;
+    if (find === '' || replacement === null) {
+        return fail(
+            `${label} needs the words to find and the words to put ` +
+                'there: {find, with}.',
+        );
+    }
+    if (find.length > MAX_FIND_CHARS || replacement.length > MAX_FIND_CHARS) {
+        return fail(
+            `${label} is longer than ${MAX_FIND_CHARS} characters; change ` +
+                'a whole line with set-lines.',
+        );
+    }
+    if (/[\r\n]/.test(find + replacement)) {
+        return fail(
+            `${label} spans lines; a replacement stays inside one line.`,
+        );
+    }
+    if (/[[\]]/.test(find + replacement)) {
+        return fail(
+            `${label} holds a chord bracket. replace changes words and ` +
+                'keeps every chord where it stood; chords are set-chords and ' +
+                "transpose's.",
+        );
+    }
+    if (checkIsNotationLine(find) || checkIsNotationLine(replacement)) {
+        return fail(NOTATION_REASON);
+    }
+    const place = raw.in ?? 'words';
+    if (!REPLACE_PLACE_LIST.includes(place)) {
+        return fail(
+            `${label}: "in" is one of ${REPLACE_PLACE_LIST.join(', ')}.`,
+        );
+    }
+    return {
+        find,
+        replacement,
+        part: typeof raw.part === 'string' ? raw.part.trim() : '',
+        place,
+    };
+}
+
+/**
+ * A word or a phrase changed where it stands, however often the song
+ * sings it: whole words only (smart case -- written in small letters it
+ * matches any case and keeps each one's capital), every chord left where
+ * it stood, nothing else touched. All or nothing: a replacement that finds
+ * nothing refuses the whole call.
+ */
+function applyReplace(state, request) {
+    const list = request?.replacements;
+    if (!Array.isArray(list) || list.length === 0) {
+        return (
+            'Give replacements: [{find, with}] -- the words as the song ' +
+            'has them and the words to put there.'
+        );
+    }
+    if (list.length > MAX_REPLACEMENTS) {
+        return `At most ${MAX_REPLACEMENTS} replacements go in one call.`;
+    }
+    const missList = [];
+    for (let index = 0; index < list.length; index += 1) {
+        const one = toReplacement(list[index], index);
+        if (one.isError) {
+            return one.reason;
+        }
+        // A `part` beside the list is each one's that names none: "in the
+        // chorus" written so had changed every verse too (EC-527).
+        if (one.part === '' && typeof request.part === 'string') {
+            one.part = request.part.trim();
+        }
+        let fences = listParts(state.doc);
+        if (one.part !== '') {
+            const fence = findPart(state.doc, one.part);
+            if (fence === null) {
+                return genNoSuchPartReason(state.doc, one.part);
+            }
+            fences = [fence];
+        }
+        const where =
+            one.part === ''
+                ? 'the song'
+                : findPart(state.doc, one.part).partName;
+        if (one.isChord === true) {
+            const done = applyChordReplacement(fences, one);
+            if (done.count === 0) {
+                missList.push(
+                    `[${one.find}] is not a chord played in ${where}`,
+                );
+                continue;
+            }
+            state.changes.push(
+                `chord ${one.find} -> ${one.replacement} ${done.count} time` +
+                    `${done.count === 1 ? '' : 's'} (${done.partNameList.join(', ')})`,
+            );
+            continue;
+        }
+        let count = 0;
+        const partNameSet = new Set();
+        const insideSet = new Set();
+        for (const fence of fences) {
+            for (const lineIndex of listReplaceIndexes(fence, one.place)) {
+                const done = replaceInLine(
+                    fence.body[lineIndex],
+                    one.find,
+                    one.replacement,
+                );
+                done.insideList.forEach((word) => {
+                    insideSet.add(word);
+                });
+                if (done.count > 0) {
+                    fence.body[lineIndex] = done.line;
+                    count += done.count;
+                    partNameSet.add(fence.partName);
+                }
+            }
+        }
+        if (count === 0) {
+            const inside = [...insideSet].slice(0, 3);
+            missList.push(
+                `"${one.find}" is not a word ${
+                    one.place === 'translations'
+                        ? 'of the translation lines of'
+                        : 'sung in'
+                } ${where}` +
+                    (inside.length > 0
+                        ? ` (only inside ${inside
+                              .map((word) => {
+                                  return `"${word}"`;
+                              })
+                              .join(', ')} -- give the whole word)`
+                        : ''),
+            );
+            continue;
+        }
+        state.changes.push(
+            `"${one.find}" -> "${one.replacement}" ${count} time` +
+                `${count === 1 ? '' : 's'} (${[...partNameSet].join(', ')})`,
+        );
+        for (const field of ['Title', 'Subtitle']) {
+            const value = readConfigValue(state.doc, field) ?? '';
+            if (
+                one.part === '' &&
+                one.place !== 'translations' &&
+                replaceInLine(value, one.find, one.replacement).count > 0
+            ) {
+                state.warnings.push(
+                    `The ${field} still says "${value}" -- change it with ` +
+                        'set-config if it should change too.',
+                );
+            }
+        }
+    }
+    if (missList.length > 0) {
+        return (
+            `Nothing was changed: ${missList.join('; ')}. Read the song for ` +
+            'the words exactly as it has them, then call again with only ' +
+            'the replacements it has.'
+        );
+    }
+    return null;
+}
+
+/** Every translation line taken out of a part, or of the whole song. */
+function applyRemoveTranslations(state, request) {
+    let fences = listParts(state.doc).filter((one) => {
+        return one.bodyRule === 'lyric';
+    });
+    const asked = typeof request?.part === 'string' ? request.part.trim() : '';
+    if (asked !== '') {
+        const fence = findPart(state.doc, asked);
+        if (fence === null) {
+            return genNoSuchPartReason(state.doc, asked);
+        }
+        fences = [fence];
+    }
+    const nameList = [];
+    let count = 0;
+    for (const fence of fences) {
+        if (fence.bodyRule !== 'lyric') {
+            continue;
+        }
+        const body = fence.body.filter((line) => {
+            return !checkIsTranslationLine(line);
+        });
+        if (body.length < fence.body.length) {
+            count += fence.body.length - body.length;
+            nameList.push(fence.partName);
+            fence.body = body;
+        }
+    }
+    if (count === 0) {
+        return asked === ''
+            ? 'The song has no translation lines to take out.'
+            : `${findPart(state.doc, asked).partName} has no translation ` +
+                  'lines to take out.';
+    }
+    state.changes.push(
+        `took out ${count} translation line${count === 1 ? '' : 's'} ` +
+            `(${nameList.join(', ')})`,
+    );
+    const configReason = applyOptionalConfig(state, request.config);
+    if (configReason !== null) {
+        return configReason;
+    }
+    return applyLocales(state, request.locales);
+}
+
+// ---------------------------------------------------------------------------
+// Chords taken out, a part renamed (2026-11-12, EC-527)
+// ---------------------------------------------------------------------------
+//
+// Measured in the window on a second song: _Take the chords out of the
+// chorus._ was sent as set-lines with the chorus's words and no chords,
+// which keeps a line's chords (EC-511) -- nothing was written and the answer
+// said they were gone; _Rename the chorus to Refrain._ took four calls (the
+// part added again, the old one removed, the order rewritten), four undo
+// steps for one change.
+
+/** Whether every sung line given is the part's own words with no chord. */
+function checkIsChordsDropped(fence, lines) {
+    const given = lines.filter(checkIsSungLine);
+    const sungIndexes = listSungIndexes(fence);
+    return (
+        given.length === sungIndexes.length &&
+        sungIndexes.some((index) => {
+            return checkHasChord(fence.body[index]);
+        }) &&
+        given.every((line, at) => {
+            return (
+                !checkHasChord(line) &&
+                toBareWords(line) === toBareWords(fence.body[sungIndexes[at]])
+            );
+        })
+    );
+}
+
+/** A sung line with its chords taken out, or null for a line of chords alone. */
+function toLineWithoutChords(line) {
+    const { bare, chords } = splitChords(line);
+    if (chords.length === 0) {
+        return line;
+    }
+    const words = bare.replace(/ {2,}/g, ' ').trim();
+    return words === '' ? null : words;
+}
+
+function applyRemoveChords(state, request) {
+    let fences = listParts(state.doc);
+    const asked = typeof request?.part === 'string' ? request.part.trim() : '';
+    if (asked !== '') {
+        const fence = findPart(state.doc, asked);
+        if (fence === null) {
+            return genNoSuchPartReason(state.doc, asked);
+        }
+        fences = [fence];
+    }
+    const nameList = [];
+    const keptList = [];
+    let count = 0;
+    let chordLineCount = 0;
+    for (const fence of fences) {
+        if (fence.bodyRule !== 'lyric') {
+            // An Instrumental is its chords, and an Intro's lines may be a
+            // progression: neither is emptied.
+            if (
+                fence.bodyRule !== 'config' &&
+                (fence.bodyRule === 'progression'
+                    ? fence.body.some((line) => {
+                          return (
+                              line.trim() !== '' && !COMMENT_PATTERN.test(line)
+                          );
+                      })
+                    : fence.body.some(checkHasChord))
+            ) {
+                keptList.push(fence.partName);
+            }
+            continue;
+        }
+        let partCount = 0;
+        fence.body = fence.body.map((line) => {
+            if (!checkIsSungLine(line)) {
+                return line;
+            }
+            const next = toLineWithoutChords(line);
+            if (next === null) {
+                chordLineCount += 1;
+                return line;
+            }
+            partCount += splitChords(line).chords.length;
+            return next;
+        });
+        if (partCount > 0) {
+            count += partCount;
+            nameList.push(fence.partName);
+        }
+    }
+    if (keptList.length > 0) {
+        state.warnings.push(
+            `${keptList.join(', ')} kept ${keptList.length === 1 ? 'its' : 'their'} ` +
+                'chords: chords are what such a part plays -- take it out ' +
+                'with remove-section if it should go.',
+        );
+    }
+    if (chordLineCount > 0) {
+        state.warnings.push(
+            `${genLineCount(chordLineCount)} of chords alone stayed -- give ` +
+                'the part again with set-lines if they should go.',
+        );
+    }
+    if (count === 0) {
+        return asked === ''
+            ? 'The song has no chords in its sung parts to take out.'
+            : `${fences[0].partName} has no chords to take out.`;
+    }
+    state.changes.push(
+        `took out ${count} chord${count === 1 ? '' : 's'} ` +
+            `(${nameList.join(', ')})`,
+    );
+    return null;
+}
+
+function genNotAPartReason(text) {
+    return (
+        `"${String(text ?? '').slice(0, 40)}" is not a part a song can ` +
+        'have. Use one of: ' +
+        OPEN_LYRIC_FENCE_LIST.filter((one) => {
+            return one.header !== 'Config';
+        })
+            .map((one) => {
+                return one.header;
+            })
+            .join(', ') +
+        ' -- with a number where there are several (Verse 3).'
+    );
+}
+
+/**
+ * `part` called `to` from now on: the same lines, chords and lines under,
+ * where it stood, and every place it plays in the order -- one change, one
+ * undo.
+ */
+function applyRenameSection(state, request) {
+    const fence = findPart(state.doc, request?.part);
+    if (fence === null) {
+        return genNoSuchPartReason(state.doc, request?.part);
+    }
+    const canonical = toCanonicalPart(request?.to);
+    if (canonical === null) {
+        return genNotAPartReason(request?.to);
+    }
+    const target = FENCE_MAP.get(canonical.header);
+    const old = fence.partName;
+    if (
+        target.bodyRule !== fence.bodyRule &&
+        target.bodyRule !== 'mixed' &&
+        fence.bodyRule !== 'mixed'
+    ) {
+        return (
+            `${old} holds ${genKindWords(fence)}, and a ${canonical.header} ` +
+            'holds something else: add a new part with add-section instead.'
+        );
+    }
+    let name;
+    if (canonical.number === null) {
+        name =
+            canonical.header === fence.header
+                ? old
+                : findFreePartName(state.doc, canonical.header);
+        if (name === null) {
+            return (
+                `The song already has its ${canonical.header}, and there is ` +
+                'only ever one.'
+            );
+        }
+    } else {
+        if (!target.allowsNumbering) {
+            return `${canonical.header} cannot be numbered; there is only ever one.`;
+        }
+        name = toPartName(canonical);
+    }
+    if (name === old) {
+        return `${old} is already called that.`;
+    }
+    if (listPartNames(state.doc).includes(name)) {
+        return (
+            `${name} is already in the song. Rename that one first, or ` +
+            'change the play order with set-order.'
+        );
+    }
+    const play = readPlayOrder(state.doc);
+    if (play.isPartial) {
+        return BROKEN_STRUCTURE_REASON;
+    }
+    fence.openLine = `\`\`\`ol:${name}`;
+    fence.header = canonical.header;
+    fence.partName = name;
+    fence.bodyRule = target.bodyRule;
+    if (!play.isMissing) {
+        writePlayOrder(
+            state.doc,
+            play.order.map((one) => {
+                return one.partName === old ? { ...one, partName: name } : one;
+            }),
+        );
+    }
+    state.changes.push(`renamed ${old} to ${name}`);
     return null;
 }
 
@@ -995,18 +2192,7 @@ function findFreePartName(doc, header) {
 function applyAddSection(state, request) {
     const canonical = toCanonicalPart(request?.part);
     if (canonical === null) {
-        return (
-            `"${String(request?.part ?? '').slice(0, 40)}" is not a part a ` +
-            'song can have. Use one of: ' +
-            OPEN_LYRIC_FENCE_LIST.filter((one) => {
-                return one.header !== 'Config';
-            })
-                .map((one) => {
-                    return one.header;
-                })
-                .join(', ') +
-            ' -- with a number where there are several (Verse 3).'
-        );
+        return genNotAPartReason(request?.part);
     }
     const fenceInfo = FENCE_MAP.get(canonical.header);
     let name;
@@ -1346,8 +2532,12 @@ const ACTION_MAP = {
     'set-lines': applySetLines,
     'add-translation': applyAddTranslation,
     'set-chords': applySetChords,
+    replace: applyReplace,
+    'remove-translations': applyRemoveTranslations,
+    'remove-chords': applyRemoveChords,
     'add-section': applyAddSection,
     'remove-section': applyRemoveSection,
+    'rename-section': applyRenameSection,
     'set-order': applySetOrder,
     'set-config': applySetConfig,
     transpose: applyTranspose,
@@ -1402,12 +2592,23 @@ export function applyLyricEdit(content, request) {
                 'by part. Open it in the Lyric Editor to fix it first.',
         );
     }
-    const state = { doc, changes: [], warnings: [] };
+    const state = { doc, changes: [], warnings: [], chordsDroppedParts: [] };
     const reason = apply(state, request);
     if (typeof reason === 'string') {
         return fail(reason);
     }
     const next = serializeLyricDocument(doc);
+    // The same words handed back without their chords is a way of asking for
+    // the chords to go, and set-lines keeps a line's chords: refused, so the
+    // answer cannot say they went (2026-11-12, EC-527).
+    if (next === String(content ?? '') && state.chordsDroppedParts.length > 0) {
+        return fail(
+            `Nothing was changed: those are the words of ` +
+                `${state.chordsDroppedParts.join(', ')} as they stand, and ` +
+                "set-lines keeps a line's chords. To take chords out, use " +
+                'remove-chords (`part`, else the whole song).',
+        );
+    }
     const before = validateOpenLyric(String(content ?? ''));
     const after = validateOpenLyric(next);
     const knownProblems = new Set(before.problems.map(toProblemKey));

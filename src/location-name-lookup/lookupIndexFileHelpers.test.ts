@@ -236,16 +236,16 @@ describe('the labels sidecar per lookup language', () => {
         const first = await importFresh();
         await first.loadLookupRecordLabelsFile();
 
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         expect(
             (await second.loadLookupRecordLabelsFile())?.labels,
-        ).toStrictEqual(['label-km-46']);
+        ).toStrictEqual(['label-xx-46']);
 
-        expect(mocked.builtLabelsLangCodes).toStrictEqual(['en', 'km']);
+        expect(mocked.builtLabelsLangCodes).toStrictEqual(['en', 'xx']);
         expect([...mocked.fileMap.keys()].sort()).toStrictEqual([
             '/data/lookup-data/verse-record-labels-en.json',
-            '/data/lookup-data/verse-record-labels-km.json',
+            '/data/lookup-data/verse-record-labels-xx.json',
             '/data/lookup-data/verse-text-index.json',
         ]);
     });
@@ -255,7 +255,7 @@ describe('the labels sidecar per lookup language', () => {
     test('reuses a sidecar already written for a language', async () => {
         const first = await importFresh();
         await first.loadLookupRecordLabelsFile();
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         await second.loadLookupRecordLabelsFile();
         expect(mocked.buildCount).toBe(2);
@@ -275,10 +275,49 @@ describe('the labels sidecar per lookup language', () => {
         await first.loadLookupTextIndexFile();
         expect(mocked.buildCount).toBe(1);
 
-        mocked.selectedLangCode = 'km';
+        mocked.selectedLangCode = 'xx';
         const second = await importFresh();
         await second.loadLookupTextIndexFile();
 
+        expect(mocked.buildCount).toBe(1);
+    });
+});
+
+// 2026-11-11: the Markdown Preview links names from the index the Reader
+// built, and never builds it itself.
+describe('a read that must not build', () => {
+    beforeEach(() => {
+        mocked.fileMap.clear();
+        mocked.appVersion = '1.0.0';
+        mocked.lookupDataVersion = { namesMap: 46, locationsMap: 48 };
+        mocked.isReportingDataVersion = true;
+        mocked.buildCount = 0;
+        mocked.selectedLangCode = 'en';
+        mocked.builtLabelsLangCodes = [];
+    });
+
+    test('answers null with nothing on disk, and builds nothing', async () => {
+        const { loadLookupTextIndexFile, loadLookupTextNeedlesFile } =
+            await importFresh();
+        expect(
+            await loadLookupTextIndexFile({ isBuildSkipped: true }),
+        ).toBeNull();
+        expect(
+            await loadLookupTextNeedlesFile('xx', { isBuildSkipped: true }),
+        ).toBeNull();
+        expect(mocked.buildCount).toBe(0);
+        expect(mocked.fileMap.size).toBe(0);
+    });
+
+    test('reads the index once the Reader has built it', async () => {
+        const first = await importFresh();
+        const built = await first.loadLookupTextIndexFile();
+        expect(mocked.buildCount).toBe(1);
+
+        const second = await importFresh();
+        expect(
+            await second.loadLookupTextIndexFile({ isBuildSkipped: true }),
+        ).toStrictEqual(built);
         expect(mocked.buildCount).toBe(1);
     });
 });

@@ -8,7 +8,7 @@ metadata:
 `owa_lyric_validate` (`tools/owa-devtools-mcp/openLyric.mjs`, added 2026-09-02)
 checks song text and answers with every mistake — line, section, what to write
 instead — then what the song IS: title, key, tempo, sections, play order. Checking
-or drafting `text` it is the one tool in that package that reaches nothing: no
+or drafting `text` it reaches nothing (nor does `owa_list_questions`): no
 CDP, no window, no network, so it works with the app shut; a `url` or
 `mode: "find"` asks the app.
 

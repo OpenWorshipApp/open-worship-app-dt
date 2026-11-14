@@ -59,7 +59,11 @@ import {
     unlocking,
 } from './electronHelpers';
 import { electronMockState } from './testElectronModule';
-import { createMockBrowserWindow, createMockWebContents } from './testUtils';
+import {
+    createMockBrowserWindow,
+    createMockWebContents,
+    flushPromises,
+} from './testUtils';
 import type { MockBrowserWindow } from './testUtils';
 
 describe('electronHelpers', () => {
@@ -298,10 +302,10 @@ describe('electronHelpers', () => {
         expect(win.webContents.setWindowOpenHandler).toHaveBeenCalledTimes(1);
     });
 
-    test('prints current window with backgrounds', () => {
+    test('prints current window with backgrounds', async () => {
         const win = createMockBrowserWindow();
 
-        printCurrentWindow(win as any);
+        await printCurrentWindow(win as any);
 
         expect(win.webContents.print).toHaveBeenCalledWith(
             { printBackground: true },
@@ -309,14 +313,231 @@ describe('electronHelpers', () => {
         );
     });
 
+    test('a window gets its page ready for paper before it is printed, either way', async () => {
+        const order: string[] = [];
+        let finishPreparing = () => {};
+        const sourceWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                executeJavaScript: vi.fn((code: string) => {
+                    order.push(code);
+                    return new Promise<void>((resolve) => {
+                        finishPreparing = resolve;
+                    });
+                }),
+                printToPDF: vi.fn(async () => {
+                    order.push('printToPDF');
+                    return Buffer.from('%PDF');
+                }),
+                print: vi.fn(() => {
+                    order.push('print');
+                }),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() =>
+            createMockBrowserWindow(),
+        );
+
+        const previewing = previewPrintCurrentWindow(sourceWin as any);
+        await flushPromises();
+        expect(order).toEqual(['globalThis.appPreparePrint?.()']);
+        finishPreparing();
+        await previewing;
+
+        const printing = printCurrentWindow(sourceWin as any);
+        await flushPromises();
+        expect(order.at(-1)).toBe('globalThis.appPreparePrint?.()');
+        finishPreparing();
+        await printing;
+
+        expect(order).toEqual([
+            'globalThis.appPreparePrint?.()',
+            'printToPDF',
+            'globalThis.appPreparePrint?.()',
+            'print',
+        ]);
+    });
+
+    // The page bounds its own waits -- the question it asks the person, the
+    // diagrams it draws -- so main waits for its answer long, never for good.
+    test('a page that never answers is printed as it stands after 10 minutes; one that fails, at once', async () => {
+        vi.useFakeTimers();
+        try {
+            const win = createMockBrowserWindow({
+                webContents: createMockWebContents({
+                    executeJavaScript: vi.fn(() => new Promise(() => {})),
+                }),
+            });
+            const printing = printCurrentWindow(win as any);
+            await vi.advanceTimersByTimeAsync(10 * 60_000 - 1);
+            expect(win.webContents.print).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(1);
+            await printing;
+            expect(win.webContents.print).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
+
+        const failingWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                executeJavaScript: vi.fn(async () => {
+                    throw new Error('the page threw');
+                }),
+            }),
+        });
+        await printCurrentWindow(failingWin as any);
+        expect(failingWin.webContents.print).toHaveBeenCalledTimes(1);
+    });
+
+    // 2026-11-12: the Markdown Preview asks whether a page's verses, people
+    // and places go on the paper, and its Cancel answers false.
+    test('a page that answers false is not printed, either way', async () => {
+        const answers: unknown[] = [false, false, true, undefined];
+        const win = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                executeJavaScript: vi.fn(async () => answers.shift()),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() =>
+            createMockBrowserWindow(),
+        );
+
+        await printCurrentWindow(win as any);
+        await expect(previewPrintCurrentWindow(win as any)).resolves.toBeNull();
+        expect(win.webContents.print).not.toHaveBeenCalled();
+        expect(win.webContents.printToPDF).not.toHaveBeenCalled();
+
+        // Ready, and a page with nothing to get ready, print as before.
+        await printCurrentWindow(win as any);
+        await expect(
+            previewPrintCurrentWindow(win as any),
+        ).resolves.not.toBeNull();
+        expect(win.webContents.print).toHaveBeenCalledTimes(1);
+        expect(win.webContents.printToPDF).toHaveBeenCalledTimes(1);
+    });
+
+    test('a window closed while its page gets ready is not printed', async () => {
+        let isDestroyed = false;
+        const win = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => isDestroyed),
+            webContents: createMockWebContents({
+                executeJavaScript: vi.fn(async () => {
+                    isDestroyed = true;
+                }),
+            }),
+        });
+
+        await printCurrentWindow(win as any);
+        await expect(previewPrintCurrentWindow(win as any)).resolves.toBeNull();
+
+        expect(win.webContents.print).not.toHaveBeenCalled();
+        expect(win.webContents.printToPDF).not.toHaveBeenCalled();
+    });
+
+    // 2026-11-12: a dev reload under the Markdown Preview's open question had
+    // main print the NEW page -- nobody had answered, and it was not made
+    // light. Settings' Apply reloads every window the same way.
+    describe('a page that goes away while it is asked', () => {
+        type ListenerType = (...args: any[]) => void;
+
+        function createAskedWin(
+            goAway: (listenerMap: Map<string, ListenerType>) => void,
+            answer: () => unknown,
+        ) {
+            const listenerMap = new Map<string, ListenerType>();
+            const webContents = createMockWebContents({
+                on: vi.fn((name: string, listener: ListenerType) => {
+                    listenerMap.set(name, listener);
+                }),
+                executeJavaScript: vi.fn(async () => {
+                    goAway(listenerMap);
+                    return answer();
+                }),
+            });
+            electronMockState.setBrowserWindowFactory(() =>
+                createMockBrowserWindow(),
+            );
+            return createMockBrowserWindow({ webContents });
+        }
+
+        const navigate = (isMainFrame: boolean, isSameDocument: boolean) => {
+            return (listenerMap: Map<string, ListenerType>) => {
+                listenerMap.get('did-start-navigation')?.({
+                    isMainFrame,
+                    isSameDocument,
+                });
+            };
+        };
+        const frameRemoved = () => {
+            throw new Error(
+                'WebFrame was removed before script could run. This ' +
+                    'normally means the underlying frame was destroyed',
+            );
+        };
+
+        test('reloaded is not printed, either way, answered or not', async () => {
+            for (const answer of [frameRemoved, () => true]) {
+                const win = createAskedWin(navigate(true, false), answer);
+
+                await printCurrentWindow(win as any);
+                await expect(
+                    previewPrintCurrentWindow(win as any),
+                ).resolves.toBeNull();
+
+                expect(win.webContents.print).not.toHaveBeenCalled();
+                expect(win.webContents.printToPDF).not.toHaveBeenCalled();
+            }
+        });
+
+        test('with its renderer gone is not printed', async () => {
+            const win = createAskedWin((listenerMap) => {
+                listenerMap.get('render-process-gone')?.({}, {});
+            }, frameRemoved);
+
+            await printCurrentWindow(win as any);
+
+            expect(win.webContents.print).not.toHaveBeenCalled();
+        });
+
+        test('a jump to a heading or a frame inside it is no reload', async () => {
+            for (const goAway of [
+                navigate(true, true),
+                navigate(false, false),
+            ]) {
+                const win = createAskedWin(goAway, () => true);
+
+                await printCurrentWindow(win as any);
+
+                expect(win.webContents.print).toHaveBeenCalledTimes(1);
+            }
+        });
+
+        test('stops listening once it is answered', async () => {
+            const win = createAskedWin(
+                () => {},
+                () => true,
+            );
+
+            await printCurrentWindow(win as any);
+
+            const added = win.webContents.on.mock.calls.map(
+                ([name, listener]) => [name, listener],
+            );
+            expect(added.map(([name]) => name)).toEqual([
+                'did-start-navigation',
+                'render-process-gone',
+            ]);
+            expect(win.webContents.removeListener.mock.calls).toEqual(added);
+        });
+    });
+
     test('printing safely does nothing when there is no live window', async () => {
-        printCurrentWindow(undefined);
+        await printCurrentWindow(undefined);
         await expect(previewPrintCurrentWindow(undefined)).resolves.toBeNull();
 
         const destroyed = createMockBrowserWindow({
             isDestroyed: vi.fn(() => true),
         });
-        printCurrentWindow(destroyed as any);
+        await printCurrentWindow(destroyed as any);
         await expect(
             previewPrintCurrentWindow(destroyed as any),
         ).resolves.toBeNull();
@@ -547,6 +768,60 @@ describe('electronHelpers', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
         expect(noteWin.focus).toHaveBeenCalled();
         expect(notYetWin.focus).not.toHaveBeenCalled();
+    });
+
+    // 2026-11-10, the user: _as a user I want to open 2 windows of one
+    // resource file so I can read different parts at the same time_. A
+    // Resources row opens each window under a fresh id; its 🤖 asks to reuse.
+    test('a fresh id opens another window of a file, and appReuseOpen takes the open one', async () => {
+        const parentWin = createMockBrowserWindow();
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+        const fileUrl = (name: string, uuid: string) => {
+            return (
+                'https://localhost:3000/markdownPreview.html' +
+                `?preview-file=%2Fr%2F${name}&uuid=${uuid}`
+            );
+        };
+        const rowWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => fileUrl('Study.md', 'preview-1')),
+            }),
+        });
+        electronMockState.setBrowserWindowFactory(() => rowWin);
+        new electronMockState.BrowserWindowMock();
+        const openDetails = (url: string, features: string) => ({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_markdown-preview_1`,
+            features,
+        });
+
+        // The row pressed again: one more window, stepped off the first.
+        const another = windowOpenHandler(
+            openDetails(fileUrl('Study.md', 'preview-2'), 'popup,width=870'),
+        );
+        expect(another.action).toBe('allow');
+        expect(another.overrideBrowserWindowOptions).toEqual(
+            expect.objectContaining({ x: 30, y: 40 }),
+        );
+
+        // The 🤖: the window the row opened is brought forward, none opened.
+        const reuseFeatures = 'popup,width=870,appReuseOpen';
+        expect(
+            windowOpenHandler(
+                openDetails(fileUrl('Study.md', 'preview'), reuseFeatures),
+            ).action,
+        ).toBe('deny');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(rowWin.focus).toHaveBeenCalled();
+
+        // Nothing open on THAT file: reusing opens it.
+        expect(
+            windowOpenHandler(
+                openDetails(fileUrl('Other.md', 'preview'), reuseFeatures),
+            ).action,
+        ).toBe('allow');
     });
 
     test('a window.open whose URL does not parse opens nothing', () => {

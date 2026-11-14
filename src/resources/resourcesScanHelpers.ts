@@ -269,15 +269,26 @@ const BOOK_KEY_SET = new Set(
  * wants: a misnamed file turns up there instead of nowhere at all.
  */
 export function checkIsBookChapterName(fileFullName: string) {
+    return readBookChapterName(fileFullName) !== null;
+}
+
+/**
+ * The book and chapter a file is named after (`JHN.3.Love.md` is John 3,
+ * `MAT.0.pdf` the book's own), or null for a name of no book's chapter.
+ */
+export function readBookChapterName(fileFullName: string) {
     const dotIndex = fileFullName.indexOf('.');
     if (dotIndex <= 0) {
-        return false;
+        return null;
     }
     const bookKey = fileFullName.slice(0, dotIndex);
     if (!BOOK_KEY_SET.has(bookKey.toLowerCase())) {
-        return false;
+        return null;
     }
-    return toChapterNumber(fileFullName, bookKey) !== null;
+    const chapter = toChapterNumber(fileFullName, bookKey);
+    return chapter === null
+        ? null
+        : { bookKey: bookKey.toUpperCase(), chapter };
 }
 
 /**

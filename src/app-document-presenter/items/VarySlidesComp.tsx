@@ -198,8 +198,8 @@ function useVarySlidesData() {
  * component — four copies of this markup drifted apart in padding once already.
  *
  * The `tran()` calls stay at the CALL SITES on purpose: a key reaching `tran()`
- * only as a variable is invisible to a grep for it, and a key missing from the
- * Khmer data throws and blanks the page.
+ * only as a variable is invisible to a grep for it, and a key missing from a
+ * language's data throws and blanks the page.
  */
 function NoSlidesToDisplayComp({
     message,

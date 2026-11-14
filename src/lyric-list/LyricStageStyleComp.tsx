@@ -1,13 +1,16 @@
 import type { ChangeEvent, ReactNode } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
 import AlignmentPadComp, {
     type AlignmentPadDataType,
 } from '../others/AlignmentPadComp';
 import AppRangeComp from '../others/AppRangeComp';
+import FontFamilyControlComp from '../others/FontFamilyControlComp';
+import { handleError } from '../helper/errorHelpers';
+import PresetsRowComp from '../others/PresetsRowComp';
 import {
     getLyricStageStyle,
     LYRIC_STAGE_STYLE_DEFAULT,
@@ -16,6 +19,14 @@ import {
     setLyricStageStyle,
     type LyricStageStyleType,
 } from './lyricStageStyleHelpers';
+import {
+    genLyricStageStylePresetPatch,
+    LYRIC_STAGE_STYLE_PRESET_LIST,
+    LYRIC_STAGE_STYLE_SAVED_PRESETS_SETTING_NAME,
+    toLyricStageStyleSavedPreset,
+    type LyricStageStylePresetIdType,
+    type LyricStageStyleSavedPresetType,
+} from './lyricStageStylePresetHelpers';
 
 // Module-level so a fresh literal per render does not re-run `AppRangeComp`'s
 // `[value, defaultSize, fixedSize]` effect on every keystroke elsewhere in the
@@ -76,6 +87,23 @@ export function toReadableCss(css: string) {
         .trim();
 }
 
+/**
+ * A stage look's name, translated in render. One literal per look so the key
+ * coverage test can read every one of them.
+ */
+function toLyricStageStylePresetLabel(id: LyricStageStylePresetIdType) {
+    switch (id) {
+        case 'full-screen':
+            return tran('Full Screen');
+        case 'center':
+            return tran('Center');
+        case 'top-banner':
+            return tran('Top Banner');
+        case 'bottom-banner':
+            return tran('Bottom Banner');
+    }
+}
+
 function RenderStyleRowComp({
     iconClassName,
     label,
@@ -113,6 +141,8 @@ function RenderMarginRowComp({
 }>) {
     const isLinked = style.isMarginLinked;
     const linkTitle = tran('Link horizontal and vertical margin');
+    // The link at the LEFT of the two sliders, centred between the rows it
+    // ties, as the Quick Text panel's Margin has it (the user, 2026-11-09).
     return (
         <div className="d-flex align-items-center app-border-white-round m-1 px-2 gap-1">
             <div className="d-flex flex-column">
@@ -120,39 +150,170 @@ function RenderMarginRowComp({
                     <i className="bi bi-arrows-angle-contract" />
                     <small>{tran('Slide Margin (%)')}</small>
                 </span>
-                <div className="d-flex align-items-center gap-1 ps-1">
-                    <i className="bi bi-arrows" />
-                    <AppRangeComp
-                        value={style.marginHorizontalPercentage}
-                        title={tran('Horizontal Margin (%)')}
-                        setValue={onHorizontalChange}
-                        defaultSize={MARGIN_HORIZONTAL_RANGE}
-                        isShowValue
-                    />
-                </div>
-                <div className="d-flex align-items-center gap-1 ps-1">
-                    <i className="bi bi-arrows-vertical" />
-                    <AppRangeComp
-                        value={style.marginVerticalPercentage}
-                        title={tran('Vertical Margin (%)')}
-                        setValue={onVerticalChange}
-                        defaultSize={MARGIN_VERTICAL_RANGE}
-                        isShowValue
-                    />
+                <div className="d-flex align-items-center gap-1">
+                    <button
+                        type="button"
+                        className={
+                            'btn btn-sm btn' +
+                            (isLinked ? '' : '-outline') +
+                            '-info'
+                        }
+                        title={linkTitle}
+                        aria-label={linkTitle}
+                        aria-pressed={isLinked}
+                        onClick={onLinkToggle}
+                    >
+                        <i
+                            className={
+                                'bi bi-link' + (isLinked ? '-45deg' : '')
+                            }
+                        />
+                    </button>
+                    <div className="d-flex flex-column">
+                        <div className="d-flex align-items-center gap-1 ps-1">
+                            <i className="bi bi-arrows" />
+                            <AppRangeComp
+                                value={style.marginHorizontalPercentage}
+                                title={tran('Horizontal Margin (%)')}
+                                setValue={onHorizontalChange}
+                                defaultSize={MARGIN_HORIZONTAL_RANGE}
+                                isShowValue
+                            />
+                        </div>
+                        <div className="d-flex align-items-center gap-1 ps-1">
+                            <i className="bi bi-arrows-vertical" />
+                            <AppRangeComp
+                                value={style.marginVerticalPercentage}
+                                title={tran('Vertical Margin (%)')}
+                                setValue={onVerticalChange}
+                                defaultSize={MARGIN_VERTICAL_RANGE}
+                                isShowValue
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
-            <button
-                type="button"
-                className={
-                    'btn btn-sm btn' + (isLinked ? '' : '-outline') + '-info'
+        </div>
+    );
+}
+
+// Loaded when the row is drawn: the song's file class pulls the editing
+// history and file sources in, which the stage's own sliders never need.
+async function getLyricClass() {
+    const { default: Lyric } = await import('./Lyric');
+    return Lyric;
+}
+
+/**
+ * The song's OWN font: the one thing in this panel that belongs to the song
+ * rather than to the stage, so it sits apart, above "Applies to every song".
+ * It is kept in the song's file (`Lyric`'s `stageSetting`) and every stage
+ * draws that song in it; empty, the song follows the app-wide font. A song
+ * made from a PowerPoint arrives with the face its slides were set in.
+ *
+ * Written through the song's editing history, like any other change to the
+ * song: the stages redraw at once, Ctrl+Z takes it back, Save keeps it. The
+ * stage's Reset below never touches it.
+ */
+function RenderSongFontComp({
+    songFilePath,
+    onChanged,
+}: Readonly<{
+    songFilePath: string;
+    onChanged: () => void;
+}>) {
+    // `undefined` while the file is read, so the picker never flashes the
+    // app font over a song that has its own.
+    const [fontFamily, setFontFamily] = useState<string | undefined>(undefined);
+    const onChangedRef = useAppCurrentRef(onChanged);
+    useAppEffect(() => {
+        let isAlive = true;
+        let stopListening: (() => void) | null = null;
+        const read = () => {
+            void getLyricClass()
+                .then(async (Lyric) => {
+                    const setting =
+                        await Lyric.getInstance(songFilePath).getStageSetting();
+                    if (isAlive) {
+                        setFontFamily(setting?.fontFamily ?? '');
+                    }
+                })
+                .catch((error) => {
+                    // The row stays away rather than offering a font it
+                    // could not read.
+                    handleError(error);
+                });
+        };
+        read();
+        // Read again whenever the song's file says it changed: the song's
+        // Undo / Redo, the Lyric Editor, the assistant. Seen live 2026-11-11:
+        // with the panel open, Undo put the song back in its own font on
+        // every stage while the picker still read the app font. One timer
+        // per panel, so a burst of edits is one read (CLAUDE.md).
+        const attemptTimeout = genTimeoutAttempt(500);
+        void import('../helper/FileSource')
+            .then(({ default: FileSource }) => {
+                if (!isAlive) {
+                    return;
                 }
-                title={linkTitle}
-                aria-label={linkTitle}
-                aria-pressed={isLinked}
-                onClick={onLinkToggle}
-            >
-                <i className={'bi bi-link' + (isLinked ? '-45deg' : '')} />
-            </button>
+                const fileSource = FileSource.getInstance(songFilePath);
+                const registered = fileSource.registerEventListener(
+                    ['update'],
+                    () => {
+                        attemptTimeout(read);
+                    },
+                );
+                stopListening = () => {
+                    fileSource.unregisterEventListener(registered);
+                };
+            })
+            .catch(handleError);
+        return () => {
+            isAlive = false;
+            stopListening?.();
+        };
+    }, [songFilePath]);
+    const handleFontFamilyChange = useCallback(
+        async (newFontFamily: string) => {
+            setFontFamily(newFontFamily);
+            const Lyric = await getLyricClass();
+            await Lyric.getInstance(songFilePath).setStageSetting(
+                newFontFamily === '' ? null : { fontFamily: newFontFamily },
+            );
+            onChangedRef.current();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [songFilePath],
+    );
+    if (fontFamily === undefined) {
+        return null;
+    }
+    return (
+        <div className="app-border-white-round m-1 px-2 pt-1">
+            <div className="d-flex align-items-center gap-1 text-nowrap">
+                <i className="bi bi-music-note-beamed" />
+                <small>{tran('Song Font')}</small>
+                <small className="text-muted text-truncate">
+                    {tran('This song only, on every stage')}
+                </small>
+            </div>
+            <div className="d-flex align-items-end gap-1">
+                <FontFamilyControlComp
+                    fontFamily={fontFamily}
+                    setFontFamily={handleFontFamilyChange}
+                />
+                {fontFamily === '' ? null : (
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary mb-2"
+                        onClick={() => {
+                            void handleFontFamilyChange('');
+                        }}
+                    >
+                        {tran('Use the app font')}
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
@@ -165,10 +326,14 @@ function RenderMarginRowComp({
  */
 export default function LyricStageStyleComp({
     stage,
+    songFilePath,
     onChanged,
     genStageBuiltInCss,
 }: Readonly<{
     stage: number;
+    // The song the panel was opened from, for its own font. Absent (a test,
+    // an older host), the song's row is not drawn.
+    songFilePath?: string;
     onChanged: () => void;
     // The css the stage applies before the operator's own, read off its
     // document. Absent, the box shows a one-line example instead.
@@ -334,6 +499,28 @@ export default function LyricStageStyleComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // A look a press: written at once, like the theme. One of the app's looks
+    // moves only the layout; a saved one is the whole record, Custom CSS and
+    // theme included.
+    const handlePresetApplying = useCallback(
+        (patch: Partial<LyricStageStyleType>) => {
+            handleChangeRef.current(patch, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const readCurrentStyle = useCallback(() => {
+        return { values: { ...styleRef.current } };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSavedPresetApplying = useCallback(
+        (preset: LyricStageStyleSavedPresetType) => {
+            handleChangeRef.current({ ...preset.values }, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
     const handleReset = useCallback(() => {
         const newStyle = { ...LYRIC_STAGE_STYLE_DEFAULT };
         styleRef.current = newStyle;
@@ -352,11 +539,45 @@ export default function LyricStageStyleComp({
                 className="flex-fill app-overflow-hidden-x"
                 style={{ overflowY: 'auto' }}
             >
+                {songFilePath === undefined ? null : (
+                    <RenderSongFontComp
+                        songFilePath={songFilePath}
+                        onChanged={onChanged}
+                    />
+                )}
                 <div className="px-1">
                     <small className="text-muted">
                         <i className="bi bi-info-circle me-1" />
                         {tran('Applies to every song')}
                     </small>
+                </div>
+                <div className="m-1 px-1">
+                    <PresetsRowComp<LyricStageStyleSavedPresetType>
+                        savedSettingName={
+                            LYRIC_STAGE_STYLE_SAVED_PRESETS_SETTING_NAME
+                        }
+                        toSavedPreset={toLyricStageStyleSavedPreset}
+                        builtIns={LYRIC_STAGE_STYLE_PRESET_LIST.map(
+                            (preset) => {
+                                return {
+                                    id: preset.id,
+                                    iconName: preset.iconName,
+                                    label: toLyricStageStylePresetLabel(
+                                        preset.id,
+                                    ),
+                                    onPick: () => {
+                                        handlePresetApplying(
+                                            genLyricStageStylePresetPatch(
+                                                preset,
+                                            ),
+                                        );
+                                    },
+                                };
+                            },
+                        )}
+                        readCurrent={readCurrentStyle}
+                        onSavedPick={handleSavedPresetApplying}
+                    />
                 </div>
                 <RenderMarginRowComp
                     style={style}

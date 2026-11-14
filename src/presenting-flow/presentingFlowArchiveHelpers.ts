@@ -321,7 +321,7 @@ export async function exportPresentingFlow(presentingFlow: PresentingFlow) {
         handleError(error);
         showSimpleToast(
             tran('Export Presenting Flow'),
-            error?.message ?? 'Unable to export the presenting flow',
+            error?.message ?? tran('It did not work. Please try again.'),
         );
         return null;
     } finally {
@@ -530,7 +530,7 @@ async function runPresentingFlowArchiveImport(archiveFilePath: string) {
         handleError(error);
         showSimpleToast(
             tran(IMPORT_TITLE),
-            error?.message ?? 'Unable to import the presenting flow',
+            error?.message ?? tran('It did not work. Please try again.'),
         );
         return null;
     } finally {
@@ -646,7 +646,7 @@ export async function importDroppedPresentingFlowArchive(
         handleError(error);
         showSimpleToast(
             tran(IMPORT_TITLE),
-            error?.message ?? 'Unable to import the presenting flow',
+            error?.message ?? tran('It did not work. Please try again.'),
         );
         return null;
     } finally {

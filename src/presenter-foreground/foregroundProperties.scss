@@ -19,6 +19,9 @@
   padding: 6px 8px;
 }
 
+// Presets, the first group of the block, are the app's one Presets row:
+// `src/others/PresetsRowComp.scss`.
+
 // The slider column. `auto-fit` is what makes the panel worth resizing: one
 // column at 440px, two by ~700px, four in full view -- the same controls, the
 // height falling as the width grows.
@@ -94,7 +97,7 @@
 }
 
 // A border style is its own picture, so the button wears one instead of a
-// word -- which is also the only way this row reads the same in Khmer.
+// word -- which is also the only way this row reads the same in every language.
 .fg-chip-preview {
   display: block;
   width: 18px;
@@ -426,17 +429,19 @@
 }
 
 // The nudge lives with the pad because an offset IS the position, measured
-// from the cell that is lit. One axis per row: side by side under the 84px
-// pad each box was ~30px, and an offset of "40" read "4|".
+// from the cell that is lit. X and Y on ONE line (2026-11-09, the user: _this
+// should be inline_). Squeezed into the 84px pad's width each box had been
+// ~30px and an offset of "40" read "4|", so each box keeps its own width and
+// the column grows by the little that takes.
 .fg-pad-offset {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 84px;
+  flex-direction: row;
+  gap: 6px;
 }
 
 .fg-pad-offset-axis {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 3px;
   min-width: 0;
@@ -445,7 +450,7 @@
   opacity: 0.72;
 
   > input {
-    width: 100%;
+    width: 46px;
     min-width: 0;
     padding: 0 3px;
     font-size: 0.74rem;
@@ -526,4 +531,27 @@
   .fg-props-toggle > i {
     transition: none;
   }
+}
+
+// Quick Text's two margin rows with their link at the left, centred between
+// them: linked, one slider moves both margins. One cell of the rows grid.
+.fg-margin-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fg-margin-rows {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fg-margin-link {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  line-height: 1.5;
 }

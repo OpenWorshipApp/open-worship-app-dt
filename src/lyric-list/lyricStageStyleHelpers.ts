@@ -153,8 +153,9 @@ function sanitizeBoxAlignment(parsed: any) {
 
 // Per FIELD, never all-or-nothing: the record is a file a user can hand-edit,
 // and one bad number must not throw away the other values — or throw at all,
-// since these are read from a render path.
-function sanitize(parsed: any): LyricStageStyleType {
+// since these are read from a render path. Exported for the saved presets,
+// which keep whole records of this shape (`lyricStageStylePresetHelpers`).
+export function sanitizeLyricStageStyle(parsed: any): LyricStageStyleType {
     if (parsed === null || typeof parsed !== 'object') {
         return { ...LYRIC_STAGE_STYLE_DEFAULT };
     }
@@ -252,7 +253,7 @@ export function getLyricStageStyle(stage: number): LyricStageStyleType {
     }
     let style: LyricStageStyleType;
     try {
-        style = sanitize(JSON.parse(raw));
+        style = sanitizeLyricStageStyle(JSON.parse(raw));
     } catch (_error) {
         // A corrupt file is not worth a console error on every slide; the
         // defaults are a working answer and the panel rewrites the file the
@@ -265,7 +266,7 @@ export function getLyricStageStyle(stage: number): LyricStageStyleType {
 
 export function setLyricStageStyle(stage: number, style: LyricStageStyleType) {
     const settingName = toLyricStageStyleSettingName(stage);
-    const sanitized = sanitize(style);
+    const sanitized = sanitizeLyricStageStyle(style);
     const raw = JSON.stringify(sanitized);
     rememberParsedStage(settingName, raw, sanitized);
     setSetting(settingName, raw);

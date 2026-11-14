@@ -9,6 +9,7 @@
         "owa-devtools-mcp": "./bin.mjs"
     },
     "dependencies": {
-        "chrome-devtools-mcp": "^1.8.0"
+        "chrome-devtools-mcp": "1.12.0",
+        "ws": "^8.21.3"
     }
 }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterEach, describe, expect, it, beforeEach } from 'vitest';
 
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -31,11 +31,24 @@ const REPO_DIR = path.join(
 
 // The runtime is a string evaluated in the app page, so it is exercised the
 // way the app gets it: evaluated, then driven through its own api.
+// Every card started is stopped after its test: a running card tracks its
+// step every 700 ms, and one left running drew itself into a page the file
+// had already torn down -- 13 "document is not defined" errors in a busy
+// full run, with every test passing.
+const startedGuideList = [];
 function startGuide(payload) {
-  return new Function(
+  const status = new Function(
     `return ${genGuideExpression(`start(${JSON.stringify(payload)})`)}`,
   )();
+  startedGuideList.push(window.__owaGuide);
+  return status;
 }
+
+afterEach(() => {
+  for (const guide of startedGuideList.splice(0)) {
+    guide?.stop?.('test-end');
+  }
+});
 
 beforeEach(() => {
   delete window.__owaGuide;
@@ -70,8 +83,8 @@ beforeEach(() => {
 });
 
 // The card sits in the app window and speaks its language: every word it
-// asks the dictionary for must be there in Khmer AND French, read straight
-// from the packages (a stale built bundle would hide a new key).
+// asks the dictionary for must be there in every language package, read
+// straight from the packages (a stale built bundle would hide a new key).
 describe('the card’s own words', () => {
   it('has every one in every language', () => {
     // Every language package there is but English's: a folder of
@@ -98,7 +111,9 @@ describe('the card’s own words', () => {
         code,
       ).toEqual([]);
     }
-  });
+    // Every package's dictionary is read (~150 ms each under a busy suite,
+    // eighty-odd of them): more than the 10 s default.
+  }, 60_000);
 
   // The list the server translates and the sentences the card says are two
   // copies; one drifting from the other is a sentence left in English.
@@ -898,10 +913,10 @@ describe('the guide runtime', () => {
   });
 
   it('refuses a match that only mentions the word in passing', () => {
-    // The Resources panel listing a "khmer-study-bible-pdf" folder is
+    // The Resources panel listing a "study-bible-pdf" folder is
     // not the Bible Reader tab, and a row of PDF notes is not "Book".
     document.body.innerHTML = [
-      '<button title="...\khmer-study-bible-pdf\data-s3">',
+      '<button title="...\study-bible-pdf\data-s3">',
       'GEN.0.pdf Introduction</button>',
     ].join('');
     const status = startGuide({

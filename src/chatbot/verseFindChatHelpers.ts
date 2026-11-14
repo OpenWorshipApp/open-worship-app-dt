@@ -265,8 +265,8 @@ function toShownPassage(verse: FoundVerseType) {
 /**
  * A verse's reference as the PERSON reads it: the Bible's own `title` in a
  * window shown in a language other than English, the English `ref`
- * otherwise (2026-10-17, the user: _when app is in Khmer we don't expect
- * user can understand english at all_ -- and every found verse was drawn as
+ * otherwise (2026-10-17, the user: _when app is in a non-English language
+ * we don't expect user can understand english at all_ -- and every found verse was drawn as
  * `Hebrews 5:14`, on its button too).
  */
 export function toShownVerseRef(verse: { ref: string; title?: string }) {
@@ -317,8 +317,8 @@ function toBibleRows(listed: any): BibleRowType[] {
  * then -- in a window shown in another language than English -- the whole
  * Bibles in that language, its parts after them, then every other. Only
  * `MAX_BIBLE_BUTTONS` are buttons and the rest must be typed, and in the
- * install order a Khmer reader with 21 Bibles got ten mostly English buttons
- * and had to type the short name of the Khmer Bible they read (2026-11-05).
+ * install order a non-English reader with 21 Bibles got ten mostly English
+ * buttons and had to type the short name of the Bible they read (2026-11-05).
  * Each group keeps the order it came in.
  */
 function orderBibleChoices(
@@ -396,8 +396,8 @@ function toCarryArgs(carry: ReturnType<typeof toVerseFindCarry>) {
 
 /**
  * The button that changes the Bible, under any answer of the search (the
- * user's ask, 2026-10-17: _I'm looking in khmer then I should be able to
- * change to english_). It lists the other Bibles, the one searched now left
+ * user's ask, 2026-10-17: _I'm looking in <my language> then I should be
+ * able to change to english_). It lists the other Bibles, the one searched now left
  * out, and carries what they remember and the verses found: picked, a Bible
  * shows those verses (**Show in another Bible**), or is searched for the
  * same words when none was found (**Search another Bible**).
@@ -1004,7 +1004,7 @@ export function genVerseFindThanksAnswer(
  */
 export const VERSE_TRANSLATION_MODEL_PATTERN = TRANSLATION_MODEL_PATTERN;
 
-// A letter of any script but Latin: Khmer, Thai, Chinese… words that have to
+// A letter of any script but Latin: Thai, Chinese, Arabic… words that have to
 // be put into English before the KJV can be searched for them.
 const NON_LATIN_LETTER_PATTERN = /(?!\p{Script=Latin})\p{L}/u;
 
@@ -1077,7 +1077,7 @@ const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b);
 /**
  * A verse cut to what the head start carries: at its last word break and
  * marked with an ellipsis, never inside a letter cluster. Cut at a fixed
- * length, Romans 8:28 reached a Khmer reader ending on a subscript sign with
+ * length, Romans 8:28 reached a reader of such a script ending on a subscript sign with
  * no letter under it, quoted back by the model as the verse (2026-11-05).
  */
 export function cutHeadStartVerse(text: string) {
@@ -1565,7 +1565,7 @@ function withFoundChapters(found: FoundVerseType[]): FoundVerseType[] {
 export function pickNamedVerses(
     found: FoundVerseType[],
     answerText: string,
-    // A verse found in the KJV for a Khmer search is the Khmer one's -- a
+    // A verse found in the KJV for a non-English search is that Bible's -- a
     // key reads in any Bible -- and once, where a verse found in both had
     // drawn two buttons of one label (seen live 2026-10-16).
     bible: string,
@@ -1685,7 +1685,7 @@ export async function answerVerseFindOffline(
     try {
         text = await call(VERSE_FIND_TOOL_NAME, { bible, words: remembered });
     } catch (error: any) {
-        // Seen live 2026-10-16: English words typed under the Khmer Bible
+        // Seen live 2026-10-16: English words typed under a non-English Bible
         // were answered "make sure the main window is open".
         if (String(error?.message).startsWith(NOT_IN_LANGUAGE_REASON)) {
             const webLine = genVerseWebSearchLine(remembered);

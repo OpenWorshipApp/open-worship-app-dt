@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Two tiny stand-ins for the shipped ~35MB packages: the English one is what the
-// index is always built from, the Khmer one only ever relabels it.
+// index is always built from, the translated one only ever relabels it.
 const h = vi.hoisted(() => ({
     lookupDataMap: {} as { [langCode: string]: any },
     readLangCodes: [] as string[],
@@ -93,14 +93,14 @@ describe('building the derived lookup files', () => {
     });
 
     test('gives up when the English package has no dataset', async () => {
-        h.lookupDataMap = { km: genEnglishData() };
+        h.lookupDataMap = { xx: genEnglishData() };
 
-        expect(await buildLookupTextIndex('km')).toBeNull();
+        expect(await buildLookupTextIndex('xx')).toBeNull();
     });
 
     describe('with a translated language selected', () => {
         beforeEach(() => {
-            h.lookupDataMap.km = {
+            h.lookupDataMap.xx = {
                 namesMap: {
                     namesMap: {
                         'id-abram': {
@@ -111,8 +111,8 @@ describe('building the derived lookup files', () => {
                         },
                         // Present here, unknown to English: nothing can ever
                         // reference it, so it must not reach the sidecar.
-                        'id-only-khmer': {
-                            id: 'id-only-khmer',
+                        'id-only-translated': {
+                            id: 'id-only-translated',
                             name: '✝✝✝☀',
                             title: '',
                             type: 'person',
@@ -132,9 +132,9 @@ describe('building the derived lookup files', () => {
         });
 
         test('relabels the records the translation covers', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
-            expect(h.readLangCodes).toStrictEqual(['en', 'km']);
+            expect(h.readLangCodes).toStrictEqual(['en', 'xx']);
             const { ids } = built!.index;
             expect(built!.recordLabels.labels[ids.indexOf('id-abram')]).toBe(
                 '✝✝✝✝',
@@ -150,7 +150,7 @@ describe('building the derived lookup files', () => {
         // An empty label makes `toVerseRecord` drop the row entirely, so a
         // partial translation would silently shorten the list.
         test('keeps the English text for records it does not cover', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
             const { ids } = built!.index;
             expect(built!.recordLabels.labels[ids.indexOf('id-satan')]).toBe(
@@ -159,9 +159,9 @@ describe('building the derived lookup files', () => {
         });
 
         test('never lets a translation-only record into the sidecar', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
-            expect(built!.index.ids).not.toContain('id-only-khmer');
+            expect(built!.index.ids).not.toContain('id-only-translated');
             expect(built!.recordLabels.labels).not.toContain('✝✝✝☀');
             expect(built!.recordLabels.labels).toHaveLength(
                 built!.index.ids.length,
@@ -171,7 +171,7 @@ describe('building the derived lookup files', () => {
         // Shown beside the translated label the way a bible book reads
         // `<its own name> (Genesis)`.
         test('keeps the English name of every relabelled record', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
             const { ids } = built!.index;
             expect(built!.recordLabels.kjvNames[ids.indexOf('id-abram')]).toBe(
@@ -191,7 +191,7 @@ describe('building the derived lookup files', () => {
         // The index matches KJV wording in rendered verse text, so its surface
         // forms have to stay the KJV's whatever language the labels are in.
         test('leaves the index itself English', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
             expect(Object.keys(built!.index.names)).toContain('abram');
             expect(Object.keys(built!.index.locations)).toContain('haran');
@@ -201,7 +201,7 @@ describe('building the derived lookup files', () => {
         // `type` is an enum the icon map is keyed on, not prose: a translated
         // package spelling it differently would cost those rows their icon.
         test('keeps the English record type', async () => {
-            const built = await buildLookupTextIndex('km');
+            const built = await buildLookupTextIndex('xx');
 
             const { ids } = built!.index;
             expect(built!.recordLabels.types[ids.indexOf('id-satan')]).toBe(
@@ -213,7 +213,7 @@ describe('building the derived lookup files', () => {
 
 describe('building the needles file for a translated bible', () => {
     beforeEach(() => {
-        h.lookupDataMap.km = {
+        h.lookupDataMap.xx = {
             namesMap: {
                 namesMap: {
                     'id-abram': {
@@ -224,7 +224,10 @@ describe('building the needles file for a translated bible', () => {
                     },
                     // Unknown to the English pass, so no id was ever minted for
                     // it and nothing could reference it.
-                    'id-only-khmer': { id: 'id-only-khmer', name: '✝✝✝☀' },
+                    'id-only-translated': {
+                        id: 'id-only-translated',
+                        name: '✝✝✝☀',
+                    },
                 },
             },
             locationsMap: {
@@ -244,7 +247,7 @@ describe('building the needles file for a translated bible', () => {
         const built = await buildLookupTextIndex('en');
         const { ids } = built!.index;
 
-        const needles = await buildLookupTextNeedles('km', ids);
+        const needles = await buildLookupTextNeedles('xx', ids);
 
         expect(needles!.needles).toHaveLength(ids.length);
         // Covered by the translation.
@@ -259,7 +262,7 @@ describe('building the needles file for a translated bible', () => {
         const built = await buildLookupTextIndex('en');
         const { ids } = built!.index;
 
-        const needles = await buildLookupTextNeedles('km', ids);
+        const needles = await buildLookupTextNeedles('xx', ids);
 
         expect(
             needles!.needles[ids.indexOf('id-haran')].split(NEEDLE_SEPARATOR),
@@ -270,13 +273,13 @@ describe('building the needles file for a translated bible', () => {
         const built = await buildLookupTextIndex('en');
         h.readLangCodes = [];
 
-        await buildLookupTextNeedles('km', built!.index.ids);
+        await buildLookupTextNeedles('xx', built!.index.ids);
 
-        expect(h.readLangCodes).toStrictEqual(['km']);
+        expect(h.readLangCodes).toStrictEqual(['xx']);
     });
 
     test('gives up when that language ships no dataset', async () => {
-        expect(await buildLookupTextNeedles('fr', ['id-abram'])).toBeNull();
+        expect(await buildLookupTextNeedles('yy', ['id-abram'])).toBeNull();
     });
 });
 
@@ -349,7 +352,7 @@ describe('records the builder skips or reshapes', () => {
     });
 
     test('a selected language with no dataset leaves the English labels', async () => {
-        const built = await buildLookupTextIndex('fr');
+        const built = await buildLookupTextIndex('yy');
 
         expect(h.readLangCodes).toStrictEqual(['en']);
         expect(built!.index.ids).toStrictEqual([
@@ -366,7 +369,7 @@ describe('records the builder skips or reshapes', () => {
     });
 
     test('a translated record without an id relabels nothing', async () => {
-        h.lookupDataMap.km = {
+        h.lookupDataMap.xx = {
             namesMap: {
                 namesMap: {
                     'no-id': { name: '✝✝✝☁', title: '✝✝✝☁' },
@@ -376,7 +379,7 @@ describe('records the builder skips or reshapes', () => {
             locationsMap: { locationsMap: [{ name: '✝✝✝♥' }] },
         };
 
-        const built = await buildLookupTextIndex('km');
+        const built = await buildLookupTextIndex('xx');
         const { ids } = built!.index;
 
         expect(built!.recordLabels.labels[ids.indexOf('id-abram')]).toBe(
@@ -395,7 +398,7 @@ describe('records the builder skips or reshapes', () => {
     });
 
     test('the needles skip a record without an id and a name of only invisible marks', async () => {
-        h.lookupDataMap.km = {
+        h.lookupDataMap.xx = {
             namesMap: {
                 namesMap: {
                     ghost: { name: '✝✝✝☠' },
@@ -409,7 +412,7 @@ describe('records the builder skips or reshapes', () => {
             locationsMap: { locationsMap: [] },
         };
 
-        const needles = await buildLookupTextNeedles('km', [
+        const needles = await buildLookupTextNeedles('xx', [
             'id-abram',
             'id-haran',
         ]);

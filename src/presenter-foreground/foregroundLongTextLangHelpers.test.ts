@@ -7,8 +7,8 @@ const { state, mocks } = vi.hoisted(() => ({
     state: {
         titles: {
             en: 'English',
-            km: 'Khmer',
-            fr: 'French',
+            xx: 'Xxish',
+            yy: 'Yyish',
             de: 'German',
             ar: 'Arabic',
             ja: 'Japanese',
@@ -21,15 +21,15 @@ const { state, mocks } = vi.hoisted(() => ({
 }));
 
 // One list, as the real one is until the window's languages change.
-const SUPPORTED_LANG_CODES = vi.hoisted(() => ['en', 'km', 'fr']);
+const SUPPORTED_LANG_CODES = vi.hoisted(() => ['en', 'xx', 'yy']);
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LOCALE: 'en-US',
     ensureLangPlugins: async () => [],
     getSupportedLangCodes: () => SUPPORTED_LANG_CODES,
     reversedLocalesMap: {
         en: 'en-US',
-        km: 'km-KH',
-        fr: 'fr-FR',
+        xx: 'xx-XX',
+        yy: 'yy-YY',
         de: 'de-DE',
         ar: 'ar-SA',
         ja: 'ja-JP',
@@ -57,20 +57,20 @@ beforeEach(() => {
     );
     mocks.getLangDataByCodeAsync.mockImplementation(
         async (langCode: string) => {
-            return langCode === 'km' ? { locale: 'km-KH' } : null;
+            return langCode === 'xx' ? { locale: 'xx-XX' } : null;
         },
     );
 });
 
 describe('Long Text languages', () => {
     test('a language reads as its code and its name', () => {
-        expect(toLongTextLanguageLabel('km')).toBe('KM - Khmer');
-        expect(mocks.getLanguageTitle).toHaveBeenCalledWith({ langCode: 'km' });
+        expect(toLongTextLanguageLabel('xx')).toBe('XX - Xxish');
+        expect(mocks.getLanguageTitle).toHaveBeenCalledWith({ langCode: 'xx' });
     });
 
     test('the app own languages come first, then the rest by name, built once', () => {
         const langCodes = getLongTextLangCodes();
-        expect(langCodes).toEqual(['en', 'km', 'fr', 'ar', 'de', 'ja']);
+        expect(langCodes).toEqual(['en', 'xx', 'yy', 'ar', 'de', 'ja']);
         const callCount = mocks.getLanguageTitle.mock.calls.length;
         expect(callCount).toBeGreaterThan(0);
         // The same list again, without sorting the table a second time.
@@ -79,16 +79,16 @@ describe('Long Text languages', () => {
     });
 
     test('a column is drawn in the package locale, else the table one, else English', async () => {
-        await expect(toLongTextLocale('km')).resolves.toBe('km-KH');
+        await expect(toLongTextLocale('xx')).resolves.toBe('xx-XX');
         await expect(toLongTextLocale('de')).resolves.toBe('de-DE');
-        await expect(toLongTextLocale('xx')).resolves.toBe('en-US');
-        expect(mocks.getLangDataByCodeAsync).toHaveBeenCalledWith('xx');
+        await expect(toLongTextLocale('zz')).resolves.toBe('en-US');
+        expect(mocks.getLangDataByCodeAsync).toHaveBeenCalledWith('zz');
     });
 
     test('typed text keeps every section, numbered in its own digits', async () => {
         const column = await genLongTextColumnInput(
             {
-                langCode: 'km',
+                langCode: 'xx',
                 source: 'raw',
                 title: 'Typed',
                 sections: ['one', 'two'],
@@ -96,7 +96,7 @@ describe('Long Text languages', () => {
                 style: { fontFamily: 'Georgia' },
             },
             {
-                langCode: 'km',
+                langCode: 'xx',
                 source: 'raw',
                 title: 'Typed title',
                 sections: [{ text: 'one' }, { text: 'two' }],
@@ -105,11 +105,11 @@ describe('Long Text languages', () => {
             [{ row: 0 }, { row: 1 }],
         );
         expect(column).toEqual({
-            langCode: 'km',
-            locale: 'km-KH',
+            langCode: 'xx',
+            locale: 'xx-XX',
             title: 'Typed title',
             texts: ['one', 'two'],
-            nums: ['km-KH#1', 'km-KH#2'],
+            nums: ['xx-XX#1', 'xx-XX#2'],
             style: { fontFamily: 'Georgia' },
         });
     });
@@ -121,15 +121,15 @@ describe('Long Text languages', () => {
                 source: 'lyric',
                 title: '',
                 sections: [],
-                lyricFilePath: '/songs/lied.lyric',
+                lyricFilePath: '/songs/other.lyric',
             },
             {
                 langCode: 'de',
                 source: 'lyric',
-                title: 'Lied',
+                title: 'Other song',
                 sections: [
-                    { partName: 'Verse 1', text: 'Erste' },
-                    { partName: 'Chorus', text: 'Kehrvers' },
+                    { partName: 'Verse 1', text: 'First' },
+                    { partName: 'Chorus', text: 'Refrain' },
                 ],
             },
             [1, 0, 5],
@@ -138,9 +138,9 @@ describe('Long Text languages', () => {
         expect(column).toEqual({
             langCode: 'de',
             locale: 'de-DE',
-            title: 'Lied',
+            title: 'Other song',
             // A row past this song's end is an empty row, not a crash.
-            texts: ['Kehrvers', 'Erste', ''],
+            texts: ['Refrain', 'First', ''],
             nums: ['de-DE#1', 'de-DE#2', 'de-DE#3'],
         });
         expect(column).not.toHaveProperty('style');
@@ -149,14 +149,14 @@ describe('Long Text languages', () => {
     test('in Atom mode a line is a row, numbered on through the whole text', async () => {
         const column = await genLongTextColumnInput(
             {
-                langCode: 'km',
+                langCode: 'xx',
                 source: 'lyric',
                 title: '',
                 sections: [],
                 lyricFilePath: '/songs/still.lyric',
             },
             {
-                langCode: 'km',
+                langCode: 'xx',
                 source: 'lyric',
                 title: 'Still',
                 sections: [
@@ -179,6 +179,6 @@ describe('Long Text languages', () => {
             'Under Your wings',
             'When the oceans rise',
         ]);
-        expect(column.nums).toEqual(['km-KH#1', 'km-KH#2', 'km-KH#3']);
+        expect(column.nums).toEqual(['xx-XX#1', 'xx-XX#2', 'xx-XX#3']);
     });
 });

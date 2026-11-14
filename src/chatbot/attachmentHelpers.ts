@@ -18,7 +18,13 @@
 
 import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
 import { tran } from './chatTranHelpers';
+import { checkIsSongSourceFileName } from './lyricDraftHelpers';
+import {
+    checkIsOfficeTextName,
+    checkIsSongDocumentName,
+} from './documentTextHelpers';
 import type { AttachmentWindowType } from './windowAimHelpers';
+import type { ForegroundAskType } from '../helper/ai/foregroundAskHelpers';
 
 /**
  * The four things that can be attached, and they are not alike. A `file` is
@@ -29,7 +35,14 @@ import type { AttachmentWindowType } from './windowAimHelpers';
  * itself along for the people who can open it (2026-10-13: _and accept files
  * like markdown pdf_) -- read off the disk at the press that sends it.
  */
-export type ChatAttachmentKindType = 'image' | 'text' | 'element' | 'file';
+export type ChatAttachmentKindType =
+    | 'image'
+    | 'text'
+    | 'element'
+    | 'file'
+    // A SESSION of a foreground component (2026-11-09): which one, never its
+    // words -- the window reads them before every question.
+    | 'foreground';
 
 /**
  * What is stored ON the message, and so written to disk. No bytes, ever -- see
@@ -74,6 +87,9 @@ export type ChatAttachmentType = {
     // (2026-11-07, a note row's Open in Chatbot): a file holds many, and the
     // conversation is about one. Its `name` is then the note's title.
     noteId?: number;
+    // `foreground` -- WHICH session of which component (2026-11-09, a
+    // session chip's Open in Chatbot, a panel's 🤖, the attach row).
+    foreground?: ForegroundAskType;
 };
 
 /**
@@ -494,7 +510,8 @@ export function checkCanAttachFileName(fileName: string) {
         checkIsImageName(fileName) ||
         checkIsCarriedFileName(fileName) ||
         checkIsBibleNoteFileName(fileName) ||
-        checkIsReadableTextName(fileName)
+        checkIsReadableTextName(fileName) ||
+        checkIsOfficeTextName(fileName)
     );
 }
 
@@ -514,8 +531,55 @@ export function toImageMediaType(fileName: string) {
 // The line the model is given above a file's words, so it knows what it is
 // reading. Written and stripped in the same module deliberately: the preview
 // shows the FILE, not the sentence this window wrapped around it.
+const ATTACHED_TEXT_HEAD = 'The user attached a file called "';
 function genAttachedTextHeader(name: string) {
-    return `The user attached a file called "${name}":\n`;
+    return `${ATTACHED_TEXT_HEAD}${name}":\n`;
+}
+
+// Where a file's words stop when it is longer than `MAX_TEXT_LENGTH`.
+const ATTACHMENT_CUT_TEXT = '[... the rest of this file was not included ...]';
+
+export type AskedTextFileType = { name: string; text: string; isCut: boolean };
+
+/**
+ * The text files an ask carries, read back off the ask (EC-500): each one's
+ * name, its words as the model was shown them, and whether they stop at
+ * `MAX_TEXT_LENGTH` -- what of a study file the model has seen. A file's
+ * words run to the next file's header, the last one's to the end of the
+ * ask; a PDF's sentence is not one.
+ */
+export function readAskedTextFiles(asked: string): AskedTextFileType[] {
+    const fileList: AskedTextFileType[] = [];
+    let at = asked.indexOf(ATTACHED_TEXT_HEAD);
+    while (at >= 0) {
+        const nameStart = at + ATTACHED_TEXT_HEAD.length;
+        const next = asked.indexOf(ATTACHED_TEXT_HEAD, nameStart);
+        const end = next < 0 ? asked.length : next;
+        const headEnd = asked.indexOf('":\n', nameStart);
+        const name = headEnd < 0 ? '' : asked.slice(nameStart, headEnd);
+        if (
+            headEnd >= 0 &&
+            headEnd < end &&
+            name !== '' &&
+            !/["\n]/.test(name)
+        ) {
+            // The blank line `toAttachmentText` joins two files with is no
+            // word of the first.
+            const joined = asked.slice(headEnd + 3, end);
+            const body =
+                next >= 0 && joined.endsWith('\n\n')
+                    ? joined.slice(0, -2)
+                    : joined;
+            const cutAt = body.indexOf(`\n${ATTACHMENT_CUT_TEXT}`);
+            fileList.push({
+                name,
+                text: cutAt < 0 ? body : body.slice(0, cutAt),
+                isCut: cutAt >= 0,
+            });
+        }
+        at = next;
+    }
+    return fileList;
 }
 
 /** What was in the file, without the line written for the model. */
@@ -529,6 +593,81 @@ export function toAttachedText(attachment: ChatAttachmentType) {
     return summary.startsWith(header) ? summary.slice(header.length) : summary;
 }
 
+/**
+ * The attached files a song ask is drafted from with no model (EC-589):
+ * every one a file of plain words (`checkIsSongSourceFileName`), each with
+ * its name and its words, the line saying where a long one was cut left
+ * out -- it is no line of the song. Null when any attachment is something
+ * else: a picture or a PDF beside them makes it a question for a model.
+ */
+export function toSongFileSources(
+    attachments: readonly ChatAttachmentType[],
+): { name: string; text: string }[] | null {
+    if (attachments.length === 0) {
+        return null;
+    }
+    const sourceList: { name: string; text: string }[] = [];
+    for (const attachment of attachments) {
+        if (
+            attachment.kind !== 'text' ||
+            !checkIsSongSourceFileName(attachment.name)
+        ) {
+            return null;
+        }
+        const text = toAttachedText(attachment);
+        const cutAt = text.indexOf(`\n${ATTACHMENT_CUT_TEXT}`);
+        sourceList.push({
+            name: attachment.name,
+            text: cutAt < 0 ? text : text.slice(0, cutAt),
+        });
+    }
+    return sourceList;
+}
+
+/**
+ * The documents a song is drafted from when every attachment is one
+ * (`EC-590`): a slide document, a PowerPoint deck, a Word file or a PDF,
+ * each a file of the disk, once. A deck's or a Word file's words, read
+ * when it was attached, go with it when they were kept WHOLE -- it is not
+ * converted a second time; a cut copy, a slide document (its attachment is
+ * a description for a model) and a PDF (its pages) are read at the draft.
+ * Null when any attachment is something else.
+ */
+export function toSongDocumentFiles(
+    attachments: readonly ChatAttachmentType[],
+): { filePath: string; name: string; text?: string }[] | null {
+    if (attachments.length === 0) {
+        return null;
+    }
+    const files: { filePath: string; name: string; text?: string }[] = [];
+    for (const attachment of attachments) {
+        const filePath = attachment.filePath;
+        if (
+            !checkIsFileAttachment(attachment) ||
+            typeof filePath !== 'string' ||
+            !checkIsSongDocumentName(filePath)
+        ) {
+            return null;
+        }
+        if (
+            files.some((one) => {
+                return one.filePath === filePath;
+            })
+        ) {
+            continue;
+        }
+        const name = attachment.name || filePath.split(/[\\/]/).pop() || '';
+        const words =
+            attachment.kind === 'text' && checkIsOfficeTextName(filePath)
+                ? toAttachedText(attachment)
+                : '';
+        const isWhole =
+            words.trim() !== '' && !words.includes(`\n${ATTACHMENT_CUT_TEXT}`);
+        files.push({ filePath, name, ...(isWhole ? { text: words } : {}) });
+    }
+    return files;
+}
+
 export function genTextAttachment(
     name: string,
     text: string,
@@ -539,7 +678,7 @@ export function genTextAttachment(
     const body =
         trimmed.length < text.length
             ? trimmed.slice(0, lastBreak > 0 ? lastBreak : trimmed.length) +
-              '\n[... the rest of this file was not included ...]'
+              `\n${ATTACHMENT_CUT_TEXT}`
             : trimmed;
     return {
         id: genAttachmentId(),
@@ -734,6 +873,7 @@ export function toReusableAttachments(
     return (attachments ?? []).filter((attachment) => {
         return (
             attachment.filePath !== undefined ||
+            attachment.kind === 'foreground' ||
             checkHasAttachmentData(attachment)
         );
     });
@@ -830,6 +970,8 @@ export function toAttachmentLegend(
             }
         } else if (attachment.kind === 'element') {
             what = `the control "${attachment.name}" they pointed at`;
+        } else if (attachment.kind === 'foreground') {
+            what = `the foreground session "${attachment.name}"`;
         } else {
             what = `the file "${attachment.name}"`;
             // A PDF's pages are pictures among the others, and counted with
@@ -942,7 +1084,9 @@ export function toAttachmentNote(attachments: ChatAttachmentType[]) {
                     ? 'picture'
                     : attachment.kind === 'element'
                       ? `the "${attachment.name}" control`
-                      : `the file "${attachment.name}"`;
+                      : attachment.kind === 'foreground'
+                        ? `the foreground session "${attachment.name}"`
+                        : `the file "${attachment.name}"`;
             return (
                 (attachment.number === undefined
                     ? what
@@ -968,7 +1112,9 @@ export function toAttachmentNote(attachments: ChatAttachmentType[]) {
         parts.push(
             attachment.kind === 'element'
                 ? `the "${attachment.name}" control`
-                : `the file "${attachment.name}"`,
+                : attachment.kind === 'foreground'
+                  ? `the foreground session "${attachment.name}"`
+                  : `the file "${attachment.name}"`,
         );
     }
     return parts.length === 0 ? '' : `(with ${parts.join(' and ')} attached)`;

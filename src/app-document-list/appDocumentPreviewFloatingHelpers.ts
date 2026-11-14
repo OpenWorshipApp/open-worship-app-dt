@@ -136,8 +136,8 @@ export function genOpenSlidesPreviewContextMenu(
         // The tooltip is where the click shortcut is discovered. NOT the
         // `context-menu-shortcut-key` badge every keyboard shortcut uses: that
         // one is positioned over the right end of the label, which is fine for
-        // `Ctrl + S` and unreadable under a label this long (longer still in
-        // Khmer).
+        // `Ctrl + S` and unreadable under a label this long (longer still once
+        // translated).
         title: isSelected
             ? tran('Already showing in the main previewer')
             : `${tran('Open Slides Preview')} (${OPEN_SLIDES_PREVIEW_SHORTCUT_LABEL})`,

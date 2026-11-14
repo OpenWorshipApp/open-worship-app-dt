@@ -3,15 +3,18 @@ id: W-21
 title: "Ajouter une vidéo ou un chant d'arrière-plan à partir d'un lien"
 section: "Configuration"
 lang: fr
-translatedFrom: 326ffd69c1940654
+translatedFrom: 9e795a2f164243ed
 ---
 # W-21 — Ajouter une vidéo ou un chant d'arrière-plan à partir d'un lien
 
 **Objectif :** récupérer une vidéo (ou son audio en MP3) depuis un lien en ligne, directement dans votre
 dossier Vidéos / Audios, sans quitter l'application. Les outils de téléchargement ne sont pas intégrés à
-l'application : la première fois, une boîte **[en:tran:Media Tools Required]** propose d'ouvrir
-**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**, où
-**[en:tran:Download and Install]** les installe une fois pour toutes.
+l'application : la première fois, une boîte **[en:tran:Media Tools Required]** demande avant tout
+téléchargement — **[en:tran:Download and Install]** les installe une fois pour toutes et le
+téléchargement continue tout seul. Quand une version plus récente est sortie, une boîte
+**[en:tran:Update Available]** demande d'abord : **[en:tran:Update]** les met à jour puis télécharge,
+**[en:tran:Not Now]** télécharge avec ceux que vous avez. Ils se mettent aussi à jour dans
+**[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:Extra Binaries]**.
 
 1. Ouvrez le panneau **[en:tran:Background]** (W-08 étape 1) et choisissez l'onglet **[en:tran:Videos]** — ou la partie **[en:tran:Audios]** si vous ne voulez que le son.
 2. **Faites un clic droit sur une partie vide de la liste** (ou utilisez le bouton ⋮ [en:tran:More Options]

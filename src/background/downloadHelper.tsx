@@ -321,7 +321,7 @@ export function streamDownloadFile(
                     if (!isSilentSuccess) {
                         showSimpleToast(
                             tran('Download Completed'),
-                            `File saved at: ${filePath}`,
+                            `${tran('File saved at:')} ${filePath}`,
                         );
                     }
                     resolve();

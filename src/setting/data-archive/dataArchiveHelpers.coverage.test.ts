@@ -240,7 +240,7 @@ describe('building the whole-data archive', () => {
             {
                 dataDirectory: biblesDirectory,
                 dirPath: '/data/bibles',
-                fileNames: ['KJV.xml', 'Khmer.xml'],
+                fileNames: ['KJV.xml', 'MadeUp.xml'],
             },
         ]);
         expect(archiveFilePath).toBe(
@@ -249,7 +249,7 @@ describe('building the whole-data archive', () => {
         expect(mocks.tarCreate.mock.calls[0].slice(0, 3)).toEqual([
             '/data',
             '/downloads/open-worship-data.owadata.tar',
-            ['documents', 'bibles/KJV.xml', 'bibles/Khmer.xml'],
+            ['documents', 'bibles/KJV.xml', 'bibles/MadeUp.xml'],
         ]);
         expect(mocks.tarAppend).toHaveBeenCalledWith(
             '/downloads/open-worship-data.owadata.tar',

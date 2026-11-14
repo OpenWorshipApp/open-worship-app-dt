@@ -4,15 +4,15 @@
  * (jsdom: the verse finder's module brings the app's provider along.)
  *
  * The user's three pictures of Noah's card: _what is the size of noah ark_
- * was answered from the record in English and in Khmer, and the same asked
- * in French was sent to the app's guide, which answers no Bible question
- * and said to type `/btw`. Each language's words are data, and nothing held
- * them to each other: the French and Khmer words for a size were the app's
- * work, English had no word for a size at all, while English `save`, `Mark`
- * and `help` took _How did God save Noah?_ to the guide in English alone.
- * The user's Khmer reached the record by its spelling, which no list held;
- * written as the dictionary writes it, it went to the guide as the French
- * did.
+ * was answered from the record in English and in one other language, and
+ * the same asked in a third was sent to the app's guide, which answers no
+ * Bible question and said to type `/btw`. Each language's words are data,
+ * and nothing held them to each other: two languages' words for a size were
+ * the app's work, English had no word for a size at all, while English
+ * `save`, `Mark` and `help` took _How did God save Noah?_ to the guide in
+ * English alone. The user's own words reached the record by their spelling,
+ * which no list held; written as the dictionary writes them, they went to
+ * the guide as the third language's had.
  *
  * Every row here is asked in English and in every language package's own
  * words -- `src/lang/data/online/<code>/tests/chatbot/chatLanguageParity.json`,
@@ -483,8 +483,9 @@ describe('one line read alike', () => {
 
 // A question is answered in the language it was ASKED in, whatever the app
 // is shown in (2026-10-29): _Which verse says present your bodies a living
-// sacrifice?_ typed in a French window was answered in French, its words
-// holding none of English's little words. A line of four words or more of
+// sacrifice?_ typed in a window shown in another Latin-script language was
+// answered in that language, its words holding none of English's little
+// words. A line of four words or more of
 // every row above, asked in each language under each other app language.
 describe('the language a typed line is answered in', () => {
     const rowList: ((lang: string) => string)[] = [

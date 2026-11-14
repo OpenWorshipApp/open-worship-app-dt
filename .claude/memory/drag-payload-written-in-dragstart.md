@@ -23,8 +23,8 @@ the Bible lookup's history row awaited `extractBibleTitle` before
 - **Reading**: read every `dataTransfer` field before the first await, and
   never let a drop handler raise an error for text it does not understand — a
   dragged link, an OS file or a run-sheet row is not a mistake
-  (`extractDragData` returns null; `applyDropped` and
-  `NoBibleViewAvailableComp` go through it). `readDroppedFiles` copies every
+  (`extractDragData` returns null, and `NoBibleViewAvailableComp` goes
+  through it; `applyDropped` catches its own `JSON.parse` and returns). `readDroppedFiles` copies every
   file out before it yields the first, because the slide canvas awaits per
   file and the list is empty by the second.
 - **`dragStore.onDropped`** is for one drag: `handleDragStart` clears it at

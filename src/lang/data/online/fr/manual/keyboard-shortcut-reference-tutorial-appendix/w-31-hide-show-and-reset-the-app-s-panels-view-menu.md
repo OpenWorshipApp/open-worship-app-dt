@@ -3,7 +3,7 @@ id: W-31
 title: "Masquer, afficher et réinitialiser les panneaux de l'application (menu View)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 87c5dec8b9feb972
+translatedFrom: eb2a09ef657ea0db
 ---
 # W-31 — Masquer, afficher et réinitialiser les panneaux de l'application (menu View)
 
@@ -11,7 +11,7 @@ translatedFrom: 87c5dec8b9feb972
 remettre toute la disposition comme elle était à l'installation.
 
 Chaque zone redimensionnable de l'application est un **panneau**. Vous pouvez déjà en réduire un en
-faisant glisser son séparateur jusqu'au bord — il se rétrécit en une fine bande verte portant
+faisant glisser son séparateur jusqu'au bord — il se rétrécit en une fine bande à rayures grises portant
 son nom, et un clic sur cette bande le fait revenir. Le menu **View** de la barre de menus du
 haut fait la même chose par le nom, ce qui est plus facile quand la bande est difficile à trouver.
 Et le séparateur lui-même a un menu de clic droit qui le fait sur place (étapes 7–9) —
@@ -29,10 +29,10 @@ le seul moyen dans une fenêtre surgissante, dont la barre de menus est masquée
    **[en:tran:Advance Bible Lookup]**, en haut à droite, basculent cette même section de recherche avancée.
    - **Coché** = le panneau est ouvert. **Décoché** = il est réduit à sa bande.
    - `Note` — les notes du document et des diapositives, sous les aperçus des diapositives (W-03) — est
-     un panneau qui **démarre décoché** : il est livré réduit à sa bande verte,
+     un panneau qui **démarre décoché** : il est livré réduit à sa bande,
      car la plupart des cultes n'en ont jamais besoin. Cochez-le, ou cliquez sur la bande, pour l'ouvrir.
      **[en:tran:Advance Lookup]**, que les jumelles ouvrent, démarre décoché lui aussi.
-2. Cliquez sur une case cochée — ce panneau se réduit à sa bande verte, et l'espace va à
+2. Cliquez sur une case cochée — ce panneau se réduit à sa bande, et l'espace va à
    son voisin. 📸
 3. Cliquez de nouveau dessus — le panneau revient aussitôt. Rien ne se recharge, et rien de ce que vous
    faisiez n'est interrompu.
@@ -56,8 +56,9 @@ fonctionne aussi dans une fenêtre surgissante :
 
 7. Faites un clic droit sur le **séparateur entre Liste des documents et Liste des déroulés** — la
    fine ligne entre les deux panneaux à gauche du Présentateur (chaque séparateur de
-   l'application a ce menu) — et choisissez **[en:tran:Close First Widget]**. 📸 Le premier
-   des deux panneaux (celui de gauche, ou celui du haut) se réduit à sa bande verte et
+   l'application a ce menu, mais celui qui sépare deux panneaux que vous ne pouvez pas réduire,
+   comme à l'étape 4, ne propose que **[en:tran:Reset Size]**) — et choisissez **[en:tran:Close First Widget]**. 📸 Le premier
+   des deux panneaux (celui de gauche, ou celui du haut) se réduit à sa bande et
    l'autre prend sa place. **[en:tran:Close Second Widget]** fait de même avec l'autre panneau. Le
    menu contient ces deux-là et **[en:tran:Reset Size]** (étape 9), rien d'autre.
    Survoler le séparateur montre les deux mêmes choix sous forme de petites flèches, chacune nommée
@@ -65,7 +66,7 @@ fonctionne aussi dans une fenêtre surgissante :
    ou **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** sur un
    séparateur entre un panneau du haut et un panneau du bas. Un panneau réduit n'a pas de séparateur — si
    l'un des deux est déjà une bande, cliquez d'abord sur la bande.
-8. Cliquez sur la bande verte **[en:tran:Document List]** — le panneau revient aussitôt.
+8. Cliquez sur la bande **[en:tran:Document List]** — le panneau revient aussitôt.
 9. Faites de nouveau un clic droit sur le **séparateur entre Liste des documents et Liste des déroulés** et
    choisissez **[en:tran:Reset Size]** — seuls ces deux panneaux retrouvent les tailles qu'ils avaient
    à l'installation. Un double-clic sur le séparateur fait la même chose. La commande

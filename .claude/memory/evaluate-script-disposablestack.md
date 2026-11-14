@@ -1,8 +1,11 @@
 ---
 name: evaluate-script-disposablestack
-description: owa-devtools `evaluate_script` is now REFUSED by the MCP firewall, and was already dead under Node 22; drive pages over raw CDP Runtime.evaluate instead
+description: "owa-devtools `evaluate_script` is now REFUSED by the MCP firewall, and was already dead under Node 22; drive pages over raw CDP Runtime.evaluate instead"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 87eaed46-7cb4-4873-b510-f52c277a7713
+  modified: 2026-11-11T04:40:39.037Z
 ---
 
 **Since 2026-09-01 there is a second, permanent reason: the MCP firewall
@@ -21,7 +24,8 @@ As of 2026-08-31 every `mcp__owa-devtools__evaluate_script` call fails with
 so the server itself is fine — only the evaluate path is dead.
 
 **Why:** `.mcp.json` spawns `node tools/owa-devtools-mcp/bin.mjs` with the
-machine's own node, and that is v22.22.3. `DisposableStack` (explicit resource
+machine's own node, and that was v22.22.3 that day (v26 by 2026-11-10; the
+firewall is the reason now). `DisposableStack` (explicit resource
 management) only became available in Node 24 / V8 13.x, and the bundled
 chrome-devtools-mcp evaluate path uses it. It is not transient and not
 page-specific — retrying never helps.

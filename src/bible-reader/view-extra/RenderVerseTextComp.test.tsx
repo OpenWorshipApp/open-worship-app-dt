@@ -162,7 +162,7 @@ describe('the verse number', () => {
         await render({
             extraVerseInfoList: [
                 genVerseInfo({
-                    bibleKey: 'KHM',
+                    bibleKey: 'TQAM',
                     localeVerse: 'iii',
                     kjvBibleVersesKey: 'GEN 2:4',
                 }),
@@ -326,7 +326,7 @@ describe('chapter dividers and new lines', () => {
         h.viewController.shouldNewLine = true;
         await render({
             verseInfo: genVerseInfo({ isNewLine: true }),
-            extraVerseInfoList: [genVerseInfo({ bibleKey: 'KHM' })],
+            extraVerseInfoList: [genVerseInfo({ bibleKey: 'TQAM' })],
         });
         expect(host.querySelector('br')).toBeNull();
     });

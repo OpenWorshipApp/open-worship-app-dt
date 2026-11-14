@@ -19,15 +19,16 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 36 of 65 withheld (and three offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
+  chrome-devtools' at all** — 39 of the 73 the chatbot's door lists are withheld on 2026-11-11 (and eight offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
-  bundles the module the audit script reads). All 65 stay registered on the
+  bundles the module the audit script reads). All of them stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
   the MODEL, which is the untrusted party. Same two enforcement points as the
   firewall and for the same reason: `askLlmBot` filters the list, and
   `runMcpTool` REFUSES the call, because these tools are named in the app's own
   manual and a filtered list alone is a suggestion. Every refusal says what to
-  use instead. Six groups: the three the window presses itself
+  use instead. Fourteen groups today (`MODEL_HIDDEN_TOOL_GROUP_LIST`), the
+  first six: the three the window presses itself
   (`owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`) plus
   `take_screenshot`, which quietly undid that same decision; the acting tools
   aimed by a snapshot uid (`click`, `fill`, `fill_form`, `drag`, `hover`,
@@ -283,7 +284,18 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `REPORT:` in English; its own digits named, never used for steps). What a
   QUESTION is in changes per question, so it goes at the end of the ask
   (`genReplyLanguageLine`, appended in `askLlmBot`): nothing for English in
-  an English app, `(Answer in Khmer.)` in a Khmer one, a sentence when they
+  an English app -- unless an answer the model is shown with it is in
+  another language: then a TYPED English line of three words or more is
+  told _They wrote in English: answer this one in English_
+  (`genAskLanguageLine`, `checkIsEnglishAfterOtherLanguage`; 2026-11-12,
+  `EC-510`: _Make a short study file on Philippians 4:6-7._ under two Khmer
+  answers had been written in Khmer, the tab's history all the model went
+  by), and so is one about a passage read in a Bible of another language
+  (`EC-496`: a passage chat's or a word study's passage,
+  `answerKeep.scriptText`), never on a translation's or a waiting reply's
+  ask, while a "yes" or an option in the answer's own language goes on in
+  it --,
+  `(Answer in Khmer.)` in a Khmer one, a sentence when they
   wrote in another language -- any language a person may type, by name
   (an installed language's `typed.json`), saying to name every button exactly as the tools
   and the guide give it and to write what follows `OPTIONS:` in that language
@@ -567,7 +579,28 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   own server as well. So the OpenAI-shaped loop asks the SAME round once
   more when a reply came back empty with tokens generated while tools were
   on offer (`isDroppedReplyRetried`, once an ask, never on the last round);
-  a second empty reply is the model's, thrown as before. **And the relay's failures are said
+  a second empty reply is the model's, thrown as before. **A shared
+  server's round that goes SILENT is sent again once** (2026-11-12,
+  `EC-524`, `SHARED_STALL_MILLISECONDS`, `checkIsRoundTimeout`): the
+  foreground run's countdown, marquee and two-component asks did the right
+  thing on screen and then sat on _Thinking_ for over four minutes -- the
+  shared gemma4:cloud round never came back, and the client waits ten.
+  A registry server (`checkIsRegistryServerId`), on an ordinary ask (not a
+  long write, a translation or a Retry), now posts each round with a 90 s
+  `timeout` (the OpenAI SDK's `APIConnectionTimeoutError`) and re-sends
+  the SAME round once -- the messages unchanged, so nothing done is asked
+  for again; a second silence is _the server took too long to answer_. A
+  failure after a round is final for an acting ask (`canHandOnAfterRound`),
+  so this, not a hand-on, is what saves it. A server of the person's own
+  is never timed: it may be loading a model. **Free is timed the same way**
+  (2026-11-13, `EC-577`, `FREE_STALL_MILLISECONDS`, `genFreeProvider`): on
+  Nemotron Super VL two foreground asks of 23 read the session and sat past
+  four minutes on the next round; the same 90 s, the same three asks left
+  on the client's clock. Unit-tested, not proven live, and the need is
+  unshown: the one such hang looked at closely was the help window
+  reloaded under the ask by a file saved beside the dev server, not Free.
+  Before blaming a provider for a hang, read `performance.timeOrigin`
+  (memory `corpus-run-in-a-shared-dev-app`). **And the relay's failures are said
   in the window's language** (`describeRelayFailure` in
   `customServerClientHelpers.ts`, EC-385): _its server is not answering …_,
   _it went quiet …_ and _took too long_, whole sentences through the
@@ -661,6 +694,29 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   that rode with a page said the day of the copy, and a regenerated manual
   with no page edited changed all 27 answers — it no longer rides
   (`agent-knowledge.md`, _nothing that changes with a release may ride_).
+- **A Retry asks a step harder, on purpose** (2026-11-10, `EC-476`,
+  `AskExtraType.retryAttempt` from the window's rotate icon,
+  `answerRetryHelpers.ts`): the one ask that sets the dials above aside.
+  `genRequestExtra(model, retryAttempt)` -- GPT-5, Kimi K3 and Bedrock's
+  OpenAI models step `reasoning_effort` low → medium → high; Claude 5
+  (`askAnthropicCompatible`) gets `output_config.effort` one level a try
+  above the model's own default (medium on Haiku 5.5 / Opus 5.5, high on
+  the rest), never `max`, and none to Haiku 4.5, which refuses it;
+  `max_tokens` / `max_completion_tokens` is doubled for the thinking (a
+  server of the user's own too); a local program (`genCustomProvider`) is
+  sampled at 0.7, then 1.0, and a general question is let think. Seen in
+  the requests a live help window sent to OWA Shared (a non-pausing
+  conditional breakpoint in `relayFetch`, the relay forwarding the body
+  unchanged): plain `gemma4:cloud` / temperature 0 / 2 000; first Retry
+  `gemma4:31b` / 0.7 / the hint; second Retry `gemma4:cloud` / 1 / 4 000.
+  And to api.openai.com (an invalid key, no cost, the window's requests
+  read over CDP): gpt-5 `reasoning_effort` low / 6 000, then medium /
+  12 000, then high / 12 000, the hint on both retries. Free and an unknown server get no new
+  field. A translation's sub-ask never carries it. An ordinary ask is
+  byte for byte as before, so the cached prefixes and the graded defaults
+  hold. And a retry is asked of SOMEONE ELSE where there is one -- Auto's
+  line with the assistant that wrote the answer last, or a paid key's next
+  model -- for that question alone; `chatbot-window.md` has the rule.
 - **An answer written from a CUT question is not shown** (2026-10-16,
   `EC-271`, `askCustomServer` + `genContextCutText`). Ollama loads a model
   on the question at its own default context and, at 0.40.3, cuts a longer
@@ -719,7 +775,60 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   question in a Khmer window, told _answer in Thai_, came back wholly in
   Khmer once of twice. An answer that must be in a language with a script
   of its own (`toAnswerScript`, never Latin) and holds none of its letters
-  in 30 or more goes back once (`checkIsWrongScriptAnswer`).
+  in 30 or more goes back once (`checkIsWrongScriptAnswer`). **And a note
+  change claimed and never made** (2026-11-09, BN-53, the elder run: _draw a
+  big star next to the important bits_ -- Free's Nemotron called no tool and
+  answered that it had added a gold star, centred and larger): an answer in
+  a note ask that says it changed the note (_I've added_, _not saved yet_,
+  _Undo this change puts it back_ -- a bare _I put_ is also an offer, so not
+  that) while no `owa_note_edit` edit changed it, no note was made and no
+  undo or redo stepped (`isNoteStepped`) goes back once with
+  `NOTE_CLAIM_NUDGE`: make it now, or say plainly it was not done
+  (`checkClaimsUnmadeNoteChange`). **A study file's the same** (2026-11-11,
+  `EC-499`: gemma4:cloud, every draft refused, answered _I have fixed the
+  cross-references in the study file_ with no card): in a tab with a
+  `Default/*.md` study open (`watch.openStudyFiles`), the note's claim
+  words or _Save changes_ with no draft held go back once with
+  `genStudyClaimNudge`, naming the file (`checkClaimsUnmadeStudyChange`).
+  **Both read a claim in the answer's own language too** (2026-11-12,
+  `EC-508`): a Gemma 4 model answers in the person's language, so English's
+  words alone missed every claim it wrote in Khmer. Each language's
+  `changeClaims` (`claim`, `unsaved`, `save`, `file`, in its `typed.json`
+  or `assistant.json`) is compiled for an answer in it alone
+  (`toChangeClaimWords`, `ToolWatchType.changeClaimWords`, seeded only in a
+  note ask, with a study open, in a foreground ask, or under a card holding
+  a new study -- `EC-700`, below) and read beside English's in
+  `changeClaimHelpers.ts`, a leaf that reads the report written into a study
+  too (`findStudyChangeReport`, below).
+  Neither is asked on the last round, where no round is left to answer it,
+  so a claim written there, or written again after its hand-back, reaches
+  the person under a note the window writes over it: _No change was made,
+  though the answer below may say so. Ask again to try once more._
+  (`checkClaimsUnmadeChange` on the finished answer, `isChangeUnmade`,
+  `UNMADE_CHANGE_TEXT`; `EC-501`). Not when anything else the ask did may be
+  what the words are about: a press or a screen (`isActedOn`), a document
+  edited, a song made or drafted. The reader cannot tell a claim about this
+  ask from one about an earlier answer, so a reply that still points at an
+  earlier card's _Save changes_ after its hand-back carries the note too.
+  And an edit that changed nothing answers
+  _Nothing was changed: the note already reads that way. Tell them so --
+  never that you changed it_: asked to lay a drawing out across that
+  already was, gemma4:cloud had answered "I've updated the drawing".
+  **And a lesson of its own goes into a NEW note** (BN-55, the same run):
+  _make me a whole lesson about forgiveness_ in the conversation about a
+  Good Shepherd lesson had been written over it. `NOTE_SYSTEM_PROMPT` says
+  the note changes only when the words ask for something in it (a greeting
+  had a misspelt line corrected), that words written for this lesson go into
+  it, and that a lesson on another subject or for another group is a new
+  note; and a typed ask for one carries `NOTE_NEW_LESSON_HINT`
+  (`checkIsNewLessonAsk` in `noteChatHelpers.ts`, added by `toNoteAsk`),
+  a line that only greets or asks -- no word for anything done to the
+  note -- `NOTE_QUESTION_HINT` (`checkIsNoteQuestionOnly`): _HELLO CAN YOU
+  HELP ME_ had the note's misspelt line corrected, unasked. And a worry
+  right after a change (_the letters went all big suddenly_, _everything is
+  blue now_) is put back with `undo`, never a new change that only looks
+  like it -- it had been Clear Formatting on every block, the headings made
+  plain lines (BN-57).
 - **Steps written with NOTHING looked up go back once too** (2026-10-17,
   `EC-311`, `checkIsStepsWithoutPage` with `ToolWatchType.toolCallCount` /
   `canSearchGuide`): the Khmer stress run on gemma4:cloud wrote every list
@@ -752,7 +861,124 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   billed a round nobody chose -- never on the last round. Beside it,
   `checkIsDoneWithoutTool` (`EC-325`) hands back an ask to put something up
   that ended without the tool that does it: gemma4:cloud had said a
-  countdown was started having called nothing.
+  countdown was started having called nothing. **The words TYPED make a
+  do-ask too** (2026-11-13, `EC-551`, `findDoAskTool`'s `asked`): _Put the
+  long text up on the screen_ found the Long Text Show's how row by its
+  phrase and was answered with the panel's five steps. Typed words opening
+  on _put_, _start_ or _show_ (never _show me_) ask it done when the row
+  carries `owa_foreground` or `owa_present_bible`, and a do-ask's hint says
+  its page is the way by hand, not the answer -- with the tool alone the
+  answer still opened with two panel steps above _now ready on the screen_.
+  And a do-ask its tool DID (`isDoToolDone`: called, not refused, no
+  error) skips the completeness pass (`checkIsCompletenessDue`): asked
+  after a verse, its "is a step missing?" round had put the panel's steps
+  back under the answer. Refused, the pass stays -- the way by hand may be
+  the answer. The four do-asks went from 3 rounds to 2.
+  **In Khmer the prompt's examples are the reader** (the same day, `EC-553`):
+  a Gemma 4 is asked in the person's language, untranslated, and the
+  do-ask readers are English, so _clear everything from the foreground_
+  typed in Khmer was answered with the Mini Screen's steps where English
+  was one `stop` -- the prompt's foreground line names it now
+  (`action: "stop", widget: "all"`), and Khmer clears in one call. So does
+  _put the time on the screen_ (`EC-556`): with no example, a Khmer ask had
+  gone up as a quick text of its words; the line names it the clock, never
+  its words as text. (The Khmer slip's real cause was before the model,
+  `EC-563`: the verse row's fill-in gap had taken _ម៉ោងនៅ_ as its verse.
+  A reference gap takes words with a number now, and Khmer names its clock
+  in `foregroundAsks`: 1 of 3 askings a clock before, 3 of 3 after.) **A
+  bare command in any language starts it** (`EC-572`): _Muestra la hora_,
+  _Tampilkan waktu_, _Покажи время_ -- no clock and no screen named, a
+  language with no `foregroundAsks` of its own -- had each been answered
+  with the panel's steps, the prompt's "only asked HOW" read as anything
+  that was not plainly about a screen; the line now says a command in any
+  language asks for it to START and only a question asks how (4 of 4 up
+  after, 0 before; _¿Qué hora es?_ changes nothing). And _show the time_
+  is the corpus clock row's phrase, so _How do I show the time?_ carries
+  W-09's page (the guide search had ranked the auto-play timer's first)
+  and a typed _Show the time_ is a do-ask (`DO_TYPED_PATTERN`). **And a line
+  that only TELLS something asks for nothing** (2026-11-14, `EC-644`):
+  _the sermon lasted 40 minutes_, typed in Hausa and in Kinyarwanda, had
+  started a 40:00 countdown, and such lines in English, French and Korean
+  were answered with the offer of one; the line says it is answered, with
+  nothing put up and no timer offered (0 of 20 up after, 2 before). A guard
+  refusing a timer start from a line naming no component was measured and
+  not kept: the window cannot tell such a line from a command in words it
+  cannot read, and it turned a Hausa countdown asked for into an offer.
+  **And a notice to stay up is the Messages panel** (2026-11-14,
+  `EC-645`): asked the general way, _show on the projector: the car park
+  is full_ and its like in five languages went up as a Quick Text -- gone
+  by itself after 10 seconds -- five times in nine, and once as a marquee.
+  The bullet says a notice is `widget: "message"`, a quick text or a
+  marquee only when asked for (9 of 9 after). A typed line is read past
+  its quoted words first (`toUnquotedAskLine` in
+  `foregroundChatHelpers.ts`): _put the message 'Welcome' on the screen_,
+  in eight languages, had named nothing. A colon rule (a showing request,
+  a colon, the words) was not built: the Foreground route has no tool for
+  a song or a verse, and _show on the screen: Amazing Grace_ would have
+  gone up as words. **And a clock that counts UP is the stopwatch**
+  (2026-11-14, `EC-646`, the bullet's next sentence): one counting DOWN is
+  the countdown. Still `open`: of eight stopwatch lines asked the general
+  way, 2 → 3 started, the rest answered as how-tos in languages the model
+  does not follow. And the foreground hint asks for the Undo sentence in
+  the model's OWN words in the language it answers in (`EC-557`,
+  `foregroundChatHelpers.ts`): _add that Undo this change puts it back_ was
+  copied into a Khmer answer as English. **A foreground answer that claims
+  a change no call made goes back once** (`EC-558`,
+  `checkClaimsUnmadeForegroundChange`): once in three,
+  _ដកនាឡិកាចេញពីអេក្រង់_ made a `read` and said the clock was off. In a
+  foreground ask, a claim (the foreground's own English verbs,
+  `checkHasForegroundClaim`, or the answer language's `changeClaims`, read
+  for foreground asks too) with no `owa_foreground` / `owa_foreground_edit`
+  change is handed `FOREGROUND_CLAIM_NUDGE`; a read, a check and a refusal
+  change nothing, while any other call -- a press, an undo
+  (`isOtherCallMade`) -- is believed. Khmer's claim words read the verb
+  split round its object (_ដក … ចេញ_). Seen live with a stand-in model making
+  the slip, and gemma4:cloud 3 of 3. **Outside a foreground ask too** (2026-11-14, `EC-649`,
+  `checkIsOrdinaryForegroundClaim`): _count back from five minutes on the
+  screen_ went the general way, read one guide page and answered _I have
+  started a 5 minute countdown_ 2 times of 3 over an empty screen. The
+  claim goes back once there as well when the ANSWER names a foreground
+  component (`readForegroundComponentAsk` over its words), no call acted
+  or changed anything else, and no document of theirs is open in the chat;
+  _I have shown you how_ is a how-to's. After: 3 of 3 handed back and then
+  really started, and a clock, a stopwatch and a how-to never handed back.
+  **What they did not give is asked for, never made up** (2026-11-14,
+  `EC-652`, `EC-653`): _show the church wifi password on the screen_ went
+  up as _Church WiFi Password: [Insert Password Here]_ and was called the
+  password, and _put up how long until the service starts_ started 5
+  minutes nobody named, 3 of 3 each. Both prompts' foreground sentence says
+  to ask (its examples are not the lines measured); a blank to fill in never
+  goes up on either door (`findForegroundBlank`); and words that are only a
+  run of the person's own line, the line marking none in quotes or after a
+  colon, go back ONCE on `owa_foreground` with the question
+  (`findForegroundEchoedWords`) -- with the sentence alone, the wifi line
+  went up as _Church WiFi Password_ 3 of 3, which no window rule tells from
+  _show welcome to our church on the screen_. After: the password, a name, a
+  number and office hours asked for, a countdown to the service, the sermon
+  or the choir asked when, and words typed inline up as before at one round
+  more (a cache read). **And every language's own foreground
+  claims since `EC-607`** (`changeClaims.foreground`, `checkHasForegroundClaim`):
+  a language's note words say _added_, never _started_, so _He iniciado una
+  cuenta regresiva_ over nothing put up had drawn no note; of six claims a
+  language (a countdown started, the clock off, everything cleared, a message
+  up, a countdown paused, the screen on), written blind in 88, its note words
+  read 157 of 528, its own foreground words 520 -- every language a
+  `typed.json` holds all six, none of the blind offers, promises, steps or
+  denials, nor a line a person types to ask for an overlay (_I sent you a
+  message yesterday_ had been read as one in two languages and was mended). **French's and
+  Khmer's since `EC-618`**, in their `assistant.json`: written blind, 6 of 6
+  claims each (3 and 1 before), none of their non-claims or denials, and no
+  French line a person types (_J'ai supprimé une Bible par erreur_, _que
+  j'ai fermé_ and _Je t'ai envoyé un message hier_ had been read and were
+  mended); their `foregroundAsks` got `countdown` and `stopwatch`, so a
+  French or Khmer countdown in an English window is a foreground ask. **The way back from a hide is an ASK,
+  never a button** (`EC-562`): told to say how to reverse it _(show it
+  again, …)_, a Khmer answer sent its reader to press a button _"show"_ --
+  the tool's action word, which no panel draws (the Clock's is **Show on
+  Screens**); the prompt now says they can ask for it back and that the
+  tool's action names are not buttons, and the cleaner writes a quoted word
+  after the language's word for a button in that language
+  (`chatbot-window.md`).
 
 - **A fifth tool offered to one kind of ask** (2026-11-06): `owa_lyric_edit`
   goes to a `lyric` ask -- a question while a `.owl` is open in the tab
@@ -781,6 +1007,12 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   _add above the khmer text_ had been answered _I need the English words_
   -- and a request with one sensible reading is done, not asked about,
   because every change is undone by one press.
+  **And the verse finder rides with it** (2026-11-12, `EC-514`,
+  `MODEL_ASK_SHARED_TOOL_MAP.slide`, ~357 tokens to a slide ask alone, the
+  ordinary list untouched at ~8 478 of 8 480): _a slide document with John
+  3:16 on one slide_ had been given the verse from the model's memory; the
+  prompt now says a verse named for a slide is read with `owa_find_verse`
+  `refs` and written as it reads there, its reference under it.
 
 - **Another tool offered to one kind of ask** (2026-11-07):
   `owa_presenting_flow_edit` goes to a `flow` ask -- a question while a
@@ -806,7 +1038,9 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   everything on bible-note_): `owa_note_edit` goes to a `note` ask -- a
   question while ONE note of a `.own` file is open in the tab
   (`ChatAttachmentType.noteId`) -- under `NOTE_SYSTEM_PROMPT`
-  (`src/chatbot/noteChatHelpers.ts`), eight rounds, the note read fresh from
+  (`src/chatbot/noteChatHelpers.ts`), eight rounds (twelve for a lesson
+  written into the empty note, BN-140: a children's Jonah ran out of eight
+  with nothing written), the note read fresh from
   its editing head into the user turn as numbered blocks in a light mark-up
   (`toNoteDocumentText`), on a custom server's lean list, and with
   `owa_help_search`, `owa_help_page` and `owa_find_verse` shared to it
@@ -819,7 +1053,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `--stdio --ratchet`). The WINDOW turns the note's NAME into its file and
   id (`resolveNoteEditTarget`); a `file` or `id` the model writes is
   refused, so is a note that is not attached, and outside a note ask the
-  tool is refused. The prompt's rules: every change in ONE `edit`, block
+  tool is refused. **Two attached notes never share a name** (2026-11-08:
+  notes are titled by the day, and the first of two of a name had been the
+  one changed): `findNoteAskFiles` puts the file's name after a shared
+  title (`Sunday (Youth)`), and its number in the file when that is shared
+  too (`#7`); a name that still fits two is refused, never guessed. The
+  prompt also says a verse token names its Bible (`[^(KJV) John 3:16]`),
+  that another Bible's verse is written that way in place of the old
+  token, and to report only the Bible the summary names
+  (`agent-tools.md`). The prompt's rules: every change in ONE `edit`, block
   numbers as read, mark-up and mention tokens kept, a verse never the
   model's words (a `passage` block or a new `[^ref]` token, read by the app
   from the installed Bible), a tidy that keeps every block's words, a verse
@@ -853,7 +1095,97 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   for the WHOLE note in a short English line is the window's, like the
   size (`readNoteStyleAsk`, `genNoteStyleChanges`,
   `genNoteStyleDoneText`), and the ¶'s answer (`view`) carries **Undo
-  this change** as an edit's does.
+  this change** as an edit's does. **In every language** (2026-11-08, the
+  user's goal _work great for all languages_; five languages run live on
+  a scratch profile, each with a Bible of its own): a note ask put into
+  English for an assistant that is not a Gemma 4 carries the TYPED words
+  beside their English (`toNoteOwnWordsHint`, put on the ask by the
+  window's `withLyric` on the English path) -- a word of the note, or words to
+  write in, do not survive a translation, and _make the word … red_ had
+  come to the model as an English word the note does not hold; the window
+  hands `verseLang` (the language asked in, when not English) on
+  `AskExtraType.note`, and the loop fills a NEW verse's `bible` with an
+  installed Bible of that language when the Lookup's is not one, looked up
+  once an ask (`owa_find_verse` with no arguments) and only for an edit
+  that adds a verse (`checkAddsNoteVerse`, `findNoteVerseBible`; BN-26:
+  asked in Khmer, John 1:1 had come from the KJV the Lookup was on). The
+  hint says the words put INTO THE NOTE are theirs and the ANSWER stays
+  English (BN-29: told "words you write for them" were Khmer, Free's
+  Nemotron answered in broken Khmer, which skipped the translation back),
+  and the question's translator keeps words they want WRITTEN somewhere as
+  written (`toQuestionTranslationAsk`, every translated ask: with the hint
+  alone the model still wrote its own Khmer for a typed line, 3 of 4 runs;
+  with the translator keeping it, the typed line exactly, 2 of 2; with
+  neither, English, 2 of 2). **And the window keeps them when the
+  translator does not** (2026-11-13, `EC-602`, `keepWrittenWords`): on
+  Free, 2 of 9 messages asked for in Spanish and Russian went up on the
+  screen in the translator's English (_the offering is now_). After the
+  translation, each quoted span is put back as typed when the English
+  holds as many, and the words after a colon -- a letter or closing mark
+  before it, a space after, so never `10:30`, `3:16` or a link -- when they
+  ask nothing (a line holding `?`, or words ending in one, is the
+  question, the translator's). A note named a letter out -- a Khmer subscript
+  written with its look-alike -- is the ONE attached note
+  (`resolveNoteEditTarget`, BN-30). Words they TYPED to go into the note
+  go in letter for letter: the window hands the typed words with the ask
+  (`AskExtraType.note.typed`), and each `owa_note_edit` change's `text`
+  and a new `title` are put back to them where only a pair of look-alike
+  letters a language names differs (`restoreTypedWords`,
+  `listLookAlikePairs`; BN-37: Free's Nemotron wrote a typed Khmer line
+  with TA's subscript for DA's -- the same on screen, not to a search).
+  **A note put INTO another language reads its verses from that
+  language's Bible** (2026-11-11, BN-133, the user: _I asked to translate
+  the whole content into Khmer then bible of translated should into khmer
+  bible_; the verses had stayed KJV, chips and passage in English): a typed
+  _translate … into <language>_ naming no part
+  (`readNoteTranslateLanguageName` -- _the title_, _the prayer_, _point 2_,
+  _the verses_ leave the verses alone), a pressed _Replace the words with
+  <language>_, or **Replace the words** under the answer that asked which
+  way (`checkIsNoteReplaceChoice`) rides `AskExtraType.note.translate`; the
+  loop looks up an installed Bible in it once an ask
+  (`findNoteTranslateBible`, the Lookup's when it is in it), reads the note
+  and sends the edit with every verse token named that Bible, every passage
+  re-pointed to it and the untouched blocks' chips too
+  (`withNoteVersesInBible`, `bible` set) -- the words read by the app, never
+  the model's; with none installed it goes in as written and the model is
+  told to say so (`genNoteTranslateNoBibleNote`). What the change left out
+  of the language -- a block still in English, letters of a third script
+  -- is named under its result, once an ask, for one more edit (BN-134,
+  `findNoteTranslateLeft`; the script the installed plugin's, else read off
+  the words written): refused instead, the model resent the translation in
+  four parts and ran out of rounds. Seen live, gemma4:cloud on a scratch
+  profile with the Khmer Bible: two notes wholly in Khmer, passage and
+  chips from it, 7-11 s. The reader is English (BN-135 open). The size and whole-note style
+  shortcuts above read any language too, from its
+  `assistant.json` (`textSizeAsks`, `noteStyleAsks`, `colorWords`;
+  `languageEditAskHelpers.ts`, BN-16), and every other installed language's
+  `typed.json` carries the size (larger, smaller) and bold for the whole
+  note (BN-31, 85 languages) -- what it does not say goes to the model.
+  **A change made and THEN a failure is answered with the change**
+  (2026-11-08, BN-36, `genChangedWithoutAnswer` in `askLlmBot`'s catch):
+  on Free's Nemotron, three typed lines of twelve went into the note --
+  once with a stray _Test line_ of the model's own -- and the model then
+  wrote nothing or the service failed, and the window said only _Free could
+  not answer_, no word of the change and no button to take it back. Any
+  ask whose tools changed a song, slide document, run sheet or note
+  (`watch.editedLyric`) now answers such a failure _"<name>" was changed,
+  but the assistant stopped before saying what it did. Undo this change
+  puts it back._ with **Undo this change** and **Show it in the list**,
+  as a finished change has; a Stop and the spend guard's pause are thrown
+  as before. A foreground change put up while every screen was off adds
+  _The screen itself is off …_ and **Turn the screen on** (`/screen-show`,
+  the person's press; `EditedLyricType.isScreenOff`, read off the result's
+  `isAnyShowing`, 2026-11-13, `EC-599`), and a foreground change is named
+  as its strip shows it -- _“Time › Default”_, not the bare session
+  (`EditedLyricType.shownName`, `EC-601`); both seen live with a stand-in
+  that starts a clock and then fails. Auto never hands such an ask on (a round came back), so no
+  second assistant makes the change again. Seen live with a stand-in
+  model that changes the note and then answers nothing: the sentence, the
+  two buttons, and Undo putting the note back. And a change made and THEN
+  the rounds run out says the same, never "could not settle on an
+  answer" (BN-153, `genOutOfRoundsAnswer`: a lesson written whole had read
+  so over its own Undo when the one more edit a note asked for used the
+  last rounds up).
 
 - **A NEW note, from any conversation that teaches** (2026-11-08, the
   user, with a Bible Reader chat that answered _make a bible note for me_
@@ -900,4 +1232,1252 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   edit, the lesson after a page break, no step from the open window. Seen live on a
   scratch profile, gemma4:cloud: a Reader summary, a second note from that
   note's chat, a Reader word lesson and a passage chat's explanation, each
-  one call, each opened and attached.
+  one call, each opened and attached. **Since 2026-11-13 the PERSON chooses
+  what it is kept as** (`EC-581`, the user: _whenever creating bible-note or
+  resource study file should always let user choose between bible-note or
+  markdown file_, then _but if user click and choose step by step
+  explicitely it should skip the confirmation_). Outside a note ask
+  (`watch.noteFiles === null`) a model's `add` is HELD (`holdNewNote` in
+  `runMcpToolCall`): the window drafts the same words as a study file
+  (`toStudyArgsFromNote`, the note's first passage its `ref`), the draft
+  keeps the note as its twin (`DraftedStudyType.note`), and the answer
+  carries the study's card with **New Bible Note** first -- the note made
+  as the model wrote it, opened and attached as above -- beside Create in
+  Resources and in Bible Notes. The model is shown `NOTE_HELD_CHOICE_NOTE`,
+  never a note made, and `NOTE_CREATE_PROMPT` says the window may hold it.
+  A new study's card offers the same button (`toNoteFromStudy`: the passage
+  first, no diagram). A PRESS naming the kind skips the card
+  (`readPressedCreateKind`, `createKindHelpers.ts` →
+  `AskExtraType.createKind`): a Bible note pressed for is made at once, and
+  so is a study drafted after it (`makeStudyNote`); a Markdown file pressed
+  for keeps the Markdown buttons alone (`isMarkdownOnly`). Typed words
+  always get the card. A note naming no passage, or one the study rules
+  refuse, is made as asked; an add beside a held new study is refused
+  (`NOTE_BESIDE_DRAFT_REFUSAL`).
+
+- **A preaching lesson, made and prepared by asking** (2026-11-10, the
+  user's goal: _chatbot completely smart enough to help prepare a best
+  preaching lesson_; BN-60..BN-63 in the `owa-enhance-bible-note-chatbot`
+  ledger). What a lesson HOLDS -- the passage read first, a big idea,
+  background, an introduction, three points each with its verses, what it
+  means, an example and how to live it, Pointing to Jesus, a response, a
+  written prayer, questions, a memory verse -- is `PREACHING_LESSON_SHAPE`
+  (`noteCreatePromptHelpers.ts`), ~190 tokens when it was added (~968 since BN-82) put on a LESSON ask alone,
+  never in a prompt: `LESSON_MAKE_HINT` where no note is attached
+  (`askLlmBot`, only beside a tool list holding `owa_bible_note`) and, in a
+  note ask, the one hint `genNoteLessonHint` picks -- the empty note's (the
+  lesson goes INTO it), a new lesson's, _finish my sermon_'s, _make it fit
+  15 minutes_' or _is this a good sermon?_'s -- and, while the note is
+  still empty, the answer to its "which passage?" (`isLessonContinued`, off
+  the tab's earlier question: a passage pressed alone had been written as a
+  fifteen-line outline). The readers are English in code; a language's own
+  are `lessonAsks` / `verseCheckAsks` in its `assistant.json` (French and
+  Khmer so far, BN-65 -- a Gemma 4 is asked in the person's language,
+  untranslated), acted on only in an empty note or a chat with no note.
+  **A long call nested in
+  `changes` is what the shared gemma4:cloud server DROPS**: replayed
+  straight to it, a whole sermon in `owa_note_edit`'s `changes[].text` came
+  back as no text and no call 7 times of 8, as one flat `owa_bible_note add`
+  `text` 5 of 5 -- so an add in a conversation about ONE note that holds
+  nothing is written into that note by the window (`toBlankNoteFillArgs`,
+  `AskExtraType.note.blankBlockCount` from `readBlankNoteBlockCount`). A
+  note ask or a lesson ask is `isLongWrite`: a custom server writes it with
+  `LONG_WRITE_MAX_TOKENS` 6 000 (a help answer's 2 000 cut a sermon) and its
+  lean tool list keeps `owa_bible_note`, which it had never had -- a new
+  lesson on Auto had reached it only when the model guessed the name. **What
+  a model writes anyway is read**: a list sent as JSON text
+  (`toListArgsRead`), changes with no `action` (an edit, and counted as one
+  by the watch -- `watchedArgs` -- or the claim nudge sends a done change
+  back and the model makes it again on a note that has moved), the same
+  document edit twice in one reply (run once; a press twice still twice),
+  and an empty reply about an empty
+  note asked again for the flat add (`NOTE_BLANK_DROPPED_NUDGE`). **_Check
+  my verses_ is read by the
+  window**: every verse the note cites, one `owa_find_verse refs` a Bible
+  before the ask (`collectNoteVerseRefs`), set beside the note's own line
+  about it (`toNoteVerseReadText`) -- told only to check, the model said
+  all were right having read none; told only what the Bible says, it
+  missed Isaiah 53:5's words credited to 53:6; side by side it named them.
+  Measured live on a scratch profile, Auto -> gemma4:cloud: a sermon into
+  an empty note in ONE call, 9-15 s, before 70-134 s through two failed
+  servers and Free; twelve follow-ups one call or an answer each, 3-8 s.
+  **In every language, and from the empty note's own buttons** (BN-64,
+  BN-65): `LESSON_OUTLINE` (~70 tokens) rides `NOTE_SYSTEM_PROMPT` and
+  `NOTE_CREATE_PROMPT` whatever the language, and an empty note's card
+  offers three lesson buttons, read as a lesson asked for in any language
+  (`checkIsLessonCardAsk`); a refused fill of the empty note leaves the
+  redirect for the next try. **_Finish my sermon_ is placed by the window**
+  (BN-67): `genLessonGapsText` names each missing part with the block it
+  goes after (the end of the part before it in the shape's order, a
+  point's own last line for its words), `checkIsBareFinishAsk` reads
+  _finish it_ beside a lesson (`checkIsLessonNoteText`), and a note of
+  loose lines is `readNoteRewrite`'s: `NOTE_LESSON_REWRITE_HINT` asks for
+  ONE flat `owa_bible_note add`, which the window writes in their place
+  (`toBlankNoteFillArgs`) only when every line of theirs is in it
+  (`findLostNoteLines`; else refused, naming the lines), and an EDIT that
+  weaves them into a lesson takes out each raw line its new words hold
+  (`withRewrittenLinesRemoved`). A dropped reply about a note with words
+  in it is asked for in parts from the end of the note up
+  (`NOTE_DROPPED_NUDGE`); about loose lines, flat (`NOTE_REWRITE_DROPPED_NUDGE`).
+  **"Best" is measured against a written standard by blind readers**
+  (BN-66, the skill's `lesson-rubric.md`), never by the assistant that
+  built it: the lesson shape READS the passage first (`owa_find_verse`) and
+  builds every quote and verse number on its words -- asked only to be
+  true, the model quoted from memory and invented history (accuracy 1.88
+  -> 1.13 of 2 as the lessons grew richer); read first, factual errors
+  2 -> 0 by one reader and accuracy up by the other. **_Is this a good
+  sermon?_ is the way from good to best** (BN-72): judged in the readers'
+  order of weight, its fixes offered as buttons that SAY the change; a
+  review with none goes back once for them (BN-74, `isLessonReview`,
+  `NOTE_REVIEW_OPTIONS_NUDGE` -- one more round of a free model, because a
+  fix the elder cannot press is a fix not made) and, still without, offers
+  the fixes it named (`readReviewFixHeadings`, BN-77); a fix pressed leaves
+  the review's others as the first buttons under its answer (BN-77); the
+  review is told the form the tab asked for (`readLessonFormAsked`,
+  BN-78), and a devotion keeps its one point, a children's lesson its
+  story, whatever the review offers. A
+  length asked for in minutes rides as a number of WORDS
+  (`genLessonLengthLine`, BN-73: told a rate, the model wrote its one
+  template whatever was asked). **A quote of the passage is its words**
+  (BN-76): a note ask keeps what it read (`ToolWatchType.noteQuoteSources`:
+  the ask, `owa_find_verse` results, reads of the note), and an
+  `owa_note_edit` change -- a fill of the empty note included -- whose
+  quotation takes most of its words from that without being word for word
+  is refused once an ask (`findNoteMisquotes`), and a quotation that names
+  its own chapter and verse is held to that verse, which the window reads
+  itself (BN-110, `findCitedMisquotes`: a verse quoted from memory and never
+  read had been let by) -- every single verse in ONE read, matched back by
+  its key (BN-148, `toCitedVerseKey`: eight reads at once, each one of the
+  firewall's 25 acting calls a minute, had left the next ask refused), a
+  range in a read of its own; and the passage's own words given another
+  verse's name are named under the change with the verse they come from
+  (BN-160, `findCitedMisattributions`: "the water of life freely" as John
+  4:14) -- and a token standing where a sentence needs the
+  verse's words -- "Jesus, who [^John 1:14]." -- is sent back once
+  (BN-120, `findTokenAsWords`: a token shows its reference alone), and a
+  children's lesson's memory verse over twenty words is read and named
+  under the lesson written, with short verses of the passage read to put
+  in its place (BN-129, `findMemoryVerseRef`: told twenty words twice,
+  Luke 15:7's 28 kept coming back; BN-143, `listShortReadVerses`: sent back
+  whole, a lesson searched for a shorter verse until its rounds ran out
+  with nothing written; BN-155: of its own passage only -- the verses read
+  before Luke 15 had offered Luke 14:34's salt that "lost his savour" to a
+  lost sheep lesson), a passage left to the assistant ("choose one of
+  these") is chosen and written on, never asked about again (BN-144,
+  `checkIsLeftToYouAsk`), the cited quotes read being those written from memory
+  first (BN-132, `pickCitedQuotesToRead`: read in the lesson's order and
+  cut at eight, a Christ section's misquote was never read), and the
+  passage at the top printed again -- after
+  the memory verse, or under a point whose lines carry their own verses --
+  is taken out by the window before the lesson is written (BN-130,
+  `dropRepeatedLessonPassages`), and a verse quoted in a modern
+  translation's words in a note whose verses are the KJV's -- Philippians
+  2:7 as "emptied himself" -- is given the KJV's words by the window and
+  the model told so under the change (BN-137,
+  `lessonKjvWordingHelpers.ts`: 44 wordings of the verses quoted most,
+  each held to the app's own KJV by a test, changed only where the
+  quotation's other words are mostly that verse's), and a sermon's
+  detail no verse gives -- the stone that "found the only gap in the
+  giant's armour", Jesus "just spoken to the people of Capernaum" --
+  is read off the lesson and named under the change for one more edit
+  (BN-142, `lessonLegendHelpers.ts`: shown its correction in the word
+  table, the model wrote it anyway; a verse's own entry there now
+  outranks a word's for the eight a read carries, BN-141), and so is a
+  word of the passage, quoted, put on Christ in Pointing to Jesus -- "He
+  took the "tormentors" … upon himself", "the ultimate "river"" -- when
+  the passage as read holds it (BN-163, `findStretchedChristWords`; what
+  the Scriptures say he bore, sins or griefs, is left), and so is a
+  new lesson's example set in a hospital (BN-150,
+  `lessonStockSceneHelpers.ts`: the scene the model reaches for by
+  default, stock to both readers; never a funeral message's) -- each by
+  the block it is in, the note read once the change is made (BN-152:
+  told only the words, the model counted its own lines and wrote over the
+  line above), and a line inside a longer block with the block's words,
+  a fix that would leave the block little but that line refused once
+  (BN-157: a children's Jonah's whole story became the one sentence a
+  legend named); the blind readers' commonest
+  error, and any error keeps a lesson out of Best. Pointing to Jesus
+  starts from the phrase of the passage that carries its big idea, a
+  verse from elsewhere only where the New Testament takes the passage up
+  (BN-149: sent first to a New Testament verse, the model quoted ones that
+  only share a theme -- Revelation 7:9 under David and Goliath), and a
+  verse of another book it names with none of its words is read by the
+  window and named under a new lesson with them (BN-154,
+  `lessonChristVerseHelpers.ts`: "whoever abides in Him will find rest"
+  as Matthew 11:28). **A fix to a lesson
+  carries the lesson's rules and adds, never operates** (BN-79, BN-80): a
+  change asked in a lesson note (a change verb, no lesson hint of its own)
+  carries `NOTE_LESSON_CHANGE_HINT` -- from the passage as read, no detail
+  it does not give, a point added in the passage's order -- and an edit in
+  it that moves or takes out a block the words did not ask to move or take
+  out is refused (`findLessonChangeSurgery`, `ToolWatchType.isLessonChange`):
+  done as block surgery, two fixes had broken a sermon's shape. **The draft
+  is the lesson** (BN-81: two blind readers found the review loop does not
+  lift a lesson on the free model): the shape asks each point to explain
+  the word, image or custom a hearer would miss from the Bible's own pages
+  (read with `owa_find_verse`), an example as a short scene from the
+  hearers' own week, and a person's reason or message only as the passage
+  states it, the whole story read first; and while the note is still
+  empty, an `owa_note_edit` that is a question is refused as the add's
+  redirect refuses one (`isBlankLesson`). **A point is a template** (BN-82,
+  2026-11-11): told in one sentence what a point holds, the model wrote one
+  paragraph that said the verse again; each point is now labelled lines --
+  **What it means:**, **A hearer asks:**, **The passage answers:** (its own
+  line: told "the question, answered", it wrote only the question), **For
+  example:**, **This week:** -- the passage is read with the verses before
+  it for the background, it runs about twenty verses at most, Pointing to
+  Jesus starts from a phrase of the passage, and a funeral comforts from
+  the passage's promises with no discussion questions (~968 tokens, lesson
+  asks only). **A new lesson's points follow and cover its passage**
+  (BN-83): written into the empty note, a lesson whose numbered points stop
+  before the passage at its top ends, or put a point whose verses all come
+  before the point above it, is refused once an ask
+  (`findLessonPointsProblem`, `ToolWatchType.isLessonPointsChecked`).
+  **A preaching message is a lesson ask** (BN-85): _a message of hope for a
+  funeral_ held no lesson word, carried no lesson hint in any run, and was
+  written from the short outline -- a "message of hope / on / about /
+  from", and a funeral's message or talk, are read as one now
+  (`checkIsLessonWriteAsk`). **The passage is READ whole** (BN-86):
+  `owa_find_verse refs` had cut it at a found verse's 300 letters, so a
+  lesson was built on its first verses and the rest came from memory --
+  every factual error both readers found in BN-82's lessons sat in those
+  verses, and the misquote check had nothing to hold them to; a passage is
+  given whole now, within 6000 letters a call (`agent-tools.md`). **An
+  empty note is empty while its window opens** (BN-87): the read before the
+  ask had failed on a busy computer and the lesson went into a NEW note;
+  an empty note's read is now worked out from its file
+  (`readBlankNoteFromFile`). **The window reads what the model would
+  otherwise make up** (BN-89, BN-91): in an empty note's lesson ask, the
+  first `owa_find_verse refs` naming one passage also reads the verses just
+  before it (`findVersesBeforeRef`) -- before the passage the ask NAMED
+  when that read is in its book (BN-105, `pickVersesBeforePassage`: read
+  from 3:1 for Proverbs 3:5-6, Proverbs 2's strange woman had been told as
+  "just before"), and the note names it. The model had invented backgrounds;
+  now it tells them from those words (`genVersesBeforeNote`) -- and, a psalm read from the KJV, the title
+  the KJV prints over it, which no Bible the app reads carries (BN-147,
+  `kjvPsalmTitles.json`, loaded only then: psalm backgrounds had been
+  told from memory). That read also
+  carries Scripture's own explanation of each KJV word its text holds that
+  a preacher stumbles on (`lessonWordGlossHelpers.ts`, eight at most), because
+  the commonest errors left were the model's memory of words: the hundred
+  pence as "a small amount". Such an entry is copied word for word wherever
+  it fits, so each one gives the unit AND how it counts, every sense the
+  Bible gives the word, or matches only the sense it gives, and it opens on
+  what corrects the commonest misreading (BN-92: "create" opened on Genesis
+  1:1 and was still read as "out of nothing"). The note over the list keeps
+  every point explaining its own verses: told only that a What it means
+  line says this of the words, a point holding none of them explained
+  nothing. Each line of a point also says what it may not add (BN-88), and
+  the Introduction is never "Have you ever" (BN-90).
+
+- **And one for a foreground session** (2026-11-09, the user: _chatbot can
+  help modify any foreground component_, then _sessions of opening
+  foreground component should be able to attached to the chatbot for the
+  chat context_; W-61, `agent-tools.md`). `owa_foreground_edit` goes to a
+  `foreground` ask -- a question while a foreground session is open in the
+  tab (`chatbot-files-report.md`), or a TYPED line naming a component
+  (`readForegroundComponentAsk`: the launcher's labels through the window's
+  `tran`, English and a few English words -- timer, ticker, scrolling text;
+  Messages and Time by a phrase only, and every installed language's own
+  phrases (`foregroundAsks` in its `assistant.json` or `typed.json`,
+  2026-11-13, `EC-563`: _put the time on the screen_ in Khmer had named
+  nothing, its Time label being an everyday word; every package's clock
+  since `EC-564`, read with `createAsks`' matcher -- `findWordSpans`, an
+  entry weighed by its longest part -- so a word that is also an hour is
+  read only near the screen; and since `EC-605` every package's message on
+  the screen -- its word for a message or an announcement and its word for
+  the screen, a projector or its canvas, both orders -- and its countdown
+  and stopwatch labels, the last word a stem, so a line typed in an
+  installed language the window is not shown in names them too: such an
+  ask had gone the general way, three times the tokens; and in English a
+  line that STARTS by asking to time something is the stopwatch,
+  `TIMING_ASK_PATTERN`, `EC-654`: _time the worship set_ had read three
+  guide pages and answered with the panel's steps, and "the time" with a
+  place word after it is the clock, `TIME_PLACE_PATTERN`, `EC-655`: _put
+  the time in the corner_ had gone up in the middle -- both read only after
+  every component word, never on a question);
+  a message, notice or announcement at
+  the top or bottom is a Quick Text, `EC-532`: _Show a message at the bottom
+  of the screen for 15 seconds_ had named nothing, gone to the ordinary
+  `owa_foreground`, which takes no look, and come up in the middle -- and
+  the prompt has `start` carry the place named in the same call, and says
+  words that go off "for 15 seconds" are a quick-text with seconds -- a
+  Message has no time, and the worker refuses one sent to it, `EC-538`;
+  in Khmer too since `EC-588`, its `foregroundAsks.quick-text`: a message,
+  notice, announcement or welcome, then the bottom or the top, then the
+  screen -- the screen required, since the message below is a chat's own
+  words -- 0 of 4 at the bottom on gemma4:cloud before, 3 of 3 after; no
+  other language has such phrases yet, so there the ordinary tool's Quick
+  Text result names where it went and the refusal of a time says to tell
+  them when it is not where asked, `EC-591`: on Free 0 → 3 of 3 answers
+  saying so, on gemma4:cloud 0 → 0; and a marquee started with a Quick
+  Text's `seconds` or `delay` and no session goes up as a Quick Text at that
+  marquee's edge, its `note` saying so, `EC-593` -- the call a model makes
+  first for such an ask in any language: kept at the edge on gemma4:cloud
+  0 → 3 of 3, on Free 0 → 2 of 3; Free's other first call, a Quick Text
+  with no place, now reads in its result that it is in the middle and the
+  call that moves it, `EC-597`: on Free 9 of 9 at the edge in one
+  question, no answer saying so before it was),
+  about its active session -- under
+  `FOREGROUND_SYSTEM_PROMPT` (`src/chatbot/foregroundChatHelpers.ts`), eight
+  rounds, the session read fresh into the user turn (`toForegroundAsk`), on
+  a custom server's lean list, with `owa_list_screens`, `owa_click`,
+  `owa_help_search` and `owa_find_verse` shared to it. A known corpus row
+  still wins (`findKnownQuestion`). The WINDOW turns a session NAME the
+  model writes into its id (`resolveForegroundSession`; Default by its strip
+  name too), and outside a foreground ask the tool is refused. **One
+  answer's foreground changes are ONE Undo** (2026-11-12, `EC-539`,
+  `mergeEditedForeground`): a countdown and a marquee started together are
+  two sessions, and the button had taken back the newest alone; every
+  change's undo id goes on it now, and an undo id a model writes into the
+  answer is taken out (`scrubAnswerUndoIds`, beside the recipe-id scrub),
+  with the quotes round it and the `owa_undo with id` it came in
+  (2026-11-13: _puts it back: owa_undo with id ""._ had reached the
+  volunteer). An undo of a `start` or `show` takes what it put on the
+  screens off again (2026-11-13, `EC-540`, `agent-tools.md`), and one of a
+  `set` on a session that is up puts its old words back up (`EC-546`). The
+  window's sentence after the press names EVERY session, one sentence each
+  in words every language already has (`EC-545`, `undoParts` → the press's
+  `parts`, `genForegroundUndoneText`): a session the answer MADE (the
+  result's `session.isNew`) _is taken away again_, one it only changed _is
+  back as it was_ -- it had written _"Welcome, friends" is back as it was_
+  over a marquee it took away, the countdown beside it unnamed. **A `start`
+  keeps a session only when it is ATTACHED** (2026-11-12, `EC-523`,
+  `toForegroundEditArgs`): a typed line with nothing attached rides the
+  panel's current session as its ask with `isCurrentOnly`
+  (`AskExtraType.foreground`), and a `start` naming it, or any session the
+  tab does not hold, has the name dropped, so new words go into a session
+  of their own and never over the panel's Default. **A 0 written beside a
+  time is dropped** (2026-11-14, `EC-616`): Free called a 5 minute
+  countdown as `{minutes: 5, seconds: 0}`, the tool's schema (a time above
+  0) refused it and a round was spent, so `toForegroundEditArgs` drops a
+  `minutes` or `seconds` of 0 when the call gives another time or an `at`;
+  a 0 alone is left for the schema to refuse. **No button or field is
+  named for the person** (`EC-617`): an off screen is offered _to turn
+  that screen on_, and the undo is said in their words, never _undo id_ --
+  the prompt's own _show button_ and _undoId_ had come back as _tombol
+  show_ and _punya id undo_ in Free's Indonesian answers (3 of 10 → 0 of 14).
+  **Nor is a screen's state written as a term** (2026-11-14, `EC-620`): the
+  tool's off-screen note (`genOffScreenNote`) and the prompt said _OFF_, and
+  4 of 24 answers on Auto wrote _(OFF)_ in English after the Arabic, Hindi
+  or Thai word; both now say _turned off_ and _turn it on_. The prompt sends an ask
+  to put something UP to `start` (one call), `show` to put a session up as
+  it stands, says to leave `screens` out (the read names every screen,
+  `EC-522`) and answers a question about something else from the guide
+  with nothing changed. A change
+  (`started`, `changed`, `shown`, `hidden`, `timer`, `created`) is acted on, and
+  `readEditedForeground` gives the answer **[en:tran:Undo this change]** for
+  either tool. ~780 tokens to that ask alone (~835 since `start`, ~864 since `timer` `add` and a `hide` of `all`, 2026-11-12; the ordinary list did not move). **The answer promises Undo only where there is one** (`EC-530`): only `set`, `start` and `session` are backed up and answer an `undoId`; a `show`, `hide` or `timer` press changes what is up and keeps none, so the prompt says how to reverse it instead -- every one of them had ended _Undo this change puts it back_ over no button. **The ordinary list DID move**:
+  `owa_foreground` learned the thirteen components, `ref`, `version`,
+  `file`, `camera` and `source`, ~491 → ~581 a round, and
+  `MODEL_TOKEN_CEILING` was raised 8 350 → 8 480 on purpose (measured
+  8 478, `audit-mcp-tools.mjs --stdio --ratchet`; history in
+  `owa-enhance-mcp/references/tool-budget.md`) -- the user's choice of _any
+  chat_ over a foreground ask alone. Not yet asked live through the window
+  with a model: the AI caution is a person's press.
+  **A widget named IN PASSING is no foreground ask** (2026-11-10, `EC-467`).
+  With no foreground session open in the tab, a typed line naming a widget
+  goes to the foreground ask only when it is not a known question. With a
+  session open, only a press, an empty line or a line that is not a known
+  question goes there. A line about the running order never does
+  (`checkIsRunningOrderLine`: _running order_, _presenting flow_, _run
+  sheet_, _order of service_, _service plan_, or the window's word for
+  Presenting Flow). Before this, the pressed corpus row _How do I make a
+  line start at a set time on the clock?_ (W-22d) was read as about the Time
+  widget. It ended in _could not settle on an answer_ after five tool calls;
+  14 of the 487 rows name a widget so.
+- **And one for the screens' own controls** (2026-11-13, `EC-611`, the
+  user: _chatbot is very smart to help user control screen_; the tool in
+  `agent-tools.md`). `owa_screen_edit` goes to a `screen` ask
+  (`src/chatbot/screenChatHelpers.ts`, pure): a typed line about the Bible
+  text's look on the screens, a passage's versions, Line Sync, a
+  transition, a display, a group, the lock, the tick, the stage or a clear
+  (`readScreenAsk`, `typedScreenAskHelpers.ts`: English by
+  `readScreenControlAsk`'s words in code, every other installed language
+  by its package's `screenAsks`, below; in the Reader and an editor only a
+  line that names a screen, since _make the Bible text bigger_ there is
+  the page's own text), or any plain line under a screen
+  answer in any language (`checkIsScreenThread`, the answer marked
+  `isScreenAnswer`). Not a how-to, a _what does … do_, a line with an
+  attachment, a foreground ask, a study, a verse looked for, the Reader's
+  own material or a known corpus row (`findKnownQuestion`): those keep
+  their own ways. The window reads the screens as they stand first
+  (`toScreenReadText`, 12 screens and 3 500 characters at most) and puts
+  them under the question, the prompt saying not to read again; the ask
+  goes out under `SCREEN_SYSTEM_PROMPT`, `SCREEN_MAX_TOOL_ROUNDS` 6.
+  Every change of one answer is ONE **[en:tran:Undo this change]**
+  (`readEditedScreen`, `mergeEditedScreen`), and a typed _undo that_ is
+  handed the ids under the answer (`findScreenUndoIds`). **The button is
+  promised only where it is** (2026-11-14, `EC-615`): the window draws it
+  for an `owa_screen_edit` answer that carries an `undoId`, and after an
+  `owa_undo` the prompt's rule had promised one over nothing (_The button
+  below will put it back_); an undo's answer now says what is back as it
+  was. **A screen change claimed and never made goes back once**
+  (`SCREEN_CLAIM_PATTERN`, `SCREEN_CLAIM_NUDGE`,
+  `checkClaimsUnmadeScreenChange`, beside the foreground's): a read
+  changes nothing, _already so_ changes nothing, and a refused call did
+  nothing -- after five refused undos the model had said _I have undone
+  the last change_ with nothing put back, so the claim reads _undone_ /
+  _undid_ too, the nudge names `owa_undo` for an undo, and a claim still
+  standing on the finished answer gets the window's note
+  (`checkClaimsUnmadeChange`). ~717 tokens a round to that ask alone; the
+  ordinary list did not move (26 tools, ~8 471 of 8 480, `--stdio
+  --ratchet`). Measured on the first 14 of the skill's 27 asks
+  (`scripts/screen-run.mjs`, Auto, mostly the shared gemma4:cloud): 0 of
+  13 changes done before (2 already so), 13 of 13 after, 500.1k → 76.0k
+  tokens, about 4.3 s an answer at the driver's poll. **A first line in
+  any installed language** (2026-11-14, `EC-614`; the words are each
+  package's `screenAsks`, `language-packages.md`): the line is read in
+  the language it is typed in first -- a how-to or an excluded subject
+  there reads nothing, English's reading too -- then by English, then by
+  every installed language's lists, the typed one and the app's first.
+  Any line is a how-to when ANY installed language's how-to words read it,
+  whichever language it is taken for -- one no language here can name (a
+  fifth of the blind asks), or one taken for the wrong language (a
+  Kinyarwanda how-to taken for English for its _transition_, a Slovak one
+  for Czech) -- but not their other subjects (one language's song is
+  another's thing); about a millisecond a line that reads nothing with
+  all 88 installed, two for one that reads a control (2026-11-14: every
+  language's how-to words are looked for only once a control is read, and
+  a control's words only beside a screen's or a Bible's, or alone for one
+  that names nothing else -- in the order first written a line cost 3.5
+  to 4.4, and the two language tests that read the blind sets took 78 s
+  each of the gate's run, now 43). A
+  Bible's short name is in a package's `bible` and `versions` both, so by
+  itself beside a number, with no screen named, it is the passage put up
+  in that Bible (`checkIsPassageInBible`: an English _present Psalm 23 NIV_,
+  which no language could name, had gone to the screens through 71
+  packages' lists). In a script that
+  does not space its words, an entry of the language's own letters
+  matches anywhere and one of other letters (`tv`, `kjv`) as a whole word
+  (`checkHasListWords`). With no assistant, such an ask is answered with
+  the setting it is about, as each screen has it, and what each screen
+  holds (`answerScreenAsk`, below), as an English one is -- the guide
+  searches English, and a Spanish one had been answered _I could not find
+  that in the app guide_. Measured on three sets written blind,
+  ten asks and seven lines that only look like them in each of 88
+  languages (`screenAsksHeldOut.json`, `…2.json`, `…3.json`), each read
+  once before anything was fitted to it: by English words alone 34, 43
+  and 35 of 880 asks went to the screens; at their one blind read 713 (8
+  of 616 look-alikes with them), 719 (54) and 697 (7). Fitting the first
+  set to 98% did not move a fresh set's reading, about four in five, as
+  the English blind sets had found; what the rounds moved was the
+  look-alikes: the second set's 54 were mostly how-tos (45 read as a
+  transition, which reads with nothing named), and after every language
+  was given the English reader's whole how-to inventory and the guard
+  above, the third set sent 7. Each set then read 0 of 616 (865, 855,
+  697 of 880). A rule keyed on the question mark was weighed and left:
+  it would have stopped 43 of the 45, but English routes _can you change
+  the transition?_ and so must every language. **A screen called by its
+  number is the screens'** (2026-11-14, `EC-623`): with no control's words
+  read, one or two digits of any script right after a language's word
+  for a screen (a `#` allowed; never another digit, or a `:`, `.` or `,`
+  and a digit, after them -- a verse, a time, a bigger number), or an
+  entry that holds its own number, reads `screen` (`readTypedScreenAsk`,
+  `checkHasScreenNumber`), and the screens' tool reads the screens and
+  works out the control. A control any language names is said first. A
+  countdown on a screen is said with a number too, so a numbered reading
+  of a line named NO language is stopped by any installed language's
+  exclude words; one named its language is not (one language's phone is
+  another's _open_). The third set read 697 → 765 of 880 by it, and a
+  fourth written blind (`…4.json`) 694 → 770 at its one read. All four
+  read no look-alike as a control now (868, 861, 765, 773). Handing a line
+  taken for English that English reads as nothing to the app's own
+  language was measured and left: 9 more of 3 520 asks, and 603 readings
+  of the English sets' look-alikes as screen asks.
+  **With no assistant, the setting asked about** (2026-11-14, `EC-625`):
+  a screen ask answered with no model -- the spend guard paused, no key,
+  the network down -- had been given what each screen showed, or the
+  guide's steps for an English line naming the control: _check the
+  display: which monitor is each screen on?_ named no monitor, and a lock
+  or a bigger Bible text asked for never said that nothing had changed.
+  A line read as one control (`readScreenAsk`'s kind, whatever the
+  English reader made of it) is now answered by `answerScreenAsk`
+  (`helpBotHelpers.ts`): the setting per screen
+  (`genScreenSettingText`, `screenStateAnswerHelpers.ts`, pure) -- the
+  monitor as the card's display button names it with its size and
+  _primary_, the lock, the stage, the tick and each passage's Bibles off
+  `owa_list_screens`; the transitions, the groups, Line Sync and the
+  Bible text's size off `owa_screen_edit`'s quiet `read` -- then what
+  each screen holds (`answerScreens`) and one line: to change it, ask
+  again when an assistant can answer, or ask how. The window's own words
+  in every language (16 keys). A clear and a screen named by its number
+  alone are answered as before. `owa_list_screens` gives a screen's
+  display as `display` by its id, never `displayId` (the first cut read
+  that, and every screen would have been on no monitor). Seen live with
+  the guard paused: nine English asks, one for each control, each
+  answered so in about a second; and with the app switched to Spanish, a
+  monitor, a lock and a transition ask drawn in Spanish. A line that also
+  names a passage is answered as a passage first (`EC-622`, the
+  `owa_present_bible` bullet in `agent-tools.md`): _pon Juan 3:16 en la
+  pantalla_ names a screen and a verse.
+  **And the change itself, as a button** (2026-11-14, `EC-627`): the
+  setting was followed by _ask again when an assistant can answer_, and
+  nothing in the window could make the one `owa_screen_edit` call the ask
+  was for. `genScreenChangeOffers` (`screenChangeOfferHelpers.ts`, pure)
+  reads the line against the quiet `read` and offers up to four presses,
+  each one `set` labelled with the panel's own words as the window shows
+  them (_Screen 0 · Lock_, _Slide transition: zoom_, _Screen 0 · Add
+  NIV_), under _Nothing has been changed yet. Press a button below to
+  change it now, or ask me how to do it yourself._ -- every control the
+  tool sets, a look included; a line typed under a screen answer
+  (_Centre it_) too (`answerScreenThreadAsk`); a clear only when there
+  is a press to offer (`isOfferOnly`). Never a question that names no
+  value, a change already so, a clear or a version on a locked screen, a
+  monitor not named, a Bible not installed (a short name in capitals no
+  installed Bible has), the last version up or the last ticked screen. A
+  press is the pseudo tool `owa_screen_change` (`SCREEN_CHANGE_TOOL_NAME`,
+  caught by `runBotAction`, registered nowhere): the change, the screens
+  read again and the setting said as it is now, with **Undo this
+  change** -- a look changed is _Done._ alone, since the setting sentence
+  says only the size. Seen live with the guard paused: a bigger verse, a
+  lock, a zoom transition, another version, _Centre it_, bold and a
+  clear, each done and undone. A look asked for in another language is
+  read only by the language's note phrases, colour words and shown labels
+  (`EC-628`). **A screen asked for is added** (the same day, `EC-630`):
+  `readScreenControlAsk` reads _add a new screen_, _I need another screen
+  for the stage_ as kind `newScreen` before any control (never a how-to, a
+  green or blank screen, a virtual one, a phone's, a version on another
+  screen, a screen made to show the same as another); in another language
+  only the Mini Screen menu's label as the window shows it, most of the
+  line (`checkHasNewScreenLabel`). With no model,
+  **[en:tran:Add New Screen]** is offered (`isOfferOnly` in English; under
+  8 screens, never off the Presenter) and the press says the new screen by its number, its
+  monitor and which screens are ticked (`readAddedScreenId`), with **Undo
+  this change**; the model's prompt says `newScreen` goes alone, only when
+  asked, and that only a person removes a screen; _added_ and _created_
+  are claims the nudge holds back. A screen added with no Undo kept is
+  still a change, with no button, and never takes an earlier change's Undo
+  away (`mergeEditedScreen`). Seen live with the guard paused: offered,
+  pressed, undone.
+- **A running order asked for in an ordinary chat puts nothing on a screen**
+  (2026-11-10, `EC-475`). On Auto, the shared server's lean list has no flow
+  tool. Asked to _make a new running order … Psalm 23, a 5 minute
+  countdown_, the model put the countdown and the verse on screen 0 instead.
+  `askLlmBot` now marks such an ask from its typed words
+  (`ToolWatchType.isRunningOrderAsk`, `checkIsRunningOrderLine` on
+  `askedText`). `runMcpToolCall` refuses it `owa_present_bible` and
+  `owa_foreground`, except `check`, with `RUNNING_ORDER_SCREEN_REFUSAL`: they
+  are lines to add, and one goes up only when asked for. Since 2026-11-12
+  (`EC-514`, closing `EC-468`) the window MAKES a new running order asked
+  for and the question becomes that flow's own conversation, which builds
+  it (`chatbot-files-report.md`); this refusal still holds for an ask the
+  reader does not take.
+
+- **A study file, asked for from ANY tab** (2026-11-09, `EC-464`; the
+  user: _open chatbot then ask chatbot to make a resource study content for
+  Mathew 3:3-7 I expect to have the new markdow file with enough information
+  for the passage with creative mermaid diagrams_). `readStudyFileAsk`
+  (`studyFileChatHelpers.ts`: a making verb and a study word; English in
+  code, every other language from `studyFileAsks` in its `assistant.json`
+  or `typed.json` -- one pattern each, its how-to, folder and note words
+  and its neighbours' refused (`EC-465`); an English how-to is nobody's
+  ask) makes a `study` ask, unless a Lookup subject or a Resources
+  file is in the tab, the line is a `/` command, a document or foreground
+  ask, or a corpus row (`findKnownQuestion` first, as everywhere). Under
+  `STUDY_SYSTEM_PROMPT`, eight rounds, with `owa_resource_file`,
+  `owa_lookup_record`, `owa_find_verse` and the web read
+  (`MODEL_ON_ASK_TOOL_MAP` kind `study`); `owa_resource_file` is shared to a
+  `lookup` ask too, and `STUDY_FILE_PROMPT` rides the Resources, Bible
+  Reader and lookup prompts, where a study is asked for next.
+  `STUDY_CONTENT_RULES` (`noteCreatePromptHelpers.ts`): draft at once and
+  never ask what to write, in the person's language, never a verse quoted
+  from memory (a `[^Book C:V]` token, which the app quotes), two to four
+  diagrams of different kinds with every label quoted, the sections a study
+  has, a 2-6 word title, and never say it is saved. **Its passage is in the
+  language asked in, English too**: `AskExtraType.study.verseLang` →
+  `findStudyVerseBible` → `pickBibleInLanguage(…, true)` (`isEnglishPicked`)
+  -- seen live, a study drafted with no `bible` had quoted the Lookup's
+  Khmer Bible under an English study; a note's verse still keeps the
+  Lookup's for English. On Auto a non-English study prefers a Gemma 4
+  (`preferModelPattern`). **`runStudyDraft`**: after a `draft`, each
+  mermaid block is PARSED in the help window (`findMermaidParseErrors` in
+  `markdownMermaidHelpers.ts`, mermaid loaded only when a block exists --
+  the one check the developer's door lacks, which has the structural lint);
+  a failure goes back once as the tool's refusal, a second drops the block
+  (`dropStudyDiagrams`) and the card counts what is left -- of a CHANGE,
+  only the diagrams the call writes (`listWrittenDiagramIndexes`,
+  2026-11-11, `EC-503`: the file's own are the person's, neither the
+  model's to fix nor the window's to drop). A `replace` (2026-11-12,
+  `EC-537`, `agent-tools.md`) writes INTO those diagrams, so it parses the
+  ones it changed (the worker's `diagramsChanged`, read by
+  `readStudyReplacedDiagrams`; on a change already held, the chain's), and
+  one that would not draw is refused every time, never dropped
+  (`genStudyReplaceDiagramRefusal`): the call goes again without that
+  pair. `toStudyReplaceArgs` reads a list sent as JSON text, or one pair
+  alone, as the list; a replace is a part edit (`checkIsStudyPartEdit`),
+  so with no `file` it goes to the one study open, it is never a whole
+  rewrite and never read first, and a kept answer goes in whole without
+  one (`toKeptAnswerDraftArgs`). A pair refused alone whose words the
+  study's own name check names is put right before it is refused
+  (`EC-541`, `applyStudyReplaceChecked`): by the worker, and on a change
+  already held by the chain, which reaches the tool as a whole text -- so
+  the chain's sentence for it leads the `change` the model is shown
+  (`toModelDraftText`'s `noteText`; so does the chain's sentence for the
+  parts it kept under a part's new words, `EC-544`). A `remove`
+  (2026-11-13, `EC-543`) is a part edit the same way, writes no words and
+  so parses no diagram, and on a change already held is taken out of it
+  by the chain. Before
+  that, a change whose words report a change (`findStudyChangeReport`,
+  `EC-505`) and a whole
+  text that would drop the file's parts (`routeWholeStudyRewrite`,
+  `EC-502`) are refused or routed, and a part drafted by its `section` with
+  none of its words shown is read by the window and sent back with them
+  (`findUnreadStudyPartRefusal`, `EC-500`; `chatbot-files-report.md`). The
+  draft is lifted into `watch.draftedStudy` and the model is shown
+  `[held by the window: N characters]` and `STUDY_HELD_NOTE` in place of
+  the study, so it is not billed twice; `save` and `preview` from the model
+  are refused (`STUDY_SAVE_MODEL_REFUSAL`, before the tool host is
+  reached). The answer's buttons are the card's alone
+  (`withStudyDraftUnder`), and a study ask is handed on after a round like
+  a Resources one (`canHandOnAfterRound`: the model writes nothing). When
+  the assistant stops with a study held -- its rounds run out, or the
+  service fails after the draft -- the answer is the card's own sentence:
+  Create for a new study, Preview and then Save changes for a change
+  (`genOutOfRoundsAnswer` in both loops, `genStudyStoppedText`,
+  `STUDY_CHANGE_STOPPED_TEXT`; `EC-504`). Out of rounds it had been _could
+  not settle on an answer_ over a **Save changes** that took out 29 of a
+  study's 30 parts, and a failure had said _Press Create_ over a change.
+  ~524 tokens a round to those asks; the ordinary list did not move
+  (8 478 of 8 480, `--stdio --ratchet`). Asked live through the window
+  2026-11-10 on Auto, gemma4:cloud (`EC-485`): a John 3:16-17 study in one
+  round of drafting, a section change, and an appended prayer. A drafted
+  CHANGE shows the model `STUDY_CHANGE_HELD_NOTE` in place of
+  `STUDY_HELD_NOTE` (`toModelDraftText`): its button is **Save changes**,
+  and the answer names every part `change` names. The change's answer had
+  said _press Create_ and named only the prayer, while the draft had also
+  put back a section saved a moment before (the attachment's stale words,
+  `chatbot-files-report.md`).
+  **An answer kept as a study is that answer, word for word** (2026-11-11,
+  `EC-466`). The prompts say how to keep one (`STUDY_KEEP_ANSWER_RULE`: a
+  `content` or `append` of `@answer`, put in by the window,
+  `toStudyContentFromAnswer`), and that alone did not hold: asked _save that
+  as a study file_ under its own explanation, gemma4:cloud wrote a study of
+  its own again, three diagrams and 13.5k tokens. So the window keeps it. A
+  short line that keeps an answer (`readKeepAnswerAsk`: a keep verb, a study
+  word, and _that_, _this_, _your answer_ or _above_, or _save as …_; never
+  a line asking for more, a topic -- _about that_ -- a how-to or a note --
+  in English in code, and since 2026-11-12 in every installed language
+  through its `studyKeepAsks` pair, `checkIsStudyKeepAsk`, EC-508: the keep
+  words compiled at the first line read, a language's whole pattern only
+  for a line its keep words read, and the answer above looked for first)
+  under a real answer (the NEWEST: `findStudyAnswerAbove` with
+  `isNewestOnly`, never a study card or a short line) carries `keepAnswer`.
+  The ask then rides `STUDY_KEEP_ANSWER_HINT`, and `runStudyDraft` puts the
+  answer in whatever the model wrote (`toKeptAnswerDraftArgs`: a new
+  study's `content`, or an `append` to a `file`, at the end of `section`
+  when named -- never the whole file replaced). The model is told only that
+  it is ready (`STUDY_KEPT_ANSWER_NOTE`, `STUDY_KEPT_ANSWER_CHANGE_NOTE`),
+  and a kept diagram that will not parse is dropped, never sent back. Its
+  passage is quoted in the ANSWER's language, not the typed line's
+  (`pickKeptAnswerLanguage`). A Retry reads "that" above the question's
+  first asking (`retry.questionId`, `findFirstTryQuestion`): retried words
+  land at the end of the tab, under the earlier try's card. Seen in the
+  window: the answer kept for 6k tokens, with a one-sentence reply.
+  **A study is TRANSLATED by the window, never by the model** (2026-11-10,
+  `EC-478`; the user, a Khmer-only NEW file drafted for _translate all to
+  khmer and then append the translated content to new pages_, its four
+  diagrams gone): the model calls `owa_resource_file translate` with
+  `file`, `language` and `place` (`STUDY_FILE_PROMPT` maps add / after /
+  under / new pages / both languages to `append`), and `runStudyTranslate`
+  asks the app for the plan -- passages quoted again from a Bible in that
+  language, the Lookup's own when it is in it (`findBibleInLanguage`) --
+  hands each part of words (`STUDY_TRANSLATE_CHUNK_CHARS` 1 600) and each
+  diagram's labels to `AskExtraType.translateText` (the window's
+  `genStudyTranslator`: the Gemma 4 `findTranslationPick` finds, else the
+  assistant asked; one round, no tools, its rounds `onHelperUsage`), asks a
+  part again once when it came back untranslated
+  (`checkIsStudyTextTranslated`), keeps a diagram whose translation will
+  not parse, stops with NOTHING drafted when words fail twice, and drafts
+  the result through `runStudyDraft(…, isWindowMade)`: the card reads
+  **Save changes to "…"**, and the model is told what the window did
+  (`describeStudyTranslation`), never shown the words. A change to a study
+  names its part (`section`, `append`, `EC-479`), and a `study` or
+  `resources` ask is `isLongWrite` (`EC-480`). Unit-tested end to end
+  (`llmBotHelpers.studyTranslate.test.ts`), and asked through the window
+  2026-11-10 on Auto (`EC-478`, gemma4:cloud, one ask, ~30 s, 11k tokens,
+  no cost). The user's own words were sent in a tab a scratch study's
+  Resources 🤖 had opened. The card held the English unchanged, then the
+  Khmer pages with the passage quoted from the Khmer Bible and the diagram
+  translated, and **Save changes** wrote exactly that. Two words were wrong
+  (`EC-486`): the window had checked only that a part came back
+  translated. **Since 2026-11-11 it checks the church's own words too**:
+  every translator is told what a word means, never how it sounds
+  (`STUDY_MEANING_RULE` -- both wrong headings had been the English _Cross_
+  in Khmer letters); a heading that is one of the language's
+  `translationTerms` is written as that word (`applyStudyHeadingTerms`); a
+  part whose English uses one of more than one word that the translation
+  does not write is asked once more, naming it, and the answer missing
+  fewer is kept (`listMissingStudyTerms`); a diagram's ask carries the
+  terms its labels use. Seen in the window the same day: _Cross references_
+  ខគម្ពីរយោង, _bronze snake_ ពស់លង្ហិន. **Every installed language has
+  some** (`EC-488`, the same day): only Khmer and French have a list, but
+  every package names the Reader's **[en:tran:Cross References]** and the
+  two Testaments in its church's words, so those four labels
+  (`STUDY_TERM_LABEL_LIST`) are its church words for the job
+  (`withStudyLabelTerms`), its own list winning. They are read from the
+  INSTALLED plugin's `tran.json` (`STUDY_LABEL_FILE_NAME`), one file loaded
+  for the job and let go -- a plugin ships its dictionary as `tran.json`,
+  every key in lower case, and no `dictionary.json`, which only the source
+  package (and so the unit tests' loader) has: read by that name, the live
+  window found nothing. A code the table of names uses that a package
+  folder does not is read from that folder (`toPackageLangCode`). Seen in
+  the window: Burmese, with no list, wrote its heading as its package's
+  ဆက်စပ်ကျမ်းချက်များ three asks of three. **A language with no installed
+  Bible has its references named in English** (`EC-489`): the draft had
+  no `bible` and named every `[^ref]` with the Lookup's -- Khmer letters
+  in a Burmese study; `findBibleInLanguage` now also picks an English
+  Bible off the same list (`englishBible`), as the passage stays English.
+  **A letter of a third script slipped into a word is asked about once
+  more** (`EC-490`, `listStudyStrayLetters` over `groupLettersByScript`):
+  not the part's main script, Latin or one the English uses (Japanese's
+  three and Korean's two count as one), counted with the missing church
+  words; a Burmese sentence had held a Sinhala letter. **So is English
+  left as it was** (`EC-533`, the user's John 3 study, its Khmer half: a
+  timeline's three periods and a mindmap's four branches still English,
+  and _and_, _between_, _and_ in the prose). A diagram's ask names the
+  words a reader sees for its KIND (`studyDiagramWordHelpers.ts`, a leaf:
+  a timeline's period stands before its colon, a mindmap's node has none;
+  it had said "the words after a colon"); a diagram that draws but left
+  labels -- Latin with none of the script, or two words given back word
+  for word into a Latin-script language (`listStudyDiagramLeftLabels`) --
+  is asked once more naming them, the answer leaving fewer kept, and one
+  with every label as it was is kept as it was. **A dialogue's boxes are
+  labels too** (`EC-582`, 2026-11-13, the user's Genesis 4 study after
+  _change all to khmer_: the sequence diagram's messages Khmer, its three
+  boxes still _God_, _Cain_ and _Abel_ -- ids its messages named, which
+  the translator keeps because the arrows use them, and no check read). A
+  participant named only by a message or a note, or declared with no name
+  after `as`, is drawn by its id, so before the ask
+  `withStudySequenceNames` gives each such id itself as its name
+  (`participant God as God`, declared right before the line that first
+  names it: every box keeps its place), and the ask says to translate
+  each name after `as`, never the id before it. An id the translator wrote
+  in the language on a declaration is put back by order
+  (`keepStudySequenceIds`); an answer whose participants' ids changed is
+  not the same diagram (`checkIsStudyDiagramTranslated` over
+  `listStudySequenceIds`: an arrow naming the old id draws a second box);
+  and a participant drawn by its id is a label (`listStudyDiagramLabels`),
+  so one left in Latin letters is asked about once more and is listed by
+  a saved study's check, where a replace in that translation renames it
+  on every arrow. A diagram whose translation is not taken stays as it
+  was, without the names. **And what is in the language already is
+  kept as it was, never asked** (2026-11-13, `EC-589`): asked _change
+  all to khmer_ again, the Genesis 4 study -- written in Khmer -- had
+  every part handed over, a Khmer part handed back as it was was no
+  translation, twice, and the job stopped with nothing drafted: a study
+  left partly English could not be finished by asking again.
+  `planStudyTranslateJobs` (pure) plans the jobs now. Into a language
+  with a script of its own, a paragraph whose every letter is the
+  script's (`checkIsStudyTextInLanguage`; code, a link's address, a
+  `[^…]` token, a tag, a single Latin letter and one word set apart as
+  a term aside -- a name or a Bible's key in Latin letters is English
+  left), a diagram whose every label is (`checkIsStudyDiagramInLanguage`,
+  a box drawn by its id a label) and a passage quoted in it, its key
+  aside (`checkIsStudyPassageInLanguage`), are kept byte for byte and
+  never asked, as is a paragraph with nothing to translate in any
+  language; the rest is asked and cut as before (the John 3 study's
+  English: the same jobs, chunk for chunk). Words handed back as they
+  were are taken when they are in the language already
+  (`checkIsStudyTextGivenBack`): into a script, most of their letters
+  its own; into Latin letters, only when the window's reader names the
+  language too, never on the translator's word alone. A translation
+  that comes out as the study was drafts nothing and says why
+  (`describeStudyNothingTranslated`); one to be added after a study
+  whose words are all in the language is refused before anything is
+  asked, the rest offered in place (`genStudyAppendInLanguageRefusal`);
+  and EC-534's book names are read for the words asked alone. Measured
+  offline, read only: the Genesis 4 study is one ask -- the dialogue --
+  where it was nine, its 12 paragraphs, 3 diagrams and passage kept byte
+  for byte; the John 3 study's Khmer half would be asked for what is
+  left in it (its timeline and mindmap still English, _Tite_, _and_, a
+  Chinese letter and a Thai word). Not seen in the window. In the words,
+  a lowercase
+  English word between two of the script's letters on a line
+  (`listStudyStrayWords`; a capitalised name, a term in italics or quotes,
+  code, a link's address and a `[^…]` token left) counts with the missing
+  church words and is named in the part's retry. **And a book is named as
+  the language's Bible names it** (`EC-534`, the same Khmer half: Titus as
+  the French Bibles name it, Ezekiel as no installed Bible does, Numbers
+  twice by the everyday word for a number, while every Khmer Bible on the
+  computer names all three -- the translator had been told only to write a
+  book in the language). With a Bible in the language to quote from
+  (`bible`, not the English stand-in) and a part citing a chapter and
+  verse outside code, a link's address, a `[^…]` token and a tag
+  (`checkHasStudyRefNumbers`), `runStudyTranslate` reads every installed
+  Bible's book names ONCE for the job (`owa_bible_suggest books`,
+  `readStudyBookNameTable`; a failed read leaves the names to the
+  translator), held to that Bible's (`toStudyBookNameTable`; none for a
+  Bible naming its books mostly in English in a language that is not --
+  the Greek, Hebrew and Aramaic ones here). Then, per part
+  (`studyBookNameHelpers.ts`, pure, reading references with the verse
+  check's own scanner): the ask names that Bible's name for each book the
+  part cites, sixteen at most (`toStudyBookNamesText`); a reference the
+  answer names as only another language's Bibles or the English name that
+  book, or writes short as the Bible's name does not start, is written
+  with the Bible's name in code (`repairStudyBookNames`); and one named as
+  no installed Bible names a book, or as another book, counts with the
+  missing church words and is named in the retry with the name to write,
+  eight at most (`listStudyBookNameSlips`) -- where such a name starts in
+  a script written without spaces, only the translator can tell. Only a
+  reference the part cites at the same chapter and verses counts; a name
+  another Bible of the language gives is left. Measured offline on that
+  study, read only: 0 of the 4 caught before, 4 of 4 after (one written
+  right in code, three named for the retry), nothing flagged among its 16
+  other references or on the English half against the KJV; not seen in
+  the window. **And a name is written as the Bible quoted writes it**
+  (`EC-535`, the same Khmer half: Aenon and Salim each with another vowel
+  sign than every Khmer Bible, the Jordan with other letters, under
+  verses quoted a page above that write all three; the Pharisees as the
+  church words write them, read off another Khmer Bible, with another
+  vowel sign than the one quoted). With the passages quoted in the
+  language (`quoted` on the plan's passage parts), `runStudyTranslate`
+  reads the plan once (`toStudyNameGuide`, `studyNameHelpers.ts`, pure,
+  no call). A church word the passage writes with the same letters and
+  one letter's vowel signs otherwise, a whole word of its verse of three
+  letters or more, is told as the passage writes it, and one for a NAME
+  written the list's way in the answer is put right in code
+  (`repairStudyNameSpellings`). A name the English passage writes with a
+  capital inside a sentence and never without one, no pronoun and no
+  church word, in a verse or two, is shown with its verse as that Bible
+  writes it, four verses and 900 letters at most a part
+  (`toStudyNameVersesText`); a word of a shown verse the answer writes
+  with one letter's vowel signs otherwise, never one the passages write,
+  counts with the missing church words and is named in the part's one
+  retry, eight at most (`listStudyNameSlips`) -- two real words can be a
+  vowel sign apart, so only the translator can tell. Only the script's
+  own vowel signs are a difference: a mark any writer may leave off
+  (`\p{Script=Inherited}`) is left out, and a virama, tone mark or point
+  (`\p{Diacritic}`) must be the same. Measured offline on that study,
+  read only: 0 of its 4 vowel-sign slips caught before, 4 of 4 after (the
+  Pharisees written so in code twice, Aenon in the words and a diagram
+  and Salim named for the retry), nothing else flagged, 1 269 characters
+  of verses for the whole job; the Jordan is only shown its verse. Not
+  seen in the window. **And a name written with OTHER letters is named in
+  that retry too** (2026-11-13, `EC-561`), read off the words standing
+  for it as the saved check's `EC-560` reads them: the part's bold span
+  naming it and the answer's in its place (`pairStudyBoldSpans`), the
+  words that may write each name read once for the job
+  (`toStudyNameGuide`'s `nameWords`), and the slip named with its English
+  name -- _Jordan as "…" (verse 26 writes "…", if that word is Jordan)_
+  -- because the verse's word coming closest may be another; named even
+  when no verse is shown. A place of other letters is whole words, as the
+  platform's word breaking reads them (`checkIsWordPlace`), and one that
+  is only part of its span's words comes 0.8 close: with the user's
+  headings paired wrongly on purpose, a piece of _share_, a piece of
+  _born_ and two whole words of a heading came close to a word of
+  "Light"'s verses, _evil_. Measured offline on that study, read only, its
+  Khmer half handed back as each part's answer: the Jordan named beside
+  the three vowel slips; all 18 rotations of the bold spans of its two
+  parts that bold any named nothing wrong; nothing named in the parts with
+  no bold name. Not seen in the window. **And every
+  language has its Bible's own words** (`EC-491`, the user's _yes_ to a
+  list for each language): `churchWords.json` in 72 packages, a side file
+  the plugin carries, holds up to sixty things a study names (_Son of
+  Man_, _bronze serpent_, _eternal life_, the Pharisees, Moses), each READ
+  off that language's own Bible at its anchor verses (`source` names the
+  Bible), never written from memory. A word is left out where the verse
+  paraphrases, says _ten words_ for the Commandments, or spells it as no
+  study now would. `withStudyChurchWords` puts them under the language's
+  `translationTerms` (a key in another case is the same word) and over
+  the labels, loaded beside the labels for the one job and let go. In a
+  language whose words change form in a sentence (`wordsChangeForm`,
+  `isWordFormChanging`) a church word is looked for by its stems, each
+  word of four letters or more by three fifths of its letters in a row;
+  elsewhere letter for letter. Both sides are compared with every
+  combining mark taken out (`toFindableText`: NFD, then `\p{M}`), so a
+  fully pointed Bible word is found in an unpointed translation and the
+  old spelling's cedilla in the new one's comma. The spaces, hyphens
+  and line breaks between a church word's words are taken out of both
+  sides as well (2026-11-13, `EC-596`): _John the Baptist_, hyphenated in
+  the Khmer list, would have been asked again of a part that spaced it.
+  A heading so written
+  starts with a capital (`toHeadingWord`). Fifteen packages have no list:
+  no free Bible text in the language, or one in a spelling the app does
+  not write (Armenian, Belarusian, Greek). The card counts one diagram as
+  one (`EC-487`: a singular key in every package). **The words also say
+  the script** (`EC-493`): when most of their letters are in one script
+  other than Latin, the translator is told to write it (_into Serbian,
+  written in Cyrillic letters_) and every part is held to it
+  (`scriptPattern`, the 40% rule); several scripts at once (Japanese) are
+  all held to, none named. Serbian had come back in Latin letters, every
+  Cyrillic word handed over "missing". **A language turned off or not
+  installed is OFFERED first** (`EC-494`): turned off in Settings →
+  Languages it is out of the window's file store, so its words, labels and
+  script cannot be read, and reading a turned-off plugin behind the
+  person's back is not the fix (turned off means not used). So
+  `runStudyTranslate` asks `findStudyLangOffer` before it loads anything:
+  the store, then `owa_language check` (`checkChatLanguage`). A language
+  turned off, or missing from this app but in the catalog, refuses the call
+  (`genStudyLangOfferRefusal`: say so in one sentence, translate nothing,
+  draft nothing), and the model's own drafts are refused while it waits
+  (`watch.langOffer`). Its sentence is asked for in the language of their
+  question, not the one translated into, with no steps or options of its
+  own: gemma4:cloud had written it in German in an English window and sent
+  them to Settings past the buttons. The window draws the offer under that
+  answer (`answer.langOffer` → `genStudyLangOffer`,
+  `chatbot-bible-import.md`): **Enable** / **Install it**, and **Not now**,
+  which asks the question again at once with `skipLangOffer` and
+  translates as before, without the package. **The offer is the window's,
+  never the model's**: the model's one sentence about it is not drawn
+  (words that say more are, `checkSaysMoreThanLangOffer`: a second
+  paragraph or over 300 letters, another part of the question answered),
+  no options are drawn under it, and the message keeps the offer's words as
+  `windowText`. A model is shown that answer without them or their
+  buttons, and an answer that was the offer alone as one line naming no
+  language, state or button (`toModelHistoryTurn`,
+  `LANG_OFFER_HISTORY_TEXT`); a report keeps all of it. Seen live: shown
+  the Serbian offer as its own earlier words, the model wrote it again over
+  a German answer -- turned off, where German was not installed -- with
+  **Enable; Not now** as a chip; with that gone, it wrote its own German
+  sentence again over Serbian, _not yet installed … install it first_
+  above **Enable**. A check
+  that cannot be made, `unavailable` or `unknown` never blocks: the study
+  is translated as before. Seen live 2026-11-11 on the dev app, Auto
+  (gemma4:cloud, free), the user's John 3 study: Serbian turned off, the
+  offer and nothing drafted (17.8k tokens), **Not now**, then the Serbian
+  pages drafted (23.7k), in Latin letters as before. After those fixes, in
+  one tab handed the study from the Markdown Preview: German, not
+  installed, drew the window's offer alone -- **Install it** / **Not now**
+  with its 0.2 MB, no chip (17.2k); Serbian under it the same with
+  **Enable** (17.4k); **Not now**, and the Serbian pages were drafted again
+  (23.6k). Nothing saved, installed or turned on. **A study translated again
+  is translated from its own words only** (`EC-492`,
+  `splitStudyTranslations`): a translation added after it opens with a rule
+  and a `#` title of its own, the plan hands that tail over as
+  `translations`, kept as it is -- after it for `append`, put back after the
+  new words for `replace`, left out of a copy. Serbian asked after a Khmer
+  translation had come back twice, from the English and from the Khmer.
+  **And one translated again into a language it holds takes the old one's
+  place** (2026-11-13, `EC-547`, `findStudyTranslationsInLanguage`): Khmer
+  asked again under `append` had been added after the first Khmer, two of
+  it in the saved file. A translation added after the study is in the
+  language asked when the window's reader (`detectTypedLanguage`, its
+  first 2 000 letters of words) names that language AND it is written
+  like the new translation, whole against whole (`textLikenessHelpers.ts`,
+  no language data): a letter-run likeness of 0.65 or more, and no letter
+  it writes often that the new one never writes. The reader knows only
+  the INSTALLED languages, and a near language not installed reads as one
+  that is; the new translation is the one sure sample of the language
+  asked. The likeness reads what is said as much as the language, so a
+  translation of words much changed since stays, the new one added after
+  it as before. Taken, `append` becomes `content` with the new words in
+  the first one's place, its rule kept, and every other copy in that
+  language out; `replace` drops them; a copy (`new`) is as it was. The
+  model's tool result says which (`describeStudyTranslation`'s
+  `takenCount`). Calibrated offline, the user's Bibles and the packages'
+  dictionaries read only: of the same chapter in two Bibles of one
+  language -- English, Khmer and French, the languages the user has two
+  Bibles of -- 684 of 690 pairs at 0.65 or more (the rest one Khmer Bible
+  in another church's words, Romans 8); of 2 312 pairs in two languages,
+  none taken; of 7 656 dictionary pairs, 24, each two near-identical
+  languages -- the risk left, beside a script whose every sign is a word
+  (Chinese), whose re-translations are unmeasured. On the user's John
+  3 study (read only): the file would have held two Khmer translations,
+  one after, everything else byte for byte; a French one taken by
+  nothing, even with a reader made to misread it; 5 to 13 ms for its
+  11 305 letters. Unit-tested through the window's loop; not seen live
+  (the dev app's relaunch was not allowed that day).
+  **And what a part's second ask still left is said before the card is
+  saved, and put right in it** (2026-11-13, `EC-600`,
+  `toStudyTranslationLeftNote`): a part's answer with fewer problems is
+  kept whatever it still leaves, and the model, told only that the window
+  translated it, said so over a card with English in it -- the user's _it
+  still partially english_. Now the study as written and its new
+  translation after a rule are read together as a saved study is
+  (`EC-536`, `EC-559`, `EC-560`, `EC-596`: a word a vowel sign from its
+  verse; letters of another script, English words and labels left; a name
+  with other letters; headings and church words), and the list rides the
+  tool result (`toStudyTranslationLeftText`), nothing when nothing is
+  left. For a change the card holds (`append`, `replace`) the model is
+  told to put the English words, labels, letters of another script and
+  headings right in ONE `replace` with `section` the translation's title,
+  which the window drafts onto the change held (`chainStudyPartEdit`) --
+  in the same ask, since a pressed option is a new ask, which holds no
+  change -- and to say the rest with its verse's or Bible's word, never
+  that every word is in the language; for a copy (`new`) the same, its
+  `file` the new study the card holds (`EC-604`, below). Measured offline on the
+  user's John 3 study, read only, its Khmer half handed over as if just
+  drafted: 16 words and two church words named in 3 542 characters, 18-20
+  ms warm (115 ms the first time), and each of the 15 a `replace` takes
+  as listed written over by one scoped to the title, the English half
+  byte for byte. Unit-tested through the window's loop; not seen in the
+  window.
+  **And a part of a NEW study the card holds is changed in that card**
+  (2026-11-13, `EC-604`, `chainHeldNewStudyEdit` and
+  `redraftHeldNewStudy` in `studyFileChatHelpers.ts`, `runHeldNewStudyEdit`
+  in `llmBotHelpers.ts`). A new study is held by the window until Create,
+  so it has no file: a `draft` naming it had been answered that no such
+  file is saved, and for a copy `EC-600` could only say what was left, to
+  be put right once it was created -- the person saved English with it
+  first. Now a `draft` that names the held new study's `file` (its name in
+  any case, `Default/` before it or not, never a path a saved study open
+  in the tab has), or no `file` and no `ref` while no study is open in the
+  tab, and changes a part -- `section` with `content` or `remove`,
+  `append`, `replace`, a saved study's own part edits -- is made in the
+  held words by the chain a held change uses (`chainStudyPartEdit`, the
+  held study posing as a change), and the study is drafted again as a NEW
+  one through the tool: its `ref`, the title off its `#` line, the words
+  under its passage, its Bible. The passage there is the app's, quoted
+  again from the Bible: a change that would touch it (a `remove` naming
+  it) is refused (`STUDY_HELD_PASSAGE_REASON`), and so are one that takes
+  out the `#` title, one that leaves no words under the passage
+  (`STUDY_HELD_EMPTY_REASON`) and the study sent whole again under its
+  name (`genHeldStudyWholeRefusal`: draft it with `ref` and no `file`).
+  Only the diagrams the change writes are parsed: a `replace` that breaks
+  one is refused every time, a part's or an append's sent back once and
+  left out after, as in a first draft. The model is shown the draft as a
+  new one, its `change` led by _Changed in the new study the card holds,
+  which is still not saved:_ and the replace's own sentence -- or, when
+  the draft is not the words as changed, the comparison's; the card is the
+  same card (Create, **New Bible Note**), a Markdown-only or window-made
+  one kept so. A `read` of the held name is answered off its words
+  (`readHeldNewStudy`, cut at 16 KB as a saved file's read is). A
+  translation copy holds the window's words, none of which the model saw,
+  so a part of it written anew by `section` and `content` is read by the
+  window and handed back with its words first, once (`EC-500`'s guard,
+  `DraftedStudyType.isWindowMade`); `replace` and `append` need no read.
+  A report of a change written into it (`EC-505`) is refused before
+  anything is changed, as a saved study's is -- a call naming no file read
+  as one naming it, the headings given back read off the held words.
+  `toStudyTranslationLeftText` now takes the target, so a copy's list asks
+  for its `file` and `replace` like a held change's. Measured offline,
+  read only: the user's John 3 study's Khmer half held as a new copy
+  (11 340 characters, 15 headings, 4 diagrams, its 73-line passage) and
+  the Genesis 4 study held as if just drafted -- each of their 22 parts
+  below the title given new words, added to and taken out, 66 of 66
+  through with the passage kept; the title's words changed and added to,
+  its removal refused as a saved study's is, the passage named by its
+  reference refused; each of the copy's 15 Latin words (_Tite_, _and_,
+  _between_ and 12 diagram labels) written over alone 15 of 15 and all
+  15 in one call, the held text each time exactly a saved file's
+  `replace`; the worker's shaping of a new study's words keeps both bodies
+  byte for byte and composes the held file back, so the replace's own
+  sentence is what the model reads; 0.2-0.6 ms a call. Unit-tested and
+  through the window's loop (`llmBotHelpers.studyTranslate.test.ts`); not
+  seen in the window.
+  **And a LATER question reaches the study the card above holds**
+  (2026-11-13, `EC-606`, `findHeldStudyAbove` and the helpers beside it in
+  `studyFileChatHelpers.ts`, `AskExtraType.heldStudy`). A held draft had
+  been reached only by its card's buttons and by the ask that drafted it,
+  so _change its title_ typed under the card held no study, in a tab
+  offered no `owa_resource_file`. The window passes the new study of the
+  card right above the question -- the tab's newest answer, a thumb-down
+  follow-up stepped over, a Retry reading above its question; never a
+  change, a draft naming no passage, a note's twin, a draft the window let
+  go, or the translator's own ask -- and the ask holds it beside its own
+  (`toReachableNewStudy`: the ask's draft first). An ordinary ask is
+  offered the study tool for it (`withHeldStudyTool`, those asks alone)
+  and told the study on the ask (`genHeldStudyAskHint`: its name, passage
+  and headings, how a part is changed and that it goes into a new card,
+  never by hand or after Create). Its parts are changed by `EC-604`'s
+  chain into a card of their own, the card above keeping its words; a
+  part written anew by `section` and `content` is read first, once
+  (`isFromEarlierAsk`, kept through the redraft, as `isWindowMade` is). A
+  read of it, or a change or translation refused, brings its card back
+  under the answer (`genHeldStudyBeforeActions`, held again under a new
+  reference once the window let it go), so the next line reaches it too.
+  A translation of it was refused in a sentence -- press Create, then ask
+  again -- until `EC-609` (below). A change to it claimed and never made, a
+  question in between (only the newest answer's card was read) and an
+  answer cut by an error (no card came back) were open until `EC-700`,
+  `EC-701` and `EC-702` (below).
+  Unit-tested and through the window's loop; seen in the window on
+  2026-11-14 (`EC-703`'s runs, below): a question typed under a new
+  study's card was answered about that study's passage, with **Add this
+  to the study** under it.
+  **And the ask says what the study is written in** (2026-11-13,
+  `EC-608`, `readStudyHalfLanguages`, `findOpenStudyFileName` and
+  `genStudyLanguageHint` in `studyFileChatHelpers.ts`). A question asked in
+  another language of a model that is not a Gemma 4 goes to it in English,
+  and a tool's arguments are never translated, so _add a prayer at the
+  end_ typed in Khmer under a Khmer study had nothing saying an English
+  prayer was wrong there, and words they gave to be written in came as
+  their English. For the study a question can change -- the one open in
+  the tab that `draft` takes (a `Default/` or `Bible Notes/` Markdown
+  file, off the whole text the name check already reads), else the new
+  study the card above holds -- the window reads each half's language
+  once (the study, then each translation after it, six at most, off its
+  own words: no quoted passage, diagram or footer) and the ask says it
+  when one is not the language the model is asked in: every word put
+  into it in that language, or into a part in its half's language,
+  whatever language the message is in, unless they ask for another. Asked
+  their English, their words go with it as typed -- a word a `replace`
+  writes over and words to be written in are taken from them, the answer
+  staying English for the translator (BN-23's for a note). The name
+  check's gate: a question with no conversation of its own. Measured on
+  the user's two studies, read only: English then Khmer, and Khmer; 1.7 ms
+  warm for the 44 KB one. Unit-tested and through the window; not seen in
+  the window.
+  **And a study not saved yet is translated from its held words**
+  (2026-11-14, `EC-609`, `findHeldStudyToTranslate` and the helpers beside
+  it in `studyFileChatHelpers.ts`, `runStudyTranslate`'s `held` in
+  `llmBotHelpers.ts`, `readStudyToTranslate` in the worker). The window
+  translated a study only from the app's plan of a SAVED file, so a
+  translation asked under a new study's card had been refused: press
+  Create, then ask again. A `translate` naming the held new study -- by
+  its name, or no `file` while no study is open in the tab; the ask's own
+  draft first, else the card above's -- is planned from its words: the
+  worker's `translate` takes `content` and `name` in place of `file` and
+  answers the parts the file of those words would, nothing read or
+  written, its `file` empty. It is translated part by part as a saved
+  file's is and drafted as a NEW study into a card of its own: added after
+  it, the study and its translation after a `---` rule, its passage from
+  the study's Bible; in its place or as a copy, the translation alone, its
+  passage from the Bible in that language; kept as a Markdown file when
+  the held study was, the card above keeping its words. A copy of a study
+  drafted in the SAME answer is refused before anything is translated
+  (`genHeldStudyCopyRefusal`: an answer holds one card), a translation that
+  drafts nothing brings the card back, and the model is told no file
+  changed and what the card holds (`genHeldStudyTranslatedNote`). A new
+  study drafted with a translation after it draws six diagrams a half and
+  sixteen in all (`checkNewStudyContent`: the user's John 3 study, four a
+  half, would have been refused at six), and a verse a change adds to its
+  translation is read from that half's Bible (`toNewStudyHalfParts`,
+  `EC-570`'s rule). Unit-tested and through the window's loop; not seen in
+  the window.
+  **And a change to it claimed and never made goes back once**
+  (2026-11-14, `EC-700`, `checkClaimsUnmadeHeldStudyChange` and
+  `genHeldStudyClaimNudge`; the slip `EC-606` left open). Under the card,
+  _I've changed the title_ written with no draft made left the card's
+  words as they were, and its Create would keep them. With no study open
+  in the tab, no draft and nothing else done in the ask -- no passage put
+  up, no note made, no press (`isNonStudyCallMade`: any call but a read
+  and the study tools, since a later line may be about anything) -- an
+  answer that reports a change MADE is handed back once: draft it now
+  with `file` the held name, or translate it, or say plainly it cannot be
+  done. Written again, the answer carries `isChangeUnmade`'s note, and
+  either way the card comes back under it. A made change is read by
+  `checkHasMadeChangeClaim`: English's first-person claim words and the
+  language's `claim`, never "not saved yet" -- the window itself tells the
+  model such a study is not saved yet, and an answer saying so is true.
+  So every language's `changeClaims` has that apart, as `unsaved` (88
+  patterns split by machine, top-level groups only, 45 pieces placed by
+  hand; the union is the old pattern, read the same on 3 663 lines, and
+  `unsaved` reads none of a language's four claim samples). A plugin
+  installed before it has no `unsaved` and its old `claim` holds both, so
+  there "not saved yet" still counts as a claim until the plugin is
+  updated. Unit-tested and through the window's loop; not seen in the
+  window.
+  **And a question asked in between no longer ends the chain**
+  (2026-11-14, `EC-701`, `findHeldStudyAbove`'s
+  `MAX_HELD_STUDY_ANSWERS_BETWEEN` and `genHeldStudyKeepHint` in
+  `studyFileChatHelpers.ts`, `runHeldNewStudyEdit`'s `isAnswerKept` in
+  `llmBotHelpers.ts`; the slip `EC-606` left open). Only the newest
+  answer's card was read, so _what does born again mean?_ asked under the
+  card left the next line, _add that to the study_, with no study held.
+  The finder now steps over up to two PLAIN answers -- no buttons, no
+  materials, no attachment asked for: an answer that offered anything is
+  what the next line may be about, and the window's own _Saved as …_
+  after a Create carries Open it and Undo, so a study saved since is never
+  offered as a new one -- and the ask says the card is further up, above
+  the last answer (`DraftedStudyType.answersBetween`, counted afresh each
+  time: a card held again keeps the count it was reached with). An answer
+  kept under it (`EC-466`'s keep ask) whose draft names the held file is
+  an `append` of that answer through `EC-604`'s chain -- a kept answer had
+  skipped the held chain, and a `draft` naming a file not saved was told
+  there is none; with no `file` it is a study of its own, as before. The
+  keep ask carries the way to it (`genHeldStudyKeepHint`: `file` the held
+  name, `append` `@answer`), a kept diagram that will not draw is left out
+  at once, never sent back, and the model is told the answer went in word
+  for word and never to paste it (`STUDY_KEPT_ANSWER_HELD_NOTE`, a
+  Markdown-only card's `STUDY_KEPT_ANSWER_HELD_MARKDOWN_NOTE`).
+  Unit-tested, through the window's loop and the window's own ask, and
+  seen in the window on 2026-11-14 (Auto, gemma4:cloud, free): under a
+  fresh John 3:16 study's card, a question answered, then its **Add this
+  to the study** pressed -- the card under the next answer held the
+  study with that answer at its end, word for word, twice (38.3k and
+  38.8k tokens). Nothing was saved.
+  **And so does an ask that failed** (2026-11-14, `EC-702`,
+  `ChatMessageType.isAskFailed`, set on the window's failure paths in
+  `ChatbotAppComp.tsx` and read by `findHeldStudyAbove` and
+  `findStudyAnswerAbove`). A failure's answer is the window's own sentence
+  over the guide's stand-in, with the door to what went wrong (**Open AI
+  settings**, a billing or status page) and the guide's own buttons, so
+  the line typed again under it reached no study: the chain ends at an
+  answer that did something. What stood for a failed or paused ask is
+  marked now, kept across a reopen, and stepped over whatever its buttons,
+  counted with the plain answers between (two at most). Nor is it ever
+  kept as their answer: `@answer` takes the answer above it, and a keep
+  line right under it is no keep ask by itself -- "that" may mean the
+  answer above as well, so the model decides. A Retry had reached the card
+  already, above the question it asks again. The card is not brought back
+  under the failure, as a read brings it: its five buttons would have
+  stood beside the failure's and the guide's. Unit-tested and through the
+  window's own failure; not seen in the window.
+  **And a question about its passage is answered, never sent to `/btw`**
+  (2026-11-14, `EC-703`, `genHeldStudyAskHint`'s last sentence and
+  `genHeldStudyQuestionNudge` in `studyFileChatHelpers.ts`, its branch in
+  `findAnswerShapeNudge`). Seen live on Auto (gemma4:cloud): _What does
+  the word begotten mean in this verse?_ typed under a new John 3:16
+  study's card was answered _The guide covers this app only ... type
+  /btw_, with **Ask it as a general question** -- the prompt's rule for
+  what a word means -- and that answer's button ended `EC-701`'s chain,
+  so the line after it reached no study. The held hint now says a
+  question about the passage (a word, a person, the background) is part
+  of the study: answered in plain words, the passage read with
+  `owa_resource_file` `read` of the held name, never by telling them to
+  type /btw, and nothing changed for a question (~70 tokens, on those
+  asks alone). With the hint alone it was answered 1 time of 2, so an
+  ordinary ask's answer (`canSearchGuide`) under a held card that still
+  says to type `/btw` (`GENERAL_ADVICE_PATTERN`) is handed back once
+  with `genHeldStudyQuestionNudge`, never on the last round; a `/btw` ask
+  is one round and never handed back. The hand-back does not bring the
+  card under the answer (`markHeldStudyBeforeReached` is left alone): a
+  card there would end the chain and keep that answer from the keep ask
+  after it. After: 2 of 2 answered in plain words in the window, **Add
+  this to the study** under each; the hand-back did not have to fire
+  live, and is unit-tested.
+  **And an answer added at its end is headed** (2026-11-14, `EC-704`,
+  `toKeptAnswerHeading` and `findStudyAnswerQuestion` in
+  `studyFileChatHelpers.ts`, `AskExtraType.answerAboveQuestion` from the
+  window). Kept by `EC-701`'s `append`, the begotten paragraph had gone
+  in under the study's _Questions for Discussion_, read as one more of
+  its answers. An answer appended at the end of a study goes under a
+  `##` heading of its own now: the answer's `#` title when it had one and
+  that is not the title of the study it goes into (`toStudyFileTitle`,
+  off the file's name), else the line they typed for it (the line of
+  theirs above the answer, a `/btw` and a reply's quote taken off, the
+  marks a heading would misread taken out), 8 to 100 characters, never a
+  command or a line ending in a colon. An answer that opens on a heading
+  keeps its own, one put into a named `section` goes in unheaded, and a
+  new study made of an answer is as before. Seen in the window twice, in
+  `EC-701`'s run: the study ending `## What does the word begotten mean
+  in this verse?` and the answer under it word for word.
+  **And no option under its card says one of its buttons again**
+  (2026-11-14, `EC-705`, `dropStudyCardEchoReplies` in
+  `studyFileChatHelpers.ts`, applied in `ChatbotAppComp.tsx` where an
+  answer's options are worked out). Seen live under the card a keep
+  brought: the model's _Create in Resources_ and _Create in Bible Notes_
+  beside **Create "..." in Resources** and **... in Bible Notes**.
+  Pressed, those words go to the model as a question, and the model can
+  never save a study. Beside a card (an action of its three tools), a
+  model's option is dropped when it is one of the card's labels with the
+  quoted name taken out -- in English and as drawn, so in the window's
+  language too, letters and digits alone compared -- or, in English, says
+  create, save or keep it (in Resources, in Bible Notes, as a note), save
+  the changes, a new Bible note, preview it or change its name; never a
+  change asked for, which names what to change. The model's options are
+  read BEFORE they are counted: a card's five buttons leave room for two
+  options, and the two echoes had been those two, so an option asking
+  for more went with them; the options the window works out itself are
+  read after. Seen live after: the card's five buttons and no echo under
+  them. The page cannot show what was dropped and the session file is
+  not read, so whether the model wrote echoes that time is not known.
+
+- **A song's words read off pictures** (2026-11-10, `EC-488`,
+  `agent-songs.md`): `askLlmBot(…, {isGeneral, isTranslation,
+  isTranscription, images})`. `isTranscription` is read first by
+  `toSystemPrompt` and sends `TRANSCRIPTION_SYSTEM_PROMPT` (copy the sung
+  lines exactly as printed, in the script printed, never translated; a blank
+  line between stanzas; no titles, numbers or copyright; `=== picture N ===`
+  before each picture's words), one round, no tools. It is asked DIRECTLY,
+  never through the Gemma 4 translator (`chatTranslateHelpers.ts`): a
+  transcription put into English is a different song. Who reads
+  (`askPictureWords`, `ChatbotAppComp.tsx`): the tab's own model when it can
+  see (`checkCanSeeImages`); on Auto, or a no-cost server or Free that cannot,
+  Auto's picks with `needsImages` (`resolveAutoPicks`); a paid key that
+  cannot, that company's first seeing model (`getFirstImageCapableModel`),
+  never another company's key; nobody, a sentence and **Open AI settings**.
+  The wait reads _Asking {who} to read the words off the pictures_, the cost
+  counts in the tab's credit, and the card names who read them.

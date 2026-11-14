@@ -208,7 +208,7 @@ export function stepChatTip(currentId: string | null, delta: number) {
  * comes back is the tip as the window shows it: the list stays English, so
  * each one is translated here, as it is handed over -- `tran` with no
  * literal the key gate can read, which is why `chatTranLabels.test.ts` holds
- * every tip to its Khmer and French itself.
+ * every tip to its string in every language package itself.
  */
 function rememberChatTip(tip: ChatTipType): ChatTipType {
     setSetting(TIP_SETTING_NAME, tip.id);

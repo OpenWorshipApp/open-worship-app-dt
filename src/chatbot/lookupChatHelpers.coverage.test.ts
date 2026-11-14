@@ -13,7 +13,7 @@ import {
 // with nothing of a passage's to shed, one too big whatever it sheds, a
 // search that would push a full record over, and a passage card asked for
 // its neighbour. (One asked in a language when its own words could not be
-// read is in the Khmer package's own tests.)
+// read is in that language's package tests.)
 
 const VERSE: LookupSubjectType = {
     kind: 'verse',

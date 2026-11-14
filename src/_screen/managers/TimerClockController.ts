@@ -67,7 +67,8 @@ export default abstract class TimerClockController<
     /**
      * EVERY whole hour, never wrapped at 24: this is a length of time, not a
      * time of day. A 25-hour countdown read `01:00:07` on the screen while the
-     * presenter said `25:00:07`.
+     * presenter said `25:00:07`. A countdown writes whole days in front of
+     * them instead (`CountdownController.hourStr`, 2026-11-13).
      */
     get hours() {
         return Math.floor(this.shownSecond / 3600);
@@ -118,7 +119,7 @@ export default abstract class TimerClockController<
         this.tick();
     }
 
-    /** A start, pause, resume or reset, applied to the clock already up. */
+    /** A start, pause, resume, reset or more time, on the clock already up. */
     update(timing: TimingType) {
         this.timing = timing;
         this.tick();

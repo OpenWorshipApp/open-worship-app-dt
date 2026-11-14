@@ -966,7 +966,7 @@ describe('custom servers and the shared registry', () => {
                             id: 'g4',
                             model: 'gemma4',
                             name: 'Gemma 4',
-                            note: { '': 'Good at Khmer.' },
+                            note: { '': 'Good at long answers.' },
                         },
                     ],
                 },
@@ -985,7 +985,7 @@ describe('custom servers and the shared registry', () => {
                 'custom/registry-hall',
             );
             expect(query('.chat-model-notice')?.textContent).toContain(
-                'Slow, but free. Good at Khmer.',
+                'Slow, but free. Good at long answers.',
             );
         } finally {
             registryStatus = null;

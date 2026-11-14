@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 72e1ac67-7514-442e-91d7-e098f96055e3
-  modified: 2026-11-07T14:23:21.776Z
+  modified: 2026-11-11T13:20:47.061Z
 ---
 
 Since `efedb3b0` (2026-10-05) `appLocalStorage.getItem` in ANY screen page
@@ -39,7 +39,10 @@ vd-20261008b (2026-10-08), fixed the same day:
   `screenSettingPushHelpers.ts` listens to every write of the window
   (`addSettingWriteListener` in `appLocalStorage.ts`, never on a screen
   page) and sends each presentation setting -- the bootstrap's own rule,
-  `checkIsMirrorPresentationSetting` in `electron/screenMirrorProtocol.ts`,
+  `checkIsMirrorPresentationSetting` in `electron/screenMirrorProtocol.ts`
+  (which leaves out every saved list of looks, `-presets$` -- the Bible
+  text, spotlight and foreground presets are named like a screen's -- since
+  2026-11-11),
   minus the keys whose value IS a layer's state (the four on-screen maps,
   `screen-draw-data-*`) -- to every SHOWING screen as `screen-setting`
   `{ settings: { key: value | null } }`. Same channel as the layer messages,

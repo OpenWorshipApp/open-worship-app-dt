@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 33d4368d-2c69-4d2b-8951-f48932510f71
-  modified: 2026-11-07T00:50:18.826Z
+  modified: 2026-11-11T13:20:45.632Z
 ---
 
 Bible/LongText Properties (`src/screen-setting/BibleCustomStyleComp.tsx`, redesigned
@@ -25,7 +25,14 @@ Bible/LongText Properties (`src/screen-setting/BibleCustomStyleComp.tsx`, redesi
   does not reset it.
 - **A preset is the whole style, size and colour included**
   (`screen-bible--style-presets`, 30 at most, presenter-only, never synced to
-  a screen). Pressing one REPLACES the style: `genBibleTextStylePatch` names
+  a screen: `checkIsMirrorPresentationSetting` in
+  `electron/screenMirrorProtocol.ts` leaves out every saved list of looks
+  (`-presets$`: this one, the spotlight's, each foreground component's),
+  held by `bibleTextPresetHelpers.test.ts` and its two siblings' tests — until
+  2026-11-11 the mirror's `^screen-` took the list into every screen's opening
+  copy and pushed each save to the showing screens; seen live that day on a
+  scratch profile, a shown screen's copy held a seeded `screen-` key and none
+  of three seeded lists). Pressing one REPLACES the style: `genBibleTextStylePatch` names
   every key, the defaults as `undefined`, so nothing of the old style is left
   behind. **Reset keeps the size** on purpose.
 - **A chosen font has to beat a verse's own** (`fontFamily`, added

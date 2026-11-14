@@ -28,11 +28,11 @@ vi.mock('monaco-editor', () => ({
     Uri: { parse: (value: string) => ({ toString: () => value }) },
 }));
 vi.mock('../../lang/langHelpers', () => ({
-    allLocalesMap: { 'en-US': 'en', 'km-KH': 'km', 'fr-FR': 'fr' },
+    allLocalesMap: { 'en-US': 'en', 'xx-XX': 'xx', 'yy-YY': 'yy' },
     DEFAULT_LANG_CODE: 'en',
     getLangCode: () => 'en',
     getLangDataAsync: async () => state.languageData,
-    languageNameMap: { en: 'English', km: 'Khmer', fr: 'French' },
+    languageNameMap: { en: 'English', xx: 'Xxish', yy: 'Yyish' },
     tran: (key: string) => {
         for (const dictionary of state.dictionaries) {
             if (dictionary[key.trim().toLowerCase()] === undefined)
@@ -96,6 +96,7 @@ vi.mock('./bibleEditorDirtyHelpers', () => ({
     setBibleEditorDirty: mocks.dirty,
 }));
 
+import type { LocaleType } from '../../lang/langHelpers';
 import BibleXMLEditorComp, {
     addMonacoBibleInfoActions,
     genBibleBooksMapXMLInput,
@@ -415,7 +416,12 @@ describe('Bible book names editor and Monaco actions', () => {
         async function parse(markup: string, changed = vi.fn()) {
             await act(async () =>
                 root.render(
-                    genBibleBooksMapXMLInput(['Old'], 'km-KH', 'KJV', changed),
+                    genBibleBooksMapXMLInput(
+                        ['Old'],
+                        'xx-XX' as LocaleType,
+                        'KJV',
+                        changed,
+                    ),
                 ),
             );
             state.value = markup;
@@ -510,9 +516,9 @@ describe('Bible book names editor and Monaco actions', () => {
         await actions.get('choose-locale').run();
         const locales = mocks.menu.mock.calls[0][1];
         await locales
-            .find((item: any) => item.menuElement.startsWith('km-KH'))
+            .find((item: any) => item.menuElement.startsWith('xx-XX'))
             .onSelect();
-        expect(setInfo).toHaveBeenCalledWith({ locale: 'km-KH' });
+        expect(setInfo).toHaveBeenCalledWith({ locale: 'xx-XX' });
         mocks.input.mockImplementationOnce(
             async (_label: string, element: any) => {
                 element.props.onChange('New Genesis\nNew Exodus');

@@ -469,8 +469,9 @@ function RenderAIEnabledComp() {
  * Deliberately NOT `RenderOpenPageButtonComp`, which puts its label and title
  * through `tran()`: a company name and a URL are not translatable strings, and
  * `tran()` THROWS on a missing key in dev, so reusing that component here would
- * blank the whole Settings page the moment the app was run in Khmer. Nothing
- * inside this button is translated, because nothing inside it is language.
+ * blank the whole Settings page the moment the app was run in another
+ * language. Nothing inside this button is translated, because nothing inside
+ * it is language.
  */
 function RenderServiceLinkComp({
     label,

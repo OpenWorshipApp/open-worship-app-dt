@@ -1,5 +1,30 @@
 Recommended run in Git Bash on Windows or Terminal on MacOS/Linux.
 
+## The MCP program in the pack (`mcp/`, pack 0.0.6 and later)
+
+From 0.0.6 every pack carries `mcp/open-worship-app-mcp[.exe]`: the app's own
+MCP server (`tools/owa-devtools-mcp`) as a Node single executable, for an AI
+agent on a machine with no Node (Settings → Others → Extra Binaries →
+**AI agents (MCP)**, recipe W-62). Unlike ffmpeg or yt-dlp it is NOT committed
+here: `node extra-work/build-extra-bin.mjs` builds it every time it builds the
+pack, from the same file tree as the npm package `open-worship-app-mcp`
+(`extra-work/mcp-dist/`), and checks it answers before packing it.
+
+- **The Node that runs the build is the one the pack carries.** Use an official
+  build from nodejs.org, 22.12 or later (a Homebrew or distro Node has no
+  single-executable fuse and is refused). Its architecture picks the pack: an
+  x64 Node on a Mac builds `mac-int`, an arm64 one builds `mac`. The pack also
+  gets that Node's `LICENSE` as `mcp/NODE-LICENSE`.
+- **A Node whose `--help` has no `--build-sea`** (an older release) injects
+  with `postject`, a devDependency of this repo.
+- **`OWA_EXTRA_BIN_NO_MCP=1`** builds a pack without `mcp/`, for a quick local
+  install. So does a Node that cannot be the runtime, or a build that failed
+  its check: the build warns, `release/bin-info.json` records `hasMcp: false`,
+  and `extra-work/release.sh` refuses to publish that pack.
+- **Raise `info.json`'s version** whenever the server should reach people who
+  already installed the tools: an installed pack is replaced only by a higher
+  version (Settings shows **Update to**).
+
 Make sure Powershell 7 installed: https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows?view=powershell-7.6#msi
 
 ## Build ffmpeg (Windows)

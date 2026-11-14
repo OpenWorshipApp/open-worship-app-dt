@@ -8,11 +8,12 @@ const h = vi.hoisted(() => ({
     locationRecord: null as any,
 }));
 
-// The lookup language is Khmer; the app interface stays English.
+// The lookup language is a made-up one (`xx`); the app interface stays
+// English.
 vi.mock('./lookupLangHelpers', () => ({
     useLookupLangPresentation: () => ({
         fontFamily: undefined,
-        translate: (text: string) => `km:${text}`,
+        translate: (text: string) => `xx:${text}`,
     }),
 }));
 vi.mock('./lookupManagersContext', () => ({
@@ -118,14 +119,15 @@ function genNameRecord(overrides: object = {}) {
 }
 
 describe('detail body facts follow the lookup language', () => {
-    // Pilate under the Khmer lookup read its word for a human beside an English `Male`.
+    // Pilate under a non-English lookup read its word for a human beside an
+    // English `Male`.
     test('a name record translates its gender with its type', () => {
         h.nameRecord = genNameRecord();
         const { facts, rowText } = render(
             <RenderNameDetailComp recordId="x" onVersesResolved={() => {}} />,
         );
-        expect(facts).toBe('km:Person|km:Male');
-        expect(rowText('Gender')).toBe('km:Male');
+        expect(facts).toBe('xx:Person|xx:Male');
+        expect(rowText('Gender')).toBe('xx:Male');
     });
 
     test('an unknown gender grows neither a chip nor a row', () => {
@@ -133,11 +135,12 @@ describe('detail body facts follow the lookup language', () => {
         const { facts, rowText } = render(
             <RenderNameDetailComp recordId="x" onVersesResolved={() => {}} />,
         );
-        expect(facts).toBe('km:Person');
+        expect(facts).toBe('xx:Person');
         expect(rowText('Gender')).toBeNull();
     });
 
-    // Abraham under the Khmer lookup read `175 years` beside its words for human and male.
+    // Abraham under a non-English lookup read `175 years` beside its words
+    // for human and male.
     test('a name record translates its age and its year ranges', () => {
         h.nameRecord = genNameRecord({
             age: '175 years',
@@ -146,12 +149,12 @@ describe('detail body facts follow the lookup language', () => {
         const { facts, rowText } = render(
             <RenderNameDetailComp recordId="x" onVersesResolved={() => {}} />,
         );
-        expect(facts).toBe('km:Person|km:Male|km:175 years');
-        expect(rowText('Age')).toBe('km:175 years');
-        expect(rowText('Years')).toBe('km:reign');
+        expect(facts).toBe('xx:Person|xx:Male|xx:175 years');
+        expect(rowText('Age')).toBe('xx:175 years');
+        expect(rowText('Years')).toBe('xx:reign');
     });
 
-    // Siloam under `km` read `Pool`.
+    // Siloam under a non-English lookup read `Pool`.
     test('a location record translates its type', () => {
         h.locationRecord = {
             name: 'Siloam',
@@ -170,8 +173,8 @@ describe('detail body facts follow the lookup language', () => {
                 onVersesResolved={() => {}}
             />,
         );
-        expect(facts).toBe('km:Pool');
-        expect(rowText('Type')).toBe('km:Pool');
+        expect(facts).toBe('xx:Pool');
+        expect(rowText('Type')).toBe('xx:Pool');
     });
 });
 

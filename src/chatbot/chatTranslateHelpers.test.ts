@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+    checkIsEnglishAnswer,
+    checkIsEnglishEcho,
     checkIsLanguageNativeModel,
     findPageLanguage,
     findTranslatedLanguage,
     genAskTranslation,
+    keepWrittenWords,
     readAnswerTranslation,
     readQuestionTranslation,
     type TranslatorType,
@@ -91,6 +94,73 @@ describe('readQuestionTranslation', () => {
     });
 });
 
+// What they typed stands in English here: the rule reads marks, never a
+// language's words (the live case is in EC-602).
+describe('keepWrittenWords: the words to write, as they typed them (EC-602)', () => {
+    it('puts back the words after a colon the translator turned', () => {
+        // Seen live on Free: an announcement went up in the model's words.
+        expect(
+            keepWrittenWords(
+                'Put an announcement on the screen: offering time now',
+                'Show an announcement on the screen: the offering is now',
+            ),
+        ).toBe('Show an announcement on the screen: offering time now');
+        // A song's words over several lines, a question mark in a verse.
+        expect(
+            keepWrittenWords(
+                'Make a song of these words:\nWho is He?\nHe is Lord',
+                'Create a song with these words:\nWho is he?\nHe is the Lord',
+            ),
+        ).toBe('Create a song with these words:\nWho is He?\nHe is Lord');
+    });
+
+    it('puts back each quoted span in its place', () => {
+        expect(
+            keepWrittenWords(
+                'Show «Welcome friends» on top and “Peace be with you” below',
+                'Show "Welcome, friends" at the top and "Peace to you" below',
+            ),
+        ).toBe(
+            'Show "Welcome friends" at the top and "Peace be with you" below',
+        );
+        // As many spans or nothing: a span the translator dropped or added
+        // cannot be matched to its own.
+        expect(
+            keepWrittenWords(
+                'Show «one» and «two»',
+                'Show "one, two" on the screen',
+            ),
+        ).toBe('Show "one, two" on the screen');
+    });
+
+    it('leaves a question, a time, a verse and a link to the translator', () => {
+        const english = 'I have a question: how do I show a verse?';
+        expect(
+            keepWrittenWords(
+                'A question I have: how is a verse shown?',
+                english,
+            ),
+        ).toBe(english);
+        for (const [original, translated] of [
+            [
+                'Start the countdown at 10:30 sharp',
+                'Start the countdown at 10:30',
+            ],
+            ['Show John 3:16 big', 'Show John 3:16 in large text'],
+            [
+                'Read https://example.com/page now',
+                'Open https://example.com/page',
+            ],
+        ]) {
+            expect(keepWrittenWords(original, translated)).toBe(translated);
+        }
+        // No colon in the English to put the words after: as it came.
+        expect(
+            keepWrittenWords('Show this: hello all', 'Show hello to everyone'),
+        ).toBe('Show hello to everyone');
+    });
+});
+
 describe('readAnswerTranslation', () => {
     it('refuses the English handed back, or nothing at all', () => {
         for (const language of OTHER_LANGUAGE_LIST) {
@@ -105,6 +175,80 @@ describe('readAnswerTranslation', () => {
                 readAnswerTranslation('  ', 'Press **Show**.', language),
             ).toBeNull();
         }
+    });
+});
+
+// BN-48 (2026-11-09): the English handed back with a word changed is no
+// translation, and an answer that came back in English when another
+// language was asked for is put into it after the fact.
+describe('an answer still in English', () => {
+    const ENGLISH =
+        'Done: block 1 is now bold. It is not saved yet, and **Undo this ' +
+        'change** puts it back.';
+
+    it('a translation that is the English near enough is none', () => {
+        expect(
+            checkIsEnglishEcho(
+                'Done: block 1 is bold now. It is not saved yet, and ' +
+                    '**Undo this change** puts it back.',
+                ENGLISH,
+            ),
+        ).toBe(true);
+        // Words of another language with the button name kept: a translation.
+        expect(
+            checkIsEnglishEcho(
+                'Zork blip 1 wug fep. Nib wug zap blorp, **Undo this ' +
+                    'change** zeb dax.',
+                ENGLISH,
+            ),
+        ).toBe(false);
+        for (const language of OTHER_LANGUAGE_LIST) {
+            expect(
+                readAnswerTranslation(
+                    'Done: block 1 is bold now. It is not saved yet, and ' +
+                        '**Undo this change** puts it back.',
+                    ENGLISH,
+                    language,
+                ),
+            ).toBeNull();
+        }
+    });
+
+    it('is an English answer to another language, given enough words', () => {
+        expect(checkIsEnglishAnswer(ENGLISH, 'xx')).toBe(true);
+        expect(checkIsEnglishAnswer(ENGLISH, 'en')).toBe(false);
+        expect(checkIsEnglishAnswer(ENGLISH, 'other')).toBe(false);
+        expect(checkIsEnglishAnswer('Done.', 'xx')).toBe(false);
+    });
+
+    it('a language with data and a translator gets a late plan', async () => {
+        for (const { code } of OTHER_LANGUAGE_LIST) {
+            const asking = genAskTranslation({
+                replyLang: code,
+                words: 'x',
+                findTranslator: async () => GEMMA,
+                translate: vi.fn(),
+            });
+            const late = await asking.planForEnglishAnswer();
+            expect(late?.language.code).toBe(code);
+            expect(late?.translator).toBe(GEMMA);
+        }
+        for (const replyLang of ['en', 'other']) {
+            const asking = genAskTranslation({
+                replyLang,
+                words: 'x',
+                findTranslator: async () => GEMMA,
+                translate: vi.fn(),
+            });
+            expect(await asking.planForEnglishAnswer()).toBeNull();
+        }
+        const noTranslator = genAskTranslation({
+            replyLang: OTHER_LANGUAGE_LIST[0]?.code ?? 'xx',
+            words: 'x',
+            findTranslator: async () => null,
+            translate: vi.fn(),
+        });
+        expect(await noTranslator.planForEnglishAnswer()).toBeNull();
     });
 });
 

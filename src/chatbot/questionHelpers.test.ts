@@ -202,6 +202,20 @@ describe('a picked question is a known one', () => {
         expect(
             await findKnownQuestion('how do I bake bread', 'presenter'),
         ).toBeNull();
+        // 2026-11-13: "How do I show the time?" matched no row, and the
+        // guide search ranked the auto-play timer's page first; "show
+        // the time" is the clock row's phrase now, so its page rides the
+        // question, and the same words typed as a command put it up.
+        const { findDoAskTool } = await import('./questionHelpers');
+        const timeHow = await findKnownQuestion(
+            'How do I show the time?',
+            'presenter',
+        );
+        expect(timeHow?.id).toBe('presenter.foreground.clock');
+        expect(findDoAskTool(timeHow!, 'How do I show the time?')).toBeNull();
+        const timeDo = await findKnownQuestion('Show the time', 'presenter');
+        expect(timeDo?.id).toBe('presenter.foreground.clock');
+        expect(findDoAskTool(timeDo!, 'Show the time')).toBe('owa_foreground');
         // The rule on its own: one word is no phrase, and two rows that
         // answer from different pages are nobody's question.
         const rows = [
@@ -227,6 +241,139 @@ describe('a picked question is a known one', () => {
             findRowByKeywordPhrase('stay awake and the screen saver', rows),
         ).toBeNull();
         expect(findRowByKeywordPhrase('stay awaken', rows)).toBeNull();
+    });
+
+    // 2026-11-14, EC-650: "count back from five minutes on the screen" was
+    // handed the Tips of the Day page by its "five minutes" keyword.
+    test('a phrase that names no subject claims no line (EC-650)', async () => {
+        const {
+            checkIsSubjectlessPhrase,
+            findKnownQuestion,
+            findRowByKeywordPhrase,
+        } = await import('./questionHelpers');
+        for (const phrase of [
+            'five minutes',
+            '30 days',
+            'per hour',
+            'a few seconds',
+            'how much',
+            'how long',
+            'where is',
+            'who is',
+            'what is this',
+            'do it for me',
+            'show it',
+            'go to',
+            'make it for me',
+        ]) {
+            expect(checkIsSubjectlessPhrase(phrase)).toBe(true);
+        }
+        for (const phrase of [
+            'stay awake',
+            'how much did this chat cost',
+            'tip of the day',
+            'five minute countdown',
+            'screen saver',
+            'help menu',
+            'show tips again',
+        ]) {
+            expect(checkIsSubjectlessPhrase(phrase)).toBe(false);
+        }
+        const rows = [
+            {
+                id: 'tips',
+                keywords: ['five minutes', 'tip of the day'],
+                resources: { recipe: 'W-46' },
+            },
+            {
+                id: 'cost',
+                keywords: ['how much', 'chat cost'],
+                resources: { recipe: 'W-42' },
+            },
+        ] as any[];
+        expect(
+            findRowByKeywordPhrase(
+                'count back from five minutes on the screen',
+                rows,
+            ),
+        ).toBeNull();
+        expect(
+            findRowByKeywordPhrase('show how much time has passed', rows),
+        ).toBeNull();
+        // The row is still found by a phrase that names something.
+        expect(
+            findRowByKeywordPhrase('where did the tip of the day go', rows)?.id,
+        ).toBe('tips');
+        expect(findRowByKeywordPhrase('what did the chat cost', rows)?.id).toBe(
+            'cost',
+        );
+        expect(
+            (
+                await findKnownQuestion(
+                    'count back from five minutes on the screen',
+                    'presenter',
+                )
+            )?.resources?.recipe,
+        ).not.toBe('W-46');
+    });
+
+    // 2026-11-14, EC-657: "put up the pastor's email address" carried the
+    // report row's "email address" whole and was answered from the bug
+    // report page; the address was never asked for.
+    test('a thing to put on the screen is no report question (EC-657)', async () => {
+        const { findKnownQuestion } = await import('./questionHelpers');
+        for (const line of [
+            "put up the pastor's email address",
+            'show the email address of the church office',
+        ]) {
+            expect(
+                (await findKnownQuestion(line, 'presenter'))?.id ?? '',
+                line,
+            ).not.toContain('report-where-saved');
+        }
+        expect(
+            (
+                await findKnownQuestion(
+                    'what is the report email address',
+                    'presenter',
+                )
+            )?.resources?.recipe,
+        ).toBe('W-42');
+    });
+
+    // 2026-11-13, EC-555: "Put it back", offered under a clear of the
+    // foreground that named the long text, carried the undo row's phrase.
+    test('an option the answer above offered is no row by its phrase', async () => {
+        const { checkIsOfferedReply, findKnownQuestion } =
+            await import('./questionHelpers');
+        const messages = [
+            { author: 'you', text: 'Clear everything from the foreground' },
+            {
+                author: 'bot',
+                text: 'I took off the long text "Morning Psalm".',
+                replies: ['Put it back', 'Start a countdown'],
+            },
+        ];
+        expect(checkIsOfferedReply(messages, 'Put it back')).toBe(true);
+        expect(checkIsOfferedReply(messages, ' put it back! ')).toBe(true);
+        expect(checkIsOfferedReply(messages, 'Put it all back')).toBe(false);
+        expect(checkIsOfferedReply(messages, '')).toBe(false);
+        // Only the NEWEST answer's options: an older one's are history.
+        expect(
+            checkIsOfferedReply(
+                [...messages, { author: 'bot', text: 'Done.', replies: [] }],
+                'Put it back',
+            ),
+        ).toBe(false);
+        expect(checkIsOfferedReply([], 'Put it back')).toBe(false);
+        // Asked as an option, the phrase labels nothing; typed on its own,
+        // it is the undo row as before.
+        expect(
+            await findKnownQuestion('Put it back', 'presenter', true),
+        ).toBeNull();
+        expect((await findKnownQuestion('Put it back', 'presenter'))?.id).toBe(
+            'common.changes.undo-a-change',
+        );
     });
 
     // 2026-10-12: "Add a slide to my document that says Welcome to church"
@@ -710,8 +857,8 @@ describe('a picked question is a known one', () => {
         expect(genKnownAskExtra(null, null)).toEqual({});
     });
 
-    // The whole list asked in Khmer (EC-323): "Can you start a 5 minute
-    // countdown on the screen?" was answered with a question back.
+    // The whole list asked in another language (EC-323): "Can you start a
+    // 5 minute countdown on the screen?" was answered with a question back.
     test('a row asking to put something up is told to do it', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         const row = (text: string, tools: string[]) => {
@@ -761,6 +908,72 @@ describe('a picked question is a known one', () => {
                 ]),
             ),
         ).not.toContain('DO it');
+    });
+
+    // EC-551: "Put the long text up on the screen" found the Long Text
+    // Show's row by its phrase -- a row that asks HOW -- and was answered
+    // with the panel's five steps.
+    test('words typed that ask to put it up are a do-ask on a how row', async () => {
+        const { findDoAskTool, genKnownAskExtra, genKnownQuestionHint } =
+            await import('./questionHelpers');
+        const howRow = {
+            text: 'How do I show a song in two languages side by side?',
+            textEn: 'How do I show a song in two languages side by side?',
+            resources: { recipe: 'W-53', tools: ['owa_foreground'] },
+            focus: null,
+        } as any;
+        for (const asked of [
+            'Put the long text up on the screen',
+            'please start the long text',
+            'Can you show the long text now?',
+        ]) {
+            expect(findDoAskTool(howRow, asked)).toBe('owa_foreground');
+        }
+        for (const asked of [
+            'Show me how to put the long text up',
+            'How do I put the long text up?',
+            'long text',
+            '',
+        ]) {
+            expect(findDoAskTool(howRow, asked)).toBeNull();
+        }
+        // The row's own words, pressed, still ask how.
+        expect(findDoAskTool(howRow, howRow.text)).toBeNull();
+        expect(findDoAskTool(howRow)).toBeNull();
+        const doHint = genKnownQuestionHint(howRow, {
+            pageText: '# Long Text Show\n\n1. Open the Foreground tab.',
+            asked: 'Put the long text up on the screen',
+        });
+        expect(doHint).toContain(
+            'it asks you to DO it, now: call owa_foreground',
+        );
+        // Its page is the way by hand, not the answer: the live window's
+        // answer had opened with two of the panel's steps.
+        expect(doHint).toContain(
+            'its steps are the way by hand, so do not write them out',
+        );
+        expect(doHint).not.toContain('write the answer from it');
+        expect(
+            genKnownQuestionHint(howRow, {
+                pageText: '# Long Text Show\n\n1. Open the Foreground tab.',
+                asked: howRow.text,
+            }),
+        ).toContain('write the answer from it');
+        expect(
+            genKnownAskExtra(
+                howRow,
+                null,
+                null,
+                'Put the long text up on the screen',
+            ).knownDoTool,
+        ).toBe('owa_foreground');
+        // A row with no tool to do it with stays a how, however it is asked.
+        expect(
+            findDoAskTool(
+                { ...howRow, resources: { recipe: 'W-53' } },
+                'Put the long text up',
+            ),
+        ).toBeNull();
     });
 
     // 2026-10-12, gemma-4-e4b on a local server, which is sent fourteen of
@@ -988,10 +1201,11 @@ describe('a picked question is a known one', () => {
 });
 
 // The page in the language the model is asked in (2026-10-17, the whole
-// corpus asked in Khmer of gemma4:cloud): handed the English page and told
-// to copy the part with the words "Open View on the top menu bar again and
-// click", it wrote the Khmer "open" and then the English words. The cut is
-// chosen in English and quoted from the translation, block for block.
+// corpus asked in another language of gemma4:cloud): handed the English page
+// and told to copy the part with the words "Open View on the top menu bar
+// again and click", it wrote that language's "open" and then the English
+// words. The cut is chosen in English and quoted from the translation,
+// block for block.
 describe('a known page rides in the language it is asked in', () => {
     // The same run: _The two small arrows at the end of that line walk them
     // in order_, quoted by itself, does not say which line, and the question
@@ -1136,7 +1350,8 @@ describe('a known page rides in the language it is asked in', () => {
     });
 
     // W-37's link list rode first with its example under it, and four passes
-    // in a row the Khmer answer left the example out (2026-10-18).
+    // in a row the answer in another language left the example out
+    // (2026-10-18).
     test('a part that ends on an example is answered with the example', async () => {
         const { genKnownQuestionHint } = await import('./questionHelpers');
         const filler = Array.from({ length: 90 }, (_, index) => {
@@ -1178,10 +1393,11 @@ describe('a known page rides in the language it is asked in', () => {
     // What the cut rests on: every current translation of the manual is
     // written block for block -- as many blocks, each of the same kind
     // (`toLocalizedCut` of the whole page is null otherwise). Measured
-    // 2026-10-17 with a bold lead starting a block: every page of both, where
-    // blank lines and steps alone had left French W-42 a block short. A
-    // translation that drifts out of line fails here; it then rides as the
-    // English cut, so the way to make it pass is to fix the translation.
+    // 2026-10-17 with a bold lead starting a block: every translated page,
+    // where blank lines and steps alone had left one translation's W-42 a
+    // block short. A translation that drifts out of line fails here; it then
+    // rides as the English cut, so the way to make it pass is to fix the
+    // translation.
     test('every current translation lines up block for block', async () => {
         const { readFileSync } = await import('node:fs');
         const path = await import('node:path');
@@ -1205,8 +1421,9 @@ describe('a known page rides in the language it is asked in', () => {
                 // Read as the window reads it, its labels filled in: a bold
                 // label ending in a full stop that a translation wraps to
                 // the start of a line is a bold lead there, and a block
-                // more (French W-50's "The router opened the port.",
-                // 2026-10-18). The English key stands in for the word.
+                // more (one translation's W-50, "The router opened the
+                // port.", 2026-10-18). The English key stands in for the
+                // word.
                 const toResolved = (text: string) => {
                     return toManualPageBody(text).replace(
                         /\[en:tran:([^\]]+)\]/g,
@@ -1235,11 +1452,12 @@ describe('a known page rides in the language it is asked in', () => {
         expect(outOfLine).toEqual([]);
     });
 
-    // Pass 11 (2026-10-18): Khmer W-42's report paragraph split one sentence
-    // more than the English ("Report: " ends a sentence, "Report:," does
-    // not), so four rows' passages were pointed at its opening sentence. A
-    // passage inside its block needs the block's sentences to line up in
-    // every current translation; the fix is to the translation.
+    // Pass 11 (2026-10-18): one translation's W-42 report paragraph split
+    // one sentence more than the English ("Report: " ends a sentence,
+    // "Report:," does not), so four rows' passages were pointed at its
+    // opening sentence. A passage inside its block needs the block's
+    // sentences to line up in every current translation; the fix is to the
+    // translation.
     test('every row’s passage is pointed at in every current translation', async () => {
         const { readFileSync, readdirSync } = await import('node:fs');
         const path = await import('node:path');
@@ -1371,6 +1589,27 @@ describe('genFollowUpQuestions', () => {
             await findTemplateAsk('Where is the button for Clear All'),
         ).toBeNull();
         expect(await findKnownQuestion('?!', 'presenter')).toBeNull();
+    });
+});
+
+// EC-583: the jobs a word typed alone could mean, as the window offers them.
+describe('genTopicChoices', () => {
+    it('answers "lyric" with up to six jobs, a song from a PowerPoint among them', async () => {
+        const { genTopicChoices, MAX_TOPIC_CHOICE_COUNT } =
+            await import('./questionHelpers');
+        const choices = await genTopicChoices('lyric', 'presenter');
+        expect(choices).toHaveLength(MAX_TOPIC_CHOICE_COUNT);
+        expect(choices).toContain(
+            'Can you turn a PowerPoint song into a lyric file?',
+        );
+        expect(choices[0]).toBe('How do I make a new song?');
+    });
+
+    it('never offers back the question asked, and one job is no choice', async () => {
+        const { genTopicChoices } = await import('./questionHelpers');
+        const asked = 'How do I make a new song?';
+        expect(await genTopicChoices(asked, 'presenter')).not.toContain(asked);
+        expect(await genTopicChoices('hello', 'presenter')).toEqual([]);
     });
 });
 

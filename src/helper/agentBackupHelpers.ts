@@ -48,6 +48,7 @@ import {
     fsReadFile,
     fsWriteFile,
     getFileFullName,
+    pathDirname,
     pathJoin,
 } from '../server/fileHelpers';
 import {
@@ -57,7 +58,9 @@ import {
     type AgentEditableKindType,
     type AgentRestoreType,
     checkIsAgentBackupId,
+    checkIsScreenRestore,
     findLaterOverlappingChanges,
+    genLaterChangesNote,
     genAgentBackupId,
     listRestoreFilePaths,
     pickPrunableBackupIds,
@@ -496,6 +499,40 @@ export async function runWithAgentBackup<T>(
     }
 }
 
+/**
+ * More to put back, added to a backup after its change ran: what a show did to
+ * the screens is known only once it has (`screen-foreground`, EC-540). The
+ * backup stands without it -- a throw here leaves the change and its backup as
+ * they were -- and its meta names the new slots, so a later show into one of
+ * them is said to go back with an undo of this one.
+ */
+export async function appendAgentBackupRestores(
+    id: string,
+    restores: AgentRestoreType[],
+) {
+    if (restores.length === 0) {
+        return;
+    }
+    const dirPath = await getAgentBackupDirPath();
+    const dataPath = pathJoin(dirPath, toAgentBackupFileNames(id).data);
+    const data = await readJsonFile<{
+        id: string;
+        restores: AgentRestoreType[];
+    }>(dataPath);
+    if (data === null || !Array.isArray(data.restores)) {
+        throw new Error(`the backup "${id}" could not be read`);
+    }
+    const restoreList = [...data.restores, ...restores];
+    const dataText = JSON.stringify({ ...data, restores: restoreList });
+    if (dataText.length > AGENT_BACKUP_MAX_CHARS) {
+        throw new Error('what it changed is too large to back up');
+    }
+    await fsWriteFile(dataPath, dataText);
+    await updateAgentBackupMeta(id, {
+        filePaths: listRestoreFilePaths(restoreList),
+    });
+}
+
 /** What every change answers with, so the model can say how to undo it. */
 export function genUndoField(meta: AgentBackupMetaType) {
     return {
@@ -706,6 +743,38 @@ export async function listAgentBackups(limit = 20) {
 }
 
 async function applyRestore(restore: AgentRestoreType) {
+    if (restore.type === 'screen-setting' || restore.type === 'screen-layer') {
+        const { applyScreenControlRestore } =
+            await import('./agentScreenControlRestoreHelpers');
+        await applyScreenControlRestore(restore);
+        return;
+    }
+    if (restore.type === 'screen-presence') {
+        const { applyScreenPresenceRestore } =
+            await import('./agentScreenControlRestoreHelpers');
+        await applyScreenPresenceRestore(restore);
+        return;
+    }
+    if (
+        restore.type === 'screen-foreground' ||
+        restore.type === 'screen-text'
+    ) {
+        const { applyScreenRestore } =
+            await import('./agentScreenRestoreHelpers');
+        await applyScreenRestore(restore);
+        return;
+    }
+    if (restore.type === 'app-setting') {
+        // The panel and the wall are told once the whole undo is in -- see
+        // `refreshRestoredForeground` -- not once per key.
+        const { removeSetting, setSetting } = await import('./settingHelpers');
+        if (restore.text === null) {
+            removeSetting(restore.key);
+        } else {
+            setSetting(restore.key, restore.text);
+        }
+        return;
+    }
     if (restore.type === 'home-setting') {
         const { appHomeStorage } = await import('../server/appHomeStorage');
         if (restore.text === null) {
@@ -778,6 +847,14 @@ async function applyRestore(restore: AgentRestoreType) {
                 await import('../setting/bible-setting/bibleXMLHelpers');
             await clearBibleXMLCache(restore.bibleKey);
         }
+        if (restore.isResource) {
+            const { invalidateResourcesScanCache } =
+                await import('../resources/resourcesScanHelpers');
+            const { announceResourcesChanged } =
+                await import('../resources/resourcesChangedEvent');
+            invalidateResourcesScanCache(pathDirname(restore.filePath));
+            announceResourcesChanged();
+        }
         // A document's attached backgrounds: the manager keeps the map for a
         // few seconds, and the slide cards would draw the background just
         // undone until it let go.
@@ -828,6 +905,28 @@ async function applyRestore(restore: AgentRestoreType) {
 }
 
 async function snapshotBeforeRestore(restore: AgentRestoreType) {
+    if (restore.type === 'screen-setting' || restore.type === 'screen-layer') {
+        const { snapshotScreenControlRestore } =
+            await import('./agentScreenControlRestoreHelpers');
+        return [await snapshotScreenControlRestore(restore)];
+    }
+    if (restore.type === 'screen-presence') {
+        const { snapshotScreenPresenceRestore } =
+            await import('./agentScreenControlRestoreHelpers');
+        return snapshotScreenPresenceRestore(restore);
+    }
+    if (
+        restore.type === 'screen-foreground' ||
+        restore.type === 'screen-text'
+    ) {
+        const { snapshotScreenRestore } =
+            await import('./agentScreenRestoreHelpers');
+        return [snapshotScreenRestore(restore)];
+    }
+    if (restore.type === 'app-setting') {
+        const { getSetting } = await import('./settingHelpers');
+        return [{ ...restore, text: getSetting(restore.key) }];
+    }
     if (restore.type === 'home-setting') {
         const { appHomeStorage } = await import('../server/appHomeStorage');
         return [{ ...restore, text: appHomeStorage.getItem(restore.key) }];
@@ -880,6 +979,7 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
             ...(restore.bibleKey === undefined
                 ? {}
                 : { bibleKey: restore.bibleKey }),
+            ...(restore.isResource ? { isResource: true } : {}),
         } as AgentRestoreType,
     ];
     if (restore.kind !== undefined) {
@@ -892,6 +992,38 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
         }
     }
     return restoreList;
+}
+
+/**
+ * A foreground component's settings put back: its open panel reads them
+ * again and what of it is on a screen is dressed as it was -- ONCE per
+ * component, however many of its keys went back. Only a notice: one that
+ * cannot be given leaves the undo done.
+ */
+async function refreshRestoredForeground(restores: AgentRestoreType[]) {
+    const widgetSet = new Set<string>();
+    for (const restore of restores) {
+        if (
+            (restore.type === 'app-setting' ||
+                restore.type === 'screen-foreground' ||
+                restore.type === 'screen-text') &&
+            restore.foreground
+        ) {
+            widgetSet.add(restore.foreground);
+        }
+    }
+    if (widgetSet.size === 0) {
+        return;
+    }
+    try {
+        const { refreshForegroundAfterUndo } =
+            await import('./agentForegroundHelpers');
+        for (const widget of widgetSet) {
+            await refreshForegroundAfterUndo(widget);
+        }
+    } catch (error) {
+        handleError(error);
+    }
 }
 
 export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
@@ -928,6 +1060,16 @@ export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
         );
     }
     const orderedList = sortRestoresForUndo(data.restores);
+    // A screen that cannot be changed here refuses the WHOLE undo, before
+    // any of it: the session back with its overlay still up is EC-540.
+    if (orderedList.some(checkIsScreenRestore)) {
+        const { checkScreenRestores } =
+            await import('./agentScreenRestoreHelpers');
+        const screenReason = checkScreenRestores(orderedList);
+        if (screenReason !== null) {
+            return fail(screenReason);
+        }
+    }
     const snapshotList: AgentRestoreType[] = [];
     for (const restore of orderedList) {
         snapshotList.push(...(await snapshotBeforeRestore(restore)));
@@ -960,6 +1102,7 @@ export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
         undoneAt: new Date().toISOString(),
         undoneBy: undoMeta.id,
     });
+    await refreshRestoredForeground(orderedList);
     const laterList = findLaterOverlappingChanges(metaList, target);
     return {
         undone: target.summary,
@@ -967,10 +1110,7 @@ export async function undoAgentBackup(id?: string): Promise<AgentResultType> {
         note:
             'Put back. The undo is a change of its own in the list, so it can ' +
             'be undone too.' +
-            (laterList.length === 0
-                ? ''
-                : ' Later changes to the same file went back with it -- ' +
-                  'say so; each can be put back from the list.'),
+            genLaterChangesNote(target, laterList),
         ...(laterList.length === 0
             ? {}
             : {

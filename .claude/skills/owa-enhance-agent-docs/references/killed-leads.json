@@ -569,5 +569,17 @@
         "doc": ".claude/memory/onscreen-setting-parse-amplification.md",
         "name": "ScreenBibleManager",
         "why": "history: a FIXED note names the site it fixed; renamed ScreenLongTextManager in eae3c775 (2026-10-13), which the note now says"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/rules/agent-tools.md",
+        "name": "h2h-run.mjs",
+        "why": "local: a measuring script in one session's scratchpad (2026-11-07), outside the repo; the rule says so"
+    },
+    {
+        "check": "paths",
+        "doc": ".claude/rules/language-packages.md",
+        "name": "__owa_lang_entry__.js",
+        "why": "virtual: the plugin build's in-memory entry (LANG_ENTRY_FILE_NAME in extra-work/build-lang-plugins.mjs), never a file on disk; the rule says so"
     }
 ]

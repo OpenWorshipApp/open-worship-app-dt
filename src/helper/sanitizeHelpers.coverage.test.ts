@@ -109,7 +109,9 @@ describe('sanitizeCssValue', () => {
         expect(sanitizeCssValue('#fff;}body{color:red')).toBe(
             '#fffbodycolor:red',
         );
-        expect(sanitizeCssValue('"Khmer OS", serif')).toBe('Khmer OS, serif');
+        expect(sanitizeCssValue('"Made Up Sans", serif')).toBe(
+            'Made Up Sans, serif',
+        );
         expect(sanitizeCssValue(String.raw`url(\'x\')<style>`)).toBe(
             'url(x)style',
         );

@@ -190,6 +190,10 @@ import {
     toEditorContent,
     toStoredContent,
 } from './bibleNoteHelpers';
+import {
+    NOTE_WINDOW_READY_GLOBAL_NAME,
+    getNoteWindowController,
+} from './noteWindowControllerHelpers';
 
 const EMPTY_ROOT_CONTENT = JSON.stringify({
     root: {
@@ -262,10 +266,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
                     checkIsThisLang: () => false,
                 },
                 {
-                    locale: 'km',
-                    langCode: 'km',
-                    fontFamily: 'KhmerFont',
-                    stickyNoteFontFamily: 'KhmerSticky',
+                    locale: 'xx',
+                    langCode: 'xx',
+                    fontFamily: 'MadeUpFont',
+                    stickyNoteFontFamily: 'MadeUpSticky',
                     checkIsThisLang: (t: string) => t.includes('x'),
                 },
             ]);
@@ -297,10 +301,10 @@ describe('bible-list/note bibleNoteHelpers', () => {
             // every locale's css is injected in one go, not per non-current one
             expect(h.initAllLangCssMock).toHaveBeenCalledTimes(1);
             expect(capturedConfig.editorExtraFontFamilies).toEqual([
-                ['KhmerFont', 'km'],
+                ['MadeUpFont', 'xx'],
             ]);
             expect(capturedConfig.stickyNoteExtraFontFamilies).toEqual([
-                'KhmerSticky',
+                'MadeUpSticky',
             ]);
         });
 
@@ -326,6 +330,51 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect((bibleNote as any).isReadOnly).toBe(true);
             await capturedConfig.saveData('new data');
             expect(noteItem.content).toBe('note content');
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
+            // The help window may read it, never change it.
+            const controller = getNoteWindowController()!;
+            expect(controller.isReadOnly).toBe(true);
+            expect(await controller.writeContent('from the chat')).toBe(false);
+            expect(noteItem.content).toBe('note content');
+        });
+
+        // 2026-11-08, the user: _bible-note chatbot should depend on
+        // bible-note UI controller_ -- the note is read and changed through
+        // this window's editor, never the file behind it.
+        test('the help window reads and changes the note through THIS editor', async () => {
+            const { note, noteItem, bibleNote } = await setupInit();
+            const controller = getNoteWindowController()!;
+            expect(controller).toMatchObject({
+                filePath: '/notes/a.note',
+                noteId: 7,
+                isReadOnly: false,
+            });
+            // What the editor shows, not what the history last kept.
+            expect(controller.readContent()).toBe('stored');
+            const checkIsReady = (globalThis as any)[
+                NOTE_WINDOW_READY_GLOBAL_NAME
+            ];
+            expect(checkIsReady()).toBe(true);
+            // Not drawn yet: what it was handed, and not ready.
+            (bibleNote as any)._content = '';
+            expect(controller.isMounted()).toBe(false);
+            expect(checkIsReady()).toBe(false);
+            expect(controller.readContent()).toBe('note content');
+            // A change goes INTO the editor, and its own save keeps it --
+            // in the editing history, at once.
+            Object.defineProperty(bibleNote, 'content', {
+                configurable: true,
+                get: () => noteItem.content,
+                set: (value: string) => {
+                    void capturedConfig.saveData(value);
+                },
+            });
+            expect(await controller.writeContent('from the chat')).toBe(true);
+            expect(noteItem.content).toBe('from the chat');
+            expect(note.addItemEditingHistory).toHaveBeenCalledWith(noteItem);
+            // The same words again keep nothing.
+            note.addItemEditingHistory.mockClear();
+            expect(await controller.writeContent('from the chat')).toBe(false);
             expect(note.addItemEditingHistory).not.toHaveBeenCalled();
         });
 
@@ -398,7 +447,7 @@ describe('bible-list/note bibleNoteHelpers', () => {
 
         test('getLangCode detects language or defaults to en', async () => {
             await setupInit();
-            expect(capturedConfig.getLangCode('has x here')).toBe('km');
+            expect(capturedConfig.getLangCode('has x here')).toBe('xx');
             expect(capturedConfig.getLangCode('plain')).toBe('en');
         });
 
@@ -650,6 +699,79 @@ describe('bible-list/note bibleNoteHelpers', () => {
             // The editor's own save of it finds nothing new to write.
             await capturedConfig.saveData('from chat');
             expect(note.updateNoteItem).not.toHaveBeenCalled();
+        });
+
+        // BN-237 (2026-11-13, held-out batch JE, J-06): the help window's
+        // next change landed while the reload of its last one read the
+        // head; the read came back with the change before and the new one
+        // was written as the old words under a new date.
+        test('a head read while this window kept a newer change is let go', async () => {
+            h.headChangedListeners.length = 0;
+            const { note, bibleNote, noteItem } = await setupInit();
+            let finishRead: () => void = () => {};
+            note.reloadEditing.mockImplementation(() => {
+                return new Promise<void>((resolve) => {
+                    finishRead = resolve;
+                });
+            });
+            note.getItemById.mockReturnValue({ id: 7, content: 'change 6' });
+            h.headChangedListeners[0]('/notes/a.note');
+            await flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            // The next change is kept while the head is being read.
+            await capturedConfig.saveData('change 8');
+            finishRead();
+            await flush();
+            expect(noteItem.content).toBe('change 8');
+            expect(bibleNote.content).not.toBe('change 6');
+            const keptList = note.addItemEditingHistory.mock.calls.map(
+                (call: any[]) => call[0].content,
+            );
+            expect(keptList.at(-1)).toBe('change 8');
+        });
+
+        test('a change on its way into the history lands before the head is read', async () => {
+            h.headChangedListeners.length = 0;
+            const { note, noteItem } = await setupInit();
+            let finishWrite: () => void = () => {};
+            note.addItemEditingHistory.mockImplementation(() => {
+                return new Promise<void>((resolve) => {
+                    finishWrite = resolve;
+                });
+            });
+            void capturedConfig.saveData('change 8');
+            note.getItemById.mockReturnValue({ id: 7, content: 'change 8' });
+            h.headChangedListeners[0]('/notes/a.note');
+            await flush();
+            // Not read while the write is on its way.
+            expect(note.reloadEditing).not.toHaveBeenCalled();
+            finishWrite();
+            await flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            expect(noteItem.content).toBe('change 8');
+        });
+
+        // BN-28 (2026-11-08): after Undo this change, the window waited out
+        // its debounce and, focused, a pause for typing -- seconds in which
+        // the help window's next read found the undone state and its edit
+        // was refused as stale. A read asked of the window shows it first.
+        test('a head change still waiting is shown before the help window reads', async () => {
+            h.headChangedListeners.length = 0;
+            // The debounce has not run yet.
+            h.genTimeoutAttemptMock.mockReturnValue(() => {});
+            const { note, bibleNote, noteItem } = await setupInit();
+            const controller = getNoteWindowController()!;
+            note.getItemById.mockReturnValue({ id: 7, content: 'undone' });
+            h.headChangedListeners[0]('/notes/a.note');
+            await flush();
+            expect(note.reloadEditing).not.toHaveBeenCalled();
+            await controller.flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            expect(noteItem.content).toBe('undone');
+            expect(bibleNote.content).toBe('undone');
+            // Nothing waits any more: the next read reloads nothing.
+            await controller.flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
         });
 
         test('a read-only preview does not listen for heads', async () => {

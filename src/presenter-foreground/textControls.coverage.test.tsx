@@ -34,6 +34,7 @@ const { state, mocks } = vi.hoisted(() => ({
         setQuick: vi.fn(),
         setCountdown: vi.fn(),
         setStopwatch: vi.fn(),
+        removeSession: vi.fn(),
         addTime: vi.fn(),
         removeTime: vi.fn(),
         manager: vi.fn(),
@@ -156,6 +157,11 @@ vi.mock('./foregroundHelpers', () => ({
     getForegroundShowingScreenIdDataList: (
         predicate: (value: any) => boolean,
     ) => state.screens.filter(([, data]) => predicate(data)),
+    // As the real one: a row per SESSION's entry of the list, per screen.
+    getForegroundSessionShowingList: (key: string) =>
+        state.screens.flatMap(([screenId, data]) =>
+            (data[key] ?? []).map((item: any) => [screenId, item]),
+        ),
     getScreenForegroundManagerInstances: (
         id: number,
         callback: (value: any) => void,
@@ -167,6 +173,7 @@ vi.mock('./foregroundHelpers', () => ({
             setQuickTextData: mocks.setQuick,
             setCountdownData: mocks.setCountdown,
             setStopwatchData: mocks.setStopwatch,
+            removeSessionData: mocks.removeSession,
             addTimeData: mocks.addTime,
             removeTimeData: mocks.removeTime,
             foregroundData: state.screens.find(
@@ -297,6 +304,7 @@ import ForegroundTimerControlsComp, {
     ForegroundAutoStartSwitchComp,
 } from './ForegroundTimerControlsComp';
 import { readSourceDictionary } from '../../tools/owa-devtools-mcp/langPacks.mjs';
+import appProvider from '../server/appProvider';
 import {
     listLangPackageCodes,
     toLangPackageDir,
@@ -379,8 +387,8 @@ describe('foreground text panels', () => {
                 [
                     3,
                     {
-                        marqueeTopData: { id: 'session-a' },
-                        marqueeBottomData: { id: 'session-a' },
+                        marqueeTopDataList: [{ id: 'session-a' }],
+                        marqueeBottomDataList: [{ id: 'session-a' }],
                     },
                 ],
             ];
@@ -402,7 +410,12 @@ describe('foreground text panels', () => {
             await click('Show on Screens');
             expect(show.mock.calls.at(-1)?.[4]).toBe(true);
             await click(`Hide Marquee ${title}`);
-            expect(set).toHaveBeenLastCalledWith(null);
+            // Only this session's scroll of this position comes down.
+            expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+                `marquee${title}DataList`,
+                { id: 'session-a' },
+            );
+            expect(set).not.toHaveBeenCalled();
             expect(
                 state.sessionOptions
                     .get(`marquee-${position}`)
@@ -423,7 +436,7 @@ describe('foreground text panels', () => {
             speedPercentage: 100,
         };
         state.screens = [
-            [3, { marqueeTopData: top, marqueeBottomData: bottom }],
+            [3, { marqueeTopDataList: [top], marqueeBottomDataList: [bottom] }],
         ];
         await render(
             <>
@@ -462,8 +475,8 @@ describe('foreground text panels', () => {
         const own = { id: 'session-a', text: 'Ours', speedPercentage: 100 };
         const other = { id: 'session-b', text: 'Theirs' };
         state.screens = [
-            [3, { marqueeTopData: own }],
-            [4, { marqueeTopData: other }],
+            [3, { marqueeTopDataList: [own] }],
+            [4, { marqueeTopDataList: [other] }],
         ];
         await render(<ForegroundMarqueeComp position="top" />);
         await change('Marquee Top font size (0 = auto)', '75');
@@ -483,13 +496,13 @@ describe('foreground text panels', () => {
 
     test("a marquee session's tab and its removal reach only its own scroll", async () => {
         state.screens = [
-            [1, { marqueeTopData: { id: 'session-a', text: 'A' } }],
-            [2, { marqueeTopData: { id: 'session-b', text: 'B' } }],
+            [1, { marqueeTopDataList: [{ id: 'session-a', text: 'A' }] }],
+            [2, { marqueeTopDataList: [{ id: 'session-b', text: 'B' }] }],
             [
                 3,
                 {
-                    marqueeTopData: null,
-                    marqueeBottomData: { id: 'session-b', text: 'C' },
+                    marqueeTopDataList: [],
+                    marqueeBottomDataList: [{ id: 'session-b', text: 'C' }],
                 },
             ],
         ];
@@ -508,7 +521,11 @@ describe('foreground text panels', () => {
         // Session B's top scroll comes down; its bottom one is not this
         // panel's, and Session A's stays.
         expect(mocks.manager.mock.calls).toEqual([[2]]);
-        expect(mocks.setTop).toHaveBeenCalledExactlyOnceWith(null);
+        expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+            'marqueeTopDataList',
+            { id: 'session-b', text: 'B' },
+        );
+        expect(mocks.setTop).not.toHaveBeenCalled();
         expect(mocks.setBottom).not.toHaveBeenCalled();
     });
 
@@ -592,7 +609,7 @@ describe('foreground text panels', () => {
 
     test('quick text renders the latest markdown and preserves its delay and lifetime', async () => {
         state.screens = [
-            [3, { quickTextData: { id: 'session-a', htmlText: 'old' } }],
+            [3, { quickTextDataList: [{ id: 'session-a', htmlText: 'old' }] }],
         ];
         await render(<ForegroundQuickTextComp />);
         await change('Markdown', '**Notice**');
@@ -610,11 +627,115 @@ describe('foreground text panels', () => {
             'session-a',
             true,
             'fade',
+            false,
         );
         await click('Show on Screens');
         expect(mocks.showQuick.mock.calls.at(-1)?.[5]).toBe(true);
         await click('Hide Quick Text');
-        expect(mocks.setQuick).toHaveBeenLastCalledWith(null);
+        expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+            'quickTextDataList',
+            { id: 'session-a', htmlText: 'old' },
+        );
+        expect(mocks.setQuick).not.toHaveBeenCalled();
+    });
+
+    // The user, 2026-11-10: _add button to re-calculated the live time (for
+    // slow, medium, fast) base on text length. click to get slow click again
+    // to get medium again to fast again to slow_.
+    test('quick text works Live out from its words, slow, medium, fast, then slow again', async () => {
+        await render(<ForegroundQuickTextComp />);
+        const live = container.querySelector(
+            '[aria-label="Seconds the text stays on screen"]',
+        ) as HTMLInputElement;
+        const title = 'Live: Slow / Medium / Fast';
+        const pace = container.querySelector(
+            `[title="${title}"]`,
+        ) as HTMLButtonElement;
+        // No pace until it is pressed: the dial alone.
+        expect(pace.textContent).toBe('');
+        await change('Markdown', 'word '.repeat(110));
+        const presses: [string, string][] = [];
+        for (let index = 0; index < 4; index++) {
+            await clickTitle(title);
+            presses.push([pace.textContent!, live.value]);
+        }
+        // 110 words at 110, 150 and 200 a minute, 5 seconds more, rounded
+        // up to 5.
+        expect(presses).toEqual([
+            ['Slow', '65'],
+            ['Medium', '50'],
+            ['Fast', '40'],
+            ['Slow', '65'],
+        ]);
+        expect(mocks.persist).toHaveBeenLastCalledWith(
+            'foreground-quick-text-time-to-live-session-a',
+            65,
+        );
+        // With Infinite on there is no Live to work out.
+        await act(async () =>
+            (
+                container.querySelector(
+                    '[aria-label="Keep the text on screen until it is hidden"]',
+                ) as HTMLInputElement
+            ).click(),
+        );
+        expect(pace.disabled).toBe(true);
+    });
+
+    // The user, 2026-11-09: each session its own timing, Live 5 seconds and
+    // Infinite off until asked; Infinite keeps it up until it is hidden.
+    test('quick text starts at 5 seconds, and Infinite keeps the session up until hidden', async () => {
+        await render(<ForegroundQuickTextComp />);
+        const live = container.querySelector(
+            '[aria-label="Seconds the text stays on screen"]',
+        ) as HTMLInputElement;
+        const delay = container.querySelector(
+            '[aria-label="Seconds to wait before showing the text"]',
+        ) as HTMLInputElement;
+        const infinite = container.querySelector(
+            '[aria-label="Keep the text on screen until it is hidden"]',
+        ) as HTMLInputElement;
+        expect(live.value).toBe('5');
+        expect(delay.value).toBe('0');
+        expect(infinite.checked).toBe(false);
+        expect(live.disabled).toBe(false);
+        await act(async () => infinite.click());
+        expect(infinite.checked).toBe(true);
+        // Greyed, not lost: switched back off, the length is still there.
+        expect(live.disabled).toBe(true);
+        expect(live.value).toBe('5');
+        // Kept under THIS session's own key.
+        expect(mocks.persist).toHaveBeenCalledWith(
+            'foreground-quick-text-is-infinite-session-a',
+            true,
+        );
+        await click('Show Quick Text');
+        expect(mocks.showQuick.mock.calls.at(-1)?.[9]).toBe(true);
+        const button = container.querySelector('[title="Show Quick Text"]')!;
+        await act(async () =>
+            button.dispatchEvent(new Event('dragstart', { bubbles: true })),
+        );
+        expect(mocks.drag.mock.calls.at(-1)?.[1].getData()).toMatchObject({
+            timeSecondToLive: 5,
+            isInfinite: true,
+        });
+        state.dropManager = { setQuickTextData: mocks.setQuick };
+        await act(async () => state.dragStore.onDropped({}));
+        expect(mocks.setQuick).toHaveBeenLastCalledWith(
+            expect.objectContaining({ isInfinite: true }),
+        );
+        await act(async () => infinite.click());
+        expect(live.disabled).toBe(false);
+        await click('Show Quick Text');
+        expect(mocks.showQuick.mock.calls.at(-1)?.[9]).toBe(false);
+        await act(async () =>
+            button.dispatchEvent(new Event('dragstart', { bubbles: true })),
+        );
+        await act(async () => state.dragStore.onDropped({}));
+        // Off, the datum carries no `isInfinite` key at all.
+        expect(mocks.setQuick.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+            'isInfinite',
+        );
     });
 
     test('quick-text drag carries markdown source, renders only on a valid drop and refreshes the shown style', async () => {
@@ -624,7 +745,7 @@ describe('foreground text panels', () => {
             timeSecondDelay: 0,
             timeSecondToLive: 3,
         };
-        state.screens = [[3, { quickTextData: shown }]];
+        state.screens = [[3, { quickTextDataList: [shown] }]];
         await render(<ForegroundQuickTextComp />);
         await change('Markdown', 'Draft');
         const button = container.querySelector('[title="Show Quick Text"]')!;
@@ -654,8 +775,11 @@ describe('foreground text panels', () => {
                 .onChange({ color: 'blue' }, true);
             await vi.advanceTimersByTimeAsync(500);
         });
+        // This session's entry is taken off, then drawn afresh in its look.
+        expect(mocks.removeSession.mock.calls).toEqual([
+            ['quickTextDataList', shown],
+        ]);
         expect(mocks.setQuick.mock.calls).toEqual([
-            [null],
             [
                 expect.objectContaining({
                     htmlText: 'old',
@@ -664,24 +788,182 @@ describe('foreground text panels', () => {
                 }),
             ],
         ]);
+        expect(mocks.removeSession.mock.invocationCallOrder[0]).toBeLessThan(
+            mocks.setQuick.mock.invocationCallOrder[0],
+        );
+    });
+
+    test('quick text previews its markdown sanitized, keeps links from navigating, and edits again', async () => {
+        mocks.markdown.mockImplementation(async (text: string) => ({
+            html:
+                `<h2>${text}</h2><a href="https://example.com/">site</a>` +
+                '<img src="x" onerror="alert(1)">',
+        }));
+        await render(<ForegroundQuickTextComp />);
+        await change('Markdown', 'Notice');
+        expect(container.querySelector('.fg-markdown-preview')).toBeNull();
+        await click('Preview');
+        const preview = container.querySelector(
+            '.fg-markdown-preview',
+        ) as HTMLDivElement;
+        expect(preview).not.toBeNull();
+        expect(container.querySelector('textarea')).toBeNull();
+        expect(mocks.markdown).toHaveBeenLastCalledWith('Notice');
+        expect(preview.querySelector('h2')?.textContent).toBe('Notice');
+        // The screen's sanitizer runs here too: no handler survives.
+        expect(
+            preview.querySelector('img')?.getAttribute('onerror'),
+        ).toBeNull();
+        expect(preview.style.fontFamily).toBe('serif');
+        const link = preview.querySelector('a')!;
+        const linkClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => link.dispatchEvent(linkClick));
+        expect(linkClick.defaultPrevented).toBe(true);
+        const textClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () =>
+            preview.querySelector('h2')!.dispatchEvent(textClick),
+        );
+        expect(textClick.defaultPrevented).toBe(false);
+        await click('Edit');
+        expect(container.querySelector('.fg-markdown-preview')).toBeNull();
+        expect(
+            (container.querySelector('textarea') as HTMLTextAreaElement).value,
+        ).toBe('Notice');
+    });
+
+    test('an empty quick text previews as its placeholder', async () => {
+        // As `renderMarkdown` answers no text: no html at all.
+        mocks.markdown.mockImplementation(async (text: string) => ({
+            html: text ? `<p>${text}</p>` : '',
+        }));
+        await render(<ForegroundQuickTextComp />);
+        await change('Markdown', '');
+        await click('Preview');
+        const preview = container.querySelector('.fg-markdown-preview')!;
+        expect(preview.innerHTML).toBe('');
+        expect(preview.getAttribute('data-placeholder')).toBe(
+            'Leave a markdown text here',
+        );
+    });
+
+    test('quick text opens a markdown lesson beside the editor, rendered and sanitized like the screen', async () => {
+        mocks.markdown.mockImplementation(async (text: string) => ({
+            html: `<p>${text}</p><img src="x" onerror="alert(1)">`,
+        }));
+        await render(<ForegroundQuickTextComp />);
+        expect(container.querySelector('.fg-md-lesson')).toBeNull();
+        const toggle = container.querySelector(
+            '.fg-md-lesson-toggle',
+        ) as HTMLButtonElement;
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        expect(toggle.title).toBe('Markdown Lesson');
+        await click('Markdown Lesson');
+        const lesson = container.querySelector('.fg-md-lesson')!;
+        expect(lesson).not.toBeNull();
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        // It opens WITH the box, not in place of it.
+        expect(container.querySelector('textarea')).not.toBeNull();
+        const rows = Array.from(lesson.querySelectorAll('.fg-md-lesson-row'));
+        expect(rows).toHaveLength(12);
+        expect(
+            rows.map((row) => {
+                return row.querySelector('.fg-md-lesson-source')!.textContent;
+            }),
+        ).toContain('**Bold**');
+        expect(mocks.markdown).toHaveBeenCalledWith('## Heading');
+        expect(mocks.markdown).toHaveBeenCalledWith('Text\\\nText');
+        const boldResult = rows[2].querySelector('.fg-md-lesson-result')!;
+        expect(boldResult.querySelector('p')?.textContent).toBe('**Bold**');
+        expect((boldResult as HTMLElement).style.fontFamily).toBe('serif');
+        // The screen's sanitizer runs on the lesson too.
+        expect(
+            boldResult.querySelector('img')?.getAttribute('onerror'),
+        ).toBeNull();
+        // The full cheat sheet goes to the system browser, never the panel.
+        const openExternalURL = vi.fn();
+        const { browserUtils } = appProvider;
+        (appProvider as any).browserUtils = { openExternalURL };
+        try {
+            await click('Open Link in Browser');
+        } finally {
+            (appProvider as any).browserUtils = browserUtils;
+        }
+        expect(openExternalURL).toHaveBeenCalledExactlyOnceWith(
+            'https://www.markdownguide.org/cheat-sheet/',
+        );
+        await click('Markdown Lesson');
+        expect(container.querySelector('.fg-md-lesson')).toBeNull();
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
     });
 
     test('session callbacks hide only their own quick text', async () => {
         state.screens = [
-            [1, { quickTextData: { id: 'session-a' } }],
-            [2, { quickTextData: { id: 'session-b' } }],
+            [1, { quickTextDataList: [{ id: 'session-a' }] }],
+            [2, { quickTextDataList: [{ id: 'session-b' }] }],
         ];
         await render(<ForegroundQuickTextComp />);
         const options = state.sessionOptions.get('quick-text');
         expect(options.checkIsOnScreen('session-a', '', [])).toBe(true);
         expect(options.checkIsOnScreen('missing', '', [])).toBe(false);
         options.hideSession('session-a', '', []);
-        expect(mocks.setQuick).toHaveBeenCalledExactlyOnceWith(null);
+        expect(mocks.manager.mock.calls).toEqual([[1]]);
+        expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+            'quickTextDataList',
+            { id: 'session-a' },
+        );
+        expect(mocks.setQuick).not.toHaveBeenCalled();
         expect(options.toOwnSettingNames('-b')).toEqual([
             'foreground-quick-text-setting-b',
             'foreground-quick-text-time-delay-b',
             'foreground-quick-text-time-to-live-b',
+            'foreground-quick-text-is-infinite-b',
         ]);
+    });
+
+    // Each session owns its own quick text on a screen: Matthew's verse and
+    // Session 6's notice up together on screen 3 are two rows, and each
+    // session's Hide takes its own down, never the other's.
+    test("two sessions' quick texts on one screen are two rows, each hidden by its own Hide", async () => {
+        const own = { id: 'session-a', htmlText: 'Matthew' };
+        const theirs = { id: 'session-b', htmlText: 'Session 6' };
+        state.screens = [[3, { quickTextDataList: [own, theirs] }]];
+        await render(<ForegroundQuickTextComp />);
+        const options = state.sessionOptions.get('quick-text');
+        // Both sessions are marked on the strip, off the one screen.
+        expect(options.checkIsOnScreen('session-a', '', [])).toBe(true);
+        expect(options.checkIsOnScreen('session-b', '', [])).toBe(true);
+        // This session's Hide row holds its own entry alone.
+        const hideButtons = Array.from(
+            container.querySelectorAll('button'),
+        ).filter((button) => {
+            return button.textContent?.trim() === 'Hide Quick Text';
+        });
+        expect(hideButtons.length).toBeGreaterThan(0);
+        for (const button of hideButtons) {
+            mocks.removeSession.mockClear();
+            await act(async () => button.click());
+            expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+                'quickTextDataList',
+                own,
+            );
+        }
+        expect(
+            mocks.manager.mock.calls.every(([screenId]) => screenId === 3),
+        ).toBe(true);
+        // The strip's hide of the other session reaches its entry only.
+        mocks.removeSession.mockClear();
+        options.hideSession('session-b', '', []);
+        expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+            'quickTextDataList',
+            theirs,
+        );
+        expect(mocks.setQuick).not.toHaveBeenCalled();
     });
 });
 
@@ -1054,17 +1336,19 @@ describe('countdown panel', () => {
             pausedMillisecond: 60000,
         };
         state.screens = [
-            [1, { countdownData: duration }],
+            [1, { countdownDataList: [duration] }],
             [
                 2,
                 {
-                    countdownData: {
-                        id: 'session-a',
-                        dateTime: new Date(Date.now() + 120000),
-                    },
+                    countdownDataList: [
+                        {
+                            id: 'session-a',
+                            dateTime: new Date(Date.now() + 120000),
+                        },
+                    ],
                 },
             ],
-            [3, { countdownData: { ...duration, id: 'session-b' } }],
+            [3, { countdownDataList: [{ ...duration, id: 'session-b' }] }],
         ];
         await render(<ForegroundCountDownComp />);
         await click('Start');
@@ -1072,20 +1356,20 @@ describe('countdown panel', () => {
         const running = mocks.setCountdown.mock.calls.at(-1)?.[0];
         expect(running).not.toHaveProperty('pausedMillisecond');
         expect(running.dateTime.getTime()).toBe(Date.now() + 60000);
-        state.screens[0][1].countdownData = running;
+        state.screens[0][1].countdownDataList = [running];
         await render(<ForegroundCountDownComp />);
         await act(async () => vi.advanceTimersByTimeAsync(2500));
         await click('Pause');
         const paused = mocks.setCountdown.mock.calls.at(-1)?.[0];
         expect(paused.pausedMillisecond).toBe(57500);
-        state.screens[0][1].countdownData = paused;
+        state.screens[0][1].countdownDataList = [paused];
         await render(<ForegroundCountDownComp />);
         await act(async () => vi.advanceTimersByTimeAsync(5000));
         await click('Resume');
         const resumed = mocks.setCountdown.mock.calls.at(-1)?.[0];
         expect(resumed.dateTime.getTime()).toBe(Date.now() + 57500);
         expect(resumed).not.toHaveProperty('pausedMillisecond');
-        state.screens[0][1].countdownData = resumed;
+        state.screens[0][1].countdownDataList = [resumed];
         await render(<ForegroundCountDownComp />);
         await clickTitle('Reset to the full duration');
         expect(mocks.setCountdown.mock.calls.at(-1)?.[0]).toMatchObject({
@@ -1097,8 +1381,22 @@ describe('countdown panel', () => {
 
     test('sessions identify and hide their own countdown and declare all owned settings', async () => {
         state.screens = [
-            [1, { countdownData: { id: 'session-a', dateTime: new Date() } }],
-            [2, { countdownData: { id: 'session-b', dateTime: new Date() } }],
+            [
+                1,
+                {
+                    countdownDataList: [
+                        { id: 'session-a', dateTime: new Date() },
+                    ],
+                },
+            ],
+            [
+                2,
+                {
+                    countdownDataList: [
+                        { id: 'session-b', dateTime: new Date() },
+                    ],
+                },
+            ],
         ];
         await render(<ForegroundCountDownComp />);
         const options = state.sessionOptions.get('countdown');
@@ -1106,7 +1404,11 @@ describe('countdown panel', () => {
         expect(options.checkIsOnScreen('missing', '', [])).toBe(false);
         options.hideSession('session-a', '', []);
         expect(mocks.manager).toHaveBeenCalledExactlyOnceWith(1);
-        expect(mocks.setCountdown).toHaveBeenCalledExactlyOnceWith(null);
+        expect(mocks.removeSession).toHaveBeenCalledExactlyOnceWith(
+            'countdownDataList',
+            state.screens[0][1].countdownDataList[0],
+        );
+        expect(mocks.setCountdown).not.toHaveBeenCalled();
         expect(options.toOwnSettingNames('-x')).toEqual([
             'foreground-date-setting-x',
             'foreground-time-setting-x',
@@ -1170,11 +1472,13 @@ describe('stopwatch panel', () => {
             [
                 1,
                 {
-                    stopwatchData: {
-                        id: 'session-a',
-                        dateTime: new Date(),
-                        pausedMillisecond: 0,
-                    },
+                    stopwatchDataList: [
+                        {
+                            id: 'session-a',
+                            dateTime: new Date(),
+                            pausedMillisecond: 0,
+                        },
+                    ],
                 },
             ],
         ];
@@ -1182,20 +1486,20 @@ describe('stopwatch panel', () => {
         await click('Start');
         let datum = mocks.setStopwatch.mock.calls.at(-1)?.[0];
         expect(datum).toEqual({ id: 'session-a', dateTime: new Date() });
-        state.screens[0][1].stopwatchData = datum;
+        state.screens[0][1].stopwatchDataList = [datum];
         await render(<ForegroundStopwatchComp />);
         await act(async () => vi.advanceTimersByTimeAsync(3500));
         await click('Pause');
         datum = mocks.setStopwatch.mock.calls.at(-1)?.[0];
         expect(datum.pausedMillisecond).toBe(3500);
-        state.screens[0][1].stopwatchData = datum;
+        state.screens[0][1].stopwatchDataList = [datum];
         await render(<ForegroundStopwatchComp />);
         await act(async () => vi.advanceTimersByTimeAsync(4000));
         await click('Resume');
         datum = mocks.setStopwatch.mock.calls.at(-1)?.[0];
         expect(datum).not.toHaveProperty('pausedMillisecond');
         expect(datum.dateTime.getTime()).toBe(Date.now() - 3500);
-        state.screens[0][1].stopwatchData = datum;
+        state.screens[0][1].stopwatchDataList = [datum];
         await render(<ForegroundStopwatchComp />);
         await act(async () => vi.advanceTimersByTimeAsync(2000));
         await click('Reset');
@@ -1222,10 +1526,12 @@ describe('stopwatch panel', () => {
             [
                 1,
                 {
-                    stopwatchData: {
-                        id: 'session-a',
-                        dateTime: new Date(Date.now() - 500),
-                    },
+                    stopwatchDataList: [
+                        {
+                            id: 'session-a',
+                            dateTime: new Date(Date.now() - 500),
+                        },
+                    ],
                 },
             ],
         ];
@@ -1262,12 +1568,18 @@ describe('stopwatch panel', () => {
             dateTime: new Date(Date.now() - 2000),
         };
         state.screens = [
-            [1, { countdownData: countdown, stopwatchData: stopwatch }],
+            [
+                1,
+                {
+                    countdownDataList: [countdown],
+                    stopwatchDataList: [stopwatch],
+                },
+            ],
             [
                 2,
                 {
-                    countdownData: { ...countdown, id: 'session-b' },
-                    stopwatchData: { ...stopwatch, id: 'session-b' },
+                    countdownDataList: [{ ...countdown, id: 'session-b' }],
+                    stopwatchDataList: [{ ...stopwatch, id: 'session-b' }],
                 },
             ],
         ];
@@ -1293,12 +1605,15 @@ describe('stopwatch panel', () => {
             </>,
         );
         await act(async () => vi.advanceTimersByTimeAsync(500));
+        // Each panel takes off only the session it changed, then redraws it.
+        expect(mocks.removeSession.mock.calls).toEqual([
+            ['countdownDataList', countdown],
+            ['stopwatchDataList', stopwatch],
+        ]);
         expect(mocks.setCountdown.mock.calls).toEqual([
-            [null],
             [{ ...countdown, extraStyle: { color: 'blue' } }],
         ]);
         expect(mocks.setStopwatch.mock.calls).toEqual([
-            [null],
             [{ ...stopwatch, extraStyle: { color: 'green' }, isBehind: true }],
         ]);
         expect(mocks.manager.mock.calls).toEqual([[1], [1]]);
@@ -1307,7 +1622,10 @@ describe('stopwatch panel', () => {
         expect(options.checkIsOnScreen('missing', '', [])).toBe(false);
         options.hideSession('session-b', '', []);
         expect(mocks.manager).toHaveBeenLastCalledWith(2);
-        expect(mocks.setStopwatch).toHaveBeenLastCalledWith(null);
+        expect(mocks.removeSession).toHaveBeenLastCalledWith(
+            'stopwatchDataList',
+            { ...stopwatch, id: 'session-b' },
+        );
     });
 });
 

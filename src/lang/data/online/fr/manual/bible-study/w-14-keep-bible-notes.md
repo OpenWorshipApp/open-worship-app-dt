@@ -3,7 +3,7 @@ id: W-14
 title: "Tenir des notes bibliques"
 section: "Étude de la Bible"
 lang: fr
-translatedFrom: df32ba1b83da6a29
+translatedFrom: 253c21afa7d6ea80
 ---
 # W-14 — Tenir des notes bibliques
 
@@ -19,3 +19,7 @@ translatedFrom: df32ba1b83da6a29
 Les flèches en HAUT de la fenêtre sont l'annulation et le rétablissement propres à l'éditeur de texte ;
 celles du bas sont celles du FICHIER de notes.
 :::
+
+Les notes d'une série de prédications peuvent avoir leur propre dossier : la rangée sous le titre **[en:tran:Bible Notes]** permet de passer d'un dossier à l'autre (W-58).
+
+La fenêtre d'aide peut modifier une note pour vous, ou vous expliquer comment faire quelque chose dans l'éditeur de notes : **[en:tran:Open in Chatbot]** dans le menu de la ligne d'une note, ou le robot en bas de la fenêtre Note biblique (W-60).

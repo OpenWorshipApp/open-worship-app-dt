@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: f570286c-7c82-42ef-990f-e6fc474abbcc
-  modified: 2026-10-04T11:52:00.817Z
+  modified: 2026-11-10T00:06:03.157Z
 ---
 
 The Foreground **Countdown** and **Stopwatch** go up STOPPED by default and are
@@ -26,7 +26,10 @@ driven by a Start / Pause / Resume / Reset row in their panels, with a per-sessi
   `handleUpdating`, `createDivContainer` stores it, and
   `ScreenForegroundManager.updateInPlace` (first thing in `compareAndRender`)
   hands the new datum over and re-keys the container map. Any other key change
-  (style, layer, length) still remounts.
+  (style, layer, length) still remounts. Since 2026-11-09 the datum is one
+  session's entry of `countdownDataList` / `stopwatchDataList`, and
+  `updateListInPlace` pairs it with the same session's mounted entry first
+  ([[foreground-session-owns-overlay]]).
 - **Rounding**: countdown rounds UP while counting down (no lead second needed;
   `00:00:00` lands exactly on time), DOWN in the overtime (zero holds one second,
   then `+00:00:01`). `TimerClockController` ticks with a second-aligned

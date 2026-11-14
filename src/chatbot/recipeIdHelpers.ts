@@ -142,6 +142,55 @@ export function scrubAnswerToolFields(text: string): string {
         .replace(/(?<=\S)[ \t]{2,}/g, ' ');
 }
 
+// A change's undo id (`20261113-034803869-schh`, `genAgentBackupId`), the
+// handle **Undo this change** presses -- never words for a person. Taken
+// with what introduces it: a colon or dash before it, or the bracket round it.
+const UNDO_ID_TEXT = String.raw`\b\d{8}-\d{9}-[a-z0-9]{2,8}\b`;
+const UNDO_ID_ASIDE_PATTERN = new RegExp(
+    String.raw`[ \t]*\([^()\n]{0,24}?` +
+        UNDO_ID_TEXT +
+        String.raw`[^()\n]{0,4}\)`,
+    'g',
+);
+// The quotes a model wraps the id in go with it: `"20261113-…"` left `""`
+// behind (2026-11-13).
+const UNDO_ID_QUOTE = '["\'“”‘’`]?';
+const UNDO_ID_PATTERN = new RegExp(
+    String.raw`[ \t]*[:\-–—]?[ \t]*` +
+        UNDO_ID_QUOTE +
+        UNDO_ID_TEXT +
+        UNDO_ID_QUOTE,
+    'g',
+);
+// The call the tool result spells the id in -- `owa_undo with id "…" puts
+// this back` (`genUndoField`) -- copied into the answer as it stood:
+// _Undo this countdown change puts it back: owa_undo with id ""._ (2026-11-13,
+// EC-540's live pass). The tool's name and its "with id" go with the id.
+const UNDO_TOOL_PATTERN =
+    /[ \t]*[:\-–—]?[ \t]*\(?`?owa_undo`?(?:[ \t]+with)?(?:[ \t]+(?:the[ \t]+)?(?:undo[ \t]+)?id)?(?:[ \t]*["'“”‘’`]{2})?\)?/g;
+
+/**
+ * Every undo id a model wrote into its answer, removed (2026-11-12, EC-539:
+ * _Undo this change puts the countdown back: 20261113-034803869-schh_, one
+ * line per change, under the one button that undoes them), and the
+ * `owa_undo` call it came in. The sentence around it stands.
+ */
+export function scrubAnswerUndoIds(text: string): string {
+    const source = String(text ?? '');
+    if (
+        !new RegExp(UNDO_ID_TEXT).test(source) &&
+        !source.includes('owa_undo')
+    ) {
+        return source;
+    }
+    return source
+        .replace(UNDO_ID_ASIDE_PATTERN, '')
+        .replace(UNDO_ID_PATTERN, '')
+        .replace(UNDO_TOOL_PATTERN, '')
+        .replace(/[ \t]+([.,;:])/g, '$1')
+        .replace(/(?<=\S)[ \t]{2,}/g, ' ');
+}
+
 function checkIsSentenceStart(whole: string, offset: number) {
     const before = whole.slice(0, offset).replace(/[*_`"“'(\s]+$/, '');
     return before.length === 0 || /[.!?:\n]$/.test(before);

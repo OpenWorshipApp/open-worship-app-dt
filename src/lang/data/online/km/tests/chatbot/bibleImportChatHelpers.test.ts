@@ -55,6 +55,7 @@ import {
     readBibleImportHelpState,
     genBibleImportCheckAnswer,
     genBibleImportUnderAnswer,
+    listLanguageChoiceNames,
     readBibleImportLanguageAsk,
     readBibleImportLinkAsk,
     readBibleImportTypedReply,
@@ -239,12 +240,13 @@ describe('a step by step import, pressed through', () => {
         expect(another.text).toContain(
             'Which language do you want the Bible in',
         );
+        // The installed languages, found the way every one is: the app's,
+        // English, then the others.
         expect(another.actions?.map((one) => one.label)).toEqual([
-            'Khmer',
-            'English',
-            'French',
+            ...listLanguageChoiceNames(),
             'A file on this computer',
         ]);
+        expect(listLanguageChoiceNames()[0]).toBe('English');
     });
 
     it('offers the names the BIBLE’s language knows, named on hover', async () => {
@@ -410,9 +412,7 @@ describe('links that do not lead to a Bible', () => {
         const asked = await runBibleImportStep({ step: 'language' });
         expect(asked.text).toContain('Which language');
         expect(asked.actions?.map((one) => one.label)).toEqual([
-            'Khmer',
-            'English',
-            'French',
+            ...listLanguageChoiceNames(),
             'A file on this computer',
         ]);
         // A language TYPED under that question searches the catalog for it.

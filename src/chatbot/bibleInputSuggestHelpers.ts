@@ -1,8 +1,8 @@
 /**
  * When the chat box's input aid asks, and what it asks for (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held a Khmer
- * digit one and offered nothing: _assistant should help the input ... book auto complete ->
+ * Asked for with a picture of a lookup conversation whose box held a
+ * non-Latin digit one and offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The rows come from `owa_bible_suggest` (the app's own
  * Bibles and names lookup); this decides the questions, and is pure so every
@@ -12,10 +12,12 @@
  *   that asked for another passage (`lookupAwaits`), the box is completing
  *   a reference -- book, then chapter, then verse.
  * - A NAME: `Who was Moses` / `Where is Bethlehem` (and every language's own
- *   way of asking, `bibleReaderWords.nameAsk`), or a bare name in a script
- *   that is not Latin (a Khmer name typed on its own). A bare Latin word is
- *   NOT loaded speculatively (`allowLoad` false): the names dataset is 34MB
- *   and is only searched when a lookup panel already holds it.
+ *   way of asking, `bibleReaderWords.nameAsk`), in any tab; or, in a tab
+ *   asking about the Bible Reader, a bare name in a script that is not Latin
+ *   (such a name typed on its own). A bare Latin word is NOT loaded
+ *   speculatively (`allowLoad` false): the names dataset is 34MB and is only
+ *   searched when a lookup panel already holds it. Off the Reader a bare
+ *   word is not asked at all: it is a command (EC-587).
  */
 import {
     checkIsInLanguageScript,
@@ -50,9 +52,9 @@ export type BibleInputSuggestRowType = {
 
 const MAX_REFERENCE_LENGTH = 40;
 const MIN_NAME_LENGTH = 3;
-// 99% of the lookup's Khmer names are 15 letters or fewer, and a name is
-// completed from its start, so a longer run is a sentence: Khmer writes one
-// with no space, and a Khmer "are there other verses related to this
+// 99% of one language's lookup names are 15 letters or fewer, and a name is
+// completed from its start, so a longer run is a sentence: a script without
+// spaces writes one with none, and such an "are there other verses related to this
 // passage?" under a passage card loaded the 34MB names dataset to complete
 // it (2026-10-23).
 const MAX_BARE_NAME_LENGTH = 16;
@@ -78,7 +80,7 @@ function checkIsNameCue(text: string) {
     });
 }
 
-// A Khmer "who is Moses" -- the name is what comes before the language's own
+// A translated "who is Moses" -- the name is what comes before the language's own
 // "who is" words, once the sentence's leading function words are taken off
 // (`nameAskLead`). A whole sentence that asks something else gives a phrase no name
 // lookup matches, and no suggestion is the honest answer.
@@ -152,7 +154,10 @@ function toTrailingNameFragment(text: string) {
         : null;
 }
 
-function readNameAsk(plain: string): BibleInputSuggestAskType | null {
+function readNameAsk(
+    plain: string,
+    focus: string,
+): BibleInputSuggestAskType | null {
     const english = ENGLISH_NAME_ASK_PATTERN.exec(plain);
     if (english !== null) {
         const tail = toTrailingNameFragment(english[1]);
@@ -170,10 +175,15 @@ function readNameAsk(plain: string): BibleInputSuggestAskType | null {
     if (localized !== null) {
         return localized;
     }
-    // A bare name typed on its own. A Khmer (or other non-Latin) one is worth
-    // loading the lookup for; a Latin word is not (`hello` is not a person).
+    // A bare name typed on its own, in a tab asking about the Bible Reader.
+    // A non-Latin one is worth loading the lookup for; a Latin word is not
+    // (`hello` is not a person). Anywhere else a short line is a command
+    // (2026-11-13, EC-587): a Khmer "pause it" in a Presenter tab loaded the
+    // names into the Presenter, 150 ms and 11.5 MB of its heap, again at
+    // each pause in the typing once the 10 s cache let them go.
     const words = plain.split(/\s+/).filter(Boolean);
     if (
+        focus === 'reader' &&
         words.length === 1 &&
         words[0].length >= MIN_NAME_LENGTH &&
         !/\p{Nd}/u.test(words[0]) &&
@@ -214,13 +224,11 @@ export function readBibleInputSuggestAskList(
         askList.push({ kind: 'reference', prefix: plain });
     }
     if (!isLookupAwaitedPassage) {
-        // A name may be typed in any window with the Reader in front of it;
-        // under an awaited passage the box is writing that passage.
-        const nameAsk = readNameAsk(plain);
-        if (
-            nameAsk !== null &&
-            (nameAsk.allowLoad === true || focus === 'reader')
-        ) {
+        // A name asked about may be typed in any window; a bare one only
+        // with the Reader in front of it. Under an awaited passage the box
+        // is writing that passage.
+        const nameAsk = readNameAsk(plain, focus);
+        if (nameAsk !== null) {
             askList.push(nameAsk);
         }
     }

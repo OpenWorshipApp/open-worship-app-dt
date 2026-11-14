@@ -225,10 +225,23 @@ export function findDataDirsOnVolumesSync(extraDirPaths: string[] = []) {
     });
 }
 
+/**
+ * One key for every way of writing the same file's path: on Windows and
+ * macOS a path's case does not matter, and on Windows a forward slash is the
+ * backslash -- `C:/notes/Default.own` is `C:\notes\Default.own`
+ * (2026-11-08, BN-38: a note changed through a path written with forward
+ * slashes, then undone, never reached the note's open window, whose next
+ * read and write put the change back).
+ */
 export function toPathCompareKey(filePath: string) {
-    return appProvider.systemUtils?.isLinux
-        ? filePath
-        : filePath.toLocaleLowerCase();
+    const systemUtils = appProvider.systemUtils;
+    if (systemUtils?.isLinux) {
+        return filePath;
+    }
+    const key = systemUtils?.isWindows
+        ? filePath.replaceAll('/', '\\')
+        : filePath;
+    return key.toLocaleLowerCase();
 }
 
 const webFileExtensions = mimeWebList.flatMap(({ extensions }) => {

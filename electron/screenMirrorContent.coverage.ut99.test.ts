@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+    mkdir,
+    mkdtemp,
+    rm,
+    symlink,
+    writeFile,
+    realpath,
+} from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,7 +19,9 @@ let registry: MirrorContentRegistry;
 let base = '';
 
 beforeEach(async () => {
-    directory = await mkdtemp(path.join(os.tmpdir(), 'owa-'));
+    // The real path: on macOS the temp folder is behind a link (`/var` ->
+    // `/private/var`), and a file published through a link is refused.
+    directory = await realpath(await mkdtemp(path.join(os.tmpdir(), 'owa-')));
     registry = new MirrorContentRegistry();
     server = http.createServer((req, res) => {
         void registry

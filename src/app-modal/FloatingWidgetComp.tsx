@@ -81,7 +81,7 @@ interface MyProps {
     // cannot be told apart from its twin. `owa_find_ui "clock"` rang the
     // Background tile and the Web Show tile at once, and no scope could
     // separate them. Translated on screen, English here, for the same reason
-    // the panes are: a name only a Khmer window answers to is a name the
+    // the panes are: a name only a translated window answers to is a name the
     // matcher loses the moment the app is switched over.
     widgetName?: string;
     // Bump this to pull the widget back to the front. For hosts whose "open"

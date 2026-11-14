@@ -50,7 +50,7 @@ afterEach(() => {
 
 describe('BibleViewTitleEditingComp', () => {
     test('an editable title in the draggable title of its bible', async () => {
-        const bibleItem = { id: 1, bibleKey: 'KHM' } as any;
+        const bibleItem = { id: 1, bibleKey: 'TQAM' } as any;
         const onTargetChange = vi.fn();
         await act(async () => {
             root.render(
@@ -62,7 +62,7 @@ describe('BibleViewTitleEditingComp', () => {
                 </BibleViewTitleEditingComp>,
             );
         });
-        expect(h.wrapperProps).toEqual({ bibleKey: 'KHM', bibleItem });
+        expect(h.wrapperProps).toEqual({ bibleKey: 'TQAM', bibleItem });
         expect(h.editorProps).toEqual({ bibleItem, onTargetChange });
         const wrapper = host.querySelector('.test-wrapper')!;
         // The editor first, then whatever the caller adds after it.

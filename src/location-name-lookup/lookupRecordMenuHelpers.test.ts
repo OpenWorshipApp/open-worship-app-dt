@@ -73,7 +73,7 @@ vi.mock('./lookupDataHelpers', () => ({
     releaseLookupData: h.releaseLookupData,
 }));
 vi.mock('./lookupLangHelpers', () => ({
-    getSelectedLookupLangCode: () => 'km',
+    getSelectedLookupLangCode: () => 'xx',
 }));
 vi.mock('./lookupRecordHelpers', () => ({
     buildNameSummary: h.buildNameSummary,
@@ -154,7 +154,7 @@ describe('a name or place row’s menu', () => {
                 'Text has been copied to clipboard',
             );
         });
-        expect(h.acquireLookupData).toHaveBeenCalledWith('km');
+        expect(h.acquireLookupData).toHaveBeenCalledWith('xx');
         expect(h.buildNameSummary).toHaveBeenCalledWith(
             h.managers,
             h.nameRecord,
@@ -164,7 +164,7 @@ describe('a name or place row’s menu', () => {
             'name text',
             '<p>name</p>',
         );
-        expect(h.releaseLookupData).toHaveBeenCalledWith('km');
+        expect(h.releaseLookupData).toHaveBeenCalledWith('xx');
     });
 
     it('copies a place from the places manager', async () => {
@@ -187,7 +187,7 @@ describe('a name or place row’s menu', () => {
             copyLookupRecord({ ...noahTarget, recordId: 'gone' }),
         ).resolves.toBe(false);
         expect(h.copyRecordToClipboard).not.toHaveBeenCalled();
-        expect(h.releaseLookupData).toHaveBeenCalledWith('km');
+        expect(h.releaseLookupData).toHaveBeenCalledWith('xx');
     });
 
     it('releases the dataset and reports a load that fails', async () => {
@@ -197,7 +197,7 @@ describe('a name or place row’s menu', () => {
         await vi.waitFor(() => {
             expect(h.handleError).toHaveBeenCalledWith(error);
         });
-        expect(h.releaseLookupData).toHaveBeenCalledWith('km');
+        expect(h.releaseLookupData).toHaveBeenCalledWith('xx');
         expect(h.showSimpleToast).not.toHaveBeenCalled();
     });
 
@@ -208,7 +208,7 @@ describe('a name or place row’s menu', () => {
                 kind: 'name',
                 target: 'noah',
                 title: '✝✝',
-                langCode: 'km',
+                langCode: 'xx',
                 page: globalThis.location?.href ?? '',
             });
         });

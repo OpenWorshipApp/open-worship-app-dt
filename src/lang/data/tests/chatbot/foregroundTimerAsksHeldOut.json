@@ -1,0 +1,577 @@
+{
+    "ar": {
+        "countdown": [
+            "ابدأ عد تنازلي ٥ دقائق",
+            "من فضلك ضع عدادًا تنازليًا لمدة 10 دقائق على البروجكتور قبل بداية الخدمة",
+            "اعمل عد تنازلي ٣ دقايق للعطاء"
+        ],
+        "stopwatch": [
+            "شغّل ساعة الإيقاف على الشاشة",
+            "اعرض مؤقت يعد تصاعديا من الصفر على الشاشة"
+        ],
+        "message": [
+            "حط رسالة 'أهلاً وسهلاً' على الشاشة",
+            "اعرض إعلان على البروجكتور: موقف السيارات ممتلئ"
+        ],
+        "notAsk": [
+            "العظة استغرقت ٤٠ دقيقة",
+            "ابعت رسالة للقسيس",
+            "الشاشة ساطعة جدًا"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "bo": {
+        "countdown": [
+            "སྐར་མ་ ༥ ཕྱིར་བགྲང་འགོ་ཚུགས།",
+            "ཚོགས་འདུ་མ་འགོ་གོང་བརྙན་ཡོལ་སྟེང་སྐར་མ་ 10 ཕྱིར་བགྲང་ཞིག་འཇོག་རོགས།",
+            "འབུལ་བ་ཕུལ་རྒྱུར་སྐར་མ་ ༣ རྒྱབ་ཕྱོགས་སུ་བགྲང་རོགས།"
+        ],
+        "stopwatch": [
+            "བརྙན་ཡོལ་སྟེང་དུས་ཚོད་འཇལ་ཆས་འགོ་ཚུགས།",
+            "ཀླད་ཀོར་ནས་དུས་ཚོད་ཡར་བགྲང་བྱས་ནས་བརྙན་ཡོལ་ལ་སྟོན་རོགས།"
+        ],
+        "message": [
+            "བརྙན་ཡོལ་སྟེང་ 'ཕེབས་པར་དགའ་བསུ་ཞུ།' ཞེས་པའི་འཕྲིན་སྟོན་རོགས།",
+            "གློག་བརྙན་འཕེན་འཁོར་སྟེང་བརྡ་ཁྱབ་ཅིག་འཇོག་རོགས། རླངས་འཁོར་འཇོག་ས་ཁེངས་སོང་།"
+        ],
+        "notAsk": [
+            "ཆོས་བཤད་སྐར་མ་ ༤༠ ཙམ་བྱས་སོང་།",
+            "སློབ་དཔོན་ལ་འཕྲིན་ཞིག་བཏང་རོགས།",
+            "བརྙན་ཡོལ་ཧ་ཅང་གསལ་དྲགས་འདུག"
+        ],
+        "floor": {
+            "countdown": 2,
+            "stopwatch": 2,
+            "message": 0
+        }
+    },
+    "fj": {
+        "countdown": [
+            "Tekivuna e dua na wili sobu ni 5 na miniti",
+            "Vakaraitaka na wili sobu ni 10 na miniti ena sikirini ni bera ni tekivu na lotu",
+            "Wili sobu 3 na miniti me baleta na soli"
+        ],
+        "stopwatch": [
+            "Tekivuna na kaloko ni wiliwili mai na saiva ena sikirini",
+            "Vakaraitaka ena sikirini e dua na kaloko me wili cake mai na 0"
+        ],
+        "message": [
+            "Vakaraitaka na itukutuku 'Bula vinaka' ena sikirini",
+            "Biuta e dua na itukutuku ena projector: sa sinai na vanua ni motoka"
+        ],
+        "notAsk": [
+            "Na vunau e 40 na miniti na kena balavu",
+            "Vakauta e dua na itukutuku vua na italatala",
+            "E rarama sivia na sikirini"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "fr": {
+        "countdown": [
+            "Lance un compte à rebours de 5 minutes",
+            "Pouvez-vous mettre un compte a rebours de 10 min sur le projecteur avant le culte ?",
+            "décompte de 3 minutes pour l'offrande stp"
+        ],
+        "stopwatch": [
+            "Démarre le chronomètre à l'écran",
+            "Affiche un chrono qui part de zero sur l'ecran"
+        ],
+        "message": [
+            "Mets le message « Bienvenue » à l'écran",
+            "Affichez une annonce sur le projecteur : le parking est complet"
+        ],
+        "notAsk": [
+            "La prédication a duré 40 minutes",
+            "Envoie un message au pasteur",
+            "L'écran est trop lumineux"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "ga": {
+        "countdown": [
+            "Tosaigh comhaireamh síos 5 nóiméad",
+            "Cuir comhaireamh síos 10 nóiméad ar an teilgeoir roimh an tseirbhís, le do thoil",
+            "Comhair siar 3 noimead don bhailiuchan"
+        ],
+        "stopwatch": [
+            "Tosaigh an stopuaireadóir ar an scáileán",
+            "Taispeáin clog a chomhaireann suas ó nialas ar an scáileán"
+        ],
+        "message": [
+            "Cuir an teachtaireacht 'Fáilte' ar an scáileán",
+            "Taispeáin fógra ar an teilgeoir: tá an carrchlós lán"
+        ],
+        "notAsk": [
+            "Mhair an tseanmóir 40 nóiméad",
+            "Seol teachtaireacht chuig an ministir",
+            "Tá an scáileán ró-gheal"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "ha": {
+        "countdown": [
+            "Fara ƙirgen baya na minti 5",
+            "Don Allah saka kirgen baya na minti 10 a kan majigi kafin a fara ibada",
+            "Ka yi kirga baya na mintuna 3 don baiko"
+        ],
+        "stopwatch": [
+            "Kunna agogon awon lokaci daga sifili a kan allo",
+            "Nuna agogon da ke ƙirga lokaci sama a kan majigi"
+        ],
+        "message": [
+            "Saka sakon 'Barka da zuwa' a kan allo",
+            "Nuna sanarwa a kan majigi: wurin ajiye motoci ya cika"
+        ],
+        "notAsk": [
+            "Wa'azin ya ɗauki minti 40",
+            "Aika sako zuwa ga fasto",
+            "Allon ya yi haske da yawa"
+        ],
+        "floor": {
+            "countdown": 1,
+            "stopwatch": 0,
+            "message": 2
+        }
+    },
+    "ig": {
+        "countdown": [
+            "Malite ngụkọ azụ nkeji 5",
+            "Biko tinye ngụkọ azụ nkeji iri na ihuenyo tupu ofufe amalite",
+            "Guo azu nkeji 3 maka onyinye"
+        ],
+        "stopwatch": [
+            "Malite elekere na-agụ oge site na efu na ihuenyo",
+            "Gosi elekere ngụkọ oge na projector, ka ọ gụwa elu site na 0"
+        ],
+        "message": [
+            "Tinye ozi 'Nnọọ' na ihuenyo",
+            "Gosi okwa na projector: ebe a na-adoba ugbo ala ejupula"
+        ],
+        "notAsk": [
+            "Ozizi ahụ were nkeji 40",
+            "Ziga pasto ozi",
+            "Ihuenyo ahụ na-enwu nke ukwuu"
+        ],
+        "floor": {
+            "countdown": 1,
+            "stopwatch": 1,
+            "message": 1
+        }
+    },
+    "km": {
+        "countdown": [
+            "ចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទី",
+            "សូមដាក់ម៉ោងរាប់ថយក្រោយ 10 នាទីលើម៉ាស៊ីនបញ្ចាំង មុនពេលចាប់ផ្តើមកម្មវិធីថ្វាយបង្គំ",
+            "រាប់ថយក្រោយ ៣នាទី សម្រាប់ការថ្វាយតង្វាយ"
+        ],
+        "stopwatch": [
+            "បើកនាឡិការាប់ម៉ោងពីសូន្យ លើអេក្រង់",
+            "បង្ហាញនាឡិកាចាប់ម៉ោងនៅលើម៉ាស៊ីនបញ្ចាំង"
+        ],
+        "message": [
+            "ដាក់សារ 'សូមស្វាគមន៍' លើអេក្រង់",
+            "បង្ហាញសេចក្តីប្រកាសលើម៉ាស៊ីនបញ្ចាំង៖ កន្លែងចតឡានពេញហើយ"
+        ],
+        "notAsk": [
+            "ការអធិប្បាយមានរយៈពេល ៤០ នាទី",
+            "ផ្ញើសារទៅលោកគ្រូគង្វាល",
+            "អេក្រង់ភ្លឺពេក"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 0,
+            "message": 0
+        }
+    },
+    "ko": {
+        "countdown": [
+            "5분 카운트다운 시작해 줘",
+            "예배 시작 전에 프로젝터에 10분 카운트다운 띄워주세요",
+            "헌금 시간 3분 거꾸로 세는 타이머 화면에 켜줘"
+        ],
+        "stopwatch": [
+            "화면에 스톱워치 켜 줘",
+            "0부터 올라가는 시간 재기를 프로젝터에 보여주세요"
+        ],
+        "message": [
+            "화면에 '환영합니다' 메시지 띄워줘",
+            "프로젝터에 공지 띄워 주세요: 주차장이 꽉 찼습니다"
+        ],
+        "notAsk": [
+            "설교가 40분 걸렸어요",
+            "목사님께 메시지 보내줘",
+            "화면이 너무 밝아요"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "mi": {
+        "countdown": [
+            "Tīmatahia he tatau whakamuri mō ngā meneti e 5",
+            "Tēnā koa, whakaturia he tatau whakamuri 10 meneti ki te pūwhakaata i mua i te tīmatanga o te karakia",
+            "Tatau whakamuri 3 meneti mo te koha"
+        ],
+        "stopwatch": [
+            "Tīmatahia te karaka ine wā mai i te kore ki te mata",
+            "Whakaaturia te karaka ine wa e tatau whakarunga ana ki te puwhakaata"
+        ],
+        "message": [
+            "Tuhia te karere 'Nau mai' ki te mata",
+            "Whakaaturia he pānui ki te pūwhakaata: kua kī te papa waka"
+        ],
+        "notAsk": [
+            "E 40 meneti te roa o te kauhau",
+            "Tukuna he karere ki te minita",
+            "Āhea tīmata ai te karakia?"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 1,
+            "message": 2
+        }
+    },
+    "my": {
+        "countdown": [
+            "၅ မိနစ် နောက်ပြန်ရေတွက်ချိန် စပေးပါ",
+            "ဝတ်ပြုပွဲမစခင် ပရိုဂျက်တာပေါ်မှာ ၁၀ မိနစ် နောက်ပြန်ရေ ပြပေးပါ",
+            "အလှူငွေကောက်ချိန်အတွက် 3 မိနစ် နောက်ပြန်ရေပေး"
+        ],
+        "stopwatch": [
+            "စခရင်ပေါ်မှာ စတော့ပ်ဝေါ့ စဖွင့်ပေးပါ",
+            "သုညကနေ အချိန်ရေတွက်တဲ့ နာရီကို မျက်နှာပြင်ပေါ် ပြပေးပါ"
+        ],
+        "message": [
+            "စခရင်ပေါ်မှာ 'ကြိုဆိုပါတယ်' ဆိုတဲ့ စာတင်ပေးပါ",
+            "ပရိုဂျက်တာပေါ်မှာ ကြေညာချက် ပြပေးပါ: ကားရပ်နားရာ နေရာ ပြည့်သွားပြီ"
+        ],
+        "notAsk": [
+            "တရားဒေသနာက မိနစ် ၄၀ ကြာတယ်",
+            "သင်းအုပ်ဆရာဆီ မက်ဆေ့ချ် ပို့ပေးပါ",
+            "စခရင်က အရမ်းလင်းနေတယ်"
+        ],
+        "floor": {
+            "countdown": 1,
+            "stopwatch": 0,
+            "message": 1
+        }
+    },
+    "ny": {
+        "countdown": [
+            "Yambitsani kuwerengera kobwerera m'mbuyo kwa mphindi 5",
+            "Ikani nthawi yowerengera m'mbuyo ya mphindi 10 pa sikirini mapemphero asanayambe",
+            "Werengera pansi mphindi zitatu za zopereka"
+        ],
+        "stopwatch": [
+            "Yambitsa wotchi yowerengera nthawi kuchokera pa ziro pa sikirini",
+            "Onetsani wotchi yowerengera nthawi kukwera pa purojekita"
+        ],
+        "message": [
+            "Ikani uthenga wakuti 'Takulandirani' pa sikirini",
+            "Onetsa chilengezo pa purojekita: malo oimika magalimoto adzaza"
+        ],
+        "notAsk": [
+            "Ulaliki unatenga mphindi 40",
+            "Tumizani uthenga kwa m'busa",
+            "Sikirini ikuwala kwambiri"
+        ],
+        "floor": {
+            "countdown": 0,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "om": {
+        "countdown": [
+            "Lakkoofsa duubatti daqiiqaa 5 jalqabi",
+            "Waaqeffannaan osoo hin jalqabin, iskiriinii irratti lakkoofsa duubatti daqiiqaa 10 kaa'i maaloo",
+            "Kennaaf daqiiqaa 3 duubatti lakkaa'i"
+        ],
+        "stopwatch": [
+            "Sa'aatii yeroo safaru zeeroo irraa jalqabsiisii iskiriinii irratti agarsiisi",
+            "Sa'aatii ol lakkaa'u pirojektara irratti nuuf bani"
+        ],
+        "message": [
+            "Ergaa 'Baga nagaan dhuftan' iskiriinii irratti agarsiisi",
+            "Beeksisa pirojektara irratti agarsiisi: bakki konkolaataan dhaabatu guutameera"
+        ],
+        "notAsk": [
+            "Lallabni daqiiqaa 40 fudhate",
+            "Paastaraaf ergaa ergi",
+            "Iskiriiniin ifa baay'ee qaba"
+        ],
+        "floor": {
+            "countdown": 1,
+            "stopwatch": 1,
+            "message": 2
+        }
+    },
+    "rn": {
+        "countdown": [
+            "Tangura guharura usubira inyuma iminota 5",
+            "Shira kuri ekara iharura risubira inyuma ry'iminota 10 imbere y'uko gusenga gutangura",
+            "Harura usubira inyuma iminota 3 yo gutanga ituro"
+        ],
+        "stopwatch": [
+            "Tangura isaha iharura igihe kuva kuri zero kuri ekara",
+            "Erekana kuri projecteur isaha iharura igihe ukuduga"
+        ],
+        "message": [
+            "Shira ubutumwa 'Murakaza neza' kuri ekara",
+            "Erekana itangazo kuri projecteur: ahaparikwa imodoka huzuye"
+        ],
+        "notAsk": [
+            "Inyigisho yamaze iminota 40",
+            "Rungikira umushumba ubutumwa",
+            "Ekara ifise umuco mwinshi cane"
+        ],
+        "floor": {
+            "countdown": 0,
+            "stopwatch": 0,
+            "message": 1
+        }
+    },
+    "rw": {
+        "countdown": [
+            "Tangiza kubara usubira inyuma iminota 5",
+            "Shyira kuri ecran igihe kibara gisubira inyuma cy'iminota 10 mbere y'uko amateraniro atangira",
+            "Bara usubira inyuma iminota itatu yo gutura amaturo"
+        ],
+        "stopwatch": [
+            "Tangiza isaha ibara igihe uhereye kuri zeru kuri mugaragaza",
+            "Erekana kuri projecteur isaha ibara igihe kizamuka"
+        ],
+        "message": [
+            "Shyira ubutumwa 'Murakaza neza' kuri ecran",
+            "Erekana itangazo kuri projecteur: aho guparika imodoka huzuye"
+        ],
+        "notAsk": [
+            "Ikibwirizwa cyamaze iminota 40",
+            "Oherereza pasiteri ubutumwa",
+            "Amateraniro atangira saa ngahe?"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "si": {
+        "countdown": [
+            "විනාඩි 5ක කවුන්ට්ඩවුන් එකක් පටන් ගන්න",
+            "නමස්කාරය පටන් ගන්න කලින් තිරයේ විනාඩි 10ක ආපස්සට ගණන් කරන ටයිමරයක් දාන්න",
+            "පඬුරු එකතු කරන්න විනාඩි 3ක් ආපස්සට ගණන් කරන්න"
+        ],
+        "stopwatch": [
+            "තිරයේ ස්ටොප්වොච් එක පටන් ගන්න",
+            "බිංදුවේ සිට කාලය ගණන් කරන ඔරලෝසුවක් ප්‍රොජෙක්ටරයේ පෙන්වන්න"
+        ],
+        "message": [
+            "තිරයේ 'සාදරයෙන් පිළිගනිමු' කියන පණිවිඩය දාන්න",
+            "ප්‍රොජෙක්ටරයේ නිවේදනයක් පෙන්වන්න: වාහන නැවැත්වීමේ ස්ථානය පිරිලා"
+        ],
+        "notAsk": [
+            "දේශනාව විනාඩි 40ක් ගියා",
+            "දේවගැතිතුමාට පණිවිඩයක් යවන්න",
+            "තිරය හරිම දීප්තිමත්"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "sm": {
+        "countdown": [
+            "Amata se faitau i lalo e 5 minute",
+            "Fa'amolemole tuu se taimi faitau i lalo e 10 minute i luga o le sikilini ae le'i amata le sauniga",
+            "Faitau i lalo le 3 minute mo le taulaga"
+        ],
+        "stopwatch": [
+            "Amata le uati fua taimi mai le selo i luga o le lau",
+            "Faʻaali i le projector se uati e faitau i luga le taimi"
+        ],
+        "message": [
+            "Tuu le fe'au 'Afio mai' i luga o le lau",
+            "Fa'aali se fa'asilasilaga i le projector: ua tumu le nofoaga e paka ai taavale"
+        ],
+        "notAsk": [
+            "O le lauga na 40 minute le umi",
+            "Auina atu se fe'au i le faifeau",
+            "E malamalama tele le sikilini"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "sn": {
+        "countdown": [
+            "Tanga kuverenga kudzokera shure kwemaminitsi mashanu",
+            "Isa nguva inoverengwa ichidzika yemaminitsi 10 pa skrini musangano usati watanga",
+            "Verenga uchidzika maminitsi 3 ezvipo"
+        ],
+        "stopwatch": [
+            "Tangisa wachi inoverenga nguva kubva pa zero pa skrini",
+            "Ratidza wachi inoverenga nguva ichikwira pa projector"
+        ],
+        "message": [
+            "Isa shoko rekuti 'Mauya' pa skrini",
+            "Ratidza chiziviso pa projector: nzvimbo yekupaka motokari yazara"
+        ],
+        "notAsk": [
+            "Mharidzo yakatora maminitsi 40",
+            "Tumira meseji kuna mufundisi",
+            "Skrini iri kupenya zvakanyanya"
+        ],
+        "floor": {
+            "countdown": 1,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "so": {
+        "countdown": [
+            "Bilow tirin hoos u dhac ah oo 5 daqiiqo ah",
+            "Fadlan shaashadda saar saacad dib u tirineysa 10 daqiiqo ka hor inta aan cibaadadu bilaabin",
+            "Hoos u tiri 3 daqiiqo oo loogu talagalay sadaqada"
+        ],
+        "stopwatch": [
+            "Shid saacadda waqti cabbirka oo ka bilaabata eber shaashadda",
+            "Projector-ka ku soo bandhig saacad kor u tirineysa waqtiga"
+        ],
+        "message": [
+            "Shaashadda ku qor fariinta 'Soo dhawoow'",
+            "Projector-ka ku soo bandhig ogeysiis: meesha baabuurta la dhigto way buuxdaa"
+        ],
+        "notAsk": [
+            "Wacdigu wuxuu qaatay 40 daqiiqo",
+            "Fariin u dir wadaadka",
+            "Shaashaddu aad bay u iftiimaysaa"
+        ],
+        "floor": {
+            "countdown": 2,
+            "stopwatch": 1,
+            "message": 2
+        }
+    },
+    "sq": {
+        "countdown": [
+            "Fillo një numërim mbrapsht 5 minutësh",
+            "Të lutem vendos në ekran një numërim mbrapsht 10 minuta para se të fillojë shërbesa",
+            "Bej numerim mbrapsht 3 minuta per oferten"
+        ],
+        "stopwatch": [
+            "Nis kronometrin në ekran",
+            "Shfaq ne projektor nje kronometer qe numeron nga zero"
+        ],
+        "message": [
+            "Vendos mesazhin 'Mirë se vini' në ekran",
+            "Shfaq një njoftim në projektor: parkingu është plot"
+        ],
+        "notAsk": [
+            "Predikimi zgjati 40 minuta",
+            "Dërgoji një mesazh pastorit",
+            "Ekrani është shumë i ndritshëm"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    },
+    "xh": {
+        "countdown": [
+            "Qala ukubala ngasemva imizuzu emi-5",
+            "Nceda ubeke ixesha elibala ngasemva lemizuzu eli-10 kwisikrini phambi kokuba inkonzo iqale",
+            "Bala ngasemva imizuzu emithathu yomnikelo"
+        ],
+        "stopwatch": [
+            "Qalisa iwotshi ebala ixesha ukusuka ku-zero kwisikrini",
+            "Bonisa iwotshi ebala ixesha inyuka kwi-projector"
+        ],
+        "message": [
+            "Beka umyalezo othi 'Wamkelekile' kwisikrini",
+            "Bonisa isaziso kwi-projector: indawo yokupaka izele"
+        ],
+        "notAsk": [
+            "Intshumayelo ithathe imizuzu engama-40",
+            "Thumela umyalezo kumfundisi",
+            "Isikrini sikhanya kakhulu"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 1,
+            "message": 2
+        }
+    },
+    "yo": {
+        "countdown": [
+            "Bẹ̀rẹ̀ ìkàsẹ́yìn ìṣẹ́jú márùn-ún",
+            "Ẹ jọ̀ọ́ fi aago ìkàsẹ́yìn ìṣẹ́jú 10 sí ojú iboju kí ìsìn tó bẹ̀rẹ̀",
+            "Ka seyin iseju meta fun ore"
+        ],
+        "stopwatch": [
+            "Bẹ̀rẹ̀ aago tí ń ka àkókò sókè láti òdo lórí iboju",
+            "Fi aago ka akoko soke han lori projector"
+        ],
+        "message": [
+            "Fi ọ̀rọ̀ 'Ẹ káàbọ̀' sí ojú iboju",
+            "Ṣe ìkéde lórí projector: ibi ìgbọ́kọ̀sí ti kún"
+        ],
+        "notAsk": [
+            "Ìwàásù náà gba ìṣẹ́jú 40",
+            "Fi ifiranse ranse si pasito",
+            "Ìmọ́lẹ̀ iboju yìí ti pọ̀ jù"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 1,
+            "message": 0
+        }
+    },
+    "zu": {
+        "countdown": [
+            "Qala ukubala emuva kwemizuzu emi-5",
+            "Ngicela ubeke isikhathi esibala emuva semizuzu eyi-10 esikrinini ngaphambi kokuthi inkonzo iqale",
+            "Bala emuva imizuzu emithathu yomnikelo"
+        ],
+        "stopwatch": [
+            "Qalisa iwashi elibala isikhathi kusukela ku-zero esikrinini",
+            "Bonisa iwashi elibala isikhathi likhuphuka ku-projector"
+        ],
+        "message": [
+            "Beka umlayezo othi 'Siyanamukela' esikrinini",
+            "Bonisa isimemezelo ku-projector: indawo yokupaka igcwele"
+        ],
+        "notAsk": [
+            "Intshumayelo ithathe imizuzu engama-40",
+            "Thumela umlayezo kumfundisi",
+            "Inkonzo iqala ngasikhathi sini?"
+        ],
+        "floor": {
+            "countdown": 3,
+            "stopwatch": 2,
+            "message": 2
+        }
+    }
+}

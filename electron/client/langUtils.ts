@@ -54,8 +54,13 @@ async function getLangPlugin(langCode: string) {
     );
 }
 
+/** Where a plugin's assets are fetched from, for its factory and its facts. */
+function getLangAssetBaseUrl(langCode: string) {
+    return toLangPluginBaseUrl(APP_ORIGIN, langCode);
+}
+
 function genHost(plugin: LangPluginType) {
-    const baseUrl = toLangPluginBaseUrl(APP_ORIGIN, plugin.langCode);
+    const baseUrl = getLangAssetBaseUrl(plugin.langCode);
     const openLyricCallbacks: ((m: OpenLyricInternalType) => void)[] = [];
     const host = {
         langCode: plugin.langCode,
@@ -87,7 +92,7 @@ const workerBlobUrlMap = new Map<string, string>();
  * and every page's `worker-src 'self' blob:`. A packaged window is on
  * `owa://local`, like the plugin's assets, and starts it as it is. A window
  * on another origin (dev's `https://localhost:3000`) gets the SAME file, read
- * off the disk, as a `blob:`: the Khmer song plugin's spellcheck worker was
+ * off the disk, as a `blob:`: a language's song plugin's spellcheck worker was
  * refused there once the plugin left the app's own bundle (2026-11-05). A
  * worker that imports a file next to it would not survive that move; the
  * build of the plugin is where such a one would have to be inlined.
@@ -215,6 +220,7 @@ const langUtils = {
     getLangData,
     readLangPluginJson,
     getLangPluginsDirPath,
+    getLangAssetBaseUrl,
 };
 
 export default langUtils;

@@ -102,7 +102,7 @@ vi.mock('./agentSlideHelpers', () => ({
 
 import { handleAgentFileRequest, toAgentContentHash } from './agentFileHelpers';
 
-const SONG_PATH = 'C:\\data\\elsewhere\\Still khmer.owl';
+const SONG_PATH = 'C:\\data\\elsewhere\\Still here.owl';
 
 beforeEach(() => {
     h.head = 'song as it is now';
@@ -162,7 +162,7 @@ describe('read', () => {
             filePath: SONG_PATH,
         });
         expect(result).toMatchObject({
-            name: 'Still khmer',
+            name: 'Still here',
             filePath: SONG_PATH,
             content: 'song as it is now',
         });
@@ -240,13 +240,13 @@ describe('update with the hash its read answered', () => {
             summary: 'new words for Verse 1',
         });
         expect(result).toMatchObject({
-            updated: 'Still khmer',
+            updated: 'Still here',
             isSaved: false,
             undoId: 'undo-7',
         });
         expect(h.setContent).toHaveBeenCalledWith('new song');
         expect(h.lastSummary).toBe(
-            'Changed the song “Still khmer”: new words for Verse 1',
+            'Changed the song “Still here”: new words for Verse 1',
         );
         expect(h.refresh).toHaveBeenCalled();
     });

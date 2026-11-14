@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
   browserManagerArgs: [],
   resolveAppBrowserUrl: vi.fn(),
   registerOwaTools: vi.fn(),
+  requireAppChoice: vi.fn(),
+  guardAppChoice: vi.fn(),
+  abandonPendingAttempt: vi.fn(),
   watchToolCalls: vi.fn(),
   guardToolCalls: vi.fn(),
   order: [],
@@ -23,6 +26,9 @@ vi.mock('chrome-devtools-mcp/build/src/BrowserManager.js', () => ({
   BrowserManager: class {
     constructor(...args) {
       mocks.browserManagerArgs.push(args);
+    }
+    abandonPendingAttempt() {
+      mocks.abandonPendingAttempt();
     }
   },
 }));
@@ -47,6 +53,11 @@ vi.mock('chrome-devtools-mcp/build/src/version.js', () => ({
 }));
 vi.mock('./discovery.mjs', () => ({
   resolveAppBrowserUrl: mocks.resolveAppBrowserUrl,
+  requireAppChoice: mocks.requireAppChoice,
+}));
+vi.mock('./appChoice.mjs', () => ({
+  guardAppChoice: mocks.guardAppChoice,
+  STDIO_SERVER_INSTRUCTIONS: 'Check the versions.',
 }));
 vi.mock('./owaTools.mjs', () => ({
   registerOwaTools: mocks.registerOwaTools,
@@ -85,6 +96,11 @@ beforeEach(() => {
   mocks.guardToolCalls.mockImplementation(() => {
     mocks.order.push('firewall');
   });
+  mocks.guardAppChoice.mockImplementation(() => {
+    mocks.order.push('app choice');
+  });
+  mocks.requireAppChoice.mockReset();
+  mocks.abandonPendingAttempt.mockReset();
 });
 
 describe('createOwaMcpServer', () => {
@@ -141,11 +157,31 @@ describe('createOwaMcpServer', () => {
     await createOwaMcpServer();
     expect(mocks.registerOwaTools).toHaveBeenCalledWith(innerServer, {
       door: 'stdio',
+      onAppChosen: expect.any(Function),
     });
     await createOwaMcpServer({ door: 'app' });
     expect(mocks.registerOwaTools).toHaveBeenLastCalledWith(innerServer, {
       door: 'app',
+      onAppChosen: expect.any(Function),
     });
+  });
+
+  // An outside agent with several apps up asks the user which one; the
+  // in-app host is pinned to its own app and has a prompt of its own.
+  it('asks for an app choice and says the versions on the stdio door only', async () => {
+    await createOwaMcpServer();
+    expect(mocks.requireAppChoice).toHaveBeenCalledWith(true);
+    expect(innerServer.server._instructions).toBe('Check the versions.');
+    // A choice drops chrome-devtools' browser so its next call follows it.
+    const [, { onAppChosen }] = mocks.registerOwaTools.mock.lastCall;
+    onAppChosen();
+    expect(mocks.abandonPendingAttempt).toHaveBeenCalledTimes(1);
+
+    mocks.requireAppChoice.mockClear();
+    delete innerServer.server._instructions;
+    await createOwaMcpServer({ door: 'app' });
+    expect(mocks.requireAppChoice).not.toHaveBeenCalled();
+    expect(innerServer.server._instructions).toBeUndefined();
   });
 
   it('hides DevTools windows from the browser tools before they connect', async () => {
@@ -193,11 +229,27 @@ describe('createOwaMcpServer', () => {
   });
 
   it('wraps every transport with the banner, then the firewall outermost', async () => {
-    const { server } = await createOwaMcpServer();
+    const { server } = await createOwaMcpServer({ door: 'app' });
     const transport = { onmessage: null };
     await expect(server.connect(transport)).resolves.toBe('connected');
     expect(mocks.order).toEqual(['connect', 'banner', 'firewall']);
     expect(mocks.watchToolCalls).toHaveBeenCalledWith(transport);
     expect(mocks.guardToolCalls).toHaveBeenCalledWith(transport);
+    expect(mocks.guardAppChoice).not.toHaveBeenCalled();
+  });
+
+  // Between the two: a call answered with the running apps raises no
+  // banner, and the firewall still judges every call first.
+  it('puts the app choice between the banner and the firewall on stdio', async () => {
+    const { server } = await createOwaMcpServer();
+    const transport = { onmessage: null };
+    await server.connect(transport);
+    expect(mocks.order).toEqual([
+      'connect',
+      'banner',
+      'app choice',
+      'firewall',
+    ]);
+    expect(mocks.guardAppChoice).toHaveBeenCalledWith(transport);
   });
 });

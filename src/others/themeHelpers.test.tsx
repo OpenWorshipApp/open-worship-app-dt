@@ -17,6 +17,7 @@ const { appProviderMock, sendDataMock, sendDataSyncMock, matchMediaState } =
         sendDataSyncMock: vi.fn(() => 'light'),
         matchMediaState: {
             matches: false,
+            isPrinting: false,
             listener: null as ((event: Event) => void) | null,
         },
     }));
@@ -52,9 +53,11 @@ async function loadModule() {
     vi.resetModules();
     Object.defineProperty(globalThis, 'matchMedia', {
         configurable: true,
-        value: vi.fn(() => ({
+        value: vi.fn((query: string) => ({
             get matches() {
-                return matchMediaState.matches;
+                return query === 'print'
+                    ? matchMediaState.isPrinting
+                    : matchMediaState.matches;
             },
             addEventListener: vi.fn(
                 (_eventName: string, listener: (event: Event) => void) => {
@@ -77,6 +80,7 @@ describe('initHelpers', () => {
         appProviderMock.isPageScreen = false;
         sendDataSyncMock.mockReturnValue('light');
         matchMediaState.matches = false;
+        matchMediaState.isPrinting = false;
         matchMediaState.listener = null;
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -224,6 +228,74 @@ describe('initHelpers', () => {
 
         expect(latestTheme).toBe('dark');
         expect(latestThemeSource).toBe('system');
+    });
+
+    async function renderSystemDarkProbe(
+        initHelpers: Awaited<ReturnType<typeof loadModule>>,
+    ) {
+        const probe = { latestTheme: '', renderCount: 0 };
+        function Probe() {
+            const current = initHelpers.useThemeSource();
+            probe.renderCount++;
+            useEffect(() => {
+                probe.latestTheme = current.theme;
+            }, [current.theme]);
+            return null;
+        }
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<Probe />);
+        });
+        return probe;
+    }
+
+    async function flipSystemTheme(isPrinting: boolean, isDark: boolean) {
+        await act(async () => {
+            matchMediaState.isPrinting = isPrinting;
+            matchMediaState.matches = isDark;
+            matchMediaState.listener?.(new Event('change'));
+            await Promise.resolve();
+        });
+    }
+
+    test('a "system" window turns light with its print, unless it keeps its theme', async () => {
+        sendDataSyncMock.mockReturnValue('system');
+        matchMediaState.matches = true;
+        const initHelpers = await loadModule();
+        const probe = await renderSystemDarkProbe(initHelpers);
+        expect(probe.latestTheme).toBe('dark');
+
+        // Blink, printing: `prefers-color-scheme` reads light.
+        await flipSystemTheme(true, false);
+        expect(probe.latestTheme).toBe('light');
+
+        await flipSystemTheme(false, true);
+        expect(probe.latestTheme).toBe('dark');
+    });
+
+    test('a window that keeps its theme while printing does not turn light: the theme read before it stands', async () => {
+        sendDataSyncMock.mockReturnValue('system');
+        matchMediaState.matches = true;
+        const initHelpers = await loadModule();
+        initHelpers.keepThemeWhilePrinting();
+        const probe = await renderSystemDarkProbe(initHelpers);
+        expect(probe.latestTheme).toBe('dark');
+
+        // Blink, printing: `prefers-color-scheme` reads light.
+        const rendersBeforePrint = probe.renderCount;
+        await flipSystemTheme(true, false);
+        expect(probe.renderCount).toBe(rendersBeforePrint);
+        expect(probe.latestTheme).toBe('dark');
+        // A render for any other reason while printing reads the same.
+        expect(initHelpers.checkIsDarkMode('system')).toBe(true);
+
+        // Printed: the system is read again, and still dark.
+        await flipSystemTheme(false, true);
+        expect(probe.latestTheme).toBe('dark');
+
+        // The system itself turning light still turns the window light.
+        await flipSystemTheme(false, false);
+        expect(probe.latestTheme).toBe('light');
     });
 
     test('with no system matcher "system" reads as light; useIsDarkMode follows the theme', async () => {

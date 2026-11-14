@@ -115,7 +115,11 @@ const AA_FACTS = {
   scriptPattern: '[\\u2600-\\u26FF]',
 };
 // A pack's names are its manifest's.
-const AA_META = { locale: 'aa-AA', name: 'Aa language', nativeName: 'Aa native' };
+const AA_META = {
+  locale: 'aa-AA',
+  name: 'Aa language',
+  nativeName: 'Aa native',
+};
 const EN_FACTS = { name: 'English', yes: 'yes' };
 const DD_FACTS = { name: 'Dd facts name' };
 
@@ -137,11 +141,15 @@ function useStandardPacks() {
     'online/bb/assistant.json': '{ not json',
     // A folder with no pack in it is no language.
     'online/cc/notes.md': 'nothing here',
-    'online/dd/dictionary.json': JSON.stringify({ 'Clear Long Text': 'DD clear' }),
+    'online/dd/dictionary.json': JSON.stringify({
+      'Clear Long Text': 'DD clear',
+    }),
     'online/dd/assistant.json': JSON.stringify(DD_FACTS),
     // With no app to say what is installed, only a pack the assistant is
     // written for is read (`langPacks.mjs`): this one has no facts.
-    'online/ee/dictionary.json': JSON.stringify({ 'Clear Long Text': 'EE clear' }),
+    'online/ee/dictionary.json': JSON.stringify({
+      'Clear Long Text': 'EE clear',
+    }),
   });
 }
 
@@ -346,14 +354,14 @@ describe('getLanguageFacts', () => {
   const bundle = {
     languages: [
       { code: 'en', assistant: null },
-      { code: 'km', assistant: { scriptPattern: 'x' } },
+      { code: 'xx', assistant: { scriptPattern: 'x' } },
     ],
   };
 
   it('reads one language facts out of a bundle, locale or code', async () => {
     const { getLanguageFacts } = await loadTran();
-    expect(getLanguageFacts('km-KH', bundle)).toEqual({ scriptPattern: 'x' });
-    expect(getLanguageFacts('km', bundle)).toEqual({ scriptPattern: 'x' });
+    expect(getLanguageFacts('xx-XX', bundle)).toEqual({ scriptPattern: 'x' });
+    expect(getLanguageFacts('xx', bundle)).toEqual({ scriptPattern: 'x' });
   });
 
   it('answers null for a language with none, or none at all', async () => {
@@ -361,7 +369,7 @@ describe('getLanguageFacts', () => {
     expect(getLanguageFacts('en', bundle)).toBeNull();
     expect(getLanguageFacts('zz', bundle)).toBeNull();
     expect(getLanguageFacts(undefined, bundle)).toBeNull();
-    expect(getLanguageFacts('km', {})).toBeNull();
+    expect(getLanguageFacts('xx', {})).toBeNull();
   });
 
   it('reads the bundle itself when given none', async () => {

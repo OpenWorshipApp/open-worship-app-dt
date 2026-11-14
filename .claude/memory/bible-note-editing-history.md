@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d75f14ee-c1f2-4d1c-8c4a-6ea951d52b9e
-  modified: 2026-09-27T01:27:22.619Z
+  modified: 2026-11-13T16:58:40.604Z
 ---
 
 The `bible-note` package's editor **saves itself** — continuously, and whatever
@@ -94,6 +94,17 @@ whole file". And the history write is debounced. Together: one word of typing
 went from **10 entries × 608KB** to **one entry of 49KB**, with the file itself
 only ~700 bytes bigger.
 
+**A head read must never undo a newer change of this window's** (2026-11-13,
+BN-237). The window's reload after a head-change event shares the `noteItem`
+the history write keeps. When the help window's next change landed while that
+reload was reading the head, the older head went into the shared item, and
+the new change's own history write kept the OLD words under a new date: the
+tool had answered "changed". `reloadNote` now writes what the window holds
+and waits for a write on its way before reading, and drops a read during
+which the window kept something newer (`localWriteCount`). Two
+`bibleNoteHelpers.test.ts` tests replay both orders.
+
 Related: [[document-archive-owadoc]], [[agent-data-tools-backup-undo]],
+[[document-write-then-undo-race]],
 [[history-read-cache-stale-paths]],
 [[presenting-flow-reads-editing-history-head]], [[markdown-preview-window]].

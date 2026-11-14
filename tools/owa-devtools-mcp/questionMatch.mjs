@@ -84,13 +84,22 @@ const TEMPLATE_SAMPLE_PATTERN_LIST = [
     /\b(?:[1-3] )?\p{Lu}\p{Ll}+ \d+:\d+(?:-\d+)?\b|(?<![\p{L}\p{M}\p{N}])(?:\p{Nd} )?\p{Lo}[\p{Lo}\p{M}]* \p{Nd}+:\p{Nd}+(?:-\p{Nd}+)?(?![\p{L}\p{M}\p{N}])/u,
 ];
 
+// The kind of a reference example: what fills its gap is a passage, and a
+// passage has a number in it (a chapter, a verse). Words with none fill no
+// reference gap -- "put the time on the screen" in a language whose "on"
+// has two forms was read as the verse row with the time as its verse, and
+// asked as "Put <the time> on the screen", and went up as words (2026-11-13,
+// EC-563).
+const REFERENCE_SAMPLE_KIND = TEMPLATE_SAMPLE_PATTERN_LIST.length - 1;
+const NUMBER_PATTERN = /\p{Nd}/u;
+
 /**
  * Where a fill-in row's example is, or null: `{ at, sample, kind }`. A
  * row's translation (`src/lang/data/online/<code>/questions.json`) carries an example of
  * the same KIND -- the dots, an address, a quoted name, a reference -- so
  * the two can be told apart around it; a quoted name may be the reader's
- * own (`"French"` in a French window, the user's ask 2026-10-17: _question
- * should change to French if in french language_).
+ * own (a language's name in a window shown in that language, the user's
+ * ask 2026-10-17: the question should follow the window's language).
  */
 export function findTemplateSample(text) {
     for (const [kind, pattern] of TEMPLATE_SAMPLE_PATTERN_LIST.entries()) {
@@ -108,8 +117,8 @@ export function findTemplateSample(text) {
  * that (and shows what was typed): every reader of the words -- a song's
  * link, a Bible to import, a button asked for, the known-question hint --
  * reads the corpus's English, and the part they filled in is theirs either
- * way (2026-10-17: the fill-in rows were the last English left in a Khmer
- * window's question list, kept so because code reads their gap).
+ * way (2026-10-17: the fill-in rows were the last English left in a
+ * translated window's question list, kept so because code reads their gap).
  */
 export function toEnglishTemplateAsk(typed, rows) {
     const said = String(typed ?? '').trim();
@@ -135,7 +144,11 @@ export function toEnglishTemplateAsk(typed, rows) {
         const filled = said
             .slice(before.length, said.length - after.length)
             .trim();
-        if (filled.length === 0) {
+        if (
+            filled.length === 0 ||
+            (local.kind === REFERENCE_SAMPLE_KIND &&
+                !NUMBER_PATTERN.test(filled))
+        ) {
             continue;
         }
         return (
@@ -191,6 +204,11 @@ const QUERY_ALIASES = {
     words: ['lyrics', 'text'],
     song: ['lyrics'],
     hymn: ['lyrics', 'song'],
+    // The app files a song as a LYRIC, and a volunteer types either: "lyric"
+    // alone had reached the export and the Lyric Editor rows and never
+    // "How do I make a new song?" (2026-11-13, EC-583).
+    lyric: ['lyrics', 'song'],
+    lyrics: ['song'],
     scripture: ['bible', 'verse'],
     passage: ['bible', 'verse'],
     picture: ['image', 'background'],
@@ -202,8 +220,8 @@ const QUERY_ALIASES = {
     stuck: ['fix'],
 };
 
-// Letters of every alphabet, not `[a-z]` alone: a French row read in French
-// (an accented e) must keep its words whole.
+// Letters of every alphabet, not `[a-z]` alone: a row read in a language
+// with accented letters must keep its words whole.
 function normalize(text) {
     return String(text ?? '')
         .toLowerCase()
@@ -211,8 +229,8 @@ function normalize(text) {
         .trim();
 }
 
-// A letter of a script that is not Latin: a question typed in Khmer, which is
-// written with no spaces between its words.
+// A letter of a script that is not Latin: a question typed in such a script,
+// which may be written with no spaces between its words.
 const NON_LATIN_LETTER_PATTERN = /(?=\p{L})\P{Script=Latin}/u;
 
 function toCompact(text) {
@@ -233,8 +251,8 @@ function toBigramCounts(text) {
 
 // How much of one text's letter pairs the other shares, 0 to 1 (Dice). Words
 // cannot be told apart in a script without spaces, but pairs of letters can
-// be counted in any script, so a half-typed Khmer question still finds the
-// row it is the start of, and one typed in other words the row it is like.
+// be counted in any script, so a half-typed question in such a script still
+// finds the row it is the start of, and one typed in other words the row it is like.
 function toPairOverlap(left, right) {
     const leftCounts = toBigramCounts(left);
     const rightCounts = toBigramCounts(right);
@@ -435,25 +453,10 @@ export function matchQuestions(
         }
         return checkMatchesFocus(row, focus);
     });
-    if (NON_LATIN_LETTER_PATTERN.test(String(query ?? ''))) {
-        const compactQuery = toCompact(query);
-        return rows
-            .map((row) => {
-                return { row, score: scoreScriptRow(row, compactQuery) };
-            })
-            .filter((item) => {
-                return item.score > 0;
-            })
-            .sort((left, right) => {
-                return right.score - left.score;
-            })
-            .slice(0, limit)
-            .map((item) => {
-                return item.row;
-            });
-    }
-    const groups = toQueryGroups(query);
-    if (groups.length === 0) {
+    if (
+        !NON_LATIN_LETTER_PATTERN.test(String(query ?? '')) &&
+        toQueryGroups(query).length === 0
+    ) {
         // The empty window only has room for a handful, and which handful
         // matters more than any ranking here: `starterRank` is where a human
         // says "these four, in this order". Everything else keeps corpus
@@ -470,10 +473,40 @@ export function matchQuestions(
             });
         return (starters.length > 0 ? starters : rows).slice(0, limit);
     }
+    return scoreQuestionRows(query, rows)
+        .sort((left, right) => {
+            return right.score - left.score;
+        })
+        .slice(0, limit)
+        .map((item) => {
+            return item.row;
+        });
+}
+
+/**
+ * Every row that matches `query` at all, with its score, in corpus order.
+ * Both rankings below read this, so a row the type-ahead finds is a row a
+ * topic can offer, and the other way round.
+ */
+function scoreQuestionRows(query, rows) {
+    if (NON_LATIN_LETTER_PATTERN.test(String(query ?? ''))) {
+        const compactQuery = toCompact(query);
+        return rows
+            .map((row) => {
+                return { row, score: scoreScriptRow(row, compactQuery) };
+            })
+            .filter((item) => {
+                return item.score > 0;
+            });
+    }
+    const groups = toQueryGroups(query);
+    if (groups.length === 0) {
+        return [];
+    }
     return rows
         .map((row) => {
             // A translated row answers to its own words and to its English
-            // ones: English typed in a Khmer window still finds it.
+            // ones: English typed in a translated window still finds it.
             const score =
                 row.textEn === undefined || row.textEn === row.text
                     ? scoreRow(row, groups)
@@ -485,9 +518,65 @@ export function matchQuestions(
         })
         .filter((item) => {
             return item.score > 0;
+        });
+}
+
+// A topic choice has to name the word somewhere whole -- in its question or
+// as one of its keywords -- not merely contain it: "hi" is inside "hide".
+const TOPIC_MIN_SCORE = SCORE.keywordToken;
+
+/**
+ * The jobs a word or two typed ALONE could mean -- "lyric", "background" --
+ * to offer as choices before anything is answered (2026-11-13, EC-583, the
+ * user: _when user type only few word, chatbot should follow up, before
+ * provide result should confirm_).
+ *
+ * Not the type-ahead's ranking. That one wants the row whose words are most
+ * like what was typed, and for "lyric" that was exporting a song's stages to
+ * PowerPoint and opening the Lyric Editor: the rows that SAY "lyric", never
+ * "How do I make a new song?". A topic wants the main jobs, and the corpus
+ * already lists each section's main jobs first -- written by a person who
+ * knew which they were. So: every row that matches at least half as well as
+ * the best one (the weak ones are some other subject that happens to share a
+ * word), then in the corpus's own order, a window's own pages before the
+ * pages true everywhere. No fill-in row (it cannot be asked as it stands)
+ * and no state question (it asks what IS, not what to do).
+ */
+export function listTopicQuestions(
+    query = '',
+    { focus = null, limit = 6, pages } = {},
+) {
+    const rows = flattenQuestions(pages).filter((row) => {
+        return (
+            checkMatchesFocus(row, focus) &&
+            !row.isTemplate &&
+            row.kind !== 'state'
+        );
+    });
+    const scored = scoreQuestionRows(query, rows);
+    if (scored.length === 0) {
+        return [];
+    }
+    const best = Math.max(
+        ...scored.map((item) => {
+            return item.score;
+        }),
+    );
+    const floor = Math.max(TOPIC_MIN_SCORE, Math.ceil(best / 2));
+    const kept = scored.filter((item) => {
+        return item.score >= floor;
+    });
+    // `scored` is in corpus order already; a stable sort keeps it inside
+    // each half.
+    return kept
+        .map((item, index) => {
+            return { ...item, index, isShared: item.row.focus === null };
         })
         .sort((left, right) => {
-            return right.score - left.score;
+            return (
+                Number(left.isShared) - Number(right.isShared) ||
+                left.index - right.index
+            );
         })
         .slice(0, limit)
         .map((item) => {

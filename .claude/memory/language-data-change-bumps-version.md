@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c87960ba-6340-4fb6-9ed7-286177f7d5d1
-  modified: 2026-11-05T16:22:16.737Z
+  modified: 2026-11-12T03:44:54.695Z
 ---
 
 The user, 2026-11-04: _add to agent documents everytime language data got
@@ -14,10 +14,14 @@ modified it have to increase meta version_.
 **Why:** a language is a plugin found in two homes (`electron-build/lang`,
 shipped, and `<data folder>/lang`, installed) and the scanner
 (`electron/langPluginHelpers.ts`) keeps the HIGHEST version, a tie going to
-the shipped copy. The catalog (`build-lang-plugins.mjs`,
-`mergeCatalogEntry`) keeps one entry per version, so a release under an
-unchanged version silently REPLACES the old pack: the Languages tab offers no
-update, and every installed copy keeps the old data.
+the shipped copy. The catalog keeps one entry per version, and since
+2026-11-11 `npm run release:lang` (`extra-work/s3-push-lang.js`) KEEPS a
+version already published -- skipped, named in its log -- so a change under
+an unchanged version is never published at all: the Languages tab offers no
+update, and every installed copy keeps the old data. (Before, it re-uploaded
+the pack: a pack is rebuilt with fresh file times, so the same URL got other
+bytes and a new checksum while the CDN could still serve the old ones, and
+every install of it would fail its integrity check.)
 
 **How to apply:**
 
@@ -37,7 +41,7 @@ update, and every installed copy keeps the old data.
   (`<data folder>/lang/<code>@<v>/`), never `src/lang/data/online/`, so an
   edit nobody packed is invisible to a live check -- and a key added to the
   source but not to the installed copy throws in dev exactly like a missing
-  one, a false failure in the Khmer pass. Order matters: **Update to** is
+  one, a false failure in the non-English pass. Order matters: **Update to** is
   offered only for a strictly higher version (`checkIsLangUpdateAvailable`),
   so raise, THEN pack; a second edit in the same change, packed under the
   number already installed, is reached by deleting the installed copy (its

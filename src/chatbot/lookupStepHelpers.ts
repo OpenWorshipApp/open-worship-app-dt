@@ -63,7 +63,7 @@ export type LookupStepType = {
     ask: LookupAskType;
     near?: 'previous' | 'next';
     // A language the person named when they asked for another Bible
-    // ("show this in Khmer"): the list keeps the Bibles in it, when there
+    // ("show this in <language>"): the list keeps the Bibles in it, when there
     // are any (2026-10-19).
     // A language code of a package here (`listAssistantLanguages`).
     preferLanguage?: string;
@@ -110,7 +110,7 @@ const STEP_NAME_LIST: LookupStepNameType[] = [
 ];
 
 // Stored in English, drawn with `tranLabel`; `chatTranLabels.test.ts` holds
-// each to its Khmer and French.
+// each to its string in every language package.
 export const LOOKUP_ACTION_LABEL_LIST = [
     'More things to do',
     'Open in bible lookup',
@@ -630,7 +630,7 @@ export function genNamesAnswer(ask: LookupAskType, facts: any) {
 /**
  * Whether a Bible's key or title says it is in this language: its own
  * script for a language written in one, and its own name for a Latin one
- * (`English NIV`, `French (BDS)`), which is how the installed list reads.
+ * (`English NIV`, `<Language> (<short name>)`), which is how the installed list reads.
  */
 function checkIsBibleInLanguage(bible: any, code: string) {
     const language = getAssistantLanguage(code);
@@ -645,8 +645,8 @@ function checkIsBibleInLanguage(bible: any, code: string) {
     if (!language.isLatinScript && language.scriptPattern.test(sample)) {
         return true;
     }
-    // Its own name too: an installed Khmer Bible may be titled `Khmer 2012`
-    // in English (`KCB`), and an English one `English NIV`.
+    // Its own name too: an installed Bible of a non-Latin script may be
+    // titled `<Language> 2012` in English, and an English one `English NIV`.
     return `${language.name} ${language.nativeName}`
         .split(/\s+/)
         .some((word) => {

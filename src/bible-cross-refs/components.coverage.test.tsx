@@ -406,7 +406,11 @@ describe('BibleCrossRefRendererComp', () => {
         );
         expect(
             queryAll('.app-xref-card-title').map((e) => e.textContent),
-        ).toEqual(['AI Cross References', 'Custom OpenAI', 'Custom Anthropic']);
+        ).toEqual([
+            'AI Cross References',
+            'OpenAI (Custom)',
+            'Anthropic (Custom)',
+        ]);
         expect(h.useGetBibleCrossRefOpenAI).toHaveBeenCalledWith('JHN', 3, 16);
         expect(h.useGetBibleCrossRefAnthropic).toHaveBeenCalledWith(
             'JHN',

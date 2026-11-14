@@ -48,6 +48,7 @@ import {
     toAgentFilePath,
     trashAgentFile,
 } from './agentBackupHelpers';
+import type { AgentBackupMetaType } from './agentBackupPlanHelpers';
 import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
 import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
 
@@ -298,6 +299,29 @@ async function handleAdd(
         return bibleItem;
     }
     const title = await toTitle(bibleItem);
+    const saved = await addWithBackup(place, found, bibleItem, title);
+    if ('refusal' in saved) {
+        return saved.refusal;
+    }
+    return {
+        where: getWhere(),
+        added: title,
+        version: bibleItem.bibleKey,
+        list: found.name,
+        id: saved.id,
+        ...genUndoField(saved.meta),
+    };
+}
+
+/** One passage added to a list found, with the backup its undo reads. */
+async function addWithBackup(
+    place: ListPlaceType,
+    found: NamedListType,
+    bibleItem: any,
+    title: string,
+): Promise<
+    { meta: AgentBackupMetaType; id: number } | { refusal: AgentResultType }
+> {
     let restores;
     try {
         restores = found.isThere
@@ -307,7 +331,7 @@ async function handleAdd(
               // where it was.
               [{ type: 'file' as const, filePath: found.filePath, text: null }];
     } catch (error) {
-        return fail(genNoBackupReason(error));
+        return { refusal: fail(genNoBackupReason(error)) };
     }
     try {
         const { meta, value: id } = await runWithAgentBackup(
@@ -327,16 +351,73 @@ async function handleAdd(
                 return bible.maxItemId;
             },
         );
-        return {
-            where: getWhere(),
-            added: title,
-            version: bibleItem.bibleKey,
-            list: found.name,
-            id,
-            ...genUndoField(meta),
-        };
+        return { meta, id };
     } catch (error) {
-        return toChangeFailure(error, `Saving “${title}”`);
+        return { refusal: toChangeFailure(error, `Saving “${title}”`) };
+    }
+}
+
+export type AgentBibleSavedFirstType = {
+    list: string;
+    // Saved by this call; false when the list held it already.
+    isNew: boolean;
+    id?: number;
+    undoId?: string;
+};
+
+/**
+ * A passage goes into the Bibles list BEFORE it goes on a screen
+ * (2026-11-14, EC-704, the user: _the rule is bible verse have to save to
+ * list first (if not added) before show on screen_), as the Bible Lookup's
+ * own double-click saves it into Default and then shows it
+ * (`addBibleItemAndPresent`). Into the Default list of the page's Bibles
+ * folder, read fresh; one it holds already -- the same version and verses --
+ * is not saved twice. Backed up like `add`, so `owa_undo` takes it out.
+ */
+export async function saveAgentBibleItemFirst(
+    bibleItem: any,
+): Promise<AgentBibleSavedFirstType | AgentResultType> {
+    try {
+        const place = await getListPlace();
+        if (place === null) {
+            return fail(genNoFolderReason());
+        }
+        const found = await findList(place, DEFAULT_LIST_NAME, {
+            mayBeMissing: true,
+        });
+        if (!checkIsListFound(found)) {
+            return found;
+        }
+        if (found.isThere) {
+            const bible = await readFreshList(place, found);
+            const held = bible.items.find((item: any) => {
+                return (
+                    item.bibleKey === bibleItem.bibleKey &&
+                    item.checkIsTargetIdentical(bibleItem)
+                );
+            });
+            if (held !== undefined) {
+                return { list: found.name, isNew: false, id: held.id };
+            }
+        }
+        const saved = await addWithBackup(
+            place,
+            found,
+            bibleItem,
+            await toTitle(bibleItem),
+        );
+        if ('refusal' in saved) {
+            return saved.refusal;
+        }
+        return {
+            list: found.name,
+            isNew: true,
+            id: saved.id,
+            undoId: saved.meta.id,
+        };
+    } catch (error: any) {
+        handleError(error);
+        return fail(String(error?.message ?? error));
     }
 }
 
@@ -695,6 +776,29 @@ const ACTION_HANDLER_MAP: Record<
  * never throws: the caller is a page expression whose only channel back is a
  * DOM event.
  */
+function genNoFolderReason() {
+    return (
+        `No Bibles folder is set up for the ${getWhere()} yet. The ` +
+        'user chooses one in Settings under Path Settings.'
+    );
+}
+
+/** The page's Bibles folder, or null when none is set up. */
+async function getListPlace(): Promise<ListPlaceType | null> {
+    const Bible = await getBibleClass();
+    const dirPath = DirSource.getDirPathBySettingName(
+        Bible.getDirSourceSettingName(),
+    );
+    if (dirPath === null) {
+        return null;
+    }
+    return {
+        Bible,
+        dirPath,
+        extension: getMimetypeExtensions('bible')[0],
+    };
+}
+
 export async function handleAgentBibleListRequest(
     request: AgentBibleListRequestType,
 ): Promise<AgentResultType> {
@@ -706,21 +810,10 @@ export async function handleAgentBibleListRequest(
                     'rename-list or delete-list.',
             );
         }
-        const Bible = await getBibleClass();
-        const dirPath = DirSource.getDirPathBySettingName(
-            Bible.getDirSourceSettingName(),
-        );
-        if (dirPath === null) {
-            return fail(
-                `No Bibles folder is set up for the ${getWhere()} yet. The ` +
-                    'user chooses one in Settings under Path Settings.',
-            );
+        const place = await getListPlace();
+        if (place === null) {
+            return fail(genNoFolderReason());
         }
-        const place = {
-            Bible,
-            dirPath,
-            extension: getMimetypeExtensions('bible')[0],
-        };
         return (await ACTION_HANDLER_MAP[action](
             place,
             request,

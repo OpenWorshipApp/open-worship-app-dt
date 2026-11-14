@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-11-07",
+    "updated": "2026-11-14",
     "sections": [
         {
             "id": "orientation",
@@ -240,6 +240,38 @@
                     }
                 },
                 {
+                    "id": "song-from-powerpoint",
+                    "text": "Can you turn a PowerPoint song into a lyric file?",
+                    "kind": "howto",
+                    "keywords": [
+                        "powerpoint",
+                        "pptx",
+                        "ppt",
+                        "lyric from powerpoint",
+                        "song from a powerpoint",
+                        "hymn slides",
+                        "convert slides to a song",
+                        "import a powerpoint song",
+                        "create lyric file from powerpoint",
+                        "several powerpoint files",
+                        "powerpoint to lyric",
+                        "powerpoint to song",
+                        "powerpoint into a song",
+                        "powerpoint into lyrics",
+                        "song from a word file",
+                        "word document to a song",
+                        "song from a pdf",
+                        "pdf to a song",
+                        "song from a slide document",
+                        "slide document to a song"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "A song from a file in your Documents list",
+                        "related": ["W-15"]
+                    }
+                },
+                {
                     "id": "song-from-text",
                     "text": "Can you make a song from words I paste in?",
                     "kind": "howto",
@@ -252,7 +284,11 @@
                         "song from a link",
                         "lyrics file",
                         "create lyric file",
-                        "turn words into a song"
+                        "turn words into a song",
+                        "verse and chorus on one line",
+                        "song from a powerpoint",
+                        "songs from slide files",
+                        "several song files"
                     ],
                     "starter": true,
                     "starterRank": 3,
@@ -301,6 +337,9 @@
                         "hymn page",
                         "song page address",
                         "read a song page",
+                        "several song links",
+                        "many songs at once",
+                        "create all songs",
                         "/lyric",
                         "lyric command",
                         "without an assistant"
@@ -422,7 +461,15 @@
             "id": "documents",
             "label": "Documents & slides",
             "panel": "Documents",
-            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45", "W-48", "W-49b"],
+            "recipes": [
+                "W-03",
+                "W-04",
+                "W-26",
+                "W-27",
+                "W-45",
+                "W-48",
+                "W-49b"
+            ],
             "questions": [
                 {
                     "id": "document-transition",
@@ -800,6 +847,24 @@
                     }
                 },
                 {
+                    "id": "song-notes",
+                    "text": "Where do I see the Note I wrote in a song?",
+                    "kind": "where",
+                    "keywords": [
+                        "song note",
+                        "lyric note",
+                        "note block",
+                        "ol:Note",
+                        "reminder",
+                        "read-only"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "related": ["W-31"],
+                        "find": "Note"
+                    }
+                },
+                {
                     "id": "trash-document",
                     "text": "How do I delete a song or document?",
                     "kind": "howto",
@@ -971,10 +1036,31 @@
                         "stage style",
                         "opacity",
                         "bigger text",
-                        "too small"
+                        "too small",
+                        "stage preset",
+                        "save the stage look",
+                        "lyrics banner"
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-font",
+                    "text": "How do I give one song its own font?",
+                    "kind": "howto",
+                    "keywords": [
+                        "song font",
+                        "font for one song",
+                        "own font",
+                        "use the app font",
+                        "powerpoint font",
+                        "font of the slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "find": "Stage Style",
                         "guide": true
                     }
                 },
@@ -1125,6 +1211,24 @@
                         "related": ["W-53"],
                         "find": "Open in Chatbot"
                     }
+                },
+                {
+                    "id": "song-from-document",
+                    "text": "How do I make a song from a PowerPoint file?",
+                    "kind": "howto",
+                    "keywords": [
+                        "song from powerpoint",
+                        "song from a powerpoint",
+                        "lyric from powerpoint",
+                        "powerpoint into a song",
+                        "song from a word file",
+                        "song from a pdf",
+                        "lyric-from"
+                    ],
+                    "resources": {
+                        "recipe": "W-62",
+                        "related": ["W-05"]
+                    }
                 }
             ]
         },
@@ -1166,7 +1270,7 @@
                         "generate slides",
                         "bible slides",
                         "multiple translations",
-                        "English and Khmer",
+                        "English and my language",
                         "next verse",
                         "upcoming verse",
                         "Bible slide font size",
@@ -1461,7 +1565,6 @@
                     "text": "How do I save my Bible text style as a preset?",
                     "kind": "howto",
                     "keywords": [
-                        "save as preset",
                         "save the style",
                         "my own look",
                         "reuse a style",
@@ -1469,7 +1572,7 @@
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Save as Preset",
+                        "find": "Bible/LongText Properties > Save as Preset",
                         "guide": true
                     }
                 },
@@ -1482,12 +1585,44 @@
                         "verse font",
                         "font of the verse",
                         "scripture font",
-                        "khmer font for the bible"
+                        "my language's font for the bible",
+                        "language font in the font list"
                     ],
                     "resources": {
                         "recipe": "W-07",
                         "find": "Font Family",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "screen-change-with-assistant",
+                    "text": "Can the assistant change the Bible text or a transition on the screens for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "assistant change the screen",
+                        "chatbot change the screen",
+                        "change the screens with the assistant",
+                        "assistant add another version",
+                        "assistant change the transition",
+                        "ask the assistant to change the screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-63",
+                        "related": ["W-07", "W-10"]
+                    }
+                },
+                {
+                    "id": "add-screen-with-assistant",
+                    "text": "Can the assistant add a new screen for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "assistant add a screen",
+                        "chatbot add a screen",
+                        "assistant add another screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-63",
+                        "related": ["W-18"]
                     }
                 },
                 {
@@ -1918,6 +2053,7 @@
                         "current time",
                         "watch",
                         "show time",
+                        "show the time",
                         "hour"
                     ],
                     "resources": {
@@ -2010,7 +2146,20 @@
                         "type message",
                         "one line",
                         "announcement",
-                        "note on screen"
+                        "note on screen",
+                        "preview markdown",
+                        "markdown lesson",
+                        "learn markdown",
+                        "markdown cheat sheet",
+                        "quick text preset",
+                        "speaker name",
+                        "verse lower third",
+                        "how long quick text stays",
+                        "how long a verse stays up",
+                        "quick text reading speed",
+                        "quick text delay",
+                        "keep text on screen until hidden",
+                        "infinite quick text"
                     ],
                     "resources": {
                         "recipe": "W-09",
@@ -2094,6 +2243,39 @@
                     }
                 },
                 {
+                    "id": "foreground-change-with-assistant",
+                    "text": "Can the assistant change a countdown or a marquee for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open in chatbot",
+                        "make the countdown bigger",
+                        "move it to the top",
+                        "change the colour",
+                        "quick text from a verse",
+                        "change foreground with the assistant"
+                    ],
+                    "resources": {
+                        "recipe": "W-61",
+                        "related": ["W-09"],
+                        "find": "Open in Chatbot"
+                    }
+                },
+                {
+                    "id": "foreground-attach-session",
+                    "text": "How do I give the assistant a foreground session to work on?",
+                    "kind": "howto",
+                    "keywords": [
+                        "attach a foreground session",
+                        "session chip",
+                        "still asking about",
+                        "attach countdown to chat"
+                    ],
+                    "resources": {
+                        "recipe": "W-61",
+                        "find": "Open in Chatbot"
+                    }
+                },
+                {
                     "id": "foreground-two-overlays",
                     "text": "Can I show two pictures over the slide at the same time?",
                     "kind": "howto",
@@ -2124,7 +2306,10 @@
                         "save this look",
                         "second marquee",
                         "switch between set-ups",
-                        "without retyping"
+                        "without retyping",
+                        "two quick texts at once",
+                        "both on the screen",
+                        "show another session beside"
                     ],
                     "resources": {
                         "recipe": "W-09",
@@ -2311,7 +2496,7 @@
                     "keywords": [
                         "bilingual",
                         "translation beside it",
-                        "khmer and english",
+                        "my language and english",
                         "sing along",
                         "long text",
                         "lyrics that scroll"
@@ -2319,7 +2504,8 @@
                     "resources": {
                         "recipe": "W-53",
                         "find": "Long Text Show",
-                        "guide": true
+                        "guide": true,
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -2447,7 +2633,9 @@
                         "brush",
                         "highlight",
                         "mark up",
-                        "presenting control"
+                        "presenting control",
+                        "highlighter",
+                        "brush preset"
                     ],
                     "resources": {
                         "recipe": "W-19",
@@ -2465,7 +2653,8 @@
                         "dim",
                         "highlight area",
                         "circle",
-                        "point at"
+                        "point at",
+                        "spotlight preset"
                     ],
                     "resources": {
                         "recipe": "W-19",

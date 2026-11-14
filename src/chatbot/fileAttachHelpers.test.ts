@@ -7,26 +7,41 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // stood in for here; the attachment store and the readers are the real ones.
 // jsdom has a `FileReader` but loads no picture, so `Image` is a stand-in
 // whose size each test says, and a canvas hands back fixed data URLs.
-const { diskState, sendState, folderState, imageState } = vi.hoisted(() => ({
-    diskState: {
-        // Size by path; a path not here is not on the disk.
-        sizeMap: new Map<string, number>(),
-        textMap: new Map<string, string>(),
-        bytesMap: new Map<string, Uint8Array>(),
-        readCountMap: new Map<string, number>(),
+const { diskState, sendState, folderState, bibleNotesState, imageState } =
+    vi.hoisted(() => ({
+        diskState: {
+            // Size by path; a path not here is not on the disk.
+            sizeMap: new Map<string, number>(),
+            textMap: new Map<string, string>(),
+            bytesMap: new Map<string, Uint8Array>(),
+            readCountMap: new Map<string, number>(),
+        },
+        sendState: {
+            channelList: [] as { channel: string; data: any }[],
+            answer: null as any,
+            isThrowing: false,
+        },
+        folderState: {
+            dirPaths: [] as string[],
+            isThrowing: false,
+            readCount: 0,
+        },
+        // The Bible Notes folder of the session in front (EC-509).
+        bibleNotesState: {
+            dirPath: null as string | null,
+            readCount: 0,
+        },
+        // The size the stand-in `Image` loads at; null fails to load.
+        imageState: { size: { width: 40, height: 20 } as null | object },
+    }));
+// A deck's or a Word file's words, as the converter reader hands them over
+// (`documentWordsHelpers.test.ts` holds the reading itself): by path, none
+// for a path not here.
+const { documentWordsState } = vi.hoisted(() => ({
+    documentWordsState: {
+        wordsMap: new Map<string, string>(),
+        readList: [] as string[],
     },
-    sendState: {
-        channelList: [] as { channel: string; data: any }[],
-        answer: null as any,
-        isThrowing: false,
-    },
-    folderState: {
-        dirPaths: [] as string[],
-        isThrowing: false,
-        readCount: 0,
-    },
-    // The size the stand-in `Image` loads at; null fails to load.
-    imageState: { size: { width: 40, height: 20 } as null | object },
 }));
 
 vi.mock('../server/fileHelpers', () => ({
@@ -82,6 +97,12 @@ vi.mock('../server/electronSendHelpers', () => ({
         return sendState.answer;
     },
 }));
+vi.mock('./documentWordsHelpers', () => ({
+    readDocumentWords: async (filePath: string) => {
+        documentWordsState.readList.push(filePath);
+        return documentWordsState.wordsMap.get(filePath) ?? null;
+    },
+}));
 vi.mock('../resources/resourcesFolderHelpers', () => ({
     getResourcesFolderList: () => {
         folderState.readCount += 1;
@@ -89,6 +110,12 @@ vi.mock('../resources/resourcesFolderHelpers', () => ({
             throw new Error('setting store not ready');
         }
         return folderState.dirPaths;
+    },
+}));
+vi.mock('../bible-list/note/bibleNotesDirHelpers', () => ({
+    getActiveBibleNotesDirPath: () => {
+        bibleNotesState.readCount += 1;
+        return bibleNotesState.dirPath;
     },
 }));
 
@@ -106,6 +133,8 @@ import {
     findResourceFileNames,
     genAttachmentFromPath,
     genPdfAttachment,
+    readWholeTextFile,
+    refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
 
@@ -145,7 +174,11 @@ beforeEach(() => {
     folderState.dirPaths = [];
     folderState.isThrowing = false;
     folderState.readCount = 0;
+    bibleNotesState.dirPath = null;
+    bibleNotesState.readCount = 0;
     imageState.size = { width: 40, height: 20 };
+    documentWordsState.wordsMap.clear();
+    documentWordsState.readList = [];
     vi.stubGlobal('Image', FakeImage);
 });
 afterEach(() => {
@@ -369,6 +402,26 @@ describe('genAttachmentFromPath', () => {
         expect(
             expectFailure(await genAttachmentFromPath('C:/docs/report.docx')),
         ).toBe('I cannot read report.docx — try a picture of it instead.');
+        expect(documentWordsState.readList).toContain('C:/docs/report.docx');
+    });
+
+    // EC-590: through the app's own converter, never its bytes read here.
+    test('a deck or a Word file is its words, with its path to read again', async () => {
+        diskState.sizeMap.set('C:/docs/Grace.pptx', 2048);
+        documentWordsState.wordsMap.set(
+            'C:/docs/Grace.pptx',
+            'Amazing grace\nhow sweet',
+        );
+        const attachment = expectAttachment(
+            await genAttachmentFromPath('C:/docs/Grace.pptx'),
+        );
+        expect(attachment.kind).toBe('text');
+        expect(attachment.name).toBe('Grace.pptx');
+        expect(attachment.filePath).toBe('C:/docs/Grace.pptx');
+        expect(attachment.summary).toContain('Amazing grace\nhow sweet');
+        expect(diskState.readCountMap.get('C:/docs/Grace.pptx')).toBe(
+            undefined,
+        );
     });
 });
 
@@ -460,6 +513,98 @@ describe('reloadFileAttachment', () => {
     });
 });
 
+describe('refreshTextAttachment', () => {
+    const STUDY_PATH = 'C:/res/Default/JHN.3.16-17 Love.md';
+
+    function attachStudy(text: string) {
+        diskState.sizeMap.set(STUDY_PATH, text.length);
+        diskState.textMap.set(STUDY_PATH, text);
+        return {
+            ...genTextAttachment('JHN.3.16-17 Love.md', text, STUDY_PATH),
+            number: 1,
+        };
+    }
+
+    test('a study file changed on disk since it was attached goes with its words as they are now', async () => {
+        const attached = attachStudy('## Questions\n\n1. Old question?\n');
+        // The window saved a change to it since.
+        const saved = '## Questions\n\n1. New question?\n';
+        diskState.sizeMap.set(STUDY_PATH, saved.length);
+        diskState.textMap.set(STUDY_PATH, saved);
+
+        const fresh = await refreshTextAttachment(attached);
+
+        expect(fresh).not.toBe(attached);
+        expect(fresh.summary).toContain('New question?');
+        expect(fresh.summary).not.toContain('Old question?');
+        // The same chip: its id, its number and where it lives.
+        expect(fresh.id).toBe(attached.id);
+        expect(fresh.number).toBe(1);
+        expect(fresh.filePath).toBe(STUDY_PATH);
+        expect(fresh.byteSize).toBe(saved.length);
+        // The message keeps what was attached.
+        expect(attached.summary).toContain('Old question?');
+    });
+
+    test('the same attachment when the file is as it was, gone, or cannot be read', async () => {
+        const attached = attachStudy('## Questions\n\n1. Same?\n');
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+
+        diskState.textMap.delete(STUDY_PATH);
+        // Still sized, but the read fails.
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+
+        diskState.sizeMap.delete(STUDY_PATH);
+        expect(await refreshTextAttachment(attached)).toBe(attached);
+    });
+
+    test('nothing is read for a picture, a PDF, words with no path, or one note of a notes file', async () => {
+        const picture: ChatAttachmentType = {
+            id: 'pic',
+            kind: 'image',
+            name: 'stage.png',
+            mimeType: 'image/png',
+            byteSize: 1,
+            filePath: 'C:/pics/stage.png',
+        };
+        const pdf = genFileAttachment('LUK.6.pdf', 10, 'C:/LUK.6.pdf');
+        const pasted = genTextAttachment('pasted.txt', 'words');
+        const note: ChatAttachmentType = {
+            ...genTextAttachment('Sunday', 'Note: Sunday\nwords', 'C:/n.own'),
+            noteId: 3,
+        };
+        for (const attachment of [picture, pdf, pasted, note]) {
+            expect(await refreshTextAttachment(attachment)).toBe(attachment);
+        }
+        expect(diskState.readCountMap.size).toBe(0);
+        expect(sendState.channelList).toEqual([]);
+    });
+
+    test("the app's own documents are left to their own conversations' reads", async () => {
+        // On disk and changed since -- still not read here: a song, a slide
+        // document, a presenting flow and a whole notes file are read as
+        // they are now by their own tools.
+        const documentList = [
+            'C:/songs/Amazing Grace.owl',
+            'C:/slides/Sunday.ows',
+            'C:/flows/Sunday.owpf',
+            'C:/notes/Sermons.own',
+        ].map((filePath) => {
+            diskState.sizeMap.set(filePath, 5);
+            diskState.textMap.set(filePath, 'new words');
+            return genTextAttachment(
+                filePath.split('/').pop() ?? '',
+                'old words',
+                filePath,
+            );
+        });
+        for (const attachment of documentList) {
+            expect(await refreshTextAttachment(attachment)).toBe(attachment);
+        }
+        expect(diskState.readCountMap.size).toBe(0);
+    });
+});
+
 describe('findResourceFileNames', () => {
     test('names each file inside a Resources folder as the tool does, once', () => {
         folderState.dirPaths = ['C:/Data/Resources/pdf', 'D:/Other/notes/'];
@@ -497,5 +642,74 @@ describe('findResourceFileNames', () => {
         folderState.isThrowing = true;
         expect(findResourceFileNames([luke])).toEqual([]);
         expect(folderState.readCount).toBe(2);
+    });
+
+    // EC-509: a study the person kept in the Bible Notes list is named as
+    // the study tool takes it, so the tab can read, change and translate it.
+    test('names a study kept in the Bible Notes folder', () => {
+        folderState.dirPaths = ['C:/Data/Resources/pdf'];
+        bibleNotesState.dirPath = 'C:/Data/Notes/';
+        const study = genFileAttachment(
+            'JHN.3.16 Love.md',
+            1,
+            'C:\\Data\\Notes\\JHN.3.16 Love.md',
+        );
+        const nested = genFileAttachment(
+            'Deep.md',
+            1,
+            'C:/Data/Notes/old/Deep.md',
+        );
+        const luke = genFileAttachment(
+            'LUK.6.pdf',
+            1,
+            'C:/Data/Resources/pdf/LUK.6.pdf',
+        );
+        expect(findResourceFileNames([study, nested, luke])).toEqual([
+            'Bible Notes/JHN.3.16 Love.md',
+            'pdf/LUK.6.pdf',
+        ]);
+        expect(bibleNotesState.readCount).toBe(1);
+    });
+
+    test('reads no Bible Notes folder for a question with no Markdown file', () => {
+        bibleNotesState.dirPath = 'C:/Data/Notes';
+        const own = genFileAttachment(
+            'Default.own',
+            1,
+            'C:/Data/Notes/Default.own',
+        );
+        expect(findResourceFileNames([own])).toEqual([]);
+        expect(bibleNotesState.readCount).toBe(0);
+    });
+});
+
+// EC-497: a study is checked from its whole text, never the attachment's cut.
+describe('readWholeTextFile', () => {
+    test('reads the whole file, past what an attachment holds', async () => {
+        const study = `# Study\n${'word '.repeat(9000)}Romans 5:8`;
+        diskState.sizeMap.set('C:/r/study.md', study.length);
+        diskState.textMap.set('C:/r/study.md', study);
+        expect(await readWholeTextFile('C:/r/study.md', 64_000)).toBe(study);
+    });
+
+    test('cuts the words at the most asked for', async () => {
+        diskState.sizeMap.set('C:/r/long.md', 30);
+        diskState.textMap.set('C:/r/long.md', 'a'.repeat(30));
+        expect(await readWholeTextFile('C:/r/long.md', 20)).toBe(
+            'a'.repeat(20),
+        );
+    });
+
+    test('reads nothing of a file larger than the words could be', async () => {
+        diskState.sizeMap.set('C:/r/huge.md', 81);
+        diskState.textMap.set('C:/r/huge.md', 'words');
+        expect(await readWholeTextFile('C:/r/huge.md', 20)).toBeNull();
+        expect(diskState.readCountMap.get('C:/r/huge.md')).toBeUndefined();
+    });
+
+    test('a file that has gone or cannot be read is null', async () => {
+        expect(await readWholeTextFile('C:/r/gone.md', 20)).toBeNull();
+        diskState.sizeMap.set('C:/r/locked.md', 5);
+        expect(await readWholeTextFile('C:/r/locked.md', 20)).toBeNull();
     });
 });

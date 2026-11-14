@@ -260,7 +260,9 @@ function ForegroundScreenItemComp({
                         genStyle={genStyle}
                     />
                 </div>
-                {showingScreenIdDataList.length > 0 ? (
+            </div>
+            {showingScreenIdDataList.length > 0 ? (
+                <div className="fg-actions-dock">
                     <div className="fg-actions">
                         <ScreensRendererComp
                             showingScreenIdDataList={showingScreenIdDataList}
@@ -272,8 +274,8 @@ function ForegroundScreenItemComp({
                             isMini={false}
                         />
                     </div>
-                ) : null}
-            </div>
+                </div>
+            ) : null}
         </ForegroundLayoutComp>
     );
 }

@@ -342,13 +342,32 @@ export function toPageName(url) {
 }
 
 /**
+ * A PDF on the disk in Chromium's own viewer: the app's PDF preview window
+ * (`openPdfPreview`) and the print preview's. No page of the app, and a
+ * window of it all the same.
+ */
+function checkIsPdfViewerUrl(url) {
+  if (!URL.canParse(url)) {
+    return false;
+  }
+  const urlObject = new URL(url);
+  return (
+    urlObject.protocol === 'file:' &&
+    urlObject.pathname.toLowerCase().endsWith('.pdf')
+  );
+}
+
+/**
  * The app windows in `after` that are not in `before` -- what a press opened.
  *
- * Only the app's own pages count. The hidden window that photographs a
- * slide's website and the one that reads a page for `owa_read_website` are
- * page targets too, and either can come and go in the middle of a press that
- * opened nothing; reporting one as "opened a window" would be the made-up
- * effect a press result exists to rule out.
+ * Only the app's own pages count, and a PDF in its viewer (2026-11-10: a
+ * Resources row opens one on every press, and each such press read as
+ * changing nothing). The hidden window that photographs a slide's website and
+ * the one that reads a page for `owa_read_website` are page targets too, and
+ * either can come and go in the middle of a press that opened nothing;
+ * reporting one as "opened a window" would be the made-up effect a press
+ * result exists to rule out. Neither loads a PDF: a slide's website is
+ * http(s) or an `.html` page of a Webs folder.
  */
 export function listNewAppPages(before, after) {
   const seenIds = new Set(
@@ -360,7 +379,8 @@ export function listNewAppPages(before, after) {
     .filter((target) => {
       return (
         !seenIds.has(target.id) &&
-        getPageRank(target.url) < APP_PAGE_RANK.length
+        (getPageRank(target.url) < APP_PAGE_RANK.length ||
+          checkIsPdfViewerUrl(target.url))
       );
     })
     .map((target) => {

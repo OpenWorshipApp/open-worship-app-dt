@@ -34,6 +34,12 @@ import {
     getLyricWarmGeneration,
     setLyricWarmDeck,
 } from './lyricWarmSlidesHelpers';
+import {
+    ensureLyricStageSetting,
+    markLyricStageSettingStale,
+    peekLyricSongFontFamily,
+    toLyricFontFamilyStack,
+} from './lyricSongStageSettingHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(10);
@@ -164,7 +170,16 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         // their decks differently (see `genWarmDeckKey`).
         const openLyric = this.liveOpenLyric;
         const savedFont = getOpenLyricFontSetting();
-        const fontFamily = openLyric?.fontFamily || savedFont.fontFamily;
+        // The song's OWN font first (a song made from a PowerPoint keeps the
+        // face its slides were set in), the app-wide one behind it. Peeked,
+        // never read here: every async entry point below has awaited
+        // `ensureLyricStageSetting` before it builds options, and this getter
+        // is on the per-slide path. Never put on the `OpenLyric` instance --
+        // its `fontFamily` setter saves the app-wide setting.
+        const fontFamily = toLyricFontFamilyStack(
+            peekLyricSongFontFamily(this.filePath),
+            openLyric?.fontFamily || savedFont.fontFamily,
+        );
         const options: OpenLyricElementMapOptions = {
             type: 'html',
             isWithKeyNote: false,
@@ -423,6 +438,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     // `step` is the play-order place a single-key slide stands for, so its
     // name and corner badge carry the same `(n)` and `(2/3)` as the whole deck.
     async getStageSlides(key?: string, step?: LyricStepRefType) {
+        await ensureLyricStageSetting(this.filePath);
         // Only the whole-song branch below needs the previewer instance; the
         // single-key branch is served from the element-map cache, so resolving
         // it up front would re-read the file for nothing.
@@ -564,6 +580,9 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         // an edit landing while it runs drops the decks and bumps the
         // generation, and this stale deck is then refused.
         const generation = getLyricWarmGeneration(this.filePath);
+        // After the generation, before the key: the key carries the song's
+        // font, and an edit landing meanwhile still bumps the generation.
+        await ensureLyricStageSetting(this.filePath);
         const warmKey = generation === null ? null : this.genWarmDeckKey();
         const slides = await this.getStageSlides();
         if (warmKey !== null) {
@@ -584,6 +603,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     }
 
     async getSlideById(id: number) {
+        await ensureLyricStageSetting(this.filePath);
         const warmSlide = this.getWarmSlide(id);
         if (warmSlide !== null) {
             return warmSlide;
@@ -626,5 +646,6 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             return key.includes(`|filePath:${this.filePath}|`);
         });
         dropLyricWarmDecks(this.filePath);
+        markLyricStageSettingStale(this.filePath);
     }
 }

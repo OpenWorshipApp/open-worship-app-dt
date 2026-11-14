@@ -94,6 +94,7 @@ import {
     getForegroundWidthScale,
 } from './propertiesSettingHelpers';
 import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { genForegroundOpenInChatbotContextMenu } from '../helper/ai/foregroundChatbotMenuHelpers';
 import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 /**
@@ -1090,6 +1091,15 @@ export default function ForegroundMediaComp({
                         config,
                     )}
                     genSessionState={genSessionState}
+                    // The chip's own Open in Chatbot: this session attached
+                    // to the help window as the conversation's context.
+                    genExtraMenuItems={(session) => {
+                        return genForegroundOpenInChatbotContextMenu({
+                            widget: kind,
+                            sessionId: session.id,
+                            sessionName: session.name,
+                        });
+                    }}
                 />
                 {propsSetting}
                 {/*

@@ -68,7 +68,7 @@ vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
     ensureLangPlugins: async () => [],
-    getSupportedLocales: () => ['en-US', 'km-KH'],
+    getSupportedLocales: () => ['en-US', 'yy-YY'],
     getLangCode: (locale: string) => h.langCodes.get(locale) ?? null,
     getLocalBibleCrossRef: async (locale: string, target: unknown) => {
         h.localRequests.push([locale, target]);
@@ -122,7 +122,7 @@ beforeEach(() => {
     h.localRequests.length = 0;
     h.langCodes = new Map([
         ['en-US', 'en'],
-        ['km-KH', 'km'],
+        ['yy-YY', 'yy'],
     ]);
     h.logs.length = 0;
     h.errors.length = 0;
@@ -152,13 +152,13 @@ async function render(bibleKey: string, verse = 1) {
 
 describe('useGettingBibleCrossRefAI', () => {
     test('loading, then the bundled references of the bible language', async () => {
-        h.bibleLocales.set('KHM', 'km-KH');
-        h.localCrossRefs.set('km-KH', THEMES);
-        await render('KHM');
+        h.bibleLocales.set('YYV', 'yy-YY');
+        h.localCrossRefs.set('yy-YY', THEMES);
+        await render('YYV');
         expect(seen[0]).toBeUndefined();
         expect(latest.bibleCrossRef).toBe(THEMES);
         expect(h.localRequests).toEqual([
-            ['km-KH', { bookKey: 'GEN', chapter: 1, verse: 1 }],
+            ['yy-YY', { bookKey: 'GEN', chapter: 1, verse: 1 }],
         ]);
         // Bundled data costs no download.
         expect(h.requests).toEqual([]);
@@ -173,29 +173,29 @@ describe('useGettingBibleCrossRefAI', () => {
     });
 
     test('with no bundle, the references are fetched in the bible language', async () => {
-        h.bibleLocales.set('KHM', 'km-KH');
+        h.bibleLocales.set('YYV', 'yy-YY');
         h.responses.set(
-            'bcr/anthropic/km/GEN/1/1.json',
+            'bcr/anthropic/yy/GEN/1/1.json',
             JSON.stringify(THEMES),
         );
-        await render('KHM');
-        expect(h.requests).toEqual(['bcr/anthropic/km/GEN/1/1.json']);
+        await render('YYV');
+        expect(h.requests).toEqual(['bcr/anthropic/yy/GEN/1/1.json']);
         expect(latest.bibleCrossRef).toEqual(THEMES);
         expect(h.logs[0]).toEqual([
             'No local cross ref found for, fetching online',
-            { locale: 'km-KH', bookKey: 'GEN', chapter: 1, verseNum: 1 },
+            { locale: 'yy-YY', bookKey: 'GEN', chapter: 1, verseNum: 1 },
         ]);
     });
 
     test('references missing in the bible language fall back to English', async () => {
-        h.bibleLocales.set('KHM', 'km-KH');
+        h.bibleLocales.set('YYV', 'yy-YY');
         h.responses.set(
             'bcr/anthropic/en/GEN/1/1.json',
             JSON.stringify(THEMES),
         );
-        await render('KHM');
+        await render('YYV');
         expect(h.requests).toEqual([
-            'bcr/anthropic/km/GEN/1/1.json',
+            'bcr/anthropic/yy/GEN/1/1.json',
             'bcr/anthropic/en/GEN/1/1.json',
         ]);
         expect(latest.bibleCrossRef).toEqual(THEMES);
@@ -208,9 +208,9 @@ describe('useGettingBibleCrossRefAI', () => {
     });
 
     test('a locale with no language code asks in English once', async () => {
-        h.langCodes.delete('km-KH');
-        h.bibleLocales.set('KHM', 'km-KH');
-        await render('KHM');
+        h.langCodes.delete('yy-YY');
+        h.bibleLocales.set('YYV', 'yy-YY');
+        await render('YYV');
         expect(h.requests).toEqual(['bcr/anthropic/en/GEN/1/1.json']);
         expect(latest.bibleCrossRef).toBeNull();
     });

@@ -150,8 +150,8 @@ vi.mock('./lookupLangHelpers', async () => {
 });
 vi.mock('./LookupLangCodeButtonComp', () => ({
     default: ({ onSelect }: { onSelect: (code: string) => void }) => (
-        <button type="button" onClick={() => onSelect('fr')}>
-            French
+        <button type="button" onClick={() => onSelect('yy')}>
+            Other language
         </button>
     ),
 }));
@@ -330,12 +330,12 @@ describe('location and name detail panels', () => {
         await act(async () => click('Copy'));
         expect(mocks.showToast).toHaveBeenCalledTimes(2);
         expect(mocks.handleError).toHaveBeenCalled();
-        await act(async () => click('French'));
+        await act(async () => click('Other language'));
         expect(mocks.openPanel).toHaveBeenCalledWith(
             expect.objectContaining({
                 kind: 'name',
                 target: 'n1',
-                langCode: 'fr',
+                langCode: 'yy',
             }),
         );
     });
@@ -426,29 +426,29 @@ describe('location and name detail panels', () => {
     test('a verse panel reads in its own bible and never loads the lookup data', async () => {
         state.panels = [
             {
-                key: 'verse:GEN 17:5:KHM',
+                key: 'verse:GEN 17:5:TQAM',
                 kind: 'verse',
                 target: 'GEN 17:5',
                 name: 'Genesis 17:5',
-                bibleKey: 'KHM',
+                bibleKey: 'TQAM',
                 raiseCount: 0,
             },
         ];
         state.controller = {};
         await act(async () => root.render(<LocationNameDetailPanelsComp />));
         expect(mocks.useLookupManagers).not.toHaveBeenCalled();
-        expect(mocks.verseFontFamily).toHaveBeenCalledWith('KHM');
+        expect(mocks.verseFontFamily).toHaveBeenCalledWith('TQAM');
         expect(
             document
                 .querySelector('[data-bible-key]')
                 ?.getAttribute('data-bible-key'),
-        ).toBe('KHM');
+        ).toBe('TQAM');
         await act(async () => click('Resolve verse'));
         await act(async () => click('Open in bible lookup'));
         expect(mocks.openVerse).toHaveBeenCalledWith(
             state.controller,
             'GEN 17:5',
-            'KHM',
+            'TQAM',
         );
     });
 
@@ -458,11 +458,11 @@ describe('location and name detail panels', () => {
     test('every panel scrolls to the top; only a verse panel auto-scrolls', async () => {
         state.panels = [
             {
-                key: 'verse:GEN 8:1-22:KHM',
+                key: 'verse:GEN 8:1-22:TQAM',
                 kind: 'verse',
                 target: 'GEN 8:1-22',
                 name: 'Genesis 8:1-22',
-                bibleKey: 'KHM',
+                bibleKey: 'TQAM',
                 raiseCount: 0,
             },
         ];
@@ -528,12 +528,12 @@ describe('location and name detail panels', () => {
             mocks.showBibleKeyOption.mock.calls[0];
         expect(excludedKeys).toEqual(['KJV']);
         expect(menuTitle).toBe('Open in another Bible');
-        onSelect('KHM');
+        onSelect('TQAM');
         expect(mocks.openPanel).toHaveBeenCalledWith({
             kind: 'verse',
             target: 'GEN 17:5',
             name: 'Genesis 1:1',
-            bibleKey: 'KHM',
+            bibleKey: 'TQAM',
         });
     });
 
@@ -547,7 +547,7 @@ describe('location and name detail panels', () => {
                 kind: 'name',
                 target: 'n1',
                 name: 'Old name',
-                langCode: 'km',
+                langCode: 'xx',
                 raiseCount: 0,
             },
         ];
@@ -568,7 +568,7 @@ describe('location and name detail panels', () => {
             kind: 'name',
             target: 'n1',
             title: 'Abraham',
-            langCode: 'km',
+            langCode: 'xx',
             page: globalThis.location.href,
         });
         state.isAiEnabled = false;

@@ -20,7 +20,7 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
 }));
 vi.mock('../lang/langHelpers', () => ({
     LOCALE_SETTING_NAME: 'language-locale',
-    getCurrentLocale: () => 'km-KH',
+    getCurrentLocale: () => 'xx-XX',
 }));
 vi.mock('../_screen/managers/screenManagerBaseHelpers', () => ({
     getScreenManagerBase: (screenId: number) => bases.get(screenId) ?? null,
@@ -63,7 +63,7 @@ describe('getMirrorBootstrap', () => {
         // language this computer uses, not the data folder's stale copy.
         expect(context.settings).toEqual({
             'screen-bg-manager': 'value:screen-bg-manager',
-            'language-locale': 'km-KH',
+            'language-locale': 'xx-XX',
         });
         expect(context.messages).toEqual([
             { screenId: 0, type: 'screen-show', data: payload },
@@ -97,7 +97,7 @@ describe('getMirrorBootstrap, what else crosses', () => {
 
     test("carries the page's font faces with absolute addresses, past a sheet it may not read", async () => {
         const fontSheet = addStyle(
-            "@font-face {font-family: Khmer; src: url(fonts/khmer.woff2), url('/fonts/khmer.ttf');} body {color: red;}",
+            "@font-face {font-family: MadeUp; src: url(fonts/made-up.woff2), url('/fonts/made-up.ttf');} body {color: red;}",
         );
         // jsdom keeps its font-face rule class to itself; the browser's is a
         // global.
@@ -117,7 +117,7 @@ describe('getMirrorBootstrap, what else crosses', () => {
         const base = location.href;
         expect(context.fontCss).toBe(
             [
-                `@font-face {font-family: Khmer; src: url("${new URL('fonts/khmer.woff2', base).href}"), url("${new URL('/fonts/khmer.ttf', base).href}");}`,
+                `@font-face {font-family: MadeUp; src: url("${new URL('fonts/made-up.woff2', base).href}"), url("${new URL('/fonts/made-up.ttf', base).href}");}`,
                 `@font-face {font-family: Late; src: url("${new URL('late.woff', base).href}");}`,
             ].join('\n'),
         );
@@ -152,7 +152,7 @@ describe('getMirrorBootstrap, what else crosses', () => {
             'screen-small': 'value:screen-small',
             'page-base-color': 'value:page-base-color',
             'pdf-full-width': 'value:pdf-full-width',
-            'language-locale': 'km-KH',
+            'language-locale': 'xx-XX',
         });
         expect(context.fontCss).toBe('');
         expect(context.resources).toEqual({});

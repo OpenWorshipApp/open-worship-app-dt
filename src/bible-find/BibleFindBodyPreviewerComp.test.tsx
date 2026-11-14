@@ -125,9 +125,9 @@ describe('the Find tab', () => {
     test('picking another Bible loads its controller', async () => {
         await renderPreviewer();
         expect(host.querySelector('.find-body')!.textContent).toBe('KJV');
-        await act(async () => h.bodyProps.setBibleKey('KJV', 'KHOV'));
-        expect(h.getInstant).toHaveBeenLastCalledWith('KHOV');
-        expect(host.querySelector('.find-body')!.textContent).toBe('KHOV');
+        await act(async () => h.bodyProps.setBibleKey('KJV', 'TQOV'));
+        expect(h.getInstant).toHaveBeenLastCalledWith('TQOV');
+        expect(host.querySelector('.find-body')!.textContent).toBe('TQOV');
     });
 
     test('a controller that cannot be had says so, and Reload tries again', async () => {

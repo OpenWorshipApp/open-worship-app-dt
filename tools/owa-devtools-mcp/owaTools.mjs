@@ -12,6 +12,7 @@ import {
   evaluateInApp,
   evaluateInTarget,
   listTargets,
+  pickTarget,
   requireLivePort,
   runInTarget,
   waitForNewAppPage,
@@ -30,7 +31,17 @@ import {
   genScrollExpression,
   genTypeExpression,
 } from './domMatch.mjs';
-import { readLiveInstances } from './discovery.mjs';
+import {
+  chooseAppInstance,
+  describeAppChoiceList,
+  findDrivenInstance,
+  listChoosableInstances,
+  readChosenAppInstance,
+  readLiveInstances,
+  toAppChoiceRow,
+} from './discovery.mjs';
+import { genVersionCheck, readMcpVersion } from './mcpVersion.mjs';
+import { findMainWindowTarget, toMainWindowPage } from './mainWindowTarget.mjs';
 import { FRESH_PAGE_NOTE_LEAD } from './manualPage.mjs';
 import {
   genPressGuard,
@@ -107,6 +118,7 @@ import {
   AGENT_UNDO_TEXT,
   formatAgentDataResult,
   genAgentDataExpression,
+  toUndoAction,
 } from './agentData.mjs';
 import {
   WEBSITE_READ_EVALUATE_TIMEOUT,
@@ -128,6 +140,8 @@ import { registerLyricEditTool } from './agentLyricEdit.mjs';
 import { registerSlideEditTool } from './agentSlideEdit.mjs';
 import { registerNoteEditTool } from './agentNoteEdit.mjs';
 import { registerPresentingFlowEditTool } from './agentPresentingFlowEdit.mjs';
+import { registerForegroundEditTool } from './agentForegroundEdit.mjs';
+import { registerScreenEditTool } from './agentScreenEdit.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -144,12 +158,27 @@ import {
 // keys, but `lwShare` and `appDocumentEditor` are html file names and say
 // nothing to a model about which window a volunteer is looking at. Every tool
 // schema is re-sent on EVERY round of EVERY question, so `owa_list_questions`
-// takes the same keys without paying for the list twice.
+// takes the same keys without paying for the list twice -- and a key that
+// already reads as its window's name (`screen-mirror`, `lyricEditor`,
+// `setting`) is not spelled out at all: the ninth window took the model's
+// bill 17 tokens over its ceiling (2026-11-14).
+function toKeyWords(key) {
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/-/g, ' ')
+    .toLowerCase();
+}
 const WINDOW_LIST_TEXT =
-  'The windows are: ' +
-  BOT_FOCUS_LIST.map((item) => {
-    return `${item.key} = ${item.label}`;
-  }).join(', ') +
+  'Keys that are not the window name: ' +
+  BOT_FOCUS_LIST.filter((item) => {
+    const label = item.label.toLowerCase();
+    const words = toKeyWords(item.key);
+    return label !== words && label !== `${words}s`;
+  })
+    .map((item) => {
+      return `${item.key} = ${item.label}`;
+    })
+    .join(', ') +
   '.';
 
 // The `page` argument, said once and short. It was ~95 characters on each of
@@ -169,7 +198,10 @@ const BIBLE_FIND_TIMEOUT = 120 * 1000;
 const LOOKUP_RECORD_TIMEOUT = 60 * 1000;
 // A Resources PDF is drawn page by page in a child process of main.
 const RESOURCE_FILE_TIMEOUT = 60 * 1000;
-// `owa_language` `install`: a language pack is up to ~30 MB (Khmer, with its
+// A PowerPoint or Word file is converted before its words are read: a long
+// deck on a church laptop takes most of a minute.
+const DOCUMENT_WORDS_TIMEOUT = 180 * 1000;
+// `owa_language` `install`: a language pack is up to ~30 MB (one with its own
 // fonts and Bible data), checked and extracted on a cheap machine over a
 // church hall's internet.
 const LANGUAGE_INSTALL_TIMEOUT = 10 * 60 * 1000;
@@ -242,8 +274,8 @@ function withTranslations(labels, langCode) {
 
 // "Panel > Control" is two labels, and each is translated on its own: the
 // whole string is no dictionary key, so a scope written in English was handed
-// to a Khmer window untranslated in both halves -- and a scope now matches the
-// name the window SHOWS for a panel (its header, in that language) as well as
+// to a translated window untranslated in both halves -- and a scope now
+// matches the name the window SHOWS for a panel (its header, in that language) as well as
 // its stamped English one (`scopePathOf`, 2026-10-16, T2).
 const SCOPE_SEPARATOR_PATTERN = /\s*(?:>|»)\s*/;
 function tranLabel(label, langCode, bundle) {
@@ -294,8 +326,8 @@ function genGuideCardWords(langCode) {
   };
 }
 
-// A step's controls, the window's words FIRST: in a Khmer window the English
-// label rings nothing, and the matcher takes the first candidate on screen.
+// A step's controls, the window's words FIRST: in a translated window the
+// English label rings nothing, and the matcher takes the first candidate on screen.
 // A scoped label also keeps its panel's English name beside the translated
 // control, because a panel answers to its `data-widget-name` in every
 // language. The English ones stay last.
@@ -326,10 +358,10 @@ function localizeFinds(finds, langCode, bundle) {
 // picks, drops and orders them reads the recipe's own words) and the two are
 // the same steps in the same order, read off the same lines; when they are
 // not, the English text stands.
-// The page's own translation is read first when it is current (`W-11@km`,
+// The page's own translation is read first when it is current (`W-11@<code>`,
 // `src/lang/data/online/<code>/manual/`): the whole step in the window's language, not the
-// English step with its button names translated -- which is what a Khmer
-// window had shown, an English sentence round a Khmer word (2026-10-17).
+// English step with its button names translated -- which is what a translated
+// window had shown, an English sentence round a translated word (2026-10-17).
 function readLocalStepPage(manualId, langCode) {
   const translated = readHelpPage(`${manualId}@${langCode}`, null, 'whole', {
     keepTemplates: true,
@@ -521,6 +553,46 @@ function genCaptureExpression(screenId, isOwnWindow) {
 }
 
 /**
+ * A FILE's own window: the Markdown Preview, which renders a file from
+ * anywhere on the machine and so runs with no Node (`rendererLockdown.ts`),
+ * or the PDF viewer, Chromium's own page on the PDF's `file:` address. The
+ * help window works in one when its tab is on that file (2026-11-10, the
+ * user: _should behave like what working for bible-note_), and neither can
+ * answer the capture ask above -- so its picture is taken over the debugging
+ * connection instead. These two alone: the help and AI Chat windows, locked
+ * down the same way, stay out of every picture.
+ */
+export function checkIsFileWindowUrl(url) {
+  if (!URL.canParse(url)) {
+    return false;
+  }
+  const urlObject = new URL(url);
+  if (urlObject.pathname.split('/').pop() === 'markdownPreview.html') {
+    return true;
+  }
+  return (
+    urlObject.protocol === 'file:' &&
+    urlObject.pathname.toLowerCase().endsWith('.pdf')
+  );
+}
+
+/** The window `page` names, when it is a file's own window; else null. */
+async function findFileWindowTarget(page) {
+  const targets = await listTargets(await requireLivePort());
+  const target = Array.isArray(targets) ? pickTarget(targets, page) : null;
+  return target && checkIsFileWindowUrl(target.url) ? target : null;
+}
+
+async function captureTargetPicture(target) {
+  const [result] = await runInTarget(target, [
+    { method: 'Page.captureScreenshot', params: { format: 'png' } },
+  ]);
+  return typeof result?.data === 'string'
+    ? `data:image/png;base64,${result.data}`
+    : null;
+}
+
+/**
  * Put the picker up and wait for the user.
  *
  * Polled rather than pushed, like `waitForBest`: the page has no way to call
@@ -639,9 +711,129 @@ function genOpenLyricRefusal(report) {
   ].join('\n');
 }
 
-export function registerOwaTools(server, { door = 'stdio' } = {}) {
+/**
+ * Which app this answer is about and whether this server is its version:
+ * `workedWith` (the pid, and whether it was chosen or is the only one) and
+ * `versionCheck` (with a sentence when they differ).
+ */
+function genDrivenVersionState(port) {
+  const liveInstances = readLiveInstances();
+  const driven =
+    findDrivenInstance(liveInstances) ??
+    liveInstances.find((instance) => instance.port === port) ??
+    null;
+  if (driven === null) {
+    return { versionCheck: genVersionCheck(null) };
+  }
+  return {
+    workedWith: {
+      pid: driven.pid,
+      isChosen: readChosenAppInstance()?.pid === driven.pid,
+    },
+    versionCheck: genVersionCheck(driven.version),
+  };
+}
+
+/**
+ * `owa_choose_app`: which running app an outside agent works with
+ * (2026-11-13, the user: _make mcp to list for choice when found multiple
+ * running app_, _this machine running 3 instances of open worship app so
+ * the mcp should check and let user pick one to work with_). With several
+ * apps up and none chosen, every tool that needs the app answers with the
+ * list instead of driving the newest (`describeAppChoiceProblem` in
+ * `discovery.mjs`, and `appChoice.mjs` for chrome-devtools' own tools).
+ * The stdio door only: the in-app host is pinned to the app it lives in.
+ */
+function registerChooseAppTool(server, { onAppChosen }) {
+  server.registerTool(
+    'owa_choose_app',
+    {
+      description:
+        'Which running Open Worship app to work with, when more than ' +
+        'one is running. Without `pid`, lists them (pid, kind, version, ' +
+        'profile, start) and which one is worked with now -- ask the ' +
+        'user to pick, by profile and kind, never pick for them. With ' +
+        '`pid`, every tool works in that app from now on (a restart of ' +
+        'it is followed). Also says whether this MCP server is the ' +
+        "app's version: they should match for the best result.",
+      inputSchema: {
+        pid: z
+          .number()
+          .int()
+          .optional()
+          .describe('The pid of the app to work with, from the list'),
+      },
+    },
+    async ({ pid } = {}) => {
+      return await attempt(async () => {
+        const instances = listChoosableInstances();
+        const drivenPid = findDrivenInstance(instances)?.pid ?? null;
+        const listed = instances.map((instance) => {
+          return toAppChoiceRow(instance, { drivenPid });
+        });
+        if (pid === undefined) {
+          return {
+            mcpVersion: readMcpVersion(),
+            apps: listed,
+            note:
+              instances.length === 0
+                ? 'No Open Worship app is running with its AI features ' +
+                  'on. Ask the user to open the app.'
+                : instances.length === 1
+                  ? 'One app is running; every tool works in it.'
+                  : readChosenAppInstance() === null
+                    ? 'Several apps are running and none is chosen: ask ' +
+                      'the user which one to work with, then call ' +
+                      'owa_choose_app with its pid.'
+                    : 'The app marked isWorkedWith is the one every tool ' +
+                      'works in; choose another by its pid.',
+          };
+        }
+        if (process.env.OWA_CDP_PORT) {
+          throw new Error(
+            `OWA_CDP_PORT=${process.env.OWA_CDP_PORT} names the app this ` +
+              'server works with, so no other can be chosen. Unset it to ' +
+              'choose among the running apps.',
+          );
+        }
+        const instance = instances.find((item) => item.pid === pid);
+        if (instance === undefined) {
+          throw new Error(
+            `No running Open Worship app has pid ${pid}.` +
+              (instances.length > 0
+                ? ` Running now:\n${describeAppChoiceList(instances)}`
+                : ' None is running with its AI features on.'),
+          );
+        }
+        const previousPid = readChosenAppInstance()?.pid ?? null;
+        chooseAppInstance(instance);
+        if (previousPid !== pid) {
+          // chrome-devtools' tools keep their browser connection; drop it so
+          // their next call connects to the app just chosen -- the two
+          // halves of one server must never drive two different apps.
+          onAppChosen?.();
+        }
+        return {
+          chosen: toAppChoiceRow(instance, { drivenPid: pid }),
+          versionCheck: genVersionCheck(instance.version),
+          note:
+            'Every tool works in this app now. Say which one to the user ' +
+            'by its profile and kind.',
+        };
+      });
+    },
+  );
+}
+
+export function registerOwaTools(
+  server,
+  { door = 'stdio', onAppChosen = null } = {},
+) {
   // Bibles from an XML link, and the installed ones: its own module.
   registerBibleXmlTool(server, { door });
+  if (door === 'stdio') {
+    registerChooseAppTool(server, { onAppChosen });
+  }
   server.registerTool(
     'owa_help_search',
     {
@@ -796,7 +988,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_tran',
     {
       // MC-07: never called in 358 recorded chatbot asks, so it pays
-      // for its seat in words only. The Khmer example cost ~40 tokens a
+      // for its seat in words only. A named-language example cost ~40 tokens a
       // round to say what "another language" already says.
       description:
         'What a button is CALLED on this user’s screen when the app ' +
@@ -817,7 +1009,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         lang: z
           .string()
           .optional()
-          .describe('A language code; default the language the app is showing.'),
+          .describe(
+            'A language code; default the language the app is showing.',
+          ),
       },
     },
     async ({ text, lang }) => {
@@ -998,6 +1192,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
             return { id: target.id, title: target.title, url: target.url };
           }),
           mainWindow,
+          // An outside agent's server may be older or newer than the app
+          // (an npm package, the pack's executable): the tools follow the
+          // app they were written with. The in-app door is the app's own
+          // code, so the chatbot is not charged for a check that cannot
+          // fail.
+          ...(door === 'stdio' ? genDrivenVersionState(port) : {}),
         };
       });
     },
@@ -1108,23 +1308,24 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_foreground',
     {
       description:
-        'Start or stop a foreground extra on the projector -- a ' +
-        'countdown, stopwatch, clock, a scrolling marquee (top or ' +
-        'bottom) or a quick line of text -- and answer with what ' +
-        'each screen holds now. Use it whenever the user asks for ' +
-        'one to go UP or come off ("start a 5 minute countdown", ' +
-        '"count down to 10:30"): never the Foreground tab, whose ' +
-        'boxes are a form for a person and whose tab closes when ' +
-        'pressed twice. A countdown takes `minutes` OR `at` (a clock ' +
-        'time today); a marquee or quick text takes `text`. `stop` ' +
-        'takes one off (`widget: "all"` is every extra, as F10); ' +
-        '`check` only reads. The answer is read BACK off the ' +
-        'screens: `did`, `detail`, each ticked screen with ' +
-        '`isShowing` and its `foreground` -- an off screen holds the ' +
-        'extra unseen until its show button is pressed, which is ' +
-        'offered, never done unasked. Starting one changes what the ' +
-        'congregation sees: do it when they asked for it, offer it ' +
-        'when they only asked how.',
+        'Start or stop any foreground extra on the projector -- ' +
+        'countdown, stopwatch, clock, marquee (top/bottom), quick ' +
+        'text, message, long text, video/image/web show, camera, ' +
+        'another screen -- through its own Foreground panel: the ' +
+        'words go into a session of that panel and it goes up in the ' +
+        "session's own look. Use it whenever the user asks for one to " +
+        'go UP or come off ("start a 5 minute countdown", "a quick ' +
+        'text of John 3:16"): never the Foreground tab, a form for a ' +
+        'person. A countdown takes `minutes` OR `at` (a clock time ' +
+        'today); a marquee, quick text or message takes `text` or ' +
+        '`ref` (a verse, read from the installed Bible -- never write ' +
+        "a verse's words yourself). `stop` takes one off (`all` is " +
+        'every extra, as F10); `check` only reads. The answer is read ' +
+        'BACK off the screens: `did`, `detail`, each screen with ' +
+        '`isShowing` and its `foreground` -- an off screen holds it ' +
+        'unseen until its show button is pressed, which is offered, ' +
+        'never done unasked. It changes what the congregation sees: ' +
+        'do it when asked, offer it when they only asked how.',
       inputSchema: {
         widget: z
           .enum(AGENT_FOREGROUND_WIDGETS)
@@ -1143,22 +1344,42 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           .string()
           .optional()
           .describe(
-            'Countdown target as a clock time today: "10:30", ' +
-              '"18:30", "6:45 pm".',
+            'Countdown to a time: "10:30", "6:45 pm", "2026-12-25 09:00".',
           ),
-        text: z
-          .string()
-          .optional()
-          .describe('The words of a marquee or a quick text.'),
+        text: z.string().optional().describe('The words to show.'),
+        ref: z.string().optional().describe('A verse: "John 3:16".'),
+        version: z.string().optional().describe('Bible version of `ref`.'),
         seconds: z
           .number()
           .int()
           .positive()
           .optional()
-          .describe('How long a quick text stays (default 10).'),
+          .describe('How long a quick text stays.'),
+        file: z
+          .string()
+          .optional()
+          .describe('Video/image/web show: the file by name.'),
+        camera: z.string().optional().describe('Camera show: its name.'),
+        source: z
+          .number()
+          .int()
+          .optional()
+          .describe('Screen show: the screen number to show.'),
       },
     },
-    async ({ widget, action, minutes, at, text, seconds }) => {
+    async ({
+      widget,
+      action,
+      minutes,
+      at,
+      text,
+      ref,
+      version,
+      seconds,
+      file,
+      camera,
+      source,
+    }) => {
       try {
         // The presenter page's alone, aimed the way the passage is:
         // with it open, whatever window is in front; without it the
@@ -1175,7 +1396,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
             minutes,
             at,
             text,
+            ref,
+            version,
             seconds,
+            file,
+            camera,
+            source,
           }),
           { port, match: hasPresenter ? 'presenter.html' : undefined },
         );
@@ -1217,6 +1443,15 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     },
     async ({ screenId, page }) => {
       try {
+        // A file's own window has nothing to ask main with
+        // (`checkIsFileWindowUrl`).
+        const fileWindow =
+          page && screenId === undefined
+            ? await findFileWindowTarget(page)
+            : null;
+        if (fileWindow !== null) {
+          return toImageResult(await captureTargetPicture(fileWindow));
+        }
         const { value } = await evaluateInApp(
           genCaptureExpression(screenId, Boolean(page)),
           { match: page },
@@ -1401,7 +1636,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         if (address !== '') {
           // The page is read by THIS tool, and the model never gets
           // a turn between the reading and the drafting. Measured
-          // 2026-09-09 on a Khmer hymnal's chord page: told twice
+          // 2026-09-09 on a non-English hymnal's chord page: told twice
           // to hand the page over whole, the model read it with
           // `owa_read_website`, retyped the words itself -- every
           // fragment rejoined correctly, and not one chord kept --
@@ -1502,16 +1737,18 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
       kindName: 'lyric',
       what: "the user's songs (Open Lyric documents)",
       actions: AGENT_FILE_ACTIONS,
-      extraSchema: {},
+      // The song's own face on every stage (2026-11-10): a song made from
+      // a PowerPoint keeps its slides' font. The last sentence below was
+      // cut to pay for it -- the ratchet stood at 8 478 of 8 480.
+      extraSchema: { fontFamily: z.string().max(64).optional() },
       contentText:
         'For `create` and `update`, `content` is the Open Lyric ' +
         'document itself: Markdown with an ```ol:Config fence ' +
         'carrying Title and Structure (required); Artist, ' +
         'Copyright, Key, Tempo (120bpm) and Time (4/4) only when ' +
         'known, never a placeholder. Then one fence per section ' +
-        '(```ol:Verse 1, ```ol:Chorus). It is checked by Open ' +
-        'Lyric before anything is written and refused with the ' +
-        'reason if it does not parse.',
+        '(```ol:Verse 1, ```ol:Chorus). Refused, with why, if it ' +
+        'does not parse.',
     },
     {
       name: 'owa_slide_file',
@@ -1562,7 +1799,17 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           page: z.string().optional(),
         },
       },
-      async ({ action, name, newName, content, slide, to, items, page }) => {
+      async ({
+        action,
+        name,
+        newName,
+        content,
+        slide,
+        to,
+        items,
+        fontFamily,
+        page,
+      }) => {
         try {
           // The NAME first, always. It used to reach the content
           // validator first, which answered a caller that its song
@@ -1603,6 +1850,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
               slide,
               to,
               items,
+              ...(typeof fontFamily === 'string' ? { fontFamily } : {}),
             }),
             { match: page },
           );
@@ -1636,6 +1884,18 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // (`agentPresentingFlowEdit.mjs`). Offered to the chatbot's model only in
   // a conversation about an attached presenting flow.
   registerPresentingFlowEditTool(server);
+
+  // Any foreground component changed through its own panel: a session's
+  // words and look, live on the wall (`agentForegroundEdit.mjs`). Offered to
+  // the chatbot's model only in a foreground conversation.
+  registerForegroundEditTool(server);
+
+  // The screens' own controls -- the Bible text style, a passage's versions,
+  // the transitions, the display, a group, the lock, the tick, the stage,
+  // on / off and the clears -- as a Mini Screen card sets them
+  // (`agentScreenEdit.mjs`). Offered to the chatbot's model only in a screen
+  // conversation (`MODEL_ON_ASK_TOOL_MAP`).
+  registerScreenEditTool(server);
 
   // The saved passages and the notes. A list or file name reaches the disk,
   // so it is checked here first with the document tools' own rule -- and
@@ -1846,9 +2106,19 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
 
   // The Resources panel's files -- listed by book, chapter or words, and
   // read: a PDF as pictures of its pages, a note as its words
-  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17). Reads only,
-  // inside the folders the panel lists. Offered to the chatbot's model only
-  // in a conversation about a Resources file (`MODEL_ON_ASK_TOOL_MAP`).
+  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17), inside the folders
+  // the panel lists. Offered to the chatbot's model only in a conversation
+  // about a Resources file or a passage, or asking for a study file
+  // (`MODEL_ON_ASK_TOOL_MAP`, `MODEL_ASK_SHARED_TOOL_MAP`).
+  //
+  // Since 2026-11-09 (EC-464) it also DRAFTS a study file for a passage
+  // (`src/helper/agentStudyFileHelpers.ts`): `draft` writes nothing; `save`
+  // writes into `<data folder>/resources/Default` -- or, with `to`
+  // "bible-notes", the Bible Notes list in front (EC-509) -- with a backup
+  // and an undo id, and `preview` opens a temporary copy -- both the
+  // PERSON's presses, refused to the help window's model
+  // (`runMcpToolCall`), here for the window's buttons and the developer's
+  // door.
   server.registerTool(
     'owa_resource_file',
     {
@@ -1865,21 +2135,71 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'text layer is excluded because legacy ' +
         'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
         'set it only to deliberately narrow a read. Use `detail` high for dense ' +
-        'or unclear print. ' +
-        'Reads only.',
+        'or unclear print. A long text file returns its start and its ' +
+        'headings; `section` reads one. ' +
+        '`draft` a study file for `ref` (a passage: "Matthew 3:3-7") from ' +
+        'a 2-6 word `title` and your Markdown `content` (## sections, ' +
+        '```mermaid diagrams, each verse as [^Book C:V], never quoted); ' +
+        'the app quotes the passage, names the file and writes NOTHING -- ' +
+        'the person presses Create under your answer. To change a study ' +
+        'file in Default or Bible Notes, `draft` with `file` and `section` ' +
+        '(a heading) + `content` (its new text), or `append` (words added ' +
+        'at the end of it, or of `section`); `content` alone is the WHOLE ' +
+        'new text. To fix words where they stand -- a name, a misspelling ' +
+        '-- `draft` with `file` and `replace`: each `from` copied exactly ' +
+        'from the file, written as its `to`; nothing else moves. `section` ' +
+        'with `remove` true takes that part out, its subparts with it. ' +
+        '`translate` a study file: `file`, `language` and `place` ("append" ' +
+        'adds the translation after it, "replace", "new" a copy); the help ' +
+        'window translates it part by part, diagrams kept -- elsewhere it ' +
+        "answers the parts to translate. `save` and `preview` are the person's presses.",
       inputSchema: {
-        action: z.enum(['list', 'read']),
+        action: z.enum([
+          'list',
+          'read',
+          'draft',
+          'translate',
+          'save',
+          'preview',
+        ]),
         book: z.string().optional(),
         chapter: z.number().int().optional(),
         ref: z
           .string()
           .optional()
-          .describe('A book and chapter together, e.g. "John 3"'),
+          .describe('A book and chapter, e.g. "John 3"; to draft, a passage'),
         search: z.string().optional(),
         file: z.string().optional(),
         page: z.number().int().optional(),
         pages: z.number().int().min(1).max(8).optional(),
         detail: z.enum(['normal', 'high']).optional(),
+        title: z.string().max(120).optional(),
+        // A whole study with its translation under it (EC-478): what the
+        // help window drafts once it has translated a file part by part.
+        content: z.string().max(65536).optional(),
+        section: z.string().max(160).optional(),
+        append: z.string().max(65536).optional(),
+        // Words written anew where they stand (EC-537): the worker refuses
+        // a `from` it cannot find as whole words, naming the pair -- and an
+        // empty list or `from` in a sentence, so no lower bound here.
+        replace: z
+          .array(
+            z.object({
+              from: z.string().max(400),
+              to: z.string().max(400),
+            }),
+          )
+          .max(20)
+          .optional(),
+        // A part taken out whole, named by `section` (EC-543).
+        remove: z.boolean().optional(),
+        language: z.string().max(60).optional(),
+        place: z.enum(['append', 'replace', 'new']).optional(),
+        bible: z.string().max(40).optional(),
+        name: z.string().max(160).optional(),
+        hash: z.string().max(40).optional(),
+        // Where `save` keeps a NEW study: the person's press says.
+        to: z.enum(['resources', 'bible-notes']).optional(),
       },
     },
     async ({
@@ -1892,12 +2212,42 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
       page,
       pages,
       detail,
+      title,
+      content,
+      section,
+      append,
+      replace,
+      remove,
+      bible,
+      name,
+      hash,
+      to,
     }) => {
       try {
         const { value } = await evaluateInApp(
           genAgentDataExpression(
             'resources',
-            { action, book, chapter, ref, search, file, page, pages, detail },
+            {
+              action,
+              book,
+              chapter,
+              ref,
+              search,
+              file,
+              page,
+              pages,
+              detail,
+              title,
+              content,
+              section,
+              append,
+              replace,
+              remove,
+              bible,
+              name,
+              hash,
+              to,
+            },
             RESOURCE_FILE_TIMEOUT,
           ),
           { timeout: RESOURCE_FILE_TIMEOUT + 5000 },
@@ -1914,7 +2264,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // chapters and verses of the Bible being read; `name` suggests the people
   // and places a who/where question is naming. The names dataset is 34MB, so
   // a NAME loads only when the person is clearly naming one (`allowLoad`) or
-  // a lookup panel already holds it (`getHeldLookupData`).
+  // a lookup panel already holds it (`getHeldLookupData`). `books` is every
+  // installed Bible's book names, which the window reads a study's own
+  // references by before a verse check (EC-497).
   server.registerTool(
     'owa_bible_suggest',
     {
@@ -1922,10 +2274,12 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         "The chat box's input aid, read by the WINDOW as a person types -- " +
         'not by you. `kind` "reference" completes a book, chapter and verse ' +
         'in the Bible being read (`prefix`, and `book` when only digits were ' +
-        'typed); "name" suggests people and places of the names lookup. ' +
-        'Reads only; answer with owa_find_verse or owa_lookup_record.',
+        'typed); "name" suggests people and places of the names lookup; ' +
+        '"books" lists every installed Bible\'s book names, which the ' +
+        'window finds the references a study cites by. Reads only; ' +
+        'answer with owa_find_verse or owa_lookup_record.',
       inputSchema: {
-        kind: z.enum(['reference', 'name']),
+        kind: z.enum(['reference', 'name', 'books']),
         prefix: z.string(),
         book: z.string().optional(),
         allowLoad: z.boolean().optional(),
@@ -2112,7 +2466,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         "Documents folder's files (`document`: import a PDF, PowerPoint, " +
         'Word, song or slide file from the disk; list them). `list` ' +
         'names them (full names, "bg.mp4"); `info` reads one (a web ' +
-        "page's text); `rename` (to `newName`, extension kept); `delete` " +
+        "page's text; a document's words, in order, for a song -- " +
+        'with `pictures` its pages with no readable words drawn as ' +
+        'pictures); `rename` (to `newName`, extension kept); `delete` ' +
         '(to the trash, a copy kept so owa_undo puts it back); `import` ' +
         'copies the file at `path` on the disk into the folder, never over ' +
         'an existing one; `create` / `update` write a web page from ' +
@@ -2128,6 +2484,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           .optional()
           .describe('A web page, for create/update'),
         path: z.string().optional().describe('A file on the disk, for import'),
+        pictures: z.boolean().optional(),
         page: z.string().optional(),
       },
     },
@@ -2136,6 +2493,17 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         const nameReason = findDataNameReason(request.name, request.newName);
         if (nameReason !== null) {
           return toErrorResult(new Error(nameReason));
+        }
+        // A document's words (2026-11-10): a PowerPoint or Word file is
+        // CONVERTED first, which takes far longer than the 15 s an ordinary
+        // read waits, and the pages drawn as pictures come back as image
+        // blocks, as `owa_resource_file`'s PDF pages do.
+        if (request.action === 'info' && request.kind === 'document') {
+          const { value } = await evaluateInApp(
+            genAgentDataExpression('media', request, DOCUMENT_WORDS_TIMEOUT),
+            { match: page, timeout: DOCUMENT_WORDS_TIMEOUT + 5000 },
+          );
+          return toResourceFileResult(value);
         }
         return await runDataRequest('media', request, page);
       } catch (error) {
@@ -2157,14 +2525,20 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         "too. The user's own edits in the app are undone with Ctrl+Z, " +
         'not this.',
       inputSchema: {
-        action: z.enum(AGENT_UNDO_ACTIONS),
+        // Optional: an `id` alone is an undo, nothing at all the list
+        // (`toUndoAction`, EC-615).
+        action: z.enum(AGENT_UNDO_ACTIONS).optional(),
         id: z.string().optional().describe('A change id from list'),
         page: z.string().optional(),
       },
     },
     async ({ action, id, page }) => {
       try {
-        return await runDataRequest('undo', { action, id }, page);
+        return await runDataRequest(
+          'undo',
+          { action: toUndoAction({ action, id }), id },
+          page,
+        );
       } catch (error) {
         return toErrorResult(error);
       }
@@ -2182,7 +2556,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_language',
     {
       description:
-        'The app languages. `list`: the installed ones and the catalog\'s ' +
+        "The app languages. `list`: the installed ones and the catalog's " +
         'others. `check` the `language` some words name (English name, ' +
         'own name, code or locale): `state` english, installed, ' +
         'turned-off, missing (with `size` in bytes), unavailable or ' +
@@ -2304,6 +2678,17 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     async ({ page }) => {
       return await attempt(async () => {
         const port = await requireLivePort();
+        // Aimed at the main window BY ITS ID: ranked by page kind, a
+        // Bible Reader window of its own tied with (or beat) the main
+        // window, and was the one sent away (`mainWindowTarget.mjs`).
+        const mainWindow = findMainWindowTarget(await listTargets(port));
+        if (mainWindow === null) {
+          throw new Error(
+            'The main app window was not found among the open ' +
+              'windows, so nothing was switched -- check owa_app_state ' +
+              'and try again.',
+          );
+        }
         // The navigation unloads the page mid-answer, so the
         // evaluation may never report back; what proves the switch
         // is the target list a moment later.
@@ -2311,6 +2696,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         try {
           const { value } = await evaluateInApp(genGotoPageExpression(page), {
             port,
+            match: mainWindow.id,
           });
           outcome = value;
         } catch {
@@ -2321,15 +2707,14 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         }
         const startedAt = Date.now();
         while (Date.now() - startedAt < 8000) {
-          const targets = await listTargets(port);
-          const arrived = targets.some((target) => {
-            return target.url.includes(page);
-          });
-          if (arrived) {
+          // The MAIN window on the page -- a Reader window of its own
+          // is on `reader.html` already and proves nothing.
+          const arrived = findMainWindowTarget(await listTargets(port));
+          if (arrived !== null && toMainWindowPage(arrived.url) === page) {
             return {
               page,
               switched: true,
-              from: outcome?.from ?? null,
+              from: outcome?.from ?? toMainWindowPage(mainWindow.url),
             };
           }
           await new Promise((resolve) => {
@@ -2805,12 +3190,24 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // folder dropped on Resources was lost that way. A second
           // dragover after a pause is what a hand's own movement gives it.
           await runInTarget(target, [
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragEnter', ...at } },
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragEnter', ...at },
+            },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragOver', ...at },
+            },
             { waitMs: 500 },
-            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'dragOver', ...at },
+            },
             { waitMs: 300 },
-            { method: 'Input.dispatchDragEvent', params: { type: 'drop', ...at } },
+            {
+              method: 'Input.dispatchDragEvent',
+              params: { type: 'drop', ...at },
+            },
           ]);
           const read = await evaluateInTarget(target, genDropReadExpression());
           return {
@@ -3100,7 +3497,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           // Read in ENGLISH, the language every rule below reads a recipe
           // in (the window a step goes to, the step a topic names, the
           // known question's own control). Read in the window's language,
-          // a Khmer page lost its button names to `toEnglishOnly` and the
+          // a translated page lost its button names to `toEnglishOnly` and the
           // capital-letter test before a ring was ever drawn; the window's
           // words go in at the very end, in `prepareSteps`.
           const manualPage = readHelpPage(manualId, 'en', 'whole');

@@ -48,27 +48,29 @@ describe('links read off a page', () => {
     // link must not take every other link on the page with it.
     expect(
       extractBibleXmlLinks(
-        '<a href="https://a.example/Khmer%E0Bible.xml">x</a>' +
+        '<a href="https://a.example/Xxlang%E0Bible.xml">x</a>' +
           '<a href="https://a.example/ThaiBible.xml">y</a>',
         'https://a.example/',
       ),
     ).toEqual([
-      { name: '', url: 'https://a.example/Khmer%E0Bible.xml' },
+      { name: '', url: 'https://a.example/Xxlang%E0Bible.xml' },
       { name: 'ThaiBible.xml', url: 'https://a.example/ThaiBible.xml' },
     ]);
   });
 
   test('a relative link with no page address to resolve it against is skipped', () => {
     expect(
-      extractBibleXmlLinks('<a href="/x/KhmerBible.xml">x</a>', 'not a url'),
+      extractBibleXmlLinks('<a href="/x/XxlangBible.xml">x</a>', 'not a url'),
     ).toEqual([]);
   });
 
   test('a short-name stem is not built from a name that cannot be decoded', () => {
-    expect(genBibleKeyChoices({ sourceName: 'Khmer%E0Bible.xml' })).toEqual([]);
+    expect(genBibleKeyChoices({ sourceName: 'Xxlang%E0Bible.xml' })).toEqual(
+      [],
+    );
     // The same name without the broken escape does give one.
-    expect(genBibleKeyChoices({ sourceName: 'KhmerBible.xml' })).toEqual([
-      'KHMER',
+    expect(genBibleKeyChoices({ sourceName: 'XxlangBible.xml' })).toEqual([
+      'XXLANG',
     ]);
   });
 });

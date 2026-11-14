@@ -29,7 +29,7 @@ import {
     findWindowIdByUrl,
     toAttachmentWindowPage,
     toWindowPage,
-    toHeldNoteWindowUrl,
+    toHeldWindowUrl,
     toTabWindowAim,
     toWindowAimLabel,
     type AppWindowEntryType,
@@ -38,19 +38,31 @@ import {
 } from './windowAimHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import {
-    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+    HOLD_WINDOW_ON_TOP_CHANNEL,
+    toHeldPreviewFilePath,
+    type HoldWindowRequestType,
+} from '../helper/ai/windowOnTopRequestHelpers';
+import {
     findNoteWindow,
     toNoteWindowTarget,
     type NoteWindowTargetType,
 } from '../helper/ai/noteWindowMatchHelpers';
 
-/** A tab about ONE Bible note keeps its own window whoever launched help. */
-function checkIsNoteSession(session: {
-    messages: Parameters<typeof findSessionNoteTarget>[0];
-    fileClosedAt?: number;
-}) {
+/**
+ * A tab about ONE Bible note keeps its own window whoever launched help:
+ * the note it keeps open, or the one waiting in its box (EC-498) -- the box
+ * the window holds, else the one a tab is read back with at mount.
+ */
+function checkIsNoteSession(
+    session: {
+        messages: Parameters<typeof findTabNoteTarget>[0];
+        fileClosedAt?: number;
+        boxFiles?: ChatAttachmentType[];
+    },
+    box: readonly ChatAttachmentType[] | undefined = session.boxFiles,
+) {
     return (
-        findSessionNoteTarget(session.messages, session.fileClosedAt) !== null
+        findTabNoteTarget(session.messages, session.fileClosedAt, box) !== null
     );
 }
 import { useThemeSource } from '../others/themeHelpers';
@@ -60,6 +72,7 @@ import {
     type ReaderDemoType,
 } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
+import { checkIsChangeableStudyName } from '../helper/agentStudyFileRules';
 import {
     MAX_ATTACHMENT_COUNT,
     checkIsCarriedFileName,
@@ -72,20 +85,28 @@ import {
     genElementAttachment,
     genImageAttachment,
     genTextAttachment,
+    toSongDocumentFiles,
+    toSongFileSources,
     getAttachmentData,
     numberAttachments,
     toAskedOfModel,
     toAttachmentLegend,
+    toAttachedText,
     toAttachmentNote,
     toAttachmentText,
     toBotImages,
     toReusableAttachments,
     type ChatAttachmentType,
 } from './attachmentHelpers';
+import { checkIsOfficeTextName } from './documentTextHelpers';
+import { readDocumentWords } from './documentWordsHelpers';
 import {
     findResourceFileNames,
     genAttachmentFromPath,
     genPdfAttachment,
+    readBlankNoteFromFile,
+    readWholeTextFile,
+    refreshTextAttachment,
     reloadFileAttachment,
 } from './fileAttachHelpers';
 import {
@@ -101,6 +122,7 @@ import {
     genResourceReadMenuReplies,
     genResourceReadingReplies,
     genResourcesRangeHint,
+    genStudyOpeningAnswer,
     sanitizeResourceReadingAnswer,
     toResourceChapterRef,
     toResourceChapterVerseCount,
@@ -118,6 +140,7 @@ import {
     LYRIC_UNDO_TOOL_NAME,
     checkIsLyricFileName,
     checkIsLyricTranslateAsk,
+    checkIsSongConversation,
     findLyricAskFiles,
     genLyricOpeningAnswer,
     genLyricUndoAction,
@@ -134,6 +157,7 @@ import {
     genSlideOpeningAnswer,
     genSlideSizeChanges,
     genSlideSizeDoneText,
+    findWindowDoneCardAsk,
     readSlideSizeAsk,
     toSlideAsk,
     toSlideDocumentText,
@@ -145,21 +169,43 @@ import {
     findNoteAskFiles,
     findOpenNoteAttachments,
     findSessionHoldingNote,
-    findSessionNoteTarget,
+    findTabNoteTarget,
     genNoteOpeningAnswer,
     genNoteSizeChanges,
     genNoteSizeDoneText,
     genNoteStyleChanges,
     genNoteStyleDoneText,
     readNoteStyleAsk,
+    checkIsEmptyNoteAttachment,
+    checkIsLanguageLessonAsk,
+    checkIsLessonCardAsk,
+    checkIsNoteVerseCheckAsk,
+    collectNoteVerseRefs,
+    readBlankNoteBlockCount,
+    readLessonFormAsked,
+    readNoteTranslateLanguageName,
+    checkIsNoteReplaceChoice,
+    readNoteRewrite,
     toNoteAsk,
+    toNoteVerseReadText,
     toNoteDocumentText,
+    readCreatedNote,
     type CreatedNoteType,
+    type NoteOwnWordsType,
 } from './noteChatHelpers';
+import { checkIsLessonWriteAsk } from './noteCreatePromptHelpers';
+import {
+    STUDY_CHURCH_WORDS_FILE_NAME,
+    STUDY_LABEL_FILE_NAME,
+    STUDY_TERM_LABEL_LIST,
+    resolveStudyTranslateLanguage,
+} from './studyTranslateHelpers';
+import { getLangFile, loadLangFile } from '../lang/langFileStore';
 import {
     SELECTION_STEP_TOOL_NAME,
     appendSelectionMention,
     checkHasSelectionQuote,
+    findSessionHoldingFile,
     genSelectionOffer,
     pickSelectionSession,
     toSelectionMentionText,
@@ -167,6 +213,17 @@ import {
     toSelectionStepAsk,
     toValidSelectionStep,
 } from './selectionMentionHelpers';
+import { toAnswerQuoteText } from './answerQuoteHelpers';
+import {
+    countRetryAttempt,
+    findFirstTryQuestion,
+    findRetryQuestion,
+    genRetryAskHint,
+    listRetryableAnswerIds,
+    pickRetryModel,
+    toRetryPicks,
+    type RetryAnsweredByType,
+} from './answerRetryHelpers';
 import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
     FLOW_EDIT_TOOL_NAME,
@@ -178,6 +235,68 @@ import {
     toFlowAsk,
     toFlowSheetText,
 } from './flowChatHelpers';
+import {
+    type CreatedDocumentType,
+    type DocumentCreateKindType,
+    DOCUMENT_CREATE_TOOL_MAP,
+    genDefaultDocumentName,
+    genDocumentCreateHint,
+    pickFreeDocumentName,
+    genMadeUndoAction,
+    readDocumentCreateAsk,
+    withCreatedUndoAction,
+} from './documentCreateHelpers';
+import {
+    readCreateAskInOwnLanguage,
+    toTypedBackgroundLinkAsk,
+    toTypedBibleListAsk,
+    toTypedDocumentCreateAsk,
+    toTypedWebBackgroundAsk,
+    type TypedCreateAskType,
+} from './typedCreateAskHelpers';
+import {
+    genDefaultWebPageName,
+    genWebBackgroundHint,
+    MEDIA_FILE_TOOL_NAME,
+    readHtmlBlock,
+    readWebBackgroundAsk,
+    toSafeWebPage,
+} from './webBackgroundAskHelpers';
+import {
+    BACKGROUND_LINK_FIND,
+    BACKGROUND_LINK_RECIPE_ID,
+    readBackgroundLinkAsk,
+} from './backgroundLinkAskHelpers';
+import {
+    BIBLE_ITEM_TOOL_NAME,
+    checkIsBibleListRowFree,
+    DEFAULT_BIBLE_LIST_NAME,
+    findCarriedBibleListRequest,
+    genBibleListSaveHint,
+    genDefaultBibleListName,
+    readBibleListAsk,
+    type BibleListRequestType,
+} from './bibleListAskHelpers';
+import {
+    checkHasBibleListPasteLead,
+    checkMayBeBibleListPaste,
+    toEnglishBibleListPasteLead,
+} from './bibleListPasteHelpers';
+import {
+    BIBLE_LIST_PICK_TOOL_NAME,
+    genBibleListPickActions,
+    genBibleListPickText,
+    genBibleListSavedLines,
+    nameBibleListRangePick,
+    readBibleListPasteAsk,
+    readSavedBibleListTitles,
+    saveBibleListPassages,
+    toBibleListSaveAsk,
+    toValidBibleListPickArgs,
+    type BibleListSaveAskType,
+    type CallToolJsonType,
+} from './bibleListSaveHelpers';
+import type { BibleListPickType } from './bibleListPasteHelpers';
 import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
@@ -223,6 +342,7 @@ import {
     type ChatAssetPreviewType,
 } from './assetPreviewHelpers';
 import RenderSessionTabsComp from './RenderSessionTabsComp';
+import RenderAskToolsMenuComp from './RenderAskToolsMenuComp';
 import {
     AUTO_ASSISTANT_VALUE,
     findSteppedProvider,
@@ -248,6 +368,7 @@ import {
 } from './autoAssistantHelpers';
 import {
     clearAutoAwayServers,
+    genAutoCandidates,
     guessAutoPick,
     resolveAutoPicks,
     resolveHandOnPicks,
@@ -332,12 +453,22 @@ import {
     genNewChatSession,
     loadChatSessions,
     saveChatSessions,
+    splitSavedBoxes,
     toChatSessionTitle,
     type ChatMessageType,
     type ChatSessionStateType,
     type ChatSessionType,
 } from './chatSessionHelpers';
 import { checkIsOpenableLink, toShownLinkText } from './chatLinkHelpers';
+import {
+    checkIsLangReloadDue,
+    LANG_RELOAD_DELAY_MILLISECONDS,
+    toEnabledLangKey,
+} from './chatLangReloadHelpers';
+import {
+    getEnabledLangPlugins,
+    onLangPluginsChanged,
+} from '../lang/langPluginRegistry';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import {
     loadAskHistory,
@@ -370,9 +501,14 @@ import {
 } from './progressHelpers';
 import {
     LANG_INSTALL_STEP_TOOL_NAME,
+    LANG_OFFER_HISTORY_TEXT,
+    checkSaysMoreThanLangOffer,
     describeLangInstallStep,
     findLangInstallTypedPress,
+    genLangAskAgainAnswer,
+    genStudyLangOffer,
     readLangInstallAsk,
+    readLangOfferReask,
     runLangInstallStep,
     type LangInstallStateType,
 } from './langInstallChatHelpers';
@@ -391,10 +527,47 @@ import {
 } from './bibleImportChatHelpers';
 import {
     takeChatbotAsk,
+    takeChatbotBibleListPaste,
     takeChatbotFileRequest,
+    takeChatbotForegroundRequest,
     takeChatbotLookupRequest,
     takeChatbotReport,
 } from '../helper/ai/chatbotHandoffStoreHelpers';
+import {
+    type ForegroundAskType,
+    checkIsSameForegroundAsk,
+} from '../helper/ai/foregroundAskHelpers';
+import { toForegroundComponentLabel } from '../presenter-foreground/foregroundComponentKeys';
+import {
+    FOREGROUND_EDIT_TOOL_NAME,
+    checkIsForegroundAttachment,
+    findOpenForegroundAttachments,
+    genForegroundAttachment,
+    genForegroundOpeningAnswer,
+    genForegroundUndoneText,
+    readForegroundComponentAsk,
+    readForegroundUndoParts,
+    toForegroundAsk,
+    toForegroundAskList,
+    toForegroundReadText,
+    toShownForegroundChipName,
+} from './foregroundChatHelpers';
+import {
+    SCREEN_EDIT_TOOL_NAME,
+    SCREEN_UNDO_KIND,
+    checkIsScreenThread,
+    findScreenUndoIds,
+    readScreenControlAsk,
+    toScreenAsk,
+    toScreenReadText,
+} from './screenChatHelpers';
+import { checkIsScreenSettingKind } from './screenStateAnswerHelpers';
+import { SCREEN_CHANGE_TOOL_NAME } from './screenChangeOfferHelpers';
+import { readScreenAsk } from './typedScreenAskHelpers';
+import {
+    checkIsVerseRowFree,
+    readTypedVerseLine,
+} from './typedVerseAskHelpers';
 import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers';
 import {
     toLookupCardArgs,
@@ -474,6 +647,7 @@ import {
     pickVerseFindBible,
     readTypedVerseContentAsk,
     readTypedVerseFindAsk,
+    toBibleReaderAnswerLanguage,
 } from './verseAskLanguageHelpers';
 import { readBibleImportAskName } from '../helper/ai/bibleImportAskHelpers';
 import {
@@ -505,8 +679,12 @@ import {
     type VerseFindStateType,
 } from './verseFindChatHelpers';
 import {
-    answerLyricLink,
+    answerLyricLinks,
+    answerLyricSources,
     answerLyricTitle,
+    answerScreenAsk,
+    answerScreenThreadAsk,
+    answerTypedVerseAsk,
     askHelpBot,
     describeActionError,
     detectOpenerFocus,
@@ -548,30 +726,102 @@ import {
     setLlmModel,
     setLlmProvider,
     toGuideRescueAnswer,
+    genCreatedNoteUnder,
     GENERAL_ASK_TOOL_NAME,
     LLM_PROVIDER_LIST,
+    UNMADE_CHANGE_TEXT,
     type GuideHelpRequestType,
     type LlmModelType,
     type LlmBotAnswerType,
     type LlmProviderType,
+    type StudyTextTranslatorType,
     toUsableLlmModel,
 } from './llmBotHelpers';
 import {
     callTool,
     callToolPicture,
+    callToolWithPictures,
     checkIsToolHostError,
     getAiEndpoints,
     parseToolJson,
 } from './mcpClient';
 import {
+    LYRIC_DOCUMENT_STEP_TOOL_NAME,
+    describeLyricDocumentStep,
+    genPictureWordsAsk,
+    readLyricDocumentAsk,
+    readLyricDocumentTypedPick,
+    runLyricDocumentStep,
+    toValidLyricDocumentState,
+    type LyricDocumentStateType,
+} from './lyricDocumentChatHelpers';
+import type { BotImageType } from './attachmentHelpers';
+import {
+    checkIsSongFileAsk,
     DRAFT_GONE_TEXT,
     LYRIC_COPY_TOOL_NAME,
+    LYRIC_CREATE_ALL_TOOL_NAME,
     LYRIC_CREATE_TOOL_NAME,
     readSongLinkAsk,
     readSongTitleAsk,
     takeDraftedLyric,
+    takeDraftedLyricList,
 } from './lyricDraftHelpers';
 import {
+    checkIsDocumentSongAsk,
+    DECK_SONG_TOOL_NAME,
+    pickOpenSongDocuments,
+    readDeckSongArgs,
+    readDeckSongAsk,
+} from './deckSongAskHelpers';
+import { draftDeckSongs, planDeckSongAsk } from './deckSongAnswerHelpers';
+import {
+    STUDY_CREATE_TOOL_NAME,
+    STUDY_DRAFT_GONE_TEXT,
+    STUDY_PREVIEW_TOOL_NAME,
+    STUDY_RENAME_TOOL_NAME,
+    clearStudyRenameWait,
+    dropStudyCardEchoReplies,
+    findHeldStudyAbove,
+    findOpenStudyFileName,
+    findStudyAnswerAbove,
+    findStudyAnswerQuestion,
+    genStudyDraftActions,
+    genStudyLanguageHint,
+    keepDraftedStudy,
+    pickKeptAnswerLanguage,
+    readDraftedStudy,
+    readKeepAnswerAsk,
+    readStudyCreatePlace,
+    readStudyFileAsk,
+    readStudyHalfLanguages,
+    setStudyRenameWait,
+    takeDraftedStudy,
+    takeStudyRenameWait,
+    toBibleNotesDraftName,
+    toStudyAsk,
+    checkIsStudyNotePress,
+    toNoteFromStudy,
+} from './studyFileChatHelpers';
+import { readPressedCreateKind } from './createKindHelpers';
+import {
+    STUDY_CHECK_READ_MAX_CHARS,
+    checkIsStudyCheckFile,
+    collectStudyVerseRefs,
+    genStudyBookNames,
+    splitStudyRefCalls,
+    toStudyVerseReadText,
+    type StudyRefReadType,
+} from './studyVerseCheckHelpers';
+import { toStudyNameCheckText } from './studyNameCheckHelpers';
+import {
+    readSavedStudyTranslationChecks,
+    toStudyCheckLanguage,
+} from './studyTranslationCheckHelpers';
+import RenderStudyDraftComp from './RenderStudyDraftComp';
+import {
+    checkIsChangeReply,
+    dropActionEchoReplies,
     genMessageReplies,
     type AttachRequestType,
     type ShowRefType,
@@ -621,6 +871,7 @@ import {
     pickReplyLanguage,
     SENTENCE_END_MARKS,
     toCharClassSource,
+    toPackageLangCode,
 } from './chatLangHelpers';
 
 // Where a warning's first sentence ends, in any script here.
@@ -629,6 +880,7 @@ const WARNING_SENTENCE_END_PATTERN = new RegExp(
     'u',
 );
 import {
+    checkIsEnglishAnswer,
     findPageLanguage,
     genAskTranslation,
     TRANSLATION_MODEL_PATTERN,
@@ -662,11 +914,14 @@ import {
 } from './richTextHelpers';
 import {
     checkIsAlreadyTyped,
+    checkIsOfferedReply,
+    genOfferedReplyHint,
     FALLBACK_STARTERS,
     findKnownQuestion,
     findTemplateAsk,
     genKnownAskExtra,
     genKnownQuestionHint,
+    genTopicChoices,
     readKnownQuestionPage,
     getAllQuestions,
     getStarterQuestions,
@@ -676,6 +931,11 @@ import {
     type QuestionRowType,
     type StarterQuestionType,
 } from './questionHelpers';
+import {
+    checkIsShortTopicAsk,
+    genTopicAskHint,
+    toTopicWords,
+} from './topicAskHelpers';
 import {
     BUILTIN_ACTION_LIST,
     BUILTIN_TOOL_NAME,
@@ -778,6 +1038,30 @@ function toHistoryTurn(message: ChatMessageType): ChatTurnType {
     };
 }
 
+// What a MODEL is shown of a message: the window's own words under an answer
+// (`windowText`, a study translation's language offer, EC-494) are left out
+// with the buttons they came with, and an answer that was the offer alone is
+// one line that names nothing to copy. Shown as its own earlier words, a
+// model wrote the Serbian offer again over its German answer -- the wrong
+// state -- and its buttons as an options line. A report keeps everything as
+// it was seen (`toHistoryTurn`).
+function toModelHistoryTurn(message: ChatMessageType): ChatTurnType {
+    if (message.windowText === undefined) {
+        return toHistoryTurn(message);
+    }
+    const ownText = message.text
+        .replace(message.windowText, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    return toHistoryTurn({
+        ...message,
+        text: ownText.length > 0 ? ownText : LANG_OFFER_HISTORY_TEXT,
+        actions: message.actions?.filter((action) => {
+            return action.toolName !== LANG_INSTALL_STEP_TOOL_NAME;
+        }),
+    });
+}
+
 // What the confirm line quotes back. One line: the complaint may be the whole
 // of a three-line question, and a confirmation that pushes the box off the
 // bottom of the window is one nobody can answer.
@@ -806,7 +1090,15 @@ const BLIND_CUSTOM_MODEL_MESSAGE =
 const SHOWN_LABEL_PATTERN_LIST: [RegExp, string][] = [
     [/^(.+) \(the one in Find\)$/, '{name} (the one in Find)'],
     [/^Put (.+) on the screen$/, 'Put {what} on the screen'],
+    // A new study's two (EC-509), before the plain one they would match.
+    [/^Create "(.+)" in Resources$/, 'Create "{name}" in Resources'],
+    [/^Create "(.+)" in Bible Notes$/, 'Create "{name}" in Bible Notes'],
     [/^Create "(.+)"$/, 'Create "{name}"'],
+    // Several drafted songs' one press (EC-589).
+    [/^Create all (\d+) songs$/, 'Create all {count} songs'],
+    // A Documents list deck's button (EC-590).
+    [/^Make a song from "(.+)"$/, 'Make a song from "{name}"'],
+    [/^Save changes to "(.+)"$/, 'Save changes to "{name}"'],
     [/^Open (.+) billing$/, 'Open {provider} billing'],
     [/^Open (.+) usage limits$/, 'Open {provider} usage limits'],
     [/^Open (.+) API keys$/, 'Open {provider} API keys'],
@@ -840,8 +1132,8 @@ function toShownBibleImportAsk(asked: string) {
 /**
  * An action's words as drawn. A found verse's button reads the reference the
  * way the Bible writes it in a window not in English (`toShownVerseRef`):
- * the Khmer "open", the Bible's own "Matthew 5:44" and the rest of the
- * label in Khmer, not `… HEBREWS 5:14 …`.
+ * the translated "open", the Bible's own "Matthew 5:44" and the rest of the
+ * label translated, not `… HEBREWS 5:14 …`.
  */
 function toShownActionLabel(action: BotActionType): string {
     const verseRef = /^Open (.+) in Bible Lookup$/.exec(action.label)?.[1];
@@ -856,6 +1148,36 @@ function toShownActionLabel(action: BotActionType): string {
     }
     return toShownLabel(action.label);
 }
+
+/**
+ * A request to save passages said in another language (EC-516), for the
+ * pasted list's reader (EC-626): its words and its first passage, read by
+ * that language's own word lists.
+ */
+function readTypedBibleListRequest(text: string): BibleListRequestType | null {
+    const typed = readCreateAskInOwnLanguage(text);
+    return typed?.job === 'bibleList'
+        ? {
+              listName: typed.listName,
+              isNewList: typed.isNewList,
+              isListNamed: true,
+          }
+        : null;
+}
+
+/**
+ * The box's first line for a text whose passages go to the Bibles list
+ * (EC-760, `BIBLE_LIST_PASTE_LEAD` in English): in the window's language,
+ * read back as that line by the Bibles list's reader.
+ */
+function genBibleListPasteLead() {
+    return tran('Add the Bible passages in this text to my Bibles list:');
+}
+
+/** `callTool`, its answer read as JSON. */
+const callBibleListToolJson: CallToolJsonType = async (name, args) => {
+    return parseToolJson(await callTool(name, args));
+};
 
 function toShownLabel(label: string): string {
     const shown = tranLabel(label);
@@ -888,6 +1210,9 @@ function toShownWindowLabel(label: string) {
 // English words; their chips say so in the app's language.
 function toShownAttachmentName(attachment: ChatAttachmentType) {
     const { name } = attachment;
+    if (attachment.kind === 'foreground' && attachment.foreground) {
+        return toShownForegroundChipName(attachment.foreground);
+    }
     if (
         attachment.mimeType === 'application/x-owa-show' &&
         attachment.filePath === undefined
@@ -1140,13 +1465,13 @@ function useBibleInputSuggestions(
     question: string,
     focus: BotFocusType,
     messages: ChatMessageType[],
-    isVerseFindThread: boolean,
+    isOffInThread: boolean,
 ) {
     const [rowList, setRowList] = useState<BibleInputSuggestRowType[]>([]);
     const attemptTimeout = useMemo(() => genTimeoutAttempt(350), []);
     const questionRef = useAppCurrentRef(question);
     useAppEffect(() => {
-        if (isVerseFindThread) {
+        if (isOffInThread) {
             setRowList([]);
             return;
         }
@@ -1201,7 +1526,7 @@ function useBibleInputSuggestions(
             }
             setRowList(nextRowList.slice(0, 60));
         });
-    }, [question, focus, messages, isVerseFindThread]);
+    }, [question, focus, messages, isOffInThread]);
     return rowList;
 }
 
@@ -1251,7 +1576,7 @@ function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
  * every installed Bible's language, so the window asks its own reference aid
  * -- the same `owa_bible_suggest` the box completes with -- about the
  * shortest run of words first, and hands the reader a matcher for the run
- * that answered (2026-10-19: asked in Khmer to summarize Matthew 18, the
+ * that answered (2026-10-19: asked in a non-English language to summarize Matthew 18, the
  * assistant summarized from memory, and asked for John 3's Resources it gave the
  * steps for opening the panel).
  */
@@ -1286,9 +1611,9 @@ async function readBibleReaderAskWithBook(asked: string) {
             // The next run of words, or no route at all.
         }
     }
-    // A book named in a language other than the open Bible's: a French
-    // "summarize" with the French name of Matthew and a chapter, typed in a
-    // French window with the KJV open, went to the ordinary assistant, which
+    // A book named in a language other than the open Bible's: a translated
+    // "summarize" with that language's name of Matthew and a chapter, typed
+    // in a window in that language with the KJV open, went to the ordinary assistant, which
     // said to type /btw (2026-11-04, EC-461). Every language package names
     // the books too (`data/<code>/bibleBooks.json`).
     try {
@@ -1304,6 +1629,82 @@ async function readBibleReaderAskWithBook(asked: string) {
     } catch (_error) {
         return null;
     }
+}
+
+/**
+ * The references a study file cites, read before a verse check is asked of
+ * the model (2026-11-11, EC-497; `studyVerseCheckHelpers.ts`): off the
+ * file's whole text, every installed Bible's book names, then each
+ * reference from the Bible its part of the study quotes -- one
+ * `owa_find_verse refs` call a Bible and eight references. Null when the
+ * names cannot be read; a call that fails leaves its references said as
+ * unread.
+ */
+async function readStudyVerseCheckText(text: string, signal: AbortSignal) {
+    const names = genStudyBookNames(
+        parseToolJson(
+            await callTool(
+                'owa_bible_suggest',
+                { kind: 'books', prefix: '' },
+                signal,
+            ),
+        ),
+    );
+    if (names === null) {
+        return null;
+    }
+    const check = collectStudyVerseRefs(text, names);
+    const readList: StudyRefReadType[] = [];
+    for (const call of splitStudyRefCalls(check)) {
+        try {
+            readList.push({
+                call,
+                result: parseToolJson(
+                    await callTool(
+                        'owa_find_verse',
+                        {
+                            refs: call.refs.join('; '),
+                            ...(call.isInstalled && call.bible !== null
+                                ? { bible: call.bible }
+                                : {}),
+                        },
+                        signal,
+                    ),
+                ),
+            });
+        } catch (_error) {
+            throwIfCancelled(signal);
+        }
+    }
+    return toStudyVerseReadText(check, readList);
+}
+
+/**
+ * A saved study translation's language as its check reads it (EC-596,
+ * `studyTranslationCheckHelpers.ts`): its Bible's words, a file of an
+ * installed language of a few KB read for the one question and let go with
+ * it, and the app's labels -- this window's own when it is shown in that
+ * language, else only a dictionary already held: a dictionary runs to
+ * hundreds of KB and is never read for a question.
+ */
+async function loadStudyCheckLanguage(code: string) {
+    const packageCode = toPackageLangCode(code);
+    const churchWords = await loadLangFile<unknown>(
+        packageCode,
+        STUDY_CHURCH_WORDS_FILE_NAME,
+    );
+    const labels =
+        code === getAppLangCode()
+            ? Object.fromEntries(
+                  STUDY_TERM_LABEL_LIST.map((label) => {
+                      return [label, tranLabel(label)];
+                  }),
+              )
+            : getLangFile<Record<string, unknown>>(
+                  packageCode,
+                  STUDY_LABEL_FILE_NAME,
+              );
+    return toStudyCheckLanguage(code, churchWords, labels);
 }
 
 /**
@@ -1528,7 +1929,7 @@ function RenderSuggestionsComp({
 // is replaced by a tick, because "-" is punctuation the model typed, not
 // something the reader needs to see.
 const BULLET_PATTERN = /^\s*[-*•]\s+/;
-// Any script's digits too: a step a model numbers in Khmer digits is a step
+// Any script's digits too: a step a model numbers in a language's own digits is a step
 // all the same.
 const NUMBERED_PATTERN = /^\s*(\p{Nd}{1,2}[.)])\s+/u;
 
@@ -1938,8 +2339,8 @@ const NO_PROVIDER_VALUE = '';
 const OFFLINE_ENGINE_LABEL = 'app guide · offline';
 
 // The button that adds words to an answer being written reads **Add**, as the
-// manual names it. The dictionary's `Add` is the blend mode's (in Khmer the
-// word for a sum), so another language says the longer key's words instead.
+// manual names it. The dictionary's `Add` is the blend mode's (in some
+// languages the word for a sum), so another language says the longer key's words instead.
 const ADD_BUTTON_KEY = 'Add more';
 function toAddButtonLabel() {
     const shown = tran(ADD_BUTTON_KEY);
@@ -2548,6 +2949,7 @@ function toChipTitle(
     // when none could be built -- by its words (`handleShowingAttachment`).
     if (
         attachment.selector !== undefined ||
+        attachment.kind === 'foreground' ||
         (attachment.kind === 'element' && attachment.name.length > 0)
     ) {
         return fillWords(tran('{name} — press to ring it in the app'), {
@@ -2574,6 +2976,131 @@ function toChipTitle(
     return fillWords(tran('{name} — press to open it'), { name });
 }
 
+/**
+ * What the attach row's **Attach a foreground session** found: the panels
+ * open in the Presenter and their sessions, read at the press
+ * (`owa_foreground_edit read open`), never kept.
+ */
+type ForegroundPickType =
+    | { status: 'loading' }
+    | { status: 'failed'; reason: string }
+    | {
+          status: 'ready';
+          rows: { ask: ForegroundAskType; isOnScreen: boolean }[];
+      };
+
+/** The open panels' sessions as rows to attach, one press each. */
+export function toForegroundPickRows(
+    result: any,
+): { ask: ForegroundAskType; isOnScreen: boolean }[] {
+    const panels = Array.isArray(result?.panels) ? result.panels : [];
+    const rows: { ask: ForegroundAskType; isOnScreen: boolean }[] = [];
+    for (const panel of panels) {
+        const widget = panel?.widget;
+        if (typeof widget !== 'string') {
+            continue;
+        }
+        const sessions = Array.isArray(panel.sessions) ? panel.sessions : [];
+        if (sessions.length === 0) {
+            rows.push({
+                ask: { widget, sessionId: '', sessionName: '' } as any,
+                isOnScreen: panel.isOnScreen === true,
+            });
+            continue;
+        }
+        for (const session of sessions) {
+            if (typeof session?.id !== 'string') {
+                continue;
+            }
+            rows.push({
+                ask: {
+                    widget,
+                    sessionId: session.id,
+                    sessionName:
+                        typeof session.name === 'string' ? session.name : '',
+                } as ForegroundAskType,
+                isOnScreen:
+                    Array.isArray(session.onScreens) &&
+                    session.onScreens.length > 0,
+            });
+        }
+    }
+    return rows;
+}
+
+function RenderForegroundPickComp({
+    pick,
+    onPick,
+    onClose,
+}: Readonly<{
+    pick: ForegroundPickType;
+    onPick: (ask: ForegroundAskType) => void;
+    onClose: () => void;
+}>) {
+    return (
+        <div
+            className="chat-open-files"
+            role="group"
+            aria-label={tran('Attach a foreground session')}
+        >
+            <span className="chat-open-files-label">
+                {tran('Attach a foreground session')}
+            </span>
+            {pick.status === 'loading' ? (
+                <span>{tran('Looking at the open panels…')}</span>
+            ) : pick.status === 'failed' ? (
+                <span>{pick.reason}</span>
+            ) : pick.rows.length === 0 ? (
+                <span>
+                    {tran(
+                        'No foreground panel is open. Open one from the ' +
+                            'Foreground tab in the Presenter.',
+                    )}
+                </span>
+            ) : (
+                <div className="chat-clips">
+                    {pick.rows.map((row) => {
+                        const name = toShownForegroundChipName(row.ask);
+                        return (
+                            <button
+                                key={`${row.ask.widget}:${row.ask.sessionId}`}
+                                type="button"
+                                className="chat-clip chat-clip-showable"
+                                title={
+                                    row.isOnScreen
+                                        ? `${name} — ${tran('On Screen')}`
+                                        : name
+                                }
+                                onClick={() => {
+                                    onPick(row.ask);
+                                }}
+                            >
+                                <i className="bi bi-layers" />
+                                <span
+                                    className={
+                                        'chat-clip-name' +
+                                        (row.isOnScreen ? ' app-on-screen' : '')
+                                    }
+                                >
+                                    {name}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+            <button
+                type="button"
+                className="chat-clip-x"
+                aria-label={tran('Close')}
+                onClick={onClose}
+            >
+                ×
+            </button>
+        </div>
+    );
+}
+
 function RenderAttachmentChipsComp({
     attachments,
     onRemove,
@@ -2597,7 +3124,16 @@ function RenderAttachmentChipsComp({
                     attachment.kind === 'image'
                         ? getAttachmentData(attachment.id)
                         : null;
-                const isGone = attachment.kind === 'image' && dataUrl === null;
+                // A chip that goes with the next question -- in the box, or
+                // still open above it, the chips that can be taken off -- is
+                // read again from its file at the ask
+                // (`reloadFileAttachment`): a picture from a folder kept in
+                // the box through a reload is not gone (EC-498).
+                const isGone =
+                    attachment.kind === 'image' &&
+                    dataUrl === null &&
+                    (onRemove === undefined ||
+                        attachment.filePath === undefined);
                 // Every chip has something to show: a control is rung, a
                 // picture opens, a file opens its folder. A picture whose
                 // bytes have gone and which never came from disk is the one
@@ -2610,6 +3146,7 @@ function RenderAttachmentChipsComp({
                 const canShow =
                     onShow !== undefined &&
                     (attachment.selector !== undefined ||
+                        attachment.kind === 'foreground' ||
                         attachment.filePath !== undefined ||
                         !isGone);
                 return (
@@ -2646,17 +3183,19 @@ function RenderAttachmentChipsComp({
                                     'bi ' +
                                     (attachment.kind === 'element'
                                         ? 'bi-bullseye'
-                                        : attachment.kind === 'image' ||
-                                            checkIsImageName(attachment.name)
-                                          ? // A saved picture arrives as a
-                                            // file, and reads as one on its
-                                            // chip unless the NAME is asked.
-                                            'bi-image'
-                                          : checkIsCarriedFileName(
-                                                  attachment.name,
-                                              )
-                                            ? 'bi-file-earmark-pdf'
-                                            : 'bi-file-earmark-text')
+                                        : attachment.kind === 'foreground'
+                                          ? 'bi-layers'
+                                          : attachment.kind === 'image' ||
+                                              checkIsImageName(attachment.name)
+                                            ? // A saved picture arrives as a
+                                              // file, and reads as one on its
+                                              // chip unless the NAME is asked.
+                                              'bi-image'
+                                            : checkIsCarriedFileName(
+                                                    attachment.name,
+                                                )
+                                              ? 'bi-file-earmark-pdf'
+                                              : 'bi-file-earmark-text')
                                 }
                             />
                         ) : (
@@ -2910,27 +3449,137 @@ function RenderCopyPictureIconComp({
 function RenderLyricPreviewComp({
     actions,
 }: Readonly<{ actions: BotActionType[] }>) {
-    const action = actions.find((one) => {
-        return one.toolName === LYRIC_CREATE_TOOL_NAME;
+    // One box per song the answer offers (EC-589): open for one song, as
+    // ever; shut under several, each named by its song, so four songs do
+    // not push the buttons a whole window down.
+    const draftedList = actions.flatMap((one) => {
+        if (one.toolName !== LYRIC_CREATE_TOOL_NAME) {
+            return [];
+        }
+        const drafted = takeDraftedLyric(one.args?.reference ?? '');
+        return drafted === null ? [] : [drafted];
     });
-    const drafted = takeDraftedLyric(action?.args?.reference ?? '');
-    if (drafted === null) {
+    if (draftedList.length === 0) {
         return null;
     }
-    const lineCount = drafted.content.split('\n').length;
+    const isOne = draftedList.length === 1;
     return (
-        <details className="cue-lyric" open>
-            <summary>{tran('The song text, as it will be saved')}</summary>
-            <textarea
-                className="cue-lyric-text"
-                readOnly={true}
-                spellCheck={false}
-                value={drafted.content}
-                rows={Math.min(20, Math.max(6, lineCount))}
-                aria-label={tran('The song text that would be saved')}
-            />
-        </details>
+        <>
+            {draftedList.map((drafted) => {
+                const lineCount = drafted.content.split('\n').length;
+                return (
+                    <details
+                        key={drafted.reference}
+                        className="cue-lyric"
+                        open={isOne}
+                    >
+                        <summary>
+                            {isOne
+                                ? tran('The song text, as it will be saved')
+                                : drafted.name}
+                        </summary>
+                        <textarea
+                            className="cue-lyric-text"
+                            readOnly={true}
+                            spellCheck={false}
+                            value={drafted.content}
+                            rows={Math.min(20, Math.max(6, lineCount))}
+                            aria-label={tran(
+                                'The song text that would be saved',
+                            )}
+                        />
+                    </details>
+                );
+            })}
+        </>
     );
+}
+
+type SavedLyricType = { name: string; filePath: string };
+
+/** The song names already in use, lowercased, for `saveDraftedLyric`. */
+async function listTakenLyricNames() {
+    const listed = parseToolJson(
+        await callTool('owa_lyric_file', { action: 'list' }),
+    );
+    return new Set<string>(
+        (listed?.names ?? []).map((one: string) => {
+            return String(one).toLowerCase();
+        }),
+    );
+}
+
+/**
+ * One drafted song written to the songs folder under a FREE name: `create`
+ * refuses a name already in use rather than overwriting, so a free one is
+ * found here, and the name given is added to `taken` -- **Create all** saves
+ * several in one press. Pressing twice makes a second song beside the first;
+ * it never replaces one. Null when it could not be written.
+ */
+async function saveDraftedLyric(
+    drafted: { name: string; content: string; fontFamily?: string | null },
+    taken: Set<string>,
+): Promise<SavedLyricType | null> {
+    let name = drafted.name;
+    for (let index = 1; taken.has(name.toLowerCase()); index += 1) {
+        name = `${drafted.name} (${index})`;
+    }
+    // `created` comes back as the file's NAME, not as `true` -- the first
+    // version of this tested it for `true`, so a song that had been written
+    // perfectly well was reported to the user as a failure. Caught by
+    // pressing the button, never by a type.
+    let created: any = null;
+    try {
+        created = parseToolJson(
+            await callTool('owa_lyric_file', {
+                action: 'create',
+                name,
+                content: drafted.content,
+                // A song made from a document keeps its face on every
+                // stage (`lyricDocumentChatHelpers.ts`).
+                ...(typeof drafted.fontFamily === 'string'
+                    ? { fontFamily: drafted.fontFamily }
+                    : {}),
+            }),
+        );
+    } catch (error) {
+        // A tool's own words are written for whoever drives the app. The
+        // reason goes to the log; the user gets a sentence.
+        handleError(error);
+    }
+    if (typeof created?.filePath !== 'string') {
+        return null;
+    }
+    taken.add(name.toLowerCase());
+    return { name, filePath: created.filePath };
+}
+
+/** What a song saved alone says, with where it went. */
+function genSavedLyricMessage(saved: SavedLyricType) {
+    return {
+        author: 'bot' as const,
+        text: fillWords(
+            tran(
+                'Saved as "{name}". It is in your documents list now, ' +
+                    'ready to put on the screen — open it in the Lyric ' +
+                    'Editor to change the words or mark the chords.',
+            ),
+            { name: saved.name },
+        ),
+        shows: [
+            // Where it went, in the app rather than on the disk. The row is
+            // looked up at PRESS time and rung in the window behind this
+            // one, so a list scrolled since still lands on the right row.
+            // Scoped to the panel because a song can easily be named after
+            // something else on screen.
+            {
+                kind: 'control' as const,
+                value: `Document List > ${saved.name}`,
+                name: tran('Show it in the list'),
+            },
+            { kind: 'file' as const, value: saved.filePath, name: saved.name },
+        ],
+    };
 }
 
 function RenderMessageComp({
@@ -2941,6 +3590,9 @@ function RenderMessageComp({
     onReply,
     onReuse,
     onRate,
+    onQuote,
+    onRetry,
+    canRetry,
     onAttachRequest,
     onShowAttachment,
 }: Readonly<{
@@ -2965,6 +3617,15 @@ function RenderMessageComp({
     onReuse: (text: string, attachments?: ChatAttachmentType[]) => void;
     // A thumb under an answer (`answerRatingHelpers`).
     onRate: (answerId: number, rating: AnswerRatingType) => void;
+    // The reply arrow: the answer, or the part of it selected, quoted in the
+    // box (`answerQuoteHelpers`).
+    onQuote: (quote: string) => void;
+    // **Retry**: the question this answer was given to, asked again for a
+    // different answer (`answerRetryHelpers`). Unset under an answer that
+    // has no question of theirs right above it to ask again; `canRetry`
+    // false while the tab is answering something.
+    onRetry?: (answerId: number) => void;
+    canRetry: boolean;
     onAttachRequest: (request: AttachRequestType) => void;
     onShowAttachment: (attachment: ChatAttachmentType) => void;
 }>) {
@@ -3003,6 +3664,49 @@ function RenderMessageComp({
         }
         onReuse(message.text, message.attachments);
     };
+    // The words selected in this answer, if any: read as the reply arrow is
+    // PRESSED (mouse down), before the press can move the selection, and
+    // only when it starts and ends in the answer's own words -- never in one
+    // of its buttons, never in another card.
+    const bodyRef = useRef<HTMLDivElement>(null);
+    const quotedSelectionRef = useRef<string | null>(null);
+    const readSelectedWords = () => {
+        const body = bodyRef.current;
+        const selection = window.getSelection();
+        if (
+            body === null ||
+            selection === null ||
+            selection.isCollapsed ||
+            selection.rangeCount === 0
+        ) {
+            return null;
+        }
+        const range = selection.getRangeAt(0);
+        const checkIsInWords = (node: Node) => {
+            const element = node instanceof Element ? node : node.parentElement;
+            return (
+                element !== null &&
+                body.contains(element) &&
+                element.closest('button') === null
+            );
+        };
+        if (
+            !checkIsInWords(range.startContainer) ||
+            !checkIsInWords(range.endContainer)
+        ) {
+            return null;
+        }
+        const words = selection.toString().trim();
+        return words.length > 0 ? words : null;
+    };
+    const handleQuoting = () => {
+        const selected = quotedSelectionRef.current ?? readSelectedWords();
+        quotedSelectionRef.current = null;
+        const quote = toAnswerQuoteText(message.text, selected);
+        if (quote !== null) {
+            onQuote(quote);
+        }
+    };
     return (
         // Focusable, so the card that was clicked stays marked (and the
         // button pressed in it): see `.cue` in the stylesheet.
@@ -3018,7 +3722,7 @@ function RenderMessageComp({
             >
                 {message.author === 'you' ? tran('You') : tran('Assistant')}
             </p>
-            <div className="cue-body">
+            <div className="cue-body" ref={bodyRef}>
                 {message.note === undefined ? null : (
                     // A note may be a marker code reads (`REPORT_NOTE`),
                     // stored English and put into words only here.
@@ -3078,6 +3782,9 @@ function RenderMessageComp({
                 ) : null}
                 {message.actions?.length ? (
                     <RenderLyricPreviewComp actions={message.actions} />
+                ) : null}
+                {message.actions?.length ? (
+                    <RenderStudyDraftComp actions={message.actions} />
                 ) : null}
                 {message.actions?.length ? (
                     <div className="cue-actions">
@@ -3192,7 +3899,55 @@ function RenderMessageComp({
                             {tran('Ask again')}
                         </button>
                     ) : (
-                        <RenderCopyButtonComp text={message.text} />
+                        <>
+                            <RenderCopyButtonComp text={message.text} />
+                            {/* Reply: the answer quoted in the box for a
+                                follow-up -- or, with words of it selected
+                                first, those words alone (a section). */}
+                            <button
+                                type="button"
+                                className="cue-tool cue-quote"
+                                title={tran(
+                                    'Reply to this answer. Select some of ' +
+                                        'its words first to reply to just ' +
+                                        'them.',
+                                )}
+                                aria-label={tran('Reply')}
+                                onMouseDown={() => {
+                                    quotedSelectionRef.current =
+                                        readSelectedWords();
+                                }}
+                                onClick={handleQuoting}
+                            >
+                                <i className="bi bi-reply" aria-hidden="true" />
+                            </button>
+                            {onRetry === undefined ? null : (
+                                // Between the reply arrow and the thumbs
+                                // (2026-11-10, the user's picture with the
+                                // spot circled: _add a rotate icon there to
+                                // ask for retrying_). Disabled, not gone,
+                                // while the tab answers: the row keeps its
+                                // shape under the card being read.
+                                <button
+                                    type="button"
+                                    className="cue-tool cue-retry"
+                                    title={tran(
+                                        'A different answer: worked out ' +
+                                            'another way, with more effort.',
+                                    )}
+                                    aria-label={tran('Retry')}
+                                    disabled={!canRetry}
+                                    onClick={() => {
+                                        onRetry(message.id);
+                                    }}
+                                >
+                                    <i
+                                        className="bi bi-arrow-repeat"
+                                        aria-hidden="true"
+                                    />
+                                </button>
+                            )}
+                        </>
                     )}
                     {isAsked || message.isFollowUp === true ? null : (
                         // Two thumbs under every ANSWER, and under nothing
@@ -3630,15 +4385,58 @@ async function translateVerseWords(
     }
 }
 
+/**
+ * The translator a study file is translated with, part by part (EC-478):
+ * the Gemma 4 Auto would ask at no cost -- the user's word for any
+ * translation -- looked for once an ask, at the first part; else the
+ * assistant the question went to. One round, no tools, the translator's
+ * room on a server of the user's own; its rounds count in the cost.
+ */
+function genStudyTranslator(
+    focus: BotFocusType,
+    provider: LlmProviderType,
+    model: string,
+    signal: AbortSignal,
+    onUsage: (round: LlmRoundUsageType) => void,
+): StudyTextTranslatorType {
+    let pickPromise: Promise<TranslationPickType | null> | null = null;
+    return async (ask) => {
+        pickPromise ??= findTranslationPick();
+        const pick = await pickPromise;
+        const answer = await askLlmBot(
+            ask,
+            focus,
+            pick?.provider ?? provider,
+            pick?.model ?? model,
+            [],
+            signal,
+            { isGeneral: true, isTranslation: true, onUsage },
+        );
+        return {
+            text: answer.text,
+            by:
+                pick === null
+                    ? getLlmModelLabel(provider, model)
+                    : toShownPickLabel(pick.label),
+        };
+    };
+}
+
 export default function ChatbotAppComp() {
     // Popup windows carry no theme of their own: without this the help window
     // opens white in front of a dark app.
     const { theme } = useThemeSource();
     // Every conversation this window is holding, and which tab is in front.
     // Read from disk once, at mount: this window is the only thing that writes
-    // that file.
+    // that file. The box each tab was saved with is taken off it as it is read
+    // (EC-498) and handed to the window's box below, its one place after that.
+    const savedBoxMapRef = useRef<Record<string, ChatAttachmentType[]>>({});
     const [sessionState, setSessionState] = useState<ChatSessionStateType>(
-        genInitialSessionState,
+        () => {
+            const saved = splitSavedBoxes(genInitialSessionState());
+            savedBoxMapRef.current = saved.boxMap;
+            return saved.state;
+        },
     );
     // `window.open` brings an existing chatbot window forward instead of
     // making a second one. That launch does not remount React, so the main
@@ -3651,7 +4449,12 @@ export default function ChatbotAppComp() {
                 return applyChatLaunchFocus(
                     oldState,
                     openerFocus,
-                    checkIsNoteSession,
+                    (session) => {
+                        return checkIsNoteSession(
+                            session,
+                            draftAttachmentMapRef.current[session.id],
+                        );
+                    },
                 );
             });
         };
@@ -3753,15 +4556,22 @@ export default function ChatbotAppComp() {
     const [serviceError, setServiceError] = useState<string | null>(null);
     // What is attached to the question NOT YET asked, per tab.
     //
-    // Component state rather than a field on the session, because it is the
-    // one part of a half-written question that must not be written to disk:
-    // the descriptions could be, but they would then outlive the pictures they
-    // describe and a reopened window would show chips for bytes that are gone.
-    // Keyed by tab all the same -- attaching a screenshot, checking the other
-    // tab and coming back must not lose it.
+    // Component state rather than a field on the session: a picture of the
+    // app is the part of a half-written question that must not be written to
+    // disk -- its description would outlive the bytes it describes, and a
+    // reopened window would show a chip for a picture that is gone. What a
+    // reload CAN bring back -- a file, read again from where it is, and a
+    // foreground session -- is written with its tab at every save and
+    // started from here (2026-11-11, EC-498: a file handed over waits in the
+    // box under a card saying it is attached below, and a reload had lost
+    // it; `checkIsKeptBoxAttachment`). Keyed by tab all the same --
+    // attaching a screenshot, checking the other tab and coming back must not
+    // lose it.
     const [draftAttachmentMap, setDraftAttachmentMap] = useState<
         Record<string, ChatAttachmentType[]>
-    >({});
+    >(() => {
+        return savedBoxMapRef.current;
+    });
     const [attachError, setAttachError] = useState<string | null>(null);
     // The picture being looked at, big. Held by id rather than by data URL
     // so it cannot outlive the store that owns the bytes.
@@ -3939,35 +4749,77 @@ export default function ChatbotAppComp() {
     // The ONE Bible note a tab was opened on, whose own window it works in
     // (`toNoteWindowAim`): a note row's Open in Chatbot opens that window
     // first, and the help may have been opened from the Reader. Set as the
-    // note is attached; otherwise read off the note the tab keeps
-    // (`findSessionNoteTarget`), so a reload or a relaunch still works in
-    // it. `null` once the person picks a window or a kind by hand.
+    // note is attached; otherwise read off the note waiting in the box or
+    // the one the tab keeps (`findTabNoteTarget`), so a reload or a relaunch
+    // still works in it. `null` once the person picks a window or a kind by
+    // hand.
     const [noteWindowBySession, setNoteWindowBySession] = useState<
         Record<string, NoteWindowTargetType | null>
     >({});
     // Read by the hand-overs, which run outside a render.
     const noteWindowBySessionRef = useAppCurrentRef(noteWindowBySession);
     const windowIdBySessionRef = useAppCurrentRef(windowIdBySession);
-    // The note's own window, else a window chosen for the tab, else the one
-    // window of the kind it asks about when that is a popup
-    // (`toFocusWindowAim`): a tab asking about Settings works in Settings.
+    // The tab's file whose own window -- a Markdown Preview, the PDF
+    // viewer -- it works in, as a note's tab works in the note's window
+    // (2026-11-10, the user, the Resources 🤖 having opened the preview
+    // beside a chat that did not name it: _should behave like what working
+    // for bible-note_): the newest of its files that has one, in the box or
+    // still open -- the one held over the main window too. Let go of, per
+    // tab, once a window or a kind is picked by hand, until a file is
+    // handed over again.
+    const [fileWindowLetGoMap, setFileWindowLetGoMap] = useState<
+        Record<string, true>
+    >({});
+    const tabPreviewFilePath = useMemo(() => {
+        const boxFileList = (draftAttachmentMap[activeSession.id] ?? []).filter(
+            checkIsFileAttachment,
+        );
+        const openFileList =
+            boxFileList.length > 0
+                ? []
+                : findOpenFileAttachments(
+                      activeSession.messages,
+                      activeSession.fileClosedAt,
+                  );
+        return toHeldPreviewFilePath(
+            [...openFileList, ...boxFileList].map((attachment) => {
+                return attachment.filePath;
+            }),
+        );
+    }, [
+        draftAttachmentMap,
+        activeSession.id,
+        activeSession.messages,
+        activeSession.fileClosedAt,
+    ]);
+    // The note's own window, else the file's, else a window chosen for the
+    // tab, else the one window of the kind it asks about when that is a
+    // popup (`toFocusWindowAim`): a tab asking about Settings works in
+    // Settings.
     const windowAim = useMemo(() => {
         const noteTarget =
             activeSession.id in noteWindowBySession
                 ? noteWindowBySession[activeSession.id]
-                : findSessionNoteTarget(
+                : findTabNoteTarget(
                       activeSession.messages,
                       activeSession.fileClosedAt,
+                      draftAttachmentMap[activeSession.id],
                   );
         return toTabWindowAim(
             noteTarget,
             windowIdBySession[activeSession.id],
             activeSession.focus,
             appWindowList,
+            fileWindowLetGoMap[activeSession.id] === true
+                ? null
+                : tabPreviewFilePath,
         );
     }, [
         noteWindowBySession,
         windowIdBySession,
+        fileWindowLetGoMap,
+        tabPreviewFilePath,
+        draftAttachmentMap,
         activeSession.id,
         activeSession.focus,
         activeSession.messages,
@@ -3976,14 +4828,17 @@ export default function ChatbotAppComp() {
     ]);
     // A tab about a note asks about the Bible Note window, a tab saved
     // before it was told so included -- until the person picks a window or
-    // a kind by hand (`null` in `noteWindowBySession`).
+    // a kind by hand (`null` in `noteWindowBySession`). A note still
+    // waiting in the box counts (EC-498): back from a reload, the tab had
+    // gone back to the window the help was opened from (BN-19).
     useAppEffect(() => {
         if (
             activeSession.focus === 'bibleNote' ||
             activeSession.id in noteWindowBySession ||
-            findSessionNoteTarget(
+            findTabNoteTarget(
                 activeSession.messages,
                 activeSession.fileClosedAt,
+                draftAttachmentMap[activeSession.id],
             ) === null
         ) {
             return;
@@ -3997,24 +4852,20 @@ export default function ChatbotAppComp() {
         activeSession.messages,
         activeSession.fileClosedAt,
         noteWindowBySession,
+        draftAttachmentMap,
     ]);
     // What a `/` command, the offline guide and a button pressed in the tab
     // in front work with; a model's answer is handed its own at the ask.
     useAppEffect(() => {
         setCurrentWindowAim(windowAim);
     }, [windowAim]);
-    // The Bible note window the tab in front works in stays on top while it
-    // does, so a press here or in the main window does not bury the note
-    // being changed (`toHeldNoteWindowUrl`). Said only when the address
-    // changes: a refreshed list re-pins nothing the person took down.
-    const heldNoteWindowUrl = useMemo(() => {
-        return toHeldNoteWindowUrl(windowAim, appWindowList);
+    // The window the tab in front works in stays over the main window while
+    // it does, so a press here or in the main window does not bury what is
+    // being worked on (`toHeldWindowUrl`); sent with the attached file's
+    // preview window below.
+    const heldWindowUrl = useMemo(() => {
+        return toHeldWindowUrl(windowAim, appWindowList);
     }, [windowAim, appWindowList]);
-    useAppEffect(() => {
-        appProvider.messageUtils.sendData(HOLD_NOTE_WINDOW_ON_TOP_CHANNEL, {
-            url: heldNoteWindowUrl,
-        });
-    }, [heldNoteWindowUrl]);
     const handleWindowChanging = useCallback(
         (windowId: string) => {
             const found = appWindowList.find((item) => {
@@ -4033,12 +4884,22 @@ export default function ChatbotAppComp() {
                 }
                 return newMap;
             });
-            // A window picked by hand is the person's word over the note's.
+            // A window picked by hand is the person's word over the note's,
+            // and over the file's.
             setNoteWindowBySession((oldMap) => {
                 return { ...oldMap, [sessionId]: null };
             });
+            setFileWindowLetGoMap((oldMap) => {
+                return { ...oldMap, [sessionId]: true };
+            });
+            // A file's own window is no kind to ask about: the tab asks
+            // about what it did.
+            const pickedFocus = found.focus;
+            if (pickedFocus === null) {
+                return;
+            }
             updateActiveSession((session) => {
-                return { ...session, focus: found.focus, isFocusChosen: true };
+                return { ...session, focus: pickedFocus, isFocusChosen: true };
             });
         },
         [appWindowList, activeSession.id, updateActiveSession],
@@ -4438,7 +5299,7 @@ export default function ChatbotAppComp() {
             return;
         }
         const state = { sessions, activeId: id };
-        saveChatSessions(state);
+        saveChatSessions(state, draftAttachmentMapRef.current);
         setSessionState(state);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -4471,7 +5332,7 @@ export default function ChatbotAppComp() {
             sessions,
             activeId: isActiveKept ? oldState.activeId : sessions[0].id,
         };
-        saveChatSessions(state);
+        saveChatSessions(state, draftAttachmentMapRef.current);
         setSessionState(state);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -4495,6 +5356,11 @@ export default function ChatbotAppComp() {
                     return { ...oldMap, [sessionId]: null };
                 });
             }
+            // Any kind picked by hand: the file's own window no longer
+            // wins either.
+            setFileWindowLetGoMap((oldMap) => {
+                return { ...oldMap, [sessionId]: true };
+            });
             updateActiveSession((session) => {
                 return { ...session, focus: newFocus, isFocusChosen: true };
             });
@@ -4651,13 +5517,29 @@ export default function ChatbotAppComp() {
     // nothing else: a question row under "/scr" would be offering to spend a
     // model call on something the person is about to do without one.
     const isVerseFindThread = readVerseFindThread(messages, question) !== null;
+    // A song's conversation is about the song (2026-11-12, EC-512): a tab
+    // opened on one from a window on the Reader still asks about the
+    // Reader, and _Remove verse 3._ was read as a passage being typed --
+    // a Bible read on every pause, a book list able to open over their
+    // words.
+    const isSongThread = useMemo(() => {
+        return checkIsSongConversation(
+            draftAttachmentMap[activeSessionId] ?? [],
+            findOpenFileAttachments(messages, activeSession.fileClosedAt),
+        );
+    }, [
+        draftAttachmentMap,
+        activeSessionId,
+        messages,
+        activeSession.fileClosedAt,
+    ]);
     // The input aid: a passage being completed (book, chapter, verse) or a
     // name/place being typed (`bibleInputSuggestHelpers.ts`).
     const bibleInputRows = useBibleInputSuggestions(
         isSelectionQuote ? '' : question,
         focus,
         messages,
-        isVerseFindThread,
+        isVerseFindThread || isSongThread,
     );
     const suggestions = useMemo((): SuggestRowType[] => {
         if (isSuggestDismissed || isBusy || isSelectionQuote) {
@@ -4872,6 +5754,22 @@ export default function ChatbotAppComp() {
             return /\.pdf$/i.test(name);
         },
     );
+    // HELD over the main window: the window the tab works in, and the
+    // preview window (Markdown or PDF) of the file it asks about -- in the
+    // box or still open (`tabPreviewFilePath`), even once another window is
+    // picked by hand -- which main finds from the file
+    // (`windowOnTopRequestHelpers.ts`): it takes an address only of a page
+    // of the app. Said only when one of the two changes: a refreshed list
+    // re-pins nothing the person took down, and main holds a preview opened
+    // later by itself.
+    const heldPreviewFilePath = tabPreviewFilePath;
+    useAppEffect(() => {
+        const request: HoldWindowRequestType = {
+            url: heldWindowUrl,
+            filePath: heldPreviewFilePath,
+        };
+        appProvider.messageUtils.sendData(HOLD_WINDOW_ON_TOP_CHANNEL, request);
+    }, [heldWindowUrl, heldPreviewFilePath]);
     // The person, place or passage the tab is asking about
     // (`findOpenLookupSubject`), drawn above the box with a × that puts it
     // away: it goes with every question, so a person moving on to something
@@ -4886,6 +5784,25 @@ export default function ChatbotAppComp() {
                 return Math.max(most, message.id);
             }, 0);
             return { ...session, lookupClosedAt: lastId };
+        });
+    }, [updateActiveSession]);
+    // The foreground sessions the tab is still asking about
+    // (`findOpenForegroundAttachments`), drawn above the box with a × that
+    // puts them away. None while one waits in the box: that one takes over.
+    const openForegroundAttachments = draftAttachments.some(
+        checkIsForegroundAttachment,
+    )
+        ? []
+        : findOpenForegroundAttachments(
+              messages,
+              activeSession.foregroundClosedAt,
+          );
+    const handleClosingForeground = useCallback(() => {
+        updateActiveSession((session) => {
+            const lastId = session.messages.reduce((most, message) => {
+                return Math.max(most, message.id);
+            }, 0);
+            return { ...session, foregroundClosedAt: lastId };
         });
     }, [updateActiveSession]);
     const handleClosingOpenFiles = useCallback(() => {
@@ -4937,6 +5854,54 @@ export default function ChatbotAppComp() {
         },
         [activeSessionId, sessionStateRef],
     );
+    // The attach row's **Attach a foreground session**: the open panels'
+    // sessions, read at the press, one press to attach one.
+    const [foregroundPick, setForegroundPick] =
+        useState<ForegroundPickType | null>(null);
+    const handleOpeningForegroundPick = useCallback(async () => {
+        setAttachError(null);
+        setForegroundPick({ status: 'loading' });
+        try {
+            const result = parseToolJson(
+                await callTool(FOREGROUND_EDIT_TOOL_NAME, {
+                    action: 'read',
+                    open: true,
+                }),
+            );
+            if (result === null || result?.isError === true) {
+                setForegroundPick({
+                    status: 'failed',
+                    reason: tran(
+                        'The Presenter could not be read. Switch the main ' +
+                            'window to the Presenter, then try again.',
+                    ),
+                });
+                return;
+            }
+            setForegroundPick({
+                status: 'ready',
+                rows: toForegroundPickRows(result),
+            });
+        } catch (error: any) {
+            setForegroundPick({
+                status: 'failed',
+                reason: describeAttachError(error, FOREGROUND_EDIT_TOOL_NAME),
+            });
+        }
+    }, []);
+    const handleClosingForegroundPick = useCallback(() => {
+        setForegroundPick(null);
+    }, []);
+    const addAttachmentsRef = useAppCurrentRef(addAttachments);
+    const handlePickingForeground = useCallback(
+        (ask: ForegroundAskType) => {
+            addAttachmentsRef.current([genForegroundAttachment(ask)]);
+            setForegroundPick(null);
+            inputRef.current?.focus();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const handleRemovingAttachment = useCallback(
         (id: string) => {
             dropAttachmentData(id);
@@ -4955,9 +5920,9 @@ export default function ChatbotAppComp() {
         [activeSessionId],
     );
     // A file the user chose, dropped or pasted. An image becomes a picture; a
-    // text file becomes text; anything else is refused BY NAME, because "that
-    // did not work" on a file they can see is worse than being told the app
-    // cannot read a .docx.
+    // text file, a Word file or a PowerPoint deck becomes its words; anything
+    // else is refused BY NAME, because "that did not work" on a file they
+    // can see is worse than being told the app cannot read a video.
     const addFiles = useCallback(
         async (files: File[]) => {
             const added: ChatAttachmentType[] = [];
@@ -5001,6 +5966,23 @@ export default function ChatbotAppComp() {
                             filePath,
                         ),
                     );
+                    continue;
+                }
+                // A PowerPoint deck or a Word file: its words (EC-589) -- a
+                // hymnal's slides are a song to write out -- read through
+                // the app's own converter (EC-590), which reads it from
+                // where it is: one with no place on disk is named.
+                if (checkIsOfficeTextName(file.name)) {
+                    const text = filePath
+                        ? await readDocumentWords(filePath)
+                        : null;
+                    if (text === null) {
+                        refused.push(file.name);
+                    } else {
+                        added.push(
+                            genTextAttachment(file.name, text, filePath),
+                        );
+                    }
                     continue;
                 }
                 // A PDF: its first pages drawn as pictures by MuPDF in main,
@@ -5149,6 +6131,37 @@ export default function ChatbotAppComp() {
     const handleShowingAttachment = useCallback(
         async (attachment: ChatAttachmentType) => {
             setAttachError(null);
+            // A foreground session is rung where it lives: its chip on its
+            // panel's sessions strip (`Quick Text > Session 2`), the panel
+            // itself for Camera Show and Screen Show, which have none.
+            if (attachment.kind === 'foreground' && attachment.foreground) {
+                const ask = attachment.foreground;
+                const label = toForegroundComponentLabel(ask.widget);
+                const find =
+                    ask.itemId === undefined
+                        ? `${label} > ${ask.sessionName || 'Default'}`
+                        : label;
+                try {
+                    const result = parseToolJson(
+                        await callTool('owa_find_ui', {
+                            text: find,
+                            highlight: true,
+                            page: 'presenter.html',
+                        }),
+                    );
+                    if (!result?.shownCount) {
+                        setAttachError(
+                            tran(
+                                'Its panel is not open. Open it from the ' +
+                                    'Foreground tab in the Presenter.',
+                            ),
+                        );
+                    }
+                } catch (error: any) {
+                    setAttachError(describeAttachError(error, 'owa_find_ui'));
+                }
+                return;
+            }
             if (attachment.selector !== undefined) {
                 // Rung in the window it was POINTED at in, whichever window
                 // the tab works with now; a chip from before windows were
@@ -5337,18 +6350,26 @@ export default function ChatbotAppComp() {
 
     // Saving is debounced because a keystroke in the box is a change to a
     // session, and `setSetting` writes a file synchronously. The unload flush
-    // is what keeps the last few hundred milliseconds of typing.
+    // is what keeps the last few hundred milliseconds of typing. A file put
+    // in the box or taken off it is a change too (EC-498): the box's files go
+    // with their tabs.
     const saveAttemptTimeout = useMemo(() => {
         return genTimeoutAttempt(400);
     }, []);
     useAppEffect(() => {
         saveAttemptTimeout(() => {
-            saveChatSessions(sessionStateRef.current);
+            saveChatSessions(
+                sessionStateRef.current,
+                draftAttachmentMapRef.current,
+            );
         });
-    }, [sessionState]);
+    }, [sessionState, draftAttachmentMap]);
     useAppEffect(() => {
         const handleUnloading = () => {
-            saveChatSessions(sessionStateRef.current);
+            saveChatSessions(
+                sessionStateRef.current,
+                draftAttachmentMapRef.current,
+            );
         };
         window.addEventListener('beforeunload', handleUnloading);
         return () => {
@@ -5380,6 +6401,11 @@ export default function ChatbotAppComp() {
     // answer further up rewrites that answer, and the list jumping to its
     // bottom took the card just pressed out of sight.
     const lastMessageId = messages[messages.length - 1]?.id;
+    // The answers that carry a **Retry**, worked out once per change of the
+    // list rather than once per card per render.
+    const retryableAnswerIds = useMemo(() => {
+        return listRetryableAnswerIds(messages);
+    }, [messages]);
     // Scrolled up away from the newest message: a round ↓ in the corner
     // takes them back (2026-10-16, the user's ask with the corner circled:
     // _when the scrollbar not at bottom then should have an icon for quick
@@ -5470,6 +6496,38 @@ export default function ChatbotAppComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [activeSessionId, updateSession, addMessage],
     );
+    // The reply arrow under an answer (2026-11-09, the user: _right next to
+    // the copy icon add reply icon, click reply to mention it in input
+    // text_; _as a user I want to be able to follow up a section_). The quote
+    // goes into the box of the tab in front, under whatever is already typed
+    // there, with the caret on the line under it -- nothing is asked: the
+    // follow-up is theirs to write. The same quote pressed twice is put in
+    // once (`appendSelectionMention`, the selection's own rule).
+    const handleQuotingAnswer = useCallback(
+        (quote: string) => {
+            const quotedSessionId = activeSessionId;
+            inputRef.current?.focus();
+            const draft =
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === quotedSessionId;
+                })?.draft ?? '';
+            if (appendSelectionMention(draft, quote) === draft) {
+                return;
+            }
+            // The effect that sizes the box puts the caret at the end.
+            isCaretToEndRef.current = true;
+            updateSession(quotedSessionId, (session) => {
+                return {
+                    ...session,
+                    draft: appendSelectionMention(session.draft, quote),
+                };
+            });
+            // A quote is not a question to complete.
+            setIsSuggestDismissed(true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeSessionId, updateSession],
+    );
 
     // What one ask spends, folded into its tab round by round. Two totals
     // out of one stream of rounds: the ask's own, stamped on the answer when
@@ -5535,6 +6593,69 @@ export default function ChatbotAppComp() {
     // file the assistant drafted. One entry per hold, so two at once in the
     // same tab release one at a time.
     const busyHoldListRef = useRef<string[]>([]);
+    // BN-45: a language installed, updated or turned on or off while this
+    // window is open -- its own offer installs one -- is read here only when
+    // the window loads (`chatLangReloadHelpers.ts`), so it loads again once
+    // nothing is on its way, as Settings > Languages reloads every window.
+    // The conversations are saved first (and again as it unloads).
+    const langReloadRef = useRef<{
+        loadedKey: string;
+        isDue: boolean;
+    } | null>(null);
+    const reloadForLanguagesWhenIdle = useCallback(() => {
+        const state = langReloadRef.current;
+        if (state === null || !state.isDue) {
+            return;
+        }
+        const countPending = () => {
+            return (
+                pendingAskListRef.current.length +
+                busyHoldListRef.current.length
+            );
+        };
+        const currentKey = toEnabledLangKey(getEnabledLangPlugins());
+        if (currentKey === state.loadedKey) {
+            state.isDue = false;
+            return;
+        }
+        if (
+            !checkIsLangReloadDue({
+                loadedKey: state.loadedKey,
+                currentKey,
+                pendingCount: countPending(),
+            })
+        ) {
+            return;
+        }
+        state.isDue = false;
+        setTimeout(() => {
+            // An ask started meanwhile keeps the window until it ends.
+            if (countPending() > 0) {
+                state.isDue = true;
+                return;
+            }
+            // The box with them: a file handed over and not yet asked
+            // about waits through the reload (EC-498).
+            saveChatSessions(
+                sessionStateRef.current,
+                draftAttachmentMapRef.current,
+            );
+            window.location.reload();
+        }, LANG_RELOAD_DELAY_MILLISECONDS);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    useAppEffect(() => {
+        langReloadRef.current = {
+            loadedKey: toEnabledLangKey(getEnabledLangPlugins()),
+            isDue: false,
+        };
+        return onLangPluginsChanged(() => {
+            if (langReloadRef.current !== null) {
+                langReloadRef.current.isDue = true;
+                reloadForLanguagesWhenIdle();
+            }
+        });
+    }, [reloadForLanguagesWhenIdle]);
     // The busy TABS, worked out from what is still on its way. Set only on a
     // change: this component is the whole window.
     const syncBusy = useCallback(() => {
@@ -5568,8 +6689,9 @@ export default function ChatbotAppComp() {
             if (!checkIsSessionPending(sessionId)) {
                 clearProgressSteps(sessionId);
             }
+            reloadForLanguagesWhenIdle();
         },
-        [syncBusy, checkIsSessionPending],
+        [syncBusy, checkIsSessionPending, reloadForLanguagesWhenIdle],
     );
     const genPendingAsk = useCallback(
         (
@@ -5732,7 +6854,7 @@ export default function ChatbotAppComp() {
             )
                 .filter((message) => !message.isFollowUp)
                 .slice(-10)
-                .map(toHistoryTurn);
+                .map(toModelHistoryTurn);
             if (
                 conversation.at(-1)?.author === 'you' &&
                 conversation.at(-1)?.text === typed
@@ -5814,7 +6936,13 @@ export default function ChatbotAppComp() {
             const previous = sessionStateRef.current.sessions
                 .find((one) => one.id === sessionId)
                 ?.messages.at(-1);
-            addMessage(sessionId, { author: 'you', text: echo });
+            // A typed line may yet go on to a model (`false` back), and is
+            // then a question; a press or a handoff is the step's (EC-506).
+            addMessage(sessionId, {
+                author: 'you',
+                text: echo,
+                ...(isTyped ? {} : { isStep: true as const }),
+            });
             const pending = genPendingAsk(sessionId, undefined, false);
             const waiting =
                 waitingQuestion ??
@@ -5930,7 +7058,7 @@ export default function ChatbotAppComp() {
         ],
     );
     const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
-    // A language asked for in so many words ("install the French language"),
+    // A language asked for in so many words ("install the Spanish language"),
     // offered and installed by buttons, with no model
     // (`langInstallChatHelpers.ts`): the press goes into the transcript as
     // the person's own words and the next answer comes back.
@@ -5940,7 +7068,47 @@ export default function ChatbotAppComp() {
             state: LangInstallStateType,
             echo: string,
         ) => {
-            addMessage(sessionId, { author: 'you', text: echo });
+            // Pressed or typed, a step's reply: the window answers it
+            // (EC-506).
+            addMessage(sessionId, { author: 'you', text: echo, isStep: true });
+            // A study's translation that waited for the language (EC-494):
+            // **Not now** asks it again at once, going on without it;
+            // **Ask again** asks it once the window has taken the language
+            // in. Pressed before that, it waits for the refresh already on
+            // its way (BN-45): a study drafted before it would be lost.
+            const reask = readLangOfferReask(state);
+            if (reask !== null) {
+                const langReload = langReloadRef.current;
+                if (
+                    state.step === 'ask' &&
+                    langReload !== null &&
+                    toEnabledLangKey(getEnabledLangPlugins()) !==
+                        langReload.loadedKey
+                ) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        ...genLangAskAgainAnswer(
+                            state.language,
+                            reask.question,
+                        ),
+                    });
+                    return;
+                }
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran('Asking your question again.'),
+                });
+                // Its words alone: the study open in the tab rides with
+                // them, and the box is left as it is.
+                handleAskingRef.current(reask.question, true, {
+                    withoutEcho: true,
+                    attachments: [],
+                    ...(reask.skipLangOffer === undefined
+                        ? {}
+                        : { skipLangOffer: reask.skipLangOffer }),
+                });
+                return;
+            }
             const pending = genPendingAsk(sessionId, undefined, false);
             clearProgressSteps(sessionId);
             syncBusy();
@@ -5968,9 +7136,163 @@ export default function ChatbotAppComp() {
                 settleSession(sessionId);
             }
         },
+        // `handleAskingRef` is declared further down, and read at the press.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
     );
     const handleLangInstallStepRef = useAppCurrentRef(handleLangInstallStep);
+    // Words read off PICTURES of a document's pages, for a song made from
+    // it (`lyricDocumentChatHelpers.ts`): one round, no tools, by an
+    // assistant that sees -- the tab's own when it does, else Auto's best
+    // that costs nothing and sees; a paid key's own seeing model stands in
+    // for its blind one, and nobody else's key is ever spent. Null when no
+    // assistant here can see a picture.
+    const askPictureWords = useCallback(
+        async (
+            pictures: BotImageType[],
+            pending: PendingAskType,
+            usageTally: ReturnType<typeof genUsageTally>,
+        ) => {
+            const { signal } = pending.controller;
+            let askedProvider = provider;
+            let askedModel = model;
+            const pickNoCostSeeing = async () => {
+                const [pick] = await resolveAutoPicks({
+                    isGeneral: true,
+                    needsImages: true,
+                    busyKeys: pendingAskListRef.current.flatMap((one) => {
+                        return one.assistantKey === undefined
+                            ? []
+                            : [one.assistantKey];
+                    }),
+                });
+                throwIfCancelled(signal);
+                return pick ?? null;
+            };
+            if (
+                isAuto ||
+                ((askedProvider === 'custom' || askedProvider === 'free') &&
+                    !checkCanSeeImages(askedProvider, askedModel))
+            ) {
+                const pick = await pickNoCostSeeing();
+                if (pick === null) {
+                    return null;
+                }
+                askedProvider = pick.provider;
+                askedModel = pick.model;
+            } else if (
+                askedProvider !== null &&
+                !checkCanSeeImages(askedProvider, askedModel)
+            ) {
+                const seeing = getFirstImageCapableModel(askedProvider);
+                if (seeing === null) {
+                    return null;
+                }
+                askedModel = seeing.id;
+            }
+            if (askedProvider === null) {
+                return null;
+            }
+            pending.assistantKey = toAutoBusyKey(askedProvider, askedModel);
+            const who = getLlmModelLabel(askedProvider, askedModel);
+            genProgressReporter(genSessionProgress(pending.sessionId))(
+                fillWords(
+                    tran('Asking {who} to read the words off the pictures'),
+                    { who },
+                ),
+            );
+            const answer = await askLlmBot(
+                genPictureWordsAsk(pictures.length),
+                focus,
+                askedProvider,
+                askedModel,
+                [],
+                signal,
+                {
+                    isGeneral: true,
+                    isTranslation: true,
+                    isTranscription: true,
+                    images: pictures,
+                    replyLang: DEFAULT_CHAT_LANG_CODE,
+                    appLang: DEFAULT_CHAT_LANG_CODE,
+                    onUsage: usageTally.onUsage,
+                    onProgress: genSessionProgress(pending.sessionId),
+                },
+            );
+            return { text: answer.text, who };
+        },
+        [provider, model, focus, isAuto],
+    );
+    // A song made from a document (`lyricDocumentChatHelpers.ts`): the
+    // files listed, one read, its pictures read -- buttons, and no model
+    // but the one that reads pictures. The press goes into the transcript
+    // as the person's own words.
+    const handleLyricDocumentStep = useCallback(
+        async (
+            sessionId: string,
+            state: LyricDocumentStateType,
+            echo: string,
+        ) => {
+            addMessage(sessionId, { author: 'you', text: echo });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            const usageTally = genUsageTally(sessionId);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const finishLine = genProgressReporter(
+                genSessionProgress(sessionId),
+            )(
+                describeLyricDocumentStep(state) ??
+                    tran('Connecting to the app'),
+            );
+            try {
+                const answer = await runLyricDocumentStep(state, {
+                    callTool: (name, args) => {
+                        return callTool(name, args, pending.controller.signal);
+                    },
+                    callToolWithPictures: (name, args) => {
+                        return callToolWithPictures(
+                            name,
+                            args,
+                            pending.controller.signal,
+                        );
+                    },
+                    transcribe: (pictures) => {
+                        return askPictureWords(pictures, pending, usageTally);
+                    },
+                });
+                throwIfCancelled(pending.controller.signal);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: answer.text,
+                    actions: answer.actions,
+                    ...usageTally.toField(),
+                });
+            } catch (error) {
+                if (!checkIsCancelError(error, pending.controller.signal)) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: describeAnswerError(error),
+                    });
+                }
+            } finally {
+                finishLine();
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+        [
+            addMessage,
+            genPendingAsk,
+            genUsageTally,
+            endPendingAsk,
+            syncBusy,
+            settleSession,
+            askPictureWords,
+        ],
+    );
+    const handleLyricDocumentStepRef = useAppCurrentRef(
+        handleLyricDocumentStep,
+    );
     // A step of finding a verse (`verseFindChatHelpers`): which Bible, then
     // the question what they remember. No model: the choice goes into the
     // transcript as the person's own words, the next question comes back.
@@ -5994,12 +7316,17 @@ export default function ChatbotAppComp() {
                     handleAskingRef.current(searchAgain, true, {
                         echoText: echo,
                         isPressed: true,
+                        isStepEcho: true,
                     });
                 }
                 return;
             }
             if (!withoutEcho)
-                addMessage(sessionId, { author: 'you', text: echo });
+                addMessage(sessionId, {
+                    author: 'you',
+                    text: echo,
+                    isStep: true,
+                });
             const pending = genPendingAsk(sessionId, undefined, false);
             clearProgressSteps(sessionId);
             syncBusy();
@@ -6029,6 +7356,134 @@ export default function ChatbotAppComp() {
         [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
     );
     const handleVerseFindStepRef = useAppCurrentRef(handleVerseFindStep);
+    // What a Bibles list save says, then the first passage still to ask
+    // about (EC-626) -- an open range named as its Bible names it -- on a
+    // message of its own, so the Undo stays with what was saved.
+    const postBibleListAnswer = useCallback(
+        async (
+            sessionId: string,
+            answer: {
+                lines: string[];
+                undoAction: BotActionType | null;
+                picks: BibleListPickType[];
+                listName: string | null;
+                page?: string;
+            },
+        ) => {
+            const [first, ...rest] = answer.picks;
+            const asked =
+                first === undefined
+                    ? null
+                    : await nameBibleListRangePick(
+                          callBibleListToolJson,
+                          first,
+                      );
+            if (answer.lines.length > 0 || asked === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text:
+                        answer.lines.length > 0
+                            ? answer.lines.join('\n\n')
+                            : tran('Done.'),
+                    actions:
+                        answer.undoAction === null ? [] : [answer.undoAction],
+                });
+            }
+            if (asked !== null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: genBibleListPickText(asked),
+                    actions: genBibleListPickActions(
+                        asked,
+                        rest,
+                        answer.listName,
+                        answer.page,
+                    ),
+                });
+            }
+        },
+        [addMessage],
+    );
+    const postBibleListAnswerRef = useAppCurrentRef(postBibleListAnswer);
+    // A choice pressed under that question: saved like the rest, and the
+    // next one asked. **Skip** saves nothing and asks the next.
+    const handleBibleListPick = useCallback(
+        async (sessionId: string, action: BotActionType) => {
+            const picked = toValidBibleListPickArgs(action.args);
+            if (picked === null || checkIsSessionPending(sessionId)) {
+                return;
+            }
+            addMessage(sessionId, {
+                author: 'you',
+                text:
+                    action.isData === true
+                        ? action.label
+                        : toShownLabel(action.label),
+                isStep: true,
+            });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            try {
+                const pageArgs: Record<string, string> =
+                    picked.page === undefined ? {} : { page: picked.page };
+                let lines: string[] = [];
+                let undoAction: BotActionType | null = null;
+                let picks = picked.rest;
+                if (picked.choice !== null) {
+                    const saved = await saveBibleListPassages(
+                        callBibleListToolJson,
+                        [
+                            {
+                                written: picked.choice.label,
+                                reference: picked.choice.reference,
+                                version: picked.choice.version,
+                            },
+                        ],
+                        {
+                            listName: picked.list,
+                            pageArgs,
+                            savedBefore: await readSavedBibleListTitles(
+                                callBibleListToolJson,
+                                picked.list,
+                                pageArgs,
+                            ),
+                        },
+                    );
+                    lines = genBibleListSavedLines(saved, picked.list);
+                    undoAction = genMadeUndoAction(
+                        picked.list ?? DEFAULT_BIBLE_LIST_NAME,
+                        saved.changeIds,
+                        null,
+                    );
+                    picks = [...saved.picks, ...picks];
+                }
+                if (pending.controller.signal.aborted) {
+                    return;
+                }
+                await postBibleListAnswer(sessionId, {
+                    lines,
+                    undoAction,
+                    picks,
+                    listName: picked.list,
+                    ...(picked.page === undefined ? {} : { page: picked.page }),
+                });
+            } finally {
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+        [
+            addMessage,
+            checkIsSessionPending,
+            genPendingAsk,
+            endPendingAsk,
+            syncBusy,
+            settleSession,
+            postBibleListAnswer,
+        ],
+    );
+    const handleBibleListPickRef = useAppCurrentRef(handleBibleListPick);
     const handleVerseFindInputRef = useAppCurrentRef(
         async (sessionId: string, question: ChatMessageType, typed: string) => {
             const choices = getVerseFindInputChoices(question.actions);
@@ -6118,6 +7573,9 @@ export default function ChatbotAppComp() {
             filePath: string,
             reading: ResourceReadingType | null = null,
             noteId: number | null = null,
+            // A study file the person just saved: the window's own "Saved"
+            // line says what it is, so no opening card under it.
+            isQuiet = false,
         ): Promise<ChatAttachmentType | null> => {
             setAttachError(null);
             const result = await genAttachmentFromPath(filePath, noteId);
@@ -6146,6 +7604,17 @@ export default function ChatbotAppComp() {
                     ),
                 };
             });
+            // A file handed over works in its own window again (a Markdown
+            // Preview, the PDF viewer -- `toFileWindowAim`), whatever was
+            // picked by hand in the tab before.
+            setFileWindowLetGoMap((oldMap) => {
+                if (!(sessionId in oldMap)) {
+                    return oldMap;
+                }
+                const newMap = { ...oldMap };
+                delete newMap[sessionId];
+                return newMap;
+            });
             // A Bible note (a note row's or the note window's Open in
             // Chatbot): the same, for one note of its file -- written with
             // no model.
@@ -6169,6 +7638,8 @@ export default function ChatbotAppComp() {
                     result.attachment.name,
                     getAppLanguage(),
                     [...listAssistantLanguages(), ...listTypedLanguages()],
+                    // An empty note's card offers a lesson (BN-64).
+                    checkIsEmptyNoteAttachment(result.attachment),
                 );
                 addMessage(sessionId, {
                     author: 'bot',
@@ -6226,10 +7697,25 @@ export default function ChatbotAppComp() {
                 inputRef.current?.focus();
                 return result.attachment;
             }
-            const opening = genResourceOpeningAnswer(
-                result.attachment.name,
-                reading,
-            );
+            if (isQuiet) {
+                inputRef.current?.focus();
+                return result.attachment;
+            }
+            // A study the assistant can change -- a Markdown file straight in
+            // Resources → Default or in Bible Notes, named as the tab will
+            // name it to the model: the jobs it is opened in the chat for,
+            // as buttons (EC-595). Any other file keeps the questions.
+            const studyName = checkIsStudyCheckFile(result.attachment)
+                ? findResourceFileNames([result.attachment])[0]
+                : undefined;
+            const opening = checkIsChangeableStudyName(studyName)
+                ? genStudyOpeningAnswer(
+                      result.attachment.name,
+                      toAttachedText(result.attachment),
+                      reading,
+                      getAppLanguage(),
+                  )
+                : genResourceOpeningAnswer(result.attachment.name, reading);
             addMessage(sessionId, {
                 author: 'bot',
                 text: opening.text,
@@ -6302,7 +7788,11 @@ export default function ChatbotAppComp() {
         const noteTarget =
             session.id in noteWindowBySessionRef.current
                 ? noteWindowBySessionRef.current[session.id]
-                : findSessionNoteTarget(session.messages, session.fileClosedAt);
+                : findTabNoteTarget(
+                      session.messages,
+                      session.fileClosedAt,
+                      draftAttachmentMapRef.current[session.id],
+                  );
         return (
             toTabWindowAim(
                 noteTarget,
@@ -6343,6 +7833,30 @@ export default function ChatbotAppComp() {
         setIsSuggestDismissed(true);
         return quote;
     };
+    // The Bibles panel's Add Bible Item → Open in Chatbot (2026-11-14,
+    // EC-760, the user: _put pretext prompt to let user continue editing by
+    // pasting more bible paragraph_): the box of the tab opened for it
+    // starts with the line saying what to do with a text, the caret on the
+    // line under it for the text -- nothing is asked until it is sent.
+    // Words already in a reused tab's box stay, under the line.
+    const putBibleListLeadRef = useAppCurrentRef((sessionId: string) => {
+        const lead = genBibleListPasteLead();
+        // The effect that sizes the box puts the caret at the end.
+        isCaretToEndRef.current = true;
+        updateSession(sessionId, (session) => {
+            if (checkHasBibleListPasteLead(session.draft, lead)) {
+                return session;
+            }
+            const typed = session.draft.trim();
+            return {
+                ...session,
+                draft: typed === '' ? `${lead}\n` : `${lead}\n${typed}`,
+            };
+        });
+        // A line to write under, not a question to complete.
+        setIsSuggestDismissed(true);
+        inputRef.current?.focus();
+    });
     // In a note: and under the quote, what to do with the words, should
     // they not want to write anything (the user, the same day: _if user did
     // not ask anything then try to provide options for user_).
@@ -6418,11 +7932,95 @@ export default function ChatbotAppComp() {
             });
         },
     );
+    // Words selected in a text file's editor (2026-11-11, the user, the
+    // Markdown Preview's editor with a line selected: _selected text in
+    // editor should have option to mention in chatbot input text_): quoted
+    // with their lines in the box of the tab holding that file, else of a
+    // tab of its own with the file attached and no opening card -- the
+    // quote is what the person came to ask about. No card of jobs under it
+    // either: those are a note's.
+    const mentionHandedFileRef = useAppCurrentRef(
+        async (
+            filePath: string,
+            mention: SelectionMentionType,
+            openSession: () => string,
+        ) => {
+            const held = findSessionHoldingFile(
+                sessionStateRef.current.sessions,
+                draftAttachmentMapRef.current,
+                sessionStateRef.current.activeId,
+                filePath,
+            );
+            if (held !== null) {
+                bringSessionToFront(held.sessionId);
+                putSelectionInBox(
+                    held.sessionId,
+                    held.attachment.name,
+                    mention,
+                );
+                return;
+            }
+            const sessionId = openSession();
+            const attachment = await attachHandedFileRef.current(
+                sessionId,
+                filePath,
+                null,
+                null,
+                true,
+            );
+            if (attachment !== null) {
+                putSelectionInBox(sessionId, attachment.name, mention);
+            }
+        },
+    );
     // A Lookup Detail panel's 🤖 (2026-10-18): the person, place or passage
     // it shows, read whole through `owa_lookup_record` in the panel's own
     // window -- where the names dataset is already held -- and kept on the
     // card, which is what every question typed under it is asked with. No
     // model: a card that says it is ready, and three questions to press.
+    // A foreground session handed over (a session chip's Open in Chatbot,
+    // a panel header's robot): its chip in the box, the tab asking about the
+    // Presenter, and the card of what can be done -- written with no model.
+    const attachHandedForegroundRef = useAppCurrentRef(
+        (sessionId: string, ask: ForegroundAskType) => {
+            setAttachError(null);
+            const session = sessionStateRef.current.sessions.find((one) => {
+                return one.id === sessionId;
+            });
+            setDraftAttachmentMap((previous) => {
+                const existing = previous[sessionId] ?? [];
+                const [attachment] = numberAttachments(
+                    [genForegroundAttachment(ask)],
+                    [
+                        ...(session?.messages ?? []).flatMap((message) => {
+                            return message.attachments ?? [];
+                        }),
+                        ...existing,
+                    ],
+                );
+                return {
+                    ...previous,
+                    [sessionId]: [...existing, attachment].slice(
+                        -MAX_ATTACHMENT_COUNT,
+                    ),
+                };
+            });
+            updateSession(sessionId, (oldSession) => {
+                return {
+                    ...oldSession,
+                    focus: 'presenter',
+                    isFocusChosen: true,
+                };
+            });
+            const opening = genForegroundOpeningAnswer(ask);
+            addMessage(sessionId, {
+                author: 'bot',
+                text: opening.text,
+                replies: opening.replies,
+            });
+            inputRef.current?.focus();
+        },
+    );
     const openHandedLookupRef = useAppCurrentRef(
         async (sessionId: string, ask: LookupAskType): Promise<boolean> => {
             const pending = genPendingAsk(sessionId, undefined, false);
@@ -6679,7 +8277,7 @@ export default function ChatbotAppComp() {
                     ? place.facts.bible
                     : (state.ask.bibleKey ?? null);
             // The language the lesson is shown in, as `handleAsking` will
-            // pick it: a Khmer verse in a Khmer window needs no way to say it.
+            // pick it: a verse in the window's own language needs no way to say it.
             const answerLanguage = getAssistantLanguage(
                 pickReplyLanguage(typed ?? '', { isPressed: typed === null }),
             );
@@ -6726,7 +8324,7 @@ export default function ChatbotAppComp() {
             echo: string,
             awaiting: LookupAskType | null = null,
         ) => {
-            addMessage(sessionId, { author: 'you', text: echo });
+            addMessage(sessionId, { author: 'you', text: echo, isStep: true });
             const pending = genPendingAsk(sessionId, undefined, false);
             if (awaiting !== null)
                 pending.waitingAnswer = {
@@ -7327,6 +8925,15 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // A foreground session: a chip's Open in Chatbot, a panel's 🤖.
+            const handedForeground = takeChatbotForegroundRequest();
+            if (handedForeground !== null) {
+                attachHandedForegroundRef.current(
+                    openHandoffSession(),
+                    handedForeground,
+                );
+                return;
+            }
             // The Resources panel's 🤖: a file to ask about, and the passage
             // the Reader is on for it.
             const handedFile = takeChatbotFileRequest();
@@ -7344,6 +8951,16 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // Words selected in a text file's editor: the same, quoted with
+            // their lines.
+            if (handedFile !== null && handedFile.mention !== null) {
+                void mentionHandedFileRef.current(
+                    handedFile.filePath,
+                    handedFile.mention,
+                    openHandoffSession,
+                );
+                return;
+            }
             if (handedFile !== null) {
                 void attachHandedFileRef.current(
                     openHandoffSession(),
@@ -7351,6 +8968,12 @@ export default function ChatbotAppComp() {
                     handedFile.reading,
                     handedFile.noteId,
                 );
+                return;
+            }
+            // The Bibles panel's Add Bible Item → Open in Chatbot: the box
+            // says what to do with a text, for the person to paste it under.
+            if (takeChatbotBibleListPaste()) {
+                putBibleListLeadRef.current(openHandoffSession());
                 return;
             }
             const asked = takeChatbotAsk();
@@ -7488,6 +9111,25 @@ export default function ChatbotAppComp() {
                 // press, before React has rendered the new one.
                 model?: string;
                 askHint?: string;
+                // **Retry** under an answer (`answerRetryHelpers`): which
+                // try, and the different way in said to the model on the
+                // ask alone -- the effort rides `AskExtraType.retryAttempt`.
+                // A retry is pressed, never typed: none of the waits for a
+                // typed line (a report, a new name) reads it, it is asked
+                // with the QUESTION's own attachments, and the box -- the
+                // person's, maybe half a sentence in -- is left as it is.
+                // `avoid`: who wrote the answer being retried -- put last
+                // in Auto's line for this one question (`toRetryPicks`).
+                // `questionId`: the question asked again -- its FIRST
+                // asking -- so what its "that" pointed at is read above it
+                // (EC-466).
+                retry?: {
+                    attempt: number;
+                    hint: string;
+                    avoid?: RetryAnsweredByType;
+                    questionId?: number;
+                };
+                attachments?: ChatAttachmentType[];
                 // A deterministic menu for a local flow whose model answer
                 // may omit or malformedly punctuate its OPTIONS line.
                 repliesOverride?: string[];
@@ -7528,6 +9170,15 @@ export default function ChatbotAppComp() {
                     actions: BotActionType[];
                     keep?: AnswerKeepType;
                 };
+                // The language package **Not now** declined under a study
+                // translation's offer of it (EC-494): the question asked
+                // again translates without it instead of offering it again.
+                skipLangOffer?: string;
+                // The echo is a press on one of the window's own steps --
+                // the verse finder's Bible picked to search again
+                // (EC-507): no **Retry** under the answer, which would ask
+                // the press's words as the question (`isStep`, EC-506).
+                isStepEcho?: true;
             },
         ) => {
             const typedAsked = asked.trim();
@@ -7547,16 +9198,44 @@ export default function ChatbotAppComp() {
             const echoText =
                 options?.echoText?.trim() ||
                 (templateAsk === null ? trimmedAsked : typedAsked);
+            // A Bible note or a Markdown file PRESSED for (EC-581, the user:
+            // _if user click and choose step by step explicitely it should
+            // skip the confirmation_): what the model makes new is made as
+            // that, with no card asking again. Typed words still get it.
+            const pressedCreateKind =
+                options?.isPressed === true
+                    ? readPressedCreateKind([trimmedAsked, echoText], {
+                          note: [tran('Bible Note'), tran('New Bible Note')],
+                          markdown: [
+                              tran('Markdown'),
+                              tran('New Markdown File'),
+                          ],
+                      })
+                    : null;
             const askModel = options?.model ?? model;
             // An attachment IS a question -- "what is this?" with a picture of
             // the screen is the whole ask -- so an empty box with something
             // clipped to it is allowed through, where an empty box alone is
             // still nothing.
             const asking = draftAttachmentMapRef.current[activeSessionId] ?? [];
-            const attachments =
-                options?.shownText === undefined && lookupStudy === null
+            // Not `const`: a new presenting flow or slide document the
+            // window makes for this question joins it below (EC-514).
+            let attachments =
+                options?.attachments ??
+                (options?.shownText === undefined && lookupStudy === null
                     ? asking
-                    : [];
+                    : []);
+            const retry = options?.retry ?? null;
+            // Every road below empties the box when it takes the question
+            // -- except under a Retry, which never came out of it.
+            const clearAskedDraft = (sessionId: string) => {
+                if (retry !== null) {
+                    return;
+                }
+                updateSession(sessionId, (session) => {
+                    return { ...session, draft: '' };
+                });
+            };
             if (
                 (trimmedAsked.length === 0 && attachments.length === 0) ||
                 (isBusy && !isForced)
@@ -7570,6 +9249,7 @@ export default function ChatbotAppComp() {
             if (
                 options?.shownText === undefined &&
                 lookupStudy === null &&
+                retry === null &&
                 !trimmedAsked.startsWith('/')
             ) {
                 const reportMessages =
@@ -7584,13 +9264,15 @@ export default function ChatbotAppComp() {
                         ? null
                         : readFixReply(reportMessages, trimmedAsked);
                 if (fixReply !== null) {
+                    // The window answers it, no model: nothing for
+                    // **Retry** to ask again (`isStep`, EC-506) -- nor at
+                    // any reader below that answers by itself.
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
                     });
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     answerFixPressRef.current(
                         activeSessionId,
                         fixReply.reply,
@@ -7606,11 +9288,38 @@ export default function ChatbotAppComp() {
                     return;
                 }
             }
+            // The new name of a study file, typed after **Change the name**
+            // (`takeStudyRenameWait`): any other line ends the wait.
+            if (
+                options?.shownText === undefined &&
+                options?.isPressed !== true &&
+                lookupStudy === null &&
+                retry === null
+            ) {
+                const renameReference = takeStudyRenameWait(
+                    activeSessionId,
+                    attachments.length === 0 ? trimmedAsked : '',
+                );
+                if (renameReference !== null) {
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                    });
+                    clearAskedDraft(activeSessionId);
+                    await renameStudyDraftRef.current(
+                        renameReference,
+                        trimmedAsked,
+                        activeSessionId,
+                    );
+                    return;
+                }
+            }
             // `/btw <words>` is the one slash line that DOES go to a model:
             // a general question, asked with no tools and no lookup in the
             // app (`readGeneralQuestion`). It takes the ordinary road below
             // with the frame on the ask; the transcript keeps what was typed.
-            // And a plain follow-up under one stays general -- "in Khmer
+            // And a plain follow-up under one stays general -- "in my language
             // please" under "/btw what is the Bible?" is about the Bible --
             // read off the tab's last question (`readInheritedGeneralQuestion`).
             const generalQuestion =
@@ -7649,9 +9358,7 @@ export default function ChatbotAppComp() {
                 const typed = trimmedAsked
                     .replaceAll(/\s+/g, ' ')
                     .slice(0, 200);
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 const handled = await handleLookupStepRef.current(
                     activeSessionId,
                     {
@@ -7709,9 +9416,7 @@ export default function ChatbotAppComp() {
                     ? null
                     : readLookupWordStudyAsk(trimmedAsked, typedLookupSubject);
             if (typedLookupSubject !== null && wordStudyAsk !== null) {
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 if (wordStudyAsk.verseKey === null) {
                     await handleLookupStepRef.current(
                         activeSessionId,
@@ -7734,9 +9439,9 @@ export default function ChatbotAppComp() {
             }
             // The card's own wording and buttons, answered by the window
             // with no model (2026-10-19). Measured on gemma4:cloud under a
-            // Khmer passage: "show this in Khmer" came back as an invented
-            // Khmer translation of the KJV -- one round, no tool call --
-            // while the installed Khmer Bible's words were in the record;
+            // non-English passage: "show this in <language>" came back as an
+            // invented translation of the KJV -- one round, no tool call --
+            // while the installed Bible's words in it were in the record;
             // and "how do I save this?" was refused with the card's **Save
             // to my Bibles list** button right above the answer.
             if (typedLookupSubject !== null) {
@@ -7745,9 +9450,7 @@ export default function ChatbotAppComp() {
                     typedLookupSubject,
                 );
                 if (verseAsk !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     if (verseAsk.kind === 'anotherBible') {
                         const handled = await handleLookupStepRef.current(
                             activeSessionId,
@@ -7768,6 +9471,7 @@ export default function ChatbotAppComp() {
                         addMessage(activeSessionId, {
                             author: 'you',
                             text: echoText,
+                            isStep: true,
                         });
                         const facts = readLookupFacts(typedLookupSubject.facts);
                         const cardActions = genLookupActions(
@@ -7847,12 +9551,11 @@ export default function ChatbotAppComp() {
                     return one.args?.step === 'map';
                 });
                 if (mapAction !== undefined) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
                     });
                     addMessage(activeSessionId, {
                         author: 'bot',
@@ -7882,9 +9585,7 @@ export default function ChatbotAppComp() {
                 typedLookupSubject !== null &&
                 checkIsLookupLineageAsk(trimmedAsked, typedLookupSubject)
             ) {
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(activeSessionId);
                 await handleLookupStepRef.current(
                     activeSessionId,
                     { step: 'lineage', ask: typedLookupSubject },
@@ -7894,7 +9595,7 @@ export default function ChatbotAppComp() {
                 return;
             }
             // A "how many" question the record's own lists answer is
-            // counted by the window (2026-10-19, EC-371): asked in Khmer
+            // counted by the window (2026-10-19, EC-371): asked in a non-English language
             // how many children he had, gemma4:cloud said "20" over a list of nineteen
             // names. The card already holds the list, so no round is spent.
             if (typedLookupSubject !== null) {
@@ -7907,12 +9608,11 @@ export default function ChatbotAppComp() {
                         ? null
                         : readLookupFacts(typedLookupSubject.facts);
                 if (countField !== null && countFacts !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
                     });
                     addMessage(activeSessionId, {
                         author: 'bot',
@@ -7944,18 +9644,541 @@ export default function ChatbotAppComp() {
                           ),
                       ])
                     : [];
+            // A NEW presenting flow or slide document asked for in words
+            // (2026-11-12, EC-514; EC-468's way (c)): the window makes it,
+            // empty, and the question goes on as that file's own
+            // conversation, whose tool and prompt build it -- the shared
+            // server Auto picks has no tool that makes a file, and had
+            // answered with how to make one by hand. A supported question
+            // asked as it stands stays the guide's; a question already
+            // carrying a document of either kind is about that one.
+            let createdDocument: CreatedDocumentType | null = null;
+            // The same asks typed in another language (EC-516): read once,
+            // with that language's own words, for whichever route below
+            // takes it -- English has its own readers.
+            let typedCreateAsk: TypedCreateAskType | null | undefined;
+            const readTypedCreateAskOnce = () => {
+                if (typedCreateAsk === undefined) {
+                    typedCreateAsk = readCreateAskInOwnLanguage(trimmedAsked);
+                }
+                return typedCreateAsk;
+            };
+            const openDocumentKinds: DocumentCreateKindType[] = [
+                ...(findOpenFlowAttachments(
+                    lookupTab?.messages ?? [],
+                    lookupTab?.fileClosedAt,
+                ).length > 0
+                    ? (['flow'] as const)
+                    : []),
+                ...(findOpenSlideAttachments(
+                    lookupTab?.messages ?? [],
+                    lookupTab?.fileClosedAt,
+                ).length > 0
+                    ? (['slide'] as const)
+                    : []),
+            ];
+            const documentCreateAsk =
+                options?.shownText === undefined &&
+                !withoutEcho &&
+                retry === null &&
+                // A text under the Bibles list's line asks for that alone.
+                !checkHasBibleListPasteLead(
+                    trimmedAsked,
+                    genBibleListPasteLead(),
+                ) &&
+                lookupStudy === null &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                !attachments.some((one) => {
+                    const fileName = one.filePath ?? one.name;
+                    return (
+                        checkIsFlowFileName(fileName) ||
+                        checkIsSlideFileName(fileName)
+                    );
+                })
+                    ? (readDocumentCreateAsk(trimmedAsked, openDocumentKinds) ??
+                      toTypedDocumentCreateAsk(
+                          readTypedCreateAskOnce(),
+                          openDocumentKinds,
+                      ))
+                    : null;
+            if (
+                documentCreateAsk !== null &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null
+            ) {
+                const creator =
+                    DOCUMENT_CREATE_TOOL_MAP[documentCreateAsk.kind];
+                try {
+                    const listed = parseToolJson(
+                        await callTool(creator.toolName, { action: 'list' }),
+                    );
+                    const name = pickFreeDocumentName(
+                        documentCreateAsk.name ??
+                            documentCreateAsk.dayName ??
+                            genDefaultDocumentName(
+                                documentCreateAsk.kind,
+                                new Date(),
+                            ),
+                        Array.isArray(listed?.names)
+                            ? listed.names.map(String)
+                            : [],
+                    );
+                    const made = parseToolJson(
+                        await callTool(creator.toolName, creator.genArgs(name)),
+                    );
+                    if (typeof made?.filePath === 'string' && made.filePath) {
+                        createdDocument = {
+                            kind: documentCreateAsk.kind,
+                            name: String(made.created ?? name),
+                            filePath: made.filePath,
+                            undoId:
+                                typeof made.undoId === 'string' && made.undoId
+                                    ? made.undoId
+                                    : null,
+                        };
+                    }
+                } catch (error) {
+                    // Not made -- a name the app refuses, the acting budget
+                    // spent: the question goes on as it would have.
+                    console.warn('A new document could not be made:', error);
+                }
+            }
+            const createdNote =
+                createdDocument === null
+                    ? undefined
+                    : fillWords(
+                          tran('I made “{name}” for you. It is in {list} now.'),
+                          {
+                              name: createdDocument.name,
+                              list:
+                                  createdDocument.kind === 'flow'
+                                      ? tran('Presenting Flows')
+                                      : tran('Documents'),
+                          },
+                      );
+            if (createdDocument !== null && createdNote !== undefined) {
+                // Asked for the file and nothing in it: the window answers
+                // alone -- the file made, with Undo under it, then the
+                // file's own card, the file waiting in the box as a row's
+                // Open in Chatbot leaves it.
+                if (
+                    documentCreateAsk?.hasContent !== true &&
+                    attachments.length === 0
+                ) {
+                    clearAskedDraft(activeSessionId);
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                    });
+                    addMessage(activeSessionId, {
+                        author: 'bot',
+                        text: createdNote,
+                        actions: withCreatedUndoAction([], createdDocument),
+                    });
+                    await attachHandedFileRef.current(
+                        activeSessionId,
+                        createdDocument.filePath,
+                    );
+                    return;
+                }
+                // Something to put in it: the file rides on this question,
+                // drawn on the question's own chip like a file they
+                // attached.
+                const made = await genAttachmentFromPath(
+                    createdDocument.filePath,
+                );
+                // A file that cannot be read back is still made: the answer
+                // says so and its Undo takes it away, and the question goes
+                // on as an ordinary one.
+                if (!('failure' in made)) {
+                    const [createdAttachment] = numberAttachments(
+                        [made.attachment],
+                        [
+                            ...(lookupTab?.messages ?? []).flatMap(
+                                (message) => {
+                                    return message.attachments ?? [];
+                                },
+                            ),
+                            ...attachments,
+                        ],
+                    );
+                    attachments = [...attachments, createdAttachment];
+                }
+            }
+            // Passages SAVED to a Bibles list, or a new list made, asked for
+            // in words (2026-11-12, EC-515): the window does it with
+            // `owa_bible_item`, which reads each reference with every
+            // installed Bible's book names -- Auto's shared server has no
+            // such tool, and had said the app could not make a named list.
+            // A list pasted under a request, or passages in a paragraph, are
+            // read off those book names first, a Bible written beside each,
+            // and an unclear one is asked about (2026-11-14, EC-626).
+            let bibleListAsk: BibleListSaveAskType | null = null;
+            if (
+                options?.shownText === undefined &&
+                !withoutEcho &&
+                retry === null &&
+                lookupStudy === null &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                createdDocument === null &&
+                attachments.length === 0
+            ) {
+                // A reply of passages alone under a question that asked to
+                // save Bible items and is not done yet (EC-703: the model's
+                // own option "John 3:16" had put the verse on the screen).
+                const carriedRequest = findCarriedBibleListRequest(
+                    lookupTab?.messages ?? [],
+                );
+                // The line Add Bible Item → Open in Chatbot put in the box
+                // (EC-760), read as its English whatever the window's
+                // language: the text under it is what to save from.
+                const bibleListText = toEnglishBibleListPasteLead(
+                    trimmedAsked,
+                    genBibleListPasteLead(),
+                );
+                const isPasteReadable = checkMayBeBibleListPaste(
+                    bibleListText,
+                    toTypedBibleListAsk(readTypedCreateAskOnce()) !== null ||
+                        carriedRequest !== null,
+                );
+                const pasted = isPasteReadable
+                    ? await readBibleListPasteAsk(
+                          callBibleListToolJson,
+                          bibleListText,
+                          readTypedBibleListRequest,
+                          carriedRequest,
+                      )
+                    : undefined;
+                bibleListAsk =
+                    pasted ??
+                    toBibleListSaveAsk(
+                        readBibleListAsk(bibleListText) ??
+                            toTypedBibleListAsk(readTypedCreateAskOnce()),
+                    );
+                // That line with no passage under it -- sent before the
+                // text was pasted, or a text with none: said by the window,
+                // and the line back in the box for the text.
+                if (
+                    bibleListAsk === null &&
+                    (!isPasteReadable || pasted === null) &&
+                    checkHasBibleListPasteLead(
+                        trimmedAsked,
+                        genBibleListPasteLead(),
+                    )
+                ) {
+                    clearAskedDraft(activeSessionId);
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                    });
+                    addMessage(activeSessionId, {
+                        author: 'bot',
+                        text: tran(
+                            'I found no Bible passage to save in that text. ' +
+                                'Paste the text with the passages under the ' +
+                                'first line, then send it.',
+                        ),
+                    });
+                    putBibleListLeadRef.current(activeSessionId);
+                    return;
+                }
+            }
+            // A bare "Add John 3:16" names no list: asked about another
+            // window, or in a tab with a file, a note or a foreground session
+            // open, it is about that one.
+            if (
+                bibleListAsk !== null &&
+                !bibleListAsk.isListNamed &&
+                ((focus !== 'presenter' && focus !== 'reader') ||
+                    openDocumentKinds.length > 0 ||
+                    findOpenFileAttachments(
+                        lookupTab?.messages ?? [],
+                        lookupTab?.fileClosedAt,
+                    ).length > 0 ||
+                    findOpenNoteAttachments(
+                        lookupTab?.messages ?? [],
+                        lookupTab?.fileClosedAt,
+                    ).length > 0 ||
+                    findOpenForegroundAttachments(
+                        lookupTab?.messages ?? [],
+                        lookupTab?.foregroundClosedAt,
+                    ).length > 0)
+            ) {
+                bibleListAsk = null;
+            }
+            if (
+                bibleListAsk !== null &&
+                checkIsBibleListRowFree(
+                    await findKnownQuestion(trimmedAsked, focus, true),
+                )
+            ) {
+                // The Reader keeps a list of its own.
+                const page = focus === 'reader' ? 'reader.html' : undefined;
+                const pageArgs: Record<string, string> =
+                    page === undefined ? {} : { page };
+                let listName = bibleListAsk.listName;
+                let madeId: string | null = null;
+                let isListReady = !bibleListAsk.isNewList && listName === null;
+                try {
+                    if (!isListReady) {
+                        const listed = parseToolJson(
+                            await callTool(BIBLE_ITEM_TOOL_NAME, {
+                                action: 'list',
+                                ...pageArgs,
+                            }),
+                        );
+                        const takenNames: string[] = Array.isArray(
+                            listed?.lists,
+                        )
+                            ? listed.lists.map((one: any) => {
+                                  return String(one?.name ?? '');
+                              })
+                            : [];
+                        const asked =
+                            listName ?? genDefaultBibleListName(new Date());
+                        const takenName = takenNames.find((one) => {
+                            return one.toLowerCase() === asked.toLowerCase();
+                        });
+                        // Saving to a list there already is saving to it; a
+                        // NEW list never takes an old one's name.
+                        if (!bibleListAsk.isNewList && takenName) {
+                            listName = takenName;
+                        } else {
+                            listName = pickFreeDocumentName(asked, takenNames);
+                            const made = parseToolJson(
+                                await callTool(BIBLE_ITEM_TOOL_NAME, {
+                                    action: 'create-list',
+                                    list: listName,
+                                    ...pageArgs,
+                                }),
+                            );
+                            listName = String(made?.created ?? listName);
+                            madeId =
+                                typeof made?.undoId === 'string' && made.undoId
+                                    ? made.undoId
+                                    : null;
+                        }
+                        isListReady = true;
+                    }
+                } catch (error) {
+                    // A name the app refuses, the acting budget spent: the
+                    // question goes on as it would have.
+                    console.warn('A Bibles list could not be made:', error);
+                }
+                if (isListReady) {
+                    clearAskedDraft(activeSessionId);
+                    addMessage(activeSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                    });
+                    // What the list holds already: a passage saved twice is
+                    // flagged in the Bibles panel (_Duplicated with item
+                    // number 2_), so a repeat is taken back and said.
+                    const saved = await saveBibleListPassages(
+                        callBibleListToolJson,
+                        bibleListAsk.passages,
+                        {
+                            listName,
+                            pageArgs,
+                            savedBefore:
+                                madeId === null
+                                    ? await readSavedBibleListTitles(
+                                          callBibleListToolJson,
+                                          listName,
+                                          pageArgs,
+                                      )
+                                    : [],
+                        },
+                    );
+                    await postBibleListAnswerRef.current(activeSessionId, {
+                        lines: genBibleListSavedLines(
+                            {
+                                ...saved,
+                                unreadable: [
+                                    ...bibleListAsk.unreadable,
+                                    ...saved.unreadable,
+                                ],
+                            },
+                            listName,
+                            {
+                                isMadeList:
+                                    madeId !== null || bibleListAsk.isNewList,
+                                overflow: bibleListAsk.overflow,
+                            },
+                        ),
+                        undoAction: genMadeUndoAction(
+                            listName ?? DEFAULT_BIBLE_LIST_NAME,
+                            saved.changeIds,
+                            madeId,
+                        ),
+                        picks: [...bibleListAsk.picks, ...saved.picks],
+                        listName,
+                        ...(page === undefined ? {} : { page }),
+                    });
+                    return;
+                }
+            }
+            // A background VIDEO or a track from a LINK (2026-11-12, EC-518):
+            // the download is the person's press -- it fetches into their
+            // folders and, the first time, installs the download tools behind
+            // a box of its own -- so the window copies the link (the
+            // **Download From URL** box fills itself from the clipboard), says
+            // where to press and offers W-21's card. No model.
+            const backgroundLinkAsk =
+                options?.shownText === undefined &&
+                !withoutEcho &&
+                retry === null &&
+                lookupStudy === null &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                createdDocument === null &&
+                attachments.length === 0
+                    ? (readBackgroundLinkAsk(trimmedAsked) ??
+                      toTypedBackgroundLinkAsk(readTypedCreateAskOnce()))
+                    : null;
+            if (
+                backgroundLinkAsk !== null &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null
+            ) {
+                clearAskedDraft(activeSessionId);
+                addMessage(activeSessionId, {
+                    author: 'you',
+                    text: echoText,
+                    isStep: true,
+                });
+                // Through main first: Chromium's own clipboard refuses a
+                // window without the focus -- a walkthrough minimises this
+                // one -- and the app's `writeTextToClipboard` pulls the app's
+                // `tran` in with its toast.
+                let isLinkCopied = false;
+                try {
+                    isLinkCopied = await electronSendAsync<boolean>(
+                        'main:app:write-clipboard-text',
+                        { text: backgroundLinkAsk.url },
+                    );
+                } catch (_error) {
+                    // An older main process: the page's own clipboard below.
+                }
+                if (!isLinkCopied) {
+                    try {
+                        await navigator.clipboard.writeText(
+                            backgroundLinkAsk.url,
+                        );
+                        isLinkCopied = true;
+                    } catch (error) {
+                        console.warn('The link could not be copied:', error);
+                    }
+                }
+                const isVideo = backgroundLinkAsk.kind === 'video';
+                const labels = {
+                    page: tran('Presenter'),
+                    panel: tran('Background'),
+                    tab: isVideo ? tran('Videos') : tran('Audios'),
+                    download: tran('Download From URL'),
+                    ok: tran('Ok'),
+                };
+                addMessage(activeSessionId, {
+                    author: 'bot',
+                    text: [
+                        fillWords(
+                            isLinkCopied
+                                ? tran('I copied the link: {url}')
+                                : tran(
+                                      'I could not copy the link, so copy it from here: {url}',
+                                  ),
+                            { url: backgroundLinkAsk.url },
+                        ),
+                        fillWords(
+                            isVideo
+                                ? tran(
+                                      'In **{page}**, open **{panel}** → **{tab}**, right-click an empty part of the list and press **{download}**. The link is in the box already: press **{ok}** and the video downloads.',
+                                  )
+                                : tran(
+                                      'In **{page}**, open **{panel}** → **{tab}**, right-click an empty part of the list and press **{download}**. The link is in the box already: press **{ok}** and its sound downloads as an MP3.',
+                                  ),
+                            labels,
+                        ),
+                    ].join('\n\n'),
+                    actions: [
+                        {
+                            label: 'Show me step by step',
+                            toolName: 'owa_guide_start',
+                            args: {
+                                manualId: BACKGROUND_LINK_RECIPE_ID,
+                                page: 'presenter.html',
+                                mode: 'show',
+                                topic: isVideo
+                                    ? 'Add a background video from a link'
+                                    : 'Add a track from a link',
+                                find: BACKGROUND_LINK_FIND,
+                            },
+                        },
+                    ],
+                });
+                return;
+            }
+            // A background WEB PAGE asked for in words (2026-11-12, EC-518):
+            // the model is asked to write it, with no tool -- the media tool
+            // stays withheld -- and the window makes the page it wrote, made
+            // safe, as a NEW page in Webs once the answer comes.
+            let webBackgroundName: string | null = null;
+            const webBackgroundAsk =
+                options?.shownText === undefined &&
+                !withoutEcho &&
+                lookupStudy === null &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                createdDocument === null &&
+                attachments.length === 0
+                    ? (readWebBackgroundAsk(trimmedAsked) ??
+                      toTypedWebBackgroundAsk(readTypedCreateAskOnce()))
+                    : null;
+            if (
+                webBackgroundAsk !== null &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null
+            ) {
+                try {
+                    const listed = parseToolJson(
+                        await callTool(MEDIA_FILE_TOOL_NAME, {
+                            action: 'list',
+                            kind: 'web',
+                        }),
+                    );
+                    webBackgroundName = pickFreeDocumentName(
+                        webBackgroundAsk.name ??
+                            genDefaultWebPageName(new Date()),
+                        Array.isArray(listed?.names)
+                            ? listed.names.map((one: unknown) => {
+                                  return String(one).replace(/\.html?$/i, '');
+                              })
+                            : [],
+                    );
+                } catch (error) {
+                    console.warn('The Webs folder could not be read:', error);
+                }
+            }
             // A SONG open in this tab, the same way, makes it a question
             // about changing that song (`lyricChatHelpers.ts`) -- unless the
             // words are one of the app's own supported questions, which the
             // guide answers whatever is attached. A button pressed under the
-            // song's card is never a corpus row.
+            // song's card is never a corpus row. Nor a new document made just
+            // now: the question is about that one.
             const lyricAskFiles =
                 (options?.shownText === undefined ||
                     options?.keepOpenFiles === true) &&
                 !trimmedAsked.startsWith('/') &&
                 generalQuestion === null &&
                 lookupSubject === null &&
-                resourceFileNames.length === 0
+                resourceFileNames.length === 0 &&
+                createdDocument === null
                     ? findLyricAskFiles([
                           ...attachments,
                           ...findOpenFileAttachments(
@@ -8087,6 +10310,76 @@ export default function ChatbotAppComp() {
             // Any one: a question about changing a document of theirs.
             const isDocumentAsk =
                 isFlowAsk || isLyricAsk || isSlideAsk || isNoteAsk;
+            // A FOREGROUND session attached now or still open in this tab,
+            // or a typed line naming a foreground component, makes it a
+            // question about the foreground (`foregroundChatHelpers.ts`):
+            // changed through its own panel by `owa_foreground_edit`. A
+            // session in the box takes over from one opened earlier; a
+            // supported question asked as it stands is still the guide's.
+            const boxForegroundAsks = toForegroundAskList(
+                attachments.filter(checkIsForegroundAttachment),
+            );
+            const openForegroundAsks =
+                boxForegroundAsks.length > 0
+                    ? boxForegroundAsks
+                    : toForegroundAskList(
+                          findOpenForegroundAttachments(
+                              lookupTab?.messages ?? [],
+                              lookupTab?.foregroundClosedAt,
+                          ),
+                      );
+            const isForegroundRoutable =
+                !isDocumentAsk &&
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0;
+            const namedForegroundWidget =
+                isForegroundRoutable && openForegroundAsks.length === 0
+                    ? readForegroundComponentAsk(trimmedAsked)
+                    : null;
+            // A press answers in an OPEN session only: a supported question
+            // pressed from the list that happens to name a widget is still
+            // the guide's (2026-11-10, EC-467: "How do I make it move on by
+            // itself at a set time?" names a timer, went to the Countdown
+            // panel and came back with no answer).
+            const isForegroundAsk =
+                isForegroundRoutable &&
+                (openForegroundAsks.length > 0
+                    ? options?.isPressed === true ||
+                      trimmedAsked.length === 0 ||
+                      (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                          null
+                    : namedForegroundWidget !== null &&
+                      (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                          null);
+            // A line about the SCREENS' own controls -- the Bible text's look,
+            // a passage's versions, a transition, a display, a group, the
+            // lock (`screenChatHelpers.ts`, English words) -- or any plain
+            // line under a screen answer, in any language, is a question
+            // about the screens: read as they are now and changed by
+            // `owa_screen_edit` (2026-11-13). A supported question asked as
+            // it stands, a study file, a verse looked for and the Reader's
+            // own material keep their own ways (`isScreenAsk`, below).
+            const isScreenRoutable =
+                isForegroundRoutable &&
+                !isForegroundAsk &&
+                attachments.length === 0;
+            // English, or another installed language by its own
+            // `screenAsks` words (EC-614): the first line of a screen
+            // conversation had been read in English only, and a how-to in
+            // another language naming the transition by the English word
+            // had been read as asking for it.
+            const screenAskKind = isScreenRoutable
+                ? readScreenAsk(trimmedAsked, focus)
+                : null;
+            const isScreenWorded = screenAskKind !== null;
+            const isScreenThread =
+                isScreenRoutable &&
+                !isScreenWorded &&
+                checkIsScreenThread(lookupTab?.messages ?? [], trimmedAsked);
             // "List me more options" under a document's card: the card again,
             // its sentence and its buttons, written by the window with no
             // model (2026-11-07, the user, a slide document open: _I just
@@ -8122,10 +10415,12 @@ export default function ChatbotAppComp() {
                               getAppLanguage(),
                               languages,
                           );
-                addMessage(activeSessionId, { author: 'you', text: echoText });
-                updateSession(activeSessionId, (session) => {
-                    return { ...session, draft: '' };
+                addMessage(activeSessionId, {
+                    author: 'you',
+                    text: echoText,
+                    isStep: true,
                 });
+                clearAskedDraft(activeSessionId);
                 addMessage(activeSessionId, {
                     author: 'bot',
                     text: opening.text,
@@ -8176,10 +10471,9 @@ export default function ChatbotAppComp() {
                         addMessage(activeSessionId, {
                             author: 'you',
                             text: echoText,
+                            isStep: true,
                         });
-                        updateSession(activeSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(activeSessionId);
                         const undoAction = genLyricUndoAction({
                             name: slideFile.name,
                             undoId:
@@ -8262,10 +10556,9 @@ export default function ChatbotAppComp() {
                         addMessage(activeSessionId, {
                             author: 'you',
                             text: echoText,
+                            isStep: true,
                         });
-                        updateSession(activeSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(activeSessionId);
                         const undoAction = genLyricUndoAction({
                             name: noteFile.name,
                             undoId:
@@ -8304,11 +10597,34 @@ export default function ChatbotAppComp() {
             // Or the whole of it in one line -- `Help me find a Bible verse
             // in "KJV": love your enemies` -- which goes straight to the
             // search with no step in front of it.
+            // Not in a conversation about one Bible note: a verse asked for
+            // there is for THAT note, and its assistant has the verse search
+            // and the note's editor (2026-11-08).
+            // An ask for a STUDY FILE (EC-464, `studyFileChatHelpers.ts`):
+            // from any tab, unless the tab is about a document, a foreground
+            // session, a Resources file or a lookup record -- those prompts
+            // offer the study tool themselves -- or the words are one of the
+            // app's own supported questions.
+            const isStudyWorded =
+                generalQuestion === null &&
+                !trimmedAsked.startsWith('/') &&
+                readStudyFileAsk(trimmedAsked);
+            const isStudyAsk =
+                isStudyWorded &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                !isDocumentAsk &&
+                !isForegroundAsk &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null;
             const isVerseAskable =
                 options?.shownText === undefined &&
                 generalQuestion === null &&
                 lookupSubject === null &&
-                attachments.length === 0;
+                attachments.length === 0 &&
+                !isNoteAsk &&
+                !isForegroundAsk &&
+                !isScreenWorded &&
+                !isStudyWorded;
             // In English or in the person's own language
             // (`verseAskLanguageHelpers.ts`).
             const oneLineVerse = isVerseAskable
@@ -8342,9 +10658,9 @@ export default function ChatbotAppComp() {
                 isVerseAskable &&
                 !trimmedAsked.startsWith('/')
             ) {
-                // A Khmer "which verse says …" too: in a Khmer window every
-                // one went to an assistant with no Bible search, which
-                // quoted a Khmer text of its own making (2026-10-17). And
+                // A translated "which verse says …" too: in a window of that
+                // language every one went to an assistant with no Bible
+                // search, which quoted a text of its own making (2026-10-17). And
                 // the verse finder's own sentence with words and no Bible
                 // ("help me find a verse: love your enemies") is searched
                 // the same way: it used to ask "which Bible?" and drop the
@@ -8388,11 +10704,14 @@ export default function ChatbotAppComp() {
             // keeps owa_present_bible.
             const detectedBibleReaderAsk: BibleReaderAskType | null =
                 options?.shownText === undefined &&
+                !isStudyAsk &&
                 focus === 'reader' &&
                 generalQuestion === null &&
                 lookupSubject === null &&
                 resourceFileNames.length === 0 &&
                 !isDocumentAsk &&
+                !isForegroundAsk &&
+                !isScreenWorded &&
                 verseFindBible === null &&
                 trimmedAsked.length > 0
                     ? (readBibleReaderAsk(trimmedAsked) ??
@@ -8415,6 +10734,12 @@ export default function ChatbotAppComp() {
                 detectedBibleReaderAsk,
                 knownQuestionForRouting ?? null,
             );
+            const isScreenAsk =
+                (isScreenWorded || isScreenThread) &&
+                !isStudyAsk &&
+                verseFindBible === null &&
+                bibleReaderAsk === null &&
+                (await findKnownQuestion(trimmedAsked, focus, true)) === null;
             // Neither of those two: a question about the app, which the
             // guide's pages, the shortcuts and the advice under an answer
             // are all for.
@@ -8424,7 +10749,10 @@ export default function ChatbotAppComp() {
                 (lookupSubject === null || isLookupAppAsk) &&
                 resourceFileNames.length === 0 &&
                 bibleReaderAsk === null &&
-                !isDocumentAsk;
+                !isDocumentAsk &&
+                !isForegroundAsk &&
+                !isScreenAsk &&
+                !isStudyAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -8465,9 +10793,7 @@ export default function ChatbotAppComp() {
                                     'first, then type `/clear` again.',
                             ),
                         });
-                        updateSession(commandSessionId, (session) => {
-                            return { ...session, draft: '' };
-                        });
+                        clearAskedDraft(commandSessionId);
                         return;
                     }
                     clearProgressSteps(commandSessionId);
@@ -8486,9 +10812,7 @@ export default function ChatbotAppComp() {
                     author: 'you',
                     text: echoText,
                 });
-                updateSession(commandSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(commandSessionId);
                 const pending = genPendingAsk(
                     commandSessionId,
                     undefined,
@@ -8523,7 +10847,7 @@ export default function ChatbotAppComp() {
                 }
                 return;
             }
-            // A language asked for in so many words ("install the French
+            // A language asked for in so many words ("install the Spanish
             // language"), or a typed "yes" / "no" under the window's own
             // offer of one: offered and installed by buttons, with no model
             // (`langInstallChatHelpers`). A model is never offered the tool.
@@ -8558,12 +10882,37 @@ export default function ChatbotAppComp() {
                           )
                         : null) ?? readLangInstallAsk(trimmedAsked);
                 if (langState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     await handleLangInstallStepRef.current(
                         activeSessionId,
                         langState,
+                        echoText,
+                    );
+                    return;
+                }
+                // A song asked to be made out of a document ("make a song
+                // from my PowerPoint"), or a file of the list under the last
+                // answer picked by its number or its name: the window's own
+                // steps, on any assistant (`lyricDocumentChatHelpers.ts`).
+                // A supported question asked as it stands is still the
+                // guide's.
+                const documentState =
+                    (lastLangAnswer?.author === 'bot'
+                        ? readLyricDocumentTypedPick(
+                              lastLangAnswer.actions,
+                              trimmedAsked,
+                          )
+                        : null) ??
+                    (readLyricDocumentAsk(trimmedAsked) !== null &&
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null
+                        ? readLyricDocumentAsk(trimmedAsked)
+                        : null);
+                if (documentState !== null) {
+                    clearAskedDraft(activeSessionId);
+                    await handleLyricDocumentStepRef.current(
+                        activeSessionId,
+                        documentState,
                         echoText,
                     );
                     return;
@@ -8591,17 +10940,20 @@ export default function ChatbotAppComp() {
                     addMessage(activeSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
                     });
                     addMessage(activeSessionId, {
                         author: 'bot',
                         text: verseThanks,
                     });
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     return;
                 }
-                const verseAsk = readTypedVerseFindAsk(trimmedAsked);
+                // A note conversation's own assistant searches verses for
+                // the note: no finder steps start there.
+                const verseAsk = isNoteAsk
+                    ? null
+                    : readTypedVerseFindAsk(trimmedAsked);
                 // One line with the words (and the Bible, or the lookup's)
                 // is asked below.
                 const verseState: VerseFindStateType | null =
@@ -8611,9 +10963,7 @@ export default function ChatbotAppComp() {
                           ? { step: 'bible', preferred: verseAsk.bibleKey }
                           : readVerseFindTypedPick(verseMessages, trimmedAsked);
                 if (verseState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     await handleVerseFindStepRef.current(
                         activeSessionId,
                         verseState,
@@ -8632,10 +10982,7 @@ export default function ChatbotAppComp() {
                     getVerseFindInputChoices(lastVerseQuestion.actions).length >
                         0
                 ) {
-                    updateSession(activeSessionId, (session) => ({
-                        ...session,
-                        draft: '',
-                    }));
+                    clearAskedDraft(activeSessionId);
                     if (
                         await handleVerseFindInputRef.current(
                             activeSessionId,
@@ -8666,10 +11013,7 @@ export default function ChatbotAppComp() {
                         trimmedAsked,
                     )
                 ) {
-                    updateSession(activeSessionId, (session) => ({
-                        ...session,
-                        draft: '',
-                    }));
+                    clearAskedDraft(activeSessionId);
                     const handled = await handleBibleImportStepRef.current(
                         activeSessionId,
                         null,
@@ -8688,11 +11032,10 @@ export default function ChatbotAppComp() {
                               return session.id === activeSessionId;
                           })?.messages ?? [],
                           trimmedAsked,
+                          { isNoteAsk },
                       );
                 if (importState !== null) {
-                    updateSession(activeSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(activeSessionId);
                     const handled = await handleBibleImportStepRef.current(
                         activeSessionId,
                         importState,
@@ -8721,24 +11064,143 @@ export default function ChatbotAppComp() {
             // song tool: "I apologize, but I cannot create a lyric file
             // directly from this chat window" (gemma-4-e4b, 2026-10-12), to
             // words the guide drafts by itself when no assistant answers.
-            if (
+            //
+            // SEVERAL links in one message, or several song files attached
+            // (EC-589, the user: _Create a lyric file from <link>_ worked
+            // for one link, _I wish it could create multiple … also
+            // multiple files_), are drafted the same way on ANY assistant:
+            // a model kept only its last draft, and the window reads four
+            // pages one after another, no model round between them, for
+            // nothing. One link or one file on a model that has the song
+            // tools still goes to it, as before.
+            const isSongAskable =
+                options?.shownText === undefined && isAppQuestion;
+            const songLinks =
+                isSongAskable && attachments.length === 0
+                    ? readSongLinkAsk(trimmedAsked)
+                    : null;
+            // A song out of DOCUMENTS -- slide documents, PowerPoint decks,
+            // Word files, PDFs -- attached to the ask, or, with nothing
+            // attached, the ones the tab's last question carried (EC-590,
+            // the user: _chatbot have to support turning powerpoint to
+            // lyric_, then _after powerpoint to lyric then appdocument to
+            // lyric_ and _also add other support like docx pdf ..._). Drafted
+            // by the window on ANY assistant and in any tab -- a slide
+            // document's own conversation, a Resources file's, the card's
+            // **Make a song from it** -- each file read for its words the way
+            // the app reads its kind (`readDocumentWords`): a model has
+            // nothing more to see, and asked, the shared server had answered
+            // that the app cannot. Only an ask to make a song OF them
+            // (`checkIsDocumentSongAsk`): _add the song title to slide 1_ is
+            // the slide document's.
+            const songDocumentFiles =
                 options?.shownText === undefined &&
-                attachments.length === 0 &&
-                isAppQuestion &&
-                checkIsCustomProvider(provider)
+                generalQuestion === null &&
+                lookupSubject === null &&
+                checkIsDocumentSongAsk(trimmedAsked)
+                    ? attachments.length > 0
+                        ? toSongDocumentFiles(attachments)
+                        : pickOpenSongDocuments(
+                              toSongDocumentFiles(
+                                  findOpenFileAttachments(
+                                      lookupTab?.messages ?? [],
+                                      lookupTab?.fileClosedAt,
+                                  ),
+                              ),
+                              trimmedAsked,
+                          )
+                    : null;
+            if (songDocumentFiles !== null) {
+                const songSessionId = activeSessionId;
+                if (!withoutEcho) {
+                    addMessage(songSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                        ...(attachments.length > 0 ? { attachments } : {}),
+                    });
+                }
+                clearAskedDraft(songSessionId);
+                if (
+                    attachments.length > 0 &&
+                    options?.attachments === undefined
+                ) {
+                    setDraftAttachmentMap((previous) => {
+                        return { ...previous, [songSessionId]: [] };
+                    });
+                    setAttachError(null);
+                }
+                const pending = genPendingAsk(songSessionId, undefined, false);
+                clearProgressSteps(songSessionId);
+                syncBusy();
+                const reportStep = genProgressReporter(
+                    genSessionProgress(songSessionId),
+                );
+                try {
+                    const answer = await draftDeckSongs(
+                        songDocumentFiles,
+                        reportStep,
+                    );
+                    if (pending.controller.signal.aborted) {
+                        return;
+                    }
+                    addMessage(songSessionId, {
+                        author: 'bot',
+                        text: answer.text,
+                        actions: answer.actions,
+                        replies: answer.replies,
+                    });
+                } finally {
+                    endPendingAsk(pending);
+                    settleSession(songSessionId);
+                }
+                return;
+            }
+            const songFiles =
+                isSongAskable &&
+                attachments.length > 0 &&
+                checkIsSongFileAsk(trimmedAsked)
+                    ? toSongFileSources(attachments)
+                    : null;
+            const isCustomSongAsk =
+                isSongAskable && checkIsCustomProvider(provider);
+            if (
+                isCustomSongAsk ||
+                (songLinks?.length ?? 0) > 1 ||
+                (songFiles?.length ?? 0) > 1
             ) {
-                const songLink = readSongLinkAsk(trimmedAsked);
+                // A deck asked for is no title (EC-590): _Create a lyric file
+                // from the PowerPoint_ had a song called "PowerPoint" looked
+                // for on the web. The Documents list's answer below takes it.
                 const songTitle =
-                    songLink === null ? readSongTitleAsk(trimmedAsked) : null;
-                if (songLink !== null || songTitle !== null) {
+                    isCustomSongAsk &&
+                    attachments.length === 0 &&
+                    songLinks === null &&
+                    readDeckSongAsk(trimmedAsked) === null
+                        ? readSongTitleAsk(trimmedAsked)
+                        : null;
+                if (
+                    songLinks !== null ||
+                    songFiles !== null ||
+                    songTitle !== null
+                ) {
                     const songSessionId = activeSessionId;
                     addMessage(songSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
+                        ...(songFiles !== null ? { attachments } : {}),
                     });
-                    updateSession(songSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(songSessionId);
+                    if (
+                        songFiles !== null &&
+                        options?.attachments === undefined
+                    ) {
+                        setDraftAttachmentMap((previous) => {
+                            return { ...previous, [songSessionId]: [] };
+                        });
+                        setAttachError(null);
+                    }
                     const pending = genPendingAsk(
                         songSessionId,
                         undefined,
@@ -8746,11 +11208,28 @@ export default function ChatbotAppComp() {
                     );
                     clearProgressSteps(songSessionId);
                     syncBusy();
+                    const reportStep = genProgressReporter(
+                        genSessionProgress(songSessionId),
+                    );
                     try {
                         const answer =
-                            songLink === null
-                                ? await answerLyricTitle(songTitle ?? '')
-                                : await answerLyricLink(songLink);
+                            songFiles !== null
+                                ? await answerLyricSources(
+                                      songFiles.map((file) => {
+                                          return {
+                                              kind: 'text' as const,
+                                              ...file,
+                                          };
+                                      }),
+                                      0,
+                                      reportStep,
+                                  )
+                                : songLinks !== null
+                                  ? await answerLyricLinks(
+                                        songLinks,
+                                        reportStep,
+                                    )
+                                  : await answerLyricTitle(songTitle ?? '');
                         if (pending.controller.signal.aborted) {
                             return;
                         }
@@ -8766,6 +11245,74 @@ export default function ChatbotAppComp() {
                     }
                     return;
                 }
+            }
+            // A song out of a document, asked for with nothing attached
+            // (EC-590, the user: _chatbot have to support turning powerpoint
+            // to lyric, it related to creating lyric from documents file_):
+            // _new lyric from powerpoint_ had gone to a model, which said the
+            // app cannot. The window answers it on any assistant -- the slide
+            // documents, decks, Word files and PDFs of the Documents list as
+            // buttons, or the one the ask named drafted at once. In a
+            // document's or a Resources file's own tab too: an ask that names
+            // another file than the one open there is still this one's. A
+            // list that cannot be read leaves the ask to go on as before.
+            const isDeckSongAskable =
+                options?.shownText === undefined &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                verseFindBible === null &&
+                bibleReaderAsk === null &&
+                !isForegroundAsk &&
+                !isStudyAsk;
+            const deckSongAsk =
+                isDeckSongAskable && attachments.length === 0
+                    ? readDeckSongAsk(trimmedAsked)
+                    : null;
+            const deckSongPlan =
+                deckSongAsk === null
+                    ? null
+                    : await planDeckSongAsk(deckSongAsk);
+            if (deckSongPlan !== null) {
+                const deckSessionId = activeSessionId;
+                addMessage(deckSessionId, {
+                    author: 'you',
+                    text: echoText,
+                    isStep: true,
+                });
+                clearAskedDraft(deckSessionId);
+                if (deckSongPlan.kind === 'answer') {
+                    addMessage(deckSessionId, {
+                        author: 'bot',
+                        text: deckSongPlan.answer.text,
+                        actions: deckSongPlan.answer.actions,
+                    });
+                    return;
+                }
+                const pending = genPendingAsk(deckSessionId, undefined, false);
+                clearProgressSteps(deckSessionId);
+                syncBusy();
+                const reportStep = genProgressReporter(
+                    genSessionProgress(deckSessionId),
+                );
+                try {
+                    const answer = await draftDeckSongs(
+                        deckSongPlan.files,
+                        reportStep,
+                    );
+                    if (pending.controller.signal.aborted) {
+                        return;
+                    }
+                    addMessage(deckSessionId, {
+                        author: 'bot',
+                        text: answer.text,
+                        actions: answer.actions,
+                        replies: answer.replies,
+                    });
+                } finally {
+                    endPendingAsk(pending);
+                    settleSession(deckSessionId);
+                }
+                return;
             }
             // A screen asked on or off, or a slide asked for by its words,
             // on a server of the user's own: answered from the app's own
@@ -8833,10 +11380,9 @@ export default function ChatbotAppComp() {
                     addMessage(directSessionId, {
                         author: 'you',
                         text: echoText,
+                        isStep: true,
                     });
-                    updateSession(directSessionId, (session) => {
-                        return { ...session, draft: '' };
-                    });
+                    clearAskedDraft(directSessionId);
                     addMessage(directSessionId, {
                         author: 'bot',
                         text: directAnswer.text,
@@ -8868,7 +11414,68 @@ export default function ChatbotAppComp() {
                           askedTab?.messages ?? [],
                           askedTab?.fileClosedAt,
                       );
-            const modelAttachments = [...openFiles, ...attachments];
+            // A word or two typed alone as the FIRST line of a tab --
+            // "lyric", "background" -- names a topic, not a job: the window
+            // asks which job, the likely ones to press under the question,
+            // before anything is answered or assumed (2026-11-13, EC-583,
+            // the user: _when user type only few word, chatbot should follow
+            // up, before provide result should confirm_). No model: one
+            // question and the corpus's own rows, each answered as the
+            // supported question it is when pressed. Further down a
+            // conversation the model is told the same (`genTopicAskHint`):
+            // there the line may well continue what was being said.
+            if (
+                options?.shownText === undefined &&
+                options?.isPressed !== true &&
+                retry === null &&
+                lookupStudy === null &&
+                attachments.length === 0 &&
+                openFiles.length === 0 &&
+                isAppQuestion &&
+                (askedTab?.messages ?? []).length === 0 &&
+                checkIsShortTopicAsk(trimmedAsked)
+            ) {
+                const topicFocus = isFocusChosen
+                    ? focus
+                    : (detectOpenerFocus() ?? focus);
+                const topicChoices =
+                    (await findKnownQuestion(
+                        trimmedAsked,
+                        topicFocus,
+                        true,
+                    )) === null
+                        ? await genTopicChoices(trimmedAsked, topicFocus)
+                        : [];
+                if (topicChoices.length > 0) {
+                    const topicSessionId = activeSessionId;
+                    addMessage(topicSessionId, {
+                        author: 'you',
+                        text: echoText,
+                        isStep: true,
+                    });
+                    clearAskedDraft(topicSessionId);
+                    addMessage(topicSessionId, {
+                        author: 'bot',
+                        text: fillWords(
+                            tran('What would you like to do with {name}?'),
+                            { name: `“${toTopicWords(echoText)}”` },
+                        ),
+                        replies: topicChoices,
+                    });
+                    return;
+                }
+            }
+            // A text file still open goes with its words as they are NOW
+            // (`refreshTextAttachment`): a study file this window saved a
+            // change to since was otherwise sent as it was attached, and
+            // the model's next change put the saved one back. So does one
+            // from the box (EC-498): it may have waited there through a
+            // reload, or been changed in its own window, since it was
+            // attached. The transcript keeps it as it was attached.
+            const modelAttachments = [
+                ...(await Promise.all(openFiles.map(refreshTextAttachment))),
+                ...(await Promise.all(attachments.map(refreshTextAttachment))),
+            ];
             // A file put back in the box by Ask again may have lost its
             // pages with a closed window, like one still open in the tab.
             await Promise.all(modelAttachments.map(reloadFileAttachment));
@@ -8918,7 +11525,35 @@ export default function ChatbotAppComp() {
                 .filter((message) => {
                     return message.isFollowUp !== true;
                 })
-                .map(toHistoryTurn);
+                .map(toModelHistoryTurn);
+            // What "save that as a study file" keeps, word for word: the
+            // history above is cut short, and a model asked to keep an
+            // answer had written a study of its own again (EC-466). A
+            // Retry's "that" is above the question it asks again.
+            const studyAnswerAbove = findStudyAnswerAbove(priorMessages, {
+                beforeId: retry?.questionId,
+            });
+            // ...and the line it answered, a kept answer's heading at a
+            // study's end (EC-704).
+            const studyAnswerQuestion =
+                studyAnswerAbove === null
+                    ? null
+                    : findStudyAnswerQuestion(priorMessages, {
+                          beforeId: retry?.questionId,
+                      });
+            // Words that keep the NEWEST answer as it is: the window puts
+            // it in whatever the model writes. The answer is looked for
+            // first: with none, no language's keep words are compiled.
+            const isKeepAnswerAsk =
+                findStudyAnswerAbove(priorMessages, {
+                    beforeId: retry?.questionId,
+                    isNewestOnly: true,
+                }) !== null && readKeepAnswerAsk(trimmedAsked);
+            // The new study the card right above holds, not saved: a line
+            // typed under it -- "change its title" -- reaches it (EC-606).
+            const heldStudyAbove = findHeldStudyAbove(priorMessages, {
+                beforeId: retry?.questionId,
+            });
             if (!withoutEcho) {
                 addMessage(askedSessionId, {
                     author: 'you',
@@ -8928,14 +11563,14 @@ export default function ChatbotAppComp() {
                     // So the next plain question in this tab knows to stay
                     // general (`readInheritedGeneralQuestion`).
                     ...(generalQuestion !== null ? { isGeneral: true } : {}),
+                    ...(options?.isStepEcho === true ? { isStep: true } : {}),
                 });
             }
             if (lookupStudy === null) {
-                updateSession(askedSessionId, (session) => {
-                    return { ...session, draft: '' };
-                });
+                clearAskedDraft(askedSessionId);
             }
-            if (attachments.length > 0) {
+            // A Retry's own were never in the box.
+            if (attachments.length > 0 && options?.attachments === undefined) {
                 // Off the box the moment they are asked with. They stay
                 // readable in the transcript above, which is where a sent
                 // attachment belongs.
@@ -8989,7 +11624,13 @@ export default function ChatbotAppComp() {
                 // otherwise -- and also when the call fails, which mid-service
                 // usually means the building's internet is down.
                 let answer: LlmBotAnswerType;
-                let note = options?.answerNote;
+                // A document the window made for this question says so over
+                // the answer, whatever the model writes (EC-514).
+                let note = options?.answerNote ?? createdNote;
+                // The assistant failed or was paused and the guide stood in:
+                // marked on the answer, so the line typed next still reaches
+                // what the tab was working on (EC-702).
+                let isAskFailed = false;
                 // What the MODEL is asked is the question plus whatever the
                 // attachments say in words -- and, for a bare picture, the
                 // question a bare picture is. The TRANSCRIPT keeps the
@@ -9043,22 +11684,23 @@ export default function ChatbotAppComp() {
                 }
                 // A quoted passage from the Bible the person reads: the
                 // installed list is read once, and the one in their language
-                // is named on the ask (`toBibleReaderAsk`), so a Khmer reader
+                // is named on the ask (`toBibleReaderAsk`), so a non-English reader
                 // is not quoted the KJV. One tool call, no model.
                 let bibleReaderBible: string | null = null;
+                // The list it was picked from: whether that Bible is in the
+                // language the answer is written in is told per assistant
+                // asked (EC-495).
+                let bibleReaderListed: unknown = null;
                 if (
                     bibleReaderAsk !== null &&
                     bibleReaderAsk.intent !== 'resources'
                 ) {
                     try {
+                        bibleReaderListed = parseToolJson(
+                            await callTool(VERSE_FIND_TOOL_NAME, {}, signal),
+                        );
                         bibleReaderBible = pickVerseFindBible(
-                            parseToolJson(
-                                await callTool(
-                                    VERSE_FIND_TOOL_NAME,
-                                    {},
-                                    signal,
-                                ),
-                            ),
+                            bibleReaderListed,
                             pickReplyLanguage(trimmedAsked),
                         );
                     } catch (_error) {
@@ -9197,11 +11839,317 @@ export default function ChatbotAppComp() {
                                   };
                               } catch (_error) {
                                   throwIfCancelled(signal);
-                                  return { name: file.name, text: null };
+                                  // Its window still opening on a busy
+                                  // computer: an EMPTY note is told by its
+                                  // file, so a lesson still goes into it
+                                  // (BN-87).
+                                  return {
+                                      name: file.name,
+                                      text: toNoteDocumentText(
+                                          await readBlankNoteFromFile(
+                                              file.filePath,
+                                              file.noteId,
+                                          ),
+                                      ),
+                                  };
                               }
                           }),
                       )
                     : [];
+                // ONE note attached and nothing in it: a lesson made now
+                // goes into it (`toBlankNoteFillArgs`).
+                const blankNoteBlockCount =
+                    noteDocs.length === 1
+                        ? readBlankNoteBlockCount(noteDocs[0].text)
+                        : null;
+                // The question before this one in the tab asked for a
+                // lesson: the answer to its "which passage?" is that lesson.
+                const lastAskedText =
+                    [...priorMessages].reverse().find((message) => {
+                        return message.author === 'you';
+                    })?.text ?? '';
+                const isLessonContinued =
+                    // A press of the empty note card's lesson button, in
+                    // any language, or the answer to its "which passage?".
+                    checkIsLessonCardAsk(trimmedAsked) ||
+                    checkIsLessonCardAsk(lastAskedText) ||
+                    checkIsLessonWriteAsk(lastAskedText) ||
+                    checkIsLanguageLessonAsk(lastAskedText);
+                // The form the tab's lesson was asked for in, off its own
+                // earlier asks, newest first (BN-78): a devotion reviewed as
+                // a sermon had been given three points.
+                const lessonForm =
+                    [...priorMessages]
+                        .reverse()
+                        .filter((message) => message.author === 'you')
+                        .map((message) => readLessonFormAsked(message.text))
+                        .find((form) => form !== null) ?? null;
+                // Its words REPLACED with another language: its verses read
+                // from that language's Bible (BN-133) -- the language named
+                // now, or, a bare "Replace the words", in the line before.
+                const noteTranslateName =
+                    readNoteTranslateLanguageName(trimmedAsked) ??
+                    (checkIsNoteReplaceChoice(trimmedAsked)
+                        ? readNoteTranslateLanguageName(lastAskedText)
+                        : null);
+                const noteTranslateLanguage =
+                    noteTranslateName === null
+                        ? null
+                        : resolveStudyTranslateLanguage(noteTranslateName);
+                const noteTranslate =
+                    noteTranslateLanguage === null
+                        ? null
+                        : {
+                              code: noteTranslateLanguage.code,
+                              name: noteTranslateLanguage.name,
+                          };
+                // Loose lines to finish as a lesson: written in their place
+                // by one flat add (BN-67, `readNoteRewrite`).
+                const noteRewrite = readNoteRewrite(
+                    trimmedAsked,
+                    noteDocs,
+                    isLessonContinued,
+                );
+                // "Check my verses": the verses the note cites, read by the
+                // window from the Bible each names -- a model had said they
+                // were checked without reading one (2026-11-10).
+                let noteVerseReadText: string | null = null;
+                if (isNoteDocAsk && checkIsNoteVerseCheckAsk(trimmedAsked)) {
+                    const readList: any[] = [];
+                    for (const { bible, refs } of collectNoteVerseRefs(
+                        noteDocs.map((doc) => doc.text),
+                    )) {
+                        try {
+                            readList.push(
+                                parseToolJson(
+                                    await callTool(
+                                        'owa_find_verse',
+                                        {
+                                            refs: refs.join('; '),
+                                            ...(bible === null
+                                                ? {}
+                                                : { bible }),
+                                        },
+                                        signal,
+                                    ),
+                                ),
+                            );
+                        } catch (_error) {
+                            throwIfCancelled(signal);
+                        }
+                    }
+                    noteVerseReadText = toNoteVerseReadText(
+                        readList,
+                        noteDocs.map((doc) => doc.text),
+                    );
+                }
+                // The same for a STUDY file open in the tab, read whole
+                // ONCE for the two checks below, and only for a question
+                // with no conversation of its own.
+                const isStudyCheckAsk =
+                    !isNoteDocAsk &&
+                    !isSongAsk &&
+                    !isSlideDocAsk &&
+                    !isFlowDocAsk &&
+                    !isForegroundAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null &&
+                    lookupSubject === null &&
+                    generalQuestion === null;
+                const studyCheckFile = isStudyCheckAsk
+                    ? modelAttachments.findLast(checkIsStudyCheckFile)
+                    : undefined;
+                let studyCheckText: string | null = null;
+                if (studyCheckFile !== undefined) {
+                    studyCheckText = await readWholeTextFile(
+                        studyCheckFile.filePath ?? '',
+                        STUDY_CHECK_READ_MAX_CHARS,
+                    );
+                    throwIfCancelled(signal);
+                }
+                // Every reference it cites, read from the Bible its part
+                // quotes (EC-497). Asked about the user's John 3 study,
+                // gemma4:cloud had checked the quoted passage's own
+                // bracketed notes and called the study's references right
+                // with none read.
+                let studyVerseReadText: string | null = null;
+                if (
+                    studyCheckText !== null &&
+                    checkIsNoteVerseCheckAsk(trimmedAsked)
+                ) {
+                    const finishReading = genProgressReporter(
+                        genSessionProgress(askedSessionId),
+                    )(tran('Reading Bible verses'));
+                    try {
+                        studyVerseReadText = await readStudyVerseCheckText(
+                            studyCheckText,
+                            signal,
+                        );
+                    } catch (_error) {
+                        // The ask goes on as before: the model reads them.
+                        throwIfCancelled(signal);
+                    } finally {
+                        finishReading();
+                    }
+                }
+                // And the words its TRANSLATION writes otherwise than the
+                // Bible it quotes (EC-536, `studyNameCheckHelpers.ts`):
+                // off the same text, no call, whatever the question -- a
+                // check is asked in any words, and a correction needs the
+                // words as much -- and nothing said of a file with none.
+                // Asked to check the user's John 3 study, a model could
+                // not see that its Khmer half wrote three names with
+                // another vowel sign than its Bible. And what else a saved
+                // translation left that a new one is held to (EC-559,
+                // `studyTranslationCheckHelpers.ts`): letters of another
+                // script, English words and diagram labels -- and its
+                // headings and church words its language's Bible writes
+                // otherwise (EC-596), each language's few KB of them read
+                // for this question alone.
+                let studyNameCheckText: string | null = null;
+                if (studyCheckFile !== undefined && studyCheckText !== null) {
+                    try {
+                        studyNameCheckText = toStudyNameCheckText(
+                            await readSavedStudyTranslationChecks(
+                                studyCheckText,
+                                loadStudyCheckLanguage,
+                            ),
+                            studyCheckFile.name,
+                        );
+                    } catch (_error) {
+                        // The ask goes on as before.
+                    }
+                    throwIfCancelled(signal);
+                }
+                // The language each half of the study the question can
+                // change is written in (EC-608): the one open in the tab,
+                // read whole above, else the new study the card above holds
+                // -- read once, said to each assistant asked below in the
+                // language it is asked in.
+                const openStudyName =
+                    studyCheckFile === undefined || studyCheckText === null
+                        ? null
+                        : findOpenStudyFileName(
+                              studyCheckFile.filePath ?? '',
+                              resourceFileNames,
+                          );
+                const studyLanguageSource =
+                    openStudyName !== null && studyCheckText !== null
+                        ? {
+                              name: openStudyName,
+                              halfLanguages: readStudyHalfLanguages(
+                                  studyCheckText,
+                                  getAppLangCode(),
+                              ),
+                          }
+                        : isStudyCheckAsk && heldStudyAbove !== null
+                          ? {
+                                name: heldStudyAbove.name,
+                                halfLanguages: readStudyHalfLanguages(
+                                    heldStudyAbove.content,
+                                    getAppLangCode(),
+                                ),
+                            }
+                          : null;
+                // A foreground session the same way (`owa_foreground_edit
+                // read`): its words, its look and the screens holding it as
+                // they are NOW. A component named with none attached is read
+                // as its panel's current session, which is then the one the
+                // question is about.
+                const isForegroundDocAsk =
+                    isForegroundAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const foregroundReadList: {
+                    ask: ForegroundAskType;
+                    text: string | null;
+                }[] = [];
+                if (isForegroundDocAsk) {
+                    const readAskList: (ForegroundAskType | null)[] =
+                        openForegroundAsks.length > 0
+                            ? openForegroundAsks
+                            : [null];
+                    for (const readAsk of readAskList) {
+                        const widget = readAsk?.widget ?? namedForegroundWidget;
+                        try {
+                            const result = parseToolJson(
+                                await callTool(
+                                    FOREGROUND_EDIT_TOOL_NAME,
+                                    {
+                                        action: 'read',
+                                        widget:
+                                            widget === 'time'
+                                                ? 'clock'
+                                                : widget,
+                                        ...(readAsk === null
+                                            ? {}
+                                            : readAsk.widget === 'camera'
+                                              ? {
+                                                    camera:
+                                                        readAsk.itemLabel ??
+                                                        readAsk.itemId,
+                                                }
+                                              : readAsk.widget === 'screen'
+                                                ? {
+                                                      source: Number(
+                                                          readAsk.itemId,
+                                                      ),
+                                                  }
+                                                : {
+                                                      session:
+                                                          readAsk.sessionId ||
+                                                          readAsk.sessionName ||
+                                                          'Default',
+                                                  }),
+                                    },
+                                    signal,
+                                ),
+                            );
+                            const readSession = result?.session as
+                                { id?: string; name?: string } | undefined;
+                            foregroundReadList.push({
+                                ask: readAsk ?? {
+                                    widget: widget as ForegroundAskType['widget'],
+                                    sessionId: readSession?.id ?? '',
+                                    sessionName: readSession?.name ?? '',
+                                },
+                                text: toForegroundReadText(result),
+                            });
+                        } catch (_error) {
+                            throwIfCancelled(signal);
+                            if (readAsk !== null) {
+                                foregroundReadList.push({
+                                    ask: readAsk,
+                                    text: null,
+                                });
+                            }
+                        }
+                    }
+                }
+                // The screens the same way (`owa_screen_edit read`): each
+                // one's controls and what it shows, the Bible text's style,
+                // the displays and the Bibles, as they are NOW -- and under
+                // a change, the id that takes it back for an "undo that".
+                let screenReadText: string | null = null;
+                const screenUndoIds = isScreenAsk
+                    ? findScreenUndoIds(lookupTab?.messages ?? [])
+                    : [];
+                if (isScreenAsk) {
+                    try {
+                        screenReadText = toScreenReadText(
+                            parseToolJson(
+                                await callTool(
+                                    SCREEN_EDIT_TOOL_NAME,
+                                    { action: 'read' },
+                                    signal,
+                                ),
+                            ),
+                        );
+                    } catch (_error) {
+                        // The ask goes on: the model reads them itself.
+                        throwIfCancelled(signal);
+                    }
+                }
                 throwIfCancelled(signal);
                 // The song's words go to the model as read above, never also
                 // as the attachment's notation -- a model shown notation
@@ -9228,13 +12176,24 @@ export default function ChatbotAppComp() {
                               );
                           })
                         : modelAttachments;
-                const withLyric = (text: string) => {
+                // `ownWords`: `text` is the English of what they typed in
+                // another language, and a note ask keeps their words beside
+                // it (BN-23).
+                const withLyric = (
+                    text: string,
+                    ownWords: NoteOwnWordsType | null = null,
+                ) => {
                     if (isNoteDocAsk) {
                         return toNoteAsk(
                             text,
                             noteDocs,
                             readLyricTranslateMode(trimmedAsked),
                             trimmedAsked.length === 0,
+                            ownWords,
+                            noteVerseReadText,
+                            isLessonContinued,
+                            noteRewrite,
+                            lessonForm,
                         );
                     }
                     if (isFlowDocAsk) {
@@ -9243,6 +12202,16 @@ export default function ChatbotAppComp() {
                             flowDocs,
                             trimmedAsked.length === 0,
                         );
+                    }
+                    if (isForegroundDocAsk) {
+                        return toForegroundAsk(
+                            text,
+                            foregroundReadList,
+                            trimmedAsked.length === 0,
+                        );
+                    }
+                    if (isScreenAsk) {
+                        return toScreenAsk(text, screenReadText, screenUndoIds);
                     }
                     if (isSlideDocAsk) {
                         return toSlideAsk(
@@ -9277,7 +12246,7 @@ export default function ChatbotAppComp() {
                 // The Bible the Reader was in when the file was handed over:
                 // the passage is quoted in the reader's own words. Asked of
                 // the lookup the tab aims at, `15-17` came back in the
-                // Presenter's KJV to a reader of Khmer (2026-10-22).
+                // Presenter's KJV to a reader of another language (2026-10-22).
                 const resourceReading = isResourcesAsk
                     ? findResourceReading(
                           sessionStateRef.current.sessions.find((session) => {
@@ -9384,9 +12353,9 @@ export default function ChatbotAppComp() {
                 }
                 // A person's or a place's verses come from a Bible in the
                 // answer's language when the record's is not one
-                // (2026-10-29): with the Reader on the KJV, a French question
-                // under Noah's card was answered with Genesis 6:15 in
-                // English, the Louis Segond installed. A passage keeps the
+                // (2026-10-29): with the Reader on the KJV, a non-English
+                // question under Noah's card was answered with Genesis 6:15
+                // in English, a Bible of that language installed. A passage keeps the
                 // Bible it was opened in -- that is what they are reading.
                 let lookupQuoteBible: string | null = null;
                 if (
@@ -9429,7 +12398,7 @@ export default function ChatbotAppComp() {
                         : null;
                 // What an answer about a passage keeps in a language other
                 // than its own: the passage's letters, which the cleaner
-                // had taken out of a Khmer answer about the Greek Bible
+                // had taken out of a non-Latin-script answer about the Greek Bible
                 // letter by letter (2026-10-23).
                 const answerKeep =
                     lookupSubject === null || isLookupAppAsk
@@ -9458,7 +12427,12 @@ export default function ChatbotAppComp() {
                               lookupQuoteBible,
                           );
                 };
-                const withResources = (text: string) => {
+                const withResources = (asked: string) => {
+                    const text = [asked, studyVerseReadText, studyNameCheckText]
+                        .filter((part) => {
+                            return part !== null;
+                        })
+                        .join('\n\n');
                     if (!isResourcesAsk) {
                         return text;
                     }
@@ -9540,10 +12514,25 @@ export default function ChatbotAppComp() {
                 // the user's own words. Not for a rescue, whose ask is
                 // machine-written and never a corpus row, nor for a general
                 // question, which is about nothing in the guide.
+                // An option the answer above offered is that answer's next
+                // step: a row only as the row stands (EC-555).
+                const isOfferedReply = checkIsOfferedReply(
+                    lookupTab?.messages ?? [],
+                    trimmedAsked,
+                );
                 const knownQuestion =
                     options?.shownText === undefined && isAppQuestion
                         ? (knownQuestionForRouting ??
-                          (await findKnownQuestion(trimmedAsked, activeFocus)))
+                          (isOfferedReply
+                              ? await findKnownQuestion(
+                                    trimmedAsked,
+                                    activeFocus,
+                                    true,
+                                )
+                              : await findKnownQuestion(
+                                    trimmedAsked,
+                                    activeFocus,
+                                )))
                         : null;
                 // The page itself goes with the hint, so the first round can
                 // answer from it (`genKnownQuestionHint`): a small local model
@@ -9567,7 +12556,7 @@ export default function ChatbotAppComp() {
                 // when nobody translates for it (`findPageLanguage`), read
                 // once per language and only when such an assistant is
                 // asked: handed the English page, gemma4:cloud answering in
-                // Khmer copied its sentences into the answer (2026-10-17).
+                // another language copied its sentences into the answer (2026-10-17).
                 const localPageMap = new Map<string, Promise<string | null>>();
                 const readLocalKnownPage = (pageLang: string | null) => {
                     if (
@@ -9608,6 +12597,7 @@ export default function ChatbotAppComp() {
                               focus: activeFocus,
                               pageText: knownPageText,
                               localPageText,
+                              asked: trimmedAsked,
                               // A local server is sent the essential tools
                               // only: the hint must not name one it lacks.
                               missingTools: (
@@ -9646,6 +12636,28 @@ export default function ChatbotAppComp() {
                               `${activeFocus}.html`,
                           )
                         : null;
+                // A word or two alone further down a conversation: what
+                // the window asks by itself on a tab's first line, the
+                // model is told to ask unless the conversation settles it
+                // (EC-583). Never for an option the answer above offered
+                // or a row asked as it stands: those are a choice made.
+                const topicHint =
+                    knownQuestion === null &&
+                    disputeHint === null &&
+                    !isOfferedReply &&
+                    isAppQuestion &&
+                    options?.shownText === undefined &&
+                    options?.isPressed !== true &&
+                    retry === null &&
+                    attachments.length === 0 &&
+                    openFiles.length === 0 &&
+                    priorTurns.length > 0 &&
+                    checkIsShortTopicAsk(trimmedAsked)
+                        ? genTopicAskHint(
+                              trimmedAsked,
+                              await genTopicChoices(trimmedAsked, activeFocus),
+                          )
+                        : null;
                 const genAskedWithHint = (
                     askedOf: LlmProviderType,
                     askedBase = askedOfModel,
@@ -9657,12 +12669,31 @@ export default function ChatbotAppComp() {
                             ? knownHint
                             : genKnownHint(askedOf, localPageText),
                         disputeHint,
+                        topicHint,
                         genBibleImportContextHint(
                             priorMessages.findLast(
                                 (message) => message.author === 'bot',
                             ),
                         ),
                         resourcesRangeHint ?? null,
+                        // The file the window made for this question: build
+                        // into it, never make another (EC-514).
+                        createdDocument === null
+                            ? null
+                            : genDocumentCreateHint(
+                                  createdDocument.kind,
+                                  createdDocument.name,
+                              ),
+                        webBackgroundName === null
+                            ? null
+                            : genWebBackgroundHint(webBackgroundName),
+                        // Passages to save, never to show (EC-703).
+                        genBibleListSaveHint(trimmedAsked),
+                        // An option of the answer above, pressed or typed:
+                        // their yes to that offer, done without a second ask.
+                        genOfferedReplyHint(isAppQuestion && isOfferedReply),
+                        // Last, beside the question: what a Retry wants.
+                        retry?.hint ?? null,
                     ]
                         .filter((part) => {
                             return part !== null;
@@ -9712,6 +12743,7 @@ export default function ChatbotAppComp() {
                     // Nor a slide document's.
                     if (
                         isFlowDocAsk ||
+                        isForegroundDocAsk ||
                         isSongAsk ||
                         isSlideDocAsk ||
                         isNoteDocAsk
@@ -9826,6 +12858,74 @@ export default function ChatbotAppComp() {
                                     'and I will look it up in the guide.',
                             ),
                         };
+                    }
+                    // A passage asked for in another language with no
+                    // assistant (EC-622): the verse from the Bible that
+                    // reads it with ONE button that puts it up, or the
+                    // parser's sentence when no installed Bible names the
+                    // book -- never the guide's page, which a verse typed
+                    // in a person's own words had drawn. Not a control of
+                    // the screens asked of it (a style, a clear, another
+                    // version: the screens' answer below), nor a foreground
+                    // extra's (a message may quote a verse), nor a
+                    // supported question asked as it stands but the row
+                    // that asks for a passage to be put up.
+                    if (
+                        (screenAskKind === null ||
+                            screenAskKind === 'screen') &&
+                        options?.shownText === undefined &&
+                        attachments.length === 0 &&
+                        !isForegroundAsk &&
+                        !isStudyAsk &&
+                        readTypedVerseLine(trimmedAsked) !== null &&
+                        checkIsVerseRowFree(
+                            await findKnownQuestion(trimmedAsked, focus, true),
+                        )
+                    ) {
+                        const verseAnswer = await answerTypedVerseAsk(
+                            trimmedAsked,
+                            { isUnknownRead: offlineWords === null },
+                        );
+                        if (verseAnswer !== null) {
+                            return verseAnswer;
+                        }
+                    }
+                    // A screen ask with no assistant: the setting it asks
+                    // about as each screen has it, what each holds, and
+                    // that nothing was changed (EC-625) -- in any language
+                    // -- with the change itself as a button to press
+                    // (EC-627). A clear or a screen named by its number,
+                    // which the state does not answer, is the guide's in
+                    // English unless there is a button to press; in
+                    // another language what each screen holds (EC-614: the
+                    // guide searches English, and a Spanish ask had been
+                    // answered _I could not find that in the app guide_).
+                    if (isScreenAsk && isScreenWorded) {
+                        const screenAnswer = await answerScreenAsk(
+                            screenAskKind,
+                            trimmedAsked,
+                            {
+                                isOfferOnly:
+                                    !checkIsScreenSettingKind(screenAskKind) &&
+                                    readScreenControlAsk(
+                                        trimmedAsked,
+                                        focus,
+                                    ) !== null,
+                            },
+                        );
+                        if (screenAnswer !== null) {
+                            return screenAnswer;
+                        }
+                    }
+                    // A plain line under a screen answer -- _centre it_,
+                    // _unlock it_ -- with the press that does it; anything
+                    // else (a how-to too) the guide's, as before.
+                    if (isScreenAsk && !isScreenWorded && isScreenThread) {
+                        const threadAnswer =
+                            await answerScreenThreadAsk(trimmedAsked);
+                        if (threadAnswer !== null) {
+                            return threadAnswer;
+                        }
                     }
                     return await askHelpBot(
                         offlineWords ?? trimmedAsked,
@@ -9984,6 +13084,10 @@ export default function ChatbotAppComp() {
                                                   toAttachedPage,
                                               ),
                                           ),
+                                          {
+                                              language: plan.language.name,
+                                              text: trimmedAsked,
+                                          },
                                       )
                                     : toGeneralQuestionAsk(
                                           toAskedOfModel(
@@ -9998,18 +13102,56 @@ export default function ChatbotAppComp() {
                             plan === null ? findPageLanguage(replyLang) : null,
                         );
                         throwIfCancelled(signal);
-                        const askedWithIntent =
-                            bibleReaderAsk === null
-                                ? englishBase
-                                : toBibleReaderAsk(
-                                      englishBase,
-                                      bibleReaderAsk,
-                                      bibleReaderBible,
-                                  );
+                        const askedWithIntent = isStudyAsk
+                            ? toStudyAsk(
+                                  englishBase,
+                                  replyLang === DEFAULT_CHAT_LANG_CODE
+                                      ? null
+                                      : getAssistantLanguage(replyLang).name,
+                              )
+                            : bibleReaderAsk === null
+                              ? englishBase
+                              : toBibleReaderAsk(
+                                    englishBase,
+                                    bibleReaderAsk,
+                                    bibleReaderBible,
+                                    toBibleReaderAnswerLanguage(
+                                        bibleReaderListed,
+                                        bibleReaderBible,
+                                        // Asked in English behind the
+                                        // scenes, it answers in English.
+                                        plan === null
+                                            ? replyLang
+                                            : DEFAULT_CHAT_LANG_CODE,
+                                    ),
+                                );
+                        // What the study is written in, and their words
+                        // when the model is asked their English (EC-608).
+                        const studyLanguageHint =
+                            studyLanguageSource === null
+                                ? null
+                                : genStudyLanguageHint({
+                                      ...studyLanguageSource,
+                                      askedCode:
+                                          plan === null
+                                              ? replyLang
+                                              : DEFAULT_CHAT_LANG_CODE,
+                                      ownWords:
+                                          plan === null ||
+                                          plan.english === trimmedAsked
+                                              ? null
+                                              : {
+                                                    language:
+                                                        plan.language.name,
+                                                    text: trimmedAsked,
+                                                },
+                                  });
                         const modelAnswer = await askLlmBot(
                             genAskedWithHint(
                                 askedOf,
-                                askedWithIntent,
+                                studyLanguageHint === null
+                                    ? askedWithIntent
+                                    : `${askedWithIntent}\n\n${studyLanguageHint}`,
                                 localPageText,
                             ),
                             activeFocus,
@@ -10019,6 +13161,9 @@ export default function ChatbotAppComp() {
                             signal,
                             {
                                 images,
+                                ...(retry === null
+                                    ? {}
+                                    : { retryAttempt: retry.attempt }),
                                 ...(generalQuestion === null
                                     ? {}
                                     : { isGeneral: true }),
@@ -10074,14 +13219,108 @@ export default function ChatbotAppComp() {
                                 ...(isSongAsk
                                     ? { lyric: { files: lyricAskFiles } }
                                     : {}),
+                                // The study's passage is quoted from a
+                                // Bible in the language it is written in,
+                                // English included -- a kept answer's own
+                                // (EC-466).
+                                ...(isStudyAsk
+                                    ? {
+                                          study: {
+                                              verseLang:
+                                                  isKeepAnswerAsk &&
+                                                  studyAnswerAbove !== null
+                                                      ? pickKeptAnswerLanguage(
+                                                            studyAnswerAbove,
+                                                            replyLang,
+                                                        )
+                                                      : replyLang,
+                                          },
+                                      }
+                                    : {}),
+                                // What a draft's `@answer` is, and kept
+                                // whatever the model writes (EC-466).
+                                ...(studyAnswerAbove === null
+                                    ? {}
+                                    : { answerAbove: studyAnswerAbove }),
+                                ...(studyAnswerQuestion === null
+                                    ? {}
+                                    : {
+                                          answerAboveQuestion:
+                                              studyAnswerQuestion,
+                                      }),
+                                ...(isKeepAnswerAsk
+                                    ? { keepAnswer: true }
+                                    : {}),
+                                ...(heldStudyAbove === null
+                                    ? {}
+                                    : { heldStudy: heldStudyAbove }),
+                                ...(pressedCreateKind === null
+                                    ? {}
+                                    : { createKind: pressedCreateKind }),
                                 ...(isSlideDocAsk
                                     ? { slide: { files: slideAskFiles } }
                                     : {}),
                                 ...(isFlowDocAsk
                                     ? { flow: { files: flowAskFiles } }
                                     : {}),
+                                ...(isForegroundDocAsk
+                                    ? {
+                                          foreground: {
+                                              asks: foregroundReadList.map(
+                                                  (one) => {
+                                                      return one.ask;
+                                                  },
+                                              ),
+                                              // Nothing attached: the
+                                              // panel's current session,
+                                              // read (EC-523).
+                                              isCurrentOnly:
+                                                  openForegroundAsks.length ===
+                                                  0,
+                                          },
+                                      }
+                                    : {}),
+                                ...(isScreenAsk
+                                    ? { screen: { isThread: isScreenThread } }
+                                    : {}),
                                 ...(isNoteDocAsk
-                                    ? { note: { files: noteAskFiles } }
+                                    ? {
+                                          note: {
+                                              files: noteAskFiles,
+                                              // A new verse comes from a
+                                              // Bible in their language
+                                              // (BN-26).
+                                              ...(replyLang ===
+                                              DEFAULT_CHAT_LANG_CODE
+                                                  ? {}
+                                                  : { verseLang: replyLang }),
+                                              // Words to write go in as
+                                              // typed (BN-37).
+                                              typed: trimmedAsked,
+                                              // An empty note is where a
+                                              // lesson made now goes.
+                                              ...(blankNoteBlockCount === null
+                                                  ? {}
+                                                  : {
+                                                        blankBlockCount:
+                                                            blankNoteBlockCount,
+                                                    }),
+                                              // Loose lines are where a
+                                              // finished lesson goes.
+                                              ...(noteRewrite === null
+                                                  ? {}
+                                                  : { rewrite: noteRewrite }),
+                                              // Put into another language:
+                                              // its verses from that
+                                              // language's Bible (BN-133).
+                                              ...(noteTranslate === null
+                                                  ? {}
+                                                  : {
+                                                        translate:
+                                                            noteTranslate,
+                                                    }),
+                                          },
+                                      }
                                     : {}),
                                 ...(verseFindBible === null
                                     ? {}
@@ -10110,8 +13349,24 @@ export default function ChatbotAppComp() {
                                     knownQuestion,
                                     knownPageText,
                                     localPageText,
+                                    plan?.english ?? trimmedAsked,
                                 ),
                                 askedText: plan?.english ?? trimmedAsked,
+                                // A study file the model asks to translate
+                                // is translated by the window (EC-478).
+                                translateText: genStudyTranslator(
+                                    activeFocus,
+                                    askedOf,
+                                    askedModelId,
+                                    signal,
+                                    usageTally.onHelperUsage,
+                                ),
+                                // **Not now** under the offer of the language
+                                // a study is translated into: asked again, it
+                                // goes on without it (EC-494).
+                                ...(options?.skipLangOffer === undefined
+                                    ? {}
+                                    : { skipLangOffer: options.skipLangOffer }),
                                 // Worked in English: the English prompt and
                                 // no language line, the answer translated
                                 // below.
@@ -10144,7 +13399,16 @@ export default function ChatbotAppComp() {
                                 onUsage,
                             },
                         );
-                        if (plan === null || askTranslation === null) {
+                        // BN-48: a model handed their own language (a Gemma
+                        // 4, never translated for) that answered in English
+                        // is put into it after the fact, by the translator.
+                        const answerPlan =
+                            plan ??
+                            (askTranslation !== null &&
+                            checkIsEnglishAnswer(modelAnswer.text, replyLang)
+                                ? await askTranslation.planForEnglishAnswer()
+                                : null);
+                        if (answerPlan === null || askTranslation === null) {
                             return modelAnswer;
                         }
                         throwIfCancelled(signal);
@@ -10156,14 +13420,14 @@ export default function ChatbotAppComp() {
                         const [shown, translatedReplies] = await Promise.all([
                             askTranslation.translateAnswer(
                                 modelAnswer.text,
-                                plan.language,
-                                plan.translator,
+                                answerPlan.language,
+                                answerPlan.translator,
                                 tranLabel,
                             ),
                             askTranslation.translateReplies(
                                 modelAnswer.replies ?? [],
-                                plan.language,
-                                plan.translator,
+                                answerPlan.language,
+                                answerPlan.translator,
                                 tranLabel,
                             ),
                         ]);
@@ -10172,7 +13436,7 @@ export default function ChatbotAppComp() {
                                 tran(
                                     'I could not put this answer into {language}, so it is in English.',
                                 ),
-                                { language: plan.language.nativeName },
+                                { language: answerPlan.language.nativeName },
                             );
                             return modelAnswer;
                         }
@@ -10185,7 +13449,7 @@ export default function ChatbotAppComp() {
                         const toShown = (text: string) => {
                             return toAnswerShownInLanguage(
                                 text,
-                                plan.language.code,
+                                answerPlan.language.code,
                                 tranLabel,
                                 answerKeep,
                                 screenLang,
@@ -10199,7 +13463,7 @@ export default function ChatbotAppComp() {
                             frames.options.length > 0
                                 ? frames.options
                                 : (translatedReplies ?? []),
-                            plan.language.code,
+                            answerPlan.language.code,
                             tranLabel,
                             answerKeep,
                             screenLang,
@@ -10234,6 +13498,15 @@ export default function ChatbotAppComp() {
                                 ? {
                                       preferModelPattern:
                                           VERSE_TRANSLATION_MODEL_PATTERN,
+                                  }
+                                : {}),
+                            // A study file written in another language:
+                            // Gemma 4 first, like any translation.
+                            ...(isStudyAsk &&
+                            replyLang !== DEFAULT_CHAT_LANG_CODE
+                                ? {
+                                      preferModelPattern:
+                                          TRANSLATION_MODEL_PATTERN,
                                   }
                                 : {}),
                             // A song or slides put into another language:
@@ -10273,14 +13546,45 @@ export default function ChatbotAppComp() {
                     // nothing pressed nothing either.
                     const canHandOnAfterRound =
                         generalQuestion !== null ||
+                        isStudyAsk ||
                         (isResourcesAsk &&
                             (lookupSubject === null || isLookupAppAsk));
                     // Who was handed the question after the tab's own
                     // assistant failed and could not answer either: said
                     // after it in the note over the guide's answer.
                     let handOnSkipped: AutoSkipType[] = [];
+                    // A Retry goes to someone OTHER than whoever wrote the
+                    // answer, for this one question (the user, 2026-11-10:
+                    // _user didn't like result from gemma4 then try with
+                    // another model (but keep the gemma4 for the next
+                    // asking)_). Matched by the pickers' own words, which is
+                    // what an answer keeps of who wrote it. A tab naming an
+                    // assistant Auto could pick goes down Auto's line this
+                    // once, that assistant last; a paid key was handed
+                    // another of its models by the press (`pickRetryModel`).
+                    const checkIsRetriedPick = (
+                        pickProvider: LlmProviderType,
+                        pickModel: string,
+                    ) => {
+                        return (
+                            retry?.avoid !== undefined &&
+                            getLlmProviderLabel(pickProvider, pickModel) ===
+                                retry.avoid.assistant &&
+                            getLlmModelLabel(pickProvider, pickModel) ===
+                                retry.avoid.model
+                        );
+                    };
+                    const isRetryElsewhere =
+                        !isAuto &&
+                        checkIsRetriedPick(provider, askModel) &&
+                        genAutoCandidates().some((candidate) => {
+                            return (
+                                candidate.provider === provider &&
+                                candidate.model === askModel
+                            );
+                        });
                     try {
-                        if (isAuto) {
+                        if (isAuto || isRetryElsewhere) {
                             // Auto: the servers are looked at, the best
                             // assistant that costs nothing and can answer
                             // is asked, and one that fails before saying
@@ -10308,6 +13612,14 @@ export default function ChatbotAppComp() {
                             // The look is a wait like any other, and a Stop
                             // pressed during it ends here.
                             throwIfCancelled(signal);
+                            if (retry?.avoid !== undefined) {
+                                picks = toRetryPicks(picks, (pick) => {
+                                    return checkIsRetriedPick(
+                                        pick.provider,
+                                        pick.model,
+                                    );
+                                });
+                            }
                             const auto = await askWithAutoAssistant({
                                 picks,
                                 checkIsFinal: checkIsFinalAskError,
@@ -10342,14 +13654,25 @@ export default function ChatbotAppComp() {
                                 },
                             });
                             answer = auto.answer;
+                            // A Retry says who answered when it was not the
+                            // one retried: _Auto asked … this time._
                             const autoNote = genAutoAnswerNote(
                                 auto.pick,
                                 auto.skipped,
-                                sessionStateRef.current.sessions.find(
-                                    (session) => {
-                                        return session.id === askedSessionId;
-                                    },
-                                )?.autoPick,
+                                retry !== null
+                                    ? checkIsRetriedPick(
+                                          auto.pick.provider,
+                                          auto.pick.model,
+                                      )
+                                        ? auto.pick.label
+                                        : ''
+                                    : sessionStateRef.current.sessions.find(
+                                          (session) => {
+                                              return (
+                                                  session.id === askedSessionId
+                                              );
+                                          },
+                                      )?.autoPick,
                             );
                             if (autoNote !== null) {
                                 note =
@@ -10360,9 +13683,10 @@ export default function ChatbotAppComp() {
                             // The tab STAYS on Auto and now says who
                             // answered. Left alone when it was taken off
                             // Auto while the answer came: that pick is the
-                            // user's own.
+                            // user's own. And by a Retry, which asked
+                            // someone else for this one question only.
                             updateSession(askedSessionId, (session) => {
-                                return session.isAuto === true
+                                return session.isAuto === true && retry === null
                                     ? {
                                           ...session,
                                           provider: auto.pick.provider,
@@ -10609,11 +13933,13 @@ export default function ChatbotAppComp() {
                                     author: 'bot',
                                     text: error.message,
                                     actions: [allowAction],
+                                    isAskFailed: true,
                                 });
                                 options.onAnswered?.(null);
                                 return;
                             }
                             answer = await askOffline();
+                            isAskFailed = true;
                             answer.actions = [
                                 allowAction,
                                 ...(answer.actions ?? []),
@@ -10685,11 +14011,13 @@ export default function ChatbotAppComp() {
                                     ...(issueActions.length > 0
                                         ? { actions: issueActions }
                                         : {}),
+                                    isAskFailed: true,
                                 });
                                 options.onAnswered?.(null);
                                 return;
                             }
                             answer = await askOffline();
+                            isAskFailed = true;
                             answer.actions = [
                                 ...issueActions,
                                 ...(answer.actions ?? []),
@@ -10722,6 +14050,69 @@ export default function ChatbotAppComp() {
                 // `handleCancelling` wrote that line at the press.
                 if (signal.aborted) {
                     return;
+                }
+                // The page the model wrote for a background web page asked
+                // for (EC-518): out of the answer, made safe, made in Webs,
+                // with Undo under it. No page in the answer, nothing made.
+                const writtenWebPage =
+                    webBackgroundName === null
+                        ? null
+                        : readHtmlBlock(answer.text);
+                if (webBackgroundName !== null && writtenWebPage !== null) {
+                    let madeName: string | null = null;
+                    let madeId: string | null = null;
+                    try {
+                        const made = parseToolJson(
+                            await callTool(MEDIA_FILE_TOOL_NAME, {
+                                action: 'create',
+                                kind: 'web',
+                                name: webBackgroundName,
+                                content: toSafeWebPage(
+                                    writtenWebPage.html,
+                                    webBackgroundName,
+                                ),
+                            }),
+                        );
+                        // Named as the Webs panel shows it: no `.html`.
+                        madeName = String(
+                            made?.created ?? webBackgroundName,
+                        ).replace(/\.html?$/i, '');
+                        madeId =
+                            typeof made?.undoId === 'string' && made.undoId
+                                ? made.undoId
+                                : null;
+                    } catch (error) {
+                        console.warn('The web page could not be made:', error);
+                    }
+                    const undoAction =
+                        madeName === null
+                            ? null
+                            : genMadeUndoAction(madeName, [], madeId);
+                    answer = {
+                        ...answer,
+                        text: [
+                            writtenWebPage.rest,
+                            madeName === null
+                                ? fillWords(
+                                      tran('I could not save {name} just now.'),
+                                      { name: webBackgroundName },
+                                  )
+                                : fillWords(
+                                      tran(
+                                          'I made “{name}” for you. It is in {list} now.',
+                                      ),
+                                      { name: madeName, list: tran('Webs') },
+                                  ),
+                        ]
+                            .filter((part) => {
+                                return part.length > 0;
+                            })
+                            .join('\n\n'),
+                        actions: [
+                            ...(undoAction === null ? [] : [undoAction]),
+                            ...(answer.actions ?? []),
+                        ],
+                    };
                 }
                 const formattedAnswer =
                     options?.formatAnswer?.(answer.text) ?? answer.text;
@@ -10756,6 +14147,21 @@ export default function ChatbotAppComp() {
                             sanitizedAnswer,
                             lookupStudy.keep?.scriptText ?? '',
                         );
+                // A study's translation that waits for its language, turned
+                // off or not installed (EC-494): offered under the answer,
+                // in the window's words, its buttons first -- each carrying
+                // the question, asked again after the press.
+                const langOffer =
+                    answer.langOffer !== undefined &&
+                    options?.shownText === undefined
+                        ? genStudyLangOffer(answer.langOffer, trimmedAsked)
+                        : null;
+                if (langOffer !== null) {
+                    answer.actions = [
+                        ...(langOffer.actions ?? []),
+                        ...(answer.actions ?? []),
+                    ];
+                }
                 // What they can press instead of typing the next message.
                 // Worked out ONCE, here, and carried on the message: the
                 // best of them were written by the model that wrote this
@@ -10766,56 +14172,90 @@ export default function ChatbotAppComp() {
                 // A general question keeps only the options its model
                 // wrote: the guide's nearest questions under an answer
                 // about the Bible's books are buttons about the app.
+                // Under an offer, its buttons are the choices: a model's
+                // options there had copied them (EC-494, "Enable; Not now").
+                // Under a study card, an option that says one of its buttons
+                // again goes, before they are counted (EC-705): the model
+                // can save nothing.
+                const modelReplies = dropStudyCardEchoReplies(
+                    answer.replies ?? [],
+                    answer.actions ?? [],
+                    toShownActionLabel,
+                );
                 const replies =
-                    options?.repliesOverride !== undefined
-                        ? options.repliesOverride.slice(0, 5)
-                        : resourcePassageRef !== null
-                          ? (() => {
-                                // The card that was pressed keeps its other
-                                // related verses under this one, so a reader
-                                // can try a different reference without going
-                                // back (2026-10-19). A menu's own numbers
-                                // (`4`, `Full chapter`) are not references.
-                                const carried = (
-                                    options?.carryReplies ?? []
-                                ).filter((one) => {
-                                    return (
-                                        checkHasColonNumber(one) &&
-                                        !/^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(
-                                            one,
-                                        )
-                                    );
-                                });
-                                const next = genResourceReadingReplies(
-                                    trimmedAsked,
-                                    resourceReadingWasRejected
-                                        ? []
-                                        : (answer.replies ?? []),
-                                    resourceChapterVerseCount,
-                                    sanitizedAnswer,
-                                );
-                                return [
-                                    ...new Set([...carried, ...next]),
-                                ].slice(0, 40);
-                            })()
-                          : options?.shownText !== undefined
-                            ? []
-                            : !isAppQuestion
-                              ? (answer.replies ?? []).slice(0, 5)
-                              : await genMessageReplies({
-                                    modelOptions: answer.replies,
-                                    answerText: shownAnswer,
-                                    askedText: trimmedAsked,
-                                    actionLabels: (answer.actions ?? []).map(
-                                        (action) => {
-                                            return action.label;
-                                        },
-                                    ),
-                                    focus: activeFocus,
-                                });
+                    langOffer !== null
+                        ? []
+                        : options?.repliesOverride !== undefined
+                          ? options.repliesOverride.slice(0, 5)
+                          : resourcePassageRef !== null
+                            ? (() => {
+                                  // The card that was pressed keeps its other
+                                  // related verses under this one, so a reader
+                                  // can try a different reference without going
+                                  // back (2026-10-19). A menu's own numbers
+                                  // (`4`, `Full chapter`) are not references.
+                                  const carried = (
+                                      options?.carryReplies ?? []
+                                  ).filter((one) => {
+                                      return (
+                                          checkHasColonNumber(one) &&
+                                          !/^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(
+                                              one,
+                                          )
+                                      );
+                                  });
+                                  const next = genResourceReadingReplies(
+                                      trimmedAsked,
+                                      resourceReadingWasRejected
+                                          ? []
+                                          : (answer.replies ?? []),
+                                      resourceChapterVerseCount,
+                                      sanitizedAnswer,
+                                  );
+                                  return [
+                                      ...new Set([...carried, ...next]),
+                                  ].slice(0, 40);
+                              })()
+                            : options?.shownText !== undefined
+                              ? []
+                              : !isAppQuestion
+                                ? dropActionEchoReplies(
+                                      [
+                                          ...new Set([
+                                              // The other changes offered
+                                              // with the one just pressed come
+                                              // first: they were being chosen
+                                              // among (BN-77).
+                                              ...(
+                                                  options?.carryReplies ?? []
+                                              ).filter(checkIsChangeReply),
+                                              ...modelReplies,
+                                          ]),
+                                      ],
+                                      (answer.actions ?? []).map((action) => {
+                                          return action.label;
+                                      }),
+                                  ).slice(0, 5)
+                                : await genMessageReplies({
+                                      modelOptions: modelReplies,
+                                      answerText: shownAnswer,
+                                      askedText: trimmedAsked,
+                                      actionLabels: (answer.actions ?? []).map(
+                                          (action) => {
+                                              return action.label;
+                                          },
+                                      ),
+                                      focus: activeFocus,
+                                  });
                 if (signal.aborted) {
                     return;
                 }
+                // And one the window worked out itself (EC-705).
+                const keptReplies = dropStudyCardEchoReplies(
+                    replies,
+                    answer.actions ?? [],
+                    toShownActionLabel,
+                );
                 // "That is wrong", typed under an answer (2026-10-12, the
                 // user's ask: _when user complain about wrong answer should
                 // recommend user to try smarter model_). Said on the answer
@@ -10845,6 +14285,16 @@ export default function ChatbotAppComp() {
                             complaintAdvice.action,
                         ];
                     }
+                }
+                // The answer still says the note or the study was changed
+                // and nothing was: said over it, since the claim went back
+                // once already or came on the last round (EC-501).
+                if (answer.isChangeUnmade === true) {
+                    const unmadeNote = tran(UNMADE_CHANGE_TEXT);
+                    note =
+                        note === undefined
+                            ? unmadeNote
+                            : `${note} ${unmadeNote}`;
                 }
                 // Asked about reading the Bible with the main window on
                 // another page -- a stray press is how an elderly reader
@@ -10920,17 +14370,44 @@ export default function ChatbotAppComp() {
                         },
                     ];
                 }
+                const heldForegroundChips = (answer.heldForeground ?? [])
+                    .filter((held) => {
+                        return !openForegroundAsks.some((one) => {
+                            return checkIsSameForegroundAsk(one, held);
+                        });
+                    })
+                    .map(genForegroundAttachment);
+                // Its Undo takes back the file the window made for this
+                // question too, after whatever was put in it (EC-514).
+                if (createdDocument !== null) {
+                    answer.actions = withCreatedUndoAction(
+                        answer.actions ?? [],
+                        createdDocument,
+                    );
+                }
                 addMessage(askedSessionId, {
                     author: 'bot',
                     // AFTER the answer, as its last paragraph, right above
                     // the button it names: a note is drawn over an answer,
                     // and this is a follow-up to one.
-                    text: [shownAnswer, readerRoute?.text, bibleFindAdvice]
+                    text: [
+                        // Under an offer, the model's one sentence about it
+                        // is not drawn: the offer says it, and right.
+                        langOffer === null ||
+                        checkSaysMoreThanLangOffer(shownAnswer)
+                            ? shownAnswer
+                            : null,
+                        langOffer?.text,
+                        readerRoute?.text,
+                        bibleFindAdvice,
+                    ]
                         .filter((part) => {
                             return typeof part === 'string' && part.length > 0;
                         })
                         .join('\n\n'),
                     note,
+                    // The offer is the window's, not the model's.
+                    ...(langOffer?.text ? { windowText: langOffer.text } : {}),
                     // A word study's answer carries the lesson's way on --
                     // the next word, the verse's words, the word on Google --
                     // and **More things to do**.
@@ -10965,8 +14442,12 @@ export default function ChatbotAppComp() {
                     ...(lookupSubject !== null
                         ? { isLookupAnswer: true as const }
                         : {}),
+                    // ...or more about the screens.
+                    ...(isScreenAsk ? { isScreenAnswer: true as const } : {}),
+                    // ...or the study the card above it holds (EC-702).
+                    ...(isAskFailed ? { isAskFailed: true as const } : {}),
                     ...usageTally.toField(),
-                    ...(replies.length > 0 ? { replies } : {}),
+                    ...(keptReplies.length > 0 ? { replies: keptReplies } : {}),
                     ...(answer.attachRequests !== undefined &&
                     options?.shownText === undefined
                         ? { attachRequests: answer.attachRequests }
@@ -10974,6 +14455,12 @@ export default function ChatbotAppComp() {
                     ...(answer.shows !== undefined &&
                     options?.shownText === undefined
                         ? { shows: answer.shows }
+                        : {}),
+                    // The foreground sessions it put up or changed, held as
+                    // chips: the tab's next question is about them (EC-520).
+                    // One the question was already about needs no second.
+                    ...(heldForegroundChips.length > 0
+                        ? { attachments: heldForegroundChips }
                         : {}),
                 });
                 // A note the answer made: opened, and attached to this tab
@@ -11007,6 +14494,8 @@ export default function ChatbotAppComp() {
                     ...(lookupSubject !== null
                         ? { isLookupAnswer: true as const }
                         : {}),
+                    ...(isScreenAsk ? { isScreenAnswer: true as const } : {}),
+                    isAskFailed: true,
                 });
                 // Told either way: a card left waiting on an answer that is
                 // never coming sits on "asking the assistant" until its own
@@ -11053,6 +14542,88 @@ export default function ChatbotAppComp() {
     );
 
     const handleAskingRef = useAppCurrentRef(handleAsking);
+    // **Retry** under an answer (2026-11-10, the user, the rotate icon drawn
+    // between the reply arrow and the thumbs: _as user I'd like to ask
+    // chatbot to retry again on the answer, so I can get different result_;
+    // the goal: _try with different approach and different effort_). The
+    // question that answer was given to is asked again in the tab in front,
+    // with what it was asked with, under a hint naming another way in and a
+    // step more effort for each try (`answerRetryHelpers`). The new answer
+    // lands at the bottom under a note saying what it is; the box is left
+    // as it was.
+    const handleRetrying = useCallback(
+        (answerId: number) => {
+            const retriedSessionId = activeSessionId;
+            if (checkIsSessionPending(retriedSessionId)) {
+                return;
+            }
+            const retriedMessages =
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === retriedSessionId;
+                })?.messages ?? [];
+            const question = findRetryQuestion(retriedMessages, answerId);
+            const answer = retriedMessages.find((message) => {
+                return message.id === answerId;
+            });
+            if (question === null || answer === undefined) {
+                return;
+            }
+            const attempt = countRetryAttempt(retriedMessages, question.text);
+            const firstAsked = findFirstTryQuestion(retriedMessages, question);
+            // Someone else answers this once (`toRetryPicks` in the ask):
+            // who wrote it, as the answer keeps it. On a paid key that is
+            // another of its models, handed to the ask alone -- the tab's
+            // MODEL list is not touched, so the next question asks the one
+            // it shows.
+            const avoid = answer.answeredBy;
+            const tab = sessionStateRef.current.sessions.find((session) => {
+                return session.id === retriedSessionId;
+            });
+            const isTabAnswered =
+                avoid !== undefined &&
+                tab?.provider !== null &&
+                tab?.provider !== undefined &&
+                tab.isAuto !== true &&
+                getLlmProviderLabel(tab.provider, tab.model) ===
+                    avoid.assistant &&
+                getLlmModelLabel(tab.provider, tab.model) === avoid.model;
+            const reused = toReusableAttachments(question.attachments);
+            const otherModel =
+                isTabAnswered && tab?.provider
+                    ? pickRetryModel(answererRef.current, (modelId) => {
+                          return (
+                              !reused.some((one) => {
+                                  return one.kind === 'image';
+                              }) || checkCanSeeImages(tab.provider!, modelId)
+                          );
+                      })
+                    : null;
+            // What is kept in the box was not typed just now: its type-ahead
+            // stays shut, or it opens over the new answer's own buttons when
+            // the box takes the focus back (seen live 2026-11-10).
+            setIsSuggestDismissed(true);
+            void handleAskingRef.current(question.text, false, {
+                retry: {
+                    attempt,
+                    hint: genRetryAskHint(
+                        answer.text,
+                        attempt,
+                        checkIsLastAnswer(retriedMessages, answerId),
+                    ),
+                    ...(avoid === undefined ? {} : { avoid }),
+                    questionId: firstAsked.id,
+                },
+                ...(otherModel === null ? {} : { model: otherModel.id }),
+                attachments: reused,
+                answerNote: tran(
+                    'A different answer: worked out another way, with more ' +
+                        'effort.',
+                ),
+            });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeSessionId],
+    );
     // A verse search handed over from Bible Find WITH its words, asked in
     // the tab the handoff opened once that tab is the one in front:
     // `handleAsking` asks in the tab it was last rendered with.
@@ -11208,8 +14779,22 @@ export default function ChatbotAppComp() {
                       return one.author === 'bot';
                   })?.text
                 : undefined;
-            handleAskingRef.current(reply, false, {
+            // The other changes offered with the one pressed stay buttons
+            // under its answer (BN-77, 2026-11-10: a lesson review offers
+            // two or three fixes; one pressed, the others were gone until
+            // the review was asked again).
+            const carriedChanges = checkIsChangeReply(reply)
+                ? parentReplies.filter((one) => {
+                      return one !== reply && checkIsChangeReply(one);
+                  })
+                : [];
+            // A card button the window does by itself, pressed in the
+            // window's language, is asked in its English -- which the
+            // window's own readers read (BN-16) -- and shown as pressed.
+            const windowDoneAsk = findWindowDoneCardAsk(reply);
+            handleAskingRef.current(windowDoneAsk ?? reply, false, {
                 isPressed: true,
+                ...(windowDoneAsk === null ? {} : { echoText: reply }),
                 ...(isResourcesRange
                     ? {
                           askHint: RESOURCES_RANGE_HINT,
@@ -11223,7 +14808,9 @@ export default function ChatbotAppComp() {
                 // could not try a different one).
                 ...(isResourcesConversation
                     ? { carryReplies: parentReplies }
-                    : {}),
+                    : carriedChanges.length > 0
+                      ? { carryReplies: carriedChanges }
+                      : {}),
                 ...(typeof parentText === 'string' && parentText.length > 0
                     ? { pressContext: parentText.slice(0, 1200) }
                     : {}),
@@ -12218,40 +15805,11 @@ export default function ChatbotAppComp() {
                 });
                 return;
             }
-            // `create` refuses a name already in use rather than overwriting,
-            // so a free one is found HERE. Pressing twice makes a second song
-            // beside the first; it never replaces one.
-            const listed = parseToolJson(
-                await callTool('owa_lyric_file', { action: 'list' }),
+            const saved = await saveDraftedLyric(
+                drafted,
+                await listTakenLyricNames(),
             );
-            const taken = new Set<string>(
-                (listed?.names ?? []).map((one: string) => {
-                    return String(one).toLowerCase();
-                }),
-            );
-            let name = drafted.name;
-            for (let index = 1; taken.has(name.toLowerCase()); index += 1) {
-                name = `${drafted.name} (${index})`;
-            }
-            // `created` comes back as the file's NAME, not as `true` -- the
-            // first version of this tested it for `true`, so a song that had
-            // been written perfectly well was reported to the user as a
-            // failure. Caught by pressing the button, never by a type.
-            let created: any = null;
-            try {
-                created = parseToolJson(
-                    await callTool('owa_lyric_file', {
-                        action: 'create',
-                        name,
-                        content: drafted.content,
-                    }),
-                );
-            } catch (error) {
-                // A tool's own words are written for whoever drives the app.
-                // The reason goes to the log; the user gets a sentence.
-                handleError(error);
-            }
-            if (typeof created?.filePath !== 'string') {
+            if (saved === null) {
                 addMessage(sessionId, {
                     author: 'bot',
                     text: tran(
@@ -12262,40 +15820,445 @@ export default function ChatbotAppComp() {
                 });
                 return;
             }
-            addMessage(sessionId, {
-                author: 'bot',
-                text: fillWords(
-                    tran(
-                        'Saved as "{name}". It is in your documents list now, ' +
-                            'ready to put on the screen — open it in the Lyric ' +
-                            'Editor to change the words or mark the chords.',
-                    ),
-                    { name },
-                ),
-                shows: [
-                    // Where it went, in the app rather than on the disk. The
-                    // row is looked up at PRESS time and rung in the window
-                    // behind this one, so a list scrolled since still lands on
-                    // the right row. Scoped to the panel because a song can
-                    // easily be named after something else on screen.
-                    {
-                        kind: 'control' as const,
-                        value: `Document List > ${name}`,
-                        name: tran('Show it in the list'),
-                    },
-                    { kind: 'file' as const, value: created.filePath, name },
-                ],
-            });
+            addMessage(sessionId, genSavedLyricMessage(saved));
         },
         [addMessage],
     );
     const handleDraftedLyricRef = useAppCurrentRef(handleDraftedLyric);
+
+    // **Create all N songs** under several drafted songs (EC-589): each
+    // saved in turn under a free name -- the names given earlier in the
+    // same press counted as taken, so two songs both called "Untitled"
+    // become two files -- and ONE answer for all of them. A song that
+    // could not be saved is named, and its own Create is still there.
+    const handleDraftedLyricList = useCallback(
+        async (action: BotActionType, sessionId: string) => {
+            const { heldList, goneCount } = takeDraftedLyricList(
+                action.args?.references,
+            );
+            if (heldList.length === 0) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(DRAFT_GONE_TEXT),
+                });
+                return;
+            }
+            const taken = await listTakenLyricNames();
+            const savedList: SavedLyricType[] = [];
+            const failedNames: string[] = [];
+            for (const drafted of heldList) {
+                const saved = await saveDraftedLyric(drafted, taken);
+                if (saved === null) {
+                    failedNames.push(drafted.name);
+                } else {
+                    savedList.push(saved);
+                }
+            }
+            const lines: string[] = [];
+            let shows: NonNullable<ChatMessageType['shows']> = [];
+            if (savedList.length === 1) {
+                const message = genSavedLyricMessage(savedList[0]);
+                lines.push(message.text);
+                shows = message.shows;
+            } else if (savedList.length > 1) {
+                lines.push(
+                    fillWords(
+                        tran(
+                            'Saved {count} songs: {names}. They are in your ' +
+                                'documents list now, ready to put on the ' +
+                                'screen — open one in the Lyric Editor to ' +
+                                'change the words or mark the chords.',
+                        ),
+                        {
+                            count: savedList.length,
+                            names: savedList
+                                .map((saved) => {
+                                    return `"${saved.name}"`;
+                                })
+                                .join(', '),
+                        },
+                    ),
+                );
+                // Each file, to open or keep; every one is an asset.
+                shows = savedList.map((saved) => {
+                    return {
+                        kind: 'file' as const,
+                        value: saved.filePath,
+                        name: saved.name,
+                    };
+                });
+            }
+            if (failedNames.length > 0) {
+                lines.push(
+                    fillWords(
+                        tran(
+                            'These could not be saved: {names}. Check there ' +
+                                'is room in your documents folder, then press ' +
+                                'that song’s own Create button.',
+                        ),
+                        {
+                            names: failedNames
+                                .map((name) => {
+                                    return `"${name}"`;
+                                })
+                                .join(', '),
+                        },
+                    ),
+                );
+            }
+            if (goneCount > 0) {
+                lines.push(tran(DRAFT_GONE_TEXT));
+            }
+            addMessage(sessionId, {
+                author: 'bot',
+                text: lines.join('\n\n'),
+                ...(shows.length > 0 ? { shows } : {}),
+            });
+        },
+        [addMessage],
+    );
+    const handleDraftedLyricListRef = useAppCurrentRef(handleDraftedLyricList);
+
+    // A Documents list deck's button under a song-from-PowerPoint ask
+    // (EC-590): that file read for its words and its song drafted, no model,
+    // under the song's own Create and Copy -- nothing written until then.
+    const handleDeckSongRef = useAppCurrentRef(
+        async (action: BotActionType, sessionId: string) => {
+            const deckFile = readDeckSongArgs(action.args);
+            if (deckFile === null) {
+                return;
+            }
+            clearProgressSteps(sessionId);
+            const answer = await draftDeckSongs(
+                [deckFile],
+                genProgressReporter(genSessionProgress(sessionId)),
+            );
+            addMessage(sessionId, {
+                author: 'bot',
+                text: answer.text,
+                actions: answer.actions,
+                replies: answer.replies,
+            });
+        },
+    );
+
+    // A study file's card (EC-464, `studyFileChatHelpers.ts`): Create or
+    // Save changes, Preview, Change the name -- and, once saved, Open it.
+    // The model only drafted it; these presses are the person's.
+    const handleStudyActionRef = useAppCurrentRef(
+        async (action: BotActionType, sessionId: string) => {
+            const savedFile = action.args?.file;
+            if (
+                action.toolName === STUDY_PREVIEW_TOOL_NAME &&
+                typeof savedFile === 'string'
+            ) {
+                try {
+                    await callTool(RESOURCES_TOOL_NAME, {
+                        action: 'preview',
+                        file: savedFile,
+                    });
+                } catch (error) {
+                    handleError(error);
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: tran('The preview could not be opened.'),
+                    });
+                }
+                return;
+            }
+            const drafted = takeDraftedStudy(action.args?.reference ?? '');
+            if (drafted === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(STUDY_DRAFT_GONE_TEXT),
+                });
+                return;
+            }
+            if (action.toolName === STUDY_RENAME_TOOL_NAME) {
+                setStudyRenameWait(sessionId, drafted.reference);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(
+                        'Type the new name for the study file, then press Send.',
+                    ),
+                });
+                inputRef.current?.focus();
+                return;
+            }
+            if (action.toolName === STUDY_PREVIEW_TOOL_NAME) {
+                let previewed: any = null;
+                try {
+                    previewed = parseToolJson(
+                        await callTool(RESOURCES_TOOL_NAME, {
+                            action: 'preview',
+                            name: drafted.name,
+                            content: drafted.content,
+                        }),
+                    );
+                } catch (error) {
+                    handleError(error);
+                }
+                if (typeof previewed?.previewed !== 'string') {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: tran('The preview could not be opened.'),
+                    });
+                }
+                return;
+            }
+            // **New Bible Note** (EC-581, the user: _whenever creating
+            // bible-note or resource study file should always let user
+            // choose between bible-note or markdown file_): the same words
+            // made a Bible note -- the note the model asked for, or the study
+            // as one -- then opened in its own window and attached to the
+            // tab, as a note the assistant makes is.
+            if (checkIsStudyNotePress(action.args) && !drafted.isChange) {
+                const note = toNoteFromStudy(drafted);
+                let created: CreatedNoteType | null = null;
+                if (note !== null) {
+                    try {
+                        created = readCreatedNote(
+                            await callTool('owa_bible_note', {
+                                action: 'add',
+                                title: note.title,
+                                text: note.text,
+                                ...(note.file === undefined
+                                    ? {}
+                                    : { file: note.file }),
+                            }),
+                        );
+                    } catch (error) {
+                        handleError(error);
+                    }
+                }
+                if (note === null || created === null) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: tran(
+                            'The Bible note could not be made. Ask me to ' +
+                                'write it again.',
+                        ),
+                    });
+                    return;
+                }
+                const under = genCreatedNoteUnder(created);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: fillWords(
+                        note.diagramCount > 0
+                            ? tran(
+                                  'Saved as "{name}" in Bible Notes, without ' +
+                                      'its diagrams: a Bible note does not ' +
+                                      'draw them. It is attached to this ' +
+                                      'chat: ask me about it, or ask me to ' +
+                                      'change it.',
+                              )
+                            : tran(
+                                  'Saved as "{name}" in Bible Notes. It is ' +
+                                      'attached to this chat: ask me about ' +
+                                      'it, or ask me to change it.',
+                              ),
+                        { name: created.name },
+                    ),
+                    actions: under.actions,
+                    shows: under.shows,
+                });
+                await openCreatedNoteRef.current(sessionId, created);
+                return;
+            }
+            // Create, or Save changes: the tool takes the next free name for
+            // a new file and refuses a change to a file changed since. A new
+            // study goes where the press says (EC-509): Resources, or the
+            // Bible Notes list, under the name it was drafted with.
+            const place = readStudyCreatePlace(action.args);
+            const isBibleNotes = !drafted.isChange && place === 'bible-notes';
+            let saved: any = null;
+            try {
+                saved = parseToolJson(
+                    await callTool(
+                        RESOURCES_TOOL_NAME,
+                        drafted.isChange
+                            ? {
+                                  action: 'save',
+                                  file: drafted.file ?? '',
+                                  hash: drafted.hash ?? '',
+                                  content: drafted.content,
+                              }
+                            : {
+                                  action: 'save',
+                                  name: isBibleNotes
+                                      ? toBibleNotesDraftName(drafted)
+                                      : drafted.name,
+                                  content: drafted.content,
+                                  to: place,
+                              },
+                    ),
+                );
+            } catch (error) {
+                handleError(error);
+            }
+            if (typeof saved?.filePath !== 'string') {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: drafted.isChange
+                        ? tran(
+                              'The changes could not be saved: the file may ' +
+                                  'have changed since. Ask me to make the ' +
+                                  'change again.',
+                          )
+                        : tran(
+                              'The study file could not be saved. Ask me to ' +
+                                  'draft it again.',
+                          ),
+                });
+                return;
+            }
+            const name = String(saved.created ?? saved.changed ?? drafted.name);
+            if (!drafted.isChange) {
+                // Attached to the tab it was asked in: the next question is
+                // about it (the folder is on the panel's list now, so the
+                // tab asks about a Resources file -- one kept in Bible Notes
+                // is named as one too, `Bible Notes/<name>`).
+                await attachHandedFileRef.current(
+                    sessionId,
+                    saved.filePath,
+                    null,
+                    null,
+                    true,
+                );
+            }
+            const undoAction =
+                typeof saved.undoId === 'string'
+                    ? genLyricUndoAction({ name, undoId: saved.undoId })
+                    : null;
+            addMessage(sessionId, {
+                author: 'bot',
+                text: drafted.isChange
+                    ? fillWords(
+                          tran(
+                              'Saved the changes to "{name}". Undo this ' +
+                                  'change puts it back.',
+                          ),
+                          { name },
+                      )
+                    : isBibleNotes
+                      ? fillWords(
+                            tran(
+                                'Saved as "{name}" in Bible Notes. It is ' +
+                                    'attached to this chat: ask me about ' +
+                                    'it, or ask me to change it.',
+                            ),
+                            { name },
+                        )
+                      : fillWords(
+                            tran(
+                                'Saved as "{name}" in Resources → Default. ' +
+                                    'It is attached to this chat: ask me ' +
+                                    'about it, or ask me to change it.',
+                            ),
+                            { name },
+                        ),
+                actions: [
+                    {
+                        label: 'Open it',
+                        toolName: STUDY_PREVIEW_TOOL_NAME,
+                        args: { file: String(saved.file ?? '') },
+                    },
+                    ...(undoAction === null ? [] : [undoAction]),
+                ],
+                shows: [{ kind: 'file' as const, value: saved.filePath, name }],
+            });
+        },
+    );
+
+    // A new name typed after **Change the name**: the same study drafted
+    // again under it, with no model -- its words are held, only the name
+    // changes -- and a fresh card.
+    const renameStudyDraftRef = useAppCurrentRef(
+        async (reference: string, typed: string, sessionId: string) => {
+            const drafted = takeDraftedStudy(reference);
+            if (drafted === null || drafted.raw === null) {
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(STUDY_DRAFT_GONE_TEXT),
+                });
+                return;
+            }
+            let text = '';
+            try {
+                text = await callTool(RESOURCES_TOOL_NAME, {
+                    action: 'draft',
+                    ref: drafted.raw.ref,
+                    title: typed,
+                    content: drafted.raw.content,
+                    ...(drafted.raw.bible === null
+                        ? {}
+                        : { bible: drafted.raw.bible }),
+                });
+            } catch (error) {
+                handleError(error);
+            }
+            const renamed = readDraftedStudy(text, {
+                ...drafted.raw,
+                title: typed,
+            });
+            if (renamed === null) {
+                // The tool's own sentence says why ("cannot contain …").
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: tran(
+                        'That name cannot be used for a file. Press Change ' +
+                            'the name and type another, in plain words.',
+                    ),
+                    actions: genStudyDraftActions(drafted),
+                });
+                return;
+            }
+            // The diagrams were checked when it was drafted; only the name
+            // and the title line are new.
+            renamed.content = drafted.content.replace(
+                /^# .*$/m,
+                `# ${renamed.raw?.title ?? typed}`,
+            );
+            renamed.diagramCount = drafted.diagramCount;
+            // A held note keeps its twin under the new name, and a press
+            // for a Markdown file stays one (EC-581).
+            const kept = keepDraftedStudy({
+                ...renamed,
+                ...(drafted.note === undefined
+                    ? {}
+                    : {
+                          note: {
+                              ...drafted.note,
+                              title: renamed.raw?.title ?? typed,
+                          },
+                      }),
+                ...(drafted.isMarkdownOnly === true
+                    ? { isMarkdownOnly: true as const }
+                    : {}),
+            });
+            addMessage(sessionId, {
+                author: 'bot',
+                text: fillWords(
+                    tran(
+                        'It will be saved as "{name}". Press Create to save ' +
+                            'it.',
+                    ),
+                    { name: kept.name },
+                ),
+                actions: genStudyDraftActions(kept),
+            });
+        },
+    );
 
     const handleActing = useCallback(
         async (action: BotActionType) => {
             // Same reason as `handleAsking`: the button that fired this lives
             // in a tab, and a tool call is slow enough to outlive looking at it.
             const actedSessionId = activeSessionId;
+            if (action.toolName !== STUDY_RENAME_TOOL_NAME) {
+                clearStudyRenameWait(actedSessionId);
+            }
             // Not a tool at all -- the Send button on a prepared report. It is
             // caught here rather than given a name in the tool host because
             // nothing outside this window may file a report on the user's
@@ -12368,6 +16331,11 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // A passage of a Bibles list save asked about (EC-626).
+            if (action.toolName === BIBLE_LIST_PICK_TOOL_NAME) {
+                await handleBibleListPickRef.current(actedSessionId, action);
+                return;
+            }
             if (action.toolName === VERSE_FIND_STEP_TOOL_NAME) {
                 await handleVerseFindStepRef.current(
                     actedSessionId,
@@ -12412,6 +16380,22 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // A song made from a document: a file pressed in the list, More
+            // files, Read the words off the pictures. Its args are checked
+            // here -- a saved button is a file anyone could edit.
+            if (action.toolName === LYRIC_DOCUMENT_STEP_TOOL_NAME) {
+                const state = toValidLyricDocumentState(action.args);
+                if (state !== null) {
+                    await handleLyricDocumentStepRef.current(
+                        actedSessionId,
+                        state,
+                        action.isData === true
+                            ? action.label
+                            : toShownLabel(action.label),
+                    );
+                }
+                return;
+            }
             // **Ask about <another file the assistant read>** under a
             // Resources answer: the file is attached to this tab, so the
             // next question is about it (`resourcesChatHelpers.ts`).
@@ -12453,16 +16437,83 @@ export default function ChatbotAppComp() {
                     if (undoneCount === 0 && lastError !== null) {
                         throw lastError;
                     }
+                    // A file the window MADE for the question goes with its
+                    // making (EC-514): there is nothing for it to be back as.
+                    const madeId = String(action.args?.madeId ?? '');
+                    const isMadeUndone =
+                        madeId !== '' && undoIdList.includes(madeId);
+                    // ...and out of the box, where a file asked for with
+                    // nothing in it waits: a chip of a file that is gone
+                    // would be asked about next.
+                    const madePath = String(action.args?.madePath ?? '');
+                    if (isMadeUndone && madePath !== '') {
+                        // Nor is it "still asked about" when it was all the
+                        // tab had open: the next question would read a file
+                        // that is gone.
+                        updateSession(actedSessionId, (session) => {
+                            const openFiles = findOpenFileAttachments(
+                                session.messages,
+                                session.fileClosedAt,
+                            );
+                            if (
+                                openFiles.length === 0 ||
+                                openFiles.some((one) => {
+                                    return one.filePath !== madePath;
+                                })
+                            ) {
+                                return session;
+                            }
+                            return {
+                                ...session,
+                                fileClosedAt: session.messages.reduce(
+                                    (most, message) => {
+                                        return Math.max(most, message.id);
+                                    },
+                                    0,
+                                ),
+                            };
+                        });
+                        setDraftAttachmentMap((previous) => {
+                            const boxed = previous[actedSessionId] ?? [];
+                            const kept = boxed.filter((one) => {
+                                return one.filePath !== madePath;
+                            });
+                            return kept.length === boxed.length
+                                ? previous
+                                : { ...previous, [actedSessionId]: kept };
+                        });
+                    }
+                    // A foreground answer's sessions, each said as it is
+                    // now: one the answer made is gone again (EC-545).
+                    const foregroundParts = readForegroundUndoParts(
+                        action.args?.parts,
+                    );
                     addMessage(actedSessionId, {
                         author: 'bot',
                         isFollowUp: true,
-                        text: fillWords(
-                            tran(
-                                '“{name}” is back as it was before that ' +
-                                    'change.',
-                            ),
-                            { name: songName },
-                        ),
+                        text: foregroundParts
+                            ? genForegroundUndoneText(foregroundParts)
+                            : action.args?.kind === SCREEN_UNDO_KIND
+                              ? tran(
+                                    'The screens are back as they were ' +
+                                        'before that change.',
+                                )
+                              : isMadeUndone
+                                ? fillWords(
+                                      tran(
+                                          '“{name}” is taken away again: ' +
+                                              'the change that made it is ' +
+                                              'undone.',
+                                      ),
+                                      { name: songName },
+                                  )
+                                : fillWords(
+                                      tran(
+                                          '“{name}” is back as it was ' +
+                                              'before that change.',
+                                      ),
+                                      { name: songName },
+                                  ),
                     });
                 } catch (error: any) {
                     addMessage(actedSessionId, {
@@ -12781,10 +16832,59 @@ export default function ChatbotAppComp() {
                 });
                 return;
             }
+            // A study file's card: busy while it is written, not stoppable.
+            if (
+                action.toolName === STUDY_CREATE_TOOL_NAME ||
+                action.toolName === STUDY_PREVIEW_TOOL_NAME ||
+                action.toolName === STUDY_RENAME_TOOL_NAME
+            ) {
+                busyHoldListRef.current = [
+                    ...busyHoldListRef.current,
+                    actedSessionId,
+                ];
+                syncBusy();
+                try {
+                    await handleStudyActionRef.current(action, actedSessionId);
+                } finally {
+                    const holdIndex =
+                        busyHoldListRef.current.indexOf(actedSessionId);
+                    busyHoldListRef.current = busyHoldListRef.current.filter(
+                        (_sessionId, index) => {
+                            return index !== holdIndex;
+                        },
+                    );
+                    syncBusy();
+                }
+                return;
+            }
+            // A deck of the Documents list, drafted as a song by the window
+            // (EC-590). Busy in its tab while the file is read and drafted.
+            if (action.toolName === DECK_SONG_TOOL_NAME) {
+                busyHoldListRef.current = [
+                    ...busyHoldListRef.current,
+                    actedSessionId,
+                ];
+                syncBusy();
+                try {
+                    await handleDeckSongRef.current(action, actedSessionId);
+                } finally {
+                    const holdIndex =
+                        busyHoldListRef.current.indexOf(actedSessionId);
+                    busyHoldListRef.current = busyHoldListRef.current.filter(
+                        (_sessionId, index) => {
+                            return index !== holdIndex;
+                        },
+                    );
+                    syncBusy();
+                    clearProgressSteps(actedSessionId);
+                }
+                return;
+            }
             // The same seam, for the song the assistant just wrote out.
             if (
                 action.toolName === LYRIC_CREATE_TOOL_NAME ||
-                action.toolName === LYRIC_COPY_TOOL_NAME
+                action.toolName === LYRIC_COPY_TOOL_NAME ||
+                action.toolName === LYRIC_CREATE_ALL_TOOL_NAME
             ) {
                 // Busy in the tab that pressed it, and not stoppable: a file
                 // half written is worse than one the user can delete.
@@ -12794,7 +16894,17 @@ export default function ChatbotAppComp() {
                 ];
                 syncBusy();
                 try {
-                    await handleDraftedLyricRef.current(action, actedSessionId);
+                    if (action.toolName === LYRIC_CREATE_ALL_TOOL_NAME) {
+                        await handleDraftedLyricListRef.current(
+                            action,
+                            actedSessionId,
+                        );
+                    } else {
+                        await handleDraftedLyricRef.current(
+                            action,
+                            actedSessionId,
+                        );
+                    }
                 } finally {
                     const holdIndex =
                         busyHoldListRef.current.indexOf(actedSessionId);
@@ -12851,6 +16961,11 @@ export default function ChatbotAppComp() {
                     text: result.text,
                     actions: result.actions,
                     ...(replies.length > 0 ? { replies } : {}),
+                    // A screen change pressed (EC-627): the next plain line
+                    // under it is more about the screens.
+                    ...(action.toolName === SCREEN_CHANGE_TOOL_NAME
+                        ? { isScreenAnswer: true as const }
+                        : {}),
                 });
             } catch (error: any) {
                 if (checkIsCancelError(error, signal)) {
@@ -13114,6 +17229,7 @@ export default function ChatbotAppComp() {
                                             tran('Guided demo: {demo}'),
                                             { demo: tranLabel(demo.label) },
                                         ),
+                                        isStep: true,
                                     });
                                     void handleActing({
                                         label: demo.label,
@@ -13270,6 +17386,13 @@ export default function ChatbotAppComp() {
                                     onReply={handleReplying}
                                     onReuse={handleReusing}
                                     onRate={handleRating}
+                                    onQuote={handleQuotingAnswer}
+                                    onRetry={
+                                        retryableAnswerIds.has(message.id)
+                                            ? handleRetrying
+                                            : undefined
+                                    }
+                                    canRetry={!isBusy}
                                     onAttachRequest={handleAttachRequest}
                                     onShowAttachment={handleShowingAttachment}
                                 />
@@ -13396,6 +17519,32 @@ export default function ChatbotAppComp() {
                         />
                     </div>
                 )}
+                {openForegroundAttachments.length === 0 ? null : (
+                    <div
+                        className="chat-open-files"
+                        title={tran(
+                            'This foreground session goes with every ' +
+                                'question in this tab. Press × when you are ' +
+                                'done with it.',
+                        )}
+                    >
+                        <span className="chat-open-files-label">
+                            {tran('Still asking about')}
+                        </span>
+                        <RenderAttachmentChipsComp
+                            attachments={openForegroundAttachments}
+                            onRemove={handleClosingForeground}
+                            onShow={handleShowingAttachment}
+                        />
+                    </div>
+                )}
+                {foregroundPick === null ? null : (
+                    <RenderForegroundPickComp
+                        pick={foregroundPick}
+                        onPick={handlePickingForeground}
+                        onClose={handleClosingForegroundPick}
+                    />
+                )}
                 {!isResourcesPdfOpen || isCautionHidden ? null : (
                     <p className="chat-caution" role="note">
                         <span className="chat-caution-mark" aria-hidden="true">
@@ -13516,61 +17665,21 @@ export default function ChatbotAppComp() {
                     />
                 ) : null}
                 <div className="chat-attach-row">
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Attach a file')}
-                        title={tran('Attach a picture or a file')}
-                        onClick={() => {
+                    <RenderAskToolsMenuComp
+                        onAttachingFile={() => {
                             fileInputRef.current?.click();
                         }}
-                    >
-                        <i className="bi bi-paperclip" />
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Attach a picture of the app')}
-                        title={tran(
-                            'Attach a picture of the app as it looks now',
-                        )}
-                        onClick={handleSnapping}
-                    >
-                        <i className="bi bi-camera" />
-                    </button>
-                    <button
-                        type="button"
-                        className="chat-attach"
-                        aria-label={tran('Point at a control in the app')}
-                        title={tran('Point at a control in the app window')}
-                        onClick={handlePicking}
-                    >
-                        <i className="bi bi-bullseye" />
-                    </button>
-                    {/*
-                     * Last in the row, beside the box it writes into: it puts
-                     * `/` there and the command list opens, which is how
-                     * someone who never read the placeholder learns what `/`
-                     * is for. Says so in its own words (label and tooltip), not
-                     * only in the glyph.
-                     */}
-                    <button
-                        type="button"
-                        className="chat-attach chat-start-command"
-                        aria-label={tran('List every command')}
-                        title={tran(
-                            'Start a command: puts / in the box and lists the commands you can type',
-                        )}
-                        onClick={handleStartingCommand}
-                    >
-                        <i className="bi bi-slash-square" aria-hidden="true" />
-                    </button>
+                        onSnapping={handleSnapping}
+                        onPicking={handlePicking}
+                        onAttachingForeground={handleOpeningForegroundPick}
+                        onStartingCommand={handleStartingCommand}
+                    />
                     <input
                         ref={fileInputRef}
                         className="chat-file-input"
                         type="file"
                         multiple
-                        accept="image/*,text/*,.md,.markdown,.json,.csv,.log,.xml,.pdf,application/pdf,.own"
+                        accept="image/*,text/*,.md,.markdown,.json,.csv,.log,.xml,.pdf,application/pdf,.own,.ows,.pptx,.docx"
                         onChange={(event) => {
                             addFiles([...(event.target.files ?? [])]);
                             // Cleared so choosing the SAME file twice still
@@ -13616,7 +17725,7 @@ export default function ChatbotAppComp() {
                     onKeyDown={(event) => {
                         if (event.key === 'Enter') {
                             // An IME still composing owns its own Enter: in
-                            // Khmer that press is choosing the syllable, and
+                            // many scripts that press is choosing the syllable, and
                             // taking it would ask half a word.
                             if (event.nativeEvent.isComposing) {
                                 return;

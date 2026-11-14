@@ -14,7 +14,10 @@ user said it, resolves it with `BibleItem.fromTitleText` (the lookup box's
 own parser) in the version the lookup is on, then any installed one that
 reads it, presents through `ScreenLongTextManager.handleBibleItemSelecting`
 with a null event (the ticked screens, exactly like the lookup's **Show
-bible item**; nothing saved to the Bibles list) and reads the screens back.
+bible item**) and reads the screens back. Since 2026-11-14 (`EC-704`, the
+user: _the rule is bible verse have to save to list first (if not added)
+before show on screen_) the passage is first saved into the Bibles list's
+Default unless it holds it already, as the Lookup's double-click does.
 `/verse John 3:16` and the offline bot (`VERSE_ASK_PATTERN`, check first,
 ONE button) use the same door. `applyToolWatch` marks a presented result
 `isActedOn` so no W-06 walkthrough is offered under an answer that did it.

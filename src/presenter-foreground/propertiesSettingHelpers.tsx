@@ -4,6 +4,7 @@ import {
     type ChangeEvent,
     type ReactNode,
     useCallback,
+    useState,
     type CSSProperties,
 } from 'react';
 
@@ -25,6 +26,7 @@ import CommonStyleControlsComp, {
 } from './ForegroundCommonPropertiesSettingComp';
 import { useAppCurrentRef } from '../helper/appHooks';
 import PropRowComp from './ForegroundPropRowComp';
+import ForegroundPresetsComp from './ForegroundPresetsComp';
 import BlendModeSelectComp from '../others/BlendModeSelectComp';
 import {
     checkIsBlending,
@@ -36,14 +38,16 @@ import {
     genForegroundDecorationStyle,
     getForegroundDecoration,
 } from './foregroundDecorationHelpers';
-import {
-    genForegroundSessionTransitionSettingName,
-    resolveForegroundTransition,
-} from './foregroundTransitionHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { genPropsSettingNames } from './foregroundStyleSettingNames';
 import { ForegroundTransitionPropComp } from './ForegroundTransitionControlsComp';
+import { getForegroundDefaultColors } from './foregroundThemeColorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 
 const DEFAULT_FONT_SIZE = 100;
 const DEFAULT_WIDGET_WIDTH_PERCENTAGE = 50;
+/** A margin keeps at least a tenth of the screen for the box. */
+const MAX_MARGIN_PERCENTAGE = 45;
 const DEFAULT_WIDGET_SCALE = 1;
 const DEFAULT_WIDGET_OPACITY_PERCENTAGE = 100;
 const DEFAULT_ROUND_PERCENTAGE = 50;
@@ -76,24 +80,9 @@ export function getForegroundWidthScale(prefix: string) {
     return getWidgetWidthScale(genPropsSettingNames(prefix).widthPercentage);
 }
 
-export function genPropsSettingNames(prefix: string) {
-    return {
-        roundPercentage: `${prefix}-setting-show-widget-round-percentage`,
-        widthPercentage: `${prefix}-setting-show-widget-width-percentage`,
-        scale: `${prefix}-setting-show-widget-scale`,
-        opacityPercentage: `${prefix}-setting-show-widget-opacity-percentage`,
-        alignment: `${prefix}-setting-show-widget-alignment-data`,
-        offsetX: `${prefix}-setting-show-widget-offset-x`,
-        offsetY: `${prefix}-setting-show-widget-offset-y`,
-        fontSize: `${prefix}-setting-show-widget-font-size`,
-        roundSizePixel: `${prefix}-setting-show-widget-round-size-px`,
-        blendMode: `${prefix}-setting-show-widget-blend-mode`,
-        isAlwaysOnTop: `${prefix}-setting-show-widget-always-on-top`,
-        zIndex: `${prefix}-setting-show-widget-z-index`,
-        transitionEffect: genForegroundSessionTransitionSettingName(prefix),
-        isBehind: `${prefix}-setting-show-widget-is-behind`,
-    };
-}
+// The key names live in a module of their own, free of this one's React and
+// styles; re-exported here for the callers that always found them here.
+export { genPropsSettingNames };
 
 /**
  * Whether this session's overlay goes BEHIND the slide and the Bible text.
@@ -216,6 +205,10 @@ function genTransformingExtraStyle(
     offsetXSettingName: string,
     offsetYSettingName: string,
     widgetScaleSettingName: string,
+    insets: { horizontalPercentage: number; verticalPercentage: number } = {
+        horizontalPercentage: 0,
+        verticalPercentage: 0,
+    },
 ): CSSProperties {
     const widgetOffsetX = Number.parseInt(
         getSetting(offsetXSettingName) ?? DEFAULT_WIDGET_OFFSET_X.toString(),
@@ -277,15 +270,22 @@ function genTransformingExtraStyle(
                 ` ${transformScaleRotate}`,
         };
     }
+    // A margin moves the box in from the edge it is set to; with none it is
+    // the plain pixel nudge it always was.
+    const toEdge = (percentage: number, pixel: number) => {
+        return percentage > 0
+            ? `calc(${percentage}% + ${pixel}px)`
+            : `${pixel}px`;
+    };
     if (horizontalAlignment === 'left') {
-        style.left = `${widgetOffsetX}px`;
+        style.left = toEdge(insets.horizontalPercentage, widgetOffsetX);
     } else if (horizontalAlignment === 'right') {
-        style.right = `${widgetOffsetX}px`;
+        style.right = toEdge(insets.horizontalPercentage, widgetOffsetX);
     }
     if (verticalAlignment === 'start') {
-        style.top = `${widgetOffsetY}px`;
+        style.top = toEdge(insets.verticalPercentage, widgetOffsetY);
     } else if (verticalAlignment === 'end') {
-        style.bottom = `${widgetOffsetY}px`;
+        style.bottom = toEdge(insets.verticalPercentage, widgetOffsetY);
     }
     style.transformOrigin = transformOrigin;
     return style;
@@ -305,7 +305,29 @@ type ForegroundPropsOptionType = {
     isGeometry: boolean;
     isCommonStyle: boolean;
     isBlendMode: boolean;
+    /** Margins in place of Width -- see `genMarginInsets`. */
+    isMargin?: boolean;
 };
+
+/**
+ * Where a box with MARGINS sits (Quick Text, 2026-11-09, the user: _replace
+ * the width with margin like in lyric setting_). The side margins are the
+ * width -- `(100 - width) / 2` on each side -- so a box set to one side starts
+ * that far in, and the top or bottom margin is a share of the screen's
+ * height. Each adds to the pixel nudge.
+ */
+function genMarginInsets(names: ReturnType<typeof genPropsSettingNames>) {
+    const width = getWidgetWidthScale(names.widthPercentage);
+    const vertical = Number.parseFloat(
+        getSetting(names.marginVerticalPercentage) ?? '0',
+    );
+    return {
+        horizontalPercentage: (100 - width) / 2,
+        verticalPercentage: Number.isFinite(vertical)
+            ? Math.max(0, Math.min(MAX_MARGIN_PERCENTAGE, vertical))
+            : 0,
+    };
+}
 
 /**
  * The whole of a widget's `extraStyle`, read straight from the settings rather
@@ -319,6 +341,7 @@ export function genForegroundExtraStyle(
         isGeometry,
         isCommonStyle,
         isBlendMode,
+        isMargin = false,
     }: ForegroundPropsOptionType,
 ): CSSProperties {
     const names = genPropsSettingNames(prefix);
@@ -357,6 +380,7 @@ export function genForegroundExtraStyle(
                 names.offsetX,
                 names.offsetY,
                 names.scale,
+                isMargin ? genMarginInsets(names) : undefined,
             ),
         });
     }
@@ -428,34 +452,65 @@ function RoundPropComp({
     setRoundSizePixel: (value: number) => void;
     isEngaged: boolean;
 }>) {
-    const isPixel = roundSizePixel > 0;
+    // The unit is the ROW's, not read off the value: a px box cleared to type
+    // a new number wrote 0, and 0 is how the setting says "use the
+    // percentage" -- so the row turned into the % slider and the box the
+    // operator was typing in vanished under them (2026-11-09, reported).
+    const [isPixel, setIsPixel] = useState(roundSizePixel > 0);
+    // What the box shows while it is typed in, which may be nothing yet.
+    const [pixelText, setPixelText] = useState(`${roundSizePixel}`);
     const roundSizePixelRef = useAppCurrentRef(roundSizePixel);
     const setRoundSizePixelRef = useAppCurrentRef(setRoundSizePixel);
+    const setRoundPercentageRef = useAppCurrentRef(setRoundPercentage);
     // Switching to px with nothing set would leave the corner unchanged and
     // the control looking broken, so it starts at the default it always had.
     const handleUsePixel = useCallback(() => {
-        setRoundSizePixelRef.current(
+        const value =
             roundSizePixelRef.current > 0
                 ? roundSizePixelRef.current
-                : DEFAULT_ROUND_SIZE_PIXEL,
-        );
+                : DEFAULT_ROUND_SIZE_PIXEL;
+        setIsPixel(true);
+        setPixelText(`${value}`);
+        setRoundSizePixelRef.current(value);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // Zero IS how the app says "use the percentage"; the toggle just stops
     // that being something the user has to know.
     const handleUsePercentage = useCallback(() => {
+        setIsPixel(false);
         setRoundSizePixelRef.current(0);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handlePixelChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setRoundSizePixelRef.current(
-                Math.max(0, Number.parseInt(event.target.value) || 0),
-            );
+            const text = event.target.value;
+            setPixelText(text);
+            const value = Number.parseInt(text, 10);
+            if (!Number.isFinite(value)) {
+                // Emptied to type another number: nothing is written yet.
+                return;
+            }
+            if (value <= 0) {
+                // 0 px is a square corner. Stored as 0 it would mean "the
+                // percentage", so the percentage goes to 0 with it.
+                setRoundPercentageRef.current(0);
+                setRoundSizePixelRef.current(0);
+                return;
+            }
+            setRoundSizePixelRef.current(value);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    // Left empty: the box shows the value that is still in force.
+    const handlePixelBlur = useCallback(() => {
+        setPixelText((text) => {
+            return Number.isFinite(Number.parseInt(text, 10))
+                ? text
+                : `${roundSizePixelRef.current}`;
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const label = tran('Round');
     return (
         <PropRowComp
@@ -489,8 +544,9 @@ function RoundPropComp({
                     type="number"
                     min={0}
                     aria-label={`${label} px`}
-                    value={roundSizePixel}
+                    value={pixelText}
                     onChange={handlePixelChange}
+                    onBlur={handlePixelBlur}
                 />
             ) : (
                 <AppRangeComp
@@ -508,6 +564,110 @@ function RoundPropComp({
                 />
             )}
         </PropRowComp>
+    );
+}
+
+/**
+ * Quick Text's Margin, in place of Width (2026-11-09, the user: _for quick
+ * text only I want to replace the width with margin like in lyric
+ * setting_): the Lyric stage style's two sliders and link. The side margin
+ * IS the width -- `(100 - width) / 2` -- so a preset, the assistant and the
+ * screen keep reading the one width they always have; the top or bottom
+ * margin is a key of its own.
+ */
+function MarginPropComp({
+    widthPercentage,
+    setWidthPercentage,
+    marginVerticalPercentage,
+    setMarginVerticalPercentage,
+    isMarginLinked,
+    setIsMarginLinked,
+}: Readonly<{
+    widthPercentage: number;
+    setWidthPercentage: (value: number) => void;
+    marginVerticalPercentage: number;
+    setMarginVerticalPercentage: (value: number) => void;
+    isMarginLinked: boolean;
+    setIsMarginLinked: (value: boolean) => void;
+}>) {
+    const horizontal = Math.round((100 - widthPercentage) / 2);
+    const toMargin = (value: number) => {
+        return Math.max(0, Math.min(MAX_MARGIN_PERCENTAGE, Math.round(value)));
+    };
+    const handleHorizontal = (value: number) => {
+        const margin = toMargin(value);
+        setWidthPercentage(100 - margin * 2);
+        if (isMarginLinked) {
+            setMarginVerticalPercentage(margin);
+        }
+    };
+    const handleVertical = (value: number) => {
+        const margin = toMargin(value);
+        setMarginVerticalPercentage(margin);
+        if (isMarginLinked) {
+            setWidthPercentage(100 - margin * 2);
+        }
+    };
+    const linkTitle = tran('Link horizontal and vertical margin');
+    const range = { min: 0, max: MAX_MARGIN_PERCENTAGE, step: 1 };
+    // The link at the LEFT of both rows, centred between the two it ties
+    // (the user's picture, 2026-11-09) -- and the Lyric stage panel's too.
+    return (
+        <div className="fg-margin-group">
+            <button
+                type="button"
+                className={
+                    'btn btn-sm btn' +
+                    (isMarginLinked ? '' : '-outline') +
+                    '-info fg-margin-link'
+                }
+                title={linkTitle}
+                aria-label={linkTitle}
+                aria-pressed={isMarginLinked}
+                onClick={() => {
+                    setIsMarginLinked(!isMarginLinked);
+                }}
+            >
+                <i
+                    className={'bi bi-link' + (isMarginLinked ? '-45deg' : '')}
+                />
+            </button>
+            <div className="fg-margin-rows">
+                <PropRowComp
+                    iconClassName="bi bi-arrows"
+                    label={tran('Horizontal Margin (%)')}
+                    isEngaged={
+                        widthPercentage !== DEFAULT_WIDGET_WIDTH_PERCENTAGE
+                    }
+                >
+                    <AppRangeComp
+                        value={horizontal}
+                        title={tran('Horizontal Margin (%)')}
+                        setValue={handleHorizontal}
+                        defaultSize={{ ...range, size: horizontal }}
+                        isShowValue
+                        isCompact
+                    />
+                </PropRowComp>
+                <PropRowComp
+                    iconClassName="bi bi-arrows-vertical"
+                    label={tran('Vertical Margin (%)')}
+                    isEngaged={marginVerticalPercentage !== 0}
+                >
+                    <AppRangeComp
+                        value={marginVerticalPercentage}
+                        title={tran('Vertical Margin (%)')}
+                        setValue={handleVertical}
+                        defaultSize={{
+                            ...range,
+                            size: marginVerticalPercentage,
+                        }}
+                        isShowValue
+                        isCompact
+                    />
+                </PropRowComp>
+            </div>
+        </div>
     );
 }
 
@@ -665,6 +825,10 @@ type PropertiesSettingBodyPropsType = Readonly<{
     setFontFamily: (value: string) => void;
     fontWeight: string;
     setFontWeight: (value: string) => void;
+    /** A preset was written: read every setting of this block again. */
+    onPresetApplied?: () => void;
+    /** Margins in place of Width (Quick Text). */
+    isMargin?: boolean;
 }>;
 
 /**
@@ -686,6 +850,8 @@ function PropertiesSettingBodyComp({
     setFontFamily,
     fontWeight,
     setFontWeight,
+    onPresetApplied,
+    isMargin = false,
 }: PropertiesSettingBodyPropsType) {
     const names = genPropsSettingNames(prefix);
     const commonNames = genCommonStyleSettingNames(prefix);
@@ -709,6 +875,14 @@ function PropertiesSettingBodyComp({
     const [widgetScale, setWidgetScale] = useStateSettingNumber(
         names.scale,
         DEFAULT_WIDGET_SCALE,
+    );
+    // Quick Text's Margin row; read while this block is open, like every
+    // other row here.
+    const [marginVerticalPercentage, setMarginVerticalPercentage] =
+        useStateSettingNumber(names.marginVerticalPercentage, 0);
+    const [isMarginLinked, setIsMarginLinked] = useStateSettingBoolean(
+        names.isMarginLinked,
+        false,
     );
     const [opacityPercentage, setOpacityPercentage] = useStateSettingNumber(
         names.opacityPercentage,
@@ -745,13 +919,22 @@ function PropertiesSettingBodyComp({
         names.isBehind,
         false,
     );
+    // Unset, the colours are the app theme's side of the defaults.
+    const [defaultColors] = useState(() => {
+        return isCommonStyle
+            ? getForegroundDefaultColors()
+            : {
+                  color: DEFAULT_TEXT_COLOR,
+                  backgroundColor: DEFAULT_BACKGROUND_COLOR,
+              };
+    });
     const [textColor, setTextColor] = useStateSettingString(
         commonNames.color,
-        DEFAULT_TEXT_COLOR,
+        defaultColors.color as AppColorType,
     );
     const [backgroundColor, setBackgroundColor] = useStateSettingString(
         commonNames.backgroundColor,
-        DEFAULT_BACKGROUND_COLOR,
+        defaultColors.backgroundColor as AppColorType,
     );
     const [backdropFilter, setBackdropFilter] = useStateSettingNumber(
         commonNames.backdropFilter,
@@ -781,6 +964,26 @@ function PropertiesSettingBodyComp({
     };
     return (
         <div className="app-inner-shadow fg-props">
+            <ForegroundPresetsComp
+                widgetKey={widgetKey}
+                prefix={prefix}
+                flags={{ isFontSize, isGeometry, isCommonStyle, isMargin }}
+                colors={
+                    isCommonStyle
+                        ? {
+                              color: textColor,
+                              backgroundColor,
+                              onChange: (colors) => {
+                                  setTextColor(colors.color);
+                                  setBackgroundColor(colors.backgroundColor);
+                                  onChange();
+                              },
+                          }
+                        : undefined
+                }
+                onChange={onChange}
+                onApplied={onPresetApplied ?? (() => {})}
+            />
             {isGeometry ? (
                 <ForegroundPositionPadComp
                     data={JSON.parse(alignmentData)}
@@ -794,31 +997,50 @@ function PropertiesSettingBodyComp({
             <div className="fg-props-rows">
                 {isGeometry ? (
                     <>
-                        <PropRowComp
-                            iconClassName="bi bi-arrows"
-                            label={tran('Width (%)')}
-                            isEngaged={
-                                widgetWidthPercentage !==
-                                DEFAULT_WIDGET_WIDTH_PERCENTAGE
-                            }
-                        >
-                            <AppRangeComp
-                                value={widgetWidthPercentage}
-                                title={tran('Width (%)')}
-                                setValue={wrapSetter(
+                        {isMargin ? (
+                            <MarginPropComp
+                                widthPercentage={widgetWidthPercentage}
+                                setWidthPercentage={wrapSetter(
                                     setWidgetWidthPercentage,
                                     onChange,
                                 )}
-                                defaultSize={{
-                                    size: widgetWidthPercentage,
-                                    min: 1,
-                                    max: 100,
-                                    step: 1,
-                                }}
-                                isShowValue
-                                isCompact
+                                marginVerticalPercentage={
+                                    marginVerticalPercentage
+                                }
+                                setMarginVerticalPercentage={wrapSetter(
+                                    setMarginVerticalPercentage,
+                                    onChange,
+                                )}
+                                isMarginLinked={isMarginLinked}
+                                setIsMarginLinked={setIsMarginLinked}
                             />
-                        </PropRowComp>
+                        ) : (
+                            <PropRowComp
+                                iconClassName="bi bi-arrows"
+                                label={tran('Width (%)')}
+                                isEngaged={
+                                    widgetWidthPercentage !==
+                                    DEFAULT_WIDGET_WIDTH_PERCENTAGE
+                                }
+                            >
+                                <AppRangeComp
+                                    value={widgetWidthPercentage}
+                                    title={tran('Width (%)')}
+                                    setValue={wrapSetter(
+                                        setWidgetWidthPercentage,
+                                        onChange,
+                                    )}
+                                    defaultSize={{
+                                        size: widgetWidthPercentage,
+                                        min: 1,
+                                        max: 100,
+                                        step: 1,
+                                    }}
+                                    isShowValue
+                                    isCompact
+                                />
+                            </PropRowComp>
+                        )}
                         <PropRowComp
                             iconClassName="bi bi-arrows-fullscreen"
                             label={tran('Scale')}
@@ -981,6 +1203,14 @@ function PropertiesSettingComp(props: PropertiesSettingBodyPropsType) {
         `foreground-${prefix}-show-properties-setting`,
         false,
     );
+    // Bumped by a preset, for a block with no floating panel round it to
+    // remount (the panels themselves remount on `notifyForegroundPanel`).
+    const [presetRevision, setPresetRevision] = useState(0);
+    const handlePresetApplied = useCallback(() => {
+        setPresetRevision((old) => {
+            return old + 1;
+        });
+    }, []);
     const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleToggle = useCallback(() => {
         setIsOpenedRef.current((old) => !old);
@@ -1009,7 +1239,11 @@ function PropertiesSettingComp(props: PropertiesSettingBodyPropsType) {
     return (
         <div>
             <div className="mb-1">{toggleButton}</div>
-            <PropertiesSettingBodyComp {...props} />
+            <PropertiesSettingBodyComp
+                key={presetRevision}
+                {...props}
+                onPresetApplied={handlePresetApplied}
+            />
         </div>
     );
 }
@@ -1021,6 +1255,7 @@ export function useForegroundPropsSetting({
     isGeometry = true,
     isCommonStyle = true,
     isBlendMode = false,
+    isMargin = false,
     widgetKey,
     extraControls,
 }: Readonly<{
@@ -1046,6 +1281,8 @@ export function useForegroundPropsSetting({
      * their own colours.
      */
     isBlendMode?: boolean;
+    /** Margins in place of Width -- Quick Text alone. */
+    isMargin?: boolean;
     extraControls?: ReactNode;
 }>) {
     const commonNames = genCommonStyleSettingNames(prefix);
@@ -1055,6 +1292,7 @@ export function useForegroundPropsSetting({
             isGeometry,
             isCommonStyle,
             isBlendMode,
+            isMargin,
         });
     };
     const getTransition = () => {
@@ -1107,6 +1345,7 @@ export function useForegroundPropsSetting({
                 isGeometry={isGeometry}
                 isCommonStyle={isCommonStyle}
                 isBlendMode={isBlendMode}
+                isMargin={isMargin}
                 widgetKey={widgetKey}
                 extraControls={extraControls}
                 fontFamily={fontFamily}

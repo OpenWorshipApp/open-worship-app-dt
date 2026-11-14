@@ -302,7 +302,7 @@ describe('the import flows', () => {
         expect(await selectAndImportSingleItemArchive(config)).toBeNull();
         expect(h.showSimpleToast).toHaveBeenLastCalledWith(
             'Import Document',
-            'Unable to import the document',
+            'It did not work. Please try again.',
         );
         expect(h.hideProgressBar).toHaveBeenCalledTimes(2);
     });

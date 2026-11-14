@@ -321,7 +321,7 @@ describe('downloading what a link points at', () => {
       'https://bibles.example/downloads': () => {
         return genChunkedResponse([
           `<!DOCTYPE html><html><body><p>${'x'.repeat(2100)}</p>`,
-          '<a href="/x/KhmerBible.xml">Khmer</a>',
+          '<a href="/x/XxlangBible.xml">Xxlang</a>',
           '</body></html>',
         ]);
       },
@@ -335,8 +335,8 @@ describe('downloading what a link points at', () => {
     // The only link is in the SECOND piece.
     expect(result.files).toEqual([
       {
-        name: 'KhmerBible.xml',
-        url: 'https://bibles.example/x/KhmerBible.xml',
+        name: 'XxlangBible.xml',
+        url: 'https://bibles.example/x/XxlangBible.xml',
       },
     ]);
     expect(await readdir(dirPath)).toEqual([]);
@@ -474,6 +474,47 @@ describe('downloading what a link points at', () => {
       setTimeout(resolve, 150);
     });
     expect(await readdir(dirPath)).toEqual([]);
+  });
+
+  // Destroyed while a piece was still being written, the stream reports that
+  // write as `ERR_STREAM_DESTROYED` before it closes -- and the first
+  // rejection wins. Under a loaded whole-suite run the person was told "The
+  // download broke off (Cannot call write after a stream was destroyed)"
+  // instead of why it broke off (2026-11-11). The write made slow, every time.
+  test('a download that breaks off mid-write names why, not the write it cut short', async () => {
+    const realWrite = fs.write;
+    fs.write = (...argList) => {
+      const callback = argList.pop();
+      setTimeout(() => {
+        realWrite(...argList, callback);
+      }, 60);
+    };
+    onTestFinished(() => {
+      fs.write = realWrite;
+    });
+    const { response } = genIteratedResponse([
+      async () => ({
+        done: false,
+        value: encode(`${XML_HEAD}${' '.repeat(2100)}`),
+      }),
+      afterPartFileExists(() => {
+        throw new Error('socket hang up');
+      }),
+    ]);
+    await expectProblem(
+      downloadBibleXml({
+        url: 'https://bibles.example/kjv.xml',
+        fetchImpl: async () => {
+          return response;
+        },
+        dirPath,
+      }),
+      'unreachable',
+      'The download broke off (socket hang up).',
+    );
+    expect(await waitForDraftDir((nameList) => nameList.length === 0)).toEqual(
+      [],
+    );
   });
 
   test('a download still going when its time is up is said to have taken too long', async () => {

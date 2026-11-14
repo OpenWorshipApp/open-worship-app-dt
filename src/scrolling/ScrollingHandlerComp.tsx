@@ -6,14 +6,12 @@ import type {
     MoveCheckType,
 } from './scrollingHandlerHelpers';
 import {
-    TO_THE_TOP_STYLE_STRING,
-    TO_THE_TOP_CLASSNAME,
-    applyToTheTop,
     applyPlayToBottom,
     PLAY_TO_BOTTOM_CLASSNAME,
     PLAY_TO_BOTTOM_MENU_CLASSNAME,
 } from './scrollingHandlerHelpers';
 import { showPlayToBottomContextMenu } from './playToBottomMenuHelpers';
+import ScrollToTopComp from './ScrollToTopComp';
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { pressElementLikeButton } from '../helper/helpers';
@@ -49,7 +47,6 @@ export default function ScrollingHandlerComp({
     };
     return (
         <>
-            <style>{TO_THE_TOP_STYLE_STRING}</style>
             {shouldShowPlayToBottom ? (
                 <i
                     className={
@@ -111,26 +108,11 @@ export default function ScrollingHandlerComp({
                     }}
                 />
             ) : null}
-            <i
-                className={
-                    `${TO_THE_TOP_CLASSNAME} bi bi-arrow-up-circle ` +
-                    `${HoverMotionHandler.lowVisibleClassname}-1`
-                }
-                title={tran('Scroll to the top')}
-                role="button"
-                tabIndex={0}
-                aria-label={tran('Scroll to the top')}
-                onKeyDown={pressElementLikeButton}
-                style={{
-                    width: '45px',
-                    height: '45px',
-                    ...style,
-                }}
-                ref={(element) => {
-                    if (element) {
-                        applyToTheTop(element, scrollingContainerSelector);
-                    }
-                }}
+            {/* Also the sheet both buttons are drawn by. */}
+            <ScrollToTopComp
+                className={`${HoverMotionHandler.lowVisibleClassname}-1`}
+                style={style}
+                scrollingContainerSelector={scrollingContainerSelector}
             />
         </>
     );

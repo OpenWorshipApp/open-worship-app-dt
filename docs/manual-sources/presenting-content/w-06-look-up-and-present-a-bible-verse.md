@@ -2,10 +2,10 @@
 id: W-06
 title: "Look up and present a Bible verse"
 section: "Presenting content"
-verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102]
-screenshots: 6
+verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103]
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -63,8 +63,13 @@ workflowsVersion: "2026-11-08"
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
-   the answer says what is on the screen now; it is not saved to the **[en:tran:Bibles]**
-   list. 📸
+   the answer says what is on the screen now. Like a double-click in the lookup,
+   it is saved to the **[en:tran:Bibles]** list first, unless the list already
+   holds it, and the answer says so. With no assistant to answer, a passage asked for in another language is
+   read from the installed Bible that names its book, with one button that puts it
+   up; when no installed Bible names the book, the answer says it could not be read,
+   and offers **[en:tran:Import a Bible for me]** when no Bible in that language is
+   installed. 📸
 
 8. To make an editable slide document from a saved passage, first save one if needed:
    press **Ctrl+B**, choose the book, chapter and verse, then point at the passage's title
@@ -108,11 +113,27 @@ workflowsVersion: "2026-11-08"
     medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
+12. To put the passage up as a short notice over whatever is on the screen,
+    choose **[en:tran:Create Quick Text]** from the same menu, right under
+    **[en:tran:Create Lyric]**. The **[en:tran:Foreground]** panel's
+    **[en:tran:Quick Text]** opens on a NEW session named after the passage,
+    for example `(ពគប) សុភាសិត ១៧:២២-២៨` — the session you had open keeps its
+    words. The box holds the reference as a `### ` heading and the verses after
+    it (one verse without its number, several with `(22): …`), and the session
+    is already dressed by the **[en:tran:Bible Verse]** preset: a dark band the
+    full width of the bottom, words at 45px set left (smaller, down to 28px, past about three verses), on screen as long as
+    the passage takes to read aloud (its **[en:tran:Live]** seconds: 20 for
+    one verse like John 3:16, about a minute for six verses), in the
+    Bible's own font — **[en:tran:Properties]** → **[en:tran:Font]**
+    reads `app-Battambang` for a Khmer Bible.
+    Press **[en:tran:Preview]** to
+    read it as it will look, then **[en:tran:Show Quick Text]** when it is
+    time. Nothing goes on a screen before that. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102`
+`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102` · `CM-103`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

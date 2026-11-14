@@ -143,7 +143,7 @@ async function runMenuAction(title: string, run: () => Promise<void>) {
         handleError(error);
         showSimpleToast(
             tran(title),
-            error?.message ?? `Unable to complete ${title}`,
+            error?.message ?? tran('It did not work. Please try again.'),
         );
     }
 }
@@ -165,12 +165,13 @@ export async function handleBibleXMLExporting() {
             return getExportableBibleXMLEntries();
         });
         if (entries.length === 0) {
-            // Toast BODIES stay plain English here, as they do in the data
-            // archive next door: they carry paths and counts, and half a
-            // sentence through `tran` reads worse than none of it.
+            // Whole sentences through `tran`, counts as `{placeholders}`, the
+            // way the data archive next door says its own (EN-63).
             showSimpleToast(
                 tran(EXPORT_TITLE),
-                'There is no Bible XML file to export yet — import one first',
+                tran(
+                    'There is no Bible XML file to export yet. Import one first.',
+                ),
             );
             return;
         }
@@ -262,7 +263,7 @@ export async function handleBibleXMLImporting(
             if (entries.length === 0) {
                 showSimpleToast(
                     tran(IMPORT_TITLE),
-                    'This archive holds no bible',
+                    tran('There is nothing in this file to import.'),
                 );
                 return;
             }
@@ -293,8 +294,9 @@ export async function handleBibleXMLImporting(
             const skippedCount = entries.length - importedBibleKeys.length;
             showSimpleToast(
                 tran(IMPORT_TITLE),
-                `Imported ${importedBibleKeys.length} bible(s);` +
-                    ` ${skippedCount} skipped`,
+                tran('Imported {count} Bible(s); {skipped} skipped')
+                    .replace('{count}', String(importedBibleKeys.length))
+                    .replace('{skipped}', String(skippedCount)),
             );
         } finally {
             await safeDeleteDir(extractDir);

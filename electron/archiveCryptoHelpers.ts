@@ -100,8 +100,9 @@ function deriveKey(
 ) {
     return new Promise<Buffer>((resolve, reject) => {
         scrypt(
-            // Normalised so a Khmer or accented password typed on two machines
-            // with different input methods still derives the same key.
+            // Normalised so a password in a non-Latin script or with accents,
+            // typed on two machines with different input methods, still
+            // derives the same key.
             password.normalize('NFKC'),
             salt,
             DERIVED_LENGTH,

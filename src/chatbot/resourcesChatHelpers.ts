@@ -21,11 +21,19 @@ import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers
 import { fillWords, tran } from './chatTranHelpers';
 import {
     COLON_MARKS,
+    DEFAULT_CHAT_LANG_CODE,
+    detectTypedLanguage,
     listAssistantLanguages,
     toCharClassSource,
+    type AssistantLanguageType,
 } from './chatLangHelpers';
 import type { BotActionType } from './helpBotHelpers';
-import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
+import { toTranslateTarget } from './lyricChatHelpers';
+import {
+    NOTE_CREATE_PROMPT,
+    STUDY_FILE_PROMPT,
+} from './noteCreatePromptHelpers';
+import { checkIsOfficeTextName } from './documentTextHelpers';
 
 export const RESOURCES_ASK_KIND = 'resources';
 export const RESOURCES_TOOL_NAME = 'owa_resource_file';
@@ -178,12 +186,25 @@ export function genResourceReadMenuReplies(readingRange: string | null) {
     ];
 }
 
+// Only a reading of this file's own book: the panel hands one over only when
+// it listed the file for it, and a saved card is checked again.
+function toOwnResourceReading(
+    name: string,
+    reading: ResourceReadingType | null,
+) {
+    return reading !== null &&
+        name.toUpperCase().startsWith(`${reading.bookKey.toUpperCase()}.`)
+        ? reading
+        : null;
+}
+
 /**
  * The card a Resources file opens its tab with, written by the window with
  * no model: what the file is, what the person is reading, and the questions
  * that fit THIS file. The verse-by-verse Read is a chapter PDF's alone, and
  * the passage being read comes first -- as its own verses on a chapter file,
- * as a question about it on any other file of that book.
+ * as a question about it on any other file of that book. A study the
+ * assistant can change opens with `genStudyOpeningAnswer` instead.
  */
 export function genResourceOpeningAnswer(
     fileName: string,
@@ -191,13 +212,7 @@ export function genResourceOpeningAnswer(
 ) {
     const kind = toResourceFileKind(fileName);
     const name = fileName.split('/').pop() ?? fileName;
-    // Only a reading of this file's own book: the panel hands one over only
-    // when it listed the file for it, and a saved card is checked again.
-    const ownReading =
-        reading !== null &&
-        name.toUpperCase().startsWith(`${reading.bookKey.toUpperCase()}.`)
-            ? reading
-            : null;
+    const ownReading = toOwnResourceReading(name, reading);
     const readingRange = toResourceReadingRange(name, ownReading);
     const lines = [
         fillWords(
@@ -254,10 +269,155 @@ export function genResourceOpeningAnswer(
     if (kind === 'chapter-pdf') {
         replies.push(tran('Read'));
     }
+    // A PowerPoint deck or a Word file -- a hymnal's slides, a song sheet --
+    // is a song the window drafts by itself (EC-590: a Documents row's Open
+    // in Chatbot). In its English: `findWindowDoneCardAsk` reads it back.
+    if (checkIsOfficeTextName(name)) {
+        replies.push(tran('Make a song from it'));
+    }
     replies.push(
         tran('What is this file about?'),
         tran('Sum up the main points'),
         tran('Explain it in simple words'),
+    );
+    // A PDF that is no chapter's study and no book's introduction may be a
+    // song sheet: offered last, after what such a file is asked most.
+    if (kind === 'other' && /\.pdf$/i.test(name)) {
+        replies.push(tran('Make a song from it'));
+    }
+    return {
+        text: lines.join('\n\n'),
+        replies,
+        reading: ownReading,
+    };
+}
+
+// What a study is written in is told by its first lines: a translation is
+// added AFTER the study, so they are the study's own.
+const STUDY_LANGUAGE_SAMPLE_CHARS = 1500;
+const STUDY_FENCE_PATTERN = /^\s*(`{3,}|~{3,})/;
+
+/**
+ * A study's first words of its OWN, to tell their language: never a diagram
+ * or code (its fences, one left open running to the end) nor a passage
+ * quoted from a Bible (a `>` line), which is that Bible's language.
+ */
+export function toStudyLanguageSample(studyText: string) {
+    const keptLines: string[] = [];
+    let keptLength = 0;
+    let fence: string | null = null;
+    for (const line of String(studyText ?? '').split('\n')) {
+        const marker = STUDY_FENCE_PATTERN.exec(line)?.[1] ?? null;
+        if (fence !== null) {
+            if (
+                marker !== null &&
+                marker[0] === fence[0] &&
+                marker.length >= fence.length
+            ) {
+                fence = null;
+            }
+            continue;
+        }
+        if (marker !== null) {
+            fence = marker;
+            continue;
+        }
+        if (/^\s*>/.test(line)) {
+            continue;
+        }
+        keptLines.push(line);
+        keptLength += line.length + 1;
+        if (keptLength >= STUDY_LANGUAGE_SAMPLE_CHARS) {
+            break;
+        }
+    }
+    return keptLines.join('\n').slice(0, STUDY_LANGUAGE_SAMPLE_CHARS);
+}
+
+/**
+ * A study's two translate buttons, one for each place `translate` writes a
+ * translation the person would ask for: its words replaced (`replace`), or
+ * the translation added after it, both languages kept (`append`). For
+ * "another language" when none is known -- the assistant then asks which.
+ */
+export function genStudyTranslateReplies(languageName: string | null) {
+    return languageName === null
+        ? [
+              tran('Replace the words with another language'),
+              tran('Add another language after it'),
+          ]
+        : [
+              fillWords(tran('Replace the words with {language}'), {
+                  language: languageName,
+              }),
+              fillWords(tran('Add {language} after it'), {
+                  language: languageName,
+              }),
+          ];
+}
+
+/**
+ * The card a study the assistant can CHANGE opens its tab with
+ * (`checkIsChangeableStudyName`; 2026-11-13, EC-595), written by the window
+ * with no model. The Resources card's buttons were all questions to read
+ * it by, so nothing on a study's tab said it could be translated, its
+ * verses checked or a diagram added -- the jobs a study is opened in the
+ * chat for. Its translate buttons offer the language `toTranslateTarget`
+ * picks off the study's own words (the song card reads a name); the passage
+ * being read is asked about first, as on the Resources card.
+ */
+export function genStudyOpeningAnswer(
+    fileName: string,
+    studyText: string,
+    reading: ResourceReadingType | null,
+    appLanguage: AssistantLanguageType,
+) {
+    const name = fileName.split('/').pop() ?? fileName;
+    const ownReading = toOwnResourceReading(name, reading);
+    const target = toTranslateTarget(
+        detectTypedLanguage(toStudyLanguageSample(studyText), appLanguage.code),
+        appLanguage,
+    );
+    // Named as the reader of THIS window says it: its own word in a window
+    // shown in English, the language's own name in any other.
+    const targetName =
+        target === null
+            ? null
+            : appLanguage.code === DEFAULT_CHAT_LANG_CODE
+              ? target.name
+              : target.nativeName;
+    const lines = [
+        fillWords(
+            tran(
+                '“{name}” is attached below. I can change this study for ' +
+                    'you: translate it, check its Bible verses and its ' +
+                    'spelling, or add a diagram. I can also sum it up and ' +
+                    'answer questions about it. Press one, or say what you ' +
+                    'want.',
+            ),
+            { name },
+        ),
+    ];
+    const replies: string[] = [];
+    if (ownReading !== null) {
+        lines.push(
+            fillWords(tran('You are reading {passage} in the Bible Reader.'), {
+                passage: ownReading.title,
+            }),
+        );
+        replies.push(
+            fillWords(tran('What does it say about {passage}?'), {
+                passage: ownReading.title,
+            }),
+        );
+    }
+    replies.push(
+        ...genStudyTranslateReplies(targetName),
+        // Asked in its English in any language (`findWindowDoneCardAsk`),
+        // so the window reads the verses it cites first (EC-497).
+        tran('Check the Bible verses'),
+        tran('Add a diagram'),
+        tran('Sum up the main points'),
     );
     return {
         text: lines.join('\n\n'),
@@ -706,7 +866,8 @@ export const RESOURCES_SYSTEM_PROMPT =
     'explanation paragraph ' +
     'starts in one picture and continues in the next, join both parts before ' +
     'answering. The pictures are authoritative: a scan may have ' +
-    'no text layer and a legacy Khmer font may expose wrong characters. ' +
+    'no text layer and a legacy (pre-Unicode) font may expose wrong ' +
+    'characters. ' +
     'When their message is just "Read" or its translated equivalent, do not ' +
     'start transcribing the whole chapter. Ask which verse or small range ' +
     'they want ' +
@@ -764,7 +925,7 @@ export const RESOURCES_SYSTEM_PROMPT =
     'button to continue with that file below the answer. ' +
     'Answer from what the complete document says, in its words, and name the ' +
     'file without discussing its pages. When the files do not say, say so ' +
-    `rather than guess. ${NOTE_CREATE_PROMPT} ` +
+    `rather than guess. ${NOTE_CREATE_PROMPT} ${STUDY_FILE_PROMPT} ` +
     'Answer plainly and in a few short paragraphs, for older readers, in ' +
     'the language they write in; do not describe the app or offer a ' +
     'walkthrough.';

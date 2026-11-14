@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-77, PL-78, PL-79, PL-80, CM-36, CM-37]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-23 — Share one document (song, sermon slides, PDF) with another machine
 
@@ -28,7 +28,7 @@ travels as its own bundle, with everything attached to it.
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
    list**, which imports it the same way. A protected bundle asks for its password
    first; an ordinary one never does. 📸
-5. The document appears in that machine's documents folder under its original name, with
+5. The document appears in that machine's documents folder — the one the list is showing (W-58) — under its original name, with
    its background re-attached and its colour note restored, so it is ready to present
    straight away.
 6. If the bundle is on a web server or a machine sharing it over the local network, use
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-77` · `PL-78` · `PL-79` · `PL-80` · `CM-36` · `CM-37`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

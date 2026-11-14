@@ -346,7 +346,7 @@ function checkSpecField(key: string, value: unknown): string | null {
  * A line break a model wrote OUT -- a backslash and an `n` -- as the line
  * break it meant. A box's words are shown to a model as a JSON string, line
  * breaks as `\n`, and it copies that inside its own JSON: measured
- * 2026-11-07 on gemma4:cloud, "Worship in Spirit and Truth\\n<the Khmer>",
+ * 2026-11-07 on gemma4:cloud, "Worship in Spirit and Truth\\n<the translation>",
  * which would have put a backslash and an n on the projector between the
  * two lines. Nobody's slide means those two characters.
  */
@@ -1065,8 +1065,9 @@ function applyUpdateSlide(
         if (spec.id === undefined) {
             // A "new" box carrying a box's whole words is that box changed
             // with its `id` left out: measured 2026-11-07 on gemma4:cloud,
-            // "add English above the Khmer" sent the English and the Khmer
-            // with no id, which would have put the Khmer on the slide twice.
+            // "add English above the <other language>" sent the English and
+            // the other language with no id, which would have put the other
+            // language on the slide twice.
             const echoed = findEchoedTextBox(items, spec.text);
             if (echoed !== null) {
                 return refuse(
@@ -1142,7 +1143,8 @@ function applyUpdateSlide(
             // New words that repeat ANOTHER box of the slide -- one this
             // change does not take off, and that the box did not already
             // carry: measured 2026-11-07 on gemma4:cloud, "add above the
-            // khmer text" put "What is Faith" over a slide's Khmer when
+            // <other language> text" put "What is Faith" over a slide's
+            // translated words when
             // the box under it already said "What is Faith".
             const repeated = findEchoedTextBox(
                 items.filter((item) => {

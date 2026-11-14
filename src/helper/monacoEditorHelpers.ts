@@ -205,6 +205,7 @@ export type StoreType = {
 };
 export function useInitMonacoEditor({
     settingName,
+    isWrapTextDefault = false,
     options,
     onInit,
     onStore,
@@ -213,6 +214,9 @@ export function useInitMonacoEditor({
     language,
 }: {
     settingName: string;
+    // Wrapping until the person turns it off: prose (markdown) is unreadable
+    // as one long line a paragraph; code and markup start unwrapped.
+    isWrapTextDefault?: boolean;
     options: editor.IStandaloneEditorConstructionOptions;
     onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
@@ -222,7 +226,7 @@ export function useInitMonacoEditor({
 }): StoreType {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
-        false,
+        isWrapTextDefault,
     );
     const editorStore = useMemo(() => {
         const newEditorStore = createEditor({

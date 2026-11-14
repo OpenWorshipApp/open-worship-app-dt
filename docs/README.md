@@ -39,9 +39,12 @@ npm run docs:preview  # serve the built site
 > `install` hook that downloaded yt-dlp/ffmpeg. There is an `install` hook again
 > (`extra-work/build.sh` → `extra-work/build-extra-bin.mjs`), but it only packs
 > the already-committed binaries from `extra-work/experiment-building/` into
-> `release/bin-<ver>.tar.gz` and downloads nothing. `--ignore-scripts` skips it,
-> which costs you only the locally built pack the dev Settings → Others → Extra
-> Binaries panel installs from.
+> `release/bin-<ver>.tar.gz` and downloads no binary; since 2026-11-06 the hook
+> also runs `extra-work/install-lang-deps.mjs --warn-only`, an `npm ci` in each
+> language folder that declares dependencies of its own (its song plugin).
+> `--ignore-scripts` skips both, which costs you the locally built pack the dev
+> Settings → Others → Extra Binaries panel installs from, and those language
+> dependencies, which typecheck and the tests read.
 
 ## Editing content
 

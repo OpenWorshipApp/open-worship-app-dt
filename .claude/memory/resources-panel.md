@@ -77,6 +77,20 @@ each box's `key` — without that, a Reload with an unchanged folder list would
 remount nothing. An abandoned walk (unmount mid-scan via `checkShouldStop`)
 returns null and is never cached.
 
+**The one writer is the help window's study file, and it NUDGES the panel**
+(2026-11-09, `EC-464`). `owa_resource_file save` writes
+`<data folder>/resources/Default/<BOOK>.<C>.<span> <title>.md`, creates
+`Default` when missing and adds it to `resources-folder-list` unless a listed
+folder already covers it (`filterUnlistedResourcesFolders` within
+`MAX_SCAN_DEPTH`). After a save -- and after an `owa_undo` of one, whose
+restore carries `isResource` -- it drops that folder's scan cache and fires
+`RESOURCES_CHANGED_EVENT` (`src/resources/resourcesChangedEvent.ts`, a leaf
+so the agent worker does not import the panel); `ResourcesRendererComp`
+answers with its own Reload path. Still not a watcher: a file another program
+writes appears when the TTL lapses or on Refresh, as before. The undo half
+was added after a live run showed the panel keeping a row for a file the undo
+had just trashed.
+
 **Folders & settings** (`resourcesFolderHelpers.ts`): list in
 `resources-folder-list` (JSON array, `isErrorToDefault`). A folder box's
 open/collapsed state is plain `useState(true)` since 2026-10-18 — the user
@@ -181,7 +195,8 @@ in its menu is the OS route. Everything else still follows the rule below.
 **Using a row: single click → `appProvider.systemUtils.openFile(filePath)`**
 (OS default app). No drag payload, no double-click-present, no screen
 integration, and PDFs deliberately bypass the app's pdf-to-images pipeline.
-Row menu (Open / Copy Path / Reveal) deliberately does NOT import
+Row menu (Copy Path / Reveal, plus Open everywhere but a `.own` note file, and
+Preview, Preview PDF and Ask the Assistant About This File where they apply) deliberately does NOT import
 `genCommonMenu` — that would pull `FileSource` + dir watchers + screen helpers
 into the lookup panel. Same anti-import stance as `ResourcesDirBoxComp`
 refusing `BibleCrossRefWrapperComp` (it copies only the collapsed-no-body

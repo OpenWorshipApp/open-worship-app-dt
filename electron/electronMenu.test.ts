@@ -120,24 +120,24 @@ describe('electronMenu', () => {
         const menusData = {
             tools: [
                 {
-                    label: 'Khmer Tools',
+                    label: 'Sample Language Tools',
                     submenu: [
                         {
                             label: 'Editor',
                             clickData: {
-                                url: 'https://editor-km.openworship.app',
+                                url: 'https://editor-xx.example.org',
                             },
                         },
                         {
                             label: 'Open Lyric',
                             clickData: {
-                                url: 'https://lyric-km.openworship.app',
+                                url: 'https://lyric-xx.example.org',
                             },
                         },
                         {
                             label: 'BibleNote',
                             clickData: {
-                                url: 'https://biblenote-km.openworship.app',
+                                url: 'https://biblenote-xx.example.org',
                             },
                         },
                     ],
@@ -178,16 +178,16 @@ describe('electronMenu', () => {
         const fontsItem = toolsMenu.submenu.find(
             (item: any) => item.label === 'Google Fonts',
         );
-        const khmerToolsMenu = toolsMenu.submenu.find(
-            (item: any) => item.label === 'Khmer Tools',
+        const languageToolsMenu = toolsMenu.submenu.find(
+            (item: any) => item.label === 'Sample Language Tools',
         );
-        const editorItem = khmerToolsMenu.submenu.find(
+        const editorItem = languageToolsMenu.submenu.find(
             (item: any) => item.label === 'Editor',
         );
-        const openLyricItem = khmerToolsMenu.submenu.find(
+        const openLyricItem = languageToolsMenu.submenu.find(
             (item: any) => item.label === 'Open Lyric',
         );
-        const bibleNoteItem = khmerToolsMenu.submenu.find(
+        const bibleNoteItem = languageToolsMenu.submenu.find(
             (item: any) => item.label === 'BibleNote',
         );
         const currentWindow = createMockBrowserWindow();
@@ -209,13 +209,13 @@ describe('electronMenu', () => {
         // Custom tool items delegate to the clickMenu handler with their
         // clickData rather than opening links directly.
         expect(clickMenu).toHaveBeenCalledWith({
-            url: 'https://editor-km.openworship.app',
+            url: 'https://editor-xx.example.org',
         });
         expect(clickMenu).toHaveBeenCalledWith({
-            url: 'https://lyric-km.openworship.app',
+            url: 'https://lyric-xx.example.org',
         });
         expect(clickMenu).toHaveBeenCalledWith({
-            url: 'https://biblenote-km.openworship.app',
+            url: 'https://biblenote-xx.example.org',
         });
 
         setCustomMenusData('test', null);

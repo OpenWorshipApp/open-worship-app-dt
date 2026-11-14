@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-24T01:59:31.105Z
+  modified: 2026-11-11T04:37:24.439Z
 ---
 
 `src/others/AppWindowToolsComp.tsx` is the one declaration of **what every
@@ -14,7 +14,8 @@ window of the app carries**: `PresentingControlComp` (the annotation overlay),
 (Help → Keyboard Shortcuts). It is mounted on all ten renderer entries —
 presenter, reader, appDocumentEditor, bibleNote, setting, webEditor, lwShare,
 lyricEditor, experiment, screen-mirror — and deliberately NOT on `about`,
-`chatbot`, `finder` or `screen`. Inclusion is decided by which entry file
+`aichat`, `chatbot`, `finder`, `markdownPreview` or `screen` (nor on
+`camera-broker`, `vd-screen`, `virtual-display` or `virtual-display-viewer`). Inclusion is decided by which entry file
 imports it; there is no page gate anywhere.
 
 Only three windows have a top bar to hold the 🤖 button, so the way in

@@ -118,7 +118,8 @@ async function readLookupDataVersion(langCode: string) {
  *
  * Per language, because the index is stamped with English's version while a
  * labels sidecar is stamped with the version of the package it was written from
- * — a corrected Khmer name has to expire the Khmer sidecar and nothing else.
+ * — a corrected name in one language has to expire that language's sidecar
+ * and nothing else.
  * The map is bounded by the number of shipped languages.
  */
 function getLookupDataVersionCached(langCode: string) {
@@ -226,6 +227,10 @@ function checkIsRecordLabelsValid(value: LookupRecordLabelsType) {
  *
  * `labelsLangCode` decides which sidecar the build writes, so asking for either
  * file always produces the pair the current selection needs.
+ *
+ * `isBuildSkipped` reads what is on disk and never builds: a window that only
+ * decorates in passing (the Markdown Preview) must not be the one that reads
+ * the whole dataset. The Reader builds it the first time it shows a verse.
  */
 async function loadDerivedFile<T extends { version: number }>(
     fileName: string,
@@ -236,6 +241,7 @@ async function loadDerivedFile<T extends { version: number }>(
         index: LookupTextIndexType;
         recordLabels: LookupRecordLabelsType;
     }) => T,
+    options: LookupFileLoadOptionsType = {},
 ): Promise<T | null> {
     const dirPath = await getLookupDataDirPath();
     if (dirPath === null) {
@@ -249,7 +255,7 @@ async function loadDerivedFile<T extends { version: number }>(
         dataVersion,
         checkIsValid,
     );
-    if (cachedValue !== null) {
+    if (cachedValue !== null || options.isBuildSkipped === true) {
         return cachedValue;
     }
     return await unlocking(BUILD_LOCK_KEY, async () => {
@@ -293,7 +299,11 @@ async function loadDerivedFile<T extends { version: number }>(
     });
 }
 
-export async function loadLookupTextIndexFile() {
+export type LookupFileLoadOptionsType = { isBuildSkipped?: boolean };
+
+export async function loadLookupTextIndexFile(
+    options: LookupFileLoadOptionsType = {},
+) {
     return await loadDerivedFile<LookupTextIndexType>(
         INDEX_FILE_NAME,
         // The index is built from English and matched against KJV wording, so it
@@ -302,6 +312,7 @@ export async function loadLookupTextIndexFile() {
         getSelectedLookupLangCode(),
         checkIsIndexValid,
         (built) => built.index,
+        options,
     );
 }
 
@@ -329,7 +340,10 @@ export async function loadLookupRecordLabelsFile() {
  * file is aligned to — it is on disk by then in every case but a cold start, and
  * a verse view that wants needles subscribes to the index anyway.
  */
-export async function loadLookupTextNeedlesFile(langCode: string) {
+export async function loadLookupTextNeedlesFile(
+    langCode: string,
+    options: LookupFileLoadOptionsType = {},
+) {
     if (langCode === DEFAULT_LANG_CODE) {
         return null;
     }
@@ -344,7 +358,7 @@ export async function loadLookupTextNeedlesFile(langCode: string) {
         dataVersion,
         checkIsNeedlesValid,
     );
-    if (cachedValue !== null) {
+    if (cachedValue !== null || options.isBuildSkipped === true) {
         return cachedValue;
     }
     // Per language: two languages have no reason to wait for each other, and
@@ -472,7 +486,7 @@ export function genLookupFileStore<T>(
  * The same subscriber-counted holding as `genLookupFileStore`, but with ONE
  * SLOT PER LANGUAGE, because which file is wanted is decided by the bible a
  * verse is in rather than by a setting — a comparison view can have a KJV column
- * and a Khmer one side by side, and each has to be able to ask for its own.
+ * and one in another language side by side, and each has to be able to ask for its own.
  *
  * A slot is created on its first subscriber and dropped whole when its last one
  * goes, so a language the reader has navigated away from is not left resident.

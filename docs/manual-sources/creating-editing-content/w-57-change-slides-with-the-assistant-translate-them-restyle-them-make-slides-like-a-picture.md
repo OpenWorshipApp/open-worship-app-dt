@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-108, CB-167]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)
 
@@ -26,8 +26,10 @@ like a picture of slides you like.
    - **Replace the words with …** puts the slides' words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation on the line
      under each line, the words made a little smaller so the box still holds them. The
-     language offered is the one the document's name says, else the one the app is shown in;
-     with neither, the buttons say _another language_ and the assistant asks which. Typed,
+     language offered is the one the document's name says, if not English; else, for a name
+     written in a language other than English, English when the app is shown in that
+     language and the app's when it is not; else the one the app is shown in, unless that is
+     English: then the buttons say _another language_ and the assistant asks which. Typed,
      say the language: _Add Spanish under each line_.
    - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
    - **[en:tran:Make the words larger]** makes every box's words larger in one change, each
@@ -36,7 +38,8 @@ like a picture of slides you like.
      help window does by itself, at once — no assistant is needed for them, so they work
      with no AI key and no internet.
    - **[en:tran:Make slides like a picture]**: attach a picture of the slides you want — the
-     📷 under the box attaches a picture of the app, the paperclip a picture file — and say
+     **⋮** at the left of the box has **[en:tran:Attach a picture of the app]** and
+     **[en:tran:Attach a file]** for a picture file — and say
      what the slides should say, e.g. _Add 2 slides that look like slide 2 in this picture:
      one says Welcome, one says Let us pray_ — or send the picture with no words at all.
      Without a picture it asks for one. A photo or video behind the words is the slide's
@@ -57,15 +60,16 @@ like a picture of slides you like.
 5. To keep it, press **[en:tran:Save]** in the slides' history row in the Presenter
    (**[en:tran:Undo]** there steps it back too), or in the Slide Editor.
 
-**Not there?** **[en:tran:Open in Chatbot]** is on an Open Worship slide document only — a
-PDF, PowerPoint or Word file has no slides here to change — and only while AI is on
-(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
-assistant can answer, the chat says so and offers **Open AI settings**.
+**Not there?** **[en:tran:Open in Chatbot]** is in a document's menu only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). A PDF,
+PowerPoint or Word file carries it too, but only an Open Worship slide document has slides
+the assistant can change; to make a song from such a file's words, see W-42 step 18. When no
+assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PL-108` · `CB-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

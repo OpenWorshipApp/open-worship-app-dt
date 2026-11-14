@@ -46,7 +46,9 @@ asking; asked *the words no come out big screen*, it took three
 cap and answered "I could not find an answer for that" after 72 s and 225 000
 tokens. A grep of every score file: no chrome-devtools tool had ever been
 called on an answer that PASSED. Two things to keep straight: the Report
-button still reads the console for itself through `callTool`, which the model
+button still reads the console for itself — from the main process
+(`main:app:recent-console`) since 2026-10-13, through `callTool` before —
+which the model
 filter never sees; and this is a denylist held by `modelTools.test.mjs` and
 the audit script, so a chrome-devtools-mcp upgrade that adds a tool offers it
 to the model until it is named there — run the audit after any upgrade.

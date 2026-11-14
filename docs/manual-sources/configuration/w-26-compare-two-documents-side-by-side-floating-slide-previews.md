@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-118, PM-119, PM-120, PM-126, PL-01, CM-06]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-26 — Compare two documents side by side (floating slide previews)
 
@@ -24,7 +24,7 @@ as well, give it a window of its own.
    thing, no menu — and holding Ctrl again on that row closes the window. The menu
    entry's tooltip reminds you of the shortcut.
 2. It is the full previewer, not a thumbnail strip: the undo / redo / discard / save
-   strip at the top, the slides, the green **[en:tran:Note]** strip (the note boxes start closed — click it to open them), and a zoom slider with the document
+   strip at the top, the slides, the grey-striped **[en:tran:Note]** strip (the note boxes start closed — click it to open them), and a zoom slider with the document
    name at the bottom. Everything you can do in the middle panel you can do here —
    click a slide to put it on the screen, drag a slide to reorder it, drop an image or a
    video onto it, right-click a slide for its menu.
@@ -58,5 +58,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-118` · `PM-119` · `PM-120` · `PM-126` · `PL-01` · `CM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

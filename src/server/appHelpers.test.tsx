@@ -166,7 +166,7 @@ vi.mock('../lang/langHelpers', () => ({
 
 // The yt-dlp callers resolve the media pack through a dynamic import; `vi.mock`
 // intercepts that too.
-vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
+vi.mock('../helper/extra-bin/extraBinGateHelpers', () => ({
     requireExtraBinPaths: requireExtraBinPathsMock,
 }));
 

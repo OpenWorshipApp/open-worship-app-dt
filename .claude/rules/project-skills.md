@@ -64,7 +64,7 @@ other PL rows are the Documents/Lyrics lists — same prefix, different subsyste
 the newer `PL-103..104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs).
 
 **Media download (video AND audio) is mandatory in every such run too** (matrix rows
-`MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only **product** code
+`MD-01..06` and `MD-08`, SKILL.md §6e). `downloadVideoOrAudio` is the only **product** code
 path that runs the `yt-dlp`/`ffmpeg`/`qjs` binaries (the dev-only experiments
 page `src/experiments/html-in-canvas/youtubeDemo.tsx` also runs yt-dlp via
 `resolveMediaStreamUrl` in `src/server/appHelpers.ts`), so a missing or broken
@@ -84,8 +84,9 @@ travels between OSes on a stick, and one shared folder mixed their packs
 (`EN-29`, memory `extra-bin-on-demand`). Consequences:
 
 - A run on a fresh machine must **install the pack first** (`MD-05`) — a media
-  download with it absent raises a confirm dialog that jumps to that panel
-  (`MD-06`), which is correct behaviour, not a bug.
+  download with it absent raises a confirm that offers to install it right there and
+  then goes on downloading (`MD-06`), and an installed pack older than the published
+  one is offered as an update first (`MD-08`): correct behaviour, not a bug.
 - In **dev the download is mocked**: it copies
   `extra-work/experiment-building/release/bin-<ver>.tar.gz`, which
   `extra-work/build-extra-bin.mjs` produces on `npm i` (the `install` npm
@@ -182,6 +183,14 @@ so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was
 ~31% of it.
 
+It also owns the server's two distributions OUTSIDE the checkout (`MC-64`,
+2026-11-13): the npm package `open-worship-app-mcp` (`npm run
+build-open-worship-app-mcp` → `../owa-mcp-dist`, with a JS/TS API) and the
+single executable in the extra-bin pack from 0.0.6. The user's rule is that
+they may not differ in what they do, so both come from one staged tree and the
+npm build fails when a single executable built from it answers `tools/list`
+or the offline calls differently (memory `mcp-two-distributions`).
+
 ## owa-enhance-aichat skill
 
 `.claude/skills/owa-enhance-aichat` owns the **AI Chat window** —
@@ -253,15 +262,17 @@ list until its words or its code move — before that the same 29 recipes and
 139 notes were listed run after run and the top few read. One that is due
 only because of an uncommitted file is listed apart, and a stamp against
 uncommitted code is refused without `--allow-dirty` (`AD-18`: eight notes went
-due mid-run from a file another session had not committed). A run is done when
+due mid-run from a file another session had not committed); a read made
+against the last commit while another session's work sits uncommitted under
+it is stamped `--at-head` (`AD-26`, 2026-11-11). A run is done when
 the audit prints 0, and `src/test-setup/manualRecipes.test.ts` holds the
 manual's two hard signals in the gate — `src/test-setup/agentDocsAudit.test.ts`
 the rest of the hard checks since 2026-10-29 (`AD-21`), front matter that does
 not parse as YAML included (`AD-20`: one had hidden this skill's own
 description from every session's listing for four days). A translated manual
 page behind its English is a `manual` signal, kept out of the gate on purpose
-(`AD-24`); the run that corrects a recipe carries the change into its Khmer and
-French pages. **A big run ends with a second read**
+(`AD-24`); the run that corrects a recipe carries the change into every
+language's translated page of it (a package's `manual/`). **A big run ends with a second read**
 (`scripts/second-read.mjs`, `references/second-read.md`): every correction
 goes to a reader told no reason and ordered to refute it, every statement set
 aside for the running app gets a deeper look at stylesheets, libraries and
@@ -337,6 +348,53 @@ asked to `fix`. A generic review skill with no ledger of its own.
 work in progress: the unstaged worktree delta plus untracked files that are
 not ignored, the file ON DISK judged against its index version. Same
 dimensions, same order, same `fix`.
+
+## owa-lt skill
+
+`.claude/skills/owa-lt` (asked for on 2026-11-12 as _tell the agent not to do
+the whole lint gate anymore but run it on its related touched files_) swaps
+the full `npm run lint` (~8 min, and red on other sessions' work in the
+shared worktree) for `scripts/lint-touched.mjs`: the gate's own tools and
+flags on the files THIS session touched -- prettier and eslint on their
+patterns, the typecheck whole (an error in a touched file fails, one
+elsewhere is listed), `vitest related` plus the tests that read files off the
+disk, the build only when a build-shaping file changed. Measured on the day:
+one component, 7 s. The list comes from a PostToolUse hook in
+`.claude/settings.json` (`scripts/touched-files.mjs hook`) that appends every
+Edit / Write / NotebookEdit path to
+`node_modules/.cache/owa-touched/<session id>.txt` from the session's first
+edit, so the switch can be thrown mid-session; a file changed through Bash is
+added by hand. The full gate still runs once at the final hand-off unless the
+user skips that too (memory `lint-gate-only-at-final-validation`).
+
+## owa-gi skill
+
+`.claude/skills/owa-gi` (asked for the same day: _`/owa-gi 10` should start
+an interval for doing git pull and commit safely then push every 10
+minutes_) runs `scripts/git-interval.mjs` as a background process, so a tick
+costs no model turn and is not delayed by a busy session the way a scheduled
+prompt is. A tick commits only this session's changed files, all or nothing,
+when `/owa-lt`'s gate passes on them (`git commit --only`, hooks on); pulls by
+fast-forward, or a merge aborted on any conflict, never a stash -- other
+sessions' uncommitted edits share the worktree; pushes, never forced. It
+refuses `main` / `master`, a detached HEAD and an operation in progress, and a
+lock file keeps two sessions' ticks apart. `disable-model-invocation`: it
+pushes, so only the user starts it.
+
+**It stops when the session is done, and never holds the session**
+(2026-11-13, the user: _when nothing will be changed by the session then stop
+the interval_, then _make sure the interval [is] not preventing the session
+to stop [or] pause the session too long_ -- three intervals had ticked
+"nothing of this session changed" all night). The loop detaches itself
+rather than run as a Bash background task, so every command returns at once
+and nothing waits on it, keeps the session open or is woken when it exits.
+`--finish`, run by the session as its last call once it will change nothing
+more, leaves a flag the sleeping loop reads within 5 s; the loop then runs
+one last tick and exits. It also follows `CLAUDE_PID` and does the same when
+that process is gone, and will not start without one to follow. Measured on
+a scratch repo with a local remote: start 46 ms, `--finish` 56 ms, the last
+tick committed, pushed and exited within 4 s, the same after the session
+stand-in was killed.
 
 ## owa-upgrade-unit-test skill
 
@@ -430,8 +488,8 @@ controls they reach.
 there — and an item is COVERED only when a tip presses or names it AND the
 All tips search (title + detail + category, `DailyTipComp`'s `filteredTips`)
 finds that tip by the control's own words; ACTED (a safe **Do it** reaches it)
-and the same search run through the Khmer and French dictionaries are reported
-beside it. The denominator cannot be quietly shrunk: `tran()` labels in a
+and the same search run through every non-English package's dictionary are
+reported beside it. The denominator cannot be quietly shrunk: `tran()` labels in a
 control position in the inventory's source folders and in every file a live
 harvest saw rendered (`data-react-comp-fp`), plus every label `--harvest`
 reads off the live window over raw CDP (`owa_list_ui`'s own reading, nothing
@@ -447,10 +505,11 @@ Khmer detail naming the control in other words than its button (`TP-01`,
 **A tip counts once it ran.** Every new or changed tip is found through the
 All tips search, started with **Show it** and pressed **Do it** by **Do it**
 in the dev window (the product path works with a stale MCP catalog because
-the renderer sends the lesson inline), then once in Khmer, where a missing
-string throws. No **Do it** presents, removes, picks a file or a record, or
-reloads; those stay words. Every tip string gets Khmer and French, with the
-control's own dictionary name inside the translated detail. And because
+the renderer sends the lesson inline), then once in an installed non-English
+language, where a missing string throws. No **Do it** presents, removes, picks a file or a record, or
+reloads; those stay words. Every tip string gets every language's
+translation, with the control's own dictionary name inside the translated
+detail. And because
 `dailyTipHelpers.ts` puts every catalog in every window that shows toasts,
 lessons stay terse and a lazy catalog is a proposal (`TP-03`), not a refactor.
 Ledger `references/backlog.md` (`TP-xx`), one row per window per run in

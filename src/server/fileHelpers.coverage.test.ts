@@ -302,11 +302,16 @@ describe('createNewFileDetail', () => {
         expect(await createNewFileDetail(tempDir, 'Song', '', 'lyric')).toBe(
             null,
         );
-        expect(h.handleError).toHaveBeenCalledOnce();
+        // The refused look is logged where it happened, then the failed
+        // create; the person reads what to do, not the log's words (EN-62).
+        expect(h.handleError).toHaveBeenCalledTimes(2);
         expect(h.handleError.mock.calls[0][0].code).toBe('EACCES');
+        expect(h.handleError.mock.calls[1][0].cause.code).toBe('EACCES');
         expect(h.showSimpleToast).toHaveBeenCalledExactlyOnceWith(
             'Creating File',
-            'Error during checking file exist',
+            'This file or folder cannot be changed. ' +
+                'Check that it is not read-only or open in another program.',
+            10e3,
         );
     });
 });

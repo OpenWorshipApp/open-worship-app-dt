@@ -27,6 +27,7 @@ const h = vi.hoisted(() => {
         migrateSettingKeyPaths: vi.fn(),
         migratePreviewerNoteClose: vi.fn(),
         runPendingDataDirMove: vi.fn(),
+        isMainWindow: true,
     };
 });
 
@@ -58,6 +59,12 @@ vi.mock('./server/appHomeStorage', () => ({
             h.events.push(`home-get:${name}`);
             return h.homeSettings.get(name) ?? null;
         },
+    },
+}));
+vi.mock('./server/mainWindowHelpers', () => ({
+    checkIsMainWindow: () => {
+        h.events.push('check-main-window');
+        return h.isMainWindow;
     },
 }));
 vi.mock('./setting/directory-setting/appLocalStorage', () => ({
@@ -124,9 +131,10 @@ beforeEach(() => {
     h.homeSettings.clear();
     h.sessionData = {};
     h.defaultStorageDirPath = '/data/open-worship-data';
-    h.getCurrentLocale.mockReturnValue('km-KH');
+    h.isMainWindow = true;
+    h.getCurrentLocale.mockReturnValue('xx-XX');
     h.getLangCode.mockImplementation((locale: string) => {
-        return locale === 'km-KH' ? 'km' : null;
+        return locale === 'xx-XX' ? 'xx' : null;
     });
     h.getLangDataAsync.mockImplementation(async (locale: string) => {
         h.events.push(`lang-data:${locale}`);
@@ -177,7 +185,7 @@ describe('init: once-per-folder migrations', () => {
             'claim:previewer-note-close-migration',
             'load:previewer-note-close',
             'run:previewer-note-close',
-            'lang-data:km-KH',
+            'lang-data:xx-XX',
             'lang-data:en-US',
             'callback',
         ]);
@@ -200,7 +208,7 @@ describe('init: once-per-folder migrations', () => {
         expect(h.events).toEqual([
             'home-get:data-dir-move-pending',
             'read-storage-dir',
-            'lang-data:km-KH',
+            'lang-data:xx-XX',
             'lang-data:en-US',
         ]);
         expect(h.migratePresentingFlowRename).not.toHaveBeenCalled();
@@ -252,7 +260,7 @@ describe('init: once-per-folder migrations', () => {
         expect(h.localSettings.get('previewer-note-close-migration')).toBe(
             'true',
         );
-        expect(h.getLangDataAsync.mock.calls).toEqual([['km-KH'], ['en-US']]);
+        expect(h.getLangDataAsync.mock.calls).toEqual([['xx-XX'], ['en-US']]);
         expect(callback).toHaveBeenCalledOnce();
     });
 });
@@ -267,12 +275,35 @@ describe('init: a data-folder move waiting from before the relaunch', () => {
 
         expect(h.events).toEqual([
             'home-get:data-dir-move-pending',
+            'check-main-window',
             'load:data-dir-move',
             'run:data-dir-move',
             'read-storage-dir',
-            'lang-data:km-KH',
+            'lang-data:xx-XX',
             'lang-data:en-US',
         ]);
+    });
+
+    test('is left to the main window: another reads its folder at once and loads no move module', async () => {
+        for (const name of MIGRATION_NAMES) {
+            h.localSettings.set(name, 'true');
+        }
+        h.homeSettings.set('data-dir-move-pending', '{"to":"D:\\\\data"}');
+        h.isMainWindow = false;
+        const pending = init();
+        // The Lyric Editor reads its song in this same tick.
+        const dirPathInSameTick = h.sessionData.defaultStorageDirPath;
+        await pending;
+
+        expect(dirPathInSameTick).toBe('/data/open-worship-data');
+        expect(h.events).toEqual([
+            'home-get:data-dir-move-pending',
+            'check-main-window',
+            'read-storage-dir',
+            'lang-data:xx-XX',
+            'lang-data:en-US',
+        ]);
+        expect(h.runPendingDataDirMove).not.toHaveBeenCalled();
     });
 
     test('is reported when it fails, and the window still opens', async () => {
@@ -302,9 +333,9 @@ describe('init: a data-folder move waiting from before the relaunch', () => {
 describe('init: language', () => {
     test('marks the document with the app language code', async () => {
         await init();
-        expect(document.documentElement.lang).toBe('km');
+        expect(document.documentElement.lang).toBe('xx');
         // The window's language, then English for the app's default face.
-        expect(h.getLangDataAsync.mock.calls).toEqual([['km-KH'], ['en-US']]);
+        expect(h.getLangDataAsync.mock.calls).toEqual([['xx-XX'], ['en-US']]);
     });
 
     test('falls back to the default code for a locale with no language code', async () => {
@@ -342,7 +373,7 @@ describe('init: language', () => {
 
 describe('init: the app font style', () => {
     test('writes the chosen family and weight into one style element', async () => {
-        h.getAppFontFamily.mockResolvedValue('Battambang');
+        h.getAppFontFamily.mockResolvedValue('Made Up Sans');
         h.getAppFontWeight.mockResolvedValue('700');
         await init();
         await flushFontStyle();
@@ -351,7 +382,7 @@ describe('init: the app font style', () => {
         expect(styles).toHaveLength(1);
         const css = styles[0].innerHTML.replaceAll(/\s+/g, ' ').trim();
         expect(css).toBe(
-            "* { font-family: 'Battambang'; } * { font-weight: 700; }",
+            "* { font-family: 'Made Up Sans'; } * { font-weight: 700; }",
         );
     });
 
@@ -372,7 +403,7 @@ describe('init: the app font style', () => {
     });
 
     test('a hostile weight cannot add a declaration', async () => {
-        h.getAppFontFamily.mockResolvedValue('Battambang');
+        h.getAppFontFamily.mockResolvedValue('Made Up Sans');
         h.getAppFontWeight.mockResolvedValue('700; color: red}');
         await init();
         await flushFontStyle();
@@ -390,7 +421,7 @@ describe('init: the app font style', () => {
     });
 
     test('a second init reuses the element and replaces the family', async () => {
-        h.getAppFontFamily.mockResolvedValue('Battambang');
+        h.getAppFontFamily.mockResolvedValue('Made Up Sans');
         await init();
         await flushFontStyle();
         h.getAppFontFamily.mockResolvedValue('Noto Serif');
@@ -402,6 +433,6 @@ describe('init: the app font style', () => {
         ).toHaveLength(1);
         const css = getCustomStyle().innerHTML;
         expect(css).toContain("font-family: 'Noto Serif';");
-        expect(css).not.toContain('Battambang');
+        expect(css).not.toContain('Made Up Sans');
     });
 });

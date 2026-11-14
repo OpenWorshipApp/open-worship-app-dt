@@ -259,4 +259,28 @@ describe('the card a Resources file opens its tab with', () => {
         expect(opening.replies).not.toContain('Read');
         expect(opening.replies).not.toContain('1');
     });
+
+    // EC-590: a Documents row's Open in Chatbot on a hymnal's slides.
+    test('a PowerPoint or Word file offers its song first', () => {
+        for (const name of ['Amazing Grace.pptx', 'Songs/Hymn 12.DOCX']) {
+            const opening = genResourceOpeningAnswer(name, null);
+            expect(opening.replies[0], name).toBe('Make a song from it');
+        }
+        for (const name of ['MAT.18.pdf', 'MAT.0.pdf', 'notes.txt']) {
+            const opening = genResourceOpeningAnswer(name, null);
+            expect(opening.replies, name).not.toContain('Make a song from it');
+        }
+    });
+
+    test('any other PDF offers its song last, after the questions', () => {
+        for (const name of ['Bulletin.pdf', 'Songs/Hymn Sheet.PDF']) {
+            const opening = genResourceOpeningAnswer(name, null);
+            expect(opening.replies, name).toEqual([
+                'What is this file about?',
+                'Sum up the main points',
+                'Explain it in simple words',
+                'Make a song from it',
+            ]);
+        }
+    });
 });

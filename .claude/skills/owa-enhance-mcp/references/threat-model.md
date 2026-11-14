@@ -52,11 +52,11 @@ The rule: **the assistant may point, the human presses.**
 | `denied-tool` | `evaluate_script`, `take_heapsnapshot`, `upload_file` are refused AND removed from `tools/list` |
 | `foreign-url` | `navigate_page` / `new_page` may only land on a page the app itself serves (`file:`, loopback, `about:blank`). Reload / back / forward carry no address and are allowed — the allowlist means history holds only app pages |
 | `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — **and its translation in every language the app is shown in** (`destructiveLabel.mjs`, derived from the app's own dictionary), read after folding what the matcher folds. Since 2026-10-10 the same rule reads `owa_press_key`'s `find` and `keys` (and **F6 by name**, `DESTRUCTIVE_KEY_MAP`: the app's Clear All key, refused whether or not the panel that titles it is on screen), both ends of an `owa_drag`, an `owa_menu` `item`, and the `to` of an `owa_drop_files` (the stdio door's alone) |
-| `menu-refusal` (main process) | `owa_menu` `click` is refused by `electron/appMenuAgentHelpers.ts` — not the firewall, because a menu item has no DOM — for `toggleDevTools` (a console with Node in every renderer, the reach `evaluate_script` is denied for), `quit` / `close` / the macOS hide roles and the `Relaunch` label (every window goes; Relaunch asks through a native dialog nothing here can answer), a submenu, and a greyed-out item. `list` marks each such item `refused` so nothing has to try it |
+| `menu-refusal` (main process) | `owa_menu` `click` is refused by `electron/appMenuAgentHelpers.ts` — not the firewall, because a menu item has no DOM — for `toggleDevTools` (a console with Node in every renderer, the reach `evaluate_script` is denied for), `quit` / `close` / the macOS hide roles and the `Relaunch` label (every window goes; Relaunch asks through a native dialog nothing here can answer), the `Factory Reset` label (every setting deleted, past any undo), a submenu, and a greyed-out item. `list` marks each such item `refused` so nothing has to try it |
 | `destructive-uid` | the same refusal for `click` / `fill` / `fill_form` / `drag`, which carry no label — the wording comes from the snapshot that minted the uid, read on its way out |
 | `destructive-press` / `question-press` | the same rule **in the page, on the element a press lands on** — `owa_click`, `owa_type` and a walkthrough's Do it: a title that cannot be undone on a button whose own words can, a key whose titled control cannot be (`F6` is *Clear All [F6]*), and anything inside the confirm / alert / input the app is asking the user. See *The interlock reads the control*, below |
 | `foreign-url` (outbound) | `owa_read_website` INVERTS the rule above: it may only go the other way. https, and never an address on this machine or its network — see *Reaching out*, below |
-| `rate-limit` | acting calls are capped at 25 in a rolling 60s; reads off the internet at 10 in a rolling 5 min; removals (a delete of a file, list, note, slide or passage, and an undo) at 10 in a rolling 5 min. Separate counters across every session, because they protect three different things: the one app window, the one network, the user's files |
+| `rate-limit` | acting calls are capped at 25 in a rolling 60s; reads off the internet at 10 in a rolling 5 min; removals (a delete of a file, list, note, slide or passage, a part taken out of a song or lines out of a run sheet, and an undo — but not one putting back, by its own id, a change this session made that took nothing away) at 10 in a rolling 5 min. Separate counters across every session, because they protect three different things: the one app window, the one network, the user's files |
 | redaction | provider keys, bearer tokens, JWTs and named credentials are scrubbed out of every tool result |
 
 ### The uid interlock, and why it is shaped the way it is
@@ -140,9 +140,11 @@ do is final:
   An undo backs itself up first, so undoing the wrong thing is one more undo.
 - **Removals have their own budget** (10 per 5 min): a loop emptying a Documents
   folder into the trash is recoverable and still a morning lost.
-- **A note open in its own window blocks a write** to that file: the window
+- **A note open in its own window blocks a write** to that file, all but
+  `add` (a new note, which the window's next save keeps): the window
   saves its whole stale copy back, which would silently undo the change the
-  answer reported.
+  answer reported. `owa_note_edit` changes a note through that window's own
+  editor instead.
 
 What this does not close: a model asked to "clean up" can still trash a real
 document the user wanted. The banner names the file, the answer must say it can

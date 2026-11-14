@@ -255,6 +255,10 @@ vi.mock('../../others/AppSuspenseComp', async () => {
         ),
     };
 });
+vi.mock('./overlayPresetComps', () => ({
+    // It has its own suite; the Focusing panel only has to mount it.
+    SpotlightPresetsComp: () => <div className="spotlight-presets-stub" />,
+}));
 vi.mock('./MiniScreenDrawHandlersComp', () => ({
     // It has its own suite; here it only has to say it was mounted.
     default: () => <div className="draw-handlers-stub" />,

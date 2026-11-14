@@ -129,8 +129,8 @@ afterEach(() => {
 
 describe('BibleXMLInfoComp editor toggle', () => {
     test('opens the data editor, remembered per Bible, and closes it again', async () => {
-        await renderRow('KSV');
-        expect(h.settingKeys).toContain('bible-xml-KSV');
+        await renderRow('TQVS');
+        expect(h.settingKeys).toContain('bible-xml-TQVS');
         const toggle = getButton('Show Editor')!;
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
         expect(getPreview()).toBeNull();
@@ -140,21 +140,21 @@ describe('BibleXMLInfoComp editor toggle', () => {
 
         expect(toggle.getAttribute('aria-pressed')).toBe('true');
         expect(toggle.title).toBe('Hide Editor');
-        expect(getPreview()!.textContent).toBe('KSV');
+        expect(getPreview()!.textContent).toBe('TQVS');
         // Opening asks nothing: there is nothing to lose yet.
         expect(h.warnIfBibleKeyDirtyMock).not.toHaveBeenCalled();
 
         await act(async () => toggle.click());
 
         expect(h.warnIfBibleKeyDirtyMock).toHaveBeenCalledWith(
-            'KSV',
+            'TQVS',
             'Save or discard unsaved Bible changes before closing the editor.',
         );
         expect(getPreview()).toBeNull();
     });
 
     test('stays open while its editor holds unsaved changes', async () => {
-        await renderRow('KSV');
+        await renderRow('TQVS');
         const toggle = getButton('Show Editor')!;
         await act(async () => toggle.click());
         await flushLazy();
@@ -169,7 +169,7 @@ describe('BibleXMLInfoComp editor toggle', () => {
 
 describe('BibleXMLInfoComp Reset', () => {
     test('is offered on the KJV row only', async () => {
-        await renderRow('KSV');
+        await renderRow('TQVS');
         expect(getButton('Reset Bible XML')).toBeNull();
         await renderRow('KJV');
         expect(getButton('Reset Bible XML')).not.toBeNull();
@@ -242,22 +242,22 @@ describe('BibleXMLInfoComp Reset', () => {
 
 describe('BibleXMLInfoComp Move to Trash', () => {
     test('trashes the Bible XML once confirmed and reloads the list', async () => {
-        const loadBibleKeys = await renderRow('KSV');
+        const loadBibleKeys = await renderRow('TQVS');
 
         await act(async () => getButton('Move to Trash')!.click());
 
         expect(h.showAppConfirmMock).toHaveBeenCalledWith(
             'Delete Bible XML',
-            'Are you sure to delete bible XML "KSV"?',
+            'Are you sure to delete bible XML "TQVS"?',
             { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
-        expect(h.deleteBibleXMLMock).toHaveBeenCalledWith('KSV');
+        expect(h.deleteBibleXMLMock).toHaveBeenCalledWith('TQVS');
         expect(loadBibleKeys).toHaveBeenCalledOnce();
     });
 
     test('a "No" keeps the file', async () => {
         h.showAppConfirmMock.mockResolvedValue(false);
-        const loadBibleKeys = await renderRow('KSV');
+        const loadBibleKeys = await renderRow('TQVS');
 
         await act(async () => getButton('Move to Trash')!.click());
 
@@ -267,9 +267,9 @@ describe('BibleXMLInfoComp Move to Trash', () => {
 });
 
 test('the row opens its context menu for its own key', async () => {
-    await renderRow('KSV');
+    await renderRow('TQVS');
     const row = container.querySelector('li')!;
-    expect(row.title).toBe('King James Version /bibles/KSV.xml');
+    expect(row.title).toBe('King James Version /bibles/TQVS.xml');
 
     await act(async () => {
         row.dispatchEvent(
@@ -278,5 +278,5 @@ test('the row opens its context menu for its own key', async () => {
     });
 
     expect(h.handBibleKeyContextMenuOpeningMock).toHaveBeenCalledOnce();
-    expect(h.handBibleKeyContextMenuOpeningMock.mock.calls[0][0]).toBe('KSV');
+    expect(h.handBibleKeyContextMenuOpeningMock.mock.calls[0][0]).toBe('TQVS');
 });

@@ -21,27 +21,49 @@ vi.mock('./ShowHideScreen', () => ({
 vi.mock('./MiniScreenClearControlComp', () => ({
     default: () => <span data-stub="clear" />,
 }));
-vi.mock('../../others/ItemColorNoteComp', () => ({
-    default: ({ item }: { item: any }) => (
-        <span data-stub="color-note" data-screen-id={item.screenId} />
-    ),
-}));
+vi.mock('../../others/ItemColorNoteComp', async () => {
+    const { useState } = await import('react');
+    return {
+        // Seeds its colour once, at mount, as the real swatch does: only a
+        // remount shows a note changed anywhere but its own menu.
+        default: ({ item }: { item: any }) => {
+            const [colorNote] = useState(item.colorNote ?? null);
+            return (
+                <span
+                    data-stub="color-note"
+                    data-screen-id={item.screenId}
+                    data-color={colorNote ?? ''}
+                />
+            );
+        },
+    };
+});
 vi.mock('./ShowingScreenIcon', () => ({
     default: ({ screenId }: { screenId: number }) => (
         <span data-stub="showing" data-screen-id={screenId} />
     ),
 }));
-vi.mock('../managers/screenManagerHooks', () => ({
-    useScreenManagerBaseContext: () => h.screenManagerBase,
-    useScreenManagerEvents: (
-        eventNames: string[],
-        target: unknown,
-        callback: () => void,
-    ) => {
-        h.instanceEventArgs = [eventNames, target];
-        h.instanceCallback = callback;
-    },
-}));
+vi.mock('../managers/screenManagerHooks', async () => {
+    const { useState } = await import('react');
+    return {
+        useScreenManagerBaseContext: () => h.screenManagerBase,
+        // Re-renders and calls back on an event, as `useScreenEvents` does.
+        useScreenManagerEvents: (
+            eventNames: string[],
+            target: unknown,
+            callback: () => void,
+        ) => {
+            const [, setRevision] = useState(0);
+            h.instanceEventArgs = [eventNames, target];
+            h.instanceCallback = () => {
+                setRevision((revision) => {
+                    return revision + 1;
+                });
+                callback();
+            };
+        },
+    };
+});
 vi.mock('../../lang/langHelpers', () => ({ tran: (text: string) => text }));
 vi.mock('../../helper/appHooks', async () => {
     const { useRef } = await import('react');
@@ -132,9 +154,32 @@ describe('ScreenPreviewerHeaderComp', () => {
         ).toBe('8');
         expect(h.renderingScreenIds).toContain(8);
         expect(h.instanceEventArgs).toEqual([
-            ['instance'],
+            ['instance', 'color-note-update'],
             h.screenManagerBase,
         ]);
+    });
+
+    test('a colour note set anywhere else shows on the card (EC-612)', async () => {
+        h.screenManagerBase.colorNote = null;
+        await renderHeader();
+        const readColor = () => {
+            return container
+                .querySelector('[data-stub="color-note"]')!
+                .getAttribute('data-color');
+        };
+        expect(readColor()).toBe('');
+        // The screen tool grouped it: the note changed, the event came.
+        h.screenManagerBase.colorNote = '#FFFF00';
+        await act(async () => {
+            h.instanceCallback!();
+        });
+        expect(readColor()).toBe('#FFFF00');
+        // An undo takes the group off again.
+        h.screenManagerBase.colorNote = null;
+        await act(async () => {
+            h.instanceCallback!();
+        });
+        expect(readColor()).toBe('');
     });
 
     test('lock toggles through the sync group and says what it will do', async () => {

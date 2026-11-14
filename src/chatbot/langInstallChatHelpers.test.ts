@@ -17,10 +17,14 @@ vi.mock('./mcpClient', () => {
 import {
     LANG_INSTALL_STEP_TOOL_NAME,
     checkChatLanguage,
+    checkSaysMoreThanLangOffer,
     describeLangInstallStep,
     findLangInstallTypedPress,
+    genLangAskAgainAnswer,
     genLangOfferText,
+    genStudyLangOffer,
     readLangInstallAsk,
+    readLangOfferReask,
     runLangInstallStep,
     toChatLangLabel,
 } from './langInstallChatHelpers';
@@ -222,5 +226,158 @@ describe('findLangInstallTypedPress', () => {
             ),
         ).toBeNull();
         expect(findLangInstallTypedPress(undefined, 'yes')).toBeNull();
+    });
+});
+
+describe('a study translation waiting for its language (EC-494)', () => {
+    const OFFER = { check: MISSING, packageCode: 'de' } as any;
+    const QUESTION = 'Translate the study into German and add it under';
+
+    it('draws a model’s words over the offer only when they say more than its one sentence', () => {
+        // The sentence it was asked for, live (two sentences, one line).
+        for (const said of [
+            '',
+            'The app cannot translate the content to German because the ' +
+                'language is not yet installed; please use the buttons ' +
+                'below my answer to install it first.',
+            'Serbian is not yet enabled in the app, so the translation ' +
+                'cannot be performed. Please turn it on first using the ' +
+                'prompt below.',
+        ]) {
+            expect(checkSaysMoreThanLangOffer(said)).toBe(false);
+        }
+        // Another part of the question answered beside it.
+        expect(
+            checkSaysMoreThanLangOffer(
+                'All 22 references are right.\n\nGerman is not installed, ' +
+                    'so the translation waits.',
+            ),
+        ).toBe(true);
+        expect(checkSaysMoreThanLangOffer(`${'word '.repeat(61)}.`)).toBe(true);
+    });
+
+    it('offers to install a missing one, the download said, each button carrying the question', () => {
+        const answer = genStudyLangOffer(OFFER, QUESTION);
+        expect(answer.text).toBe(
+            '**Gerlandish (German) is not installed in this app yet.** ' +
+                'Install it first? Then the translation uses the words of ' +
+                'the Gerlandish (German) Bible. It is a download of 13 MB ' +
+                'from Open Worship. It does not change the language the app ' +
+                'is shown in.',
+        );
+        expect(
+            answer.actions?.map((one) => [one.label, one.toolName, one.args]),
+        ).toEqual([
+            [
+                'Install it',
+                LANG_INSTALL_STEP_TOOL_NAME,
+                {
+                    step: 'install',
+                    language: 'German',
+                    langCode: 'de',
+                    label: 'Gerlandish (German)',
+                    question: QUESTION,
+                    skipLangOffer: 'de',
+                },
+            ],
+            [
+                'Not now',
+                LANG_INSTALL_STEP_TOOL_NAME,
+                {
+                    step: 'skip',
+                    language: 'German',
+                    question: QUESTION,
+                    skipLangOffer: 'de',
+                },
+            ],
+        ]);
+    });
+
+    it('offers to turn on one turned off, with no download said', () => {
+        const answer = genStudyLangOffer(
+            { ...OFFER, check: { ...MISSING, state: 'turned-off' } },
+            QUESTION,
+        );
+        expect(answer.text).toBe(
+            '**Gerlandish (German) is installed but turned off.** Turn it ' +
+                'on first? Then the translation uses the words of the ' +
+                'Gerlandish (German) Bible.',
+        );
+        expect(answer.actions?.[0].label).toBe('Enable');
+        expect(answer.actions?.[0].args).toMatchObject({
+            step: 'install',
+            isTurnOn: true,
+            question: QUESTION,
+        });
+    });
+
+    it('installed: ready, with Ask again carrying the question; a failure keeps it on both buttons', async () => {
+        const [install, skip] = genStudyLangOffer(OFFER, QUESTION).actions!;
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ state: 'installed', installed: 'de' }),
+        );
+        const done = await runLangInstallStep(install.args);
+        expect(done.text).toBe(
+            '**Done — Gerlandish (German) is ready.** This window refreshes ' +
+                'in a moment. Then press **Ask again** to translate the study.',
+        );
+        expect(done.actions?.map((one) => [one.label, one.args])).toEqual([
+            [
+                'Ask again',
+                { step: 'ask', language: 'German', question: QUESTION },
+            ],
+        ]);
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ problem: 'failed' }),
+        );
+        const failed = await runLangInstallStep(install.args);
+        expect(failed.actions?.map((one) => one.args)).toEqual([
+            install.args,
+            skip.args,
+        ]);
+    });
+
+    it('a press with a question waiting asks it again: Not now going on without the language', () => {
+        const [install, skip] = genStudyLangOffer(OFFER, QUESTION).actions!;
+        expect(readLangOfferReask(skip.args)).toEqual({
+            question: QUESTION,
+            skipLangOffer: 'de',
+        });
+        expect(
+            readLangOfferReask(
+                genLangAskAgainAnswer('German', QUESTION).actions![0].args,
+            ),
+        ).toEqual({ question: QUESTION });
+        // The install itself, and a language asked for in so many words.
+        expect(readLangOfferReask(install.args)).toBeNull();
+        expect(
+            readLangOfferReask({ step: 'skip', language: 'German' }),
+        ).toBeNull();
+        expect(
+            readLangOfferReask({
+                step: 'skip',
+                language: 'German',
+                question: '  ',
+            }),
+        ).toBeNull();
+    });
+
+    it('typed: a yes presses Install it, a no Not now, and a yes under ready Ask again', () => {
+        const actions = genStudyLangOffer(OFFER, QUESTION).actions;
+        expect(findLangInstallTypedPress(actions, 'yes')?.step).toBe('install');
+        expect(findLangInstallTypedPress(actions, 'not now')).toMatchObject({
+            step: 'skip',
+            question: QUESTION,
+        });
+        const askAgain = genLangAskAgainAnswer('German', QUESTION).actions;
+        expect(findLangInstallTypedPress(askAgain, 'ok')).toEqual({
+            step: 'ask',
+            language: 'German',
+            question: QUESTION,
+        });
+        expect(findLangInstallTypedPress(askAgain, 'Ask again')?.step).toBe(
+            'ask',
+        );
+        expect(findLangInstallTypedPress(askAgain, 'no')).toBeNull();
     });
 });

@@ -15,7 +15,7 @@ EVERY tab, so nothing could be asked anywhere until it came back.
 
 - **Busy is per tab**: `busySessionIds` in `ChatbotAppComp.tsx`, rebuilt by
   `syncBusy()` from the pending asks' `sessionId` plus `busyHoldListRef`
-  (the unstoppable song write). `isBusy` is the tab in front's.
+  (the unstoppable song and study-file writes). `isBusy` is the tab in front's.
   `settleSession(id)` ends an ask: re-syncs, clears that tab's progress only
   when nothing else of its own is pending. Stop/Escape cancel the tab in
   front only.

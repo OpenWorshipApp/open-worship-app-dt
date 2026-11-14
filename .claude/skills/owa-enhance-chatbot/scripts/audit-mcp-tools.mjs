@@ -58,7 +58,14 @@ const rounds = roundsArg ? Number(roundsArg.split('=')[1]) : 10;
 // 7 800 → 8 350 on 2026-10-10 (`MC-50`): `owa_presenting_flow` (~419, the
 // run sheets had no tool and no undo of their own) and `owa_click`'s
 // `button` / `clicks` (~62) were added on purpose, measured at 8 273.
-const MODEL_TOKEN_CEILING = 8350;
+// 8 350 → 8 480 on 2026-11-09, at the user's word (_chatbot can help modify
+// any foreground component_; asked, they chose the ordinary tool learning
+// every component, the panel's own look and a verse `ref`, the ceiling
+// raised for it): `owa_foreground` ~445 → ~581 -- seven more components in
+// its enum, `ref` / `version` / `file` / `camera` / `source`. The changing
+// itself (`owa_foreground_edit`, ~780) goes to a foreground ask alone.
+// Measured at 8 478.
+const MODEL_TOKEN_CEILING = 8480;
 const ratchetArg = argv.find((one) => {
     return one === '--ratchet' || one.startsWith('--ratchet=');
 });

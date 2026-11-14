@@ -62,6 +62,17 @@ describe('what a line is', () => {
         expect(classifyLine('ខ្ញុំ')).toBe('word');
         expect(classifyLine('ច្រៀង')).toBe('word');
     });
+
+    test('keeps a lone consonant: it is a syllable, not a fingering (EC-589)', () => {
+        // A chord site prints the first consonant of a word before the bar
+        // its chord stands on. Read as a strumming hand, it was dropped and
+        // every such line lost the start of a word.
+        expect(classifyLine('ច')).toBe('word');
+        expect(classifyLine('p')).toBe('junk');
+        expect(rejoinChordSheet(['ច', '|', 'D', '្រៀង ដោយអំណរ'])).toEqual([
+            { text: 'ច|[D]្រៀង ដោយអំណរ', hadChord: true },
+        ]);
+    });
 });
 
 describe('a chord glued to the words', () => {
@@ -177,6 +188,63 @@ describe('a song in two languages', () => {
             { text: 'Guitar chords' },
         ]);
         expect(rows.map((one) => one.isTranslation)).toEqual([false, false]);
+    });
+
+    test('pairs a translation one blank row down (EC-589)', () => {
+        // A page that boxes each translation prints an empty row before
+        // it. The translation had been glued to the NEXT line's first
+        // words, and the blank row split a verse into one part a line.
+        const page = [
+            'Blue Lantern',
+            'The Made Up Singers',
+            'playlist_add',
+            'Key: D  ·  Time: 4/4  ·  Tempo: 73bpm',
+            'Verse 1',
+            '|',
+            'D',
+            'ខ្ញុំច្រៀង',
+            '',
+            '   I am singing',
+            '|',
+            'A',
+            'ដោយអំណរ',
+            '',
+            '   with joy',
+            'Chorus',
+            '|',
+            'D',
+            'ខ្ញុំច្រៀង',
+        ];
+        const read = readLyricPage(page, { isFromPage: true, checkIsLabel });
+        expect(read.lines).toEqual([
+            'Verse 1',
+            '|[D]ខ្ញុំច្រៀង',
+            '\tI am singing',
+            '|[A]ដោយអំណរ',
+            '\twith joy',
+            'Chorus',
+            '|[D]ខ្ញុំច្រៀង',
+        ]);
+        expect(read.notes.translations).toBe(2);
+    });
+
+    test('a Latin STANZA after a blank row is a stanza, not a translation', () => {
+        const rows = markTranslations([
+            { text: 'ខ្ញុំច្រៀង', hadChord: true },
+            { text: '', hadChord: false },
+            { text: 'I am singing', hadChord: true },
+            { text: 'with joy', hadChord: true },
+        ]);
+        expect(
+            rows.map((one) => {
+                return [one.text, one.isTranslation];
+            }),
+        ).toEqual([
+            ['ខ្ញុំច្រៀង', false],
+            ['', false],
+            ['I am singing', false],
+            ['with joy', false],
+        ]);
     });
 
     test('indents the translation and only the translation', () => {

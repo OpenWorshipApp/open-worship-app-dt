@@ -38,15 +38,15 @@ describe('asking the assistant for a Bible by its short name', () => {
     it('asks for a Bible in the language the window is shown in', () => {
         // The card under _Bible key "KJV" is not available!_ offers a Bible
         // the person can READ, not the key that happens to be missing.
-        expect(genBibleImportLanguageAsk('km-KH')).toBe(
-            'Import bible for Khmer',
-        );
-        expect(genBibleImportLanguageAsk('fr-FR')).toBe(
-            'Import bible for French',
-        );
         expect(genBibleImportLanguageAsk('en-US')).toBe(
             'Import bible for English',
         );
+        expect(genBibleImportLanguageAsk('EN')).toBe(
+            'Import bible for English',
+        );
+        // A code no table names is still a language the chat can look up,
+        // by its code.
+        expect(genBibleImportLanguageAsk('xx-XX')).toBe('Import bible for xx');
         // A code with no language part, or a region alone, still asks for a
         // Bible rather than writing an empty name.
         expect(genBibleImportLanguageAsk('')).toBe('Import bible');
@@ -56,9 +56,9 @@ describe('asking the assistant for a Bible by its short name', () => {
     it('a sentence that names none is left alone', () => {
         for (const text of [
             'Import bible',
-            'Import a Bible in "Khmer"',
+            'Import a Bible in "Xxish"',
             // Not ONE name: a title, which is searched for as words.
-            'import the bible called Khmer Standard Version',
+            'import the bible called Xxish Standard Version',
             'the song called KJV',
             'Import the Bible called "KJV" from my computer',
         ]) {

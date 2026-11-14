@@ -1,10 +1,17 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    chainSectionAdds,
     checkHasNoteMarkup,
+    expandPassageChanges,
+    expandPassageRepoints,
     expandSectionAdds,
+    readHeadingMarks,
+    splitVerseTokenRefs,
+    stripHeadingKindLabel,
     toNoteAddChanges,
     toUnfoundVersesAsWords,
+    withVerseTokensSplit,
 } from './agentNoteMarkupHelpers';
 import { applyNoteEdit, readNoteBlocks } from './agentNoteBlockHelpers';
 
@@ -255,4 +262,343 @@ test('a section written with escaped line breaks is still its lines', () => {
             { after: 2, kind: 'section', text: String.raw`## A\n- b\n- c` },
         ]).map((change) => change.kind),
     ).toEqual(['h2', 'bullet', 'bullet']);
+});
+
+// 2026-11-10, the goal _chatbot completely smart enough to help prepare a
+// best preaching lesson_: a lesson opens on its passage READ, so a verse
+// token alone on its line is the passage printed whole.
+describe('a verse token alone on its line', () => {
+    test('is the passage itself; among words or in a list, a mention', () => {
+        expect(
+            toNoteAddChanges(
+                [
+                    '[^John 10:11-18]',
+                    '> [^(KJV) Psalm 23]',
+                    '**[^Luke 15:4-7]**',
+                    '## Big idea',
+                    'Read [^John 10:11] again.',
+                    '- [^John 10:14] he knows us',
+                ].join('\n'),
+            ),
+        ).toEqual([
+            { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+            { after: 0, kind: 'passage', ref: '(KJV) Psalm 23' },
+            { after: 0, kind: 'passage', ref: 'Luke 15:4-7' },
+            { after: 0, kind: 'h2', text: 'Big idea' },
+            {
+                after: 0,
+                kind: 'paragraph',
+                text: 'Read [^John 10:11] again.',
+            },
+            { after: 0, kind: 'bullet', text: '[^John 10:14] he knows us' },
+        ]);
+    });
+
+    test('a section put into a note reads it the same way', () => {
+        expect(
+            expandSectionAdds([
+                {
+                    after: 3,
+                    kind: 'section',
+                    text: '## Text\n[^John 10:11-18]\n## Big idea\nHe gives.',
+                },
+            ]),
+        ).toEqual([
+            { after: 3, kind: 'h2', text: 'Text' },
+            { after: 3, kind: 'passage', ref: 'John 10:11-18' },
+            { after: 3, kind: 'h2', text: 'Big idea' },
+            { after: 3, kind: 'paragraph', text: 'He gives.' },
+        ]);
+    });
+
+    // BN-256 (batches MJ and NA): a children's lesson's questions came as
+    // ONE paragraph add of list lines parted by a `\n` written out, and
+    // went in as one bullet holding "- How did ..." -- the second
+    // question inside the first.
+    test('a paragraph of list lines parted by a written-out break is a line each', () => {
+        expect(
+            expandSectionAdds([
+                {
+                    after: 32,
+                    kind: 'paragraph',
+                    text: '- Why were they not afraid?\\n- How did the king change?',
+                },
+            ]),
+        ).toEqual([
+            { after: 32, kind: 'bullet', text: 'Why were they not afraid?' },
+            { after: 32, kind: 'bullet', text: 'How did the king change?' },
+        ]);
+        // Words that are no mark-up keep their written-out break as words.
+        expect(
+            expandSectionAdds([
+                {
+                    after: 2,
+                    kind: 'paragraph',
+                    text: 'Type \\n to break a line.',
+                },
+            ]),
+        ).toEqual([
+            { after: 2, kind: 'paragraph', text: 'Type \\n to break a line.' },
+        ]);
+    });
+
+    test('a passage no Bible could give is a line of its reference', () => {
+        expect(
+            toUnfoundVersesAsWords(
+                [
+                    { after: 0, kind: 'passage', ref: 'Hezekiah 9:9' },
+                    { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+                ],
+                new Set(['John 10:11-18']),
+            ),
+        ).toEqual([
+            { after: 0, kind: 'paragraph', text: 'Hezekiah 9:9' },
+            { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+        ]);
+    });
+});
+
+describe('a paragraph that is one passage token', () => {
+    test('a range or a chapter is the passage; one verse stays a chip', () => {
+        expect(
+            expandSectionAdds([
+                { after: 0, kind: 'paragraph', text: '[^John 10:11-18]' },
+                { after: 0, text: '[^(KJV) Psalm 23]', color: 'navy' },
+                { after: 0, kind: 'paragraph', text: '[^John 10:11]' },
+                { after: 0, kind: 'paragraph', text: 'Read [^John 10:1-5]' },
+            ]),
+        ).toEqual([
+            { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+            { after: 0, kind: 'passage', ref: '(KJV) Psalm 23', color: 'navy' },
+            { after: 0, kind: 'paragraph', text: '[^John 10:11]' },
+            { after: 0, kind: 'paragraph', text: 'Read [^John 10:1-5]' },
+        ]);
+    });
+});
+
+// BN-67 (2026-11-10): what a model writes when it finishes a sermon.
+describe("a heading's marks in its words", () => {
+    test('come off, and say the level where no heading kind is given', () => {
+        expect(
+            readHeadingMarks({ block: 3, text: '## 1. Seek' }, 'paragraph'),
+        ).toEqual({ block: 3, kind: 'h2', text: '1. Seek' });
+        expect(
+            readHeadingMarks({ block: 3, kind: 'h3', text: '## Seek' }, 'h2'),
+        ).toEqual({ block: 3, kind: 'h3', text: 'Seek' });
+        expect(
+            readHeadingMarks(
+                { after: 1, kind: 'h2', text: '## Big idea' },
+                null,
+            ),
+        ).toEqual({ after: 1, kind: 'h2', text: 'Big idea' });
+    });
+    test('stay where they are words: code, a quote, a list, a paragraph add', () => {
+        for (const [change, kind] of [
+            [{ block: 2, text: '# install it' }, 'code'],
+            [{ block: 2, text: '# a line' }, 'quote'],
+            [{ block: 2, kind: 'bullet', text: '# a line' }, 'bullet'],
+            [{ after: 2, kind: 'paragraph', text: '## Next' }, null],
+            [{ block: 2, text: '## two\nlines' }, 'paragraph'],
+        ] as const) {
+            expect(readHeadingMarks(change as any, kind)).toBe(change);
+        }
+    });
+
+    // BN-80 (2026-11-10): two headings of a reviewed sermon read "h2: …",
+    // the kind label the note is read with copied into the words.
+    test('lose the kind label the note was read with', () => {
+        expect(stripHeadingKindLabel('h2: "1. The Plea for Mercy"')).toBe(
+            '1. The Plea for Mercy',
+        );
+        expect(stripHeadingKindLabel('H2O and the flood')).toBe(
+            'H2O and the flood',
+        );
+        expect(
+            readHeadingMarks({ block: 4, text: 'h2: 1. Lost' }, 'h2'),
+        ).toEqual({ block: 4, text: '1. Lost' });
+        expect(
+            readHeadingMarks(
+                { after: 3, kind: 'h2', text: '## h2: "Grace"' },
+                null,
+            ),
+        ).toEqual({ after: 3, kind: 'h2', text: 'Grace' });
+        // A paragraph's words are its own.
+        const words = { block: 5, text: 'h2: a note to self' };
+        expect(readHeadingMarks(words, 'paragraph')).toBe(words);
+        expect(
+            toNoteAddChanges('## h2: Big idea\nIt is grace.', '')[0],
+        ).toEqual(expect.objectContaining({ kind: 'h2', text: 'Big idea' }));
+    });
+});
+
+describe('new blocks numbered as they will stand, a heading with its words', () => {
+    test('are one section: each group after the one before', () => {
+        const changes = chainSectionAdds([
+            { after: 3, kind: 'h2', text: 'Background' },
+            { after: 4, kind: 'paragraph', text: 'Who and when.' },
+            { after: 5, kind: 'h2', text: 'Introduction' },
+            { after: 6, kind: 'paragraph', text: 'A question.' },
+            { block: 4, text: '1. Seek' },
+            { after: 4, kind: 'paragraph', text: 'What it means.' },
+        ]);
+        expect(changes.map((change) => change.chain === true)).toEqual([
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+        ]);
+    });
+    test('a heading over each block, or a line under each, stay as numbered', () => {
+        const headings = [
+            { after: 1, kind: 'h3', text: 'One' },
+            { after: 2, kind: 'h3', text: 'Two' },
+        ];
+        expect(chainSectionAdds(headings)).toEqual(headings);
+        const lines = [
+            { after: 1, kind: 'paragraph', text: 'Under one.' },
+            { after: 2, kind: 'paragraph', text: 'Under two.' },
+        ];
+        expect(chainSectionAdds(lines)).toEqual(lines);
+    });
+
+    // Seen live the same day: told one section a place, the model put each
+    // point's words after its own heading -- as read, and right.
+    test('sections, one a place, stay as numbered', () => {
+        const sections = expandSectionAdds([
+            {
+                after: 3,
+                kind: 'section',
+                text: '## Background\nWho and when.',
+            },
+            { after: 4, kind: 'section', text: 'What it means.\nAn example.' },
+            { after: 5, kind: 'section', text: 'What it means.\nHow to live.' },
+        ]);
+        expect(chainSectionAdds(sections)).toEqual(sections);
+    });
+});
+
+describe('a block changed into one passage token', () => {
+    const ownText = (block: number) => {
+        return block === 1
+            ? 'Sermon on Matthew 6:25-34'
+            : '[^(KJV) John 3:1-8]';
+    };
+    test('gives way to the passage, in its place', () => {
+        expect(
+            expandPassageChanges(
+                [{ block: 1, kind: 'paragraph', text: '[^Matthew 6:25-34]' }],
+                ownText,
+            ),
+        ).toEqual([
+            { after: 0, kind: 'passage', ref: 'Matthew 6:25-34' },
+            { block: 1, remove: true },
+        ]);
+    });
+    test("one verse, a token among words, or its own words stay the block's", () => {
+        for (const change of [
+            { block: 2, text: '[^John 3:16]' },
+            { block: 2, text: 'Read [^John 3:1-8]' },
+            { block: 2, kind: 'h2', text: '[^John 3:1-8]' },
+            // Its own range chip given back (`note-roundtrip.mjs`, a note
+            // of the dev data folder): byte for byte, no passage.
+            { block: 2, text: '[^(KJV) John 3:1-8]' },
+        ]) {
+            expect(expandPassageChanges([change], ownText)).toEqual([change]);
+        }
+    });
+});
+
+// BN-261 (heldne N-12): a children's memory verse named too long was given
+// its new verse as `{block: 26, ref}` -- 26 the Memory verse heading, 27
+// the verse -- refused twice, and the ask stopped with the long verse in.
+describe('a passage given another reference', () => {
+    // 25 a paragraph, 26 the Memory verse heading, 27 its verse, 28 a
+    // heading with no passage under it, 29 a paragraph.
+    const kindOf = (block: number) => {
+        return (
+            (
+                {
+                    25: 'paragraph',
+                    26: 'h2',
+                    27: 'passage',
+                    28: 'h2',
+                    29: 'paragraph',
+                } as Record<number, string>
+            )[block] ?? null
+        );
+    };
+    test('is that passage, in its place', () => {
+        expect(
+            expandPassageRepoints([{ block: 27, ref: 'Psalm 56:4' }], kindOf),
+        ).toEqual([
+            { after: 26, kind: 'passage', ref: 'Psalm 56:4' },
+            { block: 27, remove: true },
+        ]);
+    });
+    test('aimed at the heading over it, is still that passage', () => {
+        expect(
+            expandPassageRepoints([{ block: 26, ref: ' Psalm 56:4 ' }], kindOf),
+        ).toEqual([
+            { after: 26, kind: 'passage', ref: 'Psalm 56:4' },
+            { block: 27, remove: true },
+        ]);
+    });
+    test('is left as sent anywhere else', () => {
+        for (const change of [
+            // A heading with no passage under it, a paragraph, the last
+            // block, words beside the reference, another kind.
+            { block: 28, ref: 'Psalm 56:4' },
+            { block: 25, ref: 'Psalm 56:4' },
+            { block: 29, ref: 'Psalm 56:4' },
+            { block: 26, ref: 'Psalm 56:4', text: 'Memory verse' },
+            { block: 26, ref: 'Psalm 56:4', kind: 'h3' },
+        ]) {
+            expect(expandPassageRepoints([change], kindOf)).toEqual([change]);
+        }
+    });
+});
+
+// BN-81 (2026-11-10): a whole children's lesson was refused for one
+// token naming two references, `[^Jonah 1:17, 2:10]`.
+describe('a verse token naming several references', () => {
+    test('is each reference, the book and chapter carried over', () => {
+        expect(splitVerseTokenRefs('Jonah 1:17, 2:10')).toEqual([
+            'Jonah 1:17',
+            'Jonah 2:10',
+        ]);
+        expect(splitVerseTokenRefs('John 3:16, 18')).toEqual([
+            'John 3:16',
+            'John 3:18',
+        ]);
+        expect(splitVerseTokenRefs('Psalm 23, 24')).toEqual([
+            'Psalm 23',
+            'Psalm 24',
+        ]);
+        expect(splitVerseTokenRefs('(KJV) Luke 15:4; 15:7')).toEqual([
+            '(KJV) Luke 15:4',
+            '(KJV) Luke 15:7',
+        ]);
+        expect(splitVerseTokenRefs('John 3:16')).toBe(null);
+        expect(splitVerseTokenRefs('Jonah 1:17, and more')).toBe(null);
+    });
+    test('alone on a section line is a line each; in words, tokens', () => {
+        expect(
+            withVerseTokensSplit([
+                {
+                    after: 0,
+                    kind: 'section',
+                    text: '## Story\n[^Jonah 1:17, 2:10]\nHe was saved.',
+                },
+            ])[0].text,
+        ).toBe('## Story\n[^Jonah 1:17]\n[^Jonah 2:10]\nHe was saved.');
+        expect(
+            withVerseTokensSplit([
+                { block: 3, text: 'Read [^John 3:16, 18] today' },
+            ])[0].text,
+        ).toBe('Read [^John 3:16]; [^John 3:18] today');
+        const kept = { block: 3, text: 'Read [^John 3:16] today' };
+        expect(withVerseTokensSplit([kept])[0]).toBe(kept);
+    });
 });

@@ -97,11 +97,11 @@ function getWidget(key: string) {
 describe('which data puts a component on a screen', () => {
     const emptyData = {
         messageDataList: [],
-        marqueeTopData: null,
-        marqueeBottomData: null,
-        quickTextData: null,
-        countdownData: null,
-        stopwatchData: null,
+        marqueeTopDataList: [],
+        marqueeBottomDataList: [],
+        quickTextDataList: [],
+        countdownDataList: [],
+        stopwatchDataList: [],
         timeDataList: [],
         videoDataList: [],
         imageDataList: [],
@@ -111,11 +111,11 @@ describe('which data puts a component on a screen', () => {
     };
     const onScreenData: { [key: string]: object } = {
         message: { messageDataList: [{ id: 'm' }] },
-        'marquee-top': { marqueeTopData: { text: 'top' } },
-        'marquee-bottom': { marqueeBottomData: { text: 'bottom' } },
-        'quick-text': { quickTextData: { htmlText: 'hi' } },
-        countdown: { countdownData: { id: 'c' } },
-        stopwatch: { stopwatchData: { id: 's' } },
+        'marquee-top': { marqueeTopDataList: [{ text: 'top' }] },
+        'marquee-bottom': { marqueeBottomDataList: [{ text: 'bottom' }] },
+        'quick-text': { quickTextDataList: [{ htmlText: 'hi' }] },
+        countdown: { countdownDataList: [{ id: 'c' }] },
+        stopwatch: { stopwatchDataList: [{ id: 's' }] },
         time: { timeDataList: [{ id: 't' }] },
         video: { videoDataList: [{ id: 'v' }] },
         image: { imageDataList: [{ id: 'i' }] },
@@ -149,6 +149,11 @@ describe('which data puts a component on a screen', () => {
     test('a list missing from old data reads as empty', () => {
         for (const key of [
             'message',
+            'marquee-top',
+            'marquee-bottom',
+            'quick-text',
+            'countdown',
+            'stopwatch',
             'time',
             'video',
             'image',

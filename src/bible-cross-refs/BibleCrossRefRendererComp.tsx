@@ -124,7 +124,7 @@ export default function BibleCrossRefRendererComp({
                             </BibleCrossRefWrapperComp>
                             {isOpenAIAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title="Custom OpenAI"
+                                    title={`OpenAI (${tran('Custom')})`}
                                     note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(
@@ -143,7 +143,7 @@ export default function BibleCrossRefRendererComp({
                             ) : null}
                             {isAnthropicAvailable ? (
                                 <BibleCrossRefWrapperComp
-                                    title="Custom Anthropic"
+                                    title={`Anthropic (${tran('Custom')})`}
                                     note={genAiVigilant()}
                                     settingName="show-ai-bible-ref"
                                     onRefresh={handleRefreshing.bind(

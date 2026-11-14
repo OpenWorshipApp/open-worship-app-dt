@@ -15,8 +15,9 @@ and style (`slides`, `add-slide`, `update-slide`, `delete-slide`,
 `move-slide`, `duplicate-slide`) — then: *make sure all actions have backup
 action, e.g. delete it should move to trash and can undo*.
 
-**Why:** a Bibles list (`.owb`) and a notes file (`.own`) have NO editing
-history — every save writes the file, no `*`, no Ctrl+Z — so without a backup
+**Why:** a Bibles list (`.owb`) has NO editing history, and a notes file
+(`.own`) one only for what its note window types (since 2026-09-26) — a save
+by `owa_bible_item` or `owa_bible_note` writes the file, no `*`, no Ctrl+Z — so without a backup
 an agent's change to one is unrecoverable, and the OS trash cannot be emptied
 back into a folder by a program either.
 
@@ -31,7 +32,7 @@ back into a folder by a program either.
   list reads) beside `<id>.data.json` (the texts, read only by an undo), the
   last 100 for 30 days (`agentBackupPlanHelpers.ts`, pure and unit-tested). It
   is not in the whole-data archive.
-- An undo applies a rename, then files, then editing heads — a document's
+- An undo applies a rename, then files, then editing heads, then settings (`home-setting`, `app-setting`) — a document's
   unsaved state can only go into a document that exists — takes its own backup
   first, and names later changes to the same file that went back with it.
   `owa_undo` with no id takes the newest change that is neither undone nor an
@@ -40,8 +41,8 @@ back into a folder by a program either.
   history discarded only once the file is really gone.
 - The store is SHARED by every agent on the machine: a script checking undo
   must pass each change's own `undoId`, or it may undo another session's work.
-- The firewall rations removals (every `delete*`, a run sheet's `remove` and `undo`) at 10 per 5 min,
-  apart from the 25 presses a minute. `owa_bible_note` refuses a write while
+- The firewall rations removals (every `delete*`, a run sheet's `remove` and `undo`) at 10 per 5 min, except an undo, by its own id, of a change the same session made with a tool that takes nothing away (BN-46, 2026-11-09),
+  apart from the 25 presses a minute. `owa_bible_note` refuses a write but an `add` (2026-11-08) while
   that file is open in a `bibleNote.html` window, which saves its stale copy
   back over it.
 - Cost: +1 089 tokens a round to the chatbot's model (24 tools, ~7 990).

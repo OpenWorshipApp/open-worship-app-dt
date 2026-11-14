@@ -19,6 +19,9 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import {
+    answerLyricSources,
+    answerScreenAsk,
+    answerScreenThreadAsk,
     answerWhereIs,
     askHelpBot,
     checkIsPresenterStateAsk,
@@ -33,6 +36,7 @@ import {
     runBotAction,
 } from './helpBotHelpers';
 import { genQuickReplies } from './quickReplyHelpers';
+import languageNameMap from '../lang/data/en/language-names.json';
 
 beforeEach(() => {
     callTool.mockClear();
@@ -212,14 +216,14 @@ describe('walkthrough actions', () => {
             { id: 'W-11' },
             'reader',
             true,
-            'Use the Khmer book and chapter buttons.',
+            'Use the book and chapter buttons of my Bible.',
         )[1];
         const result = await runBotAction(action);
         expect(callTool).toHaveBeenCalledWith('owa_guide_start', {
             manualId: 'W-11',
             page: 'reader.html',
             mode: 'show',
-            topic: 'Use the Khmer book and chapter buttons.',
+            topic: 'Use the book and chapter buttons of my Bible.',
         });
         expect(result.isNeedingModel).toBe(true);
         expect(result.text).toContain('prepare the safe **Do it** step');
@@ -271,7 +275,7 @@ describe('pressing Highlight again', () => {
 describe('localized Bible button lookup', () => {
     test('turns an English reference into exact book, chapter, and verse buttons', () => {
         const answer = genReaderButtonReferenceAnswer(
-            'I use a Khmer Bible. Typing John 3:16 does not work. Use the book and chapter buttons.',
+            'My Bible is in another language. Typing John 3:16 does not work. Use the book and chapter buttons.',
             'reader',
         );
         expect(answer?.text).toContain('do not need to type');
@@ -290,6 +294,54 @@ describe('localized Bible button lookup', () => {
                 { find: 'Verse 16', action: 'click' },
             ],
         });
+    });
+
+    // A Bible named by its language alone is the same ask, whichever
+    // language English's table names: none is picked out.
+    test('takes a Bible named by any language', () => {
+        const nameList = Object.values(
+            languageNameMap as Record<string, string>,
+        ).map((name) => {
+            return name.split(/[,;(]/)[0].trim();
+        });
+        expect(nameList.length).toBeGreaterThan(100);
+        for (const name of nameList) {
+            const answer = genReaderButtonReferenceAnswer(
+                `I use a ${name} Bible. Typing John 3:16 does not work.`,
+                'reader',
+            );
+            const stepList = (answer?.actions?.[1].args.steps ?? []) as {
+                find: string;
+                action: string;
+            }[];
+            expect([
+                name,
+                stepList.map(({ find, action }) => {
+                    return { find, action };
+                }),
+            ]).toEqual([
+                name,
+                [
+                    { find: 'Clear input', action: 'click' },
+                    { find: 'John', action: 'click' },
+                    { find: 'Chapter 3', action: 'click' },
+                    { find: 'Verse 16', action: 'click' },
+                ],
+            ]);
+        }
+        // Nor in another window, nor with no language and no buttons named.
+        expect(
+            genReaderButtonReferenceAnswer(
+                'I use a Swahili Bible. Typing John 3:16 does not work.',
+                'presenter',
+            ),
+        ).toBeNull();
+        expect(
+            genReaderButtonReferenceAnswer(
+                'I use a big Bible. Typing John 3:16 does not work.',
+                'reader',
+            ),
+        ).toBeNull();
     });
 
     test('does not take over an ordinary Reader question', () => {
@@ -1086,6 +1138,194 @@ describe('the offline bot writes a pasted song out itself', () => {
         expect(answer.text).not.toContain('budget');
     });
 
+    // EC-589, the user: _it work for only one url, I wish it could create
+    // multiple (post with multiple urls), also multiple files_.
+    const genPageDraft = (title: string) => {
+        return DRAFT.replace('from the text', 'from the page').replace(
+            /Amazing Grace/g,
+            title,
+        );
+    };
+
+    test('several song links are read one after another, under Create all', async () => {
+        const titles = ['First Song', 'Second Song', 'Third Song'];
+        let at = 0;
+        callTool.mockImplementation(async () => {
+            const title = titles[at];
+            at += 1;
+            return genPageDraft(title);
+        });
+        const answer = await askHelpBot(
+            `Create lyric files from ${PAGE}, ${PAGE}/2 and ${PAGE}/3`,
+            'presenter',
+        );
+        expect(callTool.mock.calls).toEqual([
+            ['owa_lyric_validate', { url: PAGE, mode: 'draft' }],
+            ['owa_lyric_validate', { url: `${PAGE}/2`, mode: 'draft' }],
+            ['owa_lyric_validate', { url: `${PAGE}/3`, mode: 'draft' }],
+        ]);
+        expect(answer.text).toContain('I wrote out 3 songs');
+        expect(answer.text).toContain('Song: "Second Song" · hymnary.example');
+        expect(answer.text).not.toContain('```ol:');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create all 3 songs',
+            'Create "First Song"',
+            'Create "Second Song"',
+            'Create "Third Song"',
+        ]);
+        expect(answer.actions?.[0].toolName).toBe('owa-lyric-create-all');
+        expect(answer.actions?.[0].args.references).toEqual(
+            answer.actions?.slice(1).map((one) => one.args.reference),
+        );
+    });
+
+    test('a link that gives no song is said in its own sentence, the rest kept', async () => {
+        callTool
+            .mockResolvedValueOnce(genPageDraft('First Song'))
+            .mockResolvedValueOnce(
+                'That does not look like the words of a song.',
+            )
+            .mockRejectedValueOnce(new Error('the budget is spent'))
+            .mockResolvedValueOnce(genPageDraft('Fourth Song'));
+        const answer = await askHelpBot(
+            `songs: ${PAGE} https://other.example/a https://third.example/b ${PAGE}/4`,
+            'presenter',
+        );
+        expect(answer.text).toContain('I wrote out 2 songs');
+        expect(answer.text).toContain(
+            'I read other.example but could not find a song on it.',
+        );
+        expect(answer.text).toContain('I could not read third.example');
+        expect(answer.text).not.toContain('budget');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create all 2 songs',
+            'Create "First Song"',
+            'Create "Fourth Song"',
+        ]);
+    });
+
+    test('one song of several links is answered as one song, Copy and all', async () => {
+        callTool
+            .mockResolvedValueOnce(
+                'That does not look like the words of a song.',
+            )
+            .mockResolvedValueOnce(genPageDraft('Only Song'));
+        const answer = await askHelpBot(
+            `songs ${PAGE} https://other.example/a`,
+            'presenter',
+        );
+        expect(answer.text).toContain('I read other.example and wrote');
+        expect(answer.text).toContain('I read hymnary.example but could not');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create "Only Song"',
+            'Copy song text',
+        ]);
+    });
+
+    test('past four links the rest are left for another message, said so', async () => {
+        callTool.mockImplementation(async (_name: string, args: any) => {
+            return genPageDraft(`Song ${String(args.url).slice(-1)}`);
+        });
+        const links = [1, 2, 3, 4, 5, 6].map((index) => {
+            return `${PAGE}/${index.toString()}`;
+        });
+        const answer = await askHelpBot(
+            `create songs from ${links.join(' ')}`,
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(4);
+        expect(answer.text).toContain(
+            'I read the first 4 links only. Send me the others in another ' +
+                'message.',
+        );
+        expect(answer.actions?.[0].label).toBe('Create all 4 songs');
+    });
+
+    test('no link of several gives a song: only the sentences, no button', async () => {
+        callTool.mockResolvedValue(
+            'That does not look like the words of a song.',
+        );
+        const answer = await askHelpBot(
+            `songs ${PAGE} https://other.example/a`,
+            'presenter',
+        );
+        expect(answer.text).toContain('I read hymnary.example but could not');
+        expect(answer.text).toContain('I read other.example but could not');
+        expect(answer.actions).toBeUndefined();
+    });
+
+    test('song files: each drafted, an untitled one named after its file', async () => {
+        const UNTITLED = DRAFT.replace(/Amazing Grace/g, 'Untitled');
+        callTool.mockImplementation(async (_name: string, args: any) => {
+            if (args.text === 'no song') {
+                return 'That does not look like the words of a song.';
+            }
+            if (args.title !== undefined) {
+                return DRAFT.replace(/Amazing Grace/g, args.title);
+            }
+            return args.text === 'untitled words'
+                ? UNTITLED
+                : genPageDraft('Titled Song');
+        });
+        const steps: string[] = [];
+        const answer = await answerLyricSources(
+            [
+                { kind: 'text', name: 'titled.txt', text: 'titled words' },
+                {
+                    kind: 'text',
+                    name: 'Morning Hymn.md',
+                    text: 'untitled words',
+                },
+                { kind: 'text', name: 'notes.txt', text: 'no song' },
+            ],
+            0,
+            (text) => {
+                steps.push(text);
+                return () => {
+                    steps.push(`done: ${text}`);
+                };
+            },
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_lyric_validate', {
+            text: 'untitled words',
+            mode: 'draft',
+            title: 'Morning Hymn',
+        });
+        expect(answer.text).toContain('I wrote out 2 songs');
+        expect(answer.text).toContain('· Morning Hymn.md');
+        expect(answer.text).toContain(
+            'I could not find a song in "notes.txt".',
+        );
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create all 2 songs',
+            'Create "Titled Song"',
+            'Create "Morning Hymn"',
+        ]);
+        // Each file a step of its own on the tab's progress line.
+        expect(steps).toEqual([
+            'Writing the song out',
+            'done: Writing the song out',
+            'Writing the song out',
+            'done: Writing the song out',
+            'Writing the song out',
+            'done: Writing the song out',
+        ]);
+    });
+
+    test('a file of one song is answered as one song', async () => {
+        callTool.mockResolvedValue(DRAFT);
+        const answer = await answerLyricSources([
+            { kind: 'text', name: 'grace.txt', text: PASTE },
+        ]);
+        expect(answer.text).toContain(
+            'I wrote those words out as a song for the Lyric Editor.',
+        );
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create "Amazing Grace"',
+            'Copy song text',
+        ]);
+    });
+
     test('a link with no song word beside it still goes to the manual', async () => {
         callTool.mockResolvedValue('[]');
         parseToolJson.mockReturnValue([]);
@@ -1433,6 +1673,14 @@ describe('the offline bot offers to put a passage on the screen', () => {
             ['show Psalm 23 on the projector', 'Psalm 23'],
             ['please put up 1 John 1:1-4', '1 John 1:1-4'],
             ['Present Romans 8.28 to the big screen.', 'Romans 8.28'],
+            // Asked as a request (EC-622): it had been the guide's page,
+            // and "me John" the book.
+            ['can you put John 3:16 on the projector?', 'John 3:16'],
+            ['show me Psalm 23, please', 'Psalm 23'],
+            [
+                'Could you please show 1 John 1:1-4 on the screen?',
+                '1 John 1:1-4',
+            ],
         ]) {
             callTool.mockClear();
             await askHelpBot(ask, 'presenter');
@@ -1469,9 +1717,13 @@ describe('the offline bot offers to put a passage on the screen', () => {
         callTool.mockResolvedValue('[]');
         for (const ask of [
             'How do I put John 3:16 on the screen?',
+            'Can I put John 3:16 on the screen?',
             'How do I put a Bible verse on the screen?',
             'Put the song on the screen',
             'show slide 3 on the screen',
+            // "the song 3" had been read as a passage.
+            'show the song 3',
+            'show me the song 3',
         ]) {
             callTool.mockClear();
             await askHelpBot(ask, 'presenter');
@@ -1480,6 +1732,65 @@ describe('the offline bot offers to put a passage on the screen', () => {
                 expect.anything(),
             );
         }
+    });
+
+    // "Show me ..." is also a control to point at (EC-622): the pointing
+    // had answered "show me Psalm 23" with the closest control's name.
+    test('show me a passage is the passage when the app reads it', async () => {
+        parseToolJson.mockReturnValue({ ...checked, reference: 'Psalm 23' });
+        const answer = await askHelpBot('show me Psalm 23', 'presenter');
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_find_ui',
+            expect.anything(),
+        );
+        expect(answer.actions?.[0]?.args).toEqual({
+            command: '/verse Psalm 23',
+        });
+    });
+
+    test('show me what the app reads as no passage is a control to point at', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_present_bible') {
+                throw new Error(
+                    '"Display 2" could not be read as a passage in any installed version.',
+                );
+            }
+            return name;
+        });
+        parseToolJson.mockImplementation((text: string) => {
+            return text === 'owa_find_ui'
+                ? {
+                      count: 1,
+                      matches: [{ label: 'Display 2', isVisible: true }],
+                  }
+                : null;
+        });
+        await askHelpBot('show me Display 2', 'presenter');
+        expect(callTool).toHaveBeenCalledWith(
+            'owa_find_ui',
+            expect.objectContaining({ text: 'Display 2' }),
+        );
+    });
+
+    // Off the Presenter the check carries no screens, and the answer had
+    // said the screen was off of a screen nobody looked at (EC-622).
+    test('off the Presenter, nothing is said of the screens', async () => {
+        const {
+            screens: _screens,
+            isAnyShowing: _showing,
+            ...offPresenter
+        } = checked;
+        parseToolJson.mockReturnValue(offPresenter);
+        const answer = await askHelpBot(
+            'Put John 3:16 on the screen',
+            'reader',
+        );
+        expect(answer.text).toBe(
+            '**John 3:16 (KJV)** reads -- "(16): For God so loved the world".',
+        );
+        expect(answer.actions?.[0]?.args).toEqual({
+            command: '/verse John 3:16',
+        });
     });
 
     test("a reference the app cannot read gets the app's sentence and no button", async () => {
@@ -2066,5 +2377,360 @@ describe('a press whose card or window did not come up', () => {
                 args: { manualId: 'W-16', page: 'nowhere.html' },
             }),
         ).rejects.toThrow('no open page matching "nowhere.html"');
+    });
+});
+
+// EC-625: with no assistant, a screen ask is answered with the setting it
+// asks about, then what each screen holds, then that nothing was changed.
+describe('answerScreenAsk', () => {
+    const listState = {
+        showingScreenIds: [0],
+        displays: [{ id: 7, label: 'DELL U2419H', width: 1920, height: 1080 }],
+        screens: [
+            {
+                screenId: 0,
+                isShowing: true,
+                isLocked: true,
+                isSelected: true,
+                display: { id: 7, label: 'DELL U2419H' },
+                stage: 0,
+                bible: { reference: 'John 3:16', version: 'KJV' },
+            },
+        ],
+    };
+    const editState = {
+        screens: [
+            {
+                id: 0,
+                group: null,
+                transition: {
+                    slide: 'zoom',
+                    background: 'fade',
+                    foreground: 'fade',
+                },
+                lineSync: false,
+            },
+        ],
+    };
+    const closing =
+        'To change it, ask again when an assistant can answer, or ask me ' +
+        'how to do it yourself.';
+
+    beforeEach(() => {
+        callTool.mockImplementation(async (name: string) => name);
+        parseToolJson.mockImplementation((text?: any) => {
+            return text === 'owa_list_screens'
+                ? listState
+                : text === 'owa_screen_edit'
+                  ? editState
+                  : null;
+        });
+    });
+
+    test('a monitor ask names the monitor, from the screens list alone', async () => {
+        const answer = await answerScreenAsk('display');
+        expect(answer?.text).toBe(
+            'Screen 0 is on DELL U2419H (1920×1080).\n\n' +
+                'Screen 0 is showing right now, on a machine with 1 ' +
+                'display(s) -- John 3:16 (KJV).\n\n' +
+                closing,
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_list_screens');
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_screen_edit',
+            expect.anything(),
+        );
+        expect(answer?.actions?.map((action) => action.label)).toEqual([
+            'Hide every screen',
+        ]);
+    });
+
+    test('a transition ask reads the screens quietly', async () => {
+        const answer = await answerScreenAsk('transition');
+        expect(callTool).toHaveBeenCalledWith('owa_screen_edit', {
+            action: 'read',
+        });
+        expect(
+            answer?.text.startsWith('Screen 0 changes slides with zoom'),
+        ).toBe(true);
+        expect(answer?.text.endsWith(closing)).toBe(true);
+    });
+
+    test('a clear says what each screen holds and that nothing changed', async () => {
+        const answer = await answerScreenAsk('clear');
+        expect(answer?.text).toBe(
+            'Screen 0 is showing right now, on a machine with 1 display(s) ' +
+                '-- John 3:16 (KJV).\n\n' +
+                closing,
+        );
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_screen_edit',
+            expect.anything(),
+        );
+    });
+
+    test('a read that fails leaves what each screen holds', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_screen_edit') {
+                throw new Error('This window did not answer.');
+            }
+            return name;
+        });
+        const answer = await answerScreenAsk('group');
+        expect(answer?.text.startsWith('Screen 0 is showing right now')).toBe(
+            true,
+        );
+    });
+
+    test('no screens list, no answer: the guide answers instead', async () => {
+        parseToolJson.mockReturnValue({ error: 'no presenter' });
+        expect(await answerScreenAsk('display')).toBe(null);
+    });
+});
+
+// EC-627: with no assistant, the screen ask is offered the press that does
+// it, and the press makes the change, says the setting as it is now and
+// carries its Undo.
+describe('the screens changed with no assistant', () => {
+    const listState = {
+        showingScreenIds: [0],
+        displays: [{ id: 7, label: 'DELL U2419H', width: 1920, height: 1080 }],
+        screens: [
+            {
+                screenId: 0,
+                isShowing: true,
+                isLocked: false,
+                isSelected: true,
+                display: { id: 7, label: 'DELL U2419H' },
+                stage: 0,
+                bible: { reference: 'John 3:16', version: 'KJV' },
+            },
+        ],
+    };
+    let isLocked = false;
+    const genEditState = () => {
+        return {
+            screens: [
+                {
+                    id: 0,
+                    on: true,
+                    ticked: true,
+                    locked: isLocked,
+                    group: null,
+                    stage: 0,
+                    transition: {
+                        slide: 'fade',
+                        background: 'fade',
+                        foreground: 'fade',
+                    },
+                    lineSync: false,
+                    bible: { reference: 'John 3:16', versions: ['KJV'] },
+                },
+            ],
+            bibleStyle: '65px, words #FFFFFF',
+            displays: [{ id: 7, name: 'DELL U2419H', size: '1920x1080' }],
+            bibles: [
+                'KJV: King James Version (English)',
+                'NIV: New International Version (English)',
+            ],
+        };
+    };
+
+    beforeEach(() => {
+        isLocked = false;
+        callTool.mockImplementation(async (name: string, args?: any) => {
+            if (name === 'owa_screen_edit' && args?.action === 'set') {
+                isLocked = args.lock === true;
+                return JSON.stringify({
+                    did: 'Locked screen 0.',
+                    undoId: 'u1',
+                });
+            }
+            return name;
+        });
+        parseToolJson.mockImplementation((text?: any) => {
+            return text === 'owa_list_screens'
+                ? {
+                      ...listState,
+                      screens: [{ ...listState.screens[0], isLocked }],
+                  }
+                : text === 'owa_screen_edit'
+                  ? genEditState()
+                  : null;
+        });
+    });
+
+    test('a lock asked for is offered as the press that does it', async () => {
+        const answer = await answerScreenAsk('lock', 'Lock screen 0');
+        expect(
+            answer?.text.endsWith(
+                'Nothing has been changed yet. Press a button below to change ' +
+                    'it now, or ask me how to do it yourself.',
+            ),
+        ).toBe(true);
+        expect(answer?.actions?.[0]).toEqual({
+            label: 'Lock',
+            toolName: 'owa_screen_change',
+            args: { kind: 'lock', set: { screens: [0], lock: true } },
+        });
+        expect(callTool).not.toHaveBeenCalledWith(
+            'owa_screen_edit',
+            expect.objectContaining({ action: 'set' }),
+        );
+    });
+
+    test('pressed, it locks the screen, says so and offers Undo', async () => {
+        const answer = await answerScreenAsk('lock', 'Lock screen 0');
+        const result = await runBotAction(answer!.actions![0]);
+        expect(callTool).toHaveBeenCalledWith('owa_screen_edit', {
+            screens: [0],
+            lock: true,
+            action: 'set',
+        });
+        expect(result.text.startsWith('Done. ')).toBe(true);
+        expect(result.text).toContain('locked');
+        expect(result.actions).toEqual([
+            {
+                label: 'Undo this change',
+                toolName: 'lyric-undo',
+                args: { id: 'u1', name: expect.any(String), kind: 'screen' },
+            },
+        ]);
+    });
+
+    test('a look changed is said as done, with no size sentence beside it', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            return name === 'owa_screen_edit'
+                ? JSON.stringify({ did: 'Centred the words.', undoId: 'u2' })
+                : name;
+        });
+        const result = await runBotAction({
+            label: 'Align center',
+            toolName: 'owa_screen_change',
+            args: { kind: 'style', set: { style: { align: 'center' } } },
+        });
+        expect(result.text).toBe('Done.');
+        expect(result.actions?.[0]?.args).toMatchObject({ id: 'u2' });
+        expect(callTool).toHaveBeenCalledTimes(1);
+    });
+
+    test('a change already so is no change, and carries no Undo', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            return name === 'owa_screen_edit' ? '{"did":"Already so."}' : name;
+        });
+        const result = await runBotAction({
+            label: 'Lock',
+            toolName: 'owa_screen_change',
+            args: { kind: 'lock', set: { screens: [0], lock: true } },
+        });
+        expect(result.text.startsWith('Done.')).toBe(false);
+        expect(result.actions).toBeUndefined();
+    });
+
+    test('a clear the state says nothing of is answered only with its press', async () => {
+        expect(
+            (
+                await answerScreenAsk('clear', 'Take the Bible off screen 0', {
+                    isOfferOnly: true,
+                })
+            )?.actions?.[0]?.args,
+        ).toEqual({ kind: 'clear', set: { screens: [0], clear: 'bible' } });
+        isLocked = true;
+        expect(
+            await answerScreenAsk('clear', 'Take the Bible off screen 0', {
+                isOfferOnly: true,
+            }),
+        ).toBeNull();
+    });
+
+    // EC-630: a screen asked for is offered the Mini Screen menu's press,
+    // and the press adds it, says it by its number -- where it is, and
+    // which screens are ticked -- and carries its Undo.
+    test('a screen asked for is added by its press, said by its number', async () => {
+        let isAdded = false;
+        callTool.mockImplementation(async (name: string, args?: any) => {
+            if (name === 'owa_screen_edit' && args?.action === 'set') {
+                isAdded = args.newScreen === true;
+                return JSON.stringify({
+                    did: 'added screen 1',
+                    newScreen: 1,
+                    undoId: 'u7',
+                });
+            }
+            return name;
+        });
+        parseToolJson.mockImplementation((text?: any) => {
+            return text === 'owa_list_screens'
+                ? {
+                      ...listState,
+                      screens: [
+                          ...listState.screens,
+                          ...(isAdded
+                              ? [
+                                    {
+                                        screenId: 1,
+                                        isShowing: false,
+                                        isLocked: false,
+                                        isSelected: false,
+                                        stage: 0,
+                                        bible: null,
+                                    },
+                                ]
+                              : []),
+                      ],
+                  }
+                : text === 'owa_screen_edit'
+                  ? genEditState()
+                  : null;
+        });
+        const answer = await answerScreenAsk('newScreen', 'add a new screen', {
+            isOfferOnly: true,
+        });
+        expect(answer?.actions?.[0]).toEqual({
+            label: 'Add New Screen',
+            toolName: 'owa_screen_change',
+            args: { kind: 'newScreen', set: { newScreen: true } },
+        });
+        expect(isAdded).toBe(false);
+        const result = await runBotAction(answer!.actions![0]);
+        expect(callTool).toHaveBeenCalledWith('owa_screen_edit', {
+            newScreen: true,
+            action: 'set',
+        });
+        expect(result.text).toBe(
+            'Done. Screen 1 is on no monitor here. Screen 0 is ticked, so ' +
+                'what you present next goes there.',
+        );
+        expect(result.actions).toEqual([
+            {
+                label: 'Undo this change',
+                toolName: 'lyric-undo',
+                args: { id: 'u7', name: expect.any(String), kind: 'screen' },
+            },
+        ]);
+    });
+
+    test('a screen added with no Undo kept is still said as done', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            return name === 'owa_screen_edit'
+                ? JSON.stringify({ did: 'added screen 1', newScreen: 1 })
+                : name;
+        });
+        const result = await runBotAction({
+            label: 'Add New Screen',
+            toolName: 'owa_screen_change',
+            args: { kind: 'newScreen', set: { newScreen: true } },
+        });
+        expect(result.text.startsWith('Done.')).toBe(true);
+        expect(result.actions).toBeUndefined();
+    });
+
+    test('a line typed under a screen answer is offered its press, or left to the guide', async () => {
+        const answer = await answerScreenThreadAsk('Centre it');
+        expect(answer?.actions?.map((action) => action.args)).toEqual([
+            { kind: 'style', set: { style: { align: 'center' } } },
+        ]);
+        expect(await answerScreenThreadAsk('How do I centre it?')).toBeNull();
+        expect(await answerScreenThreadAsk('Thank you')).toBeNull();
     });
 });

@@ -585,9 +585,9 @@ describe('a question on its way', () => {
         expect($('.chat-add')).toBeNull();
         await typeQuestion('and the background');
         expect($('.chat-add')?.textContent).toBe('Add');
-        plugTestTranslator({ 'Add more': 'ADD-MORE-KM' });
+        plugTestTranslator({ 'Add more': 'ADD-MORE-XX' });
         await typeQuestion('and the backgrounds');
-        expect($('.chat-add')?.textContent).toBe('ADD-MORE-KM');
+        expect($('.chat-add')?.textContent).toBe('ADD-MORE-XX');
         await act(async () => {
             answer.resolve({ text: 'Here it is.' });
         });
@@ -786,11 +786,11 @@ describe('a job another window handed over', () => {
             'Import a Bible from https://example.com/kjv.xml',
         ],
         ['Import bible', 'Import a Bible'],
-        ['Import the Bible called "KJV"', 'CALLED-KM "KJV"'],
-        ['Import bible for Khmer', 'Import bible for Khmer'],
+        ['Import the Bible called "KJV"', 'CALLED-XX "KJV"'],
+        ['Import bible for Swahili', 'Import bible for Swahili'],
     ])('a Bible import "%s" is shown as "%s"', async (asked, shown) => {
         plugTestTranslator({
-            'Import the Bible called "{name}"': 'CALLED-KM "{name}"',
+            'Import the Bible called "{name}"': 'CALLED-XX "{name}"',
         });
         handOver('chatbot-handoff-ask', { text: asked });
         await renderWindow();

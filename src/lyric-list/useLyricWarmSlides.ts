@@ -46,6 +46,9 @@ export async function warmLyricStages(
             filePath,
             stage,
         );
+        // The deck's key carries the song's own font, PEEKED: the last font
+        // read stays known past its freshness, so a deck built under it is
+        // still found here, and `getSlides` reads it again before a build.
         if (lyricAppDocument.getWarmDeck() !== null) {
             continue;
         }

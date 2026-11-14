@@ -30,6 +30,7 @@ const h = vi.hoisted(() => {
         matcher: null as null | ((text: string) => any[]),
         customVersePropsList: [] as any[],
         decorateCallList: [] as any[][],
+        dataListenerMap: new Map<string, Set<(...args: any[]) => void>>(),
     };
 });
 
@@ -37,6 +38,16 @@ vi.mock('../server/appProvider', () => ({
     default: {
         systemUtils: { isDev: false },
         envUtils: { isFEUseEffectWarning: false },
+        messageUtils: {
+            listenForData: (channel: string, listener: any) => {
+                const listenerSet = h.dataListenerMap.get(channel) ?? new Set();
+                listenerSet.add(listener);
+                h.dataListenerMap.set(channel, listenerSet);
+            },
+            removeListener: (channel: string, listener: any) => {
+                h.dataListenerMap.get(channel)?.delete(listener);
+            },
+        },
     },
 }));
 vi.mock('../helper/loggerHelpers', () => ({ appWarning: () => undefined }));
@@ -298,32 +309,32 @@ describe('useLookupManagers', () => {
         });
         expect(container.textContent).toBe('loaded en-data');
 
-        h.langCode = 'km';
+        h.langCode = 'xx';
         render(<ManagersStateComp revision={2} />);
         // The English managers are still resident, yet no English row stays
-        // on screen while Khmer loads.
+        // on screen while the other language loads.
         expect(container.textContent).toBe('loading');
         expect(h.releaseList).toEqual(['en']);
-        expect(h.deferredList[1].langCode).toBe('km');
+        expect(h.deferredList[1].langCode).toBe('xx');
 
         await act(async () => {
-            h.deferredList[1].resolve({ id: 'km-data' });
+            h.deferredList[1].resolve({ id: 'xx-data' });
         });
-        expect(container.textContent).toBe('loaded km-data');
+        expect(container.textContent).toBe('loaded xx-data');
     });
 
     test('a load superseded by another language is ignored when it lands', async () => {
         render(<ManagersStateComp revision={1} />);
-        h.langCode = 'fr';
+        h.langCode = 'yy';
         render(<ManagersStateComp revision={2} />);
         await act(async () => {
             h.deferredList[0].resolve({ id: 'en-late' });
         });
         expect(container.textContent).toBe('loading');
         await act(async () => {
-            h.deferredList[1].resolve({ id: 'fr-data' });
+            h.deferredList[1].resolve({ id: 'yy-data' });
         });
-        expect(container.textContent).toBe('loaded fr-data');
+        expect(container.textContent).toBe('loaded yy-data');
     });
 
     test('a failed load is reported and shown as failed', async () => {
@@ -360,8 +371,8 @@ describe('LocationNameLookupToggleComp', () => {
     };
 
     test('toggles one floating lookup panel into the body', async () => {
-        h.bibleKey = 'KHOV';
-        h.localeByBibleKey = { KHOV: 'km-KH' };
+        h.bibleKey = 'XXV';
+        h.localeByBibleKey = { XXV: 'xx-XX' };
         render(<LocationNameLookupToggleComp />);
         const toggle = getToggle();
         expect(toggle.title).toBe('t(Names and locations lookup)');
@@ -373,7 +384,7 @@ describe('LocationNameLookupToggleComp', () => {
         // The language button gets the bible's locale once it is read.
         expect(h.langButtonPropsList[0].bibleLocale).toBeUndefined();
         await waitFor(() => {
-            return container.textContent === 'km-KH';
+            return container.textContent === 'xx-XX';
         });
 
         act(() => {
@@ -439,6 +450,33 @@ describe('LocationNameDetailPanelsHostComp', () => {
             closeDetailPanel('name:n-1:en');
         });
         expect(container.innerHTML).toBe('');
+    });
+
+    // 2026-11-11, the user: a name pressed in the Markdown Preview opens
+    // _the floating panel in reader page_ -- main hands the request here.
+    test('opens what another window asks for, checked, and stops hearing on unmount', async () => {
+        render(<LocationNameDetailPanelsHostComp />);
+        const listenerSet = h.dataListenerMap.get('main:app:open-detail-panel');
+        expect(listenerSet?.size).toBe(1);
+        const [listener] = [...(listenerSet ?? [])];
+
+        act(() => {
+            listener({}, { kind: 'script', target: 'n-1', name: 'Moses' });
+        });
+        expect(container.innerHTML).toBe('');
+
+        act(() => {
+            listener({}, { kind: 'name', target: 'n-1', name: 'Moses' });
+        });
+        await waitFor(() => {
+            return container.querySelector('.mock-detail-panels') !== null;
+        });
+
+        act(() => {
+            closeDetailPanel('name:n-1:en');
+            root.unmount();
+        });
+        expect(listenerSet?.size).toBe(0);
     });
 });
 
@@ -560,7 +598,7 @@ describe('RenderLookupRecordItemComp', () => {
 });
 
 describe('RenderCustomVerseLookupComp', () => {
-    const bibleItem = { bibleKey: 'KHOV' } as any;
+    const bibleItem = { bibleKey: 'XXV' } as any;
 
     test('with no matcher yet the custom HTML is rendered undecorated', () => {
         render(
@@ -568,10 +606,10 @@ describe('RenderCustomVerseLookupComp', () => {
                 bibleItem={bibleItem}
                 customHtml="<b>Abram</b> went"
                 kjvShortVerse="GEN 12:4"
-                lookupLangCode="km"
+                lookupLangCode="xx"
             />,
         );
-        expect(h.matcherArgsList).toEqual([['km', 'GEN 12:4']]);
+        expect(h.matcherArgsList).toEqual([['xx', 'GEN 12:4']]);
         expect(h.customVersePropsList[0]).toMatchObject({
             bibleItem,
             customHtml: '<b>Abram</b> went',

@@ -78,6 +78,8 @@ export type AgentMediaFileRequestType = {
     newName?: unknown;
     content?: unknown;
     path?: unknown;
+    // `info` on a document: also draw the pages with no readable words.
+    pictures?: unknown;
 };
 
 type KindType = {
@@ -315,7 +317,18 @@ async function handleList(place: PlaceType) {
 async function handleInfo(
     place: PlaceType,
     found: { fullName: string; filePath: string },
+    request: AgentMediaFileRequestType,
 ) {
+    // A document's WORDS, for a song made from it (2026-11-10). Imported
+    // here, on the ask, so the PowerPoint and Word readers stay out of
+    // every window that answers a data request.
+    if (place.kindName === 'document' && !/\.owl$/i.test(found.fullName)) {
+        const { readAgentDocumentWords } =
+            await import('./agentDocumentWordsHelpers');
+        return await readAgentDocumentWords(found.filePath, found.fullName, {
+            pictures: request.pictures === true,
+        });
+    }
     if (!place.kind.isText) {
         return {
             kind: place.kindName,
@@ -662,7 +675,7 @@ export async function handleAgentMediaFileRequest(
             return found;
         }
         if (action === 'info') {
-            return await handleInfo(place, found);
+            return await handleInfo(place, found, request);
         }
         if (action === 'update') {
             return await handleUpdate(place, found, request.content);

@@ -20,7 +20,7 @@
   }
 
   // THE mark. Accent text on its halo with a solid accent underline -- the
-  // underline is what survives when a Khmer or a serif bible face makes the
+  // underline is what survives when a tall-script or a serif bible face makes the
   // tinted ground hard to read at 12px.
   .app-found-match {
     border-radius: 2px;
@@ -80,7 +80,7 @@
   // The verse itself, under the reference that names it.
   //
   // A rank below the reference in colour, and with a leading wide enough for a
-  // Khmer or Devanagari face at this size -- the match inside it is already the
+  // face with stacked or tall marks at this size -- the match inside it is already the
   // loudest thing in the panel, so the words around it are the ground that
   // match is read against, not a second thing competing for attention.
   .app-find-text {

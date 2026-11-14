@@ -1,0 +1,1131 @@
+{
+    "af": {
+        "folder": "af",
+        "keep": "Stoor dit as 'n studielêer",
+        "polite": "Kan jy asseblief jou antwoord as 'n studie stoor?",
+        "more": "Stoor dit as 'n studielêer en vertaal dit na Engels",
+        "topic": "Stoor 'n studielêer oor hierdie gedeelte",
+        "studyAsks": [
+            "Maak 'n studielêer vir Johannes 3:16",
+            "Skep 'n bybelstudie oor Romeine 8",
+            "Hoe skep ek 'n studielêer?",
+            "Skryf 'n nota by my bybelstudie oor Johannes 3"
+        ]
+    },
+    "am": {
+        "folder": "am",
+        "keep": "ያንን እንደ ጥናት ፋይል አስቀምጥ",
+        "polite": "እባክህ መልስህን እንደ ጥናት ማስቀመጥ ትችላለህ?",
+        "more": "ያንን እንደ ጥናት ፋይል አስቀምጥ እና ወደ እንግሊዝኛ ተርጉመው",
+        "topic": "ስለዚህ ምንባብ የጥናት ፋይል አስቀምጥ",
+        "studyAsks": [
+            "ለዮሐንስ 3:16 የጥናት ፋይል ፍጠር",
+            "በሮሜ 8 ላይ የመጽሐፍ ቅዱስ ጥናት አዘጋጅልኝ",
+            "የጥናት ፋይል እንዴት መፍጠር እችላለሁ?",
+            "በመጽሐፍ ቅዱስ ጥናቴ ላይ ማስታወሻ ጻፍ"
+        ]
+    },
+    "ar": {
+        "folder": "ar",
+        "keep": "احفظ ذلك كملف دراسة",
+        "polite": "هل يمكنك حفظ إجابتك كدراسة من فضلك؟",
+        "more": "احفظ ذلك كملف دراسة وترجمه إلى الإنجليزية",
+        "topic": "احفظ ملف دراسة عن هذا المقطع",
+        "studyAsks": [
+            "أنشئ ملف دراسة ليوحنا 3:16",
+            "اكتب دراسة كتابية عن رومية 8",
+            "كيف أنشئ ملف دراسة؟",
+            "اكتب ملاحظة عن دراسة يوحنا 3"
+        ]
+    },
+    "az": {
+        "folder": "az",
+        "keep": "Bunu öyrənmə faylı kimi yadda saxla",
+        "polite": "Cavabını öyrənmə materialı kimi yadda saxlaya bilərsən, zəhmət olmasa?",
+        "more": "Bunu öyrənmə faylı kimi yadda saxla və ingilis dilinə tərcümə et",
+        "topic": "Bu parça haqqında öyrənmə faylı yadda saxla",
+        "studyAsks": [
+            "Yəhya 3:16 üçün öyrənmə faylı yarat",
+            "Romalılara 8 haqqında Bibliya araşdırması hazırla",
+            "Öyrənmə faylını necə yaradım?",
+            "Bibliya araşdırmama qeyd yaz"
+        ]
+    },
+    "be": {
+        "folder": "be",
+        "keep": "Захавай гэта як вучэбны файл",
+        "polite": "Можаш захаваць свой адказ як вучэбны матэрыял, калі ласка?",
+        "more": "Захавай гэта як вучэбны файл і перакладзі на англійскую",
+        "topic": "Захавай вучэбны файл пра гэты ўрывак",
+        "studyAsks": [
+            "Зрабі вучэбны файл для Яна 3:16",
+            "Падрыхтуй вывучэнне Бібліі па Рымлянам 8",
+            "Як стварыць вучэбны файл?",
+            "Напішы нататку пра вывучэнне Яна 3"
+        ]
+    },
+    "bg": {
+        "folder": "bg",
+        "keep": "Запази това като учебен файл",
+        "polite": "Можеш ли да запазиш отговора си като изучаване, моля?",
+        "more": "Запази това като учебен файл и го преведи на английски",
+        "topic": "Запази учебен файл за този пасаж",
+        "studyAsks": [
+            "Направи учебен файл за Йоан 3:16",
+            "Подготви библейско изучаване върху Римляни 8",
+            "Как да създам учебен файл?",
+            "Напиши бележка за изучаването на Йоан 3"
+        ]
+    },
+    "bn": {
+        "folder": "bn",
+        "keep": "সেটা অধ্যয়ন ফাইল হিসেবে সংরক্ষণ করুন",
+        "polite": "আপনি কি আপনার উত্তরটি অধ্যয়ন হিসেবে সংরক্ষণ করতে পারবেন, দয়া করে?",
+        "more": "সেটা অধ্যয়ন ফাইল হিসেবে সংরক্ষণ করুন এবং ইংরেজিতে অনুবাদ করুন",
+        "topic": "এই অংশ সম্পর্কে একটি অধ্যয়ন ফাইল সংরক্ষণ করুন",
+        "studyAsks": [
+            "যোহন ৩:১৬ এর জন্য একটি অধ্যয়ন ফাইল তৈরি করুন",
+            "রোমীয় ৮ নিয়ে একটি বাইবেল অধ্যয়ন লিখুন",
+            "আমি কীভাবে একটি অধ্যয়ন ফাইল তৈরি করব?",
+            "আমার বাইবেল অধ্যয়নের জন্য একটি নোট লিখুন"
+        ]
+    },
+    "bo": {
+        "folder": "bo",
+        "keep": "དེ་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་ཏུ་ཉར་ཚགས་གནང་རོགས།",
+        "polite": "ཁྱེད་ཀྱི་ལན་དེ་སློབ་སྦྱོང་ཞིག་ཏུ་ཉར་ཚགས་གནང་ཐུབ་བམ།",
+        "more": "དེ་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་ཏུ་ཉར་ཚགས་གནང་ནས་དབྱིན་ཡིག་ཏུ་སྒྱུར་རོགས།",
+        "topic": "ལུང་འདིའི་སྐོར་གྱི་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་ཉར་ཚགས་གནང་རོགས།",
+        "studyAsks": [
+            "ཡོ་ཧ་ནན་ 3:16 ཆེད་དུ་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བཟོ་རོགས།",
+            "རོ་མ་པ་ 8 སྐོར་གྱི་སློབ་སྦྱོང་ཡིག་ཆ་ཞིག་བྲིས་རོགས།",
+            "སློབ་སྦྱོང་ཡིག་ཆ་ག་འདྲ་བྱས་ནས་བཟོ་དགོས་སམ།"
+        ]
+    },
+    "ca": {
+        "folder": "ca",
+        "keep": "Desa això com a fitxer d'estudi",
+        "polite": "Pots desar la teva resposta com a estudi, si us plau?",
+        "more": "Desa això com a fitxer d'estudi i tradueix-ho a l'anglès",
+        "topic": "Desa un fitxer d'estudi sobre aquest passatge",
+        "studyAsks": [
+            "Fes un fitxer d'estudi per a Joan 3:16",
+            "Prepara un estudi bíblic sobre Romans 8",
+            "Com puc crear un fitxer d'estudi?",
+            "Escriu una nota per al meu estudi bíblic de Joan 3"
+        ]
+    },
+    "ceb": {
+        "folder": "ceb",
+        "keep": "I-save kana isip file sa pagtuon",
+        "polite": "Mahimo ba nimo itipig ang imong tubag isip usa ka pagtuon, palihug?",
+        "more": "I-save kana isip file sa pagtuon ug hubara kini sa Iningles",
+        "topic": "I-save ang file sa pagtuon bahin niining tudling",
+        "studyAsks": [
+            "Paghimo og file sa pagtuon para sa Juan 3:16",
+            "Andama ang usa ka pagtuon sa Bibliya bahin sa Roma 8",
+            "Unsaon nako paghimo og file sa pagtuon?",
+            "Isulat ang usa ka nota sa akong pagtuon sa Bibliya"
+        ]
+    },
+    "cs": {
+        "folder": "cs",
+        "keep": "Ulož to jako studijní soubor",
+        "polite": "Můžeš uložit svou odpověď jako studii, prosím?",
+        "more": "Ulož to jako studijní soubor a přelož to do angličtiny",
+        "topic": "Ulož studijní soubor o této pasáži",
+        "studyAsks": [
+            "Vytvoř studijní soubor pro Jana 3:16",
+            "Připrav biblické studium o Římanům 8",
+            "Jak vytvořím studijní soubor?",
+            "Napiš poznámku k mému biblickému studiu Jana 3"
+        ]
+    },
+    "da": {
+        "folder": "da",
+        "keep": "Gem det som en studiefil",
+        "polite": "Kan du venligst gemme dit svar som et studie?",
+        "more": "Gem det som en studiefil og oversæt det til engelsk",
+        "topic": "Gem en studiefil om denne passage",
+        "studyAsks": [
+            "Lav en studiefil til Johannes 3,16",
+            "Skriv et bibelstudie om Romerbrevet 8",
+            "Hvordan opretter jeg en studiefil?",
+            "Skriv en note til mit bibelstudie om Johannes 3"
+        ]
+    },
+    "de": {
+        "folder": "de",
+        "keep": "Speichere das als Studiendatei",
+        "polite": "Kannst du deine Antwort bitte als Bibelstudie speichern?",
+        "more": "Speichere das als Studiendatei und übersetze es ins Englische",
+        "topic": "Speichere eine Studiendatei über diesen Abschnitt",
+        "studyAsks": [
+            "Erstelle eine Studiendatei für Johannes 3,16",
+            "Schreib ein Bibelstudium über Römer 8",
+            "Wie erstelle ich eine Studiendatei?",
+            "Schreib eine Notiz zu meinem Bibelstudium über Johannes 3"
+        ]
+    },
+    "el": {
+        "folder": "el",
+        "keep": "Αποθήκευσέ το ως αρχείο μελέτης",
+        "polite": "Μπορείς να αποθηκεύσεις την απάντησή σου ως μελέτη, παρακαλώ;",
+        "more": "Αποθήκευσέ το ως αρχείο μελέτης και μετάφρασέ το στα αγγλικά",
+        "topic": "Αποθήκευσε ένα αρχείο μελέτης για αυτό το απόσπασμα",
+        "studyAsks": [
+            "Φτιάξε ένα αρχείο μελέτης για το Ιωάννης 3:16",
+            "Γράψε μια βιβλική μελέτη για τους Ρωμαίους 8",
+            "Πώς δημιουργώ ένα αρχείο μελέτης;",
+            "Γράψε μια σημείωση για τη μελέτη μου στο Ιωάννης 3"
+        ]
+    },
+    "es": {
+        "folder": "es",
+        "keep": "Guarda eso como archivo de estudio",
+        "polite": "¿Puedes guardar tu respuesta como un estudio, por favor?",
+        "more": "Guarda eso como archivo de estudio y tradúcelo al inglés",
+        "topic": "Guarda un archivo de estudio sobre este pasaje",
+        "studyAsks": [
+            "Haz un archivo de estudio para Juan 3:16",
+            "Prepara un estudio bíblico sobre Romanos 8",
+            "¿Cómo puedo crear un archivo de estudio?",
+            "Escribe una nota para mi estudio bíblico de Juan 3"
+        ]
+    },
+    "et": {
+        "folder": "et",
+        "keep": "Salvesta see uurimisfailina",
+        "polite": "Kas sa saaksid palun oma vastuse piibliuurimisena salvestada?",
+        "more": "Salvesta see uurimisfailina ja tõlgi see inglise keelde",
+        "topic": "Salvesta uurimisfail selle lõigu kohta",
+        "studyAsks": [
+            "Tee Johannese 3:16 jaoks uurimisfail",
+            "Koosta piibliuurimine Roomlastele 8 kohta",
+            "Kuidas ma saan uurimisfaili luua?",
+            "Kirjuta märkus minu piibliuurimise kohta"
+        ]
+    },
+    "fa": {
+        "folder": "fa",
+        "keep": "آن را به عنوان فایل مطالعه ذخیره کن",
+        "polite": "می توانی پاسخت را به عنوان یک مطالعه ذخیره کنی، لطفاً؟",
+        "more": "آن را به عنوان فایل مطالعه ذخیره کن و آن را به انگلیسی ترجمه کن",
+        "topic": "یک فایل مطالعه درباره این بخش ذخیره کن",
+        "studyAsks": [
+            "یک فایل مطالعه برای یوحنا ۳:۱۶ بساز",
+            "یک مطالعه کتاب مقدس درباره رومیان ۸ بنویس",
+            "چطور یک فایل مطالعه بسازم؟",
+            "یک یادداشت برای مطالعه یوحنا ۳ بنویس"
+        ]
+    },
+    "fi": {
+        "folder": "fi",
+        "keep": "Tallenna tämä opiskelutiedostoksi",
+        "polite": "Voisitko tallentaa vastauksesi raamattuopiskeluksi?",
+        "more": "Tallenna tämä opiskelutiedostoksi ja käännä se englanniksi",
+        "topic": "Tallenna opiskelutiedosto tästä kohdasta",
+        "studyAsks": [
+            "Tee opiskelutiedosto Johanneksen 3:16 jakeesta",
+            "Laadi raamattuopiskelu Roomalaiskirjeen 8 luvusta",
+            "Miten voin tehdä opiskelutiedoston?",
+            "Kirjoita muistiinpano raamattuopiskeluuni"
+        ]
+    },
+    "fj": {
+        "folder": "fj",
+        "keep": "Maroroya oqori me faile ni vuli",
+        "polite": "E rawa ni o maroroya na nomu isau me vuli, yalo vinaka?",
+        "more": "Maroroya oqori me faile ni vuli ka vakadewataka ki na vosa vakavalagi",
+        "topic": "Maroroya e dua na faile ni vuli me baleta na tikina oqo",
+        "studyAsks": [
+            "Bulia e dua na faile ni vuli me baleta na Joni 3:16",
+            "Cakava e dua na faile ni vuli me baleta na Roma 8",
+            "Au na bulia vakacava e dua na faile ni vuli?"
+        ]
+    },
+    "fr": {
+        "folder": "fr",
+        "keep": "Enregistre ça comme fichier d'étude",
+        "polite": "Peux-tu sauvegarder ta réponse comme une étude, s'il te plaît ?",
+        "more": "Enregistre ça comme fichier d'étude et traduis-le en anglais",
+        "topic": "Enregistre un fichier d'étude sur ce passage",
+        "studyAsks": [
+            "Crée un fichier d'étude pour Jean 3:16",
+            "Prépare une étude biblique sur Romains 8",
+            "Comment créer un fichier d'étude ?",
+            "Écris une note dans mon étude de Jean 3"
+        ]
+    },
+    "ga": {
+        "folder": "ga",
+        "keep": "Sábháil é sin mar chomhad staidéir",
+        "polite": "An féidir leat d'fhreagra a shábháil mar ábhar staidéir, le do thoil?",
+        "more": "Sábháil é sin mar chomhad staidéir agus aistrigh go Béarla é",
+        "topic": "Sábháil comhad staidéir faoin sliocht seo",
+        "studyAsks": [
+            "Déan comhad staidéir do Eoin 3:16",
+            "Ullmhaigh treoir staidéir ar Rómhánaigh 8",
+            "Conas a chruthaím comhad staidéir?",
+            "Scríobh nóta i mo chomhad staidéir"
+        ]
+    },
+    "gl": {
+        "folder": "gl",
+        "keep": "Garda iso como ficheiro de estudo",
+        "polite": "Podes gardar a túa resposta como un estudo, por favor?",
+        "more": "Garda iso como ficheiro de estudo e tradúceo ao inglés",
+        "topic": "Garda un ficheiro de estudo sobre esta pasaxe",
+        "studyAsks": [
+            "Fai un ficheiro de estudo para Xoán 3:16",
+            "Prepara un estudo bíblico sobre Romanos 8",
+            "Como podo crear un ficheiro de estudo?",
+            "Escribe unha nota para o meu estudo bíblico de Xoán 3"
+        ]
+    },
+    "gu": {
+        "folder": "gu",
+        "keep": "તેને અભ્યાસ ફાઇલ તરીકે સાચવો",
+        "polite": "કૃપા કરીને તમારો જવાબ અભ્યાસ તરીકે સાચવો",
+        "more": "તેને અભ્યાસ ફાઇલ તરીકે સાચવો અને તેનો અંગ્રેજીમાં અનુવાદ કરો",
+        "topic": "આ ફકરા વિશે અભ્યાસ ફાઇલ સાચવો",
+        "studyAsks": [
+            "યોહાન 3:16 માટે અભ્યાસ ફાઇલ બનાવો",
+            "રોમનો 8 પર બાઇબલ અભ્યાસ લખો",
+            "હું અભ્યાસ ફાઇલ કેવી રીતે બનાવું?",
+            "મારા બાઇબલ અભ્યાસ માટે નોંધ લખો"
+        ]
+    },
+    "ha": {
+        "folder": "ha",
+        "keep": "Ajiye wancan a matsayin fayil na nazari",
+        "polite": "Za ka iya ajiye amsarka a matsayin nazari, don Allah?",
+        "more": "Ajiye wancan a matsayin fayil na nazari kuma ka fassara shi zuwa Turanci",
+        "topic": "Ajiye fayil na nazari game da wannan nassi",
+        "studyAsks": [
+            "Yi min fayil na nazari don Yahaya 3:16",
+            "Shirya nazarin Littafi Mai Tsarki akan Romawa 8",
+            "Yaya zan ƙirƙiri fayil na nazari?"
+        ]
+    },
+    "he": {
+        "folder": "he",
+        "keep": "שמור את זה כקובץ לימוד",
+        "polite": "תוכל לשמור את התשובה שלך כלימוד, בבקשה?",
+        "more": "שמור את זה כקובץ לימוד ותרגם אותו לאנגלית",
+        "topic": "שמור קובץ לימוד על הקטע הזה",
+        "studyAsks": [
+            "צור קובץ לימוד ליוחנן 3:16",
+            "הכן לימוד מקרא על הרומים 8",
+            "איך ליצור קובץ לימוד?",
+            "כתוב הערה על הלימוד שלי ביוחנן 3"
+        ]
+    },
+    "hi": {
+        "folder": "hi",
+        "keep": "उसे अध्ययन फ़ाइल के रूप में सेव करो",
+        "polite": "क्या आप अपना जवाब अध्ययन के रूप में सहेज सकते हैं, कृपया?",
+        "more": "उसे अध्ययन फ़ाइल के रूप में सेव करो और उसका अंग्रेज़ी में अनुवाद करो",
+        "topic": "इस अंश के बारे में एक अध्ययन फ़ाइल सेव करो",
+        "studyAsks": [
+            "यूहन्ना 3:16 के लिए एक अध्ययन फ़ाइल बनाओ",
+            "रोमियों 8 पर एक बाइबल अध्ययन लिखिए",
+            "मैं अध्ययन फ़ाइल कैसे बनाऊँ?",
+            "मेरे बाइबल अध्ययन के लिए एक नोट लिखो"
+        ]
+    },
+    "hr": {
+        "folder": "hr",
+        "keep": "Spremi to kao datoteku za proučavanje",
+        "polite": "Možeš li spremiti svoj odgovor kao proučavanje, molim te?",
+        "more": "Spremi to kao datoteku za proučavanje i prevedi na engleski",
+        "topic": "Spremi datoteku za proučavanje o ovom odlomku",
+        "studyAsks": [
+            "Napravi datoteku za proučavanje za Ivan 3:16",
+            "Pripremi biblijski studij o Rimljanima 8",
+            "Kako da napravim datoteku za proučavanje?",
+            "Napiši bilješku za moje proučavanje Ivana 3"
+        ]
+    },
+    "ht": {
+        "folder": "ht",
+        "keep": "Sove sa kòm yon fichye etid",
+        "polite": "Èske ou ka sove repons ou kòm yon etid, souple?",
+        "more": "Sove sa kòm yon fichye etid epi tradui l an angle",
+        "topic": "Sove yon fichye etid sou pasaj sa a",
+        "studyAsks": [
+            "Fè yon fichye etid pou Jan 3:16",
+            "Prepare yon etid biblik sou Women 8",
+            "Kijan pou m kreye yon fichye etid?",
+            "Ekri yon nòt pou etid biblik mwen sou Jan 3"
+        ]
+    },
+    "hu": {
+        "folder": "hu",
+        "keep": "Mentsd el ezt tanulmányi fájlként",
+        "polite": "El tudnád menteni a válaszodat tanulmányként, kérlek?",
+        "more": "Mentsd el ezt tanulmányi fájlként, és fordítsd le angolra",
+        "topic": "Ments el egy tanulmányi fájlt erről a szakaszról",
+        "studyAsks": [
+            "Készíts egy tanulmányi fájlt a János 3:16-hoz",
+            "Írj egy bibliatanulmányt a Róma 8-ról",
+            "Hogyan készítsek tanulmányi fájlt?",
+            "Írj egy jegyzetet a bibliatanulmányomhoz"
+        ]
+    },
+    "hy": {
+        "folder": "hy",
+        "keep": "Պահպանիր սա որպես ուսումնասիրության ֆայլ",
+        "polite": "Կարո՞ղ ես պահպանել քո պատասխանը որպես ուսումնասիրություն, խնդրում եմ",
+        "more": "Պահպանիր սա որպես ուսումնասիրության ֆայլ և թարգմանիր անգլերեն",
+        "topic": "Պահպանիր ուսումնասիրության ֆայլ այս հատվածի մասին",
+        "studyAsks": [
+            "Ստեղծիր ուսումնասիրության ֆայլ Հովհաննես 3:16-ի համար",
+            "Պատրաստիր Աստվածաշնչի ուսումնասիրություն Հռոմեացիներ 8-ի մասին",
+            "Ինչպե՞ս ստեղծել ուսումնասիրության ֆայլ",
+            "Գրիր նշում իմ Աստվածաշնչի ուսումնասիրության մասին"
+        ]
+    },
+    "id": {
+        "folder": "id",
+        "keep": "Simpan itu sebagai file studi",
+        "polite": "Bisa tolong simpan jawabanmu sebagai studi?",
+        "more": "Simpan itu sebagai file studi dan terjemahkan ke bahasa Inggris",
+        "topic": "Simpan file studi tentang perikop ini",
+        "studyAsks": [
+            "Buat file studi untuk Yohanes 3:16",
+            "Siapkan pendalaman Alkitab tentang Roma 8",
+            "Bagaimana cara membuat file studi?",
+            "Tulis catatan untuk studi Alkitab saya tentang Yohanes 3"
+        ]
+    },
+    "ig": {
+        "folder": "ig",
+        "keep": "Chekwaa nke ahụ dị ka faịlụ ọmụmụ",
+        "polite": "Ị nwere ike ịchekwa azịza gị dị ka ọmụmụ Baịbụl, biko?",
+        "more": "Chekwaa nke ahụ dị ka faịlụ ọmụmụ ma sụgharịa ya n'asụsụ Bekee",
+        "topic": "Chekwaa faịlụ ọmụmụ gbasara akụkụ a",
+        "studyAsks": [
+            "Mepụta faịlụ ọmụmụ maka Jọn 3:16",
+            "Kwadebe ọmụmụ Baịbụl banyere Ndị Rom 8",
+            "Kedu ka m ga-esi mepụta faịlụ ọmụmụ?"
+        ]
+    },
+    "is": {
+        "folder": "is",
+        "keep": "Vistaðu þetta sem skrá fyrir biblíulestur",
+        "polite": "Geturðu vinsamlegast vistað svarið þitt sem biblíulestur?",
+        "more": "Vistaðu þetta sem skrá fyrir biblíulestur og þýddu það yfir á ensku",
+        "topic": "Vistaðu skrá fyrir biblíulestur um þennan kafla",
+        "studyAsks": [
+            "Búðu til skrá fyrir biblíulestur um Jóhannes 3:16",
+            "Undirbúðu biblíulestur um Rómverjabréfið 8",
+            "Hvernig get ég búið til skrá fyrir biblíulestur?",
+            "Skrifaðu athugasemd við biblíulesturinn minn"
+        ]
+    },
+    "it": {
+        "folder": "it",
+        "keep": "Salva questo come file di studio",
+        "polite": "Puoi salvare la tua risposta come uno studio, per favore?",
+        "more": "Salva questo come file di studio e traducilo in inglese",
+        "topic": "Salva un file di studio su questo passo",
+        "studyAsks": [
+            "Crea un file di studio per Giovanni 3:16",
+            "Prepara uno studio biblico su Romani 8",
+            "Come posso creare un file di studio?",
+            "Scrivi una nota per il mio studio biblico su Giovanni 3"
+        ]
+    },
+    "ja": {
+        "folder": "ja",
+        "keep": "それを学習ファイルとして保存して",
+        "polite": "あなたの回答を学習として保存していただけますか？",
+        "more": "それを学習ファイルとして保存して、英語に翻訳して",
+        "topic": "この箇所についての学習ファイルを保存して",
+        "studyAsks": [
+            "ヨハネ3:16の学習ファイルを作って",
+            "ローマ人への手紙8章の聖書研究を書いてください",
+            "学習ファイルはどうやって作りますか？",
+            "ヨハネ3章の聖書研究についてメモを書いて"
+        ]
+    },
+    "ka": {
+        "folder": "ka",
+        "keep": "შეინახე ეს შესასწავლ ფაილად",
+        "polite": "შეგიძლია შეინახო შენი პასუხი შესწავლად, გთხოვ?",
+        "more": "შეინახე ეს შესასწავლ ფაილად და თარგმნე ინგლისურად",
+        "topic": "შეინახე შესასწავლი ფაილი ამ მონაკვეთის შესახებ",
+        "studyAsks": [
+            "შექმენი შესასწავლი ფაილი იოანე 3:16-სთვის",
+            "მოამზადე ბიბლიის შესწავლა რომაელთა 8-ზე",
+            "როგორ შევქმნა შესასწავლი ფაილი?",
+            "დაწერე შენიშვნა ჩემი ბიბლიის შესწავლისთვის"
+        ]
+    },
+    "kk": {
+        "folder": "kk",
+        "keep": "Мұны зерттеу файлы ретінде сақта",
+        "polite": "Жауабыңды зерттеу ретінде сақтай аласың ба, өтінемін?",
+        "more": "Мұны зерттеу файлы ретінде сақта және ағылшын тіліне аудар",
+        "topic": "Осы үзінді туралы зерттеу файлын сақта",
+        "studyAsks": [
+            "Жохан 3:16 үшін зерттеу файлын жаса",
+            "Римдіктерге 8 туралы Киелі кітапты зерттеу дайында",
+            "Зерттеу файлын қалай жасаймын?",
+            "Киелі кітапты зерттеуім үшін жазба жаз"
+        ]
+    },
+    "km": {
+        "folder": "km",
+        "keep": "រក្សាទុកវាជាឯកសារសិក្សា",
+        "polite": "តើអ្នកអាចរក្សាទុកចម្លើយរបស់អ្នកជាឯកសារសិក្សាបានទេ?",
+        "more": "រក្សាទុកវាជាឯកសារសិក្សា ហើយបកប្រែជាភាសាអង់គ្លេស",
+        "topic": "រក្សាទុកឯកសារសិក្សាអំពីវគ្គនេះ",
+        "studyAsks": [
+            "បង្កើតឯកសារសិក្សាសម្រាប់យ៉ូហាន 3:16",
+            "រៀបចំការសិក្សាព្រះគម្ពីរអំពីរ៉ូម 8",
+            "តើខ្ញុំបង្កើតឯកសារសិក្សាដោយរបៀបណា?",
+            "សរសេរកំណត់ត្រាក្នុងការសិក្សារបស់ខ្ញុំ"
+        ]
+    },
+    "kn": {
+        "folder": "kn",
+        "keep": "ಅದನ್ನು ಅಧ್ಯಯನ ಫೈಲ್ ಆಗಿ ಉಳಿಸಿ",
+        "polite": "ನೀವು ನಿಮ್ಮ ಉತ್ತರವನ್ನು ಅಧ್ಯಯನವಾಗಿ ಉಳಿಸಬಹುದೇ, ದಯವಿಟ್ಟು?",
+        "more": "ಅದನ್ನು ಅಧ್ಯಯನ ಫೈಲ್ ಆಗಿ ಉಳಿಸಿ ಮತ್ತು ಅದನ್ನು ಇಂಗ್ಲಿಷಿಗೆ ಅನುವಾದಿಸಿ",
+        "topic": "ಈ ಭಾಗದ ಬಗ್ಗೆ ಅಧ್ಯಯನ ಫೈಲ್ ಉಳಿಸಿ",
+        "studyAsks": [
+            "ಯೋಹಾನ 3:16 ಗಾಗಿ ಅಧ್ಯಯನ ಫೈಲ್ ರಚಿಸಿ",
+            "ರೋಮಾಪುರದವರಿಗೆ 8 ರ ಬಗ್ಗೆ ಬೈಬಲ್ ಅಧ್ಯಯನವನ್ನು ಬರೆಯಿರಿ",
+            "ಅಧ್ಯಯನ ಫೈಲ್ ಅನ್ನು ಹೇಗೆ ರಚಿಸುವುದು?",
+            "ನನ್ನ ಬೈಬಲ್ ಅಧ್ಯಯನಕ್ಕಾಗಿ ಟಿಪ್ಪಣಿ ಬರೆಯಿರಿ"
+        ]
+    },
+    "ko": {
+        "folder": "ko",
+        "keep": "그거 학습 파일로 저장해 줘",
+        "polite": "답변을 학습으로 저장해 주실 수 있나요?",
+        "more": "그거 학습 파일로 저장하고 영어로 번역해 줘",
+        "topic": "이 구절에 대한 학습 파일을 저장해 줘",
+        "studyAsks": [
+            "요한복음 3:16 학습 파일을 만들어 줘",
+            "로마서 8장에 대한 성경 공부를 작성해 주세요",
+            "학습 파일은 어떻게 만들어요?",
+            "요한복음 3장 성경 공부에 대한 메모를 작성해 줘"
+        ]
+    },
+    "lo": {
+        "folder": "lo",
+        "keep": "ບັນທຶກອັນນັ້ນເປັນໄຟລ໌ສຶກສາ",
+        "polite": "ເຈົ້າຊ່ວຍບັນທຶກຄຳຕອບຂອງເຈົ້າເປັນການສຶກສາໄດ້ບໍ່?",
+        "more": "ບັນທຶກອັນນັ້ນເປັນໄຟລ໌ສຶກສາ ແລະ ແປເປັນພາສາອັງກິດ",
+        "topic": "ບັນທຶກໄຟລ໌ສຶກສາກ່ຽວກັບຂໍ້ພຣະຄຳພີນີ້",
+        "studyAsks": [
+            "ສ້າງໄຟລ໌ສຶກສາສຳລັບໂຢຮັນ 3:16",
+            "ກະກຽມການສຶກສາພຣະຄຳພີກ່ຽວກັບໂຣມ 8",
+            "ຂ້ອຍຈະສ້າງໄຟລ໌ສຶກສາແນວໃດ?",
+            "ຂຽນໂນດສຳລັບການສຶກສາພຣະຄຳພີຂອງຂ້ອຍ"
+        ]
+    },
+    "lt": {
+        "folder": "lt",
+        "keep": "Išsaugok tai kaip studijų failą",
+        "polite": "Ar galėtum išsaugoti savo atsakymą kaip studiją, prašau?",
+        "more": "Išsaugok tai kaip studijų failą ir išversk į anglų kalbą",
+        "topic": "Išsaugok studijų failą apie šią ištrauką",
+        "studyAsks": [
+            "Sukurk studijų failą Jono 3:16",
+            "Paruošk Biblijos studiją apie Romiečiams 8",
+            "Kaip sukurti studijų failą?",
+            "Parašyk pastabą mano Biblijos studijai apie Jono 3"
+        ]
+    },
+    "lv": {
+        "folder": "lv",
+        "keep": "Saglabā to kā studiju failu",
+        "polite": "Vai tu vari saglabāt savu atbildi kā studiju, lūdzu?",
+        "more": "Saglabā to kā studiju failu un pārtulko to angļu valodā",
+        "topic": "Saglabā studiju failu par šo fragmentu",
+        "studyAsks": [
+            "Izveido studiju failu Jāņa 3:16",
+            "Sagatavo Bībeles studiju par Romiešiem 8",
+            "Kā izveidot studiju failu?",
+            "Uzraksti piezīmi manai Bībeles studijai par Jāņa 3"
+        ]
+    },
+    "mg": {
+        "folder": "mg",
+        "keep": "Tehirizo ho rakitra fandalinana izany",
+        "polite": "Azonao atao ve ny mitahiry ny valinteninao ho fandalinana, azafady?",
+        "more": "Tehirizo ho rakitra fandalinana izany ary adikao amin'ny teny anglisy",
+        "topic": "Tehirizo ny rakitra fandalinana momba ity andalana ity",
+        "studyAsks": [
+            "Mamorona rakitra fandalinana ho an'i Jaona 3:16",
+            "Manomana fandalinana Baiboly momba ny Romana 8",
+            "Ahoana no hamoronako rakitra fandalinana?"
+        ]
+    },
+    "mi": {
+        "folder": "mi",
+        "keep": "Tiakina tēnā hei kōnae ako",
+        "polite": "Ka taea e koe te tiaki i tō whakautu hei akoranga, koa?",
+        "more": "Tiakina tēnā hei kōnae ako, ā, whakapākehātia",
+        "topic": "Tiakina he kōnae ako e pā ana ki tēnei wāhanga",
+        "studyAsks": [
+            "Waihangatia he kōnae ako mō Hoani 3:16",
+            "Whakaritea he akoranga Paipera mō Roma 8",
+            "Me pēhea au e waihanga ai i tētahi kōnae ako?"
+        ]
+    },
+    "mk": {
+        "folder": "mk",
+        "keep": "Зачувај го тоа како датотека за проучување",
+        "polite": "Можеш ли да го зачуваш твојот одговор како проучување, те молам?",
+        "more": "Зачувај го тоа како датотека за проучување и преведи го на англиски",
+        "topic": "Зачувај датотека за проучување за овој пасус",
+        "studyAsks": [
+            "Направи датотека за проучување за Јован 3:16",
+            "Подготви библиско проучување за Римјаните 8",
+            "Како да создадам датотека за проучување?",
+            "Напиши белешка за моето проучување на Јован 3"
+        ]
+    },
+    "ml": {
+        "folder": "ml",
+        "keep": "അത് ഒരു പഠന ഫയലായി സേവ് ചെയ്യുക",
+        "polite": "നിങ്ങളുടെ ഉത്തരം ഒരു പഠനമായി സേവ് ചെയ്യാമോ, ദയവായി?",
+        "more": "അത് ഒരു പഠന ഫയലായി സേവ് ചെയ്ത് ഇംഗ്ലീഷിലേക്ക് വിവർത്തനം ചെയ്യുക",
+        "topic": "ഈ ഭാഗത്തെക്കുറിച്ച് ഒരു പഠന ഫയൽ സേവ് ചെയ്യുക",
+        "studyAsks": [
+            "യോഹന്നാൻ 3:16 നായി ഒരു പഠന ഫയൽ ഉണ്ടാക്കുക",
+            "റോമർ 8 നെക്കുറിച്ച് ഒരു ബൈബിൾ പഠനം തയ്യാറാക്കുക",
+            "ഒരു പഠന ഫയൽ എങ്ങനെ ഉണ്ടാക്കാം?",
+            "എന്റെ ബൈബിൾ പഠനത്തിനായി ഒരു കുറിപ്പ് എഴുതുക"
+        ]
+    },
+    "mn": {
+        "folder": "mn",
+        "keep": "Үүнийг судалгааны файл болгон хадгал",
+        "polite": "Хариултаа судалгаа болгон хадгалж өгнө үү?",
+        "more": "Үүнийг судалгааны файл болгон хадгал, бас англи хэл рүү орчуул",
+        "topic": "Энэ хэсгийн тухай судалгааны файл хадгал",
+        "studyAsks": [
+            "Иохан 3:16-д зориулж судалгааны файл үүсгэ",
+            "Ром 8-ын тухай Библийн судалгаа бэлтгэ",
+            "Судалгааны файлыг яаж үүсгэх вэ?",
+            "Миний Библийн судалгаанд тэмдэглэл бич"
+        ]
+    },
+    "mr": {
+        "folder": "mr",
+        "keep": "हे अभ्यास फाइल म्हणून जतन करा",
+        "polite": "तुम्ही तुमचे उत्तर अभ्यास म्हणून जतन करू शकता का, कृपया?",
+        "more": "हे अभ्यास फाइल म्हणून जतन करा आणि त्याचे इंग्रजीत भाषांतर करा",
+        "topic": "या उताऱ्याविषयी एक अभ्यास फाइल जतन करा",
+        "studyAsks": [
+            "योहान 3:16 साठी अभ्यास फाइल बनवा",
+            "रोमकरांस 8 वर बायबल अभ्यास तयार करा",
+            "मी अभ्यास फाइल कशी बनवू?",
+            "माझ्या बायबल अभ्यासासाठी एक नोंद लिहा"
+        ]
+    },
+    "ms": {
+        "folder": "ms",
+        "keep": "Simpan itu sebagai fail kajian",
+        "polite": "Boleh tolong simpan jawapan anda sebagai kajian?",
+        "more": "Simpan itu sebagai fail kajian dan terjemahkan ke dalam bahasa Inggeris",
+        "topic": "Simpan fail kajian tentang petikan ini",
+        "studyAsks": [
+            "Buat fail kajian untuk Yohanes 3:16",
+            "Sediakan kajian Bible tentang Roma 8",
+            "Bagaimana saya boleh membuat fail kajian?",
+            "Tulis nota untuk kajian Bible saya tentang Yohanes 3"
+        ]
+    },
+    "my": {
+        "folder": "my",
+        "keep": "အဲဒါကို လေ့လာရေးဖိုင်အဖြစ် သိမ်းပေးပါ",
+        "polite": "ခင်ဗျားရဲ့ အဖြေကို လေ့လာမှုအဖြစ် သိမ်းပေးနိုင်မလား",
+        "more": "အဲဒါကို လေ့လာရေးဖိုင်အဖြစ် သိမ်းပြီး အင်္ဂလိပ်လို ဘာသာပြန်ပေးပါ",
+        "topic": "ဒီကျမ်းပိုဒ်အကြောင်း လေ့လာရေးဖိုင်တစ်ခု သိမ်းပေးပါ",
+        "studyAsks": [
+            "ယောဟန် 3:16 အတွက် လေ့လာရေး ဖိုင် တစ်ခု ဖန်တီးပေးပါ",
+            "ရောမ 8 အကြောင်း ကျမ်းစာလေ့လာမှု တစ်ခု ရေးပေးပါ",
+            "လေ့လာရေး ဖိုင်ကို ဘယ်လို ဖန်တီးရမလဲ?",
+            "ကျွန်ုပ်၏ ကျမ်းစာလေ့လာမှုအတွက် မှတ်စု ရေးပေးပါ"
+        ]
+    },
+    "ne": {
+        "folder": "ne",
+        "keep": "त्यसलाई अध्ययन फाइलको रूपमा सुरक्षित गर्नुहोस्",
+        "polite": "के तपाईं आफ्नो जवाफलाई अध्ययनको रूपमा सुरक्षित गर्न सक्नुहुन्छ, कृपया?",
+        "more": "त्यसलाई अध्ययन फाइलको रूपमा सुरक्षित गर्नुहोस् र अंग्रेजीमा अनुवाद गर्नुहोस्",
+        "topic": "यो खण्डको बारेमा एउटा अध्ययन फाइल सुरक्षित गर्नुहोस्",
+        "studyAsks": [
+            "यूहन्ना ३:१६ को लागि अध्ययन फाइल बनाउनुहोस्",
+            "रोमी ८ बारे बाइबल अध्ययन तयार गर्नुहोस्",
+            "म अध्ययन फाइल कसरी बनाउँ?",
+            "मेरो बाइबल अध्ययनको लागि एउटा नोट लेख्नुहोस्"
+        ]
+    },
+    "nl": {
+        "folder": "nl",
+        "keep": "Sla dat op als studiebestand",
+        "polite": "Kun je je antwoord als studie opslaan, alsjeblieft?",
+        "more": "Sla dat op als studiebestand en vertaal het naar het Engels",
+        "topic": "Sla een studiebestand op over dit gedeelte",
+        "studyAsks": [
+            "Maak een studiebestand voor Johannes 3:16",
+            "Schrijf een bijbelstudie over Romeinen 8",
+            "Hoe maak ik een studiebestand?",
+            "Schrijf een notitie bij mijn bijbelstudie over Johannes 3"
+        ]
+    },
+    "no": {
+        "folder": "nb",
+        "keep": "Lagre det som en studiefil",
+        "polite": "Kan du vennligst lagre svaret ditt som en studie?",
+        "more": "Lagre det som en studiefil og oversett det til engelsk",
+        "topic": "Lagre en studiefil om dette avsnittet",
+        "studyAsks": [
+            "Lag en studiefil for Johannes 3,16",
+            "Skriv et bibelstudium om Romerne 8",
+            "Hvordan oppretter jeg en studiefil?",
+            "Skriv et notat til bibelstudiet mitt om Johannes 3"
+        ]
+    },
+    "ny": {
+        "folder": "ny",
+        "keep": "Sungani izi ngati fayilo yophunzirira",
+        "polite": "Kodi mungasunge yankho lanu ngati phunziro, chonde?",
+        "more": "Sungani izi ngati fayilo yophunzirira ndipo muzimasulire m'Chingerezi",
+        "topic": "Sungani fayilo yophunzirira yokhudza ndime iyi",
+        "studyAsks": [
+            "Pangani fayilo yophunzirira ya Yohane 3:16",
+            "Konzani phunziro la Baibulo pa Aroma 8",
+            "Kodi ndingathe bwanji kupanga fayilo yophunzirira?"
+        ]
+    },
+    "om": {
+        "folder": "om",
+        "keep": "Sana akka faayilii qorannootti olkaa'i",
+        "polite": "Maaloo, deebii kee akka qo'annootti olkaa'uu dandeessaa?",
+        "more": "Sana akka faayilii qorannootti olkaa'i fi gara Afaan Ingiliziitti hiiki",
+        "topic": "Waa'ee kutaa kanaa faayilii qorannoo olkaa'i",
+        "studyAsks": [
+            "Yohannis 3:16f faayilii qorannoo uumi",
+            "Waa'ee Roomaa 8 qo'annoo Macaafa Qulqulluu qopheessi",
+            "Faayilii qorannoo akkamitti uumuu danda'a?"
+        ]
+    },
+    "or": {
+        "folder": "or",
+        "keep": "ଏହାକୁ ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ଭାବରେ ସେଭ୍ କରନ୍ତୁ",
+        "polite": "ଆପଣ ଆପଣଙ୍କ ଉତ୍ତରକୁ ଏକ ଅଧ୍ୟୟନ ଭାବରେ ସେଭ୍ କରିପାରିବେ କି, ଦୟାକରି?",
+        "more": "ଏହାକୁ ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ଭାବରେ ସେଭ୍ କରନ୍ତୁ ଏବଂ ଇଂରାଜୀରେ ଅନୁବାଦ କରନ୍ତୁ",
+        "topic": "ଏହି ଅଂଶ ବିଷୟରେ ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ସେଭ୍ କରନ୍ତୁ",
+        "studyAsks": [
+            "ଯୋହନ 3:16 ପାଇଁ ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ତିଆରି କରନ୍ତୁ",
+            "ରୋମୀୟ 8 ଉପରେ ଏକ ବାଇବେଲ ଅଧ୍ୟୟନ ଲେଖନ୍ତୁ",
+            "ମୁଁ କିପରି ଏକ ଅଧ୍ୟୟନ ଫାଇଲ୍ ତିଆରି କରିବି?",
+            "ମୋ ବାଇବେଲ ଅଧ୍ୟୟନ ପାଇଁ ଏକ ନୋଟ୍ ଲେଖନ୍ତୁ"
+        ]
+    },
+    "pa": {
+        "folder": "pa",
+        "keep": "ਉਸ ਨੂੰ ਅਧਿਐਨ ਫ਼ਾਈਲ ਵਜੋਂ ਸੰਭਾਲੋ",
+        "polite": "ਕੀ ਤੁਸੀਂ ਆਪਣਾ ਜਵਾਬ ਅਧਿਐਨ ਵਜੋਂ ਸੰਭਾਲ ਸਕਦੇ ਹੋ, ਕਿਰਪਾ ਕਰਕੇ?",
+        "more": "ਉਸ ਨੂੰ ਅਧਿਐਨ ਫ਼ਾਈਲ ਵਜੋਂ ਸੰਭਾਲੋ ਅਤੇ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਅਨੁਵਾਦ ਕਰੋ",
+        "topic": "ਇਸ ਹਵਾਲੇ ਬਾਰੇ ਇੱਕ ਅਧਿਐਨ ਫ਼ਾਈਲ ਸੰਭਾਲੋ",
+        "studyAsks": [
+            "ਯੂਹੰਨਾ 3:16 ਲਈ ਇੱਕ ਅਧਿਐਨ ਫ਼ਾਈਲ ਬਣਾਓ",
+            "ਰੋਮੀਆਂ 8 ਬਾਰੇ ਇੱਕ ਬਾਈਬਲ ਅਧਿਐਨ ਲਿਖੋ",
+            "ਮੈਂ ਅਧਿਐਨ ਫ਼ਾਈਲ ਕਿਵੇਂ ਬਣਾਵਾਂ?",
+            "ਮੇਰੇ ਬਾਈਬਲ ਅਧਿਐਨ ਲਈ ਇੱਕ ਨੋਟ ਲਿਖੋ"
+        ]
+    },
+    "pl": {
+        "folder": "pl",
+        "keep": "Zapisz to jako plik do studiowania",
+        "polite": "Czy możesz zapisać swoją odpowiedź jako studium, proszę?",
+        "more": "Zapisz to jako plik do studiowania i przetłumacz na angielski",
+        "topic": "Zapisz plik do studiowania o tym fragmencie",
+        "studyAsks": [
+            "Zrób plik do studiowania dla Jana 3:16",
+            "Przygotuj studium biblijne o Rzymian 8",
+            "Jak utworzyć plik do studiowania?",
+            "Napisz notatkę do mojego studium biblijnego o Jana 3"
+        ]
+    },
+    "pt": {
+        "folder": "pt",
+        "keep": "Salve isso como um arquivo de estudo",
+        "polite": "Você pode salvar a sua resposta como um estudo, por favor?",
+        "more": "Salve isso como um arquivo de estudo e traduza para o inglês",
+        "topic": "Salve um arquivo de estudo sobre esta passagem",
+        "studyAsks": [
+            "Faça um arquivo de estudo para João 3:16",
+            "Prepare um estudo bíblico sobre Romanos 8",
+            "Como posso criar um arquivo de estudo?",
+            "Escreva uma nota para o meu estudo bíblico de João 3"
+        ]
+    },
+    "rn": {
+        "folder": "rn",
+        "keep": "Bika ivyo nk'idosiye yo kwiga",
+        "polite": "Ndakwinginze, wobika inyishu yawe nk'inyigisho?",
+        "more": "Bika ivyo nk'idosiye yo kwiga kandi ubihindure mu Congereza",
+        "topic": "Bika idosiye yo kwiga ivyerekeye iki gice",
+        "studyAsks": [
+            "Rema idosiye yo kwiga ya Yohana 3:16",
+            "Tegura inyigisho ya Bibiliya ku Baroma 8",
+            "Nshobora gute kurema idosiye yo kwiga?"
+        ]
+    },
+    "ro": {
+        "folder": "ro",
+        "keep": "Salvează asta ca fișier de studiu",
+        "polite": "Poți să salvezi răspunsul tău ca studiu, te rog?",
+        "more": "Salvează asta ca fișier de studiu și tradu-l în engleză",
+        "topic": "Salvează un fișier de studiu despre acest pasaj",
+        "studyAsks": [
+            "Fă un fișier de studiu pentru Ioan 3:16",
+            "Pregătește un studiu biblic despre Romani 8",
+            "Cum pot crea un fișier de studiu?",
+            "Scrie o notiță pentru studiul meu biblic despre Ioan 3"
+        ]
+    },
+    "ru": {
+        "folder": "ru",
+        "keep": "Сохрани это как учебный файл",
+        "polite": "Можешь сохранить свой ответ как учебный материал, пожалуйста?",
+        "more": "Сохрани это как учебный файл и переведи его на английский",
+        "topic": "Сохрани учебный файл об этом отрывке",
+        "studyAsks": [
+            "Сделай учебный файл для Иоанна 3:16",
+            "Подготовь изучение Библии по Римлянам 8",
+            "Как создать учебный файл?",
+            "Напиши заметку к моему изучению Иоанна 3"
+        ]
+    },
+    "rw": {
+        "folder": "rw",
+        "keep": "Bika ibyo nka dosiye yo kwiga",
+        "polite": "Wabika igisubizo cyawe nk'inyigisho, nyamuneka?",
+        "more": "Bika ibyo nka dosiye yo kwiga kandi ubihindure mu Cyongereza",
+        "topic": "Bika dosiye yo kwiga yerekeye iki gice",
+        "studyAsks": [
+            "Kora dosiye yo kwiga ya Yohana 3:16",
+            "Tegura inyigisho ya Bibiliya ku Baroma 8",
+            "Nshobora gute gukora dosiye yo kwiga?"
+        ]
+    },
+    "si": {
+        "folder": "si",
+        "keep": "එය අධ්යයන ගොනුවක් ලෙස සුරකින්න",
+        "polite": "කරුණාකර ඔබේ පිළිතුර අධ්යයනයක් ලෙස සුරකින්න පුළුවන්ද?",
+        "more": "එය අධ්යයන ගොනුවක් ලෙස සුරකින්න සහ එය ඉංග්රීසියට පරිවර්තනය කරන්න",
+        "topic": "මෙම කොටස ගැන අධ්යයන ගොනුවක් සුරකින්න",
+        "studyAsks": [
+            "යොහන් 3:16 සඳහා අධ්‍යයන ගොනුවක් සාදන්න",
+            "රෝම 8 ගැන බයිබල් අධ්‍යයනයක් ලියන්න",
+            "මම අධ්‍යයන ගොනුවක් සාදන්නේ කොහොමද?",
+            "මගේ බයිබල් අධ්‍යයනය සඳහා සටහනක් ලියන්න"
+        ]
+    },
+    "sk": {
+        "folder": "sk",
+        "keep": "Ulož to ako študijný súbor",
+        "polite": "Môžeš uložiť svoju odpoveď ako štúdium, prosím?",
+        "more": "Ulož to ako študijný súbor a prelož to do angličtiny",
+        "topic": "Ulož študijný súbor o tejto pasáži",
+        "studyAsks": [
+            "Urob študijný súbor pre Jána 3:16",
+            "Priprav biblické štúdium o Rimanom 8",
+            "Ako vytvorím študijný súbor?",
+            "Napíš poznámku k môjmu biblickému štúdiu o Jánovi 3"
+        ]
+    },
+    "sl": {
+        "folder": "sl",
+        "keep": "Shrani to kot študijsko datoteko",
+        "polite": "Lahko shraniš svoj odgovor kot študij, prosim?",
+        "more": "Shrani to kot študijsko datoteko in to prevedi v angleščino",
+        "topic": "Shrani študijsko datoteko o tem odlomku",
+        "studyAsks": [
+            "Naredi študijsko datoteko za Janez 3:16",
+            "Pripravi svetopisemski študij o Rimljanih 8",
+            "Kako ustvarim študijsko datoteko?",
+            "Napiši opombo k mojemu študiju Janeza 3"
+        ]
+    },
+    "sm": {
+        "folder": "sm",
+        "keep": "Teu lena o se faila su'esu'e",
+        "polite": "E mafai ona e teu lau tali o se su'esu'ega, fa'amolemole?",
+        "more": "Teu lena o se faila su'esu'e ma fa'aliliu i le gagana Peretania",
+        "topic": "Teu se faila su'esu'e e uiga i lenei mau",
+        "studyAsks": [
+            "Fausia se faila su'esu'e mo Ioane 3:16",
+            "Saunia se su'esu'ega o le Tusi Paia e uiga i Roma 8",
+            "E fa'apefea ona ou fausia se faila su'esu'e?"
+        ]
+    },
+    "sn": {
+        "folder": "sn",
+        "keep": "Chengetedza izvozvo sefaira rekudzidza",
+        "polite": "Ungachengetedza mhinduro yako sechidzidzo here, ndapota?",
+        "more": "Chengetedza izvozvo sefaira rekudzidza uye uzvishandure kuChirungu",
+        "topic": "Chengetedza faira rekudzidza pamusoro pendima iyi",
+        "studyAsks": [
+            "Gadzira faira rekudzidza raJohani 3:16",
+            "Gadzirira chidzidzo cheBhaibheri pamusoro paVaRoma 8",
+            "Ndingaita sei kugadzira faira rekudzidza?"
+        ]
+    },
+    "so": {
+        "folder": "so",
+        "keep": "Taas u kaydi sidii fayl barasho ah",
+        "polite": "Ma kaydin kartaa jawaabtaada sidii barasho, fadlan?",
+        "more": "Taas u kaydi sidii fayl barasho ah, kadibna u turjun Ingiriisi",
+        "topic": "Kaydi fayl barasho ah oo ku saabsan qaybtan",
+        "studyAsks": [
+            "Samee fayl barasho ah oo ku saabsan Yooxanaa 3:16",
+            "Diyaari daraasad Kitaabka Quduuska ah oo ku saabsan Rooma 8",
+            "Sidee baan u sameeyaa fayl barasho ah?"
+        ]
+    },
+    "sq": {
+        "folder": "sq",
+        "keep": "Ruaje këtë si skedar studimi",
+        "polite": "A mund ta ruash përgjigjen tënde si studim, të lutem?",
+        "more": "Ruaje këtë si skedar studimi dhe përktheje në anglisht",
+        "topic": "Ruaj një skedar studimi rreth kësaj pjese",
+        "studyAsks": [
+            "Krijo një skedar studimi për Gjonin 3:16",
+            "Përgatit një studim biblik për Romakëve 8",
+            "Si mund të krijoj një skedar studimi?",
+            "Shkruaj një shënim për studimin tim biblik për Gjonin 3"
+        ]
+    },
+    "sr": {
+        "folder": "sr",
+        "keep": "Сачувај то као датотеку за проучавање",
+        "polite": "Можеш ли да сачуваш свој одговор као проучавање, молим те?",
+        "more": "Сачувај то као датотеку за проучавање и преведи га на енглески",
+        "topic": "Сачувај датотеку за проучавање о овом одломку",
+        "studyAsks": [
+            "Направи датотеку за проучавање за Јована 3:16",
+            "Pripremi biblijsko proučavanje o Rimljanima 8",
+            "Како да направим датотеку за проучавање?",
+            "Напиши белешку за моје проучавање Јована 3"
+        ]
+    },
+    "sv": {
+        "folder": "sv",
+        "keep": "Spara det som en studiefil",
+        "polite": "Kan du spara ditt svar som en studie, tack?",
+        "more": "Spara det som en studiefil och översätt det till engelska",
+        "topic": "Spara en studiefil om det här avsnittet",
+        "studyAsks": [
+            "Gör en studiefil för Johannes 3:16",
+            "Skriv ett bibelstudium om Romarbrevet 8",
+            "Hur skapar jag en studiefil?",
+            "Skriv en anteckning till mitt bibelstudium om Johannes 3"
+        ]
+    },
+    "sw": {
+        "folder": "sw",
+        "keep": "Hifadhi hilo kama faili ya kujifunza",
+        "polite": "Je, unaweza kuhifadhi jibu lako kama somo, tafadhali?",
+        "more": "Hifadhi hilo kama faili ya kujifunza na ulitafsiri kwa Kiingereza",
+        "topic": "Hifadhi faili ya kujifunza kuhusu kifungu hiki",
+        "studyAsks": [
+            "Tengeneza faili ya kujifunza kwa Yohana 3:16",
+            "Andaa somo la Biblia kuhusu Warumi 8",
+            "Jinsi ya kutengeneza faili ya kujifunza?",
+            "Andika dokezo kwa somo langu la Biblia"
+        ]
+    },
+    "ta": {
+        "folder": "ta",
+        "keep": "அதை ஒரு படிப்புக் கோப்பாகச் சேமி",
+        "polite": "தயவுசெய்து உங்கள் பதிலை ஒரு படிப்புக் கோப்பாகச் சேமிக்க முடியுமா?",
+        "more": "அதை ஒரு படிப்புக் கோப்பாகச் சேமி மற்றும் அதை ஆங்கிலத்தில் மொழிபெயர்",
+        "topic": "இந்தப் பகுதியைப் பற்றி ஒரு படிப்புக் கோப்பைச் சேமி",
+        "studyAsks": [
+            "யோவான் 3:16 க்கு ஒரு படிப்புக் கோப்பை உருவாக்கு",
+            "ரோமர் 8 பற்றி ஒரு வேதாகம ஆய்வு எழுதுங்கள்",
+            "படிப்புக் கோப்பை எப்படி உருவாக்குவது?",
+            "என் வேதாகம ஆய்வுக்கு ஒரு குறிப்பு எழுது"
+        ]
+    },
+    "te": {
+        "folder": "te",
+        "keep": "దాన్ని అధ్యయన ఫైలుగా సేవ్ చేయి",
+        "polite": "మీరు మీ సమాధానాన్ని అధ్యయనంగా సేవ్ చేయగలరా, దయచేసి?",
+        "more": "దాన్ని అధ్యయన ఫైలుగా సేవ్ చేయి మరియు దాన్ని ఆంగ్లంలోకి అనువదించు",
+        "topic": "ఈ భాగం గురించి ఒక అధ్యయన ఫైల్ సేవ్ చేయి",
+        "studyAsks": [
+            "యోహాను 3:16 కోసం అధ్యయన ఫైల్ సృష్టించండి",
+            "రోమీయులు 8 పై బైబిల్ అధ్యయనం రాయండి",
+            "అధ్యయన ఫైల్ ఎలా సృష్టించాలి?",
+            "నా బైబిల్ అధ్యయనం కోసం ఒక గమనిక రాయండి"
+        ]
+    },
+    "th": {
+        "folder": "th",
+        "keep": "บันทึกสิ่งนั้นเป็นไฟล์ศึกษา",
+        "polite": "ช่วยบันทึกคำตอบของคุณเป็นการศึกษาได้ไหมครับ",
+        "more": "บันทึกสิ่งนั้นเป็นไฟล์ศึกษาและแปลเป็นภาษาอังกฤษ",
+        "topic": "บันทึกไฟล์ศึกษาเกี่ยวกับพระคัมภีร์ตอนนี้",
+        "studyAsks": [
+            "สร้างไฟล์ศึกษาสำหรับยอห์น 3:16",
+            "ช่วยเตรียมการศึกษาพระคัมภีร์เรื่องโรม 8",
+            "จะสร้างไฟล์ศึกษาได้อย่างไร?",
+            "เขียนโน้ตสำหรับการศึกษาพระคัมภีร์ของฉัน"
+        ]
+    },
+    "tl": {
+        "folder": "fil",
+        "keep": "I-save mo iyan bilang file sa pag-aaral",
+        "polite": "Puwede mo bang i-save ang sagot mo bilang isang pag-aaral, pakiusap?",
+        "more": "I-save mo iyan bilang file sa pag-aaral at isalin mo sa Ingles",
+        "topic": "Mag-save ng file sa pag-aaral tungkol sa talatang ito",
+        "studyAsks": [
+            "Gumawa ng file sa pag-aaral para sa Juan 3:16",
+            "Ihanda ang isang pag-aaral ng Bibliya tungkol sa Roma 8",
+            "Paano gumawa ng file sa pag-aaral?",
+            "Isulat ang isang tala sa aking pag-aaral ng Bibliya"
+        ]
+    },
+    "to": {
+        "folder": "to",
+        "keep": "Tauhi 'ena ko ha faile ako",
+        "polite": "'E lava ke ke tauhi ho'o tali ko ha faile ako, kātaki?",
+        "more": "Tauhi 'ena ko ha faile ako pea liliu ki he lea faka-Pilitānia",
+        "topic": "Tauhi ha faile ako fekau'aki mo e potu folofola ko 'eni",
+        "studyAsks": [
+            "Fa'u ha faile ako ki he Sione 3:16",
+            "Teuteu ha ako Tohitapu ki he Loma 8",
+            "'E fēfē 'eku fa'u ha faile ako?"
+        ]
+    },
+    "tr": {
+        "folder": "tr",
+        "keep": "Bunu çalışma dosyası olarak kaydet",
+        "polite": "Cevabını çalışma olarak kaydedebilir misin, lütfen?",
+        "more": "Bunu çalışma dosyası olarak kaydet ve İngilizceye çevir",
+        "topic": "Bu pasaj hakkında bir çalışma dosyası kaydet",
+        "studyAsks": [
+            "Yuhanna 3:16 için bir çalışma dosyası oluştur",
+            "Romalılar 8 hakkında bir Kutsal Kitap çalışması hazırla",
+            "Çalışma dosyasını nasıl oluşturabilirim?",
+            "Kutsal Kitap çalışmam için bir not yaz"
+        ]
+    },
+    "uk": {
+        "folder": "uk",
+        "keep": "Збережи це як файл для вивчення",
+        "polite": "Можеш зберегти свою відповідь як навчальний матеріал, будь ласка?",
+        "more": "Збережи це як файл для вивчення і переклади англійською",
+        "topic": "Збережи файл для вивчення про цей уривок",
+        "studyAsks": [
+            "Зроби файл для вивчення Івана 3:16",
+            "Підготуй біблійне дослідження про Римлян 8",
+            "Як створити файл для вивчення?",
+            "Напиши нотатку до мого вивчення Івана 3"
+        ]
+    },
+    "ur": {
+        "folder": "ur",
+        "keep": "اسے مطالعاتی فائل کے طور پر محفوظ کریں",
+        "polite": "کیا آپ اپنا جواب مطالعہ کے طور پر محفوظ کر سکتے ہیں، براہ کرم؟",
+        "more": "اسے مطالعاتی فائل کے طور پر محفوظ کریں اور اس کا انگریزی میں ترجمہ کریں",
+        "topic": "اس حوالے کے بارے میں ایک مطالعاتی فائل محفوظ کریں",
+        "studyAsks": [
+            "یوحنا 3:16 کے لیے ایک مطالعاتی فائل بنائیں",
+            "رومیوں 8 پر بائبل کا مطالعہ لکھیں",
+            "میں مطالعاتی فائل کیسے بناؤں؟",
+            "میرے بائبل مطالعہ کے لیے ایک نوٹ لکھیں"
+        ]
+    },
+    "vi": {
+        "folder": "vi",
+        "keep": "Lưu cái đó thành tệp nghiên cứu",
+        "polite": "Bạn có thể vui lòng lưu câu trả lời của bạn thành một bài nghiên cứu không?",
+        "more": "Lưu cái đó thành tệp nghiên cứu và dịch nó sang tiếng Anh",
+        "topic": "Lưu một tệp nghiên cứu về đoạn Kinh Thánh này",
+        "studyAsks": [
+            "Tạo tệp nghiên cứu cho Giăng 3:16",
+            "Soạn một bài nghiên cứu Kinh Thánh về Rô-ma 8",
+            "Làm thế nào để tạo tệp nghiên cứu?",
+            "Viết ghi chú cho bài nghiên cứu Kinh Thánh của tôi"
+        ]
+    },
+    "xh": {
+        "folder": "xh",
+        "keep": "Gcina oko njengefayile yokufunda",
+        "polite": "Ungakwazi ukugcina impendulo yakho njengesifundo, nceda?",
+        "more": "Gcina oko njengefayile yokufunda kwaye uyiguqulele esiNgesini",
+        "topic": "Gcina ifayile yokufunda malunga nesi sicatshulwa",
+        "studyAsks": [
+            "Yenza ifayile yokufunda kaYohane 3:16",
+            "Lungiselela isifundo seBhayibhile malunga namaRoma 8",
+            "Ndingakwazi njani ukwenza ifayile yokufunda?"
+        ]
+    },
+    "yo": {
+        "folder": "yo",
+        "keep": "Fi ìyẹn pamọ́ gẹ́gẹ́ bí fáìlì ẹ̀kọ́",
+        "polite": "Ṣé o lè fi ìdáhùn rẹ pamọ́ gẹ́gẹ́ bí ẹ̀kọ́, jọ̀wọ́?",
+        "more": "Fi ìyẹn pamọ́ gẹ́gẹ́ bí fáìlì ẹ̀kọ́ kí o sì túmọ̀ rẹ̀ sí èdè Gẹ̀ẹ́sì",
+        "topic": "Fi fáìlì ẹ̀kọ́ kan pamọ́ nípa àyọkà yìí",
+        "studyAsks": [
+            "Ṣẹ̀dá fáìlì ẹ̀kọ́ fún Jòhánù 3:16",
+            "Pèsè ìkẹ́kọ̀ọ́ Bíbélì nípa Róòmù 8",
+            "Báwo ni mo ṣe lè ṣẹ̀dá fáìlì ẹ̀kọ́?",
+            "Kọ àkọsílẹ̀ kan fún ẹ̀kọ́ Bíbélì mi"
+        ]
+    },
+    "zh": {
+        "folder": "zh",
+        "keep": "把那个保存为研读文件",
+        "polite": "可以请你把你的回答保存为一份研读吗？",
+        "more": "把那个保存为研读文件，然后翻译成英文",
+        "topic": "保存一个关于这段经文的研读文件",
+        "studyAsks": [
+            "为约翰福音3:16创建一个研读文件",
+            "帮我准备一份关于罗马书8章的查经资料",
+            "怎么创建研读文件？",
+            "为我的约翰福音3章研读写一条笔记"
+        ]
+    },
+    "zh-Hant": {
+        "folder": "zh",
+        "keep": "把那個儲存為研讀檔案",
+        "polite": "可以請你把你的回答儲存為一份研讀嗎？",
+        "more": "把那個儲存為研讀檔案，然後翻譯成英文",
+        "topic": "儲存一個關於這段經文的研讀檔案",
+        "studyAsks": [
+            "為約翰福音3:16建立一個研讀檔案",
+            "幫我準備一份關於羅馬書8章的查經資料",
+            "怎麼建立研讀檔案？",
+            "為我的約翰福音3章研讀寫一則筆記"
+        ]
+    },
+    "zu": {
+        "folder": "zu",
+        "keep": "Gcina lokho njengefayela lokutadisha",
+        "polite": "Ungakwazi ukugcina impendulo yakho njengesifundo, ngiyacela?",
+        "more": "Gcina lokho njengefayela lokutadisha futhi ulihumushele esiNgisini",
+        "topic": "Gcina ifayela lokutadisha mayelana nalesi siqephu",
+        "studyAsks": [
+            "Yenza ifayela lokutadisha likaJohane 3:16",
+            "Lungiselela isifundo seBhayibheli ngamaRoma 8",
+            "Ngingakwazi kanjani ukwenza ifayela lokutadisha?",
+            "Bhala inothi esifundweni sami seBhayibheli"
+        ]
+    }
+}

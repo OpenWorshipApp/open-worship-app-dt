@@ -16,14 +16,21 @@ environment.
 **Changed 2026-08-24 (SongSelect integration):** `vitest.config.ts` now DOES
 carry `test.server.deps.inline: ['open-lyric', /monaco-editor/]`, and the full
 suite is green. It is safe now because inlining only affects modules a test
-actually imports — and three tests import the real open-lyric, all
+actually imports — and three tests imported the real open-lyric by 2026-10-11 (two on
+2026-08-24; the MCP oracle came 2026-09-08), all
 deliberately: `src/plugins/song-select/songSelectLyricHelpers.test.ts` (via the
 app wrapper `checkOpenLyricMarkdown`, which wraps `api.document.checkMarkdown`,
 transitively),
 `src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts`
 (direct `await import('open-lyric')`, also driving `new OpenLyric()` for
 attachment parsing) and `tools/owa-devtools-mcp/openLyricOracle.test.mjs` (the MCP
-validator checked against it) — all as validation oracles.
+validator checked against it) — all as validation oracles. Eight do by
+2026-11-10, each through the jsdom recipe below: also
+`src/lyric-list/lyricAtomModeHelpers.test.ts`,
+`src/bible-list/bibleLyricMarkdownHelpers.test.ts`,
+`src/presenter-foreground/foregroundLongTextLyricHelpers.test.ts`,
+`tools/owa-devtools-mcp/openLyricEdit.test.mjs` and a language package's own
+oracle under `src/lang/data/online/<code>/tests/`.
 
 **Why:** the real validator catches mapping bugs (structure codes, fence
 rules) that a mocked open-lyric would wave through.

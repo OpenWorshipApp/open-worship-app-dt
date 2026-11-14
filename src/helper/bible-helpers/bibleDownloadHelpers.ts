@@ -109,7 +109,7 @@ export async function extractDownloadedBible(filePath: string) {
     try {
         showSimpleToast(
             tran(BIBLE_DOWNLOAD_TOAST_TITLE),
-            `Start extracting bible from file "${filePath}"`,
+            `${tran('Extracting Bible')}: "${filePath}"`,
         );
         const downloadPath = await bibleDataReader.getWritableBiblePath();
         await tarExtract(filePath, downloadPath);

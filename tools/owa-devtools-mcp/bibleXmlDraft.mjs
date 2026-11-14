@@ -329,7 +329,7 @@ export async function readBibleXmlTitles(
 
 // --- the listing of a repository, kept for a few minutes ---------------------
 
-// Choosing a Bible is several looks at ONE listing -- "Khmer", then "2016",
+// Choosing a Bible is several looks at ONE listing -- a language, then "2016",
 // then another language after a Cancel -- and the catalog's is 0.9 MB out of
 // an allowance of sixty unsigned reads an hour for the whole network the
 // computer is on (measured 2026-10-10). So the file names of the LAST listing
@@ -383,7 +383,7 @@ async function genPageAnswer({
     );
   }
   // Every file in the language asked for, not a sample: a person choosing
-  // between seven Khmer Bibles has to see all seven.
+  // between seven Bibles of their language has to see all seven.
   const ranked = rankBibleXmlLinks(links, find, PAGE_FILE_LIMIT);
   return {
     kind: 'page',
@@ -558,6 +558,13 @@ export async function downloadBibleXml({
         stream.end(resolve);
       };
       pump().catch((error) => {
+        // A piece still being written when the stream is destroyed is
+        // reported as `ERR_STREAM_DESTROYED` before it closes, and the first
+        // rejection wins: the person was told "Cannot call write after a
+        // stream was destroyed" instead of why the download broke off
+        // (2026-11-11). The write this destroy cuts short is not the reason.
+        stream.off('error', reject);
+        stream.on('error', () => {});
         // Rejected only once the file is shut. Destroyed before its open had
         // finished, the stream still creates the file -- after the `rm`
         // below had looked for it, which left the `.part` behind on a

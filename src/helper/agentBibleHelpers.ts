@@ -33,9 +33,14 @@
  *   page expression fires a DOM event, `domHelpers.ts` relays it here, and
  *   the import there is LAZY -- the screen managers and the bible graph must
  *   not load in every window because somebody might ask.
- * - Nothing is written to disk. The lookup's double-click also SAVES the
- *   verse into the Bibles list; this deliberately does not, so the whole
- *   effect is on the screen and **Clear Long Text** undoes it.
+ * - The passage is SAVED into the Bibles list's Default first, unless that
+ *   list holds it already, as the lookup's own double-click saves it
+ *   (`addBibleItemAndPresent`) -- the user's rule since 2026-11-14 (EC-704:
+ *   _bible verse have to save to list first (if not added) before show on
+ *   screen_); until then this wrote nothing, and _show gen 3 on screen_ put
+ *   Genesis 3 up with the list never holding it. A save that fails puts
+ *   nothing up, as the lookup's does not; `owa_undo` takes the save back and
+ *   **Clear Long Text** the screen.
  * - A locked screen refuses the verse, as it refuses a click, and the answer
  *   says so instead of pretending.
  * - Whether to present at all is decided BEFORE this is called -- the model
@@ -58,6 +63,8 @@ import {
     genPendingQuestionNote,
     waitForPendingAppQuestion,
 } from './agentPendingQuestionHelpers';
+import { genOffScreenNote } from './agentOffScreenNoteHelpers';
+import type { AgentBibleSavedFirstType } from './agentBibleListHelpers';
 
 export type AgentBibleRequestType = {
     action?: unknown;
@@ -98,6 +105,9 @@ export type AgentBibleResultType =
           // A popup the present left open for the operator -- see
           // `agentPendingQuestionHelpers`.
           pendingQuestion?: AgentPendingQuestionType;
+          // The Bibles list the passage is in (EC-704): saved by this call,
+          // or there already.
+          listed?: AgentBibleSavedFirstType;
           note?: string;
       };
 
@@ -141,7 +151,7 @@ async function getLookupVersion(): Promise<string | null> {
 /**
  * The version to read the reference in, in order: the one asked for (which
  * must be installed), the one the lookup is on, then every other installed
- * one -- because "John 3:16" does not parse under a Khmer version's book
+ * one -- because "John 3:16" does not parse under another language's version's book
  * names, and a volunteer who typed it in English wants the verse, not a
  * refusal. The answer names the version it settled on.
  */
@@ -199,14 +209,14 @@ async function parseReference(bibleKey: string, reference: string) {
     }
     const chapterOnly = CHAPTER_ONLY_PATTERN.exec(reference);
     if (chapterOnly === null) {
-        return null;
+        return parseLooseReference(bibleKey, reference);
     }
     const first = await BibleItem.fromTitleText(
         bibleKey,
         `${chapterOnly[1]} ${chapterOnly[2]}:1`,
     );
     if (first === null) {
-        return null;
+        return parseLooseReference(bibleKey, reference);
     }
     const { bookKey, chapter } = first.target;
     const verseCount = await getVersesCount(bibleKey, bookKey, chapter);
@@ -218,6 +228,58 @@ async function parseReference(bibleKey: string, reference: string) {
             bibleKey,
             `${chapterOnly[1]} ${chapterOnly[2]}:1-${verseCount}`,
         )) ?? first
+    );
+}
+
+/**
+ * A reference the app's parser refuses, read the way `owa_find_verse` reads
+ * one (`resolveBookKey`): "Psalms 23:1" -- the KJV calls the book "Psalm"
+ * --, a book named in the English way under another Bible, a start of a
+ * name only one book has ("1 Cor 13"). 2026-11-09, BN-50: a note's
+ * `[^Psalms 23:1]` was refused as "no installed Bible could read" it, and a
+ * new note kept it as words, while the verse finder read it. Loaded only
+ * here, when the parser has already said no.
+ */
+async function parseLooseReference(bibleKey: string, reference: string) {
+    const [
+        { checkVerseFitsChapter, parseRefParts, resolveBookKey, toVerseKey },
+        { getBibleInfo },
+        { kjvBibleModelInfo },
+    ] = await Promise.all([
+        import('./bibleVerseFindHelpers'),
+        import('./bible-helpers/bibleInfoHelpers'),
+        import('./bible-helpers/bibleModelHelpers'),
+    ]);
+    const parts = parseRefParts(reference);
+    if (parts === null) {
+        return null;
+    }
+    const info = await getBibleInfo(bibleKey).catch(() => {
+        return null;
+    });
+    const bookKey = resolveBookKey(parts.book, [
+        info?.keyBookMap ?? {},
+        kjvBibleModelInfo.keyBookMap,
+    ]);
+    if (bookKey === null) {
+        return null;
+    }
+    const verseCount = await getVersesCount(bibleKey, bookKey, parts.chapter);
+    if (verseCount === null) {
+        return null;
+    }
+    if (parts.verseStart === null) {
+        return BibleItem.fromVerseKey(
+            bibleKey,
+            toVerseKey(bookKey, parts.chapter, 1, verseCount),
+        );
+    }
+    if (!checkVerseFitsChapter(verseCount, parts.verseStart, parts.verseEnd)) {
+        return null;
+    }
+    return BibleItem.fromVerseKey(
+        bibleKey,
+        toVerseKey(bookKey, parts.chapter, parts.verseStart, parts.verseEnd),
     );
 }
 
@@ -237,6 +299,14 @@ export async function resolveBibleItem(
         }
     }
     return null;
+}
+
+function checkIsSavedFirst(value: unknown): value is AgentBibleSavedFirstType {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        typeof (value as AgentBibleSavedFirstType).isNew === 'boolean'
+    );
 }
 
 function toScreenState(screenId: number): AgentBibleScreenType | null {
@@ -311,8 +381,8 @@ export async function handleAgentBibleRequest(
                 `${resolved.order.length === 1 ? resolved.order[0] : 'any installed version'}. ` +
                 "Write it as the version's full book name, chapter and verse " +
                 '-- "John 3:16", "Psalm 23:1-6", "1 John 1:1-4" -- or a ' +
-                'whole chapter as "Psalm 23"; short forms like "Jn" or ' +
-                '"Ps" are not read.',
+                'whole chapter as "Psalm 23"; a short form several books ' +
+                'share, like "Jo", names no book.',
             resolved.installed,
         );
     }
@@ -362,6 +432,17 @@ export async function handleAgentBibleRequest(
                 'again.',
         );
     }
+    // Into the Bibles list before it goes up (EC-704), as the lookup's own
+    // double-click does: lazily, the list's code is no present's until now.
+    const { saveAgentBibleItemFirst } = await import('./agentBibleListHelpers');
+    const savedFirst = await saveAgentBibleItemFirst(bibleItem);
+    if (!checkIsSavedFirst(savedFirst)) {
+        return toReason(
+            'Nothing was put on a screen: a passage is saved to the Bibles ' +
+                'list before it is shown, and saving it failed. ' +
+                String(savedFirst.reason ?? ''),
+        );
+    }
     // The same path as the lookup's own "Show bible item": no mouse event, so
     // the screens are the ticked ones, which is what a double-click in the
     // lookup would use too. The manager itself steps over a locked screen
@@ -390,11 +471,13 @@ export async function handleAgentBibleRequest(
         .filter((screen) => !screen.isShowing)
         .map((screen) => screen.screenId);
     if (offIds.length > 0) {
+        notes.push(genOffScreenNote(offIds, 'the passage'));
+    }
+    if (savedFirst.isNew) {
         notes.push(
-            `Screen ${offIds.join(' and ')} holds the passage but is OFF, so ` +
-                'the projector shows nothing until its show button is ' +
-                'pressed (owa_list_screens names it under controls.showHide) ' +
-                '-- offer that, do not press it unasked.',
+            `It was saved to the Bibles list "${savedFirst.list}" first, as ` +
+                'the Bible Lookup saves a passage it shows: say so in a few ' +
+                'words, and do not add it again.',
         );
     }
     const pendingQuestion = await waitForPendingAppQuestion();
@@ -408,6 +491,7 @@ export async function handleAgentBibleRequest(
         text,
         screens: after,
         isAnyShowing: isAnyShowingNow,
+        listed: savedFirst,
         ...(pendingQuestion !== null ? { pendingQuestion } : {}),
         ...(notes.length > 0 ? { note: notes.join(' ') } : {}),
     };

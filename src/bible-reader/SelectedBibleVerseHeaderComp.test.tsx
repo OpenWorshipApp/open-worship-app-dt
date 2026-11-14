@@ -71,7 +71,7 @@ afterEach(() => {
 
 function genBibleItem(text: string) {
     return {
-        bibleKey: 'KHM',
+        bibleKey: 'TQAM',
         toText: vi.fn(async () => text),
     } as any;
 }
@@ -91,8 +91,10 @@ describe('SelectedBibleVerseHeaderComp', () => {
             );
         });
         const block = host.firstElementChild as HTMLDivElement;
-        expect(block.style.fontFamily).toBe('KHM Font');
-        expect(host.querySelector('.alert .test-key')!.textContent).toBe('KHM');
+        expect(block.style.fontFamily).toBe('TQAM Font');
+        expect(host.querySelector('.alert .test-key')!.textContent).toBe(
+            'TQAM',
+        );
         // A one-verse editor that waits for the start verse.
         expect(h.editorProps).toEqual({
             bibleItem,
@@ -103,11 +105,11 @@ describe('SelectedBibleVerseHeaderComp', () => {
         const text = block.lastElementChild as HTMLDivElement;
         expect(text.textContent).toBe('For God so loved the world');
         expect(text.style.maxHeight).toBe('75px');
-        expect(text.style.fontFamily).toBe('KHM Font');
+        expect(text.style.fontFamily).toBe('TQAM Font');
         expect(bibleItem.toText).toHaveBeenCalledOnce();
 
         // Only the new key matters to the panel.
-        h.keySelectionProps!.onBibleKeyChange(false, 'KHM', 'KJV');
+        h.keySelectionProps!.onBibleKeyChange(false, 'TQAM', 'KJV');
         expect(onBibleKeyChange).toHaveBeenCalledWith('KJV');
     });
 

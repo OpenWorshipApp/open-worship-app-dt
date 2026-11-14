@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
-    langCodeMap: { 'en-US': 'en', 'km-KH': 'km' } as Record<string, string>,
+    langCodeMap: { 'en-US': 'en', 'yy-YY': 'yy' } as Record<string, string>,
     // The digits each language pack writes; a locale missing here has no
     // pack to read.
     numListMap: {} as Record<string, string[]>,
@@ -106,7 +106,7 @@ describe('genBibleKeyXMLInput', () => {
     test('flags a key that is already taken, whatever its case', async () => {
         const onChange = vi.fn();
         await act(async () => {
-            root.render(genBibleKeyXMLInput('NEW', onChange, ['KJV', 'KSV']));
+            root.render(genBibleKeyXMLInput('NEW', onChange, ['KJV', 'TQVS']));
         });
         expect(container.textContent).toContain('Define a Bible key');
         expect(getInput().value).toBe('NEW');
@@ -134,10 +134,10 @@ describe('genBibleKeyXMLInput', () => {
         await act(async () => {
             root.render(
                 genBibleKeyXMLInput(
-                    'KM',
+                    'YY1',
                     onChange,
-                    ['ksv'],
-                    ['KM', 'KSV', 'KH'],
+                    ['tqvs'],
+                    ['YY1', 'TQVS', 'YY2'],
                 ),
             );
         });
@@ -147,16 +147,16 @@ describe('genBibleKeyXMLInput', () => {
         ).map((button) => {
             return button.textContent;
         });
-        expect(offered).toEqual(['KH']);
+        expect(offered).toEqual(['YY2']);
 
-        await act(async () => findButton('KH')!.click());
+        await act(async () => findButton('YY2')!.click());
 
-        expect(onChange).toHaveBeenCalledWith('KH');
-        expect(getInput().value).toBe('KH');
+        expect(onChange).toHaveBeenCalledWith('YY2');
+        expect(getInput().value).toBe('YY2');
         // The key just taken from the list is no longer offered, and the one
         // left behind is.
-        expect(findButton('KH')).toBeNull();
-        expect(findButton('KM')).not.toBeNull();
+        expect(findButton('YY2')).toBeNull();
+        expect(findButton('YY1')).not.toBeNull();
     });
 
     test('has no guessing section when there is nothing to guess', async () => {
@@ -173,22 +173,22 @@ describe('genBibleKeyXMLInput', () => {
 
 describe('genBibleNumbersMapXMLInput', () => {
     test('offers the language pack digits and applies them all ten', async () => {
-        h.numListMap['km-KH'] = OWN_DIGITS;
+        h.numListMap['yy-YY'] = OWN_DIGITS;
         const onChange = vi.fn();
         await act(async () => {
             root.render(
                 genBibleNumbersMapXMLInput(
                     '0 1 2 3 4 5 6 7 8 9'.split(' '),
-                    'km-KH' as any,
+                    'yy-YY' as any,
                     onChange,
                 ),
             );
         });
-        expect(container.textContent).toContain('Define numbers map for km');
+        expect(container.textContent).toContain('Define numbers map for yy');
         expect(getInput().value).toBe('0 1 2 3 4 5 6 7 8 9');
         const link = container.querySelector('a') as HTMLAnchorElement;
-        expect(link.href).toContain('tl=km&');
-        expect(link.textContent).toBe('Translate (km)');
+        expect(link.href).toContain('tl=yy&');
+        expect(link.textContent).toBe('Translate (yy)');
 
         const useButton = findButton('Use １ ２ ３');
         expect(useButton).not.toBeNull();
@@ -243,14 +243,14 @@ describe('genBibleNumbersMapXMLInput', () => {
     });
 
     test('leaves the map alone when the pack is gone by the time it is used', async () => {
-        h.numListMap['km-KH'] = OWN_DIGITS;
+        h.numListMap['yy-YY'] = OWN_DIGITS;
         const onChange = vi.fn();
         await act(async () => {
             root.render(
-                genBibleNumbersMapXMLInput(['x'], 'km-KH' as any, onChange),
+                genBibleNumbersMapXMLInput(['x'], 'yy-YY' as any, onChange),
             );
         });
-        delete h.numListMap['km-KH'];
+        delete h.numListMap['yy-YY'];
 
         await act(async () => findButton('Use １ ２ ３')!.click());
 

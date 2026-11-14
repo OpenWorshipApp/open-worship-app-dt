@@ -55,10 +55,11 @@ function genDirectionStyle(locale: LocaleType) {
     return { dir: 'rtl', style: { textAlign: 'right' as const } };
 }
 
-// The font a language brings (Khmer's Battambang) is said inline, so the
+// The font a language brings (its own face) is said inline, so the
 // family chosen in Bible/LongText Properties has to be read here to win at all. The
 // language's own stays behind it: a Latin family picked for the English column
-// must not leave the Khmer one beside it in whatever the system falls back to.
+// must not leave a column in another script beside it in whatever the system
+// falls back to.
 // With nothing chosen the variable is unset and this is the font it always was.
 function genLangFontFamily({ fontFamily }: LanguageDataType) {
     if (!fontFamily) {
@@ -168,7 +169,7 @@ function ScreenShowMoreChapterRowComp({
  * under the other, the way the Bible Reader shows versions merged: the row's
  * numbers on a line of their own, each in its language's digits and font,
  * then each language's words. One header says every code and every title,
- * `EN | KM`. `isNumberHidden` (a long text's Hide Number) draws no number and
+ * `EN | XX`. `isNumberHidden` (a long text's Hide Number) draws no number and
  * no language code in the header, side by side or stacked -- the titles stay.
  */
 export function LongTextTableComp({

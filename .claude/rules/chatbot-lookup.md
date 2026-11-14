@@ -117,7 +117,18 @@ window as a whole — tabs, pickers, its language, the caution — is in
   screen_ is answered by the guide with the Presenter's route. The answer
   still marks `isLookupAnswer`, so the next plain line is about the passage.
   `lookupWords` is per language in `assistant.json`; the ordinary tool list
-  and its 8 350-token ratchet did not move.
+  and its 8 350-token ratchet did not move. **A line about something that
+  is NOT the passage is never a card button** (2026-11-09, the user, _save
+  to a bible note_ and _save the preaching lesson to a file_ each answered
+  _Press Save to my Bibles list under the passage above_: _bible note
+  referring to bible-note document_): `lookupWords.notCard` -- a note, a
+  file, a document, the lesson or sermon, the answer, a summary (en, km,
+  fr) -- makes `readLookupVerseAsk` answer null before any card word is
+  read, so the line goes on to the passage's conversation, whose assistant
+  writes a NEW Bible note (`owa_bible_note add`, `NOTE_CREATE_PROMPT`) that
+  the window opens and attaches. A bare _save_ had taken every save, of
+  anything. Seen live on the dev app the same day: _save to a bible note_
+  under ម៉ាថាយ ៣:១-១៧ made _មេរៀនពី ម៉ាថាយ ៣:១-១៧_ from the lesson above it.
 
 - **The same line goes the same way in every language** (2026-10-29,
   `EC-440`; the user's three pictures of Noah's card, _what is the size of
@@ -133,7 +144,8 @@ window as a whole — tabs, pickers, its language, the caution — is in
   how-do-I is what the PERSON does (`bibleReaderWords.howToAsks`: French
   `comment` before a lower-case infinitive, Khmer `ខ្ញុំ` with a how-word),
   never any "how". `src/chatbot/chatLanguageParity.test.ts` asks 63
-  questions alike in English, Khmer and French and holds every one to one
+  questions alike in English and in every language whose package carries
+  them (`tests/chatbot/chatLanguageParity.json`) and holds every one to one
   route, and every translated supported question out of the Bible readers;
   a word added to one language that moves a row fails there. **A
   person's or a place's verses come from a Bible in the answer's language**
@@ -144,7 +156,11 @@ window as a whole — tabs, pickers, its language, the caution — is in
   picks a whole one in the language (`pickBibleInLanguage`, shared with the
   verse finder) and passes it as `AskExtraType.lookup.quoteBible` with a
   line under the question, never in the record turn. A passage card keeps
-  the Bible it was opened in.
+  the Bible it was opened in, and an English question about it in an
+  English app, its Bible in another language, is told to answer in English
+  (2026-11-12, `EC-496`, through EC-510's line: the passage counts as
+  what the model is shown, `checkIsEnglishAfterOtherLanguage`'s
+  `subjectText`), the verses quoted as they read.
 
 - **A person's family line is read from the Bible, never from the record**
   (2026-10-19, `EC-369`). Asked under David's card _ឈ្មោះតាមលំដាប់ពីដាវីឌដល់

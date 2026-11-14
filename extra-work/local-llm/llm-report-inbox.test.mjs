@@ -709,7 +709,7 @@ describe('the inbox’s door', () => {
             skipped: [],
         });
         const row = server.store.find('OWA-261013-127b');
-        // Khmer and all, byte for byte -- the report, not the JSON round it.
+        // Symbols and all, byte for byte -- the report, not the JSON round it.
         expect(row.body).toBe(prompt);
         expect(row.title).toBe('Projector blank');
         expect(row.visitor).not.toBe('');

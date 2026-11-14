@@ -21,8 +21,8 @@ const LIST_LINE_PATTERN = /^\s*(?:\d+[a-z]?[.)]|[-*•])\s+/;
 // A line that merely STARTS with a bold word ("**Alt+↑** puts the question
 // back") is the sentence before it carrying on, and stays where it is.
 // A sentence may end in any script's full stop (`\p{Sentence_Terminal}`,
-// the Khmer one among them): a translated page (`manualI18n.mjs`) must fall
-// into the same passages as its English one.
+// every script's own among them): a translated page (`manualI18n.mjs`) must
+// fall into the same passages as its English one.
 const BOLD_LEAD_PATTERN = /^\s*\*\*[^*\n]{3,160}[:\p{Sentence_Terminal}]\*\*/u;
 // The same lead when the manual's ninety-character wrap carried it over a
 // line break: "**Auto, the last row of that list, chooses for you — among
@@ -216,7 +216,7 @@ export function rankPassages(passages, terms = [], anchors = []) {
 
 // A cut never lands inside a button's name: `**[en:tran:Line …` is a
 // template no resolver can read, and it reached the help window as those
-// very characters (2026-10-17, a Khmer excerpt). The cut goes before it,
+// very characters (2026-10-17, a translated excerpt). The cut goes before it,
 // with the bold that opened round it.
 function cutBeforeOpenTemplate(head) {
   const open = head.lastIndexOf('[en:tran:');
@@ -227,7 +227,7 @@ function cutBeforeOpenTemplate(head) {
 }
 
 // The last place inside the text a sentence ends: a full stop of ANY script
-// (`\p{Sentence_Terminal}` -- the Khmer one as well as `.`, `!`, `?`)
+// (`\p{Sentence_Terminal}` -- every script's own as well as `.`, `!`, `?`)
 // with a space or the end after it.
 function findLastSentenceEnd(head) {
   let last = -1;

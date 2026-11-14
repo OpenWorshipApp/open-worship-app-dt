@@ -26,11 +26,14 @@ import {
     toQuestionTranslationAsk,
     toRepliesTranslationAsk,
 } from '../../../../chatbot/chatTranslateHelpers';
+import { genNoteOpeningAnswer } from '../../../../chatbot/noteChatHelpers';
 
 // The same two questions, as a person in each language types them: a how-to
 // about the app and one about what is too small to read. A third column is a
-// language of the same family the line cannot be told from: Slovenian and
-// Croatian share every little word in it.
+// language the line cannot be told from: Slovenian and Croatian share every
+// little word in it. Named either -- or, in a script of their own, `other`:
+// answered in the language it was written in (2026-11-08, BN-33: a tie in a
+// script had gone to the first listed, Macedonian to Serbian).
 const SAMPLE_LIST: [string, string, string?][] = [
     ['es', '¿Cómo pongo un versículo de la Biblia en la pantalla?'],
     ['es', 'Las letras son muy pequeñas, ¿cómo las hago más grandes?'],
@@ -188,6 +191,12 @@ const NAMED_SAMPLE_LIST = SAMPLE_LIST.filter(([code]) => {
 const UNNAMED_SAMPLE_LIST = SAMPLE_LIST.filter(([code]) => {
     return !NAMED_CODE_SET.has(code);
 });
+function toAcceptedList(code: string, sibling: string | undefined) {
+    return sibling === undefined
+        ? [code]
+        : [code, sibling, OTHER_CHAT_LANG_CODE];
+}
+
 // A case about particular languages runs while every one of them is named
 // here -- installed, its package in the checkout -- so the suite still runs
 // with every non-English package deleted.
@@ -199,7 +208,9 @@ function checkHasAll(...codeList: string[]) {
 
 describe('the language a question is written in', () => {
     test.each(NAMED_SAMPLE_LIST)('%s: %s', (code, text, sibling) => {
-        expect([code, sibling]).toContain(detectTypedLanguage(text));
+        expect(toAcceptedList(code, sibling)).toContain(
+            detectTypedLanguage(text),
+        );
     });
 
     // Its words wait in its own folder until it has a package.
@@ -396,6 +407,85 @@ describe('an answer shown on a screen in another language', () => {
         },
     );
 
+    // EC-598: a French question in a Khmer app with French not installed is
+    // answered in French, its language `other`, and every chip had stayed.
+    const frenchAnswer =
+        "Le message est prêt, mais l'écran est éteint. Voulez-vous que je l'allume ?";
+    test.runIf(checkHasAll('fr', 'km'))(
+        'under an answer in a language not installed, a chip in English or another script goes',
+        () => {
+            expect(
+                toRepliesShownInLanguage(
+                    [
+                        'Yes, turn the screen on',
+                        'ទេ អរគុណ',
+                        'How do I take it off again?',
+                        "Oui, allume l'écran",
+                        'F5',
+                    ],
+                    OTHER_CHAT_LANG_CODE,
+                    asIs,
+                    undefined,
+                    'km',
+                    frenchAnswer,
+                ),
+            ).toEqual(["Oui, allume l'écran", 'F5']);
+        },
+    );
+
+    test.runIf(checkHasAll('km'))(
+        'under an English answer in a language not installed, English chips stay',
+        () => {
+            const chips = ['Turn the screen on', 'No thanks'];
+            expect(
+                toRepliesShownInLanguage(
+                    chips,
+                    OTHER_CHAT_LANG_CODE,
+                    asIs,
+                    undefined,
+                    'km',
+                    'The message is ready, but the screen is off. Shall I turn it on?',
+                ),
+            ).toEqual(chips);
+            // With no answer to read, nothing is known to go.
+            expect(
+                toRepliesShownInLanguage(
+                    [...chips, 'ទេ អរគុណ'],
+                    OTHER_CHAT_LANG_CODE,
+                    asIs,
+                    undefined,
+                    'km',
+                ),
+            ).toEqual([...chips, 'ទេ អរគុណ']);
+        },
+    );
+
+    test.runIf(checkHasAll('fr', 'km'))(
+        'under an answer in Latin letters, a chip in another script goes unless the passage is in it',
+        () => {
+            expect(
+                toRepliesShownInLanguage(
+                    ["Oui, allume l'écran", 'ទេ អរគុណ'],
+                    'fr',
+                    asIs,
+                    undefined,
+                    'km',
+                    frenchAnswer,
+                ),
+            ).toEqual(["Oui, allume l'écran"]);
+            expect(
+                toRepliesShownInLanguage(
+                    ["Oui, allume l'écran", 'ម៉ាថាយ ៥:៤៤'],
+                    'fr',
+                    asIs,
+                    { scriptText: 'ចូរ​ស្រឡាញ់​ខ្មាំង​សត្រូវ' },
+                    'km',
+                    frenchAnswer,
+                ),
+            ).toEqual(["Oui, allume l'écran", 'ម៉ាថាយ ៥:៤៤']);
+        },
+    );
+
     test('an English gloss stays on an English screen', () => {
         const answer = '点击 设置 (Settings) 按钮。';
         expect(
@@ -441,6 +531,37 @@ describe('an answer shown on a screen in another language', () => {
             ).toEqual([]);
         },
     );
+});
+
+// BN-25 (2026-11-08, the goal _work great for all languages_): a note
+// named in a language, its card in a window of that language, offered to
+// put its words into that same language. Every line above, as a note's
+// name: English in a window of its own language and in an English one, the
+// window's own in another's.
+describe('the translation a note card offers, in every language', () => {
+    const languageList = [...listAssistantLanguages(), ...listTypedLanguages()];
+    test.each(NAMED_SAMPLE_LIST)('%s: %s', (code, text, sibling) => {
+        const detected = detectTypedLanguage(text);
+        expect(toAcceptedList(code, sibling)).toContain(detected);
+        // `other`: shown in its own language's window, it is that window's.
+        const writtenIn =
+            detected === OTHER_CHAT_LANG_CODE ? code : (detected ?? code);
+        const offeredIn = (windowCode: string) => {
+            return genNoteOpeningAnswer(
+                text,
+                getAssistantLanguage(windowCode),
+                languageList,
+            ).translateLanguage?.code;
+        };
+        expect(offeredIn(writtenIn)).toBe('en');
+        expect(offeredIn('en')).toBe('en');
+        const otherWindow = listAssistantLanguages().find((language) => {
+            return language.code !== writtenIn && language.code !== 'en';
+        });
+        if (otherWindow !== undefined) {
+            expect(offeredIn(otherWindow.code)).toBe(otherWindow.code);
+        }
+    });
 });
 
 describe('worked in English behind the scenes', () => {
@@ -506,6 +627,50 @@ describe('worked in English behind the scenes', () => {
             );
             expect(askedList[0]).toContain('from Spanish into English');
             expect(await translation.planFor('gemma4:cloud')).toBeNull();
+        },
+    );
+
+    // EC-602, seen live on Free (Nemotron, a model asked in English): the
+    // translator turned the announcement too, and it went up on the screen
+    // as "the offering is now".
+    test.runIf(checkHasAll('es'))(
+        'the words for the screen reach the model as they were typed',
+        async () => {
+            const translation = genAskTranslation({
+                replyLang: 'es',
+                words: 'Muestra un anuncio en la pantalla: la ofrenda es ahora',
+                findTranslator: async () => {
+                    return {
+                        provider: 'custom',
+                        model: 'gemma4:cloud',
+                        label: 'gemma4:cloud',
+                    };
+                },
+                translate: async () => {
+                    return 'Show an announcement on the screen: the offering is now';
+                },
+            });
+            const plan = await translation.planFor('Nemotron Super VL');
+            expect(plan?.english).toBe(
+                'Show an announcement on the screen: la ofrenda es ahora',
+            );
+            const quoted = genAskTranslation({
+                replyLang: 'es',
+                words: 'Pon «Bienvenidos a todos» arriba y «Paz a vosotros» abajo',
+                findTranslator: async () => {
+                    return {
+                        provider: 'custom',
+                        model: 'gemma4:cloud',
+                        label: 'gemma4:cloud',
+                    };
+                },
+                translate: async () => {
+                    return 'Put "Welcome everyone" at the top and "Peace be with you" at the bottom';
+                },
+            });
+            expect((await quoted.planFor('Nemotron Super VL'))?.english).toBe(
+                'Put "Bienvenidos a todos" at the top and "Paz a vosotros" at the bottom',
+            );
         },
     );
 

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PR-27, PR-28, PR-29, CM-38, CM-39]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-24 — Share a bible list with another machine
 
@@ -21,7 +21,7 @@ A bible list (the verses you lined up for a service) travels the same way.
    inside.
 3. On the other machine, right-click an empty part of the **[en:tran:Bibles]** panel → **[en:tran:Import]** and pick the file — or **drag the `.owbible.tar.gz` (or `.owbible.enc`) onto
    the Bibles panel**; a protected one asks for its password first. **[en:tran:Import From URL]** works here too. 📸
-4. The list appears in that machine's bibles folder with its verses, their colours and
+4. The list appears in that machine's bibles folder — the one the list is showing (W-58) — with its verses, their colours and
    its background, ready to present. If a list of the same name is already there, the
    verses it does not have yet are added to that list instead of a second one appearing.
 
@@ -40,5 +40,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-27` · `PR-28` · `PR-29` · `CM-38` · `CM-39`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

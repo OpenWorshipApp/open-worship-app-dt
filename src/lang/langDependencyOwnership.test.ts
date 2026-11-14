@@ -1,8 +1,8 @@
 /**
  * A language's song plugin (`open-lyric-plugin-<lang>-<region>`: a keyboard,
  * a spellcheck, fonts for songs in it) is the LANGUAGE's dependency, never
- * the app's (2026-11-05, the user: _for khmer plugin it have to ship with
- * khmer language bundle_). The language declares it in its own
+ * the app's (2026-11-05, the user: a language's song plugin has to ship
+ * with that language's bundle). The language declares it in its own
  * `package.json`, `extra-work/install-lang-deps.mjs` installs it into the
  * language's own `node_modules`, and `extra-work/build-lang-plugins.mjs`
  * bundles nothing from outside the language's folder. Found by folder: this

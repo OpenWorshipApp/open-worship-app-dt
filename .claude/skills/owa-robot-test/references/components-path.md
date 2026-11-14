@@ -20,7 +20,7 @@ Pair it with:
 > Every React component in this app is named `…Comp` (project convention). Source files
 > are linked so you can confirm current behavior before reporting a "bug".
 >
-> **Targeting rules (from the knowledge base):** locale is dynamic (Khmer/English) — target
+> **Targeting rules (from the knowledge base):** locale is dynamic (English or any installed language) — target
 > by **role / CSS class / icon (`bi-*`) / position**, not literal text. Click the actual
 > `button`, not its wrapping `<li>`/`StaticText`. Slide & lyric previews live inside
 > **shadow roots** (not reachable from document-level `querySelectorAll`).
@@ -290,7 +290,7 @@ matches `/Setting/`. Root `SettingComp` (tabs `General` / `Path Settings` / `Bib
 | `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ the **Show Tips of the Day automatically** switch, a **Show again** per thing a _Hide for 30 days_ put away (listed only while it is hidden), and `Clear All Settings` (destructive — it asks first). `Reset Widgets Size` moved to the native View menu on 2026-08-09. |
 | _(native View menu)_ `initWidgetAppMenu` | [resize-actor/widgetAppMenuHelpers.ts](../../../../src/resize-actor/widgetAppMenuHelpers.ts) · [resize-actor/widgetRegistry.ts](../../../../src/resize-actor/widgetRegistry.ts) | 🖱️ **View → Widgets** tick-box per collapsible pane (toggles it live) and **View → Reset Widgets Size** (confirm → restore defaults + reopen collapsed panes, live). Registered from `run()` for the main window only. Unreachable from CDP — drive it with `owa_menu` (`list` / `click` by path); the dev-only `globalThis.getViewWidgetMenuItems()` / `tryToggleWidget(id)` / `tryResetWidgetsSize()` need the refused `evaluate_script`. |
 | `SettingComp → SettingBibleComp` (Bible tab) | [setting/bible-setting/SettingBibleComp.tsx](../../../../src/setting/bible-setting/SettingBibleComp.tsx) | 🖱️ download/enable/disable bible versions; ⌨️✎ search. A console `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` is **intended** when the online list is unavailable — do not report (KB §7). |
-| `SettingComp → SettingOthersComp` (Others tab) | [setting/SettingOthersComp.tsx](../../../../src/setting/SettingOthersComp.tsx) | Two cards in order: `SettingOthersSongSelectComp` ([plugins/song-select/](../../../../src/plugins/song-select/SettingOthersSongSelectComp.tsx) — CCLI SongSelect sign-in; dev builds add a `(dev) Use Mock Data` toggle), and `SettingOthersExtraBinComp` ([setting/SettingOthersExtraBinComp.tsx](../../../../src/setting/SettingOthersExtraBinComp.tsx) — **Extra Binaries**, the target of mandatory `MD-05`/`MD-06`). `SettingOthersAIComp` (AI API keys; an OpenAI key reveals the **Auto Play Audio AI when available** switch) is the AI Providers tab's (`SettingAIComp`). `SettingOthersSecureStorageWarningComp` renders on both credential cards when OS secure storage is unavailable. |
+| `SettingComp → SettingOthersComp` (Others tab) | [setting/SettingOthersComp.tsx](../../../../src/setting/SettingOthersComp.tsx) | Two cards in order: `SettingOthersSongSelectComp` ([plugins/song-select/](../../../../src/plugins/song-select/SettingOthersSongSelectComp.tsx) — CCLI SongSelect sign-in; dev builds add a `(dev) Use Mock Data` toggle), and `SettingOthersExtraBinComp` ([setting/SettingOthersExtraBinComp.tsx](../../../../src/setting/SettingOthersExtraBinComp.tsx) — **Extra Binaries**, the target of mandatory `MD-05`). `SettingOthersAIComp` (AI API keys; an OpenAI key reveals the **Auto Play Audio AI when available** switch) is the AI Providers tab's (`SettingAIComp`). `SettingOthersSecureStorageWarningComp` renders on both credential cards when OS secure storage is unavailable. |
 
 ---
 
@@ -353,5 +353,5 @@ has no `#root` (see the exception note under the Pages table).
 - **Presenter:** header tabs 🖱️ · `Ctrl+B`/`Ctrl+Q` modal · doc/lyric row 🖱️ select, slide 🖱️ present · expand Background 🖱️ then tab-switch · color swatch (+contrast confirm) · foreground drag⇕drop onto mini-screen · **screen block (mandatory): present → `F5` show → drive `screen.html` target → `F6`–`F10` clears → hide** · lock/display/transition/stage controls on the previewer card · zoom/size 🎚️.
 - **Reader:** incremental lookup ⌨️✎ + `Tab`/`Escape` · full ref resolves to verse.
 - **Slide Editor:** select doc first · box 🖱️/⇕/resize · `Ctrl+Enter` focus · tools drag⇕drop · background tabs.
-- **Settings (popup):** tab 🖱️ · Language `English`/`Khmer`/`French` · `Apply Settings` · destructive resets (confirm).
+- **Settings (popup):** tab 🖱️ · **Languages** tab: one Language button per installed language (the press reloads every window) · `Apply Settings` · destructive resets (confirm).
 - **Screen (while showing = CDP target):** screenshot layers · `Ctrl/Alt+Arrows` change bible · ❌ `#close` hides; hidden → logs via `all:app:log`.

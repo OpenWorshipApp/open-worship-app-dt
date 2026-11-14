@@ -1,6 +1,4 @@
 import { appManagedDataDirNames } from '../constants';
-import { tran } from '../../lang/langHelpers';
-import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import appProvider from '../../server/appProvider';
 import {
     ensureDirectory,
@@ -20,10 +18,11 @@ export const EXTRA_BIN_ARCHIVE_REGEX = /^bin-.+\.tar\.gz$/;
  * "What I just found on disk disagrees with what another window is showing."
  *
  * The Settings window is its own renderer, so the Extra Binaries panel cannot
- * see what the gate below discovered. It reads once and re-reads only after one
- * of its own buttons; being SENT here by the download prompt is not one of
- * those, so without this it can greet the user with a stale `Installed 0.0.2`
- * -- and, because that answer hides the primary button, with no way to install.
+ * see what another window did: the download gate installing or updating the
+ * pack (`extraBinGateHelpers.ts`). It reads once and re-reads only after one
+ * of its own buttons, so without this it can greet the user with a stale
+ * `Installed 0.0.2` -- and, because that answer hides the primary button, with
+ * no way to install.
  */
 const EXTRA_BIN_CHANGED_BROADCAST_CHANNEL = 'all:app:extra-bin-changed';
 const EXTRA_BIN_CHANGED_RENDERER_CHANNEL = 'main:app:extra-bin-changed';
@@ -59,6 +58,10 @@ export type ExtraBinPathsType = {
     // (`electron/extraBinPaths.ts` resolves the same path); here for the
     // existence check only.
     cloudflaredBinPath: string;
+    // The app's MCP server as one program, for an AI agent on a computer
+    // with no Node.js (pack 0.0.6 and later). The app never runs it: an AI
+    // client does, from the command Settings shows.
+    mcpBinPath: string;
 };
 
 export type ExtraBinNameType = 'yt-dlp' | 'ffmpeg' | 'qjs' | 'cloudflared';
@@ -184,8 +187,27 @@ export function getExtraBinPaths(): ExtraBinPathsType {
             'cloudflared',
             `cloudflared${dotExe}`,
         ),
+        mcpBinPath: pathJoin(dirPath, 'mcp', `open-worship-app-mcp${dotExe}`),
     };
 }
+
+/**
+ * The MCP executable when the installed pack carries one, else null. Not one
+ * of `EXTRA_BIN_ALL_NAMES` on purpose: a pack from before it is still whole,
+ * "Installed" stays true for it, and its update is offered by its version.
+ */
+export async function findInstalledMcpBinPath() {
+    const { mcpBinPath } = getExtraBinPaths();
+    return (await fsCheckFileExist(mcpBinPath)) ? mcpBinPath : null;
+}
+
+// The client texts moved to a leaf of their own with the AI client picker;
+// kept reachable from here for the callers that had them.
+export {
+    genMcpClientCommand,
+    genMcpClientJson,
+    MCP_CLIENT_SERVER_NAME,
+} from './mcpClientHelpers';
 
 /**
  * `missingNames` is what makes a failure diagnosable — "not installed" and "the
@@ -233,40 +255,4 @@ export async function getInstalledExtraBinVersion() {
     } catch (_error) {
         return null;
     }
-}
-
-/**
- * The gate in front of every yt-dlp call. Returns null when the pack is not
- * there — after offering to take the user to the panel that installs it.
- */
-export async function requireExtraBinPaths() {
-    const { isInstalled, missingNames } = await checkIsExtraBinInstalled(
-        EXTRA_BIN_MEDIA_NAMES,
-    );
-    if (isInstalled) {
-        return getExtraBinPaths();
-    }
-    const isOk = await showAppConfirm(
-        tran('Media Tools Required'),
-        `${tran(
-            'Downloading video or audio needs the extra binaries, ' +
-                'which are not installed yet.',
-        )} (${missingNames.join(', ')}). ` +
-            `${tran('Would you like to open Settings to install them?')}`,
-        {
-            cancelButtonLabel: 'No',
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    if (isOk) {
-        // Before the window comes forward, so an already-open panel is
-        // re-reading while it is being raised rather than after.
-        notifyExtraBinChanged();
-        // Dynamic so this module never drags the settings page's dependencies
-        // into the media download path.
-        const { openOthersSetting } =
-            await import('../../setting/settingHelpers');
-        openOthersSetting();
-    }
-    return null;
 }

@@ -26,7 +26,8 @@ and `.card-body` so an empty session still shows it. W-58, PM-170/171.
   only) and `folderSessionHelpers.ts` (`getActiveDirSourceSettingName`, a
   setting read) are what `Bible.ts`, `Note.ts`, `lyricEditorBoot.ts` import;
   `folderSessionPathHelpers.ts` (DirSource + path compare) only the editor
-  OPENERS. `MediaSessionsComp` re-exports the old names.
+  OPENERS and, since 2026-11-08, the agent note helpers
+  (`agentNoteEditHelpers.ts`, `agentNoteWindowHelpers.ts`). `MediaSessionsComp` re-exports the old names.
 - **Anything made from OUTSIDE the list lands in the active session** (user's
   choice): `Bible.getDirSourceSettingName()` now returns the active key
   (`getBaseDirSourceSettingName()` is the page's base), Create Lyric / Generate

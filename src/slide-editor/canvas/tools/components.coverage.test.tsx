@@ -818,10 +818,14 @@ describe('ToolsTextFontControlComp', () => {
         expect(h.setProps).toHaveBeenLastCalledWith({ fontFamily: 'Arial' });
         await click(query('.font-weight'));
         expect(h.setProps).toHaveBeenLastCalledWith({ fontWeight: 'bold' });
-        h.props = { fontSize: 40, fontFamily: 'Battambang', fontWeight: '700' };
+        h.props = {
+            fontSize: 40,
+            fontFamily: 'Made Up Sans',
+            fontWeight: '700',
+        };
         await render(<ToolsTextFontControlComp />);
         expect(query('.font-family').getAttribute('data-family')).toBe(
-            'Battambang',
+            'Made Up Sans',
         );
         expect(query('.font-weight').getAttribute('data-weight')).toBe('700');
     });
@@ -888,7 +892,7 @@ describe('SlideEditorToolsTextComp', () => {
             text: 'Hi',
             color: '#FF0000',
             fontSize: 40,
-            fontFamily: 'Battambang',
+            fontFamily: 'Made Up Sans',
             fontWeight: 'bold',
             textHorizontalAlignment: 'left',
             textVerticalAlignment: 'center',
@@ -908,9 +912,11 @@ describe('SlideEditorToolsTextComp', () => {
         await click(query('.color'));
         expect(h.setProps).toHaveBeenLastCalledWith({ color: '#00FF00' });
 
+        // The alignment groups by their own names: a titled section is a
+        // named group too.
         const alignLabels = Array.from(
             container.querySelectorAll<HTMLButtonElement>(
-                '[role="group"] button',
+                '[role="group"][aria-label$="alignment"] button',
             ),
         ).map((button) => [button.getAttribute('aria-label'), button.disabled]);
         expect(alignLabels).toEqual([
@@ -935,7 +941,7 @@ describe('SlideEditorToolsTextComp', () => {
         const textArea = query<HTMLTextAreaElement>('textarea');
         expect(textArea.value).toBe('Hi');
         expect(textArea.placeholder).toBe('Type the slide text here');
-        expect(textArea.style.fontFamily).toBe('Battambang');
+        expect(textArea.style.fontFamily).toBe('Made Up Sans');
         expect(textArea.style.fontWeight).toBe('bold');
         await changeValue(textArea, 'Hello');
         expect(h.setProps).toHaveBeenLastCalledWith({ text: 'Hello' });
@@ -949,7 +955,9 @@ describe('SlideEditorToolsTextComp', () => {
                 isTextContentEnabled={false}
             />,
         );
-        expect(container.querySelector('[role="group"]')).toBe(null);
+        expect(
+            container.querySelector('[role="group"][aria-label$="alignment"]'),
+        ).toBe(null);
         expect(container.querySelector('textarea')).toBe(null);
         expect(container.querySelector('.font-size')).not.toBe(null);
         await render(<SlideEditorToolsTextComp isAlignmentEnabled={false} />);

@@ -195,7 +195,7 @@ function createScreenManagerStub() {
                 width: '100%',
                 height: '100%',
             },
-            foregroundData: { marqueeTopData: null },
+            foregroundData: { marqueeTopDataList: [] },
         },
         screenDrawManager: {
             render: vi.fn(),

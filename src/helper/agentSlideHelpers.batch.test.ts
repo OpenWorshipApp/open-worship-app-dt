@@ -217,8 +217,8 @@ describe('applying update-slides', () => {
     });
 
     it('refuses a "new" box carrying a box’s words, naming its id', () => {
-        // gemma4:cloud, 2026-11-07: the English and the Khmer sent with no
-        // id, which would have put the Khmer on the slide twice.
+        // gemma4:cloud, 2026-11-07: the English and the other language's words
+        // sent with no id, which would have put those words on the slide twice.
         const json = genDocument(1);
         json.items[0].canvasItems[0].text = 'Worship in truth';
         const refused = applyAgentSlideBatch(

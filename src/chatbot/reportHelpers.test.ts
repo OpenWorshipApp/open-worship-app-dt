@@ -1111,9 +1111,9 @@ describe('what a report says of the machine it came from', () => {
         // only, heard since the window was made.
         electronSendAsyncMock.mockClear();
         electronSendAsyncMock.mockResolvedValueOnce([
-            "error: ENOENT: no such file, open 'C:\\Users\\Sokha Chan\\AppData\\Roaming\\open-worship-app\\x.json'",
-            'warning: failed to load file:///C:/Users/sokha/Desktop/song.lyric',
-            'error: at /home/sokha/.config/app/main.js:10:2',
+            "error: ENOENT: no such file, open 'C:\\Users\\Robin Smith\\AppData\\Roaming\\open-worship-app\\x.json'",
+            'warning: failed to load file:///C:/Users/robin/Desktop/song.lyric',
+            'error: at /home/robin/.config/app/main.js:10:2',
             // Not a line: dropped, never drawn.
             42,
         ]);

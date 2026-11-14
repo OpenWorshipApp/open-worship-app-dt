@@ -14,14 +14,24 @@ polyfill**. Anything a test needs, that test builds.
 
 | | `vitest.config.ts` | `vitest.electron.config.ts` |
 | --- | --- | --- |
-| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs`, `extra-work/local-llm/**/*.test.mjs` | `electron/**/*.test.ts` |
+| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs`, `extra-work/local-llm/**/*.test.mjs`, `src/lang/data/online/*/tests/**/*.test.mjs` | `electron/**/*.test.ts` |
 | Environment | `node`, jsdom **per file** via pragma | `node` |
+| Pool | `threads` (since 2026-11-11), `isolate` on | `forks` (the default; threads gained nothing) |
 | Setup | `src/test-setup/localStoragePolyfill.ts` | none |
 | Inlined deps | `open-lyric`, `monaco-editor` | none |
 | Mocks | `clearMocks`, `restoreMocks`, `mockReset` all **true** | same |
 | Command | `npm test` | `npm run test:electron` |
 
-`npm run test:all` runs both, and `npm run lint` runs `test:all`.
+`npm run test:all` runs both, and `npm run lint` runs `test:all`. Since
+2026-11-11 it is ONE run of both as vitest projects
+(`vitest.all.config.ts`, the two configs named `renderer` and `electron`),
+sharing one pool of workers: ~51 s against ~64.5 s one after the other, and
+the renderer suite's `threads` pool took it from ~56 s to ~46 s. Measured
+and set aside: `isolate: false` (49 files fail, and slower) and the VM-threads pool
+(21 s, but 24 files fail -- tests that redefine `window` / `location`, no
+`WritableStream` in the VM context, a note-item check that fails across
+realms). A test that needs a real process (`process.chdir`, a forked
+child's own `process`) belongs in the electron suite, which still forks.
 
 `mockReset: true` matters more than it looks: **every mock's implementation is
 reset between tests**, so a `vi.fn(() => x)` factory default set at module scope
@@ -157,7 +167,7 @@ test('presses the button', async () => {
 });
 ```
 
-Some 210 test files use this shape. Everything goes through `act`, including the
+Some 600 test files use this shape. Everything goes through `act`, including the
 initial render and the unmount.
 
 ### The batched harness — the pattern for breadth
@@ -272,7 +282,8 @@ the default hook timeout during measurement while its focused suite passed.
 `tran.mjs` takes ENGLISH alone from `electron-build/knowledge/tran.json`
 (since 2026-11-04) and every other language from `langPacks.mjs`: the
 installed plugins a lister names, or -- in a test, with none configured -- the
-source packs in `src/lang/data/online/`. A test that wants "installed"
+source packs in `src/lang/data/online/` that carry an `assistant.json` (two
+of the 87 on 2026-11-10). A test that wants "installed"
 languages points `configureLangPacks(() => [dirs])` at temp plugin folders
 and resets it with `configureLangPacks(null)`. (Before, an old local bundle's
 dictionaries had won over the source and failed four real-data tests.)
@@ -282,10 +293,12 @@ clear them after unmount before restoring real timers. Instrumentation slowed
 the foreground harness enough for an earlier test's real marquee timer to
 arrive in the independent-timers test; focused runs had not exposed it.
 
-The foreground harness extracts both real dictionaries, returns English labels
-for queries, and throws on missing dynamic keys. Its Node fixture reads use
-repo-relative paths: Vite's asset transform rewrote a dynamic
-`new URL(..., import.meta.url)` into a nonexistent drive-root path on Windows.
+The foreground harness reads every language package's real dictionary
+(`readSourceDictionary` over `listLangPackageCodes`), returns English labels
+for queries, and throws on missing dynamic keys. Its Node fixture reads
+resolve from `import.meta.dirname` (`src/test-setup/langPackageDirs.ts`),
+never a dynamic `new URL(..., import.meta.url)`: Vite's asset transform
+rewrote that into a nonexistent drive-root path on Windows.
 
 The measurement runner checks child-process failure before reading any summary.
 Finding a summary alone can accept a stale report. The regression tests in

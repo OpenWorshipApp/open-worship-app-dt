@@ -3,6 +3,7 @@ import { app, protocol } from 'electron';
 import { initAiChatGuestGuard } from './aiChatGuestHelpers';
 import { checkIsAiEnabled, enableRemoteDebugging, initAi } from './aiHelpers';
 import { initAppWindowListWatch } from './appWindowListHelpers';
+import { initWindowOnTopWatch } from './windowOnTopHelpers';
 import { initConsoleLog } from './consoleLogHelpers';
 import { initLlmReportQueue } from './llmReportHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
@@ -120,6 +121,9 @@ async function main() {
         // The help window's window picker follows windows as they come and
         // go -- watched from the first one made.
         initAppWindowListWatch();
+        // What the help works on stays over the main window, a window that
+        // opens after the ask too.
+        initWindowOnTopWatch();
     }
     initCustomSchemeHandler();
     initDisplayMediaHandler();

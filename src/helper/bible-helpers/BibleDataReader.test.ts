@@ -320,7 +320,7 @@ describe('BibleDataReader', () => {
         await reader.initKJVBible();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             'Failed to convert KJV Bible data to XML text.',
-            'error',
+            'Error',
         );
         expect(mocks.fsWriteFileMock).not.toHaveBeenCalled();
     });

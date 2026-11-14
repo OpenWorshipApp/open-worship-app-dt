@@ -148,9 +148,9 @@ function formatMovedAt(movedAt: string | null) {
         return '';
     }
     // Year first and a 24-hour clock, the one order no reader takes the wrong
-    // way round: Electron's Chromium has no Khmer date format and wrote a
-    // Khmer window's date as `10/17/2026, 9:56 PM`. In the app's own digits,
-    // the way it writes every number (`toStringNum`).
+    // way round: Electron's Chromium has no date format for some app
+    // languages and wrote such a window's date as `10/17/2026, 9:56 PM`. In
+    // the app's own digits, the way it writes every number (`toStringNum`).
     const toTwoDigits = (n: number) => {
         return `${n}`.padStart(2, '0');
     };

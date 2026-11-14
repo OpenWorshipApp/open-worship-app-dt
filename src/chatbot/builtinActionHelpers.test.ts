@@ -56,7 +56,7 @@ import {
     resetSpendGuardForTests,
 } from './spendGuardHelpers';
 import { setCurrentWindowAim } from './windowAimHelpers';
-import { listAssistantLanguages } from './chatLangHelpers';
+import { listAssistantLanguages, listTypedLanguages } from './chatLangHelpers';
 
 beforeEach(() => {
     callTool.mockReset();
@@ -652,6 +652,15 @@ describe('a slide or the screen asked for in words, with no model', () => {
         // Nothing selected, and the Reader page, are said.
         callTool.mockResolvedValue(genAppState(null));
         expect((await answerSlideShowAsk('verse 1'))?.text).toContain(
+            'Nothing is selected',
+        );
+        // ...but only of words that name a slide: "put the time on the
+        // screen" and a passage, with no song selected, are not slides --
+        // they go on to whoever answers them (EC-521).
+        for (const words of ['the time', 'John 3:16', 'a countdown']) {
+            expect(await answerSlideShowAsk(words), words).toBeNull();
+        }
+        expect((await answerSlideShowAsk('slide 3'))?.text).toContain(
             'Nothing is selected',
         );
         callTool.mockResolvedValue(genAppState(null, 'reader.html'));
@@ -1839,7 +1848,17 @@ describe('the commands when the app answers otherwise', () => {
             isSeparateWindow: true,
         });
         try {
-            for (const language of listAssistantLanguages()) {
+            // Every installed language is named alike, with an
+            // `assistant.json` or not.
+            const seenCodes = new Set<string>();
+            for (const language of [
+                ...listAssistantLanguages(),
+                ...listTypedLanguages(),
+            ]) {
+                if (seenCodes.has(language.code)) {
+                    continue;
+                }
+                seenCodes.add(language.code);
                 callTool.mockResolvedValue(
                     JSON.stringify({
                         mainWindow: {
@@ -1863,13 +1882,14 @@ describe('the commands when the app answers otherwise', () => {
 
             callTool.mockResolvedValue(
                 JSON.stringify({
-                    mainWindow: { page: 'setting.html', language: 'de' },
+                    mainWindow: { page: 'setting.html', language: 'xx' },
                 }),
             );
+            // A code no installed language has is said as the code.
             const unknown = await runBuiltinCommand('/here', 'presenter');
             expect(unknown.text).toBe(
                 '**This tab works with the Settings, a window of its own** ' +
-                    'in de.',
+                    'in xx.',
             );
 
             callTool.mockResolvedValue(
@@ -1879,6 +1899,34 @@ describe('the commands when the app answers otherwise', () => {
             expect(silent.text).toBe(
                 '**This tab works with the Settings, a window of its own**.',
             );
+        } finally {
+            setCurrentWindowAim(null);
+        }
+    });
+
+    // 2026-11-10: a tab on a study file works in the file's own Markdown
+    // Preview, which a state read is never aimed at -- the read is the main
+    // window's, and said as such.
+    test("/here in a tab working in a file's own window names the main window", async () => {
+        setCurrentWindowAim({
+            windowId: 'MD-1',
+            focus: null,
+            isSeparateWindow: false,
+            filePath: '/resources/JHN.3.md',
+        });
+        try {
+            callTool.mockResolvedValue(
+                JSON.stringify({
+                    mainWindow: { page: 'reader.html' },
+                    windows: [{ url: 'https://localhost:3000/reader.html' }],
+                }),
+            );
+            const answer = await runBuiltinCommand('/here', 'reader');
+            expect(callTool.mock.calls.at(-1)?.[1]).toEqual({});
+            expect(answer.text).toContain(
+                '**The main window is on the Bible Reader**',
+            );
+            expect(answer.text).not.toContain('a window of its own');
         } finally {
             setCurrentWindowAim(null);
         }

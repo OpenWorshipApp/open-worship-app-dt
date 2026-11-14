@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
+import { tran } from '../lang/langHelpers';
 import { getHTMLChild } from '../helper/helpers';
 import type ScreenManagerBase from './managers/ScreenManagerBase';
 import type {
@@ -220,6 +221,7 @@ export function genHtmlForegroundQuickText(
         htmlText,
         timeSecondDelay,
         timeSecondToLive,
+        isInfinite,
         extraStyle = {},
     }: ForegroundQuickTextDataType,
     animData: StyleAnimType,
@@ -249,6 +251,11 @@ export function genHtmlForegroundQuickText(
                 setTimeout(resolve, timeSecondDelay * 1000);
             });
             await animData.animIn(element, parentContainer);
+            if (isInfinite) {
+                // No timer at all: it stays until a Hide, a Clear or a newer
+                // entry of its session takes it down.
+                return;
+            }
             await new Promise<void>((resolve) => {
                 setTimeout(resolve, timeSecondToLive * 1000);
             });
@@ -350,6 +357,21 @@ export function genHtmlForegroundMessage(
     };
 }
 
+/**
+ * A countdown's, a stopwatch's and a clock's box is never narrower than its
+ * digits. They are set on one line (`nowrap`) at a size in px, and the
+ * box's width is a share of the SCREEN: on a smaller screen, or at a larger
+ * size, the digits ran out past the box's right edge (2026-11-09, the
+ * user's picture of a clock in the corner). The width asked for still holds
+ * whenever it is the wider; the clock's caption takes no part in this.
+ */
+const TIMER_BOX_STYLE = { minWidth: 'max-content' } as const;
+
+/** `41d` in the app's language, from one full day out (2026-11-13). */
+function toCountdownDayText(days: number) {
+    return tran('{count}d').replace('{count}', days.toString());
+}
+
 export function genHtmlForegroundCountdown(
     data: ForegroundCountdownDataType,
     animData: StyleAnimType,
@@ -361,7 +383,8 @@ export function genHtmlForegroundCountdown(
     // long as it does (memory `infinite-paint-animation-at-rest`). Resting red,
     // it counts the time OVER behind a `+` (`CountdownController`). The sign is
     // a SPAN so the digit rule's `min-width` leaves no gap while it is empty.
-    // `nowrap` keeps the digits on one line in any font the widget is given.
+    // `nowrap` keeps the digits on one line in any font the widget is given,
+    // and the box is never narrower than they are (`TIMER_BOX_STYLE`).
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -370,6 +393,7 @@ export function genHtmlForegroundCountdown(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
+                ...TIMER_BOX_STYLE,
                 ...extraStyle,
             }}
         >
@@ -387,6 +411,9 @@ export function genHtmlForegroundCountdown(
                 .${uniqueClassname} #second {
                     text-align: left;
                 }
+                .${uniqueClassname} #day:not(:empty) {
+                    margin-right: 0.5ch;
+                }
                 .${uniqueClassname}[data-time-diff="0"] {
                     animation: anim-${uniqueClassname}-alerting 2s ease-in 5
                         forwards;
@@ -400,6 +427,7 @@ export function genHtmlForegroundCountdown(
             <div className={uniqueClassname}>
                 <span style={{ marginRight: '25px' }}>⏳</span>
                 <span id="sign" />
+                <span id="day" />
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -408,7 +436,11 @@ export function genHtmlForegroundCountdown(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const countDownHandler = CountdownController.init(element, data);
+    const countDownHandler = CountdownController.init(
+        element,
+        data,
+        toCountdownDayText,
+    );
     let currentData = data;
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
@@ -445,6 +477,7 @@ export function genHtmlForegroundStopwatch(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
+                ...TIMER_BOX_STYLE,
                 ...extraStyle,
             }}
         >
@@ -512,6 +545,7 @@ export function genHtmlForegroundTime(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
+                ...TIMER_BOX_STYLE,
                 ...timeData.extraStyle,
             }}
         >
@@ -540,6 +574,12 @@ export function genHtmlForegroundTime(
                     // picked from the list read `Phnom_Penh (Asia/Phnom_Penh)`
                     // -- and `overflow: hidden` cut it off mid-word. It wraps.
                     overflowWrap: 'anywhere',
+                    // ...within the width the digits give the box: it takes
+                    // no part in that width (`TIMER_BOX_STYLE`), or a long
+                    // caption would stretch the clock across the screen.
+                    width: 0,
+                    minWidth: '100%',
+                    boxSizing: 'border-box',
                 }}
             >
                 <small>{title}</small>

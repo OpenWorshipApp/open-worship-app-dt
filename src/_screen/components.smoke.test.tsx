@@ -102,7 +102,7 @@ const screenManagerMock: any = {
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
-        foregroundData: { marqueeTopData: null },
+        foregroundData: { marqueeTopDataList: [] },
     },
     screenDrawManager: {
         render: vi.fn(),
@@ -477,6 +477,43 @@ describe('screen component smoke tests', () => {
             root.unmount();
         });
         container.remove();
+    });
+
+    // Each session's top marquee is its own band: the passage starts below
+    // the TALLEST of them, whichever session put it up and in whatever order.
+    test("the passage clears the tallest of the sessions' top marquees", async () => {
+        const { default: ScreenBibleComp } = await import('./ScreenBibleComp');
+        const { getMarqueeBandHeight } = await import('./marqueeBandHelpers');
+        const { foregroundData } = screenManagerMock.screenForegroundManager;
+        const small = { id: 'a', text: 'Welcome', extraStyle: {} };
+        const tall = {
+            id: 'b',
+            text: 'Parking full',
+            extraStyle: { fontSize: '120px' },
+        };
+        const tallInset = getMarqueeBandHeight(tall as any, 720);
+        expect(tallInset).toBeGreaterThan(
+            getMarqueeBandHeight(small as any, 720),
+        );
+        const readViewStyle = () => {
+            const html = renderToStaticMarkup(<ScreenBibleComp />);
+            const style = /<div id="bible-screen-view" style="([^"]*)"/.exec(
+                html,
+            );
+            expect(style, html).not.toBeNull();
+            return style![1];
+        };
+        try {
+            foregroundData.marqueeTopDataList = [small, tall];
+            const style = readViewStyle();
+            expect(style).toContain(`top:${tallInset}px`);
+            expect(style).toContain(`height:${720 - tallInset}px`);
+            // No top marquee up: the passage keeps the whole screen.
+            foregroundData.marqueeTopDataList = [];
+            expect(readViewStyle()).not.toContain('top:');
+        } finally {
+            foregroundData.marqueeTopDataList = [];
+        }
     });
 
     test('renders background video sizing and playback attributes', async () => {

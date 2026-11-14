@@ -136,7 +136,7 @@ const other = {
     nativeName: '✦✧',
     flagSVG: '<svg id="flag-xx"></svg>',
 };
-const french = { locale: 'fr-FR', name: 'French', flagSVG: '' };
+const unnamed = { locale: 'yy-YY', name: 'Yyish', flagSVG: '' };
 
 let container: HTMLDivElement;
 let root: Root;
@@ -166,7 +166,7 @@ beforeEach(() => {
     state.theme = 'dark';
     state.isSecureStorageAvailable = true;
     state.fontProps = null;
-    mocks.getAllLangs.mockResolvedValue([english, other, french]);
+    mocks.getAllLangs.mockResolvedValue([english, other, unnamed]);
     mocks.getLangData.mockResolvedValue({});
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -196,7 +196,7 @@ describe('the language card', () => {
             ['English', 'English', 'true'],
             ['✦✧', 'Example', 'false'],
             // No name of its own: its English name stands in.
-            ['French', 'French', 'false'],
+            ['Yyish', 'Yyish', 'false'],
         ]);
         expect(buttons[0].className).toContain('btn-info');
         expect(buttons[1].className).toContain('btn-outline-info');

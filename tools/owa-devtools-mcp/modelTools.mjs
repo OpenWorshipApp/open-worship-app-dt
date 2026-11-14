@@ -111,6 +111,14 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     nameList: ['owa_drop_files'],
   },
   {
+    // Registered on the stdio door only too: the in-app host is pinned to
+    // the app it lives in, so the chatbot has no other app to choose.
+    reason:
+      'You work in the app this window belongs to; there is no other ' +
+      'app to choose.',
+    nameList: ['owa_choose_app'],
+  },
+  {
     // The menu bar is the developer's too: every item a volunteer needs
     // has a button in the window (Settings, Help, the panels), and the
     // rest -- Reload, zoom, Export Data -- changes the window under them.
@@ -307,6 +315,20 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // The window names the attached file in `file` itself
   // (`src/chatbot/flowChatHelpers.ts`).
   owa_presenting_flow_edit: 'flow',
+  // A conversation about a FOREGROUND component (2026-11-09, a session of
+  // an open panel attached to the chat, a panel's own 🤖, or a question
+  // naming a component): its words and look changed, live on the wall,
+  // through its own panel. The ordinary question keeps owa_foreground.
+  owa_foreground_edit: 'foreground',
+  // A conversation about the SCREENS' own controls (2026-11-13, the user:
+  // _chatbot is very smart to help user control screen_): the Bible text's
+  // look on every screen, a passage's versions, Line Sync, transitions,
+  // displays, groups, the lock, the tick, the stage, show/hide and clear --
+  // what a Mini Screen card and the Bible text panel hold. Asked from words
+  // about them or a line under such an answer
+  // (`src/chatbot/screenChatHelpers.ts`); the ordinary list stayed at its
+  // ratchet.
+  owa_screen_edit: 'screen',
 };
 
 /**
@@ -327,7 +349,14 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
   // person, place or passage. And the notes (2026-11-08, the user's goal:
   // _chatbot can put a lesson to a new bible note for user_): what a record
   // or a word study taught is put into a new note, opened and attached.
-  lookup: ['owa_read_website', 'owa_find_verse', 'owa_bible_note'],
+  // And a study file (2026-11-09, EC-464): a passage's chat is where "make
+  // a study file of this" is asked next.
+  lookup: [
+    'owa_read_website',
+    'owa_find_verse',
+    'owa_bible_note',
+    'owa_resource_file',
+  ],
   // A study file names its sources and links; one past the files is
   // read there, rationed and announced like any web read. A passage the
   // file cites is read whole from the installed Bible rather than completed
@@ -361,6 +390,41 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
     'owa_help_page',
     'owa_find_verse',
     'owa_bible_note',
+  ],
+  // A foreground conversation (2026-11-09): the screens read and their show
+  // button pressed when asked, how a panel works from the guide, and a
+  // verse found by its words before it is put into a quick text by `ref`.
+  foreground: [
+    'owa_list_screens',
+    'owa_click',
+    'owa_help_search',
+    'owa_find_verse',
+  ],
+  // An ask for a STUDY FILE from any tab (2026-11-09, EC-464, the user:
+  // _open chatbot then ask chatbot to make a resource study content for
+  // Matthew 3:3-7_): the file drafted (`owa_resource_file draft`, the
+  // person presses Create), the passage's people, places and cross
+  // references read first, a verse found by its words, a source on the web.
+  study: [
+    'owa_resource_file',
+    'owa_lookup_record',
+    'owa_find_verse',
+    'owa_read_website',
+  ],
+  // A slide document's conversation reads a Bible verse it is asked to put
+  // on a slide (2026-11-12, EC-514: "a slide document with John 3:16 on one
+  // slide", the document made by the window): quoted from the installed
+  // Bible, never from the model's memory, which the slide prompt forbids.
+  slide: ['owa_find_verse'],
+  // A screen conversation (2026-11-13): a verse put up in the versions
+  // asked for, the last change taken back when asked ("undo that" -- the
+  // ask names its id), the main window brought to the Presenter, where the
+  // screens are, and how a control works from the guide.
+  screen: [
+    'owa_present_bible',
+    'owa_undo',
+    'owa_goto_page',
+    'owa_help_search',
   ],
 };
 

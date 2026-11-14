@@ -26,12 +26,15 @@ window as a whole — tabs, pickers, its language, the caution — is in
   no attachment, ~1.6 s — and typing `/` lists them in the suggestion list
   (`SuggestRowType` is the one shape questions and commands share; a command
   with no argument asks on the press, one with an argument fills the box;
-  Tab fills either — see _Tab finishes the word_ above).
+  Tab fills either — see _Tab finishes the word_ in `chatbot-window.md`).
   **A `/` button ends the attach row** (2026-11-05, the user's ask with the
   row under the box circled: _add an icon of `/` somewhere to click then add
   `/` to input, so user know how `/` for. dom of the icon should explain what
   it is for_; `.chat-start-command`, `bi-slash-square`, `aria-label` **List
-  every command**, a tooltip saying what the press does).
+  every command**, a tooltip saying what the press does). **Since 2026-11-10
+  it is the LAST ROW of the ⋮ left of the box** (`RenderAskToolsMenuComp`,
+  `chatbot-window.md`), its words beside its glyph, under a line apart from
+  the four attach rows; the class and label stayed.
   `toCommandStartedDraft` decides the box: empty → `/` and the list opens;
   already a command → unchanged, the list brought back if Escape put it
   away; holding words → `/ ` IN FRONT of them, caret after the `/`, no list
@@ -66,7 +69,37 @@ window as a whole — tabs, pickers, its language, the caution — is in
   the paste check), where measured with the assistant paused they were
   searched for in the manual and answered with how to make an EMPTY file.
   A page with no song, a refused read and a site's bot check each get a
+  sentence of their own (`EC-123`). **Several links are several songs**
+  (2026-11-13, `EC-589`, the user: _it work for only one url, I wish it
+  could create multiple_): `/lyric <link> <link> …` with at most
+  `MAX_LYRIC_LINKS_EXTRA_WORDS` (12) other words (`countWordsBesideAddresses`;
+  words of a song with links in them stay a paste) goes to
+  `answerLyricLinks`, and the same links in prose -- _Create lyric files
+  from_ and two to four addresses -- are drafted by the WINDOW on any
+  assistant (`readSongLinkAsk` answers the list, `readSongAddressList`):
+  the pages read ONE AFTER ANOTHER (`answerLyricSources`), never at once
+  -- each read is a hidden window on a weak machine and a call out of the
+  firewall's ten in five minutes -- `MAX_SONGS_PER_ASK` (4) of them, the
+  rest said to be left for another message, each page that gives no song
+  named in a sentence of its own. The answer carries every draft with
+  **Create all N songs** first (`LYRIC_CREATE_ALL_TOOL_NAME`, a pseudo
+  tool), then each song's own **Create "…"**, and no **Copy song text**;
+  the preview boxes are shut under several, each named by its song. The
+  press saves each under a free name in turn and answers _Saved N songs: …_
+  with one file chip each. One link on a model that has the song tools
+  still goes to the model, as before; a model that drafts several keeps
+  them all now (`withDraftedSource`, one per page or title -- it had kept
+  the last, and three links offered the third's Create alone). Seen live:
+  three links 8 s and two by `/lyric` 6 s, no model round.
   sentence of their own (`EC-123`).
+  **`/lyric-from` makes a song from a document** (2026-11-10, `EC-488`;
+  also `/lyrics-from`, `/lyric-from-file` -- not `song-from-…`, which
+  `/lyric`'s aliases would take, nor `/document…`, which is `/selected`'s):
+  the Documents folder's PowerPoint, Word, PDF and slide files as buttons,
+  or, given a name, that file read at once (`runLyricFrom`); `/lyric
+  <name>.pptx` (`.docx`, `.pdf`, `.ows`) goes the same way. Listing and
+  reading need no model; **Read the words off the pictures** under its
+  card is the window's own press (`agent-songs.md`).
   **`/btw <words>` is the ONE slash line that goes to a model** (2026-10-10,
   the user's ask: _add command `/btw` to let assistant know it about asking
   general question, e.g. `/btw "what is holy bible"`_; memory
@@ -115,7 +148,10 @@ window as a whole — tabs, pickers, its language, the caution — is in
   `answerScreenToggleAsk` (the screens' state plus the ONE button that does
   it, never a Clear) and `readSlideShowAsk` → `answerSlideShowAsk` (the
   slide named, **Put "…" on the screen** running `/slide N`; a sentence
-  naming no slide of the song — a passage — falls through to the model).
+  naming no slide of the song — a passage — falls through to the model;
+  with NOTHING selected only words naming a slide, verse or chorus wait for
+  a song, `SLIDE_PART_WORDS_PATTERN` — 2026-11-12, `EC-521`: _Put the time
+  on the screen_ had been told to select a song first).
   **And a third, 2026-10-13** (`readSlideStepAsk` → `answerSlideStepAsk`,
   tried before the slide-by-words reader or _the next slide_ is looked up
   as a slide of that name): _Show the next slide?_ / _show the previous

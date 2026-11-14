@@ -6,8 +6,6 @@ const {
     fsReadFileMock,
     fsListMock,
     fsMoveMock,
-    showAppConfirmMock,
-    openOthersSettingMock,
     defaultStorageMock,
 } = vi.hoisted(() => ({
     appProviderMock: {
@@ -23,24 +21,10 @@ const {
     fsReadFileMock: vi.fn(),
     fsListMock: vi.fn(async (): Promise<{ name: string }[]> => []),
     fsMoveMock: vi.fn(async () => {}),
-    showAppConfirmMock: vi.fn(),
-    openOthersSettingMock: vi.fn(),
     defaultStorageMock: { value: '/data' },
 }));
 
 vi.mock('../../server/appProvider', () => ({ default: appProviderMock }));
-
-vi.mock('../../lang/langHelpers', () => ({
-    tran: (text: string) => text,
-}));
-
-vi.mock('../../popup-widget/popupWidgetHelpers', () => ({
-    showAppConfirm: showAppConfirmMock,
-}));
-
-vi.mock('../../setting/settingHelpers', () => ({
-    openOthersSetting: openOthersSettingMock,
-}));
 
 vi.mock('../../server/fileHelpers', () => ({
     ensureDirectory: vi.fn(async () => {}),
@@ -88,6 +72,7 @@ describe('extraBinHelpers', () => {
             qjsBinPath: '/data/extra-bin/win/qjs/qjs.exe',
             cloudflaredBinPath:
                 '/data/extra-bin/win/cloudflared/cloudflared.exe',
+            mcpBinPath: '/data/extra-bin/win/mcp/open-worship-app-mcp.exe',
         });
     });
 
@@ -104,6 +89,54 @@ describe('extraBinHelpers', () => {
         expect(paths.ffmpegBinPath).toBe(
             '/data/extra-bin/linux/ffmpeg/bin/ffmpeg',
         );
+        expect(paths.mcpBinPath).toBe(
+            '/data/extra-bin/linux/mcp/open-worship-app-mcp',
+        );
+    });
+
+    test('finds the MCP executable only where the pack carries one', async () => {
+        const module = await loadModule();
+        fsCheckFileExistMock.mockResolvedValueOnce(true);
+        expect(await module.findInstalledMcpBinPath()).toBe(
+            '/data/extra-bin/win/mcp/open-worship-app-mcp.exe',
+        );
+        expect(fsCheckFileExistMock).toHaveBeenCalledWith(
+            '/data/extra-bin/win/mcp/open-worship-app-mcp.exe',
+        );
+        // A 0.0.5 pack: no executable, and still a whole pack.
+        fsCheckFileExistMock.mockResolvedValue(false);
+        expect(await module.findInstalledMcpBinPath()).toBeNull();
+        fsCheckFileExistMock.mockClear();
+        fsCheckFileExistMock.mockResolvedValue(true);
+        expect(await module.checkIsExtraBinInstalled()).toEqual({
+            isInstalled: true,
+            missingNames: [],
+        });
+        expect(fsCheckFileExistMock).not.toHaveBeenCalledWith(
+            expect.stringContaining('/mcp/'),
+        );
+    });
+
+    test('gives a client the command and the JSON for the executable', async () => {
+        const module = await loadModule();
+        const macPath =
+            "/Users/ann/Library/Application Support/o'w/extra-bin/mac/mcp/open-worship-app-mcp";
+        // A space and a quote survive a POSIX shell, single-quoted.
+        expect(module.genMcpClientCommand(macPath, false)).toBe(
+            "claude mcp add owa-devtools -- '/Users/ann/Library/Application Support/o'\\''w/extra-bin/mac/mcp/open-worship-app-mcp'",
+        );
+        const winPath =
+            'C:\\Users\\Ann\\open-worship-data\\extra-bin\\win\\mcp\\open-worship-app-mcp.exe';
+        expect(module.genMcpClientCommand(winPath, true)).toBe(
+            `claude mcp add owa-devtools -- "${winPath}"`,
+        );
+        // The platform's own by default.
+        expect(module.genMcpClientCommand(winPath)).toBe(
+            module.genMcpClientCommand(winPath, true),
+        );
+        expect(JSON.parse(module.genMcpClientJson(winPath))).toEqual({
+            mcpServers: { 'owa-devtools': { command: winPath, args: [] } },
+        });
     });
 
     test('keeps one pack per OS and processor, named as the packs are built', async () => {
@@ -200,10 +233,6 @@ describe('extraBinHelpers', () => {
         expect(
             await module.checkIsExtraBinInstalled(module.EXTRA_BIN_MEDIA_NAMES),
         ).toEqual({ isInstalled: true, missingNames: [] });
-        expect(await module.requireExtraBinPaths()).toEqual(
-            module.getExtraBinPaths(),
-        );
-        expect(showAppConfirmMock).not.toHaveBeenCalled();
     });
 
     test('reads the installed version, and survives a missing or broken info file', async () => {
@@ -220,36 +249,5 @@ describe('extraBinHelpers', () => {
 
         fsReadFileMock.mockResolvedValue('{"version":123}');
         expect(await module.getInstalledExtraBinVersion()).toBeNull();
-    });
-
-    test('hands the paths over when the pack is installed', async () => {
-        const module = await loadModule();
-        fsCheckFileExistMock.mockResolvedValue(true);
-
-        expect(await module.requireExtraBinPaths()).toEqual(
-            module.getExtraBinPaths(),
-        );
-        expect(showAppConfirmMock).not.toHaveBeenCalled();
-    });
-
-    test('offers the settings panel when the pack is missing, and answers null either way', async () => {
-        const module = await loadModule();
-        fsCheckFileExistMock.mockResolvedValue(false);
-
-        showAppConfirmMock.mockResolvedValue(true);
-        expect(await module.requireExtraBinPaths()).toBeNull();
-        expect(openOthersSettingMock).toHaveBeenCalledTimes(1);
-        // The panel being raised lives in another renderer and may already be
-        // showing a stale "installed" answer, so it has to be told.
-        expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
-            'all:app:extra-bin-changed',
-        );
-
-        appProviderMock.messageUtils.sendData.mockClear();
-        showAppConfirmMock.mockResolvedValue(false);
-        expect(await module.requireExtraBinPaths()).toBeNull();
-        // Declining must not open anything.
-        expect(openOthersSettingMock).toHaveBeenCalledTimes(1);
-        expect(appProviderMock.messageUtils.sendData).not.toHaveBeenCalled();
     });
 });

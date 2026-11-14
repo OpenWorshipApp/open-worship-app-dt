@@ -31,8 +31,8 @@ one schema (+491 tokens a round) rather than six tools.
   (the worker), the `owa-agent-foreground` relay in `domHelpers.ts` (lazy
   import). `widget` countdown | stopwatch | clock | marquee-top |
   marquee-bottom | quick-text | all (stop only); `minutes` OR `at` (a clock
-  time today; one gone by is refused); `text` (≤ 300); `seconds` for a quick
-  text (default 10 — the widget's own default of 3 is too short for an
+  time today; one gone by is refused); `text` (≤ 300; since 2026-11-09 a marquee ≤ 600, a quick text or a message ≤ 3 000); `seconds` for a quick
+  text (default 10 — the widget's own default, 3 then and 5 since 2026-11-09, is too short for an
   announcement). A stop of a widget not on is `did: stopped` with a note.
 - `stateOf` in `genClickExpression` (`domMatch.mjs`) reads `aria-selected`
   and `.nav-link.active`, so a tab press answers `isOnNow`. Nothing yet tells
@@ -42,6 +42,9 @@ one schema (+491 tokens a round) rather than six tools.
   `clearable`: a layer held on an off screen is cleared, and a Clear press
   (a plain button the press-verification cannot read) is proven by the
   layer reading empty afterwards — never by the click.
+- **Superseded in part on 2026-11-09** ([[chatbot-foreground-component-edit]]):
+  all thirteen components, the PANEL's look and sessions, a verse `ref`,
+  `undoId`; a new session per new content. The quick text default stays 10 s.
 - Left open: [[chatbot-in-the-middle-of]]'s song-by-name path presents the
   wordless **First** slide and turns the screen ON where the verse path
   offers the button (`EC-169`); the background demo cannot double-click a

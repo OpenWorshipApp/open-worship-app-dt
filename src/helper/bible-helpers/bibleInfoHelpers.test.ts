@@ -126,7 +126,7 @@ describe('bibleInfoHelpers', () => {
                 GEN: 'Genesis',
                 TI2: 'ii Timothy',
             },
-            locale: 'km-KH',
+            locale: 'xx-XX',
         };
         mocks.bibleDataReadMock.mockResolvedValue(info);
 

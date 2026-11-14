@@ -59,7 +59,7 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         labelKey: 'Marquee Top',
         iconName: 'chevron-bar-up',
         checkIsOnScreen: (data) => {
-            return data.marqueeTopData !== null;
+            return (data.marqueeTopDataList ?? []).length > 0;
         },
         Comp: lazy(() => {
             return import('./ForegroundMarqueeTopComp');
@@ -70,7 +70,7 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         labelKey: 'Marquee Bottom',
         iconName: 'chevron-bar-down',
         checkIsOnScreen: (data) => {
-            return data.marqueeBottomData !== null;
+            return (data.marqueeBottomDataList ?? []).length > 0;
         },
         Comp: lazy(() => {
             return import('./ForegroundMarqueeBottomComp');
@@ -81,7 +81,7 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         labelKey: 'Quick Text',
         iconName: 'chat-square-text',
         checkIsOnScreen: (data) => {
-            return data.quickTextData !== null;
+            return (data.quickTextDataList ?? []).length > 0;
         },
         Comp: lazy(() => {
             return import('./ForegroundQuickTextComp');
@@ -115,7 +115,7 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         labelKey: 'Countdown',
         iconName: 'hourglass-split',
         checkIsOnScreen: (data) => {
-            return data.countdownData !== null;
+            return (data.countdownDataList ?? []).length > 0;
         },
         Comp: lazy(() => {
             return import('./ForegroundCountDownComp');
@@ -126,7 +126,7 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         labelKey: 'Stopwatch',
         iconName: 'stopwatch',
         checkIsOnScreen: (data) => {
-            return data.stopwatchData !== null;
+            return (data.stopwatchDataList ?? []).length > 0;
         },
         Comp: lazy(() => {
             return import('./ForegroundStopwatchComp');

@@ -19,7 +19,8 @@ the bucket root, so an object lands at its verbatim S3 key,
 e.g. `extra-work/fake-s3/www/download/win/info.json`) and the CloudFront
 invalidation is skipped.
 
-The upload is faked and git is left alone: a dry run does not check that the
+The upload is faked and git is left alone beyond the `git pull` every run
+starts with: a dry run does not check that the
 work tree is clean, asks nothing and does not reset to the `release-<version>`
 tag, so it packs whatever is checked out. The dependency install (skipped with
 `RELEASE_SKIP_INSTALL=true`) and the full platform pack run exactly as they

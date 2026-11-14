@@ -144,8 +144,7 @@ export async function getCrossRefs(
         logError('Error in getCrossRefs:', error);
         showSimpleToast(
             tran('Cross References'),
-            'Failed to get cross references. ' +
-                'Please check your OpenAI API Key and network connection.',
+            tran('Check your OpenAI API key and the internet connection.'),
         );
         handleError(error);
         return null;

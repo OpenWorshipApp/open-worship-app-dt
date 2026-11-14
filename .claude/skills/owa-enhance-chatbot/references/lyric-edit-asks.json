@@ -1,0 +1,190 @@
+{
+  "about": "The song conversation's standing asks (scripts/lyric-run.mjs, 2026-11-12, EC-511). Each ask gets a fresh copy of `song` attached in a tab of its own; `expect` is what the song must hold after it -- the change asked for, and nothing else lost. The song has chords in two verses and a second line under every line of Verse 1 (a translation line, written here in plain English so the set stays English; the tool treats any language alike).",
+  "songName": "Amazing Grace",
+  "song": [
+    "```ol:Config",
+    "- Title: Amazing Grace",
+    "- Subtitle: My chains are gone",
+    "- Artist: John Newton",
+    "- Key: G",
+    "- Locales: en-US, en-GB",
+    "- Structure: V1V2CV3C",
+    "```",
+    "",
+    "```ol:Verse 1",
+    "[G]Amazing grase how [C]sweet the [G]sound",
+    "\tWonderful kindness, how sweet to hear",
+    "That saved a [G]wretch like [D]me",
+    "\tIt rescued someone as lost as me",
+    "I [G]once was lost but [C]now am [G]found",
+    "\tI was lost once, now I am found",
+    "Was [G]blind but [D]now I [G]see",
+    "\tI was blind, and now I can see",
+    "```",
+    "",
+    "```ol:Verse 2",
+    "[G]Twas grace that taught my [C]heart to [G]fear",
+    "And grace my fears re[D]lieved",
+    "How [G]precious did that [C]grace ap[G]pear",
+    "The hour I [D]first be[G]lieved",
+    "```",
+    "",
+    "```ol:Chorus",
+    "[G]My chains are gone, I've been set free",
+    "My God, my Savior has ransomed me",
+    "```",
+    "",
+    "```ol:Verse 3",
+    "When we've been there ten thousand years",
+    "Bright shining as the sun",
+    "We've no less days to sing God's praise",
+    "Than when we'd first begun",
+    "```",
+    ""
+  ],
+  "asks": [
+    {
+      "id": "L01",
+      "shape": "one word fixed",
+      "ask": "Fix the typo in verse 1: \"grase\" should be \"grace\".",
+      "expect": {
+        "lineHas": [["Verse 1", 0, "Amazing grace how"]],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 2", "Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L02",
+      "shape": "a word replaced everywhere",
+      "ask": "Change the word \"grace\" to \"mercy\" everywhere in the song.",
+      "expect": {
+        "wordsHave": ["mercy"],
+        "wordsLack": [" grace "],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L03",
+      "shape": "one line rewritten",
+      "ask": "Change the last line of verse 3 to \"Than when we first begun\".",
+      "expect": {
+        "lineHas": [["Verse 3", 3, "Than when we first begun"]],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus"]
+      }
+    },
+    {
+      "id": "L04",
+      "shape": "a new part with its words",
+      "ask": "Add a bridge after the chorus with these words: Hallelujah, grace like rain / Falls down on me",
+      "expect": {
+        "partsAdded": ["Bridge"],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L05",
+      "shape": "play order",
+      "ask": "Sing the chorus twice at the end.",
+      "expect": {
+        "playOrderEnds": "Chorus x2",
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L06",
+      "shape": "key change",
+      "ask": "Move the song to the key of A.",
+      "expect": {
+        "key": "A",
+        "lineHas": [["Verse 1", 0, "[A]Amazing grase how [D]sweet"]],
+        "chords": 21,
+        "translations": 4
+      }
+    },
+    {
+      "id": "L07",
+      "shape": "a part removed",
+      "ask": "Remove verse 3.",
+      "expect": {
+        "partsGone": ["Verse 3"],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus"]
+      }
+    },
+    {
+      "id": "L08",
+      "shape": "title",
+      "ask": "Change the title to Amazing Grace (My Chains Are Gone).",
+      "expect": {
+        "title": "Amazing Grace (My Chains Are Gone)",
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L09",
+      "shape": "spelling across the song",
+      "ask": "Check the whole song for spelling mistakes and fix them.",
+      "expect": {
+        "lineHas": [["Verse 1", 0, "grace"]],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L10",
+      "shape": "chords for one part",
+      "ask": "Put a G chord at the start of every line of verse 3.",
+      "expect": {
+        "lineHas": [
+          ["Verse 3", 0, "[G]When"],
+          ["Verse 3", 3, "[G]Than"]
+        ],
+        "chords": 25,
+        "translations": 4,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus"]
+      }
+    },
+    {
+      "id": "L11",
+      "shape": "a question about the song",
+      "ask": "What key is this song in, and how many verses does it have?",
+      "expect": { "unchanged": true }
+    },
+    {
+      "id": "L12",
+      "shape": "one translation line",
+      "ask": "Change the line under the first line of verse 1 to \"Wonderful grace, how sweet the sound\".",
+      "expect": {
+        "translationHas": [["Verse 1", 0, "Wonderful grace, how sweet the sound"]],
+        "lineHas": [["Verse 1", 0, "[G]Amazing grase how [C]sweet the [G]sound"]],
+        "chords": 21,
+        "translations": 4,
+        "partsKept": ["Verse 2", "Chorus", "Verse 3"]
+      }
+    },
+    {
+      "id": "L13",
+      "shape": "the translation lines taken out",
+      "ask": "Take out the translation lines.",
+      "expect": {
+        "lineHas": [["Verse 1", 0, "[G]Amazing grase how [C]sweet the [G]sound"]],
+        "chords": 21,
+        "translations": 0,
+        "partsKept": ["Verse 2", "Chorus", "Verse 3"]
+      }
+    }
+  ]
+}

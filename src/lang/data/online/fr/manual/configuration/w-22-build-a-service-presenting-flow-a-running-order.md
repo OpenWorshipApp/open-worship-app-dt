@@ -3,7 +3,7 @@ id: W-22
 title: "Construire le déroulé d'un culte (l'ordre de passage)"
 section: "Configuration"
 lang: fr
-translatedFrom: da2b9fe7b6eb9353
+translatedFrom: 5ed23ea14ef120a0
 ---
 # W-22 — Construire le déroulé d'un culte (l'ordre de passage)
 
@@ -30,4 +30,5 @@ translatedFrom: da2b9fe7b6eb9353
 - attendre sur une ligne puis passer à la suite tout seul (W-22d), faire tourner une série de diapositives en boucle ou revenir en arrière (W-22e), répondre à une touche de votre choix (W-22f) ;
 - faire qu'une ligne en affiche d'autres avec elle (W-22g), ou lire la vidéo à l'intérieur d'une diapositive (W-22h) ;
 - envoyer une ligne vers un écran précis à chaque fois, ou mettre une ligne en attente (W-22i) ;
-- être transmis à un autre ordinateur sous la forme d'un seul fichier (W-22j).
+- être transmis à un autre ordinateur sous la forme d'un seul fichier (W-22j) ;
+- être rangé dans un dossier à lui, accessible d'un seul appui sous le titre **[en:tran:Presenting Flows]** (W-58).

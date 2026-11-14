@@ -660,14 +660,19 @@ describe('ResourcesDirBoxComp', () => {
 
     test('an unexpected failure is reported and said in words, and nothing is re-scanned', async () => {
         selectFilesMock.mockResolvedValue(['/downloads/PSA.1.pdf']);
-        const error = new Error('EPERM: operation not permitted');
+        const error = Object.assign(
+            new Error('EPERM: operation not permitted'),
+            { code: 'EPERM' },
+        );
         copyFilesMock.mockRejectedValue(error);
         await renderBox();
         await pickAddFiles();
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Add Files',
-            'Cannot copy file: EPERM: operation not permitted',
+            'Cannot copy file: This file or folder cannot be changed. ' +
+                'Check that it is not read-only or open in another program.',
+            10e3,
         );
         expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
         // The guard is let go: the next Add Files opens the dialog again.

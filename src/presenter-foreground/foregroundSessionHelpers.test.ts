@@ -6,6 +6,9 @@ vi.mock('../media-sessions/MediaSessionsComp', () => ({
     toSessionSuffix: (id: string) => (id === 'default' ? '' : `-${id}`),
     useMediaSessions: () => ({ sessions: [], activeId: 'default' }),
 }));
+vi.mock('../helper/ai/foregroundChatbotMenuHelpers', () => ({
+    genForegroundOpenInChatbotContextMenu: () => [],
+}));
 vi.mock('../helper/appHooks', () => ({
     useAppCurrentRef: <T>(value: T) => ({ current: value }),
 }));

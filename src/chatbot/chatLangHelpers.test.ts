@@ -15,6 +15,7 @@ import {
     getAssistantLanguage,
     listAssistantLanguages,
     pickReplyLanguage,
+    toPackageLangCode,
 } from './chatLangHelpers';
 
 afterEach(() => {
@@ -126,5 +127,36 @@ describe('pickReplyLanguage', () => {
                 isPressed: true,
             }),
         ).toBe('xx');
+    });
+});
+
+describe('toPackageLangCode', () => {
+    test('a package is its own; the code its typed.json names it by leads back to it', () => {
+        const folderCodeList = listLangPackageCodes({
+            isEnglishIncluded: false,
+            fileName: 'typed.json',
+        });
+        for (const folderCode of folderCodeList) {
+            expect(toPackageLangCode(folderCode)).toBe(folderCode);
+            const typed: Record<string, { order?: number }> = JSON.parse(
+                fs.readFileSync(
+                    path.join(toLangPackageDir(folderCode), 'typed.json'),
+                    'utf8',
+                ),
+            );
+            if (folderCode in typed) {
+                continue;
+            }
+            const ownCode = Object.entries(typed).sort(([, one], [, other]) => {
+                return (
+                    (one.order ?? Number.MAX_SAFE_INTEGER) -
+                    (other.order ?? Number.MAX_SAFE_INTEGER)
+                );
+            })[0]?.[0];
+            if (ownCode !== undefined && !folderCodeList.includes(ownCode)) {
+                expect(toPackageLangCode(ownCode)).toBe(folderCode);
+            }
+        }
+        expect(toPackageLangCode('zz')).toBe('zz');
     });
 });

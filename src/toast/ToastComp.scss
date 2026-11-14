@@ -39,7 +39,7 @@ $toast-stack-top: $header-height + 8px;
   // place. It carried a full title band, 16px body type and four equally
   // weighted buttons (390x~250); it is one quiet label row, the tip, and three
   // small buttons now (320x~115). Sizes come from the console type scale --
-  // nothing drops below `--app-text-sm`, which is the floor Khmer stays
+  // nothing drops below `--app-text-sm`, which is the floor every script stays
   // legible at.
   > .app-daily-tip {
     width: min(320px, calc(100vw - 20px));

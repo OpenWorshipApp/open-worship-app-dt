@@ -36,8 +36,11 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
 - **`createMcpServer` can only be called once per process with telemetry on**
   ("ClearcutLogger is already initialized" — a singleton). The app serves one
   server per MCP session, so `server.mjs` forces `usageStatistics = false`.
-- **`browserUrl` is a live getter**, re-read by chrome-devtools-mcp on every
-  tool call, so one long-lived MCP server follows the app across restarts. It
+- **`browserUrl` is a live getter**, re-read by chrome-devtools-mcp at every
+  connection (since 1.12 on the config's own `resolved`, which `BrowserManager`
+  reads at each connect: `createMcpServer` would copy it once, so `server.mjs`
+  builds the server from its parts), so one long-lived MCP server follows the
+  app across restarts. It
   must never be falsy — an empty one makes it LAUNCH its own Chrome.
 - **The in-app host is pinned to its own instance** (2026-09-09). Discovery is
   newest-first, so with the packaged app up and a dev build started after it
@@ -55,7 +58,7 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   (in `electron:build`) copies `docs/manual-sources/**` (`manual`) and
   an allowlist of `.claude/` — `CLAUDE.md`, `rules/`, `memory/`, `skills/` —
   (`internal`) into `electron-build/knowledge/` plus a search
-  index, so a question is one file read, not 140. Internal hits are labelled —
+  index, so a question is one file read, not some 400. Internal hits are labelled —
   they are notes for whoever builds the app, not user instructions.
 - **Reachable from every window, six providers, many models.** The **🤖**
   button is in the top-right toolbar (left of **?**) of the three windows that
@@ -77,9 +80,9 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   and embedding models too) and only reasoning models may be sent
   `reasoning_effort` — `gpt-5-chat-latest` is the trap, so the pattern is
   `/^(gpt-5(?!-chat)|o[0-9])/`. GPT-5 spends reasoning tokens out of
-  `max_completion_tokens`, so the OpenAI budget is far larger than the
-  Anthropic one and its effort is `low` — at the Anthropic figure the answer
-  itself comes back empty.
+  `max_completion_tokens`, so the OpenAI budget is 6 000 and its effort is
+  `low` — at 2 000 the answer itself came back empty (Claude thinks out of its
+  budget too, and has the same 6 000).
 - **The tab IS the session, and it owns the whole head row.** Several
   conversations at once (`src/chatbot/chatSessionHelpers.ts`): a tab holds its
   messages, its half-typed draft, its focus, its provider AND its model, so one
@@ -94,7 +97,8 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   tab whose provider's key was removed is put back on one that can answer
   (`genInitialSessionState`), rather than on a dead one.
 - **A key is a thing the user has to be told about.** With no key at all a
-  tab opens on the keyless Free assistant, whose sticky notice carries **Open
+  tab opens on Auto (a new tab's default since 2026-10-13, `toIsLlmAuto`),
+  which can always ask the keyless Free assistant, and its sticky notice carries **Open
   AI settings** (the `app guide · offline` BUTTON in the head and the
   empty-state line with its own button are drawn for a tab with NO provider,
   which `getAvailableLlmProviders` no longer produces: Free is always
@@ -234,10 +238,14 @@ undiscoverable.
 
 - **The window has a design of its own** (`ChatbotAppComp.scss`): a cue-sheet
   rail with a marker per turn, brass for the rail and the live marker, the
-  app's cyan kept for the one primary action, Bahnschrift/DIN for every label
-  and the system face for answers. No webfont is loaded -- the building's
-  internet is the first thing to go mid-service -- and no `.btn`/`.app-data`
-  class is used, because neither bootstrap's sizing nor the app's global sheet
+  app's cyan kept for the one primary action, the app's own face first (a face
+  picked in Settings, else `--app-font-family`: the language's, then Google
+  Sans, since 2026-11-06), then Bahnschrift/DIN for every label and the system
+  face for answers. No font comes from the internet (the app's faces are files
+  it ships) -- the building's
+  internet is the first thing to go mid-service -- and no `.app-data` class is
+  used, nor `.btn` beyond a few zero-padding `btn-link` text buttons,
+  because neither bootstrap's sizing nor the app's global sheet
   belongs in a 460px window (the latter is not even loaded here).
 
 **How to apply:** never reintroduce a fixed port, nor a `.mcp.json` that names

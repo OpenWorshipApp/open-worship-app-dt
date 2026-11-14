@@ -48,11 +48,11 @@ describe('collectFontFaceCss', () => {
         beforeEach(() => {
             const style = document.createElement('style');
             style.textContent =
-                '@font-face { font-family: "app-Battambang";' +
-                ' src: url(fonts/battambang.woff2); }\n' +
+                '@font-face { font-family: "app-Xx-Face";' +
+                ' src: url(fonts/xx-face.woff2); }\n' +
                 "@font-face { font-family: 'app-Unused';" +
                 ' src: url(fonts/unused.woff2); }\n' +
-                '.verse { font-family: app-Battambang; }';
+                '.verse { font-family: app-Xx-Face; }';
             document.head.appendChild(style);
             // jsdom parses @font-face into its own rule class but does not
             // expose it as a global; the helper needs it for `instanceof`.
@@ -63,13 +63,11 @@ describe('collectFontFaceCss', () => {
 
         test('copies only the rules of families the printed HTML uses', () => {
             const css = collectFontFaceCss(
-                '<p style="font-family: app-Battambang">✝</p>',
+                '<p style="font-family: app-Xx-Face">✝</p>',
             );
-            const expectedUrl = new URL(
-                'fonts/battambang.woff2',
-                document.baseURI,
-            ).href;
-            expect(css).toContain('app-Battambang');
+            const expectedUrl = new URL('fonts/xx-face.woff2', document.baseURI)
+                .href;
+            expect(css).toContain('app-Xx-Face');
             expect(css).toContain(`url(${expectedUrl})`);
             expect(css).not.toContain('app-Unused');
             expect(css).not.toContain('.verse');
@@ -112,14 +110,14 @@ describe('collectFontFaceCss', () => {
                     href: 'https://app.local/assets/fonts.css',
                     cssRules: [
                         new FakeFontFaceRule(
-                            '@font-face { src: url(km.woff2) }',
-                            '"Khmer OS"',
+                            '@font-face { src: url(xx.woff2) }',
+                            '"Made Up Sans"',
                         ),
                     ],
                 },
             ]);
-            expect(collectFontFaceCss('font-family: Khmer OS')).toBe(
-                '@font-face { src: url(https://app.local/assets/km.woff2) }',
+            expect(collectFontFaceCss('font-family: Made Up Sans')).toBe(
+                '@font-face { src: url(https://app.local/assets/xx.woff2) }',
             );
         });
 

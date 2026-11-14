@@ -14,6 +14,10 @@
  * Pure: no store, no file, no `tran`. Every rule a test.
  */
 import { COUNTDOWN_LEAD_SECOND } from '../presenter-foreground/foregroundDragHelpers';
+import {
+    QUICK_TEXT_DEFAULT_DELAY_SECOND,
+    QUICK_TEXT_DEFAULT_LIVE_SECOND,
+} from '../presenter-foreground/foregroundComponentRules';
 
 export const AGENT_FLOW_FOREGROUND_WIDGETS = [
     'countdown',
@@ -28,8 +32,14 @@ export const AGENT_FLOW_FOREGROUND_WIDGETS = [
 export type AgentFlowForegroundWidgetType =
     (typeof AGENT_FLOW_FOREGROUND_WIDGETS)[number];
 
-/** What each widget takes, said the way the assistant is told it. */
+/**
+ * What each widget takes, said the way the assistant is told it. The first
+ * line is the SHAPE: a small model had written `seconds` beside `foreground`
+ * eleven times running and never inside it (EC-469).
+ */
 export const AGENT_FLOW_FOREGROUND_FIELD_TEXT_LIST = [
+    'a line is add {foreground: {widget, …its fields}}, e.g. {foreground: ' +
+        '{widget: "countdown", seconds: 300}}',
     'countdown: seconds (its length) or dateTime (ISO, counts to it), autoStart',
     'stopwatch: autoStart',
     'time: utcOffset (hours), title (a city), is24Hour',
@@ -39,6 +49,89 @@ export const AGENT_FLOW_FOREGROUND_FIELD_TEXT_LIST = [
 ];
 
 const PICKED_WIDGET_LIST = ['video', 'image', 'camera', 'screen', 'web'];
+
+// The fields each widget reads -- the ones taken from beside `foreground`
+// when a model wrote them there.
+const WIDGET_FIELD_KEY_MAP: Record<AgentFlowForegroundWidgetType, string[]> = {
+    countdown: ['seconds', 'dateTime', 'autoStart'],
+    stopwatch: ['autoStart'],
+    time: ['utcOffset', 'title', 'is24Hour'],
+    message: ['text', 'texts', 'intervalSecond'],
+    'marquee-top': ['text', 'speed'],
+    'marquee-bottom': ['text', 'speed'],
+    'quick-text': ['text', 'delaySecond', 'liveSecond'],
+};
+
+function checkIsWidgetName(value: unknown) {
+    return (
+        typeof value === 'string' &&
+        ((AGENT_FLOW_FOREGROUND_WIDGETS as readonly string[]).includes(value) ||
+            PICKED_WIDGET_LIST.includes(value))
+    );
+}
+
+/**
+ * The widget and fields of a foreground line, read the way models write one
+ * (2026-11-10, EC-469: a running order built from an order of service was
+ * refused twice over, every call the same three shapes): as asked,
+ * `{widget: "countdown", seconds: 300}`; the widget as the KEY,
+ * `{countdown: {seconds: 300}}`; the widget alone as a word, `"countdown"`;
+ * and the widget's own fields written BESIDE `foreground`, in `beside` (the
+ * `add` it came in), which a field inside wins over. Null when it names no
+ * widget at all -- the caller's refusal says the shape.
+ */
+export function readAgentForegroundSpec(
+    foreground: unknown,
+    beside: Record<string, unknown> = {},
+): { widget: unknown; fields: Record<string, unknown> } | null {
+    let widget: unknown;
+    let fields: Record<string, unknown>;
+    if (typeof foreground === 'string') {
+        widget = foreground.trim();
+        fields = {};
+    } else if (foreground !== null && typeof foreground === 'object') {
+        const { widget: named, ...rest } = foreground as Record<
+            string,
+            unknown
+        >;
+        const keys = Object.keys(rest);
+        const inner = keys.length === 1 ? rest[keys[0]] : undefined;
+        if (
+            named === undefined &&
+            keys.length === 1 &&
+            checkIsWidgetName(keys[0])
+        ) {
+            widget = keys[0];
+            const isTextWidget =
+                WIDGET_FIELD_KEY_MAP[
+                    widget as AgentFlowForegroundWidgetType
+                ]?.includes('text') === true;
+            // `{message: "Potluck after the service"}`: its words;
+            // `{countdown: 300}`: its length.
+            fields =
+                inner !== null && typeof inner === 'object'
+                    ? { ...(inner as Record<string, unknown>) }
+                    : typeof inner === 'string' && isTextWidget
+                      ? { text: inner }
+                      : typeof inner === 'number' && widget === 'countdown'
+                        ? { seconds: inner }
+                        : {};
+        } else {
+            widget = named;
+            fields = rest;
+        }
+    } else {
+        return null;
+    }
+    const keyList =
+        WIDGET_FIELD_KEY_MAP[widget as AgentFlowForegroundWidgetType] ?? [];
+    for (const key of keyList) {
+        if (fields[key] === undefined && beside[key] !== undefined) {
+            fields[key] = beside[key];
+        }
+    }
+    return { widget, fields };
+}
 
 const MAX_TEXT_LENGTH = 2000;
 const MAX_MESSAGE_COUNT = 20;
@@ -169,8 +262,9 @@ export function genAgentForegroundData(
             delete data.durationSecond;
         } else if (isNew) {
             return fail(
-                'Say how long the countdown runs (`seconds`, 300 is five ' +
-                    'minutes) or what time it counts to (`dateTime`).',
+                'Say how long the countdown runs, INSIDE `foreground`: ' +
+                    '{widget: "countdown", seconds: 300} is five minutes; ' +
+                    'or the time it counts to, as `dateTime`.',
             );
         }
         if (fields.autoStart !== undefined) {
@@ -318,15 +412,17 @@ export function genAgentForegroundData(
         }
         data.timeSecondDelay = fields.delaySecond;
     } else if (isNew) {
-        data.timeSecondDelay = 0;
+        data.timeSecondDelay = QUICK_TEXT_DEFAULT_DELAY_SECOND;
     }
     if (fields.liveSecond !== undefined) {
         if (!checkIsPositiveNumber(fields.liveSecond)) {
             return fail('`liveSecond` is how many seconds it stays up.');
         }
         data.timeSecondToLive = fields.liveSecond;
+        // Seconds asked for are how long it stays: no longer until hidden.
+        delete data.isInfinite;
     } else if (isNew) {
-        data.timeSecondToLive = 3;
+        data.timeSecondToLive = QUICK_TEXT_DEFAULT_LIVE_SECOND;
     }
     return { data };
 }

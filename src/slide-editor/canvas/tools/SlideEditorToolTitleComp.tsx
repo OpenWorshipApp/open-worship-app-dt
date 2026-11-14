@@ -24,16 +24,26 @@ export default function SlideEditorToolTitleComp({
         isInitiallyExpanded,
         persistingKey,
     );
+    // A titled section is a named group: a screen reader says which section
+    // a control belongs to, and the assistant can aim at one by its section
+    // ("Shape Properties > Shadow") when another control of the window
+    // carries the same name -- a canvas item's Presets row has a Shadow look
+    // beside Shape Properties' Shadow picker, and a walkthrough refuses a
+    // name two shown controls share.
+    const groupProps = title ? { role: 'group', 'aria-label': title } : {};
     if (!isCollapsible || !title) {
         return (
-            <div className={'app-tool' + (isInline ? ' app-tool-inline' : '')}>
+            <div
+                className={'app-tool' + (isInline ? ' app-tool-inline' : '')}
+                {...groupProps}
+            >
                 {title && <div className="app-tool-title">{title}</div>}
                 <div className="app-tool-body">{children}</div>
             </div>
         );
     }
     return (
-        <div className="app-tool">
+        <div className="app-tool" {...groupProps}>
             <div
                 className="app-tool-title app-tool-title-collapsible"
                 {...headerProps}

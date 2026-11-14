@@ -7,8 +7,8 @@ import {
     toShownLinkText,
 } from './chatLinkHelpers';
 
-// EC-297: a Google search for Khmer words was drawn as 300 characters of
-// percent-escapes.
+// EC-297: a Google search for words in a script of their own was drawn as
+// 300 characters of percent-escapes.
 describe('toShownLinkText', () => {
     it('cuts a long address and keeps a short one whole', () => {
         const long = `https://example.org/${'a'.repeat(100)}`;

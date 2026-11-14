@@ -17,7 +17,7 @@ import {
 
 describe('parseFontFamilyList', () => {
     test('reads a computed font-family the way CSS does', () => {
-        expect(parseFontFamilyList('Moul')).toEqual(['Moul']);
+        expect(parseFontFamilyList('MadeUpSans')).toEqual(['MadeUpSans']);
         expect(
             parseFontFamilyList(
                 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -29,8 +29,8 @@ describe('parseFontFamilyList', () => {
             'Roboto',
             'sans-serif',
         ]);
-        expect(parseFontFamilyList(`'Khmer OS, Bold', serif`)).toEqual([
-            'Khmer OS, Bold',
+        expect(parseFontFamilyList(`'Made Up, Bold', serif`)).toEqual([
+            'Made Up, Bold',
             'serif',
         ]);
         expect(parseFontFamilyList('')).toEqual([]);
@@ -39,7 +39,7 @@ describe('parseFontFamilyList', () => {
     test('knows the generic names that stand for a platform font', () => {
         expect(checkIsGenericFontFamily('system-ui')).toBe(true);
         expect(checkIsGenericFontFamily('Sans-Serif')).toBe(true);
-        expect(checkIsGenericFontFamily('Battambang')).toBe(false);
+        expect(checkIsGenericFontFamily('Made Up Sans')).toBe(false);
     });
 });
 
@@ -58,7 +58,7 @@ describe('calcPptxFirstBaseline', () => {
     });
 
     test('a font taller than its line is centered and lifted 3%', () => {
-        // Battambang 105px on a 141.75px line: PowerPoint drew 101px, the
+        // A language's own tall face, 105px on a 141.75px line: PowerPoint drew 101px, the
         // browser 104px
         expect(
             calcPptxFirstBaseline(141.75, 105, {
@@ -66,7 +66,7 @@ describe('calcPptxFirstBaseline', () => {
                 descent: 61.5,
             }),
         ).toBeCloseTo(101.05, 1);
-        // Moul 75px: 72.6px in PowerPoint
+        // Another such face, 75px: 72.6px in PowerPoint
         expect(
             calcPptxFirstBaseline(101.25, 75, {
                 ascent: 91.55,

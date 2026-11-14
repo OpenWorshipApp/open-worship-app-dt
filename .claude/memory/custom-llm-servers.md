@@ -10,7 +10,7 @@ metadata:
 
 Added 2026-10-09 at the user's ask, tested against their LM Studio
 (`http://localhost:1234/v1`, `phi-3.1-mini-128k-instruct`). Settings →
-Others → **Custom servers**; shared rules in `electron/customLlmProtocol.ts`.
+AI Providers → **Custom servers**; shared rules in `electron/customLlmProtocol.ts`.
 
 - **Every call goes through the MAIN process** (`customLlmRelayHelpers.ts`),
   because the user chose "any URL" and the chatbot window's only network
@@ -72,7 +72,7 @@ Others → **Custom servers**; shared rules in `electron/customLlmProtocol.ts`.
   ROOT of an address ending exactly `/v1`) says loaded / context / `vlm`.
   Settings' Test and Load show it under each row; Load ticks **Sees
   pictures** (a row field, `canSeeImages`, stored only when true); the
-  chatbot reads it before each ask (1.5 s cap) to refuse a too-small context
+  chatbot reads it before each ask (5 s cap) to refuse a too-small context
   and to say "Waiting for <server> to load <model>" on round 1.
 - **A machine on the church's own network is free** (`checkIsLocalNetworkUrl`:
   a bare machine name, `.local`/`.lan`/…, RFC1918, 100.64/10, fc00::/7).
@@ -87,7 +87,7 @@ read that 404 as _this model is not available to the account_.
 
 - **The server's KIND is read off its root, never stored**
   (`readCustomServerModelInfo` → `{kind, infoMap}`, `CustomServerKindType`
-  `lm-studio | ollama | other`): LM Studio's `/api/v0/models` first, else
+  `lm-studio | ollama | llama-cpp | other`): LM Studio's `/api/v0/models` first, else
   Ollama's `/api/tags` (every model with `capabilities` — `vision` is what
   ticks **Sees pictures** — and `details.context_length`) plus `/api/ps`
   (what is in memory, with the `context_length` it is loaded with), all

@@ -86,7 +86,7 @@ import BibleSlidesPopupComp from './BibleSlidesPopupComp';
 const BIBLES = [
     { key: 'KJV', title: 'King James', locale: 'en' },
     { key: 'NIV', title: 'New International', locale: 'en' },
-    { key: 'KHOV', title: 'Khmer Old Version', locale: 'km' },
+    { key: 'XXOV', title: 'Made Up Old Version', locale: 'xx' },
 ];
 
 let host: HTMLDivElement;
@@ -200,7 +200,7 @@ describe('Generate Slides popup', () => {
         expect(labels).toEqual([
             'KJV',
             'NIV — New International',
-            'KHOV — Khmer Old Version',
+            'XXOV — Made Up Old Version',
         ]);
         const own =
             document.body.querySelector<HTMLInputElement>('label.p-2 input')!;
@@ -208,8 +208,8 @@ describe('Generate Slides popup', () => {
         expect(own.disabled).toBe(true);
         expect(getBibleCheckbox('NIV').checked).toBe(false);
         expect(
-            getBibleCheckbox('KHOV').closest('label')!.dataset.localeFf,
-        ).toBe('km');
+            getBibleCheckbox('XXOV').closest('label')!.dataset.localeFf,
+        ).toBe('xx');
         expect(query('[role="status"]')).toBeNull();
     });
 
@@ -227,9 +227,9 @@ describe('Generate Slides popup', () => {
 
     test('generates slides with the chosen Bibles, size and theme, then shows the new document', async () => {
         await renderPopup();
-        await act(async () => getBibleCheckbox('KHOV').click());
+        await act(async () => getBibleCheckbox('XXOV').click());
         await act(async () => getBibleCheckbox('NIV').click());
-        await act(async () => getBibleCheckbox('KHOV').click());
+        await act(async () => getBibleCheckbox('XXOV').click());
         await typeFontSize('64');
         await chooseTheme('light');
         await submit();

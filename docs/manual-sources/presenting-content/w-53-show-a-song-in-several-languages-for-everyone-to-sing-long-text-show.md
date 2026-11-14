@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166, PM-167]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -104,8 +104,8 @@ menu.
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
 8. **Give a language its own font and size.** The whole text is drawn in
-   **[en:tran:Bible/LongText Properties]**, the book and gear beside
-   **[en:tran:Add Language]** (W-07): its colour, boldness, alignment, shadow
+   **[en:tran:Bible/LongText Properties]**, the book and gear at the right
+   end of the row at the top of the panel (W-07): its colour, boldness, alignment, shadow
    and highlight are every language's. Open **[en:tran:Properties]** on a card
    for the two things a language may need of its own: **[en:tran:Font]**, and
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
@@ -125,5 +125,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166` · `PM-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

@@ -29,7 +29,12 @@ import {
     DEFAULT_CHAT_LANG_CODE,
     type AssistantLanguageType,
 } from './chatLangHelpers';
-import { fillWords, tran } from './chatTranHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { checkHasLanguageName } from './languageNameWordHelpers';
+import {
+    readLanguageSizeAsk,
+    type LanguageSizeAskType,
+} from './languageEditAskHelpers';
 import {
     type LyricAskFileType,
     type LyricTranslateModeType,
@@ -409,13 +414,20 @@ export const SLIDE_WORDLESS_HINT =
 
 // A typed translation that says WHERE the new lines go. The card's button
 // says "under each line" and its hint says it again; typed, _Add the
-// English under the Khmer line on slide 3_ was put ABOVE the Khmer by
+// English under the <other language> line on slide 3_ was put ABOVE it by
 // gemma4:cloud (seen live 2026-11-07, a copy of a real sermon document),
 // the prompt's own rule notwithstanding. Said once more, plainly, beside
 // the ask. English words only; a translation word must be in the line, or
-// "a box under the title" would be read as a placement of lines.
-const SLIDE_TRANSLATE_WORD_PATTERN =
-    /translat|language|\b(?:english|khmer|french|spanish|chinese|korean|thai|german|portuguese|vietnamese|japanese|tagalog)\b/i;
+// "a box under the title" would be read as a placement of lines. A language
+// is any of English's table of names (`checkHasLanguageName`), every one
+// found the same way.
+const SLIDE_TRANSLATE_WORD_PATTERN = /translat|language/i;
+
+function checkHasTranslateWord(text: string) {
+    return (
+        SLIDE_TRANSLATE_WORD_PATTERN.test(text) || checkHasLanguageName(text)
+    );
+}
 const SLIDE_UNDER_WORD_PATTERN = /\b(?:under|below|beneath|underneath)\b/i;
 const SLIDE_ABOVE_WORD_PATTERN = /\b(?:above|over|on top of)\b/i;
 
@@ -434,7 +446,7 @@ export function readSlidePlacement(
     asked: string,
 ): keyof typeof SLIDE_PLACEMENT_HINT_MAP | null {
     const text = String(asked ?? '');
-    if (!SLIDE_TRANSLATE_WORD_PATTERN.test(text)) {
+    if (!checkHasTranslateWord(text)) {
         return null;
     }
     const isUnder = SLIDE_UNDER_WORD_PATTERN.test(text);
@@ -504,8 +516,9 @@ export const SLIDE_SYSTEM_PROMPT =
     'is wrong and say what you fixed. Words you can take from the slides ' +
     "are not new words: a translation of a box's words, those words fixed, " +
     'shortened or split, a title made from them. So "add English above the ' +
-    'Khmer" means: translate that Khmer into English yourself and write ' +
-    'each English line on the line above its Khmer line, in the same box -- ' +
+    'other language" means: translate those words into English yourself ' +
+    'and write each English line on the line above the line it translates, ' +
+    'in the same box -- ' +
     'do it, never ask them for the words. When a request has one sensible ' +
     'reading, do it rather than ask: every change can be undone. ' +
     'TRANSLATING has two ways and the person chooses: REPLACE the words ' +
@@ -552,7 +565,9 @@ export const SLIDE_SYSTEM_PROMPT =
     'or restyle the slides already there with update-slides when they ' +
     'asked for those to look like it. When they ask for slides like a ' +
     'picture and none is attached, ask them to attach one and end with ' +
-    'NEEDS: file. Never make up the words of a song, a sermon or a Bible ' +
+    'NEEDS: file. A Bible verse they name for a slide is read with ' +
+    'owa_find_verse `refs` and written as it reads there, its reference ' +
+    'under it. Never make up the words of a song, a sermon or a Bible ' +
     'verse: ask for words only when nothing on the slides, in their ' +
     'message or in their picture gives them. Boxes that are ' +
     'not text (pictures, videos, Bible passages) can be moved, resized or ' +
@@ -621,17 +636,53 @@ const SLIDE_SIZE_SHOWN_PAIRS = 4;
 const SIZE_FILLER_PATTERN =
     /\b(?:please|pls|all|the|every|each|of|on|in|to|a|bit|little|slides?|everywhere)\b/g;
 
+// The card buttons whose press the window does by itself: pressed in any
+// language they are asked in their English (`findWindowDoneCardAsk`), which
+// is what the readers below read.
+const WINDOW_DONE_CARD_KEY_LIST = [
+    'Make the words larger',
+    'Make the words smaller',
+    // An attached PowerPoint or Word file's card (EC-590): its song is
+    // drafted by the window, which reads the English ask.
+    'Make a song from it',
+    // A study card's verse check (EC-595) is the window's in part: it
+    // reads every verse the study cites before any model (EC-497), on
+    // an ask `checkIsNoteVerseCheckAsk` reads, which knows only a few
+    // languages' words for it.
+    'Check the Bible verses',
+];
+
 /**
- * The size request in `asked`, or null. English only, a short line and
- * nothing else in it: "make the words larger on slide 2", "make the title
- * larger" or "make it look nicer" are the assistant's -- they choose boxes.
- * A pressed card button asks its own English, so a press in any language is
- * read here.
+ * The English of a card button pressed in the window's language, when the
+ * window does that button's work itself, or null (2026-11-08, BN-16: a card
+ * keeps its buttons as the window shows them, so **Make the words larger**
+ * pressed in a non-English window had reached the assistant, its translated
+ * words no reader here knew).
+ */
+export function findWindowDoneCardAsk(pressed: string): string | null {
+    const text = String(pressed ?? '').trim();
+    return (
+        WINDOW_DONE_CARD_KEY_LIST.find((key) => {
+            return key !== text && tranLabel(key) === text;
+        }) ?? null
+    );
+}
+
+/**
+ * The size request in `asked`, or null. A short line and nothing else in
+ * it: "make the words larger on slide 2", "make the title larger" or "make
+ * it look nicer" are the assistant's -- they choose boxes. English in code;
+ * another language in its own words (`readLanguageSizeAsk`, its
+ * `assistant.json`), and a card button pressed in any language is asked in
+ * its English (`findWindowDoneCardAsk`).
  */
 export function readSlideSizeAsk(asked: string): SlideSizeAskType | null {
     const raw = String(asked ?? '').trim();
-    if (raw.length === 0 || raw.length > 80 || /\n/.test(raw)) {
+    if (raw.length === 0 || /\n/.test(raw)) {
         return null;
+    }
+    if (raw.length > 80) {
+        return toSlideSizeAsk(readLanguageSizeAsk(raw));
     }
     const words = raw
         .toLowerCase()
@@ -663,7 +714,29 @@ export function readSlideSizeAsk(asked: string): SlideSizeAskType | null {
             ? { kind: 'set', size }
             : null;
     }
-    return null;
+    return toSlideSizeAsk(readLanguageSizeAsk(raw));
+}
+
+/** A size asked in another language's words, as the English one reads. */
+function toSlideSizeAsk(
+    ask: LanguageSizeAskType | null,
+): SlideSizeAskType | null {
+    if (ask === null) {
+        return null;
+    }
+    if (ask.kind === 'set') {
+        return ask.size >= SLIDE_FONT_SIZE_MIN &&
+            ask.size <= SLIDE_FONT_SIZE_MAX
+            ? { kind: 'set', size: ask.size }
+            : null;
+    }
+    return {
+        kind: 'scale',
+        factor:
+            ask.kind === 'smaller'
+                ? SLIDE_SIZE_SMALLER_FACTOR
+                : SLIDE_SIZE_LARGER_FACTOR,
+    };
 }
 
 export type SlideSizeChangeType = {
@@ -807,6 +880,9 @@ export function genSlideOpeningAnswer(
             tran('Check the spelling'),
             tran('Make the words larger'),
             tran('Make slides like a picture'),
+            // Its words made a song with no model (EC-590, the user:
+            // _after powerpoint to lyric then appdocument to lyric_).
+            tran('Make a song from it'),
         ],
         translateLanguage: target,
     };

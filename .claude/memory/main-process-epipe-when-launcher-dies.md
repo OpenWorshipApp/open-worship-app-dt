@@ -12,7 +12,7 @@ The dialog _A JavaScript error occurred in the main process — Uncaught
 Exception: Error: EPIPE: broken pipe, write … at console.log …
 ElectronSettingManager_ means the dev app's launcher went away while the app
 kept running: under `npm run dev` / `electron:dev`, Electron's main process
-runs under `electron/cli.js` started by nodemon (`electron:watch`); when
+runs under `node_modules/electron/cli.js` started by nodemon (`electron:watch`); when
 nodemon (or the terminal) is gone, stdout leads into a closed pipe and the
 next `console.log` (a settings save's `Setting saved`) raises EPIPE on the
 stream. With no listener that was an uncaught exception, and the main

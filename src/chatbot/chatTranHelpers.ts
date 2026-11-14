@@ -13,8 +13,7 @@
 //
 // Named `tran` on purpose: `src/lang/tranKeyCoverage.test.ts` reads every
 // call of that name with a literal key in `src/`, so each key here is held to
-// having its Khmer (and, through the Khmer file, its French) string like any
-// other label.
+// having its string in every language package like any other label.
 //
 // One rule for what may be translated where. Words CODE reads back -- an
 // action's label (`WALKTHROUGH_ACTION_PATTERN`, a typed reply matched to a
@@ -48,7 +47,7 @@ function readBibleKeyNameMap(locale: string | null | undefined) {
 
 /**
  * Plug the app's translators in. `strict` is the app's `tran()`, which throws
- * in dev on a key no dictionary has -- a missing Khmer string is found at once
+ * in dev on a key no dictionary has -- a missing translated string is found at once
  * -- and `lenient` answers a word that may or may not be a key (an action
  * label a model wrote, a window's name) with its translation or itself.
  */
@@ -126,8 +125,9 @@ function normalizeBibleName(text: string) {
 
 /**
  * The key this language knows a Bible by, matched on the NAME its edition
- * carries: `Khmer 2012 (Khmer Christian Bible)` is this app's `KCB`, and
- * `Khmer 2023 (<its own name in Khmer>)` its `GKHB`. Null for an edition no
+ * carries: `<Language> 2012 (<its name in English>)` is the short name the
+ * language's `bibleKeyMap.json` gives that name, and `<Language> 2023 (<its
+ * own name in its language>)` another. Null for an edition no
  * language pack names -- most files of the free collection -- because a
  * guessed name is worse than none.
  *
@@ -135,8 +135,8 @@ function normalizeBibleName(text: string) {
  * the name fits too -- and the longest that fits wins, so `New King James
  * Version` is not read as the KJV. Names shorter than five characters are
  * never matched: they are initials, and initials occur by accident. A title
- * shorter than the name is never a match: `Khmer` alone would claim every
- * named Khmer edition.
+ * shorter than the name is never a match: a language's name alone would
+ * claim every named edition in it.
  */
 export function findChatBibleKeyByName(
     title: string,

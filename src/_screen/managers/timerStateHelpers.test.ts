@@ -8,8 +8,11 @@ import {
     genStopwatchTiming,
     getCountdownState,
     getStopwatchState,
+    toCountdownClockText,
     toCountdownMillisecondToNextChange,
+    toCountdownRemainingMillisecond,
     toCountdownShownSecond,
+    toLongerCountdownData,
     toPausedCountdownData,
     toPausedStopwatchData,
     toResetCountdownData,
@@ -125,6 +128,65 @@ describe('countdown state', () => {
         expect(describeCountdown({ dateTime: new Date('x') }, NOW)).toBe(
             'countdown',
         );
+    });
+
+    test('says the days of a countdown a day or more away, as the wall does', () => {
+        expect(toCountdownClockText(86_399)).toBe('23:59:59');
+        expect(toCountdownClockText(86_400)).toBe('1d 00:00:00');
+        expect(toCountdownClockText(41 * 86_400 + 64_492)).toBe('41d 17:54:52');
+        const far = genCountdownTiming(25 * 3600 + 7, false, NOW);
+        expect(describeCountdown(far, NOW)).toBe(
+            'countdown of 1d 01:00:07, shown but not started',
+        );
+    });
+
+    test('names the day of a countdown that ends on another (EC-580)', () => {
+        const christmas = new Date(2026, 11, 25, 9, 0, 0, 0);
+        expect(describeCountdown({ dateTime: christmas }, NOW)).toBe(
+            `countdown to ${christmas.toLocaleTimeString()} on ` +
+                `${christmas.toDateString()}`,
+        );
+    });
+
+    // EC-526: "add 2 more minutes" to a countdown that is up.
+    test('more time is added where the countdown is, its clock changed in place', () => {
+        const running = toStartedCountdownData(
+            genCountdownTiming(300, false, NOW),
+            NOW,
+        );
+        // 1:51 run, 3:09 left: 5:09 left after two more minutes.
+        const longer = toLongerCountdownData(running, 120_000, NOW + 111_000);
+        expect(toCountdownRemainingMillisecond(longer, NOW + 111_000)).toBe(
+            309_000,
+        );
+        expect(getCountdownState(longer)).toBe('running');
+        expect(checkIsSameTimerExceptTiming(running, longer)).toBe(true);
+
+        const paused = toPausedCountdownData(running, NOW + 11_000);
+        const pausedLonger = toLongerCountdownData(paused, 120_000);
+        expect(pausedLonger.pausedMillisecond).toBe(409_000);
+        expect(getCountdownState(pausedLonger)).toBe('paused');
+        expect(checkIsSameTimerExceptTiming(paused, pausedLonger)).toBe(true);
+
+        // Over and counting the time over: two minutes from now.
+        const over = toLongerCountdownData(running, 120_000, NOW + 400_000);
+        expect(toCountdownRemainingMillisecond(over, NOW + 400_000)).toBe(
+            120_000,
+        );
+
+        // Not started: that much longer, and Reset winds back to it.
+        const waiting = genCountdownTiming(300, false, NOW);
+        const waitingLonger = toLongerCountdownData(waiting, 60_000, NOW);
+        expect(getCountdownState(waitingLonger)).toBe('not-started');
+        expect(toResetCountdownData(waitingLonger, NOW).pausedMillisecond).toBe(
+            360_000,
+        );
+
+        // To a time of day: that time moves.
+        const target = { dateTime: new Date(NOW + 600_000) };
+        expect(
+            toLongerCountdownData(target, 300_000, NOW).dateTime.getTime(),
+        ).toBe(NOW + 900_000);
     });
 });
 

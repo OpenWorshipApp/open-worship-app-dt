@@ -25,30 +25,30 @@ describe('toUnicodeRange', () => {
 describe('readLanguageFontFiles', () => {
     const CSS = `
         @font-face {
-            font-family: app-Battambang;
-            src: url(/fonts/Battambang-Regular.ttf) format("truetype");
+            font-family: app-Xx-Face;
+            src: url(/fonts/XxFace-Regular.ttf) format("truetype");
             font-weight: normal;
         }
         @font-face {
-            font-family: app-Battambang;
-            src: url(/fonts/Battambang-Bold.ttf) format("truetype");
+            font-family: app-Xx-Face;
+            src: url(/fonts/XxFace-Bold.ttf) format("truetype");
             font-weight: bold;
         }
         @font-face {
-            font-family: app-Battambang;
-            src: url(/fonts/Battambang-Light.ttf) format("truetype");
+            font-family: app-Xx-Face;
+            src: url(/fonts/XxFace-Light.ttf) format("truetype");
             font-weight: 300;
         }
         @font-face {
-            font-family: km-font-Fasthand;
+            font-family: xx-font-Fasthand;
             src: url(/fonts/Fasthand.ttf) format("truetype");
             font-weight: normal;
         }`;
 
     it('takes the regular and bold files of the face, nothing else', () => {
-        expect(readLanguageFontFiles(CSS, 'app-Battambang')).toEqual([
-            { url: '/fonts/Battambang-Regular.ttf', weight: '400' },
-            { url: '/fonts/Battambang-Bold.ttf', weight: '700' },
+        expect(readLanguageFontFiles(CSS, 'app-Xx-Face')).toEqual([
+            { url: '/fonts/XxFace-Regular.ttf', weight: '400' },
+            { url: '/fonts/XxFace-Bold.ttf', weight: '700' },
         ]);
         expect(readLanguageFontFiles(CSS, 'nothing')).toEqual([]);
     });
@@ -169,8 +169,8 @@ describe('genGuestFontScript', () => {
             { data: btoa('r'), weight: '400' },
             { data: btoa('bb'), weight: '700' },
         ],
-        'app-Battambang',
-        'U+1780-17FF, U+19E0-19FF',
+        'app-Xx-Face',
+        'U+2600-26FF, U+2700-27BF',
     );
     const genFace = (overrides: Partial<FakeFaceType>): FakeFaceType => {
         return {
@@ -186,7 +186,7 @@ describe('genGuestFontScript', () => {
 
     it('hands the bytes over and fetches nothing', () => {
         expect(SCRIPT).toContain('new FontFace(name, buffer');
-        expect(SCRIPT).toContain('"U+1780-17FF, U+19E0-19FF"');
+        expect(SCRIPT).toContain('"U+2600-26FF, U+2700-27BF"');
         expect(SCRIPT).not.toMatch(/fetch\(|url\(/);
     });
 
@@ -207,10 +207,10 @@ describe('genGuestFontScript', () => {
         // Its body's first face took the language's: no body rule.
         expect(page.run()).toBe('');
         expect(page.added()).toEqual([
-            'app-Battambang | 400 | normal | U+1780-17FF, U+19E0-19FF | 1',
-            'app-Battambang | 700 | normal | U+1780-17FF, U+19E0-19FF | 2',
-            'anthropic-sans | 300 800 | normal | U+1780-17FF, U+19E0-19FF | 1',
-            'Heavy Face | 700 | normal | U+1780-17FF, U+19E0-19FF | 2',
+            'app-Xx-Face | 400 | normal | U+2600-26FF, U+2700-27BF | 1',
+            'app-Xx-Face | 700 | normal | U+2600-26FF, U+2700-27BF | 2',
+            'anthropic-sans | 300 800 | normal | U+2600-26FF, U+2700-27BF | 1',
+            'Heavy Face | 700 | normal | U+2600-26FF, U+2700-27BF | 2',
         ]);
     });
 
@@ -222,7 +222,7 @@ describe('genGuestFontScript', () => {
         page.load(serif);
         page.load({ ...serif });
         expect(page.added().slice(2)).toEqual([
-            'anthropic-serif | 300 800 | normal | U+1780-17FF, U+19E0-19FF | 1',
+            'anthropic-serif | 300 800 | normal | U+2600-26FF, U+2700-27BF | 1',
         ]);
         expect(page.run()).toBeNull();
         expect(page.added()).toHaveLength(3);
@@ -304,13 +304,13 @@ describe('applyGuestLanguageFont', () => {
 
     const useFont = () => {
         setLanguageFont({
-            family: 'app-Battambang',
+            family: 'app-Xx-Face',
             css: `@font-face {
-                font-family: app-Battambang;
-                src: url(/fonts/Battambang-Regular.ttf) format("truetype");
+                font-family: app-Xx-Face;
+                src: url(/fonts/XxFace-Regular.ttf) format("truetype");
                 font-weight: normal;
             }`,
-            unicodeRange: 'U+1780-17FF',
+            unicodeRange: 'U+2600-26FF',
         });
         return vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
             return new Response(new Uint8Array([1, 2, 3]));
@@ -327,7 +327,7 @@ describe('applyGuestLanguageFont', () => {
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(guest.executeJavaScript).toHaveBeenCalledTimes(2);
         expect(guest.insertCSS).toHaveBeenCalledWith(
-            'body { font-family: "app-Battambang", anthropic-sans, system-ui; }',
+            'body { font-family: "app-Xx-Face", anthropic-sans, system-ui; }',
         );
     });
 
@@ -363,7 +363,7 @@ describe('applyGuestLanguageFont', () => {
         });
         const { guest, element } = genGuest(false);
         await expect(applyGuestLanguageFont(element)).resolves.toBeUndefined();
-        expect(fetchSpy).toHaveBeenCalledWith('/fonts/Battambang-Regular.ttf');
+        expect(fetchSpy).toHaveBeenCalledWith('/fonts/XxFace-Regular.ttf');
         // Only the mark was read: no font script, no style rule.
         expect(guest.executeJavaScript).toHaveBeenCalledTimes(1);
         expect(guest.insertCSS).not.toHaveBeenCalled();
@@ -373,7 +373,7 @@ describe('applyGuestLanguageFont', () => {
         });
         await applyGuestLanguageFont(element);
         expect(guest.insertCSS).toHaveBeenCalledWith(
-            'body { font-family: "app-Battambang", anthropic-sans, system-ui; }',
+            'body { font-family: "app-Xx-Face", anthropic-sans, system-ui; }',
         );
     });
 
@@ -385,7 +385,7 @@ describe('applyGuestLanguageFont', () => {
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(guest.insertCSS).toHaveBeenNthCalledWith(
             1,
-            'body { font-family: "app-Battambang", anthropic-sans, system-ui; }',
+            'body { font-family: "app-Xx-Face", anthropic-sans, system-ui; }',
         );
         expect(guest.insertCSS).toHaveBeenNthCalledWith(
             2,

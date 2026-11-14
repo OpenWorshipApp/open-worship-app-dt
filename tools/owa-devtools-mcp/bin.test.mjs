@@ -25,6 +25,22 @@ vi.mock('./server.mjs', () => ({
 }));
 
 const saved = { argv: process.argv, title: process.title };
+// Node ignores a write to `process.title` in a worker thread, which is where
+// the suite runs (`pool: 'threads'`), so bin.mjs is handed a `process` that
+// keeps the title it is given -- everything else is the real process.
+const titleHolder = { title: saved.title };
+const processKeepingTitle = new Proxy(process, {
+  get: (target, key) => {
+    return key === 'title' ? titleHolder.title : Reflect.get(target, key);
+  },
+  set: (target, key, value) => {
+    if (key === 'title') {
+      titleHolder.title = String(value);
+      return true;
+    }
+    return Reflect.set(target, key, value);
+  },
+});
 const servers = [];
 const sockets = [];
 
@@ -67,6 +83,8 @@ let errorLog;
 beforeEach(() => {
   mocks.transports.length = 0;
   errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
+  titleHolder.title = saved.title;
+  vi.stubGlobal('process', processKeepingTitle);
 });
 
 afterEach(async () => {
@@ -83,6 +101,7 @@ afterEach(async () => {
       });
     }),
   );
+  vi.unstubAllGlobals();
 });
 
 describe('the stdio door', () => {

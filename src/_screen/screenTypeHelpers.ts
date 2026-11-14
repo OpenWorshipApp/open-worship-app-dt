@@ -169,9 +169,10 @@ export type ForegroundCountdownDataType = ForegroundLayerDataType & {
     /**
      * Which SESSION of the widget put this up. A session is one saved set-up of
      * the panel -- its own words or numbers and its own Properties -- and it is
-     * what the panel's session strip marks as being on a screen. Only one of
-     * these can be up at a time, so a new one REPLACES whatever was there,
-     * whichever session owned it; an entry with no id is the Default session's.
+     * what the panel's session strip marks as being on a screen. Each session
+     * has its OWN entry on a screen: a session's Show replaces only what that
+     * session had up, and leaves every other session's beside it (see
+     * `ForegroundDataType`). An entry with no id is the Default session's.
      */
     id?: string;
     /**
@@ -306,8 +307,21 @@ export type ForegroundQuickTextDataType = ForegroundLayerDataType & {
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
+    /**
+     * Stays up until a person hides it; `timeSecondToLive` is then not read.
+     * Written only when true (`toQuickTextInfinitePart`), so an entry saved
+     * before it compares the same.
+     */
+    isInfinite?: boolean;
     extraStyle?: CSSProperties;
 };
+
+/** `isInfinite` for a quick text datum: the key only when it is true. */
+export function toQuickTextInfinitePart(
+    isInfinite: boolean | undefined,
+): Pick<ForegroundQuickTextDataType, 'isInfinite'> {
+    return isInfinite === true ? { isInfinite: true } : {};
+}
 export type ForegroundCameraDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
@@ -402,14 +416,23 @@ export type ForegroundImageDataType = ForegroundLayerDataType & {
     id?: string;
     extraStyle?: CSSProperties;
 };
+/**
+ * Every session of a widget owns its own overlay on a screen (2026-11-09, the
+ * user: _each session of all foreground components should own it's screen
+ * render_ -- a Quick Text of Matthew up, then Session 6's shown beside it
+ * rather than over it). The countdown, stopwatch, marquees and quick text
+ * held ONE datum per screen until then, so a second session's Show took the
+ * first one down. Each list holds at most one item per session, keyed by the
+ * datum's `id` (none for the Default session -- `toSessionDataKey`).
+ */
 export type ForegroundDataType = {
     messageDataList: ForegroundMessageDataType[];
-    countdownData: ForegroundCountdownDataType | null;
-    stopwatchData: ForegroundStopwatchDataType | null;
+    countdownDataList: ForegroundCountdownDataType[];
+    stopwatchDataList: ForegroundStopwatchDataType[];
     timeDataList: ForegroundTimeDataType[];
-    marqueeTopData: ForegroundMarqueeDataType | null;
-    marqueeBottomData: ForegroundMarqueeDataType | null;
-    quickTextData: ForegroundQuickTextDataType | null;
+    marqueeTopDataList: ForegroundMarqueeDataType[];
+    marqueeBottomDataList: ForegroundMarqueeDataType[];
+    quickTextDataList: ForegroundQuickTextDataType[];
     cameraDataList: ForegroundCameraDataType[];
     screenDataList: ForegroundScreenDataType[];
     webDataList: ForegroundWebDataType[];

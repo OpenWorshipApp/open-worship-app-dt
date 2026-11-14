@@ -6,6 +6,36 @@ evidence, so a future run can weigh it without re-deriving it.
 
 Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
+### MC-64 — the server outside the checkout: npm `open-worship-app-mcp` and an executable in the extra-bin pack, one behaviour · done 2026-11-13
+
+The user: _add `npm run build-open-worship-app-mcp` to bundle all owa-mcp … to
+../owa-mcp-dist_, a complete npm package found by the app as it starts; then
+_as an ai user I want to install open-worship-app's extra-bin and have the
+executable mcp binarry file ready_; _npm mcp and the single executable have
+to be no different functionalities_; _make sure the npm package export
+typescript and javascript api as well_. One staging function
+(`extra-work/mcp-dist/mcpRuntimeTree.mjs`) feeds both; the executable is a
+Node single executable built at pack time (extra-bin 0.0.6), whose bootstrap
+loads `bin.mjs` from disk; the npm build's verify step builds one from the
+same tree and fails on any difference in `tools/list` or the offline answers.
+The API (`index.mjs` + `index.d.mts`, `stdio.mjs` / `bridge.mjs` split out of
+`bin.mjs`) strips `mcpToken`. **Cost to the model:** none -- no tool, schema
+or description changed. **Size:** the pack 36.9 → 96.4 MB with Node 26 on a
+Mac (the Node binary is most of it). **Seen live 2026-11-13** on a scratch
+dev profile: pack installed from Settings, the **AI agents (MCP)** row in
+English and Khmer, Copy / Copy JSON, the executable finding the app, a
+screenshot, a Settings tab press, _Delete everything_ and `evaluate_script`
+refused, Claude Code reporting it connected (W-62, `ST-93`). **The first
+real build's tests were green against the repo's node_modules and 25 files
+could not start in the dist's own install** (`jsdom`, `monaco-editor`, both
+reached only through other packages here), so the verify step now installs
+the tarball as a user and as the dist's developer would and runs the
+handshake and the tests there (`checkCleanInstalls`), and the shipped tests'
+imports and environment pragmas must be declared (`checkTestPackages`).
+**Not yet seen:** Windows and Linux packs (built by hand on each OS at
+release), Claude Desktop / Cursor, an update from 0.0.5. Memory
+`mcp-two-distributions`.
+
 ### MC-62 — `owa_find_verse` finds stories, a book named in the words and every verse · done 2026-10-22
 
 The chatbot skill's `EC-387`..`EC-391` (the user: _make the chatbot super

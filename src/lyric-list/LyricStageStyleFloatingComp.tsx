@@ -28,10 +28,13 @@ const LazyLyricStageStyleComp = lazy(() => {
  */
 export default function LyricStageStyleFloatingComp({
     ownerId,
+    songFilePath,
     onChanged,
     genStageBuiltInCss,
 }: Readonly<{
     ownerId: string;
+    // The song the panel is opened from: its own font is edited here too.
+    songFilePath?: string;
     onChanged: () => void;
     genStageBuiltInCss?: (stage: number) => string;
 }>) {
@@ -61,11 +64,13 @@ export default function LyricStageStyleFloatingComp({
                         keeps this widget mounted, so without it the body would
                         keep its `useState` and show the PREVIOUS stage's values
                         under the new stage's title — and the first drag would
-                        write them into the new stage's setting.
+                        write them into the new stage's setting. The song is
+                        in it too: the song's own font row belongs to ONE song.
                     */}
                     <LazyLyricStageStyleComp
-                        key={stage}
+                        key={`${songFilePath ?? ''}:${stage}`}
                         stage={stage}
+                        songFilePath={songFilePath}
                         onChanged={onChanged}
                         genStageBuiltInCss={genStageBuiltInCss}
                     />

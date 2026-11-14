@@ -464,7 +464,7 @@ describe('presenting-flow archives', () => {
                     target: { ...cross, chapterEnd: undefined },
                 },
                 { id: 2, bibleKey: 'KJV', target: { ...cross, chapterEnd: 2 } },
-                { id: 3, bibleKey: 'LSG', target: { ...cross } },
+                { id: 3, bibleKey: 'TQLS', target: { ...cross } },
                 { id: 4, bibleKey: 'KJV', target: { ...cross } },
             ],
             filePath: '/default',
@@ -616,7 +616,7 @@ describe('presenting-flow archives', () => {
         ).resolves.toBeNull();
         expect(mocks.toast).toHaveBeenLastCalledWith(
             'Import Presenting Flow',
-            'Unable to import the presenting flow',
+            'It did not work. Please try again.',
         );
         expect(mocks.hideProgress).toHaveBeenCalledTimes(3);
     });

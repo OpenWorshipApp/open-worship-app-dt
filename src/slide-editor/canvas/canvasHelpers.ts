@@ -319,13 +319,13 @@ export function genTextStyle(props: TextStylePropsType): CSSProperties {
         width: '100%',
         height: '100%',
         fontSize: `${props.fontSize}px`,
-        // Keep ascenders/combining marks visible for complex scripts (Khmer, etc.).
+        // Keep ascenders/combining marks visible for complex scripts.
         lineHeight: SCRIPT_SAFE_LINE_HEIGHT,
         // A box with no font of its own reads in the screen window's font,
         // not in whatever surrounds it: in the presenter and the editor that
         // is the app font (Settings -> Font Family), so the thumbnails and the
-        // mini preview drew it in, e.g., Battambang while the projector drew
-        // Segoe UI.
+        // mini preview drew it in, e.g., a language's own face while the
+        // projector drew Segoe UI.
         fontFamily: props.fontFamily || SCREEN_FONT_FAMILY,
         fontWeight: props.fontWeight ?? '',
         color: props.color,

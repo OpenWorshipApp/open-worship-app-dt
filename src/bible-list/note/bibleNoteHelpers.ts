@@ -39,14 +39,20 @@ import {
     initAllLangCss,
     tran,
 } from '../../lang/langHelpers';
+import {
+    genLangEditorFontFamilies,
+    genLangStickyNoteFontFamilies,
+} from '../../lang/langFontListHelpers';
 import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
 import { registerNoteHeadChangedListener } from './noteHeadChangeHelpers';
+import { setNoteWindowController } from './noteWindowControllerHelpers';
 import {
     genPreviewSettingStore,
     lockBibleNoteReadOnly,
 } from './bibleNoteReadOnlyHelpers';
 import { acquireLookupData } from '../../location-name-lookup/lookupDataHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
+import { toEmoticonSafeText } from '../../helper/noteEmoticonHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
@@ -196,6 +202,13 @@ export function checkIsEmptyNoteContent(content: string) {
  */
 const EDITING_HISTORY_DEBOUNCE_MILLISECOND = 1_000;
 
+/**
+ * How long a change the help window put into the editor waits for the editor
+ * to hand it back through `saveData` -- it does at once; this is only for an
+ * editor that never answers.
+ */
+const OUTSIDE_WRITE_WAIT_MILLISECOND = 3_000;
+
 // The window's pending history write, on demand: the footer's 🤖 hands the note
 // to the help window, which reads the editing HEAD -- the last second of
 // typing must be in it first. One editor a window, so one slot.
@@ -300,7 +313,9 @@ async function shortToVerseData(shortVerse: string) {
     const selectedBibleKey = getBibleNoteSelectedBibleKey();
     bibleItem.bibleKey = selectedBibleKey;
     const title = await bibleItem.toTitle();
-    const fullText = await bibleItem.toFullText();
+    // The editor's EmojisPlugin turns the KJV's ":)" into a smiley -- Luke
+    // 2:4 printed "David🙂" (BN-240): the Bible's words, parted unseen.
+    const fullText = toEmoticonSafeText(await bibleItem.toFullText());
     const fontFamily = await getBibleFontFamily(selectedBibleKey);
     const data = { title, fullText, style: { fontFamily } };
     return data;
@@ -429,22 +444,13 @@ export async function initBibleNote({
 }>) {
     void initAllLangCss();
     const langDataList = await getAllLangsAsync();
-    const stickyNoteExtraFontFamilies = langDataList
-        .filter((langData) => {
-            return langData.stickyNoteFontFamily !== undefined;
-        })
-        .map((langData) => langData.stickyNoteFontFamily!);
+    // Every font the language packages ship, in both of the editor's font
+    // pickers -- each package's `@font-face` rules are registered above, so
+    // a family picked here is drawn at once.
+    const stickyNoteExtraFontFamilies =
+        genLangStickyNoteFontFamilies(langDataList);
     const editorExtraFontFamilies: ReadonlyArray<[string, string]> =
-        langDataList
-            .filter((langData) => {
-                return langData.fontFamily !== undefined;
-            })
-            .map((langData) => {
-                return [langData.fontFamily!, langData.langCode] as [
-                    string,
-                    string,
-                ];
-            });
+        genLangEditorFontFamilies(langDataList);
 
     const getLangCode = (text: string) => {
         const currentLangData = langDataList.find((langData) => {
@@ -474,13 +480,29 @@ export async function initBibleNote({
         EDITING_HISTORY_DEBOUNCE_MILLISECOND,
     );
     let pendingHistoryItem: NoteItem | null = null;
+    // BN-237 (2026-11-13): a head read while this window kept something
+    // newer is let go. The help window's change landed here a second after
+    // the one before it, while the head-change reload of THAT one was
+    // reading the head: the read came back with the change before, was put
+    // into the shared item, and the new change's own history write then
+    // kept the old words under a new date -- answered "block 36: new
+    // words" and never written (two such of 170 follow-up changes, each a
+    // fix the window had asked for). So every change kept here counts, and
+    // a write on its way is waited for before the head is read.
+    let localWriteCount = 0;
+    let historyWrite: Promise<void> = Promise.resolve();
     const writeEditingHistory = async () => {
         const itemToWrite = pendingHistoryItem;
         if (itemToWrite === null) {
             return;
         }
         pendingHistoryItem = null;
-        await note.addItemEditingHistory(itemToWrite);
+        const write = note.addItemEditingHistory(itemToWrite);
+        historyWrite = Promise.resolve(write).then(
+            () => {},
+            () => {},
+        );
+        await write;
     };
     flushPendingHistory = writeEditingHistory;
     // A window closed a moment after the last letter must not lose it. Nothing
@@ -500,6 +522,9 @@ export async function initBibleNote({
         storageManager,
         editorKeySeenMap,
     );
+    // A change the help window's note conversation put into the editor
+    // (`writeContent` below) waits here for the editor to hand it back.
+    let handleOutsideWriteSaved: ((isChanged: boolean) => void) | null = null;
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
@@ -516,9 +541,11 @@ export async function initBibleNote({
             // hold the one value the editor refuses to load back.
             const newContent = toStoredContent(data);
             if (newContent === noteItem.content) {
+                handleOutsideWriteSaved?.(false);
                 return;
             }
             noteItem.content = newContent;
+            localWriteCount += 1;
             // The EDITING HISTORY, never the file: the editor saves itself
             // constantly and saves whatever state it is in, so a bad moment
             // used to reach the disk with nothing to undo it. The human
@@ -526,6 +553,7 @@ export async function initBibleNote({
             note.updateNoteItem(noteItem, true);
             pendingHistoryItem = noteItem;
             historyAttemptTimeout(writeEditingHistory);
+            handleOutsideWriteSaved?.(true);
         },
         // A preview's lock is the host's, never the user's preference.
         storageManager: (isReadOnly
@@ -555,20 +583,45 @@ export async function initBibleNote({
     // note B changes within the debounce window
     const attemptTimeout = genTimeoutAttempt(1_000);
     const abortController = new AbortController();
-    const reloadNote = async (isHeadChange: boolean) => {
+    // A head another window wrote and this one has not shown yet: it waits
+    // for the debounce and, in a focused window, for typing to settle --
+    // seconds in which the help window's next read found the state before
+    // an undo and its edit was refused as stale (BN-28, 2026-11-08). A read
+    // or change asked of this window takes it at once (`flush`): asked from
+    // the help window, nobody is typing here.
+    let isHeadChangePending = false;
+    const reloadNote = async (isHeadChange: boolean, isAsked = false) => {
         // The wait protects typing in progress from being overwritten; a
         // preview has none, and following the file as it changes is the
         // point of keeping one open.
-        if (!isReadOnly && (bibleNote.getIsFocusing() || document.hasFocus())) {
+        if (
+            !isAsked &&
+            !isReadOnly &&
+            (bibleNote.getIsFocusing() || document.hasFocus())
+        ) {
             await new Promise((resolve) => {
                 setTimeout(resolve, 3_000);
             });
         }
+        if (isHeadChange) {
+            isHeadChangePending = false;
+        }
+        // What this window kept and has not written yet, or is writing,
+        // goes into the head before it is read (BN-237).
+        if (!isReadOnly) {
+            await writeEditingHistory();
+            await historyWrite;
+        }
+        const writeCountBefore = localWriteCount;
         // The EDITING head, not the file: an item added or a verse marked
         // from the list rebases that head onto the new file, so what comes
         // back here still carries this window's own unsaved text instead of
         // wiping it.
         await (isReadOnly ? note.reload() : note.reloadEditing());
+        // A change kept here while the head was read is newer than the read.
+        if (localWriteCount !== writeCountBefore) {
+            return;
+        }
         const newNoteItem = note.getItemById(noteItem.id);
         if (newNoteItem === null) {
             return;
@@ -589,6 +642,59 @@ export async function initBibleNote({
         }
         bibleNote.content = toEditorContent(newContent);
     };
+
+    // The help window's note conversation reads and changes THIS note
+    // through this editor -- what the person sees, unsaved typing and all --
+    // never the file behind their back (`noteWindowControllerHelpers.ts`).
+    setNoteWindowController({
+        filePath: note.filePath,
+        noteId: noteItem.id,
+        isReadOnly,
+        // Until the editor has mounted it reads '', and what it was handed
+        // is what it shows.
+        isMounted: () => {
+            return bibleNote.content !== '';
+        },
+        readContent: () => {
+            const shownContent = bibleNote.content;
+            return shownContent === ''
+                ? noteItem.content
+                : toStoredContent(shownContent);
+        },
+        writeContent: async (content: string) => {
+            if (isReadOnly) {
+                return false;
+            }
+            const contentBefore = noteItem.content;
+            const isSaved = await new Promise<boolean>((resolve) => {
+                const timeoutId = setTimeout(() => {
+                    handleOutsideWriteSaved = null;
+                    resolve(false);
+                }, OUTSIDE_WRITE_WAIT_MILLISECOND);
+                handleOutsideWriteSaved = (isChanged) => {
+                    clearTimeout(timeoutId);
+                    handleOutsideWriteSaved = null;
+                    resolve(isChanged);
+                };
+                // The editor's own way in: one step of its Undo, then its
+                // `saveData` above, as for typing.
+                bibleNote.content = toEditorContent(content);
+            });
+            // Kept now, not a second from now: the answer's undo and the
+            // next read go by the editing history.
+            await writeEditingHistory();
+            return isSaved || noteItem.content !== contentBefore;
+        },
+        // A head another window wrote is shown first (BN-28), then what was
+        // typed and not kept yet is kept.
+        flush: async () => {
+            if (isHeadChangePending) {
+                await reloadNote(true, true);
+            }
+            await writeEditingHistory();
+        },
+    });
+
     try {
         appProvider.fileUtils.watch(
             note.filePath,
@@ -627,6 +733,7 @@ export async function initBibleNote({
                 });
                 return;
             }
+            isHeadChangePending = true;
             attemptTimeout(() => {
                 return reloadNote(true);
             });

@@ -9,7 +9,8 @@ A note file (`.own`) now holds two kinds of item. An item with a `verseKey`
 (`"(KJV) GEN 22:1"`) is a **verse item**: the highlights and comments made on that
 one verse, each with its own uuid and `[start, end]` character offsets. Everything
 without a `verseKey` is an ordinary bible note and behaves as it always did. Written
-by `src/bible-list/note/verseAnnotationHelpers.ts`, always into `Note.getDefault()`.
+by `src/bible-list/note/verseAnnotationHelpers.ts`, always into `Note.getDefault({ isBaseSession: true })`: the Default note of the
+Default SESSION, whatever session the Bible Notes list is on ([[file-list-folder-sessions]]).
 
 **Why:** the user asked for marks to live in Bible Notes rather than in a parallel
 store, so they ride the existing save, watch, archive and backup machinery and show up

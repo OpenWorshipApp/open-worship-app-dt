@@ -14,9 +14,10 @@
 // --asks=<file.json> asks a short list of questions the corpus does not have
 // (2026-10-16): each is TYPED, so each joins the window's Alt+Up history.
 //
-// --lang=km asks every question in the app's OWN language (2026-10-17, the
-// user's ask: _test model gemma4:cloud on Khmer all questions_): the words
-// are each row's translation in `src/lang/data/<lang>/questions.json`, pressed in the
+// --lang=<code> asks every question in the app's OWN language (2026-10-17, the
+// user's ask: every question on gemma4:cloud in the app's non-English
+// language): the words are each row's translation in
+// `src/lang/data/online/<code>/questions.json`, pressed in the
 // More… list as that window draws it, and the app must already be shown in
 // that language. The head row's pickers are found by what they HOLD (focus
 // keys, Free/Auto, the engine), never by their aria-labels, which are
@@ -1566,7 +1567,8 @@ for (const row of rows) {
     }
     // In any language: no model round and a note under the answer is the
     // guide standing in for an assistant that failed (2026-10-17: LM Studio
-    // could not load a model, said in Khmer, and the row was kept as answered).
+    // could not load a model, said in the app's language, and the row was kept
+    // as answered).
     if (
         !OFFLINE &&
         !record.error &&

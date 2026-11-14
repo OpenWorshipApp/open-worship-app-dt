@@ -208,6 +208,10 @@ export type LangUtilsType = {
     getLangData: (langCode: string) => Promise<LanguageDataType | null>;
     // One of the plugin's own `*.json` files, parsed, or null.
     readLangPluginJson: (langCode: string, fileName: string) => Promise<any>;
+    // Where this window fetches the plugin's assets from (the folder, with
+    // its trailing `/`): what its factory's `host.assetUrl` resolves against,
+    // so a font read off `langFacts.json` is the same address (EN-59).
+    getLangAssetBaseUrl?: (langCode: string) => string;
     // `<data folder>/lang`, where Settings > Languages installs; null when the
     // window cannot write there (a remote viewer).
     getLangPluginsDirPath: () => string | null;

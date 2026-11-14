@@ -438,4 +438,45 @@ describe('a word in quotes', () => {
             ),
         ).toBe('ចុច "ខគម្ពីររបស់វា" ដើម្បីអាន។');
     });
+
+    // Seen live 2026-11-13 (EC-562): after the clock was taken off, a Khmer
+    // answer sent its reader to a button "show" -- the tool's action word.
+    const translateButtonWord = (label: string) => {
+        return ({ Show: 'បង្ហាញ' } as Record<string, string>)[label] ?? label;
+    };
+
+    test('a single word right after the word for a button is that button', () => {
+        expect(
+            toAnswerShownInLanguage(
+                'ដើម្បីដាក់វាឱ្យបង្ហាញឡើងវិញ អ្នកអាចចុចប៊ូតុង "show" បាន។',
+                'km',
+                translateButtonWord,
+            ),
+        ).toBe('ដើម្បីដាក់វាឱ្យបង្ហាញឡើងវិញ អ្នកអាចចុចប៊ូតុង "បង្ហាញ" បាន។');
+        expect(
+            toAnswerShownInLanguage(
+                'ចុចប៊ូតុង “Show” ម្ដងទៀត។',
+                'km',
+                translateButtonWord,
+            ),
+        ).toBe('ចុចប៊ូតុង "បង្ហាញ" ម្ដងទៀត។');
+    });
+
+    test('after the word for a button, a word the dictionary does not know stays', () => {
+        expect(
+            toAnswerShownInLanguage(
+                'ចុចប៊ូតុង "sparkle" ម្ដងទៀត។',
+                'km',
+                translateButtonWord,
+            ),
+        ).toBe('ចុចប៊ូតុង "sparkle" ម្ដងទៀត។');
+        // Not after a button word: a word being discussed.
+        expect(
+            toAnswerShownInLanguage(
+                'ពាក្យ "show" មានន័យថាបង្ហាញ។',
+                'km',
+                translateButtonWord,
+            ),
+        ).toBe('ពាក្យ "show" មានន័យថាបង្ហាញ។');
+    });
 });

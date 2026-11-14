@@ -26,7 +26,7 @@ describe('a reply from the interpreter', () => {
     });
 
     test('a link that is no address is no value, and the question keeps waiting', () => {
-        const typed = 'https://exa mple.org/bibles/khmer.xml';
+        const typed = 'https://exa mple.org/bibles/sample.xml';
         expect(
             readWaitingInputReply(
                 JSON.stringify({ kind: 'value', value: typed }),
@@ -35,7 +35,7 @@ describe('a reply from the interpreter', () => {
             ),
         ).toBeNull();
         // The same reply with a real address is the value.
-        const good = 'https://example.org/bibles/khmer.xml';
+        const good = 'https://example.org/bibles/sample.xml';
         expect(
             readWaitingInputReply(
                 JSON.stringify({ kind: 'value', value: good }),

@@ -3,7 +3,7 @@ id: W-13
 title: "Références croisées"
 section: "Étude de la Bible"
 lang: fr
-translatedFrom: b523d9fb4ef23857
+translatedFrom: 190d8f7cc8f2fd8e
 ---
 # W-13 — Références croisées
 
@@ -42,6 +42,6 @@ translatedFrom: b523d9fb4ef23857
    ouvrir la page qui explique ce que cela vous coûte en exactitude. Sur une traduction dont les titres de thèmes
    ont été traduits automatiquement, chaque titre porte son propre bouton **traduire**
    (**[en:tran:Generated using Google Translate.]**) qui le signale — sur une Bible anglaise, rien n'a été traduit et la marque est absente.
-7. Si vous avez mis votre propre clé OpenAI ou Anthropic dans les Paramètres, **Custom OpenAI** et
-   **Custom Anthropic** apparaissent en dessous comme des sections à part, chacune se repliant et s'actualisant
+7. Si vous avez mis votre propre clé OpenAI ou Anthropic dans les Paramètres, **OpenAI ([en:tran:Custom])** et
+   **Anthropic ([en:tran:Custom])** apparaissent en dessous comme des sections à part, chacune se repliant et s'actualisant
    de la même façon. La section au-dessus d'elles n'a besoin d'aucune clé.

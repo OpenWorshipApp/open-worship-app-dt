@@ -84,7 +84,7 @@ describe('runMenuAction', () => {
         expect(mocks.handleError).toHaveBeenCalledWith(null);
         expect(mocks.showSimpleToast).toHaveBeenCalledWith(
             'tr:Import Data',
-            'Unable to complete Import Data',
+            'tr:It did not work. Please try again.',
         );
     });
 });

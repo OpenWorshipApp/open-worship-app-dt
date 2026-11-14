@@ -265,35 +265,35 @@ const foregroundClearMap: Record<
         label: 'Clear FG Marquee Top',
         badge: 'M↑',
         clear: (manager) => {
-            manager.setMarqueeTopData(null);
+            manager.removeSessionData('marqueeTopDataList', null);
         },
     },
     'marquee-bottom': {
         label: 'Clear FG Marquee Bottom',
         badge: 'M↓',
         clear: (manager) => {
-            manager.setMarqueeBottomData(null);
+            manager.removeSessionData('marqueeBottomDataList', null);
         },
     },
     'quick-text': {
         label: 'Clear FG Quick Text',
         badge: 'QT',
         clear: (manager) => {
-            manager.setQuickTextData(null);
+            manager.removeSessionData('quickTextDataList', null);
         },
     },
     countdown: {
         label: 'Clear FG Countdown',
         badge: 'CD',
         clear: (manager) => {
-            manager.setCountdownData(null);
+            manager.removeSessionData('countdownDataList', null);
         },
     },
     stopwatch: {
         label: 'Clear FG Stopwatch',
         badge: 'SW',
         clear: (manager) => {
-            manager.setStopwatchData(null);
+            manager.removeSessionData('stopwatchDataList', null);
         },
     },
     time: {

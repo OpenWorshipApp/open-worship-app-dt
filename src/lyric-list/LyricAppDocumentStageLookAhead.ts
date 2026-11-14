@@ -11,6 +11,7 @@ import {
 } from './lyricLookAheadHelpers';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 import { type LyricStepRefType } from './lyricStructureHelpers';
+import { ensureLyricStageSetting } from './lyricSongStageSettingHelpers';
 
 const EXTRA_SLIDE_KEYS = [
     OPEN_LYRIC_FIRST_KEY,
@@ -97,6 +98,7 @@ export function withLyricLookAhead<TBase extends StageClassType>(
         // deck: the one built ahead of the click while the song is held, else
         // a fresh build — which is then kept for the next click.
         async getSlideById(id: number) {
+            await ensureLyricStageSetting(this.filePath);
             const warmSlide = this.getWarmSlide(id);
             if (warmSlide !== null) {
                 return warmSlide;

@@ -48,7 +48,8 @@ describe('a question about what the Bible says', () => {
             ['Is there a verse about anger?', 'anger'],
             ['Find me a verse about patience', 'patience'],
             // A story by its name (EC-389): it went to the general
-            // assistant, and in Khmer named a book the Bible lacks.
+            // assistant, and in another language named a book the Bible
+            // lacks.
             [
                 'where in the bible is the story of the flood?',
                 'story of the flood',

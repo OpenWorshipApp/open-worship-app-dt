@@ -432,6 +432,7 @@ const EXCLUDED_LOCAL_KEY_LIST = [
     'setting-tab-request', // `src/setting/settingHelpers.ts`
     'setting-ai-key-focus', // `src/helper/ai/aiKeyFocusHelpers.ts`
     'chatbot-handoff-ask', // `src/helper/ai/chatbotHandoffStoreHelpers.ts`
+    'chatbot-handoff-bible-list', // the same, EC-760
     'bible-xml-import-request', // `bibleImportRequestHelpers.ts`
     'error-datetime-setting', // `src/others/main.tsx`
     // Conversations and what they cost: the user's data, not a preference,

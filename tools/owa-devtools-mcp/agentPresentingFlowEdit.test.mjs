@@ -177,4 +177,23 @@ describe('the policy around it', () => {
             'page',
         ]);
     });
+
+    it("keeps a foreground line's fields written beside it (EC-469)", () => {
+        const server = { registerTool: vi.fn() };
+        registerPresentingFlowEditTool(server);
+        const [, config] = server.registerTool.mock.calls[0];
+        const parsed = config.inputSchema.changes.parse([
+            {
+                add: {
+                    foreground: { widget: 'message' },
+                    text: 'Potluck after the service',
+                },
+                after: 0,
+            },
+        ]);
+        expect(parsed[0].add).toEqual({
+            foreground: { widget: 'message' },
+            text: 'Potluck after the service',
+        });
+    });
 });

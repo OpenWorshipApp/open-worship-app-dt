@@ -108,7 +108,7 @@ export default function InputHandlerComp({
     // interval re-asked `getBibleXMLDataFromKeyCaching` every 5 s to "keep
     // bible data in cache", against a 10 s cache whose expiry is absolute from
     // the write -- so every second tick MISSED and re-read and re-parsed the
-    // whole bible (4.7 MB KJV, 14.8 MB Khmer) on the main thread, with a
+    // whole bible (the KJV 4.7 MB, another 14.8 MB) on the main thread, with a
     // "Loading Bible Data" progress bar, for as long as this box was mounted
     // and nobody typed (`EN-11`). The 10 s cache serves a burst of keystrokes;
     // the first lookup after a pause pays one parse, which is the rule.

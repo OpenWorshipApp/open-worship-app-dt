@@ -434,20 +434,25 @@ async function startConvertingOfficeFile(
         try {
             slidesCount = await getSlidesCount(tempFilePath);
         } catch {}
-        const slideMessage = slidesCount
-            ? slidesCount + ' slides'
-            : 'unknown slides count';
+        // The one instruction that matters here is the last one, so it is
+        // said in the window's own language (EN-63).
         showSimpleToast(
             getWidgetTitle(),
-            `Document with ${slideMessage} is being converted. ` +
-                'Do not close application',
+            tran(
+                'Converting {name} to PDF. Do not close the app until it is done.',
+            ).replace('{name}', () => {
+                return toHtmlBold(fileFullName);
+            }),
         );
         const error = await convertToPdf(tempFilePath, targetPdfFilePath);
         if (error !== null) {
             showSimpleToast(
                 getWidgetTitle(),
-                `Failed to convert ${toHtmlBold(fileFullName)} to PDF. ` +
-                    `Error: ${error.message}`,
+                `${toHtmlBold(fileFullName)}: ` +
+                    tran(
+                        'Something wrong during converting, please try again.',
+                    ) +
+                    ` (${error.message})`,
             );
             return;
         }
@@ -455,13 +460,14 @@ async function startConvertingOfficeFile(
         if (slidesCount != null && pdfPagesCount !== slidesCount) {
             showSimpleToast(
                 getWidgetTitle(),
-                `Warning: Slides count mismatch. ` +
-                    `Original: ${slidesCount}, Converted: ${pdfPagesCount}`,
+                tran(
+                    'Something wrong during converting, please check converted file',
+                ) + ` (${slidesCount} → ${pdfPagesCount})`,
             );
         }
         showSimpleToast(
             getWidgetTitle(),
-            `${toHtmlBold(fileFullName)} is converted to PDF ` +
+            `${toHtmlBold(fileFullName)} — ${tran('File saved at:')} ` +
                 `"${targetPdfFilePath}"`,
         );
     } catch (error: any) {

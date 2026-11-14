@@ -3,7 +3,7 @@ id: W-23
 title: "Partager un seul document (chant, diapositives de prédication, PDF) avec une autre machine"
 section: "Configuration"
 lang: fr
-translatedFrom: 2185168b8aa54f3b
+translatedFrom: 6c42cea38ff72049
 ---
 # W-23 — Partager un seul document (chant, diapositives de prédication, PDF) avec une autre machine
 
@@ -26,7 +26,7 @@ voyage dans son propre paquet, avec tout ce qui lui est attaché.
    `.owadoc.tar.gz` (ou `.owadoc.enc`) depuis votre gestionnaire de fichiers sur la liste
    Documents**, ce qui l'importe de la même façon. Un paquet protégé demande d'abord son mot de
    passe ; un paquet ordinaire ne le demande jamais. 📸
-5. Le document apparaît dans le dossier de documents de cette machine sous son nom d'origine, avec
+5. Le document apparaît dans le dossier de documents de cette machine — celui que la liste affiche (W-58) — sous son nom d'origine, avec
    son arrière-plan rattaché et sa note de couleur restaurée : il est donc prêt à être présenté
    tout de suite.
 6. Si le paquet se trouve sur un serveur web ou sur une machine qui le partage sur le réseau local,

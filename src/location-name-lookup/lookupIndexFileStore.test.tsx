@@ -178,34 +178,34 @@ describe('subscriber-counted lookup file stores', () => {
     });
 
     test('different Bible languages load independently and release separately', async () => {
-        const km = deferred<string | null>();
-        const fr = deferred<string | null>();
+        const xxLoad = deferred<string | null>();
+        const yyLoad = deferred<string | null>();
         const load = vi.fn((lang: string) =>
-            lang === 'km' ? km.promise : fr.promise,
+            lang === 'xx' ? xxLoad.promise : yyLoad.promise,
         );
         const useValue = genLookupLangFileStore<string>(load);
-        const khmer = mount(() =>
-            createElement('span', {}, useValue('km') ?? 'loading'),
+        const firstView = mount(() =>
+            createElement('span', {}, useValue('xx') ?? 'loading'),
         );
-        const french = mount(() =>
-            createElement('span', {}, useValue('fr') ?? 'loading'),
+        const secondView = mount(() =>
+            createElement('span', {}, useValue('yy') ?? 'loading'),
         );
-        await render(khmer);
-        await render(french);
-        expect(load.mock.calls.map(([lang]) => lang)).toEqual(['km', 'fr']);
+        await render(firstView);
+        await render(secondView);
+        expect(load.mock.calls.map(([lang]) => lang)).toEqual(['xx', 'yy']);
         await act(async () => {
-            km.resolve('Khmer needles');
-            await km.promise;
+            xxLoad.resolve('xx needles');
+            await xxLoad.promise;
         });
-        expect(khmer.container.textContent).toBe('Khmer needles');
-        expect(french.container.textContent).toBe('loading');
+        expect(firstView.container.textContent).toBe('xx needles');
+        expect(secondView.container.textContent).toBe('loading');
         await act(async () => {
-            fr.resolve('French needles');
-            await fr.promise;
+            yyLoad.resolve('yy needles');
+            await yyLoad.promise;
         });
-        expect(french.container.textContent).toBe('French needles');
-        await unmount(khmer);
-        expect(french.container.textContent).toBe('French needles');
+        expect(secondView.container.textContent).toBe('yy needles');
+        await unmount(firstView);
+        expect(secondView.container.textContent).toBe('yy needles');
     });
 
     test('empty Bible language never loads and a departed language cannot revive its slot', async () => {
@@ -223,7 +223,7 @@ describe('subscriber-counted lookup file stores', () => {
         expect(load).not.toHaveBeenCalled();
 
         const old = mount(() =>
-            createElement('span', {}, useValue('km') ?? 'loading'),
+            createElement('span', {}, useValue('xx') ?? 'loading'),
         );
         await render(old);
         await unmount(old);
@@ -232,7 +232,7 @@ describe('subscriber-counted lookup file stores', () => {
             await oldLoad.promise;
         });
         const fresh = mount(() =>
-            createElement('span', {}, useValue('km') ?? 'loading'),
+            createElement('span', {}, useValue('xx') ?? 'loading'),
         );
         await render(fresh);
         expect(load).toHaveBeenCalledTimes(2);
@@ -247,7 +247,7 @@ describe('subscriber-counted lookup file stores', () => {
             .mockResolvedValueOnce('recovered');
         const useValue = genLookupLangFileStore<string>(load);
         const view = mount(() =>
-            createElement('span', {}, useValue('km') ?? 'loading'),
+            createElement('span', {}, useValue('xx') ?? 'loading'),
         );
         await render(view);
         const error = new Error('disk failed');
@@ -258,7 +258,7 @@ describe('subscriber-counted lookup file stores', () => {
         expect(h.error).toHaveBeenCalledWith(error);
         await unmount(view);
         const again = mount(() =>
-            createElement('span', {}, useValue('km') ?? 'loading'),
+            createElement('span', {}, useValue('xx') ?? 'loading'),
         );
         await render(again);
         expect(again.container.textContent).toBe('recovered');
@@ -326,19 +326,19 @@ describe('lookup file stores after a failed or stale load', () => {
     });
 
     test('readers of one Bible language share its load and its loaded value', async () => {
-        const km = deferred<string | null>();
-        const load = vi.fn(() => km.promise);
+        const xxLoad = deferred<string | null>();
+        const load = vi.fn(() => xxLoad.promise);
         const useValue = genLookupLangFileStore<string>(load);
         const ProbeComp = () =>
-            createElement('span', {}, useValue('km') ?? 'loading');
+            createElement('span', {}, useValue('xx') ?? 'loading');
         const first = mount(ProbeComp);
         const second = mount(ProbeComp);
         await render(first);
         await render(second);
         expect(load).toHaveBeenCalledTimes(1);
         await act(async () => {
-            km.resolve('Khmer needles');
-            await km.promise;
+            xxLoad.resolve('xx needles');
+            await xxLoad.promise;
         });
         const third = mount(ProbeComp);
         await render(third);
@@ -347,6 +347,6 @@ describe('lookup file stores after a failed or stale load', () => {
             [first, second, third].map((view) => {
                 return view.container.textContent;
             }),
-        ).toEqual(['Khmer needles', 'Khmer needles', 'Khmer needles']);
+        ).toEqual(['xx needles', 'xx needles', 'xx needles']);
     });
 });

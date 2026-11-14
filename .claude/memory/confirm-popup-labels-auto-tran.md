@@ -23,3 +23,12 @@ labels are bare string literals present as keys in every `src/lang/data/online/<
 and that a `confirmButtonLabel: 'Yes'` is paired with `cancelButtonLabel: 'No'`
 (otherwise the dialog reads "Cancel / Yes"). Sites that keep both defaults get
 the coherent "Cancel / Ok" pair and need no options object.
+
+**The title and body rule is held by a test** since 2026-11-12 (EN-63):
+`src/lang/userMessageTran.test.ts` fails on a literal with a word outside
+`tran()` / `tranSafely()` in the first two arguments of `showAppConfirm`,
+`showSimpleToast`, `showAppAlert` and `showAppInput` (`SimpleToastComp` does not
+translate either). Data goes after the translated words or into a
+`{placeholder}`; a file-system failure's body is `toFileErrorText(error)`
+(EN-62), never `error.message`. An English message kept on purpose goes in the
+test's allowlist with its reason.

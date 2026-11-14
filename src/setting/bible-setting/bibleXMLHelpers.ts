@@ -128,14 +128,14 @@ function downloadXMLToFile(
                     if (error) {
                         showSimpleToast(
                             tran('Download Error'),
-                            `Error: ${error}`,
+                            `${tran('Error')}: ${error}`,
                         );
                         reject(error);
                         return;
                     }
                     showSimpleToast(
                         tran('Download Completed'),
-                        `File saved at: ${filePath}`,
+                        `${tran('File saved at:')} ${filePath}`,
                     );
                     resolve();
                 },
@@ -176,8 +176,8 @@ export async function readFromUrl(
         return xmlText;
     } catch (error) {
         showSimpleToast(
-            `Error occurred during download "${inputText.value}"`,
-            `Error: ${error}`,
+            `${tran('Error occurred during download')}: "${inputText.value}"`,
+            `${tran('Error')}: ${error}`,
         );
         handleError(error);
     }

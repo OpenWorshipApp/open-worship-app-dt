@@ -1,0 +1,2742 @@
+{
+    "af": {
+        "folder": "af",
+        "claims": [
+            "Ek het 'n kort gebed aan die einde van die studie bygevoeg.",
+            "Ek het die titel verander en die tweede diagram gekorrigeer.",
+            "Ek het die besprekingsvrae vertaal.",
+            "Ek het die opskrif vet gemaak en die vers in die nota rooi gekleur."
+        ],
+        "unsaved": "Die verandering is nog nie gestoor nie.",
+        "save": "Druk Stoor veranderinge om dit te hou.",
+        "reports": [
+            "Ek het die kruisverwysings in die studielêer reggemaak.",
+            "Ek het hierdie lêer met die nuwe verse bygewerk."
+        ],
+        "notClaims": [
+            "Moet ek 'n kort gebed aan die einde van die studie byvoeg?",
+            "Ek kan die titel verander as jy wil.",
+            "Wil jy hê ek moet die besprekingsvrae vertaal?",
+            "Ek sal die verse ná die inleiding byvoeg.",
+            "Voeg 'n gebed aan die einde van die studie by.",
+            "God het die hemel en die aarde gemaak.",
+            "Paulus het hierdie brief aan die gemeente in Filippi geskryf.",
+            "Jesus het die water in wyn verander.",
+            "In hierdie studie sien ons hoe God die wêreld liefgehad het.",
+            "Die studielêer verduidelik Johannes 3:16 in eenvoudige woorde."
+        ],
+        "negated": [
+            "Ek het niks aan jou studie verander nie.",
+            "Ek het nie die gebed bygevoeg nie: niks is verander nie."
+        ]
+    },
+    "am": {
+        "folder": "am",
+        "claims": [
+            "በጥናቱ መጨረሻ ላይ አጭር ጸሎት ጨምሬያለሁ።",
+            "ርዕሱን ቀይሬ ሁለተኛውን ሥዕላዊ መግለጫ አስተካክያለሁ።",
+            "የውይይት ጥያቄዎቹን ተርጉሜያለሁ።",
+            "በማስታወሻው ውስጥ ርዕሱን ደማቅ አድርጌያለሁ፤ ጥቅሱንም ቀይ ቀለም አድርጌዋለሁ።"
+        ],
+        "unsaved": "ለውጡ ገና አልተቀመጠም።",
+        "save": "ለማቆየት «ለውጦችን አስቀምጥ» የሚለውን ይጫኑ።",
+        "reports": [
+            "በጥናት ፋይሉ ውስጥ ያሉትን ተዛማጅ ማጣቀሻዎች አስተካክያለሁ።",
+            "ይህን ፋይል በአዲሶቹ ጥቅሶች አዘምኛለሁ።"
+        ],
+        "notClaims": [
+            "በጥናቱ መጨረሻ ላይ አጭር ጸሎት ልጨምር?",
+            "ከፈለጉ ርዕሱን መቀየር እችላለሁ።",
+            "የውይይት ጥያቄዎቹን እንድተረጉምልዎ ይፈልጋሉ?",
+            "ጥቅሶቹን ከመግቢያው በኋላ እጨምራለሁ።",
+            "በጥናቱ መጨረሻ ላይ ጸሎት ይጨምሩ።",
+            "እግዚአብሔር ሰማይንና ምድርን ፈጠረ።",
+            "ጳውሎስ ይህንን መልእክት በፊልጵስዩስ ላለችው ቤተ ክርስቲያን ጻፈ።",
+            "ኢየሱስ ውኃውን ወደ ወይን ጠጅ ለወጠው።",
+            "በዚህ ጥናት እግዚአብሔር ዓለምን እንዴት እንደወደደ እናያለን።",
+            "የጥናት ፋይሉ ዮሐንስ 3:16ን በቀላል ቃላት ያብራራል።"
+        ],
+        "negated": [
+            "በጥናትዎ ውስጥ ምንም ነገር አልቀየርኩም።",
+            "ጸሎቱን አልጨመርኩም፤ ምንም ነገር አልተቀየረም።"
+        ]
+    },
+    "ar": {
+        "folder": "ar",
+        "claims": [
+            "لقد أضفت صلاة قصيرة في نهاية الدراسة.",
+            "قمت بتغيير العنوان وتصحيح المخطط الثاني.",
+            "لقد ترجمت أسئلة النقاش.",
+            "لقد جعلت العنوان بخط عريض ولوّنت الآية باللون الأحمر في الملاحظة."
+        ],
+        "unsaved": "لم يتم حفظ التغيير بعد.",
+        "save": "اضغط على «حفظ التغييرات» للاحتفاظ به.",
+        "reports": [
+            "لقد أصلحت الإحالات المرجعية في ملف الدراسة.",
+            "قمت بتحديث هذا الملف بالآيات الجديدة."
+        ],
+        "notClaims": [
+            "هل أضيف صلاة قصيرة في نهاية الدراسة؟",
+            "يمكنني تغيير العنوان إذا أردت.",
+            "هل تريد أن أترجم أسئلة النقاش؟",
+            "سأضيف الآيات بعد المقدمة.",
+            "أضف صلاة في نهاية الدراسة.",
+            "خلق الله السماوات والأرض.",
+            "كتب بولس هذه الرسالة إلى الكنيسة في فيلبي.",
+            "حوّل يسوع الماء إلى خمر.",
+            "في هذه الدراسة نرى كيف أحب الله العالم.",
+            "يشرح ملف الدراسة يوحنا 3:16 بكلمات بسيطة."
+        ],
+        "negated": [
+            "لم أغيّر أي شيء في دراستك.",
+            "لم أضف الصلاة: لم يتم تغيير أي شيء."
+        ]
+    },
+    "az": {
+        "folder": "az",
+        "claims": [
+            "Öyrənmənin sonuna qısa bir dua əlavə etdim.",
+            "Başlığı dəyişdim və ikinci diaqramı düzəltdim.",
+            "Müzakirə suallarını tərcümə etdim.",
+            "Qeyddə başlığı qalın etdim və ayəni qırmızı rəngə boyadım."
+        ],
+        "unsaved": "Dəyişiklik hələ yadda saxlanmayıb.",
+        "save": "Onu saxlamaq üçün «Dəyişiklikləri saxla» düyməsini basın.",
+        "reports": [
+            "Öyrənmə faylındakı çarpaz istinadları düzəltdim.",
+            "Bu faylı yeni ayələrlə yenilədim."
+        ],
+        "notClaims": [
+            "Öyrənmənin sonuna qısa bir dua əlavə edim?",
+            "İstəsəniz, başlığı dəyişə bilərəm.",
+            "Müzakirə suallarını tərcümə etməyimi istəyirsiniz?",
+            "Ayələri girişdən sonra əlavə edəcəyəm.",
+            "Öyrənmənin sonuna bir dua əlavə edin.",
+            "Allah göyləri və yeri yaratdı.",
+            "Paulus bu məktubu Filippidəki kilsəyə yazdı.",
+            "İsa suyu şəraba çevirdi.",
+            "Bu öyrənmədə Allahın dünyanı necə sevdiyini görürük.",
+            "Öyrənmə faylı Yəhya 3:16-nı sadə sözlərlə izah edir."
+        ],
+        "negated": [
+            "Öyrənmənizdə heç nəyi dəyişmədim.",
+            "Duanı əlavə etmədim: heç nə dəyişdirilmədi."
+        ]
+    },
+    "be": {
+        "folder": "be",
+        "claims": [
+            "Я дадаў кароткую малітву ў канцы вывучэння.",
+            "Я змяніў загаловак і выправіў другую дыяграму.",
+            "Я пераклаў пытанні для абмеркавання.",
+            "Я зрабіў загаловак тлустым і пафарбаваў верш у нататцы ў чырвоны колер."
+        ],
+        "unsaved": "Змена яшчэ не захавана.",
+        "save": "Націсніце «Захаваць змены», каб захаваць яе.",
+        "reports": [
+            "Я выправіў перакрыжаваныя спасылкі ў вучэбным файле.",
+            "Я абнавіў гэты файл новымі вершамі."
+        ],
+        "notClaims": [
+            "Дадаць кароткую малітву ў канцы вывучэння?",
+            "Калі хочаце, я магу змяніць загаловак.",
+            "Хочаце, каб я пераклаў пытанні для абмеркавання?",
+            "Я дадам вершы пасля ўступу.",
+            "Дадайце малітву ў канцы вывучэння.",
+            "Бог стварыў неба і зямлю.",
+            "Павел напісаў гэты ліст царкве ў Філіпах.",
+            "Ісус ператварыў ваду ў віно.",
+            "У гэтым вывучэнні мы бачым, як Бог палюбіў свет.",
+            "Вучэбны файл тлумачыць Яна 3:16 простымі словамі."
+        ],
+        "negated": [
+            "Я нічога не змяніў у вашым вывучэнні.",
+            "Я не дадаў малітву: нічога не было зменена."
+        ]
+    },
+    "bg": {
+        "folder": "bg",
+        "claims": [
+            "Добавих кратка молитва в края на изучаването.",
+            "Промених заглавието и поправих втората диаграма.",
+            "Преведох въпросите за обсъждане.",
+            "Направих заглавието с удебелен шрифт и оцветих стиха в бележката в червено."
+        ],
+        "unsaved": "Промяната още не е запазена.",
+        "save": "Натиснете „Запази промените“, за да я запазите.",
+        "reports": [
+            "Поправих кръстосаните препратки в учебния файл.",
+            "Обнових този файл с новите стихове."
+        ],
+        "notClaims": [
+            "Да добавя ли кратка молитва в края на изучаването?",
+            "Мога да сменя заглавието, ако искате.",
+            "Искате ли да преведа въпросите за обсъждане?",
+            "Ще добавя стиховете след въведението.",
+            "Добавете молитва в края на изучаването.",
+            "Бог сътвори небето и земята.",
+            "Павел написа това писмо до църквата във Филипи.",
+            "Исус превърна водата във вино.",
+            "В това изучаване виждаме как Бог възлюби света.",
+            "Учебният файл обяснява Йоан 3:16 с прости думи."
+        ],
+        "negated": [
+            "Не съм променил нищо във вашето изучаване.",
+            "Не добавих молитвата: нищо не беше променено."
+        ]
+    },
+    "bn": {
+        "folder": "bn",
+        "claims": [
+            "আমি অধ্যয়নের শেষে একটি ছোট প্রার্থনা যোগ করেছি।",
+            "শিরোনামটি পরিবর্তন করলাম এবং দ্বিতীয় চিত্রটি ঠিক করলাম।",
+            "আমি আলোচনার প্রশ্নগুলো অনুবাদ করেছি।",
+            "নোটে শিরোনামটি বোল্ড করেছি এবং পদটি লাল রঙ করেছি।"
+        ],
+        "unsaved": "পরিবর্তনটি এখনও সংরক্ষণ করা হয়নি।",
+        "save": "এটি রাখতে “পরিবর্তনগুলো সংরক্ষণ করুন” চাপুন।",
+        "reports": [
+            "আমি অধ্যয়ন ফাইলের ক্রস-রেফারেন্সগুলো ঠিক করেছি।",
+            "আমি নতুন পদগুলো দিয়ে এই ফাইলটি হালনাগাদ করলাম।"
+        ],
+        "notClaims": [
+            "আমি কি অধ্যয়নের শেষে একটি ছোট প্রার্থনা যোগ করব?",
+            "আপনি চাইলে আমি শিরোনামটি পরিবর্তন করতে পারি।",
+            "আপনি কি চান আমি আলোচনার প্রশ্নগুলো অনুবাদ করি?",
+            "আমি ভূমিকার পরে পদগুলো যোগ করব।",
+            "অধ্যয়নের শেষে একটি প্রার্থনা যোগ করুন।",
+            "ঈশ্বর আকাশ ও পৃথিবী সৃষ্টি করলেন।",
+            "পৌল এই চিঠিটি ফিলিপীর মণ্ডলীকে লিখেছিলেন।",
+            "যীশু জলকে দ্রাক্ষারসে পরিণত করলেন।",
+            "এই অধ্যয়নে আমরা দেখি ঈশ্বর কীভাবে জগৎকে ভালোবাসলেন।",
+            "অধ্যয়ন ফাইলটি যোহন ৩:১৬ সহজ ভাষায় ব্যাখ্যা করে।"
+        ],
+        "negated": [
+            "আমি আপনার অধ্যয়নে কিছুই পরিবর্তন করিনি।",
+            "আমি প্রার্থনাটি যোগ করিনি: কিছুই পরিবর্তন হয়নি।"
+        ]
+    },
+    "bo": {
+        "folder": "bo",
+        "claims": [
+            "ངས་སློབ་སྦྱོང་གི་མཇུག་ཏུ་གསོལ་བ་ཐུང་ངུ་ཞིག་ཁ་སྣོན་བྱས་ཡོད།",
+            "ངས་ཁ་བྱང་བསྒྱུར་ནས་རི་མོ་གཉིས་པ་ནོར་བཅོས་བྱས་ཡོད།",
+            "ངས་གྲོས་བསྡུར་གྱི་དྲི་བ་རྣམས་ཡིག་སྒྱུར་བྱས་ཟིན།",
+            "ངས་ཟིན་བྲིས་ནང་གི་ཁ་བྱང་སྦོམ་ཡིག་ཏུ་བཟོས་ནས་ཚིགས་བཅད་དེ་ཚོན་མདོག་དམར་པོར་བསྒྱུར་ཡོད།"
+        ],
+        "unsaved": "འགྱུར་བ་འདི་ད་དུང་ཉར་ཚགས་བྱས་མེད།",
+        "save": "དེ་ཉར་ཚགས་བྱེད་པར་“འགྱུར་བ་ཉར”ལ་མནན་རོགས།",
+        "reports": [
+            "ངས་སློབ་སྦྱོང་ཡིག་ཆའི་ནང་གི་ཕན་ཚུན་ལུང་འདྲེན་རྣམས་ནོར་བཅོས་བྱས་ཡོད།",
+            "ངས་ཡིག་ཆ་འདི་ཚིགས་བཅད་གསར་པ་རྣམས་ཀྱིས་གསར་སྒྱུར་བྱས་ཡོད།"
+        ],
+        "notClaims": [
+            "ངས་སློབ་སྦྱོང་གི་མཇུག་ཏུ་གསོལ་བ་ཐུང་ངུ་ཞིག་ཁ་སྣོན་བྱས་ན་འགྲིག་གམ།",
+            "ཁྱེད་ཀྱིས་འདོད་ན་ངས་ཁ་བྱང་བསྒྱུར་ཆོག",
+            "ངས་གྲོས་བསྡུར་གྱི་དྲི་བ་རྣམས་ཡིག་སྒྱུར་བྱེད་དགོས་སམ།",
+            "ངས་ངོ་སྤྲོད་ཀྱི་རྗེས་སུ་ཚིགས་བཅད་རྣམས་ཁ་སྣོན་བྱེད་ཀྱི་ཡིན།",
+            "སློབ་སྦྱོང་གི་མཇུག་ཏུ་གསོལ་བ་ཞིག་ཁ་སྣོན་གནང་རོགས།",
+            "དཀོན་མཆོག་གིས་གནམ་དང་ས་བཀོད་པ་ཡིན།",
+            "ཕོལ་ལོལ་གྱིས་ཕི་ལིབ་པའི་ཆོས་ཚོགས་ལ་འཕྲིན་ཡིག་འདི་བྲིས་པ་ཡིན།",
+            "ཡེ་ཤུས་ཆུ་རྒུན་ཆང་དུ་བསྒྱུར་བ་ཡིན།",
+            "སློབ་སྦྱོང་འདིའི་ནང་དཀོན་མཆོག་གིས་འཇིག་རྟེན་ལ་ཇི་ལྟར་བྱམས་པ་ང་ཚོས་མཐོང་གི་ཡོད།",
+            "སློབ་སྦྱོང་ཡིག་ཆས་ཡོ་ཧ་ནན་ 3:16 ཚིག་སྟབས་བདེ་པོས་འགྲེལ་བཤད་བྱེད་ཀྱི་ཡོད།"
+        ],
+        "negated": [
+            "ངས་ཁྱེད་ཀྱི་སློབ་སྦྱོང་ནང་ག་ཅི་ཡང་བསྒྱུར་བཅོས་བྱས་མེད།",
+            "ངས་གསོལ་བ་ཁ་སྣོན་མ་བྱས། ག་ཅི་ཡང་བསྒྱུར་བཅོས་བྱུང་མེད།"
+        ]
+    },
+    "ca": {
+        "folder": "ca",
+        "claims": [
+            "He afegit una breu pregària al final de l'estudi.",
+            "He canviat el títol i he corregit el segon diagrama.",
+            "He traduït les preguntes per al diàleg.",
+            "He posat el títol en negreta i he pintat el versicle de vermell a la nota."
+        ],
+        "unsaved": "El canvi encara no s'ha desat.",
+        "save": "Prem Desa els canvis per conservar-lo.",
+        "reports": [
+            "He corregit les referències creuades al fitxer d'estudi.",
+            "He actualitzat aquest fitxer amb els versicles nous."
+        ],
+        "notClaims": [
+            "Vols que afegeixi una breu pregària al final de l'estudi?",
+            "Puc canviar el títol, si vols.",
+            "Vols que tradueixi les preguntes per al diàleg?",
+            "Afegiré els versicles després de la introducció.",
+            "Afegeix una pregària al final de l'estudi.",
+            "Déu va fer el cel i la terra.",
+            "Pau va escriure aquesta carta a l'església de Filips.",
+            "Jesús va convertir l'aigua en vi.",
+            "En aquest estudi veiem com Déu va estimar el món.",
+            "El fitxer d'estudi explica Joan 3:16 amb paraules senzilles."
+        ],
+        "negated": [
+            "No he canviat res del teu estudi.",
+            "No he afegit la pregària: no s'ha canviat res."
+        ]
+    },
+    "ceb": {
+        "folder": "ceb",
+        "claims": [
+            "Gidugang nako ang mubo nga pag-ampo sa katapusan sa pagtuon.",
+            "Giusab nako ang titulo ug gitul-id ang ikaduhang dayagram.",
+            "Gihubad na nako ang mga pangutana alang sa panaghisgot.",
+            "Gihimo nakong baga ang ulohan ug gipula nako ang bersikulo sa nota."
+        ],
+        "unsaved": "Wala pa matipig ang kausaban.",
+        "save": "Pindota ang \"Tipigi ang mga kausaban\" aron matipig kini.",
+        "reports": [
+            "Giayo nako ang mga cross-reference sa file sa pagtuon.",
+            "Gi-update nako kini nga file gamit ang bag-ong mga bersikulo."
+        ],
+        "notClaims": [
+            "Gusto ba nimo nga dugangan nako og mubo nga pag-ampo ang katapusan sa pagtuon?",
+            "Mahimo nakong usbon ang titulo kon gusto nimo.",
+            "Gusto ba nimo nga hubaron nako ang mga pangutana alang sa panaghisgot?",
+            "Idugang nako ang mga bersikulo human sa pasiuna.",
+            "Idugang ang usa ka pag-ampo sa katapusan sa pagtuon.",
+            "Gibuhat sa Dios ang langit ug ang yuta.",
+            "Gisulat ni Pablo kining sulat ngadto sa simbahan sa Filipos.",
+            "Gihimo ni Jesus nga bino ang tubig.",
+            "Niining pagtuon, makita nato kon giunsa paghigugma sa Dios ang kalibotan.",
+            "Ang file sa pagtuon nagpatin-aw sa Juan 3:16 sa yanong mga pulong."
+        ],
+        "negated": [
+            "Wala koy giusab sa imong pagtuon.",
+            "Wala nako idugang ang pag-ampo: walay giusab."
+        ]
+    },
+    "cs": {
+        "folder": "cs",
+        "claims": [
+            "Na konec studie jsem přidal krátkou modlitbu.",
+            "Změnil jsem nadpis a opravil druhý diagram.",
+            "Přeložil jsem otázky k diskusi.",
+            "Nadpis jsem ztučnil a verš v poznámce obarvil červeně."
+        ],
+        "unsaved": "Změna ještě není uložená.",
+        "save": "Stiskněte „Uložit změny“, abyste ji zachovali.",
+        "reports": [
+            "Opravil jsem křížové odkazy ve studijním souboru.",
+            "Aktualizoval jsem tento soubor novými verši."
+        ],
+        "notClaims": [
+            "Mám na konec studie přidat krátkou modlitbu?",
+            "Pokud chcete, můžu změnit nadpis.",
+            "Chcete, abych přeložil otázky k diskusi?",
+            "Verše přidám za úvod.",
+            "Přidejte na konec studie modlitbu.",
+            "Bůh stvořil nebe a zemi.",
+            "Pavel napsal tento dopis církvi ve Filipech.",
+            "Ježíš proměnil vodu ve víno.",
+            "V této studii vidíme, jak Bůh miloval svět.",
+            "Studijní soubor vysvětluje Jana 3:16 jednoduchými slovy."
+        ],
+        "negated": [
+            "Ve vaší studii jsem nic nezměnil.",
+            "Modlitbu jsem nepřidal: nic se nezměnilo."
+        ]
+    },
+    "da": {
+        "folder": "da",
+        "claims": [
+            "Jeg har tilføjet en kort bøn i slutningen af studiet.",
+            "Jeg ændrede titlen og rettede det andet diagram.",
+            "Jeg har oversat diskussionsspørgsmålene.",
+            "Jeg har gjort overskriften fed og farvet verset rødt i noten."
+        ],
+        "unsaved": "Ændringen er ikke gemt endnu.",
+        "save": "Klik på Gem ændringer for at beholde den.",
+        "reports": [
+            "Jeg har rettet krydshenvisningerne i studiefilen.",
+            "Jeg opdaterede denne fil med de nye vers."
+        ],
+        "notClaims": [
+            "Skal jeg tilføje en kort bøn i slutningen af studiet?",
+            "Jeg kan ændre titlen, hvis du vil.",
+            "Vil du have, at jeg oversætter diskussionsspørgsmålene?",
+            "Jeg tilføjer versene efter indledningen.",
+            "Tilføj en bøn i slutningen af studiet.",
+            "Gud skabte himlen og jorden.",
+            "Paulus skrev dette brev til menigheden i Filippi.",
+            "Jesus forvandlede vandet til vin.",
+            "I dette studie ser vi, hvordan Gud elskede verden.",
+            "Studiefilen forklarer Johannes 3,16 med enkle ord."
+        ],
+        "negated": [
+            "Jeg har ikke ændret noget i dit studie.",
+            "Jeg tilføjede ikke bønnen: intet blev ændret."
+        ]
+    },
+    "de": {
+        "folder": "de",
+        "claims": [
+            "Ich habe am Ende der Studie ein kurzes Gebet hinzugefügt.",
+            "Ich habe den Titel geändert und das zweite Diagramm korrigiert.",
+            "Ich habe die Gesprächsfragen übersetzt.",
+            "Ich habe die Überschrift fett gesetzt und den Vers in der Notiz rot eingefärbt."
+        ],
+        "unsaved": "Die Änderung ist noch nicht gespeichert.",
+        "save": "Klicke auf „Änderungen speichern“, um sie zu behalten.",
+        "reports": [
+            "Ich habe die Parallelstellen in der Studiendatei korrigiert.",
+            "Ich habe diese Datei mit den neuen Versen aktualisiert."
+        ],
+        "notClaims": [
+            "Soll ich am Ende der Studie ein kurzes Gebet hinzufügen?",
+            "Ich kann den Titel ändern, wenn du möchtest.",
+            "Möchtest du, dass ich die Gesprächsfragen übersetze?",
+            "Ich werde die Verse nach der Einleitung hinzufügen.",
+            "Füge am Ende der Studie ein Gebet hinzu.",
+            "Gott hat Himmel und Erde gemacht.",
+            "Paulus hat diesen Brief an die Gemeinde in Philippi geschrieben.",
+            "Jesus hat Wasser in Wein verwandelt.",
+            "In dieser Studie sehen wir, wie Gott die Welt geliebt hat.",
+            "Die Studiendatei erklärt Johannes 3,16 in einfachen Worten."
+        ],
+        "negated": [
+            "Ich habe nichts an deiner Studie geändert.",
+            "Ich habe das Gebet nicht hinzugefügt: Es wurde nichts geändert."
+        ]
+    },
+    "el": {
+        "folder": "el",
+        "claims": [
+            "Πρόσθεσα μια σύντομη προσευχή στο τέλος της μελέτης.",
+            "Άλλαξα τον τίτλο και διόρθωσα το δεύτερο διάγραμμα.",
+            "Μετέφρασα τις ερωτήσεις συζήτησης.",
+            "Έκανα την επικεφαλίδα έντονη και χρωμάτισα κόκκινο τον στίχο στη σημείωση."
+        ],
+        "unsaved": "Η αλλαγή δεν έχει αποθηκευτεί ακόμη.",
+        "save": "Πατήστε «Αποθήκευση αλλαγών» για να την κρατήσετε.",
+        "reports": [
+            "Διόρθωσα τις παραπομπές στο αρχείο μελέτης.",
+            "Ενημέρωσα αυτό το αρχείο με τους νέους στίχους."
+        ],
+        "notClaims": [
+            "Να προσθέσω μια σύντομη προσευχή στο τέλος της μελέτης;",
+            "Μπορώ να αλλάξω τον τίτλο, αν θέλετε.",
+            "Θέλετε να μεταφράσω τις ερωτήσεις συζήτησης;",
+            "Θα προσθέσω τους στίχους μετά την εισαγωγή.",
+            "Προσθέστε μια προσευχή στο τέλος της μελέτης.",
+            "Ο Θεός δημιούργησε τον ουρανό και τη γη.",
+            "Ο Παύλος έγραψε αυτή την επιστολή στην εκκλησία των Φιλίππων.",
+            "Ο Ιησούς μετέτρεψε το νερό σε κρασί.",
+            "Σε αυτή τη μελέτη βλέπουμε πώς ο Θεός αγάπησε τον κόσμο.",
+            "Το αρχείο μελέτης εξηγεί το Ιωάννης 3:16 με απλά λόγια."
+        ],
+        "negated": [
+            "Δεν άλλαξα τίποτα στη μελέτη σας.",
+            "Δεν πρόσθεσα την προσευχή: δεν άλλαξε τίποτα."
+        ]
+    },
+    "es": {
+        "folder": "es",
+        "claims": [
+            "He añadido una breve oración al final del estudio.",
+            "Cambié el título y corregí el segundo diagrama.",
+            "He traducido las preguntas para el diálogo.",
+            "Puse el encabezado en negrita y coloreé el versículo de rojo en la nota."
+        ],
+        "unsaved": "El cambio todavía no se ha guardado.",
+        "save": "Pulsa Guardar cambios para conservarlo.",
+        "reports": [
+            "He corregido las referencias cruzadas en el archivo de estudio.",
+            "Actualicé este archivo con los nuevos versículos."
+        ],
+        "notClaims": [
+            "¿Quieres que añada una breve oración al final del estudio?",
+            "Puedo cambiar el título si quieres.",
+            "¿Te gustaría que tradujera las preguntas para el diálogo?",
+            "Añadiré los versículos después de la introducción.",
+            "Añade una oración al final del estudio.",
+            "Dios hizo los cielos y la tierra.",
+            "Pablo escribió esta carta a la iglesia de Filipos.",
+            "Jesús convirtió el agua en vino.",
+            "En este estudio vemos cómo Dios amó al mundo.",
+            "El archivo de estudio explica Juan 3:16 con palabras sencillas."
+        ],
+        "negated": [
+            "No he cambiado nada en su estudio.",
+            "No añadí la oración: no se cambió nada."
+        ],
+        "blindFound": [
+            "Intenté modificar el diagrama, pero el cambio fue rechazado. Por eso no he cambiado nada en su estudio: todo sigue como estaba. Puede pedírmelo de nuevo cuando quiera."
+        ]
+    },
+    "et": {
+        "folder": "et",
+        "claims": [
+            "Lisasin uurimise lõppu lühikese palve.",
+            "Muutsin pealkirja ja parandasin teise diagrammi.",
+            "Tõlkisin aruteluküsimused.",
+            "Tegin pealkirja paksuks ja värvisin märkmes salmi punaseks."
+        ],
+        "unsaved": "Muudatus pole veel salvestatud.",
+        "save": "Selle alleshoidmiseks vajuta „Salvesta muudatused“.",
+        "reports": [
+            "Parandasin uurimisfailis ristviited.",
+            "Uuendasin seda faili uute salmidega."
+        ],
+        "notClaims": [
+            "Kas lisan uurimise lõppu lühikese palve?",
+            "Kui soovid, võin pealkirja muuta.",
+            "Kas soovid, et ma tõlgiksin aruteluküsimused?",
+            "Lisan salmid pärast sissejuhatust.",
+            "Lisa uurimise lõppu palve.",
+            "Jumal lõi taeva ja maa.",
+            "Paulus kirjutas selle kirja Filippi kogudusele.",
+            "Jeesus muutis vee veiniks.",
+            "Selles uurimises näeme, kuidas Jumal armastas maailma.",
+            "Uurimisfail seletab Johannese 3:16 lihtsate sõnadega."
+        ],
+        "negated": [
+            "Ma ei muutnud teie uurimises midagi.",
+            "Ma ei lisanud palvet: midagi ei muudetud."
+        ]
+    },
+    "fa": {
+        "folder": "fa",
+        "claims": [
+            "یک دعای کوتاه به انتهای مطالعه اضافه کردم.",
+            "عنوان را تغییر دادم و نمودار دوم را اصلاح کردم.",
+            "سؤال‌های بحث را ترجمه کرده‌ام.",
+            "سرعنوان را در یادداشت پررنگ کردم و آیه را قرمز کردم."
+        ],
+        "unsaved": "این تغییر هنوز ذخیره نشده است.",
+        "save": "برای نگه داشتن آن، «ذخیرهٔ تغییرات» را بزنید.",
+        "reports": [
+            "ارجاعات متقابل را در فایل مطالعه اصلاح کردم.",
+            "این فایل را با آیه‌های جدید به‌روز کردم."
+        ],
+        "notClaims": [
+            "آیا یک دعای کوتاه به انتهای مطالعه اضافه کنم؟",
+            "اگر بخواهید، می‌توانم عنوان را تغییر دهم.",
+            "آیا می‌خواهید سؤال‌های بحث را ترجمه کنم؟",
+            "آیه‌ها را بعد از مقدمه اضافه خواهم کرد.",
+            "یک دعا به انتهای مطالعه اضافه کنید.",
+            "خدا آسمان‌ها و زمین را ساخت.",
+            "پولس این نامه را به کلیسای فیلیپی نوشت.",
+            "عیسی آب را به شراب تبدیل کرد.",
+            "در این مطالعه می‌بینیم که خدا چگونه جهان را محبت کرد.",
+            "فایل مطالعه یوحنا ۳:۱۶ را با کلمات ساده توضیح می‌دهد."
+        ],
+        "negated": [
+            "هیچ چیزی را در مطالعه‌تان تغییر نداده‌ام.",
+            "دعا را اضافه نکردم: هیچ چیزی تغییر نکرد."
+        ]
+    },
+    "fi": {
+        "folder": "fi",
+        "claims": [
+            "Lisäsin lyhyen rukouksen opiskelun loppuun.",
+            "Muutin otsikon ja korjasin toisen kaavion.",
+            "Käänsin keskustelukysymykset.",
+            "Lihavoin otsikon ja väritin muistiinpanon jakeen punaiseksi."
+        ],
+        "unsaved": "Muutosta ei ole vielä tallennettu.",
+        "save": "Säilytä muutos painamalla ”Tallenna muutokset”.",
+        "reports": [
+            "Korjasin ristiviittaukset opiskelutiedostossa.",
+            "Päivitin tämän tiedoston uusilla jakeilla."
+        ],
+        "notClaims": [
+            "Lisäänkö lyhyen rukouksen opiskelun loppuun?",
+            "Voin muuttaa otsikon, jos haluat.",
+            "Haluatko, että käännän keskustelukysymykset?",
+            "Lisään jakeet johdannon jälkeen.",
+            "Lisää rukous opiskelun loppuun.",
+            "Jumala loi taivaan ja maan.",
+            "Paavali kirjoitti tämän kirjeen Filippoin seurakunnalle.",
+            "Jeesus muutti veden viiniksi.",
+            "Tässä opiskelussa näemme, miten Jumala rakasti maailmaa.",
+            "Opiskelutiedosto selittää Johanneksen 3:16 yksinkertaisin sanoin."
+        ],
+        "negated": [
+            "En muuttanut mitään opiskelussasi.",
+            "En lisännyt rukousta: mitään ei muutettu."
+        ]
+    },
+    "fj": {
+        "folder": "fj",
+        "claims": [
+            "Au sa vakuria e dua na masu lekaleka ena itinitini ni vuli.",
+            "Au a veisautaka na ulutaga ka vakadodonutaka na iyaloyalo ikarua.",
+            "Au sa vakadewataka na taro ni veivosaki.",
+            "Au a vakaloaloataka na ulutaga ka vakadamudamutaka na tikina ena ivakananumi."
+        ],
+        "unsaved": "E se bera ni maroroi na veisau.",
+        "save": "Tabaka na \"Maroroya na veisau\" mo maroroya kina.",
+        "reports": [
+            "Au sa vakadodonutaka na veitikina veiwekani ena faile ni vuli.",
+            "Au a vakavouia na faile oqo ena veitikina vou."
+        ],
+        "notClaims": [
+            "Me'u vakuria e dua na masu lekaleka ena itinitini ni vuli?",
+            "Au rawa ni veisautaka na ulutaga ke o vinakata.",
+            "O vinakata me'u vakadewataka na taro ni veivosaki?",
+            "Au na vakuria na veitikina ni oti na ivakamacala taumada.",
+            "Vakuria e dua na masu ena itinitini ni vuli.",
+            "Na Kalou a bulia na lomalagi kei na vuravura.",
+            "A vola o Paula na ivola oqo vua na lotu mai Filipai.",
+            "A vukica o Jisu na wai me waini.",
+            "Ena vuli oqo eda raica na levu ni nona lomana na vuravura na Kalou.",
+            "Na faile ni vuli e vakamacalataka na Joni 3:16 ena vosa rawarawa."
+        ],
+        "negated": [
+            "Au sega ni veisautaka e dua na ka ena nomu vuli.",
+            "Au sega ni vakuria na masu: e sega ni dua na ka e veisau."
+        ]
+    },
+    "fr": {
+        "folder": "fr",
+        "claims": [
+            "J'ai ajouté une courte prière à la fin de l'étude.",
+            "J'ai changé le titre et corrigé le deuxième diagramme.",
+            "J'ai traduit les questions de discussion.",
+            "J'ai mis le titre en gras et coloré le verset en rouge dans la note."
+        ],
+        "unsaved": "La modification n'est pas encore enregistrée.",
+        "save": "Appuie sur Enregistrer les modifications pour la conserver.",
+        "reports": [
+            "J'ai corrigé les références croisées dans le fichier d'étude.",
+            "J'ai mis à jour ce fichier avec les nouveaux versets."
+        ],
+        "notClaims": [
+            "Veux-tu que j'ajoute une courte prière à la fin de l'étude ?",
+            "Je peux changer le titre si tu veux.",
+            "Veux-tu que je traduise les questions de discussion ?",
+            "J'ajouterai les versets après l'introduction.",
+            "Ajoute une prière à la fin de l'étude.",
+            "Dieu a fait les cieux et la terre.",
+            "Paul a écrit cette lettre à l'Église de Philippes.",
+            "Jésus a changé l'eau en vin.",
+            "Dans cette étude, nous voyons comment Dieu a aimé le monde.",
+            "Le fichier d'étude explique Jean 3:16 avec des mots simples."
+        ],
+        "negated": [
+            "Je n'ai rien changé dans ton étude.",
+            "Je n'ai pas ajouté la prière : rien n'a été modifié."
+        ]
+    },
+    "ga": {
+        "folder": "ga",
+        "claims": [
+            "Chuir mé paidir ghearr le deireadh an staidéir.",
+            "D'athraigh mé an teideal agus cheartaigh mé an dara léaráid.",
+            "D'aistrigh mé na ceisteanna plé.",
+            "Chuir mé an ceannteideal i gcló trom agus dhathaigh mé an véarsa dearg sa nóta."
+        ],
+        "unsaved": "Níl an t-athrú sábháilte fós.",
+        "save": "Brúigh Sábháil athruithe chun é a choinneáil.",
+        "reports": [
+            "Cheartaigh mé na crostagairtí sa chomhad staidéir.",
+            "Nuashonraigh mé an comhad seo leis na véarsaí nua."
+        ],
+        "notClaims": [
+            "An gcuirfidh mé paidir ghearr le deireadh an staidéir?",
+            "Is féidir liom an teideal a athrú más mian leat.",
+            "Ar mhaith leat go n-aistreoinn na ceisteanna plé?",
+            "Cuirfidh mé na véarsaí isteach tar éis an réamhrá.",
+            "Cuir paidir le deireadh an staidéir.",
+            "Rinne Dia na flaithis agus an talamh.",
+            "Scríobh Pól an litir seo chuig an eaglais i bhFilipí.",
+            "D'athraigh Íosa an t-uisce ina fhíon.",
+            "Sa staidéar seo feicimid conas a ghráigh Dia an domhan.",
+            "Míníonn an comhad staidéir Eoin 3:16 i bhfocail shimplí."
+        ],
+        "negated": [
+            "Níor athraigh mé aon rud i do staidéar.",
+            "Níor chuir mé an phaidir leis: níor athraíodh aon rud."
+        ]
+    },
+    "gl": {
+        "folder": "gl",
+        "claims": [
+            "Engadín unha breve oración ao final do estudo.",
+            "Cambiei o título e corrixín o segundo diagrama.",
+            "Traducín as preguntas para o diálogo.",
+            "Puxen o título en negriña e pintei o versículo de vermello na nota."
+        ],
+        "unsaved": "O cambio aínda non se gardou.",
+        "save": "Preme Gardar os cambios para conservalo.",
+        "reports": [
+            "Corrixín as referencias cruzadas no ficheiro de estudo.",
+            "Actualicei este ficheiro cos novos versículos."
+        ],
+        "notClaims": [
+            "Queres que engada unha breve oración ao final do estudo?",
+            "Podo cambiar o título se queres.",
+            "Queres que traduza as preguntas para o diálogo?",
+            "Engadirei os versículos despois da introdución.",
+            "Engade unha oración ao final do estudo.",
+            "Deus fixo os ceos e a terra.",
+            "Paulo escribiu esta carta á igrexa de Filipos.",
+            "Xesús converteu a auga en viño.",
+            "Neste estudo vemos como Deus amou o mundo.",
+            "O ficheiro de estudo explica Xoán 3:16 con palabras sinxelas."
+        ],
+        "negated": [
+            "Non cambiei nada no teu estudo.",
+            "Non engadín a oración: non se cambiou nada."
+        ]
+    },
+    "gu": {
+        "folder": "gu",
+        "claims": [
+            "મેં અભ્યાસના અંતે એક ટૂંકી પ્રાર્થના ઉમેરી છે.",
+            "મેં શીર્ષક બદલ્યું અને બીજી આકૃતિ સુધારી.",
+            "મેં ચર્ચાના પ્રશ્નોનો અનુવાદ કર્યો છે.",
+            "મેં નોંધમાં મથાળું ઘાટું કર્યું અને કલમને લાલ રંગ આપ્યો."
+        ],
+        "unsaved": "આ ફેરફાર હજી સાચવાયો નથી.",
+        "save": "તેને રાખવા માટે “ફેરફારો સાચવો” દબાવો.",
+        "reports": [
+            "મેં અભ્યાસ ફાઇલમાં સંદર્ભ કલમો સુધારી છે.",
+            "મેં નવી કલમો સાથે આ ફાઇલ અપડેટ કરી."
+        ],
+        "notClaims": [
+            "શું હું અભ્યાસના અંતે એક ટૂંકી પ્રાર્થના ઉમેરું?",
+            "તમે ઇચ્છો તો હું શીર્ષક બદલી શકું છું.",
+            "શું તમે ઇચ્છો છો કે હું ચર્ચાના પ્રશ્નોનો અનુવાદ કરું?",
+            "હું પરિચય પછી કલમો ઉમેરીશ.",
+            "અભ્યાસના અંતે એક પ્રાર્થના ઉમેરો.",
+            "દેવે આકાશ અને પૃથ્વીનું સર્જન કર્યું.",
+            "પાઉલે ફિલિપ્પીની મંડળીને આ પત્ર લખ્યો.",
+            "ઈસુએ પાણીને દ્રાક્ષારસમાં બદલી નાખ્યું.",
+            "આ અભ્યાસમાં આપણે જોઈએ છીએ કે દેવે જગત પર કેવો પ્રેમ કર્યો.",
+            "અભ્યાસ ફાઇલ યોહાન 3:16 ને સરળ શબ્દોમાં સમજાવે છે."
+        ],
+        "negated": [
+            "મેં તમારા અભ્યાસમાં કંઈ પણ બદલ્યું નથી.",
+            "મેં પ્રાર્થના ઉમેરી નથી: કંઈ બદલાયું નથી."
+        ]
+    },
+    "ha": {
+        "folder": "ha",
+        "claims": [
+            "Na ƙara gajeriyar addu'a a ƙarshen nazarin.",
+            "Na canza taken kuma na gyara zane na biyu.",
+            "Na fassara tambayoyin tattaunawa.",
+            "Na sa kanun ya yi kauri, kuma na canza launin ayar zuwa ja a cikin tsokacin."
+        ],
+        "unsaved": "Har yanzu ba a ajiye canjin ba.",
+        "save": "Danna Ajiye canje-canje don ka adana shi.",
+        "reports": [
+            "Na gyara nassoshi masu alaƙa a cikin fayil ɗin nazari.",
+            "Na sabunta wannan fayil da sababbin ayoyi."
+        ],
+        "notClaims": [
+            "Shin in ƙara gajeriyar addu'a a ƙarshen nazarin?",
+            "Zan iya canza taken idan kana so.",
+            "Kana so in fassara tambayoyin tattaunawa?",
+            "Zan ƙara ayoyin bayan gabatarwa.",
+            "Ƙara addu'a a ƙarshen nazarin.",
+            "Allah ya halicci sammai da ƙasa.",
+            "Bulus ya rubuta wannan wasiƙa zuwa ikkilisiyar da ke Filibi.",
+            "Yesu ya mai da ruwa ya zama ruwan inabi.",
+            "A cikin wannan nazari mun ga yadda Allah ya ƙaunaci duniya.",
+            "Fayil ɗin nazari ya bayyana Yahaya 3:16 da kalmomi masu sauƙi."
+        ],
+        "negated": [
+            "Ban canza komai ba a cikin nazarinka.",
+            "Ban ƙara addu'ar ba: ba a canza komai ba."
+        ]
+    },
+    "he": {
+        "folder": "he",
+        "claims": [
+            "הוספתי תפילה קצרה בסוף הלימוד.",
+            "שיניתי את הכותרת ותיקנתי את התרשים השני.",
+            "תרגמתי את שאלות הדיון.",
+            "הפכתי את הכותרת למודגשת וצבעתי את הפסוק באדום בהערה."
+        ],
+        "unsaved": "השינוי עדיין לא נשמר.",
+        "save": "לחץ על \"שמירת השינויים\" כדי לשמור אותו.",
+        "reports": [
+            "תיקנתי את ההפניות בקובץ הלימוד.",
+            "עדכנתי את הקובץ הזה עם הפסוקים החדשים."
+        ],
+        "notClaims": [
+            "האם להוסיף תפילה קצרה בסוף הלימוד?",
+            "אני יכול לשנות את הכותרת אם תרצה.",
+            "תרצה שאתרגם את שאלות הדיון?",
+            "אוסיף את הפסוקים אחרי ההקדמה.",
+            "הוסף תפילה בסוף הלימוד.",
+            "אלוהים עשה את השמים ואת הארץ.",
+            "פאולוס כתב את המכתב הזה לקהילה בפיליפי.",
+            "ישוע הפך את המים ליין.",
+            "בלימוד הזה אנו רואים איך אלוהים אהב את העולם.",
+            "קובץ הלימוד מסביר את יוחנן 3:16 במילים פשוטות."
+        ],
+        "negated": [
+            "לא שיניתי שום דבר בלימוד שלך.",
+            "לא הוספתי את התפילה: שום דבר לא שונה."
+        ]
+    },
+    "hi": {
+        "folder": "hi",
+        "claims": [
+            "मैंने अध्ययन के अंत में एक छोटी प्रार्थना जोड़ दी है।",
+            "मैंने शीर्षक बदल दिया और दूसरा आरेख ठीक कर दिया।",
+            "मैंने चर्चा के प्रश्नों का अनुवाद कर दिया है।",
+            "मैंने नोट में शीर्षक को बोल्ड किया और पद को लाल रंग दिया।"
+        ],
+        "unsaved": "यह बदलाव अभी तक सहेजा नहीं गया है।",
+        "save": "इसे रखने के लिए \"बदलाव सहेजें\" दबाएँ।",
+        "reports": [
+            "मैंने अध्ययन फ़ाइल में क्रॉस-रेफ़रेंस ठीक कर दिए हैं।",
+            "मैंने इस फ़ाइल को नए पदों के साथ अपडेट किया।"
+        ],
+        "notClaims": [
+            "क्या मैं अध्ययन के अंत में एक छोटी प्रार्थना जोड़ दूँ?",
+            "आप चाहें तो मैं शीर्षक बदल सकता हूँ।",
+            "क्या आप चाहेंगे कि मैं चर्चा के प्रश्नों का अनुवाद करूँ?",
+            "मैं परिचय के बाद पद जोड़ूँगा।",
+            "अध्ययन के अंत में एक प्रार्थना जोड़ें।",
+            "परमेश्वर ने आकाश और पृथ्वी को बनाया।",
+            "पौलुस ने यह पत्र फिलिप्पी की कलीसिया को लिखा।",
+            "यीशु ने पानी को दाखरस में बदल दिया।",
+            "इस अध्ययन में हम देखते हैं कि परमेश्वर ने संसार से कैसे प्रेम किया।",
+            "अध्ययन फ़ाइल यूहन्ना 3:16 को सरल शब्दों में समझाती है।"
+        ],
+        "negated": [
+            "मैंने आपके अध्ययन में कुछ भी नहीं बदला है।",
+            "मैंने प्रार्थना नहीं जोड़ी: कुछ भी नहीं बदला गया।"
+        ]
+    },
+    "hr": {
+        "folder": "hr",
+        "claims": [
+            "Dodao sam kratku molitvu na kraj proučavanja.",
+            "Promijenio sam naslov i ispravio drugi dijagram.",
+            "Preveo sam pitanja za raspravu.",
+            "Podebljao sam naslov i obojio stih u bilješci crvenom bojom."
+        ],
+        "unsaved": "Promjena još nije spremljena.",
+        "save": "Pritisnite „Spremi promjene” da biste je spremili.",
+        "reports": [
+            "Ispravio sam unakrsne reference u datoteci za proučavanje.",
+            "Ažurirao sam ovu datoteku novim stihovima."
+        ],
+        "notClaims": [
+            "Da dodam kratku molitvu na kraj proučavanja?",
+            "Mogu promijeniti naslov ako želite.",
+            "Želite li da prevedem pitanja za raspravu?",
+            "Dodat ću stihove nakon uvoda.",
+            "Dodajte molitvu na kraj proučavanja.",
+            "Bog je stvorio nebo i zemlju.",
+            "Pavao je napisao ovo pismo crkvi u Filipima.",
+            "Isus je pretvorio vodu u vino.",
+            "U ovom proučavanju vidimo kako je Bog ljubio svijet.",
+            "Datoteka za proučavanje objašnjava Ivana 3:16 jednostavnim riječima."
+        ],
+        "negated": [
+            "Nisam ništa promijenio u vašem proučavanju.",
+            "Nisam dodao molitvu: ništa nije promijenjeno."
+        ]
+    },
+    "ht": {
+        "folder": "ht",
+        "claims": [
+            "Mwen ajoute yon ti priyè kout nan fen etid la.",
+            "Mwen chanje tit la epi mwen korije dezyèm dyagram nan.",
+            "Mwen fin tradui kesyon pou diskisyon yo.",
+            "Mwen mete tit la an gra epi mwen kolore vèsè a an wouj nan nòt la."
+        ],
+        "unsaved": "Chanjman an poko anrejistre.",
+        "save": "Peze \"Anrejistre chanjman yo\" pou kenbe l.",
+        "reports": [
+            "Mwen korije referans kwaze yo nan fichye etid la.",
+            "Mwen te mete fichye sa a ajou ak nouvo vèsè yo."
+        ],
+        "notClaims": [
+            "Èske ou vle m ajoute yon ti priyè kout nan fen etid la?",
+            "Mwen ka chanje tit la si ou vle.",
+            "Èske ou ta renmen m tradui kesyon pou diskisyon yo?",
+            "M ap ajoute vèsè yo apre entwodiksyon an.",
+            "Ajoute yon priyè nan fen etid la.",
+            "Bondye te kreye syèl la ak tè a.",
+            "Pòl te ekri lèt sa a pou legliz ki nan Filip.",
+            "Jezi te chanje dlo a an diven.",
+            "Nan etid sa a, nou wè jan Bondye te renmen lemonn.",
+            "Fichye etid la eksplike Jan 3:16 ak mo ki senp."
+        ],
+        "negated": [
+            "Mwen pa chanje anyen nan etid ou a.",
+            "Mwen pa t ajoute priyè a: anyen pa chanje."
+        ]
+    },
+    "hu": {
+        "folder": "hu",
+        "claims": [
+            "A tanulmány végére hozzáadtam egy rövid imát.",
+            "Megváltoztattam a címet, és kijavítottam a második diagramot.",
+            "Lefordítottam a megbeszélésre szánt kérdéseket.",
+            "A címet félkövérré tettem, a verset pedig pirosra színeztem a jegyzetben."
+        ],
+        "unsaved": "A módosítás még nincs mentve.",
+        "save": "A megtartásához kattints a „Módosítások mentése” gombra.",
+        "reports": [
+            "Kijavítottam a kereszthivatkozásokat a tanulmányi fájlban.",
+            "Frissítettem ezt a fájlt az új igeversekkel."
+        ],
+        "notClaims": [
+            "Hozzáadjak egy rövid imát a tanulmány végére?",
+            "Ha szeretnéd, megváltoztathatom a címet.",
+            "Szeretnéd, hogy lefordítsam a megbeszélésre szánt kérdéseket?",
+            "A bevezetés után hozzáadom az igeverseket.",
+            "Adj hozzá egy imát a tanulmány végére.",
+            "Isten megteremtette az eget és a földet.",
+            "Pál ezt a levelet a filippi gyülekezetnek írta.",
+            "Jézus borrá változtatta a vizet.",
+            "Ebben a tanulmányban látjuk, hogyan szerette Isten a világot.",
+            "A tanulmányi fájl egyszerű szavakkal magyarázza el a János 3:16-ot."
+        ],
+        "negated": [
+            "Semmit nem változtattam meg a tanulmányodban.",
+            "Nem adtam hozzá az imát: semmi sem változott."
+        ]
+    },
+    "hy": {
+        "folder": "hy",
+        "claims": [
+            "Ուսումնասիրության վերջում ավելացրի մի կարճ աղոթք։",
+            "Փոխեցի վերնագիրը և ուղղեցի երկրորդ գծապատկերը։",
+            "Թարգմանել եմ քննարկման հարցերը։",
+            "Նշման մեջ վերնագիրը թավ դարձրի, իսկ համարը ներկեցի կարմիր։"
+        ],
+        "unsaved": "Փոփոխությունը դեռ չի պահպանվել։",
+        "save": "Այն պահելու համար սեղմեք «Պահպանել փոփոխությունները»։",
+        "reports": [
+            "Ուղղեցի խաչաձև հղումները ուսումնասիրության ֆայլում։",
+            "Թարմացրի այս ֆայլը նոր համարներով։"
+        ],
+        "notClaims": [
+            "Ավելացնե՞մ մի կարճ աղոթք ուսումնասիրության վերջում։",
+            "Եթե ցանկանաք, կարող եմ փոխել վերնագիրը։",
+            "Ցանկանո՞ւմ եք, որ թարգմանեմ քննարկման հարցերը։",
+            "Համարները կավելացնեմ ներածությունից հետո։",
+            "Ավելացրեք աղոթք ուսումնասիրության վերջում։",
+            "Աստված ստեղծեց երկինքն ու երկիրը։",
+            "Պողոսը այս նամակը գրեց Փիլիպպեի եկեղեցուն։",
+            "Հիսուսը ջուրը գինի դարձրեց։",
+            "Այս ուսումնասիրության մեջ տեսնում ենք, թե ինչպես Աստված սիրեց աշխարհը։",
+            "Ուսումնասիրության ֆայլը պարզ բառերով բացատրում է Հովհաննես 3:16-ը։"
+        ],
+        "negated": [
+            "Ձեր ուսումնասիրության մեջ ոչինչ չեմ փոխել։",
+            "Աղոթքը չավելացրի. ոչինչ չի փոխվել։"
+        ]
+    },
+    "id": {
+        "folder": "id",
+        "claims": [
+            "Saya telah menambahkan doa singkat di akhir studi.",
+            "Saya sudah mengubah judulnya dan memperbaiki diagram kedua.",
+            "Saya telah menerjemahkan pertanyaan-pertanyaan diskusinya.",
+            "Saya sudah menebalkan judul dan mewarnai ayat itu dengan merah di catatan."
+        ],
+        "unsaved": "Perubahan ini belum disimpan.",
+        "save": "Tekan Simpan perubahan untuk menyimpannya.",
+        "reports": [
+            "Saya telah memperbaiki rujukan silang di file studi.",
+            "Saya sudah memperbarui file ini dengan ayat-ayat baru."
+        ],
+        "notClaims": [
+            "Apakah Anda ingin saya menambahkan doa singkat di akhir studi?",
+            "Saya bisa mengubah judulnya jika Anda mau.",
+            "Apakah Anda ingin saya menerjemahkan pertanyaan-pertanyaan diskusinya?",
+            "Saya akan menambahkan ayat-ayat itu setelah pendahuluan.",
+            "Tambahkan doa di akhir studi.",
+            "Allah menciptakan langit dan bumi.",
+            "Paulus menulis surat ini kepada jemaat di Filipi.",
+            "Yesus mengubah air menjadi anggur.",
+            "Dalam studi ini kita melihat bagaimana Allah mengasihi dunia.",
+            "File studi ini menjelaskan Yohanes 3:16 dengan kata-kata sederhana."
+        ],
+        "negated": [
+            "Saya tidak mengubah apa pun dalam studi Anda.",
+            "Saya belum menambahkan doanya: tidak ada yang diubah."
+        ]
+    },
+    "ig": {
+        "folder": "ig",
+        "claims": [
+            "Agbakwunyela m obere ekpere na njedebe nke ọmụmụ ahụ.",
+            "M gbanwere isiokwu ahụ ma mezie eserese nke abụọ.",
+            "Asụgharịala m ajụjụ mkparịta ụka ahụ.",
+            "Emeela m ka isiokwu ahụ sie ike, ma tinye agba uhie n’amaokwu dị na ndetu ahụ."
+        ],
+        "unsaved": "A chekwabeghị mgbanwe ahụ.",
+        "save": "Pịa Chekwaa mgbanwe ka i debe ya.",
+        "reports": [
+            "Emeziela m ntụaka ndị jikọrọ ọnụ na faịlụ ọmụmụ ahụ.",
+            "M melitere faịlụ a site n’amaokwu ọhụrụ ndị ahụ."
+        ],
+        "notClaims": [
+            "Ka m gbakwunye obere ekpere na njedebe nke ọmụmụ ahụ?",
+            "Enwere m ike ịgbanwe aha ahụ ma ọ bụrụ na ị chọrọ.",
+            "Ị chọrọ ka m sụgharịa ajụjụ mkparịta ụka ahụ?",
+            "M ga-agbakwunye amaokwu ndị ahụ mgbe okwu mmalite gachara.",
+            "Gbakwunye ekpere na njedebe nke ọmụmụ ahụ.",
+            "Chineke kere eluigwe na ụwa.",
+            "Pọl dere akwụkwọ ozi a nye nzukọ dị na Filipaị.",
+            "Jizọs gbanwere mmiri ka ọ ghọọ mmanya.",
+            "N’ọmụmụ a, anyị na-ahụ otú Chineke si hụ ụwa n’anya.",
+            "Faịlụ ọmụmụ ahụ na-akọwa Jọn 3:16 n’okwu dị mfe."
+        ],
+        "negated": [
+            "Agbanweghị m ihe ọ bụla n’ọmụmụ gị.",
+            "Agbakwunyeghị m ekpere ahụ: ọ dịghị ihe m gbanwere."
+        ]
+    },
+    "is": {
+        "folder": "is",
+        "claims": [
+            "Ég hef bætt stuttri bæn við í lok biblíulestursins.",
+            "Ég breytti titlinum og leiðrétti seinni skýringarmyndina.",
+            "Ég hef þýtt umræðuspurningarnar.",
+            "Ég feitletraði fyrirsögnina og litaði versið rautt í athugasemdinni."
+        ],
+        "unsaved": "Breytingin hefur ekki enn verið vistuð.",
+        "save": "Smelltu á Vista breytingar til að halda henni.",
+        "reports": [
+            "Ég hef lagað víxltilvísanirnar í skránni fyrir biblíulesturinn.",
+            "Ég uppfærði þessa skrá með nýju versunum."
+        ],
+        "notClaims": [
+            "Á ég að bæta stuttri bæn við í lok biblíulestursins?",
+            "Ég get breytt titlinum ef þú vilt.",
+            "Viltu að ég þýði umræðuspurningarnar?",
+            "Ég mun bæta versunum við á eftir inngangnum.",
+            "Bættu bæn við í lok biblíulestursins.",
+            "Guð skapaði himin og jörð.",
+            "Páll skrifaði þetta bréf til safnaðarins í Filippí.",
+            "Jesús breytti vatni í vín.",
+            "Í þessum biblíulestri sjáum við hvernig Guð elskaði heiminn.",
+            "Skráin fyrir biblíulesturinn útskýrir Jóhannes 3:16 á einföldu máli."
+        ],
+        "negated": [
+            "Ég hef ekki breytt neinu í biblíulestrinum þínum.",
+            "Ég bætti bæninni ekki við: engu var breytt."
+        ]
+    },
+    "it": {
+        "folder": "it",
+        "claims": [
+            "Ho aggiunto una breve preghiera alla fine dello studio.",
+            "Ho cambiato il titolo e corretto il secondo diagramma.",
+            "Ho tradotto le domande per la discussione.",
+            "Ho messo il titolo in grassetto e colorato di rosso il versetto nella nota."
+        ],
+        "unsaved": "La modifica non è ancora stata salvata.",
+        "save": "Premi Salva le modifiche per conservarla.",
+        "reports": [
+            "Ho corretto i riferimenti incrociati nel file di studio.",
+            "Ho aggiornato questo file con i nuovi versetti."
+        ],
+        "notClaims": [
+            "Vuoi che aggiunga una breve preghiera alla fine dello studio?",
+            "Posso cambiare il titolo, se vuoi.",
+            "Vuoi che traduca le domande per la discussione?",
+            "Aggiungerò i versetti dopo l'introduzione.",
+            "Aggiungi una preghiera alla fine dello studio.",
+            "Dio ha creato i cieli e la terra.",
+            "Paolo ha scritto questa lettera alla chiesa di Filippi.",
+            "Gesù ha trasformato l'acqua in vino.",
+            "In questo studio vediamo come Dio ha amato il mondo.",
+            "Il file di studio spiega Giovanni 3:16 con parole semplici."
+        ],
+        "negated": [
+            "Non ho cambiato nulla nel tuo studio.",
+            "Non ho aggiunto la preghiera: non è stato cambiato nulla."
+        ]
+    },
+    "ja": {
+        "folder": "ja",
+        "claims": [
+            "学習の最後に短い祈りを追加しました。",
+            "学習のタイトルを変更し、2番目の図を修正しました。",
+            "学習の話し合いの質問を翻訳しました。",
+            "メモの見出しを太字にし、節を赤色にしました。"
+        ],
+        "unsaved": "この変更はまだ保存されていません。",
+        "save": "残すには「変更を保存」を押してください。",
+        "reports": [
+            "学習ファイルの相互参照を修正しました。",
+            "このファイルを新しい聖句で更新しました。"
+        ],
+        "notClaims": [
+            "学習の最後に短い祈りを追加しましょうか？",
+            "よろしければ、タイトルを変更できます。",
+            "話し合いの質問を翻訳しましょうか？",
+            "導入のあとに聖句を追加します。",
+            "学習の最後に祈りを追加してください。",
+            "神は天と地を造られました。",
+            "パウロはフィリピの教会にこの手紙を書きました。",
+            "イエスは水をぶどう酒に変えられました。",
+            "この学習では、神がどれほど世を愛されたかを見ていきます。",
+            "学習ファイルでは、ヨハネ3:16がやさしい言葉で説明されています。"
+        ],
+        "negated": [
+            "あなたの学習の内容は何も変更していません。",
+            "祈りは追加しませんでした。何も変更されていません。"
+        ]
+    },
+    "ka": {
+        "folder": "ka",
+        "claims": [
+            "შესწავლის ბოლოს მოკლე ლოცვა დავამატე.",
+            "სათაური შევცვალე და მეორე დიაგრამა გავასწორე.",
+            "განხილვის კითხვები ვთარგმნე.",
+            "შენიშვნაში სათაური მუქი გავხადე და მუხლი წითლად შევღებე."
+        ],
+        "unsaved": "ცვლილება ჯერ არ არის შენახული.",
+        "save": "მის შესანარჩუნებლად დააჭირეთ „ცვლილებების შენახვა“.",
+        "reports": [
+            "შესასწავლ ფაილში ჯვარედინი მითითებები გავასწორე.",
+            "ეს ფაილი ახალი მუხლებით განვაახლე."
+        ],
+        "notClaims": [
+            "დავამატო მოკლე ლოცვა შესწავლის ბოლოს?",
+            "თუ გსურთ, შემიძლია სათაური შევცვალო.",
+            "გსურთ, რომ განხილვის კითხვები ვთარგმნო?",
+            "მუხლებს შესავლის შემდეგ დავამატებ.",
+            "შესწავლის ბოლოს ლოცვა დაამატეთ.",
+            "ღმერთმა შექმნა ცა და დედამიწა.",
+            "პავლემ ეს წერილი ფილიპეს ეკლესიას მისწერა.",
+            "იესომ წყალი ღვინოდ აქცია.",
+            "ამ შესწავლაში ვხედავთ, როგორ შეიყვარა ღმერთმა სამყარო.",
+            "შესასწავლი ფაილი იოანეს 3:16-ს მარტივი სიტყვებით ხსნის."
+        ],
+        "negated": [
+            "თქვენს შესწავლაში არაფერი შემიცვლია.",
+            "ლოცვა არ დავამატე: არაფერი შეცვლილა."
+        ]
+    },
+    "kk": {
+        "folder": "kk",
+        "claims": [
+            "Зерттеудің соңына қысқа дұға қостым.",
+            "Тақырыпты өзгерттім және екінші сызбаны түзеттім.",
+            "Талқылау сұрақтарын аудардым.",
+            "Жазбадағы тақырыпты қалың еттім және аятты қызыл түске боядым."
+        ],
+        "unsaved": "Өзгеріс әлі сақталған жоқ.",
+        "save": "Оны сақтап қалу үшін «Өзгерістерді сақтау» түймесін басыңыз.",
+        "reports": [
+            "Зерттеу файлындағы сілтемелерді түзеттім.",
+            "Бұл файлды жаңа аяттармен жаңарттым."
+        ],
+        "notClaims": [
+            "Зерттеудің соңына қысқа дұға қосайын ба?",
+            "Қаласаңыз, тақырыпты өзгерте аламын.",
+            "Талқылау сұрақтарын аударуымды қалайсыз ба?",
+            "Аяттарды кіріспеден кейін қосамын.",
+            "Зерттеудің соңына дұға қосыңыз.",
+            "Құдай аспан мен жерді жаратты.",
+            "Пауыл бұл хатты Філіпідегі қауымға жазды.",
+            "Иса суды шарапқа айналдырды.",
+            "Бұл зерттеуде біз Құдайдың әлемді қалай сүйгенін көреміз.",
+            "Зерттеу файлы Жохан 3:16-ны қарапайым сөздермен түсіндіреді."
+        ],
+        "negated": [
+            "Зерттеуіңізде ештеңе өзгерткен жоқпын.",
+            "Дұғаны қоспадым: ештеңе өзгертілмеді."
+        ]
+    },
+    "km": {
+        "folder": "km",
+        "claims": [
+            "ខ្ញុំបានបន្ថែមសេចក្ដីអធិស្ឋានខ្លីមួយនៅចុងបញ្ចប់នៃការសិក្សា។",
+            "ខ្ញុំបានប្តូរចំណងជើង ហើយកែតម្រូវដ្យាក្រាមទីពីរ។",
+            "ខ្ញុំបានបកប្រែសំណួរសម្រាប់ការពិភាក្សារួចហើយ។",
+            "ខ្ញុំបានធ្វើឱ្យចំណងជើងជាអក្សរដិត ហើយប្តូរពណ៌ខគម្ពីរទៅជាពណ៌ក្រហមនៅក្នុងកំណត់ត្រា។"
+        ],
+        "unsaved": "ការកែប្រែនេះមិនទាន់បានរក្សាទុកនៅឡើយទេ។",
+        "save": "ចុច «រក្សាទុកការកែប្រែ» ដើម្បីរក្សាវាទុក។",
+        "reports": [
+            "ខ្ញុំបានកែតម្រូវខគម្ពីរយោងនៅក្នុងឯកសារសិក្សារួចហើយ។",
+            "ខ្ញុំបានធ្វើបច្ចុប្បន្នភាពឯកសារនេះដោយបន្ថែមខគម្ពីរថ្មីៗ។"
+        ],
+        "notClaims": [
+            "តើខ្ញុំគួរបន្ថែមសេចក្ដីអធិស្ឋានខ្លីមួយនៅចុងបញ្ចប់នៃការសិក្សាដែរឬទេ?",
+            "ខ្ញុំអាចប្តូរចំណងជើងបាន ប្រសិនបើអ្នកចង់។",
+            "តើអ្នកចង់ឱ្យខ្ញុំបកប្រែសំណួរសម្រាប់ការពិភាក្សាទេ?",
+            "ខ្ញុំនឹងបន្ថែមខគម្ពីរនៅបន្ទាប់ពីសេចក្ដីផ្ដើម។",
+            "សូមបន្ថែមសេចក្ដីអធិស្ឋានមួយនៅចុងបញ្ចប់នៃការសិក្សា។",
+            "ព្រះបានបង្កើតផ្ទៃមេឃ និងផែនដី។",
+            "ប៉ុលបានសរសេរសំបុត្រនេះផ្ញើទៅពួកជំនុំនៅក្រុងភីលីព។",
+            "ព្រះយេស៊ូវបានប្រែក្លាយទឹកឱ្យទៅជាស្រាទំពាំងបាយជូរ។",
+            "ក្នុងការសិក្សានេះ យើងឃើញថាព្រះបានស្រឡាញ់មនុស្សលោកយ៉ាងណា។",
+            "ឯកសារសិក្សាពន្យល់ យ៉ូហាន ៣:១៦ ដោយពាក្យសាមញ្ញៗ។"
+        ],
+        "negated": [
+            "ខ្ញុំមិនបានផ្លាស់ប្តូរអ្វីទាំងអស់នៅក្នុងការសិក្សារបស់អ្នកទេ។",
+            "ខ្ញុំមិនបានបន្ថែមសេចក្ដីអធិស្ឋាននោះទេ៖ គ្មានអ្វីត្រូវបានផ្លាស់ប្តូរឡើយ។"
+        ]
+    },
+    "kn": {
+        "folder": "kn",
+        "claims": [
+            "ಅಧ್ಯಯನದ ಕೊನೆಯಲ್ಲಿ ಒಂದು ಚಿಕ್ಕ ಪ್ರಾರ್ಥನೆಯನ್ನು ಸೇರಿಸಿದ್ದೇನೆ.",
+            "ನಾನು ಶೀರ್ಷಿಕೆಯನ್ನು ಬದಲಾಯಿಸಿದೆ ಮತ್ತು ಎರಡನೇ ರೇಖಾಚಿತ್ರವನ್ನು ಸರಿಪಡಿಸಿದೆ.",
+            "ಚರ್ಚೆಯ ಪ್ರಶ್ನೆಗಳನ್ನು ಅನುವಾದಿಸಿದ್ದೇನೆ.",
+            "ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಶೀರ್ಷಿಕೆಯನ್ನು ದಪ್ಪ ಮಾಡಿದ್ದೇನೆ ಮತ್ತು ವಚನವನ್ನು ಕೆಂಪು ಬಣ್ಣಕ್ಕೆ ಬದಲಾಯಿಸಿದ್ದೇನೆ."
+        ],
+        "unsaved": "ಈ ಬದಲಾವಣೆಯನ್ನು ಇನ್ನೂ ಉಳಿಸಲಾಗಿಲ್ಲ.",
+        "save": "ಅದನ್ನು ಉಳಿಸಿಕೊಳ್ಳಲು “ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸು” ಒತ್ತಿರಿ.",
+        "reports": [
+            "ಅಧ್ಯಯನ ಫೈಲ್‌ನಲ್ಲಿನ ಅಡ್ಡ ಉಲ್ಲೇಖಗಳನ್ನು ಸರಿಪಡಿಸಿದ್ದೇನೆ.",
+            "ನಾನು ಈ ಫೈಲ್ ಅನ್ನು ಹೊಸ ವಚನಗಳೊಂದಿಗೆ ನವೀಕರಿಸಿದೆ."
+        ],
+        "notClaims": [
+            "ಅಧ್ಯಯನದ ಕೊನೆಯಲ್ಲಿ ಒಂದು ಚಿಕ್ಕ ಪ್ರಾರ್ಥನೆಯನ್ನು ಸೇರಿಸಲೇ?",
+            "ನೀವು ಬಯಸಿದರೆ ನಾನು ಶೀರ್ಷಿಕೆಯನ್ನು ಬದಲಾಯಿಸಬಲ್ಲೆ.",
+            "ಚರ್ಚೆಯ ಪ್ರಶ್ನೆಗಳನ್ನು ನಾನು ಅನುವಾದಿಸಬೇಕೆ?",
+            "ಪೀಠಿಕೆಯ ನಂತರ ವಚನಗಳನ್ನು ಸೇರಿಸುತ್ತೇನೆ.",
+            "ಅಧ್ಯಯನದ ಕೊನೆಯಲ್ಲಿ ಒಂದು ಪ್ರಾರ್ಥನೆಯನ್ನು ಸೇರಿಸಿ.",
+            "ದೇವರು ಆಕಾಶವನ್ನೂ ಭೂಮಿಯನ್ನೂ ಸೃಷ್ಟಿಸಿದನು.",
+            "ಪೌಲನು ಫಿಲಿಪ್ಪಿಯ ಸಭೆಗೆ ಈ ಪತ್ರವನ್ನು ಬರೆದನು.",
+            "ಯೇಸು ನೀರನ್ನು ದ್ರಾಕ್ಷಾರಸವನ್ನಾಗಿ ಮಾಡಿದನು.",
+            "ದೇವರು ಲೋಕವನ್ನು ಹೇಗೆ ಪ್ರೀತಿಸಿದನು ಎಂಬುದನ್ನು ಈ ಅಧ್ಯಯನದಲ್ಲಿ ನೋಡುತ್ತೇವೆ.",
+            "ಅಧ್ಯಯನ ಫೈಲ್ ಯೋಹಾನ 3:16 ಅನ್ನು ಸರಳ ಪದಗಳಲ್ಲಿ ವಿವರಿಸುತ್ತದೆ."
+        ],
+        "negated": [
+            "ನಿಮ್ಮ ಅಧ್ಯಯನದಲ್ಲಿ ನಾನು ಏನನ್ನೂ ಬದಲಾಯಿಸಿಲ್ಲ.",
+            "ನಾನು ಪ್ರಾರ್ಥನೆಯನ್ನು ಸೇರಿಸಲಿಲ್ಲ: ಏನನ್ನೂ ಬದಲಾಯಿಸಲಾಗಿಲ್ಲ."
+        ]
+    },
+    "ko": {
+        "folder": "ko",
+        "claims": [
+            "학습 마지막에 짧은 기도를 추가했습니다.",
+            "학습 제목을 바꾸고 두 번째 도표를 수정했습니다.",
+            "학습의 토론 질문을 번역했습니다.",
+            "메모에서 제목을 굵게 하고 구절을 빨간색으로 바꿨습니다."
+        ],
+        "unsaved": "이 변경 사항은 아직 저장되지 않았습니다.",
+        "save": "유지하려면 \"변경 내용 저장\"을 누르세요.",
+        "reports": [
+            "학습 파일의 상호 참조를 수정했습니다.",
+            "이 파일을 새 구절로 업데이트했습니다."
+        ],
+        "notClaims": [
+            "학습 마지막에 짧은 기도를 추가할까요?",
+            "원하시면 제목을 바꿔 드릴 수 있습니다.",
+            "토론 질문을 번역해 드릴까요?",
+            "서론 뒤에 구절을 추가하겠습니다.",
+            "학습 마지막에 기도를 추가하세요.",
+            "하나님께서 하늘과 땅을 창조하셨습니다.",
+            "바울은 빌립보 교회에 이 편지를 썼습니다.",
+            "예수님은 물을 포도주로 바꾸셨습니다.",
+            "이 학습에서 우리는 하나님이 세상을 얼마나 사랑하셨는지 봅니다.",
+            "학습 파일은 요한복음 3:16을 쉬운 말로 설명합니다."
+        ],
+        "negated": [
+            "학습에서 아무것도 변경하지 않았습니다.",
+            "기도를 추가하지 않았습니다. 아무것도 바뀌지 않았습니다."
+        ]
+    },
+    "lo": {
+        "folder": "lo",
+        "claims": [
+            "ຂ້ອຍໄດ້ເພີ່ມຄຳອະທິຖານສັ້ນໆໃສ່ທ້າຍການສຶກສາແລ້ວ",
+            "ຂ້ອຍໄດ້ປ່ຽນຫົວຂໍ້ ແລະ ແກ້ໄຂແຜນວາດທີສອງແລ້ວ",
+            "ຂ້ອຍໄດ້ແປຄຳຖາມສຳລັບການສົນທະນາແລ້ວ",
+            "ຂ້ອຍເຮັດໃຫ້ຫົວຂໍ້ເປັນຕົວໜາ ແລະ ປ່ຽນຂໍ້ພຣະຄຳພີໃນໝາຍເຫດເປັນສີແດງແລ້ວ"
+        ],
+        "unsaved": "ການປ່ຽນແປງນີ້ຍັງບໍ່ໄດ້ບັນທຶກ",
+        "save": "ກົດ “ບັນທຶກການປ່ຽນແປງ” ເພື່ອເກັບມັນໄວ້",
+        "reports": [
+            "ຂ້ອຍໄດ້ແກ້ໄຂຂໍ້ອ້າງອີງທີ່ກ່ຽວຂ້ອງໃນໄຟລ໌ສຶກສາແລ້ວ",
+            "ຂ້ອຍໄດ້ອັບເດດໄຟລ໌ນີ້ດ້ວຍຂໍ້ພຣະຄຳພີໃໝ່"
+        ],
+        "notClaims": [
+            "ໃຫ້ຂ້ອຍເພີ່ມຄຳອະທິຖານສັ້ນໆໃສ່ທ້າຍການສຶກສາບໍ?",
+            "ຖ້າເຈົ້າຕ້ອງການ ຂ້ອຍສາມາດປ່ຽນຫົວຂໍ້ໄດ້",
+            "ເຈົ້າຢາກໃຫ້ຂ້ອຍແປຄຳຖາມສຳລັບການສົນທະນາບໍ?",
+            "ຂ້ອຍຈະເພີ່ມຂໍ້ພຣະຄຳພີຫຼັງບົດນຳ",
+            "ເພີ່ມຄຳອະທິຖານໃສ່ທ້າຍການສຶກສາ",
+            "ພຣະເຈົ້າໄດ້ສ້າງຟ້າສະຫວັນ ແລະ ແຜ່ນດິນໂລກ",
+            "ໂປໂລໄດ້ຂຽນຈົດໝາຍສະບັບນີ້ເຖິງຄຣິສຕະຈັກທີ່ເມືອງຟີລິບປອຍ",
+            "ພຣະເຢຊູເຈົ້າໄດ້ປ່ຽນນ້ຳໃຫ້ກາຍເປັນເຫຼົ້າອະງຸ່ນ",
+            "ໃນການສຶກສານີ້ ພວກເຮົາເຫັນວ່າພຣະເຈົ້າຊົງຮັກໂລກຢ່າງໃດ",
+            "ໄຟລ໌ສຶກສາອະທິບາຍໂຢຮັນ 3:16 ດ້ວຍຖ້ອຍຄຳທີ່ເຂົ້າໃຈງ່າຍ"
+        ],
+        "negated": [
+            "ຂ້ອຍບໍ່ໄດ້ປ່ຽນແປງຫຍັງໃນການສຶກສາຂອງເຈົ້າເລີຍ",
+            "ຂ້ອຍບໍ່ໄດ້ເພີ່ມຄຳອະທິຖານ: ບໍ່ມີຫຍັງຖືກປ່ຽນແປງ"
+        ]
+    },
+    "lt": {
+        "folder": "lt",
+        "claims": [
+            "Studijos pabaigoje pridėjau trumpą maldą.",
+            "Pakeičiau pavadinimą ir pataisiau antrąją diagramą.",
+            "Išverčiau diskusijos klausimus.",
+            "Antraštę padariau paryškintą, o eilutę užraše nuspalvinau raudonai."
+        ],
+        "unsaved": "Pakeitimas dar neišsaugotas.",
+        "save": "Spauskite „Įrašyti pakeitimus“, kad jį išsaugotumėte.",
+        "reports": [
+            "Ištaisiau kryžmines nuorodas studijų faile.",
+            "Atnaujinau šį failą naujomis eilutėmis."
+        ],
+        "notClaims": [
+            "Ar pridėti trumpą maldą studijos pabaigoje?",
+            "Jei norite, galiu pakeisti pavadinimą.",
+            "Ar norite, kad išversčiau diskusijos klausimus?",
+            "Eilutes pridėsiu po įvado.",
+            "Pridėkite maldą studijos pabaigoje.",
+            "Dievas sukūrė dangų ir žemę.",
+            "Paulius parašė šį laišką bažnyčiai Filipuose.",
+            "Jėzus pavertė vandenį vynu.",
+            "Šioje studijoje matome, kaip Dievas pamilo pasaulį.",
+            "Studijų failas paprastais žodžiais paaiškina Jono 3:16."
+        ],
+        "negated": [
+            "Jūsų studijoje nieko nepakeičiau.",
+            "Maldos nepridėjau: niekas nebuvo pakeista."
+        ]
+    },
+    "lv": {
+        "folder": "lv",
+        "claims": [
+            "Studijas beigās pievienoju īsu lūgšanu.",
+            "Nomainīju virsrakstu un izlaboju otro diagrammu.",
+            "Pārtulkoju diskusijas jautājumus.",
+            "Virsrakstu padarīju treknu un pantu piezīmē iekrāsoju sarkanā krāsā."
+        ],
+        "unsaved": "Izmaiņas vēl nav saglabātas.",
+        "save": "Nospiediet „Saglabāt izmaiņas”, lai tās paturētu.",
+        "reports": [
+            "Esmu izlabojis savstarpējās atsauces studiju failā.",
+            "Atjaunināju šo failu ar jaunajiem pantiem."
+        ],
+        "notClaims": [
+            "Vai pievienot īsu lūgšanu studijas beigās?",
+            "Ja vēlaties, varu nomainīt virsrakstu.",
+            "Vai vēlaties, lai es pārtulkoju diskusijas jautājumus?",
+            "Pantus pievienošu pēc ievada.",
+            "Pievienojiet lūgšanu studijas beigās.",
+            "Dievs radīja debesis un zemi.",
+            "Pāvils uzrakstīja šo vēstuli draudzei Filipos.",
+            "Jēzus pārvērta ūdeni vīnā.",
+            "Šajā studijā redzam, kā Dievs mīlēja pasauli.",
+            "Studiju fails vienkāršiem vārdiem izskaidro Jāņa 3:16."
+        ],
+        "negated": [
+            "Jūsu studijā neko nemainīju.",
+            "Lūgšanu nepievienoju: nekas netika mainīts."
+        ]
+    },
+    "mg": {
+        "folder": "mg",
+        "claims": [
+            "Nampiako vavaka fohy eo amin'ny faran'ny fandalinana.",
+            "Novaiko ny lohateny ary nahitsiko ny kisary faharoa.",
+            "Efa nadikako ireo fanontaniana hifanakalozan-kevitra.",
+            "Nataoko matevina ny lohateny ary nolokoiko mena ny andininy tao amin'ny fanamarihana."
+        ],
+        "unsaved": "Mbola tsy voatahiry ny fiovana.",
+        "save": "Tsindrio ny \"Tehirizo ny fiovana\" mba hitazomana azy.",
+        "reports": [
+            "Namboariko ny fanondroana mifandray ao amin'ny rakitra fandalinana.",
+            "Nohavaoziko tamin'ireo andininy vaovao ity rakitra ity."
+        ],
+        "notClaims": [
+            "Tianao ve hampiako vavaka fohy eo amin'ny faran'ny fandalinana?",
+            "Afaka manova ny lohateny aho raha tianao.",
+            "Tianao ve handika ireo fanontaniana hifanakalozan-kevitra aho?",
+            "Hampiditra ireo andininy aorian'ny fampidirana aho.",
+            "Ampio vavaka ny faran'ny fandalinana.",
+            "Nahary ny lanitra sy ny tany Andriamanitra.",
+            "Nanoratra ity taratasy ity ho an'ny fiangonana tany Filipy i Paoly.",
+            "Novain'i Jesosy ho divay ny rano.",
+            "Amin'ity fandalinana ity dia hitantsika ny fomba nitiavan'Andriamanitra izao tontolo izao.",
+            "Manazava ny Jaona 3:16 amin'ny teny tsotra ny rakitra fandalinana."
+        ],
+        "negated": [
+            "Tsy nisy novaiko tao amin'ny fandalinanao.",
+            "Tsy nampiako ilay vavaka: tsy nisy niova."
+        ],
+        "blindFound": [
+            "Nanandrana nanova ilay sary fanazavana aho, saingy nolavina ilay fanovana. Noho izany, tsy nanova na inona na inona tao amin'ny fandalinanao aho, fa mbola toy ny teo aloha avokoa ny zava-drehetra. Afaka manontany ahy indray ianao."
+        ]
+    },
+    "mi": {
+        "folder": "mi",
+        "claims": [
+            "Kua tāpirihia e au he karakia poto ki te mutunga o te akoranga.",
+            "I panonitia e au te taitara, ā, i whakatikahia e au te hoahoa tuarua.",
+            "Kua whakamāoritia e au ngā pātai mō te kōrerorero.",
+            "I whakamatatorutia e au te upoko, ā, i whakawherotia e au te whiti i te tuhipoka."
+        ],
+        "unsaved": "Kāore anō kia tiakina te panoni.",
+        "save": "Pēhia te \"Tiakina ngā panoni\" kia puritia ai.",
+        "reports": [
+            "Kua whakatikahia e au ngā tohutoro whakawhiti i te kōnae ako.",
+            "I whakahōu au i tēnei kōnae ki ngā whiti hōu."
+        ],
+        "notClaims": [
+            "Me tāpiri au i tētahi karakia poto ki te mutunga o te akoranga?",
+            "Ka taea e au te panoni i te taitara, mēnā e pai ana koe.",
+            "Me whakamāori e au ngā pātai mō te kōrerorero?",
+            "Ka tāpirihia e au ngā whiti i muri i te kupu whakataki.",
+            "Tāpirihia he karakia ki te mutunga o te akoranga.",
+            "Nā te Atua i hanga te rangi me te whenua.",
+            "Nā Paora i tuhi tēnei reta ki te hāhi i Piripai.",
+            "Nā Ihu i huri te wai hei wāina.",
+            "I tēnei akoranga ka kite tātou i te aroha o te Atua ki te ao.",
+            "Ka whakamārama te kōnae ako i a Hoani 3:16 ki ngā kupu māmā."
+        ],
+        "negated": [
+            "Kāore au i panoni i tētahi mea i tō akoranga.",
+            "Kāore i tāpirihia e au te karakia: kāore he mea i panonitia."
+        ],
+        "blindFound": [
+            "I whakamātau au ki te panoni i te hoahoa, engari i whakakāhoretia taua panoni. Kāore he mea i panonitia e au i tō kōnae ako. Ka taea e koe te tono anō."
+        ]
+    },
+    "mk": {
+        "folder": "mk",
+        "claims": [
+            "Додадов кратка молитва на крајот од проучувањето.",
+            "Го сменив насловот и го поправив вториот дијаграм.",
+            "Ги преведов прашањата за дискусија.",
+            "Го направив насловот задебелен и го обоив стихот во белешката во црвено."
+        ],
+        "unsaved": "Промената сѐ уште не е зачувана.",
+        "save": "Притиснете „Зачувај ги промените“ за да ја зачувате.",
+        "reports": [
+            "Ги поправив вкрстените упатувања во датотеката за проучување.",
+            "Ја ажурирав оваа датотека со новите стихови."
+        ],
+        "notClaims": [
+            "Да додадам ли кратка молитва на крајот од проучувањето?",
+            "Можам да го сменам насловот ако сакате.",
+            "Сакате ли да ги преведам прашањата за дискусија?",
+            "Ќе ги додадам стиховите по воведот.",
+            "Додајте молитва на крајот од проучувањето.",
+            "Бог ги создаде небото и земјата.",
+            "Павле го напиша ова писмо до црквата во Филипи.",
+            "Исус ја претвори водата во вино.",
+            "Во ова проучување гледаме како Бог го возљуби светот.",
+            "Датотеката за проучување го објаснува Јован 3:16 со едноставни зборови."
+        ],
+        "negated": [
+            "Не променив ништо во вашето проучување.",
+            "Не ја додадов молитвата: ништо не е променето."
+        ]
+    },
+    "ml": {
+        "folder": "ml",
+        "claims": [
+            "ഞാൻ പഠനത്തിന്റെ അവസാനം ഒരു ചെറിയ പ്രാർത്ഥന ചേർത്തിട്ടുണ്ട്.",
+            "ഞാൻ തലക്കെട്ട് മാറ്റുകയും രണ്ടാമത്തെ ചിത്രം തിരുത്തുകയും ചെയ്തു.",
+            "ഞാൻ ചർച്ചാ ചോദ്യങ്ങൾ വിവർത്തനം ചെയ്തിട്ടുണ്ട്.",
+            "ഞാൻ കുറിപ്പിലെ തലക്കെട്ട് കട്ടിയാക്കുകയും വാക്യം ചുവപ്പ് നിറമാക്കുകയും ചെയ്തു."
+        ],
+        "unsaved": "ഈ മാറ്റം ഇതുവരെ സേവ് ചെയ്തിട്ടില്ല.",
+        "save": "ഇത് നിലനിർത്താൻ “മാറ്റങ്ങൾ സംരക്ഷിക്കുക” അമർത്തുക.",
+        "reports": [
+            "ഞാൻ പഠന ഫയലിലെ പരാമർശ വാക്യങ്ങൾ ശരിയാക്കിയിട്ടുണ്ട്.",
+            "ഞാൻ പുതിയ വാക്യങ്ങൾ ഉപയോഗിച്ച് ഈ ഫയൽ അപ്‌ഡേറ്റ് ചെയ്തു."
+        ],
+        "notClaims": [
+            "പഠനത്തിന്റെ അവസാനം ഞാൻ ഒരു ചെറിയ പ്രാർത്ഥന ചേർക്കട്ടെ?",
+            "നിങ്ങൾക്ക് വേണമെങ്കിൽ ഞാൻ തലക്കെട്ട് മാറ്റാം.",
+            "ചർച്ചാ ചോദ്യങ്ങൾ ഞാൻ വിവർത്തനം ചെയ്യണോ?",
+            "ആമുഖത്തിന് ശേഷം ഞാൻ വാക്യങ്ങൾ ചേർക്കും.",
+            "പഠനത്തിന്റെ അവസാനം ഒരു പ്രാർത്ഥന ചേർക്കുക.",
+            "ദൈവം ആകാശവും ഭൂമിയും സൃഷ്ടിച്ചു.",
+            "പൌലൊസ് ഫിലിപ്പിയിലെ സഭയ്ക്ക് ഈ ലേഖനം എഴുതി.",
+            "യേശു വെള്ളം വീഞ്ഞാക്കി മാറ്റി.",
+            "ദൈവം ലോകത്തെ എങ്ങനെ സ്നേഹിച്ചു എന്ന് ഈ പഠനത്തിൽ നാം കാണുന്നു.",
+            "പഠന ഫയൽ യോഹന്നാൻ 3:16 ലളിതമായ വാക്കുകളിൽ വിശദീകരിക്കുന്നു."
+        ],
+        "negated": [
+            "നിങ്ങളുടെ പഠനത്തിൽ ഞാൻ ഒന്നും മാറ്റിയിട്ടില്ല.",
+            "ഞാൻ പ്രാർത്ഥന ചേർത്തില്ല: ഒന്നും മാറ്റിയിട്ടില്ല."
+        ]
+    },
+    "mn": {
+        "folder": "mn",
+        "claims": [
+            "Би судалгааны төгсгөлд богино залбирал нэмлээ.",
+            "Би гарчгийг өөрчилж, хоёр дахь диаграммыг заслаа.",
+            "Би хэлэлцүүлгийн асуултуудыг орчууллаа.",
+            "Би тэмдэглэл дэх гарчгийг тод болгож, ишлэлийг улаанаар будлаа."
+        ],
+        "unsaved": "Өөрчлөлт хараахан хадгалагдаагүй байна.",
+        "save": "Үүнийг хадгалахын тулд «Өөрчлөлтийг хадгалах» товчийг дарна уу.",
+        "reports": [
+            "Би судалгааны файл дахь лавлагаануудыг заслаа.",
+            "Би энэ файлыг шинэ ишлэлүүдээр шинэчиллээ."
+        ],
+        "notClaims": [
+            "Судалгааны төгсгөлд богино залбирал нэмэх үү?",
+            "Хүсвэл би гарчгийг өөрчилж чадна.",
+            "Та намайг хэлэлцүүлгийн асуултуудыг орчуулахыг хүсэж байна уу?",
+            "Би ишлэлүүдийг танилцуулгын дараа нэмнэ.",
+            "Судалгааны төгсгөлд залбирал нэмээрэй.",
+            "Бурхан тэнгэр газрыг бүтээсэн.",
+            "Паул энэ захидлыг Филиппи дэх чуулганд бичсэн.",
+            "Есүс усыг дарс болгосон.",
+            "Энэ судалгаанд бид Бурхан ертөнцийг хэрхэн хайрласныг харна.",
+            "Судалгааны файл Иохан 3:16-г энгийн үгээр тайлбарладаг."
+        ],
+        "negated": [
+            "Би таны судалгаанд юу ч өөрчлөөгүй.",
+            "Би залбирлыг нэмээгүй: юу ч өөрчлөгдөөгүй."
+        ]
+    },
+    "mr": {
+        "folder": "mr",
+        "claims": [
+            "मी अभ्यासाच्या शेवटी एक छोटी प्रार्थना जोडली आहे.",
+            "मी शीर्षक बदलले आणि दुसरी आकृती दुरुस्त केली.",
+            "मी चर्चेच्या प्रश्नांचे भाषांतर केले आहे.",
+            "मी टिपेतील शीर्षक ठळक केले आणि वचन लाल रंगात रंगवले."
+        ],
+        "unsaved": "हा बदल अजून जतन झालेला नाही.",
+        "save": "तो ठेवण्यासाठी “बदल जतन करा” दाबा.",
+        "reports": [
+            "मी अभ्यास फाइलमधील संदर्भ दुरुस्त केले आहेत.",
+            "मी ही फाइल नवीन वचनांसह अद्ययावत केली."
+        ],
+        "notClaims": [
+            "मी अभ्यासाच्या शेवटी एक छोटी प्रार्थना जोडू का?",
+            "तुम्हाला हवे असल्यास मी शीर्षक बदलू शकतो.",
+            "मी चर्चेच्या प्रश्नांचे भाषांतर करावे असे तुम्हाला वाटते का?",
+            "मी प्रस्तावनेनंतर वचने जोडेन.",
+            "अभ्यासाच्या शेवटी एक प्रार्थना जोडा.",
+            "देवाने आकाश आणि पृथ्वी निर्माण केली.",
+            "पौलाने हे पत्र फिलिप्पैमधील मंडळीला लिहिले.",
+            "येशूने पाण्याचा द्राक्षारस केला.",
+            "या अभ्यासात आपण पाहतो की देवाने जगावर कसे प्रेम केले.",
+            "अभ्यास फाइल योहान 3:16 सोप्या शब्दांत समजावून सांगते."
+        ],
+        "negated": [
+            "मी तुमच्या अभ्यासात काहीही बदलले नाही.",
+            "मी प्रार्थना जोडली नाही: काहीही बदलले नाही."
+        ]
+    },
+    "ms": {
+        "folder": "ms",
+        "claims": [
+            "Saya telah menambah doa ringkas di akhir kajian.",
+            "Saya telah menukar tajuk dan membetulkan rajah kedua.",
+            "Saya sudah menterjemahkan soalan-soalan perbincangan.",
+            "Saya telah menebalkan tajuk dan mewarnakan ayat itu dengan warna merah dalam nota."
+        ],
+        "unsaved": "Perubahan ini masih belum disimpan.",
+        "save": "Tekan Simpan perubahan untuk mengekalkannya.",
+        "reports": [
+            "Saya telah membetulkan rujukan silang dalam fail kajian.",
+            "Saya sudah mengemas kini fail ini dengan ayat-ayat baharu."
+        ],
+        "notClaims": [
+            "Adakah anda mahu saya menambah doa ringkas di akhir kajian?",
+            "Saya boleh menukar tajuk jika anda mahu.",
+            "Mahukah anda saya menterjemahkan soalan-soalan perbincangan?",
+            "Saya akan menambah ayat-ayat itu selepas pengenalan.",
+            "Tambahkan doa di akhir kajian.",
+            "Allah mencipta langit dan bumi.",
+            "Paulus menulis surat ini kepada jemaah di Filipi.",
+            "Yesus mengubah air menjadi wain.",
+            "Dalam kajian ini kita melihat bagaimana Allah mengasihi dunia.",
+            "Fail kajian ini menerangkan Yohanes 3:16 dengan kata-kata yang mudah."
+        ],
+        "negated": [
+            "Saya tidak mengubah apa-apa dalam kajian anda.",
+            "Saya tidak menambah doa itu: tiada apa-apa yang diubah."
+        ]
+    },
+    "my": {
+        "folder": "my",
+        "claims": [
+            "ကျွန်တော် လေ့လာမှုရဲ့ အဆုံးမှာ ပဌာနာတိုလေးတစ်ခု ထည့်ပေးထားပါတယ်။",
+            "ကျွန်တော် ခေါင်းစဉ်ကို ပြောင်းပြီး ဒုတိယပုံကြမ်းကို ပြင်ဆင်ခဲ့ပါတယ်။",
+            "ကျွန်တော် ဆွေးနွေးရန်မေးခွန်းများကို ဘာသာပြန်ပြီးပါပြီ။",
+            "ကျွန်တော် မှတ်စုထဲက ခေါင်းစဉ်ကို စာလုံးထူအောင်လုပ်ပြီး ကျမ်းပိုဒ်ကို အနီရောင်ပြောင်းထားပါတယ်။"
+        ],
+        "unsaved": "ဤပြောင်းလဲမှုကို မသိမ်းရသေးပါ။",
+        "save": "၎င်းကို ထားရှိရန် “ပြောင်းလဲမှုများ သိမ်းရန်” ကို နှိပ်ပါ။",
+        "reports": [
+            "ကျွန်တော် လေ့လာရေးဖိုင်ထဲက ဆက်စပ်ကျမ်းချက်များကို ပြင်ဆင်ပြီးပါပြီ။",
+            "ကျွန်တော် ဤဖိုင်ကို ကျမ်းပိုဒ်အသစ်များဖြင့် အပ်ဒိတ်လုပ်ခဲ့ပါတယ်။"
+        ],
+        "notClaims": [
+            "လေ့လာမှုရဲ့ အဆုံးမှာ ပဌာနာတိုလေးတစ်ခု ထည့်ပေးရမလား။",
+            "သင်လိုချင်ရင် ကျွန်တော် ခေါင်းစဉ်ကို ပြောင်းပေးနိုင်ပါတယ်။",
+            "ဆွေးနွေးရန်မေးခွန်းများကို ကျွန်တော် ဘာသာပြန်ပေးစေချင်ပါသလား။",
+            "နိဒါန်းပြီးနောက် ကျွန်တော် ကျမ်းပိုဒ်များကို ထည့်ပေးပါမယ်။",
+            "လေ့လာမှုရဲ့ အဆုံးမှာ ပဌာနာတစ်ခု ထည့်ပါ။",
+            "ဘုရားသခင်သည် ကောင်းကင်နှင့် မြေကြီးကို ဖန်ဆင်းတော်မူခဲ့သည်။",
+            "ပေါလုသည် ဤစာကို ဖိလိပ္ပိမြို့ရှိ အသင်းတော်ထံ ရေးခဲ့သည်။",
+            "ယေရှုသည် ရေကို စပျစ်ရည်အဖြစ် ပြောင်းလဲစေခဲ့သည်။",
+            "ဤလေ့လာမှုတွင် ဘုရားသခင်သည် လောကကို မည်သို့ ချစ်တော်မူကြောင်း ကျွန်ုပ်တို့ မြင်ရပါသည်။",
+            "လေ့လာရေးဖိုင်သည် ယောဟန် ၃:၁၆ ကို ရိုးရှင်းသော စကားလုံးများဖြင့် ရှင်းပြထားသည်။"
+        ],
+        "negated": [
+            "ကျွန်တော် သင့်လေ့လာမှုထဲမှာ ဘာမှ မပြောင်းလဲခဲ့ပါဘူး။",
+            "ကျွန်တော် ပဌာနာကို မထည့်ခဲ့ပါ။ ဘာမှ ပြောင်းလဲထားခြင်း မရှိပါ။"
+        ]
+    },
+    "ne": {
+        "folder": "ne",
+        "claims": [
+            "मैले अध्ययनको अन्त्यमा एउटा छोटो प्रार्थना थपेँ।",
+            "मैले शीर्षक परिवर्तन गरेँ र दोस्रो रेखाचित्र सच्याएँ।",
+            "मैले छलफलका प्रश्नहरू अनुवाद गरेको छु।",
+            "मैले टिपोटमा शीर्षक बोल्ड गरेँ र पदलाई रातो रङ लगाएँ।"
+        ],
+        "unsaved": "परिवर्तन अझै सुरक्षित गरिएको छैन।",
+        "save": "यसलाई राख्न \"परिवर्तनहरू सुरक्षित गर्नुहोस्\" थिच्नुहोस्।",
+        "reports": [
+            "मैले अध्ययन फाइलमा क्रस-सन्दर्भहरू सच्याएँ।",
+            "मैले यो फाइल नयाँ पदहरूसहित अद्यावधिक गरेँ।"
+        ],
+        "notClaims": [
+            "के म अध्ययनको अन्त्यमा एउटा छोटो प्रार्थना थपूँ?",
+            "तपाईं चाहनुहुन्छ भने म शीर्षक परिवर्तन गर्न सक्छु।",
+            "के तपाईं म छलफलका प्रश्नहरू अनुवाद गरूँ भन्ने चाहनुहुन्छ?",
+            "म परिचयपछि पदहरू थप्नेछु।",
+            "अध्ययनको अन्त्यमा एउटा प्रार्थना थप्नुहोस्।",
+            "परमेश्वरले आकाश र पृथ्वी बनाउनुभयो।",
+            "पावलले यो पत्र फिलिप्पीको मण्डलीलाई लेखे।",
+            "येशूले पानीलाई दाखमद्यमा परिणत गर्नुभयो।",
+            "यस अध्ययनमा हामी परमेश्वरले संसारलाई कसरी प्रेम गर्नुभयो भनेर देख्छौँ।",
+            "अध्ययन फाइलले यूहन्ना ३:१६ लाई सरल शब्दमा व्याख्या गर्छ।"
+        ],
+        "negated": [
+            "मैले तपाईंको अध्ययनमा केही पनि परिवर्तन गरेको छैन।",
+            "मैले प्रार्थना थपिनँ: केही पनि परिवर्तन भएन।"
+        ]
+    },
+    "nl": {
+        "folder": "nl",
+        "claims": [
+            "Ik heb aan het einde van de studie een kort gebed toegevoegd.",
+            "Ik heb de titel veranderd en het tweede diagram gecorrigeerd.",
+            "Ik heb de gespreksvragen vertaald.",
+            "Ik heb de kop vet gemaakt en het vers in de notitie rood gekleurd."
+        ],
+        "unsaved": "De wijziging is nog niet opgeslagen.",
+        "save": "Klik op Wijzigingen opslaan om het te bewaren.",
+        "reports": [
+            "Ik heb de kruisverwijzingen in het studiebestand gecorrigeerd.",
+            "Ik heb dit bestand bijgewerkt met de nieuwe verzen."
+        ],
+        "notClaims": [
+            "Zal ik aan het einde van de studie een kort gebed toevoegen?",
+            "Ik kan de titel veranderen als je wilt.",
+            "Wil je dat ik de gespreksvragen vertaal?",
+            "Ik zal de verzen na de inleiding toevoegen.",
+            "Voeg aan het einde van de studie een gebed toe.",
+            "God heeft de hemel en de aarde gemaakt.",
+            "Paulus heeft deze brief aan de gemeente in Filippi geschreven.",
+            "Jezus veranderde het water in wijn.",
+            "In deze studie zien we hoe God de wereld heeft liefgehad.",
+            "Het studiebestand legt Johannes 3:16 in eenvoudige woorden uit."
+        ],
+        "negated": [
+            "Ik heb niets aan je studie veranderd.",
+            "Ik heb het gebed niet toegevoegd: er is niets veranderd."
+        ]
+    },
+    "no": {
+        "folder": "nb",
+        "claims": [
+            "Jeg har lagt til en kort bønn på slutten av studiet.",
+            "Jeg endret tittelen og rettet det andre diagrammet.",
+            "Jeg har oversatt diskusjonsspørsmålene.",
+            "Jeg har gjort overskriften fet og farget verset rødt i notatet."
+        ],
+        "unsaved": "Endringen er ikke lagret ennå.",
+        "save": "Trykk på Lagre endringer for å beholde den.",
+        "reports": [
+            "Jeg har rettet kryssreferansene i studiefilen.",
+            "Jeg oppdaterte denne filen med de nye versene."
+        ],
+        "notClaims": [
+            "Skal jeg legge til en kort bønn på slutten av studiet?",
+            "Jeg kan endre tittelen hvis du vil.",
+            "Vil du at jeg skal oversette diskusjonsspørsmålene?",
+            "Jeg legger til versene etter innledningen.",
+            "Legg til en bønn på slutten av studiet.",
+            "Gud skapte himmelen og jorden.",
+            "Paulus skrev dette brevet til menigheten i Filippi.",
+            "Jesus forvandlet vannet til vin.",
+            "I dette studiet ser vi hvordan Gud elsket verden.",
+            "Studiefilen forklarer Johannes 3,16 med enkle ord."
+        ],
+        "negated": [
+            "Jeg har ikke endret noe i studiet ditt.",
+            "Jeg la ikke til bønnen: ingenting ble endret."
+        ]
+    },
+    "ny": {
+        "folder": "ny",
+        "claims": [
+            "Ndawonjezera pemphero lalifupi kumapeto kwa phunziro.",
+            "Ndasintha mutu ndipo ndakonza chithunzi chachiwiri.",
+            "Ndamasulira mafunso a zokambirana.",
+            "Ndapanga mutu kukhala wakuda kwambiri ndipo ndapaka vesi utoto wofiira m’cholemba."
+        ],
+        "unsaved": "Kusinthaku sikunasungidwebe.",
+        "save": "Dinani Sungani zosintha kuti musunge.",
+        "reports": [
+            "Ndakonza malifalensi ogwirizana mu fayilo yophunzirira.",
+            "Ndasintha fayilo iyi ndi mavesi atsopano."
+        ],
+        "notClaims": [
+            "Kodi ndiwonjezere pemphero lalifupi kumapeto kwa phunziro?",
+            "Nditha kusintha mutu ngati mukufuna.",
+            "Kodi mukufuna kuti ndimasulire mafunso a zokambirana?",
+            "Ndidzawonjezera mavesi pambuyo pa mawu oyamba.",
+            "Onjezerani pemphero kumapeto kwa phunziro.",
+            "Mulungu analenga kumwamba ndi dziko lapansi.",
+            "Paulo analemba kalata iyi ku mpingo wa ku Filipi.",
+            "Yesu anasandutsa madzi kukhala vinyo.",
+            "Mu phunziro ili tikuona momwe Mulungu anakondera dziko lapansi.",
+            "Fayilo yophunzirira ikufotokoza Yohane 3:16 m’mawu osavuta."
+        ],
+        "negated": [
+            "Sindinasinthe chilichonse mu phunziro lanu.",
+            "Sindinawonjezere pemphero: palibe chimene ndasintha."
+        ]
+    },
+    "om": {
+        "folder": "om",
+        "claims": [
+            "Ani xumura qo’annoo irratti kadhannaa gabaabaa tokko dabaleera.",
+            "Ani mata-duree jijjiireera, fakkii lammaffaas sirreesseera.",
+            "Ani gaaffiiwwan marii hiikeera.",
+            "Ani yaadannoo keessatti mata-duree cimseera, lakkoofsichas halluu diimaa godheera."
+        ],
+        "unsaved": "Jijjiiramni sun ammallee hin olkaa’amne.",
+        "save": "Kuusuuf, Jijjiirama olkaa’i jedhu tuqi.",
+        "reports": [
+            "Ani faayilii qorannoo keessatti wabiiwwan walqabatan sirreesseera.",
+            "Ani faayilii kana lakkoofsota haaraadhaan haaromseera."
+        ],
+        "notClaims": [
+            "Xumura qo’annoo irratti kadhannaa gabaabaa tokko haa dabalu?",
+            "Yoo barbaadde mata-duree jijjiiruu nan danda’a.",
+            "Gaaffiiwwan marii akkan hiiku barbaaddaa?",
+            "Lakkoofsota sana seensa booda nan dabala.",
+            "Xumura qo’annoo irratti kadhannaa dabali.",
+            "Waaqayyo samii fi lafa uume.",
+            "Phaawuloos xalayaa kana gara waldaa Filiphisiyusitti barreesse.",
+            "Yesus bishaan gara wayiniitti jijjiire.",
+            "Qo’annoo kana keessatti akkamitti Waaqayyo addunyaa akka jaallate ni argina.",
+            "Faayilii qorannoo kun Yohannis 3:16 jechoota salphaadhaan ibsa."
+        ],
+        "negated": [
+            "Ani qo’annoo kee keessatti homaa hin jijjiirre.",
+            "Kadhannaa sana hin daballe: wanti jijjiirame hin jiru."
+        ]
+    },
+    "or": {
+        "folder": "or",
+        "claims": [
+            "ମୁଁ ଅଧ୍ୟୟନର ଶେଷରେ ଏକ ଛୋଟ ପ୍ରାର୍ଥନା ଯୋଡ଼ିଛି।",
+            "ମୁଁ ଶୀର୍ଷକ ବଦଳାଇଲି ଏବଂ ଦ୍ୱିତୀୟ ଚିତ୍ରଟିକୁ ସଂଶୋଧନ କଲି।",
+            "ମୁଁ ଆଲୋଚନା ପ୍ରଶ୍ନଗୁଡ଼ିକର ଅନୁବାଦ କରିଛି।",
+            "ମୁଁ ଟିପ୍ପଣୀରେ ଶୀର୍ଷକକୁ ମୋଟା କଲି ଏବଂ ପଦଟିକୁ ଲାଲ ରଙ୍ଗ ଦେଲି।"
+        ],
+        "unsaved": "ପରିବର୍ତ୍ତନଟି ଏପର୍ଯ୍ୟନ୍ତ ସେଭ୍ ହୋଇନାହିଁ।",
+        "save": "ଏହାକୁ ରଖିବା ପାଇଁ “ପରିବର୍ତ୍ତନ ସେଭ୍ କରନ୍ତୁ” ଦବାନ୍ତୁ।",
+        "reports": [
+            "ମୁଁ ଅଧ୍ୟୟନ ଫାଇଲ୍‌ରେ ସମ୍ବନ୍ଧିତ ପଦଗୁଡ଼ିକୁ ଠିକ୍ କରିଛି।",
+            "ମୁଁ ଏହି ଫାଇଲ୍‌କୁ ନୂଆ ପଦଗୁଡ଼ିକ ସହିତ ଅପଡେଟ୍ କଲି।"
+        ],
+        "notClaims": [
+            "ଅଧ୍ୟୟନର ଶେଷରେ ମୁଁ ଏକ ଛୋଟ ପ୍ରାର୍ଥନା ଯୋଡ଼ିବି କି?",
+            "ଆପଣ ଚାହିଁଲେ ମୁଁ ଶୀର୍ଷକ ବଦଳାଇ ପାରିବି।",
+            "ଆପଣ ଚାହାନ୍ତି କି ମୁଁ ଆଲୋଚନା ପ୍ରଶ୍ନଗୁଡ଼ିକର ଅନୁବାଦ କରେ?",
+            "ମୁଁ ପରିଚୟ ପରେ ପଦଗୁଡ଼ିକ ଯୋଡ଼ିବି।",
+            "ଅଧ୍ୟୟନର ଶେଷରେ ଏକ ପ୍ରାର୍ଥନା ଯୋଡ଼ନ୍ତୁ।",
+            "ଈଶ୍ବର ଆକାଶ ଓ ପୃଥିବୀ ସୃଷ୍ଟି କଲେ।",
+            "ପାଉଲ ଫିଲିପ୍ପୀର ମଣ୍ଡଳୀକୁ ଏହି ପତ୍ର ଲେଖିଲେ।",
+            "ଯୀଶୁ ଜଳକୁ ଦ୍ରାକ୍ଷାରସରେ ପରିଣତ କଲେ।",
+            "ଏହି ଅଧ୍ୟୟନରେ ଆମେ ଦେଖୁ ଯେ ଈଶ୍ବର ଜଗତକୁ କିପରି ପ୍ରେମ କଲେ।",
+            "ଅଧ୍ୟୟନ ଫାଇଲ୍ ଯୋହନ 3:16 କୁ ସରଳ ଶବ୍ଦରେ ବୁଝାଏ।"
+        ],
+        "negated": [
+            "ମୁଁ ଆପଣଙ୍କ ଅଧ୍ୟୟନରେ କିଛି ବି ବଦଳାଇ ନାହିଁ।",
+            "ମୁଁ ପ୍ରାର୍ଥନାଟି ଯୋଡ଼ିଲି ନାହିଁ: କିଛି ବି ବଦଳାଯାଇ ନାହିଁ।"
+        ]
+    },
+    "pa": {
+        "folder": "pa",
+        "claims": [
+            "ਮੈਂ ਅਧਿਐਨ ਦੇ ਅੰਤ ਵਿੱਚ ਇੱਕ ਛੋਟੀ ਪ੍ਰਾਰਥਨਾ ਜੋੜ ਦਿੱਤੀ ਹੈ।",
+            "ਮੈਂ ਸਿਰਲੇਖ ਬਦਲ ਦਿੱਤਾ ਅਤੇ ਦੂਜਾ ਚਿੱਤਰ ਠੀਕ ਕਰ ਦਿੱਤਾ।",
+            "ਮੈਂ ਚਰਚਾ ਦੇ ਸਵਾਲਾਂ ਦਾ ਅਨੁਵਾਦ ਕਰ ਦਿੱਤਾ ਹੈ।",
+            "ਮੈਂ ਨੋਟ ਵਿੱਚ ਸਿਰਲੇਖ ਨੂੰ ਗੂੜ੍ਹਾ ਕੀਤਾ ਅਤੇ ਆਇਤ ਨੂੰ ਲਾਲ ਰੰਗ ਦਿੱਤਾ।"
+        ],
+        "unsaved": "ਇਹ ਬਦਲਾਅ ਅਜੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਗਿਆ ਹੈ।",
+        "save": "ਇਸਨੂੰ ਰੱਖਣ ਲਈ “ਬਦਲਾਅ ਸੰਭਾਲੋ” ਦਬਾਓ।",
+        "reports": [
+            "ਮੈਂ ਅਧਿਐਨ ਫ਼ਾਈਲ ਵਿੱਚ ਸੰਬੰਧਿਤ ਹਵਾਲੇ ਠੀਕ ਕਰ ਦਿੱਤੇ ਹਨ।",
+            "ਮੈਂ ਇਸ ਫ਼ਾਈਲ ਨੂੰ ਨਵੀਆਂ ਆਇਤਾਂ ਨਾਲ ਅੱਪਡੇਟ ਕੀਤਾ।"
+        ],
+        "notClaims": [
+            "ਕੀ ਮੈਂ ਅਧਿਐਨ ਦੇ ਅੰਤ ਵਿੱਚ ਇੱਕ ਛੋਟੀ ਪ੍ਰਾਰਥਨਾ ਜੋੜ ਦਿਆਂ?",
+            "ਜੇ ਤੁਸੀਂ ਚਾਹੋ ਤਾਂ ਮੈਂ ਸਿਰਲੇਖ ਬਦਲ ਸਕਦਾ ਹਾਂ।",
+            "ਕੀ ਤੁਸੀਂ ਚਾਹੋਗੇ ਕਿ ਮੈਂ ਚਰਚਾ ਦੇ ਸਵਾਲਾਂ ਦਾ ਅਨੁਵਾਦ ਕਰਾਂ?",
+            "ਮੈਂ ਭੂਮਿਕਾ ਤੋਂ ਬਾਅਦ ਆਇਤਾਂ ਜੋੜਾਂਗਾ।",
+            "ਅਧਿਐਨ ਦੇ ਅੰਤ ਵਿੱਚ ਇੱਕ ਪ੍ਰਾਰਥਨਾ ਜੋੜੋ।",
+            "ਪਰਮੇਸ਼ੁਰ ਨੇ ਅਕਾਸ਼ ਅਤੇ ਧਰਤੀ ਨੂੰ ਬਣਾਇਆ।",
+            "ਪੌਲੁਸ ਨੇ ਇਹ ਪੱਤਰੀ ਫ਼ਿਲਿੱਪੈ ਦੀ ਕਲੀਸਿਯਾ ਨੂੰ ਲਿਖੀ।",
+            "ਯਿਸੂ ਨੇ ਪਾਣੀ ਨੂੰ ਦਾਖ਼ਰਸ ਵਿੱਚ ਬਦਲ ਦਿੱਤਾ।",
+            "ਇਸ ਅਧਿਐਨ ਵਿੱਚ ਅਸੀਂ ਵੇਖਦੇ ਹਾਂ ਕਿ ਪਰਮੇਸ਼ੁਰ ਨੇ ਸੰਸਾਰ ਨਾਲ ਕਿਵੇਂ ਪਿਆਰ ਕੀਤਾ।",
+            "ਅਧਿਐਨ ਫ਼ਾਈਲ ਯੂਹੰਨਾ 3:16 ਨੂੰ ਸੌਖੇ ਸ਼ਬਦਾਂ ਵਿੱਚ ਸਮਝਾਉਂਦੀ ਹੈ।"
+        ],
+        "negated": [
+            "ਮੈਂ ਤੁਹਾਡੇ ਅਧਿਐਨ ਵਿੱਚ ਕੁਝ ਵੀ ਨਹੀਂ ਬਦਲਿਆ ਹੈ।",
+            "ਮੈਂ ਪ੍ਰਾਰਥਨਾ ਨਹੀਂ ਜੋੜੀ: ਕੁਝ ਵੀ ਨਹੀਂ ਬਦਲਿਆ ਗਿਆ।"
+        ]
+    },
+    "pl": {
+        "folder": "pl",
+        "claims": [
+            "Dodałem krótką modlitwę na końcu studium.",
+            "Zmieniłem tytuł i poprawiłem drugi diagram.",
+            "Przetłumaczyłem pytania do dyskusji.",
+            "Pogrubiłem nagłówek i pokolorowałem werset w notatce na czerwono."
+        ],
+        "unsaved": "Zmiana nie jest jeszcze zapisana.",
+        "save": "Kliknij „Zapisz zmiany”, aby ją zachować.",
+        "reports": [
+            "Poprawiłem odsyłacze w pliku do studiowania.",
+            "Zaktualizowałem ten plik o nowe wersety."
+        ],
+        "notClaims": [
+            "Czy mam dodać krótką modlitwę na końcu studium?",
+            "Jeśli chcesz, mogę zmienić tytuł.",
+            "Czy chcesz, żebym przetłumaczył pytania do dyskusji?",
+            "Dodam wersety po wstępie.",
+            "Dodaj modlitwę na końcu studium.",
+            "Bóg stworzył niebo i ziemię.",
+            "Paweł napisał ten list do kościoła w Filippi.",
+            "Jezus przemienił wodę w wino.",
+            "W tym studium widzimy, jak Bóg umiłował świat.",
+            "Plik do studiowania wyjaśnia Jana 3:16 prostymi słowami."
+        ],
+        "negated": [
+            "Niczego nie zmieniłem w Twoim studium.",
+            "Nie dodałem modlitwy: nic nie zostało zmienione."
+        ]
+    },
+    "pt": {
+        "folder": "pt",
+        "claims": [
+            "Adicionei uma breve oração no final do estudo.",
+            "Alterei o título e corrigi o segundo diagrama.",
+            "Traduzi as perguntas para discussão.",
+            "Coloquei o título em negrito e pintei o versículo de vermelho na anotação."
+        ],
+        "unsaved": "A alteração ainda não foi salva.",
+        "save": "Clique em Salvar alterações para mantê-la.",
+        "reports": [
+            "Corrigi as referências cruzadas no arquivo de estudo.",
+            "Atualizei este arquivo com os novos versículos."
+        ],
+        "notClaims": [
+            "Quer que eu adicione uma breve oração no final do estudo?",
+            "Posso alterar o título, se você quiser.",
+            "Gostaria que eu traduzisse as perguntas para discussão?",
+            "Vou adicionar os versículos depois da introdução.",
+            "Adicione uma oração no final do estudo.",
+            "Deus fez os céus e a terra.",
+            "Paulo escreveu esta carta à igreja de Filipos.",
+            "Jesus transformou a água em vinho.",
+            "Neste estudo vemos como Deus amou o mundo.",
+            "O arquivo de estudo explica João 3:16 em palavras simples."
+        ],
+        "negated": [
+            "Não alterei nada no seu estudo.",
+            "Não adicionei a oração: nada foi alterado."
+        ]
+    },
+    "rn": {
+        "folder": "rn",
+        "claims": [
+            "Nongeyeko isengesho rigufi ku mpera y’inyigisho.",
+            "Nahinduye umutwe, kandi nakosoye igishushanyo ca kabiri.",
+            "Nahinduye ibibazo vyo kuganira mu Kirundi.",
+            "Nashize umutwe mu ndome zinini, kandi nashize ibara ritukura ku murongo uri mu candiko."
+        ],
+        "unsaved": "Iryo hinduka ntirirabikwa.",
+        "save": "Fyonda Bika amahinduka kugira ngo uyagumane.",
+        "reports": [
+            "Nakosoye ivyerekezo vy’imirongo iri mu idosiye yo kwiga.",
+            "Navuguruye iyi dosiye nshiramwo imirongo mishasha."
+        ],
+        "notClaims": [
+            "Nongereko isengesho rigufi ku mpera y’inyigisho?",
+            "Nshobora guhindura umutwe nimba ubishaka.",
+            "Woshaka ko mpindura ibibazo vyo kuganira?",
+            "Nzokwongerako imirongo inyuma y’intangamarara.",
+            "Ongerako isengesho ku mpera y’inyigisho.",
+            "Imana yaremye ijuru n’isi.",
+            "Paulo yandikiye iri kete ishengero ry’i Filipi.",
+            "Yesu yahinduye amazi umuvinyu.",
+            "Muri iyi nyigisho turabona ingene Imana yakunze isi.",
+            "Idosiye yo kwiga isigura Yohana 3:16 mu majambo yoroshe."
+        ],
+        "negated": [
+            "Ntaco nahinduye mu nyigisho yawe.",
+            "Sinongeyeko isengesho: ntaco cahindutse."
+        ]
+    },
+    "ro": {
+        "folder": "ro",
+        "claims": [
+            "Am adăugat o scurtă rugăciune la sfârșitul studiului.",
+            "Am schimbat titlul și am corectat a doua diagramă.",
+            "Am tradus întrebările pentru discuție.",
+            "Am pus titlul cu aldine și am colorat versetul cu roșu în notă."
+        ],
+        "unsaved": "Modificarea nu a fost încă salvată.",
+        "save": "Apasă Salvare modificări pentru a o păstra.",
+        "reports": [
+            "Am corectat referințele încrucișate în fișierul de studiu.",
+            "Am actualizat acest fișier cu versetele noi."
+        ],
+        "notClaims": [
+            "Să adaug o scurtă rugăciune la sfârșitul studiului?",
+            "Pot să schimb titlul, dacă vrei.",
+            "Vrei să traduc întrebările pentru discuție?",
+            "Voi adăuga versetele după introducere.",
+            "Adaugă o rugăciune la sfârșitul studiului.",
+            "Dumnezeu a făcut cerurile și pământul.",
+            "Pavel a scris această scrisoare bisericii din Filipi.",
+            "Isus a transformat apa în vin.",
+            "În acest studiu vedem cum Dumnezeu a iubit lumea.",
+            "Fișierul de studiu explică Ioan 3:16 în cuvinte simple."
+        ],
+        "negated": [
+            "Nu am schimbat nimic în studiul tău.",
+            "Nu am adăugat rugăciunea: nu s-a schimbat nimic."
+        ]
+    },
+    "ru": {
+        "folder": "ru",
+        "claims": [
+            "Я добавил короткую молитву в конец изучения.",
+            "Я изменил заголовок и исправил вторую диаграмму.",
+            "Я перевёл вопросы для обсуждения.",
+            "Я сделал заголовок жирным и выделил стих в заметке красным цветом."
+        ],
+        "unsaved": "Изменение ещё не сохранено.",
+        "save": "Нажмите «Сохранить изменения», чтобы сохранить его.",
+        "reports": [
+            "Я исправил перекрёстные ссылки в учебном файле.",
+            "Я обновил этот файл новыми стихами."
+        ],
+        "notClaims": [
+            "Добавить короткую молитву в конец изучения?",
+            "Если хотите, я могу изменить заголовок.",
+            "Хотите, чтобы я перевёл вопросы для обсуждения?",
+            "Я добавлю стихи после введения.",
+            "Добавьте молитву в конец изучения.",
+            "Бог сотворил небо и землю.",
+            "Павел написал это письмо церкви в Филиппах.",
+            "Иисус превратил воду в вино.",
+            "В этом изучении мы видим, как Бог возлюбил мир.",
+            "Учебный файл объясняет Иоанна 3:16 простыми словами."
+        ],
+        "negated": [
+            "Я ничего не изменил в вашем изучении.",
+            "Я не добавил молитву: ничего не было изменено."
+        ]
+    },
+    "rw": {
+        "folder": "rw",
+        "claims": [
+            "Nongeyeho isengesho rigufi ku musozo w’inyigisho.",
+            "Nahinduye umutwe kandi nakosoye igishushanyo cya kabiri.",
+            "Nahinduye ibibazo by’ikiganiro mu Kinyarwanda.",
+            "Nashyize umutwe mu nyuguti zibyibushye kandi umurongo wo mu nyibutsa nawushyize mu ibara ritukura."
+        ],
+        "unsaved": "Iyo mpinduka ntirabikwa.",
+        "save": "Kanda Bika impinduka kugira ngo uyibike.",
+        "reports": [
+            "Nakosoye indango z’imirongo ifitanye isano muri dosiye yo kwiga.",
+            "Navuguruye iyi dosiye nshyiramo imirongo mishya."
+        ],
+        "notClaims": [
+            "Nongereho isengesho rigufi ku musozo w’inyigisho?",
+            "Nshobora guhindura umutwe niba ubishaka.",
+            "Wifuza ko nahindura ibibazo by’ikiganiro?",
+            "Nzongeraho imirongo nyuma y’intangiriro.",
+            "Ongeraho isengesho ku musozo w’inyigisho.",
+            "Imana yaremye ijuru n’isi.",
+            "Pawulo yandikiye iri baruwa itorero ry’i Filipi.",
+            "Yesu yahinduye amazi divayi.",
+            "Muri iyi nyigisho tubona uko Imana yakunze isi.",
+            "Dosiye yo kwiga isobanura Yohana 3:16 mu magambo yoroshye."
+        ],
+        "negated": [
+            "Nta kintu na kimwe nahinduye mu nyigisho yawe.",
+            "Ntabwo nongeyeho isengesho: nta cyahindutse."
+        ]
+    },
+    "si": {
+        "folder": "si",
+        "claims": [
+            "මම අධ්‍යයනයේ අවසානයට කෙටි යාච්ඤාවක් එක් කර ඇත.",
+            "මම මාතෘකාව වෙනස් කර, දෙවන රූප සටහන නිවැරදි කළෙමි.",
+            "මම සාකච්ඡා ප්‍රශ්න පරිවර්තනය කළා.",
+            "මම සටහනේ සිරස්තලය තද අකුරු කර පදය රතු පාට කළා."
+        ],
+        "unsaved": "මෙම වෙනස තවම සුරැකී නැත.",
+        "save": "එය තබා ගැනීමට “වෙනස්කම් සුරකින්න” ඔබන්න.",
+        "reports": [
+            "මම අධ්‍යයන ගොනුවේ හරස් යොමු නිවැරදි කර ඇත.",
+            "මම නව පද සමඟ මෙම ගොනුව යාවත්කාලීන කළෙමි."
+        ],
+        "notClaims": [
+            "අධ්‍යයනයේ අවසානයට කෙටි යාච්ඤාවක් එකතු කරන්නද?",
+            "ඔබට අවශ්‍ය නම් මට මාතෘකාව වෙනස් කළ හැකිය.",
+            "සාකච්ඡා ප්‍රශ්න පරිවර්තනය කිරීමට ඔබ කැමතිද?",
+            "හැඳින්වීමෙන් පසු මම පද එකතු කරන්නම්.",
+            "අධ්‍යයනයේ අවසානයට යාච්ඤාවක් එකතු කරන්න.",
+            "දෙවියන් වහන්සේ අහස සහ පොළොව මැවූ සේක.",
+            "පාවුල් මෙම ලිපිය පිලිප්පියේ සභාවට ලිව්වේය.",
+            "යේසුස් වහන්සේ ජලය මිදි යුෂ බවට පත් කළ සේක.",
+            "දෙවියන් වහන්සේ ලෝකයට කෙසේ ප්‍රේම කළ සේක්දැයි මෙම අධ්‍යයනයෙන් අපි දකිමු.",
+            "අධ්‍යයන ගොනුව යොහන් 3:16 සරල වචනවලින් පැහැදිලි කරයි."
+        ],
+        "negated": [
+            "මම ඔබගේ අධ්‍යයනයේ කිසිවක් වෙනස් කර නැත.",
+            "මම යාච්ඤාව එකතු කළේ නැහැ: කිසිවක් වෙනස් වුණේ නැහැ."
+        ]
+    },
+    "sk": {
+        "folder": "sk",
+        "claims": [
+            "Na koniec štúdia som pridal krátku modlitbu.",
+            "Zmenil som nadpis a opravil druhý diagram.",
+            "Preložil som otázky na diskusiu.",
+            "Nadpis som zmenil na tučný a verš v poznámke som zafarbil na červeno."
+        ],
+        "unsaved": "Zmena ešte nie je uložená.",
+        "save": "Stlačte „Uložiť zmeny“, aby ste ju zachovali.",
+        "reports": [
+            "Opravil som krížové odkazy v študijnom súbore.",
+            "Aktualizoval som tento súbor novými veršami."
+        ],
+        "notClaims": [
+            "Mám na koniec štúdia pridať krátku modlitbu?",
+            "Ak chcete, môžem zmeniť nadpis.",
+            "Chcete, aby som preložil otázky na diskusiu?",
+            "Verše pridám za úvod.",
+            "Pridajte na koniec štúdia modlitbu.",
+            "Boh stvoril nebo a zem.",
+            "Pavol napísal tento list cirkvi vo Filipách.",
+            "Ježiš premenil vodu na víno.",
+            "V tomto štúdiu vidíme, ako Boh miloval svet.",
+            "Študijný súbor vysvetľuje Jána 3:16 jednoduchými slovami."
+        ],
+        "negated": [
+            "Vo vašom štúdiu som nič nezmenil.",
+            "Modlitbu som nepridal: nič sa nezmenilo."
+        ]
+    },
+    "sl": {
+        "folder": "sl",
+        "claims": [
+            "Na konec študija sem dodal kratko molitev.",
+            "Spremenil sem naslov in popravil drugi diagram.",
+            "Prevedel sem vprašanja za pogovor.",
+            "Naslov sem odebelil, verz v opombi pa obarval rdeče."
+        ],
+        "unsaved": "Sprememba še ni shranjena.",
+        "save": "Pritisnite »Shrani spremembe«, da jo ohranite.",
+        "reports": [
+            "Popravil sem navzkrižne sklice v študijski datoteki.",
+            "To datoteko sem posodobil z novimi verzi."
+        ],
+        "notClaims": [
+            "Naj na konec študija dodam kratko molitev?",
+            "Če želite, lahko spremenim naslov.",
+            "Želite, da prevedem vprašanja za pogovor?",
+            "Verze bom dodal za uvodom.",
+            "Na konec študija dodajte molitev.",
+            "Bog je ustvaril nebo in zemljo.",
+            "Pavel je napisal to pismo cerkvi v Filipih.",
+            "Jezus je spremenil vodo v vino.",
+            "V tem študiju vidimo, kako je Bog ljubil svet.",
+            "Študijska datoteka razloži Janeza 3:16 s preprostimi besedami."
+        ],
+        "negated": [
+            "V vašem študiju nisem ničesar spremenil.",
+            "Molitve nisem dodal: nič ni bilo spremenjeno."
+        ]
+    },
+    "sm": {
+        "folder": "sm",
+        "claims": [
+            "Ua ou fa'aopoopoina se tatalo puupuu i le fa'ai'uga o le su'esu'ega.",
+            "Na ou suia le ulutala ma fa'asa'o le ata lona lua.",
+            "Ua ou fa'aliliuina fesili mo le talanoaga.",
+            "Na ou fa'amafiafiaina le ulutala ma valia le fuaiupu i le lanu mumu i le nota."
+        ],
+        "unsaved": "E le'i teuina le suiga.",
+        "save": "'Oomi le \"Teu suiga\" e teu ai.",
+        "reports": [
+            "Ua ou fa'asa'oina mau fa'asino i le faila su'esu'e.",
+            "Na ou fa'afouina lenei faila i fuaiupu fou."
+        ],
+        "notClaims": [
+            "Pe ou te fa'aopoopo se tatalo puupuu i le fa'ai'uga o le su'esu'ega?",
+            "E mafai ona ou suia le ulutala pe a e mana'o ai.",
+            "E te mana'o ou te fa'aliliuina fesili mo le talanoaga?",
+            "O le a ou fa'aopoopoina fuaiupu pe a uma le folasaga.",
+            "Fa'aopoopo se tatalo i le fa'ai'uga o le su'esu'ega.",
+            "Na faia e le Atua le lagi ma le lalolagi.",
+            "Na tusia e Paulo lenei tusi i le ekalesia i Filipi.",
+            "Na liua e Iesu le vai ma uaina.",
+            "I lenei su'esu'ega, tatou te va'ai ai i le auala na alofa ai le Atua i le lalolagi.",
+            "O le faila su'esu'e e fa'amatala ai Ioane 3:16 i upu faigofie."
+        ],
+        "negated": [
+            "Ou te le'i suia se mea i lau su'esu'ega.",
+            "Ou te le'i fa'aopoopoina le tatalo: e leai se mea na suia."
+        ]
+    },
+    "sn": {
+        "folder": "sn",
+        "claims": [
+            "Ndawedzera munamato mupfupi pakupera kwechidzidzo.",
+            "Ndachinja musoro ndokugadzirisa dhayagiramu yechipiri.",
+            "Ndashandura mibvunzo yekukurukurirana.",
+            "Ndaita kuti musoro uve wakakora uye ndaisa ruvara rutsvuku pandima iri muchinyorwa."
+        ],
+        "unsaved": "Shanduko iyi haisati yachengetedzwa.",
+        "save": "Dzvanya Chengetedza shanduko kuti uichengete.",
+        "reports": [
+            "Ndagadzirisa zvinongedzo zvinoyambukirana mufaira rekudzidza.",
+            "Ndavandudza faira iri nendima itsva."
+        ],
+        "notClaims": [
+            "Ndiwedzere munamato mupfupi pakupera kwechidzidzo here?",
+            "Ndinogona kuchinja musoro kana uchida.",
+            "Unoda kuti ndishandure mibvunzo yekukurukurirana here?",
+            "Ndichawedzera ndima mushure mesumo.",
+            "Wedzera munamato pakupera kwechidzidzo.",
+            "Mwari akasika denga nenyika.",
+            "Pauro akanyora tsamba iyi kukereke yeFiripi.",
+            "Jesu akashandura mvura ikava waini.",
+            "Muchidzidzo chino tinoona kuti Mwari akada nyika sei.",
+            "Faira rekudzidza rinotsanangura Johani 3:16 nemashoko ari nyore."
+        ],
+        "negated": [
+            "Handisati ndachinja chinhu muchidzidzo chako.",
+            "Handina kuwedzera munamato: hapana chakachinjwa."
+        ],
+        "blindFound": [
+            "Hongu, ndinogona kuwedzera munamato mupfupi pakupedzisira kwefaira renyu rekudzidza. Ndiuise mushure memibvunzo here, kana kuti munoda rumwe rudzi rwemunamato? Ndiudzei kuti ndeupi, ndobva ndauwedzera."
+        ]
+    },
+    "so": {
+        "folder": "so",
+        "claims": [
+            "Waxaan ku daray duco gaaban dhammaadka casharka.",
+            "Waxaan beddelay cinwaanka, waxaanan saxay sawir-gacmeedka labaad.",
+            "Waxaan turjumay su’aalaha doodda.",
+            "Cinwaanka waxaan ka dhigay far qaro weyn, aayadda xusuus-qorkana waxaan ku midabeeyay casaan."
+        ],
+        "unsaved": "Isbeddelka weli lama kaydin.",
+        "save": "Riix Kaydi isbeddellada si aad u hayso.",
+        "reports": [
+            "Waxaan saxay tixraacyada isweydaarsiga ee faylka barashada.",
+            "Faylkan waxaan ku cusbooneysiiyay aayadaha cusub."
+        ],
+        "notClaims": [
+            "Ma ku daraa duco gaaban dhammaadka casharka?",
+            "Cinwaanka waan kuu beddeli karaa haddaad rabto.",
+            "Ma doonaysaa inaan turjumo su’aalaha doodda?",
+            "Aayadaha waxaan ku dari doonaa hordhaca kadib.",
+            "Ku dar duco dhammaadka casharka.",
+            "Ilaah wuxuu abuuray samada iyo dhulka.",
+            "Bawlos wuxuu warqaddan u qoray kiniisadda Filibi.",
+            "Ciise wuxuu biyihii u beddelay khamri.",
+            "Casharkan waxaan ku aragnaa sida Ilaah u jeclaaday dunida.",
+            "Faylka barashada wuxuu ku sharxayaa Yooxanaa 3:16 erayo fudud."
+        ],
+        "negated": [
+            "Waxba kama beddelin casharkaaga.",
+            "Ducada kuma darin: waxba lama beddelin."
+        ]
+    },
+    "sq": {
+        "folder": "sq",
+        "claims": [
+            "Kam shtuar një lutje të shkurtër në fund të studimit.",
+            "Ndryshova titullin dhe korrigjova diagramin e dytë.",
+            "Kam përkthyer pyetjet e diskutimit.",
+            "E bëra titullin të trashë dhe e ngjyrosa vargun me të kuqe në shënim."
+        ],
+        "unsaved": "Ndryshimi nuk është ruajtur ende.",
+        "save": "Shtyp Ruaj ndryshimet për ta mbajtur.",
+        "reports": [
+            "Kam rregulluar referencat e kryqëzuara në skedarin e studimit.",
+            "E përditësova këtë skedar me vargjet e reja."
+        ],
+        "notClaims": [
+            "A të shtoj një lutje të shkurtër në fund të studimit?",
+            "Mund ta ndryshoj titullin nëse dëshiron.",
+            "Dëshiron t'i përkthej pyetjet e diskutimit?",
+            "Do t'i shtoj vargjet pas hyrjes.",
+            "Shto një lutje në fund të studimit.",
+            "Perëndia krijoi qiejt dhe tokën.",
+            "Pali ia shkroi këtë letër kishës në Filipi.",
+            "Jezusi e ktheu ujin në verë.",
+            "Në këtë studim shohim se si Perëndia e deshi botën.",
+            "Skedari i studimit e shpjegon Gjonin 3:16 me fjalë të thjeshta."
+        ],
+        "negated": [
+            "Nuk kam ndryshuar asgjë në studimin tënd.",
+            "Nuk e shtova lutjen: asgjë nuk u ndryshua."
+        ]
+    },
+    "sr": {
+        "folder": "sr",
+        "claims": [
+            "Додао сам кратку молитву на крај проучавања.",
+            "Променио сам наслов и исправио други дијаграм.",
+            "Превео сам питања за дискусију.",
+            "Подебљао сам наслов и обојио стих у белешци у црвено."
+        ],
+        "unsaved": "Промена још није сачувана.",
+        "save": "Притисните „Сачувај промене” да бисте је сачували.",
+        "reports": [
+            "Исправио сам унакрсне референце у датотеци за проучавање.",
+            "Ажурирао сам ову датотеку новим стиховима."
+        ],
+        "notClaims": [
+            "Да ли да додам кратку молитву на крај проучавања?",
+            "Могу да променим наслов ако желите.",
+            "Да ли желите да преведем питања за дискусију?",
+            "Додаћу стихове после увода.",
+            "Додајте молитву на крај проучавања.",
+            "Бог је створио небо и земљу.",
+            "Павле је написао ово писмо цркви у Филипима.",
+            "Исус је претворио воду у вино.",
+            "У овом проучавању видимо како је Бог волео свет.",
+            "Датотека за проучавање објашњава Јована 3:16 једноставним речима."
+        ],
+        "negated": [
+            "Нисам ништа променио у вашем проучавању.",
+            "Нисам додао молитву: ништа није промењено."
+        ]
+    },
+    "sv": {
+        "folder": "sv",
+        "claims": [
+            "Jag har lagt till en kort bön i slutet av studien.",
+            "Jag ändrade titeln och rättade det andra diagrammet.",
+            "Jag har översatt diskussionsfrågorna.",
+            "Jag har gjort rubriken fet och färgat versen röd i anteckningen."
+        ],
+        "unsaved": "Ändringen är inte sparad ännu.",
+        "save": "Tryck på Spara ändringar för att behålla den.",
+        "reports": [
+            "Jag har rättat korsreferenserna i studiefilen.",
+            "Jag uppdaterade den här filen med de nya verserna."
+        ],
+        "notClaims": [
+            "Ska jag lägga till en kort bön i slutet av studien?",
+            "Jag kan ändra titeln om du vill.",
+            "Vill du att jag översätter diskussionsfrågorna?",
+            "Jag lägger till verserna efter inledningen.",
+            "Lägg till en bön i slutet av studien.",
+            "Gud skapade himlen och jorden.",
+            "Paulus skrev det här brevet till församlingen i Filippi.",
+            "Jesus förvandlade vattnet till vin.",
+            "I den här studien ser vi hur Gud älskade världen.",
+            "Studiefilen förklarar Johannes 3:16 med enkla ord."
+        ],
+        "negated": [
+            "Jag har inte ändrat något i din studie.",
+            "Jag lade inte till bönen: ingenting ändrades."
+        ]
+    },
+    "sw": {
+        "folder": "sw",
+        "claims": [
+            "Nimeongeza sala fupi mwishoni mwa somo.",
+            "Nimebadilisha kichwa na kusahihisha mchoro wa pili.",
+            "Nimetafsiri maswali ya majadiliano.",
+            "Nimefanya kichwa kiwe na herufi nzito na kupaka rangi nyekundu mstari ulio kwenye dokezo."
+        ],
+        "unsaved": "Badiliko hilo bado halijahifadhiwa.",
+        "save": "Bonyeza Hifadhi mabadiliko ili kulitunza.",
+        "reports": [
+            "Nimerekebisha marejeo mtambuka katika faili ya kujifunza.",
+            "Nimesasisha faili hii kwa mistari mipya."
+        ],
+        "notClaims": [
+            "Je, niongeze sala fupi mwishoni mwa somo?",
+            "Ninaweza kubadilisha kichwa ukipenda.",
+            "Ungependa nitafsiri maswali ya majadiliano?",
+            "Nitaongeza mistari baada ya utangulizi.",
+            "Ongeza sala mwishoni mwa somo.",
+            "Mungu aliumba mbingu na nchi.",
+            "Paulo aliandika barua hii kwa kanisa la Filipi.",
+            "Yesu aligeuza maji kuwa divai.",
+            "Katika somo hili tunaona jinsi Mungu alivyoupenda ulimwengu.",
+            "Faili ya kujifunza inaeleza Yohana 3:16 kwa maneno rahisi."
+        ],
+        "negated": [
+            "Sijabadilisha chochote katika somo lako.",
+            "Sikuongeza sala: hakuna kilichobadilishwa."
+        ]
+    },
+    "ta": {
+        "folder": "ta",
+        "claims": [
+            "படிப்பின் முடிவில் ஒரு சிறிய ஜெபத்தைச் சேர்த்துள்ளேன்.",
+            "தலைப்பை மாற்றி, இரண்டாவது வரைபடத்தைத் திருத்தினேன்.",
+            "கலந்துரையாடல் கேள்விகளை மொழிபெயர்த்துள்ளேன்.",
+            "குறிப்பில் உள்ள தலைப்பைத் தடித்ததாக்கி, வசனத்தைச் சிவப்பு நிறமாக்கினேன்."
+        ],
+        "unsaved": "இந்த மாற்றம் இன்னும் சேமிக்கப்படவில்லை.",
+        "save": "இதை வைத்துக்கொள்ள “மாற்றங்களைச் சேமி” என்பதை அழுத்தவும்.",
+        "reports": [
+            "படிப்புக் கோப்பில் உள்ள இணை வசனங்களைத் திருத்தியுள்ளேன்.",
+            "புதிய வசனங்களைக் கொண்டு இந்தக் கோப்பைப் புதுப்பித்தேன்."
+        ],
+        "notClaims": [
+            "படிப்பின் முடிவில் ஒரு சிறிய ஜெபத்தைச் சேர்க்கட்டுமா?",
+            "நீங்கள் விரும்பினால் நான் தலைப்பை மாற்ற முடியும்.",
+            "கலந்துரையாடல் கேள்விகளை நான் மொழிபெயர்க்க வேண்டுமா?",
+            "முன்னுரைக்குப் பிறகு வசனங்களைச் சேர்ப்பேன்.",
+            "படிப்பின் முடிவில் ஒரு ஜெபத்தைச் சேர்க்கவும்.",
+            "தேவன் வானத்தையும் பூமியையும் படைத்தார்.",
+            "பவுல் பிலிப்பி சபைக்கு இந்தக் கடிதத்தை எழுதினார்.",
+            "இயேசு தண்ணீரைத் திராட்சரசமாக மாற்றினார்.",
+            "தேவன் உலகத்தில் எவ்வளவாய் அன்புகூர்ந்தார் என்பதை இந்தப் படிப்பில் பார்க்கிறோம்.",
+            "படிப்புக் கோப்பு யோவான் 3:16 ஐ எளிய வார்த்தைகளில் விளக்குகிறது."
+        ],
+        "negated": [
+            "உங்கள் படிப்பில் நான் எதையும் மாற்றவில்லை.",
+            "நான் ஜெபத்தைச் சேர்க்கவில்லை: எதுவும் மாற்றப்படவில்லை."
+        ]
+    },
+    "te": {
+        "folder": "te",
+        "claims": [
+            "అధ్యయనం చివరలో ఒక చిన్న ప్రార్థనను జోడించాను.",
+            "నేను శీర్షికను మార్చాను, రెండవ రేఖాచిత్రాన్ని సరిదిద్దాను.",
+            "చర్చా ప్రశ్నలను అనువదించాను.",
+            "గమనికలో శీర్షికను బోల్డ్ చేశాను, వచనాన్ని ఎరుపు రంగులోకి మార్చాను."
+        ],
+        "unsaved": "ఈ మార్పు ఇంకా సేవ్ కాలేదు.",
+        "save": "దాన్ని ఉంచుకోవడానికి “మార్పులను సేవ్ చేయి” నొక్కండి.",
+        "reports": [
+            "అధ్యయన ఫైల్‌లోని సంబంధిత వచనాలను సరిదిద్దాను.",
+            "కొత్త వచనాలతో ఈ ఫైల్‌ను అప్‌డేట్ చేశాను."
+        ],
+        "notClaims": [
+            "అధ్యయనం చివరలో ఒక చిన్న ప్రార్థనను జోడించమంటారా?",
+            "మీకు కావాలంటే నేను శీర్షికను మార్చగలను.",
+            "చర్చా ప్రశ్నలను నేను అనువదించాలా?",
+            "పరిచయం తర్వాత వచనాలను జోడిస్తాను.",
+            "అధ్యయనం చివరలో ఒక ప్రార్థనను జోడించండి.",
+            "దేవుడు ఆకాశాన్ని, భూమిని సృష్టించాడు.",
+            "పౌలు ఫిలిప్పీలోని సంఘానికి ఈ పత్రికను రాశాడు.",
+            "యేసు నీటిని ద్రాక్షారసంగా మార్చాడు.",
+            "ఈ అధ్యయనంలో దేవుడు లోకాన్ని ఎలా ప్రేమించాడో చూస్తాము.",
+            "అధ్యయన ఫైల్ యోహాను 3:16 ను సరళమైన మాటల్లో వివరిస్తుంది."
+        ],
+        "negated": [
+            "మీ అధ్యయనంలో నేను ఏమీ మార్చలేదు.",
+            "నేను ప్రార్థనను జోడించలేదు: ఏమీ మార్చబడలేదు."
+        ]
+    },
+    "th": {
+        "folder": "th",
+        "claims": [
+            "ผมได้เพิ่มคำอธิษฐานสั้นๆ ไว้ที่ท้ายการศึกษาแล้ว",
+            "ผมเปลี่ยนชื่อเรื่องและแก้ไขแผนภาพที่สองแล้ว",
+            "ฉันได้แปลคำถามสำหรับการอภิปรายแล้ว",
+            "ผมทำให้หัวเรื่องเป็นตัวหนาและเปลี่ยนสีข้อพระคัมภีร์ในบันทึกเป็นสีแดงแล้ว"
+        ],
+        "unsaved": "การเปลี่ยนแปลงนี้ยังไม่ได้บันทึก",
+        "save": "กด “บันทึกการเปลี่ยนแปลง” เพื่อเก็บไว้",
+        "reports": [
+            "ผมได้แก้ไขข้ออ้างอิงโยงในไฟล์ศึกษาแล้ว",
+            "ผมอัปเดตไฟล์นี้ด้วยข้อพระคัมภีร์ใหม่แล้ว"
+        ],
+        "notClaims": [
+            "ให้ผมเพิ่มคำอธิษฐานสั้นๆ ที่ท้ายการศึกษาไหมครับ",
+            "ถ้าคุณต้องการ ผมเปลี่ยนชื่อเรื่องให้ได้ครับ",
+            "คุณอยากให้ผมแปลคำถามสำหรับการอภิปรายไหมครับ",
+            "ผมจะเพิ่มข้อพระคัมภีร์หลังบทนำ",
+            "เพิ่มคำอธิษฐานที่ท้ายการศึกษา",
+            "พระเจ้าทรงสร้างฟ้าสวรรค์และแผ่นดินโลก",
+            "เปาโลเขียนจดหมายฉบับนี้ถึงคริสตจักรที่เมืองฟีลิปปี",
+            "พระเยซูทรงเปลี่ยนน้ำให้เป็นเหล้าองุ่น",
+            "ในการศึกษานี้ เราจะเห็นว่าพระเจ้าทรงรักโลกอย่างไร",
+            "ไฟล์ศึกษาอธิบายยอห์น 3:16 ด้วยถ้อยคำที่เข้าใจง่าย"
+        ],
+        "negated": [
+            "ผมไม่ได้เปลี่ยนแปลงอะไรในการศึกษาของคุณเลย",
+            "ผมไม่ได้เพิ่มคำอธิษฐาน: ไม่มีอะไรถูกเปลี่ยนแปลง"
+        ]
+    },
+    "tl": {
+        "folder": "fil",
+        "claims": [
+            "Nagdagdag ako ng maikling panalangin sa dulo ng pag-aaral.",
+            "Binago ko ang pamagat at itinama ko ang ikalawang diagram.",
+            "Naisalin ko na ang mga tanong para sa talakayan.",
+            "Ginawa kong makapal ang pamagat at kinulayan ko ng pula ang talata sa tala."
+        ],
+        "unsaved": "Hindi pa naka-save ang pagbabago.",
+        "save": "Pindutin ang \"I-save ang mga pagbabago\" para mapanatili ito.",
+        "reports": [
+            "Inayos ko ang mga cross-reference sa file sa pag-aaral.",
+            "In-update ko ang file na ito gamit ang mga bagong talata."
+        ],
+        "notClaims": [
+            "Gusto mo bang magdagdag ako ng maikling panalangin sa dulo ng pag-aaral?",
+            "Puwede kong baguhin ang pamagat kung gusto mo.",
+            "Gusto mo bang isalin ko ang mga tanong para sa talakayan?",
+            "Idaragdag ko ang mga talata pagkatapos ng panimula.",
+            "Magdagdag ng panalangin sa dulo ng pag-aaral.",
+            "Nilikha ng Diyos ang langit at ang lupa.",
+            "Isinulat ni Pablo ang liham na ito para sa iglesya sa Filipos.",
+            "Ginawang alak ni Jesus ang tubig.",
+            "Sa pag-aaral na ito, nakikita natin kung paano inibig ng Diyos ang sanlibutan.",
+            "Ipinapaliwanag ng file sa pag-aaral ang Juan 3:16 sa simpleng mga salita."
+        ],
+        "negated": [
+            "Wala akong binago sa iyong pag-aaral.",
+            "Hindi ko idinagdag ang panalangin: walang binago."
+        ]
+    },
+    "to": {
+        "folder": "to",
+        "claims": [
+            "Kuo u tānaki ha ki'i lotu nounou 'i he faka'osinga 'o e ako.",
+            "Na'a ku liliu 'a e kaveinga pea fakatonutonu 'a e fakatātā hono ua.",
+            "Kuo u liliu 'a e ngaahi fehu'i ki he fepōtalanoa'aki.",
+            "Na'a ku fakamatolu 'a e kaveinga pea vali kulokula 'a e veesi 'i he nouti."
+        ],
+        "unsaved": "'Oku te'eki ke tauhi 'a e liliu.",
+        "save": "Lomi'i 'a e \"Tauhi 'a e ngaahi liliu\" ke tauhi ia.",
+        "reports": [
+            "Kuo u fakatonutonu 'a e ngaahi veesi fekau'aki 'i he faile ako.",
+            "Na'a ku fakafo'ou 'a e faile ko 'eni 'aki 'a e ngaahi veesi fo'ou."
+        ],
+        "notClaims": [
+            "Te u tānaki ha ki'i lotu nounou 'i he faka'osinga 'o e ako?",
+            "'E lava ke u liliu 'a e kaveinga kapau 'oku ke loto ki ai.",
+            "'Oku ke loto ke u liliu 'a e ngaahi fehu'i ki he fepōtalanoa'aki?",
+            "Te u tānaki 'a e ngaahi veesi hili 'a e talateu.",
+            "Tānaki ha lotu 'i he faka'osinga 'o e ako.",
+            "Na'e fakatupu 'e he 'Otua 'a e langi mo e fonua.",
+            "Na'e tohi 'e Paula 'a e tohi ni ki he siasi 'i Filipai.",
+            "Na'e liliu 'e Sīsū 'a e vai ko e uaine.",
+            "'I he ako ko 'eni, 'oku tau sio ai ki he 'ofa 'a e 'Otua ki māmani.",
+            "'Oku fakamatala'i 'e he faile ako 'a Sione 3:16 'i he ngaahi lea faingofua."
+        ],
+        "negated": [
+            "Na'e 'ikai te u liliu ha me'a 'i ho'o ako.",
+            "Na'e 'ikai te u tānaki 'a e lotu: na'e 'ikai ke liliu ha me'a."
+        ]
+    },
+    "tr": {
+        "folder": "tr",
+        "claims": [
+            "Çalışmanın sonuna kısa bir dua ekledim.",
+            "Başlığı değiştirdim ve ikinci diyagramı düzelttim.",
+            "Tartışma sorularını çevirdim.",
+            "Nottaki başlığı kalın yaptım ve ayeti kırmızıya boyadım."
+        ],
+        "unsaved": "Değişiklik henüz kaydedilmedi.",
+        "save": "Korumak için «Değişiklikleri kaydet» düğmesine basın.",
+        "reports": [
+            "Çalışma dosyasındaki çapraz referansları düzelttim.",
+            "Bu dosyayı yeni ayetlerle güncelledim."
+        ],
+        "notClaims": [
+            "Çalışmanın sonuna kısa bir dua ekleyeyim mi?",
+            "İsterseniz başlığı değiştirebilirim.",
+            "Tartışma sorularını çevirmemi ister misiniz?",
+            "Ayetleri girişten sonra ekleyeceğim.",
+            "Çalışmanın sonuna bir dua ekleyin.",
+            "Tanrı gökleri ve yeri yarattı.",
+            "Pavlus bu mektubu Filipi'deki kiliseye yazdı.",
+            "İsa suyu şaraba dönüştürdü.",
+            "Bu çalışmada Tanrı'nın dünyayı nasıl sevdiğini görüyoruz.",
+            "Çalışma dosyası Yuhanna 3:16'yı basit sözcüklerle açıklıyor."
+        ],
+        "negated": [
+            "Çalışmanızda hiçbir şeyi değiştirmedim.",
+            "Duayı eklemedim: hiçbir şey değiştirilmedi."
+        ]
+    },
+    "uk": {
+        "folder": "uk",
+        "claims": [
+            "Я додав коротку молитву наприкінці вивчення.",
+            "Я змінив заголовок і виправив другу діаграму.",
+            "Я переклав питання для обговорення.",
+            "Я зробив заголовок жирним і виділив вірш у нотатці червоним кольором."
+        ],
+        "unsaved": "Зміну ще не збережено.",
+        "save": "Натисніть «Зберегти зміни», щоб зберегти її.",
+        "reports": [
+            "Я виправив перехресні посилання у файлі для вивчення.",
+            "Я оновив цей файл новими віршами."
+        ],
+        "notClaims": [
+            "Додати коротку молитву наприкінці вивчення?",
+            "Якщо хочете, я можу змінити заголовок.",
+            "Хочете, щоб я переклав питання для обговорення?",
+            "Я додам вірші після вступу.",
+            "Додайте молитву наприкінці вивчення.",
+            "Бог створив небо і землю.",
+            "Павло написав цей лист церкві у Филипах.",
+            "Ісус перетворив воду на вино.",
+            "У цьому вивченні ми бачимо, як Бог полюбив світ.",
+            "Файл для вивчення пояснює Івана 3:16 простими словами."
+        ],
+        "negated": [
+            "Я нічого не змінив у вашому вивченні.",
+            "Я не додав молитву: нічого не було змінено."
+        ]
+    },
+    "ur": {
+        "folder": "ur",
+        "claims": [
+            "میں نے مطالعے کے آخر میں ایک مختصر دعا شامل کر دی ہے۔",
+            "میں نے عنوان تبدیل کیا اور دوسرا خاکہ درست کیا۔",
+            "میں نے بحث کے سوالات کا ترجمہ کر دیا ہے۔",
+            "میں نے نوٹ میں سرخی کو بولڈ کیا اور آیت کو سرخ رنگ دیا۔"
+        ],
+        "unsaved": "یہ تبدیلی ابھی محفوظ نہیں ہوئی ہے۔",
+        "save": "اسے برقرار رکھنے کے لیے \"تبدیلیاں محفوظ کریں\" دبائیں۔",
+        "reports": [
+            "میں نے مطالعاتی فائل میں حوالہ جات درست کر دیے ہیں۔",
+            "میں نے اس فائل کو نئی آیات کے ساتھ اپ ڈیٹ کیا۔"
+        ],
+        "notClaims": [
+            "کیا میں مطالعے کے آخر میں ایک مختصر دعا شامل کروں؟",
+            "اگر آپ چاہیں تو میں عنوان تبدیل کر سکتا ہوں۔",
+            "کیا آپ چاہتے ہیں کہ میں بحث کے سوالات کا ترجمہ کروں؟",
+            "میں تعارف کے بعد آیات شامل کروں گا۔",
+            "مطالعے کے آخر میں ایک دعا شامل کریں۔",
+            "خدا نے آسمان اور زمین کو بنایا۔",
+            "پولس نے یہ خط فلپی کی کلیسیا کو لکھا۔",
+            "یسوع نے پانی کو مے میں بدل دیا۔",
+            "اس مطالعے میں ہم دیکھتے ہیں کہ خدا نے دنیا سے کیسی محبت کی۔",
+            "مطالعاتی فائل یوحنا 3:16 کو آسان الفاظ میں بیان کرتی ہے۔"
+        ],
+        "negated": [
+            "میں نے آپ کے مطالعے میں کچھ بھی تبدیل نہیں کیا۔",
+            "میں نے دعا شامل نہیں کی: کچھ بھی تبدیل نہیں ہوا۔"
+        ]
+    },
+    "vi": {
+        "folder": "vi",
+        "claims": [
+            "Tôi đã thêm một lời cầu nguyện ngắn vào cuối bài nghiên cứu.",
+            "Tôi đã đổi tiêu đề và sửa lại sơ đồ thứ hai.",
+            "Tôi đã dịch các câu hỏi thảo luận.",
+            "Tôi đã in đậm tiêu đề và tô màu đỏ cho câu Kinh Thánh trong ghi chú."
+        ],
+        "unsaved": "Thay đổi này chưa được lưu.",
+        "save": "Nhấn “Lưu thay đổi” để giữ lại.",
+        "reports": [
+            "Tôi đã sửa các tham khảo chéo trong tệp nghiên cứu.",
+            "Tôi đã cập nhật tệp này với các câu Kinh Thánh mới."
+        ],
+        "notClaims": [
+            "Tôi có nên thêm một lời cầu nguyện ngắn vào cuối bài nghiên cứu không?",
+            "Tôi có thể đổi tiêu đề nếu bạn muốn.",
+            "Bạn có muốn tôi dịch các câu hỏi thảo luận không?",
+            "Tôi sẽ thêm các câu Kinh Thánh sau phần giới thiệu.",
+            "Hãy thêm một lời cầu nguyện vào cuối bài nghiên cứu.",
+            "Đức Chúa Trời đã dựng nên trời và đất.",
+            "Phao-lô đã viết thư này cho Hội thánh ở Phi-líp.",
+            "Đức Chúa Jêsus đã biến nước thành rượu.",
+            "Trong bài nghiên cứu này, chúng ta thấy Đức Chúa Trời đã yêu thương thế gian như thế nào.",
+            "Tệp nghiên cứu giải thích Giăng 3:16 bằng những lời đơn giản."
+        ],
+        "negated": [
+            "Tôi chưa thay đổi gì trong bài nghiên cứu của bạn.",
+            "Tôi không thêm lời cầu nguyện: không có gì được thay đổi."
+        ]
+    },
+    "xh": {
+        "folder": "xh",
+        "claims": [
+            "Ndongeze umthandazo omfutshane ekupheleni kwesifundo.",
+            "Nditshintshe isihloko ndaza ndalungisa umzobo wesibini.",
+            "Ndiguqulele imibuzo yengxoxo.",
+            "Ndenze isihloko sangqindilili, ndaza ndafaka ibala elibomvu kwivesi elikwinqaku."
+        ],
+        "unsaved": "Utshintsho alukagcinwa.",
+        "save": "Cofa ku-Gcina utshintsho ukuze ulugcine.",
+        "reports": [
+            "Ndilungise izalathiso ezinxulumeneyo kwifayile yokufunda.",
+            "Ndihlaziye le fayile ngeevesi ezintsha."
+        ],
+        "notClaims": [
+            "Ingaba ndongeze umthandazo omfutshane ekupheleni kwesifundo?",
+            "Ndingasitshintsha isihloko ukuba uyathanda.",
+            "Ungathanda ukuba ndiguqulele imibuzo yengxoxo?",
+            "Ndiza kongeza iivesi emva kwentshayelelo.",
+            "Yongeza umthandazo ekupheleni kwesifundo.",
+            "UThixo wadala izulu nomhlaba.",
+            "UPawulos wabhala le leta kwibandla laseFilipi.",
+            "UYesu waguqula amanzi aba yiwayini.",
+            "Kwesi sifundo sibona indlela uThixo awalithanda ngayo ihlabathi.",
+            "Ifayile yokufunda ichaza uYohane 3:16 ngamazwi alula."
+        ],
+        "negated": [
+            "Andikhange nditshintshe nto kwisifundo sakho.",
+            "Andikhange ndongeze umthandazo: akukho nto itshintshiweyo."
+        ]
+    },
+    "yo": {
+        "folder": "yo",
+        "claims": [
+            "Mo ti fi àdúrà kúkúrú kan kún ìparí ẹ̀kọ́ náà.",
+            "Mo yí àkọlé padà, mo sì ṣàtúnṣe àwòrán kejì.",
+            "Mo ti túmọ̀ àwọn ìbéèrè ìjíròrò náà.",
+            "Mo mú kí àkọlé náà nípọn, mo sì yí àwọ̀ ẹsẹ inú àkíyèsí náà padà sí pupa."
+        ],
+        "unsaved": "A kò tíì tọ́jú àyípadà náà.",
+        "save": "Tẹ Tọ́jú àwọn ìyípadà láti pa á mọ́.",
+        "reports": [
+            "Mo ti ṣàtúnṣe àwọn ìtọ́kasí inú fáìlì ẹ̀kọ́ náà.",
+            "Mo ti ṣe àtúnṣe fáìlì yìí pẹ̀lú àwọn ẹsẹ tuntun."
+        ],
+        "notClaims": [
+            "Ṣé kí n fi àdúrà kúkúrú kan kún ìparí ẹ̀kọ́ náà?",
+            "Mo lè yí àkọlé náà padà tí o bá fẹ́.",
+            "Ṣé o fẹ́ kí n túmọ̀ àwọn ìbéèrè ìjíròrò náà?",
+            "Màá fi àwọn ẹsẹ náà kún un lẹ́yìn ìfáàrà.",
+            "Fi àdúrà kan kún ìparí ẹ̀kọ́ náà.",
+            "Ọlọ́run dá ọ̀run àti ayé.",
+            "Pọ́ọ̀lù kọ lẹ́tà yìí sí ìjọ tó wà ní Fílípì.",
+            "Jésù sọ omi di wáìnì.",
+            "Nínú ẹ̀kọ́ yìí a rí bí Ọlọ́run ṣe fẹ́ ayé.",
+            "Fáìlì ẹ̀kọ́ náà ṣàlàyé Jòhánù 3:16 ní ọ̀rọ̀ tó rọrùn."
+        ],
+        "negated": [
+            "Mi ò yí nǹkan kan padà nínú ẹ̀kọ́ rẹ.",
+            "N kò fi àdúrà náà kún un: kò sí ohun tí mo yí padà."
+        ]
+    },
+    "zh": {
+        "folder": "zh",
+        "claims": [
+            "我在研读的结尾添加了一段简短的祷告。",
+            "我修改了标题，并更正了第二张图表。",
+            "我已经翻译了讨论问题。",
+            "我把笔记中的标题加粗了，并把经文标成了红色。"
+        ],
+        "unsaved": "这项更改还没有保存。",
+        "save": "请按“保存更改”来保留它。",
+        "reports": [
+            "我已修正研读文件中的交叉引用。",
+            "我用新的经文更新了这个文件。"
+        ],
+        "notClaims": [
+            "要我在研读的结尾加上一段简短的祷告吗？",
+            "如果你愿意，我可以修改标题。",
+            "需要我把讨论问题翻译出来吗？",
+            "我会在引言之后加上这些经文。",
+            "在研读的结尾加上一段祷告。",
+            "神创造了天地。",
+            "保罗写了这封信给腓立比的教会。",
+            "耶稣把水变成了酒。",
+            "在这个研读中，我们看到神是如何爱世人的。",
+            "研读文件用简单的话解释了约翰福音3:16。"
+        ],
+        "negated": [
+            "我没有修改你的研读中的任何内容。",
+            "我没有添加这段祷告：什么都没有改动。"
+        ]
+    },
+    "zh-Hant": {
+        "folder": "zh",
+        "claims": [
+            "我在研讀的結尾加上了一段簡短的禱告。",
+            "我修改了標題，並更正了第二張圖表。",
+            "我已經翻譯了討論問題。",
+            "我把筆記中的標題加粗了，並把經文標成了紅色。"
+        ],
+        "unsaved": "這項更改還沒有儲存。",
+        "save": "請按「保存更改」來保留它。",
+        "reports": [
+            "我已修正研讀檔案中的交叉引用。",
+            "我用新的經文更新了這個檔案。"
+        ],
+        "notClaims": [
+            "要我在研讀的結尾加上一段簡短的禱告嗎？",
+            "如果你願意，我可以修改標題。",
+            "需要我把討論問題翻譯出來嗎？",
+            "我會在引言之後加上這些經文。",
+            "在研讀的結尾加上一段禱告。",
+            "神創造了天地。",
+            "保羅寫了這封信給腓立比的教會。",
+            "耶穌把水變成了酒。",
+            "在這個研讀中，我們看到神是如何愛世人的。",
+            "研讀檔案用簡單的話解釋了約翰福音3:16。"
+        ],
+        "negated": [
+            "我沒有修改你的研讀中的任何內容。",
+            "我沒有加上這段禱告：什麼都沒有改動。"
+        ]
+    },
+    "zu": {
+        "folder": "zu",
+        "claims": [
+            "Ngengeze umthandazo omfushane ekugcineni kwesifundo.",
+            "Ngishintshe isihloko futhi ngalungisa umdwebo wesibili.",
+            "Ngihumushe imibuzo yengxoxo.",
+            "Ngigqamise isihloko futhi ngenze ivesi libe bomvu enothini."
+        ],
+        "unsaved": "Ushintsho alukagcinwa.",
+        "save": "Chofoza okuthi Gcina izinguquko ukuze kugcinwe.",
+        "reports": [
+            "Ngilungise izinkomba eziphambanayo efayeleni lokutadisha.",
+            "Ngibuyekeze leli fayela ngamavesi amasha."
+        ],
+        "notClaims": [
+            "Ngabe ngengeze umthandazo omfushane ekugcineni kwesifundo?",
+            "Ngingashintsha isihloko uma uthanda.",
+            "Ungathanda ukuthi ngihumushe imibuzo yengxoxo?",
+            "Ngizokwengeza amavesi ngemva kwesingeniso.",
+            "Engeza umthandazo ekugcineni kwesifundo.",
+            "UNkulunkulu wadala izulu nomhlaba.",
+            "UPawulu wabhala le ncwadi ebandleni laseFilipi.",
+            "UJesu waphendula amanzi aba yiwayini.",
+            "Kulesi sifundo sibona ukuthi uNkulunkulu walithanda kanjani izwe.",
+            "Ifayela lokutadisha lichaza uJohane 3:16 ngamazwi alula."
+        ],
+        "negated": [
+            "Angizange ngishintshe lutho esifundweni sakho.",
+            "Angiwengezanga umthandazo: akukho okushintshiwe."
+        ]
+    }
+}

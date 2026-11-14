@@ -16,9 +16,10 @@ import { tran } from '../../lang/langHelpers';
  * The number is the card's VIEW index, exactly as the badge shows it (a PPTX
  * sub-slide reads `2.01`), because that is what the user sees and counts.
  * Through `tran` because every other accessible name in this app is, and a
- * Khmer window must not answer to English alone; `agentPresenterHelpers`
- * calls this same function for the `find` it hands the tool, in the same
- * window, so the label is translated exactly once and the same way.
+ * window in another language must not answer to English alone;
+ * `agentPresenterHelpers` calls this same function for the `find` it hands
+ * the tool, in the same window, so the label is translated exactly once and
+ * the same way.
  */
 export function toSlideAccessibleName(
     viewIndex: number,

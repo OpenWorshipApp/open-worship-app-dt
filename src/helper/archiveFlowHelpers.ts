@@ -34,7 +34,7 @@ export async function runMenuAction(title: string, run: () => Promise<void>) {
         handleError(error);
         showSimpleToast(
             tran(title),
-            error?.message ?? `Unable to complete ${title}`,
+            error?.message ?? tran('It did not work. Please try again.'),
         );
     }
 }

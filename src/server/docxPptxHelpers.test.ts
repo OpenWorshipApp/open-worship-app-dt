@@ -495,11 +495,11 @@ describe('docxHelpers and pptxHelpers', () => {
     test('reads the docx fonts missing on this computer from info.json alone', async () => {
         const module = await loadDocxModule();
         const { infoPaths } = mockPreviewInfo('/files/book.docx', 'book.docx', {
-            missingFontFamily: ['Khmer OS Muol'],
+            missingFontFamily: ['Made Up Display'],
         });
         await expect(
             module.getDocxMissingFontFamilyList('/files/book.docx'),
-        ).resolves.toEqual(['Khmer OS Muol']);
+        ).resolves.toEqual(['Made Up Display']);
         expect(infoPaths).toEqual(['/files/book.docx-docx-htmls/info.json']);
         expect(generateFileMD5Mock).not.toHaveBeenCalled();
         expect(electronSendAsyncMock).not.toHaveBeenCalled();
@@ -517,11 +517,11 @@ describe('docxHelpers and pptxHelpers', () => {
     test('reads the pptx fonts missing on this computer from info.json alone', async () => {
         const module = await loadPptxModule();
         const { infoPaths } = mockPreviewInfo('/files/talk.pptx', 'talk.pptx', {
-            missingFontFamily: ['Kh Battambang', 'Calibri'],
+            missingFontFamily: ['Made Up Sans', 'Calibri'],
         });
         await expect(
             module.getPptxMissingFontFamilyList('/files/talk.pptx'),
-        ).resolves.toEqual(['Kh Battambang', 'Calibri']);
+        ).resolves.toEqual(['Made Up Sans', 'Calibri']);
         expect(infoPaths).toEqual(['/files/talk.pptx-htmls/info.json']);
         expect(generateFileMD5Mock).not.toHaveBeenCalled();
 

@@ -37,7 +37,7 @@ cleared on a delete made from the card).
   admitted viewer (the user turned the internet on and expected it to work —
   2026-10-07) but only the viewer's module graph —
   `checkIsVirtualDisplayDevViewerFile` (two pages, `/@fs/<repo>/src/`,
-  `node_modules/` minus dot-dirs except `.vite/deps`, `tools/owa-devtools-mcp/*.mjs`, the five
+  `node_modules/` minus dot-dirs except `.vite/deps`, `tools/owa-devtools-mcp/*.mjs`, the seven
   `electron/` protocol files `src/` imports, the Vite client; no `..`, `\`, `?raw`). Measure the graph
   again with a resource log if the screen page starts importing elsewhere: the
   first symptom is a 404 in that list, and on a phone just the wallpaper.

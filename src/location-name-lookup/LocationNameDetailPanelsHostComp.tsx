@@ -1,7 +1,9 @@
 import { lazy } from 'react';
 
+import { useAppEffect } from '../helper/appHooks';
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import { useOpenDetailPanels } from './detailPanelHelpers';
+import { openDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
+import { registerDetailPanelRequestListener } from './detailPanelRequestHelpers';
 
 // Lazy so neither the detail panels nor — through them — the `bible-note` chunk
 // and the lookup dataset are touched until a record is actually opened.
@@ -20,8 +22,19 @@ const LazyLocationNameDetailPanelsComp = lazy(() => {
  *
  * Renders nothing at all until a record is opened, so a window that never uses
  * the feature pays only for this component.
+ *
+ * It also opens what ANOTHER window asks for: a name, place or verse pressed
+ * in the Markdown Preview, which hosts no panels, is sent here by the main
+ * process when this window is the one to show it
+ * (`detailPanelRequestHelpers.ts`). No language travels with it: the panel
+ * reads in this window's own lookup language.
  */
 export default function LocationNameDetailPanelsHostComp() {
+    useAppEffect(() => {
+        return registerDetailPanelRequestListener((request) => {
+            openDetailPanel(request);
+        });
+    }, []);
     const openDetailPanels = useOpenDetailPanels();
     if (openDetailPanels.length === 0) {
         return null;

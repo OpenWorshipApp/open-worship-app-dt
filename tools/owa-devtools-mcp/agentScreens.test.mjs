@@ -66,10 +66,10 @@ describe('describeScreenContent', () => {
         bible: {
           reference: 'John 3:16',
           version: 'KJV',
-          versions: ['KJV', 'KHSV'],
+          versions: ['KJV', 'TQSV'],
         },
       }),
-    ).toBe('John 3:16 in KJV, KHSV');
+    ).toBe('John 3:16 in KJV, TQSV');
   });
 
   it('says blank plainly', () => {

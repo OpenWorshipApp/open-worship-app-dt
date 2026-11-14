@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-11-05",
+    "updated": "2026-11-13",
     "sections": [
         {
             "id": "general",
@@ -41,7 +41,7 @@
                     "kind": "howto",
                     "keywords": [
                         "english",
-                        "khmer",
+                        "my language",
                         "translate",
                         "locale",
                         "language"
@@ -147,7 +147,10 @@
                         "typeface",
                         "missing font",
                         "text style",
-                        "letters"
+                        "letters",
+                        "Google Sans",
+                        "language font",
+                        "app-Google-Sans"
                     ],
                     "resources": {
                         "recipe": "W-16",
@@ -531,13 +534,13 @@
                 },
                 {
                     "id": "import-xml-url",
-                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
                     "kind": "howto",
                     "keywords": [
                         "import",
                         "xml",
                         "url",
-                        "Khmer",
+                        "my language",
                         "locale",
                         "number mapping",
                         "book names",
@@ -556,7 +559,7 @@
                 },
                 {
                     "id": "import-bible-language",
-                    "text": "Import a Bible in \"Khmer\"",
+                    "text": "Import a Bible in \"your language\"",
                     "kind": "howto",
                     "template": true,
                     "keywords": [
@@ -564,8 +567,8 @@
                         "download",
                         "language",
                         "country",
-                        "khmer",
-                        "cambodia",
+                        "my language",
+                        "my country",
                         "translation",
                         "add bible",
                         "want a bible"
@@ -841,7 +844,8 @@
             "label": "Accounts & extras",
             "recipes": [
                 "W-35",
-                "W-21"
+                "W-21",
+                "W-62"
             ],
             "questions": [
                 {
@@ -900,6 +904,39 @@
                     "resources": {
                         "recipe": "W-21",
                         "find": "Extra Binaries"
+                    }
+                },
+                {
+                    "id": "extra-binaries-mcp",
+                    "text": "How do I connect my own AI agent to the app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "mcp",
+                        "mcp server",
+                        "model context protocol",
+                        "ai agent",
+                        "claude code",
+                        "claude desktop",
+                        "cursor",
+                        "connect ai",
+                        "open-worship-app-mcp",
+                        "chatgpt",
+                        "codex",
+                        "gemini cli",
+                        "github copilot",
+                        "vs code",
+                        "windsurf",
+                        "zed",
+                        "cline",
+                        "mcp config",
+                        "program path"
+                    ],
+                    "resources": {
+                        "recipe": "W-62",
+                        "related": [
+                            "W-21"
+                        ],
+                        "find": "AI agents (MCP)"
                     }
                 }
             ]

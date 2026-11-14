@@ -62,9 +62,11 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    it whole. The same for CODE nobody has committed: the audit lists a note or a recipe
    that is due *only because of an uncommitted file* apart from the ones a
    commit moved (2026-10-11, `AD-18`). Your own file: read the note now and
-   stamp it with `--allow-dirty`. Another session's: name the file in the
-   report and leave the note — a stamp against it is refused, because it
-   would not outlive their next save.
+   stamp it with `--allow-dirty`. Another session's: read the note against
+   the last commit (`git show HEAD:<path>`) and stamp it with `--at-head`,
+   which hashes their files as that commit has them, so the note is listed
+   apart until their work lands and is due again once it has (2026-11-11,
+   `AD-26`); name the file in the report.
 
 ## Invocation
 
@@ -226,8 +228,9 @@ Safe classes, fixed without asking:
 
   More than about eight recipes due: split them among readers that only
   PROPOSE (the JSON `scripts/apply-manual-edits.mjs` documents — old text,
-  new text, the code line that proves it), and apply through that script,
-  which refuses a proposal whose proof is not in the code. One writer.
+  new text, the code line that proves it; each checks its own with
+  `scripts/check-manual-edits.mjs`), and apply through that script, which
+  refuses a proposal whose proof is not in the code. One writer.
 
   In the same change: a dated entry at the head of `user-workflows.md` saying
   what was read and what was not seen live, `npm run docs:gen`, the questions
@@ -421,10 +424,13 @@ restates the code, or a lead nobody confirmed.
   is the notes due a read. `--stamp-manual=<ids | all>` and
   `--stamp-notes=<paths | @list>` are its only writes: the review ledgers;
   either is refused against uncommitted code unless `--allow-dirty` says the
-  changes are the stamper's own.
+  changes are the stamper's own, or `--at-head` records a read made against
+  the last commit.
 - [scripts/apply-manual-edits.mjs](./scripts/apply-manual-edits.mjs): checks
   proposed manual or matrix edits (each `old` once, no overlap, every proof in
-  the code), then writes them. [scripts/find-label.mjs](./scripts/find-label.mjs):
+  the code), then writes them. A reader checks its own with
+  [scripts/check-manual-edits.mjs](./scripts/check-manual-edits.mjs): the same
+  checks, never a write. [scripts/find-label.mjs](./scripts/find-label.mjs):
   is this word a `tran()` key, and where is it drawn.
 - [references/live-checks.md](./references/live-checks.md): the statements
   only the running app can settle, by document; a line leaves when a run

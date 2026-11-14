@@ -86,6 +86,17 @@ vi.mock('./discovery.mjs', () => {
       serverState.calls.push(['resolveAppBrowserUrl']);
       return serverState.browserUrl;
     },
+    requireAppChoice: (isRequired) => {
+      serverState.calls.push(['requireAppChoice', isRequired]);
+    },
+  };
+});
+vi.mock('./appChoice.mjs', () => {
+  return {
+    STDIO_SERVER_INSTRUCTIONS: 'Check the versions.',
+    guardAppChoice: (transport) => {
+      serverState.calls.push(['guardAppChoice', transport]);
+    },
   };
 });
 vi.mock('./firewall.mjs', () => {
@@ -192,9 +203,21 @@ describe('createOwaMcpServer', () => {
       return name === 'registerOwaTools';
     });
     expect(registered).toEqual([
-      ['registerOwaTools', stdioServer, { door: 'stdio' }],
-      ['registerOwaTools', appServer, { door: 'app' }],
+      [
+        'registerOwaTools',
+        stdioServer,
+        { door: 'stdio', onAppChosen: expect.any(Function) },
+      ],
+      [
+        'registerOwaTools',
+        appServer,
+        { door: 'app', onAppChosen: expect.any(Function) },
+      ],
     ]);
+    // Only the outside agent's door asks for a choice among running apps.
+    expect(
+      serverState.calls.filter(([name]) => name === 'requireAppChoice'),
+    ).toEqual([['requireAppChoice', true]]);
   });
 });
 
@@ -222,6 +245,7 @@ describe('server.connect', () => {
       ['connect', transport],
       ['connected', transport],
       ['watchToolCalls', transport],
+      ['guardAppChoice', transport],
       ['guardToolCalls', transport],
     ]);
   });
@@ -235,6 +259,7 @@ describe('server.connect', () => {
       'connect',
       'connected',
       'watchToolCalls',
+      'guardAppChoice',
       'guardToolCalls',
     ]);
   });

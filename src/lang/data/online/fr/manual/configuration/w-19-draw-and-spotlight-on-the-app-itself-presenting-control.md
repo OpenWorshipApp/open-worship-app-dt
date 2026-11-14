@@ -3,7 +3,7 @@ id: W-19
 title: "Dessiner et mettre un spot sur l'application elle-même (Contrôle de présentation)"
 section: "Configuration"
 lang: fr
-translatedFrom: 2b3e5c2733bcb526
+translatedFrom: fcd91be15344bfbd
 ---
 # W-19 — Dessiner et mettre un spot sur l'application elle-même (Contrôle de présentation)
 
@@ -53,7 +53,8 @@ du mini-écran (W-10) ; ici, c'est la même paire d'outils, tournée vers l'appl
    et il affiche **[en:tran:Hold]**, qui n'assombrit que tant que le bouton de la souris est
    enfoncé. **[en:tran:Contrast]** (`X`) l'inverse — le cercle devient la zone masquée. La taille, le
    niveau d'assombrissement et le **flou du bord** (`,` / `.`) ont chacun un curseur, et
-   **[en:tran:Dim color]** choisit la couleur de l'assombrissement. 📸
+   **[en:tran:Dim color]** choisit la couleur de l'assombrissement.
+   Le pinceau et le spot s'ouvrent tous deux sur **[en:tran:Presets]**, comme sur le mini-écran (W-10). 📸
 7. L'**appareil photo** au bout de la barre de titre prend une photo de l'application **telle qu'elle est
    en ce moment** — votre dessin, votre spot et tout le reste — et vous demande quoi en faire :
    **[en:tran:Ask the assistant about this]** ouvre la fenêtre d'aide avec la photo déjà jointe, si bien

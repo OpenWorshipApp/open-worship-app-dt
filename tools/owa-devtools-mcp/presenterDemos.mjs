@@ -8,7 +8,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-bible-lookup',
     label: 'Look up a Bible passage',
-    detail: 'Open Bible Lookup without leaving the Presenter.',
+    detail:
+      'Bible Lookup opens over the Presenter: Previous and Next step a chapter, Add New Bible adds a version, and Ctrl+Q closes it.',
     title: 'Look up a Bible passage',
     steps: [
       {
@@ -22,7 +23,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-document-list',
     label: 'Show or hide the Document List',
-    detail: 'Toggle the panel that holds your slide documents.',
+    detail:
+      "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.",
     title: 'Show or hide the Document List',
     steps: [
       {
@@ -36,7 +38,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-flow-list',
     label: 'Show or hide the Presenting Flow List',
-    detail: 'Toggle the panel used to build and follow a service order.',
+    detail:
+      "Toggle the Presenting Flow List. A run sheet has Collapse All, Expand All and Stop Auto Next; a line's menu has Move up, Move down, Move to Top and Move to Bottom.",
     title: 'Show or hide the Presenting Flow List',
     steps: [
       {
@@ -50,7 +53,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-bible-notes',
     label: 'Show or hide Bibles and Bible Notes',
-    detail: 'Toggle the panel for saved passages and notes.',
+    detail:
+      'Bibles keeps passages (Add Bible Item, Generate Slides, Create Lyric, Move To); Bible Notes keeps notes (New Note Item, Edit Title, Add to Bible List).',
     title: 'Show or hide Bibles and Bible Notes',
     steps: [
       {
@@ -64,7 +68,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-mini-screen',
     label: 'Show or hide the Mini Screen',
-    detail: 'Toggle the panel that previews and controls audience screens.',
+    detail:
+      'Mini Screen previews each screen. Mini Screen Options holds Add New Screen, Virtual Screens Manager and Show Monitor Wallpaper; Preview Size Scale sizes the previews.',
     title: 'Show or hide the Mini Screen',
     steps: [
       {
@@ -78,7 +83,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-full-view',
     label: 'Give the Presenter more room',
-    detail: 'Switch the Presenter between normal and full view.',
+    detail:
+      "Full view gives the Presenter more room; a divider's menu has Reset Size, Close First Widget and Close Second Widget.",
     title: 'Give the Presenter more room',
     steps: [
       {
@@ -93,7 +99,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-slide-editor-window',
     label: 'Open Slide Editor in its own window',
-    detail: 'Keep the Presenter visible while editing the selected document.',
+    detail:
+      'Keep the Presenter in view while you edit the selected document; Save keeps the changes.',
     title: 'Open Slide Editor in its own window',
     steps: [
       {
@@ -121,7 +128,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-settings',
     label: 'Open app Settings',
-    detail: 'Change language, theme, folders, screens, and other app options.',
+    detail:
+      'Setting changes language, theme, folders and screens; Stay Awake in the header keeps this computer from sleeping during a service.',
     title: 'Open app Settings',
     steps: [
       {
@@ -135,7 +143,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-help-menu',
     label: 'Open the Help menu',
-    detail: 'Find app help, tips, updates, and information about the app.',
+    detail:
+      'Help has Open Online Help, Open Chatbot and Report a Problem; the Help menu at the top holds tips and updates.',
     title: 'Open the Help menu',
     steps: [
       {
@@ -149,7 +158,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-foreground-panel',
     label: 'Open foreground controls',
-    detail: 'Reach countdowns, clocks, marquees, and quick text.',
+    detail:
+      'Foreground opens Countdown, Time, Marquee Top, Quick Text, Messages and Long Text Show; Close floating widget puts one away.',
     title: 'Open foreground controls',
     steps: [
       {
@@ -167,7 +177,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-countdown',
     label: 'Count down to the start of a service',
     detail:
-      'Countdown counts a number of minutes, or down to a time on the clock.',
+      'Countdown counts Hours, Minutes and Seconds, or to a Countdown Date and Countdown Time; Show Countdown puts it up, Auto-start and Pause run it.',
     title: 'Count down to the start of a service',
     isFeatured: false,
     steps: [
@@ -184,14 +194,21 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Show Countdown: a duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown). Once the time is up it counts the time over. This lesson will not start it for you.',
+        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment.',
+      },
+      {
+        text: 'Tick the screens it should reach, then press Show Countdown. A duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it; Auto-start makes it count the moment it is shown.',
+      },
+      {
+        text: 'Once the time is up it counts the time over. This lesson will not start it for you.',
       },
     ],
   },
   {
     id: 'presenter-foreground-stopwatch',
     label: 'Time how long something is running',
-    detail: 'Stopwatch counts up from zero on the audience screen.',
+    detail:
+      'Stopwatch counts up from zero: Show Stopwatch puts it up, Auto-start and Pause run it, History keeps the times.',
     title: 'Time how long something is running',
     isFeatured: false,
     steps: [
@@ -208,14 +225,18 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
+        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again.',
+      },
+      {
+        text: 'It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
       },
     ],
   },
   {
     id: 'presenter-foreground-time',
     label: 'Show the time on the audience screen',
-    detail: 'Time puts one clock up, or several for different cities.',
+    detail:
+      'Time puts up a clock: Use Current Timezone or Choose City, a Label shown above the time, AM/PM, and Add Time for other cities.',
     title: 'Show the time on the audience screen',
     isFeatured: false,
     steps: [
@@ -224,15 +245,25 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Time > Choose City',
       },
       {
         text: 'Choose Time. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
         find: 'Time',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Time > Choose City',
       },
       {
-        text: "Add Time adds a clock. Give it a label, and either keep this device's timezone or choose a city to set its own. More than one clock can run at once. This lesson will not put one on a screen.",
+        // Opens the city list and nothing else: the clock changes only when
+        // the person picks a city from it.
+        text: "Press Choose City to see the cities. Picking one sets the clock to that city's time; press Escape to leave it as it is. Use Current Timezone goes back to this computer's own time.",
+        find: 'Time > Choose City',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Add Time adds a clock. Give it a label shown above the time, and tick AM/PM for a 12-hour clock. More than one clock can run at once. This lesson will not put one on a screen.',
       },
     ],
   },
@@ -240,7 +271,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-marquee-top',
     label: 'Scroll a line of text across the top',
     detail:
-      'Marquee Top is a moving notice above everything else on the screen.',
+      "Marquee Top is a moving notice above everything; Quick font size, Quick scroll speed and Today's Date set it, Saved keeps lines.",
     title: 'Scroll a line of text across the top',
     isFeatured: false,
     steps: [
@@ -289,7 +320,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-foreground-quick-text',
     label: 'Put a short message up for a moment',
-    detail: 'Quick Text puts a few words up that go again by themselves.',
+    detail:
+      'Quick Text puts a few words up: Delay waits first, Live sets how long they stay or Infinite keeps them until hidden, Markdown formats them, Preview shows them, Markdown Lesson each mark.',
     title: 'Put a short message up for a moment',
     isFeatured: false,
     steps: [
@@ -298,15 +330,34 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         text: 'Choose Quick Text. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
         find: 'Quick Text',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
-        text: 'Type the message -- Markdown is understood -- set how many seconds it stays and how long to wait first, then press Show Quick Text. Live shows it as you type. This lesson will not put it on a screen.',
+        text: 'Press Preview to see the words drawn the way the screen will draw them; Edit goes back to typing.',
+        find: 'Quick Text > Preview',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        // A toggle beside Edit and Preview; it opens a reading panel and
+        // changes nothing. Its "Open Link in Browser" leaves the app, so it
+        // stays the person's.
+        text: 'Press Markdown Lesson: each mark sits beside what the screen draws from it -- a heading, bold, a quote, a list -- so you can copy one while typing. Press it again to close it; Open Link in Browser, a fuller guide, is yours to press.',
+        find: 'Quick Text > Markdown Lesson',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        // Infinite stays words: it changes how long the session's text
+        // stays the next time it is shown.
+        text: 'Under Edit, type the message -- Markdown is understood. Delay is the seconds to wait first and Live the seconds it stays; Infinite keeps it up until you hide it. Each session keeps its own three. Show Quick Text puts it up; this lesson will not.',
       },
     ],
   },
@@ -314,7 +365,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-video',
     label: 'Play a clip over the slide',
     detail:
-      'Video Show plays a clip above the background, the slide and the passage.',
+      'Video Show plays a clip above the slide; Play With Sound, Volume, Blend Mode and Slide Show are in its panel.',
     title: 'Play a clip over the slide',
     isFeatured: false,
     steps: [
@@ -406,7 +457,10 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties. It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
+        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties.',
+      },
+      {
+        text: 'It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
       },
     ],
   },
@@ -437,7 +491,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-foreground-properties',
     label: 'Place and size a foreground item',
-    detail: 'Use Properties for position, size, opacity and blending.',
+    detail:
+      'Properties: Position, Width (%) or Horizontal Margin (%), Scale, Opacity (%), Behind Slide, Always on Top, Font Family, Text Color, Backdrop Filter and Own transition.',
     title: 'Place and size a foreground item',
     isFeatured: false,
     steps: [
@@ -446,38 +501,86 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         text: 'Choose Quick Text to open its panel.',
         find: 'Quick Text',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
       },
       {
         // Scoped to the panel by name: every open foreground panel has a
         // Properties button, and they all read the same word. The plain word
         // is kept behind it because a scope matches the panel's ENGLISH
-        // `data-widget-name` while the button itself is translated, so a Khmer
-        // window falls back to opening some panel's Properties rather than
-        // refusing the step outright.
+        // `data-widget-name` while the button itself is translated, so a
+        // translated window falls back to opening some panel's Properties
+        // rather than refusing the step outright.
         text: 'Open Properties inside the Quick Text panel.',
         find: 'Quick Text > Properties',
         finds: ['Quick Text > Properties', 'Properties'],
         translateFinds: true,
         action: 'click',
+        skipIfVisible: 'Quick Text > Presets',
       },
       {
-        text: 'Every foreground component carries this same strip, and each keeps its own settings: a pad for the corner it sits in, Width, Scale and Opacity, an X and Y nudge, Round for the corners, Blend Mode, and the transition it arrives with.',
+        text: 'Every foreground component carries this same strip, and each keeps its own settings: Presets first, a pad for the corner it sits in, Width, Scale and Opacity, an X and Y nudge, Round for the corners, Blend Mode, and the transition it arrives with.',
       },
       {
-        text: 'Two of them are worth knowing. Always on Top turns on a Z-Index, which is what decides who wins when two overlays land in the same place. And Blend Mode set to Screen drops the black out of a clip, which is how falling snow shot on black ends up over the live slide.',
+        text: 'Quick Text has Horizontal Margin (%) and Vertical Margin (%) in place of Width: the space kept clear at the sides and at the top and bottom. The chain between them, Link horizontal and vertical margin, moves both together.',
+      },
+      {
+        text: 'Always on Top turns on a Z-Index, which decides who wins when two overlays land in the same place. Blend Mode set to Screen drops the black out of a clip, which is how falling snow shot on black ends up over the live slide.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-presets',
+    label: 'Give a foreground item a ready look',
+    detail:
+      'Presets, first in every foreground Properties, give a ready look; Dark or Light sets the words for the background, and Save as Preset keeps yours (Rename Preset, Replace with Current Look).',
+    title: 'Give a foreground item a ready look',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        text: 'Choose Quick Text to open its panel.',
+        find: 'Quick Text',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Properties',
+      },
+      {
+        // Properties is a toggle; a preset tile showing means it is open.
+        // Never a FIND: a bare "Presets" matches the tiles ("Presets: Speaker")
+        // before the row, and a tile rewrites the session's whole look.
+        text: 'Open Properties inside the Quick Text panel.',
+        find: 'Quick Text > Properties',
+        finds: ['Quick Text > Properties', 'Properties'],
+        translateFinds: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Presets',
+      },
+      {
+        text: 'Presets is the first row. Each tile gives this component a whole look for one job -- here Bible Verse, Speaker, Song Title, Sermon Title, Event Session and Announcement -- keeping your font. Choosing one is yours; this lesson chooses none.',
+      },
+      {
+        text: 'Dark or Light sets the words for the background behind them. The + is Save as Preset: it keeps the current look under a name you give. Right-click a saved one for Rename Preset, Replace with Current Look and Remove Preset.',
       },
     ],
   },
   {
     id: 'presenter-foreground-sessions',
     label: 'Keep the lines you use every week',
-    detail: 'Save named sessions inside a foreground component.',
+    detail:
+      "Each foreground panel keeps sessions: Add Session starts one; a session's menu has Rename Session, Remove Session and Open in Chatbot, which asks the assistant to change it.",
     title: 'Keep the lines you use every week',
     isFeatured: false,
     steps: [
@@ -486,40 +589,48 @@ export const PRESENTER_DEMO_LIST = [
         find: 'Foreground',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Marquee Top > Properties',
       },
       {
-        text: 'Choose Marquee Top and look at the row of names above its text box.',
+        text: 'Choose Marquee Top and look at the row of names at the top of its panel.',
         find: 'Marquee Top',
         translateFind: true,
         action: 'click',
+        skipIfVisible: 'Marquee Top > Properties',
       },
       {
-        text: 'That row is the saved sessions. + adds one, and the dots beside a name rename or remove it, so the welcome line and the offering notice can each keep their own wording and speed.',
+        text: 'That row is the sessions, each with its own words, look and speed. + (Add Session) starts one; right-click a name, or press the dots on the one you are on, for Rename Session, Remove Session and Open in Chatbot.',
+      },
+      {
+        text: "Open in Chatbot -- also the robot in the panel's title bar -- opens the assistant with the session you are on attached, so you can ask for a slower scroll or bigger words.",
+      },
+      {
+        text: 'Each session owns its overlay: Show from a second session puts its words up beside the first instead of replacing them, and its Hide takes only its own down. This lesson changes no session.',
       },
     ],
   },
   {
     id: 'presenter-foreground-clear',
     label: 'Take a foreground item back off',
-    detail: 'Hide one component, or clear the whole foreground layer.',
+    detail:
+      'Hide one component, or clear the whole foreground layer; inside a panel, Remove Message, Remove Language and Delete this saved session take out what you added.',
     title: 'Take a foreground item back off',
     isFeatured: false,
+    // Words only (TP-14): the bare Mini Screen find can press a screen card.
     steps: [
       {
-        text: 'Open Mini Screen and find the screen card that is carrying the overlay.',
-        find: 'Mini Screen',
-        translateFind: true,
-        action: 'click',
+        text: "Each foreground panel has its own Hide button, which takes off only the session you are on; the panel's other sessions stay up.",
       },
       {
-        text: 'Each foreground panel has its own Hide button, which takes off only that component. The screen card has Clear Foreground, which takes off all of them at once. This lesson will not change a live screen.',
+        text: 'In the Mini Screen, the card of the screen carrying the overlay has Clear Foreground, which takes off all of them at once. This lesson will not change a live screen.',
       },
     ],
   },
   {
     id: 'presenter-colors-tab',
     label: 'Open background colors',
-    detail: 'Choose a solid color for the selected audience screens.',
+    detail:
+      'Choose a solid color for the selected screens, or Select custom color and Copy Color.',
     title: 'Open background colors',
     steps: [
       {
@@ -547,7 +658,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-videos-tab',
     label: 'Open background videos',
-    detail: 'Browse and control moving backgrounds.',
+    detail:
+      "Browse moving backgrounds; a video's menu has Toggle Fading at End, and Thumbnail View or List View change the grid.",
     title: 'Open background videos',
     steps: [
       {
@@ -575,7 +687,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-webs-tab',
     label: 'Open website backgrounds',
-    detail: 'Browse saved web pages used as screen backgrounds.',
+    detail:
+      'Browse saved web pages for backgrounds: New File, Add URL, Edit this web file and Copy URL to Clipboard are on their menus.',
     title: 'Open website backgrounds',
     steps: [
       {
@@ -589,7 +702,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-audios-tab',
     label: 'Open the audio library',
-    detail: 'Browse music and other audio used during a service.',
+    detail:
+      "Browse music and other audio: Repeat this audio loops one, Document Audios plays the selected document's own.",
     title: 'Open the audio library',
     steps: [
       {
@@ -603,14 +717,16 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-path-editor',
     label: 'Change the open document folder',
-    detail: 'Show the folder path box above the Document List.',
+    detail:
+      'Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.',
     title: 'Change the open document folder',
     steps: [
       {
         text: 'Show the path editor at the top of the Document List.',
         find: 'Show path editor',
         finds: ['Document List > Show path editor', 'Show path editor'],
-        translateFind: true,
+        // TP-01: PathSelectorComp draws this title in English in every
+        // language and it is no dictionary key, so it is not translated.
         action: 'click',
       },
     ],
@@ -618,7 +734,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-filter-documents',
     label: 'Find a document by name',
-    detail: 'Filter a long Document List without moving or deleting anything.',
+    detail:
+      'Filter by name narrows a long Document List without moving or deleting anything.',
     title: 'Find a document by name',
     steps: [
       {
@@ -633,7 +750,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-sort-documents',
     label: 'Sort the Document List',
-    detail: 'Change how documents are ordered without changing their files.',
+    detail:
+      'Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.',
     title: 'Sort the Document List',
     steps: [
       {
@@ -648,7 +766,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-filter-document-types',
     label: 'Filter documents by type',
-    detail: 'Show only slides, lyrics, PDFs, or another document kind.',
+    detail:
+      'Filter by Type shows only slides, lyrics, PDFs or another document kind.',
     title: 'Filter documents by type',
     steps: [
       {
@@ -663,7 +782,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-pin-document',
     label: 'Pin the selected document',
-    detail: 'Keep presenting from one document while selecting another.',
+    detail:
+      'Pin document keeps presenting from one document while you select another.',
     title: 'Pin the selected document',
     steps: [
       {
@@ -692,7 +812,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-preview-width',
     label: 'Fit the selected document to width',
-    detail: 'Toggle full-width document previews without changing the screen.',
+    detail:
+      'Full Width or Not Full Width fits a PDF or Word preview, without changing the screen.',
     title: 'Fit the selected document to width',
     steps: [
       {
@@ -707,7 +828,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-note-panel',
     label: 'Write a note on a document or slide',
-    detail: 'Open the Note panel under the slide previews; it starts closed.',
+    detail:
+      'Open the Note panel under the slides: Document Note for the whole document, Slide Notes for each slide; it starts closed.',
     title: 'Write a note on a document or slide',
     steps: [
       {
@@ -728,7 +850,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-present-slide',
     label: 'Present a slide from a document',
     detail:
-      'Select a document, then send one of its slide cards to the audience.',
+      'Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.',
     title: 'Present a slide from a document',
     isFeatured: false,
     steps: [
@@ -765,7 +887,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-present-lyrics',
     label: 'Present song lyrics',
-    detail: 'Choose a lyric document and present its generated stage slides.',
+    detail:
+      'Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.',
     title: 'Present song lyrics',
     isFeatured: false,
     steps: [
@@ -783,7 +906,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-present-bible',
     label: 'Look up and present a Bible verse',
-    detail: 'Choose a passage, preview it, then send it to selected screens.',
+    detail:
+      'In the Bible pane: Add Extra Bible, Change Bible Key, Verse Start and Verse End, Save bible item, Save bible item and show on screen, Floating.',
     title: 'Look up and present a Bible verse',
     isFeatured: false,
     steps: [
@@ -801,7 +925,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-style-bible',
     label: 'Style Bible text on screen',
-    detail: 'Change the Bible layer font, size, colors, spacing, and layout.',
+    detail:
+      'Reveal Hidden Controls under the Bible pane shows Font Size, Should New Lines and Change Bible Model Info; Bible/LongText Properties styles the words on screen.',
     title: 'Style Bible text on screen',
     isFeatured: false,
     steps: [
@@ -911,7 +1036,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-play-audio',
     label: 'Play audio during a service',
-    detail: 'Choose a saved audio file and use its playback controls.',
+    detail:
+      'Choose a saved audio file and use its playback controls; Enable Background Audio Handlers under a screen card shows the sound controls of a background.',
     title: 'Play audio during a service',
     isFeatured: false,
     steps: [
@@ -940,14 +1066,18 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Twelve components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
+        text: 'Thirteen components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Long Text Show, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show.',
+      },
+      {
+        text: 'Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },
   {
     id: 'presenter-screen-controls',
     label: 'Control what the audience sees',
-    detail: 'Use Mini Screen to show, hide, lock, or clear individual layers.',
+    detail:
+      'On a Mini Screen card: Toggle showing screen (F5), Clear All (F6), Clear Background, Clear Slide, Lock, Stop rendering preview and Transition.',
     title: 'Control what the audience sees',
     isFeatured: false,
     steps: [
@@ -966,7 +1096,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-multi-screen',
     label: 'Use more than one audience screen',
     detail:
-      'Add screen cards, choose displays, and decide which screens receive content.',
+      "Add New Screen for each display; a card's More Options has Solo, Deselect and Refresh Preview, beside Manage Virtual Displays.",
     title: 'Use more than one audience screen',
     isFeatured: false,
     steps: [
@@ -984,7 +1114,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-draw-spotlight',
     label: 'Draw or spotlight on the app',
-    detail: 'Use Presenting Control for arrows, drawing, erasing, and focus.',
+    detail:
+      'Presenting Control (Ctrl+Shift+P): Draw on the app, Erase parts of the drawing, Spotlight part of the app, Keyboard screencast, Drawing history, Take a picture of the app.',
     title: 'Draw or spotlight on the app',
     isFeatured: false,
     steps: [
@@ -1001,7 +1132,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-keyboard-screencast',
     label: 'Show the keys you press',
     detail:
-      'Display keyboard shortcuts while teaching or demonstrating the app.',
+      "Presenting Control's Keyboard screencast shows each key you press; beside it, Hold to spotlight and Dim the rest of the app point at one place.",
     title: 'Show the keys you press',
     isFeatured: false,
     steps: [
@@ -1018,7 +1149,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-download-media',
     label: 'Download a background video or song',
-    detail: 'Use a supported public link to add video or audio to the library.',
+    detail:
+      "Use a supported public link to add a video or a song to the library; a downloaded file's Open Shared Link opens where it came from.",
     title: 'Download a background video or song',
     isFeatured: false,
     steps: [
@@ -1037,7 +1169,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-build-flow',
     label: 'Build a service presenting flow',
     detail:
-      'Arrange documents, passages, actions, and cues into a running order.',
+      'Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.',
     title: 'Build a service presenting flow',
     isFeatured: false,
     steps: [
@@ -1092,7 +1224,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-public-domain',
     label: 'Import a public-domain hymn',
-    detail: 'Browse the built-in hymn collection without an account.',
+    detail:
+      "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.",
     title: 'Import a public-domain hymn',
     isFeatured: false,
     steps: [
@@ -1111,7 +1244,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-more-options',
     label: 'Use the More Options buttons',
     detail:
-      'Open the three-dot menu on a document, slide, background, or flow item.',
+      "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.",
     title: 'Use the More Options buttons',
     isFeatured: false,
     steps: [
@@ -1131,7 +1264,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-app-assistant',
     label: 'Ask the App Assistant for help',
     detail:
-      'Ask about the Presenter and request a safe step-by-step walkthrough.',
+      'App Assistant answers questions about the Presenter; Open in Chatbot on a document, Ask the assistant about this on a picture, Load the change for a song it changed.',
     title: 'Ask the App Assistant for help',
     isFeatured: false,
     steps: [
@@ -1187,7 +1320,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-lookup-reference',
     label: 'Type a complete reference in Bible Lookup',
     detail:
-      'Enter a book, chapter and verse range together, then check the preview.',
+      'Type into Bible Reference, then Tab to complete; Clear input chunk trims the last part and Clear input empties it; Previous and Next move on.',
     title: 'Type a complete reference in Bible Lookup',
     isFeatured: false,
     steps: [
@@ -1209,7 +1342,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-lookup-keep-open',
     label: 'Keep Bible Lookup open between passages',
-    detail: 'Use Keep Open when preparing several Bible passages in a row.',
+    detail:
+      'Keep Open keeps Bible Lookup up between passages; Full size preview, Show all verses and Insert bible item into selected slide sit beside it.',
     title: 'Keep Bible Lookup open between passages',
     isFeatured: false,
     steps: [
@@ -1232,7 +1366,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-lookup-history',
     label: 'Reuse a passage from lookup history',
     detail:
-      'Bring back an earlier reference from the history above Bible Lookup.',
+      'Click to open the verse in the history above Bible Lookup; its menu has Open beside the current verse and Set to current editing.',
     title: 'Reuse a passage from lookup history',
     isFeatured: false,
     steps: [
@@ -1284,7 +1418,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-lookup-switch-split',
     label: 'Move between split passages in Bible Lookup',
     detail:
-      'Split a passage, then press Ctrl+Shift with an arrow key to work in the passage on that side.',
+      'Split Horizontal or Split Vertical (Ctrl+Shift+S, Ctrl+Shift+V) splits a passage; then Ctrl+Shift with an arrow key moves to the passage on that side.',
     title: 'Move between split passages in Bible Lookup',
     isFeatured: false,
     steps: [
@@ -1378,7 +1512,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-background-folder',
     label: 'Check which media folder is open',
     detail:
-      'Reveal the Background path editor when an expected file is missing.',
+      'Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.',
     title: 'Check which media folder is open',
     isFeatured: false,
     steps: [
@@ -1398,7 +1532,8 @@ export const PRESENTER_DEMO_LIST = [
       {
         text: 'Toggle Show path editor inside Background.',
         find: 'Background > Show path editor',
-        translateFind: true,
+        // TP-01: PathSelectorComp draws this title in English in every
+        // language, so a translated name would find nothing.
         action: 'click',
       },
       {
@@ -1461,7 +1596,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-messages',
     label: 'Prepare several audience messages',
     detail:
-      'Use Messages for separate notices with their own Show and Hide controls.',
+      "Use Messages for separate notices: Add Message, Type a message, then Show All Messages or each one's own Show and Hide.",
     title: 'Prepare several audience messages',
     isFeatured: false,
     steps: [
@@ -1551,7 +1686,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-effects',
     label: 'Find border and shadow effects for an overlay',
     detail:
-      'Open Quick Text, then explore the Effects section inside Properties.',
+      'Open Quick Text, then Effects inside Properties: Round, Border, Shadow, Padding, Text Align, Line Height, Letter Spacing, Text Shadow, Italic.',
     title: 'Find border and shadow effects for an overlay',
     isFeatured: false,
     steps: [
@@ -1570,10 +1705,22 @@ export const PRESENTER_DEMO_LIST = [
         skipIfVisible: 'Quick Text > Properties',
       },
       {
-        text: 'Open Properties in Quick Text and expand Effects. Border, Shadow and Padding style the box; Text Align, Line Height and Text Shadow style the words.',
+        // Both are disclosures: they show the settings and change none.
+        text: 'Open Properties inside the Quick Text panel.',
+        find: 'Quick Text > Properties',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Effects',
       },
       {
-        text: 'Each foreground component keeps its own settings. A change can reach an overlay already on screen; prepare the appearance before showing it. This lesson opens the panel without changing its style.',
+        text: 'Expand Effects at the foot of Properties.',
+        find: 'Quick Text > Effects',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Quick Text > Letter Spacing',
+      },
+      {
+        text: 'Round, Border, Shadow and Padding style the box; Text Align, Line Height, Letter Spacing and Text Shadow style the words. A change reaches an overlay already on screen. The same buttons fold Effects and Properties away again.',
       },
     ],
   },
@@ -1581,7 +1728,7 @@ export const PRESENTER_DEMO_LIST = [
     id: 'presenter-foreground-slideshow',
     label: 'Prepare an image overlay slide show',
     detail:
-      'Find Image Show slide show controls and timing options before starting playback.',
+      "Image Show's Slide Show Options: Repeat All, Step, Jumping Step, Random Up To and Wait Until The Video Ends, before starting playback.",
     title: 'Prepare an image overlay slide show',
     isFeatured: false,
     steps: [
@@ -1604,6 +1751,360 @@ export const PRESENTER_DEMO_LIST = [
       },
       {
         text: 'An Image Show is a foreground overlay above other screen content. Check its size, position and selected screens before Start Slide Show. This lesson leaves playback stopped or running as you had it.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-document-row-menu',
+    label: 'Work with a document from its row',
+    detail:
+      'Right-click a document for Open Slides Preview, Edit, Print, Export to PPTX, Rename, Duplicate, Copy Path to Clipboard and Reveal in File Explorer.',
+    title: 'Work with a document from its row',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a document in the Document List. Open Slides Preview (Ctrl + Click) shows its slides; Edit opens the editor; Print and Export to PPTX make copies; Rename, Duplicate, Copy Path to Clipboard, Reveal in File Explorer and Move to Trash manage the file; Color Note marks it. This lesson opens no file for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-slide-menu',
+    label: "Rearrange slides from a slide's menu",
+    detail:
+      'Right-click a slide card for Move forward, Move backward, Copy, Duplicate, Disable, Choose Color and Remove background; New Slide and Paste Image add one.',
+    title: "Rearrange slides from a slide's menu",
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a slide card of a slide document. Move forward and Move backward reorder it; Copy and Duplicate copy it; Disable skips it; Choose Color marks it; Remove background clears its background. Right-click the space between the cards for New Slide, Paste and Paste Image. Undo puts any of it back. This lesson changes no slide for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-stage-style',
+    label: 'Fit lyric slides with a stage style',
+    detail:
+      'For a lyric, Add Stage and its Stage Style set Slide Margin (%), Background Opacity (%), Extra Font Size, Theme and Custom CSS; Atom Mode gives each line a slide.',
+    title: 'Fit lyric slides with a stage style',
+    isFeatured: false,
+    steps: [
+      {
+        text: "Select a lyric in the Document List. Above its slides, Add Stage adds a stage and each stage chip opens its Stage Style: Slide Margin (%), Horizontal Margin (%) and Vertical Margin (%) with Link horizontal and vertical margin, Position, Background Opacity (%), Extra Font Size, Theme (Light or Dark), Custom CSS and Edit a copy of the stage's CSS; Reset Stage Style puts the defaults back. Atom Mode makes every line of a part its own slide. This lesson changes no stage for you.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-long-text',
+    label: 'Show a long text in several languages',
+    detail:
+      'Long Text Show: Add Language, Choose Lyric or Raw Text, Stack, Hide Number, View as Text Cards and Bring to Middle, then Show Long Text.',
+    title: 'Show a long text in several languages',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Long Text Show > Properties',
+      },
+      {
+        text: 'Choose Long Text Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Long Text Show',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Long Text Show > Properties',
+      },
+      {
+        text: 'Add Language adds a column; Choose Language names it; take its words from Choose Lyric (a Lyric File) or type Raw Text with a Title and Add Section.',
+      },
+      {
+        text: 'Stack puts the languages under each other, Hide Number drops the section numbers, View as Text Cards shows them as cards, and Bring to Middle centres one. Show Long Text puts it on the screens; this lesson will not.',
+      },
+    ],
+  },
+  {
+    // Words only: it starts from a passage the person saved, and the menu
+    // row writes a new Quick Text session.
+    id: 'presenter-foreground-bible-quick-text',
+    label: 'Put a Bible passage up as a Quick Text',
+    detail:
+      'Right-click a passage in Bibles and choose Create Quick Text: it opens in a new Quick Text session, set out by the Bible Verse preset.',
+    title: 'Put a Bible passage up as a Quick Text',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a saved passage in the Bibles list and choose Create Quick Text. The Quick Text panel opens on a new session holding the passage, laid out by the Bible Verse preset, ready for Show Quick Text. This lesson will not choose a passage for you.',
+      },
+      {
+        text: 'The words are yours to change in that session, and the session keeps them for next time. Delay and Live set when the passage comes up and how long it stays.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-virtual-screens',
+    label: 'Watch a screen on a phone, a browser or a TV',
+    detail:
+      'Virtual Screens Manager: Virtual Displays, Add Virtual Display, Let other devices watch, Copy address, QR code and Cast to a TV; Screen Mirror opens it too.',
+    title: 'Watch a screen on a phone, a browser or a TV',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Mini Screen Options at the top of the Mini Screen.',
+        find: 'Mini Screen Options',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Virtual Displays',
+      },
+      {
+        text: 'Choose Virtual Screens Manager. It opens in a panel of its own; Screen Mirror at the top of the window opens the same panel.',
+        find: 'Virtual Screens Manager',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Virtual Displays',
+      },
+      {
+        text: 'Open the Virtual Displays tab.',
+        find: 'Virtual Displays',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Add Virtual Display makes a screen that exists only in the app. Let other devices watch opens it to this network; then a display card has Copy address, QR code, Watch in a browser and Cast to a TV. Screen Mirror Connection, the other tab, lets other computers connect as extra screens. This lesson turns nothing on for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-screen-drawing',
+    label: 'Draw or spotlight on an audience screen',
+    detail:
+      'On a Mini Screen card, Enable Drawing or Choose Drawing or Focusing, then Stroke style, Manual eraser, Clear drawing, or Spotlight size and Dim color.',
+    title: 'Draw or spotlight on an audience screen',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'On a screen card, Choose Drawing or Focusing picks the tool and Enable Drawing (or Enable Focusing) turns it on. Drawing has Color, Size, Opacity, Stroke style, Toggle drawing quality, Reset settings, Undo, Redo, Manual eraser and Clear drawing; Focusing has Spotlight size, Dim color, Dim the rest of the screen, Spotlight edge blur and Contrast. What you draw shows on that screen; this lesson draws nothing.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-bible-text-look',
+    label: 'Make Bible words readable on any background',
+    detail:
+      'Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.',
+    title: 'Make Bible words readable on any background',
+    isFeatured: false,
+    steps: [
+      {
+        text: "Under the Mini Screen, Reveal Hidden Controls shows Bible/LongText Properties; it opens in a panel of its own. Pick one of the Presets or Save as Preset (a preset's menu has Rename Preset and Replace with Current Look); choose Light words for a dark background or the other way round; then Font Size, Bold, Italic, Text Align, Line Height, Highlight Color, Outline, Shadow Blur, Shadow Offset X and Y, Glow, and Reset for plain words. Every change shows on the screens at once.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-take-back',
+    label: 'Take a slide or an edit back',
+    detail:
+      "A slide card's Remove from screen takes it off that screen, Discard changed drops a document's unsaved edits for good, and a slide's Delete removes it.",
+    title: 'Take a slide or an edit back',
+    isFeatured: false,
+    steps: [
+      {
+        text: "A slide that is on a screen shows that screen's number on its card; Remove from screen on that mark takes it off. Discard changed throws away every unsaved edit of the document and cannot be undone, so Undo is the safer way back. A slide's right-click menu has Delete. This lesson removes nothing for you.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-remove-saved',
+    label: 'Remove what you no longer use',
+    detail:
+      'Remove URL drops a saved web address, Remove Preset a text preset, Remove Session a media session, and Remove a Bible Lookup history entry.',
+    title: 'Remove what you no longer use',
+    isFeatured: false,
+    steps: [
+      {
+        text: "Remove URL is on a saved web address in the Background panel's Webs; Remove Preset is in a saved preset's menu in Bible/LongText Properties and in a foreground component's Presets; Remove Session is in a media session's menu; in Bible Lookup, Remove takes one reference out of the history. Each is your own choice to make; this lesson removes nothing.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-flow-line-timing',
+    label: 'Start a run sheet line by itself',
+    detail:
+      "Arm a line with At Time, or with Shortcut and Press a shortcut; a media line's Set Volume, Set Speed, At Media Time and Then Pause shape it.",
+    title: 'Start a run sheet line by itself',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'On a run sheet line, At Time starts it at a clock time, and Shortcut with Press a shortcut gives it a key of its own. Add Media Control on a media line opens Set Volume, Set Speed, At Media Time and Then Pause. Nothing runs until the sheet does.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-flow-take-out',
+    label: 'Take a line out of a run sheet',
+    detail:
+      'Remove from Presenting Flow takes a line out of the run sheet, and Remove CC Element takes out an element that follows a line.',
+    title: 'Take a line out of a run sheet',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a run sheet line for Remove from Presenting Flow. A CC element under a line has its own Remove CC Element. A run sheet keeps every change at once, so take a line out only when you mean to; this lesson removes nothing.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-virtual-guests',
+    label: 'Choose who may watch a virtual display',
+    detail:
+      'Let other computers connect or Open to the internet; then Allow connection, Reject connection or Disconnect each of the Connected guests.',
+    title: 'Choose who may watch a virtual display',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In the Virtual Screens Manager, Let other computers connect lets devices on this network watch, and Open to the internet lets any device with the link. Each one that asks shows Allow connection and Reject connection; Connected guests lists who is watching, each with Disconnect. Who may watch is your choice; this lesson opens nothing.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-virtual-display-card',
+    label: 'Set up a virtual display',
+    detail:
+      'A virtual display card: Resolution and Apply set its size, Choose File picks its wallpaper, Allow interaction lets a viewer scroll, then Preview, Settings and Delete Virtual Display.',
+    title: 'Set up a virtual display',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In the Virtual Screens Manager, each card under Virtual Displays is one display. Resolution with Apply sets its size; Choose File picks a picture or a video as its wallpaper; Allow interaction lets a viewer scroll and pick verses; Preview, Settings and Delete Virtual Display act on that display.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-bible-passage',
+    label: 'Work in a Bible passage',
+    detail:
+      'Click a verse number for its notes, Double click to select verses, Export to MS Word keeps the passage, and Full gives it the whole panel.',
+    title: 'Work in a Bible passage',
+    isFeatured: false,
+    steps: [
+      {
+        text: "In a Bible passage, click a verse number to reveal that verse's notes and double-click it to select the verse; Double click to select verses selects the rest. The passage's menu has Export to MS Word, and Full (Toggle Widget Full View) gives it the whole panel.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-saved-passages',
+    label: 'Open saved passages and notes',
+    detail:
+      "In the Presenter's Bibles tab, Lookup opens a saved passage in Bible Lookup; Double click to open note, Edit Comment on a verse, or drag that verse to the Bible list.",
+    title: 'Open saved passages and notes',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In the Bibles tab, right-click a saved passage for Lookup (or Open). In Bible Notes, Double click to open note opens it; a verse in a note has Edit Comment, and you can drag it to the Bible list, or to another note file. This lesson opens nothing for you.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-office-files',
+    label: 'Show a PowerPoint, PDF or Word file',
+    detail:
+      'Right-click a PPTX, PDF or DOCX for Open PPTX, Preview PDF or Open DOCX; Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again.',
+    title: 'Show a PowerPoint, PDF or Word file',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a PPTX, PDF or DOCX in the Document List. Open PPTX, Preview PDF or Open DOCX shows the file; after it changed on disk, Refresh PPTX Slides, Refresh PDF Images or Refresh DOCX Pages reads it again. For a DOCX, the colour button above its pages (Choose DOCX Preview Background, right click to clear) sets the page colour.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-practice-tips',
+    label: 'Find and replay Presenter tips',
+    detail:
+      'Use Help > All tips, search a task, then choose Show it to practise one step at a time; Hide for 30 days rests the daily tip.',
+    title: 'Find and replay Presenter tips',
+    isFeatured: false,
+    steps: [
+      {
+        text: "Open Help > All tips in the Presenter and type a button's words into Search tips. Choose a tip and press Show it: Do it presses one named control, Next explains a step you do yourself, and Back to tip returns to the list. Next tip shows another daily tip.",
+      },
+    ],
+  },
+  {
+    id: 'presenter-split-translation',
+    label: 'Split directly into another translation',
+    detail:
+      'Use Split Horizontal to or Split Vertical to from a passage menu, then choose a Bible.',
+    title: 'Split directly into another translation',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Right-click a passage in the Bible pane and choose Split Horizontal to for side-by-side panes, or Split Vertical to for stacked panes, then pick an installed Bible from the next menu.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-ask-about-reading',
+    label: 'Ask about what you are reading',
+    detail:
+      'Use Ask the Assistant About This Passage, Ask the Assistant About This Verse, or Ask the Assistant About This File to ask about that material.',
+    title: 'Ask about what you are reading',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Hover over a passage header in the Bible pane for Ask the Assistant About This Passage; for one verse, right-click it and choose Ask the Assistant About This Verse. The assistant asks you to read its caution first.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-edit-passages',
+    label: 'Edit and arrange reading panes',
+    detail:
+      "Edit a pane's reference with Click to edit this section or its Book, Chapter and Verse Start buttons, change its version, or close it.",
+    title: 'Edit and arrange reading panes',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In a passage header, the pencil (Click to edit this section) or the Book, Chapter, Verse Start and Verse End buttons change the reference, Change Bible Key changes its Bible, and its More Options splits it or has Close.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-version-info',
+    label: 'Change version and read Bible information',
+    detail:
+      'Choose a translation with the version button or Add New Bible, then open Bible Information for its publisher and copyright.',
+    title: 'Change version and read Bible information',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In Bible Lookup, the Bible abbreviation (such as KJV) beside Bible Reference chooses another installed translation; Add New Bible at the end of that list opens the Bible settings. Bible Information beside a passage gives its publisher and copyright.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-bibles-file-actions',
+    label: 'Manage saved Bible list files',
+    detail:
+      'Right-click a list file for Rename, Duplicate, Empty, Copy Path to Clipboard, Reveal in File Explorer or Move to Trash.',
+    title: 'Manage saved Bible list files',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In the Bibles tab, right-click a list file for Rename, Duplicate, Copy Path to Clipboard or Reveal in File Explorer. Move All Items To moves its passages to another list; Empty clears it and Move to Trash removes the file -- your choices to make.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-notes-file-actions',
+    label: 'Manage Bible Notes files',
+    detail:
+      'Use a note file menu for Rename, Duplicate, Copy All Items, Move All Items To, Reveal in File Explorer or Move to Trash.',
+    title: 'Manage Bible Notes files',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'In Bible Notes, right-click a note file for Rename, Duplicate, Reveal in File Explorer or its path. Copy All Items copies what it holds; Move All Items To moves it to another note file. Empty and Move to Trash are yours to choose.',
       },
     ],
   },
@@ -1683,7 +2184,8 @@ export const PRESENTER_DEMO_LIST = [
   {
     id: 'presenter-view-widgets',
     label: 'Show or hide Presenter panels from View',
-    detail: 'Use View > Widgets to choose which Presenter panels are open.',
+    detail:
+      'Use View > Widgets to choose which Presenter panels are open; a closed panel leaves a strip, and its Enable Note or Enable Previewer opens it again.',
     title: 'Show or hide Presenter panels from View',
     isFeatured: false,
     steps: [
@@ -1742,7 +2244,7 @@ export function getPresenterDemo(id, translate = (value) => value) {
         const translated = translate(step.find);
         if (translated !== step.find) {
           if (step.find.includes(' > ') && step.finds === undefined) {
-            // A scoped control has one exact localized name. In a Khmer
+            // A scoped control has one exact localized name. In a translated
             // window the English "Images" can match the folder path button
             // instead of the Images tab; do not try that stale name first.
             finds.splice(0, finds.length, translated);

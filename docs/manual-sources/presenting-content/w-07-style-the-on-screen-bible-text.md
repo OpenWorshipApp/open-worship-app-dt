@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, PM-167, SP-21]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-07 — Style the on-screen Bible text
 
@@ -49,7 +49,12 @@ the edge or shadow that keeps them readable over a picture. A
    opacity low (the band lies under every line of what is selected); the arrow
    beside it puts that side back to its default.
 7. **Change how the words are set.** **[en:tran:Font Family]** is a list of
-   the fonts on this computer: pick one and every verse is drawn in it; pick
+   the app's own fonts and then the fonts on this computer. At the top is each
+   enabled language's own face (`app-Google-Sans`, `app-Battambang` — the
+   face a Bible in that language is drawn in), then the fonts the languages
+   ship under their own names (Google Sans, Battambang, a sticky-note hand).
+   Pick one
+   and every verse is drawn in it; pick
    the first line of the list, `--`, to go back to each Bible's own font. Letters
    the font you picked does not have — Khmer under an English font — stay in
    the Bible's own. **[en:tran:Text Style]** has
@@ -77,5 +82,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `PM-167` · `SP-21`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

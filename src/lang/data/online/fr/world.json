@@ -8,5 +8,8 @@
     },
     "latinStopWords": {
         "fr-FR": "et de la le les des il à que en qui ne pas est dans pour sur une du vous"
+    },
+    "catalogLanguageCodes": {
+        "fr": "fra"
     }
 }

@@ -1,11 +1,11 @@
 // Cuts a corpus-run answer file into bundles a grader reads (2026-10-17, for
-// the Khmer pass): per answer, the question as asked and in English, the
+// a non-English language's pass): per answer, the question as asked and in English, the
 // window, the guide page the corpus files it under with the manual files
 // that hold that page in English and in the language, the passage / control
 // / menu / key / tools the row names, the answer, its buttons, the tools the
 // window called and what `lang-check.mjs` flagged.
 //
-//   node grade-bundle.mjs <corpus.jsonl> --parts=4 [--lang=km] [--keys=a,b]
+//   node grade-bundle.mjs <corpus.jsonl> --parts=4 [--lang=<code>] [--keys=a,b]
 //        [--out-dir=<dir>] [--carry=<earlier corpus.jsonl>]
 //        [--carry-grades=<grade.json,grade.json>]
 //

@@ -4,7 +4,7 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-10-18",
+    "updated": "2026-11-14",
     "sections": [
         {
             "id": "screens",
@@ -566,40 +566,6 @@
                     "resources": {
                         "recipe": "W-50",
                         "find": "Host addresses"
-                    }
-                },
-                {
-                    "id": "fill-address-from-qr-or-paste",
-                    "text": "How do I fill in the host address from a QR code or a copied link?",
-                    "kind": "howto",
-                    "keywords": [
-                        "read qr code",
-                        "paste address",
-                        "qr code",
-                        "picture",
-                        "link",
-                        "scan"
-                    ],
-                    "resources": {
-                        "recipe": "W-50",
-                        "find": "Paste address"
-                    }
-                },
-                {
-                    "id": "connect-several-hosts",
-                    "text": "Can this computer show screens from more than one host?",
-                    "kind": "howto",
-                    "keywords": [
-                        "more than one host",
-                        "several hosts",
-                        "multiple hosts",
-                        "second host",
-                        "two computers"
-                    ],
-                    "resources": {
-                        "recipe": "W-50",
-                        "passage": "A guest can be linked to several hosts at once",
-                        "find": "Connect by address"
                     }
                 },
                 {

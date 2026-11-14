@@ -1,6 +1,6 @@
 ---
 name: owa-enhance
-description: 'Research-first improvement of the WHOLE Open Worship App — find what is most worth improving, prove it with evidence from the code and the RUNNING app, report a ranked plan, and change NOTHING until the user says which items to apply. Use when asked to enhance / improve / audit / harden / speed up / clean up the app as a whole, to "find what to improve" or "what should I fix next", or to work on an app-wide area with no dedicated skill: security (IPC handlers, node-integrated renderers, HTML sinks, archives, downloads, external content, dependencies), performance (memory, startup, bundle, per-event work on low-spec church machines), reliability (data loss, cross-window races, crashes, console errors, a projector that blanks), ui (volunteer-facing clarity, accessibility, Khmer, design tokens, empty and error states), dev-flow (install, dev loop, test and typecheck speed, the lint gate, packaging, CI, agent tooling), code-health (import cycles, oversized modules, duplication, dead mocks, test gaps, outdated dependencies) and docs (the manual against the live app, memory and CLAUDE.md drift, knowledge freshness). With no argument, or `auto`, it TRIAGES every area with cheap read-only signals — scripts/triage.mjs for static leads, scripts/app-vitals.mjs for what the running app costs per process and per page — and researches the area holding the strongest evidenced problem; `full` researches all of them. THE RULE THAT BINDS EVERY RUN: research is read-only — no source edit, format, stage, commit, setting, user data, screen or API credit; its one write is a gitignored report under test-results/owa-enhance/ — and the run ENDS with that report (proposed EN-xx ids, severity, confidence, effort, failure scenario, proposed change, the proof each will be judged by) and a question. Only an explicit `apply` starts changes, which are then verified LIVE, gated by npm run lint last and landed with their paper trail. The AI subsystems keep their own skills (the 🤖 assistant is owa-enhance-chatbot, tools/owa-devtools-mcp is owa-enhance-mcp, the ✨ AI Chat window is owa-enhance-aichat) and /owa-robot-test runs are read as evidence.'
+description: 'Research-first improvement of the WHOLE Open Worship App — find what is most worth improving, prove it with evidence from the code and the RUNNING app, report a ranked plan, and change NOTHING until the user says which items to apply. Use when asked to enhance / improve / audit / harden / speed up / clean up the app as a whole, to "find what to improve" or "what should I fix next", or to work on an app-wide area with no dedicated skill: security (IPC handlers, node-integrated renderers, HTML sinks, archives, downloads, external content, dependencies), performance (memory, startup, bundle, per-event work on low-spec church machines), reliability (data loss, cross-window races, crashes, console errors, a projector that blanks), ui (volunteer-facing clarity, accessibility, every installed language, design tokens, empty and error states), dev-flow (install, dev loop, test and typecheck speed, the lint gate, packaging, CI, agent tooling), code-health (import cycles, oversized modules, duplication, dead mocks, test gaps, outdated dependencies) and docs (the manual against the live app, memory and CLAUDE.md drift, knowledge freshness). With no argument, or `auto`, it TRIAGES every area with cheap read-only signals — scripts/triage.mjs for static leads, scripts/app-vitals.mjs for what the running app costs per process and per page — and researches the area holding the strongest evidenced problem; `full` researches all of them. THE RULE THAT BINDS EVERY RUN: research is read-only — no source edit, format, stage, commit, setting, user data, screen or API credit; its one write is a gitignored report under test-results/owa-enhance/ — and the run ENDS with that report (proposed EN-xx ids, severity, confidence, effort, failure scenario, proposed change, the proof each will be judged by) and a question. Only an explicit `apply` starts changes, which are then verified LIVE, gated by npm run lint last and landed with their paper trail. The AI subsystems keep their own skills (the 🤖 assistant is owa-enhance-chatbot, tools/owa-devtools-mcp is owa-enhance-mcp, the ✨ AI Chat window is owa-enhance-aichat) and /owa-robot-test runs are read as evidence.'
 argument-hint: '[auto (default) | security | performance | reliability | ui | dev-flow | code-health | docs | full | area,area | apply EN-xx … | file | deeper EN-xx | a plain description of what feels wrong]'
 ---
 
@@ -35,7 +35,8 @@ Then the user says which.
    failure scenario from THIS app. A pattern match is a lead, reported as one.
 4. **The app's own rules outrank a finding's convenience** (CLAUDE.md):
    performance before elegance, nothing that changes a congregation's screen
-   done unasked, a missing Khmer key throws, verify live first and gate last.
+   done unasked, a missing key throws in any non-English language, verify live
+   first and gate last.
 5. **The AI subsystems keep their skills.** Work in `src/chatbot/`,
    `tools/owa-devtools-mcp/` or the AI Chat window is researched and applied
    the way `owa-enhance-chatbot`, `owa-enhance-mcp` or `owa-enhance-aichat`
@@ -63,7 +64,7 @@ Then the user says which.
 | `security` | `sec`, `harden` | the operator's machine, network, files and credentials from content that came from outside |
 | `performance` | `perf`, `memory`, `speed`, `startup` | a volunteer on a low-spec machine — CLAUDE.md's top-priority requirement |
 | `reliability` | `bugs`, `correctness`, `data`, `crash` | the service in progress and the user's files |
-| `ui` | `ux`, `a11y`, `i18n`, `khmer`, `design` | a hurried, non-technical volunteer, often reading Khmer |
+| `ui` | `ux`, `a11y`, `i18n`, `language`, `design` | a hurried, non-technical volunteer, often reading the app in a language other than English |
 | `dev-flow` | `dx`, `tooling`, `ci`, `build`, `release` | the maintainer's hour and every agent session |
 | `code-health` | `health`, `architecture`, `refactor`, `deps`, `tests` | the next change |
 | `docs` | `manual`, `notes` | a volunteer reading the manual or asking the 🤖, and every later session |
@@ -208,7 +209,7 @@ decide, I will start on the obvious one".
    fails before the change and passes after it.
 4. **Implement** under CLAUDE.md: performance first; `Comp` names; a
    per-instance `genTimeoutAttempt(500)` on a multi-instance event hook; every
-   new label a `tran()` key with its Khmer and French strings; no app-module `import()` from
+   new label a `tran()` key in every language's dictionary; no app-module `import()` from
    an injected page expression.
 5. **Prove it live** with the finding's *Proof on apply*: the report's baseline
    measurement re-taken the same way, a screenshot, the reproduced failure no

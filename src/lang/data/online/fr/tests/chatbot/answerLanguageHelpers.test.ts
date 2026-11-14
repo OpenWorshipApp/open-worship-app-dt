@@ -63,4 +63,26 @@ describe('toAnswerShownInLanguage in French', () => {
             'Pour agrandir le texte de la Bible, utilisez **[xx] Font Size**.',
         );
     });
+
+    test('a single word right after the word for a button is that button (EC-562)', () => {
+        const buttonLabel = (label: string) => {
+            return (
+                ({ Show: 'Afficher' } as Record<string, string>)[label] ?? label
+            );
+        };
+        expect(
+            toAnswerShownInLanguage(
+                'Pour la remettre, appuyez sur le bouton "show".',
+                'fr',
+                buttonLabel,
+            ),
+        ).toBe('Pour la remettre, appuyez sur le bouton "Afficher".');
+        expect(
+            toAnswerShownInLanguage(
+                'Le mot "show" veut dire afficher.',
+                'fr',
+                buttonLabel,
+            ),
+        ).toBe('Le mot "show" veut dire afficher.');
+    });
 });

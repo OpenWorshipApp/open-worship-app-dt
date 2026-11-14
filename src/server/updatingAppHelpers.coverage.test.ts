@@ -262,7 +262,7 @@ describe('checkForAppUpdate', () => {
 
         expect(h.showAppConfirm).toHaveBeenCalledOnce();
         expect(h.showAppConfirm.mock.calls[0][1]).toContain(
-            'version:"2026.2.8" and commit ID:"abcdef0"',
+            '(2026.2.8, abcdef0)',
         );
     });
 

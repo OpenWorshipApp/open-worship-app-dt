@@ -9,8 +9,13 @@
 // somebody attaches the file, and nothing is held but what the attachment
 // store holds (`attachmentHelpers.ts`, bounded, gone with the window).
 
+import { getActiveBibleNotesDirPath } from '../bible-list/note/bibleNotesDirHelpers';
 import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
-import { toResourceFileName } from '../helper/agentResourceNameHelpers';
+import {
+    toBibleNotesStudyName,
+    toResourceFileName,
+} from '../helper/agentResourceNameHelpers';
+import { STUDY_FILE_EXTENSION } from '../helper/agentStudyFileRules';
 import { getResourcesFolderList } from '../resources/resourcesFolderHelpers';
 import { electronSendAsync } from '../server/electronSendHelpers';
 import {
@@ -38,10 +43,16 @@ import {
     toImageMediaType,
 } from './attachmentHelpers';
 import { fillWords, tran } from './chatTranHelpers';
-import { toNoteFileText, toNoteItemFromFileText } from './noteFileTextHelpers';
+import {
+    toBlankNoteReadFromFileText,
+    toNoteFileText,
+    toNoteItemFromFileText,
+} from './noteFileTextHelpers';
 import { checkIsLyricFileName, toLyricFileText } from './lyricChatHelpers';
 import { checkIsSlideFileName, toSlideFileText } from './slideChatHelpers';
 import { checkIsFlowFileName, toFlowFileText } from './flowChatHelpers';
+import { checkIsOfficeTextName } from './documentTextHelpers';
+import { readDocumentWords } from './documentWordsHelpers';
 
 // What is read off the disk for one attachment, at most. A picture is cut to
 // 1024px before it is held; a text file to 16 KB of words; a note file is
@@ -146,6 +157,78 @@ export async function reloadFileAttachment(attachment: ChatAttachmentType) {
     }
 }
 
+/**
+ * A text file still open in a tab, its words read AGAIN from disk for the
+ * question being asked. The words a text attachment carries are the ones
+ * read when it was attached, and they ride every later question -- so a
+ * study file this window had itself saved a change to since went out as it
+ * WAS, and the model's next whole-file change put the saved one back
+ * (2026-11-10, live on Auto: a section changed and saved, then _add a short
+ * closing prayer at the end_ drafted the old section again, the answer
+ * naming only the prayer). A new object, so the message keeps what was
+ * attached; the same one when nothing changed, the file is gone or cannot
+ * be read. Nothing is kept between asks. The app's own documents -- a song,
+ * a slide document, a presenting flow, a Bible notes file -- are not read
+ * here: their conversations read them as they are now with their own tools
+ * (`owa_lyric_edit read`, `owa_note_edit read` …), and parsing one twice a
+ * question is a cost a weak machine pays for nothing.
+ */
+export async function refreshTextAttachment(
+    attachment: ChatAttachmentType,
+): Promise<ChatAttachmentType> {
+    const filePath = attachment.filePath;
+    if (
+        attachment.kind !== 'text' ||
+        filePath === undefined ||
+        attachment.noteId !== undefined
+    ) {
+        return attachment;
+    }
+    const name = pathBasename(filePath);
+    if (
+        checkIsBibleNoteFileName(name) ||
+        checkIsLyricFileName(name) ||
+        checkIsSlideFileName(name) ||
+        checkIsFlowFileName(name)
+    ) {
+        return attachment;
+    }
+    const fresh = await genAttachmentFromPath(filePath);
+    if (
+        !('attachment' in fresh) ||
+        fresh.attachment.kind !== 'text' ||
+        fresh.attachment.summary === attachment.summary
+    ) {
+        return attachment;
+    }
+    return {
+        ...attachment,
+        byteSize: fresh.attachment.byteSize,
+        summary: fresh.attachment.summary,
+    };
+}
+
+/**
+ * A text file's words WHOLE, up to `maxChars`, for a check that must see all
+ * of it (2026-11-11, EC-497): an attachment's words stop at 16 KB, and a
+ * study's translated part runs past that -- the user's John 3 study is 44 KB,
+ * its Khmer Cross References from its 22 435th letter.
+ * Null when the file is larger than those letters could be or cannot be
+ * read. Read for the one question; nothing is kept.
+ */
+export async function readWholeTextFile(filePath: string, maxChars: number) {
+    try {
+        // Four bytes a letter at most in UTF-8.
+        if ((await fsGetFileSize(filePath)) > maxChars * 4) {
+            return null;
+        }
+        const text = await fsReadFile(filePath);
+        return text.length > maxChars ? text.slice(0, maxChars) : text;
+    } catch (_error) {
+        return null;
+    }
+}
+
 // A picture off the disk, already cut to what is worth sending.
 async function readImageDataUrl(filePath: string, name: string) {
     try {
@@ -167,6 +250,11 @@ async function readImageDataUrl(filePath: string, name: string) {
  * as `owa_resource_file` names them (`pdf/LUK.6.pdf`) -- what makes a
  * question a `resources` one (`resourcesChatHelpers.ts`). Read fresh each
  * ask: the folder list is a setting the panel can change at any time.
+ *
+ * A study kept in the Bible Notes list is one too (2026-11-12, EC-509:
+ * Create offers Resources or Bible Notes), named `Bible Notes/<name>.md`,
+ * so it is asked about, changed and translated the way a study in Resources
+ * is.
  */
 export function findResourceFileNames(attachments: ChatAttachmentType[]) {
     // No setting is read for a question with no file of the disk on it --
@@ -175,22 +263,26 @@ export function findResourceFileNames(attachments: ChatAttachmentType[]) {
     if (files.length === 0) {
         return [];
     }
-    let dirPaths: string[];
-    try {
-        dirPaths = getResourcesFolderList();
-    } catch (_error) {
-        return [];
-    }
-    if (dirPaths.length === 0) {
-        return [];
-    }
+    const dirPaths = readSettingSafely(getResourcesFolderList) ?? [];
+    // The Bible Notes folder is read only for a Markdown file.
+    const bibleNotesDirPath = files.some((attachment) => {
+        return checkIsStudyMarkdownPath(attachment.filePath ?? '');
+    })
+        ? readSettingSafely(getActiveBibleNotesDirPath)
+        : null;
+    const rules = {
+        toBaseName: pathBasename,
+        toCompareKey: toPathCompareKey,
+        separator: pathSeparator,
+    };
     const names: string[] = [];
     for (const attachment of files) {
-        const name = toResourceFileName(attachment.filePath ?? '', dirPaths, {
-            toBaseName: pathBasename,
-            toCompareKey: toPathCompareKey,
-            separator: pathSeparator,
-        });
+        const filePath = attachment.filePath ?? '';
+        const name =
+            (dirPaths.length === 0
+                ? null
+                : toResourceFileName(filePath, dirPaths, rules)) ??
+            toBibleNotesStudyName(filePath, bibleNotesDirPath, rules);
         if (name !== null && !names.includes(name)) {
             names.push(name);
         }
@@ -198,8 +290,41 @@ export function findResourceFileNames(attachments: ChatAttachmentType[]) {
     return names;
 }
 
+function checkIsStudyMarkdownPath(filePath: string) {
+    return filePath.toLowerCase().endsWith(STUDY_FILE_EXTENSION);
+}
+
+// A setting read that cannot stop an ask: a window with no settings store
+// names no file.
+function readSettingSafely<T>(read: () => T): T | null {
+    try {
+        return read();
+    } catch (_error) {
+        return null;
+    }
+}
+
 export type FileAttachResultType =
     { attachment: ChatAttachmentType } | { failure: string };
+
+/**
+ * An EMPTY note's read worked out from its file, for a question asked while
+ * the note's window cannot be read yet (BN-87: on a busy computer it took
+ * over twenty seconds to open, and a lesson asked for meanwhile went into a
+ * NEW note beside the empty one). Null when the note holds anything, or the
+ * file cannot be read: the question then goes on with no read, as before.
+ */
+export async function readBlankNoteFromFile(filePath: string, noteId: number) {
+    try {
+        return toBlankNoteReadFromFileText(
+            await fsReadFile(filePath),
+            noteId,
+            pathBasename(filePath).replace(/\.[^.]+$/, ''),
+        );
+    } catch {
+        return null;
+    }
+}
 
 /**
  * ONE note of a Bible notes file (a note row's Open in Chatbot): named by its
@@ -281,6 +406,16 @@ export async function genAttachmentFromPath(
                 ? null
                 : await genImageAttachment(dataUrl, name, filePath);
         return attachment === null ? { failure: cannotRead } : { attachment };
+    }
+    // A PowerPoint deck or a Word file is its words (EC-589): a hymnal's
+    // slides, read here, are a song the drafter can write out -- and words
+    // any model can read, where the file itself is not. Read through the
+    // app's own converter, as the Documents list shows it (EC-590).
+    if (checkIsOfficeTextName(name)) {
+        const text = await readDocumentWords(filePath);
+        return text === null
+            ? { failure: cannotRead }
+            : { attachment: genTextAttachment(name, text, filePath) };
     }
     if (checkIsBibleNoteFileName(name) && noteId !== null) {
         return genNoteAttachment(filePath, noteId, cannotRead);

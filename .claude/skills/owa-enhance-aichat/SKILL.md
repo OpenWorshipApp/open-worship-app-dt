@@ -143,8 +143,11 @@ including the two that fail when a wall has become a brick. A browser window
 opening on example.com during a run is the press gate failing.
 
 > **The guest is not a `list_pages` target.** chrome-devtools-mcp lists pages;
-> a `<webview>` is a `webview` target, and the `owa_*` tools refuse the host
-> page as they refuse the chatbot's (it is locked down). So: chrome-devtools'
+> a `<webview>` is a `webview` target, and the `owa_*` tools that need Node in
+> the page refuse the host page as they refuse the chatbot's (it is locked
+> down; `owa_find_ui` does search it -- next to last in `cdp.mjs`'s
+> `APP_PAGE_RANK`, before only the screen, with pages the list does not name
+> after both). So: chrome-devtools'
 > `take_snapshot` / `click` / `take_screenshot` by page id drive the HOST (tabs,
 > chooser, head row) and a `take_screenshot` of the host does include the
 > guest's pixels; the probe script reaches the guest over raw CDP
@@ -155,7 +158,7 @@ opening on example.com during a run is the press gate failing.
 
 > **Two watchers restart the dev app under `npm run electron:dev`.**
 > `electron/*.ts` is recompiled by `tsc -w` and nodemon restarts Electron on
-> `electron-build/` (not its `knowledge/`) AND on `tools/owa-devtools-mcp/**`
+> `electron-build/` (not its `knowledge/` or `lang/`) AND on `tools/owa-devtools-mcp/**`
 > — so editing the guard or the corpus closes the AI Chat window mid-check. Tabs come
 > back from `aichat-sessions` on the next open. `npm run build` deletes
 > `electron-build/` and does the same (memory: `build-kills-running-dev-app`):
@@ -263,8 +266,10 @@ looking at (`AC-13`). A second exception is the user's call, not a run's.
   every field in it is bounded (8 tabs, a 60-character page title, a
   2 000-character address).
 - The host page loads bootstrap and its own sheet, no app tokens, no
-  webfonts but the language pack's own face (`--chat-lang-font`, Battambang
-  for Khmer) — the chatbot's rules, for the same back-room reasons.
+  font from the internet — only faces the app ships: its default
+  (`--app-font-family`, set by `boot.ts` since 2026-11-06: the language's face,
+  then English's Google Sans) and the language pack's own (`--chat-lang-font`, the face its
+  `fonts.json` names) — the chatbot's rules, for the same back-room reasons.
 
 ### C. The sites — where the real bugs live
 
@@ -308,8 +313,8 @@ bot-detection page (the probe reads the same signals):
   Chat** (`AppAssistantComp`, every window). None is gated on the AI switch.
 - Strings inside the window are in the app's language, like the chatbot's
   (2026-10-17): the chatbot's own `tran` (`src/chatbot/chatTranHelpers.ts`),
-  with Khmer and French; the one label the app windows draw (`AI Chat`) goes
-  through the app's `tran()` and has its Khmer key.
+  in every language; the one label the app windows draw (`AI Chat`) goes
+  through the app's `tran()` and has its key in every dictionary.
 
 ## What counts as an improvement
 

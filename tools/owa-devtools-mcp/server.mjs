@@ -20,8 +20,9 @@ import { ConfigParser } from 'chrome-devtools-mcp/build/src/config/ConfigParser.
 import { puppeteer } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 
+import { guardAppChoice, STDIO_SERVER_INSTRUCTIONS } from './appChoice.mjs';
 import { skipDevToolsTargets } from './devToolsTargets.mjs';
-import { resolveAppBrowserUrl } from './discovery.mjs';
+import { requireAppChoice, resolveAppBrowserUrl } from './discovery.mjs';
 import { guardToolCalls } from './firewall.mjs';
 import { listLangPacks, readLangPackJson } from './langPacks.mjs';
 import { watchToolCalls } from './notify.mjs';
@@ -130,7 +131,21 @@ export async function createOwaMcpServer({
   const { server } = mcpServer;
   closeBrowserWithServer(mcpServer);
   restoreSdkToolCalls(server);
-  registerOwaTools(server, { door });
+  const isStdio = door === 'stdio';
+  if (isStdio) {
+    // An outside agent with several apps running asks the user which one
+    // rather than driving the newest (`appChoice.mjs`), and is told on
+    // `initialize` to check the versions. The in-app host is pinned to its
+    // own app and its chatbot has a prompt of its own.
+    requireAppChoice(true);
+    server.server._instructions = STDIO_SERVER_INSTRUCTIONS;
+  }
+  registerOwaTools(server, {
+    door,
+    // A choice drops chrome-devtools' browser connection, so its next call
+    // connects to the app chosen: the two halves never drive two apps.
+    onAppChosen: () => browserManager.abandonPendingAttempt(),
+  });
   // Wrapped here rather than at each transport: the stdio bin and the
   // in-app HTTP host both reach the window through this one server, and a
   // click nobody in the room made must say who made it. Set
@@ -140,6 +155,11 @@ export async function createOwaMcpServer({
     const connected = await connect(transport);
     // After, never before: the SDK chains whatever handler it finds.
     watchToolCalls(transport);
+    // Between the two: a call answered with the running apps raises no
+    // banner, and the firewall still judges every call first.
+    if (isStdio) {
+      guardAppChoice(transport);
+    }
     // Last, so it is the OUTERMOST wrapper and therefore runs FIRST. The
     // order is load-bearing: a call the firewall refuses must not also
     // raise a banner telling the user the app just did it. See

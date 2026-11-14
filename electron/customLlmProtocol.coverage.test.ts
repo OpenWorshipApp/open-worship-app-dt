@@ -189,8 +189,8 @@ describe('the shared registry’s models', () => {
 
 describe('small lookups', () => {
     test('a note with nothing in it says nothing', () => {
-        expect(pickRegistryNote({}, 'km')).toBe('');
-        expect(pickRegistryNote(undefined, 'km')).toBe('');
+        expect(pickRegistryNote({}, 'yy')).toBe('');
+        expect(pickRegistryNote(undefined, 'yy')).toBe('');
         expect(pickRegistryNote({ xx: 'Welcome ✝' }, 'yy')).toBe('Welcome ✝');
     });
 

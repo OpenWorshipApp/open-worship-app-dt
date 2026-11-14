@@ -78,8 +78,9 @@ export default function ShowHideScreenComp() {
     }, []);
     // Through `tran()` because this is the one control an assistant is asked
     // to press by name -- "turn the screen on" -- and a hardcoded English
-    // title is a control a Khmer window cannot answer to at all. The manual
-    // names it as `[en:tran:Toggle showing screen]` for the same reason.
+    // title is a control a window in another language cannot answer to at
+    // all. The manual names it as `[en:tran:Toggle showing screen]` for the
+    // same reason.
     const toggleTitle =
         tran('Toggle showing screen') +
         ` [${toShortcutKey(showingScreenEventMap)}]`;

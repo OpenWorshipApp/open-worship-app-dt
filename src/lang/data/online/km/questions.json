@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-11-08",
+    "updated": "2026-11-14",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -157,6 +157,10 @@
         "screen.screen-mirror": {
             "en": "Screen Mirror",
             "text": "ការបង្ហាញអេក្រង់នៅកុំព្យូទ័រផ្សេង"
+        },
+        "screen-mirror.connect": {
+            "en": "Connecting to a host",
+            "text": "ការតភ្ជាប់ទៅម៉ាស៊ីនមេ"
         },
         "screen.virtual-displays": {
             "en": "Virtual displays",
@@ -431,6 +435,14 @@
         "common.help.copy-answer": {
             "en": "How do I copy an answer?",
             "text": "តើខ្ញុំចម្លងចម្លើយមួយដោយរបៀបណា?"
+        },
+        "common.help.reply-to-answer": {
+            "en": "How do I ask a follow-up about one answer?",
+            "text": "តើខ្ញុំសួរសំណួរបន្តអំពីចម្លើយមួយដោយរបៀបណា?"
+        },
+        "common.help.retry-answer": {
+            "en": "How do I get a different answer to the same question?",
+            "text": "តើខ្ញុំទទួលបានចម្លើយផ្សេងសម្រាប់សំណួរដដែលដោយរបៀបណា?"
         },
         "common.help.answer-was-wrong": {
             "en": "What can I do when an answer is wrong?",
@@ -728,6 +740,10 @@
             "en": "How do I make a new song?",
             "text": "តើខ្ញុំបង្កើតចម្រៀងថ្មីដោយរបៀបណា?"
         },
+        "presenter.making.song-from-powerpoint": {
+            "en": "Can you turn a PowerPoint song into a lyric file?",
+            "text": "តើអ្នកអាចប្ដូរចម្រៀងក្នុង PowerPoint ទៅជាឯកសារចំរៀងបានទេ?"
+        },
         "presenter.making.song-from-text": {
             "en": "Can you make a song from words I paste in?",
             "text": "តើអ្នកអាចបង្កើតចម្រៀងពីពាក្យដែលខ្ញុំបិទភ្ជាប់បានទេ?"
@@ -836,6 +852,10 @@
             "en": "How do I open the Note panel under the slides?",
             "text": "តើខ្ញុំបើកផ្ទាំងកំណត់ត្រានៅខាងក្រោមស្លាយដោយរបៀបណា?"
         },
+        "presenter.documents.song-notes": {
+            "en": "Where do I see the Note I wrote in a song?",
+            "text": "តើខ្ញុំមើលកំណត់ត្រាដែលខ្ញុំបានសរសេរក្នុងចម្រៀងនៅឯណា?"
+        },
         "presenter.documents.trash-document": {
             "en": "How do I delete a song or document?",
             "text": "តើខ្ញុំលុបចម្រៀង ឬឯកសារដោយរបៀបណា?"
@@ -864,6 +884,10 @@
             "en": "Can the assistant translate or change my song?",
             "text": "តើជំនួយការអាចបកប្រែ ឬកែបទចម្រៀងរបស់ខ្ញុំបានទេ?"
         },
+        "presenter.lyrics.song-from-document": {
+            "en": "How do I make a song from a PowerPoint file?",
+            "text": "តើខ្ញុំបង្កើតចម្រៀងពីឯកសារ PowerPoint ដោយរបៀបណា?"
+        },
         "presenter.lyrics.find-song": {
             "en": "Where are my songs?",
             "text": "តើចម្រៀងរបស់ខ្ញុំនៅឯណា?"
@@ -875,6 +899,10 @@
         "presenter.lyrics.song-look": {
             "en": "How do I change how the song looks on screen?",
             "text": "តើខ្ញុំប្តូររូបរាងចម្រៀងនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-font": {
+            "en": "How do I give one song its own font?",
+            "text": "តើខ្ញុំដាក់ពុម្ពអក្សរផ្ទាល់ខ្លួនឲ្យចម្រៀងមួយដោយរបៀបណា?"
         },
         "presenter.lyrics.song-add-stage": {
             "en": "How do I add another stage to the Stage Previewer?",
@@ -975,6 +1003,14 @@
         "presenter.bible.verse-font": {
             "en": "How do I change the font of the Bible text on the screen?",
             "text": "តើខ្ញុំប្តូរពុម្ពអក្សររបស់អក្សរព្រះគម្ពីរនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.screen-change-with-assistant": {
+            "en": "Can the assistant change the Bible text or a transition on the screens for me?",
+            "text": "តើជំនួយការអាចកែអក្សរព្រះគម្ពីរ ឬការផ្លាស់ប្តូរនៅលើអេក្រង់ជូនខ្ញុំបានទេ?"
+        },
+        "presenter.bible.add-screen-with-assistant": {
+            "en": "Can the assistant add a new screen for me?",
+            "text": "តើជំនួយការអាចបន្ថែមអេក្រង់ថ្មីជូនខ្ញុំបានទេ?"
         },
         "presenter.bible.bible-list": {
             "en": "How do I save a verse to a list for later?",
@@ -1103,6 +1139,14 @@
         "presenter.foreground.clear-foreground": {
             "en": "How do I clear the countdown or the message off the screen?",
             "text": "តើខ្ញុំលុបការរាប់ថយក្រោយ ឬសារចេញពីអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-change-with-assistant": {
+            "en": "Can the assistant change a countdown or a marquee for me?",
+            "text": "តើជំនួយការអាចកែការរាប់ថយក្រោយ ឬអក្សររត់ជូនខ្ញុំបានទេ?"
+        },
+        "presenter.foreground.foreground-attach-session": {
+            "en": "How do I give the assistant a foreground session to work on?",
+            "text": "តើខ្ញុំផ្ដល់វគ្គផ្ទៃខាងមុខមួយឲ្យជំនួយការធ្វើការលើវាដោយរបៀបណា?"
         },
         "presenter.foreground.foreground-two-overlays": {
             "en": "Can I show two pictures over the slide at the same time?",
@@ -1500,6 +1544,10 @@
             "en": "How do I share a page of Bible notes with another machine?",
             "text": "តើខ្ញុំចែករំលែកទំព័រកំណត់ត្រាព្រះគម្ពីរទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
         },
+        "reader.notes.notes-markdown-file": {
+            "en": "How do I make a Markdown file in Bible Notes?",
+            "text": "តើខ្ញុំបង្កើតឯកសារ Markdown នៅក្នុងកំណត់ត្រាព្រះគម្ពីរដោយរបៀបណា?"
+        },
         "reader.notes.bible-list-add": {
             "en": "How do I add a verse to a Bible list?",
             "text": "តើខ្ញុំបន្ថែមខគម្ពីរទៅបញ្ជីព្រះគម្ពីរដោយរបៀបណា?"
@@ -1603,6 +1651,10 @@
         "reader.resources.resources-open": {
             "en": "How do I open one of my Resources files?",
             "text": "តើខ្ញុំបើកឯកសារមួយក្នុងឯកសារពាក់ព័ន្ធរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.resources.resources-edit-markdown": {
+            "en": "How do I change a markdown file from Resources?",
+            "text": "តើខ្ញុំកែសម្រួលឯកសារ Markdown ពីឯកសារពាក់ព័ន្ធដោយរបៀបណា?"
         },
         "reader.resources.resources-ask-assistant": {
             "en": "How do I ask the assistant about a study file for the verses I am reading?",
@@ -1784,17 +1836,25 @@
             "en": "How do I send the host address to the guest computer?",
             "text": "តើខ្ញុំផ្ញើអាសយដ្ឋានម៉ាស៊ីនមេទៅម៉ាស៊ីនភ្ញៀវដោយរបៀបណា?"
         },
-        "screen.screen-mirror.fill-address-from-qr-or-paste": {
-            "en": "How do I fill in the host address from a QR code or a copied link?",
-            "text": "តើខ្ញុំបំពេញអាសយដ្ឋានម៉ាស៊ីនមេពីកូដ QR ឬពីតំណដែលបានចម្លងដោយរបៀបណា?"
-        },
-        "screen.screen-mirror.connect-several-hosts": {
-            "en": "Can this computer show screens from more than one host?",
-            "text": "តើកុំព្យូទ័រនេះអាចបង្ហាញអេក្រង់ពីម៉ាស៊ីនមេច្រើនជាងមួយបានទេ?"
-        },
         "screen.screen-mirror.guest-from-internet-or-local": {
             "en": "How can I tell which guests are connected from the internet?",
             "text": "តើខ្ញុំដឹងដោយរបៀបណាថាម៉ាស៊ីនភ្ញៀវណាខ្លះតភ្ជាប់តាមអ៊ីនធឺណិត?"
+        },
+        "screen-mirror.connect.connect-to-host": {
+            "en": "How do I connect this computer to a host?",
+            "text": "តើខ្ញុំតភ្ជាប់កុំព្យូទ័រនេះទៅម៉ាស៊ីនមេដោយរបៀបណា?"
+        },
+        "screen-mirror.connect.no-host-found": {
+            "en": "No host is listed. What do I check?",
+            "text": "មិនមានម៉ាស៊ីនមេនៅក្នុងបញ្ជីទេ។ តើខ្ញុំត្រូវពិនិត្យអ្វីខ្លះ?"
+        },
+        "screen-mirror.connect.fill-address-from-qr-or-paste": {
+            "en": "How do I fill in the host address from a QR code or a copied link?",
+            "text": "តើខ្ញុំបំពេញអាសយដ្ឋានម៉ាស៊ីនមេពីកូដ QR ឬពីតំណដែលបានចម្លងដោយរបៀបណា?"
+        },
+        "screen-mirror.connect.connect-several-hosts": {
+            "en": "Can this computer show screens from more than one host?",
+            "text": "តើកុំព្យូទ័រនេះអាចបង្ហាញអេក្រង់ពីម៉ាស៊ីនមេច្រើនជាងមួយបានទេ?"
         },
         "screen.virtual-displays.make-virtual-display": {
             "en": "How do I make a virtual display?",
@@ -2024,6 +2084,10 @@
             "en": "How do I install the Extra Binaries on a computer with no internet?",
             "text": "តើខ្ញុំដំឡើងកម្មវិធីបន្ថែម (Extra Binaries) លើកុំព្យូទ័រដែលគ្មានអ៊ីនធឺណិតដោយរបៀបណា?"
         },
+        "settings.others.extra-binaries-mcp": {
+            "en": "How do I connect my own AI agent to the app?",
+            "text": "តើខ្ញុំភ្ជាប់ភ្នាក់ងារ AI ផ្ទាល់ខ្លួនរបស់ខ្ញុំទៅកម្មវិធីនេះដោយរបៀបណា?"
+        },
         "troubleshooting.screen.nothing-showing": {
             "en": "Nothing is showing on the projector — what do I check?",
             "text": "គ្មានអ្វីបង្ហាញលើម៉ាស៊ីនបញ្ចាំងទេ — តើខ្ញុំត្រូវពិនិត្យអ្វី?"
@@ -2172,6 +2236,10 @@
             "en": "Save John 3:16 to my Bibles list",
             "text": "រក្សាទុក យ៉ូហាន ៣:១៦ ក្នុងបញ្ជីព្រះគម្ពីររបស់ខ្ញុំ"
         },
+        "common.changes.make-new-for-me": {
+            "en": "Can you make a new running order, slide document, Bible list or background for me?",
+            "text": "តើអ្នកអាចបង្កើតតារាងកម្មវិធីថ្មី ឯកសារស្លាយ បញ្ជីព្រះគម្ពីរ ឬផ្ទៃខាងក្រោយ ឲ្យខ្ញុំបានទេ?"
+        },
         "common.changes.write-a-note": {
             "en": "Write a Bible note about ...",
             "text": "សរសេរកំណត់ត្រាព្រះគម្ពីរអំពី ..."
@@ -2197,12 +2265,12 @@
             "text": "ដាក់ យ៉ូហាន ៣:១៦ លើអេក្រង់"
         },
         "settings.bible-settings.import-xml-url": {
-            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
-            "text": "នាំចូលព្រះគម្ពីរពីអាសយដ្ឋាន xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml",
+            "text": "នាំចូលព្រះគម្ពីរពីអាសយដ្ឋាន xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/EnglishNKJBible.xml"
         },
         "settings.bible-settings.import-bible-language": {
-            "en": "Import a Bible in \"Khmer\"",
-            "text": "នាំចូលព្រះគម្ពីរជាភាសា \"ខ្មែរ\""
+            "en": "Import a Bible in \"your language\"",
+            "text": "នាំចូលព្រះគម្ពីរជា \"ភាសារបស់អ្នក\""
         }
     }
 }

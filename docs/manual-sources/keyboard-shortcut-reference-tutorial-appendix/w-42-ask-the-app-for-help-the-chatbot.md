@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
-screenshots: 50
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, CB-175, CB-180, CB-181, CB-184, CB-185, CB-186, CB-187, CB-188, CB-189, CB-190, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+screenshots: 57
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -72,19 +72,21 @@ it is describing.
    offers the data folder and the language. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
    left out. Another tab can be asking about a different window at the same time.
-   **More than one window of the app open? Choose it on the WORKING IN line above the box.**
+   **More than one window of the app open? Choose it on the [en:tran:WORKING IN] line above the box.**
    That line, just over the box you type in, names each open window — the main
    window, and for example a Slide Editor (by its document's name), Settings or a
    Bible Reader opened in a window of its own — and the help then works with the
    one you choose: it reads what that window shows, outlines buttons in it, walks you
-   through steps there, the 📷 takes a picture of that window and the ◎ points in it.
+   through steps there, **[en:tran:Attach a picture of the app]** in the **⋮** at the left of
+   the box takes a picture of that window and
+   **[en:tran:Point at a control in the app]** points in it.
    Choosing one sets **[en:tran:ASKING ABOUT]** to match and marks the line with a coloured
    bar; choosing the main window goes back to the usual way. The choice belongs to
    that chat tab while the help window stays open; the line appears only while there
    is a second window to choose, and it keeps up by itself: a window you open or
    close, or the main window moving to another page, shows in the list within a
-   second, with nothing to press in the help window. A picture from the 📷 and a
-   control from the ◎ remember the window they came from — rest the mouse on the
+   second, with nothing to press in the help window. A picture from **[en:tran:Attach a picture of the app]** and a
+   control from **[en:tran:Point at a control in the app]** remember the window they came from — rest the mouse on the
    chip to see it — and the assistant is told which window each is of; pressing a
    pointed-at chip outlines that control in its own window, whichever window is
    chosen now. 📸 **[en:tran:ASSISTANT]** is which service answers and **[en:tran:MODEL]** is which of
@@ -129,7 +131,7 @@ it is describing.
    narrows itself as you type. **[en:tran:Fewer]** folds it away again. 📸
    **A Bible can be installed from the chat, with no model call.** Ask
    `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`
-   — the **Bible versions** section under **[en:tran:More… — everything it can answer]** contains this editable sample. Asking it
+   — the **Bible versions** section under **[en:tran:More… — everything it can answer]** contains an editable sample like it, for an English Bible. Asking it
    downloads the file, says where it is from and asks you to press **[en:tran:I agree]** (on a
    computer with no KJV yet it offers **[en:tran:Create the provided KJV]** first), then asks a
    few quick questions in the chat, each with buttons to
@@ -186,14 +188,23 @@ it is describing.
    off?", and it knows what you mean — you do not have to say the whole thing again.
    Each tab keeps its own thread: a question asked here is never answered out of the
    chat next door.
-   **And you rarely have to type the next thing.** Every answer ends with two or
-   three short buttons in the assistant's own words — _“How do I style the verse
+   **And you rarely have to type the next thing.** Every answer ends with up to
+   five short buttons in the assistant's own words — _“How do I style the verse
    text?”_, _“Which button shows it?”_, _“No thanks”_ — and pressing one says it for
    you, as if you had typed it. A reply that only repeats **[en:tran:Show me step by step]**
    in other words is not offered beside it. They are the round-cornered buttons on the bottom row; the
    square ones above them, in capitals, are the ones that DO something in the app.
    Only the newest answer carries them, so a **Yes** is always a yes to the question
    you were just asked. 📸
+   **A word or two on its own is asked about first.** Type just _lyric_ (or
+   _background_, _bible_) in a new chat and the window answers at once, with no
+   assistant asked: _What would you like to do with “lyric”?_ and up to six of the
+   questions it is ready for as buttons — _How do I make a new song?_, _Can you
+   turn a PowerPoint song into a lyric file?_, _How do I put a song's lyrics on
+   the screen?_ … — so nothing is guessed. Press the one you meant and it is
+   answered; or type more in your own words. Further down a conversation, a word
+   or two that the conversation does not already explain is answered the same
+   way: a short question, with the likely jobs as buttons. 📸
    **It tells you what it is doing while you wait.** Under your question, a
    short list builds up as it works — _Connecting to the app_, _Thinking about
    it_, _Searching the guide for "background"_, _Checking the projector
@@ -256,8 +267,8 @@ it is describing.
    **/verse John 3:16** puts that passage on the screen — read by the app's own
    reference parser, in the Bible version the Bible Lookup is on (or another
    installed one that reads it), and read back afterwards: _John 3:16 (KJV) is
-   on the screen now — "For God so loved…"_, with _Turn the screen on_ offered
-   when the screen is off and _Take it off again_ beside it (**F9**). Asking in
+   on the screen now — "For God so loved…"_, with **[en:tran:Turn the screen on]** offered
+   when the screen is off and **[en:tran:Take it off again]** beside it (**F9**). Asking in
    words does the same: _Put John 3:16 on the screen_ puts it up straight away
    with an assistant, and offers one button that does it without one;
    **/countdown 5** starts a five-minute countdown on the screen (**/countdown
@@ -265,8 +276,8 @@ it is describing.
    the same command) and **/marquee Please silence your phones** scrolls the
    words along the bottom (**/marquee-top** along the top; **stop** takes either
    off) — each read back afterwards, _a 5 minute countdown, ending at 11:45 AM is
-   on the screen now_, with _Turn the screen on_ offered while the screen is off
-   and _Take it off again_ beside it. Asking in words does the same: _Start a 5
+   on the screen now_, with **[en:tran:Turn the screen on]** offered while the screen is off
+   and **[en:tran:Take it off again]** beside it. Asking in words does the same: _Start a 5
    minute countdown on the screen_ or _Put the time on the screen_ starts it
    straight away with an assistant and offers the screen's own show button, and
    without one the guide offers one button that starts it; the five
@@ -337,8 +348,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    tools; and on such a server _Turn off the screen for me_, _Turn the screen
    on_, _show verse 1 on screen for me_ or _put slide 3 on the projector_ are
    answered from the app's own state at once, with ONE button that does it —
-   _Nothing to turn off_ when no screen is on (never a Clear), **Turn every
-   screen off** when one is, **Put "(1)-Verse 1" on the screen** for a slide
+   _Nothing to turn off_ when no screen is on (never a Clear), **[en:tran:Turn every screen off]** when one is, **Put "(1)-Verse 1" on the screen** for a slide
    the selected song has — and _Show the next slide?_ or _show the previous
    slide_ the same way, naming the slide the arrow keys would go to and
    offering the one button that puts it up — and _Where is the button for
@@ -350,7 +360,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    (_Put John 3:16 on the screen_) goes on to the assistant as before;
    **/commands**
    lists them all. The square buttons under a command's answer are
-   commands too — _Turn the screen on_ under _nothing is showing_ — and pressing
+   commands too — **[en:tran:Turn the screen on]** under _nothing is showing_ — and pressing
    one writes the command into the chat as though you had typed it, so the word is
    there for next time. A command with a spelling mistake lists the real ones
    rather than guessing. 📸
@@ -370,10 +380,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    back by itself after that. **Want the tips back sooner?
    Type /tips** in the box and ask: the line is back at once, and the answer
    gives you one tip straight away. 📸
-7. **Show it, instead of describing it.** Beside the box are three buttons.
-   **📎** attaches a picture or a file from your computer; **📷** takes a picture
-   of the app as it looks right now; **🎯** lets you POINT — an outline follows
-   your mouse over the app and the control you click is the one you meant.
+7. **Show it, instead of describing it.** Press the **⋮** at the left of the box
+   (**[en:tran:More Options]**): it opens a short menu, each row an icon and its
+   name. **[en:tran:Attach a file]** attaches a picture or a file from your computer;
+   **[en:tran:Attach a picture of the app]** takes a picture of the app as it looks
+   right now; **[en:tran:Point at a control in the app]** lets you POINT — an outline
+   follows your mouse over the app and the control you click is the one you meant.
+   The same menu holds **[en:tran:Attach a foreground session]** and, last,
+   **[en:tran:List every command]**, which puts **/** in the box and lists the
+   commands. **Esc**, or a press anywhere else, closes the menu.
    You can also paste a picture straight into the box (**Ctrl+V**) or drag a file
    onto the window. Whatever you attach shows as a small chip above the box, with
    an **×** to take it off again, and up to four can ride one question.
@@ -408,8 +423,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    window says so before spending anything and offers you one that can, in a
    single press.
    **And it can ask to be shown.** When the assistant cannot answer without
-   seeing your screen it says so and puts the button right there — _Send a picture
-   of my screen_, _Point at the control_, _Attach a file_ — so you never have to
+   seeing your screen it says so and puts the button right there — **[en:tran:Send a picture of my screen]**,
+   **[en:tran:Point at the control]**, **[en:tran:Attach a file]** — so you never have to
    work out how to send it one. 📸
    **Read a study PDF one verse or range at a time.** In the Bible Reader's
    Resources panel, press the 🤖 (**[en:tran:Ask the Assistant About This File]**) beside a chapter PDF
@@ -438,7 +453,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
    **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
-   With **ASKING ABOUT** on **Bible Reader**, type the sentence the way you say it —
+   With **[en:tran:ASKING ABOUT]** on **[en:tran:Bible Reader]**, type the sentence the way you say it —
    _summarize Matthew 18_, _show the resources for John 3_, _what does MAT.18.pdf
    say?_ — in English or in your own language, with your Bible's own book names and
    digits. The assistant reads the chapter from your Bible, or the file you named from
@@ -449,6 +464,34 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **[en:tran:Ask again]** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **And every answer has a reply arrow beside Copy, to follow up on it.** Press the
+   arrow (**[en:tran:Reply]**) and the answer is written into the box under a line
+   _Replying to your answer:_, each of its lines starting with `>`; type your question
+   under it and send, and the assistant knows which answer you mean, however far up the
+   chat it is. To follow up on one part of it — a section, a sentence, a word — select
+   those words in the answer first, then press the arrow: only they are written in,
+   under _Replying to this part of your answer:_. Nothing is sent until you press
+   **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
+   pressing the arrow twice writes it in once.
+   **And every answer has a Retry beside the reply arrow, for a different answer.**
+   Press the round arrows (**[en:tran:Retry]**) under an answer and the same
+   question is asked again — with the file or picture it was asked with — and
+   the new answer comes at the bottom under _A different answer: worked out
+   another way, with more effort._ Each press tries another way in: another
+   way to do it that the app has (or, when there is only one, it says so and
+   adds what to do when a step does not work), the question read another way,
+   or the answer worked out again step by step — and it thinks harder each
+   time, but keeps every button name right. And where there is another assistant to ask, the press asks it,
+   for that one question: on **[en:tran:Auto]** — or on your own server, OWA Shared or
+   **[en:tran:Free]** — the one that wrote the answer goes to the back of the line and the
+   note says who answered this time (_Auto asked … this time._); with a key of
+   your own for **Claude**, **ChatGPT** or **[en:tran:Kimi]**, the next model up of that
+   same key answers — or, on its best model already, the next one down. The next question
+   goes to the one picked at the top of the window, as before — nothing there
+   changes. Anything you were typing in the box stays there, and the round
+   arrows wait, greyed, while an answer is on its way. An answer to one of the
+   `/` commands has none — pressed again, a command would just do the same
+   thing again.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
@@ -463,8 +506,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    pressing it again takes it off; the mark is kept with the chat on this
    computer and is sent nowhere. The first time you press 👎 under an answer the
    help window follows up by itself — no assistant is asked, so it costs nothing:
-   it asks what was wrong, with three things to press (_A button it names is not
-   there_, _The steps did not work_, _That is wrong for the window I am in_), and
+   it asks what was wrong, with three things to press (**[en:tran:A button it names is not there]**,
+   **[en:tran:The steps did not work]**, **[en:tran:That is wrong for the window I am in]**), and
    says what most often helps, a smarter model. When the assistant answering has
    one — **Claude**, **ChatGPT** and **[en:tran:Kimi]** list theirs best first — a button
    **Ask again with …** names the next model up: it asks the same question of
@@ -490,7 +533,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    was called, how many tokens went in and came out, how much of that was served
    from the cache. The dollars are an **estimate from the model's list price**, so
    the bill from your provider is the figure that counts; a free service reads
-   **free**, and a model this app has no list price for reads **price not known**
+   **[en:tran:free]**, and a model this app has no list price for reads **[en:tran:price not known]**
    with the tokens still counted. Nothing at all is shown until a question has been
    asked. The assistant itself cannot read these figures — it can only say where
    they are — so for the total in words type **/credit**, which answers from the tab
@@ -522,7 +565,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
    **Attach a picture or PDF to a problem report.** In this help window, type what
-   went wrong into the question box, then use its paperclip to choose the picture,
+   went wrong into the question box, then press the **⋮** at its left and
+   **[en:tran:Attach a file]** to choose the picture,
    text file or PDF. Press **[en:tran:Report]** below **[en:tran:Send]**, then
    **[en:tran:Report it]** in the confirmation. Read the prepared report and its
    attachment list, then press **[en:tran:Send report]** when ready to send it.
@@ -531,7 +575,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
    **[en:tran:Report]** button on it: type a line, attach a picture or a file if it
-   helps (the paperclip takes pictures, text files and a PDF), and
+   helps (**[en:tran:Attach a file]** in the **⋮** takes pictures, text files and a PDF), and
    press **[en:tran:Send]** or **[en:tran:Report]** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
@@ -861,7 +905,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     language**: the one you write in, and the one the app is shown in whenever that
     cannot be told — a "yes", a number, a suggestion you pressed. That is any
     language, not only the ones the app can be shown in: a question written in
-    Spanish, Thai or Swahili is answered in it, the suggestions under the answer
+    Spanish or Thai is answered in it — in a language you have not installed, only when
+    its letters tell which: a script of its own, or a letter English never writes, such
+    as an accent; a question in plain English letters, as Swahili is written, is answered
+    in the language the app is shown in — and the suggestions under the answer
     too, with every button named the way your screen shows it. With the app in
     Khmer the window's own buttons and labels are in Khmer too, drawn in the app's
     Khmer letters, and so is the AI Chat (✨) window. Behind the scenes, an assistant
@@ -877,7 +924,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 18. **It can turn words you already have into a song.** Paste the verses of a song
     into the box of this help window, where you type a question (not into the Lyric
     Editor) — from an email, from a hymn sheet, from a page you found — and ask
-    for a song; or attach a `.txt` of the words with the paperclip; or give it the
+    for a song; or attach a `.txt` of the words, or the PowerPoint (`.pptx`) slides
+    a hymn is projected from (the **⋮** at the left of the box → **[en:tran:Attach a file]**); or give it the
     address of a page the words are on. One of the **[en:tran:Try asking]** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
     The answer comes back in plain words — what the song came out as, its parts and
@@ -895,7 +943,11 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     saved beside the first with `(1)` after the name. **[en:tran:Copy song text]** puts the same thing on the clipboard, to paste
     straight into the Lyric Editor.
     Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
-    the blocks and it uses them. Without labels each block becomes a verse, and a
+    the blocks and it uses them. Typed on one line works too: _Create a song called
+    Morning Praise with these words: Verse 1: We lift our eyes to you this morning,
+    Chorus: Holy, holy, holy Lord._ — each label with a colon after it starts a part
+    of its own, a ` / ` between words starts a new line, and the title you named is
+    the song's. Without labels each block becomes a verse, and a
     block repeated word for word is written once and sung each time it appears. Chord
     lines above the words are left out — Open Lyric puts chords inside the words —
     and a section it cannot make sense of is kept whole, with your own label above it,
@@ -915,6 +967,25 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     written out by the app itself in a second or two, under a note that reads
     _I wrote the song out myself instead_ — with the same **[en:tran:Create]** and
     **[en:tran:Copy song text]** buttons, and nothing searched in this guide for the words. 📸
+    **A song from a file in your Documents list.** With nothing attached, type
+    _new lyric from powerpoint_ — or _make a song from my PDF_, or the file by its
+    name: _make a song from Amazing Grace.docx_ — and the app answers by itself, with
+    no assistant asked: the files of that kind in your Documents list (slide
+    documents, PowerPoint and Word files, PDFs), up to six, each a
+    **Make a song from "<file>"** button, and how to reach the others — name the
+    file in your question. A file you named is written out at once. A button writes
+    its song out in a moment, named by the title slide — for a hymnal, its number,
+    the hymn's name and its English name when the slide carries both — with the
+    verse numbers out of the words, and nothing is written beside your file;
+    **[en:tran:Create]** saves it as above. A PowerPoint or a Word file is read through the same
+    converter the Documents list shows its slides with, a slide document by its text
+    boxes, a PDF by the words in its first eight pages (a scanned PDF has none to
+    read). A slide document or a Word file attached in the box works the same with
+    _make a song from it_, and so does that line with the box empty, for the file
+    the chat last carried; the card of choices the window shows for a slide
+    document carries **[en:tran:Make a song from it]** too. `.ppt` and `.doc` files are not read —
+    save them as `.pptx` or `.docx` first. In a window shown in another language the
+    answer and its buttons are in that language. 📸
 19. **Name a song, or give the address of a song page, and it is written out for
     you.** The fourth **[en:tran:Try asking]** chip is not a question but the start of one:
     _Create a lyric file for song "Amazing Grace"_. Pressing it does not ask
@@ -975,7 +1046,103 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     "…"_ — and ask again. Everything else is the same as pasting the words yourself:
     the two buttons underneath, and nothing written to disk until you press
     **[en:tran:Create]**.
-20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
+    **Several songs at once.** Put two, three or four addresses in one message —
+    _Create lyric files from_ and the links — or attach up to four PowerPoint files
+    (the **⋮** at the left of the box → **[en:tran:Attach a file]**) and type _Create lyric files from these_.
+    `/lyric` followed by several links does the same. The app reads them one after
+    another by itself, with no assistant asked, and answers with every song at once:
+    a box per song, shut, named by its title, to open and read before anything is
+    made, and under them **Create all N songs** first, then each song's own
+    **Create "<title>"** to make just that one. **Create all N songs** saves every
+    one and answers _Saved N songs: …_ with one file under it for each. A page or a
+    file it finds no song in is named in a sentence of its own, and links past the
+    fourth are left for another message. From a hymnal's slides, the verse numbers
+    are left out of the words, a note for the musicians at the end (_music, then
+    sing verses 3 and 4 again_) is kept in the file but never put on the screen,
+    and a chorus printed after every verse is written once and played after each.
+    📸
+20. **Ask for a new running order, slide document, Bibles list or background,
+    and it is made.** Type what you want in an ordinary chat, the way you would
+    say it: _Create a running order called Evening Service._, _Make a new slide
+    document called Sunday Welcome with a welcome slide and an announcements
+    slide._, _Save John 3:16 to my Bible list._, _Make a new Bible list called
+    Easter with John 20:1-18 and 1 Corinthians 15:3-8._, _Make a background web
+    page with a soft blue gradient._, _Add this video as a background:_ and its
+    link. 📸
+    **In your own language too.** The same asks typed in a language installed
+    in **[en:tran:Settings]** → **[en:tran:Languages]** are made the same way,
+    even with the app in English: _Hazme un orden de culto nuevo para el
+    miércoles, por favor_ makes a running order, and a Khmer request with
+    Khmer numbers saves the verses to your Bibles list. The answer's own
+    sentence (_I made …_) is in the language the app is shown in.
+    **Asked for empty**, the file is made at once and the answer says where:
+    _I made "Evening Service" for you. It is in Presenting Flows now._ Under it
+    is that file's own card, with the file waiting in the box, so the next thing
+    you type is about it — _add Amazing Grace and John 3:16_. A name that is
+    taken gets `(2)` after it; with no name it is called after the day, such as
+    _Slides 2026-11-12_.
+    **Asked for with things in it**, it is made and filled in the same answer:
+    the slides with their words, a verse as your Bible reads it with its
+    reference under it, a running order's songs, passages and countdown. Songs
+    must already be in your Documents; the answer says which it could not find.
+    Nothing goes on a screen.
+    **Passages for a Bibles list** are saved straight away, without the
+    assistant: the answer names each one as the Bible writes it, a list it made
+    (_I made "Easter" for you. It is in Bibles now._), and a reference no
+    installed Bible can read. _My Bible list_ is the list called Default; _the
+    Wedding list_ is one you named. Asked in the Bible Reader, the Reader's own
+    list is used. A passage the list holds already is not saved again: the
+    answer says _… is in your Bibles list already, so it is not saved twice._
+    **A list you carry can be pasted as it is**, one passage a line, the way
+    you keep it: _Add these to my Bibles list:_ and under it _John 3:15 (kjv)_,
+    a passage in another installed Bible's own words and numbers with that
+    Bible's name in brackets, _GEN 1:2-_, and so on. Each one is saved in the
+    Bible written beside it. Passages inside a paragraph are found too: _Last
+    Sunday at 10:30 am we sang 2 hymns, then read Ph 4:13 and Romans 8:28-30,
+    and Pastor preached on John 3:16, 17. Save these to the Easter list._
+    saves Romans 8:28-30, John 3:16 and John 3:17 and leaves the time and the
+    hymns alone. **What is not clear is asked, never guessed**: _Which do you
+    mean by “GEN 1:2-”? Press one and I will save it._ over **Genesis 1:2-31**
+    and **Genesis 1:2**; _Ph_ as each book it could be; and a Bible that is
+    not installed -- _No Bible called “niv” is installed. Which Bible should I
+    save … in?_ -- with one button for each Bible you have. Press one and that
+    passage is saved, with its own **[en:tran:Undo this change]**, and the next
+    question comes; **[en:tran:Skip]** leaves it out. 📸
+    **Adding is never showing**: _add bible items for me for:_ with _john 3:16
+    gen 1_ under it, short names in lower case and all, is saved -- _Saved
+    (KJV) John 3:16, (KJV) Genesis 1:1-31 to your Bibles list._ -- and nothing
+    goes on the screen. Asked for a passage by its words only (_add a bible
+    item for me: the verse that says the Lord is my shepherd_), the answer
+    offers the passage as a button, **Psalm 23:1**; pressing it saves it the
+    same way. To put a passage up, say so: _put John 3:16 on the screen_.
+    **From the Bibles panel**: under the Default list,
+    **[en:tran:Add Bible Item]** asks how -- **[en:tran:Bible Lookup]** opens
+    the lookup as before, and **[en:tran:Open in Chatbot]** opens the
+    assistant in a chat of its own whose box already holds its first line,
+    _Add the Bible passages in this text to my Bibles list:_, in the language
+    the app is shown in, the cursor on the line under it. Paste a list or a
+    paragraph there and press **[en:tran:Send]**: every passage in it is
+    saved to the list called Default -- a whole chapter in the middle of a
+    sentence too (_we will read Psalm 23 together_) -- and what is not clear
+    is asked as above. Sent with nothing under it, the answer says so and
+    the line waits in the box again. With AI features turned off the button
+    opens the lookup straight away. 📸
+    **A background web page** is written by the assistant and saved in
+    **[en:tran:Background]** → **[en:tran:Webs]** under the name you gave (or
+    the day's, such as _Background 2026-11-12_): _I made "Calm Sea" for you. It
+    is in Webs now._ It fills the screen, loads nothing from the internet and,
+    if it moves, only slides or fades, which an old computer can keep up with.
+    **A video or a song's sound from a link** is not downloaded by the chat:
+    the answer copies the link for you and says where to press -- in
+    **[en:tran:Background]** → **[en:tran:Videos]** (or **[en:tran:Audios]**),
+    right-click an empty part of the list, **[en:tran:Download From URL]**; the
+    box already holds the link, so **[en:tran:Ok]** is all that is left (W-21).
+    **Show me step by step** under it rings each control.
+    **[en:tran:Undo this change]** under the answer takes it all back: what was
+    put in, and a file, list or page it made. 📸
+    A question about HOW to make one (_How do I make a new slide document?_) is
+    answered with the steps, and nothing is made.
+21. **[en:tran:Enable AI features]** turns all of this on or off. It is in
     **[en:tran:Settings]** → **[en:tran:AI Providers]**, at the top of the
     section (click the section's title if it is folded). To
     turn the whole feature off, untick it and restart the app: the chatbot, its tools
@@ -985,7 +1152,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `CB-175` · `CB-180` · `CB-181` · `CB-184` · `CB-185` · `CB-186` · `CB-187` · `CB-188` · `CB-189` · `CB-190` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

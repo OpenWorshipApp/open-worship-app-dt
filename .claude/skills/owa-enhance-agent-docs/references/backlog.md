@@ -380,3 +380,75 @@ translation. The run's four translators brought both languages to 65 of 65.
 language); 0 now. One French page had to be given the English's line break
 before a bold label so its blocks lined up (the test's own comment records the
 same trap: French W-50, 2026-10-18).
+
+## AD-25 · Readers get a check-only door to the edit checker — `done` 2026-11-11 · S3 · L4
+
+**Signal.** In run `20261110-2250` the auto-mode permission check refused
+`apply-manual-edits.mjs` to 7 of 22 first readers, with `--apply` or without —
+the name says it writes — and each wrote its own copy of the three checks,
+which proves nothing about the real ones. **Change.**
+`scripts/check-manual-edits.mjs` sets a flag and loads the applier: one set of
+checks, two doors, and only the applier writes; the brief and §3 name it.
+**Cost.** 0 always-loaded bytes. **Proof.** A valid proposal run through it
+with `--apply` printed `0 problem(s)`, exit 0, and the target's hash was the
+same before and after. Applied at the user's word (`apply AD-25`).
+
+## AD-26 · A stamp can record a read made against the last commit — `done` 2026-11-11 · S2 · L3
+
+**Signal.** In run `20261110-2250`, 33 notes and 11 recipes read and corrected
+stayed "due a read" because other sessions had uncommitted work in what they
+name: a stamp is refused there, and the read had nowhere to go. **Change.**
+`--stamp-notes` / `--stamp-manual` take `--at-head`: every uncommitted file is
+hashed as the last commit has it — the code the reader judged — which is how
+the staleness and manual checks read a document listed apart, so it stays
+apart until that work lands and is due again once it has. Non-negotiable 7
+says when. **Cost.** 0. **Proof.** After the stamps: recipes due a read
+11 → 0 (11 listed apart), notes 33 → 0 of those (each listed apart, naming its
+file); two commits that landed mid-run were read against each stamped
+document before it was stamped again. Applied at the user's word.
+
+## AD-27 · The `tools` check reads tools registered by a constant — `done` 2026-11-11 · S2 · L3
+
+**Signal.** The check counted 40 registered `owa_*` tools of 45: the five
+one-document editors are registered as `registerTool(NOTE_EDIT_TOOL_NAME, …)`,
+so CLAUDE.md's list could leave four of them out with nothing printed (fixed
+by hand the same run). **Change.** `readRegisteredTools` adds the value of a
+`const NAME = 'owa_…'` that some `registerTool(NAME` passes, and
+`checkMentionsTool` reads `` `owa_foreground` / `_edit` `` as naming
+`owa_foreground_edit`. A new test in `agentDocsAudit.test.ts` registers the
+real tools on a stand-in server and holds the check's count to that number.
+**Cost.** 0. **Proof.** The test fails on the old script (40) and passes now
+(45); the new count found the MCP README's table lacking `owa_slide_edit`,
+added. Applied at the user's word.
+
+## AD-28 · The staleness check never diffs an empty path list — `done` 2026-11-11 · S3 · L3
+
+**Signal.** `RELEASE.md` was listed against 3 835 changed files: every file it
+names is git-ignored and on disk, so its tracked list was empty, and
+`git diff <sha> --` with no path lists the whole repository. **Change.** A
+stamped document whose named files are all outside what git tracks has no code
+to fall behind, and is skipped. **Cost.** 0. **Proof.** With a deliberately
+stale stamp, the committed script listed `RELEASE.md` due against 3 845 files;
+the fixed one does not list it. Applied at the user's word.
+
+## AD-29 · The `ids` check holds `BN-xx` to its ledger — `done` 2026-11-11 · S3 · L3
+
+**Signal.** 63 distinct `BN-` ids were cited across the docs, outside the
+bible-note skill's own references, with nothing checking them against its
+90-id ledger. **Change.** `BN` joins `ID_PATTERN` and `ID_OWNER_MAP`
+(`owa-enhance-bible-note-chatbot/references/backlog.md`). **Cost.** 0.
+**Proof.** The check prints 0 against the real ledger; pointed at the wrong
+ledger it flags 139 citations, so every one is now read. Applied under the
+user's stated goal (_documents are 100% coverage code base_).
+
+## AD-30 · Picturing the help window is written down — `done` 2026-11-11 (note) · S4 · L4
+
+**Signal.** 4 of 40 sessions since 2026-11-07 aimed `owa_screenshot` at the
+help window and were refused (_This window has node integration switched
+off_); the refusal says to ask the app window, which pictures the wrong one.
+**Change.** A bullet in memory `chatbot-cdp-driver-gotchas`: picture the
+help and AI Chat windows with chrome-devtools' `take_screenshot` by the
+page's id. The stronger fix -- the refusal itself naming that tool -- is
+code in `tools/owa-devtools-mcp/owaTools.mjs`, left to `owa-enhance-mcp`.
+**Cost.** 0 always-loaded bytes (an on-demand note). **Proof.** The mechanism
+only: a friction signature cannot be re-measured in one session.

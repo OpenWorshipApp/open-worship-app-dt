@@ -195,8 +195,8 @@ describe('initOpenLyric', () => {
     // The overprint regression. open-lyric freezes a slide's lines into pixel
     // boxes measured in whatever faces the window has registered, and this used
     // to fetch the language list WITHOUT registering any: a song set in
-    // `app-Battambang` was measured in the fallback font, then drawn in
-    // Battambang, and its long lines wrapped over the next one.
+    // a language's own face (`app-Xx-Face`) was measured in the fallback
+    // font, then drawn in its own, and its long lines wrapped over the next one.
     test('registers every language font before handing the previewer out', async () => {
         let isRegistered = false;
         mocks.initAllLangCssMock.mockImplementationOnce(async () => {
@@ -237,11 +237,11 @@ describe('applyOpenLyricTheme', () => {
 describe('getOpenLyricFontSetting', () => {
     test('reads the size and face the previewer saved', () => {
         vi.mocked(appLocalStorage.getItem).mockReturnValue(
-            JSON.stringify({ fontSize: 61, fontFamily: 'app-Battambang' }),
+            JSON.stringify({ fontSize: 61, fontFamily: 'app-Xx-Face' }),
         );
         expect(getOpenLyricFontSetting()).toEqual({
             fontSize: 61,
-            fontFamily: 'app-Battambang',
+            fontFamily: 'app-Xx-Face',
         });
         expect(appLocalStorage.getItem).toHaveBeenCalledWith(
             'open-lyric-previewer-setting',
@@ -284,12 +284,12 @@ describe('initOpenLyric wiring', () => {
     test('starts from the song text and the saved font', async () => {
         mocks.getContentMock.mockResolvedValue('v1: Amazing grace');
         vi.mocked(appLocalStorage.getItem).mockReturnValue(
-            JSON.stringify({ fontSize: 61, fontFamily: 'app-Battambang' }),
+            JSON.stringify({ fontSize: 61, fontFamily: 'app-Xx-Face' }),
         );
         const previewer: any = await initOpenLyric(FILE_PATH, true);
         expect(previewer.value).toBe('v1: Amazing grace');
         expect(previewer.fontSize).toBe('61px');
-        expect(previewer.fontFamily).toBe('app-Battambang');
+        expect(previewer.fontFamily).toBe('app-Xx-Face');
     });
 
     test('no saved face leaves open-lyric its own', async () => {
@@ -299,13 +299,13 @@ describe('initOpenLyric wiring', () => {
     });
 
     test('each language may plug into the previewer, unless told not to', async () => {
-        const khmerPlugins = vi.fn();
+        const langPlugins = vi.fn();
         mocks.initAllLangCssMock.mockResolvedValue([
-            { initOpenLyricPlugins: khmerPlugins },
+            { initOpenLyricPlugins: langPlugins },
             {},
         ]);
         const previewer = await initOpenLyric(FILE_PATH);
-        expect(khmerPlugins).toHaveBeenCalledExactlyOnceWith({
+        expect(langPlugins).toHaveBeenCalledExactlyOnceWith({
             openLyric: previewer,
             // This window's own registry, for a language plugin's Open Lyric
             // half to register into.
@@ -315,8 +315,8 @@ describe('initOpenLyric wiring', () => {
             genOpenLyricFontFaces,
         });
 
-        khmerPlugins.mockClear();
+        langPlugins.mockClear();
         await initOpenLyric(FILE_PATH, true);
-        expect(khmerPlugins).not.toHaveBeenCalled();
+        expect(langPlugins).not.toHaveBeenCalled();
     });
 });

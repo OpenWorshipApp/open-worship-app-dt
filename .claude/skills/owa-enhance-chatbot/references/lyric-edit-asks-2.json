@@ -1,0 +1,239 @@
+{
+  "about": "The song conversation's second standing set (scripts/lyric-run.mjs --asks=lyric-edit-asks-2.json, 2026-11-12, EC-527): harder asks a band leader types, on a second song (public domain, 1873) -- chords in Verse 1, Verse 2 and the Chorus, none in Verse 3 or Verse 4, and a typo inside a chorded word (as[D7]surence). Each ask gets a fresh copy; `expect` is what the song must hold after it -- the change asked for, and nothing else lost.",
+  "songName": "It Is Well",
+  "song": [
+    "```ol:Config",
+    "- Title: It Is Well With My Soul",
+    "- Artist: Horatio Spafford",
+    "- Key: C",
+    "- Locales: en-US",
+    "- Structure: V1CV2CV3CV4C",
+    "```",
+    "",
+    "```ol:Verse 1",
+    "[C]When peace like a [F]river at[C]tendeth my way,",
+    "When [Am]sorrows like [D7]sea billows [G]roll;",
+    "What[C]ever my [F]lot, Thou hast [C]taught me to [Am]say,",
+    "It is [C]well, it is [G7]well with my [C]soul.",
+    "```",
+    "",
+    "```ol:Chorus",
+    "It is [C]well (it is well) with my [G]soul (with my soul),",
+    "It is [F]well, it is [G7]well with my [C]soul.",
+    "```",
+    "",
+    "```ol:Verse 2",
+    "[C]Though Satan should [F]buffet, though [C]trials should come,",
+    "Let [Am]this blest as[D7]surence con[G]trol,",
+    "That [C]Christ has re[F]garded my [C]helpless es[Am]tate,",
+    "And hath [C]shed His own [G7]blood for my [C]soul.",
+    "```",
+    "",
+    "```ol:Verse 3",
+    "My sin, oh, the bliss of this glorious thought!",
+    "My sin, not in part but the whole,",
+    "Is nailed to the cross, and I bear it no more,",
+    "Praise the Lord, praise the Lord, O my soul!",
+    "```",
+    "",
+    "```ol:Verse 4",
+    "And Lord, haste the day when my faith shall be sight,",
+    "The clouds be rolled back as a scroll;",
+    "The trump shall resound, and the Lord shall descend,",
+    "Even so, it is well with my soul.",
+    "```",
+    ""
+  ],
+  "asks": [
+    {
+      "id": "H01",
+      "shape": "a part renamed",
+      "ask": "Rename the chorus to Refrain.",
+      "expect": {
+        "partsAdded": ["Refrain"],
+        "partsGone": ["Chorus"],
+        "partChords": [["Refrain", 5]],
+        "chords": 31,
+        "playOrderIs": "Verse 1 → Refrain → Verse 2 → Refrain → Verse 3 → Refrain → Verse 4 → Refrain",
+        "partsKept": ["Verse 1", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H02",
+      "shape": "chords copied from one verse onto another",
+      "ask": "Copy the chords of verse 1 onto verse 3.",
+      "expect": {
+        "partChords": [["Verse 3", 13]],
+        "wordsKept": ["Verse 3"],
+        "chords": 44,
+        "partsKept": ["Verse 1", "Verse 2", "Chorus", "Verse 4"]
+      }
+    },
+    {
+      "id": "H03",
+      "shape": "one chord changed everywhere",
+      "ask": "Change every F chord to Fmaj7.",
+      "expect": {
+        "chordTally": { "F": 0, "Fmaj7": 5 },
+        "chords": 31,
+        "wordsKept": ["Verse 1", "Verse 2", "Chorus"],
+        "partsKept": ["Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H04",
+      "shape": "the chords taken out of one part",
+      "ask": "Take the chords out of the chorus.",
+      "expect": {
+        "partChords": [["Chorus", 0]],
+        "wordsKept": ["Chorus"],
+        "chords": 26,
+        "partsKept": ["Verse 1", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H05",
+      "shape": "two changes in one ask",
+      "ask": "Fix the typo in verse 2 and move the song to D.",
+      "expect": {
+        "key": "D",
+        "partHas": [["Verse 2", "assurance"]],
+        "partLacks": [["Verse 2", "assurence"]],
+        "lineHas": [["Verse 1", 0, "[D]When peace"]],
+        "chords": 31,
+        "wordsKept": ["Verse 1", "Chorus"],
+        "partsKept": ["Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H06",
+      "shape": "one line taken out",
+      "ask": "Delete the second line of verse 4.",
+      "expect": {
+        "partLineCount": [["Verse 4", 3]],
+        "partLacks": [["Verse 4", "The clouds be rolled back"]],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3"]
+      }
+    },
+    {
+      "id": "H07",
+      "shape": "one line added",
+      "ask": "Add this line at the end of verse 4: Amen, amen, it is well with my soul.",
+      "expect": {
+        "partLineCount": [["Verse 4", 5]],
+        "lineHas": [
+          ["Verse 4", 3, "Even so, it is well with my soul."],
+          ["Verse 4", 4, "Amen, amen, it is well with my soul"]
+        ],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3"]
+      }
+    },
+    {
+      "id": "H08",
+      "shape": "play order rewritten",
+      "ask": "Only sing the chorus after verse 2 and after verse 4.",
+      "expect": {
+        "playOrderIs": "Verse 1 → Verse 2 → Chorus → Verse 3 → Verse 4 → Chorus",
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H09",
+      "shape": "one part translated",
+      "ask": "Add a Spanish translation under the chorus only.",
+      "expect": {
+        "partTranslations": [["Chorus", 2]],
+        "translations": 2,
+        "chords": 31,
+        "wordsKept": ["Chorus"],
+        "partsKept": ["Verse 1", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H10",
+      "shape": "two verses sung in another order",
+      "ask": "Sing verse 3 before verse 2.",
+      "expect": {
+        "playOrderHasBefore": ["Verse 3", "Verse 2"],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H11",
+      "shape": "a note for the band",
+      "ask": "Add a note for the band at the start: slow piano intro, everyone joins on verse 1.",
+      "expect": {
+        "partsAdded": ["Note"],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H12",
+      "shape": "tempo and time",
+      "ask": "Set the tempo to 72 and the time signature to 6/8.",
+      "expect": {
+        "config": { "tempo": "72bpm", "time": "6/8" },
+        "chords": 31,
+        "partsKept": ["Verse 1", "Chorus", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H13",
+      "shape": "two lines swapped",
+      "ask": "Swap the two lines of the chorus.",
+      "expect": {
+        "lineHas": [
+          ["Chorus", 0, "It is [F]well, it is [G7]well with my [C]soul"],
+          ["Chorus", 1, "It is [C]well (it is well) with my [G]soul"]
+        ],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H14",
+      "shape": "a phrase changed in one part only",
+      "ask": "In the chorus, change \"with my soul\" to \"with my heart\".",
+      "expect": {
+        "partLacks": [["Chorus", "with my soul"]],
+        "partHas": [["Chorus", "with my heart"]],
+        "partChords": [["Chorus", 5]],
+        "chords": 31,
+        "partsKept": ["Verse 1", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H15",
+      "shape": "one chord moved",
+      "ask": "In verse 1, move the D7 chord onto the word \"billows\".",
+      "expect": {
+        "lineHas": [["Verse 1", 1, "sea [D7]billows"]],
+        "partChords": [["Verse 1", 13]],
+        "wordsKept": ["Verse 1"],
+        "chords": 31,
+        "partsKept": ["Chorus", "Verse 2", "Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H16",
+      "shape": "every chord taken out",
+      "ask": "Remove all the chords from the song.",
+      "expect": {
+        "chords": 0,
+        "wordsKept": ["Verse 1", "Chorus", "Verse 2"],
+        "partsKept": ["Verse 3", "Verse 4"]
+      }
+    },
+    {
+      "id": "H17",
+      "shape": "a question about the chords",
+      "ask": "Which chords does the chorus use?",
+      "expect": { "unchanged": true }
+    }
+  ]
+}

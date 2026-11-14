@@ -124,6 +124,16 @@ export function matchQuestions(
     options: MatchOptionsType,
 ): QuestionRowType[];
 
+/** The main jobs a word or two typed alone could mean, corpus order. */
+export function listTopicQuestions(
+    query: string,
+    options: {
+        pages: QuestionPageType[];
+        focus?: BotFocusType | null;
+        limit?: number;
+    },
+): QuestionRowType[];
+
 export function outlineQuestions(options: {
     pages: QuestionPageType[];
     focus?: BotFocusType | null;

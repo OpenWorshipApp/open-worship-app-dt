@@ -32,8 +32,9 @@ the slides its `1`.
   already seen has the same problem.
 - Discoverability was half the ask: the lesson `presenter-note-panel` ("Write a
   note on a document or slide") in `presenterDemos.mjs` is the Tip of the Day
-  AND the practice-shelf entry, W-03 carries a Tips bullet, W-31 lists `Note`
-  as the one panel that starts unticked, and `questions/presenter.json` has
+  AND the walkthrough its **Show it** starts (the help window's practice shelf
+  lists the Reader's lessons only), W-03 carries a Tips bullet, W-31 lists `Note`
+  as a panel that starts unticked (as does Advance Lookup), and `questions/presenter.json` has
   `open-note-panel`. See [[question-corpus-maintenance]].
 - Found on the way, fixed with it: `setDisablingSetting` read the STORED blob
   while both closers had just written the neighbour's new grow to the DOM, so

@@ -41,11 +41,12 @@ vi.mock('../../helper/FileSource', () => ({
     default: {
         getInstance: (filePath: string) => ({
             filePath,
+            fullName: filePath.split('/').pop() ?? '',
             name:
                 filePath
                     .split('/')
                     .pop()
-                    ?.replace(/\.own$/, '') ?? '',
+                    ?.replace(/\.[^.]+$/, '') ?? '',
             readFileData: () => h.readFileDataMock(filePath),
             writeFileData: (data: string) =>
                 h.writeFileDataMock(filePath, data),
@@ -264,6 +265,27 @@ describe('bible-list/note Note editing history', () => {
         expect(note.getItemById(1)?.content).toBe('typed in the other window');
     });
 
+    // BN-75 (2026-11-10): the assistant named a lesson in an empty note, then
+    // a change made in its window put the old name back -- and the window's
+    // Save would have put it in the file. The list owns the title.
+    test('an item write keeps the title the head holds', async () => {
+        h.getCurrentHistoryMock.mockResolvedValue(
+            JSON.stringify(
+                genNoteJson([{ ...genItem(1, 'old text'), title: 'Renamed' }]),
+            ),
+        );
+        // this window opened before the rename
+        const note = genNote([genItem(1, 'old text')]);
+        const myItem = note.getItemById(1)!;
+        myItem.content = 'new text';
+        await note.addItemEditingHistory(myItem);
+        const written = JSON.parse(readAddedHistory());
+        expect(written.items[0].title).toBe('Renamed');
+        expect(written.items[0].content).toBe('new text');
+        // The window's own item is left as it was handed in.
+        expect(myItem.title).toBe('Item 1');
+    });
+
     // The head is the last readable copy of a note file that has been damaged.
     test('an unreadable file falls back to the editing head', async () => {
         h.readFileDataMock.mockResolvedValue('{ this is not json');
@@ -461,6 +483,15 @@ describe('bible-list/note Note editing history', () => {
             'Cannot find Note Item',
         );
         expect(h.writeFileDataMock).not.toHaveBeenCalled();
+    });
+
+    // 2026-11-11: the Bible Notes list shows Markdown files too, and a
+    // `Default.md` among them is no home for the verse marks.
+    test('only the note file named Default is the default', () => {
+        expect(Note.checkIsDefault('/notes/Default.own')).toBe(true);
+        expect(Note.checkIsDefault('/notes/Default.OWN')).toBe(true);
+        expect(Note.checkIsDefault('/notes/Default.md')).toBe(false);
+        expect(Note.checkIsDefault('/notes/Sermon.own')).toBe(false);
     });
 
     test('default note loads an existing file or creates and opens one', async () => {

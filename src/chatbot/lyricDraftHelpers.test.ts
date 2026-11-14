@@ -9,16 +9,31 @@ import {
 import {
     checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
+    checkIsSongFileAsk,
+    checkIsSongSourceFileName,
+    countWordsBesideAddresses,
+    genLyricDraftActions,
+    keepDraftedLyric,
+    LYRIC_COPY_TOOL_NAME,
+    LYRIC_CREATE_ALL_TOOL_NAME,
+    LYRIC_CREATE_TOOL_NAME,
+    MAX_SONGS_PER_ASK,
     readDraftedLyric,
     readDraftReport,
     readSongAddress,
+    readSongAddressList,
     readSongLinkAsk,
     readSongLookupYours,
     readSongTitleArgument,
     readSongTitleAsk,
+    readSongTitleNamed,
     SONG_NOT_FOUND_PREFIX,
     SONG_YOURS_PREFIX,
+    takeDraftedLyric,
+    takeDraftedLyricList,
     toDraftedLyricName,
+    toDraftedSourceKey,
+    withDraftedSource,
 } from './lyricDraftHelpers';
 
 const SONG_PAGE = 'https://example.com/hymns/amazing-grace';
@@ -36,21 +51,41 @@ describe('checkIsBrowserCheckRefusal', () => {
 
 describe('readSongLinkAsk', () => {
     it("reads the app's own starter chip", () => {
-        expect(readSongLinkAsk(`Create a lyric file from ${SONG_PAGE}`)).toBe(
-            SONG_PAGE,
-        );
+        expect(
+            readSongLinkAsk(`Create a lyric file from ${SONG_PAGE}`),
+        ).toEqual([SONG_PAGE]);
     });
     it('reads the address out of other shapes of the ask, punctuation off', () => {
         expect(
             readSongLinkAsk(`make a song from this page ${SONG_PAGE}.`),
-        ).toBe(SONG_PAGE);
-        expect(readSongLinkAsk(`${SONG_PAGE} - the lyrics are on here`)).toBe(
-            SONG_PAGE,
-        );
+        ).toEqual([SONG_PAGE]);
+        expect(
+            readSongLinkAsk(`${SONG_PAGE} - the lyrics are on here`),
+        ).toEqual([SONG_PAGE]);
         expect(
             readSongLinkAsk(`Can you write out the hymn at ${SONG_PAGE}?`),
-        ).toBe(SONG_PAGE);
-        expect(readSongLinkAsk(`chords: (${SONG_PAGE})`)).toBe(SONG_PAGE);
+        ).toEqual([SONG_PAGE]);
+        expect(readSongLinkAsk(`chords: (${SONG_PAGE})`)).toEqual([SONG_PAGE]);
+    });
+    // EC-589: two addresses had been no song link at all.
+    it('several links are several songs, in order, each once', () => {
+        expect(
+            readSongLinkAsk(
+                `Create lyric files from ${SONG_PAGE}, ${SONG_PAGE}/2 and ` +
+                    `${SONG_PAGE}/3.`,
+            ),
+        ).toEqual([SONG_PAGE, `${SONG_PAGE}/2`, `${SONG_PAGE}/3`]);
+        expect(
+            readSongLinkAsk(
+                `songs:\n${SONG_PAGE}\n${SONG_PAGE}/2\n${SONG_PAGE}`,
+            ),
+        ).toEqual([SONG_PAGE, `${SONG_PAGE}/2`]);
+        // The words are counted with the links out: ten links are as short
+        // an ask as one.
+        const many = Array.from({ length: 10 }, (_one, index) => {
+            return `${SONG_PAGE}/${index.toString()}-${'x'.repeat(40)}`;
+        });
+        expect(readSongLinkAsk(`songs ${many.join(' ')}`)).toHaveLength(10);
     });
     it('a bare address is not a song ask', () => {
         // As likely a YouTube link or a Bible XML file: reading a page is
@@ -58,10 +93,7 @@ describe('readSongLinkAsk', () => {
         expect(readSongLinkAsk(SONG_PAGE)).toBeNull();
         expect(readSongLinkAsk(`read this for me ${SONG_PAGE}`)).toBeNull();
     });
-    it('two addresses, a command, notation or a long message is left alone', () => {
-        expect(
-            readSongLinkAsk(`songs ${SONG_PAGE} and ${SONG_PAGE}/2`),
-        ).toBeNull();
+    it('a command, notation or a long message is left alone', () => {
         expect(readSongLinkAsk(`/song ${SONG_PAGE}`)).toBeNull();
         expect(
             readSongLinkAsk(`song \`\`\`ol:Config\n${SONG_PAGE}`),
@@ -83,7 +115,178 @@ describe('readSongAddress', () => {
         expect(
             readSongAddress('Amazing grace\nhow sweet the sound'),
         ).toBeNull();
-        expect(readSongAddress(`${SONG_PAGE} ${SONG_PAGE}`)).toBeNull();
+        // The same page twice is one page; two pages are not ONE address.
+        expect(readSongAddress(`${SONG_PAGE} ${SONG_PAGE}`)).toBe(SONG_PAGE);
+        expect(readSongAddress(`${SONG_PAGE} ${SONG_PAGE}/2`)).toBeNull();
+    });
+});
+
+describe('readSongAddressList and countWordsBesideAddresses (EC-589)', () => {
+    it('every address once, in order, sentence punctuation off', () => {
+        expect(
+            readSongAddressList(
+                `${SONG_PAGE}/2; ${SONG_PAGE}! (${SONG_PAGE}/2) https://`,
+            ),
+        ).toEqual([`${SONG_PAGE}/2`, SONG_PAGE]);
+        expect(readSongAddressList('no link here')).toEqual([]);
+    });
+    it('counts the words a message says beside its links', () => {
+        expect(countWordsBesideAddresses(`${SONG_PAGE} ${SONG_PAGE}/2`)).toBe(
+            0,
+        );
+        expect(
+            countWordsBesideAddresses(`songs from ${SONG_PAGE} and here`),
+        ).toBe(4);
+    });
+});
+
+describe('the song files of an ask (EC-589)', () => {
+    it('takes word files and the decks and documents read as words', () => {
+        expect(checkIsSongSourceFileName('Amazing Grace.txt')).toBe(true);
+        expect(checkIsSongSourceFileName('hymn.MD')).toBe(true);
+        expect(checkIsSongSourceFileName('hymn.markdown')).toBe(true);
+        // A PowerPoint deck and a Word file: their words are read out.
+        expect(checkIsSongSourceFileName('hymn.pptx')).toBe(true);
+        expect(checkIsSongSourceFileName('hymn.DOCX')).toBe(true);
+        expect(checkIsSongSourceFileName('hymn.pdf')).toBe(false);
+        expect(checkIsSongSourceFileName('hymn.owl')).toBe(false);
+        // The old binary kinds are no zip of words.
+        expect(checkIsSongSourceFileName('hymn.doc')).toBe(false);
+        expect(checkIsSongSourceFileName('hymn.ppt')).toBe(false);
+    });
+    it('reads a short making line with a song word as a file ask', () => {
+        expect(checkIsSongFileAsk('Create lyric files from these')).toBe(true);
+        expect(checkIsSongFileAsk('make songs from the attached files')).toBe(
+            true,
+        );
+        expect(checkIsSongFileAsk('Add these hymns to my songs')).toBe(true);
+    });
+    it('turning or converting a file is one too (EC-590)', () => {
+        expect(checkIsSongFileAsk('turn this into a lyric')).toBe(true);
+        expect(checkIsSongFileAsk('Convert it to a song')).toBe(true);
+        expect(checkIsSongFileAsk('turn powerpoint to lyric')).toBe(true);
+        // The attached PowerPoint's own card button, in its English.
+        expect(checkIsSongFileAsk('Make a song from it')).toBe(true);
+        // A song word is still needed: a file turned into nothing said.
+        expect(checkIsSongFileAsk('turn this into a picture')).toBe(false);
+    });
+    it('a question, a title, a link, a command or a paste is not one', () => {
+        expect(checkIsSongFileAsk('')).toBe(false);
+        expect(checkIsSongFileAsk('can you make songs from these?')).toBe(
+            false,
+        );
+        expect(checkIsSongFileAsk('Create a song called "Amazing Grace"')).toBe(
+            false,
+        );
+        expect(checkIsSongFileAsk(`make songs from ${SONG_PAGE}`)).toBe(false);
+        expect(checkIsSongFileAsk('/lyric create songs')).toBe(false);
+        expect(checkIsSongFileAsk('create songs\nfrom these')).toBe(false);
+        expect(checkIsSongFileAsk('what is in these files')).toBe(false);
+        const long = Array.from({ length: 20 }, () => 'song').join(' ');
+        expect(checkIsSongFileAsk(`create ${long}`)).toBe(false);
+    });
+});
+
+const genSong = (title: string) => {
+    return `\`\`\`ol:Config\n- Title: ${title}\n- Structure: V1\n\`\`\``;
+};
+
+describe('the buttons under drafted songs (EC-589)', () => {
+    it('one song: Create and Copy, as ever', () => {
+        const drafted = keepDraftedLyric(genSong('Lantern'));
+        expect(genLyricDraftActions([drafted])).toEqual([
+            {
+                label: 'Create "Lantern"',
+                toolName: LYRIC_CREATE_TOOL_NAME,
+                args: { reference: drafted.reference },
+            },
+            {
+                label: 'Copy song text',
+                toolName: LYRIC_COPY_TOOL_NAME,
+                args: { reference: drafted.reference },
+            },
+        ]);
+        expect(genLyricDraftActions([])).toEqual([]);
+    });
+    it("several: Create all first, then each one's own Create, no Copy", () => {
+        const list = ['One', 'Two', 'Three'].map((title) => {
+            return keepDraftedLyric(genSong(title));
+        });
+        const actions = genLyricDraftActions(list);
+        expect(
+            actions.map((one) => {
+                return one.label;
+            }),
+        ).toEqual([
+            'Create all 3 songs',
+            'Create "One"',
+            'Create "Two"',
+            'Create "Three"',
+        ]);
+        expect(actions[0]).toEqual({
+            label: 'Create all 3 songs',
+            toolName: LYRIC_CREATE_ALL_TOOL_NAME,
+            args: {
+                references: list.map((one) => {
+                    return one.reference;
+                }),
+            },
+        });
+    });
+    it('holds two asks of songs and lets older ones go', () => {
+        const kept = Array.from(
+            { length: MAX_SONGS_PER_ASK * 2 + 1 },
+            (_one, index) => {
+                return keepDraftedLyric(genSong(`Song ${index.toString()}`));
+            },
+        );
+        expect(takeDraftedLyric(kept[0].reference)).toBeNull();
+        expect(takeDraftedLyric(kept[1].reference)?.name).toBe('Song 1');
+        const taken = takeDraftedLyricList([
+            kept[0].reference,
+            kept[8].reference,
+            42,
+            kept[2].reference,
+        ]);
+        expect(
+            taken.heldList.map((one) => {
+                return one.name;
+            }),
+        ).toEqual(['Song 8', 'Song 2']);
+        expect(taken.goneCount).toBe(2);
+        expect(takeDraftedLyricList('not a list')).toEqual({
+            heldList: [],
+            goneCount: 0,
+        });
+    });
+});
+
+describe('the drafts a model made, one per source (EC-589)', () => {
+    it('keys a page by its address and words by their title', () => {
+        expect(toDraftedSourceKey(genSong('A'), ` ${SONG_PAGE} `)).toBe(
+            `url:${SONG_PAGE}`,
+        );
+        expect(toDraftedSourceKey(genSong('Amazing Grace'), undefined)).toBe(
+            'title:amazing grace',
+        );
+        expect(toDraftedSourceKey(genSong('B'), '')).toBe('title:b');
+    });
+    it('replaces the same source where it stood and adds a new one last', () => {
+        let list = withDraftedSource([], { key: 'a', content: '1' });
+        list = withDraftedSource(list, { key: 'b', content: '2' });
+        list = withDraftedSource(list, { key: 'a', content: '3' });
+        expect(list).toEqual([
+            { key: 'a', content: '3' },
+            { key: 'b', content: '2' },
+        ]);
+        for (const key of ['c', 'd', 'e']) {
+            list = withDraftedSource(list, { key, content: key });
+        }
+        expect(
+            list.map((one) => {
+                return one.key;
+            }),
+        ).toEqual(['a', 'b', 'c', 'd']);
     });
 });
 
@@ -287,5 +490,47 @@ describe('the song lookup prefixes', () => {
         expect(readSongLookupYours('Drafted a song from the text.')).toEqual(
             [],
         );
+    });
+});
+
+describe('readSongTitleNamed (EC-517)', () => {
+    it('reads the title named before the words', () => {
+        expect(
+            readSongTitleNamed(
+                'Create a song called Morning Praise with these words: ' +
+                    'Verse 1: We lift our eyes, Chorus: Holy, holy.',
+            ),
+        ).toBe('Morning Praise');
+        expect(
+            readSongTitleNamed(
+                'Make a new hymn titled "Grace: Again" from these lines',
+            ),
+        ).toBe('Grace: Again');
+        expect(
+            readSongTitleNamed(
+                'Write a lyric file named Hope Rising:\nVerse 1',
+            ),
+        ).toBe('Hope Rising');
+        expect(
+            readSongTitleNamed('Make a song called It Is Well with My Soul'),
+        ).toBe('It Is Well with My Soul');
+        expect(
+            readSongTitleNamed(
+                'Create a song for Sunday called Light in the Dark using these words',
+            ),
+        ).toBe('Light in the Dark');
+    });
+
+    it('names nothing without a song word before it, or from a lyric', () => {
+        for (const text of [
+            'Create a slide called Welcome',
+            'Verse 1: a name named above all, Chorus: holy',
+            'Make a song with these words: a love called grace',
+            'Create a song called these words',
+            '/lyric called Hope',
+            '',
+        ]) {
+            expect(readSongTitleNamed(text)).toBeNull();
+        }
     });
 });

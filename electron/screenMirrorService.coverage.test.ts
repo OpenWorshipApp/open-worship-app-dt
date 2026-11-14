@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import http from 'node:http';
@@ -319,7 +319,11 @@ beforeEach(async () => {
     vi.mocked(lookUpPublicAddress).mockReset().mockResolvedValue('');
     vi.mocked(closeRouterPort).mockReset().mockResolvedValue(undefined);
     vi.spyOn(os, 'networkInterfaces').mockReturnValue(NICS);
-    directory = await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-coverage-'));
+    // The real path: on macOS the temp folder is behind a link (`/var` ->
+    // `/private/var`), and a file published through a link is refused.
+    directory = await realpath(
+        await mkdtemp(path.join(os.tmpdir(), 'owa-mirror-coverage-')),
+    );
     fixture.appPath = directory;
     fixture.userData = path.join(directory, 'user-data');
 });
@@ -2367,6 +2371,9 @@ test('the intercom asks macOS for the microphone, and the broker’s voice reach
     expect(asked).toEqual(['microphone']);
     expect(service.intercomStateOf(key).mic).toBe(false);
 
+    // Allowed this time -- on a Mac running the suite the real platform
+    // still asks.
+    fixture.askForMediaAccess = async () => true;
     await service.setIntercom(key, { mic: true });
     expect(guest.socket.packets.at(-1)).toEqual({
         protocol: 1,

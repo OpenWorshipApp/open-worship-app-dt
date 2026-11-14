@@ -19,11 +19,12 @@ vi.mock('../../context-menu/contextMenuIconHelpers', () => ({
 }));
 
 import {
+    genDocumentOpenInChatbotContextMenu,
     genLyricOpenInChatbotContextMenu,
     openLyricInChatbot,
 } from './lyricChatbotMenuHelpers';
 
-const SONG_PATH = '/docs/Still khmer.owl';
+const SONG_PATH = '/docs/Still here.owl';
 
 beforeEach(() => {
     h.isAiEnabled = true;
@@ -39,7 +40,13 @@ describe('Open in Chatbot on a song', () => {
         expect(item.childBefore).toBe('icon:robot');
         item.onSelect?.({} as any, {} as any);
         await vi.dynamicImportSettled();
-        expect(h.openChatbotWithFile).toHaveBeenCalledWith(SONG_PATH);
+        // A song has no window of its own to open first.
+        expect(h.openChatbotWithFile).toHaveBeenCalledWith(
+            SONG_PATH,
+            null,
+            null,
+            null,
+        );
     });
 
     test('is not offered while AI is off', () => {
@@ -52,5 +59,40 @@ describe('Open in Chatbot on a song', () => {
         h.openChatbotWithFile.mockRejectedValue(error);
         expect(await openLyricInChatbot(SONG_PATH)).toBe(false);
         expect(h.handleError).toHaveBeenCalledWith(error);
+    });
+});
+
+// 2026-11-13, the user, with a Bible Notes Markdown row's menu open:
+// _markdown file in bible-note should have open in chatbot context menu as
+// well_.
+describe('Open in Chatbot on a Markdown file with a window of its own', () => {
+    const STUDY_PATH = '/notes/GEN.4.Genesis 4 Study.md';
+
+    test('hands the press that opens its window to the help window, unpressed', async () => {
+        const openOwnWindow = vi.fn(async () => {});
+        const [item, ...rest] = genDocumentOpenInChatbotContextMenu(
+            STUDY_PATH,
+            openOwnWindow,
+        );
+        expect(rest).toEqual([]);
+        expect(item.menuElement).toBe('Open in Chatbot');
+        expect(item.childBefore).toBe('icon:robot');
+        item.onSelect?.({} as any, {} as any);
+        await vi.dynamicImportSettled();
+        expect(h.openChatbotWithFile).toHaveBeenCalledExactlyOnceWith(
+            STUDY_PATH,
+            null,
+            null,
+            openOwnWindow,
+        );
+        // `openChatbotWithFile` runs it, once the caution is answered.
+        expect(openOwnWindow).not.toHaveBeenCalled();
+    });
+
+    test('is not offered while AI is off', () => {
+        h.isAiEnabled = false;
+        expect(
+            genDocumentOpenInChatbotContextMenu(STUDY_PATH, async () => {}),
+        ).toEqual([]);
     });
 });

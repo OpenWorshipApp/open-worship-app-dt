@@ -133,6 +133,14 @@ describe('what the model is offered', () => {
         expect(checkIsModelHiddenTool('owa_presenting_flow')).toBe(false);
     });
 
+    // Which running app an outside agent works with: the in-app host is
+    // pinned to its own, so the chatbot has nothing to choose -- and choosing
+    // presses nothing in any app.
+    it('withholds the app choice, which is no press', () => {
+        expect(checkIsModelHiddenTool('owa_choose_app')).toBe(true);
+        expect(checkIsActingTool('owa_choose_app')).toBe(false);
+    });
+
     // A tool for one conversation is no tax on every other question: the
     // verse finder goes to a verse-finding ask, and that ask gets it ALONE
     // -- its own short prompt, its own one schema (2026-10-16).
@@ -192,6 +200,34 @@ describe('what the model is offered', () => {
             'owa_bible_note',
         ]);
         expect(checkIsModelOnAskTool('owa_resource_file')).toBe(true);
+        // A study file asked for from any tab (EC-464): drafted with the
+        // Resources tool, the passage read first, a verse or a page looked
+        // up -- and nothing that presses or presents.
+        expect(
+            pickAskToolList(
+                [
+                    { name: 'owa_resource_file' },
+                    { name: 'owa_lookup_record' },
+                    { name: 'owa_find_verse' },
+                    { name: 'owa_read_website' },
+                    { name: 'owa_bible_note' },
+                    { name: 'owa_click' },
+                    { name: 'owa_present_bible' },
+                ],
+                'study',
+            ).map((tool) => tool.name),
+        ).toEqual([
+            'owa_resource_file',
+            'owa_lookup_record',
+            'owa_find_verse',
+            'owa_read_website',
+        ]);
+        // A passage's lookup chat may draft one too.
+        expect(
+            pickAskToolList([{ name: 'owa_resource_file' }], 'lookup').map(
+                (tool) => tool.name,
+            ),
+        ).toEqual(['owa_resource_file']);
         // A typed Bible-Reader question gets all three, whichever it wants
         // -- and the notes, to MAKE one about what they read (2026-11-08:
         // asked "make a bible note for me", it had no tool and handed over

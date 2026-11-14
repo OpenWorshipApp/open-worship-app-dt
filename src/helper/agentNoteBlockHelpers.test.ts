@@ -4,9 +4,13 @@ import {
     applyNoteEdit,
     collectNewNoteVerseRefs,
     genNoteContentHash,
+    placeUnplacedAdds,
+    takeMisplacedCallFields,
     readNoteBlocks,
+    splitNoteVerseRef,
     toRealLineBreaks,
     type NoteVerseType,
+    withBlankNoteFilled,
 } from './agentNoteBlockHelpers';
 
 // Every node below has the shape a real note file holds (read off a note
@@ -213,7 +217,7 @@ describe('a note read as blocks', () => {
             }),
         ).toEqual([
             [1, 'h1', 'Grace Alone'],
-            [2, 'paragraph', '**Text:** [^Isaiah 53:5] and [@Mary]'],
+            [2, 'paragraph', '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]'],
             [3, 'bullet', 'first point'],
             [4, 'bullet', 'second point'],
             [5, 'quote', 'Love is patient'],
@@ -313,6 +317,34 @@ describe('a change to a note', () => {
                 { after: 0, kind: 'passage', ref: 'John 3:16' },
             ]),
         ).toEqual(['Romans 8:28', 'John 3:16']);
+        // BN-81: a token naming two references is read as the two -- a
+        // whole lesson had been refused for `[^Jonah 1:17, 2:10]`.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                {
+                    after: 3,
+                    kind: 'section',
+                    text: '## The fish\n[^Jonah 1:17, 2:10]\nGod saved him.',
+                },
+            ]),
+        ).toEqual(['Jonah 1:17', 'Jonah 2:10']);
+        // BN-67: a token alone on a section's line is a passage, read even
+        // where the note has its chip; in a paragraph's words it stays one.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                {
+                    after: 3,
+                    kind: 'section',
+                    text: '[^Isaiah 53:5]\nWhat it means.',
+                },
+                { block: 2, text: 'See [^Isaiah 53:5]' },
+            ]),
+        ).toEqual(['Isaiah 53:5']);
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                { block: 2, text: 'See [^Isaiah 53:5]' },
+            ]),
+        ).toEqual([]);
         const result = edit([{ block: 2, text: 'See [^Romans 8:28]' }], {
             verseMap: new Map([['Romans 8:28', ROMANS]]),
         });
@@ -329,6 +361,69 @@ describe('a change to a note', () => {
         );
     });
 
+    // 2026-11-08: asked to make the English lines' verses KJV, the model
+    // could not see which Bible a chip was in, and every verse it wrote
+    // came back as the old chip's Bible.
+    test('a verse token names its Bible: as read it is the chip, another Bible is a new verse', () => {
+        // Given back as read, Bible and all: the note does not move.
+        expect(
+            edit([
+                {
+                    block: 2,
+                    text: '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]',
+                },
+            ]).isChanged,
+        ).toBe(false);
+        // The Bible named in any case is the same chip.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                { block: 2, text: '[^(kjv) Isaiah 53:5]' },
+            ]),
+        ).toEqual([]);
+        // Another Bible is a NEW verse, read from that Bible.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                {
+                    block: 2,
+                    text: '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]',
+                },
+            ]),
+        ).toEqual(['(NIV) Isaiah 53:5']);
+        const niv: NoteVerseType = {
+            mentionName: '(NIV) Isaiah 53:5',
+            shownText: 'Isaiah 53:5',
+            verseText: '(5): But he was pierced for our transgressions',
+            style: '',
+        };
+        const result = edit(
+            [{ block: 2, text: '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]' }],
+            { verseMap: new Map([['(NIV) Isaiah 53:5', niv]]) },
+        );
+        const mention = rootOf(result.content).children[1].children[1];
+        expect(mention).toMatchObject({
+            type: 'mention',
+            mentionKind: 'bible-verse',
+            mentionName: '(NIV) Isaiah 53:5',
+            mentionData: niv.verseText,
+        });
+        expect(readNoteBlocks(result.content)!.blocks[1].text).toBe(
+            '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]',
+        );
+    });
+
+    test("a verse token's Bible is read off its front, and only there", () => {
+        expect(splitNoteVerseRef('(KJV) Hebrews 11:1')).toEqual({
+            bibleKey: 'KJV',
+            ref: 'Hebrews 11:1',
+        });
+        expect(splitNoteVerseRef(' Hebrews 11:1 ')).toEqual({
+            bibleKey: null,
+            ref: 'Hebrews 11:1',
+        });
+        // Brackets with a space in them are no Bible's short name.
+        expect(splitNoteVerseRef('(see this) John 3:16').bibleKey).toBeNull();
+    });
+
     test('a new person or place is written as words', () => {
         const result = edit([{ block: 1, text: 'With [@Peter] in [#Rome]' }]);
         expect(
@@ -341,6 +436,34 @@ describe('a change to a note', () => {
             ['text', ' in '],
             ['text', 'Rome'],
         ]);
+    });
+
+    // BN-72 (2026-11-10): a review's fix narrowed a point's passage with
+    // `{block, ref}` -- "says nothing to change" -- and then with two ranges
+    // in one reference, read as the very span already there.
+    test('a passage given another reference is that passage, in its place', () => {
+        // The fixture's passage is block 8 of 10 (its list is two blocks).
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                { block: 8, ref: 'Romans 8:28' },
+            ]),
+        ).toEqual(['Romans 8:28']);
+        const result = edit([{ block: 8, ref: 'Romans 8:28' }], {
+            verseMap: new Map([['Romans 8:28', ROMANS]]),
+        });
+        const blocks = readNoteBlocks(result.content)!.blocks;
+        expect(blocks).toHaveLength(10);
+        expect(blocks[7].kind).toBe('passage');
+        expect(blocks[7].text).toContain('(KJV) Romans 8:28');
+        // A block that is no passage, given a `ref`, still says nothing.
+        expect(reasonOf([{ block: 2, ref: 'Romans 8:28' }])).toContain(
+            'says nothing to change',
+        );
+        const reason = reasonOf([
+            { after: 3, kind: 'passage', ref: 'Matthew 13:5-6, 20-21' },
+        ]);
+        expect(reason).toContain('A passage is ONE reference');
+        expect(reason).toContain('"Matthew 13:5-6", then "Matthew 13:20-21"');
     });
 
     test('a passage is added from the resolved verse, after the block named', () => {
@@ -357,6 +480,24 @@ describe('a change to a note', () => {
             ROMANS.verseText,
         );
         expect(readNoteBlocks(result.content)!.blocks[1].kind).toBe('passage');
+    });
+
+    // BN-240 (ab80, both readers): Luke 2:4's ":)" was drawn as a smiley by
+    // the editor's EmojisPlugin.
+    test("a passage's words never hold an emoticon the editor would draw", () => {
+        const luke: NoteVerseType = {
+            mentionName: '(KJV) Luke 2:4',
+            shownText: 'Luke 2:4',
+            verseText: '(4): of the house and lineage of David:)',
+            style: '',
+        };
+        const result = edit([{ after: 1, kind: 'passage', ref: 'Luke 2:4' }], {
+            verseMap: new Map([['Luke 2:4', luke]]),
+        });
+        const line = rootOf(result.content).children[1].children[1].children[0]
+            .children[0].text;
+        expect(line).toBe('(4): of the house and lineage of David:⁠)');
+        expect(line).not.toContain(':)');
     });
 
     test('a bullet after a bullet joins its list; a paragraph cuts the list there', () => {
@@ -416,7 +557,7 @@ describe('a change to a note', () => {
             }),
         ).toEqual([
             ['h2', 'Grace Alone'],
-            ['paragraph', '**Text:** [^Isaiah 53:5] and [@Mary]'],
+            ['paragraph', '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]'],
             ['bullet', 'first point'],
             ['paragraph', 'second point'],
             ['bullet', 'Love is patient'],
@@ -454,7 +595,7 @@ describe('a change to a note', () => {
             readNoteBlocks(result.content)!.blocks.map((block) => block.text),
         ).toEqual([
             'call Tom',
-            '**Text:** [^Isaiah 53:5] and [@Mary]',
+            '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]',
             'Grace Alone',
             'first point',
             'second point',
@@ -536,6 +677,129 @@ describe('a change to a note', () => {
 });
 
 describe('what a change is refused for', () => {
+    // BN-164 (shape38's L-07): a lesson written whole as new blocks, one of
+    // them given no place, was refused, and the ask ran out of rounds.
+    test('a new block with no place goes after the one added before it', () => {
+        expect(
+            placeUnplacedAdds([
+                { after: 0, kind: 'h2', text: 'Big idea' },
+                { text: 'God forgives.' },
+                { kind: 'h2', text: 'Background' },
+            ]),
+        ).toEqual([
+            { after: 0, kind: 'h2', text: 'Big idea' },
+            { after: 0, text: 'God forgives.' },
+            { after: 0, kind: 'h2', text: 'Background' },
+        ]);
+        // Put in, in the order given.
+        const blocks = readNoteBlocks(
+            edit([
+                { after: 10, kind: 'h2', text: 'Closing prayer' },
+                { text: 'Lord, teach us to forgive.' },
+            ]).content,
+        )!.blocks;
+        expect(
+            blocks.slice(-2).map((block) => {
+                return [block.kind, block.text];
+            }),
+        ).toEqual([
+            ['h2', 'Closing prayer'],
+            ['paragraph', 'Lord, teach us to forgive.'],
+        ]);
+        // Not after a change to a block, nor a removal or a bare style.
+        for (const changes of [
+            [{ block: 1, text: 'Grace' }, { text: 'more' }],
+            [{ after: 1, text: 'one' }, { remove: true }],
+            [{ after: 1, text: 'one' }, { color: 'red' }],
+        ]) {
+            expect(
+                placeUnplacedAdds(changes as any[])[1],
+                JSON.stringify(changes),
+            ).toEqual(changes[1]);
+        }
+        expect(reasonOf([{ text: 'nowhere' }])).toContain('A change needs');
+    });
+
+    // BN-176 (shape44's children's Jonah): the Pointing to Jesus heading
+    // given its paragraph, the Memory verse heading a verse token -- each
+    // the block under it, aimed one short.
+    test("a heading given a paragraph's words or a lone verse token", () => {
+        const paragraph =
+            'In the story, Jonah was in the fish for three days before he ' +
+            'went to tell the people of Nineveh that God would destroy them.';
+        expect(reasonOf([{ block: 1, text: paragraph }])).toContain(
+            'Block 1 is the heading "Grace Alone": these 25 words are a ' +
+                "paragraph's -- the block under it is 2.",
+        );
+        expect(reasonOf([{ block: 1, text: '[^John 3:16]' }])).toContain(
+            'a verse token alone is a verse, never a heading',
+        );
+        // A heading's own words, or another kind given: changed.
+        expect(edit([{ block: 1, text: 'Grace and Truth' }]).isChanged).toBe(
+            true,
+        );
+        expect(
+            edit([{ block: 1, kind: 'paragraph', text: paragraph }]).isChanged,
+        ).toBe(true);
+    });
+
+    // BN-169 (shape41's L-04): `{hash, note}` written as the last change of
+    // a whole lesson -- the call's own fields, taken out of `changes`.
+    test("the call's own fields written as a change are the call's", () => {
+        expect(
+            takeMisplacedCallFields([
+                { after: 10, text: 'one more line' },
+                { hash: 'h', note: 'Lesson', title: 'Grace' } as any,
+            ]),
+        ).toEqual({
+            changes: [{ after: 10, text: 'one more line' }],
+            title: 'Grace',
+        });
+        const result = edit([
+            { after: 10, kind: 'paragraph', text: 'one more line' },
+            { hash: 'h', note: 'Lesson' },
+        ]);
+        expect(readNoteBlocks(result.content)!.blocks.at(-1)?.text).toBe(
+            'one more line',
+        );
+        // A change with any field of its own stays a change.
+        expect(
+            takeMisplacedCallFields([{ block: 1, text: 'x', note: 'n' } as any])
+                .changes,
+        ).toHaveLength(1);
+        // BN-180 (shape47's L-03): an item with nothing in it asks for
+        // nothing, and a whole lesson is not refused for it.
+        expect(
+            takeMisplacedCallFields([
+                { after: 0, kind: 'h2', text: 'Big idea' },
+                {} as any,
+                { title: undefined } as any,
+            ]).changes,
+        ).toEqual([{ after: 0, kind: 'h2', text: 'Big idea' }]);
+        const kept = edit([
+            { after: 10, kind: 'paragraph', text: 'one more line' },
+            {} as any,
+        ]);
+        expect(readNoteBlocks(kept.content)!.blocks.at(-1)?.text).toBe(
+            'one more line',
+        );
+    });
+
+    // BN-168 (shape40's L-05): refused twice with BN-164 in place -- the
+    // newest add placed it, whatever came between, and the refusal names it.
+    test('the newest add places it, and a refusal names the one', () => {
+        expect(
+            placeUnplacedAdds([
+                { after: 2, kind: 'h2', text: 'Big idea' },
+                { block: 1, remove: true },
+                { kind: 'h2', text: 'Background' },
+            ])[2],
+        ).toEqual({ after: 2, kind: 'h2', text: 'Background' });
+        expect(reasonOf([{ text: 'Nowhere to go at all' }])).toContain(
+            'the one starting "Nowhere to go at all" has neither',
+        );
+    });
+
     test('words for a fixed block, or a new kind for it', () => {
         expect(reasonOf([{ block: 6, text: 'a picture' }])).toContain(
             'is a picture',
@@ -556,6 +820,25 @@ describe('what a change is refused for', () => {
                 { after: 1, kind: 'h2', text: 'first point' },
             ]).isChanged,
         ).toBe(true);
+    });
+
+    // BN-44: a line the note has already, added on purpose -- the refusal
+    // says how, and `again` adds it with the twin left as it was.
+    test('the same words again, on purpose', () => {
+        expect(reasonOf([{ after: 2, text: 'first point' }])).toContain(
+            '`again: true`',
+        );
+        const result = edit([
+            { after: 10, kind: 'paragraph', text: 'first point', again: true },
+        ]);
+        expect(result.isChanged).toBe(true);
+        const blocks = readNoteBlocks(result.content)!.blocks;
+        expect(
+            blocks.filter((block) => {
+                return block.text === 'first point';
+            }).length,
+        ).toBe(2);
+        expect(blocks.at(-1)?.text).toBe('first point');
     });
 
     test('a block named twice, out of range, or with nothing to change', () => {
@@ -700,5 +983,492 @@ describe('a block at another text size', () => {
         const result = edit([{ after: 0, kind: 'h2', text: 'Big', size: 40 }]);
         // Its words took the note's own style (20px), then the size asked.
         expect(sizesOf(result.content, 0)).toEqual(['font-size: 40px;']);
+    });
+});
+
+// BN-35 (2026-11-08): three blocks of a note in the dev data folder came out
+// changed when given their own words back -- a space inside a bold run moved
+// out of it, a comment's mark was dropped, a code block's colouring was
+// flattened. The mark-up says none of them; the block keeps its nodes.
+describe('a block given its own words back', () => {
+    const MARK = {
+        children: [text('Let there be light')],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'mark',
+        version: 1,
+        ids: ['comment-1'],
+    };
+    const highlight = (words: string, highlightType?: string) => {
+        return {
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: words,
+            type: 'code-highlight',
+            version: 1,
+            ...(highlightType === undefined ? {} : { highlightType }),
+        };
+    };
+    const OWN_CONTENT = JSON.stringify({
+        root: {
+            children: [
+                paragraph([
+                    text('Theme: ', 1),
+                    text('God '),
+                    text('creates', 1),
+                    text(', orders and speaks.'),
+                ]),
+                paragraph([
+                    text('Comment anchor: '),
+                    MARK,
+                    text(' is the phrase to revisit.'),
+                ]),
+                {
+                    children: [
+                        highlight('#', 'punctuation'),
+                        highlight(' Genesis 1 Study', 'title'),
+                        { type: 'linebreak', version: 1 },
+                        highlight('- creation, light'),
+                    ],
+                    direction: null,
+                    format: '',
+                    indent: 0,
+                    type: 'code',
+                    version: 1,
+                    language: 'markdown',
+                },
+            ],
+            direction: null,
+            format: '',
+            indent: 0,
+            type: 'root',
+            version: 1,
+        },
+    });
+    const ownBlocks = readNoteBlocks(OWN_CONTENT)!.blocks;
+
+    test.each(ownBlocks.map((block) => [block.n, block.kind, block.text]))(
+        'block %s (%s) is left byte for byte',
+        (n, _kind, words) => {
+            const result = applyNoteEdit({
+                content: OWN_CONTENT,
+                changes: [{ block: n, text: words }],
+            });
+            if ('reason' in result) {
+                throw new Error(result.reason);
+            }
+            expect(result.content).toBe(OWN_CONTENT);
+            expect(result.isChanged).toBe(false);
+            expect(result.summary).not.toContain('new words');
+        },
+    );
+
+    test('with a colour, the comment keeps its mark and the words go red', () => {
+        const result = applyNoteEdit({
+            content: OWN_CONTENT,
+            changes: [{ block: 2, text: ownBlocks[1].text, color: 'red' }],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        const block = rootOf(result.content).children[1];
+        const mark = block.children.find((child: any) => {
+            return child.type === 'mark';
+        });
+        expect(mark?.ids).toEqual(['comment-1']);
+        expect(JSON.stringify(block)).toContain('color: red');
+        expect(result.summary).not.toContain('new words');
+    });
+
+    test('words that differ are still new words', () => {
+        const result = applyNoteEdit({
+            content: OWN_CONTENT,
+            changes: [{ block: 1, text: '**Theme:** God makes light.' }],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(result.summary).toContain('new words');
+        expect(result.content).not.toBe(OWN_CONTENT);
+    });
+});
+
+// 2026-11-10, a sermon written into an empty note: the note's own blank
+// line had stayed between the passage and the rest.
+describe('withBlankNoteFilled', () => {
+    const blank = applyNoteEdit({
+        content: '',
+        changes: [{ after: 0, kind: 'paragraph', text: 'x' }],
+    });
+    test('the blank lines of an empty note give way to what is put in', () => {
+        const empty = JSON.stringify({
+            root: {
+                type: 'root',
+                version: 1,
+                children: [
+                    { type: 'paragraph', version: 1, children: [] },
+                    { type: 'paragraph', version: 1, children: [] },
+                ],
+            },
+        });
+        expect(
+            withBlankNoteFilled(empty, [
+                { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+                { after: 1, kind: 'h2', text: 'Big idea' },
+                { after: 3, kind: 'paragraph', text: 'He gives.' },
+            ]),
+        ).toEqual([
+            { block: 1, remove: true },
+            { block: 2, remove: true },
+            { after: 0, kind: 'passage', ref: 'John 10:11-18' },
+            { after: 0, kind: 'h2', text: 'Big idea' },
+            // A block this call adds, named by its would-be number.
+            { after: 3, kind: 'paragraph', text: 'He gives.' },
+        ]);
+        const result = applyNoteEdit({
+            content: empty,
+            changes: withBlankNoteFilled(empty, [
+                { after: 1, kind: 'h2', text: 'Big idea' },
+                { after: 1, kind: 'paragraph', text: 'He gives.' },
+            ]),
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(
+            readNoteBlocks(result.content)!.blocks.map((block) => {
+                return [block.kind, block.text];
+            }),
+        ).toEqual([
+            ['h2', 'Big idea'],
+            ['paragraph', 'He gives.'],
+        ]);
+    });
+
+    test('a note with anything in it, or a change naming a block, is kept', () => {
+        if ('reason' in blank) {
+            throw new Error(blank.reason);
+        }
+        const adds = [{ after: 1, kind: 'h2', text: 'Next' }];
+        expect(withBlankNoteFilled(blank.content, adds)).toEqual(adds);
+        const empty = JSON.stringify({
+            root: {
+                type: 'root',
+                version: 1,
+                children: [{ type: 'paragraph', version: 1, children: [] }],
+            },
+        });
+        const named = [
+            { block: 1, text: 'Grace' },
+            { after: 1, kind: 'h2', text: 'Next' },
+        ];
+        expect(withBlankNoteFilled(empty, named)).toEqual(named);
+        expect(withBlankNoteFilled(empty, [])).toEqual([]);
+    });
+
+    // BN-250 (ab85): a lesson's name sent last "at the top" closed it.
+    test("a lesson's title sent last at the top goes first", () => {
+        const empty = JSON.stringify({
+            root: {
+                type: 'root',
+                version: 1,
+                children: [{ type: 'paragraph', version: 1, children: [] }],
+            },
+        });
+        const section = {
+            kind: 'section',
+            text: '## Big idea\nGod gives a rock.\n\n## 1. The wise builder\nHe dug deep.',
+        };
+        const title = { kind: 'h1', text: 'The Wise and Foolish Builders' };
+        const toKinds = (changes: any[]) => {
+            const result = applyNoteEdit({
+                content: empty,
+                changes: withBlankNoteFilled(empty, changes),
+            });
+            if ('reason' in result) {
+                throw new Error(result.reason);
+            }
+            return readNoteBlocks(result.content)!.blocks.map((block) => {
+                return block.kind;
+            });
+        };
+        const lesson = ['h1', 'quote', 'h2', 'paragraph', 'h2', 'paragraph'];
+        // Only adds, the title last at 0 (batch MG's M-06).
+        expect(
+            toKinds([
+                { after: 0, kind: 'quote', text: 'Matthew 7:24-27' },
+                { after: 1, ...section },
+                { after: 0, ...title },
+            ]),
+        ).toEqual(lesson);
+        // The empty line taken out by the call, the title last at 1.
+        expect(
+            toKinds([
+                { block: 1, remove: true },
+                { after: 0, kind: 'quote', text: 'Matthew 7:24-27' },
+                { after: 1, ...section },
+                { after: 1, ...title },
+            ]),
+        ).toEqual(lesson);
+        // A heading asked for alone, one put further down, or a second
+        // heading 1: as given.
+        expect(toKinds([{ after: 0, ...title }])).toEqual(['h1']);
+        expect(
+            toKinds([
+                { after: 0, kind: 'quote', text: 'Matthew 7:24-27' },
+                { after: 1, kind: 'paragraph', text: 'Amen.' },
+                { after: 2, ...title },
+            ]),
+        ).toEqual(['quote', 'paragraph', 'h1']);
+        expect(
+            toKinds([
+                { after: 0, kind: 'h1', text: 'Part one' },
+                { after: 1, ...section },
+                { after: 0, ...title },
+            ]),
+        ).toEqual(['h1', 'h2', 'paragraph', 'h2', 'paragraph', 'h1']);
+    });
+});
+
+// 2026-11-10: "give me two cross references for point 1" -- a bullet after
+// block 9, the next after block 10, block 10 being the point's example.
+describe('list items added in a row', () => {
+    const base = applyNoteEdit({
+        content: '',
+        changes: [
+            { after: 0, kind: 'h2', text: '1. The Sacrifice' },
+            { after: 0, kind: 'paragraph', text: 'He lays down his life.' },
+            { after: 0, kind: 'paragraph', text: 'Example: a parent.' },
+            { after: 0, kind: 'h2', text: 'Questions' },
+            { after: 0, kind: 'bullet', text: 'Who is lost?' },
+            { after: 0, kind: 'h2', text: 'Memory verse' },
+        ],
+    });
+    const toRows = (content: string) => {
+        return readNoteBlocks(content)!.blocks.map((block) => {
+            return [block.kind, block.text];
+        });
+    };
+
+    test('are one list where they were meant, not split by a block', () => {
+        if ('reason' in base) {
+            throw new Error(base.reason);
+        }
+        const result = applyNoteEdit({
+            content: base.content,
+            changes: [
+                { after: 2, kind: 'bullet', text: 'Isaiah 53:6' },
+                { after: 3, kind: 'bullet', text: 'Romans 5:8' },
+                { after: 5, kind: 'bullet', text: 'Who helps?' },
+                { after: 6, kind: 'bullet', text: 'Where now?' },
+            ],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(toRows(result.content)).toEqual([
+            ['h2', '1. The Sacrifice'],
+            ['paragraph', 'He lays down his life.'],
+            ['bullet', 'Isaiah 53:6'],
+            ['bullet', 'Romans 5:8'],
+            ['paragraph', 'Example: a parent.'],
+            ['h2', 'Questions'],
+            ['bullet', 'Who is lost?'],
+            ['bullet', 'Who helps?'],
+            ['bullet', 'Where now?'],
+            ['h2', 'Memory verse'],
+        ]);
+    });
+
+    test('paragraphs under each line stay under each line', () => {
+        if ('reason' in base) {
+            throw new Error(base.reason);
+        }
+        const result = applyNoteEdit({
+            content: base.content,
+            changes: [
+                { after: 2, kind: 'paragraph', text: 'Under the life line.' },
+                { after: 3, kind: 'paragraph', text: 'Under the example.' },
+            ],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(toRows(result.content).slice(1, 5)).toEqual([
+            ['paragraph', 'He lays down his life.'],
+            ['paragraph', 'Under the life line.'],
+            ['paragraph', 'Example: a parent.'],
+            ['paragraph', 'Under the example.'],
+        ]);
+    });
+});
+
+// 2026-11-10, BN-67: _finish my sermon_ on an outline, replayed as the shared
+// gemma4:cloud numbered it -- each new block after the one it had just
+// added, and a heading's own "## " written into its words. The note had come
+// out with the background under the first point and the introduction under
+// the second, its points reading "## 1. The shepherd seeks".
+describe('a sermon finished as a model numbers it', () => {
+    const outline = applyNoteEdit({
+        content: '',
+        changes: [
+            { after: 0, kind: 'h2', text: 'Big idea' },
+            { after: 0, kind: 'paragraph', text: 'God goes after the lost.' },
+            { after: 0, kind: 'h2', text: '1. The shepherd seeks' },
+            { after: 0, kind: 'h2', text: '2. The shepherd carries' },
+            { after: 0, kind: 'h2', text: '3. Heaven rejoices' },
+        ],
+    });
+    const toRows = (content: string) => {
+        return readNoteBlocks(content)!.blocks.map((block) => {
+            return [block.kind, block.text];
+        });
+    };
+    const apply = (changes: any[]) => {
+        if ('reason' in outline) {
+            throw new Error(outline.reason);
+        }
+        const result = applyNoteEdit({ content: outline.content, changes });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        return toRows(result.content);
+    };
+
+    test('a heading and its words are one section; each point grows in place', () => {
+        expect(
+            apply([
+                { after: 2, kind: 'h2', text: 'Background' },
+                {
+                    after: 3,
+                    kind: 'paragraph',
+                    text: 'Jesus eats with sinners.',
+                },
+                { after: 4, kind: 'h2', text: 'Introduction' },
+                { after: 5, kind: 'paragraph', text: 'Have you lost a ring?' },
+                { block: 3, text: '## 1. The shepherd seeks' },
+                {
+                    after: 3,
+                    kind: 'paragraph',
+                    text: 'He searches until found.',
+                },
+                { block: 4, text: '## 2. The shepherd carries' },
+                { after: 4, kind: 'paragraph', text: 'He carries it home.' },
+                { block: 5, kind: 'h2', text: '## 3. Heaven rejoices' },
+                { after: 5, kind: 'paragraph', text: 'Heaven is glad.' },
+            ]),
+        ).toEqual([
+            ['h2', 'Big idea'],
+            ['paragraph', 'God goes after the lost.'],
+            ['h2', 'Background'],
+            ['paragraph', 'Jesus eats with sinners.'],
+            ['h2', 'Introduction'],
+            ['paragraph', 'Have you lost a ring?'],
+            ['h2', '1. The shepherd seeks'],
+            ['paragraph', 'He searches until found.'],
+            ['h2', '2. The shepherd carries'],
+            ['paragraph', 'He carries it home.'],
+            ['h2', '3. Heaven rejoices'],
+            ['paragraph', 'Heaven is glad.'],
+        ]);
+    });
+
+    test('a heading over each block stays over each block', () => {
+        expect(
+            apply([
+                { after: 2, kind: 'h3', text: 'Over point one' },
+                { after: 3, kind: 'h3', text: 'Over point two' },
+            ]),
+        ).toEqual([
+            ['h2', 'Big idea'],
+            ['paragraph', 'God goes after the lost.'],
+            ['h3', 'Over point one'],
+            ['h2', '1. The shepherd seeks'],
+            ['h3', 'Over point two'],
+            ['h2', '2. The shepherd carries'],
+            ['h2', '3. Heaven rejoices'],
+        ]);
+    });
+
+    test('a line given a heading level by its marks', () => {
+        expect(
+            apply([{ block: 2, text: '### God goes after the lost.' }])[1],
+        ).toEqual(['h3', 'God goes after the lost.']);
+        expect(
+            apply([{ after: 1, kind: 'h2', text: '## Big idea, again' }])[1],
+        ).toEqual(['h2', 'Big idea, again']);
+    });
+
+    test('a line changed into a passage token is the passage, in its place', () => {
+        if ('reason' in outline) {
+            throw new Error(outline.reason);
+        }
+        const result = applyNoteEdit({
+            content: outline.content,
+            changes: [{ block: 1, kind: 'paragraph', text: '[^Luke 15:1-7]' }],
+            verseMap: new Map([
+                [
+                    'Luke 15:1-7',
+                    {
+                        mentionName: '(KJV) Luke 15:1-7',
+                        shownText: 'Luke 15:1-7',
+                        verseText: '(1): Then drew near unto him',
+                        style: '',
+                    },
+                ],
+            ]),
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        const rows = toRows(result.content);
+        expect(rows[0][0]).toBe('passage');
+        expect(rows[1]).toEqual(['paragraph', 'God goes after the lost.']);
+        expect(rows).toHaveLength(5);
+    });
+});
+
+// BN-238 (2026-11-13, held-out batches G, JE and JF): a discussion question
+// rewritten as "- What does ...?" drew the dash as words, the item being a
+// bullet already.
+describe("a list item's new words lose the list mark they open on", () => {
+    const base = applyNoteEdit({
+        content: '',
+        changes: [
+            { after: 0, kind: 'h2', text: 'Questions' },
+            { after: 0, kind: 'bullet', text: 'Who is lost?' },
+            { after: 0, kind: 'number', text: 'First step' },
+        ],
+    });
+    const toRows = (content: string) => {
+        return readNoteBlocks(content)!.blocks.map((block) => {
+            return [block.kind, block.text];
+        });
+    };
+
+    test('changed or added, a bullet or a numbered item', () => {
+        if ('reason' in base) {
+            throw new Error(base.reason);
+        }
+        const result = applyNoteEdit({
+            content: base.content,
+            changes: [
+                { block: 2, text: '- What does her request show?' },
+                { block: 3, text: '2. Second step' },
+                { after: 2, kind: 'bullet', text: '* Who helps?' },
+            ],
+        });
+        if ('reason' in result) {
+            throw new Error(result.reason);
+        }
+        expect(toRows(result.content)).toEqual([
+            ['h2', 'Questions'],
+            ['bullet', 'What does her request show?'],
+            ['bullet', 'Who helps?'],
+            ['number', 'Second step'],
+        ]);
     });
 });

@@ -21,6 +21,7 @@ import {
 import {
   applyQuestionOverlay,
   findTemplateSample,
+  listTopicQuestions,
   toEnglishTemplateAsk,
 } from './questionMatch.mjs';
 
@@ -548,7 +549,8 @@ describe('outlineQuestions', () => {
 
 // The corpus in the app's other languages (`src/lang/data/online/<code>/questions.json`): a
 // translation is a row's words in that language, kept beside the English it
-// was made from. A volunteer reading Khmer is offered Khmer chips, and a
+// was made from. A volunteer reading another language is offered chips in
+// it, and a
 // reworded row shows its new English until its translation is redone.
 describe('the corpus in other languages', () => {
   const overlayList = loadQuestionOverlays();
@@ -628,8 +630,8 @@ describe('the corpus in other languages', () => {
 
   // A ratchet, at nothing missing: a question added to the corpus is added
   // with its words in every language that has a file, the way a label is
-  // added with its Khmer and French (`tranKeyCoverage.test.ts`). Fill-in
-  // rows too, since 2026-10-17: they were the last English in a Khmer
+  // added in every language (`tranKeyCoverage.test.ts`). Fill-in
+  // rows too, since 2026-10-17: they were the last English in a translated
   // window's question list, and are asked in English once finished.
   const MAX_UNTRANSLATED_ROWS = 0;
   it('carries every row, fill-in rows too', () => {
@@ -703,5 +705,72 @@ describe('the corpus in other languages', () => {
       return one.id === 'presenter.bible.present-verse';
     });
     expect(row.text).toBe('How do I present a Bible verse?');
+  });
+});
+
+// EC-583: a word typed alone is answered with the jobs it could mean, the
+// corpus's own main jobs first -- not the rows that merely SAY the word.
+describe('listTopicQuestions', () => {
+  const toTexts = (query, focus = 'presenter') => {
+    return listTopicQuestions(query, { pages: PAGES, focus, limit: 6 }).map(
+      (row) => {
+        return row.text;
+      },
+    );
+  };
+
+  it('answers "lyric" with what to do with a song, the PowerPoint one too', () => {
+    const texts = toTexts('lyric');
+    expect(texts).toHaveLength(6);
+    expect(texts.slice(0, 2)).toEqual([
+      'How do I make a new song?',
+      'Can you turn a PowerPoint song into a lyric file?',
+    ]);
+    expect(texts).toContain("How do I put a song's lyrics on the screen?");
+    // A song is a lyric, and "song" says the same.
+    expect(toTexts('song').slice(0, 2)).toEqual(texts.slice(0, 2));
+  });
+
+  it('offers no fill-in row and no question about what IS', () => {
+    for (const query of ['lyric', 'bible', 'screen', 'background', 'song']) {
+      for (const row of listTopicQuestions(query, {
+        pages: PAGES,
+        focus: 'presenter',
+        limit: 20,
+      })) {
+        expect(row.isTemplate, row.id).toBe(false);
+        expect(row.kind, row.id).not.toBe('state');
+      }
+    }
+  });
+
+  it('leaves out a row that shares a word and not the subject', () => {
+    // "How do I change a document's or a slide's own transition?" names a
+    // background icon among its keywords, and is no background job.
+    for (const text of toTexts('background')) {
+      expect(text).toMatch(/background/i);
+    }
+  });
+
+  it("puts a window's own questions before the ones true everywhere", () => {
+    const rows = listTopicQuestions('song', {
+      pages: PAGES,
+      focus: 'presenter',
+      limit: 40,
+    });
+    const firstShared = rows.findIndex((row) => {
+      return row.focus === null;
+    });
+    expect(firstShared).toBeGreaterThan(0);
+    expect(
+      rows.slice(firstShared).every((row) => {
+        return row.focus === null;
+      }),
+    ).toBe(true);
+  });
+
+  it('has nothing for words no question is about', () => {
+    expect(toTexts('hello')).toEqual([]);
+    expect(toTexts('')).toEqual([]);
   });
 });

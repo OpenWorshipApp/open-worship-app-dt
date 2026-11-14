@@ -12,10 +12,13 @@ metadata:
 read** (the user, of problem reports: _and accept files like markdown pdf_).
 `genFileAttachment` keeps the name, the size and the path — NO bytes, not
 even in the live map — and a sentence for the model saying the file is there
-and cannot be opened, so an answer never pretends to have read it. A problem
+and cannot be opened, so an answer never pretends to have read it -- since
+2026-10-18 only when its pages could not be drawn (or, in a problem report, the model cannot see them): its first pages are held as
+pictures for the model (`genPdfAttachment`, `chatbot-files-report.md`). A problem
 report reads it off the disk at the press that sends it
-([[chatbot-report-button]]). It needs a path (a drop or the paperclip) and is
-refused over 5 MB, the size a report carries in one file.
+([[chatbot-report-button]]). It needs a path (a drop or the paperclip); since
+2026-10-18 it is no longer refused over 5 MB, the size a report carries in one
+file -- that cap is the report's alone.
 
 **Every attachment has a number since 2026-10-13** (the user, over four
 chips all called _my screen_: _attachment should have id like `1` `2` `3`

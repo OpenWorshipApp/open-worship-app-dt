@@ -110,8 +110,8 @@ function englishOf(s) {
 }
 // Letters of a script that is neither the app's own nor Latin, in an
 // answer in the app's language: a Devanagari or a Bengali syllable in the
-// middle of a Khmer word. The app's scripts are its packages' own
-// (`assistant.json`).
+// middle of a word of the app's own script. The app's scripts are its
+// packages' own (`assistant.json`).
 const OWN_SCRIPT_SOURCE_LIST = listPackageCodes()
   .map((code) => readAssistantFacts(code).scriptPattern)
   .filter((source) => typeof source === 'string');

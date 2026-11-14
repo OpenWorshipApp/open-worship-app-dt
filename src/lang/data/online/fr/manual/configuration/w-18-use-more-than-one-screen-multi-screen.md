@@ -3,7 +3,7 @@ id: W-18
 title: "Utiliser plus d'un écran (multi-écran)"
 section: "Configuration"
 lang: fr
-translatedFrom: e4b56f9fe68a85bc
+translatedFrom: 335ef127fee54eed
 ---
 # W-18 — Utiliser plus d'un écran (multi-écran)
 
@@ -11,7 +11,7 @@ translatedFrom: e4b56f9fe68a85bc
 
 1. **Faites un clic droit** sur une zone vide du panneau du mini-écran et choisissez
    **[en:tran:Add New Screen]** — une deuxième carte d'aperçu apparaît avec son propre numéro et sa propre couleur. 📸
-2. Orientez la nouvelle carte vers le moniteur qu'elle doit remplir avec le bouton **Moniteur** de
+2. Orientez la nouvelle carte vers le moniteur qu'elle doit remplir avec le bouton **[en:tran:Display]** de
    son pied de carte (W-10), puis allumez-la avec son propre bouton afficher/masquer. Chaque carte a
    aussi ses propres effacements, transitions et verrouillage.
 3. Le contenu va sur chaque écran **sélectionné**. Pour qu'un écran ne reçoive plus de contenu

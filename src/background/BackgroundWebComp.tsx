@@ -79,7 +79,7 @@ function RenderWebListComp({
         async (urlSource: BackgroundWebUrlSource) => {
             const isOk = await showAppConfirm(
                 tran('Remove URL'),
-                `Remove "${urlSource.fullName}"?`,
+                `${tran('Remove')} "${urlSource.fullName}"?`,
                 {
                     cancelButtonLabel: 'No',
                     confirmButtonLabel: 'Yes',

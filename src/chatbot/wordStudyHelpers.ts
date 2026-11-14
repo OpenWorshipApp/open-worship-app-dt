@@ -15,7 +15,7 @@
  * (`passages[].text`, `(1): …` per verse), and a verse the record cut short
  * is read again by its key.
  *
- * Measured first, in the passage chat as it stood: asked in Khmer to explain
+ * Measured first, in the passage chat as it stood: asked in another language to explain
  * the words of Genesis 8:1 in the GB Bible, the answer quoted the verse as
  * guillemets round its verse number, commas and spaces -- every Greek letter
  * taken out by the answer cleaner as a "third script" -- so the words to
@@ -59,7 +59,7 @@ export const MAX_STUDY_WORDS = 30;
 const VERSE_LABEL_WORDS = 4;
 const VERSE_LABEL_CHARS = 32;
 // A run of letters this long with no space between is a script written
-// without them (Khmer with no zero-width spaces, Thai): cut into words.
+// without them (one with no zero-width spaces, Thai): cut into words.
 const LONG_RUN_CHARS = 20;
 
 const KEY_PATTERN =
@@ -111,7 +111,7 @@ export function readAnyDigits(text: string) {
     return text.length === 0 ? Number.NaN : value;
 }
 
-/** A number in the digits `sample` is written in (Khmer digits for a Khmer one). */
+/** A number in the digits `sample` is written in (a script's own digits for one in them). */
 export function toDigitsLike(value: number, sample: string) {
     const first = [...sample].find((one) => {
         return DIGIT_PATTERN.test(one);
@@ -306,7 +306,7 @@ const WORD_JOINER_MARKS = BIBLE_SOURCE_FILE_LIST.map((file) => {
 const CHANT_MARKS = BIBLE_SOURCE_FILE_LIST.map((file) => {
     return file.chantMarks ?? '';
 }).join('');
-// Where a verse's words part: spaces, the zero-width spaces a Khmer Bible
+// Where a verse's words part: spaces, the zero-width spaces some Bibles
 // puts between its words, and the marks a source language joins two words
 // into one sound with (`wordJoinerMarks` in its `bibleSource.json`:
 // the Hebrew maqaf) -- Genesis 1:7's object marker joined to "the
@@ -374,7 +374,7 @@ function cutLongRun(run: string): string[] {
 /**
  * A verse's words in the order it has them, each once (a word that comes
  * again is the same word to learn, `toStudyWordKey`), as the verse first
- * writes it: split at spaces, at the zero-width spaces a Khmer Bible puts
+ * writes it: split at spaces, at the zero-width spaces some Bibles put
  * between its words and at the Hebrew maqaf, the punctuation off both
  * ends, a number left out.
  */
@@ -605,7 +605,7 @@ export function toWordStudyQuestion(
 // verse's letters. The hints are DATA (each language's `bibleSource.json`,
 // `grammarHints`): the Hebrew one names the stems in Hebrew
 // letters, which an answer keeps -- given as Qal, Niphal, Piel, they came
-// back in Latin letters inside the Khmer -- and says no "state": a noun with
+// back in Latin letters inside a non-Latin answer -- and says no "state": a noun with
 // no article was called definite.
 const GRAMMAR_HINT_LIST: [RegExp, string][] = BIBLE_SOURCE_FILE_LIST.flatMap(
     (file) => {
@@ -629,8 +629,8 @@ const GRAMMAR_HINT_LIST: [RegExp, string][] = BIBLE_SOURCE_FILE_LIST.flatMap(
  * (`toLookupAsk` / `toLookupQuestion`'s `contextText`). A small model asked
  * with the verse only in the record had read it again with a tool and
  * explained phrases, not words. `answerLanguage`: the language the answer is
- * shown in -- a verse written in its own script (a Khmer verse in a Khmer
- * window) needs no way to say it, and a romanised Khmer word (_Srolanh_)
+ * shown in -- a verse written in its own script (a verse in the window's
+ * own script) needs no way to say it, and a romanised word of that script
  * is English letters to a reader of none (2026-10-23, two lessons in two).
  */
 export function toWordStudyContext(
@@ -688,7 +688,7 @@ const OTHER_SCRIPT_LETTER_PATTERN = /(?=\p{L})[^\p{Script=Latin}]/u;
 
 /**
  * A verse's word the model copied with a letter of ANOTHER script inside it,
- * put back as the verse writes it: "the earth" with a Khmer ro where the
+ * put back as the verse writes it: "the earth" with the answer script's ro where the
  * verse has a Hebrew resh, in both "All words" answers about Genesis 1:1
  * (2026-10-23, at temperature 0, so every time). Only a run that mixes the
  * verse's script with another, and only when ONE of the verse's words
@@ -811,7 +811,7 @@ function toDictionaryAccent(word: string) {
  * the word quoted, in its dictionary accent, with the language its letters
  * are in, which is what brings a lexicon up first (Strong's G2316 for the
  * quoted word then _biblical Greek word meaning_). The zero-width joiners a
- * Khmer word carries are taken out, or
+ * word of some scripts carries are taken out, or
  * the search looks for them too.
  */
 export function toWordSearchUrl(word: string) {
@@ -840,7 +840,7 @@ const ANY_LETTER_PATTERN = /\p{L}/gu;
  * other than the passage's (`toAnswerShownInLanguage`): the passage's own
  * letters. Latin is kept only for a word study of a verse written in it --
  * an English verse's words ARE the lesson there, where an ordinary answer
- * about the KJV in a Khmer window still loses an English word it slips in.
+ * about the KJV in a non-Latin window still loses an English word it slips in.
  */
 export function toPassageAnswerKeep(
     facts: any,

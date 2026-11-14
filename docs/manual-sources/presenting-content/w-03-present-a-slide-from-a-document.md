@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-03 — Present a slide from a document
 
@@ -72,12 +72,12 @@ Tips:
   opens **auto-play**: set seconds, press play, and slides advance automatically; the
   red ✕ closes it (W-04).
 - **Pin the document so you cannot lose it by a stray click** — see W-27.
-- **Notes for yourself:** under the slide previews there is a thin green **[en:tran:Note]**
+- **Notes for yourself:** under the slide previews there is a thin grey-striped **[en:tran:Note]**
   strip. Click it and a **[en:tran:Document Note]** box (one for the whole document) and a
   **[en:tran:Slide Note]** box (one per slide) open below the slides. They are saved for you as
   you type and are **never sent to an audience screen**. The panel starts closed, so
   it costs nothing until you want it; to put it away again drag the divider above it
-  down to the bottom edge, or untick **View → Widgets → Note** (W-31).
+  down to the bottom edge, or untick **View** → **[en:tran:Widgets]** → **[en:tran:Note]** (W-31).
 - **A slide that is the wrong shape for the screen.** A slide document keeps its own
   width and height, and one made for another display does not match yours. While a slide
   and the display differ, an amber button with a hammer — **[en:tran:Fix slide dimension]**,
@@ -95,5 +95,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08` · `PM-170`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

@@ -15,8 +15,9 @@
 // says how it is told apart -- a name, the script, the little words and
 // letters that tell it from its neighbours, its words for yes and no -- in its
 // own `typed.json` (`src/lang/data/online/<code>/typed.json`), so a Spanish
-// question is answered in Spanish rather than in the French whose `la` and
-// `de` it shares, and a Thai one keeps the buttons written in Thai under it.
+// question is answered in Spanish rather than in another Latin-script
+// language whose little words it shares, and a Thai one keeps the buttons
+// written in Thai under it.
 // That file is LANGUAGE DATA and comes with the installed language like the
 // rest (2026-11-04, the user: _everything related to a language have to be
 // loaded from the language data (from language installation catalog), must
@@ -28,7 +29,37 @@
 //
 // No app imports: the window's entry, the provider loop and node-environment
 // tests all read it.
+import unicodeScriptFile from '../lang/data/en/unicode-scripts.json';
 import { listLangFiles } from '../lang/langFileStore';
+import { checkIsSpacedLocale } from '../helper/bibleVerseFindHelpers';
+import { tranLabel } from './chatTranHelpers';
+import type { CreateAskWordsType } from './typedCreateAskHelpers';
+import type { ScreenAskWordsType } from './typedScreenAskHelpers';
+
+// One "save that as a study file" of a language (EC-508): its keep words,
+// and the rest of what such a line holds and lacks.
+export type StudyKeepAskSourceType = { keep: string; pattern: string };
+
+// "I have changed it", as an answer in a language says it (EC-508): each a
+// pattern, read whatever its case, of a line made NFC with its invisible
+// format characters taken out and its curly apostrophes made straight.
+// `claim` is the assistant's own report of a change it made -- a change
+// word in a finished, first-person form -- never an offer, a step for the
+// person, or what a person of the Bible did; `unsaved`, what it says of
+// that change: "not saved yet" (EC-700: the truth of a new study a card
+// holds, which no change made, so it is read apart); `save` is the study
+// card's Save changes as the language says it; `file`, words pointing at
+// the file itself ("the study file", "this file"); `foreground`, the
+// assistant's own report of a change to an overlay on the screens -- a
+// countdown started, a clock taken off, the screen turned on (EC-607) --
+// which a note's words do not say.
+export type ChangeClaimSourceType = {
+    claim?: string;
+    unsaved?: string;
+    save?: string;
+    file?: string;
+    foreground?: string;
+};
 
 type AssistantLanguageFileType = {
     name: string;
@@ -78,9 +109,71 @@ type AssistantLanguageFileType = {
     removalWords?: string[];
     closingWords?: string[];
     menuWords?: string[];
+    buttonWords?: string[];
     // "That is wrong", as this language says it (`disputeHelpers.ts`):
     // patterns, read whatever their case.
     disputeAsks?: string[];
+    // An ask for a STUDY FILE of a passage, as this language says it
+    // (`studyFileChatHelpers.ts`, EC-464): patterns, read whatever their
+    // case, that name making one -- the reference is read apart.
+    studyFileAsks?: string[];
+    // "Save that as a study file" (`readKeepAnswerAsk`, EC-508): a line
+    // both patterns of a pair read, whatever its case -- `keep`, a keep
+    // word, read first; `pattern`, compiled only for a line `keep` reads: a
+    // word pointing at the answer above and a study word, and none of the
+    // words that ask for more (and, translate, a passage named) nor its
+    // how-to or note words.
+    studyKeepAsks?: StudyKeepAskSourceType[];
+    // An answer saying it changed the note or the study (EC-508).
+    changeClaims?: ChangeClaimSourceType;
+    // A new running order, slide document, Bibles list, background web
+    // page, or a video or a track from a link, asked for in this language
+    // (`typedCreateAskHelpers.ts`, EC-516): word lists, one per part of
+    // such a request.
+    createAsks?: CreateAskWordsType;
+    // A foreground component named in the language's own words, by its
+    // key (`time`, `message` …): phrases, read as the English ones are
+    // (`readForegroundComponentAsk`, EC-563).
+    foregroundAsks?: Record<string, string[]>;
+    // Marks the language's writers put in or leave out as they like -- a
+    // vowel sign over a consonant, a doubling sign, a stretching stroke:
+    // its `foregroundAsks` are read with them left out of the line and of
+    // its words (EC-640).
+    optionalMarks?: string;
+    // A screen's own control asked about in the language's own words --
+    // the Bible text's look, its versions, a transition, a display, a
+    // group, the lock (`typedScreenAskHelpers.ts`, EC-614): word lists, one
+    // per part of such a line, read as `createAsks` are.
+    screenAsks?: ScreenAskWordsType;
+
+    // A SONG asked to be made out of a document -- a PowerPoint, a Word or
+    // PDF file, a slide document -- as this language says it
+    // (`lyricDocumentChatHelpers.ts`): patterns, read whatever their case.
+    // Which kind of file is read apart, off a Latin word or an extension.
+    lyricDocumentAsks?: string[];
+    // A preaching lesson asked to be WRITTEN, and the verses of a note
+    // asked to be CHECKED, as this language says them (`noteChatHelpers.ts`,
+    // BN-65): patterns, read whatever their case. A lesson asked so is
+    // acted on only where it cannot be misread -- an empty note, or a chat
+    // with no note -- never as a new lesson beside one.
+    lessonAsks?: string[];
+    verseCheckAsks?: string[];
+    // Work the help window does with no model, asked in this language
+    // (`languageEditAskHelpers.ts`, BN-16): every word of a document larger
+    // or smaller, or one size (a `size` group), and a style for a WHOLE
+    // Bible note -- one pattern list a style word of `readNoteStyleAsk`
+    // (bold, italic, …, center, left, right, justify, clear), `color` with a
+    // `color` group read through `colorWords` (its word -> a CSS colour) and
+    // `font` with a `font` group. A request about one part is the model's:
+    // the patterns say "all" or "the whole note".
+    textSizeAsks?: { larger?: string[]; smaller?: string[]; set?: string[] };
+    noteStyleAsks?: Record<string, string[]>;
+    colorWords?: Record<string, string>;
+    // Letters, or letters with their marks, that are drawn the same and that
+    // keyboards and models swap: each pair two sequences of one length, the
+    // FIRST the one written in the end when a model's words differ from the
+    // person's typed ones only by them (`restoreTypedWords`, BN-37).
+    lookAlikes?: string[][];
     // A question about reading the Bible in this language's words
     // (`readerRouteHelpers.ts`): a Bible word and a reading word, and the
     // presenting words that make it the Presenter's work instead.
@@ -106,7 +199,7 @@ type AssistantLanguageFileType = {
         resources?: string[];
         names?: string[];
         // A how-do-I -- what the PERSON does, never "how did God…" --
-        // as words, and as patterns for what words cannot say (a French
+        // as words, and as patterns for what words cannot say (a language's
         // "how" before an infinitive). Read case as written.
         howTo?: string[];
         howToAsks?: string[];
@@ -129,9 +222,14 @@ type AssistantLanguageFileType = {
     // copy, another Bible, the Bible Lookup, the previous / next chapter,
     // and the verbs that ask to SEE the passage (2026-10-19). `lineage` and
     // `jesus` are how a question asks for a family line to Jesus, answered
-    // from the Bible's own genealogies (2026-10-19, EC-369).
+    // from the Bible's own genealogies (2026-10-19, EC-369). `notCard`
+    // names what a line is about when it is NOT the passage or the card's
+    // Bibles list -- a Bible note (a `.own` document), a file, the lesson,
+    // the answer: such a line is the conversation's, never a card button
+    // (2026-11-09).
     lookupWords?: {
         save?: string[];
+        notCard?: string[];
         copy?: string[];
         anotherBible?: string[];
         openLookup?: string[];
@@ -186,6 +284,37 @@ type TypedLanguageFileType = {
     yes?: string[];
     no?: string[];
     order?: number;
+    // The work the help window does with no model, as the language types it
+    // (`languageEditAskHelpers.ts`, BN-31): the same fields an
+    // `assistant.json` carries.
+    textSizeAsks?: { larger?: string[]; smaller?: string[]; set?: string[] };
+    noteStyleAsks?: Record<string, string[]>;
+    colorWords?: Record<string, string>;
+    lookAlikes?: string[][];
+    // A STUDY FILE asked for in its own words (EC-465): one pattern, read
+    // whatever its case, holding a making word and a study word and none of
+    // the language's how-to, folder or note words -- nor its neighbours'.
+    studyFileAsks?: string[];
+    // "Save that as a study file" (EC-508): the field an `assistant.json`
+    // carries.
+    studyKeepAsks?: StudyKeepAskSourceType[];
+    // "I have changed it" (EC-508): the field an `assistant.json` carries.
+    changeClaims?: ChangeClaimSourceType;
+    // Something made, asked for in its own words (EC-516): the field an
+    // `assistant.json` carries.
+    createAsks?: CreateAskWordsType;
+    // A foreground component named in the language's own words, by its
+    // key (`time`, `message` …): phrases, read as the English ones are
+    // (`readForegroundComponentAsk`, EC-563).
+    foregroundAsks?: Record<string, string[]>;
+    // Marks the language's writers put in or leave out as they like -- a
+    // vowel sign over a consonant, a doubling sign, a stretching stroke:
+    // its `foregroundAsks` are read with them left out of the line and of
+    // its words (EC-640).
+    optionalMarks?: string;
+    // A screen's own control asked about (EC-614): the field an
+    // `assistant.json` carries.
+    screenAsks?: ScreenAskWordsType;
 };
 
 export type AssistantLanguageType = {
@@ -196,8 +325,9 @@ export type AssistantLanguageType = {
     // be SHOWN in, its manual translated and every list below its own. A
     // language only typed has its name, script and yes and no, the rest empty.
     isPackaged: boolean;
-    // A letter of this language's own script. Latin for English and French,
-    // which tell each other apart by `functionWordSet` instead.
+    // A letter of this language's own script. Latin for English and every
+    // Latin-script language, which tell each other apart by
+    // `functionWordSet` instead.
     scriptPattern: RegExp;
     isLatinScript: boolean;
     nativeDigits: string | null;
@@ -250,8 +380,38 @@ export type AssistantLanguageType = {
     // The language's word for a MENU: the menu bar's English name after it
     // is kept as the bar shows it (`answerLanguageHelpers.ts`).
     menuWords: string[];
+    // The language's word for a BUTTON: a single English word quoted right
+    // after it is a button's name, written as the window shows it
+    // (`answerLanguageHelpers.ts`, EC-562).
+    buttonWords: string[];
     // See the file type: every list is [] for a language that does not say.
     disputeAskPatterns: RegExp[];
+    studyFileAskPatterns: RegExp[];
+    // Compiled only when a line is read for one (`checkIsStudyKeepAsk`).
+    studyKeepAskSources: StudyKeepAskSourceType[];
+    // Compiled only for an answer in the language (`toChangeClaimWords`).
+    changeClaimSource: ChangeClaimSourceType;
+    // The words a request to make something is read by (EC-516); null for
+    // a language that says none.
+    createAskWords: CreateAskWordsType | null;
+    // `foregroundAsks` as entries, NFC, each read as `createAsks` reads its
+    // words (`findWordSpans`) in the language's own spacing.
+    foregroundAskWords: ForegroundAskWordType[];
+    // The words a screen's own control is asked about by (EC-614); null
+    // for a language that says none.
+    screenAskWords: ScreenAskWordsType | null;
+
+    lyricDocumentAskPatterns: RegExp[];
+    lessonAskPatterns: RegExp[];
+    verseCheckAskPatterns: RegExp[];
+    textSizeAskPatterns: {
+        larger: RegExp[];
+        smaller: RegExp[];
+        set: RegExp[];
+    };
+    noteStyleAskPatterns: Record<string, RegExp[]>;
+    colorWords: Record<string, string>;
+    lookAlikePairs: [string, string][];
     readerRouteWords: {
         bible: string[];
         reading: string[];
@@ -278,6 +438,7 @@ export type AssistantLanguageType = {
     // language that does not say.
     lookupWords: {
         save: string[];
+        notCard: string[];
         copy: string[];
         anotherBible: string[];
         openLookup: string[];
@@ -307,7 +468,7 @@ export type AssistantLanguageType = {
 // line must not take the help window down with it (a test holds every file
 // to patterns that compile). A verse ask is read whatever its case (a
 // question that starts with a capital or not); a how-to pattern reads case
-// as written, because a French infinitive after its "how" is lower case and
+// as written, because an infinitive after a language's "how" is lower case and
 // a name is not (the same "how" before Peter's name asks about Peter).
 function toPatternList(
     sourceList: string[] | undefined,
@@ -322,14 +483,104 @@ function toPatternList(
     });
 }
 
+// A language file's "I have changed it" words: only the fields that are
+// strings, left uncompiled.
+// Only lists of words: a field of another shape reads nothing.
+function toCreateAskWords<WordsType extends Record<string, string[]>>(
+    words: WordsType | undefined,
+): WordsType | null {
+    if (words === null || typeof words !== 'object' || Array.isArray(words)) {
+        return null;
+    }
+    const entryList = Object.entries(words).filter(([, list]) => {
+        return (
+            Array.isArray(list) &&
+            list.every((word) => {
+                return typeof word === 'string';
+            })
+        );
+    });
+    return entryList.length === 0
+        ? null
+        : (Object.fromEntries(entryList) as WordsType);
+}
+
+function toChangeClaimSource(
+    source: ChangeClaimSourceType | undefined,
+): ChangeClaimSourceType {
+    return Object.fromEntries(
+        (['claim', 'unsaved', 'save', 'file', 'foreground'] as const).flatMap(
+            (field) => {
+                const value = source?.[field];
+                return typeof value === 'string' && value.length > 0
+                    ? [[field, value]]
+                    : [];
+            },
+        ),
+    );
+}
+
 export const DEFAULT_CHAT_LANG_CODE = 'en';
 
 // What a question in a script no language here claims is answered in: the
 // model is told to use the language it was written in.
 export const OTHER_CHAT_LANG_CODE = 'other';
 
+// What is typed for an apostrophe, read as the straight one in a line and in
+// a language's little words alike: the curly one, and the okina (U+02BB) a
+// Tongan list writes and a Samoan keyboard types (2026-11-08, BN-33).
+const APOSTROPHE_PATTERN = /[\u2019\u02BB]/g;
+
 const LANGUAGE_FILE_LIST =
     listLangFiles<AssistantLanguageFileType>('assistant.json');
+
+/**
+ * A language's word for a foreground component: `entry` as `createAsks`
+ * writes one -- a word, a stem (`word*`), a compound's end (`*word`) or
+ * parts joined by an ellipsis (`clock … screen`) -- read in the
+ * language's own spacing (2026-11-13, EC-564).
+ */
+export type ForegroundAskWordType = {
+    key: string;
+    entry: string;
+    isSpaced: boolean;
+    // The language's `optionalMarks`, left out of the line before `entry`
+    // (written without them) is looked for (EC-640).
+    optionalMarkPattern?: RegExp;
+};
+
+export function toForegroundAskWords(
+    map: Record<string, string[]> | undefined,
+    code: string,
+    optionalMarks?: string,
+): ForegroundAskWordType[] {
+    if (map === undefined) {
+        return [];
+    }
+    const isSpaced = checkIsSpacedLocale(code);
+    // One pattern for the language, so a line is folded once for it.
+    const marks =
+        typeof optionalMarks === 'string' ? optionalMarks.normalize('NFC') : '';
+    const optionalMarkPattern =
+        marks === ''
+            ? undefined
+            : new RegExp(`[${toCharClassSource(marks)}]`, 'gu');
+    return Object.entries(map).flatMap(([key, list]) => {
+        return (Array.isArray(list) ? list : []).flatMap((phrase) => {
+            if (typeof phrase !== 'string') {
+                return [];
+            }
+            let entry = phrase.normalize('NFC');
+            if (optionalMarkPattern !== undefined) {
+                entry = entry.replace(optionalMarkPattern, '');
+            }
+            entry = entry.trim();
+            return entry === ''
+                ? []
+                : [{ key, entry, isSpaced, optionalMarkPattern }];
+        });
+    });
+}
 
 function toLanguage(
     code: string,
@@ -353,7 +604,7 @@ function toLanguage(
         colonMarks: file.colonMarks ?? '',
         functionWordSet: new Set(
             (file.functionWords ?? []).map((word) => {
-                return word.toLowerCase();
+                return word.toLowerCase().replace(APOSTROPHE_PATTERN, "'");
             }),
         ),
         yesWords: file.yesWords ?? [],
@@ -383,7 +634,43 @@ function toLanguage(
             return word.toLowerCase();
         }),
         menuWords: file.menuWords ?? [],
+        buttonWords: file.buttonWords ?? [],
         disputeAskPatterns: toPatternList(file.disputeAsks, 'iu'),
+        studyFileAskPatterns: toPatternList(file.studyFileAsks, 'iu'),
+        studyKeepAskSources: (file.studyKeepAsks ?? []).filter((source) => {
+            return (
+                typeof source?.keep === 'string' &&
+                typeof source.pattern === 'string'
+            );
+        }),
+        changeClaimSource: toChangeClaimSource(file.changeClaims),
+        createAskWords: toCreateAskWords(file.createAsks),
+        foregroundAskWords: toForegroundAskWords(
+            file.foregroundAsks,
+            code,
+            file.optionalMarks,
+        ),
+        screenAskWords: toCreateAskWords(file.screenAsks),
+
+        lyricDocumentAskPatterns: toPatternList(file.lyricDocumentAsks, 'iu'),
+        lessonAskPatterns: toPatternList(file.lessonAsks, 'iu'),
+        verseCheckAskPatterns: toPatternList(file.verseCheckAsks, 'iu'),
+        textSizeAskPatterns: {
+            larger: toPatternList(file.textSizeAsks?.larger, 'iu'),
+            smaller: toPatternList(file.textSizeAsks?.smaller, 'iu'),
+            set: toPatternList(file.textSizeAsks?.set, 'iu'),
+        },
+        noteStyleAskPatterns: Object.fromEntries(
+            Object.entries(file.noteStyleAsks ?? {}).map(([job, list]) => {
+                return [job, toPatternList(list, 'iu')];
+            }),
+        ),
+        colorWords: Object.fromEntries(
+            Object.entries(file.colorWords ?? {}).map(([word, color]) => {
+                return [word.toLowerCase(), color];
+            }),
+        ),
+        lookAlikePairs: toLookAlikePairs(file.lookAlikes),
         readerRouteWords: {
             bible: file.readerRouteWords?.bible ?? [],
             reading: file.readerRouteWords?.reading ?? [],
@@ -405,6 +692,7 @@ function toLanguage(
         },
         lookupWords: {
             save: file.lookupWords?.save ?? [],
+            notCard: file.lookupWords?.notCard ?? [],
             copy: file.lookupWords?.copy ?? [],
             anotherBible: file.lookupWords?.anotherBible ?? [],
             openLookup: file.lookupWords?.openLookup ?? [],
@@ -432,57 +720,11 @@ function toLanguage(
 }
 
 // Unicode's scripts this window tells apart (`\p{Script=…}`): every one a
-// language here is written in, and others a person or a Bible may write in.
-// A letter of none of them is a script nobody here names (`other`).
-const SCRIPT_NAME_LIST = [
-    'Latin',
-    'Cyrillic',
-    'Greek',
-    'Armenian',
-    'Georgian',
-    'Hebrew',
-    'Arabic',
-    'Syriac',
-    'Thaana',
-    'Devanagari',
-    'Bengali',
-    'Gurmukhi',
-    'Gujarati',
-    'Oriya',
-    'Tamil',
-    'Telugu',
-    'Kannada',
-    'Malayalam',
-    'Sinhala',
-    'Thai',
-    'Lao',
-    'Tibetan',
-    'Myanmar',
-    'Khmer',
-    'Mongolian',
-    'Hangul',
-    'Hiragana',
-    'Katakana',
-    'Han',
-    'Bopomofo',
-    'Yi',
-    'Ethiopic',
-    'Cherokee',
-    'Canadian_Aboriginal',
-    'Tifinagh',
-    'Vai',
-    'Nko',
-    'Adlam',
-    'Ol_Chiki',
-    'Javanese',
-    'Balinese',
-    'Sundanese',
-    'Coptic',
-    'Tai_Viet',
-    'Tai_Tham',
-    'New_Tai_Lue',
-    'Cham',
-];
+// language here is written in, and others a person or a Bible may write in
+// -- a table of the world, English's data (`en/unicode-scripts.json`), so
+// no language is named in code. A letter of none of them is a script
+// nobody here names (`other`).
+const SCRIPT_NAME_LIST: string[] = unicodeScriptFile.scripts;
 
 // A script whose one letter is a syllable or a word: three Hangul letters say
 // as much as a short English word does, so they are weighed against Latin
@@ -544,6 +786,24 @@ const TYPED_CODE_BY_FOLDER_MAP = new Map(
     }),
 );
 
+/**
+ * The installed package a language's code names: the folder whose
+ * `typed.json` names its language by that code when the two differ (the
+ * reverse of `TYPED_CODE_BY_FOLDER_MAP`), else the code itself -- for a
+ * file read out of that package by a code from the table of names.
+ */
+export function toPackageLangCode(code: string) {
+    if (TYPED_CODE_BY_FOLDER_MAP.has(code)) {
+        return code;
+    }
+    for (const [folderCode, typedCode] of TYPED_CODE_BY_FOLDER_MAP) {
+        if (typedCode === code && folderCode !== code) {
+            return folderCode;
+        }
+    }
+    return code;
+}
+
 const TYPED_FILE_ENTRY_LIST = TYPED_FILE_LIST.flatMap(({ file }) => {
     return Object.entries(file);
 })
@@ -589,6 +849,17 @@ function toTypedLanguage(code: string, file: TypedLanguageFileType) {
                 }),
             yesWords: file.yes ?? [],
             noWords: file.no ?? [],
+            textSizeAsks: file.textSizeAsks,
+            noteStyleAsks: file.noteStyleAsks,
+            colorWords: file.colorWords,
+            lookAlikes: file.lookAlikes,
+            studyFileAsks: file.studyFileAsks,
+            studyKeepAsks: file.studyKeepAsks,
+            changeClaims: file.changeClaims,
+            createAsks: file.createAsks,
+            foregroundAsks: file.foregroundAsks,
+            optionalMarks: file.optionalMarks,
+            screenAsks: file.screenAsks,
         },
         false,
     );
@@ -610,6 +881,41 @@ const ENGLISH_LANGUAGE: AssistantLanguageType =
         scriptPattern: '[A-Za-z]',
     });
 
+// A pair is two different sequences of one length, so a text folded by it
+// keeps every other letter where it was.
+function toLookAlikePairs(list: string[][] | undefined): [string, string][] {
+    return (list ?? []).flatMap((pair) => {
+        if (!Array.isArray(pair) || pair.length !== 2) {
+            return [];
+        }
+        const [first, second] = pair.map((one) => {
+            return typeof one === 'string' ? one.normalize('NFC') : '';
+        });
+        return first.length > 0 &&
+            first.length === second.length &&
+            first !== second
+            ? [[first, second] as [string, string]]
+            : [];
+    });
+}
+
+/** Every installed language's look-alike pairs (`lookAlikes`). */
+export function listLookAlikePairs(): [string, string][] {
+    return [...LANGUAGE_LIST, ...TYPED_LANGUAGE_LIST].flatMap((language) => {
+        return language.lookAlikePairs;
+    });
+}
+
+/**
+ * Every installed language's words for a foreground component
+ * (`foregroundAsks`).
+ */
+export function listForegroundAskWords(): ForegroundAskWordType[] {
+    return [...LANGUAGE_LIST, ...TYPED_LANGUAGE_LIST].flatMap((language) => {
+        return language.foregroundAskWords;
+    });
+}
+
 /** The languages the app can be SHOWN in: each has a package of its own. */
 export function listAssistantLanguages() {
     return LANGUAGE_LIST;
@@ -618,6 +924,96 @@ export function listAssistantLanguages() {
 /** The languages a person may only TYPE (an installed one's `typed.json`). */
 export function listTypedLanguages() {
     return TYPED_LANGUAGE_LIST;
+}
+
+type StudyKeepAskType = {
+    keep: RegExp;
+    patternSource: string;
+    // `undefined` until a line its keep words read; `null`: it does not
+    // compile, and reads nothing.
+    pattern: RegExp | null | undefined;
+};
+
+let studyKeepAskList: StudyKeepAskType[] | null = null;
+
+/**
+ * Whether a line is any installed language's "save that as a study file"
+ * (`studyKeepAsks`, EC-508). The keep words are compiled the first time a
+ * line is read, and the rest of a language's pattern only for a line its
+ * keep words read: a window may never read one, and every test file loads
+ * all 87 packages -- whole, the 88 patterns took half a second to compile
+ * and read the first line, their keep words 60 ms.
+ */
+export function checkIsStudyKeepAsk(line: string) {
+    studyKeepAskList ??= [...LANGUAGE_LIST, ...TYPED_LANGUAGE_LIST].flatMap(
+        (language) => {
+            return language.studyKeepAskSources.flatMap((source) => {
+                return toPatternList([source.keep], 'iu').map((keep) => {
+                    return {
+                        keep,
+                        patternSource: source.pattern,
+                        pattern: undefined,
+                    };
+                });
+            });
+        },
+    );
+    return studyKeepAskList.some((item) => {
+        if (!item.keep.test(line)) {
+            return false;
+        }
+        if (item.pattern === undefined) {
+            item.pattern = toPatternList([item.patternSource], 'iu')[0] ?? null;
+        }
+        return item.pattern !== null && item.pattern.test(line);
+    });
+}
+
+export type ChangeClaimWordsType = {
+    claim: RegExp | null;
+    unsaved?: RegExp | null;
+    save: RegExp | null;
+    file: RegExp | null;
+    foreground?: RegExp | null;
+};
+
+/**
+ * The "I have changed it" words of the language an answer is written in,
+ * compiled (`changeClaims`, EC-508): null for English, whose words are in
+ * code, and for a language that does not say them. A Gemma 4 model answers
+ * in the person's language itself (`chatTranslateHelpers.ts`), so an
+ * answer claiming a change to the note or the study, and such a claim
+ * written into the study, were read in English alone. Compiled for one
+ * ask's language, never every language's.
+ */
+export function toChangeClaimWords(
+    langCode: string | null,
+): ChangeClaimWordsType | null {
+    if (langCode === null || langCode === DEFAULT_CHAT_LANG_CODE) {
+        return null;
+    }
+    const language = getAssistantLanguage(langCode);
+    if (language.code !== langCode) {
+        return null;
+    }
+    const toPattern = (source: string | undefined) => {
+        return toPatternList(source === undefined ? [] : [source], 'iu')[0];
+    };
+    const { claim, unsaved, save, file, foreground } =
+        language.changeClaimSource;
+    const words = {
+        claim: toPattern(claim) ?? null,
+        unsaved: toPattern(unsaved) ?? null,
+        save: toPattern(save) ?? null,
+        file: toPattern(file) ?? null,
+        foreground: toPattern(foreground) ?? null,
+    };
+    return words.claim === null &&
+        words.unsaved === null &&
+        words.save === null &&
+        words.foreground === null
+        ? null
+        : words;
 }
 
 function joinMarks(pick: (language: AssistantLanguageType) => string) {
@@ -652,7 +1048,7 @@ const WORD_CHARACTER_PATTERN = /[\p{L}\p{M}\p{N}]/u;
 /**
  * Whether the text holds one of the words: as a whole word in a language
  * written with spaces between words (Latin), anywhere in one written
- * without them -- a Khmer word sits inside a run of letters.
+ * without them -- a word of such a script sits inside a run of letters.
  */
 export function checkHasLanguageWord(
     text: string,
@@ -754,8 +1150,8 @@ const IDENTITY_LIST: LanguageIdentityType[] = [
 ];
 
 // How much a little word or a letter says: one only one language uses says
-// all of it, one five languages share a fifth -- `la` is French, Spanish,
-// Italian and Catalan, Spanish's accented "what" is Spanish alone.
+// all of it, one five languages share a fifth -- `la` is in four Latin-script
+// languages' lists, Spanish's accented "what" is Spanish alone.
 function genWeightMap(listOf: (identity: LanguageIdentityType) => string[]) {
     const countMap = new Map<string, number>();
     for (const identity of IDENTITY_LIST) {
@@ -817,6 +1213,41 @@ export function getAppLanguage(): AssistantLanguageType {
     return getAssistantLanguage(getAppLangCode());
 }
 
+/**
+ * A language's name as this window shows it, every language but English the
+ * same way (2026-11-09, the user: _all languages development, except
+ * english, should be treated the same way_): the app's own language in its
+ * own words, any other by the name the window's locale gives it
+ * (`Intl.DisplayNames`), else its English name. English, the one built in,
+ * keeps its dictionary key. Until then two languages had a key of their own
+ * and every other was drawn in English.
+ */
+export function toShownLanguageName(code: string, englishName: string) {
+    if (code === DEFAULT_CHAT_LANG_CODE) {
+        return tranLabel(englishName);
+    }
+    const appCode = getAppLangCode();
+    const language = getAssistantLanguage(code);
+    if (
+        code === appCode &&
+        language.code === code &&
+        language.nativeName.length > 0
+    ) {
+        return language.nativeName;
+    }
+    if (appCode === DEFAULT_CHAT_LANG_CODE) {
+        return englishName;
+    }
+    try {
+        const shown = new Intl.DisplayNames([appCode], {
+            type: 'language',
+        }).of(code);
+        return shown !== undefined && shown !== code ? shown : englishName;
+    } catch (_error) {
+        return englishName;
+    }
+}
+
 /** Whether the text carries a letter of this language's own script. */
 export function checkIsInLanguageScript(
     text: string,
@@ -863,8 +1294,40 @@ function findScriptName(character: string): string | null {
 }
 
 /**
+ * A text's letters by their script's name, in order (a letter of a script
+ * nobody here names left out): the last script found is tried first, so a
+ * text in one script costs one test a letter.
+ */
+export function groupLettersByScript(text: string): Map<string, string[]> {
+    const letterMap = new Map<string, string[]>();
+    let lastScript: (typeof SCRIPT_LIST)[number] | undefined;
+    for (const character of text) {
+        if (!/\p{L}/u.test(character)) {
+            continue;
+        }
+        const script: (typeof SCRIPT_LIST)[number] | undefined =
+            lastScript !== undefined && lastScript.pattern.test(character)
+                ? lastScript
+                : SCRIPT_LIST.find((one) => {
+                      return one.pattern.test(character);
+                  });
+        if (script === undefined) {
+            continue;
+        }
+        lastScript = script;
+        const letters = letterMap.get(script.name);
+        if (letters === undefined) {
+            letterMap.set(script.name, [character]);
+        } else {
+            letters.push(character);
+        }
+    }
+    return letterMap;
+}
+
+/**
  * The patterns of the scripts other than Latin a text is written in -- the
- * letters a Greek passage, a Thai answer, a Khmer button name are made of --
+ * letters a Greek passage, a Thai answer, a translated button name are made of --
  * each found once.
  */
 export function listTextScriptPatterns(text: string | undefined): RegExp[] {
@@ -898,9 +1361,10 @@ function countScriptLetters(text: string) {
 
 // What a language's little words and letters say a text is in, each weighed
 // by how few languages share it (`WORD_WEIGHT_MAP`). An elided little word is
-// the front of a token (a French article or pronoun cut short before a
-// vowel): the language lists it with its apostrophe (2026-10-29, a French
-// line about God making man in his image had read as no language at all).
+// the front of a token (a Latin-script language's article or pronoun cut
+// short before a vowel): the language lists it with its apostrophe
+// (2026-10-29, a line in such a language about God making man in his image
+// had read as no language at all).
 function scoreEvidence(
     identity: LanguageIdentityType,
     wordList: string[],
@@ -930,26 +1394,107 @@ function scoreEvidence(
 // Two sums of fractions as near as this are one score.
 const SCORE_TIE = 1e-9;
 
-// The languages the app is shown in are the ones its people write most
-// often, so one of them is believed on half the evidence a language only
-// typed needs: _Que dit Jean 3:16 ?_ is made of little words French shares
-// with Spanish, Italian and Catalan, and had read as no language at all
-// (2026-11-03, the parity rows); a Spanish line still says itself in words
-// no package has (its accented question words, its upside-down mark).
-const PACKAGED_PRIOR = 2;
+// English's commonest word, which its own `functionWords` leave out: "a" is
+// a little word of a dozen other languages too, and counted for English it
+// read 281 of their held-out lines as English in an app with English alone
+// installed. So it names NO language by itself (2026-11-14, EC-651): with
+// four languages installed, one of them listing "a", the English "start a
+// 5 minute countdown" and "start a stopwatch" were named that language --
+// its only sign -- and answered in it in an English app.
+const ENGLISH_SHARED_WORD_SET = new Set(['a']);
+
+/**
+ * Whether a line's only sign of `identity` is a word English writes too
+ * (`ENGLISH_SHARED_WORD_SET`): none of its letters, no other little word of
+ * its, whole or elided. Such a line is a doubt, never that language.
+ */
+function checkIsOnlySharedWordEvidence(
+    identity: LanguageIdentityType,
+    wordList: string[],
+    letterSet: Set<string>,
+) {
+    if (identity.language.code === DEFAULT_CHAT_LANG_CODE) {
+        return false;
+    }
+    for (const letter of identity.letterSet) {
+        if (letterSet.has(letter)) {
+            return false;
+        }
+    }
+    const { functionWordSet } = identity.language;
+    return wordList.every((word) => {
+        if (functionWordSet.has(word)) {
+            return ENGLISH_SHARED_WORD_SET.has(word);
+        }
+        const elidedAt = word.indexOf("'");
+        return !(
+            elidedAt > 0 && functionWordSet.has(word.slice(0, elidedAt + 1))
+        );
+    });
+}
+
+// The language the app is SHOWN in is the one its people write most often,
+// and English is every reader's other one, so those two are believed on half
+// the evidence another language needs: a short "what does John 3:16 say"
+// in a Latin-script language is made of little words it shares with three
+// others, and had read as no language at all (2026-11-03, the parity rows).
+// Until 2026-11-08 (BN-33) the half went to the languages with an
+// `assistant.json` -- one of them in every app -- and with every language
+// installed a Dutch, Italian, Haitian or Samoan line in an English app was
+// named that language on one little word they share and answered in it.
+const SHOWN_LANGUAGE_PRIOR = 2;
+
+function toLanguagePrior(identity: LanguageIdentityType, appLangCode: string) {
+    const { code } = identity.language;
+    return code === DEFAULT_CHAT_LANG_CODE || code === appLangCode
+        ? SHOWN_LANGUAGE_PRIOR
+        : 1;
+}
+
+/**
+ * Of languages a line of their script fits alike, the one it is written in:
+ * the only one, the app's own language, one family's first -- or `other`,
+ * answered in the language it was written in. Until 2026-11-08 (BN-33) the
+ * first listed won: with every language installed, a Ukrainian, Bulgarian or
+ * Macedonian line with no letter of its own was named Russian, a Nepali or
+ * Marathi one Hindi, a Mongolian one Kazakh.
+ */
+function pickTiedScriptLanguage(
+    tiedList: LanguageIdentityType[],
+    appLangCode: string,
+) {
+    const shown = tiedList.find((identity) => {
+        return identity.language.code === appLangCode;
+    });
+    if (tiedList.length === 1 || shown !== undefined) {
+        return (shown ?? tiedList[0]).language.code;
+    }
+    const family = tiedList[0].family;
+    return family !== null &&
+        tiedList.every((identity) => {
+            return identity.family === family;
+        })
+        ? tiedList[0].language.code
+        : OTHER_CHAT_LANG_CODE;
+}
 
 /**
  * The language a question was WRITTEN in, or null when its words cannot say:
  * "ok", "F5", "John 3:16", two English words, a line whose little words two
- * unrelated languages share alike. Script first -- a Khmer sentence is Khmer
- * whatever a button name in it reads, Japanese is the Han letters WITH kana
+ * unrelated languages share alike. Script first -- a sentence in a script
+ * one language owns is that language whatever a button name in it reads,
+ * Japanese is the Han letters WITH kana
  * -- then, among the languages that share a script (Latin, Cyrillic, Arabic,
  * Devanagari), whichever one's little words and letters it uses most, a word
  * five languages share counting a fifth. `other` is a script none of the
  * languages here claims, or Latin letters English never writes in a line
  * whose words no language here claims (a language not installed).
+ * `appLangCode` is the language the app is shown in, believed first.
  */
-export function detectTypedLanguage(text: string): string | null {
+export function detectTypedLanguage(
+    text: string,
+    appLangCode: string = getAppLangCode(),
+): string | null {
     // A letter typed as a base and its accent is the letter: an e and a
     // combining acute are the accented e.
     let clean = text.normalize('NFC');
@@ -958,18 +1503,19 @@ export function detectTypedLanguage(text: string): string | null {
     }
     const scriptCountMap = countScriptLetters(clean);
     const latinCount = scriptCountMap.get('Latin') ?? 0;
-    // A curly apostrophe is the straight one, so an elided French article
-    // reads as typed
-    // on any keyboard. A word keeps its vowel signs: a Hindi word is one word.
-    const lowerText = clean.toLowerCase().replaceAll('’', "'");
+    // A curly apostrophe is the straight one, so an elided article
+    // reads as typed on any keyboard (`APOSTROPHE_PATTERN`). A word keeps
+    // its vowel signs: a Hindi word is one word.
+    const lowerText = clean.toLowerCase().replace(APOSTROPHE_PATTERN, "'");
     // A word in capitals in a line that has small letters is a label or an
-    // acronym -- "Chat IA", "KJV" -- never one of a language's little words:
-    // French's "IA" is Indonesian's "ia", and with only the INSTALLED
-    // languages weighed (2026-11-04) it had tied a French line with
-    // Indonesian. A line typed all in capitals keeps every word.
+    // acronym -- a translated "AI Chat", "KJV" -- never one of a language's
+    // little words: one language's acronym "IA" is Indonesian's "ia", and
+    // with only the INSTALLED languages weighed (2026-11-04) it had tied a
+    // line in that language with Indonesian. A line typed all in capitals
+    // keeps every word.
     const hasSmallLetter = /\p{Ll}/u.test(clean);
     const wordList = (
-        clean.replaceAll('’', "'").match(/[\p{L}\p{M}']+/gu) ?? []
+        clean.replace(APOSTROPHE_PATTERN, "'").match(/[\p{L}\p{M}']+/gu) ?? []
     )
         .filter((word) => {
             return (
@@ -983,11 +1529,9 @@ export function detectTypedLanguage(text: string): string | null {
             return word.toLowerCase();
         });
     const letterSet = new Set([...lowerText]);
-    let best: {
-        identity: LanguageIdentityType;
-        count: number;
-        score: number;
-    } | null = null;
+    let bestScriptCount = 0;
+    let bestScriptScore = 0;
+    let tiedScriptList: LanguageIdentityType[] = [];
     for (const identity of IDENTITY_LIST) {
         if (identity.language.isLatinScript) {
             continue;
@@ -1006,18 +1550,25 @@ export function detectTypedLanguage(text: string): string | null {
         }
         // More of the text in its scripts first, so Japanese is not Chinese
         // for the Han letters they share; then its words and letters, so
-        // Ukrainian is not Russian; then the first listed.
+        // Ukrainian is not Russian; then `pickTiedScriptLanguage`.
         const score = scoreEvidence(identity, wordList, letterSet);
         if (
-            best === null ||
-            count > best.count ||
-            (count === best.count && score > best.score + SCORE_TIE)
+            tiedScriptList.length === 0 ||
+            count > bestScriptCount ||
+            (count === bestScriptCount && score > bestScriptScore + SCORE_TIE)
         ) {
-            best = { identity, count, score };
+            bestScriptCount = count;
+            bestScriptScore = score;
+            tiedScriptList = [identity];
+        } else if (
+            count === bestScriptCount &&
+            score >= bestScriptScore - SCORE_TIE
+        ) {
+            tiedScriptList.push(identity);
         }
     }
-    if (best !== null) {
-        return best.identity.language.code;
+    if (tiedScriptList.length > 0) {
+        return pickTiedScriptLanguage(tiedScriptList, appLangCode);
     }
     const otherCount = countMatches(clean, NON_LATIN_LETTER_PATTERN);
     if (otherCount >= 2 && otherCount >= latinCount) {
@@ -1034,8 +1585,11 @@ export function detectTypedLanguage(text: string): string | null {
         }
         const score =
             scoreEvidence(identity, wordList, letterSet) *
-            (identity.language.isPackaged ? PACKAGED_PRIOR : 1);
-        if (score <= SCORE_TIE) {
+            toLanguagePrior(identity, appLangCode);
+        if (
+            score <= SCORE_TIE ||
+            checkIsOnlySharedWordEvidence(identity, wordList, letterSet)
+        ) {
             continue;
         }
         if (score > bestScore + SCORE_TIE) {
@@ -1086,11 +1640,12 @@ export function pickReplyLanguage(
     if (isPressed) {
         return appLangCode;
     }
-    const typedLangCode = detectTypedLanguage(typed);
+    const typedLangCode = detectTypedLanguage(typed, appLangCode);
     // A question that carries the app's own script is written by somebody
-    // who reads it, whatever English it quotes: a Khmer question about
-    // where the verse "all things work together for good" is had more Latin
-    // letters than Khmer and was answered in English, to a person who reads
+    // who reads it, whatever English it quotes: a question in the app's
+    // script about where the verse "all things work together for good" is
+    // had more Latin letters than its own and was answered in English, to a
+    // person who reads
     // none
     // (2026-10-17, the elder-persona run).
     if (
@@ -1100,6 +1655,54 @@ export function pickReplyLanguage(
         return appLangCode;
     }
     return typedLangCode ?? appLangCode;
+}
+
+// Fewer words than this are a "yes" or an "ok", which goes on in the
+// language the conversation is in.
+const MIN_LANGUAGE_SWITCH_WORDS = 3;
+// Enough of a passage to tell its language: a chapter read whole is
+// thousands of letters, and its first lines say the same.
+const MAX_SUBJECT_LANGUAGE_CHARS = 600;
+
+function checkIsInOtherLanguage(text: string) {
+    const langCode = detectTypedLanguage(text, DEFAULT_CHAT_LANG_CODE);
+    return langCode !== null && langCode !== DEFAULT_CHAT_LANG_CODE;
+}
+
+/**
+ * Whether a line typed in English follows answers in another language
+ * (2026-11-12, EC-510). Asked in an English app, such a line was told no
+ * language (`genAskLanguageLine`), so the tab's history was all the model
+ * had to go by: _Make a short study file on Philippians 4:6-7._ under two
+ * Khmer answers was written in Khmer. The line must read as English and
+ * hold a few words: an option pressed in the answer's own language, or a
+ * typed "yes", goes on in the conversation's language as before. One
+ * answer the model is shown in another language is enough, the newest or
+ * not. So is `subjectText`, the passage the ask is about when it is read
+ * in a Bible of another language (EC-496): a passage chat keeps the Bible
+ * it was opened in, and its first question has no answer above it.
+ */
+export function checkIsEnglishAfterOtherLanguage(
+    askedText: string,
+    historyTurns: { author: 'you' | 'bot'; text: string }[],
+    subjectText = '',
+) {
+    const wordCount = (askedText.match(/\p{L}+/gu) ?? []).length;
+    if (
+        wordCount < MIN_LANGUAGE_SWITCH_WORDS ||
+        detectTypedLanguage(askedText, DEFAULT_CHAT_LANG_CODE) !==
+            DEFAULT_CHAT_LANG_CODE
+    ) {
+        return false;
+    }
+    const isAfterOtherLanguage = historyTurns.some((turn) => {
+        return turn.author === 'bot' && checkIsInOtherLanguage(turn.text);
+    });
+    if (isAfterOtherLanguage) {
+        return true;
+    }
+    const subject = subjectText.trim().slice(0, MAX_SUBJECT_LANGUAGE_CHARS);
+    return subject.length > 0 && checkIsInOtherLanguage(subject);
 }
 
 function checkIsInAppScript(typed: string, appLangCode: string) {
@@ -1152,7 +1755,7 @@ export function checkIsRemovalReply(reply: string) {
     });
 }
 
-/** The language's own digits written as 0-9, so a Khmer two is the 2 it means. */
+/** The language's own digits written as 0-9, so its own two is the 2 it means. */
 export function toAsciiDigits(text: string) {
     let result = text;
     for (const language of LANGUAGE_LIST) {
@@ -1167,8 +1770,8 @@ export function toAsciiDigits(text: string) {
 }
 
 /**
- * 0-9 written as the app language's own digits -- `74` in Khmer digits in a
- * Khmer window -- for a count the window writes beside references the Bible
+ * 0-9 written as the app language's own digits -- `74` in that language's
+ * digits in its window -- for a count the window writes beside references the Bible
  * already writes in them (2026-10-22: a count in 0-9 had stood beside
  * references written in the Bible's own digits).
  */
@@ -1231,7 +1834,7 @@ export function listFrameAliases(marker: string): string[] {
  * language on its own (measured on the free tier: a Chinese "please confirm
  * this button is shown" under an
  * English answer). By SCRIPT, not by a list of languages: a Thai answer's
- * Thai chips are as chosen as a Khmer answer's Khmer ones -- every answer in
+ * Thai chips are as chosen as a packaged language's own ones -- every answer in
  * Chinese, Thai, Korean, Russian and Arabic had lost its chips while only a
  * package's script counted (2026-11-03).
  */
@@ -1275,8 +1878,8 @@ function toQuestionWords(question: string) {
 
 /**
  * The yes and no buttons for a question asked in one of the languages here,
- * read by how that language starts (French, with its "do you want") or
- * ends (Khmer, with its question particle) a yes-or-no question. Null for
+ * read by how that language starts (one with its "do you want") or ends
+ * (another with its question particle) a yes-or-no question. Null for
  * one it cannot tell -- English is
  * read by its own lead-ins in `quickReplyHelpers`.
  */

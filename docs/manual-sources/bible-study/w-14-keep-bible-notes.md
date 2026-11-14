@@ -2,10 +2,10 @@
 id: W-14
 title: "Keep Bible notes"
 section: "Bible study"
-verify: [PR-03, PU-03, KB-11, PM-170]
-screenshots: 1
+verify: [PR-03, PU-03, KB-11, PM-170, PL-111]
+screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-14 — Keep Bible notes
 
@@ -15,6 +15,16 @@ workflowsVersion: "2026-11-08"
    **[en:tran:Bibles]** (under it when the column is narrow) inside the
    **[en:tran:Bible and Notes]** section — at the top of the right column in the Presenter,
    on the left in the Bible Reader.
+   **Making a new file:** click the **⋮ [en:tran:More Options]** in the panel's title
+   (or right-click the empty space under the files) and pick **[en:tran:New Bible Note]**
+   (a notes file, holding notes) or **[en:tran:New Markdown File]** (a `.md` page of your
+   own). Type a name and press **Enter**. A Markdown file is listed with the markdown icon
+   among the notes files, its first line the name as a heading, and it opens in its own
+   **Markdown Preview** window — click its row to open it again, and press
+   **[en:tran:Edit]** there to write (W-37 step 6). Its row's menu adds
+   **[en:tran:Preview]** and **[en:tran:Open in Default App]** to the usual Rename, Copy
+   Path, Reveal and **[en:tran:Move to Trash]**. A Markdown file dropped on the panel is
+   copied into its folder, as a notes file is. 📸
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸
 3. Type your note. Nothing is written to the note file yet — your typing is kept
    in an editing history, and the row of buttons that appears at the bottom
@@ -41,7 +51,7 @@ the bottom of the Bible Note window (W-60).
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PR-03` · `PU-03` · `KB-11` · `PM-170`
+`PR-03` · `PU-03` · `KB-11` · `PM-170` · `PL-111`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

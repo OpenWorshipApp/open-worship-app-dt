@@ -164,7 +164,7 @@ export function getVerseTextLookupLangCode(
 // silently open the wrong record, so anything unresolved stays plain text.
 function resolveByVerseEvidence(
     candidateList: number[] | undefined,
-    verseRecordIndexSet: Set<number>,
+    verseRecordIndexSet: ReadonlySet<number>,
 ) {
     if (candidateList === undefined) {
         return null;
@@ -195,8 +195,8 @@ function resolveByVerseEvidence(
 function resolveNeedle(
     nameCandidateList: number[] | undefined,
     locationCandidateList: number[] | undefined,
-    verseNameIndexSet: Set<number>,
-    verseLocationIndexSet: Set<number>,
+    verseNameIndexSet: ReadonlySet<number>,
+    verseLocationIndexSet: ReadonlySet<number>,
 ): { kind: 'name' | 'location'; recordIndex: number } | null {
     const nameByEvidence = resolveByVerseEvidence(
         nameCandidateList,
@@ -239,11 +239,36 @@ export function findLookupTextMatches(
     text: string,
     kjvShortVerse: string,
 ): LookupTextMatchType[] {
-    const verseNameIndexSet = new Set(index.verseNames[kjvShortVerse] ?? []);
-    const verseLocationIndexSet = new Set(
-        index.verseLocations[kjvShortVerse] ?? [],
-    );
-    const nonNameNeedleList = VERSE_NON_NAME_NEEDLE_MAP.get(kjvShortVerse);
+    return findLookupTextMatchesByEvidence(index, text, {
+        nameIndexSet: new Set(index.verseNames[kjvShortVerse] ?? []),
+        locationIndexSet: new Set(index.verseLocations[kjvShortVerse] ?? []),
+        nonNameNeedleList: VERSE_NON_NAME_NEEDLE_MAP.get(kjvShortVerse),
+    });
+}
+
+export type LookupTextEvidenceType = {
+    // The records the text in hand is known to mention: a verse's, or a whole
+    // chapter's for a page written about that chapter.
+    nameIndexSet: ReadonlySet<number>;
+    locationIndexSet: ReadonlySet<number>;
+    nonNameNeedleList?: readonly string[];
+};
+
+/**
+ * `findLookupTextMatches` with the evidence handed in: a verse's attested
+ * records, or -- for a study written about one chapter, in the Markdown
+ * Preview -- every record the chapter attests. The same rules hold: without
+ * evidence for a form, only one borne by a single record in the whole
+ * dataset is linked.
+ */
+export function findLookupTextMatchesByEvidence(
+    index: LookupTextIndexType,
+    text: string,
+    evidence: LookupTextEvidenceType,
+): LookupTextMatchType[] {
+    const verseNameIndexSet = evidence.nameIndexSet;
+    const verseLocationIndexSet = evidence.locationIndexSet;
+    const nonNameNeedleList = evidence.nonNameNeedleList;
     const tokenList: { text: string; start: number }[] = [];
     TOKEN_PATTERN.lastIndex = 0;
     let tokenMatch = TOKEN_PATTERN.exec(text);

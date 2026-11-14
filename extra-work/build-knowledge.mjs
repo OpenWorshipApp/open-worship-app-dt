@@ -48,7 +48,7 @@ import {
     statSync,
     writeFileSync,
 } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 import { readSourceAssistantFacts } from '../tools/owa-devtools-mcp/tran.mjs';
 import { hashManualPage } from '../tools/owa-devtools-mcp/manualI18n.mjs';
@@ -61,7 +61,43 @@ import {
 } from './bibleNoteGuideHelpers.mjs';
 
 const REPO_ROOT = resolve('.');
-const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
+const DEFAULT_OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
+const OUT_FLAG_PREFIX = '--out=';
+
+// `--out=<dir>` writes the bundle somewhere else: the npm package
+// `open-worship-app-mcp` and the extra-bin pack stage a copy of their own
+// (`extra-work/mcp-dist/mcpRuntimeTree.mjs`) and leave `electron-build/` -- a
+// running dev app's main entry -- alone. The folder is emptied first, so one
+// named on purpose must be new, empty or an earlier bundle, and never the
+// repository or a folder holding it.
+function resolveOutputDir() {
+    const outArg = process.argv.slice(2).find((arg) => {
+        return arg.startsWith(OUT_FLAG_PREFIX);
+    });
+    if (outArg === undefined) {
+        return DEFAULT_OUTPUT_DIR;
+    }
+    const outputDir = resolve(outArg.slice(OUT_FLAG_PREFIX.length));
+    const repoFromOutput = relative(outputDir, REPO_ROOT);
+    if (!repoFromOutput.startsWith('..') && !isAbsolute(repoFromOutput)) {
+        throw new Error(
+            `--out must not be the repository or a folder holding it: ${outputDir}`,
+        );
+    }
+    if (
+        existsSync(outputDir) &&
+        readdirSync(outputDir).length > 0 &&
+        !existsSync(join(outputDir, 'index.json'))
+    ) {
+        throw new Error(
+            '--out names a folder that is not empty and holds no knowledge ' +
+                `bundle: ${outputDir}`,
+        );
+    }
+    return outputDir;
+}
+
+const OUTPUT_DIR = resolveOutputDir();
 // Enough for scoring and an excerpt of an INTERNAL note; the full file is read
 // only when a page is actually opened. The manual is indexed WHOLE (up to the
 // page cap below): it is what every answer must come from, and two of its
@@ -377,5 +413,6 @@ console.log(
     `Knowledge bundled: ${entries.length} documents ` +
         `(${manualCount} manual, ${entries.length - manualCount} internal), ` +
         `${bibleNoteGuideCount} Bible Note editor guide pages apart, ` +
-        'English only (every other language is read from its installed plugin)',
+        'English only (every other language is read from its installed plugin)' +
+        (OUTPUT_DIR === DEFAULT_OUTPUT_DIR ? '' : `, into ${OUTPUT_DIR}`),
 );

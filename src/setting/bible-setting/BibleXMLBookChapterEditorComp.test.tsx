@@ -157,9 +157,9 @@ describe('BibleXMLBookChapterEditorComp', () => {
             container.querySelector('[data-json]')!.textContent!,
         );
         for (const [key, value, message] of [
-            ['bibleKey', 'OTHER', 'Invalid Bible Key OTHER'],
-            ['bookKey', 'EXO', 'Invalid Book Key EXO'],
-            ['chapter', 2, 'Invalid Chapter Number 2'],
+            ['bibleKey', 'OTHER', 'Invalid Bible key: OTHER'],
+            ['bookKey', 'EXO', 'Invalid book key: EXO'],
+            ['chapter', 2, 'Invalid chapter number: 2'],
         ] as const) {
             h.nextSave = { ...data, [key]: value };
             await save();
@@ -200,7 +200,7 @@ describe('BibleXMLBookChapterEditorComp', () => {
         await save();
         expect(h.toast).toHaveBeenLastCalledWith(
             'Saving Bible Data',
-            'Bible Data not found for key KJV',
+            'Bible XML data not found: "KJV"',
         );
         expect(h.saveXml).not.toHaveBeenCalled();
         h.xml = { books: { GEN: { '1': {} } } };

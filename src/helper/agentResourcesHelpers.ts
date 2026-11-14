@@ -9,15 +9,15 @@
  * the panel lists (`getResourcesFolderList`): a name is resolved under its
  * folder and refused when it lands anywhere else.
  *
- * A PDF is answered with its pages as PICTURES -- a Khmer PDF set in a
- * legacy font has nonsense for a text layer -- drawn by MuPDF in a child
+ * A PDF is answered with its pages as PICTURES -- a PDF in a script of its
+ * own set in a legacy font has nonsense for a text layer -- drawn by MuPDF in a child
  * process of main (`main:app:pdf-to-chat-pages`). An MCP read returns up to
  * eight pages unless its caller deliberately supplies a smaller `pages`
  * count; a longer file says `nextPage`, so the model reads on rather than
  * putting a whole commentary into one request. The renderer may retain the
  * PDF's own text layer in its disposable cache, but the tool never sends
  * that layer to the model: a legacy font can
- * make unrelated Latin characters look like valid Khmer evidence. Pagination
+ * make unrelated Latin characters look like valid evidence in another script. Pagination
  * says whether every
  * page has been returned, so a long file is never silently cut. A
  * Bible note is its notes' words (`toNoteFileText`), a text file its words
@@ -27,6 +27,7 @@
  */
 import { normalizeImage } from '../chatbot/attachmentHelpers';
 import { toNoteFileText } from '../chatbot/noteFileTextHelpers';
+import { getActiveBibleNotesDirPath } from '../bible-list/note/bibleNotesDirHelpers';
 import { getResourcesFolderList } from '../resources/resourcesFolderHelpers';
 import {
     MAX_SCAN_DEPTH,
@@ -37,6 +38,7 @@ import { electronSendAsync } from '../server/electronSendHelpers';
 import {
     checkIsHiddenName,
     checkIsSystemFileName,
+    fsCheckFileExist,
     fsGetFileSize,
     fsListDirents,
     fsReadFile,
@@ -56,6 +58,10 @@ import {
     toResourceFileKind,
 } from './agentResourceNameHelpers';
 import { genResourceOverview } from './agentResourceOverviewHelpers';
+import {
+    STUDY_BIBLE_NOTES_LABEL,
+    STUDY_FILE_EXTENSION,
+} from './agentStudyFileRules';
 import { parseRefParts } from './bibleVerseFindHelpers';
 import { getAllLocalBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
 import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
@@ -70,6 +76,13 @@ export type AgentResourcesRequestType = {
     page?: unknown;
     pages?: unknown;
     detail?: unknown;
+    title?: unknown;
+    content?: unknown;
+    section?: unknown;
+    append?: unknown;
+    bible?: unknown;
+    name?: unknown;
+    hash?: unknown;
 };
 
 type RefusalType = { isError: true; reason: string };
@@ -111,8 +124,11 @@ function toInnerName(folder: ResourceFolderType, filePath: string) {
 function checkIsInside(dirPath: string, filePath: string) {
     const dirKey = toPathCompareKey(pathResolve(dirPath));
     const fileKey = toPathCompareKey(pathResolve(filePath));
+    // The separator as the keys write it (BN-38: a forward slash is the
+    // backslash on Windows).
+    const separatorKey = toPathCompareKey(pathSeparator);
     return fileKey.startsWith(
-        dirKey.endsWith(pathSeparator) ? dirKey : dirKey + pathSeparator,
+        dirKey.endsWith(separatorKey) ? dirKey : dirKey + separatorKey,
     );
 }
 
@@ -129,7 +145,7 @@ function toWholeNumber(value: unknown) {
 
 /**
  * A book's key from its code, its English name, or its name in any installed
- * Bible's own language (the Khmer Bible's own name for John). The English and code halves are pure and
+ * Bible's own language (a Bible's own name for John in its language). The English and code halves are pure and
  * tried first; only a name in another language reads the installed Bibles'
  * book maps, so the ordinary call does no I/O (2026-10-18).
  */
@@ -303,14 +319,30 @@ async function listResources(request: AgentResourcesRequestType) {
     };
 }
 
+/**
+ * `Bible Notes/<name>.md`, a study kept in the Bible Notes list (EC-509):
+ * the Bible Notes folder of the session in front, read like a Resources
+ * folder. A Resources folder of that name is asked first.
+ */
+function findBibleNotesFolder(label: string): ResourceFolderType | undefined {
+    if (label.toLowerCase() !== STUDY_BIBLE_NOTES_LABEL.toLowerCase()) {
+        return undefined;
+    }
+    const dirPath = getActiveBibleNotesDirPath();
+    return dirPath === null
+        ? undefined
+        : { label: STUDY_BIBLE_NOTES_LABEL, dirPath };
+}
+
 function resolveResourceFile(fileName: unknown) {
     const split = splitResourceFileName(String(fileName ?? ''));
     if (split === null) {
         return null;
     }
-    const folder = getResourceFolders().find((one) => {
-        return one.label.toLowerCase() === split.folder.toLowerCase();
-    });
+    const folder =
+        getResourceFolders().find((one) => {
+            return one.label.toLowerCase() === split.folder.toLowerCase();
+        }) ?? findBibleNotesFolder(split.folder);
     if (folder === undefined) {
         return null;
     }
@@ -326,7 +358,10 @@ function resolveResourceFile(fileName: unknown) {
  * name (`MAT.18.pdf`) when exactly ONE file in the Resources folders has it.
  * A model and a person both say a PDF by its name, and the bare name used to
  * be refused while the very next round listed the same file (seen live
- * 2026-10-19). Two of one name are named back, never guessed.
+ * 2026-10-19). Two of one name are named back, never guessed -- a study kept
+ * straight in the Bible Notes folder counted among them (2026-11-14,
+ * EC-706): the bare name of a study attached from Bible Notes had read its
+ * Resources copy, and the model told the person the study was all Khmer.
  */
 async function resolveResourceFileForRead(fileName: unknown) {
     const direct = resolveResourceFile(fileName);
@@ -373,6 +408,25 @@ async function resolveResourceFileForRead(fileName: unknown) {
                     name: toInnerName(folder, filePath),
                 });
             }
+        }
+    }
+    const notesFolder = lowerName.endsWith(STUDY_FILE_EXTENSION)
+        ? findBibleNotesFolder(STUDY_BIBLE_NOTES_LABEL)
+        : undefined;
+    if (notesFolder !== undefined) {
+        const filePath = pathJoin(notesFolder.dirPath, raw);
+        const fileKey = toPathCompareKey(filePath);
+        if (
+            !matches.some((one) => {
+                return toPathCompareKey(one.filePath) === fileKey;
+            }) &&
+            (await fsCheckFileExist(filePath))
+        ) {
+            matches.push({
+                folder: notesFolder,
+                filePath,
+                name: toInnerName(notesFolder, filePath),
+            });
         }
     }
     return matches.length === 1
@@ -504,14 +558,70 @@ async function readResource(request: AgentResourcesRequestType) {
     }
     const raw = await fsReadFile(filePath);
     const text = (kind === 'note' ? toNoteFileText(raw) : null) ?? raw;
+    const section =
+        typeof request.section === 'string' ? request.section.trim() : '';
+    if (section !== '' && kind === 'text') {
+        return await readTextSection(name, text, section);
+    }
     return {
         file: name,
         kind,
         text: text.slice(0, MAX_TEXT_CHARS),
         ...(text.length > MAX_TEXT_CHARS
-            ? { note: 'Only the start of it is here.' }
+            ? { note: await toLongTextNote(name, text) }
             : {}),
     };
+}
+
+/**
+ * One section of a text file, by its heading's words (EC-481): how what is
+ * past the first 16 KB of a long study file -- its translation under it --
+ * is read.
+ */
+async function readTextSection(name: string, text: string, section: string) {
+    const { readStudySection, toStudyOutline } =
+        await import('./agentStudyFileRules');
+    const found = readStudySection(text, section);
+    if ('reason' in found) {
+        return toReason(found.reason);
+    }
+    const isCut = found.text.length > MAX_TEXT_CHARS;
+    const outline = isCut ? toStudyOutline(found.text) : '';
+    return {
+        file: name,
+        kind: 'text',
+        section: found.heading,
+        text: found.text.slice(0, MAX_TEXT_CHARS),
+        ...(isCut
+            ? {
+                  note:
+                      'Only the start of this section is here. Read a ' +
+                      'heading inside it with `section`' +
+                      (outline === '' ? '.' : `:\n${outline}`),
+              }
+            : {}),
+    };
+}
+
+/**
+ * What a read of a long file says under the start of it. A Markdown file
+ * (a study file has its translation under it, EC-479) names every heading,
+ * so a change is made by section, never by writing back the part read.
+ */
+async function toLongTextNote(name: string, text: string) {
+    if (!name.toLowerCase().endsWith('.md')) {
+        return 'Only the start of it is here.';
+    }
+    const { STUDY_HEADINGS_LEAD, toStudyOutline } =
+        await import('./agentStudyFileRules');
+    const outline = toStudyOutline(text);
+    return (
+        `Only the start of it is here: it is ${text.length} characters. ` +
+        'Read one part with `section` (one of its headings); change it ' +
+        'with `draft`, `file` and `section`, or `append` -- never by ' +
+        'writing back the part read.' +
+        (outline === '' ? '' : ` ${STUDY_HEADINGS_LEAD}\n${outline}`)
+    );
 }
 
 export async function handleAgentResourcesRequest(
@@ -523,8 +633,19 @@ export async function handleAgentResourcesRequest(
     if (request.action === 'read') {
         return await readResource(request);
     }
+    if (
+        request.action === 'draft' ||
+        request.action === 'translate' ||
+        request.action === 'save' ||
+        request.action === 'preview'
+    ) {
+        // A study file (EC-464): loaded only when one is asked for.
+        const { handleAgentStudyRequest } =
+            await import('./agentStudyFileHelpers');
+        return await handleAgentStudyRequest(request);
+    }
     return toReason(
-        'Give action: "list" (by `book`, `chapter` or `search`) or "read" ' +
-            '(a `file` as listed).',
+        'Give action: "list" (by `book`, `chapter` or `search`), "read" ' +
+            '(a `file` as listed) or "draft" (a study file for `ref`).',
     );
 }

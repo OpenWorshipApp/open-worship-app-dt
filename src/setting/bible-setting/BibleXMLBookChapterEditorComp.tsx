@@ -162,7 +162,7 @@ async function handleSaving(
     if (!xmlBibleData) {
         showSimpleToast(
             tran('Saving Bible Data'),
-            `Bible Data not found for key ${bibleKey}`,
+            `${tran('Bible XML data not found')}: "${bibleKey}"`,
         );
         return;
     }
@@ -248,21 +248,21 @@ function EditorComp({
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
                         tran('Saving Bible Data'),
-                        `Invalid Bible Key ${newJsonData.bibleKey}`,
+                        `${tran('Invalid Bible key')}: ${newJsonData.bibleKey}`,
                     );
                     return;
                 }
                 if (newJsonData.bookKey !== bookKey) {
                     showSimpleToast(
                         tran('Saving Bible Data'),
-                        `Invalid Book Key ${newJsonData.bookKey}`,
+                        `${tran('Invalid book key')}: ${newJsonData.bookKey}`,
                     );
                     return;
                 }
                 if (newJsonData.chapter !== chapter) {
                     showSimpleToast(
                         tran('Saving Bible Data'),
-                        `Invalid Chapter Number ${newJsonData.chapter}`,
+                        `${tran('Invalid chapter number')}: ${newJsonData.chapter}`,
                     );
                     return;
                 }

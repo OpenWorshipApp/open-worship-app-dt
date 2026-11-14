@@ -172,7 +172,7 @@ export function resolveLangPluginFilePath(
 }
 
 /**
- * `@lang/<code>/<path>` out of a URL path (`/@lang/km/assets/x.ttf`), or null.
+ * `@lang/<code>/<path>` out of a URL path (`/@lang/xx/assets/x.ttf`), or null.
  */
 export function parseLangPluginRoute(urlPathname: string) {
     const match = /^\/@lang\/([a-z]{2,3})\/(.+)$/.exec(urlPathname);

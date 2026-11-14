@@ -1,5 +1,206 @@
 # Tips backlog — `TP-xx`
 
+## TP-21 · Show it re-pressed a lesson's openers when every one was already done — `done` · S2 · every window
+
+**Evidence (2026-11-10, live, the Presenter).** `presenter-foreground-presets`
+started with Quick Text's Properties already open: the host skipped all three
+act steps by their `skipIfVisible` and started the two look steps, a card that
+cannot demo (`canDemo: false`). `startDailyTipGuide` read that as a stale
+show-only host and sent the lesson again INLINE — its act steps only, with no
+`skipIfVisible` and no look steps — so the card offered **Do it** on
+Foreground, Quick Text (choosing it again puts the panel away) and a bare
+`Properties` (`finds.at(-1)`) that rang the Messages panel's. Nothing was
+pressed. Every lesson whose act steps all carry `skipIfVisible` had it:
+sessions with Marquee Top open, effects with Effects open, properties.
+**Change (applied).** `checkHostSkippedEveryAction` in `dailyTipHelpers.ts`:
+no upgrade when every act step of the lesson carries `skipIfVisible` and the
+host's card holds exactly the lesson's other steps; two tests hold both
+sides. **Proof.** Live, the same start gave the two look steps; Properties
+open, the properties lesson started on its three. Found and fixed in run
+`2026-11-10` (presets).
+
+## TP-20 · In a translated window a Foreground lesson asks a second Do it on its own panel — `open` · S2 · presenter
+
+**Evidence (2026-11-09, live, the Presenter in Khmer).** `presenter-foreground-time`
+step 2's finds are `['ម៉ោង', 'Time']` — the translated launcher row first,
+the English word last, alternatives for ONE control. **Do it** pressed the
+row and the Time panel opened, but the card stayed on step 2 with _រួចហើយ -
+ហើយវាបានបង្ហាញ "Time"។ ចុច ធ្វើឲ្យ ម្ដងទៀត…_ (press Do it again):
+`withMore` in `guide.mjs` reads every find missing BEFORE the press and
+present after it as something the press revealed, and the panel just
+opened carries `data-widget-name="Time"`, English in every language. The
+second press would click the panel itself — its centre, which in a panel
+like Countdown's can be a control. Not pressed; **Next** went on, and
+step 3's scoped `Time > ជ្រើសរើសទីក្រុង` opened the cities. Every component
+lesson (`presenter-foreground-<component>`, 13 of them) has the same shape
+in every language but English. In the same card the layer named in a hint
+stays English (_"ជ្រើសរើសទីក្រុង" នៅពីក្រោយ the menu that is open_).
+**Change.** In `withMore`, a demo step's finds are alternatives, not a
+sequence: skip a needle that is another language's form of the find just
+pressed (or any find of a `translateFind` step); and put the layer names
+through the card's words — both `owa-enhance-mcp`'s. **Proof on apply.**
+In Khmer, `presenter-foreground-time` step 2 opens the panel with one Do it
+and moves to step 3; the hint reads Khmer throughout. Found in run
+`2026-11-09` (Foreground).
+
+## TP-19 · Do it closes the person's floating panel when it overlaps the one aimed at — `open` · S3 · presenter
+
+**Evidence (2026-11-09, live, the Foreground run).** With the Messages and
+Quick Text panels both open and Messages over Quick Text's toolbar, **Do it**
+on `presenter-foreground-quick-text`'s **Quick Text > Preview** answered
+_I closed the floating panel, which was in the way_ — `layerOf` in the
+walkthrough engine treats any `.floating-widget` over the target as a layer
+to shut with its ✕, which is right for a popup and wrong for a panel the
+person opened and arranged. Nothing was lost (a panel reopens from the
+Foreground launcher, its session kept), but the person's layout changed.
+Opening a SECOND panel the other way round raised it above the first a
+moment later, so the panels can be stacked without closing either.
+**Change.** When the layer in the way and the target are both floating
+panels, bring the target's panel to the front instead of closing the other
+— `owa-enhance-mcp`'s. **Proof on apply.** The same press with Messages over
+Quick Text leaves both panels open and presses Preview. Found in run
+`2026-11-09` (Foreground).
+
+## TP-18 · In Khmer an agent cannot press an All tips row by its title — `open` · S3 · every window
+
+**Evidence (2026-11-09, live, the Presenter in Khmer).** Each row is a
+`<button aria-label={title}>` (`DailyTipComp.tsx`), and `domMatch.mjs` names a
+control by its aria-label AND its text run together — the number, the title,
+the category and the whole detail. A Khmer row runs past the 120-character cap
+`owa_list_ui` keeps and past the length ratio a title may match against, so
+`owa_click` / `owa_find_ui` on _ស្វែងរកបទគម្ពីរ_ found nothing (no near miss
+either), while the accessibility tree names the row by its title alone and
+pressing it there opened the tip. English titles fit by luck of length. The
+chatbot reaches a tip by id, so this is the stdio door's QA path. **Change.**
+Let an `aria-label` stand as the control's whole name, the way the
+accessibility tree does — `owa-enhance-mcp`'s. **Proof on apply.** `owa_click`
+on a Khmer tip title opens it from All tips. Found in run `2026-11-09`.
+On 2026-11-10 two Khmer rows WERE pressed by title (_បង្ហាញសារខ្លីមួយក្នុងរយៈពេលខ្លី_,
+_ផ្ដល់រូបរាងស្រាប់ឱ្យធាតុផ្ទៃខាងមុខ_): a short Khmer title and detail fit,
+so it is length, not the script.
+
+## TP-17 · Tips translate a menu name the native menu draws in English — `open` · S3 · every window
+
+**Evidence (2026-11-09, read from code and the dictionaries).** The native
+menu's top-level names are plain English in `electron/electronMenu.ts`
+(`File`, `Edit`, `View`, `Tools`, `Window`; `Help` by role), and so are its
+role rows (Reload, Toggle Full Screen, Toggle Developer Tools); only the
+renderer-contributed rows are `tran()`'d (`Widgets`,
+`widgetAppMenuHelpers.ts`). Older tips in most languages translate the path
+anyway: Khmer has 11 strings saying មើល > …, one of them
+`មើល > Widgets` where the window shows `View > ផ្ទាំង`. The Presenter's new
+_Use View > Widgets …_ detail was corrected in all 87 packages to `View >`
+plus the language's own `Widgets` word. **Change.** Decide first — translate
+the native menu's own names in the app (`owa-enhance`), or rewrite those tip
+strings to the English names — because either makes the other wrong. **Proof
+on apply.** A Khmer volunteer reading a tip's path finds those exact words in
+the menu bar. Found in run `2026-11-09`.
+
+## TP-16 · Two Presenter items still untaught, and ACTED is a fifth — `open` · S3 · presenter
+
+**Evidence (2026-11-09).** After the run, `tip-coverage.mjs presenter
+--uncovered` lists `slides-more` (**Slides > More Options**: what its menu
+holds was not read this run) and `text-reset` (the Bible/LongText Properties
+reset, titled _Plain words again; the size stays_: `presenter-bible-text-look`
+says "Reset for plain words" in its step, which is not the title, and its
+detail has no word a volunteer would type for it). ACTED is 41/221 (47/223
+after the Foreground run, whose surface is 18/53: a timer's Start, a show
+button and a picked file stay the person's): 31 of
+the 114 lessons are words only (33 of 115 after it), most because they teach a row menu (a
+document, a slide, a run sheet line), a removal, or a panel behind `TP-13` /
+`TP-14`. **Next.** Read the Slides panel's menu and teach it in the lesson that
+already names the panel; name the reset's title in `presenter-bible-text-look`
+when its detail is next reworded; after `TP-13` / `TP-14` are fixed, give the
+words-only lessons their openers back. **Also found by the translation
+pass:** Latvian gives **Move up** and **Move to Top** the same words
+(_Pārvietot uz augšu_), so the slide menu shows two identical rows there;
+**Lookup** and **Bible Lookup** share their words in `fa`, `ur`, `sw` and
+`id`, **Setting** and **Settings** in `he`, `so`, `rw`, `rn` and `vi`, and
+**Remove** and **Delete** in `id` and `ms`. Dictionary fixes, each with its
+package's version raised. Found in run `2026-11-09`.
+
+## TP-15 · Seven floating panels on the Presenter have no panel name — `open` · S2 · presenter
+
+**Evidence (2026-11-09, read from code).** `FloatingWidgetComp` stamps
+`data-widget-name` only when it is given `widgetName`, and the Presenting Flow
+preview (`PresentingFlowPreviewFloatingComp`), the Slides preview
+(`AppDocumentPreviewFloatingItemComp`), Presenting Control
+(`ControllerToolbarComp`), Stage Style (`LyricStageStyleFloatingComp`), Import
+From SongSelect, Import From Public Domain Songs and the note editor popup pass
+none. Everything inside them reports the pane BEHIND as its `inPanel`, so a
+scoped find (`Presenting Flow > Collapse All`) cannot land and a name they
+share with the window twins (the 2026-09-24 note in CLAUDE.md, _Mapping DOM
+elements_). **Change.** Pass each its English label key as `widgetName` — an
+app change, `owa-enhance`'s to apply. **Proof on apply.** `owa_find_ui` inside
+each reports its own panel; a run-sheet tip can press **Collapse All** by a
+scoped find. Found in run `2026-11-09`.
+
+## TP-14 · The Presenter's `Mini Screen` find presses a screen card — `open` · S2 · presenter
+
+**Evidence (2026-11-09).** A lesson step `find: 'Mini Screen'` with
+`skipIfVisible: 'Mini Screen Options'` was pressed live with the panel already
+open: it did not skip, and **Do it** clicked the first screen card (its label
+starts `BGSLLTFG0(0)`), with no visible change. The step was taken out of
+`presenter-screen-drawing` and `presenter-bible-text-look`, which are words
+now; `presenter-mini-screen`, `presenter-style-bible`,
+`presenter-screen-controls` and `presenter-multi-screen` still use it
+(`presenter-foreground-clear`, which had it with no `skipIfVisible` at all,
+became words in the Foreground run of the same day). **Change.** Find out why
+`skipIfVisible` did not hold (the walkthrough engine is `owa-enhance-mcp`'s),
+and aim the opener at the panel's own toggle by a word only it carries.
+**Proof on apply.** Show it → Do it on `presenter-screen-controls` with the
+panel open goes straight to the next step; closed, it opens the panel and
+nothing else. Found in run `2026-11-09`.
+
+## TP-13 · The Presenter's `Documents` tab twins with its own region — `open` · S2 · presenter
+
+**Evidence (2026-11-09).** A step `find: 'Documents'` was refused live as two
+controls of that name in one panel: the tab and the `data-widget-name`
+region it opens (a panel region counts as a control). The step was removed from
+the three new row-menu lessons (`presenter-document-row-menu`,
+`presenter-slide-menu`, `presenter-stage-style`), which are words now; the
+older `presenter-present-slide`, `presenter-auto-play`,
+`presenter-present-lyrics`, `presenter-songselect` and
+`presenter-public-domain` still open with it. **Change.** Let the twin rule
+skip a region whose name is the tab that owns it, or scope the step to the
+tab strip — `owa-enhance-mcp`'s. **Proof on apply.** Those five lessons' first
+Do it opens the Documents tab in English and Khmer. Found in run
+`2026-11-09`.
+
+## TP-12 · A list panel's header More Options shares its name with every list file's — `open` · S2 · reader, presenter
+
+**Evidence (2026-11-09).** `reader-bibles-new-list`, `reader-bibles-share`,
+`reader-notes-new-file` and `reader-notes-share` pressed `Bibles > More
+Options` / `Bible Notes > More Options`; live, the card refused each with
+_16 controls are called "More Options" (in Bibles) and the step does not say
+which_ — every list file row's dots carry the same title. The header button is
+`ListMenuButtonComp` in `src/others/FileListHandlerComp.tsx` (`aria-label` and
+`title` `tran('More Options')`), shared by every file list, so the Presenter's
+Documents, Lyrics and Background lists very likely refuse the same press (the
+Mini Screen's dots got **Mini Screen Options** for this reason). The four steps
+are words now, which cost ACTED two items (`bibles-more`, `notes-more`).
+**Change.** Its own title, e.g. **List Options**, in every language — an app
+change, so `owa-enhance`'s to apply; then the four openers press again.
+Related: `TP-08` (Resources' header). **Proof on apply.** The four Do it
+steps press the header's menu in English and Khmer; ACTED gains the two
+items back. Found in run `2026-11-09`.
+
+## TP-11 · The note window's Bible Lookup panel is taught only in the Reader — `idea` · S3 · bibleNote
+
+**Evidence (2026-11-09).** The Bible Note inventory keeps the jobs the panel
+is opened for there (Open Bible Lookup, Insert Bible Text, Insert Collapse
+Bible Text, Change Bible Key — taught by `bibleNote-bible-lookup`) and lists
+the rest as one exclusion, `bible-lookup-reader-tools`: the panel is the
+Reader's own `RenderBibleLookupComp` (study sidebar, Resources, verse picking,
+split, copy, the floating frame), measured in the Reader inventory. A
+volunteer in the note window cannot find those lessons from its All tips.
+**Change.** Let `getDailyTips('bibleNote')` also list the Reader lessons whose
+controls sit in that panel, by id — no new strings, and the guide already
+aims at the window it starts in; the user decides whether the note window's
+list should grow by ~20 entries (`TP-03` weighs every catalog in every
+window). **Proof on apply.** The exclusion becomes items, and `--leads` stays
+0 · 0. Found in run `2026-11-09`.
+
 ## TP-10 · Fresh Reader harvest and localized search gaps remain — `open` · S2 · reader
 
 **Evidence (2026-10-22).** Four new controls are inventoried and taught: the
@@ -13,6 +214,13 @@ ACTED stays 41/122, with 21 existing not-searchable warnings.
 recording the operator's passage, then improve localized search and safe actions
 under TP-07. Both changed tips passed All tips search and Show it in English
 and Khmer; they are self-guided.
+**2026-11-09: the state walk is done** — 36 live passes over the panels,
+menus, study views, names lookup, records, sessions and the tips card; the
+inventory grew to 186 items (10 new, e.g. More…, Floating, the session strip,
+the assistant doors), every name link and record row is ignored by pattern, not
+by the operator's own words, and leads read 0 · 0, so the English figure is
+final. Still open: the Khmer and French search gaps of details this run did not
+reword.
 
 What `/owa-enhance-tips` runs found and did not fix in the run, under stable
 ids, so a later run starts from the truth. A finding owned by another skill is
@@ -54,6 +262,11 @@ dropped `translateFind` (the title is English in every language anyway), so
 `reader-bibles-folder` ran Show it → Do it in a Khmer window, and
 `readerDemos.test.mjs` holds them to it; `presenter-path-editor` still carries
 it. The app key is still owed, and with it `translateFind` comes back.
+**2026-11-09, the Presenter run:** `presenter-path-editor` and the third step
+of `presenter-background-folder` (`Background > Show path editor`, whose whole
+scoped label WAS a key, so a Khmer window looked only for a translated name
+the control never draws) dropped `translateFind` too, and that key left all 87
+packages. No tip translates the path editor's name now.
 
 ## TP-02 · A Khmer detail names the control in other words, so Khmer search misses it — `done` · S2 · reader
 
@@ -91,7 +304,11 @@ each; `getPageDemo` builds a single step, so none can open a tab and then
 teach what is in it. **Change.** Give `PAGE_DEMO_LIST` the Reader's lesson
 shape (several steps, `translateFind`), then inventory those windows.
 **Proof on apply.** `--all` shows each window with an inventory and a COVERED
-figure. Found in run `2026-10-16`.
+figure. Found in run `2026-10-16`. **Bible Note, 2026-11-09:** inventoried
+(106 items) and covered 106/106 with 19 one-step lessons, each opening the
+menu or panel it names and listing the controls inside it — but ACTED is
+8/93, because one step can press only the opener; a second step (the menu's
+own row) is what several steps would buy.
 
 ## TP-05 · A scoped find never landed in a translated Reader window — `done` · S1 · reader
 
@@ -109,7 +326,7 @@ because the renderer's inline fallback takes the last. **Proof.** In Khmer
 pressed it there; `readerDemos.test.mjs` holds the order. The in-app MCP host
 picks it up on its next start (TP-06).
 
-## TP-06 · The in-app host runs its own, older copy of a built-in lesson — `idea` · S3 · all
+## TP-06 · The in-app host runs its own, older copy of a built-in lesson — `open` · S2 · all
 
 **Evidence.** **Show it** sends only the `demoId` to the in-app MCP host,
 which builds the lesson from the catalog and the dictionary it loaded when the
@@ -121,6 +338,23 @@ for the same reason. A packaged build ships both at once, so this is dev-only.
 host's, not only when the host lacks the id or has a show-only form
 (`startDailyTipGuide`). The walkthrough engine is `owa-enhance-mcp`'s, so it
 is filed there before it is built. Found in run `2026-10-16`.
+**More evidence (2026-11-10, live).** The skill's own gotcha said Show it
+"needs no restart" — true only for a NEW id. A CHANGED one runs the host's
+copy (`builtInDemo?.steps ?? steps` in `owaTools.mjs`): after the Quick Text
+lesson's Presets press became a Markdown Lesson press, Show it started the
+OLD steps, step 4 still `Quick Text > Presets` — which since the upgrade
+names the Presets row whose tiles rewrite a session's look. Properties was
+shut, so nothing could be pressed; stopped there. The app had been started
+with plain `npm run dev` (no nodemon), so nothing relaunched it. Verify a
+changed lesson only after the dev app has restarted.
+**And a failed load is kept too (2026-11-10, live).** Two minutes after a
+restart, the first Show it answered _Could not start this walkthrough_; the
+dev log read `[owa-devtools-mcp] MCP host request failed SyntaxError:
+Unexpected identifier 's'`. Another session was saving `owaTools.mjs` as the
+host made its first import, and Node keeps a failed ES-module import, so every
+later request failed the same way while the file on disk parsed clean
+(`node --check`). A restart taken once `node --check` passed every module
+fixed it. Before calling a card broken, read the dev log.
 
 ## TP-07 · ACTED is a third of the Reader: whole panels are taught in words only — `open` · S2 · reader
 
@@ -148,4 +382,9 @@ title, as the Mini Screen's **Mini Screen Options** got — an app change, so
 row's own words; a person can press it, and the chatbot starts lessons by id.
 _Remove an extra Bible version_ reads the same. **Change.** Titles that say
 what the volunteer gets (_Correct the last part of a reference_) instead of a
-verb the firewall must refuse. Found in run `2026-10-16`.
+verb the firewall must refuse. Found in run `2026-10-16`. **2026-11-09, the
+Presenter run:** only the row's TITLE is read that way — `owa_click` on
+_Remove what you no longer use_ was refused, while _Take a line out of a run
+sheet_, whose detail opens with "Remove from Presenting Flow", opened and ran
+**Show it**. That title is still owed the rewording above; its detail carries
+the four `Remove …` controls, so search finds it either way.

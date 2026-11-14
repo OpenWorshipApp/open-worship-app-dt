@@ -1,0 +1,101 @@
+[
+    {
+        "id": "N-01",
+        "form": "sermon",
+        "genre": "Old Testament narrative",
+        "ask": "Help me prepare a sermon on Abraham offering Isaac, Genesis 22"
+    },
+    {
+        "id": "N-02",
+        "form": "sermon",
+        "genre": "Gospel narrative",
+        "ask": "make me a preaching lesson on the woman who touched the hem of Jesus' garment"
+    },
+    {
+        "id": "N-03",
+        "form": "sermon",
+        "genre": "poetry, wisdom",
+        "ask": "I am preaching from Psalm 32 next week, please prepare the lesson"
+    },
+    {
+        "id": "N-04",
+        "form": "sermon",
+        "genre": "epistle",
+        "ask": "sermon on Hebrews 11:1-6 about what faith is"
+    },
+    {
+        "id": "N-05",
+        "form": "sermon",
+        "genre": "prophecy",
+        "ask": "Prepare a sermon on Habakkuk 3:17-19 about joy when everything fails"
+    },
+    {
+        "id": "N-06",
+        "form": "sermon",
+        "genre": "parable",
+        "ask": "help me prepare a sermon on the parable of the talents"
+    },
+    {
+        "id": "N-07",
+        "form": "sermon",
+        "genre": "topical",
+        "ask": "I need to preach about generosity this Sunday",
+        "then": "first-option"
+    },
+    {
+        "id": "N-08",
+        "form": "sermon",
+        "genre": "occasion",
+        "ask": "write a Palm Sunday sermon",
+        "then": "first-option"
+    },
+    {
+        "id": "N-09",
+        "form": "sermon",
+        "genre": "time limit",
+        "ask": "a 15 minute sermon on Colossians 3:12-17"
+    },
+    {
+        "id": "N-10",
+        "form": "sermon",
+        "genre": "typed by an elder",
+        "ask": "pls help me make preach for sunday about jesus wash the feet of disciple",
+        "then": "first-option"
+    },
+    {
+        "id": "N-11",
+        "form": "devotion",
+        "genre": "devotion",
+        "ask": "a short devotion on Psalm 23 for our women's prayer group"
+    },
+    {
+        "id": "N-12",
+        "form": "children",
+        "genre": "children's lesson",
+        "ask": "a children's lesson on Shadrach, Meshach and Abednego in the fiery furnace"
+    },
+    {
+        "id": "N-13",
+        "form": "sermon",
+        "genre": "Old Testament history",
+        "ask": "Help me prepare a sermon on Nehemiah rebuilding the wall, Nehemiah 4"
+    },
+    {
+        "id": "N-14",
+        "form": "short",
+        "genre": "baptism, epistle",
+        "ask": "a short message for a baptism service, from Romans 6:3-4"
+    },
+    {
+        "id": "N-15",
+        "form": "sermon",
+        "genre": "Gospel teaching",
+        "ask": "sermon on Jesus the bread of life, John 6:35-40"
+    },
+    {
+        "id": "N-16",
+        "form": "sermon",
+        "genre": "New Testament narrative",
+        "ask": "a sermon on Peter and Cornelius, Acts 10:34-48"
+    }
+]

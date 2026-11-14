@@ -27,6 +27,64 @@ export type LangFontsFileType = {
     songOrder?: number;
 };
 
+/** Every font file a `fonts.json` names, each once, in the order it names them. */
+export function listLangFontFileNames(fonts: LangFontsFileType) {
+    const fileNames = [
+        ...fonts.faces.map((face) => {
+            return face.file;
+        }),
+        ...(fonts.stickyNote === undefined ? [] : [fonts.stickyNote.file]),
+    ];
+    return [...new Set(fileNames)];
+}
+
+type OpenLyricFontSectionType = {
+    title: string;
+    fontFaces: string[];
+    indexRange: number;
+};
+
+/**
+ * A language's own section of a song's font list (a song previewer's, the
+ * Lyric Editor's and its Markdown manager's): its `app-…` face, at its
+ * `songOrder`. The one place both the plugin's factory and the app's
+ * fonts-only reading (`src/lang/langFontDataHelpers.ts`) say it, so a song
+ * lists the same faces whichever of them registered the language.
+ */
+export function applyLangOpenLyricFontFaces(
+    fonts: LangFontsFileType,
+    title: string,
+    {
+        openLyric,
+        openLyricMarkdownManager,
+        genOpenLyricFontFaces,
+    }: {
+        openLyric?: { fontFaces: any };
+        openLyricMarkdownManager?: { fontFaces: any };
+        genOpenLyricFontFaces: (
+            fontFacesList: any,
+            fontFaceData: OpenLyricFontSectionType,
+        ) => OpenLyricFontSectionType[];
+    },
+) {
+    const option: OpenLyricFontSectionType = {
+        title,
+        fontFaces: [fonts.uiFamily],
+        indexRange: fonts.songOrder ?? 0,
+    };
+    if (openLyric !== undefined) {
+        openLyric.fontFaces = genOpenLyricFontFaces(openLyric.fontFaces ?? [], {
+            ...option,
+        });
+    }
+    if (openLyricMarkdownManager !== undefined) {
+        openLyricMarkdownManager.fontFaces = genOpenLyricFontFaces(
+            openLyricMarkdownManager.fontFaces ?? [],
+            { ...option },
+        );
+    }
+}
+
 function genFontFaceCss(
     family: string,
     src: string,

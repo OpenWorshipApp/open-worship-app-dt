@@ -76,4 +76,34 @@ describe('the agent documents name only what the repo has', () => {
         },
         120000,
     );
+
+    // `AD-27`: the check read only a quoted name handed to `registerTool`, so
+    // the five tools registered by a constant were invisible to it (40 of 45)
+    // and CLAUDE.md's list lost four of them in silence. The count it prints
+    // is held to what the server REALLY registers, asked of a stand-in server
+    // that only records the names, in a process of its own.
+    test('the tools check counts every owa_* tool the server registers', () => {
+        const result = spawnSync(
+            process.execPath,
+            [
+                '--input-type=module',
+                '-e',
+                [
+                    "const url = new URL('./tools/owa-devtools-mcp/owaTools.mjs', 'file:///' + process.cwd().replace(/\\\\/g, '/') + '/');",
+                    'const { registerOwaTools } = await import(url.href);',
+                    'const nameSet = new Set();',
+                    "registerOwaTools({ registerTool: (name) => { nameSet.add(name); return {}; } }, { door: 'stdio' });",
+                    "console.log([...nameSet].filter((name) => name.startsWith('owa_')).length);",
+                ].join('\n'),
+            ],
+            { cwd: REPO_ROOT, encoding: 'utf-8' },
+        );
+        expect(result.status, result.stderr).toBe(0);
+        const registeredCount = Number(result.stdout.trim());
+        expect(registeredCount).toBeGreaterThan(0);
+        const label = readSignalList('tools').find((signal) => {
+            return signal.label.startsWith('registered owa_* tools');
+        })?.label;
+        expect(label).toContain(`(${registeredCount})`);
+    }, 120000);
 });

@@ -23,7 +23,9 @@ import {
     genBibleTextStylePatch,
     toBibleTextStyleView,
 } from '../_screen/bibleTextStyleHelpers';
+import { checkIsMirrorPresentationSetting } from '../../electron/screenMirrorProtocol';
 import {
+    BIBLE_TEXT_PRESETS_SETTING_NAME,
     MAX_BIBLE_TEXT_PRESET_COUNT,
     addBibleTextPreset,
     genBibleTextPresetName,
@@ -205,5 +207,18 @@ describe('putting a preset back', () => {
             ...patch,
         };
         expect(toBibleTextStyleView(applied)).toEqual(plainView);
+    });
+});
+
+describe('the presets stay with the presenter', () => {
+    // A screen draws the style that is APPLIED, never the saved list: until
+    // 2026-11-11 the screen mirror's `^screen-` took every preset into each
+    // screen's opening copy and pushed every save to the showing screens.
+    test('the preset list is no screen setting; the applied style is', () => {
+        expect(BIBLE_TEXT_PRESETS_SETTING_NAME).toBe(SETTING_NAME);
+        expect(checkIsMirrorPresentationSetting(SETTING_NAME)).toBe(false);
+        expect(
+            checkIsMirrorPresentationSetting('screen-bible--line-sync-0'),
+        ).toBe(true);
     });
 });

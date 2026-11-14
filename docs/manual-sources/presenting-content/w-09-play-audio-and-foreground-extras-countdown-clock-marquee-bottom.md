@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -34,10 +34,69 @@ button:
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
+  The message is markdown (`## Title`, `**bold**`, `*italic*`): press
+  **[en:tran:Preview]** above the box to read it as the screen will draw it,
+  and **[en:tran:Edit]** to type again. **[en:tran:Markdown Lesson]** beside
+  them opens a short lesson above the box: each mark as you type it next to
+  how the screen draws it — headings, bold, italic, struck-through words,
+  lists, a quote and a dividing line. Three rows show the thing most often
+  missed: one Enter does not start a new line on the screen; end the line
+  with `\` to break it, or leave an empty line for a new paragraph.
+  **[en:tran:Open Link in Browser]** at the top of the lesson opens the full
+  cheat sheet (markdownguide.org) in the computer's browser; press
+  **[en:tran:Markdown Lesson]** again to close it. Its **[en:tran:Presets]** (first row
+  of _Properties_, below) are **[en:tran:Bible Verse]**, **[en:tran:Speaker]**,
+  **[en:tran:Song Title]**, **[en:tran:Sermon Title]**,
+  **[en:tran:Event Session]** and **[en:tran:Announcement]**, and each also sets
+  how many seconds the text stays and how its markdown is set: the first line
+  becomes the title — **bold** for a song, a heading for a verse, a speaker,
+  a sermon, a session or an announcement — and a song's or a sermon's lines
+  under it turn *italic* (and upright again with any other preset). With
+  nothing typed yet (the box empty, or still its sample) a preset fills in an
+  example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
+  **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
+  white under black words on the **[en:tran:Light]** side), the
+  words at 45px set left, on screen as long as they take to read aloud;
+  past about three verses it
+  sets the words smaller, down to 28px, so a long passage stays a band
+  instead of covering the slide. Every word you typed is kept; pressing a
+  preset twice changes nothing more. The band sits flush on the bottom edge;
+  **Y** in _Properties_ lifts it.
+- **How long a quick text stays is each session's own.** On one line above
+  the box, **[en:tran:Delay]** is the seconds it waits before it shows (0 to
+  start) and **[en:tran:Live]** the seconds it stays on the screen (5 to
+  start; a preset sets its own; **[en:tran:Bible Verse]** works it out from
+  the words in the box, about 150 a minute read aloud with a few seconds
+  more, never under 10). The dial button after Live works Live out from the
+  words in the box, at the pace it then names: the first press
+  **[en:tran:Slow]**, the next **[en:tran:Medium]**, then
+  **[en:tran:Fast]**, then **[en:tran:Slow]** again — press it again after
+  changing the words. Switch on
+  **[en:tran:Infinite]** beside them and that session's text stays up until
+  you take it down with its **[en:tran:Hide Quick Text]** row or a Clear;
+  the Live box and the dial grey and Live keeps its number for when you
+  switch it off again. Each session keeps its own three, so a verse can stay up while a speaker's
+  name in another session leaves after a few seconds.
+- In _Properties_ the **[en:tran:Round]** row's px box can be emptied to type
+  another size: it keeps its place until you type a number, and shows the
+  size in force again if you leave it empty. 0 px is a square corner.
+- Quick Text's _Properties_ has **[en:tran:Horizontal Margin (%)]** and
+  **[en:tran:Vertical Margin (%)]** in place of a width, as a Lyric stage's
+  _Slide Margin_ has them: the side margin is kept on each side, the vertical
+  one above or below the box (whichever edge it is set to), and the link at the
+  left of both sliders moves both together.
+- The Show / Start row is the panel's footer in [en:tran:Messages], the
+  marquees, [en:tran:Quick Text], [en:tran:Stopwatch] and [en:tran:Long Text Show]
+  ([en:tran:Countdown] docks its Start / Pause row there; [en:tran:Time],
+  [en:tran:Camera Show] and [en:tran:Screen Show] their Hide row): it stays at
+  the bottom of the panel while the _Properties_ and the rest scroll under it,
+  and its buttons are small. The **X** and **Y** nudge boxes sit on one line
+  under the position pad.
 - **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
   **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
   clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
-  hours is fine: 25 h reads `25:00:00`) and press
+  hours is fine: a day or more reads its days first, in the app's language —
+  25 h reads `1d 01:00:00`) and press
   **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
   can be put up early and started on the cue. While it is on a screen,
   **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
@@ -57,7 +116,9 @@ button:
   of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
   session keeps its own list (the last 20; a reset under one second is not kept), and
   **[en:tran:Clear]** beside it empties it after a confirm.
-- **[en:tran:Time]** (the clock): same pattern — configure, Show, Hide.
+- **[en:tran:Time]** (the clock): same pattern — configure, then
+  **[en:tran:Show Time]** puts it up, and the **[en:tran:Hide Time]** button
+  under it (one for each screen holding it) takes it down.
   **[en:tran:Choose City]** puts the city's name above the clock in words
   (`Phnom Penh`) with its time; **[en:tran:Use Current Timezone]** goes back to
   this computer's time and takes that name away with it (a name you typed
@@ -124,14 +185,21 @@ button:
   what another session has on the wall, and a session with nothing up shows no
   Hide button at all. To take down what another session put up, press the session
   button carrying the on-screen dot and use the Hide button there. Something that
-  went up with no session (a dragged run-sheet row, the assistant) belongs to the
+  went up with no session (a dragged run-sheet row) belongs to the
   first session button, which is **[en:tran:Default]** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
   up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
-  thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  thing on a screen **per session**: showing from another session puts its own up
+  **beside** what is already there (a Bible verse band from one Quick Text session
+  and a speaker's name from another, both on the wall), and showing a session again
+  replaces only what that session had up. Each session's dot stays lit while its own
+  is up, its **[en:tran:Start counting]** / **[en:tran:Pause]** run only its own
+  clock, and its Hide row takes only its own down. Two sessions left at the same
+  place cover one another, so give each its own place in _Properties_ (a Countdown's
+  **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
+  **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
   another tile replaces it. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
@@ -139,6 +207,43 @@ button:
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
+- **[en:tran:Presets]** — the first row of _Properties_ in every foreground
+  component but [en:tran:Long Text Show] (which has its own looks) — dresses
+  the session in one press for a job: [en:tran:Messages] has
+  **[en:tran:Announcement]**, **[en:tran:Event Session]**,
+  **[en:tran:Top Banner]** and **[en:tran:Bottom Banner]**; the marquees
+  **[en:tran:Announcement]**, **[en:tran:Bible Verse]** (a slower scroll) and
+  **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
+  **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (large, in
+  the middle) and **[en:tran:Bottom Banner]**; [en:tran:Time] **[en:tran:Top Left]**, **[en:tran:Top Right]**, **[en:tran:Bottom Right]** and
+  **[en:tran:Center]**; the picture, screen and web shows
+  **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]**, **[en:tran:Center]** and a small corner;
+  the camera **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and **[en:tran:Bottom Left]**.
+  At the right of the _Presets_ name, in every component with words and a box
+  (all but the picture, screen and web shows), is **[en:tran:Dark]** /
+  **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
+  on a light box for a light one. The side lit is read off the words' colour.
+  Pressing the other one keeps both colours and only makes them lighter or
+  darker — the box darker and the words lighter for **[en:tran:Dark]**, the
+  reverse for **[en:tran:Light]** — until the words stand out clearly from the
+  box; a blue box stays blue, only lighter or darker. A preset pressed then goes
+  on in that side, and each preset's icon shows its colours on it. Until you
+  pick a colour yourself, a session's words and box follow the app's theme:
+  their **[en:tran:Light]** side in a light window.
+  Every preset with words but a marquee's sets its own font size too (a clock or timer in a
+  corner 40px, **[en:tran:Center]** 120px), and a clock's, a countdown's or a
+  stopwatch's box is never drawn narrower than its digits, whatever its width.
+  **[en:tran:Save as Preset]**, at the end of the row, keeps the session's whole
+  _Properties_ as a preset of your own under a name you type — place, size,
+  colours, font, Effects, layer and transition (and a marquee's size and speed).
+  It is a button after the app's own in that component's row, on every session;
+  pressing it puts that look back exactly. Right-click it for
+  **[en:tran:Rename Preset]**, **[en:tran:Replace with Current Look]** and
+  **[en:tran:Remove Preset]** (asked first). Thirty a component at most.
+  One of the app's presets sets the place, size, colours, frame and Effects the component has,
+  never its words' font, its transition or its layer; _Properties_ shows the
+  new values at once, ready to adjust, and what that session has on a screen
+  takes the new look straight away.
 - **[en:tran:Always on Top]** (every foreground component but [en:tran:Long Text Show], not just these — under
   _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
@@ -194,5 +299,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

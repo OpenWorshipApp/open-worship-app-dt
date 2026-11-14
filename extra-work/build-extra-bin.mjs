@@ -22,10 +22,20 @@
  *     ffmpeg/bin/ffmpeg[.exe]      <- a DIRECTORY: yt-dlp's --ffmpeg-location
  *     qjs/qjs[.exe]
  *     cloudflared/cloudflared[.exe] <- also resolved by electron/extraBinPaths.ts
+ *     mcp/open-worship-app-mcp[.exe] <- the app's MCP server for an AI agent
+ *
+ * `mcp/` (pack 0.0.6 and later) is not committed: it is BUILT here, from this
+ * checkout, as a Node single executable over the same runtime tree the npm
+ * package `open-worship-app-mcp` is made from (`mcp-dist/mcpExtraBin.mjs`).
+ * The Node running this script is the Node inside it, so each OS's release
+ * machine needs an official build from nodejs.org.
  *
  * Hooked to the `install` npm lifecycle (package.json), so it must never throw on
  * a platform we have no committed binaries for -- that would break plain
- * `npm i`. It warns and exits 0 instead.
+ * `npm i`. It warns and exits 0 instead. For the same reason a Node that cannot
+ * be the MCP's runtime, or `OWA_EXTRA_BIN_NO_MCP=1`, makes a pack WITHOUT
+ * `mcp/` and says so; `bin-info.json`'s `hasMcp` records it, and `release.sh`
+ * refuses to publish such a pack.
  */
 import {
   chmodSync,
@@ -52,6 +62,12 @@ import {
   getPrebuiltSourceDir,
   systemUtils,
 } from './buildPlatformHelpers.mjs';
+import { MCP_PACK_DIR_NAME } from './mcp-dist/mcpDistHelpers.mjs';
+import {
+  digestMcpPackInputs,
+  stageMcpPackDir,
+} from './mcp-dist/mcpExtraBin.mjs';
+import { readNodeSeaSupport } from './mcp-dist/mcpSea.mjs';
 
 const EXPERIMENT_BUILDING_DIR = resolve('./extra-work/experiment-building');
 const INFO_FILE_PATH = join(EXPERIMENT_BUILDING_DIR, 'info.json');
@@ -89,6 +105,24 @@ function clearReleaseDir(keptFileFullNames = []) {
 function genFileStamp(filePath) {
   const stats = statSync(filePath);
   return { filePath, size: stats.size, mtimeMs: stats.mtimeMs };
+}
+
+/**
+ * Whether this run builds `mcp/`, and the digest of what it is made from --
+ * part of the stamp, so a changed server rebuilds the pack.
+ */
+function readMcpPlan() {
+  if (process.env.OWA_EXTRA_BIN_NO_MCP === '1') {
+    return { isWanted: false, reason: 'OWA_EXTRA_BIN_NO_MCP=1' };
+  }
+  const support = readNodeSeaSupport();
+  if (!support.isUsable) {
+    return {
+      isWanted: false,
+      reason: `Node ${support.nodeVersion} cannot be its runtime: ${support.reason}`,
+    };
+  }
+  return { isWanted: true, digest: digestMcpPackInputs() };
 }
 
 function genChecksum(filePath) {
@@ -140,6 +174,7 @@ async function main() {
   const outFileFullName = `bin-${version}.tar.gz`;
   const outFilePath = join(RELEASE_DIR, outFileFullName);
   const stampFilePath = `${outFilePath}.stamp.json`;
+  const mcpPlan = readMcpPlan();
   const stamp = {
     version,
     platformDirName,
@@ -147,6 +182,9 @@ async function main() {
       ...sources.map(({ filePath }) => genFileStamp(filePath)),
       genFileStamp(INFO_FILE_PATH),
     ],
+    mcp: mcpPlan.isWanted
+      ? { digest: mcpPlan.digest }
+      : { skipped: mcpPlan.reason },
   };
 
   // `npm i` runs often (`release:version` runs it too) and re-gzipping ~36 MB
@@ -176,6 +214,27 @@ async function main() {
     }
     console.log(`"${baseName}" is staged`);
   }
+  let mcpInfo = null;
+  if (mcpPlan.isWanted) {
+    try {
+      mcpInfo = await stageMcpPackDir({
+        packStagingDir: STAGING_DIR,
+        packVersion: version,
+        platform: platformDirName,
+      });
+    } catch (error) {
+      // A different stamp than a built one: the next run tries again.
+      stamp.mcp = { failed: String(error.message).split('\n')[0] };
+      console.warn(
+        'WARNING: the pack is built WITHOUT the MCP executable, which ' +
+          `failed: ${error.message}`,
+      );
+    }
+  } else {
+    console.warn(
+      `The pack is built without the MCP executable (${mcpPlan.reason}).`,
+    );
+  }
   writeFileSync(
     join(STAGING_DIR, 'info.json'),
     JSON.stringify(
@@ -186,6 +245,17 @@ async function main() {
         binaries: Object.fromEntries(
           sources.map(({ baseName, fileFullName }) => [baseName, fileFullName]),
         ),
+        ...(mcpInfo === null
+          ? {}
+          : {
+              mcp: {
+                executable: `${MCP_PACK_DIR_NAME}/${mcpInfo.exeName}`,
+                appVersion: mcpInfo.appVersion,
+                commit: mcpInfo.commit,
+                nodeVersion: mcpInfo.nodeVersion,
+                toolCount: mcpInfo.toolCount,
+              },
+            }),
       },
       null,
       2,
@@ -212,7 +282,14 @@ async function main() {
       // extracted binaries executable on macOS/Linux.
       portable: true,
     },
-    ['info.json', 'yt', 'ffmpeg', 'qjs', 'cloudflared'],
+    [
+      'info.json',
+      'yt',
+      'ffmpeg',
+      'qjs',
+      'cloudflared',
+      ...(mcpInfo === null ? [] : [MCP_PACK_DIR_NAME]),
+    ],
   );
   rmSync(outFilePath, { force: true });
   renameSync(tempOutFilePath, outFilePath);
@@ -222,7 +299,13 @@ async function main() {
   writeFileSync(
     join(RELEASE_DIR, 'bin-info.json'),
     JSON.stringify(
-      { version, fileFullName: outFileFullName, checksum },
+      {
+        version,
+        fileFullName: outFileFullName,
+        checksum,
+        // Read by release.sh, which publishes no pack without it.
+        hasMcp: mcpInfo !== null,
+      },
       null,
       2,
     ),

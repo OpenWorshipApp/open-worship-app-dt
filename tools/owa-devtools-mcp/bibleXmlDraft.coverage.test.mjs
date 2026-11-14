@@ -25,7 +25,7 @@ import {
 } from './bibleXmlDraft.mjs';
 
 const XML_HEAD =
-  '<?xml version="1.0" encoding="UTF-8"?>\n<bible translation="Khmer Old">';
+  '<?xml version="1.0" encoding="UTF-8"?>\n<bible translation="Xxlang Old">';
 
 let dirPath;
 beforeEach(async () => {
@@ -81,7 +81,7 @@ describe('the drafts folder', () => {
 });
 
 describe('openBibleUrl', () => {
-  const url = 'https://example.org/bibles/KhmerBible.xml';
+  const url = 'https://example.org/bibles/XxlangBible.xml';
 
   test('says what each refusal of the site means', async () => {
     const answer = (status) => async () => new Response('no', { status });
@@ -123,7 +123,7 @@ describe('readBibleXmlTitles', () => {
     const pulled = [];
     const fetchImpl = async (url, options) => {
       headerList.push(options.headers);
-      if (url.endsWith('Khmer.xml')) {
+      if (url.endsWith('Xxlang.xml')) {
         return streamResponse([
           `${XML_HEAD}${' '.repeat(3000)}`,
           ' '.repeat(3000),
@@ -136,7 +136,7 @@ describe('readBibleXmlTitles', () => {
     const titleMap = new Map([['https://example.org/Kept.xml', 'Kept Title']]);
     const files = await readBibleXmlTitles(
       [
-        { url: 'https://example.org/Khmer.xml', name: 'Khmer.xml' },
+        { url: 'https://example.org/Xxlang.xml', name: 'Xxlang.xml' },
         { url: 'https://example.org/Untitled.xml', name: 'Untitled.xml' },
         { url: 'https://example.org/Kept.xml', name: 'Kept.xml' },
       ],
@@ -144,24 +144,28 @@ describe('readBibleXmlTitles', () => {
     );
     expect(files).toEqual([
       {
-        url: 'https://example.org/Khmer.xml',
-        name: 'Khmer.xml',
-        title: 'Khmer Old',
+        url: 'https://example.org/Xxlang.xml',
+        name: 'Xxlang.xml',
+        title: 'Xxlang Old',
       },
       // No title in it: it keeps its file name.
       { url: 'https://example.org/Untitled.xml', name: 'Untitled.xml' },
-      { url: 'https://example.org/Kept.xml', name: 'Kept.xml', title: 'Kept Title' },
+      {
+        url: 'https://example.org/Kept.xml',
+        name: 'Kept.xml',
+        title: 'Kept Title',
+      },
     ]);
     // Two reads, both ranged; the remembered one was not read again.
     expect(headerList).toHaveLength(2);
     expect(headerList[0].Range).toBe('bytes=0-2047');
-    expect(titleMap.get('https://example.org/Khmer.xml')).toBe('Khmer Old');
+    expect(titleMap.get('https://example.org/Xxlang.xml')).toBe('Xxlang Old');
     expect(pulled).toEqual(['https://example.org/Untitled.xml']);
   });
 });
 
 describe('downloadBibleXml', () => {
-  const url = 'https://example.org/bibles/KhmerBible.xml';
+  const url = 'https://example.org/bibles/XxlangBible.xml';
 
   test('says an empty file is empty', async () => {
     await expectProblem(
@@ -179,7 +183,7 @@ describe('downloadBibleXml', () => {
       if (asked === url) {
         return streamResponse([
           `<!DOCTYPE html><html><body>${' '.repeat(2100)}`,
-          '<a href="files/KhmerBible.xml">Khmer</a>',
+          '<a href="files/XxlangBible.xml">Xxlang</a>',
           '<a href="files/ThaiBible.xml">Thai</a></body></html>',
         ]);
       }
@@ -189,11 +193,11 @@ describe('downloadBibleXml', () => {
       url,
       dirPath,
       fetchImpl,
-      find: 'khmer',
+      find: 'xxlang',
     });
     expect(answer.kind).toBe('page');
     expect(answer.files.map((file) => file.url)).toContain(
-      'https://example.org/bibles/files/KhmerBible.xml',
+      'https://example.org/bibles/files/XxlangBible.xml',
     );
     expect(answer.matched).toBe(1);
   });
@@ -211,7 +215,7 @@ describe('downloadBibleXml', () => {
     });
     expect(answer).toMatchObject({
       kind: 'xml',
-      fileName: 'KhmerBible.xml',
+      fileName: 'XxlangBible.xml',
       source: url,
       finalUrl: url,
       bytes: chunks.join('').length,
@@ -236,9 +240,7 @@ describe('downloadBibleXml', () => {
       }),
       'unreachable',
     );
-    expect(problem.message).toBe(
-      'The download broke off (connection reset).',
-    );
+    expect(problem.message).toBe('The download broke off (connection reset).');
     expect(await readdir(dirPath)).toEqual([]);
   });
 });

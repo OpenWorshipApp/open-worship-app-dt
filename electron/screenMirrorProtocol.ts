@@ -249,8 +249,20 @@ const MIRROR_PRESENTATION_SETTING =
 // every screen); left out, the screen draws that setting's default.
 export const MIRROR_PRESENTATION_SETTING_MAX_LENGTH = 256000;
 
+// A saved list of looks is the presenter's to pick from, and every one is
+// named `…-presets`: the Bible text style's (`bibleTextPresetHelpers.ts`), the
+// spotlight's (`overlayPresetHelpers.ts`), each foreground component's
+// (`foregroundSavedPresetHelpers.ts`), up to 30 whole looks each. A screen
+// draws the look that is APPLIED, never the list. Until 2026-11-11 `^screen-`
+// and `^foreground-` took them into every screen's opening copy and pushed
+// each save to every showing screen.
+const PRESENTER_ONLY_SETTING = /-presets$/;
+
 export function checkIsMirrorPresentationSetting(key: string) {
-    return MIRROR_PRESENTATION_SETTING.test(key);
+    return (
+        MIRROR_PRESENTATION_SETTING.test(key) &&
+        !PRESENTER_ONLY_SETTING.test(key)
+    );
 }
 
 /**

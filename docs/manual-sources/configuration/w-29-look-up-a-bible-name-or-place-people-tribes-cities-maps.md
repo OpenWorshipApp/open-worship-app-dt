@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -25,7 +25,8 @@ your Bible reading.
    places themselves are written in. It is **green** while that is the language of the
    Bible you are reading and **red** while it is not — `en` beside a Khmer Bible such as
    `ពគប` is red, and its tooltip adds **[en:tran:Not the language of the Bible]** with
-   that Bible's language. Click it and pick another — `km - Khmer
+   that Bible's language. Click it and pick another language the names come
+   in — one installed from Settings → **[en:tran:Languages]** (W-55), such as `km - Khmer
 (ភាសាខ្មែរ)` — and the lookup list and the
    "in your reading" panel switch to it at once, with nothing to reload.
    Person and location windows already open keep their own language. The choice is
@@ -77,7 +78,7 @@ your Bible reading.
    > window's robot does (step 13); and **[en:tran:Open Graph Preview]** opens its
    > connection graph (see **W-38**).
 7. **[en:tran:Verses]** starts closed and shows how many there are — some entries have hundreds
-   (Jerusalem has 712). Click it to open, and the references turn into readable
+   (Jerusalem has 710). Click it to open, and the references turn into readable
    titles like _Joshua 10:1-43_.
 8. Any underlined name or place — in the description or in a list — opens as another
    small window **beside** the one you are reading, so you can follow a family or a
@@ -160,7 +161,10 @@ your Bible reading.
     passage again when it is already in that language — and on an English passage _show this passage in English_
     repeats the record's own words. _How do I save this?_ and _copy this passage_ name
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
-    button beside the answer. A question about using the app — _how do I put this passage
+    button beside the answer. Ask to keep something that is not the passage itself —
+    _save to a bible note_, _save the preaching lesson to a file_ — and no button is named:
+    the assistant writes it into a new Bible note, which opens in its own window (W-60). A
+    question about using the app — _how do I put this passage
     on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
     **Everything related to it.** As a passage's card opens it also gathers what the
     app's own cross references — the same ones the Reader's
@@ -204,13 +208,14 @@ list of names and places and the small buttons on a window's title bar keep thei
 
 **A note on what is translated:** a person's kind and **[en:tran:Gender]** and a place's **[en:tran:Type]**
 come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
-is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown exactly as the
-dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
+is one word out of a short, fixed list. A person's **[en:tran:Age]** comes in it too, its number kept: the datasets write
+every age in one of three set phrases, such as _175 years_. Only a phrase or a word — a gender, a
+place type — a newer dataset adds before the app knows it is shown exactly as the dataset wrote it.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149` · `CB-154` · `CB-162`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

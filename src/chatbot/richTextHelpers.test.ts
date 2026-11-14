@@ -44,9 +44,9 @@ describe('splitRichTextParts', () => {
         ]);
     });
 
-    // The whole list asked in Khmer (2026-10-18): "a line of three backticks
-    // (```)" was drawn with a code span from the third backtick to the next
-    // group's first.
+    // The whole list asked in another language (2026-10-18): "a line of
+    // three backticks (```)" was drawn with a code span from the third
+    // backtick to the next group's first.
     test('a run of backticks is words, not the edge of a code span', () => {
         const line =
             'a line of three backticks (```) then ol:Verse, then (```)';
@@ -84,8 +84,9 @@ describe('splitRichTextParts', () => {
         ]);
     });
 
-    // The Khmer manual writes the fence as `` ``` ``, and an answer copies it
-    // (pass 13, 2026-10-18): drawn raw, the reader saw five backticks more.
+    // A translated manual writes the fence as `` ``` ``, and an answer
+    // copies it (pass 13, 2026-10-18): drawn raw, the reader saw five
+    // backticks more.
     test('a double-backtick span is code holding its backticks', () => {
         expect(
             splitRichTextParts('three backticks (`` ``` ``) and `ol:Verse 1`'),

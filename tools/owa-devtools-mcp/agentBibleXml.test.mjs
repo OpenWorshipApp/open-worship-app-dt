@@ -45,7 +45,7 @@ vi.mock('./bibleBookNames.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   findBibleBookNames: mocks.findNames,
   getBibleNumberChoices: (locale) =>
-    locale.startsWith('km')
+    locale.startsWith('xx')
       ? [
           ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'],
           ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
@@ -82,18 +82,18 @@ async function call(args) {
 
 function analysis() {
   return {
-    title: 'Khmer Bible',
+    title: 'Xxlang Bible',
     books: 66,
     chapters: 1189,
     verses: 31102,
     missingBooks: [],
-    keys: ['KHM', 'KHM2'],
+    keys: ['XXL', 'XXL2'],
     takenKeys: ['KJV'],
-    locales: [{ locale: 'km-KH', why: 'the verses are Khmer' }],
-    recommendedLocale: 'km-KH',
+    locales: [{ locale: 'xx-XX', why: 'the verses are Xxlang' }],
+    recommendedLocale: 'xx-XX',
     nameLists: [
       {
-        label: 'Khmer names',
+        label: 'Xxlang names',
         source: 'built in',
         names: ['GEN ✝', 'EXO ✝'],
       },
@@ -115,14 +115,14 @@ beforeEach(() => {
     kind: 'xml',
     draftId: 'abcdefghijkl',
     xmlPath: '/drafts/abcdefghijkl.xml',
-    fileName: 'KhmerBible.xml',
-    source: 'https://example.test/KhmerBible.xml',
+    fileName: 'XxlangBible.xml',
+    source: 'https://example.test/XxlangBible.xml',
     bytes: 1048576,
   };
   state.meta = {
-    fileName: 'KhmerBible.xml',
+    fileName: 'XxlangBible.xml',
     recommended: {
-      locale: 'km-KH',
+      locale: 'xx-XX',
       digits: 'local',
       bookNames: 'n0',
     },
@@ -133,7 +133,7 @@ beforeEach(() => {
     if (request.action === 'list')
       return { bibles: state.installed, downloaded: [] };
     if (request.action === 'score') return { matches: [1, 8] };
-    if (request.action === 'info') return { key: request.key, locale: 'km-KH' };
+    if (request.action === 'info') return { key: request.key, locale: 'xx-XX' };
     if (request.action === 'import')
       return { installed: request.key, undo: 'undo-1' };
     if (request.action === 'update')
@@ -188,34 +188,34 @@ describe('Bible XML MCP tool', () => {
     state.downloaded = {
       kind: 'page',
       files: [
-        { title: '  Khmer  Bible ', url: 'https://example.test/one.xml' },
+        { title: '  Xxlang  Bible ', url: 'https://example.test/one.xml' },
         { title: 'Unknown Title', url: 'https://example.test/two.xml' },
       ],
     };
-    state.installed = [{ key: 'KHM', title: 'khmer bible' }];
+    state.installed = [{ key: 'XXL', title: 'xxlang bible' }];
     const result = value(
       await call({ action: 'check', url: 'https://example.test/page' }),
     );
-    expect(result.files[0].installedAs).toBe('KHM');
+    expect(result.files[0].installedAs).toBe('XXL');
     expect(result.files[1].installedAs).toBeUndefined();
   });
 
   test('analyzed XML offers choices, persists the draft and warns about a duplicate title', async () => {
-    state.installed = [{ key: 'KHM-OLD', title: 'Khmer Bible' }];
+    state.installed = [{ key: 'XXL-OLD', title: 'Xxlang Bible' }];
     const result = value(
       await call({
         action: 'check',
-        url: 'https://example.test/KhmerBible.xml',
+        url: 'https://example.test/XxlangBible.xml',
       }),
     );
     expect(result).toMatchObject({
       kind: 'xml',
       draftId: 'abcdefghijkl',
-      installedAs: 'KHM-OLD',
+      installedAs: 'XXL-OLD',
       books: 66,
       recommended: {
-        key: 'KHM',
-        locale: 'km-KH',
+        key: 'XXL',
+        locale: 'xx-XX',
         digits: 'local',
         bookNames: 'n0',
       },
@@ -226,8 +226,8 @@ describe('Bible XML MCP tool', () => {
       expect.objectContaining({
         fileListId: 'n1',
         // Kept for the installed Bible's note.
-        url: 'https://example.test/KhmerBible.xml',
-        source: 'https://example.test/KhmerBible.xml',
+        url: 'https://example.test/XxlangBible.xml',
+        source: 'https://example.test/XxlangBible.xml',
         bytes: 1048576,
       }),
     );
@@ -270,14 +270,14 @@ describe('Bible XML MCP tool', () => {
     });
     state.lists.set('n0', { names: ['Genesis', 'Exodus'] });
     const result = value(
-      await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' }),
+      await call({ action: 'import', draftId: 'abcdefghijkl', key: 'XXL' }),
     );
-    expect(result).toMatchObject({ installed: 'KHM', undo: 'undo-1' });
+    expect(result).toMatchObject({ installed: 'XXL', undo: 'undo-1' });
     expect(result.note).toContain('Undo');
     expect(state.requests.at(-1)).toMatchObject({
       action: 'import',
-      key: 'KHM',
-      locale: 'km-KH',
+      key: 'XXL',
+      locale: 'xx-XX',
       bookNames: ['Genesis', 'Exodus'],
     });
     expect(mocks.remove).toHaveBeenCalledWith('abcdefghijkl');
@@ -286,26 +286,29 @@ describe('Bible XML MCP tool', () => {
   test('import hands the app where the draft came from and which list was chosen', async () => {
     state.meta = {
       ...state.meta,
-      url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
-      source: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
-      finalUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
+      url: 'https://github.com/o/r/blob/main/XxlangBible.xml',
+      source: 'https://raw.githubusercontent.com/o/r/main/XxlangBible.xml',
+      finalUrl: 'https://raw.githubusercontent.com/o/r/main/XxlangBible.xml',
       bytes: 2048,
     };
     state.lists.set('n0', {
-      label: 'Khmer names',
+      label: 'Xxlang names',
       source: 'https://example.test/names',
       names: ['Genesis', 'Exodus'],
     });
-    await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' });
+    await call({ action: 'import', draftId: 'abcdefghijkl', key: 'XXL' });
     expect(state.requests.at(-1).origin).toEqual({
       // Registered with no door: an outside agent over stdio.
       by: 'agent',
-      url: 'https://github.com/o/r/blob/main/KhmerBible.xml',
-      downloadUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
-      finalUrl: 'https://raw.githubusercontent.com/o/r/main/KhmerBible.xml',
-      fileName: 'KhmerBible.xml',
+      url: 'https://github.com/o/r/blob/main/XxlangBible.xml',
+      downloadUrl: 'https://raw.githubusercontent.com/o/r/main/XxlangBible.xml',
+      finalUrl: 'https://raw.githubusercontent.com/o/r/main/XxlangBible.xml',
+      fileName: 'XxlangBible.xml',
       bytes: 2048,
-      bookNames: { label: 'Khmer names', source: 'https://example.test/names' },
+      bookNames: {
+        label: 'Xxlang names',
+        source: 'https://example.test/names',
+      },
     });
   });
 
@@ -326,7 +329,7 @@ describe('Bible XML MCP tool', () => {
     await call({
       action: 'import',
       draftId: 'abcdefghijkl',
-      key: 'KHM',
+      key: 'XXL',
       bookNames: { GEN: 'New Genesis' },
     });
     expect(state.requests.at(-1).origin).toMatchObject({
@@ -339,7 +342,7 @@ describe('Bible XML MCP tool', () => {
     const result = await call({
       action: 'import',
       draftId: 'abcdefghijkl',
-      key: 'KHM',
+      key: 'XXL',
       bookNames: 'missing',
     });
     expect(result.isError).toBe(true);
@@ -355,12 +358,12 @@ describe('Bible XML MCP tool', () => {
       await call({
         action: 'import',
         draftId: 'abcdefghijkl',
-        key: 'FRE',
-        locale: 'fr-FR',
+        key: 'YYL',
+        locale: 'yy-YY',
       }),
     );
     expect(state.requests.at(-1)).toMatchObject({
-      locale: 'fr-FR',
+      locale: 'yy-YY',
       bookNames: ['File Genesis', 'File Exodus'],
     });
     expect(state.requests.at(-1).numbers[0]).toBe('0');
@@ -371,12 +374,12 @@ describe('Bible XML MCP tool', () => {
     const result = value(
       await call({
         action: 'update',
-        key: 'KHM',
+        key: 'XXL',
         digits: 'ascii',
         bookNames: { GEN: 'New Genesis' },
       }),
     );
-    expect(result).toMatchObject({ changed: ['title'], key: 'KHM' });
+    expect(result).toMatchObject({ changed: ['title'], key: 'XXL' });
     expect(state.requests.map((request) => request.action)).toEqual([
       'info',
       'update',
@@ -389,11 +392,11 @@ describe('Bible XML MCP tool', () => {
 
   test('list, info, delete and cancel forward the correct work or release the draft', async () => {
     expect(value(await call({ action: 'list' }))).toMatchObject({ bibles: [] });
-    expect(value(await call({ action: 'info', key: 'KHM' }))).toMatchObject({
-      key: 'KHM',
+    expect(value(await call({ action: 'info', key: 'XXL' }))).toMatchObject({
+      key: 'XXL',
     });
-    expect(value(await call({ action: 'delete', key: 'KHM' }))).toMatchObject({
-      removed: 'KHM',
+    expect(value(await call({ action: 'delete', key: 'XXL' }))).toMatchObject({
+      removed: 'XXL',
     });
     expect(
       value(await call({ action: 'cancel', draftId: 'abcdefghijkl' })),
@@ -420,7 +423,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
   const namesFound = (locale) => ({
     locale,
     bookNames: [['GEN ✝', 'EXO ✝']],
-    sources: [{ label: 'French', url: 'https://example.test/fr' }],
+    sources: [{ label: 'Yylang', url: 'https://example.test/yy' }],
     warnings: [],
     moreAvailable: false,
   });
@@ -432,7 +435,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
       return namesFound(locale);
     });
     const result = value(
-      await call({ action: 'names', locale: 'fr', draftId: 'abcdefghijkl' }),
+      await call({ action: 'names', locale: 'en', draftId: 'abcdefghijkl' }),
     );
     expect(mocks.firewall).toHaveBeenCalledWith('owa_read_website', {
       url: 'https://www.bible.com/bible/1/GEN.1',
@@ -444,7 +447,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     );
     expect(read).toEqual({ content: 'page' });
     // A bare language is installed under its whole locale.
-    expect(result.locale).toBe('fr-FR');
+    expect(result.locale).toBe('en-US');
   });
 
   test('stops a name search the network budget refuses', async () => {
@@ -456,7 +459,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
       await readPage('https://www.bible.com/bible/1/GEN.1');
       return namesFound(locale);
     });
-    const result = await call({ action: 'names', locale: 'fr' });
+    const result = await call({ action: 'names', locale: 'yy' });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe('That is ten reads in five minutes.');
     expect(mocks.evaluateTarget).not.toHaveBeenCalled();
@@ -465,7 +468,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
   test('keeps a locale it cannot read as it was written', async () => {
     state.names = namesFound('not a locale!');
     const result = value(
-      await call({ action: 'names', locale: 'fr', key: 'FRE' }),
+      await call({ action: 'names', locale: 'yy', key: 'YYL' }),
     );
     expect(result.locale).toBe('not a locale!');
     // No draft to score the lists against: they stay in their order.
@@ -477,7 +480,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
 
   test('leaves the lists unranked when the draft cannot score them', async () => {
     state.names = {
-      ...namesFound('fr-FR'),
+      ...namesFound('yy-YY'),
       bookNames: [['A'], ['B']],
       sources: [
         { label: 'First', url: null },
@@ -489,7 +492,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
       return request.action === 'score' ? {} : worker(request);
     };
     const unscored = value(
-      await call({ action: 'names', locale: 'fr-FR', draftId: 'abcdefghijkl' }),
+      await call({ action: 'names', locale: 'yy-YY', draftId: 'abcdefghijkl' }),
     );
     expect(unscored.nameLists.map((list) => list.label)).toEqual([
       'First',
@@ -502,7 +505,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
       return worker(request);
     };
     const failed = value(
-      await call({ action: 'names', locale: 'fr-FR', draftId: 'abcdefghijkl' }),
+      await call({ action: 'names', locale: 'yy-YY', draftId: 'abcdefghijkl' }),
     );
     expect(failed.nameLists.map((list) => list.label)).toEqual([
       'First',
@@ -537,7 +540,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     };
     const result = await call({
       action: 'check',
-      url: 'https://example.test/KhmerBible.xml',
+      url: 'https://example.test/XxlangBible.xml',
     });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe('Script failed to execute');
@@ -550,7 +553,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     );
     expect(
       value(
-        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' }),
+        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'XXL' }),
       ),
     ).toEqual({
       problem: 'draft-gone',
@@ -560,7 +563,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     const broken = await call({
       action: 'import',
       draftId: 'abcdefghijkl',
-      key: 'KHM',
+      key: 'XXL',
     });
     expect(broken.isError).toBe(true);
     expect(broken.content[0].text).toBe('meta.json is not JSON');
@@ -573,7 +576,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     };
     expect(
       value(
-        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' }),
+        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'XXL' }),
       ),
     ).toMatchObject({ problem: 'locale' });
     expect(state.requests.some((request) => request.action === 'import')).toBe(
@@ -595,7 +598,7 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
     const failed = await call({
       action: 'import',
       draftId: 'abcdefghijkl',
-      key: 'KHM',
+      key: 'XXL',
     });
     expect(failed.isError).toBe(true);
     expect(failed.content[0].text).toBe('The disk is full.');
@@ -608,17 +611,23 @@ describe('Bible XML MCP tool, the less travelled paths', () => {
         ? { isError: true, reason: 'No Bible is installed as "XYZ".' }
         : {};
     };
-    const result = await call({ action: 'update', key: 'XYZ', digits: 'local' });
+    const result = await call({
+      action: 'update',
+      key: 'XYZ',
+      digits: 'local',
+    });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe('No Bible is installed as "XYZ".');
     expect(state.requests.map((request) => request.action)).toEqual(['info']);
   });
 
   test('update with an empty list id changes no book names', async () => {
-    value(await call({ action: 'update', key: 'KHM', title: 'K', bookNames: ' ' }));
+    value(
+      await call({ action: 'update', key: 'XXL', title: 'K', bookNames: ' ' }),
+    );
     expect(state.requests.at(-1)).toEqual({
       action: 'update',
-      key: 'KHM',
+      key: 'XXL',
       title: 'K',
     });
   });

@@ -1,0 +1,336 @@
+{
+    "ga": {
+        "stopwatchDescribed": [
+            "taispeáin clog a chomhaireann suas ó náid",
+            "cuir amadóir ar an scáileán atá ag comhaireamh suas",
+            "tosaigh ag comhaireamh an ama ó náid ar an scáileán",
+            "taispeáin an t-am atá imithe ó thosaigh an tseanmóir",
+            "clog ag dul suas o 0 ar an scailean le do thoil"
+        ],
+        "stopwatchNamed": [
+            "cuir stopuaireadóir ar an scáileán",
+            "tosaigh an stopwatch ar an scailean"
+        ],
+        "countdownDescribed": [
+            "clog ag comhaireamh síos cúig nóiméad",
+            "taispeáin an t-am ag dul síos go náid roimh an tseirbhís",
+            "amadóir a théann síos ó dheich nóiméad go náid"
+        ],
+        "clock": [
+            "taispeáin an t-am anois ar an scáileán",
+            "cuir clog ar an scáileán",
+            "taispeáin an t-am reatha sa chúinne"
+        ],
+        "none": [
+            "cén t-am a thosaíonn an t-aifreann?",
+            "comhair cé mhéad amhrán atá againn",
+            "cas suas an fhuaim beagán",
+            "tá clog an tséipéil briste, cé a dheisíonn é?"
+        ],
+        "floor": {
+            "stopwatch": 4,
+            "countdown": 2,
+            "clock": 1
+        }
+    },
+    "sn": {
+        "stopwatchDescribed": [
+            "ratidza wachi inoverenga ichikwira kubva pa zero",
+            "isa timer pascreen inoverenga ichienda kumusoro",
+            "tanga kuverenga nguva kubva pa zero pascreen",
+            "ratidza nguva yadarika kubva pakatanga mharidzo",
+            "isa wachi inokwira kubva pa 0 pa screen"
+        ],
+        "stopwatchNamed": [
+            "batidza stopwatch pa screen",
+            "tinoda stopwatch pascreen"
+        ],
+        "countdownDescribed": [
+            "wachi inoverenga ichidzika maminitsi mashanu",
+            "ratidza nguva ichidzokera ku zero sevhisi isati yatanga",
+            "isa timer inodzika kubva pa maminitsi gumi kusvika pa zero"
+        ],
+        "clock": [
+            "ratidza nguva yazvino pascreen",
+            "isa wachi pascreen",
+            "ratidza nguva iripo izvozvi pa screen"
+        ],
+        "none": [
+            "sevhisi inotanga nguva dzipi?",
+            "verenga kuti tine nziyo ngani",
+            "kwidza volume zvishoma",
+            "wachi yekereke yaputsika, ndiani anoigadzirisa?"
+        ],
+        "floor": {
+            "stopwatch": 5,
+            "countdown": 2,
+            "clock": 1
+        }
+    },
+    "xh": {
+        "stopwatchDescribed": [
+            "bonisa iwotshi ebala ukuya phezulu ukusuka ku-zero",
+            "beka i-timer kwisikrini ebala inyuka",
+            "qala ukubala ixesha ukusuka ku-zero kwisikrini",
+            "bonisa ixesha elihambileyo okoko yaqala intshumayelo",
+            "iwotshi enyukayo ukusuka ku 0 esikrinini nceda"
+        ],
+        "stopwatchNamed": ["vula i-stopwatch kwisikrini", "qalisa istopwatch"],
+        "countdownDescribed": [
+            "iwotshi ebala ibuyela emva imizuzu emihlanu",
+            "bonisa ixesha elehlayo liye ku-zero phambi kwenkonzo",
+            "i-timer ehlayo ukusuka kwimizuzu elishumi ukuya ku-zero"
+        ],
+        "clock": [
+            "bonisa ixesha langoku kwisikrini",
+            "beka iwotshi esikrinini",
+            "bonisa ukuba ngubani ixesha ngoku esikrinini"
+        ],
+        "none": [
+            "inkonzo iqala ngabani ixesha?",
+            "bala ukuba zingaphi iingoma esinazo",
+            "nyusa isandi kancinci",
+            "iwotshi yecawa yaphukile, ngubani oza kuyilungisa?"
+        ],
+        "floor": {
+            "stopwatch": 5,
+            "countdown": 3,
+            "clock": 1
+        }
+    },
+    "zu": {
+        "stopwatchDescribed": [
+            "bonisa iwashi elibala likhuphuka kusukela ku-zero",
+            "faka i-timer esikrinini ebala enyuka",
+            "qala ukubala isikhathi kusukela ku-zero esikrinini",
+            "bonisa isikhathi esesidlulile kusukela kwaqala intshumayelo",
+            "iwashi elikhuphukayo kusukela ku 0 esikrinini sicela"
+        ],
+        "stopwatchNamed": [
+            "vula i-stopwatch esikrinini",
+            "faka istopwatch esikrinini"
+        ],
+        "countdownDescribed": [
+            "iwashi elibala ngokwehla imizuzu emihlanu",
+            "bonisa isikhathi esehlayo siye ku-zero ngaphambi kwenkonzo",
+            "i-timer ehlayo kusukela emizuzwini eyishumi kuya ku-zero"
+        ],
+        "clock": [
+            "bonisa isikhathi samanje esikrinini",
+            "beka iwashi esikrinini",
+            "bonisa ukuthi yisikhathi sini manje esikrinini"
+        ],
+        "none": [
+            "inkonzo iqala ngasiphi isikhathi?",
+            "bala ukuthi zingaki izingoma esinazo",
+            "khuphula umsindo kancane",
+            "iwashi lesonto lephukile, ubani ozolilungisa?"
+        ],
+        "floor": {
+            "stopwatch": 4,
+            "countdown": 3,
+            "clock": 1
+        }
+    },
+    "my": {
+        "stopwatchDescribed": [
+            "သုညကနေ တိုးပြီး ရေတဲ့ နာရီ ပြပေးပါ",
+            "စခရင်ပေါ်မှာ အပေါ်ကို ရေတက်သွားတဲ့ timer တစ်ခု တင်ပေး",
+            "စခရင်ပေါ်မှာ သုညကနေ အချိန်ကို စရေပေးပါ",
+            "ဒေသနာ ကြာချိန်ကို စခရင်ပေါ်မှာ ပြပေးပါ",
+            "0 ကနေ တက်သွားတဲ့ နာရီ ပြပါ"
+        ],
+        "stopwatchNamed": [
+            "stopwatch ဖွင့်ပေးပါ",
+            "စတော့ဝါ့ချ် စခရင်ပေါ် တင်ပေး"
+        ],
+        "countdownDescribed": [
+            "၅ မိနစ်ကနေ နောက်ပြန်ရေတဲ့ နာရီ",
+            "ဝတ်ပြုမစခင် သုညအထိ ပြန်ကျသွားတဲ့ အချိန်ကို ပြပေးပါ",
+            "၁၀ မိနစ်ကနေ သုညအထိ လျော့သွားတဲ့ နာရီ တင်ပေး"
+        ],
+        "clock": [
+            "အခုအချိန်ကို စခရင်ပေါ်မှာ ပြပေးပါ",
+            "စခရင်ပေါ်မှာ နာရီ တင်ပေး",
+            "ဘယ်နှစ်နာရီ ရှိပြီလဲ စခရင်မှာ ပြပေး"
+        ],
+        "none": [
+            "ဝတ်ပြုပွဲ ဘယ်အချိန် စမလဲ",
+            "သီချင်း ဘယ်နှစ်ပုဒ် ရှိလဲ ရေကြည့်ပေး",
+            "အသံ နည်းနည်း မြှင့်ပေး",
+            "ဘုရားကျောင်းက နာရီ ပျက်နေတယ်၊ ဘယ်သူ ပြင်မလဲ"
+        ],
+        "floor": {
+            "stopwatch": 2,
+            "countdown": 0,
+            "clock": 1
+        }
+    },
+    "si": {
+        "stopwatchDescribed": [
+            "බිංදුවේ සිට ඉහළට ගණන් කරන ඔරලෝසුවක් පෙන්වන්න",
+            "තිරයේ ඉහළට ගණන් කරන ටයිමරයක් දාන්න",
+            "තිරයේ බිංදුවේ සිට කාලය ගණන් කරන්න පටන් ගන්න",
+            "දේශනාවට ගත වූ කාලය තිරයේ පෙන්වන්න",
+            "0 ඉඳන් වැඩි වෙන ඔරලෝසුවක් screen එකේ දාන්න"
+        ],
+        "stopwatchNamed": [
+            "නැවතුම් ඔරලෝසුව තිරයේ පෙන්වන්න",
+            "ස්ටොප්වොච් එක දාන්න"
+        ],
+        "countdownDescribed": [
+            "විනාඩි 5ක් පහළට ගණන් කරන ඔරලෝසුවක්",
+            "නමස්කාරයට කලින් බිංදුව දක්වා අඩු වෙන වෙලාව පෙන්වන්න",
+            "විනාඩි 10 සිට බිංදුවට අඩු වෙන ටයිමරයක් දාන්න"
+        ],
+        "clock": [
+            "දැන් වෙලාව තිරයේ පෙන්වන්න",
+            "තිරයට ඔරලෝසුවක් දාන්න",
+            "වෙලාව කීයද කියලා screen එකේ පෙන්වන්න"
+        ],
+        "none": [
+            "නමස්කාරය පටන් ගන්නේ කීයටද?",
+            "අපිට ගීත කීයක් තියෙනවද ගණන් කරන්න",
+            "සද්දේ ටිකක් වැඩි කරන්න",
+            "පල්ලියේ ඔරලෝසුව කැඩිලා, කවුද හදන්නේ?"
+        ],
+        "floor": {
+            "stopwatch": 5,
+            "countdown": 2,
+            "clock": 1
+        }
+    },
+    "sm": {
+        "stopwatchDescribed": [
+            "fa'aali se uati e faitau i luga mai le selo",
+            "tu'u se uati taimi i le lau e faitau a'e i luga",
+            "amata ona faitau le taimi mai le selo i luga o le lau",
+            "fa'aali le taimi ua mavae talu ona amata le lauga",
+            "fai se uati e alu ae mai le 0 i le screen"
+        ],
+        "stopwatchNamed": [
+            "tu'u le stopwatch i luga o le lau",
+            "fa'aola le stop watch"
+        ],
+        "countdownDescribed": [
+            "se uati e faitau i lalo le lima minute",
+            "fa'aali le taimi o alu i lalo i le selo a'o le'i amata le lotu",
+            "uati taimi e alu ifo mai le sefulu minute se'ia o'o i le selo"
+        ],
+        "clock": [
+            "fa'aali le taimi nei i luga o le lau",
+            "tu'u se uati i luga o le lau",
+            "ia iloa atu le taimi i le tulimanu o le lau"
+        ],
+        "none": [
+            "o le a le taimi e amata ai le lotu?",
+            "faitau pe fia a tatou pese",
+            "si'i i luga le leo",
+            "ua malepe le uati a le falesa, o ai e toe fa'aleleia?"
+        ],
+        "floor": {
+            "stopwatch": 6,
+            "countdown": 1,
+            "clock": 1
+        }
+    },
+    "so": {
+        "stopwatchDescribed": [
+            "tus saacad kor u tirinaysa eber laga bilaabo",
+            "shaashadda ku dhig saacad waqti tirisa oo kor u socota",
+            "bilow tirinta waqtiga eber laga bilaabo shaashadda",
+            "tus inta waqti ah ee wacdigu socday",
+            "saacad eber ka bilaabanta oo kor u kacaysa shaashadda ku dhig"
+        ],
+        "stopwatchNamed": ["fur stopwatch-ka shaashadda", "ku dar stopwatch"],
+        "countdownDescribed": [
+            "saacad hoos u tirinaysa shan daqiiqo",
+            "tus waqtiga oo dib ugu laabanaya eber ka hor cibaadada",
+            "saacad toban daqiiqo ka bilaabata oo hoos ugu dhacaysa eber"
+        ],
+        "clock": [
+            "shaashadda ku tus waqtiga hadda",
+            "saacad shaashadda ku dhig",
+            "shaashadda ku tus inta ay saacaddu tahay"
+        ],
+        "none": [
+            "saacadda meeqaad ayay cibaadadu bilaabanaysaa?",
+            "tiri immisa hees ayaan haysanaa",
+            "codka kor u qaad",
+            "saacadda kaniisadda waa jaban tahay, yaa hagaajinaya?"
+        ],
+        "floor": {
+            "stopwatch": 6,
+            "countdown": 1,
+            "clock": 1
+        }
+    },
+    "km": {
+        "stopwatchDescribed": [
+            "បង្ហាញនាឡិកាដែលរាប់ឡើងពីសូន្យ",
+            "ដាក់នាឡិកាកំណត់ម៉ោងលើអេក្រង់ ឲ្យវារាប់ឡើង",
+            "ចាប់ផ្ដើមរាប់ម៉ោងពីសូន្យនៅលើអេក្រង់",
+            "បង្ហាញពេលវេលាដែលកន្លងទៅនៃការអធិប្បាយ",
+            "សុំនាឡិការាប់ចាប់ពី 0 ឡើងទៅ"
+        ],
+        "stopwatchNamed": [
+            "បើកនាឡិកាបញ្ឈប់លើអេក្រង់",
+            "ដាក់ stopwatch លើអេក្រង់"
+        ],
+        "countdownDescribed": [
+            "នាឡិការាប់ថយក្រោយ ៥ នាទី",
+            "បង្ហាញម៉ោងរាប់ចុះដល់សូន្យ មុនកម្មវិធីថ្វាយបង្គំ",
+            "ដាក់នាឡិកាឲ្យរាប់ចុះពី ១០ នាទីដល់សូន្យ"
+        ],
+        "clock": [
+            "បង្ហាញម៉ោងឥឡូវនេះលើអេក្រង់",
+            "ដាក់នាឡិកាលើអេក្រង់",
+            "ឥឡូវម៉ោងប៉ុន្មានហើយ បង្ហាញលើអេក្រង់បន្តិច"
+        ],
+        "none": [
+            "កម្មវិធីថ្វាយបង្គំចាប់ផ្តើមម៉ោងប៉ុន្មាន?",
+            "រាប់មើលថាយើងមានចម្រៀងប៉ុន្មានបទ",
+            "ដំឡើងសំឡេងបន្តិច",
+            "នាឡិកានៅព្រះវិហារខូចហើយ អ្នកណាជួសជុល?"
+        ],
+        "floor": {
+            "stopwatch": 3,
+            "countdown": 2,
+            "clock": 1
+        }
+    },
+    "en": {
+        "stopwatchDescribed": [
+            "show a clock that counts up from zero",
+            "put a timer on the screen that counts up",
+            "start counting the time from 0 on the screen",
+            "show how much time has passed since the sermon started",
+            "need a timer going up from zero pls"
+        ],
+        "stopwatchNamed": [
+            "start a stopwatch on the screen",
+            "put the stop watch up on the projector"
+        ],
+        "countdownDescribed": [
+            "a clock counting down 5 minutes",
+            "show the time running back to zero before the service starts",
+            "timer going down from 10 min to 0"
+        ],
+        "clock": [
+            "show the current time on the screen",
+            "put a clock on the projector",
+            "can we have the time of day in the corner of the screen"
+        ],
+        "none": [
+            "what time does the service start?",
+            "count how many songs we have tonight",
+            "turn the volume up a bit",
+            "the church clock is broken, who fixes it?"
+        ],
+        "floor": {
+            "stopwatch": 4,
+            "countdown": 2,
+            "clock": 2
+        }
+    }
+}

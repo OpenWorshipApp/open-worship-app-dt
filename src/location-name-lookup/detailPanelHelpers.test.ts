@@ -53,8 +53,8 @@ describe('opening a detail panel', () => {
         '%s details are unique per language and keep their original language',
         (kind) => {
             openDetailPanel({ kind, target: 'x', name: 'English' });
-            h.langCode = 'km';
-            openDetailPanel({ kind, target: 'x', name: 'Khmer' });
+            h.langCode = 'xx';
+            openDetailPanel({ kind, target: 'x', name: 'Other' });
             openDetailPanel({
                 kind,
                 target: 'x',
@@ -69,16 +69,16 @@ describe('opening a detail panel', () => {
                 })),
             ).toEqual([
                 { langCode: 'en', raiseCount: 1 },
-                { langCode: 'km', raiseCount: 0 },
+                { langCode: 'xx', raiseCount: 0 },
             ]);
             closeDetailPanel(`${kind}:x:en`);
-            expect(readPanels().map((panel) => panel.langCode)).toEqual(['km']);
+            expect(readPanels().map((panel) => panel.langCode)).toEqual(['xx']);
         },
     );
 
     test('verse panels keep their existing identity across language changes', () => {
         openDetailPanel({ kind: 'verse', target: 'EXO 6:23', name: 'Exodus' });
-        h.langCode = 'km';
+        h.langCode = 'xx';
         openDetailPanel({ kind: 'verse', target: 'EXO 6:23', name: 'Exodus' });
         expect(readPanels()).toHaveLength(1);
         expect(readPanels()[0].key).toBe('verse:EXO 6:23');
@@ -99,7 +99,7 @@ describe('opening a detail panel', () => {
             kind: 'verse',
             target: 'GEN 17:5',
             name: '✝♪',
-            bibleKey: 'KHM',
+            bibleKey: 'TQAM',
         });
         openDetailPanel({
             kind: 'verse',
@@ -117,7 +117,7 @@ describe('opening a detail panel', () => {
         ).toEqual([
             { key: 'verse:GEN 17:5', bibleKey: undefined, raiseCount: 0 },
             { key: 'verse:GEN 17:5:KJV', bibleKey: 'KJV', raiseCount: 1 },
-            { key: 'verse:GEN 17:5:KHM', bibleKey: 'KHM', raiseCount: 0 },
+            { key: 'verse:GEN 17:5:TQAM', bibleKey: 'TQAM', raiseCount: 0 },
         ]);
     });
 

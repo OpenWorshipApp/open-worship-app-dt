@@ -76,7 +76,7 @@ describe('ButtonAddMoreBibleComp', () => {
     test('adds the first passage again, in the bible picked', async () => {
         const applyPresents = vi.fn();
         const first = genItem('KJV');
-        const second = genItem('KHM');
+        const second = genItem('TQAM');
         await act(async () => {
             root.render(
                 <ButtonAddMoreBibleComp

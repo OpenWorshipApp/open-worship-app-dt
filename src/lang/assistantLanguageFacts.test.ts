@@ -24,6 +24,66 @@ function readFacts(langCode: string) {
     return { text, facts: JSON.parse(text) };
 }
 
+// The glossary's keys as written, a word written twice kept twice. Its
+// text runs from its `{` to the first `}` outside a string, since every
+// value in it is a string. Until 2026-11-12 the keys were read from
+// "glossary" to the end of the file, so the objects written after it were
+// read too, and `lookupWords.save` met `changeClaims.save` (EC-508).
+function listGlossaryKeys(text: string) {
+    const keyStart = text.indexOf('"glossary"');
+    if (keyStart < 0) {
+        return [];
+    }
+    const open = text.indexOf('{', keyStart);
+    let end = text.length;
+    let isInString = false;
+    for (let index = open + 1; index < text.length; index++) {
+        const char = text[index];
+        if (isInString) {
+            if (char === '\\') {
+                index++;
+            } else if (char === '"') {
+                isInString = false;
+            }
+        } else if (char === '"') {
+            isInString = true;
+        } else if (char === '}') {
+            end = index;
+            break;
+        }
+    }
+    return [...text.slice(open, end).matchAll(/^\s+"([^"]+)":/gm)].map(
+        (match) => {
+            return match[1];
+        },
+    );
+}
+
+describe('the glossary key reader', () => {
+    test('keeps a word written twice and nothing written after', () => {
+        const text = [
+            '{',
+            '    "glossary": {',
+            '        "a {b}": "one",',
+            '        "c": "two",',
+            '        "a {b}": "three"',
+            '    },',
+            '    "lookupWords": {',
+            '        "save": ["x"]',
+            '    },',
+            '    "changeClaims": {',
+            '        "save": "y"',
+            '    }',
+            '}',
+        ].join('\n');
+        expect(listGlossaryKeys(text)).toEqual(['a {b}', 'c', 'a {b}']);
+        expect(
+            listGlossaryKeys('{\n    "glossary": {},\n    "a": 1\n}'),
+        ).toEqual([]);
+        expect(listGlossaryKeys('{\n    "a": 1\n}')).toEqual([]);
+    });
+});
+
 describe('assistant.json beside every language package', () => {
     test('the packages are found, so a green run means something', () => {
         // English is the one package that is always there.
@@ -109,14 +169,7 @@ describe('assistant.json beside every language package', () => {
         const keyList = [...text.matchAll(/^\s+"([^"]+)":/gm)].map((match) => {
             return match[1];
         });
-        const glossaryStart = text.indexOf('"glossary"');
-        const glossaryKeyList = [
-            ...text.slice(glossaryStart).matchAll(/^\s+"([^"]+)":/gm),
-        ]
-            .map((match) => {
-                return match[1];
-            })
-            .slice(1);
+        const glossaryKeyList = listGlossaryKeys(text);
         expect(keyList.length).toBeGreaterThan(0);
         expect(new Set(glossaryKeyList).size).toBe(glossaryKeyList.length);
     });

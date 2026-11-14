@@ -1,20 +1,20 @@
 // The app's own labels, in the language the user is actually looking at.
 //
 // The knowledge is written in English, but the buttons it names are not: a
-// volunteer running the app in Khmer is told to press **Bible Lookup** and has
-// that button's Khmer words on screen. Naming the control in a language they
-// cannot match to their window is the same as not naming it at all.
+// volunteer running the app in another language is told to press **Bible
+// Lookup** and has that button's translated words on screen. Naming the
+// control in a language they cannot match to their window is the same as not naming it at all.
 //
 // So the docs carry a TEMPLATE instead of a label:
 //
 //     Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 //
 // and this module fills it in with whatever that key reads as in the running
-// app's interface language -- `Clear Long Text` in English, the Khmer
-// dictionary's words in Khmer. One source text, every language, and the doc
-// can never drift from the app the way a hand-copied twin does (the manual
-// still gave an old Khmer wording for **All Books** long after the app's own
-// dictionary had changed it).
+// app's interface language -- `Clear Long Text` in English, a language's
+// dictionary words in that language. One source text, every language, and
+// the doc can never drift from the app the way a hand-copied twin does (the
+// manual still gave an old translated wording for **All Books** long after
+// the app's own dictionary had changed it).
 //
 // The dictionary is the app's OWN `tran()` dictionary, lifted out of the
 // language at build time so nothing here has to load a TypeScript module: an

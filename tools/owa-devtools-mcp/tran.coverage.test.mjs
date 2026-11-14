@@ -173,7 +173,9 @@ describe('a checkout with no knowledge build', () => {
     // of its own folder.
     for (const code of codes) {
       const language = bundle.languages.find((one) => one.code === code);
-      const meta = readJsonOrNull(path.join(ONLINE_DATA_DIR, code, 'meta.json'));
+      const meta = readJsonOrNull(
+        path.join(ONLINE_DATA_DIR, code, 'meta.json'),
+      );
       expect(language.assistant, code).toEqual(
         readJsonOrNull(path.join(ONLINE_DATA_DIR, code, 'assistant.json')),
       );
@@ -303,16 +305,16 @@ describe('installed language plugins', () => {
   it('has English alone with none installed, whatever the checkout holds', async () => {
     const { tran, langPacks } = await loadModules();
     langPacks.configureLangPacks(() => []);
-    expect(tran.listTranLanguages().map((language) => language.code)).toEqual(
-      ['en'],
-    );
+    expect(tran.listTranLanguages().map((language) => language.code)).toEqual([
+      'en',
+    ]);
     // A lister that fails has nothing installed to offer either.
     langPacks.configureLangPacks(() => {
       throw new Error('no app');
     });
-    expect(tran.listTranLanguages().map((language) => language.code)).toEqual(
-      ['en'],
-    );
+    expect(tran.listTranLanguages().map((language) => language.code)).toEqual([
+      'en',
+    ]);
     langPacks.configureLangPacks(null);
   });
 
@@ -355,7 +357,7 @@ describe('installed language plugins', () => {
   });
 });
 
-// The Khmer package's own tests read its facts; these read English's, the
+// A language package's own tests read its facts; these read English's, the
 // one package every tree has.
 describe('readSourceAssistantFacts and getLanguageFacts', () => {
   it('reads a language assistant facts, or null when there are none to read', async () => {

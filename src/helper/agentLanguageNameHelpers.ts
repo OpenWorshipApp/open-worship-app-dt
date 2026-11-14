@@ -1,4 +1,4 @@
-// Which language a few words NAME -- "French", "a Bible in French", a code,
+// Which language a few words NAME -- its English name, "a Bible in <it>", a code,
 // a locale, a language's own name for itself -- for `owa_language`
 // (`agentLanguageHelpers.ts`), which the help window asks whenever its
 // conversation turns to a language (2026-11-05, the user: _chatbot must ask

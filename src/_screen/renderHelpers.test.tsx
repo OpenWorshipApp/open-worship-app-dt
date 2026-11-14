@@ -377,7 +377,7 @@ describe('screen render helpers', () => {
         host.innerHTML = renderToStaticMarkup(
             <LongTextTableComp
                 columns={[
-                    genColumn('KM', 3),
+                    genColumn('XX', 3),
                     // One section short: drawn with a blank cell, never read
                     // past its end.
                     genColumn('EN', 2, {
@@ -410,7 +410,7 @@ describe('screen render helpers', () => {
             Array.from(root.querySelectorAll('.bible-key')).map((chip) => {
                 return chip.textContent;
             }),
-        ).toEqual(['KM', 'EN']);
+        ).toEqual(['XX', 'EN']);
         expect(root.querySelector('th .highlight')).toBeNull();
 
         const rows = Array.from(root.querySelectorAll('tbody tr'));
@@ -425,10 +425,10 @@ describe('screen render helpers', () => {
         ).toEqual(['lt-1', 'lt-1']);
         expect(firstRowSpans[0].hasAttribute('data-verse-key')).toBe(false);
 
-        // KM keeps the screen's family ahead of its own; EN says its own,
+        // XX keeps the screen's family ahead of its own; EN says its own,
         // and the screen's cannot win over it.
         expect(firstRowSpans[0].style.fontFamily).toContain(
-            'var(--bible-font-family, Font-KM)',
+            'var(--bible-font-family, Font-XX)',
         );
         expect(firstRowSpans[1].style.fontFamily).not.toContain('var(');
         expect(
@@ -844,6 +844,28 @@ describe('screen render helpers', () => {
         expect(remove).toHaveBeenCalledOnce();
         expect(parent.innerHTML).toContain('<b>Safe</b>');
         expect(parent.innerHTML).not.toContain('<script');
+
+        // Infinite: up after its delay, and no timer ever takes it down.
+        const removeInfinite = vi.fn();
+        const infiniteText = genHtmlForegroundQuickText(
+            {
+                htmlText: '<p>Until hidden</p>',
+                timeSecondDelay: 1,
+                timeSecondToLive: 2,
+                isInfinite: true,
+                extraStyle: {},
+            },
+            animData,
+            removeInfinite,
+        );
+        const infiniteParent = document.createElement('div');
+        const infiniteAdding = infiniteText.handleAdding(infiniteParent);
+        await vi.advanceTimersByTimeAsync(1000);
+        await infiniteAdding;
+        expect(infiniteParent.innerHTML).toContain('Until hidden');
+        await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+        expect(removeInfinite).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
 
         vi.useRealTimers();
     });

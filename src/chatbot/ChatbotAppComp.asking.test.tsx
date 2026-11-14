@@ -152,7 +152,7 @@ vi.mock('./attachmentHelpers', async (importOriginal) => ({
 }));
 
 import ChatbotAppComp from './ChatbotAppComp';
-import { suggestQuestions } from './questionHelpers';
+import { OFFERED_REPLY_HINT, suggestQuestions } from './questionHelpers';
 import {
     SpendLimitError,
     getSpendState,
@@ -671,9 +671,45 @@ describe('the model road of the help window', () => {
             ),
         ).toEqual(['Tell me more']);
 
-        await askAndSettle('in khmer please');
+        await askAndSettle('in another language please');
         expect(h.askLlmBot).toHaveBeenCalledTimes(2);
         expect(h.askLlmBot.mock.calls[1][6].isGeneral).toBe(true);
+    });
+
+    // 2026-11-13, the user: pressing **Put it back** under a clear is the
+    // request -- the model is told so on that ask, and on no other.
+    test('an option the answer above offered is asked as their yes to it', async () => {
+        seedSessions([
+            {
+                id: 'offered',
+                messages: [
+                    {
+                        id: 1,
+                        author: 'you',
+                        text: 'Take everything off the screen',
+                    },
+                    {
+                        id: 2,
+                        author: 'bot',
+                        text: 'I took off the long text "Morning Psalm".',
+                        replies: ['Put it back', 'Start a countdown'],
+                    },
+                ],
+            },
+        ]);
+        h.askLlmBot.mockImplementation(answerWith('It is back up.'));
+        await renderWindow();
+        await press('Put it back');
+        await waitForAsks(1);
+        await waitFor(isIdle, 'the pressed option answered');
+
+        const [asked] = h.askLlmBot.mock.calls[0];
+        expect(asked).toContain('Put it back');
+        expect(asked).toContain(OFFERED_REPLY_HINT);
+
+        // Words no answer offered carry no such yes.
+        await askAndSettle('Put it all back');
+        expect(h.askLlmBot.mock.calls[1][0]).not.toContain(OFFERED_REPLY_HINT);
     });
 
     test('a general question with no assistant to answer it offers the AI settings instead of the guide', async () => {
@@ -1123,14 +1159,10 @@ describe('a typed line under the Bible import', () => {
         const buttons = [
             ...lastBot()!.querySelectorAll('.cue-actions button'),
         ].map((button) => button.textContent);
-        expect(buttons).toEqual(
-            expect.arrayContaining([
-                'Khmer',
-                'English',
-                'French',
-                'A file on this computer',
-            ]),
-        );
+        // The app's language first -- English here -- then the other
+        // installed ones, then a file.
+        expect(buttons[0]).toBe('English');
+        expect(buttons.at(-1)).toBe('A file on this computer');
     });
 
     test('a line the waiting question cannot read is interpreted, and an unrelated one goes to the assistant', async () => {
@@ -1145,9 +1177,9 @@ describe('a typed line under the Bible import', () => {
                         text: 'Which language is the Bible in?',
                         actions: [
                             {
-                                label: 'Khmer',
+                                label: 'Sample',
                                 toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
-                                args: { step: 'language', locale: 'km' },
+                                args: { step: 'language', locale: 'xx' },
                             },
                         ],
                     },

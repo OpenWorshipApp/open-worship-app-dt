@@ -32,20 +32,20 @@ import {
 const BUNDLE = {
   dictionaries: {
     en: { 'clicked something': 'clicked something' },
-    km: {
-      'clicked something': '«km» clicked something',
-      'pressed a key': '«km» pressed a key',
-      assistant: '«km» assistant',
+    xx: {
+      'clicked something': '«xx» clicked something',
+      'pressed a key': '«xx» pressed a key',
+      assistant: '«xx» assistant',
       'not a banner word': 'x',
     },
-    fr: { 'clicked something': '«fr» clicked something' },
+    yy: { 'clicked something': '«yy» clicked something' },
   },
 };
 
 const CLICK_WORDS = {
   en: { who: 'Assistant', what: 'clicked something' },
-  km: { who: '«km» assistant', what: '«km» clicked something' },
-  fr: { who: 'Assistant', what: '«fr» clicked something' },
+  xx: { who: '«xx» assistant', what: '«xx» clicked something' },
+  yy: { who: 'Assistant', what: '«yy» clicked something' },
 };
 
 // Five minutes between tests (none moves its own clock that far): the
@@ -105,7 +105,10 @@ describe('a Bible note changed from the help window', () => {
       toNoteNoticeTarget('owa_click', { file: '/n/Default.own', id: 1 }),
     ).toBeNull();
     expect(
-      findNoteWindowTarget(TARGETS, { fileFullName: 'Default.own', noteId: 10 }),
+      findNoteWindowTarget(TARGETS, {
+        fileFullName: 'Default.own',
+        noteId: 10,
+      }),
     ).toBe(NOTE_WINDOW);
     expect(
       findNoteWindowTarget(TARGETS, { fileFullName: 'Other.own', noteId: 10 }),
@@ -273,7 +276,9 @@ describe('what each change says', () => {
     expect(say('create', 'Sunday')).toBe('made the run sheet "Sunday"');
     expect(say('create')).toBe('made the run sheet');
     expect(say('rename', 'Sunday')).toBe('renamed the run sheet "Sunday"');
-    expect(say('move', 'Sunday')).toBe('moved a line in the run sheet "Sunday"');
+    expect(say('move', 'Sunday')).toBe(
+      'moved a line in the run sheet "Sunday"',
+    );
     expect(say('duplicate', 'Sunday')).toBe(
       'copied a line in the run sheet "Sunday"',
     );

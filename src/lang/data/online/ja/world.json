@@ -18,5 +18,17 @@
             "locales": ["ja-JP"],
             "order": 702
         }
+    ],
+    "catalogLanguageCodes": {
+        "ja": "jpn"
+    },
+    "scriptMarkLocales": [
+        {
+            "script": "Han",
+            "marks": ["Hiragana", "Katakana"],
+            "name": "Japanese",
+            "locales": ["ja-JP"],
+            "order": 0
+        }
     ]
 }

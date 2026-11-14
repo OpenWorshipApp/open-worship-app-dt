@@ -1,6 +1,6 @@
 import '../cueList.scss';
 
-import { type ReactNode, useCallback } from 'react';
+import { type ReactNode } from 'react';
 
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
@@ -12,9 +12,15 @@ import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { tran } from '../../lang/langHelpers';
 import type { DroppedFileType } from '../../others/droppingFileHelpers';
 import { toIconedLabel } from '../../others/labelIconHelpers';
-import FileListHandlerComp from '../../others/FileListHandlerComp';
-import { getFileFullName } from '../../server/fileHelpers';
+import FileListHandlerComp, {
+    type NewFileKindType,
+} from '../../others/FileListHandlerComp';
+import { createNewFileDetail, getFileFullName } from '../../server/fileHelpers';
 import { useFileListSessions } from '../../media-sessions/useFileListSessions';
+import { checkIsMarkdownPreviewFileName } from '../../markdown-preview/markdownPreviewParamHelpers';
+import MarkdownNoteFileComp, {
+    openMarkdownNoteFile,
+} from './MarkdownNoteFileComp';
 import Note from './Note';
 import NoteFileComp from './NoteFileComp';
 import {
@@ -64,6 +70,63 @@ function handleDroppedFileTaking(file: DroppedFileType) {
     return true;
 }
 
+// 2026-11-11, the user: _make markdown be the part of bible-note area as
+// well, so user can create either bible-note or markdown file_. The list
+// shows both, and its menu makes either, as the Documents list's does
+// slides and songs.
+const NEW_FILE_KIND_MARKDOWN = 'markdown';
+const newFileKinds: NewFileKindType[] = [
+    { key: 'note', title: 'New Bible Note', iconName: 'journal-text' },
+    {
+        key: NEW_FILE_KIND_MARKDOWN,
+        title: 'New Markdown File',
+        iconName: 'markdown',
+    },
+];
+
+// A new Markdown file starts with its name as its heading, and opens in
+// its own window, whose editor is one press away.
+async function newFileHandling(
+    dirPath: string,
+    name: string,
+    kindKey: string | null,
+) {
+    if (kindKey !== NEW_FILE_KIND_MARKDOWN) {
+        return !(await Note.create(dirPath, name));
+    }
+    const filePath = await createNewFileDetail(
+        dirPath,
+        name,
+        `# ${name}\n`,
+        'markdown',
+    );
+    if (filePath === null) {
+        return true;
+    }
+    void openMarkdownNoteFile(filePath);
+    return false;
+}
+
+// A Markdown file dropped onto the list is copied into it, as a note file is.
+function checkIsDroppedMarkdownFile(fileFullName: string) {
+    return checkIsMarkdownPreviewFileName(fileFullName);
+}
+
+function handleBodyRendering(filePaths: string[]) {
+    return filePaths.map((filePath, i) => {
+        if (checkIsMarkdownPreviewFileName(filePath)) {
+            return (
+                <MarkdownNoteFileComp
+                    key={filePath}
+                    index={i}
+                    filePath={filePath}
+                />
+            );
+        }
+        return <NoteFileComp key={filePath} index={i} filePath={filePath} />;
+    });
+}
+
 /**
  * The Bible Notes list: the folder-session strip under its title, and the
  * list of the session in front, keyed by session so a switch drops the list
@@ -92,13 +155,6 @@ function BibleNoteListBodyComp({
     isDirSettingRouteHidden: boolean;
 }>) {
     const dirSource = useGenDirSourceReload(dirSourceSettingName);
-    const handleBodyRendering = useCallback((filePaths: string[]) => {
-        return filePaths.map((filePath, i) => {
-            return (
-                <NoteFileComp key={filePath} index={i} filePath={filePath} />
-            );
-        });
-    }, []);
     if (dirSource === null) {
         return null;
     }
@@ -108,11 +164,12 @@ function BibleNoteListBodyComp({
         <FileListHandlerComp
             className="note-list app-cue-list"
             mimetypeName="note"
+            extraMimetypeNames={['markdown']}
             defaultFolderName={defaultDataDirNames.BIBLE_NOTES}
             dirSource={dirSource}
-            onNewFile={async (dirPath: string, name: string) => {
-                return !(await Note.create(dirPath, name));
-            }}
+            onNewFile={newFileHandling}
+            newFileKinds={newFileKinds}
+            checkExtraFile={checkIsDroppedMarkdownFile}
             header={<span>{toIconedLabel('Bible Notes')}</span>}
             sessionsElement={sessionsElement}
             isDirSettingRouteHidden={isDirSettingRouteHidden}

@@ -16,6 +16,23 @@
 /** The pseudo tool names the two buttons carry. Never sent to a model. */
 export const LYRIC_CREATE_TOOL_NAME = 'owa-lyric-create';
 export const LYRIC_COPY_TOOL_NAME = 'owa-lyric-copy';
+/**
+ * The one press under SEVERAL drafted songs that saves every one of them
+ * (2026-11-13, EC-589, the user: _Create a lyric file from <link>_ worked
+ * for one link, _I wish it could create multiple … also multiple files_).
+ * Its `references` are the drafts' own, in the order they were written.
+ */
+export const LYRIC_CREATE_ALL_TOOL_NAME = 'owa-lyric-create-all';
+
+/**
+ * How many songs one ask drafts. The links of a message, the files of a
+ * question (`MAX_ATTACHMENT_COUNT` is four too) or the drafts of a model's
+ * answer past it are left for another message, said so -- each link is a
+ * page read through the firewall's ten-reads budget, and each draft is a
+ * song held in memory and a button under the answer (four Creates and the
+ * one that saves them all).
+ */
+export const MAX_SONGS_PER_ASK = 4;
 
 export type DraftedLyricType = {
     reference: string;
@@ -23,6 +40,12 @@ export type DraftedLyricType = {
     content: string;
     /** What to call the file, taken from the song's own Title. */
     name: string;
+    /**
+     * The face the song is drawn in on every stage, when it came from a
+     * document set in one (a PowerPoint's slides): written into the new
+     * song's own stage setting on Create. Null for any other draft.
+     */
+    fontFamily: string | null;
 };
 
 /**
@@ -87,17 +110,22 @@ export function readDraftedLyric(text: string) {
     return content.length === 0 ? null : content;
 }
 
-// In memory only and bounded, for the reasons in the header above.
+// In memory only and bounded, for the reasons in the header above: two
+// answers' worth of songs, a few kilobytes each.
 const draftedLyricMap = new Map<string, DraftedLyricType>();
-const MAX_DRAFTED_LYRICS = 3;
+const MAX_DRAFTED_LYRICS = MAX_SONGS_PER_ASK * 2;
 let draftCount = 0;
 
-export function keepDraftedLyric(content: string): DraftedLyricType {
+export function keepDraftedLyric(
+    content: string,
+    fontFamily: string | null = null,
+): DraftedLyricType {
     draftCount += 1;
     const drafted = {
         reference: `lyric-${Date.now().toString(36)}-${draftCount}`,
         content,
         name: toDraftedLyricName(content),
+        fontFamily,
     };
     draftedLyricMap.set(drafted.reference, drafted);
     while (draftedLyricMap.size > MAX_DRAFTED_LYRICS) {
@@ -112,6 +140,112 @@ export function keepDraftedLyric(content: string): DraftedLyricType {
 
 export function takeDraftedLyric(reference: string) {
     return draftedLyricMap.get(reference) ?? null;
+}
+
+type DraftActionType = {
+    label: string;
+    toolName: string;
+    args: { reference: string } | { references: string[] };
+};
+
+/**
+ * The buttons under drafted songs. One song: **Create "…"** and **Copy song
+ * text**, as ever. Several: **Create all N songs** first, then each song's
+ * own **Create "…"** -- no Copy each, which would be nine buttons under four
+ * songs; each song's words are in its preview box above them to select.
+ * Labels in English: `DRAFT_ACTION_PATTERN` reads them, and the window
+ * translates them where they are drawn.
+ */
+export function genLyricDraftActions(
+    draftedList: readonly DraftedLyricType[],
+): DraftActionType[] {
+    const createList = draftedList.map((drafted) => {
+        return {
+            label: `Create "${drafted.name}"`,
+            toolName: LYRIC_CREATE_TOOL_NAME,
+            args: { reference: drafted.reference },
+        };
+    });
+    if (draftedList.length === 1) {
+        return [
+            ...createList,
+            {
+                label: 'Copy song text',
+                toolName: LYRIC_COPY_TOOL_NAME,
+                args: { reference: draftedList[0].reference },
+            },
+        ];
+    }
+    if (draftedList.length === 0) {
+        return [];
+    }
+    return [
+        {
+            label: `Create all ${draftedList.length.toString()} songs`,
+            toolName: LYRIC_CREATE_ALL_TOOL_NAME,
+            args: {
+                references: draftedList.map((drafted) => {
+                    return drafted.reference;
+                }),
+            },
+        },
+        ...createList,
+    ];
+}
+
+/**
+ * The songs a **Create all** press names that this window still holds, in
+ * order; the references it no longer holds are counted apart, so the answer
+ * can say a reopened window lost them rather than saving fewer in silence.
+ */
+export function takeDraftedLyricList(references: unknown) {
+    const list = Array.isArray(references) ? references : [];
+    const heldList: DraftedLyricType[] = [];
+    let goneCount = 0;
+    for (const reference of list) {
+        const drafted =
+            typeof reference === 'string' ? takeDraftedLyric(reference) : null;
+        if (drafted === null) {
+            goneCount += 1;
+        } else {
+            heldList.push(drafted);
+        }
+    }
+    return { heldList, goneCount };
+}
+
+/**
+ * The songs a model drafted in one ask, each under the SOURCE it came from:
+ * its page's address, else the title it came out with. A source drafted
+ * again replaces its draft -- a model that drafts the same page twice has
+ * been told the first area was wrong (`from` / `to`), and a song drafted
+ * again under the same title is a correction -- and a new source is added
+ * after the others, up to `MAX_SONGS_PER_ASK`. Until 2026-11-13 the watch
+ * kept ONE draft, the last, so three links drafted in one answer offered
+ * the third song's Create alone (EC-589).
+ */
+export type DraftedSourceType = { key: string; content: string };
+
+export function toDraftedSourceKey(content: string, url: unknown) {
+    const address = typeof url === 'string' ? url.trim() : '';
+    return address === ''
+        ? `title:${toDraftedLyricName(content).toLowerCase()}`
+        : `url:${address}`;
+}
+
+export function withDraftedSource(
+    list: readonly DraftedSourceType[],
+    drafted: DraftedSourceType,
+): DraftedSourceType[] {
+    const at = list.findIndex((one) => {
+        return one.key === drafted.key;
+    });
+    if (at >= 0) {
+        return list.map((one, index) => {
+            return index === at ? drafted : one;
+        });
+    }
+    return list.length >= MAX_SONGS_PER_ASK ? [...list] : [...list, drafted];
 }
 
 /**
@@ -204,21 +338,47 @@ const SONG_WORD_PATTERN =
 const MAX_SONG_LINK_ASK_WORDS = 40;
 
 /**
- * The one https address in a piece of text, with the punctuation a sentence
- * hangs on its end taken off -- or null when there is none, or more than one
- * (two addresses is a list, and the drafter reads one page).
+ * Every https address in a piece of text, in the order written, each once,
+ * with the punctuation a sentence hangs on its end taken off. A list of
+ * links is pages to read one after another (EC-589); the drafter reads one
+ * page a call.
  */
-export function readSongAddress(text: string): string | null {
+export function readSongAddressList(text: string): string[] {
     const addresses = String(text ?? '').match(HTTPS_ADDRESS_PATTERN) ?? [];
-    if (addresses.length !== 1) {
-        return null;
+    const addressList: string[] = [];
+    for (const one of addresses) {
+        const address = one.replace(/[.,;:!?]+$/, '');
+        if (
+            address.length > 'https://'.length &&
+            !addressList.includes(address)
+        ) {
+            addressList.push(address);
+        }
     }
-    const address = addresses[0].replace(/[.,;:!?]+$/, '');
-    return address.length > 'https://'.length ? address : null;
+    return addressList;
+}
+
+/** How many words a piece of text says beside its https addresses. */
+export function countWordsBesideAddresses(text: string) {
+    return String(text ?? '')
+        .replace(HTTPS_ADDRESS_PATTERN, ' ')
+        .split(/\s+/)
+        .filter((word) => {
+            return word.length > 0;
+        }).length;
 }
 
 /**
- * The address of a song page in an ask, or null.
+ * The one https address in a piece of text -- or null when there is none, or
+ * more than one.
+ */
+export function readSongAddress(text: string): string | null {
+    const addressList = readSongAddressList(text);
+    return addressList.length === 1 ? addressList[0] : null;
+}
+
+/**
+ * The addresses of song pages in an ask, in order, or null.
  *
  * "Create a lyric file from https://…" is the app's own starter chip, and
  * measured 2026-10-09 with the assistant paused (no key, no credit or a 429
@@ -228,27 +388,79 @@ export function readSongAddress(text: string): string | null {
  * needs no model at all -- and a song is only ever OFFERED under a button,
  * never written, so a page that merely mentions a hymn costs nothing.
  *
- * A song word beside exactly one https address, in a short message. A bare
- * address is not enough: on its own it is as likely a YouTube link or a Bible
- * XML file, and reading a page is rationed and announced in the app window.
+ * A song word beside one https address or more, in a short message -- the
+ * words counted with the addresses taken out, so a list of five links is as
+ * short as a list of one. A bare address is not enough: on its own it is as
+ * likely a YouTube link or a Bible XML file, and reading a page is rationed
+ * and announced in the app window.
+ *
+ * Several links are several songs (2026-11-13, EC-589, the user: _it work
+ * for only one url, I wish it could create multiple_): two addresses had
+ * been read as no song link at all, and the guide searched the manual for
+ * them.
  */
-export function readSongLinkAsk(text: string): string | null {
+export function readSongLinkAsk(text: string): string[] | null {
     const trimmed = String(text ?? '').trim();
     if (trimmed.startsWith('/') || trimmed.includes('```')) {
         return null;
     }
-    const address = readSongAddress(trimmed);
-    if (address === null) {
+    const addressList = readSongAddressList(trimmed);
+    if (addressList.length === 0) {
         return null;
     }
-    const rest = trimmed.replace(address, ' ');
-    if (!SONG_WORD_PATTERN.test(rest)) {
+    if (!SONG_WORD_PATTERN.test(trimmed.replace(HTTPS_ADDRESS_PATTERN, ' '))) {
         return null;
     }
-    const wordCount = rest.split(/\s+/).filter((word) => {
-        return word.length > 0;
-    }).length;
-    return wordCount > MAX_SONG_LINK_ASK_WORDS ? null : address;
+    return countWordsBesideAddresses(trimmed) > MAX_SONG_LINK_ASK_WORDS
+        ? null
+        : addressList;
+}
+
+// The files a song can be drafted from with no model beside plain words:
+// a plain text file, or a PowerPoint deck's or a Word file's words, which
+// the window reads out when they are attached (`documentWordsHelpers.ts`).
+// Documents attached alone -- a slide document, a deck, a Word file, a PDF
+// -- are read the way the app reads their kind (`toSongDocumentFiles`);
+// these are for words files beside them. A song (`.owl`) is its own
+// conversation's.
+const SONG_SOURCE_FILE_PATTERN = /\.(txt|text|md|markdown|pptx|docx)$/i;
+
+export function checkIsSongSourceFileName(name: string) {
+    return SONG_SOURCE_FILE_PATTERN.test(String(name ?? ''));
+}
+
+const MAX_SONG_FILE_ASK_WORDS = 16;
+
+/**
+ * Is this the words a person types over ATTACHED files to have them made
+ * into songs -- _Create lyric files from these_, _make songs from the
+ * attached files_ -- (EC-589)? A song word and a making verb in one short
+ * line that names no title and no address; the files are the caller's to
+ * check. A question, a command or a paste is somebody else's.
+ */
+export function checkIsSongFileAsk(text: string) {
+    const trimmed = String(text ?? '').trim();
+    if (
+        trimmed === '' ||
+        trimmed.startsWith('/') ||
+        trimmed.endsWith('?') ||
+        trimmed.includes('```') ||
+        trimmed.includes('\n') ||
+        /https?:\/\//i.test(trimmed)
+    ) {
+        return false;
+    }
+    return (
+        trimmed.split(/\s+/).length <= MAX_SONG_FILE_ASK_WORDS &&
+        SONG_WORD_PATTERN.test(trimmed) &&
+        (SONG_MAKE_VERB_PATTERN.test(trimmed) ||
+            SONG_TURN_VERB_PATTERN.test(trimmed)) &&
+        // A song NAMED is a song to find, not the files beside it -- a
+        // quoted title, or one _called_ so. Not `readSongTitleAsk`, which
+        // reads "the attached files" after "from" as a title.
+        !QUOTED_TITLE_PATTERN.test(trimmed) &&
+        readSongTitleNamed(trimmed) === null
+    );
 }
 
 export type DraftReportType = {
@@ -309,6 +521,11 @@ export function readDraftReport(text: string): DraftReportType {
 // from 'Amazing Grace'", "make a song for Amazing Grace", "add the hymn …".
 const SONG_MAKE_VERB_PATTERN =
     /\b(?:create|make|add|write|draft|import|get|find|look\s*up|need)\b/i;
+// What a person does to an attached FILE to have its song: _turn this into a
+// lyric_, _convert it to a song_ (2026-11-13, `EC-590`). Read by the file
+// ask only -- "turn" before a title is no title.
+const SONG_TURN_VERB_PATTERN =
+    /\b(?:turn|convert|change|transform|extract|generate|build)\b/i;
 // Straight, curly and guillemet quotes around the title.
 const QUOTED_TITLE_PATTERN = /["“”«»]([^"“”«»\n]{2,80})["“”«»]/;
 // A title said after the word that introduces it, to the end of the line.
@@ -319,7 +536,10 @@ const TRAILING_TITLE_PATTERN =
 // Read from the START of the title only, so "It Is Well with My Soul" is
 // still a title while "it" alone is not.
 const NOT_A_TITLE_PATTERN =
-    /^(?:(?:a|an|the|my|our|your|this|these|that|those|some)\s+)*(?:(?:words?|text|lyrics?|paste[ds]?|pasting|clipboard|files?|links?|pages?|sites?|websites?|address|url|scratch|attachments?)\b|(?:this|these|that|those|it|them|below|above)$)/i;
+    // A document is no title either: "a song from my PowerPoint" is a song
+    // made out of a file (`lyricDocumentChatHelpers.ts`), not a hymn called
+    // "my PowerPoint".
+    /^(?:(?:a|an|the|my|our|your|this|these|that|those|some)\s+)*(?:(?:words?|text|lyrics?|paste[ds]?|pasting|clipboard|files?|links?|pages?|sites?|websites?|address|url|scratch|attachments?|power\s*points?|pptx?|presentations?|slides?|docx?|word\s+(?:files?|documents?)|pdfs?|documents?)\b|(?:this|these|that|those|it|them|below|above)$)/i;
 const MAX_SONG_TITLE_ASK_WORDS = 16;
 
 /**
@@ -361,6 +581,48 @@ export function readSongTitleAsk(text: string): string | null {
     const title = (quoted ?? TRAILING_TITLE_PATTERN.exec(trimmed)?.[1] ?? '')
         .replace(/[.!,;:]+$/, '')
         .trim();
+    if (
+        title.length < 2 ||
+        (quoted === undefined && NOT_A_TITLE_PATTERN.test(title))
+    ) {
+        return null;
+    }
+    return title;
+}
+
+// "called Morning Praise", "titled 'Grace Again'": the title, quoted or up to
+// the words that hand the song over or a stop. Only those words: a bare
+// "with" or "in" ends "It Is Well with My Soul" and "Light in the Dark".
+const NAMED_TITLE_PATTERN =
+    /\b(?:called|named|titled|entitled)\s+(?:["“”«»‘’']([^"“”«»‘’'\n]{2,80})["“”«»‘’']|([^\n:,.;!?"“”«»]{2,80}?)(?=\s+(?:(?:with|from|and|using)\s+(?:these|this|the|its|my)\s+(?:words?|lyrics?|text|lines?|verses?)|with\s+(?:words|lyrics)|using)\b|\s*[:,.;!?\n]|\s+[—–-]\s|\s*$))/i;
+
+/**
+ * The title a person NAMED for a song whose words they give, or null.
+ *
+ * 2026-11-12, `EC-517`: _Create a song called Morning Praise with these
+ * words: Verse 1: …_ was drafted as "Untitled" -- the model handed the words
+ * to the drafter and left the title out. The window puts it in
+ * (`runMcpToolCall`). Read on the ask's FIRST line only, after a song word,
+ * so a lyric that says "named" names nothing.
+ */
+export function readSongTitleNamed(text: string): string | null {
+    const firstLine = String(text ?? '').split('\n')[0] ?? '';
+    if (firstLine.trim().startsWith('/')) {
+        return null;
+    }
+    const matched = NAMED_TITLE_PATTERN.exec(firstLine);
+    const head = matched === null ? '' : firstLine.slice(0, matched.index);
+    // Past a colon are the words themselves: "with these words: … called
+    // grace" names nothing.
+    if (
+        matched === null ||
+        !SONG_WORD_PATTERN.test(head) ||
+        head.includes(':')
+    ) {
+        return null;
+    }
+    const quoted = matched[1];
+    const title = (quoted ?? matched[2] ?? '').trim();
     if (
         title.length < 2 ||
         (quoted === undefined && NOT_A_TITLE_PATTERN.test(title))

@@ -284,11 +284,11 @@
                     "program": "LM Studio",
                     "machine": "server-pc",
                     "contextLength": null,
-                    "task": "general question (/btw), then a follow-up in Khmer",
-                    "asked": "/btw what is holy bible, then: in khmer please",
+                    "task": "general question (/btw), then a follow-up in an installed non-English language",
+                    "asked": "/btw what is holy bible, then: in <that language> please",
                     "seconds": 15,
-                    "outcome": "answered in under 15 s; the follow-up answered in Khmer (705 tokens)",
-                    "source": "docs/test-paths/coverage-matrix.md — \"`/btw` under 15 s and the Khmer follow-up (705 tokens) on gemma-4-e4b over the LAN\""
+                    "outcome": "answered in under 15 s; the follow-up answered in that language (705 tokens)",
+                    "source": "docs/test-paths/coverage-matrix.md — `/btw` under 15 s and the follow-up in that language (705 tokens) on gemma-4-e4b over the LAN"
                 },
                 {
                     "date": "2026-10-10",
@@ -894,7 +894,7 @@
                     "task": "app question with tools",
                     "asked": "Where do I type John 3:16? (Reader)",
                     "totalTokens": 23000,
-                    "outcome": "answered on the selected provider, under $0.001 · 23k tokens; on a second ask about a Khmer Bible it asked the person to read back Khmer",
+                    "outcome": "answered on the selected provider, under $0.001 · 23k tokens; on a second ask about a Bible in a non-English language it asked the person to read back that language",
                     "source": ".claude/skills/owa-enhance-chatbot/references/scoreboard.md — same sentence as Claude Haiku 4.5"
                 }
             ]

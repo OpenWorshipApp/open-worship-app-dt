@@ -18,6 +18,7 @@ import {
 } from './helpers';
 import appProvider from '../server/appProvider';
 import { openAiChatPage, openPopupWindow } from './popupWindowHelpers';
+import { openChatbotPage } from './chatbotPageHelpers';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -368,6 +369,7 @@ export {
     openAiChatPage,
     openPopupWindow,
 } from './popupWindowHelpers';
+export { openChatbotPage } from './chatbotPageHelpers';
 
 function openAboutPage() {
     return openPopupWindow(
@@ -388,27 +390,6 @@ appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
     openAboutPage();
 });
 
-export function openChatbotPage() {
-    return openPopupWindow(
-        appProvider.chatbotHomePage,
-        `chatbot_${Date.now()}`,
-        'chatbot',
-        {
-            width: 460,
-            height: 640,
-            // Beside the app rather than over it: the answers point at
-            // controls in the window behind this one -- and the frosted
-            // backdrop keeps that window half-visible THROUGH the help, so a
-            // step that says "the button below the tabs" can be followed
-            // without moving anything out of the way.
-            appGlassy: true,
-            appAlignHorizontal: 'right',
-            appAlignVertical: 'center',
-            appFollowScale: true,
-            appTopToMain: true,
-        },
-    );
-}
 // Help -> App Help (Chatbot) in the native menu bar. It gets the same
 // caution the 🤖 button and the Tools entry ask for, so the warning cannot be
 // walked around by opening the window a different way.
@@ -651,6 +632,12 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentNoteEditHelpers'))
             .handleAgentNoteEditRequest;
     },
+    // ...which runs in the note's OWN window only, opened here from the main
+    // window when it is not open (2026-11-08).
+    'note-window': async () => {
+        return (await import('./agentNoteWindowHelpers'))
+            .handleAgentNoteWindowRequest;
+    },
     undo: async () => {
         return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
     },
@@ -773,49 +760,42 @@ document.addEventListener('owa-agent-foreground', (event) => {
         });
 });
 
-function toURLObject(urlOrPathname: string) {
-    return new URL(urlOrPathname, globalThis.location.href);
-}
-// Preserve the caller's URL shape: an absolute input serializes back to an
-// absolute URL, a relative path back to a "pathname?search#hash" string.
-function serializeURL(urlObject: URL, urlOrPathname: string) {
-    return URL.canParse(urlOrPathname)
-        ? urlObject.toString()
-        : urlObject.pathname + urlObject.search + urlObject.hash;
-}
+// `owa_screen_edit` (2026-11-13): the screens' own controls -- the Bible text
+// style, a passage's versions, Line Sync, the transitions, the display, a
+// group, the lock, the tick, the stage, on / off and the clears -- changed
+// for the help window's assistant the way a Mini Screen card changes them.
+// Same relay, same lazy import: the worker pulls in the screen managers.
+document.addEventListener('owa-agent-screen-edit', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-screen-edit-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentScreenControlHelpers')
+        .then(async ({ handleAgentScreenEditRequest }) => {
+            reply(await handleAgentScreenEditRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
 
-export function getParamKeyValue(urlOrPathname: string, key: string) {
-    return toURLObject(urlOrPathname).searchParams.get(key);
-}
-export function setParamKeyValue(
-    urlOrPathname: string,
-    key: string,
-    value: string,
-) {
-    const urlObject = toURLObject(urlOrPathname);
-    urlObject.searchParams.set(key, value);
-    return serializeURL(urlObject, urlOrPathname);
-}
-export function getParamIdNum(urlOrPathname: string) {
-    const id = getParamKeyValue(urlOrPathname, 'id');
-    const idNum = Number.parseInt(id ?? '');
-    if (Number.isNaN(idNum)) {
-        return null;
-    }
-    return idNum;
-}
-export function setParamIdNum(urlOrPathname: string, idNum: number) {
-    return setParamKeyValue(urlOrPathname, 'id', idNum.toString());
-}
-export function getParamFileFullName(urlOrPathname: string) {
-    return getParamKeyValue(urlOrPathname, 'file');
-}
-export function setParamFileFullName(
-    urlOrPathname: string,
-    fileFullName: string,
-) {
-    return setParamKeyValue(urlOrPathname, 'file', fileFullName);
-}
+// A leaf of their own, re-exported here for the callers that had them.
+export {
+    getParamFileFullName,
+    getParamIdNum,
+    getParamKeyValue,
+    setParamFileFullName,
+    setParamIdNum,
+    setParamKeyValue,
+} from './urlParamHelpers';
 
 export function checkIsDisabled(element: Element) {
     const isDisabled = Array.from(element.classList).some((className) =>

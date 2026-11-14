@@ -231,7 +231,7 @@ export async function handleSettingsImporting(archiveFilePath?: string) {
             if (manifest.sections.length === 0) {
                 showSimpleToast(
                     tran(IMPORT_TITLE),
-                    'This file holds no settings this version can import',
+                    tran('There is nothing in this file to import.'),
                 );
                 return;
             }
@@ -244,8 +244,9 @@ export async function handleSettingsImporting(archiveFilePath?: string) {
             });
             showSimpleToast(
                 tran(IMPORT_TITLE),
-                `Imported ${result.writtenCount} setting(s);` +
-                    ` ${result.removedCount} reset to default`,
+                tran('Imported {count} setting(s); {reset} reset to default')
+                    .replace('{count}', String(result.writtenCount))
+                    .replace('{reset}', String(result.removedCount)),
             );
             await askToApplyImportedSettings(result.needsRelaunch);
         } finally {

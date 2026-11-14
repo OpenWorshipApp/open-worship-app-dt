@@ -5,10 +5,8 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { tran } from '../lang/langHelpers';
-import {
-    showAppConfirm,
-    showAppInput,
-} from '../popup-widget/popupWidgetHelpers';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { askPresetName } from '../popup-widget/presetNameInputHelpers';
 import {
     genBibleTextStylePatch,
     genBibleTextViewCss,
@@ -32,34 +30,6 @@ import {
     toBibleTextPresetView,
     type BibleTextPresetType,
 } from './bibleTextPresetHelpers';
-
-function genPresetNameInput(name: string, onChange: (name: string) => void) {
-    return (
-        <input
-            type="text"
-            autoFocus
-            className="form-control"
-            defaultValue={name}
-            onFocus={(event) => {
-                event.currentTarget.select();
-            }}
-            onChange={(event) => {
-                onChange(event.target.value);
-            }}
-        />
-    );
-}
-
-async function askPresetName(title: string, suggestedName: string) {
-    let name = suggestedName;
-    const isOk = await showAppInput(
-        title,
-        genPresetNameInput(name, (newName) => {
-            name = newName;
-        }),
-    );
-    return isOk && name.trim() !== '' ? name : null;
-}
 
 /**
  * The looks somebody saved, as tiles after the app's own, and the tile that

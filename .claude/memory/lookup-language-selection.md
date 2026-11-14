@@ -7,7 +7,9 @@ metadata:
 
 The location/name lookup picks its dataset language from
 `location-name-lookup-lang-code` (`src/location-name-lookup/lookupLangHelpers.ts`),
-chosen from the `en` / `km` button in the bible-lookup header — **not** from the
+chosen from the language-code button in the bible-lookup header (`en`, `km`
+and any other installed package that carries the dataset,
+`getLookupLangCodeListAsync`) — **not** from the
 app locale. Added 2026-08-29.
 
 Four things about it are easy to get wrong:
@@ -84,7 +86,7 @@ the app-side hook below does not reach them. (The map data itself moved out of
 
 The language also decides how the records are WRITTEN, not only their words
 (`useLookupLangPresentation`): the three surfaces take its `fontFamily`
-(`app-Battambang` for km; English names none, so nothing is forced) — the detail
+(`app-Battambang` for km; English's, since 2026-11-06, is the app's own default face, `app-Google-Sans`) — the detail
 widget's TITLE BAR separately, since it renders in `FloatingWidgetComp` chrome
 OUTSIDE the body, and NOT for a verse panel, whose title is a KJV reference —
 and the

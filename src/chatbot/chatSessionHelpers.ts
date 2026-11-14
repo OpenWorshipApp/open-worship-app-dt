@@ -16,6 +16,7 @@
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     MAX_ATTACHMENT_COUNT,
+    checkIsFileAttachment,
     type ChatAttachmentType,
 } from './attachmentHelpers';
 import type { BotFocusType } from '../../tools/owa-devtools-mcp/botFocus.d.mts';
@@ -39,6 +40,7 @@ import {
 import { toValidUsage, type ChatUsageType } from './usageHelpers';
 // Value imports with no imports of their own, like the two above.
 import { toOpenableLinks } from './chatLinkHelpers';
+import { toValidForegroundAsk } from '../helper/ai/foregroundAskHelpers';
 import { fillWords, tran } from './chatTranHelpers';
 // A leaf too: its validator and the request's own, nothing else.
 import {
@@ -146,6 +148,10 @@ export type ChatMessageType = {
     // (`bibleReaderChatHelpers.ts`), so the next plain line under it
     // ("and chapter 5?") stays in it.
     isBibleReaderAnswer?: true;
+    // An answer of a conversation about the screens' own controls
+    // (`screenChatHelpers.ts`), so the next plain line under it ("centre
+    // it", "undo that"), in any language, stays in it.
+    isScreenAnswer?: true;
     // An answer that asked which passage to open (**Open another passage**):
     // the record it was asked from, so the line typed under it is read as
     // that passage, in its Bible.
@@ -159,6 +165,26 @@ export type ChatMessageType = {
     // The window's own follow-up to a thumb down -- not an answer: it carries
     // no thumbs, and a complaint typed under it is about the answer above.
     isFollowUp?: true;
+    // What stood for an answer when the assistant failed or was paused: the
+    // window's own sentence and the guide's stand-in (EC-702). Not what the
+    // tab was working on -- the line typed next still reaches the new study
+    // of a card above it, and "save that" never keeps the guide's words.
+    isAskFailed?: true;
+    // The window's own words at the end of an answer's `text`: a study
+    // translation's offer of its language (EC-494). Drawn with the answer,
+    // and left out of the history a model is shown, with the buttons they
+    // came with (`toModelHistoryTurn`): shown it as its own earlier words, a
+    // model wrote it again over its next answer, for the wrong language and
+    // the wrong state, and its buttons as an options line.
+    windowText?: string;
+    // Their words the WINDOW answers itself, no model (EC-506): a reply to
+    // one of its steps -- a Bible import's, a language's offer, the verse
+    // finder's, a lookup's, a guided demo; most often a button pressed and
+    // put in as their words -- or a line one of its readers takes: a
+    // thank-you, the boxes' text size, a study's new name. No question for
+    // **Retry** to ask again: a pressed **Not now**, or a size change the
+    // window already made, would go to a model as one.
+    isStep?: true;
 };
 
 export type ChatSessionType = {
@@ -209,6 +235,21 @@ export type ChatSessionType = {
     // The record the tab was asking about was put away (its × on the
     // **Still asking about** line) at this message (`findOpenLookupSubject`).
     lookupClosedAt?: number;
+    // The foreground sessions the tab was asking about were put away at this
+    // message (`findOpenForegroundAttachments`).
+    foregroundClosedAt?: number;
+    // What waits in the box from a FILE -- the one a Resources 🤖, a
+    // document's Open in Chatbot or the Markdown Preview's 🤖 handed over, a
+    // note the assistant made -- and a foreground session (2026-11-11,
+    // EC-498). The window holds its box in memory, and a reload (a language
+    // installed, a code edit in dev) or the window closed and opened again
+    // had dropped the chip while the card above it still said the file was
+    // attached below; the next question went out about nothing. Only the
+    // DESCRIPTION, as a message keeps one: a PDF's pages and a picture are
+    // read again at the ask (`reloadFileAttachment`). Taken into the
+    // window's box once, at mount (`splitSavedBoxes`), and off the tab: the
+    // box is what is written back after that (`saveChatSessions`).
+    boxFiles?: ChatAttachmentType[];
 };
 
 export type ChatSessionStateType = {
@@ -233,7 +274,8 @@ const MAX_TITLE_LENGTH = 26;
 // question corpus is a whole question ("A panel has disappeared - how do I
 // get it back?") and cutting one in half would be worse than showing it
 // wrapped.
-const MAX_REPLY_COUNT = 5;
+// Six: the jobs a word typed alone is answered with (EC-583).
+const MAX_REPLY_COUNT = 6;
 const MAX_REPLY_LENGTH = 120;
 // "LM Studio super-computer · Gemma 4 12B": a server's name and a model's,
 // both of which are capped where they are typed. A guard, like the reply's.
@@ -466,7 +508,9 @@ function toValidAttachments(raw: any) {
                 (one.kind === 'image' ||
                     one.kind === 'text' ||
                     one.kind === 'element' ||
-                    one.kind === 'file')
+                    one.kind === 'file' ||
+                    (one.kind === 'foreground' &&
+                        toValidForegroundAsk(one.foreground) !== null))
             );
         })
         .slice(0, MAX_ATTACHMENT_COUNT)
@@ -511,9 +555,82 @@ function toValidAttachments(raw: any) {
                 one.noteId >= 0
                     ? { noteId: one.noteId }
                     : {}),
+                // Which foreground session it is, checked field by field.
+                ...(one.kind === 'foreground'
+                    ? { foreground: toValidForegroundAsk(one.foreground)! }
+                    : {}),
             };
         });
     return attachments.length > 0 ? { attachments } : {};
+}
+
+/**
+ * What of a tab's box a reload can bring back as it was (EC-498): a file
+ * from disk -- its words kept, its pages or its picture read again from
+ * where it is -- and a foreground session, read afresh before every
+ * question anyway. A picture of the app (a 📷, a paste) has its bytes in
+ * memory alone, and a pointed-at control is of the app as it WAS: neither
+ * waits through one.
+ */
+export function checkIsKeptBoxAttachment(attachment: ChatAttachmentType) {
+    return (
+        attachment.kind === 'foreground' || checkIsFileAttachment(attachment)
+    );
+}
+
+/** A tab's box as it is written with the tab: the kept ones, four at most. */
+export function toKeptBoxAttachments(
+    attachments: readonly ChatAttachmentType[] | undefined,
+): ChatAttachmentType[] {
+    return (attachments ?? [])
+        .filter(checkIsKeptBoxAttachment)
+        .slice(-MAX_ATTACHMENT_COUNT);
+}
+
+/**
+ * The tabs read at mount, and the box each was saved with, apart (EC-498):
+ * from then on the window holds every tab's box itself, so a box is taken
+ * off its tab here and never read off a tab again -- one taken off by its ×
+ * must not come back from a copy the tab still carried.
+ */
+export function splitSavedBoxes(state: ChatSessionStateType): {
+    state: ChatSessionStateType;
+    boxMap: Record<string, ChatAttachmentType[]>;
+} {
+    const boxMap: Record<string, ChatAttachmentType[]> = {};
+    for (const session of state.sessions) {
+        if (session.boxFiles !== undefined && session.boxFiles.length > 0) {
+            boxMap[session.id] = session.boxFiles;
+        }
+    }
+    if (
+        !state.sessions.some((session) => {
+            return session.boxFiles !== undefined;
+        })
+    ) {
+        return { state, boxMap };
+    }
+    return {
+        state: {
+            ...state,
+            sessions: state.sessions.map((session) => {
+                if (session.boxFiles === undefined) {
+                    return session;
+                }
+                const tab = { ...session };
+                delete tab.boxFiles;
+                return tab;
+            }),
+        },
+        boxMap,
+    };
+}
+
+// A box read back off disk: the same listed fields as a message's
+// attachments, and only what a reload keeps.
+function toValidBoxFiles(raw: unknown) {
+    const boxFiles = toKeptBoxAttachments(toValidAttachments(raw).attachments);
+    return boxFiles.length > 0 ? { boxFiles } : {};
 }
 
 // Which window a picture or a pointed-at control came from
@@ -594,13 +711,25 @@ function toValidMessage(raw: any): ChatMessageType | null {
     ) {
         return null;
     }
+    const text =
+        raw.author === 'bot' ? toCleanStoredBotText(raw.text) : raw.text;
     return {
         id: typeof raw.id === 'number' ? raw.id : 0,
         author: raw.author,
-        text: raw.author === 'bot' ? toCleanStoredBotText(raw.text) : raw.text,
+        text,
         ...(typeof raw.note === 'string' ? { note: raw.note } : {}),
+        // Only words the answer holds: they are cut out of it for a model.
+        ...(raw.author === 'bot' &&
+        typeof raw.windowText === 'string' &&
+        raw.windowText.length > 0 &&
+        text.includes(raw.windowText)
+            ? { windowText: raw.windowText }
+            : {}),
         ...(raw.author === 'you' && raw.isGeneral === true
             ? { isGeneral: true as const }
+            : {}),
+        ...(raw.author === 'you' && raw.isStep === true
+            ? { isStep: true as const }
             : {}),
         ...(raw.author === 'bot' &&
         typeof raw.answeredBy?.assistant === 'string' &&
@@ -627,6 +756,9 @@ function toValidMessage(raw: any): ChatMessageType | null {
         ...(raw.author === 'bot' && raw.isBibleReaderAnswer === true
             ? { isBibleReaderAnswer: true as const }
             : {}),
+        ...(raw.author === 'bot' && raw.isScreenAnswer === true
+            ? { isScreenAnswer: true as const }
+            : {}),
         ...toValidLookupAwaitsField(raw),
         ...(raw.author === 'bot' &&
         (raw.rating === 'like' || raw.rating === 'dislike')
@@ -637,6 +769,9 @@ function toValidMessage(raw: any): ChatMessageType | null {
             : {}),
         ...(raw.author === 'bot' && raw.isFollowUp === true
             ? { isFollowUp: true as const }
+            : {}),
+        ...(raw.author === 'bot' && raw.isAskFailed === true
+            ? { isAskFailed: true as const }
             : {}),
         ...(Array.isArray(raw.actions) ? { actions: raw.actions } : {}),
         ...toValidReplies(raw.replies),
@@ -682,6 +817,49 @@ function toValidMessage(raw: any): ChatMessageType | null {
     };
 }
 
+/**
+ * A tab's last `MAX_MESSAGE_COUNT` messages -- and, in place of the oldest
+ * of them, the question that attached the files the tab is still about when
+ * it would be cut (BN-54, 2026-11-09, the elder run: a lesson asked about
+ * thirty-odd times in one tab came back from a reload asking about the
+ * Bible Reader, the note gone from it -- the question that carried the
+ * note was the 61st from the end). The same test as
+ * `findOpenFileAttachments`: the last question with a file, unless the
+ * tab closed its files after it (`fileClosedAt`).
+ */
+export function trimSessionMessages<
+    T extends {
+        id: number;
+        author: string;
+        attachments?: ChatAttachmentType[];
+    },
+>(messages: readonly T[], closedAfterId?: number): T[] {
+    const kept = messages.slice(-MAX_MESSAGE_COUNT);
+    if (kept.length === messages.length) {
+        return kept;
+    }
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        const hasFile =
+            message.author === 'you' &&
+            (message.attachments ?? []).some((attachment) => {
+                return (
+                    attachment.kind !== 'element' &&
+                    attachment.filePath !== undefined &&
+                    attachment.window === undefined
+                );
+            });
+        if (!hasFile) {
+            continue;
+        }
+        const isKept = index >= messages.length - MAX_MESSAGE_COUNT;
+        const isClosed =
+            closedAfterId !== undefined && message.id <= closedAfterId;
+        return isKept || isClosed ? kept : [message, ...kept.slice(1)];
+    }
+    return kept;
+}
+
 function toValidSession(raw: any): ChatSessionType | null {
     if (typeof raw?.id !== 'string' || !Array.isArray(raw.messages)) {
         return null;
@@ -690,12 +868,14 @@ function toValidSession(raw: any): ChatSessionType | null {
         id: raw.id,
         title:
             typeof raw.title === 'string' ? toChatSessionTitle(raw.title) : '',
-        messages: raw.messages
-            .map(toValidMessage)
-            .filter((message: ChatMessageType | null) => {
-                return message !== null;
-            })
-            .slice(-MAX_MESSAGE_COUNT),
+        messages: trimSessionMessages(
+            raw.messages
+                .map(toValidMessage)
+                .filter((message: ChatMessageType | null) => {
+                    return message !== null;
+                }),
+            Number.isInteger(raw.fileClosedAt) ? raw.fileClosedAt : undefined,
+        ),
         draft: typeof raw.draft === 'string' ? raw.draft : '',
         focus: toBotFocus(raw.focus),
         isFocusChosen: raw.isFocusChosen === true,
@@ -732,6 +912,10 @@ function toValidSession(raw: any): ChatSessionType | null {
         ...(Number.isInteger(raw.lookupClosedAt)
             ? { lookupClosedAt: raw.lookupClosedAt }
             : {}),
+        ...(Number.isInteger(raw.foregroundClosedAt)
+            ? { foregroundClosedAt: raw.foregroundClosedAt }
+            : {}),
+        ...toValidBoxFiles(raw.boxFiles),
     };
 }
 
@@ -777,11 +961,26 @@ export function loadChatSessions(
     };
 }
 
-export function saveChatSessions(state: ChatSessionStateType) {
+export function saveChatSessions(
+    state: ChatSessionStateType,
+    // The window's box, by tab (EC-498): what of it a reload brings back is
+    // written with each tab. Not given, a tab keeps what it was read with.
+    boxMap?: Readonly<
+        Record<string, readonly ChatAttachmentType[] | undefined>
+    >,
+) {
     const sessions = state.sessions.slice(-MAX_SESSION_COUNT).map((session) => {
+        const { boxFiles, ...rest } = session;
+        const kept = toKeptBoxAttachments(
+            boxMap === undefined ? boxFiles : boxMap[session.id],
+        );
         return {
-            ...session,
-            messages: session.messages.slice(-MAX_MESSAGE_COUNT),
+            ...rest,
+            messages: trimSessionMessages(
+                session.messages,
+                session.fileClosedAt,
+            ),
+            ...(kept.length > 0 ? { boxFiles: kept } : {}),
         };
     });
     setSetting(

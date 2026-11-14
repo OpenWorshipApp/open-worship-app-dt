@@ -185,6 +185,9 @@ vi.mock('../presenter-foreground/ForegroundTransitionControlsComp', () => ({
     ForegroundComponentTransitionButtonComp: () =>
         createElement('span', {}, 'Transition'),
 }));
+vi.mock('../presenter-foreground/ForegroundChatbotButtonComp', () => ({
+    default: () => null,
+}));
 vi.mock('./items/AppDocumentPreviewerComp', () => ({
     default: () => createElement('span', {}, 'Documents previewer'),
 }));

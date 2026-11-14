@@ -33,7 +33,7 @@
         "test:coverage": "vitest run --config vitest.config.ts --coverage --coverage.reporter=html --coverage.reporter=text-summary --coverage.reportsDirectory=coverage",
         "test:electron:coverage": "vitest run --config vitest.electron.config.ts --coverage --coverage.reporter=html --coverage.reporter=text-summary --coverage.reportsDirectory=coverage-electron",
         "test:all:coverage": "npm run test:coverage && npm run test:electron:coverage",
-        "test:all": "npm run test && npm run test:electron",
+        "test:all": "vitest run --config vitest.all.config.ts",
         "test:e2e": "npm run build && playwright test",
         "test:e2e:headed": "npm run build && playwright test --headed",
         "vite:dev": "vite --force",
@@ -54,7 +54,8 @@
         "release": "bash extra-work/release.sh",
         "release:dry-run": "cross-env RELEASE_DRY_RUN=true bash extra-work/release.sh",
         "release:lang": "node extra-work/s3-push-lang.js",
-        "lang:pack": "node extra-work/build-lang-plugins.mjs --pack"
+        "lang:pack": "node extra-work/build-lang-plugins.mjs --pack",
+        "build-open-worship-app-mcp": "node extra-work/build-open-worship-app-mcp.mjs"
     },
     "browserslist": {
         "production": [
@@ -79,6 +80,8 @@
             "!tools/owa-devtools-mcp/**/*.test.mjs",
             "!tools/owa-devtools-mcp/probe-mcp.mjs",
             "src/lang/data/en/world.json",
+            "src/lang/data/en/language-names.json",
+            "src/lang/data/en/bible-catalog-words.json",
             "src/lang/data/en/open-lyric-locales.json",
             "package.json"
         ],
@@ -87,6 +90,8 @@
             "dist/**/*.gz.bundle",
             "tools/owa-devtools-mcp/**/*",
             "src/lang/data/en/world.json",
+            "src/lang/data/en/language-names.json",
+            "src/lang/data/en/bible-catalog-words.json",
             "src/lang/data/en/open-lyric-locales.json",
             "node_modules/chrome-devtools-mcp/**/*",
             "node_modules/ws/**/*"
@@ -193,12 +198,14 @@
         "magic-string": "^0.30.21",
         "markdown-it": "^14.2.0",
         "markdown-it-music": "^2.0.6",
+        "mermaid": "^12.3.0",
         "moment-timezone": "^0.6.2",
         "monaco-editor": "^0.57.0",
         "nodemon": "^3.1.14",
-        "open-lyric": "^0.1.79",
+        "open-lyric": "^0.1.80",
         "open-lyric-plugin-player": "^0.1.12",
         "openai": "^7.53.0",
+        "postject": "1.0.0-alpha.6",
         "prettier": "^3.8.4",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
@@ -216,7 +223,6 @@
         "jsqr": "^1.4.0",
         "libreoffice-convert": "^1.8.1",
         "lw-share": "^0.0.11",
-        "mermaid": "^12.3.0",
         "mupdf": "^1.28.0",
         "pptx-to-html-conv": "^1.0.4",
         "qr-image": "^3.2.0",

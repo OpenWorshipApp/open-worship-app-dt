@@ -1,14 +1,15 @@
 // The person's language behind the scenes (2026-10-17, the user's ask: _for
-// khmer, behind the scene it should translate all khmer to english to work
-// with llm or post directly to llm if it is gemma 4 family, then translate
-// to khmer to show to user … for translation recommend using gemma 4
+// <a language>, behind the scene it should translate all <of it> to english
+// to work with llm or post directly to llm if it is gemma 4 family, then
+// translate back to show to user … for translation recommend using gemma 4
 // models. make sure to make it generic, this will be the template for all
 // supporting language_, and _use gemma 4 as sub assistant (if gemma 4 models
 // available) to help translation_).
 //
 // - **A Gemma 4 model is asked in their language and answers in it**: that
 //   family reads and writes the languages the app is shown in well enough to
-//   be handed them directly (Khmer measured on gemma-4-12b, 2026-10-16).
+//   be handed them directly (a non-Latin script measured on gemma-4-12b,
+//   2026-10-16).
 // - **Any other model works in ENGLISH**, which every model here reads and
 //   writes best and which the guide and the tools are written in: what they
 //   typed is put into English first, the assistant is asked in English under
@@ -69,11 +70,11 @@ export function findTranslatedLanguage(
  * `replyLang` as it stands (no translation behind the scenes), or null for
  * the English page: English, a script no language here claims, a language
  * with no data, and a language only TYPED -- the manual is translated into
- * the languages the app is shown in alone. A model asked to write Khmer from
- * the English page copied its sentences into the answer as they stood
- * (2026-10-17, gemma4:cloud); the page in Khmer has every button, message and
- * step in the words the Khmer app shows (`W-31@km`, and the English page
- * where none is current).
+ * the languages the app is shown in alone. A model asked to write another
+ * language from the English page copied its sentences into the answer as
+ * they stood (2026-10-17, gemma4:cloud); the translated page has every
+ * button, message and step in the words the app shows in that language
+ * (`W-31@<code>`, and the English page where none is current).
  */
 export function findPageLanguage(replyLang: string | null | undefined) {
     if (
@@ -123,8 +124,8 @@ export function listUsedTerms(
             });
     }
     // Longest first, each taken out of the text once found: in a script
-    // written without spaces a short word sits inside a longer one (Khmer
-    // "God" inside "Bible" and "Jesus"), and must not be read there.
+    // written without spaces a short word sits inside a longer one (one
+    // language's "God" inside its "Bible" and "Jesus"), and must not be read there.
     let rest = text;
     const used: string[] = [];
     for (const [english, word] of [...entries].sort((one, other) => {
@@ -152,8 +153,9 @@ export function toQuestionTranslationAsk(
         `${text.trim()}\n\n(Translate the message above from ` +
         `${language.name} into English. It is a church volunteer's question ` +
         'to the help assistant of Open Worship, a church presentation app. ' +
-        'Keep links, numbers, Bible references, key names (F5, Ctrl+B) and ' +
-        'anything in quotes exactly as written.' +
+        'Keep links, numbers, Bible references, key names (F5, Ctrl+B), ' +
+        'anything in quotes, and words they want WRITTEN somewhere (a line ' +
+        'to add, a title to give) exactly as written, in their language.' +
         toTermsText(
             listUsedTerms(text, language, 'language'),
             'These words mean:',
@@ -257,7 +259,7 @@ const LEAD_LABEL_PATTERN =
 
 // What a local model's template leaks into its words now and then: a
 // control token like `<audio|>` or `<|im_end|>`, once seen in the middle of
-// a Khmer word (gemma-4-12b, 2026-10-17). Never the words of an answer.
+// a translated word (gemma-4-12b, 2026-10-17). Never the words of an answer.
 const MODEL_TOKEN_PATTERN =
     /<\|[^<>|\s]{1,40}\|?>|<[a-z_]{1,30}\|>|<\/?(?:start|end)_of_turn>/gi;
 
@@ -287,18 +289,140 @@ export function readQuestionTranslation(answerText: string): string | null {
     return english;
 }
 
+// A quoted span, in the marks people type: its words between.
+const KEPT_QUOTE_PATTERN = /["“„«]([^"“”„«»\n]{1,400})["”“»]/gu;
+
+// The colon that hands over the words to WRITE: after a letter or a closing
+// mark, a space after it -- never a time (10:30), a verse (3:16) or a link.
+const WRITTEN_COLON_PATTERN = /(?<=[\p{L}\p{M}"”»)])\s*:\s+(?=\S)/u;
+
+function listQuotedSpans(text: string) {
+    return [...text.matchAll(KEPT_QUOTE_PATTERN)].map((match) => {
+        return { inner: match[1], index: match.index + 1 };
+    });
+}
+
+function findWrittenTail(text: string) {
+    const match = WRITTEN_COLON_PATTERN.exec(text);
+    if (match === null) {
+        return null;
+    }
+    const start = match.index + match[0].length;
+    return { start, tail: text.slice(start) };
+}
+
+/**
+ * The English a translator gave a question, with the words the person wants
+ * WRITTEN put back as they typed them (2026-11-13, EC-602). The translator is
+ * asked to keep those, and a small model does not always: on Free, _show an
+ * announcement on the screen: <their words>_ went up as a Quick Text in
+ * English -- the congregation would have read words nobody typed. Each
+ * quoted span the English holds in its place, when it holds as many; and
+ * the words after a colon, when they ask nothing (a question there is the
+ * question, and is the translator's). The English is what the model reads,
+ * so their language left in it costs a model little, and a model's own
+ * words on the wall cost the room.
+ */
+export function keepWrittenWords(original: string, english: string) {
+    let kept = english;
+    const originalQuotes = listQuotedSpans(original);
+    const englishQuotes = listQuotedSpans(kept);
+    const isQuoteKept =
+        originalQuotes.length > 0 &&
+        originalQuotes.length === englishQuotes.length;
+    if (isQuoteKept) {
+        // From the end, so each index still stands.
+        for (let i = englishQuotes.length - 1; i >= 0; i--) {
+            const { inner, index } = englishQuotes[i];
+            kept =
+                kept.slice(0, index) +
+                originalQuotes[i].inner +
+                kept.slice(index + inner.length);
+        }
+    }
+    const originalTail = findWrittenTail(original);
+    if (originalTail === null) {
+        return kept;
+    }
+    // A question after the colon is the question: one line holding a
+    // question mark, or the words ending in one (a song's words may ask
+    // one in a verse).
+    const tail = originalTail.tail.trim();
+    if (/\?$/.test(tail) || (!tail.includes('\n') && tail.includes('?'))) {
+        return kept;
+    }
+    // Its quotes put back above already.
+    if (isQuoteKept && listQuotedSpans(tail).length > 0) {
+        return kept;
+    }
+    const englishTail = findWrittenTail(kept);
+    if (englishTail === null) {
+        return kept;
+    }
+    return kept.slice(0, englishTail.start) + tail;
+}
+
 /**
  * The answer put into the language, or null for one that is not: empty, the
  * English handed back, or -- for a language with a script of its own -- not
  * a letter of that script in it.
  */
+// A "translation" that is the English handed back with a word or two changed
+// (2026-11-09, BN-48, the 87-language run: a Catalan answer was shown in
+// English with no note -- for a language in Latin letters anything that
+// differed from the English had been taken). Most of its words are the
+// English it was given; a real one shares the button names and little else,
+// so the bar is high.
+const ENGLISH_ECHO_SHARE = 0.6;
+const ENGLISH_ECHO_MIN_WORDS = 6;
+
+function toLetterWords(text: string) {
+    return text.toLowerCase().match(/\p{L}+/gu) ?? [];
+}
+
+/** Whether a translation is the English it was given, near enough. */
+export function checkIsEnglishEcho(translated: string, english: string) {
+    const words = toLetterWords(translated);
+    if (words.length < ENGLISH_ECHO_MIN_WORDS) {
+        return false;
+    }
+    const englishWordSet = new Set(toLetterWords(english));
+    const shared = words.filter((word) => {
+        return englishWordSet.has(word);
+    }).length;
+    return shared / words.length > ENGLISH_ECHO_SHARE;
+}
+
+/**
+ * An answer that came back in English when another language was asked for
+ * (BN-48: a Gemma 4, handed the person's language, answered a Xhosa ask in
+ * English). A few words are no evidence either way.
+ */
+export function checkIsEnglishAnswer(text: string, replyLang: string) {
+    if (
+        replyLang === DEFAULT_CHAT_LANG_CODE ||
+        replyLang === OTHER_CHAT_LANG_CODE ||
+        toLetterWords(text).length < ENGLISH_ECHO_MIN_WORDS
+    ) {
+        return false;
+    }
+    return (
+        detectTypedLanguage(text, DEFAULT_CHAT_LANG_CODE) ===
+        DEFAULT_CHAT_LANG_CODE
+    );
+}
+
 export function readAnswerTranslation(
     answerText: string,
     english: string,
     language: AssistantLanguageType,
 ): string | null {
     const translated = stripWrapping(answerText);
-    if (translated.length === 0 || translated === english.trim()) {
+    if (
+        translated.length === 0 ||
+        translated === english.trim() ||
+        checkIsEnglishEcho(translated, english)
+    ) {
         return null;
     }
     if (!language.isLatinScript && !language.scriptPattern.test(translated)) {
@@ -399,9 +523,37 @@ export function genAskTranslation({
                 toQuestionTranslationAsk(words, language),
                 translator,
                 'question',
-            ).then(readQuestionTranslation);
+            ).then((answered) => {
+                const read = readQuestionTranslation(answered);
+                // Their words for a screen or a file as they typed them
+                // (EC-602).
+                return read === null ? null : keepWrittenWords(words, read);
+            });
             const english = await englishAsk;
             return english === null ? null : { language, translator, english };
+        },
+        /**
+         * The language and translator to put an answer that came back in
+         * English into theirs after the fact, whoever answered -- a model
+         * handed their own language (a Gemma 4, never translated for) that
+         * answered in English (BN-48) -- or null.
+         */
+        async planForEnglishAnswer(): Promise<{
+            language: AssistantLanguageType;
+            translator: TranslatorType;
+        } | null> {
+            if (
+                replyLang === DEFAULT_CHAT_LANG_CODE ||
+                replyLang === OTHER_CHAT_LANG_CODE
+            ) {
+                return null;
+            }
+            const language = getAssistantLanguage(replyLang);
+            if (language.code !== replyLang) {
+                return null;
+            }
+            const translator = await getTranslator();
+            return translator === null ? null : { language, translator };
         },
         /** The answer in their language, or null to show it as it came. */
         async translateAnswer(

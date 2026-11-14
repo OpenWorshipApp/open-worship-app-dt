@@ -63,13 +63,17 @@ function parseConfig(env) {
  * No browser is reached: the probe answers by itself, and the chrome tool is
  * called without its required `pageId`, which it refuses before connecting.
  */
-async function askAfterRegistering({ isRestored }) {
+async function askAfterRegistering({ isRestored, instructions = null }) {
   const config = parseConfig({ [NO_CONFIG_DISCOVERY_ENV]: '1' });
   config.resolved.usageStatistics = false;
   const browserManager = new BrowserManager(config, {});
   const { server } = await McpServer.from(config, { browserManager });
   if (isRestored) {
     restoreSdkToolCalls(server);
+  }
+  if (instructions !== null) {
+    // What server.mjs does for the stdio door.
+    server.server._instructions = instructions;
   }
   server.registerTool('owa_probe', { description: 'probe' }, async () => {
     return { content: [{ type: 'text', text: 'probed' }] };
@@ -94,7 +98,7 @@ async function askAfterRegistering({ isRestored }) {
       input.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
     });
   };
-  await ask(1, 'initialize', {
+  const initialized = await ask(1, 'initialize', {
     protocolVersion: '2025-06-18',
     capabilities: {},
     clientInfo: { name: 'contract-test', version: '1' },
@@ -113,7 +117,7 @@ async function askAfterRegistering({ isRestored }) {
     arguments: {},
   });
   await server.close();
-  return { listed, probe, chrome };
+  return { initialized, listed, probe, chrome };
 }
 
 describe('chrome-devtools-mcp, as server.mjs uses it', () => {
@@ -124,7 +128,22 @@ describe('chrome-devtools-mcp, as server.mjs uses it', () => {
     expect(typeof NO_CONFIG_DISCOVERY_ENV).toBe('string');
     expect(typeof puppeteer?.connect).toBe('function');
     expect(VERSION).toMatch(/^\d+\.\d+\.\d+/);
+    // `owa_choose_app` drops the session's browser through it, so the next
+    // chrome-devtools call connects to the app chosen (`server.mjs`).
+    expect(typeof BrowserManager.prototype.abandonPendingAttempt).toBe(
+      'function',
+    );
   });
+
+  // The stdio door's instructions (`appChoice.mjs`) ride the SDK server's
+  // own field, which `initialize` answers with.
+  test('answers initialize with the instructions set on the SDK server', async () => {
+    const { initialized } = await askAfterRegistering({
+      isRestored: true,
+      instructions: 'Check the versions.',
+    });
+    expect(initialized.result.instructions).toBe('Check the versions.');
+  }, 30_000);
 
   test('keeps one `resolved` object, so the live browserUrl getter holds', () => {
     const config = parseConfig({ [NO_CONFIG_DISCOVERY_ENV]: '1' });

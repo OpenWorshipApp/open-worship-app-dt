@@ -112,7 +112,7 @@ describe('langPluginRegistry', () => {
         expect(h.sent).toEqual(['all:app:lang-plugins-changed']);
     });
 
-    // Khmer installed from Settings, 2026-11-05: the window took the new list
+    // A language installed from Settings, 2026-11-05: the window took the new list
     // before the language it now named was loaded, and `tran` threw.
     test('a list read again is prepared before the window takes it', async () => {
         const { registry } = await importModules();

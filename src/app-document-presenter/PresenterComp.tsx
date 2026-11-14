@@ -48,6 +48,9 @@ import type {
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import VaryAppDocumentPinComp from './VaryAppDocumentPinComp';
 import { ForegroundComponentTransitionButtonComp } from '../presenter-foreground/ForegroundTransitionControlsComp';
+import ForegroundChatbotButtonComp from '../presenter-foreground/ForegroundChatbotButtonComp';
+import { useForegroundPanelRevision } from '../presenter-foreground/foregroundPanelRevisionHelpers';
+import { checkIsForegroundComponentKey } from '../presenter-foreground/foregroundComponentKeys';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -75,6 +78,11 @@ function ForegroundWidgetPanelComp({
     // that layer's changes, which the foreground manager never hears of.
     useScreenLongTextManagerEvents(['update']);
     const isOnScreen = getForegroundWidgetShowingScreenIds(widget).length > 0;
+    // Bumped when the help window's assistant writes this component's
+    // settings: every field of a panel reads its setting once, at mount, so
+    // the panel is mounted again to show the change -- and not to write the
+    // old values back over it the first time a control is touched.
+    const revision = useForegroundPanelRevision(widget.key);
     const { Comp } = widget;
     return (
         <FloatingWidgetComp
@@ -94,12 +102,19 @@ function ForegroundWidgetPanelComp({
             // The transition of the WHOLE component -- every session at once;
             // a session's own row in its Properties still wins over it.
             extraActionButtons={
-                widget.isNoTransition ? null : (
-                    <ForegroundComponentTransitionButtonComp
-                        widgetKey={widget.key}
-                        widgetLabel={widget.labelKey}
-                    />
-                )
+                <>
+                    {/* The panel's current session, attached to the help
+                        window as the conversation's context. */}
+                    {checkIsForegroundComponentKey(widget.key) ? (
+                        <ForegroundChatbotButtonComp widgetKey={widget.key} />
+                    ) : null}
+                    {widget.isNoTransition ? null : (
+                        <ForegroundComponentTransitionButtonComp
+                            widgetKey={widget.key}
+                            widgetLabel={widget.labelKey}
+                        />
+                    )}
+                </>
             }
             options={{
                 width: 460,
@@ -109,7 +124,7 @@ function ForegroundWidgetPanelComp({
             }}
         >
             <AppSuspenseComp>
-                <Comp />
+                <Comp key={revision} />
             </AppSuspenseComp>
         </FloatingWidgetComp>
     );

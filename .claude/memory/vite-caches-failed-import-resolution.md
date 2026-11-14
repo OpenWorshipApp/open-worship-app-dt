@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8c7dbfa0-0489-4c4c-899b-1ef4e06fc0df
-  modified: 2026-10-19T19:48:06.785Z
+  modified: 2026-11-11T12:55:05.711Z
 ---
 
 If you edit a module to `import './NewComp'` **before** the file exists, the dev
@@ -67,6 +67,14 @@ every file edited that way before a live check. Re-confirmed 2026-10-19: a new f
 the served module but its call site was not (the `?t=` stamp was the FIRST edit's mtime), so a
 live fix silently did nothing; `touch` + reload cleared it, and the served `?t=` URL is the
 fastest proof of which version the page actually runs.
+
+**Sibling case (2026-11-11): a `git stash --include-untracked` under a running
+dev server.** The stash takes every untracked file away, so each module that
+imports one fails to resolve while it is gone and stays failed after `git stash
+apply` brings it back: `ChatbotAppComp.tsx` answered 500 (`./lyricDocumentChatHelpers`)
+and every help window on port 3000 was blank, which showed as a lesson run's
+first ask failing to make its note. Touching `vite.config.ts` cured it. After a
+stash-pull-apply with untracked files, touch it at once.
 
 **Why:** it looks like a code bug and sends you auditing a correct file — or, in
 the silent variant, like an unimplemented feature.

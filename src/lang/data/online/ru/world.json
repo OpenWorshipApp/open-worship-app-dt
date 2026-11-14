@@ -21,5 +21,8 @@
             "locale": "ru-RU",
             "order": 1
         }
-    ]
+    ],
+    "catalogLanguageCodes": {
+        "ru": "rus"
+    }
 }

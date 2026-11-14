@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import markdownTypeList from '../server/mime/markdown-types.json';
 import {
     checkIsMarkdownPreviewFileName,
     getMarkdownPreviewFilePath,
@@ -19,6 +20,23 @@ describe('checkIsMarkdownPreviewFileName', () => {
         expect(checkIsMarkdownPreviewFileName('notes.markdown')).toBe(true);
         expect(checkIsMarkdownPreviewFileName('GEN.1.md.pdf')).toBe(false);
         expect(checkIsMarkdownPreviewFileName('GEN.1.mdx')).toBe(false);
+    });
+
+    // The Bible Notes list shows every Markdown name the mimetype table
+    // knows, and a row it shows must open here.
+    test('every Markdown name the mimetype table lists', () => {
+        const dotExtensionList = markdownTypeList.flatMap((type) => {
+            return type.extensions;
+        });
+        expect(dotExtensionList.length).toBeGreaterThan(2);
+        for (const dotExtension of dotExtensionList) {
+            expect(
+                checkIsMarkdownPreviewFileName(
+                    'notes' + dotExtension.toUpperCase(),
+                ),
+            ).toBe(true);
+        }
+        expect(checkIsMarkdownPreviewFileName('notes.mkdx')).toBe(false);
     });
 });
 

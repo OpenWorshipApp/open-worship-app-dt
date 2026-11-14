@@ -41,17 +41,33 @@ import {
 } from './chatLangHelpers';
 import { tran, tranLabel } from './chatTranHelpers';
 
-// Three buttons is a row in a 460px window; two is the cap when the answer is
-// already carrying walkthrough buttons of its own, because a wall of buttons
-// under an answer is the same dead end as none.
-export const MAX_REPLY_COUNT = 3;
-export const MAX_REPLY_COUNT_WITH_ACTIONS = 2;
-// ...and a ceiling on BOTH rows together. Measured live: an offline manual
-// answer carries four of its own buttons, and two more under them made six
-// under one paragraph -- more choices than the answer had sentences.
-export const MAX_BUTTON_COUNT = 5;
+// Five options under an answer, three when it carries buttons of its own
+// (2026-11-13, EC-584, the user: _keep providing user with maximum amount
+// of options_). It had been three and two -- one row in the window -- and an
+// answer that asked "which one?" could offer only half of what it was
+// choosing among; the rest had to be typed by somebody who did not know the
+// words for them.
+export const MAX_REPLY_COUNT = 5;
+export const MAX_REPLY_COUNT_WITH_ACTIONS = 3;
+// ...and a ceiling on BOTH rows together: an offline manual answer carries
+// four of its own buttons, and the options under them stop at seven.
+export const MAX_BUTTON_COUNT = 7;
 // Long enough for "Yes, walk me through it", short enough that three fit.
 export const MAX_REPLY_LENGTH = 40;
+// A passage offered to choose names its story AND where it is (2026-11-10,
+// BN-74: "The Parable of the Lost Sheep (Luke 15:1-7)", 43 letters, was
+// dropped, and two of the three passages under "which passage?" with it).
+const MAX_PASSAGE_REPLY_LENGTH = 64;
+// A Bible passage offered to choose, bare, with its story in brackets, or in
+// brackets after it: "Psalm 23", "Psalm 23 (The Lord is my Shepherd)",
+// "David and Goliath (1 Samuel 17)", "The Lost Sheep (Luke 15:1-7)".
+const PASSAGE_REF_SOURCE =
+    '(?:[1-3] ?)?[A-Z][a-z]+(?: (?:of )?[A-Z][a-z]+){0,2} \\d{1,3}' +
+    '(?::\\d{1,3}(?: ?[-–] ?\\d{1,3})?)?';
+const PASSAGE_CLOSING_PATTERN = new RegExp(
+    `^${PASSAGE_REF_SOURCE}(?: \\([^()]{1,50}\\))?$|\\(${PASSAGE_REF_SOURCE}\\)$`,
+    'u',
+);
 
 // The frame the model is held to. Written UPPERCASE and with a colon so it
 // cannot be confused with a sentence -- and required to START a word, so an
@@ -81,14 +97,21 @@ export const MAX_REPLY_LENGTH = 40;
 function escapeRegExp(text: string) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-function genFrameMarker(word: string) {
-    const nameList = [word, ...listFrameAliases(word).map(escapeRegExp)];
+function genFrameMarker(word: string, englishAliasList: string[] = []) {
+    const nameList = [
+        word,
+        ...englishAliasList,
+        ...listFrameAliases(word).map(escapeRegExp),
+    ];
     return new RegExp(
         `(^|[\\s>*_(.!?${toCharClassSource(SENTENCE_END_MARKS)}-])(?:${nameList.join('|')})[:\\uFF1A${toCharClassSource(COLON_MARKS)}][ \\t]*`,
         'iu',
     );
 }
-const OPTIONS_MARKER = genFrameMarker('OPTIONS');
+// A model writes its options under another English word now and then
+// (2026-11-08, BN-29: Free's Nemotron ended a note answer with "Choices: Undo
+// this change", which stayed in the answer as words, half translated).
+const OPTIONS_MARKER = genFrameMarker('OPTIONS', ['CHOICES']);
 // How far back the marker may sit. The model puts it last; two lines of slack
 // covers a stray blank or a closing sentence typed after it. Further back than
 // that and it is something else -- a quoted example, a step in a recipe.
@@ -132,10 +155,10 @@ function toCleanReply(raw: string) {
  * this button is shown".
  *
  * So an option is kept when it has a Latin letter (a button name in another
- * language inside an English option, "Show me" and a Khmer button's name, is still
+ * language inside an English option, "Show me" and a translated button's name, is still
  * English) or when it is written in a language somebody CHOSE: the answer's
- * own, or the one the app is shown in (`checkIsChosenScript`) -- a Khmer
- * answer's Khmer options. A script neither of them uses is the model changing
+ * own, or the one the app is shown in (`checkIsChosenScript`) -- a translated
+ * answer's own options. A script neither of them uses is the model changing
  * language on its own.
  *
  * Enforced here rather than asked for in the prompt, which is this window's
@@ -146,18 +169,72 @@ function checkIsReadableReply(reply: string, answerText: string) {
 }
 
 // A reply's length as it is SEEN: a vowel sign or a subscript mark adds a
-// code unit to a Khmer word and nothing to its width.
+// code unit to a word and nothing to its width.
 function toShownLength(reply: string) {
     return reply.replace(/\p{M}/gu, '').length;
+}
+
+// A passage offered to choose whose story runs long keeps its reference and
+// as much of its story as fits (2026-11-11, BN-84: _write an Easter sermon_
+// was asked "which one would you like to use?" over a few passages, and only
+// the one whose story was short enough was drawn -- "a few suggestions" over
+// one button).
+const PASSAGE_THEN_STORY_PATTERN = new RegExp(
+    `^(${PASSAGE_REF_SOURCE}) \\(([^()]+)\\)$`,
+    'u',
+);
+const STORY_THEN_PASSAGE_PATTERN = new RegExp(
+    `^([^()]+) \\((${PASSAGE_REF_SOURCE})\\)$`,
+    'u',
+);
+// The most of a story kept in brackets after a passage: the pattern above
+// reads 50 letters there.
+const MAX_PASSAGE_STORY_LENGTH = 48;
+
+function toCutStory(story: string, room: number) {
+    const cut = story
+        .slice(0, room)
+        .replace(/\s+\S*$/u, '')
+        .replace(/[\s,;:–-]+$/u, '');
+    return cut.length > 0 ? `${cut}…` : '';
+}
+
+function toFittedPassageReply(reply: string) {
+    if (toShownLength(reply) <= MAX_PASSAGE_REPLY_LENGTH) {
+        return reply;
+    }
+    const passageFirst = PASSAGE_THEN_STORY_PATTERN.exec(reply);
+    if (passageFirst !== null) {
+        const story = toCutStory(
+            passageFirst[2],
+            Math.min(
+                MAX_PASSAGE_STORY_LENGTH,
+                MAX_PASSAGE_REPLY_LENGTH - passageFirst[1].length - 4,
+            ),
+        );
+        return story === '' ? passageFirst[1] : `${passageFirst[1]} (${story})`;
+    }
+    const storyFirst = STORY_THEN_PASSAGE_PATTERN.exec(reply);
+    if (storyFirst !== null) {
+        const story = toCutStory(
+            storyFirst[1],
+            MAX_PASSAGE_REPLY_LENGTH - storyFirst[2].length - 4,
+        );
+        return story === '' ? storyFirst[2] : `${story} (${storyFirst[2]})`;
+    }
+    return reply;
 }
 
 function toReplyList(raw: string, answerText = '') {
     const seen = new Set<string>();
     const replies: string[] = [];
     for (const part of raw.split('|')) {
-        const reply = toCleanReply(part);
+        const reply = toFittedPassageReply(toCleanReply(part));
         const key = reply.toLowerCase();
-        if (reply.length === 0 || toShownLength(reply) > MAX_REPLY_LENGTH) {
+        const maxLength = PASSAGE_CLOSING_PATTERN.test(reply)
+            ? MAX_PASSAGE_REPLY_LENGTH
+            : MAX_REPLY_LENGTH;
+        if (reply.length === 0 || toShownLength(reply) > maxLength) {
             continue;
         }
         if (!checkIsReadableReply(reply, answerText)) {
@@ -228,9 +305,298 @@ function cutTrailingFrame(text: string, marker: RegExp) {
     return { text: String(text ?? ''), tail: null };
 }
 
+// The options a model LISTED under a bare marker, one a line, to the end of
+// the answer (2026-11-08, BN-27: a Chinese note answer ended `OPTIONS:` and
+// three lines, and all four were drawn as words -- the marker sat further
+// back than the lookback, and one listed option would have stayed in the
+// text with no button).
+const MAX_LISTED_OPTION_COUNT = 5;
+const MAX_LISTED_OPTION_LENGTH = 80;
+const LISTED_OPTION_MARK_PATTERN = /^\s*(?:[-*•·]|\d{1,2}[.)])\s+/u;
+
+function cutListedFrame(text: string, marker: RegExp) {
+    const lines = String(text ?? '').split('\n');
+    const listed: string[] = [];
+    for (let index = lines.length - 1; index >= 0; index--) {
+        const line = lines[index];
+        if (line.trim().length === 0) {
+            continue;
+        }
+        const matched = marker.exec(line);
+        if (matched !== null) {
+            // A bold marker's closing marks are no words after it
+            // (2026-11-10, BN-67: `**OPTIONS:**` over three lines, under
+            // every finished sermon, was drawn as words with no buttons).
+            const tail = line
+                .slice(matched.index + matched[0].length)
+                .replace(/^[*_~`]+/, '');
+            if (tail.trim().length > 0 || listed.length === 0) {
+                return null;
+            }
+            const head = line
+                .slice(0, matched.index + matched[1].length)
+                .replace(/[ \t>*_-]+$/, '')
+                .trimEnd();
+            const kept = lines.slice(0, index);
+            if (head.length > 0) {
+                kept.push(head);
+            }
+            return {
+                text: kept.join('\n').trimEnd(),
+                tail: listed.reverse().join(' | '),
+            };
+        }
+        const option = line.replace(LISTED_OPTION_MARK_PATTERN, '').trim();
+        if (
+            listed.length >= MAX_LISTED_OPTION_COUNT ||
+            option.length > MAX_LISTED_OPTION_LENGTH ||
+            option.includes('|')
+        ) {
+            return null;
+        }
+        listed.push(option);
+    }
+    return null;
+}
+
+// A marker in the person's OWN language (2026-11-09, BN-47, the 87-language
+// run: a Polish answer ended with its options under Polish's own word for
+// "options", drawn as words with no buttons -- the model, or the translator
+// that put its answer into Polish, had translated OPTIONS). A language that is not
+// one of the help window's own has no word for it here, so such a line is read
+// by its SHAPE: the last line of the answer, one to three words and a colon,
+// then two to five short items between `|`. Never a list one a line: a
+// heading word over a list is how an answer writes steps.
+const UNNAMED_OPTIONS_PATTERN = new RegExp(
+    `(^|[.!?…${toCharClassSource(SENTENCE_END_MARKS)}][ \\t]+)` +
+        `[\\p{L}\\p{M}]{2,24}(?:[ \\u00A0][\\p{L}\\p{M}]{1,24}){0,2}[ \\t]*` +
+        `[:\\uFF1A${toCharClassSource(COLON_MARKS)}][ \\t]*` +
+        `((?:[^|\\n]{1,80}\\|){1,4}[^|\\n]{1,80})$`,
+    'u',
+);
+
+// The lines the guide and the report write for the window, never options.
+const OTHER_FRAME_LEAD_PATTERN = /^\s*(?:DO|REPORT)\s*[:：]/i;
+
+// Two to five short items between `|` and nothing else on the line -- never
+// a table's row, which opens or closes on its `|`.
+const BARE_OPTIONS_LINE_PATTERN = /^[^|\n]{1,80}(?:\|[^|\n]{1,80}){1,4}$/u;
+
+// A change to make, as a lesson review's buttons are asked to open
+// (`NOTE_LESSON_REVIEW_HINT`: "Add, Write, Move or Make") -- and as they
+// open anyway (BN-77, seen live: "Grow Jesus from the river in v. 4",
+// "Rewrite Response to gather Big idea"). Never "Explain …": pressed, it
+// is answered in the chat as a question (BN-72).
+const CHANGE_OPTION_PATTERN =
+    /^(?:Add|Write|Rewrite|Move|Make|Fix|Edit|Grow|Change|Replace|Expand|Shorten|Strengthen|Deepen|Clarify|Insert|Include|Put|Turn|Simplify|Connect|Tie|Retell|Restate|Give|Use)\s\S/u;
+
+/** Whether an option is a change to make -- a lesson review's fix. */
+export function checkIsChangeReply(text: string) {
+    return CHANGE_OPTION_PATTERN.test(String(text ?? '').trim());
+}
+
+// A review's own improvement at the head of its line, a change to make:
+// "2. **Strengthen the "Pointing to Jesus" section:** While …".
+const REVIEW_FIX_HEAD_PATTERN =
+    /^\s*(?:\d{1,2}[.)]\s*|[-*•]\s+)?(?:\*\*)?([^:\n*]{8,70}?)\s*(?:\*\*)?\s*[:：](?:\*\*)?\s/u;
+const MAX_REVIEW_FIX_LENGTH = 64;
+
+/**
+ * The fixes a lesson review NAMED, when it offered none to press even once
+ * asked for them (BN-77, 2026-11-10: a Zacchaeus review headed its two
+ * fixes "Deepen …" and "Strengthen the "Pointing to Jesus" section" and
+ * ended with no OPTIONS, twice) -- each item that opens on a change to make.
+ */
+export function readReviewFixHeadings(text: string) {
+    const fixes: string[] = [];
+    for (const line of String(text ?? '').split('\n')) {
+        const matched = REVIEW_FIX_HEAD_PATTERN.exec(line);
+        if (matched === null) {
+            continue;
+        }
+        const fix = toCleanReply(matched[1]);
+        if (
+            !checkIsChangeReply(fix) ||
+            toShownLength(fix) > MAX_REVIEW_FIX_LENGTH ||
+            fixes.includes(fix)
+        ) {
+            continue;
+        }
+        fixes.push(fix);
+        if (fixes.length >= MAX_REPLY_COUNT) {
+            break;
+        }
+    }
+    return fixes;
+}
+
+/**
+ * The items alone as the last line, right under a QUESTION (2026-11-10,
+ * BN-68: the empty note card's children's lesson pressed, gemma4:cloud asked
+ * "Which passage or subject would you like …?" over "The Parable of the Lost
+ * Sheep (Luke 15:1-7) | The Fruit of the Spirit … | David and Goliath …" --
+ * no marker, drawn as words, nothing to press). Only under a line that asks
+ * -- the shape of a question's choices, never an answer's own words -- or
+ * when every item is a change to make (BN-74, the same day: a review of a
+ * Psalm 51 sermon ended "Add why David fears losing the Spirit | Add meaning
+ * of verses 18-19 to Point 3" under its last sentence, the marker dropped,
+ * and its two fixes could not be pressed).
+ */
+function cutBareOptionsLine(lines: readonly string[], index: number) {
+    const line = lines[index].trim();
+    if (
+        !BARE_OPTIONS_LINE_PATTERN.test(line) ||
+        line.startsWith('|') ||
+        line.endsWith('|')
+    ) {
+        return null;
+    }
+    const before = lines
+        .slice(0, index)
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+    const asking = before.at(-1) ?? '';
+    const isChangeList = line
+        .split('|')
+        .every((item) => CHANGE_OPTION_PATTERN.test(item.trim()));
+    if (!/[?？]\s*$/u.test(asking) && !isChangeList) {
+        return null;
+    }
+    return {
+        text: lines.slice(0, index).join('\n').trimEnd(),
+        tail: line,
+    };
+}
+
+/**
+ * Passages to choose from, one a line, closing an answer that asks
+ * (2026-11-10, BN-74: the empty note card's children's lesson pressed,
+ * gemma4:cloud asked "which Bible passage …?" then "here are a few options
+ * that work well for children:" over three lines -- "The Parable of the
+ * Lost Sheep (Luke 15:1-7)", "David and Goliath (1 Samuel 17)" … -- with no
+ * marker, and there was nothing to press). Every line names a passage at its
+ * end and one of the two lines over them asks: steps never end in a
+ * reference, and a list of verses an answer cites asks nothing.
+ */
+// A question under the passages that asks to choose among them (BN-97,
+// 2026-11-11: "Which passage shall we use, or do you have another one in
+// mind?" closed three passages, and nothing could be pressed). A yes/no
+// question under verses an answer cites keeps its Yes and No.
+const CHOOSING_QUESTION_PATTERN = /\b(?:which|choose|pick|prefer)\b/i;
+// ...or a short line under them that asks for another (BN-171, shape42's
+// C-02, twice: "Or please let me know if you have another passage in
+// mind!" closed three passages, no button was drawn, and the children's
+// lesson the card asked for was never written).
+const ANOTHER_CHOICE_PATTERN =
+    /\b(?:another|other|different|else)\b[^.?!]{0,40}\b(?:passage|passages|story|stories|verse|verses|chapter|subject|topic|book|one|idea)\b|\bin mind\b/i;
+const MAX_ANOTHER_CHOICE_LENGTH = 160;
+// ...or a line under them saying what happens once one is chosen, and a
+// lead-in over them asking to choose (BN-222, 2026-11-13, a held-out
+// topical ask, _I need to preach about prayer this Sunday_: "Please choose
+// one:" over three passages a blank line apart, closed by "Once you pick
+// one, I will write the full lesson directly into your note." -- no
+// question anywhere, nothing drawn to press, and no lesson written).
+const CHOSEN_THEN_PATTERN =
+    /\b(?:once|when|after|if|as soon as)\s+you(?:'ve|\s+have)?\s+(?:pick|picked|choose|chosen|select|selected|decide|decided)\b/i;
+const CHOOSING_LEAD_PATTERN =
+    /\b(?:choose|pick|select)\b[^.?!]{0,30}[:：]\s*$|\bwhich\b[^.?!]{0,60}[:：]\s*$/iu;
+
+function cutPassageListFrame(text: string) {
+    const lines = String(text ?? '').split('\n');
+    const listed: string[] = [];
+    let closingIndex: number | null = null;
+    let index = lines.length - 1;
+    for (; index >= 0; index--) {
+        const line = lines[index].trim();
+        if (line.length === 0) {
+            continue;
+        }
+        const option = toFittedPassageReply(toCleanReply(line));
+        if (
+            option.length > MAX_PASSAGE_REPLY_LENGTH ||
+            !PASSAGE_CLOSING_PATTERN.test(option)
+        ) {
+            if (
+                listed.length === 0 &&
+                closingIndex === null &&
+                ((/[?？]\s*$/u.test(line) &&
+                    CHOOSING_QUESTION_PATTERN.test(line)) ||
+                    (/[.!?？！]\s*$/u.test(line) &&
+                        line.length <= MAX_ANOTHER_CHOICE_LENGTH &&
+                        (ANOTHER_CHOICE_PATTERN.test(line) ||
+                            CHOSEN_THEN_PATTERN.test(line))))
+            ) {
+                closingIndex = index;
+                continue;
+            }
+            break;
+        }
+        listed.push(option);
+    }
+    if (listed.length < 2 || listed.length > MAX_LISTED_OPTION_COUNT) {
+        return null;
+    }
+    const above = lines
+        .slice(0, index + 1)
+        .map((one) => one.trim())
+        .filter((one) => one !== '');
+    if (
+        closingIndex === null &&
+        !above
+            .slice(-2)
+            .some(
+                (one) => /[?？]/u.test(one) || CHOOSING_LEAD_PATTERN.test(one),
+            )
+    ) {
+        return null;
+    }
+    // The choosing question stays in the answer, under what came first.
+    const kept = lines
+        .slice(0, index + 1)
+        .join('\n')
+        .trimEnd();
+    const closing = closingIndex === null ? '' : lines[closingIndex].trim();
+    return {
+        text: closing === '' ? kept : `${kept}\n\n${closing}`.trimStart(),
+        tail: listed.reverse().join(' | '),
+    };
+}
+
+function cutUnnamedFrame(text: string) {
+    const lines = String(text ?? '').split('\n');
+    for (let index = lines.length - 1; index >= 0; index--) {
+        const line = lines[index].trimEnd();
+        if (line.trim().length === 0) {
+            continue;
+        }
+        const bare = cutBareOptionsLine(lines, index);
+        if (bare !== null) {
+            return bare;
+        }
+        const matched = UNNAMED_OPTIONS_PATTERN.exec(line);
+        // Another frame of the window's own, with a list of its own
+        // (`SHOWS: Clear All | Font Size`), is that frame's.
+        if (
+            matched === null ||
+            SHOWS_MARKER.test(line) ||
+            NEEDS_MARKER.test(line) ||
+            OTHER_FRAME_LEAD_PATTERN.test(line)
+        ) {
+            return null;
+        }
+        const head = line.slice(0, matched.index + matched[1].length).trimEnd();
+        const kept = lines.slice(0, index);
+        if (head.length > 0) {
+            kept.push(head);
+        }
+        return { text: kept.join('\n').trimEnd(), tail: matched[2] };
+    }
+    return null;
+}
+
 /**
  * The answer as the user should see it, and the options the model attached to
- * it.
+ * it -- on the marker's own line, or listed one a line under a bare marker.
  *
  * The line is taken off the text WHETHER OR NOT it parsed into anything usable.
  * A bubble reading `OPTIONS: |` at a volunteer is the one failure this design
@@ -241,7 +607,13 @@ export function parseAnswerOptions(text: string): {
     text: string;
     options: string[];
 } {
-    const cut = cutTrailingFrame(text, OPTIONS_MARKER);
+    const marked =
+        cutListedFrame(text, OPTIONS_MARKER) ??
+        cutTrailingFrame(text, OPTIONS_MARKER);
+    const cut =
+        marked.tail === null
+            ? (cutUnnamedFrame(text) ?? cutPassageListFrame(text) ?? marked)
+            : marked;
     return {
         text: cut.text,
         options: cut.tail === null ? [] : toReplyList(cut.tail, cut.text),
@@ -596,7 +968,7 @@ export function genQuickReplies(text: string): string[] {
     return YES_NO_LEAD.test(question) ? [YES_REPLY, NO_REPLY] : [];
 }
 
-// Letters of every script: keyed on `[a-z0-9]` alone, a Khmer option had an
+// Letters of every script: keyed on `[a-z0-9]` alone, a non-Latin option had an
 // empty key and was dropped as a duplicate of nothing.
 function toMatchKey(text: string) {
     return text
@@ -640,8 +1012,10 @@ export function checkIsWalkthroughEcho(reply: string) {
 // with no model at all. Only ever applied beside those two buttons: with no
 // draft on offer, "Create a new song" is a real request.
 const DRAFT_ECHO_PATTERN =
-    /^(?:(?:yes|yeah|ok|okay|sure|please)[,!. ]*)?(?:please )?(?:(?:create|save|make|add|write|keep) (?:the |this |that |it as a |a |it )?(?:song |lyric |lyrics )?(?:file|song|it|now)?|create it|save it|copy (?:the |this |that |it )?(?:song |lyric |lyrics )?(?:text|notation|words|it)?(?: (?:to|for) (?:the )?clipboard)?|copy to (?:the )?clipboard|copy it)$/i;
-const DRAFT_ACTION_PATTERN = /^create "|^copy song text$/i;
+    /^(?:(?:yes|yeah|ok|okay|sure|please)[,!. ]*)?(?:please )?(?:(?:create|save|make|add|write|keep) (?:the |this |that |it as a |a |it )?(?:song |lyric |lyrics )?(?:file|song|it|now)?|create it|save it|copy (?:the |this |that |it )?(?:song |lyric |lyrics )?(?:text|notation|words|it)?(?: (?:to|for) (?:the )?clipboard)?|copy to (?:the )?clipboard|copy it|(?:create|save|add|make) (?:them )?all(?: (?:\d+ |the |of the )?(?:songs?|lyrics?|files?)| of them)?)$/i;
+// **Create all N songs** too (EC-589), drawn over several drafted songs.
+const DRAFT_ACTION_PATTERN =
+    /^create "|^copy song text$|^create all \d+ songs$/i;
 
 export function checkIsDraftEcho(reply: string) {
     return DRAFT_ECHO_PATTERN.test(String(reply ?? '').trim());
@@ -650,7 +1024,7 @@ export function checkIsDraftEcho(reply: string) {
 // An action's label is stored in English and translated where it is drawn
 // (`tranLabel`), while a model answering in the window's language writes its
 // options in it -- so both shapes of the label are taken. Seen live in a
-// Khmer window: the import offer's button and the model's chip with the same
+// non-English window: the import offer's button and the model's chip with the same
 // words, side by side under one answer.
 function dropDuplicates(replies: string[], actionLabels: string[]) {
     const taken = new Set(
@@ -678,6 +1052,19 @@ function dropDuplicates(replies: string[], actionLabels: string[]) {
         taken.add(key);
         return true;
     });
+}
+
+/**
+ * A model's options less any that only repeats an action button under the
+ * same answer -- for an answer whose options are not worked out by
+ * `genMessageReplies` (a note's, a song's): a Bible note answer showed
+ * **Undo this change** twice, the button and an option (BN-53).
+ */
+export function dropActionEchoReplies(
+    replies: readonly string[],
+    actionLabels: readonly string[],
+) {
+    return dropDuplicates([...replies], [...actionLabels]);
 }
 
 /**
@@ -727,9 +1114,6 @@ export async function genMessageReplies({
     if (actionLabels.some((label) => DRAFT_ACTION_PATTERN.test(label))) {
         return [];
     }
-    const followUps = await genFollowUpQuestions(askedText, focus);
-    return dropDuplicates(followUps, actionLabels).slice(
-        0,
-        Math.min(limit, MAX_REPLY_COUNT_WITH_ACTIONS),
-    );
+    const followUps = await genFollowUpQuestions(askedText, focus, limit);
+    return dropDuplicates(followUps, actionLabels).slice(0, limit);
 }

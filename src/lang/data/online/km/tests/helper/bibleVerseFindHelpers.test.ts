@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import meta from '../../meta.json';
 import {
     checkIsOneEditApart,
+    checkIsSpacedLocale,
     cutNamedBooks,
     findNamedBooks,
     parseRefParts,
@@ -30,6 +32,11 @@ const ENGLISH_NAMES = {
 };
 
 describe('letters typed with no space', () => {
+    it('is how Khmer is written: its locale reads as run together', () => {
+        expect(checkIsSpacedLocale(meta.locale)).toBe(false);
+        expect(checkIsSpacedLocale('km')).toBe(false);
+    });
+
     // The user's own, 2026-10-16: "Jesus asked Peter many times", typed as
     // one run of Khmer letters, matched nothing.
     const vocabulary = new Set([
@@ -88,11 +95,13 @@ describe('a book named as it is said', () => {
         expect(resolveBookKey('Philip', nameMapList)).toBe('PHP');
         expect(resolveBookKey('jud', nameMapList)).toBe('JUD');
         expect(resolveBookKey('យ៉ូហាន', nameMapList)).toBe('JHN');
+        // EC-151: `Phil` starts Philippians and Philemon, and the usual short
+        // forms write Philippians so (Philemon is `Phlm`).
+        expect(resolveBookKey('Phil.', nameMapList)).toBe('PHP');
     });
 
     it('guesses no book a short form leaves open', () => {
         expect(resolveBookKey('Jo', nameMapList)).toBeNull();
-        expect(resolveBookKey('Phil.', nameMapList)).toBeNull();
         expect(resolveBookKey('Ju', nameMapList)).toBeNull();
         expect(resolveBookKey('Hezekiah', nameMapList)).toBeNull();
         expect(resolveBookKey('', nameMapList)).toBeNull();

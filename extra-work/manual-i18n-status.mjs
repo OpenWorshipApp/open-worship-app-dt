@@ -6,7 +6,7 @@
 // translated again (`tools/owa-devtools-mcp/manualI18n.mjs`).
 //
 //   node extra-work/manual-i18n-status.mjs            every language
-//   node extra-work/manual-i18n-status.mjs km         one language
+//   node extra-work/manual-i18n-status.mjs <code>     one language
 //   node extra-work/manual-i18n-status.mjs --hash <docs/manual-sources/…md>
 //       the `translatedFrom` a translation of that page must carry
 //

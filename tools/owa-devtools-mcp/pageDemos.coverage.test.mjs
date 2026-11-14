@@ -22,19 +22,38 @@ describe('getPageDemo', () => {
   });
 
   it('translates the title, the step and the control it presses', () => {
-    const demo = getPageDemo('setting-bible', (value) => `km:${value}`);
-    expect(demo.title).toBe('km:Manage Bible versions');
+    const demo = getPageDemo('setting-bible', (value) => `xx:${value}`);
+    expect(demo.title).toBe('xx:Manage Bible versions');
     expect(demo.steps[0].text).toBe(
-      'km:Open Bible settings to manage the installed Bible versions.',
+      'xx:Open Bible settings to manage the installed Bible versions.',
     );
-    expect(demo.steps[0].find).toBe('km:Bible');
+    expect(demo.steps[0].find).toBe('xx:Bible');
     expect(demo.steps[0].action).toBe('click');
+  });
+
+  // The Bible Note window's toolbar is drawn by the bible-note package in
+  // English in every language: its label is no dictionary key, and `tran()`
+  // throws on one in a dev window of another language.
+  it('leaves a find the package draws in English untranslated', () => {
+    const demo = getPageDemo('bibleNote-text-style', (value) => `xx:${value}`);
+    expect(demo.title).toBe('xx:Make a heading, a list or a quote');
+    expect(demo.steps[0].text).toMatch(/^xx:/);
+    expect(demo.steps[0].find).toBe('Formatting options for text style');
+    expect(demo.steps[0].action).toBe('click');
+  });
+
+  it('translates the find of an app button in the same window', () => {
+    const demo = getPageDemo(
+      'bibleNote-bible-lookup',
+      (value) => `xx:${value}`,
+    );
+    expect(demo.steps[0].find).toBe('xx:Open Bible Lookup');
   });
 
   // A lesson with nothing to press is one to read: it must never offer a
   // Do it that presses nothing.
   it('makes a lesson with no control a step to look at', () => {
-    const demo = getPageDemo('bibleNote-edit');
+    const demo = getPageDemo('bibleNote-save');
     expect(demo.steps).toHaveLength(1);
     expect(demo.steps[0].kind).toBe('look');
     expect(demo.steps[0]).not.toHaveProperty('find');

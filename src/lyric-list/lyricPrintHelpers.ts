@@ -54,7 +54,7 @@ async function inlineLinkedStyleSheets(documentObject: Document) {
     );
 }
 
-// App fonts (the language fonts, e.g. `app-Battambang` for Khmer songs) are
+// App fonts (a language's own fonts, `app-<family>`, for its songs) are
 // @font-face rules injected into this window only; without a copy the print
 // window rasterizes fallback glyphs.
 function appendFontFaceCss(documentObject: Document, printedHtml: string) {

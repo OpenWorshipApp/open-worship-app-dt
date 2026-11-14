@@ -144,7 +144,7 @@ describe('bible-list bibleItemHelpers', () => {
         };
         const list = [
             { bibleKey: 'KJV', target } as any,
-            { bibleKey: 'LSG', target: { ...target } } as any,
+            { bibleKey: 'TQLS', target: { ...target } } as any,
         ];
         expect(genDuplicatedMessage(list, list[0], 0)).toBeUndefined();
         expect(genDuplicatedMessage(list, list[1], 1)).toBeUndefined();

@@ -29,8 +29,9 @@ to revert_, then _Goal set: mcp tool can user automate everything_.
   sheet row went through the app's own drop handler.
 - **The menu bar is pressed in the MAIN process** (`electron/appMenuAgentHelpers.ts`,
   two sync IPC channels) with Electron's own `MenuItem.click` handed the
-  asking window; it refuses DevTools, Quit/Exit, Close, the macOS hide roles
-  and the `Relaunch` label itself — a menu item has no DOM for the firewall's
+  asking window; it refuses DevTools, Quit/Exit, Close, the macOS hide roles,
+  the `Relaunch` label itself and (since 2026-11-06) Help → Factory Reset, which
+  deletes every setting — a menu item has no DOM for the firewall's
   page half to read. Verifying it needs a main process that has the code: a
   scratch second instance on a freshly `tsc -p electron.tsconfig.json`
   compiled `electron-build` ([[scratch-dev-instance-beside-user-app]]).
@@ -76,6 +77,7 @@ carries no label — the judged route closes most of it.
 **How to apply:** when a QA run or a tutorial needs a right-click, a key, a
 drag or a menu item, reach for these before `press_key` / `drag` / a uid; when
 a new label-aimed acting tool is added, give it the words check in
-`checkToolCall`, an `ACTING_TOOLS` phrase with km/fr strings, and a
+`checkToolCall`, an `ACTING_TOOLS` phrase with its string in every language's
+`dictionary.json`, and a
 `modelTools.mjs` decision in the same change. See [[mcp-model-hidden-tools]],
 [[agent-data-tools-backup-undo]].

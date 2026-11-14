@@ -69,8 +69,8 @@ vi.mock('../../helper/appHooks', async () => {
 
 import BibleXMLImportComp from './BibleXMLImportComp';
 
-const XML_TEXT = '<bible key="KM" />';
-const XML_JSON = { info: { key: 'KM' }, books: {} };
+const XML_TEXT = '<bible key="XX" />';
+const XML_JSON = { info: { key: 'XX' }, books: {} };
 
 let container: HTMLDivElement;
 let root: Root;
@@ -153,7 +153,7 @@ beforeEach(() => {
     h.readFromUrlMock.mockResolvedValue(XML_TEXT);
     h.xmlTextToJsonMock.mockImplementation(
         async (_text: string, options: any) => {
-            options.onKeyChoices(['KM', 'KHM']);
+            options.onKeyChoices(['XX', 'XXV']);
             return XML_JSON;
         },
     );
@@ -172,7 +172,7 @@ describe('BibleXMLImportComp from a file', () => {
     test('reviews a chosen file with its name, size and key choices', async () => {
         await renderForm();
         expect(getSubmit().disabled).toBe(true);
-        await chooseFile('khmer.xml');
+        await chooseFile('made-up.xml');
         expect(getSubmit().disabled).toBe(false);
         const form = container.querySelector('form');
 
@@ -186,20 +186,20 @@ describe('BibleXMLImportComp from a file', () => {
         expect(h.readFromUrlMock).not.toHaveBeenCalled();
         expect(h.xmlTextToJsonMock).toHaveBeenCalledWith(XML_TEXT, {
             isImportPreview: true,
-            sourceName: 'khmer.xml',
+            sourceName: 'made-up.xml',
             onKeyChoices: expect.any(Function),
         });
         expect(getReview()).not.toBeNull();
         expect(h.reviewProps).toMatchObject({
             data: XML_JSON,
-            keyChoices: ['KM', 'KHM'],
-            origin: { by: 'settings', fileName: 'khmer.xml', bytes: 18 },
+            keyChoices: ['XX', 'XXV'],
+            origin: { by: 'settings', fileName: 'made-up.xml', bytes: 18 },
         });
     });
 
     test('cancelling the review goes back to an empty form', async () => {
         await renderForm();
-        await chooseFile('khmer.xml');
+        await chooseFile('made-up.xml');
         await submit();
 
         await act(async () => findButton('review-cancel')!.click());
@@ -214,12 +214,12 @@ describe('BibleXMLImportComp from a file', () => {
 describe('BibleXMLImportComp from a link', () => {
     test('an import done reloads the Bible list and empties the form', async () => {
         const loadBibleKeys = await renderForm();
-        await typeUrl('https://example.org/km.xml');
+        await typeUrl('https://example.org/made-up.xml');
         await submit();
         expect(h.readFromUrlMock).toHaveBeenCalledOnce();
         expect(h.reviewProps.origin).toMatchObject({
-            url: 'https://example.org/km.xml',
-            fileName: 'km.xml',
+            url: 'https://example.org/made-up.xml',
+            fileName: 'made-up.xml',
             isLinkFromChatbot: false,
         });
 
@@ -232,7 +232,7 @@ describe('BibleXMLImportComp from a link', () => {
 
     test('the clear button empties the link and disables Import', async () => {
         await renderForm();
-        await typeUrl('https://example.org/km.xml');
+        await typeUrl('https://example.org/made-up.xml');
         expect(getSubmit().disabled).toBe(false);
 
         await act(async () => {
@@ -251,7 +251,7 @@ describe('BibleXMLImportComp from a link', () => {
     test('nothing read means nothing to review', async () => {
         h.readFromUrlMock.mockResolvedValue(null);
         await renderForm();
-        await typeUrl('https://example.org/km.xml');
+        await typeUrl('https://example.org/made-up.xml');
 
         await submit();
 
@@ -266,7 +266,7 @@ describe('BibleXMLImportComp from a link', () => {
     test('a text that does not parse as a Bible says so', async () => {
         h.xmlTextToJsonMock.mockResolvedValue(null);
         await renderForm();
-        await typeUrl('https://example.org/km.xml');
+        await typeUrl('https://example.org/made-up.xml');
 
         await submit();
 
@@ -280,7 +280,7 @@ describe('BibleXMLImportComp from a link', () => {
     test('a read that throws is reported', async () => {
         h.readFromUrlMock.mockRejectedValue(new Error('socket hang up'));
         await renderForm();
-        await typeUrl('https://example.org/km.xml');
+        await typeUrl('https://example.org/made-up.xml');
 
         await submit();
 

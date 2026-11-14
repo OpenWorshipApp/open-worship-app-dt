@@ -149,7 +149,7 @@ function useCheckSetting() {
 // The error dialogs' words must never throw. `tran` does in dev when the
 // language in force is not loaded in this window, and a throw here is one more
 // unhandled rejection that comes straight back here: 209,171 of them in the
-// Setting window once Khmer was installed (2026-11-05).
+// Setting window once a language was installed (2026-11-05).
 function tranSafely(text: string) {
     try {
         return tran(text);
@@ -161,8 +161,11 @@ function tranSafely(text: string) {
 async function confirmLocalStorageErasing() {
     const isOk = await showAppConfirm(
         tranSafely('Unfixable Error'),
-        'We were sorry, local settings are broken, we need to erase local' +
-            ' storage and reload the app',
+        // Its OK erases them, so it is asked in the window's language (EN-63).
+        tranSafely(
+            'The local settings are broken and must be erased. ' +
+                'The app will then reload.',
+        ),
     );
     if (isOk) {
         await appLocalStorage.clear();

@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168]
-screenshots: 7
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168]
+screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -42,7 +42,8 @@ in the same documents folder. 📸
    page** — only your editing and preview views use the picture.
 
 6. **Blend a box with the ones under it.** Select a box, and under
-   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab pick a
+   **[en:tran:Shape Properties]** in the right-hand **[en:tran:Properties]** tab (inside
+   **[en:tran:Box Properties]** — expand it if it is collapsed) pick a
    **[en:tran:Blend Mode]** — **[en:tran:Multiply]** to darken, **[en:tran:Screen Blend]**
    to drop black out of a clip, **[en:tran:Overlay]** for a texture over a photo. It
    blends with the **canvas items underneath it in the same slide**, so it only shows
@@ -82,7 +83,7 @@ in the same documents folder. 📸
    **[en:tran:Text Properties] → [en:tran:Color]**. Type or paste the new hex color,
    then press **Enter** or click away to apply it (step 9). 📸
 9. **Type an exact color.** Select a box, then click the hex value beside
-   **[en:tran:Background Color]** or under **[en:tran:Text Properties] → [en:tran:Color]**.
+   **[en:tran:Background Color]** (also inside **[en:tran:Box Properties]**) or under **[en:tran:Text Properties] → [en:tran:Color]**.
    Type or paste a hex color, then press **Enter** or click away to apply it.
    Three-, four-, six- and eight-digit hex values work, with or without `#`;
    eight digits include opacity, for example `#2468AC80`. **Escape** cancels the
@@ -90,6 +91,17 @@ in the same documents folder. 📸
    without changing the slide. The arrow still opens the swatches and opacity
    slider. **[en:tran:Undo]** / **[en:tran:Redo]** restore and reapply changes. 📸
 10. Save with **Ctrl+S**.
+
+**A ready-made look for a box:** select it, and **[en:tran:Presets]** at the top of
+**[en:tran:Properties]** offers **[en:tran:Plain]** (no backing, shadow, blend or bold),
+**[en:tran:Shadow]** and **[en:tran:Glass Effect]** (not on a picture or a video). A box of
+words also gets **[en:tran:Highlight]** and **[en:tran:Urgent Alert]** (bold words) and a
+**[en:tran:Dark]** / **[en:tran:Light]** switch: light words for a dark background or dark
+words for a light one — the other side trades the lightness of the words and their backing,
+each keeping its hue. A look never changes the box's size, place, words or font, and one press
+is one **[en:tran:Undo]**. **[en:tran:Save as Preset]** keeps the box's look — from a box of
+words its words' style too, and then it is offered to boxes of words only; right-click a saved
+one to rename, replace or remove it. 📸
 
 **HTML and plain text:** imported HTML keeps its formatting, but scripts, event
 handlers and embedded pages are removed in the editor, previews, screen rendering
@@ -116,7 +128,7 @@ to press.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `PM-33` · `PM-124` · `PM-168`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `ED-55` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `PM-33` · `PM-124` · `PM-168`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

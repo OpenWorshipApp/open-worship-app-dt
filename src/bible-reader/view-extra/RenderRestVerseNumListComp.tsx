@@ -6,7 +6,7 @@ import { tran } from '../../lang/langHelpers';
 
 export type RestVerseType = {
     verse: number;
-    // The number as the bible writes it (Khmer digits for a Khmer bible).
+    // The number as the bible writes it (in its language's own digits).
     label: string | number | null;
 };
 

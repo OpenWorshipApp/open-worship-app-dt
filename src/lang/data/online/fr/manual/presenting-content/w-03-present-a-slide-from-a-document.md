@@ -3,7 +3,7 @@ id: W-03
 title: "Présenter une diapositive d'un document"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 3e4d6d2c5fc9fe0d
+translatedFrom: 0e3ac116d72abe75
 ---
 # W-03 — Présenter une diapositive d'un document
 
@@ -33,5 +33,7 @@ Astuces :
 - Le curseur dans le pied de l'onglet Documents redimensionne les vignettes.
 - L'icône de chronomètre en bas à gauche de la liste des diapositives — présente dès qu'une diapositive est en direct — ouvre la **lecture automatique** : réglez les secondes, appuyez sur lecture, et les diapositives avancent automatiquement ; le ✕ rouge la ferme (W-04).
 - **Épinglez le document pour ne pas le perdre par un clic malencontreux** — voir W-27.
-- **Notes pour vous-même :** sous les aperçus des diapositives se trouve une fine bande verte **[en:tran:Note]**. Cliquez dessus et une case **[en:tran:Document Note]** (une pour tout le document) et une case **[en:tran:Slide Note]** (une par diapositive) s'ouvrent sous les diapositives. Elles sont enregistrées pour vous au fil de la frappe et ne sont **jamais envoyées vers un écran du public**. Le panneau démarre fermé, il ne coûte donc rien tant que vous n'en avez pas besoin ; pour le ranger, faites glisser le séparateur au-dessus de lui jusqu'au bord inférieur, ou décochez **View → Panneaux → Note** (W-31).
+- **Notes pour vous-même :** sous les aperçus des diapositives se trouve une fine bande à rayures grises **[en:tran:Note]**. Cliquez dessus et une case **[en:tran:Document Note]** (une pour tout le document) et une case **[en:tran:Slide Note]** (une par diapositive) s'ouvrent sous les diapositives. Elles sont enregistrées pour vous au fil de la frappe et ne sont **jamais envoyées vers un écran du public**. Le panneau démarre fermé, il ne coûte donc rien tant que vous n'en avez pas besoin ; pour le ranger, faites glisser le séparateur au-dessus de lui jusqu'au bord inférieur, ou décochez **View** → **[en:tran:Widgets]** → **[en:tran:Note]** (W-31).
 - **Une diapositive qui n'a pas la bonne forme pour l'écran.** Un document de diapositives garde sa propre largeur et sa propre hauteur, et un document fait pour un autre moniteur ne correspond pas au vôtre. Tant qu'une diapositive et le moniteur diffèrent, un bouton orange avec un marteau — **[en:tran:Fix slide dimension]**, les tailles dans son infobulle — apparaît dans la rangée de boutons en haut des diapositives, ici et dans l'Éditeur de diapositives : appuyez dessus et les diapositives qui diffèrent prennent la taille du moniteur, et le bouton disparaît. Pour une seule diapositive à la fois, ce sont les cases **[en:tran:Width]** et **[en:tran:Height]** de l'Éditeur de diapositives, avec **[en:tran:Apply All Slides]** pour tout le document.
+
+- **Plus d'un dossier de chants et de diapositives.** La rangée de boutons sous le titre **[en:tran:Documents]** — **[en:tran:Default]** et **＋** — garde d'autres dossiers à portée d'un seul appui (W-58).

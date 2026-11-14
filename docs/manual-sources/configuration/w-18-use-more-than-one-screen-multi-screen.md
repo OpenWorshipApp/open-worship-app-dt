@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [SP-04, SP-05, SP-10, SP-11, SP-12, SP-33]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-18 — Use more than one screen (multi-screen)
 
@@ -13,7 +13,7 @@ workflowsVersion: "2026-11-08"
 
 1. **Right-click** an empty area of the mini-screen panel and choose
    **[en:tran:Add New Screen]** — a second preview card appears with its own number and color. 📸
-2. Point the new card at the display it should fill with the **Display** button in its
+2. Point the new card at the display it should fill with the **[en:tran:Display]** button in its
    footer (W-10), then turn it on with its own show/hide button. Every card has its own
    clears, transitions and lock too.
 3. Content goes to every **selected** screen. To stop one screen receiving content
@@ -41,5 +41,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-04` · `SP-05` · `SP-10` · `SP-11` · `SP-12` · `SP-33`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

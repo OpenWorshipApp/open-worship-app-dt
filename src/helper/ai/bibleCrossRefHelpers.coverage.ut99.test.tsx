@@ -283,7 +283,7 @@ describe('useBibleKeyContext', () => {
             root.render(
                 <div>
                     <KeyProbeComp />
-                    <BibleKeyContext.Provider value="KHMER">
+                    <BibleKeyContext.Provider value="XXV">
                         <KeyProbeComp />
                     </BibleKeyContext.Provider>
                 </div>,
@@ -293,6 +293,6 @@ describe('useBibleKeyContext', () => {
             [...container.querySelectorAll('output')].map((one) => {
                 return one.textContent;
             }),
-        ).toEqual(['KJV', 'KHMER']);
+        ).toEqual(['KJV', 'XXV']);
     });
 });

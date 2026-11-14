@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83, ST-84, ST-85, ST-86, ST-87, ST-92, CB-163, LT-02, LT-03, LT-04]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -19,11 +19,18 @@ workflowsVersion: "2026-11-08"
 2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
    tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
-   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
-     configured but not installed on this computer. When the chosen font comes in more
+   - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. The list starts
+     with the app's own fonts, which no computer has installed: each enabled language's own face first (`app-Google-Sans`,
+     `app-Battambang` -- the face that language's Bible text is drawn in), then the fonts the languages ship under their own
+     names (Google Sans, Battambang, a sticky-note hand), then the computer's fonts. Every font list in the app starts the same
+     way: the Slide Editor's, the foreground **[en:tran:Properties]**, **[en:tran:Bible/LongText Properties]**, the Lyric
+     Editor's (a section per language, above the computer's) and the Bible Note editor's two font boxes (its main box sorts
+     its fonts by name, which puts the `app-` faces first). A language installed or turned on is in every list the next time
+     a list is opened. A font marked `(Missing)` is
+     configured but neither installed on this computer nor shipped by an installed language. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
-   - **Reset button** (`Clear All Settings`):
+   - **Reset button** (**[en:tran:Clear All Settings]**):
      **this erases configuration; use with care.** It asks for confirmation first.
    - **Help → Factory Reset** in the menu bar is the way back when a setting has
      broken the app so badly that Settings cannot be opened at all: it works with
@@ -37,7 +44,7 @@ workflowsVersion: "2026-11-08"
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-2a. **[en:tran:Path Settings]** tab (next to **[en:tran:General]**): where everything
+2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
     lives on disk.
    - **Directories:** where documents, lyrics, and bibles are stored on disk. A data
      folder is required: everything you make and set up — songs, slides, Bibles, notes
@@ -88,7 +95,7 @@ workflowsVersion: "2026-11-08"
      it once. Pictures, videos and songs still pointing at where the folder USED to be
      are pointed at where it is now; a link to something that still exists is left as it
      is. A box says how many links it repaired, and the app reloads to show them. 📸
-   - **Reset button** (`Reset All Child Directories`):
+   - **Reset button** (**[en:tran:Reset All Child Directories]**):
      **this erases configuration; use with care.** It asks for confirmation first.
 3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
    or export/import a **[en:tran:Bible Data]** archive. The old online version list is
@@ -104,7 +111,7 @@ workflowsVersion: "2026-11-08"
    custom servers — see **W-42**.
 4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
     this computer, turned on or off, and the ones to install (those two — see **W-55**).
-   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+   - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in
@@ -125,5 +132,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-20` · `ST-22` · `ST-52` · `ST-54` · `ST-55` · `ST-58` · `ST-83` · `ST-84` · `ST-85` · `ST-86` · `ST-87` · `ST-92` · `CB-163` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

@@ -269,9 +269,15 @@ describe('file operations on a temporary directory', () => {
         expect(
             await fsCopyFilePathToPath(new Blob(['orphan']), workDir),
         ).toBeNull();
+        // The log keeps why; the person reads what to do (EN-62).
+        expect(h.handleError).toHaveBeenCalledWith(
+            new Error('Cannot get file name'),
+        );
         expect(h.showSimpleToast).toHaveBeenCalledWith(
             'Copying File:undefined',
-            expect.stringContaining('Cannot get file name'),
+            'Error occurred during copying file: ' +
+                'It did not work. Please try again.',
+            10e3,
         );
         expect(h.hideProgressBar).toHaveBeenCalledTimes(2);
     });
@@ -285,9 +291,16 @@ describe('file operations on a temporary directory', () => {
                 fs.existsSync(path.resolve(destination, 'dropped.ows')),
             ).toBe(false);
         }
+        expect(h.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: expect.stringContaining('No folder to copy into'),
+            }),
+        );
         expect(h.showSimpleToast).toHaveBeenCalledWith(
             'Copying File:dropped.ows',
-            expect.stringContaining('No folder to copy into'),
+            'Error occurred during copying file: ' +
+                'It did not work. Please try again.',
+            10e3,
         );
     });
 

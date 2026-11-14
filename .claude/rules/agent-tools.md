@@ -18,11 +18,17 @@ The doors and the firewall: `agent-access.md`.
 Not every tool has its notes here. Each has a paragraph in
 `tools/owa-devtools-mcp/README.md`; `owa_help_search`, `owa_help_page`,
 `owa_list_questions` and `owa_tran` are in `agent-knowledge.md`,
-`owa_read_website` in `agent-access.md`, `owa_screenshot` and
+`owa_read_website` and `owa_choose_app` (the stdio door's choice among
+several running apps) in `agent-access.md`, `owa_screenshot` and
 `owa_highlight_selector` in `chatbot-window.md`. `owa_type` finds its box the
 way `owa_click` finds a control, `owa_guide_step` moves on the card
 `owa_guide_start` put up, and `owa_hide_screens` takes content off a
-projector, so it is offered and never done unasked.
+projector, so it is offered and never done unasked. **So is a screen turned
+on, in the chatbot's loop**: an `owa_click` on a screen's show/hide in an
+answer that already changed what the screens hold is refused with the offer
+to make instead (2026-11-13, `EC-603`; Free had put a message up and then
+turned the projector on, unasked) -- `checkIsScreenToggleFind`, the label
+`owa_list_screens` gave or its English; a _yes_ asked next is pressed.
 
 - **A press is reported as what it CHANGED, not as what it hit** (2026-09-03).
   `owa_click` used to answer `clicked: <the control>` and stop, which is a tool
@@ -62,7 +68,10 @@ projector, so it is offered and never done unasked.
   a layer shown after the press that was not shown before it (identity +
   `checkVisibility`), and `window` + `page` for a new app page target. The
   window check polls up to 1 s only when nothing else changed; the capture and
-  read-website windows never count. Any of them means `didChange: true` and no
+  read-website windows never count. A PDF in Chromium's viewer does
+  (2026-11-10, `listNewAppPages`: a Resources row opens one more on every
+  press, and those presses read `unverified`), its `page` the file's name.
+  Any of them means `didChange: true` and no
   `unverified`. A projector change still needs `owa_list_screens`. +2 tokens a
   round.
 - **A press also says what it made the app ASK, and what it switched beside
@@ -229,8 +238,8 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `genGuideCardWords` hands `start` the window language's words as `words`.
   A phrase stitched from pieces cannot be translated, which is why none is
   left. `guide.test.mjs` holds the list to the runtime's own source (a
-  sentence said but not listed stays English in silence) and to having its
-  Khmer and French. What a press REFUSES with (`toTwinWords`, a refusal's
+  sentence said but not listed stays English in silence) and to having it in
+  every language. What a press REFUSES with (`toTwinWords`, a refusal's
   `reason`) still goes back to a model, and stays English. **And its
   lettering** (2026-10-17, the user's picture of the card with its Khmer in
   the OS's fallback face: _there's no font-family apply on guiding panel_):
@@ -266,8 +275,14 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   walkthrough at **[en:tran:Path Settings]** for the same reason.
 - **Tips belong to the operator page** (2026-09-28). In addition to Presenter
   and Reader, `pageDemos.mjs` supplies local lessons for Settings, Slide Editor,
-  Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
-  listens for the Help menu in every supported window; only the main window
+  Bible Note, Web Editor, Lyric Editor and Local Web Share. **A page lesson's
+  `find` that the window draws in English stays English** (2026-11-09,
+  `isFindTranslated: false`): the Bible Note editor is the bible-note
+  package, which has no translator, so its toolbar reads _Formatting options
+  for font family_ in every language -- a translated find would match nothing
+  in a non-English window, and `tran()` throws on a key no dictionary has. Its 19
+  lessons each open one menu or panel and name what is inside it, since a
+  page lesson is one step. `DailyTipComp` listens for the Help menu in every supported window; only the main window
   owns the shared menu registration. **One press opens every open page's
   card** (2026-10-23, the user: _open `Help` menubar, when click show in all
   pages_): the items are registered `isSentToAllWindows`, main sends the click
@@ -313,7 +328,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 106
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 109
   Reader-only lessons through the same guarded card. Thirty are featured
   in the Reader assistant's zero-model practice shelf: the original font
   larger/smaller, localized John 3:16 and Bible Find demos; passage history,
@@ -321,7 +336,8 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   scrolling, line layout, advanced study views and book filtering; and direct
   practice for typing a complete reference, removing one reference part,
   automatic Bible audio, filtering and sorting notes, Settings and Help.
-  Fifty-two of the 106 Reader tips begin with a safe deterministic action;
+  Forty-eight of the 109 Reader tips begin with a safe deterministic action
+  (2026-11-09: four list-menu openers became words, `TP-12`);
   Reader additions cover copying formats, saved list and note file management,
   Resources, names and graphs with practical searchable tips. Mixed steps use
   `look` after the safe action, and scoped labels translate each part. **A
@@ -340,12 +356,26 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 91 lessons across documents,
+  person's own word. The Presenter catalog has 116 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
-  planning, app help and the View menu. Eighty-one lessons now begin with a
-  safe deterministic **Do it**
+  planning, app help and the View menu (2026-11-09: 23 added, among them the
+  Long Text Show, the Virtual Screens Manager's guests and display cards, run
+  sheet timing and the PowerPoint / PDF / Word rows; six of them reuse a
+  Reader lesson's own title and detail, so they cost no string; then the
+  Foreground run added **Create Quick Text** from a saved passage and gave
+  Quick Text's Preview / **Markdown Lesson**, Time's Choose City and Effects
+  their own presses; when every component's Properties gained a Presets row,
+  a lesson of its own opened Properties and teaches the row in words -- a
+  bare `Presets` find matches a tile, `Presets: Speaker`, before the row, and
+  a tile rewrites the session's look, so it is a `skipIfVisible` only).
+  Eighty-three
+  lessons begin with a safe deterministic **Do it**
   action, then turn any explanation-only follow-up into **Next**; ten native-menu
-  or disruptive lessons remain fully self-guided.
+  or disruptive lessons remain fully self-guided, and 23 teach in words a menu
+  that needs a row, a passage or a display chosen first, a control that
+  removes something, or a panel whose opener the card cannot aim at (the
+  **Documents** tab twins with its own region, the Mini Screen find lands on a
+  screen card: `TP-13`, `TP-14`).
   No lesson can present, reload, relaunch, reset layout, or open Developer Tools
   for the person. **A shortcut no button shows is taught by a tip that presses
   it** (2026-10-04): Ctrl+Shift+Arrow (⌘+Shift on a Mac) moves between split
@@ -370,7 +400,12 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   one names its own component in its detail line (a friendly title alone left
   "countdown" matching no countdown lesson). Tips also send their current
   inline lesson when a hot-reloaded
-  renderer finds an older long-running MCP catalog. `demoId` is a string
+  renderer finds an older long-running MCP catalog -- but not when the host
+  ran the lesson and skipped every act step as already done, which also
+  answers `canDemo: false`: re-sent inline it lost its `skipIfVisible` and
+  offered to press the openers again (`checkHostSkippedEveryAction`,
+  2026-11-10, TP-21). A CHANGED lesson still runs the host's older copy until
+  the app restarts (TP-06). `demoId` is a string
   validated against those catalogs at call time, not a growing schema enum
   sent to the model on every round. Fourteen additional Presenter-only lessons
   (2026-09-28) cover lookup
@@ -518,11 +553,26 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `domHelpers.ts`, lazily imported). The lookup is a picker for a person whose
   labels nothing can aim at, so walkthroughs stalled on it (`EC-131`). The tool
   resolves the reference with the app's OWN parser (`BibleItem.fromTitleText`,
-  every locale; the version's FULL book name, never `Ps`/`Jn` — `EC-151`; a
-  whole chapter widened to all its verses) in the lookup's version first, then
-  any installed one that reads it; presents it exactly as **Show bible item**
+  every locale; a whole chapter widened to all its verses), and what that
+  refuses the way `owa_find_verse` reads a reference (`parseLooseReference`,
+  `resolveBookKey` over the version's names, then the KJV's: a key, a name, a
+  start only one book has; since 2026-11-13 a short form the usual lists give
+  ONE book -- `Ps`, `Jn`, `Phil`, `1 Kgs`, `I Cor` -- `EC-151`,
+  `resolveShortBookName`; `Hb`, `Jo` stay no book), in the lookup's version
+  first, then any installed one that reads it; presents it exactly as
+  **Show bible item**
   does (`ScreenLongTextManager.handleBibleItemSelecting` to the ticked screens;
-  NOTHING saved to the Bibles list, so **Clear Long Text** undoes it); and reads
+  **Clear Long Text** takes it off again) -- SAVED into the Bibles list's
+  Default FIRST unless that list holds it already, the same version and
+  verses (2026-11-14, `EC-704`, the user: _the rule is bible verse have to
+  save to list first (if not added) before show on screen_ -- it had said
+  _nothing saved_ until then, and _show gen 3 on screen_ put up a passage
+  the list never got; `saveAgentBibleItemFirst` in
+  `agentBibleListHelpers.ts`, as the Lookup's double-click,
+  `addBibleItemAndPresent`, saves and then shows): backed up like
+  `owa_bible_item add`, the result's `listed` naming the list, `isNew` and
+  its `undoId`, a new save said in the `note` and by `/verse`; a save that
+  fails puts nothing up, and `check` saves nothing; and reads
   the screens BACK — `isPresented`, the passage, its first words, each ticked
   screen's `isShowing` / `isLocked`, and a `note` to OFFER the show button when
   the screen is off. `action: "check"` resolves and quotes without touching a
@@ -535,6 +585,27 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   so no W-06 walkthrough is offered. `/verse John 3:16` needs no model; the
   offline bot offers ONE button (a typed sentence is not the consent a press
   is). **Whatever version the lookup is on is what goes up** (`EC-149`).
+  **And in another language** (2026-11-14, `EC-622`, the user's goal
+  _chatbot is very smart to help user control screen_): with no model
+  only English verbs were read, and _pon Juan 3:16 en la pantalla_ got the
+  guide's Settings page. A short line holding a chapter and a verse in any
+  script's digits (`readTypedVerseLine`, `typedVerseAskHelpers.ts`, pure:
+  never a time, a ratio or a how-to in the language typed) is named by the
+  installed Bibles' book names, read once for the line and let go
+  (`readTypedVerseRef` over `owa_bible_suggest` `books`), and
+  `answerTypedVerseAsk` (`helpBotHelpers.ts`) answers it as the English ask
+  is: the verse in the Bible that names the book, and the ONE button
+  (`/verse`, the reference as that Bible writes it). A word before the
+  chapter that no installed Bible names a book by gets the parser's
+  sentence -- only when nothing was put into English for the guide
+  (`isUnknownRead`) -- and, with no Bible of the typed language installed,
+  **[en:tran:Import a Bible for me]** already searching for that language
+  (`genBibleImportLanguageOfferAction`). A known corpus row keeps its own
+  way unless it is the row that puts a passage up (`checkIsVerseRowFree`).
+  Held to the screen asks' four blind sets (`typedVerseAsks.test.ts`): 347
+  of 352 put-ups taken in their own app, none of 11 264 look-alike
+  readings; seen live with the guard paused, a Khmer put-up pressed onto a
+  screen and a Spanish one offered the import (backlog `EC-622`).
   `EC-135`: `checkIsNamedNearly` strips a `[shortcut]` off both the label part
   and the needle, so `owa_click "Clear Long Text [F9]"` works. Open `EC-148`:
   `canDemo` is true when ANY step is pressable, so a recipe whose second step
@@ -548,13 +619,23 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `genClickExpression` reads `aria-selected` and a `.nav-link`'s `active`
   class, so a press that shut a panel answers `isOnNow: false`. The tool takes
   `widget` (countdown, stopwatch, clock, marquee-top, marquee-bottom,
-  quick-text; `all` for a stop) with `minutes` OR `at` (a clock time today; a
-  past one is refused in a sentence) or `text` (≤300 characters; a quick text
+  quick-text; `all` for a stop) with `minutes` OR `at` (a clock time today,
+  or a day as the panel's Start Countdown to DateTime takes one --
+  `2026-12-25 09:00`, a day alone its midnight, up to a year ahead,
+  `parseCountdownAt`, `EC-580`; a past one is refused in a sentence that
+  names today, which the model does not know -- the countdown read carries
+  `today` for the same reason) or `text` (≤300 characters; a quick text
   stays `seconds`, default 10). It does what the widget's own Start does
   (`ScreenForegroundManager.setCountdownData` and siblings on the TICKED
   screens, the widget's defaults, the panel's +1 s) and reads back `did`,
-  `detail` in words, each screen's `foreground`, and the OFF note (offer the
-  show button, never press it). `stop` takes one off (`all` is F10), `check`
+  `detail` in words, each screen's `foreground`, and the off-screen note
+  (offer to turn the screen on, never unasked -- and it says the assistant
+  CAN, on a yes: `genOffScreenNote`, shared with `owa_present_bible`,
+  `EC-586`; _offer that, do not press it unasked_ alone was answered _I
+  can't press its show button for you_ in 5 of 24 answers on Free; in plain
+  words since `EC-620`, its _is OFF … its show button_ having come back as
+  an English _(OFF)_ in Arabic, Hindi and Thai answers). `stop` takes one
+  off (`all` is F10), `check`
   reads. `/countdown 5` (also `/timer`), `/countdown 10:30`, `/countdown stop`,
   `/marquee <words>` and `/marquee-top` need no model; the offline bot offers
   ONE button (`readCountdownAsk`). It is in `ACTING_TOOLS`, the firewall's
@@ -566,6 +647,209 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `EC-169` (_Put Blessed Assurance on the screen_ turns the screen on to the
   wordless **First** slide) and `EC-170` (the W-08 demo's step 2 clicks
   **Colors**; no card can double-click a video).
+  **Every component, the PANEL's way, and a session as chat context**
+  (2026-11-09, the user: _chatbot can help modify any foreground component_
+  -- a 5-minute countdown, a top marquee, _a quick-text for a given bible
+  verse_ -- then, the strip `Default · Session 2 · +` circled: _sessions of
+  opening foreground component should be able to attached to the chatbot for
+  the chat context_; W-61). The tool had written the SCREEN with
+  `extraStyle: {}` and no session, so an overlay ignored its panel's look and
+  the panel never showed what was done. Now all thirteen components
+  (`FOREGROUND_COMPONENT_LIST`, a leaf, held to `FOREGROUND_WIDGET_LIST` by a
+  test; `clock` still answers for `time`, `all` for a stop) go through ONE
+  model: `foregroundComponentRules.ts` (per key its sessions target, the
+  Properties prefix, the props flags, its own setting names -- what the
+  panels read, so the two cannot style a widget apart) and the panels' own
+  show paths (`agentForegroundComponentHelpers.ts`: the datum built with
+  `withForegroundLayer` and `toTransitionPart`, a NEW object every time,
+  timers through `to{Started,Paused,Reset}*Data` in place). **Words go into a
+  NEW session named after them** (`5:00`, `→ 10:30`, the marquee's words,
+  `(KJV) John 3:16`; `toForegroundSessionName`), the active session's look
+  copied in (`genLookCopyWrites`, only keys that exist), the panel opened on
+  it -- unless the active session already holds the same (unset keys compared
+  at the PANEL's defaults, `checkIsSameContent`: a fresh profile's Default is
+  already 5:00) or one is already named so; nothing typed is overwritten. A
+  verse `ref` is read from the installed Bible (`readForegroundVerse`), never
+  the model's words, and a new verse quick text gets the Bible Verse preset.
+  **Changing** is `owa_foreground_edit` (`agentForegroundEdit.mjs`), offered
+  to a FOREGROUND ask only (`MODEL_ON_ASK_TOOL_MAP`, with `owa_list_screens`,
+  `owa_click`, `owa_help_search`, `owa_find_verse` shared to it): `read`
+  (`open: true` the panels open in the Presenter, from
+  `foreground-open-panels`, and their sessions), `set` (fields and/or a
+  `look` in words, `agentForegroundLookRules.ts`, pure: size larger / smaller
+  / px, colours, place, width, scale, opacity, round, blur, font, bold, the
+  ONE Effects JSON key merged whole, layer, blend, transition, a marquee's
+  speed -- a field the component lacks refused naming what it takes; so is
+  a TIME since 2026-11-12, `EC-538`, `checkTimeFields`: `seconds` / `delay`
+  are a Quick Text's, `interval` Messages', `minutes` / `at` a countdown's,
+  and one sent to another component -- 15 seconds on a Message, which stays
+  until hidden -- had been dropped while the answer promised it; but a
+  marquee STARTED or SHOWN with `seconds` / `delay` and no session is a
+  Quick Text at that marquee's edge, said in the result's `note`, on both
+  tools -- 2026-11-13, `EC-593`, `toEdgeQuickTextAsk`: the ordinary tool
+  takes no place, and its refusal had sent the words to the middle; and a
+  Quick Text put up with no place that lands in the middle says so in its
+  `note`, with the one call that moves it to an edge and never to say it is
+  there before that call answers -- `EC-597`, `QUICK_TEXT_MIDDLE_NOTE`), `show`
+  / `hide`, `timer`, `session`, and `start` (2026-11-12, `EC-523`: new
+  words or a time put UP in one call, as `owa_foreground` does -- a session
+  of their own named after them, never one a person typed in, on the ticked
+  screens, a countdown or stopwatch running; `show` puts a session up as it
+  stands). Before it, a model `set` the panel's Default over what a person
+  had typed and asked whether to show it. **A countdown `set` on no screen
+  says it is NOT counting down** (2026-11-13, `EC-578`,
+  `genNotOnScreenWords`: told only that the panel held the change, Free
+  answered _Count down until … 11:45 pm_ as coming with nothing up, 0 of 3;
+  3 of 5 `start` after), **and a `show` naming neither minutes nor a time
+  follows the session** (`EC-579`, `pickCountdownMode`): the panel holds a
+  length AND a time, a Start each, and keeps no choice, so a countdown up
+  keeps the way it is up -- a restyle or a re-show had turned a countdown to
+  11:45 PM into its 5 minutes -- and one whose time is still ahead, its
+  length not zero, is refused naming `minutes` and `at`
+  (`genCountdownChoiceWords`), nothing put up. **`read` names every screen**
+  (`screens`: id, ticked, on, locked; `toScreenChoiceWords`, `EC-522`), and
+  a `screens` naming a number no screen has is refused with the screens
+  there are and _leave screens out_ -- a model had guessed screen 1 on a
+  computer with screen 0 alone and been told no screen was ticked. **`timer`
+  `add` puts MORE time on a countdown that is up** (`EC-526`,
+  `toLongerCountdownData` in `timerStateHelpers.ts`, `minutes` / `seconds`,
+  24 hours at most): a running one reaches zero that much later (one
+  already over counts down again from now), a paused one reads that much
+  more, one not started is made that much longer (Reset winds back to the
+  new length) -- only the timing changes, so the clock is changed in place
+  on the wall. _Add 2 more minutes_ had been a `set` of 7 minutes, the
+  countdown started over at 7:00. A stopwatch, and a countdown on no screen,
+  are refused in a sentence (`set` its minutes instead). **`hide` with
+  widget `all`** (`EC-529`) is F10's Clear Foreground on every screen: in a
+  held foreground conversation, _clear everything_ had hidden the one
+  session the tab held and left the rest up. **Every result's `screens`
+  names a Long Text Show up** (2026-11-13, `EC-552`, `toScreenState`):
+  drawn in the text layer, it had been left out, so `check` answered _No
+  foreground extra is on any screen_ over it while `owa_list_screens`
+  named it; the same `toLongTextSummary` line now rides both. **A `stop`
+  of `all` says what it took off** (the same day, `EC-554`,
+  `genClearedDetail`): read per screen before the clear, with _A clear
+  keeps no Undo_ and how to put one back -- it returns no `undoId`, and
+  _how do I put it back_ had offered a clock and a countdown never up. **A
+  Time session with no clock gets one** (the same day, `EC-556`,
+  `genFirstClockPlan`): a session holds no clock until its panel is first
+  opened, so on a new install _put the time on the screen_ was refused; the
+  start now writes the one clock the panel's first open would (this
+  computer's time, no offset stored), backed up with the rest. What a
+  session has on a screen is restyled
+  the panel's way (`restyleOnScreen`), its words re-shown. **Every write is
+  backed up** as an `app-setting` restore (`agentBackupPlanHelpers.ts`, every
+  key of the session) and the answer carries `undoId`; an undo notifies the
+  panel and restyles the wall (`refreshForegroundAfterUndo`). **A `start` or
+  `show` keeps the SCREENS too** (2026-11-13, `EC-540`: an undo of a start
+  put the session back and left its countdown running on the wall, owned by
+  no session). `runBackedUp(…, { isShowing: true })` reads the component's
+  list on every live screen before and after the change
+  (`agentScreenRestoreHelpers.ts`, imported lazily) and adds each slot that
+  changed -- a list item by its `id`, '' for Default -- to the backup as a
+  `screen-foreground` restore holding what the slot held before
+  (`diffForegroundSlots`, `appendAgentBackupRestores`, after the change: a
+  show's slots are known only once it ran; a failure there leaves the
+  settings' backup as it was). An undo puts each slot back through the
+  list's own setter (`mergeForegroundSlot`, every other item the same
+  object), last, after the session; its own backup keeps what the slot
+  holds now, so an undo of the undo puts the overlay back with its own end
+  time. Another session's overlay, or one put up since, is never touched.
+  The undo is refused WHOLE, before anything, off the Presenter page or on
+  a locked screen (`checkScreenRestores`). **A Long Text Show keeps the
+  screen's TEXT LAYER** (the same day, `EC-550`: its undo had left the text
+  on the wall): it is drawn where a Bible passage is, not in a foreground
+  list, so its start keeps each live screen's layer that changed as a
+  `screen-text` restore (`captureWidgetScreens` / `diffWidgetScreens`,
+  `diffTextLayers`) -- what it held before, nothing, a verse or another
+  session's text, and `expect`, what the start left there
+  (`toTextLayerKey`: a long text by its session, a passage by its verses).
+  An undo puts the layer back only while it still holds that, so a verse
+  put up since stays. Seen live on a scratch instance: off screen 0 through
+  the tools and through the help window's Undo, back with the undo of the
+  undo; John 3:16 it covered back on screen 0 after the help window's Undo,
+  and Psalm 23:1 presented over it since left by the undo. **So does a `set` on a session that is UP**
+  (the same day, `EC-546`: its new words are put up again on the screens
+  holding it, and its undo had put the session's words back under the new
+  ones on the wall): `handleSet` passes `isShowing` while a screen holds
+  the session; one that is not up reads no screen. Seen live 2026-11-13 on a scratch instance
+  through the tools and the help window: a countdown and a marquee started
+  in one answer, one **[en:tran:Undo this change]**, both off screen 0; an
+  undo of the undo, the countdown back to the second. **An open panel
+  follows**: its fields read settings once at mount, so
+  `useForegroundPanelRevision` keys the panel and `notifyForegroundPanel`
+  remounts it (mounted listeners only, no file watch). Banner: _changed the
+  <component> "<session>"_; a read is quiet. Seen live on a scratch profile
+  through a fresh stdio server (the token cost and the window's side are in
+  `chatbot-llm.md` / `chatbot-files-report.md`).
+- **The screens' OWN controls are `owa_screen_edit`** (2026-11-13, the
+  user: _chatbot is very smart to help user control screen_ -- the size,
+  colour or style of the Bible showing, another version added to it, a
+  transition, the display checked, screens grouped, _should cover
+  everything in screen control_; `EC-611`; `agentScreenEdit.mjs` → the
+  `owa-agent-screen-edit` relay in `domHelpers.ts` →
+  `src/helper/agentScreenControlHelpers.ts`, imported lazily, the rules
+  pure in `agentScreenControlRules.ts`). Measured first through the help
+  window on a scratch profile (the skill's `references/screen-asks.json`,
+  27 asks): not one of the 23 asks for a change was done, every answer the
+  panel's steps, nine of them wrong. `read` answers per screen on/off,
+  ticked, locked, its group, stage, display, transitions, Line Sync and
+  what it shows, plus the Bible text style, the displays and the installed
+  Bibles. `set` takes many fields in one call, each through the setter its
+  Mini Screen card or the Bible text panel presses: `style` (one for EVERY
+  screen -- the patch the panel's own controls write, `genScreenStylePatch`,
+  a colour word read by `resolveCssColor`), `versions` (the card's version
+  menu: an added Bible goes after those there, as Shift+click puts it;
+  Remove takes one off; `planScreenBibleKeys`, by key, title or language),
+  `lineSync`, `transition` per layer, `display`, `group` (the colour note
+  that groups screens), `lock` (its group with it), `select` (the tick),
+  `stage`, `show` (only when asked to turn one on or off) and `clear`.
+  Everything asked is checked before anything changes: one wrong field
+  refuses the call whole, so a refusal never leaves half a change on a
+  congregation's screen. **Every change is backed up**: the screens'
+  controls and layers are read before and after, and what differs joins
+  the backup (`screen-setting` and `screen-layer` restores beside the
+  foreground's `screen-foreground` / `screen-text`), so the answer's
+  `undoId` puts back what the change did, whatever its setters did beside
+  it (a stage above 0 sets the slide transition to none; a screen joining
+  a group takes the group's content and lock). An undo writes the fields in
+  `AGENT_SCREEN_SETTING_FIELD_LIST`'s order, an unlock FIRST and a lock or
+  a screen turned on again LAST (`sortRestoresForUndo`): a locked screen
+  refuses what goes onto it, Line Sync included. The later changes an undo
+  takes with it are named by what they shared -- _the same screen_,
+  _setting_ or _file_ (`genLaterChangesNote`, `EC-613`: a screen's lock
+  had been called _the same file_). **A group made anywhere shows on both
+  cards** (`EC-612`): the card's swatch reads its colour once, at mount, so
+  `ScreenPreviewerHeaderComp` follows the manager's `color-note-update` and
+  keys the swatch by the note -- two grouped screens had both read **No
+  Color**. **A call is read as the model meant it** (2026-11-14, `EC-615`,
+  `toScreenEditArgs`): 83 of 96 changes in the first run came with no
+  `action`, each refused, so no action is a `set` when a field is sent and
+  a `read` otherwise; a `style` sent as a list of looks is one look, a
+  Bible named alone in `versions` a list of one, and `group: [0, 1]` those
+  screens grouped -- each a `z.preprocess`, so the schema the model is
+  sent did not change. An `owa_undo` with an `id` and no action is that
+  undo (`toUndoAction` in `agentData.mjs`, read alike by the tool, the
+  firewall, the banner and the waiting line). Firewall: `read` is quiet
+  (`READING_ACTION_MAP`), `set` acts, announced _changed a screen_ (a set
+  that only clears is `owa_hide_screens`' banner), and nothing is a
+  removal. Offered to the chatbot's model only in a `screen` ask
+  (`MODEL_ON_ASK_TOOL_MAP`, with `owa_present_bible`, `owa_undo`,
+  `owa_goto_page` and `owa_help_search` shared to it): ~717 tokens a round
+  there, the ordinary list unchanged (26 tools, ~8 471 of 8 480). The
+  route and the window's side are in `chatbot-llm.md`. Seen live
+  2026-11-14 on a scratch instance through the help window and through a
+  fresh stdio server, every change undone by its own id. **And a screen
+  ADDED** (the same day, `EC-630`): `newScreen: true`, alone in a `set`, is
+  the Mini Screen menu's **[en:tran:Add New Screen]** -- off, not ticked, in
+  no group, its number in the answer -- refused beside any other field,
+  past 8 screens (`MAX_AGENT_SCREEN_COUNT`, a leaf the help window's offer
+  imports alone) and off the Presenter. It is backed up as a
+  `screen-presence` restore: its undo takes the screen away, refused whole
+  while it is on, holds anything or is locked; the undo of that puts it
+  back with its card's settings, never on or locked; and an undo of the
+  add names every later change to that screen as gone with it. Removing a
+  screen stays a person's (Delete in its card's menu).
 - **A panel divider is a named control, and the card right-clicks it where it
   is** (2026-09-09, `FlexResizeActorComp.stampAccessibleName`, `domMatch.mjs`
   `tierOf` / `openContextMenu`, `guide.mjs`). Reported with a screenshot: the
@@ -601,16 +885,18 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   divider route as steps 7–9 and `questions/common.json` a question for it.
 - **The focus vocabulary is declared ONCE**, in
   `tools/owa-devtools-mcp/botFocus.mjs` (no `node:fs`, so the renderer bundles
-  the module the server runs). Eight windows, each `{key, label, window,
-isMainWindow, howToOpen, openFind}`, and the `key` is NOT a label: it is
+  the module the server runs). Nine windows, each `{key, label, window,
+isMainWindow, howToOpen, openFind}` (and an optional `alsoSurface`, below),
+  and the `key` is NOT a label: it is
   spliced into `page: "<key>.html"` by `owa_find_ui`/`owa_app_state`, so it
   must stay the
   html base name. It used to be a two-value union written out by hand in the
   type, the picker list, the opener sniff, the session validator, the fallback
   starters, two zod enums and a `focus !== 'presenter' && focus !== 'reader'`
   guard. `isMainWindow` is what tells `genSystemPrompt` whether `owa_goto_page`
-  can take the user there at all — three of the eight are pages the ONE main
-  window navigates between, and that tool's enum is DERIVED from them
+  can take the user there at all — four of the nine are pages the ONE main
+  window navigates between (the Screen Mirror page the fourth, 2026-11-14),
+  and that tool's enum is DERIVED from them
   (`BOT_MAIN_WINDOW_PAGES`), having refused the Document Editor for as long as
   the prompt had been promising it. The rest have to be OPENED, and `openFind`
   names the one control that opens each where one does — only Settings, of the
@@ -622,7 +908,11 @@ isMainWindow, howToOpen, openFind}`, and the `key` is NOT a label: it is
   happens to match there, reported as a card about Settings ringing a Bible
   version off “Language: click **English**”, that button reading `KJV English
 KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
-  caller's page.
+  caller's page. **`alsoSurface` lets a window take another's manual pages**
+  (2026-11-14, `applyFocus` in `help.mjs`, taken but not lifted): the Screen
+  Mirror page's recipe, W-50, is filed under the Presenter, where the host's
+  half is done, and every question asked from that page would have lost it
+  as another window's.
   Between them those fields are why a walkthrough of a window nobody
   opened now opens it instead of reporting that it is not there: the chatbot's
   `genPageOpenAnswer` navigates or presses, starts the walkthrough it was asked
@@ -705,6 +995,9 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   `list` and `info` stay silent like every other read. **Open Lyric Config
   fields need a leading `- `** (`- Title: ...`) — the mistake a model makes,
   now named in the refusal.
+  **A song's `create` takes `fontFamily`** (2026-11-10, `EC-488`, at most
+  64 characters, checked again at the disk): the song's own face on every
+  stage (`agent-songs.md`), written as `stageSetting` beside `content`.
 - **The data tools change what the user KEEPS, so every change is backed up
   first and a delete is a move to the trash** (2026-09-14, `MC-24`; asked for
   by the user — _add all possible tools: bible-item crud, bible-note crud,
@@ -740,7 +1033,7 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   store is shared by every agent on the machine**, so a script checking undo
   passes each change's own `undoId`. The firewall rations removals — every
   `delete*` and `owa_undo` — at 10 per 5 minutes, a counter apart from the 25
-  presses a minute, because what it protects is the user's files; and
+  presses a minute, because what it protects is the user's files; except that an `owa_undo` naming, by its own id, a change THIS session made with a tool that takes nothing away is no removal (2026-11-09, BN-46: the help window's own **Undo this change** had been refused after ten in five minutes); and
   `owa_bible_note` refuses a write while that file is open in a
   `bibleNote.html` window, which saves its stale copy back over it --
   **except `add`** (2026-11-08): a new note is the panel's own +, pressed with
@@ -862,7 +1155,15 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   `kind: "document"` lists the Documents folder and imports a PDF /
   PowerPoint / Word / song / slide file from the disk — the one file-dialog
   case left — while a song or slide document stays its own tool's to rename
-  or trash (the editing history goes with it). And **`revert`** on
+  or trash (the editing history goes with it).
+  **`info` on a PowerPoint, Word, PDF or slide file answers its WORDS**,
+  ready for a song (2026-11-10, `EC-488`, `agentDocumentWordsHelpers.ts`,
+  `agent-songs.md`): title, headings left out, the main font, the text in
+  blocks, what was skipped and which pages have no words to read; with
+  `pictures: true`, those pages as image blocks (`toResourceFileResult`).
+  It runs under a 180 s timeout of its own, not the 15 s a page expression
+  gets: a deck converts to HTML on its first read (154 s measured on a cold
+  dev server, 1.6 s warm). And **`revert`** on
   `owa_lyric_file` / `owa_slide_file` is the editor's Discard made
   revertible: the saved content goes back into the editing history as a new
   entry (the `*` clears) behind a backup of the head it replaces, where the
@@ -1011,7 +1312,13 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   and every verse found is quoted from the chosen one (`searchedIn`); a
   result from a Bible not in English names `englishBible` for the model to
   search what it translated. `refs` quotes references (an English name, a
-  code or the Bible's own) from that Bible; `open` puts one in the Bible
+  code or the Bible's own) from that Bible -- a chapter and verse with no
+  book being the book before it's (`splitRefList`, BN-81: "Jonah 1:1-4,
+  1:17, 2:1" had left all but the first unread), and a passage (a range
+  or a chapter) given WHOLE, within 6000 letters the call's references
+  share (`toReadPassageTextLimit`, BN-86, 2026-11-11: cut at a found
+  verse's 300, a lesson's thirteen verses were read as their first two and
+  every factual error the blind readers found was in the rest); `open` puts one in the Bible
   Lookup the way the names panel's **Open in bible lookup** does
   (`applyTargetOrBibleKey` on the live controller, or the Presenter's popup
   through `bibleLookupPopupOpener.ts`), never on a screen. Only `open` acts:
@@ -1192,7 +1499,10 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   verify coverage; `pages` deliberately narrows a read to at most eight, and
   `detail: "high"` renders the complete read at a 2048px long edge. A
   Bible note answers as its notes' words (`toNoteFileText`), a text
-  file's words cut at 16 KB, a picture itself. Reads only, counted in the
+  file's words cut at 16 KB -- a `.md` file longer than that with its
+  headings and a note to read one with `section`, which answers that
+  heading's part whole (`readStudySection`, 2026-11-10, `EC-481`) -- a
+  picture itself. Reads only, counted in the
   acting budget (each PDF read spawns a process). Offered to the
   chatbot's model only in a `resources` ask (`MODEL_ON_ASK_TOOL_MAP`), so
   the ordinary bill did not move. That ask also receives the shared
@@ -1214,6 +1524,345 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   page's printed references were text, not buttons; a card at ANY position
   keeps its reference buttons, and a card saved by an older window derives
   them from its own references line).
+
+- **`owa_resource_file` also WRITES a study file, and only the person
+  saves one** (2026-11-09, `EC-464`; the user: _make a resource study
+  content for Mathew 3:3-7 … with creative mermaid diagrams_, _should ask
+  user to confirm file name and confirst create_, _if resource file exist
+  then should create with different suffix_). Three more actions, the
+  worker `src/helper/agentStudyFileHelpers.ts` (imported lazily from
+  `handleAgentResourcesRequest`), the rules pure in `agentStudyFileRules.ts`.
+  **`draft` writes nothing**: from `ref` + `title` + `content` it builds the
+  name from the PARSED reference, never the model's (`MAT.3.3-7 <title>.md`,
+  `JHN.3.16 <title>.md`, a whole chapter `MAT.3.<title>.md`; the title
+  refused, never cleaned, by `checkAgentFileName`), the next free name in
+  `<data folder>/resources/Default` (`… (1).md`, `nameTaken` says so), and
+  the file: `# title`, the passage QUOTED BY THE APP from an installed Bible
+  (`bible`, else the Lookup's) as a blockquote, a line saying it was drafted
+  by the app's assistant, then the content -- a `[^Isaiah 40:3]` token on a
+  line of its own becomes that verse quoted, inline its reference, an
+  unreadable one refused by name; fences balanced, every mermaid block one
+  of the allowed types with no `%%{init`, `click` or raw HTML; `content`
+  48 000 characters at most, a whole file 64 KB and 16 diagrams (a NEW
+  study 6, each half of one drafted with its translation after it,
+  `EC-609`). With `file` (a `.md` inside Default only, by its name or its
+  whole path) it drafts a CHANGE and answers the file's `hash` and what
+  changed by section. **A change names its part** (2026-11-10, `EC-479`):
+  `section` (a heading as it reads) with `content` rewrites that part,
+  `append` adds words at the file's end before its footer or at the end of
+  `section`, and `content` alone is still the WHOLE new text -- the user's
+  ask to add a translation had been a whole file in one call, past what a
+  help round writes. A heading the file lacks is refused with its
+  headings; a repeated one (a translation repeats them) is told apart in
+  the summary, which compares bodies without the footer and names five
+  sections at most. A run of plain lines written one item a line gets a
+  blank line between them (`separateStudyLines`, `EC-482`: Markdown had
+  drawn John 3's verse-by-verse lines as one paragraph), never in lines
+  the change did not reach. **Words are fixed where they stand by
+  `replace`** (2026-11-12, `EC-537`: told by `EC-536` which three names
+  the user's John 3 study writes with another vowel sign than the Bible
+  it quotes, a model could change them only by writing the four parts
+  that hold them again, 1 572 characters, one of the person's diagrams
+  among them): with `file`, `replace: [{from, to}]` (`section` keeps it
+  to one part) writes each `from`, exactly as the file writes it, as its
+  `to`, and nothing else moves (`applyStudyReplace`). Only in the study's
+  own words and its diagrams' lines -- never a quoted passage, a code
+  block, a rule or the footer, nor a link's address, a web address or a
+  `[^…]` token -- whole words where a script writes spaces, and where it
+  does not, a glued word of two letters or more, or of one letter of
+  ANOTHER such script glued between them (2026-11-13, `EC-559`: a
+  translation's letter of another language slipped into a word, which
+  the study's check now names), never at a place that splits a letter
+  cluster (`checkIsClusterEdge` in `scriptClusterHelpers.ts`). Pairs in
+  order, all or nothing: a `from` it
+  cannot find is refused saying why (another case or spacing, only inside
+  a longer word, only in what the app writes, in another part, in the
+  footer). No line break, 400 characters a side, 20 pairs, never beside
+  `content` or `append`; an empty list is no replace. The answer names
+  each pair's count (`replaced`, and `change`: _It writes “B” for “A” (2
+  places); …; nothing else changes._) and the file's diagrams it changed
+  (`diagramsChanged`), the only ones the help window parses
+  (`chatbot-llm.md`). It costs ~91 tokens a round on the asks the tool
+  rides (`owa_resource_file` ~700 → ~791, `--stdio`); the ordinary list did
+  not move (~8 478 of 8 480). **A pair a model could not tell from its
+  verse is put right** (2026-11-12, `EC-541`): told those words, a model
+  cannot see the vowel sign apart either, and its pairs came out with the
+  verse's spelling as `from`, turned round, or a word given its own
+  spelling back -- each refused, and its next try as blind. A call that
+  would be refused is tried once more (`applyStudyReplaceChecked` in
+  `src/chatbot/studyNameCheckHelpers.ts`, the worker's and the window's
+  chain's one way in): each pair refused ALONE has every place its words
+  write a word the study's own check names (`listSavedStudyNameSlips`) --
+  as the file writes it, as its verse does, or a vowel sign apart
+  (`findStudyWordVariants`), only words a replace could write over
+  (`checkIsStudyReplaceWords`) -- written in `from` as the file does and in
+  `to` as the verse does; the same pair twice is written once, a word two
+  verses spell otherwise is left as asked, a pair that goes through alone
+  is never changed, and a call still refused is refused as it was. The
+  answer names the pairs (`repaired`, and a sentence leading `change`). No
+  schema changed; a right call costs nothing more. **A part is taken out
+  by `remove`** (2026-11-13, `EC-543`): no call could take one out --
+  `section` with no words is refused, and a whole text leaving a part out
+  of a long file is refused too (`EC-502`) -- so a part of the user's
+  44 KB John 3 study stayed in for good, and an old translation could
+  not make room for a new one. With `file` and `section`, `remove: true`
+  drafts the file without that part: its heading's line down to the next
+  heading of its level or above, its own parts with it, every other line
+  as it was (`applyStudyRemove`). A rule closing the part stays when a
+  part comes after it -- a translation under the study opens with one --
+  unless the line above the cut is a rule already, and a rule left last
+  before the footer goes, so taking out a whole translation leaves the
+  study as it was before it was added. Refused: no `section`, words
+  beside it (`content`, `append`, `replace`), a heading the file lacks or
+  has twice (only their place tells them apart: the person takes one out
+  in the editor), the study's own title (its part is the whole study),
+  and a part that is all the study holds. `change` is the change summary's
+  own: _It removes “Prayer” (0 line(s) in, 4 out)._ Measured offline on
+  that study (read only): 0 of its 30 parts could be taken out before, 29
+  after (the title refused), and in all 29 the 775 parts compared stayed
+  word for word, the footer and the translation split held, and no rule
+  was doubled or left over the footer. It costs ~25 tokens a round on the
+  asks the tool rides (~791 → ~816, `--stdio`); the ordinary list did not
+  move (~8 478 of 8 480). **A part's new words never take out what they
+  do not write** (2026-11-13, `EC-544`): `section` with `content` had
+  replaced the part's whole range, so new words for what stands right
+  under a heading took out every part it holds -- under a study's `#`
+  title, the whole study -- and a heading alone, a rename, took out the
+  part's words. Now words that write no heading under their first line
+  are the part's OWN words and the parts under it stay (`keptParts`, and
+  `change` ends _The parts under “X” were kept as they were, below these
+  words: “A”, “B”. To take one out, draft it with `remove`._); a heading
+  alone renames the part, every word kept; words that write its parts'
+  headings are the whole part, as before; and words appended to a part
+  that holds parts go at the end of its own words, never into its last
+  part -- an appended heading still goes at its end. A part holding no
+  parts is drafted byte for byte as before. Measured offline on the
+  user's study (read only): new words for each of its 6 parts that hold
+  parts took out 40 parts they never named before, none after; 30
+  renames took out 40 parts (588 lines) before, none after (each changes
+  its heading line alone); 6 appended lines landed in the part's last
+  subpart before, none after. No schema changed. **Nor the passage the
+  app quoted there** (2026-11-13, `EC-548`): the app writes a study's
+  passage right under its `#` title (`composeStudyFile`), so the title's
+  own words ARE the passage, and an introduction sent for them took it
+  out. New words for a part -- its own words, or its parts' too -- that
+  place no passage of their own (none quoted, no `[^John 3:16]` alone on
+  a line) keep the passages its old words quoted, where they stood:
+  first when nothing came before them, else under the new words, above
+  its parts (`keptPassages`; `change` adds _The passage “John 3:1-36”
+  quoted under “X” was kept as it was, above these words: the app quotes
+  it from the Bible. To quote another passage there, put its reference
+  alone on a line of the words, as [^John 3:16]; to take one out, draft
+  `remove` with `section` “John 3:1-36”._). `remove` takes a passage by
+  its reference (its Bible after it or not) when no heading has those
+  words; a reference quoted twice is refused like a heading twice, and
+  refusing the title names its passage's reference. Measured offline on
+  the user's study (read only): new words for each of its 30 parts lost
+  146 quoted lines before (73 under the study's title, 73 under its
+  translation's), none after; the other 28 parts' drafts byte for byte as
+  before; each passage taken out by its reference, 73 lines and nothing
+  else. No schema changed. **And a passage copied back changed is put
+  back as quoted** (2026-11-13, `EC-549`, `restoreStudyPassages`): new
+  words for a part, words appended, or a whole new text that carry a
+  passage the file already quotes -- the same reference AND Bible -- with
+  a line changed have it put back as the app quoted it, every other word
+  as sent; `change` adds _The passage “John 3:16” was put back as the
+  app quoted it from the Bible: the words sent changed 1 of its line(s),
+  and a quoted passage is the Bible's own words. To quote another
+  passage, put its reference alone on a line, as [^John 3:16]._ A quote
+  of another reference or Bible is a new one (quoted again from its
+  Bible since `EC-565`, below), and one
+  the file quotes twice apart is left alone; `replace` already writes
+  only outside quotes. Measured offline on the user's study (read only):
+  the file copied back unchanged, nothing put back; each of its 72 verse
+  lines changed by a word, put back exactly, 0.4 ms each; the title's
+  words sent with its 73-line quote copied and one verse changed saved
+  that verse before, and put it back after, the new words kept. No
+  schema changed. **And a passage new to the file is that Bible's words
+  too** (2026-11-13, `EC-565`): new words carrying a passage in the
+  app's own form (`> **Romans 5:8** (KJV)` and a verse a line) that the
+  file never quoted -- a model copying the form of the passages it read,
+  its verse written from memory -- have it quoted again from the Bible
+  it names, when that Bible is installed and reads the reference
+  (`requoteNewStudyPassages` in the worker; `listStudyNewPassages`,
+  `checkIsSameStudyPassage` and `mergeStudyQuoteLines`, pure). A
+  reference read as other verses than the words number, a Bible not
+  installed and a heading no Bible reads are left as written, and a
+  passage cut where the app cuts one is read to the verses it holds, so
+  a translation's passages come back as they were. `change` (a new
+  study: `warnings`) adds _The passage “Romans 5:8” (KJV) was quoted
+  from that Bible as it reads there: the words sent had 1 of its
+  line(s) otherwise, and a passage under a Bible's name is that Bible's
+  own words. To quote a passage, put its reference alone on a line, as
+  [^John 3:16]._ **Words put in bold or italics inside a quote stay**,
+  here and in `EC-549`'s put-back: a line is compared by its words --
+  the `>` and the verse's number exactly, emphasis marks aside -- and
+  only a line whose words changed comes from the quote; asked to put a
+  verse in bold, the whole passage had been put back without it.
+  Measured offline on the user's study (read only): a phrase put in bold
+  in each of its 72 verse lines was put back 72 times of 72 before and
+  kept 72 of 72 after (~1 ms a file), and another verse's words changed
+  beside it put that verse back alone (70 of 70); a quote of each verse
+  written as new with its words drifted was quoted again 72 of 72, and
+  with its words right, or a phrase in bold, left alone 72 of 72; a
+  change that adds no passage reads no Bible. No schema changed. **And
+  a verse a change adds is read from its own half's Bible** (2026-11-13,
+  `EC-570`, `toStudyTokenParts` and `quoteStudyTokens` in the worker,
+  `listStudyHalves` pure): a `[^Romans 5:8]` added to the study as
+  written is quoted from the Bible its passage is quoted from (the first
+  passage the app quoted in it), one added to a translation after it
+  from that translation's, then the Lookup's and every other installed
+  Bible as before. The Lookup's had come first: the user's John 3 study
+  quotes the Amplified, its Khmer translation a Khmer Bible, and
+  whichever Bible the Lookup was on, a verse added to a part came in the
+  other language in one half or in both. A `bible` asked for is every
+  half's (the window's own translation asks for the new half's); a half
+  whose Bible is not installed, or that quotes none, reads the Lookup's;
+  a token in both halves is read once from each; and a token naming its
+  own installed Bible (`[^(KJV) John 3:16]`) is read from it even when
+  `bible` names another, as the worker always said it was. A new study
+  is as it was, its passage's Bible first. Measured offline on the
+  user's study (read only, its 20 Bibles' keys, the worker's own draft
+  over fakes of the disk and the Bibles): a token added to each of its
+  16 parts, on its own line and inline, came from its own half's Bible 0
+  of 16 times with the Lookup on the KJV and 8 of 16 with it on the
+  Khmer Bible before, 16 of 16 both ways after, a draft under 12 ms (one
+  of them right only by luck until `EC-571`, below). No schema changed.
+  **And a translation keeps its rule when the part before it changes**
+  (2026-11-13, `EC-571`, `holdStudySectionToHalf`): a part runs to the
+  next heading of its level, so the study's last part ran on over the
+  `---` that opens a translation added after it -- words appended to
+  it went in under that rule, above the translation's title, and new
+  words for it took the rule out; either way the translation was no
+  longer split off (`splitStudyTranslations`), so a `translate` would
+  take it for the study's own words (`EC-492`) and its verses would be
+  read as the study's (`EC-570`). `applyStudyEdit` and
+  `readStudySection` hold a part to its half (the window's chain onto
+  a held change uses the same edit); `remove` already kept the rule
+  (`EC-543`). Measured offline on the user's study (read only), every
+  one of its 28 parts appended to, given new words and taken out: 2 of
+  84 changes left the translation unsplit before (both on _Questions
+  for Discussion_), none after; of 180 results (six asks a part, a
+  read among them) 173 byte for byte as before, the 7 others that part
+  and the title's (a part appended to the title lands above the rule,
+  its read ends before it). No schema changed.
+  **And a verse quoted in a form of the model's own is a Bible's words
+  too** (2026-11-13, `EC-575`, `requoteStudyOwnQuotes` in the worker,
+  `agentStudyOwnQuoteRules.ts` pure): a model quoting a verse from
+  memory writes it its own way -- `> "…" (John 3:16)`, `— John 3:16`
+  after the words or on a line of its own, `**John 3:16:**` or `John
+  3:16 (KJV)` before them, a lead such as `**Key Verse:**` in front --
+  in the words of the translation it remembers, seldom the one the
+  study quotes, and no pass read such a quote. Now new words for a
+  part, words appended and a whole new text have each one (a
+  blockquote paragraph, or a plain one wholly in quote marks or
+  emphasis, naming one chapter and verse; never a list item, a token, a
+  code block, a passage the app quoted or a paragraph the file already
+  held; 12 a draft) read from the Bible named beside it when installed,
+  else from its half's (`EC-570`; a new study's from its passage's),
+  and judged against what that Bible reads there, by runs of three
+  letters (`measureLetterRunLikeness`, and `measureLetterRunContainment`
+  for how much of the quote the verse writes, `textLikenessHelpers.ts`;
+  a script written without spaces reads alike): its own words, or
+  pieces of them in order between `…`, stay as sent; other words for
+  it are written as that Bible reads it, in the app's form, a lead kept
+  above; words that do not read as it are left as sent and named. Words
+  set out as a quote (quote marks, emphasis, a dash, a Bible named) are
+  other words for the verse at the mean of the two, 0.42; words with
+  only a reference after them are a sentence about the verse unless
+  nearly its own (likeness 0.6), and stay. `change` (a new study:
+  `warnings`) adds _The quote “John 3:16” (KJV) was written as that
+  Bible reads it, in the app's form: the words sent were not the
+  Bible's, and a verse quoted in a study is the Bible's own words. To
+  quote a verse, put its reference alone on a line, as [^John 3:16]._,
+  or _The words quoted as “John 3:16” (KJV) do not read as that verse
+  in that Bible, so they were left as sent: check the reference, or put
+  it alone on a line, as [^John 3:16], for the Bible's own words._ A
+  passage in the app's form under a short book name with no verse
+  numbered under it (`> **Rom 5:8** (KJV)` and the words) is read by its
+  words for `EC-565` too (`checkIsStudyPassageLike`). Measured offline
+  on the user's study (read only, the worker's own draft over the
+  verses of its ten Bibles): each verse of John 3 in another English
+  translation's words, in quote marks, appended to the study as written
+  was written as the Amplified -- the Bible that half quotes -- 34 or 35
+  times of 36 (the rest named, or a few words the Amplified's own),
+  with no quote marks 24 to 27 of 36; four other Khmer translations'
+  words in its Khmer half, under a Khmer or an English reference, 31 to
+  36 of 36 as the Khmer Bible that half quotes; a reference five verses
+  off, 0 of 31 written over and 31 named; nine sentences about a verse
+  and the Amplified's own words for each verse, none touched; 2 to 3.5
+  ms a draft. Of the repo's 585 Markdown files one paragraph reads as
+  such a quote (the README's Psalm 150:6, the KJV's own words), of the
+  user's study none (a book named in two letters, `Jn 3:16`, read by no
+  pass then, is read since `EC-151`). Left: a quote in a list item or inside a
+  sentence, a range over 30 verses, a Bible named by its name and not
+  its key; a translation worded far from the half's Bible is named, not
+  written over (2 of 36 of the NIV's, 4 or 5 of 36 in the Khmer half),
+  and a close paraphrase in a blockquote with its reference after it is
+  written as the verse (6 of 32 such sentences, against the KJV, the
+  NIV or the ESV), said in `change`. No schema changed.
+  **`translate`**
+  (`EC-478`) writes nothing
+  either: it splits a study file into parts -- its words, each diagram,
+  each passage quoted again from `bible`, a footer, and the translations
+  already added after it, kept apart as `translations` and never
+  translated again (`EC-492`), one already in the language asked giving
+  its place to the new one, never a second (`EC-547`: the help window's
+  draft does it, and the plan's note tells the developer's door to) --
+  and answers the plan
+  (`translating: true`, the file's `hash`); the help window translates it
+  part by part and drafts the result as a change (`chatbot-llm.md`),
+  while the developer's door gets the plan and its note to do the same.
+  With no `file` it plans a new study not saved yet from its words
+  (2026-11-14, `EC-609`): `content` the whole study as its draft wrote
+  it, `name` the name the draft gave it; the same parts as the file of
+  those words, nothing read, the plan's `file` empty and its note saying
+  to draft a new study. The help window plans the study its card holds
+  so, and drafts the result as a new study. No schema changed.
+  **`save`** creates Default when missing, never overwrites (the free name
+  re-checked; a change needs the `hash` it was drafted from), writes behind
+  `runWithAgentBackup` (`isResource` on the restore), puts Default on
+  `resources-folder-list` unless a listed folder already covers it
+  (`folderAdded`), drops that folder's scan cache and fires
+  `RESOURCES_CHANGED_EVENT` (`src/resources/resourcesChangedEvent.ts`, a
+  leaf), which the panel answers with its own reload -- a nudge, nothing
+  watches these folders. An undo of it does the same, or the panel kept a
+  row for a file the undo had trashed (seen live, fixed the same day).
+  **`save` takes `to`** (2026-11-12, `EC-509`, the user: _when create
+  markdown file for user make sure ask user into resource or bible-note
+  area_): `resources` (or none) is Default as above; `bible-notes` writes a
+  NEW study into the Bible Notes folder of the session in front
+  (`getActiveBibleNotesDirPath`), created when missing, the free name taken
+  there, backed up as a plain file (no `isResource`), nothing listed or
+  announced -- that list watches its folder -- and answers
+  `file: "Bible Notes/<name>"` with `place`. No Bible Notes folder set is
+  refused in a sentence. A study kept there is named `Bible Notes/<name>`
+  everywhere a Default one is named `Default/<name>`: `read` resolves it
+  (`findBibleNotesFolder`), and `draft` with `file`, `save` of a change,
+  `preview` and `translate` change it in place (`resolveStudyFile` takes
+  either folder, by that name or its whole path, one level, `.md` only).
+  **The file name alone is the folder that has it** (2026-11-14,
+  `EC-706`): it had been Default's whatever Bible Notes held, and the
+  user's study attached from Bible Notes had its namesake in Default
+  translated and saved twice. Both folders holding it, the call is
+  refused naming both; a `read` by the name alone counts the Bible Notes
+  study among the files of that name (`resolveResourceFileForRead`), and
+  the help window names the study its tab has open before the tool sees
+  the call (`pinOpenStudyFile`, `chatbot-files-report.md`).
+  `to` and those words cost ~18 tokens a round on the asks the tool rides
+  (`owa_resource_file` ~682 → ~700, measured `--stdio`); the ordinary list
+  is unchanged (~8 478 of 8 480).
+  **`preview`** writes the content to `<temp>/open-worship-app-study-preview`
+  (the newest three kept) or takes a Default or Bible Notes `file`, and opens it in the
+  Markdown Preview window, diagrams drawn. The model may only `draft`:
+  `save` and `preview` are refused to it in `runMcpToolCall`
+  (`STUDY_SAVE_MODEL_REFUSAL`) and are the help window's presses
+  (`chatbot-files-report.md`). Firewall: `save` is an acting call like the
+  rest; banner _made a study file "…"_ / _changed a study file "…"_
+  (`notify.mjs`), the other actions quiet. Seen live through a fresh stdio
+  server: Matthew 3:3-7 drafted with the KJV passage and two diagrams, both
+  drawn in the preview, saved twice (`(1)`), listed under **Default** in
+  the Reader's Resources panel, undone.
 
 - **A typed Bible-Reader question gets those three tools, in any language**
   (2026-10-18; the user's goal: _chatbot will help bible reader have more
@@ -1270,10 +1919,15 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   (`src/chatbot/bibleInputSuggestHelpers.ts` decides WHEN): a passage box --
   a tab asking about the Bible Reader, or an answer that asked for another
   passage (`lookupAwaits`) -- and a name box -- `Who was Moses` / `Where is
-Bethlehem` and every language's own way (`bibleReaderWords.nameAsk`), or a
-  bare name in a script that is not Latin -- 16 letters at most, no
+Bethlehem` and every language's own way (`bibleReaderWords.nameAsk`), in
+  any tab, or -- in a tab asking about the Bible Reader -- a bare name in a
+  script that is not Latin -- 16 letters at most, no
   sentence mark, no question's lead word with more after it, since Khmer
-  writes a whole question with no space (`EC-422`). A bare LATIN word is `allowLoad:
+  writes a whole question with no space (`EC-422`). Off the Reader a bare
+  word is a command and is not asked (2026-11-13, `EC-587`: a Khmer
+  _pause it_ in a Presenter tab loaded the names into the Presenter, 150 ms
+  and 11.5 MB of its heap, again at each pause once the 10 s cache let
+  them go). A bare LATIN word is `allowLoad:
 false` and searches only a dataset a lookup panel already holds
   (`getHeldLookupData`) -- the 34MB names dataset is never fetched
   speculatively. The app side (`src/helper/agentBibleSuggestHelpers.ts`)
@@ -1294,6 +1948,14 @@ false` and searches only a dataset a lookup panel already holds
   move (host tools 64); a model answers with `owa_find_verse` /
   `owa_lookup_record`. Seen live in Khmer: `យ៉ូ` -> Joshua/Job/Joel/Jonah/John,
   John -> chapters 1..21, chapter 3 -> verses, and `ម៉ូសេ` -> Moses/Moseroth.
+  **`kind: "books"` lists every book name the installed Bibles write**
+  (2026-11-11, `EC-497`; `prefix` `""`): `bookKeys`, the `english` names
+  and, per group of Bibles naming every book alike, `{keys, locale,
+  books}` -- 66 names each, `''` where a Bible lacks the book, at most 40
+  Bibles read (`getBibleInfo`, the small `_info` file each, no verse).
+  It is how the help window finds the references a study file cites, in
+  whatever language and script its parts are written (the study verse
+  check, `chatbot-files-report.md`).
 
 - **A step WAITING for typed input asks the assistant when the exact match
   fails** (2026-10-18; the user's picture of the Bible import's language step,
@@ -1408,8 +2070,8 @@ false` and searches only a dataset a lookup panel already holds
   model only in a conversation about an attached song; its rules are in
   `agent-songs.md`. Firewall: every action but `read` is an acting call
   (`READING_ACTION_MAP`, the reverse of `owa_language`'s
-  `ACTING_ACTION_MAP`), and `remove-section` is a removal
-  (`AGENT_REMOVING_ACTIONS`). The banner says _changed the song "<name>"_
+  `ACTING_ACTION_MAP`), and `remove-section`, `remove-translations` and
+  `remove-chords` are removals (`AGENT_REMOVING_ACTIONS`). The banner says _changed the song "<name>"_
   (key `changed a song`, the song's name never its path); a read is quiet.
   The worker's `owa-agent-file` request takes `filePath` (songs only:
   `read`, `info`, `update`) and `update` an `expectedHash` and a
@@ -1527,8 +2189,13 @@ false` and searches only a dataset a lookup panel already holds
   night, `readSlideSizeAsk` / `genSlideSizeChanges` in
   `src/chatbot/slideChatHelpers.ts`, run in `ChatbotAppComp` right after the
   options card): the card's **Make the words larger** (a pressed button asks
-  its own English, so in any language), _make the words smaller_ and
-  _make every box 110 px_ -- a short English line and nothing else in it;
+  its own English, so in any language -- since 2026-11-08, BN-16: a card
+  stores its buttons as the window shows them, and until then a press in
+  another language was asked in its own words, which only the model read;
+  `findWindowDoneCardAsk` maps it back), _make the words smaller_ and
+  _make every box 110 px_ -- a short English line and nothing else in it,
+  or the same in a language whose `assistant.json` says it
+  (`textSizeAsks`, `languageEditAskHelpers.ts`);
   a slide named, a box chosen or a look asked for stays the model's. The
   window reads the document (`slides`), scales every unlocked text box
   (×1.25 / ×0.8, so a 90 title over a 70 subtitle stays above it --
@@ -1663,7 +2330,24 @@ false` and searches only a dataset a lookup panel already holds
   on by itself_ had given a song two clocks. After them every card button
   did its job in one change, and _Build it from my order of service_ typed
   with the order under it carried the button's hint (`readFlowButtonHint`
-  takes a message the button's words LEAD).
+  takes a message the button's words LEAD). **A foreground line takes the
+  shapes a model writes** (2026-11-10, `EC-469`). `readAgentForegroundSpec`
+  (`agentFlowForegroundRules.ts`) reads all of these the same way:
+  - `{foreground: {widget, …}}`;
+  - `{foreground: {countdown: {seconds}}}` (the widget as the key);
+  - `{foreground: {countdown: 300}}` or `{message: "words"}`;
+  - `"countdown"` alone;
+  - the widget's own fields written BESIDE `foreground` (a field inside
+    wins). Only the fields that widget has are read (`WIDGET_FIELD_KEY_MAP`).
+  On the MCP side, `add` is a `z.looseObject`: the strict object had dropped
+  a message's `text` on the way in. A countdown without its time is refused
+  with the shape to write. An `after` naming a line the same call adds is
+  refused with the rule it needs: adds with the same `after` go in the
+  order given, and an empty sheet takes none. A countdown asked for had cost
+  33.4k tokens and added nothing; afterwards it took 5.9k and one change.
+  The ask also reads a CC as _its element is line N, run with this line --
+  not a jump to line N_ (`toCcText`, `EC-474`). **Check my running order**
+  had called a CC's element a jump to skip, then redundant.
 
 - **ONE Bible note changed by the assistant is `owa_note_edit`**
   (2026-11-07, the user, with a note row's menu open: _add `Open in
@@ -1688,7 +2372,11 @@ false` and searches only a dataset a lookup panel already holds
   `
 ` read as a line break -- and so does a paragraph add whose words ARE such
   lines, which is what a model writes anyway: `expandSectionAdds`, 2026-11-08,
-  for a lesson put into the note after a page break), and `title`. **`size`** (2026-11-08) is the editor's own size box
+  for a lesson put into the note after a page break; a new block given
+  neither `block` nor `after` goes after the same block as the newest add
+  before it -- `placeUnplacedAdds`, BN-164/168: a lesson written whole had
+  been refused for one such block and its ask ran out of rounds; with no
+  add before it the refusal names it by its first words), and `title`. **`size`** (2026-11-08) is the editor's own size box
   in words: "larger" / "smaller" (x1.25 / x0.8) or px 8-72, written on
   every run of the block as `font-size: Npx;` and on its `textStyle`; a
   run with no size of its own starts from the size its block is drawn at
@@ -1705,7 +2393,14 @@ false` and searches only a dataset a lookup panel already holds
   the one before, as the editor does it, or taken back out) -- for the
   block, or with `words` for those words only, runs split where they
   start and end, WHOLE words first (`fas` had matched inside
-  `tasdfasd`), and HTML a model writes round the words read as the
+  `tasdfasd`) -- in a script written with no spaces, whole where the
+  browser's word segmenter puts its edges (2026-11-08, BN-24: Khmer
+  _ព្រះ_ had coloured the start of _ព្រះជាម្ចាស់_ too; Electron's ICU cuts
+  Khmer, Thai, Chinese and Burmese into words, measured), else anywhere
+  widened to whole letter clusters (a mark, or a letter set under an
+  invisible stacker, never a run of its own), and a word asked in another
+  case found at its own offset (a dotted capital I lowers to two letters)
+  -- and HTML a model writes round the words read as the
   words and their style (`readWordsMarkup`: gemma4:cloud sent a
   `<span style="color:red">` and no `color`). A fixed block takes them
   too (a passage in Georgia), never words. Adds take the Insert menu's
@@ -1722,7 +2417,20 @@ false` and searches only a dataset a lookup panel already holds
   `owa-enhance-bible-note-chatbot`: 60 of 60, none excluded, since the
   four once left to the person became fields too -- `kind: "drawing"`
   (boxes and arrows laid out from lines, an inline `excalidraw` node IN
-  a paragraph, as the editor keeps it), `kind: "example"` (the editor's
+  a paragraph, as the editor keeps it; **a drawing takes what changes IT**
+  since 2026-11-09, BN-51, the user: _make sure chatbot can help drawing_ --
+  a `size` on its block had reached no words and the answer said it was
+  larger: `size` larger / smaller scales the node's `width` and `height`,
+  which is how large the board draws it; `background` fills its boxes and
+  `color` its lines, white words on a dark fill; new lines in `text` draw
+  it again keeping its colours, layout and scale; a first line `layout:
+  across` / `circle` / `center` lays it out left to right, round a ring or
+  round its first box, kept as `layout` in the scene; it reads back as the
+  lines that draw it; anything drawn by hand in it (a pen stroke, a shape
+  of its own) makes it colourable and sizeable, never drawn again; font,
+  styles, a px size and `words` on a drawing are refused with what it
+  takes; `applyDrawingChange` in `agentNoteBlockHelpers.ts`,
+  `changeNoteDrawingNode` in `agentNoteDrawingHelpers.ts`), `kind: "example"` (the editor's
   own Default Example, captured from the running editor into
   `agentNoteDefaultExample.json`, read only when asked for), `linkTo`
   (Link block text: the editor's own entry of node PATHS in its storage
@@ -1753,25 +2461,82 @@ false` and searches only a dataset a lookup panel already holds
   the ORIGINAL node, a run of unchanged words keeps its own style, new words
   take the block's (a Khmer note's font), and every other node is copied
   through byte for byte -- proven on all 227 editable blocks of the dev data
-  folder's real notes, each given its own words back. A NEW verse (`[^ref]`
+  folder's real notes, each given its own words back. **And a block given
+  its OWN words back keeps its nodes** (2026-11-08, BN-35,
+  `ownWordsChangeSet`): the mark-up says no space inside a bold run, no
+  comment's mark (`type: "mark"`) and no code block's colouring, and
+  rebuilding from it had moved a space out of the bold, dropped a comment
+  and flattened a Markdown code block in a note the editor wrote -- a
+  model sends a block's words back with a style or a kind all the time;
+  its summary says no "new words" (round trip 254 / 292, 0 failures). A NEW verse (`[^ref]`
   or a `passage`) is read by the app from the installed Bible
-  (`owa_present_bible`'s resolvers, the lookup's version unless `bible`
-  names one); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
-  is never loaded for it). **It writes the EDITING HISTORY, never the file**
-  (`note.addItemEditingHistory`), like the note window's own typing:
-  unsaved, the window's Save keeps it; a new title is saved to the file at
-  once, as Edit Title does. **An open note window follows** -- it watches
-  only its FILE, so the worker (and an undo of a note's head in
-  `applyRestore`) sends `all:app:note-head-changed`, main relays
-  `main:app:note-head-changed` to every window (`electronEventListener.ts`),
-  and `initBibleNote` reloads its head (`noteHeadChangeHelpers.ts`). Backed
+  (`owa_present_bible`'s resolvers -- which since 2026-11-09, BN-50, fall
+  back to the verse finder's reading when the Lookup's parser refuses a
+  reference: `[^Psalms 23:1]` had been "no installed Bible could read" it,
+  the KJV calling the book "Psalm" (`parseLooseReference`) -- the lookup's version unless `bible`
+  names one -- and in the chatbot a note ask typed in another language
+  than English fills `bible` with an installed Bible of that language when
+  the Lookup's is not one, BN-26, `findNoteVerseBible` in
+  `llmBotHelpers.ts`: asked in Khmer, John 1:1 had come from the KJV the
+  Lookup was on); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
+  is never loaded for it). **A verse token names its Bible**
+  (2026-11-08, the user's picture of a note chat claiming the English
+  lines' verses were now KJV while every chip still read the Khmer Bible,
+  `ពគប`): read as `[^(KJV) John 3:16]` (the key off the chip's
+  `mentionName`), kept as the ORIGINAL chip when given back so; a token
+  naming ANOTHER Bible is a new verse read from that Bible
+  (`splitNoteVerseRef`, `checkIsVerseToken`), a token naming none matches
+  a chip by its words as before. The model had seen `[^ref]` only, a kept
+  token matched the old chip by its words, and `[^Hebrews 11:1]` with no
+  `bible` was read from the lookup's Bible -- the same Khmer chip again,
+  added to the English line. The summary now names every new verse as it
+  was read (`new verses read from the Bible: (KJV) Hebrews 11:1`), so an
+  answer can only say the Bible it got. **It runs in the note's OWN window,
+  through its editor** (the same day, the user: _it's dangerous to read and
+  modify wrong file … bible-note chatbot should depend on bible-note UI
+  controller_, the goal _chatbot modifying files should work on the fresh
+  latest user seen content_, and _only bible-note is an edge case_).
+  `agentNoteEdit.mjs` finds the window among the app's windows by its
+  address (`checkIsNoteWindowUrl`: `bibleNote.html`, `file`, `id`), opens it
+  from the main window when none is open (domain `note-window`,
+  `agentNoteWindowHelpers.ts`, the row's own Open after checking the note),
+  waits for its editor (`__owaIsNoteWindowReady`), and sends the request
+  there; `page` is ignored. The window registers its editor in
+  `noteWindowControllerHelpers.ts` (`initBibleNote`) and the worker refuses
+  anywhere else (`not-note-window`) and a window showing another note by
+  the WHOLE path (`other-note-window`: another Bible Notes folder's
+  `Default.own` has the same address, so the tool tries the next window,
+  then opens the right one). Every action first keeps what was typed and
+  not yet kept (`flush`), and the note is read off the EDITOR
+  (`bibleNote.content`), not the head, which trails typing by a second. A
+  change goes INTO the editor (`bibleNote.content =`, one step of the
+  editor's own Undo); the window's `saveData` writes it into the editing
+  history as it writes typing -- unsaved, the window's Save keeps it -- and
+  the answer's `hash` is the editor's own writing of it. A read-only
+  preview window is read, never changed. A new title is saved to the file at
+  once, as Edit Title does. **Any other window of the note follows** --
+  the worker (and an undo of a note's head in `applyRestore`) sends
+  `all:app:note-head-changed`, main relays `main:app:note-head-changed` to
+  every window (`electronEventListener.ts`), and `initBibleNote` reloads its
+  head (`noteHeadChangeHelpers.ts`); the window the change was made in
+  finds nothing new. The file is matched by `toPathCompareKey`, which on
+  Windows reads a forward slash as the backslash (2026-11-09, BN-38: a
+  change named `C:/…/Default.own` and undone never reached the window
+  holding `C:\…`, whose editor kept the undone line and wrote it back). Seen live on a scratch profile with a copy of the
+  user's note: no window open, a read opened it and read in 1.9 s; the six
+  English chips moved to KJV in one edit (0.5 s), the Khmer ones kept;
+  words typed a moment before a read were in it; the toolbar's Undo took
+  back the typing, then the change, and Redo both; `owa_undo` put it back
+  and the window followed. Backed
   up first: the head, or -- for a note no window ever wrote a history for --
   the FILE's state taken as the head, or the undo would have nothing to put
   back. Guards: a verse-marks item is refused; a stale `hash` (typed into
   since the read) is refused; a "new" block repeating a block the call does
-  not touch is refused with that block's number; a block given another kind
+  not touch is refused with that block's number; unless the add says `again: true`, the same words on purpose (2026-11-09, BN-44: refused twice with no way out, a model told the person the line was added); a block given another kind
   AND fewer than half its own words is refused (`checkLosesWords`, seen
-  live). Only a `.own` inside a Bible Notes folder of any session
+  live; the segmenter's words, so a Khmer or Chinese paragraph -- one or
+  two "words" split at its spaces -- is held to it too). Only a `.own`
+  inside a Bible Notes folder of any session
   (`findSessionIdByFilePath`). Firewall: `read` reads, `edit` acts
   (`READING_ACTION_MAP`); no removal (a block taken out is an edit with its
   undo). Banner: _changed the Bible note "<title>"_ (key
@@ -1782,4 +2547,38 @@ false` and searches only a dataset a lookup panel already holds
   behind the note being changed; the call names no `page`, its worker runs
   in the main window). An `owa_undo` of it still bannered in the main
   window: its call carries only the undo id. Offered to the chatbot's model
-  only in a `note` ask (`chatbot-llm.md`).
+  only in a `note` ask (`chatbot-llm.md`). **A lesson written whole**
+  (2026-11-10, BN-60..BN-62): a verse token alone on its line of a
+  `section` or a new note -- or a paragraph add that is one token naming a
+  range or a chapter -- is the PASSAGE printed whole (`readPassageLineRef`,
+  `checkIsPassageRef`; one verse alone in a paragraph stays its chip); an
+  edit that only adds blocks to a note holding nothing but empty lines
+  takes those lines out (`withBlankNoteFilled`); and list items added in a
+  row, `after: N, N+1 …` onto a block that is not an item of that list, are
+  one list (`chainListAdds` -- two cross references had stood apart round a
+  point's example). A whole lesson nested in `changes[].text` is the call
+  the shared gemma4:cloud server drops (7 of 8 replays, no text and no call
+  back), so the chatbot writes an empty note's lesson as `owa_bible_note
+  add` and the window turns it into this edit (`chatbot-llm.md`). **And
+  what a model writes finishing one** (2026-11-10, BN-67, four partial
+  sermons asked live): a heading's own `## ` in its words is read as the
+  heading (`readHeadingMarks`), and so is the `h2:` label the note is read
+  with when a model copies it in (`stripHeadingKindLabel`, BN-80); a verse
+  token naming several references, `[^Jonah 1:17, 2:10]`, is that many
+  tokens -- one alone on a section's line that many lines, each a passage
+  (`withVerseTokensSplit`, BN-81: the whole lesson had been refused); new blocks ONE a place whose `after` goes up
+  one at a time and hold a heading with words after it are one section,
+  each after the one before (`chainSectionAdds` -- sections one a place were
+  numbered as read, and stay so); a line changed into one token naming a
+  range is that passage, in its place (`expandPassageChanges`); a section's
+  lone verse token is read from the Bible even where the note has its chip
+  (`collectNewNoteVerseRefs`: the passage it becomes needs the verse, and
+  "no installed Bible could read Luke 15:4" had refused a whole finish);
+  and a chained block counts as placed after the block its chain grows
+  from, never after the number it was given -- a block of the note too, so
+  a point's words had gone under the background. A passage block given
+  another `ref` is that passage in its place (`expandPassageRepoints`,
+  BN-72), and a passage `ref` holding two ranges ("Matthew 13:5-6, 20-21")
+  is refused with the two passages to add -- the resolver had read it as
+  one span, the very passage already there, and answered "nothing was
+  changed".

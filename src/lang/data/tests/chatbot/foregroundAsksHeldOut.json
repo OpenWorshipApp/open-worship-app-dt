@@ -1,0 +1,659 @@
+{
+    "af": {
+        "put": ["Sit die horlosie op die skerm", "Wys asseblief die tyd"],
+        "take": "Haal die horlosie van die skerm af",
+        "whatTime": "Hoe laat is dit?",
+        "startsAt": "Die diens begin om tienuur.",
+        "hours": "Ons het nog twee uur oor."
+    },
+    "am": {
+        "put": ["ሰዓቱን በስክሪኑ ላይ አሳይ", "እባክህ አሁን ያለውን ሰዓት አሳየኝ"],
+        "take": "ሰዓቱን ከስክሪኑ ላይ አንሳው",
+        "whatTime": "ስንት ሰዓት ነው?",
+        "startsAt": "አምልኮው ከጠዋቱ አራት ሰዓት ይጀምራል።",
+        "hours": "ሁለት ሰዓት ቀርቶናል።"
+    },
+    "ar": {
+        "put": ["اعرض الساعة على الشاشة", "أظهر الوقت من فضلك"],
+        "take": "أزل الساعة من الشاشة",
+        "whatTime": "كم الساعة الآن؟",
+        "startsAt": "تبدأ الخدمة في الساعة العاشرة.",
+        "hours": "بقي لدينا ساعتان."
+    },
+    "az": {
+        "put": ["Saatı ekrana çıxar", "Zəhmət olmasa, indiki vaxtı göstər"],
+        "take": "Saatı ekrandan götür",
+        "whatTime": "Saat neçədir?",
+        "startsAt": "İbadət saat onda başlayır.",
+        "hours": "İki saatımız qalıb."
+    },
+    "be": {
+        "put": [
+            "Пакажы гадзіннік на экране",
+            "Пакажы, калі ласка, які зараз час"
+        ],
+        "take": "Прыбяры гадзіннік з экрана",
+        "whatTime": "Колькі зараз часу?",
+        "startsAt": "Служба пачынаецца а дзясятай гадзіне.",
+        "hours": "У нас засталося дзве гадзіны."
+    },
+    "bg": {
+        "put": ["Покажи часовника на екрана", "Покажи колко е часът, моля"],
+        "take": "Махни часовника от екрана",
+        "whatTime": "Колко е часът?",
+        "startsAt": "Службата започва в десет часа.",
+        "hours": "Остават ни два часа."
+    },
+    "bn": {
+        "put": ["স্ক্রিনে ঘড়িটা দেখাও", "অনুগ্রহ করে এখনকার সময় দেখান"],
+        "take": "স্ক্রিন থেকে ঘড়িটা সরিয়ে দাও",
+        "whatTime": "কয়টা বাজে?",
+        "startsAt": "উপাসনা দশটায় শুরু হয়।",
+        "hours": "আমাদের হাতে আর দুই ঘণ্টা আছে।"
+    },
+    "bo": {
+        "put": [
+            "ཆུ་ཚོད་འཆར་ངོས་སྟེང་ལ་སྟོན་རོགས།",
+            "ད་ལྟའི་དུས་ཚོད་སྟོན་རོགས།"
+        ],
+        "take": "ཆུ་ཚོད་དེ་འཆར་ངོས་ནས་ཕྱིར་ལེན་རོགས།",
+        "whatTime": "ད་ཆུ་ཚོད་ག་ཚོད་རེད།",
+        "startsAt": "ཚོགས་འདུ་ཆུ་ཚོད་བཅུ་པར་འགོ་ཚུགས་ཀྱི་རེད།",
+        "hours": "ང་ཚོར་ཆུ་ཚོད་གཉིས་ལྷག་ཡོད།"
+    },
+    "ca": {
+        "put": ["Posa el rellotge a la pantalla", "Mostra l'hora, si us plau"],
+        "take": "Treu el rellotge de la pantalla",
+        "whatTime": "Quina hora és?",
+        "startsAt": "El culte comença a les deu.",
+        "hours": "Ens queden dues hores."
+    },
+    "ceb": {
+        "put": [
+            "Ibutang ang orasan sa screen",
+            "Ipakita ang oras karon palihug"
+        ],
+        "take": "Kuhaa ang orasan sa screen",
+        "whatTime": "Unsa nang orasa karon?",
+        "startsAt": "Ang serbisyo magsugod sa alas diyes.",
+        "hours": "Duha na lang ka oras ang nabilin nato."
+    },
+    "cs": {
+        "put": ["Dej hodiny na obrazovku", "Ukaž prosím aktuální čas"],
+        "take": "Odeber hodiny z obrazovky",
+        "whatTime": "Kolik je hodin?",
+        "startsAt": "Bohoslužba začíná v deset hodin.",
+        "hours": "Zbývají nám dvě hodiny."
+    },
+    "da": {
+        "put": ["Sæt uret på skærmen", "Vis klokken, tak"],
+        "take": "Tag uret af skærmen",
+        "whatTime": "Hvad er klokken?",
+        "startsAt": "Gudstjenesten begynder klokken ti.",
+        "hours": "Vi har to timer tilbage."
+    },
+    "de": {
+        "put": [
+            "Zeig die Uhr auf dem Bildschirm an",
+            "Bitte die aktuelle Uhrzeit anzeigen"
+        ],
+        "take": "Nimm die Uhr vom Bildschirm",
+        "whatTime": "Wie spät ist es?",
+        "startsAt": "Der Gottesdienst beginnt um zehn Uhr.",
+        "hours": "Wir haben noch zwei Stunden."
+    },
+    "el": {
+        "put": ["Βάλε το ρολόι στην οθόνη", "Δείξε την ώρα, παρακαλώ"],
+        "take": "Βγάλε το ρολόι από την οθόνη",
+        "whatTime": "Τι ώρα είναι;",
+        "startsAt": "Η λειτουργία αρχίζει στις δέκα.",
+        "hours": "Μας μένουν δύο ώρες."
+    },
+    "es": {
+        "put": ["Pon el reloj en la pantalla", "Muestra la hora, por favor"],
+        "take": "Quita el reloj de la pantalla",
+        "whatTime": "¿Qué hora es?",
+        "startsAt": "El culto empieza a las diez.",
+        "hours": "Nos quedan dos horas."
+    },
+    "et": {
+        "put": ["Pane kell ekraanile", "Näita palun praegust kellaaega"],
+        "take": "Võta kell ekraanilt ära",
+        "whatTime": "Mis kell on?",
+        "startsAt": "Jumalateenistus algab kell kümme.",
+        "hours": "Meil on jäänud kaks tundi."
+    },
+    "fa": {
+        "put": ["ساعت رو روی صفحه نشون بده", "لطفاً زمان فعلی رو نشون بده"],
+        "take": "ساعت رو از روی صفحه بردار",
+        "whatTime": "ساعت چنده؟",
+        "startsAt": "مراسم ساعت ده شروع می‌شود.",
+        "hours": "دو ساعت دیگه وقت داریم."
+    },
+    "fi": {
+        "put": ["Laita kello näytölle", "Näytä kellonaika, kiitos"],
+        "take": "Poista kello näytöltä",
+        "whatTime": "Paljonko kello on?",
+        "startsAt": "Jumalanpalvelus alkaa kello kymmenen.",
+        "hours": "Meillä on kaksi tuntia jäljellä."
+    },
+    "fil": {
+        "put": ["Ilagay ang orasan sa screen", "Pakipakita ang oras ngayon"],
+        "take": "Alisin ang orasan sa screen",
+        "whatTime": "Anong oras na?",
+        "startsAt": "Magsisimula ang serbisyo nang alas-diyes.",
+        "hours": "May dalawang oras pa tayo."
+    },
+    "fj": {
+        "put": [
+            "Vakaraitaka mada na kaloko ena sikirini",
+            "Vakaraitaka mada na gauna oqo"
+        ],
+        "take": "Kauta tani na kaloko mai na sikirini",
+        "whatTime": "Sa vica na kaloko?",
+        "startsAt": "Na lotu ena tekivu ena kaloko tini.",
+        "hours": "Sa vo ga e rua na aua vei keda."
+    },
+    "fr": {
+        "put": ["Mets l'horloge à l'écran", "Affiche l'heure, s'il te plaît"],
+        "take": "Enlève l'horloge de l'écran",
+        "whatTime": "Quelle heure est-il ?",
+        "startsAt": "Le culte commence à dix heures.",
+        "hours": "Il nous reste deux heures."
+    },
+    "ga": {
+        "put": [
+            "Cuir an clog ar an scáileán",
+            "Taispeáin an t-am, le do thoil"
+        ],
+        "take": "Bain an clog den scáileán",
+        "whatTime": "Cén t-am é?",
+        "startsAt": "Tosaíonn an tseirbhís ag a deich a chlog.",
+        "hours": "Tá dhá uair an chloig fágtha againn."
+    },
+    "gl": {
+        "put": ["Pon o reloxo na pantalla", "Amosa a hora, por favor"],
+        "take": "Quita o reloxo da pantalla",
+        "whatTime": "Que hora é?",
+        "startsAt": "O culto comeza ás dez.",
+        "hours": "Quédannos dúas horas."
+    },
+    "gu": {
+        "put": ["સ્ક્રીન પર ઘડિયાળ બતાવો", "કૃપા કરીને સમય બતાવો"],
+        "take": "સ્ક્રીન પરથી ઘડિયાળ હટાવી દો",
+        "whatTime": "કેટલા વાગ્યા છે?",
+        "startsAt": "આરાધના દસ વાગ્યે શરૂ થાય છે.",
+        "hours": "આપણી પાસે હજુ બે કલાક બાકી છે."
+    },
+    "ha": {
+        "put": ["Sanya agogo a kan allo", "Don Allah nuna mini lokaci"],
+        "take": "Cire agogo daga kan allo",
+        "whatTime": "Ƙarfe nawa ne yanzu?",
+        "startsAt": "Ibada tana farawa da ƙarfe goma.",
+        "hours": "Saura mana awa biyu."
+    },
+    "he": {
+        "put": ["תציג את השעון על המסך", "תראה לי את השעה בבקשה"],
+        "take": "תוריד את השעון מהמסך",
+        "whatTime": "מה השעה?",
+        "startsAt": "האסיפה מתחילה בשעה עשר.",
+        "hours": "נשארו לנו שעתיים."
+    },
+    "hi": {
+        "put": ["स्क्रीन पर घड़ी दिखाओ", "कृपया समय दिखाइए"],
+        "take": "स्क्रीन से घड़ी हटा दो",
+        "whatTime": "कितने बजे हैं?",
+        "startsAt": "आराधना दस बजे शुरू होती है।",
+        "hours": "हमारे पास दो घंटे बचे हैं।"
+    },
+    "hr": {
+        "put": ["Stavi sat na ekran", "Prikaži vrijeme, molim te"],
+        "take": "Makni sat s ekrana",
+        "whatTime": "Koliko je sati?",
+        "startsAt": "Bogoslužje počinje u deset sati.",
+        "hours": "Ostala su nam još dva sata."
+    },
+    "ht": {
+        "put": ["Mete revèy la sou ekran an", "Tanpri montre lè a"],
+        "take": "Retire revèy la sou ekran an",
+        "whatTime": "Ki lè li ye?",
+        "startsAt": "Sèvis la kòmanse a dizè.",
+        "hours": "Nou gen de èdtan ki rete."
+    },
+    "hu": {
+        "put": [
+            "Tedd ki az órát a képernyőre",
+            "Mutasd meg a pontos időt, kérlek"
+        ],
+        "take": "Vedd le az órát a képernyőről",
+        "whatTime": "Hány óra van?",
+        "startsAt": "Az istentisztelet tíz órakor kezdődik.",
+        "hours": "Két óránk maradt."
+    },
+    "hy": {
+        "put": ["Ժամացույցը ցույց տուր էկրանին", "Խնդրում եմ, ցույց տուր ժամը"],
+        "take": "Ժամացույցը հանիր էկրանից",
+        "whatTime": "Ժամը քանի՞սն է",
+        "startsAt": "Արարողությունը սկսվում է ժամը տասին։",
+        "hours": "Մեզ մնացել է երկու ժամ։"
+    },
+    "id": {
+        "put": ["Tampilkan jam di layar", "Tolong tunjukkan waktu sekarang"],
+        "take": "Hilangkan jam dari layar",
+        "whatTime": "Jam berapa sekarang?",
+        "startsAt": "Ibadah dimulai jam sepuluh.",
+        "hours": "Kita masih punya waktu dua jam lagi."
+    },
+    "ig": {
+        "put": ["Tinye elekere na ihuenyo", "Biko gosi m oge ugbu a"],
+        "take": "Wepụ elekere na ihuenyo",
+        "whatTime": "Olee oge ọ bụ ugbu a?",
+        "startsAt": "Ofufe na-amalite n'elekere iri.",
+        "hours": "Awa abụọ fọdụrụ anyị."
+    },
+    "is": {
+        "put": ["Settu klukkuna á skjáinn", "Sýndu tímann, takk"],
+        "take": "Taktu klukkuna af skjánum",
+        "whatTime": "Hvað er klukkan?",
+        "startsAt": "Guðsþjónustan hefst klukkan tíu.",
+        "hours": "Við eigum tvo tíma eftir."
+    },
+    "it": {
+        "put": ["Metti l'orologio sullo schermo", "Mostra l'ora, per favore"],
+        "take": "Togli l'orologio dallo schermo",
+        "whatTime": "Che ore sono?",
+        "startsAt": "Il culto inizia alle dieci.",
+        "hours": "Ci restano due ore."
+    },
+    "ja": {
+        "put": ["画面に時計を表示して", "今の時刻を出してください"],
+        "take": "画面から時計を消して",
+        "whatTime": "今何時？",
+        "startsAt": "礼拝は10時に始まります。",
+        "hours": "あと2時間あります。"
+    },
+    "ka": {
+        "put": ["საათი ეკრანზე გამოიტანე", "გთხოვ, დრო მაჩვენე"],
+        "take": "საათი ეკრანიდან მოაშორე",
+        "whatTime": "რომელი საათია?",
+        "startsAt": "მსახურება ათ საათზე იწყება.",
+        "hours": "ორი საათი დაგვრჩა."
+    },
+    "kk": {
+        "put": ["Сағатты экранға шығар", "Қазіргі уақытты көрсетші"],
+        "take": "Сағатты экраннан алып таста",
+        "whatTime": "Сағат неше болды?",
+        "startsAt": "Қызмет сағат онда басталады.",
+        "hours": "Бізде екі сағат қалды."
+    },
+    "km": {
+        "put": ["ដាក់នាឡិកាលើអេក្រង់", "សូមបង្ហាញម៉ោងបច្ចុប្បន្ន"],
+        "take": "ដកនាឡិកាចេញពីអេក្រង់",
+        "whatTime": "ឥឡូវម៉ោងប៉ុន្មានហើយ?",
+        "startsAt": "កម្មវិធីថ្វាយបង្គំចាប់ផ្តើមនៅម៉ោងដប់។",
+        "hours": "យើងនៅសល់ពីរម៉ោងទៀត។"
+    },
+    "kn": {
+        "put": ["ಪರದೆಯ ಮೇಲೆ ಗಡಿಯಾರ ತೋರಿಸಿ", "ದಯವಿಟ್ಟು ಸಮಯ ತೋರಿಸಿ"],
+        "take": "ಪರದೆಯಿಂದ ಗಡಿಯಾರ ತೆಗೆದುಹಾಕಿ",
+        "whatTime": "ಈಗ ಎಷ್ಟು ಗಂಟೆ?",
+        "startsAt": "ಆರಾಧನೆ ಹತ್ತು ಗಂಟೆಗೆ ಶುರುವಾಗುತ್ತದೆ.",
+        "hours": "ನಮಗೆ ಇನ್ನೂ ಎರಡು ಗಂಟೆ ಉಳಿದಿದೆ."
+    },
+    "ko": {
+        "put": ["화면에 시계 띄워줘", "현재 시간 보여주세요"],
+        "take": "화면에서 시계 내려 주세요",
+        "whatTime": "지금 몇 시야?",
+        "startsAt": "예배는 10시에 시작해요.",
+        "hours": "두 시간 남았어요."
+    },
+    "lo": {
+        "put": ["ສະແດງໂມງຢູ່ໜ້າຈໍ", "ກະລຸນາສະແດງເວລາ"],
+        "take": "ເອົາໂມງອອກຈາກໜ້າຈໍ",
+        "whatTime": "ຕອນນີ້ຈັກໂມງແລ້ວ?",
+        "startsAt": "ການນະມັດສະການເລີ່ມຕອນສິບໂມງ.",
+        "hours": "ພວກເຮົາຍັງເຫຼືອເວລາອີກສອງຊົ່ວໂມງ."
+    },
+    "lt": {
+        "put": ["Parodyk laikrodį ekrane", "Parodyk laiką, prašau"],
+        "take": "Nuimk laikrodį nuo ekrano",
+        "whatTime": "Kiek dabar valandų?",
+        "startsAt": "Pamaldos prasideda dešimtą valandą.",
+        "hours": "Mums liko dvi valandos."
+    },
+    "lv": {
+        "put": ["Parādi pulksteni uz ekrāna", "Lūdzu, parādi pašreizējo laiku"],
+        "take": "Noņem pulksteni no ekrāna",
+        "whatTime": "Cik ir pulkstenis?",
+        "startsAt": "Dievkalpojums sākas pulksten desmitos.",
+        "hours": "Mums atlikušas divas stundas."
+    },
+    "mg": {
+        "put": [
+            "Asehoy amin'ny efijery ny famantaranandro",
+            "Asehoy ny ora azafady"
+        ],
+        "take": "Esory amin'ny efijery ny famantaranandro",
+        "whatTime": "Amin'ny firy izao?",
+        "startsAt": "Manomboka amin'ny folo ora ny fotoam-pivavahana.",
+        "hours": "Adiny roa sisa no ananantsika."
+    },
+    "mi": {
+        "put": [
+            "Whakaaturia te karaka ki te mata",
+            "Tēnā, whakaaturia mai te wā"
+        ],
+        "take": "Tangohia te karaka i te mata",
+        "whatTime": "He aha te wā?",
+        "startsAt": "Ka tīmata te karakia ā te tekau karaka.",
+        "hours": "E rua hāora e toe ana ki a tātou."
+    },
+    "mk": {
+        "put": [
+            "Стави го часовникот на екранот",
+            "Те молам, прикажи го времето"
+        ],
+        "take": "Тргни го часовникот од екранот",
+        "whatTime": "Колку е часот?",
+        "startsAt": "Богослужбата почнува во десет часот.",
+        "hours": "Ни останаа уште два часа."
+    },
+    "ml": {
+        "put": ["സ്ക്രീനിൽ ക്ലോക്ക് കാണിക്കൂ", "ദയവായി സമയം കാണിക്കൂ"],
+        "take": "സ്ക്രീനിൽ നിന്ന് ക്ലോക്ക് മാറ്റൂ",
+        "whatTime": "ഇപ്പോൾ സമയം എത്രയായി?",
+        "startsAt": "ആരാധന പത്തു മണിക്ക് തുടങ്ങും.",
+        "hours": "നമുക്ക് ഇനി രണ്ടു മണിക്കൂർ ബാക്കിയുണ്ട്."
+    },
+    "mn": {
+        "put": ["Цагийг дэлгэц дээр гарга", "Одоогийн цагийг харуулаач"],
+        "take": "Цагийг дэлгэцээс арилга",
+        "whatTime": "Хэдэн цаг болж байна?",
+        "startsAt": "Мөргөл арван цагт эхэлнэ.",
+        "hours": "Бидэнд хоёр цаг үлдлээ."
+    },
+    "mr": {
+        "put": ["स्क्रीनवर घड्याळ दाखव", "कृपया वेळ दाखवा"],
+        "take": "स्क्रीनवरून घड्याळ काढून टाक",
+        "whatTime": "किती वाजले?",
+        "startsAt": "उपासना दहा वाजता सुरू होते.",
+        "hours": "आपल्याकडे अजून दोन तास उरले आहेत."
+    },
+    "ms": {
+        "put": ["Paparkan jam di skrin", "Tolong tunjukkan masa sekarang"],
+        "take": "Alihkan jam dari skrin",
+        "whatTime": "Pukul berapa sekarang?",
+        "startsAt": "Kebaktian bermula pukul sepuluh.",
+        "hours": "Kita ada dua jam lagi."
+    },
+    "my": {
+        "put": ["စခရင်ပေါ်မှာ နာရီပြပေးပါ", "အခုအချိန်ကို ပြပေးပါ"],
+        "take": "စခရင်ပေါ်က နာရီကို ဖယ်ပေးပါ",
+        "whatTime": "အခု ဘယ်နှစ်နာရီရှိပြီလဲ",
+        "startsAt": "ဝတ်ပြုကိုးကွယ်ခြင်းက ဆယ်နာရီမှာ စတယ်။",
+        "hours": "ကျွန်တော်တို့မှာ နှစ်နာရီ ကျန်သေးတယ်။"
+    },
+    "nb": {
+        "put": ["Sett klokka på skjermen", "Vis klokkeslettet, takk"],
+        "take": "Ta klokka av skjermen",
+        "whatTime": "Hva er klokka?",
+        "startsAt": "Gudstjenesten begynner klokka ti.",
+        "hours": "Vi har to timer igjen."
+    },
+    "ne": {
+        "put": ["स्क्रिनमा घडी देखाउनुहोस्", "कृपया समय देखाउनुहोस्"],
+        "take": "स्क्रिनबाट घडी हटाउनुहोस्",
+        "whatTime": "कति बज्यो?",
+        "startsAt": "आराधना दस बजे सुरु हुन्छ।",
+        "hours": "हामीसँग अझै दुई घण्टा बाँकी छ।"
+    },
+    "nl": {
+        "put": ["Zet de klok op het scherm", "Laat de tijd zien, alsjeblieft"],
+        "take": "Haal de klok van het scherm",
+        "whatTime": "Hoe laat is het?",
+        "startsAt": "De dienst begint om tien uur.",
+        "hours": "We hebben nog twee uur."
+    },
+    "ny": {
+        "put": ["Ikani wotchi pa sikirini", "Chonde onetsani nthawi"],
+        "take": "Chotsani wotchi pa sikirini",
+        "whatTime": "Ndi nthawi yanji pano?",
+        "startsAt": "Mapemphero amayamba nthawi ya 10 koloko.",
+        "hours": "Tatsala ndi maola awiri."
+    },
+    "om": {
+        "put": [
+            "Sa'aatii iskiriinii irratti agarsiisi",
+            "Maaloo yeroo amma jiru agarsiisi"
+        ],
+        "take": "Sa'aatii iskiriinii irraa kaasi",
+        "whatTime": "Amma sa'aatii meeqa?",
+        "startsAt": "Waaqeffannaan sa'aatii afuritti jalqaba.",
+        "hours": "Sa'aatii lama qofatu nuuf hafe."
+    },
+    "or": {
+        "put": ["ସ୍କ୍ରିନରେ ଘଡ଼ି ଦେଖାଅ", "ଦୟାକରି ସମୟ ଦେଖାନ୍ତୁ"],
+        "take": "ସ୍କ୍ରିନରୁ ଘଡ଼ି ହଟାଇ ଦିଅ",
+        "whatTime": "କେତେ ବାଜିଲାଣି?",
+        "startsAt": "ଉପାସନା ଦଶଟାରେ ଆରମ୍ଭ ହୁଏ।",
+        "hours": "ଆମ ପାଖରେ ଆଉ ଦୁଇ ଘଣ୍ଟା ବାକି ଅଛି।"
+    },
+    "pa": {
+        "put": ["ਸਕ੍ਰੀਨ 'ਤੇ ਘੜੀ ਦਿਖਾਓ", "ਕਿਰਪਾ ਕਰਕੇ ਸਮਾਂ ਦਿਖਾਓ"],
+        "take": "ਸਕ੍ਰੀਨ ਤੋਂ ਘੜੀ ਹਟਾ ਦਿਓ",
+        "whatTime": "ਕਿੰਨੇ ਵੱਜੇ ਹਨ?",
+        "startsAt": "ਆਰਾਧਨਾ ਦਸ ਵਜੇ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ।",
+        "hours": "ਸਾਡੇ ਕੋਲ ਦੋ ਘੰਟੇ ਬਾਕੀ ਹਨ।"
+    },
+    "pl": {
+        "put": ["Wyświetl zegar na ekranie", "Pokaż aktualną godzinę, proszę"],
+        "take": "Zdejmij zegar z ekranu",
+        "whatTime": "Która godzina?",
+        "startsAt": "Nabożeństwo zaczyna się o dziesiątej.",
+        "hours": "Zostały nam dwie godziny."
+    },
+    "pt": {
+        "put": ["Coloca o relógio na tela", "Mostra a hora, por favor"],
+        "take": "Tira o relógio da tela",
+        "whatTime": "Que horas são?",
+        "startsAt": "O culto começa às dez horas.",
+        "hours": "Ainda temos duas horas."
+    },
+    "rn": {
+        "put": [
+            "Shira isaha kuri ekarani",
+            "Erekana isaha y'ubu, ndakwinginze"
+        ],
+        "take": "Kura isaha kuri ekarani",
+        "whatTime": "Ni isaha zingahe ubu?",
+        "startsAt": "Amasengesho atangura isaha ine z'igitondo.",
+        "hours": "Dusigaje amasaha abiri."
+    },
+    "ro": {
+        "put": ["Pune ceasul pe ecran", "Arată ora exactă, te rog"],
+        "take": "Scoate ceasul de pe ecran",
+        "whatTime": "Cât e ceasul?",
+        "startsAt": "Slujba începe la ora zece.",
+        "hours": "Mai avem două ore."
+    },
+    "ru": {
+        "put": ["Выведи часы на экран", "Покажи время, пожалуйста"],
+        "take": "Убери часы с экрана",
+        "whatTime": "Который час?",
+        "startsAt": "Служение начинается в десять часов.",
+        "hours": "У нас осталось два часа."
+    },
+    "rw": {
+        "put": [
+            "Shyira isaha kuri mugaragaza",
+            "Erekana isaha y'ubu, ndakwinginze"
+        ],
+        "take": "Kuraho isaha kuri mugaragaza",
+        "whatTime": "Ni saa ngahe?",
+        "startsAt": "Amateraniro atangira saa yine za mu gitondo.",
+        "hours": "Dusigaje amasaha abiri."
+    },
+    "si": {
+        "put": ["තිරයේ ඔරලෝසුව පෙන්වන්න", "කරුණාකර වෙලාව පෙන්වන්න"],
+        "take": "තිරයෙන් ඔරලෝසුව අයින් කරන්න",
+        "whatTime": "දැන් වෙලාව කීයද?",
+        "startsAt": "නමස්කාරය දහයට පටන් ගන්නවා.",
+        "hours": "අපිට තව පැය දෙකක් ඉතුරුයි."
+    },
+    "sk": {
+        "put": ["Daj hodiny na obrazovku", "Ukáž aktuálny čas, prosím"],
+        "take": "Daj hodiny preč z obrazovky",
+        "whatTime": "Koľko je hodín?",
+        "startsAt": "Bohoslužba začína o desiatej.",
+        "hours": "Zostávajú nám dve hodiny."
+    },
+    "sl": {
+        "put": ["Postavi uro na zaslon", "Prikaži trenutni čas, prosim"],
+        "take": "Odstrani uro z zaslona",
+        "whatTime": "Koliko je ura?",
+        "startsAt": "Bogoslužje se začne ob desetih.",
+        "hours": "Ostali sta nam še dve uri."
+    },
+    "sm": {
+        "put": [
+            "Tu'u le uati i luga o le sikulini",
+            "Fa'amolemole fa'aali mai le taimi"
+        ],
+        "take": "Ave'ese le uati mai le sikulini",
+        "whatTime": "O le ā le taimi?",
+        "startsAt": "E amata le lotu i le sefulu i le taeao.",
+        "hours": "E lua le itula o totoe mo i tatou."
+    },
+    "sn": {
+        "put": ["Isa wachi pasikirini", "Ndapota ratidza nguva"],
+        "take": "Bvisa wachi pasikirini",
+        "whatTime": "Inguva ngani iye zvino?",
+        "startsAt": "Kunamata kunotanga nenguva yegumi.",
+        "hours": "Tasara nemaawa maviri."
+    },
+    "so": {
+        "put": ["Saacadda shaashadda ku soo bandhig", "Fadlan i tus waqtiga"],
+        "take": "Saacadda ka saar shaashadda",
+        "whatTime": "Saacaddu waa immisa?",
+        "startsAt": "Cibaadadu waxay bilaabanaysaa saacadda tobanka.",
+        "hours": "Waxaa noo harsan laba saacadood."
+    },
+    "sq": {
+        "put": ["Vendose orën në ekran", "Shfaq orën aktuale, të lutem"],
+        "take": "Hiqe orën nga ekrani",
+        "whatTime": "Sa është ora?",
+        "startsAt": "Shërbesa fillon në orën dhjetë.",
+        "hours": "Na kanë mbetur dy orë."
+    },
+    "sr": {
+        "put": ["Стави сат на екран", "Прикажи време, молим те"],
+        "take": "Склони сат са екрана",
+        "whatTime": "Колико је сати?",
+        "startsAt": "Богослужење почиње у десет сати.",
+        "hours": "Остала су нам још два сата."
+    },
+    "sv": {
+        "put": ["Lägg upp klockan på skärmen", "Visa tiden, tack"],
+        "take": "Ta bort klockan från skärmen",
+        "whatTime": "Vad är klockan?",
+        "startsAt": "Gudstjänsten börjar klockan tio.",
+        "hours": "Vi har två timmar kvar."
+    },
+    "sw": {
+        "put": ["Weka saa kwenye skrini", "Tafadhali nionyeshe saa ya sasa"],
+        "take": "Ondoa saa kwenye skrini",
+        "whatTime": "Ni saa ngapi?",
+        "startsAt": "Ibada inaanza saa nne asubuhi.",
+        "hours": "Tumebakiwa na saa mbili."
+    },
+    "ta": {
+        "put": [
+            "திரையில் கடிகாரத்தைக் காட்டு",
+            "தயவுசெய்து நேரத்தைக் காட்டுங்கள்"
+        ],
+        "take": "திரையிலிருந்து கடிகாரத்தை எடுத்துவிடு",
+        "whatTime": "மணி என்ன?",
+        "startsAt": "ஆராதனை பத்து மணிக்குத் தொடங்கும்.",
+        "hours": "நமக்கு இன்னும் இரண்டு மணி நேரம் இருக்கிறது."
+    },
+    "te": {
+        "put": ["స్క్రీన్ మీద గడియారం చూపించు", "దయచేసి సమయం చూపించండి"],
+        "take": "స్క్రీన్ నుండి గడియారం తీసేయి",
+        "whatTime": "ఇప్పుడు సమయం ఎంత అయింది?",
+        "startsAt": "ఆరాధన పది గంటలకు మొదలవుతుంది.",
+        "hours": "మనకు ఇంకా రెండు గంటలు మిగిలి ఉన్నాయి."
+    },
+    "th": {
+        "put": ["แสดงนาฬิกาบนจอ", "ช่วยแสดงเวลาหน่อยครับ"],
+        "take": "เอานาฬิกาออกจากจอ",
+        "whatTime": "ตอนนี้กี่โมงแล้ว?",
+        "startsAt": "การนมัสการเริ่มตอนสิบโมง",
+        "hours": "เราเหลือเวลาอีกสองชั่วโมง"
+    },
+    "to": {
+        "put": [
+            "Tuku 'a e uasi ki he sikilini",
+            "Kataki 'o fakahā mai 'a e taimi"
+        ],
+        "take": "To'o 'a e uasi mei he sikilini",
+        "whatTime": "Ko e hā 'a e taimi?",
+        "startsAt": "'Oku kamata 'a e lotu 'i he taimi hongofulu.",
+        "hours": "'Oku toe 'a e houa 'e ua kiate kitautolu."
+    },
+    "tr": {
+        "put": ["Saati ekranda göster", "Şu anki saati gösterir misin?"],
+        "take": "Saati ekrandan kaldır",
+        "whatTime": "Saat kaç?",
+        "startsAt": "İbadet saat onda başlıyor.",
+        "hours": "İki saatimiz kaldı."
+    },
+    "uk": {
+        "put": ["Виведи годинник на екран", "Покажи час, будь ласка"],
+        "take": "Прибери годинник з екрана",
+        "whatTime": "Котра година?",
+        "startsAt": "Служіння починається о десятій годині.",
+        "hours": "У нас залишилося дві години."
+    },
+    "ur": {
+        "put": ["اسکرین پر گھڑی دکھاؤ", "براہ کرم وقت دکھائیں"],
+        "take": "اسکرین سے گھڑی ہٹا دو",
+        "whatTime": "کتنے بجے ہیں؟",
+        "startsAt": "عبادت دس بجے شروع ہوتی ہے۔",
+        "hours": "ہمارے پاس دو گھنٹے باقی ہیں۔"
+    },
+    "vi": {
+        "put": ["Hiện đồng hồ lên màn hình", "Hiển thị giờ hiện tại giúp mình"],
+        "take": "Gỡ đồng hồ khỏi màn hình",
+        "whatTime": "Mấy giờ rồi?",
+        "startsAt": "Buổi nhóm bắt đầu lúc mười giờ.",
+        "hours": "Chúng ta còn hai tiếng nữa."
+    },
+    "xh": {
+        "put": ["Beka iwotshi kwiskrini", "Nceda ubonise ixesha"],
+        "take": "Susa iwotshi kwiskrini",
+        "whatTime": "Ngubani ixesha?",
+        "startsAt": "Inkonzo iqala ngentsimbi yeshumi.",
+        "hours": "Sisele neeyure ezimbini."
+    },
+    "yo": {
+        "put": ["Fi aago hàn lójú ìbòjú", "Jọ̀wọ́ fi àkókò báyìí hàn"],
+        "take": "Yọ aago kúrò lójú ìbòjú",
+        "whatTime": "Aago mélòó ló lù?",
+        "startsAt": "Ìsìn máa ń bẹ̀rẹ̀ ní aago mẹ́wàá.",
+        "hours": "Wákàtí méjì ló kù fún wa."
+    },
+    "zh": {
+        "put": ["把时钟显示在屏幕上", "请显示当前时间"],
+        "take": "把屏幕上的时钟撤掉",
+        "whatTime": "现在几点了？",
+        "startsAt": "礼拜十点开始。",
+        "hours": "我们还剩两个小时。"
+    },
+    "zu": {
+        "put": ["Beka iwashi esikrinini", "Ngicela ungibonise isikhathi"],
+        "take": "Susa iwashi esikrinini",
+        "whatTime": "Yisikhathi sini?",
+        "startsAt": "Inkonzo iqala ngehora leshumi.",
+        "hours": "Sisele namahora amabili."
+    }
+}

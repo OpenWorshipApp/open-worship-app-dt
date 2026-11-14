@@ -2,7 +2,7 @@ import type { LanguageDataType } from './langHelpers';
 
 // The app's own face on every page that boots (2026-11-06, the user: _use
 // en's font-family as default app. add selected language's font-family, when
-// available_, the language FIRST: `app-Battambang, app-Google-Sans, …`).
+// available_, the language FIRST: `app-<Family>, app-Google-Sans, …`).
 // English's Google Sans is the default (`data/en/fonts.json`); a language with
 // a face of its own goes in front of it, so its letters -- and, where that
 // face has them, its Latin ones -- are drawn the way the rest of the app draws

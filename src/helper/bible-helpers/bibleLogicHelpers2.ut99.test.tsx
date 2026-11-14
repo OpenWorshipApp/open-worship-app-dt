@@ -272,7 +272,7 @@ describe('bibleLogicHelpers2', () => {
                 JHN: 'John',
                 JUD: 'Jude',
             },
-            locale: 'km-KH',
+            locale: 'xx-XX',
             numList: [
                 '０',
                 '１',
@@ -326,9 +326,9 @@ describe('bibleLogicHelpers2', () => {
         );
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
-                if (locale === 'km-KH') {
+                if (locale === 'xx-XX') {
                     return {
-                        fontFamily: 'Khmer Font',
+                        fontFamily: 'Xx Font',
                         sanitizeText: (text: string) =>
                             text.replaceAll('.', ':'),
                         transformBibleBookName: (text: string) => [text],
@@ -496,9 +496,9 @@ describe('bibleLogicHelpers2', () => {
 
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
-                if (locale === 'km-KH') {
+                if (locale === 'xx-XX') {
                     return {
-                        fontFamily: 'Khmer Font',
+                        fontFamily: 'Xx Font',
                         sanitizeText: (text: string) => text,
                         transformBibleBookName: (text: string) => [
                             text,

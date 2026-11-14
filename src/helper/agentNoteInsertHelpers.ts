@@ -110,7 +110,7 @@ const AUDIO_EXTENSION_LIST = [
 export type NoteInsertContextType = {
     // A line of words in the block mark-up, as nodes.
     genInline: (text: string) => NodeType[];
-    // The style new words get (a Khmer note's font).
+    // The style new words get (a note's language font).
     style: string;
     // The note's root: a new sticky note goes over the ones there.
     root: NodeType;
@@ -118,6 +118,8 @@ export type NoteInsertContextType = {
     genId?: () => string;
     // The editor's Default Example, read by the app only when asked for.
     exampleNodes?: NodeType[];
+    // A new drawing's box fill and line colour (BN-51).
+    drawing?: { fill?: string; stroke?: string };
 };
 
 export type NoteInsertResultType =
@@ -657,6 +659,8 @@ export function genNoteInsertNode(
             const drawing = genNoteDrawingNode(text, {
                 now: context.now,
                 genId: context.genId,
+                fill: context.drawing?.fill,
+                stroke: context.drawing?.stroke,
             });
             // The board's drawing is an INLINE object: the editor keeps it in
             // a paragraph, and one left at the top was wrapped by an open

@@ -38,7 +38,14 @@ function langSourceFilesPlugin(): Plugin {
 export default defineConfig({
     plugins: [gzBundlePlugin(), langSourceFilesPlugin()],
     test: {
+        name: 'renderer',
         environment: 'node',
+        // Worker threads, not forked processes: every file still gets a
+        // fresh worker (`isolate` stays on -- the suite depends on it, 49
+        // files fail without), and a thread starts far cheaper than a
+        // process. Measured 2026-11-11, 1,703 files on 12 cores: forks 55.6
+        // / 56.3 / 58.2 s, threads 45.4 / 45.5 / 46.0 s, all green.
+        pool: 'threads',
         testTimeout: 10000,
         server: {
             deps: {
@@ -54,6 +61,7 @@ export default defineConfig({
             'src/**/*.test.tsx',
             'tools/**/*.test.mjs',
             'extra-work/local-llm/**/*.test.mjs',
+            'extra-work/mcp-dist/**/*.test.mjs',
             // A language's own tests travel with its package
             // (`src/lang/data/online/<code>/tests/`), the MCP server's and
             // the scripts' among them.

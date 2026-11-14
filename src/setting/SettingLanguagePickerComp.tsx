@@ -82,9 +82,9 @@ export default function SettingLanguagePickerComp() {
     const [locale, setLocale] = useState(getCurrentLocale());
     // Below it on the same tab a language is installed, updated, deleted or
     // turned on or off, and every window re-reads the list (the user's
-    // picture: Khmer installed, and only English and Hebrew offered). Read
-    // again then -- and the current language too: turning off or deleting
-    // the one in force falls back to English.
+    // picture: a language just installed, and only English and one other
+    // offered). Read again then -- and the current language too: turning
+    // off or deleting the one in force falls back to English.
     useAppEffect(() => {
         return onLangPluginsChanged(() => {
             setLocale(getCurrentLocale());

@@ -189,8 +189,13 @@ const LOOSE_MEDIA_CONTROL_SCHEMA = z.looseObject({
 const SCREEN_IDS_SCHEMA = z.array(z.number().int().min(0)).max(20).optional();
 
 const FLOW_CHANGE_SCHEMA = z.object({
+  // Loose: a model writes a foreground line's own fields BESIDE
+  // `foreground` as often as in it, and a strict object dropped them on the
+  // way in -- `seconds` survived only as an arming field, a message's
+  // `text` never arrived (2026-11-10, EC-469). The app reads the widget's
+  // own fields off it (`readAgentForegroundSpec`) and nothing else.
   add: z
-    .object({
+    .looseObject({
       document: z.string().max(200).optional(),
       reference: z.string().max(200).optional(),
       version: z.string().max(60).optional(),

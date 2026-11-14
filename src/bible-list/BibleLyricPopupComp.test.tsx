@@ -86,7 +86,7 @@ import BibleLyricPopupComp from './BibleLyricPopupComp';
 const BIBLES = [
     { key: 'KJV', title: 'King James', locale: 'en' },
     { key: 'NIV', title: 'New International', locale: 'en' },
-    { key: 'KHOV', title: 'Khmer Old Version', locale: 'km' },
+    { key: 'XXOV', title: 'Made Up Old Version', locale: 'xx' },
 ];
 const LYRIC_FILE_PATH = '/documents/(KJV) John 3 16.owl';
 
@@ -182,7 +182,7 @@ describe('Create Lyric popup', () => {
         expect(labels).toEqual([
             'KJV',
             'NIV — New International',
-            'KHOV — Khmer Old Version',
+            'XXOV — Made Up Old Version',
         ]);
         const own =
             document.body.querySelector<HTMLInputElement>('label.p-2 input')!;
@@ -204,15 +204,15 @@ describe('Create Lyric popup', () => {
 
     test('creates the song with the Bibles in the order ticked, then selects and shows it', async () => {
         await renderPopup();
-        await act(async () => getBibleCheckbox('KHOV').click());
+        await act(async () => getBibleCheckbox('XXOV').click());
         await act(async () => getBibleCheckbox('NIV').click());
-        await act(async () => getBibleCheckbox('KHOV').click());
-        await act(async () => getBibleCheckbox('KHOV').click());
+        await act(async () => getBibleCheckbox('XXOV').click());
+        await act(async () => getBibleCheckbox('XXOV').click());
         await submit();
         expect(h.createBibleItemLyric).toHaveBeenCalledWith(bibleItem, [
             'KJV',
             'NIV',
-            'KHOV',
+            'XXOV',
         ]);
         expect(h.getInstance).toHaveBeenCalledWith(LYRIC_FILE_PATH);
         expect(h.setSelectedAppDocument).toHaveBeenCalledWith({

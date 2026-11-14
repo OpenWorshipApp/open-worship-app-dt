@@ -19,7 +19,7 @@ import { toResourcePatternLabel } from './resourcePatternHelpers';
 // A language's own names for the 66 books, beside a shorter list (a
 // 39-book Old Testament) that must never be taken for it.
 const LOCALIZED_BOOKS = kjvBibleConfigJson.bookKeysOrder.map((bookKey) => {
-    return `km-${bookKey}`;
+    return `xx-${bookKey}`;
 });
 const SHORT_BOOKS = kjvBibleConfigJson.bookKeysOrder
     .slice(0, 39)
@@ -35,7 +35,7 @@ function genPattern(bookKey: string, chapter: number) {
 }
 
 beforeEach(() => {
-    h.getCurrentLocale.mockReturnValue('km-KH');
+    h.getCurrentLocale.mockReturnValue('xx-XX');
     h.getLangData.mockReturnValue({
         bibleBooks: [
             { keys: [], books: SHORT_BOOKS },
@@ -48,15 +48,15 @@ describe('toResourcePatternLabel', () => {
     test('names the book in the current language, from its whole-bible list', () => {
         expect(toResourcePatternLabel(genPattern('REV', 3))).toBe(
             'REV.3.*, «{book} chapter {chapter}»'
-                .replace('{book}', 'km-REV')
+                .replace('{book}', 'xx-REV')
                 .replace('{chapter}', '3'),
         );
-        expect(h.getLangData).toHaveBeenCalledWith('km-KH');
+        expect(h.getLangData).toHaveBeenCalledWith('xx-XX');
     });
 
     test('a book-level pattern reads as the book introduction', () => {
         expect(toResourcePatternLabel(genPattern('GEN', 0))).toBe(
-            'GEN.0.*, km-GEN «Introduction»',
+            'GEN.0.*, xx-GEN «Introduction»',
         );
     });
 

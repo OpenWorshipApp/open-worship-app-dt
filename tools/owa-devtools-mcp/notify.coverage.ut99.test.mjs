@@ -28,24 +28,24 @@ vi.mock('./tran.mjs', () => {
 });
 
 const BUNDLE = {
-  languages: [{ code: 'en' }, { code: 'km' }, { code: 'fr' }],
+  languages: [{ code: 'en' }, { code: 'xx' }, { code: 'yy' }],
   dictionaries: {
     // English is the language the keys are written in: never read.
     en: { 'clicked something': 'EN must not be used' },
-    km: {
-      assistant: 'KM-Assistant',
-      'clicked something': 'KM-clicked',
-      'pressed a key': 'KM-pressed',
+    xx: {
+      assistant: 'XX-Assistant',
+      'clicked something': 'XX-clicked',
+      'pressed a key': 'XX-pressed',
     },
     // No word for `Assistant`: the app's `App Assistant` stands in.
-    fr: { 'app assistant': 'FR-Assistant', 'clicked something': 'FR-clique' },
+    yy: { 'app assistant': 'YY-Assistant', 'clicked something': 'YY-clicked' },
   },
 };
 
 const CLICK_WORDS = {
   en: { who: 'Assistant', what: 'clicked something' },
-  km: { who: 'KM-Assistant', what: 'KM-clicked' },
-  fr: { who: 'FR-Assistant', what: 'FR-clique' },
+  xx: { who: 'XX-Assistant', what: 'XX-clicked' },
+  yy: { who: 'YY-Assistant', what: 'YY-clicked' },
 };
 
 let savedNotice;
@@ -323,7 +323,7 @@ describe('the banner words, out of the app dictionary', () => {
     );
     expect(words).toEqual({
       en: { who: 'Assistant', what: 'pressed F5' },
-      km: { who: 'KM-Assistant', what: 'KM-pressed · F5' },
+      xx: { who: 'XX-Assistant', what: 'XX-pressed · F5' },
     });
   });
 
@@ -334,19 +334,19 @@ describe('the banner words, out of the app dictionary', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
     const notice = describeToolNotice('click', {});
-    expect(genNoticeWords(notice).km.what).toBe('KM-clicked');
+    expect(genNoticeWords(notice).xx.what).toBe('XX-clicked');
     expect(tranState.reads).toBe(1);
     tranState.bundle = {
       ...BUNDLE,
-      dictionaries: { km: { 'clicked something': 'KM-changed' } },
+      dictionaries: { xx: { 'clicked something': 'XX-changed' } },
     };
     vi.advanceTimersByTime(30_000);
-    expect(genNoticeWords(notice).km.what).toBe('KM-clicked');
+    expect(genNoticeWords(notice).xx.what).toBe('XX-clicked');
     vi.advanceTimersByTime(29_000);
-    expect(genNoticeWords(notice).km.what).toBe('KM-clicked');
+    expect(genNoticeWords(notice).xx.what).toBe('XX-clicked');
     expect(tranState.reads).toBe(1);
     vi.advanceTimersByTime(2_000);
-    expect(genNoticeWords(notice).km.what).toBe('KM-changed');
+    expect(genNoticeWords(notice).xx.what).toBe('XX-changed');
     expect(tranState.reads).toBe(2);
   });
 

@@ -14,5 +14,8 @@
     },
     "latinStopWords": {
         "en-US": "the and of to that in he shall unto for his they be is him not them it with all thou lord"
+    },
+    "catalogLanguageCodes": {
+        "en": "eng"
     }
 }

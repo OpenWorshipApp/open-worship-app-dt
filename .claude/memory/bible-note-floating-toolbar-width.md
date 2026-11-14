@@ -18,7 +18,7 @@ has not been re-checked live.
 Still true, and what this note is now about:
 
 - The Bible Note popup window opens at `width: 870`
-  (`src/bible-list/note/BibleNoteItemRenderComp.tsx:46`).
+  (`openNoteWindow` in `src/bible-list/note/noteWindowOpenHelpers.ts`).
 - CDP `resize_page` does NOT work on popups — Electron has no
   `Browser.getWindowForTarget`. Resize with `window.resizeTo(1500, 950)` via
   `evaluate_script` instead — which the firewall refuses unless the server was started

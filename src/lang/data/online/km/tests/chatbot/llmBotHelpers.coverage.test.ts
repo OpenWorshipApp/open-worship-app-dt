@@ -326,3 +326,174 @@ describe('an answer, not a translation', () => {
         expect((await askAnswer('en')).text).toBe('សួស្តី (Hello)');
     });
 });
+
+function anthropicToolUse(...uses: { name: string; input: any }[]) {
+    return {
+        content: uses.map((use, index) => {
+            return {
+                type: 'tool_use',
+                id: `tool-${index}`,
+                name: use.name,
+                input: use.input,
+            };
+        }),
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 10, output_tokens: 5 },
+    };
+}
+
+// The tool results a round sent back, by the id of the call they answer.
+function readToolResults(sent: any) {
+    const last = sent.messages[sent.messages.length - 1];
+    return last.content.filter((block: any) => {
+        return block.type === 'tool_result';
+    });
+}
+
+// BN-133 and BN-134 (2026-11-11, the user: _I asked to translate the whole
+// content into Khmer then bible of translated should into khmer bible_; the
+// live run then left a heading in English): a note put into Khmer has its
+// verses read from the Khmer Bible, and its words are held to Khmer once.
+describe('a note put into Khmer', () => {
+    const BLOCKS = [
+        {
+            n: 1,
+            kind: 'passage',
+            text: '(KJV) John 3:16 — (16): For God so loved',
+        },
+        { n: 2, kind: 'h2', text: 'Big idea' },
+        { n: 3, kind: 'paragraph', text: 'Love [^(KJV) John 3:16] given.' },
+    ];
+    const KHMER_LINE = 'សេចក្ដីស្រឡាញ់ [^(KJV) John 3:16] ។';
+    const KHMER_HEADING = 'គំនិតសំខាន់';
+
+    const ask = async (
+        bibles: { key: string; locale: string }[],
+        editList: any[][],
+    ) => {
+        fake.toolList = [{ name: 'owa_note_edit' }];
+        fake.answerTool = (name: string, args: any) => {
+            if (name === 'owa_find_verse') {
+                return JSON.stringify({ bible: 'KJV', bibles });
+            }
+            if (args?.action === 'read') {
+                return JSON.stringify({
+                    name: 'Lesson',
+                    hash: 'h',
+                    blocks: BLOCKS,
+                });
+            }
+            return JSON.stringify({ name: 'Lesson', isChanged: true });
+        };
+        const { sentList } = useAnthropic(
+            [
+                ...editList.map((changes) => {
+                    return anthropicToolUse({
+                        name: 'owa_note_edit',
+                        input: { action: 'edit', note: 'Lesson', changes },
+                    });
+                }),
+                anthropicText('It is in Khmer now.'),
+            ],
+            'anthropic',
+        );
+        await askLlmBot(
+            'translate the whole content into Khmer',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Lesson',
+                            filePath: 'C:\notes\Default.own',
+                            noteId: 4,
+                        },
+                    ],
+                    translate: { code: 'km', name: 'Khmer' },
+                },
+            },
+        );
+        return {
+            sentList,
+            edits: fake.toolCallList.filter((call) => {
+                return call.args?.action === 'edit';
+            }),
+        };
+    };
+
+    test('its verses are read from the Khmer Bible', async () => {
+        const { edits } = await ask(
+            [
+                { key: 'KJV', locale: 'en' },
+                { key: 'ពគប', locale: 'km-KH' },
+            ],
+            [
+                [
+                    { block: 2, text: KHMER_HEADING },
+                    { block: 3, text: KHMER_LINE },
+                ],
+            ],
+        );
+        expect(edits.length).toBe(1);
+        expect(edits[0].args.bible).toBe('ពគប');
+        expect(edits[0].args.changes).toEqual([
+            { block: 2, text: KHMER_HEADING },
+            { block: 3, text: 'សេចក្ដីស្រឡាញ់ [^(ពគប) John 3:16] ។' },
+            { block: 1, ref: '(ពគប) John 3:16' },
+        ]);
+    });
+
+    test('with no Khmer Bible the words go in, and it is said', async () => {
+        const { sentList, edits } = await ask(
+            [{ key: 'KJV', locale: 'en' }],
+            [
+                [
+                    { block: 2, text: KHMER_HEADING },
+                    { block: 3, text: KHMER_LINE },
+                ],
+            ],
+        );
+        expect(edits[0].args.changes).toEqual([
+            { block: 2, text: KHMER_HEADING },
+            { block: 3, text: KHMER_LINE },
+        ]);
+        expect(readToolResults(sentList[1])[0].content).toContain(
+            'No Khmer Bible is installed here',
+        );
+    });
+
+    test('a heading left in English is named under the change, once', async () => {
+        const { sentList, edits } = await ask(
+            [
+                { key: 'KJV', locale: 'en' },
+                { key: 'ពគប', locale: 'km-KH' },
+            ],
+            [
+                [{ block: 3, text: KHMER_LINE }],
+                [
+                    { block: 2, text: KHMER_HEADING },
+                    { block: 3, text: KHMER_LINE },
+                ],
+            ],
+        );
+        // The change is made, and what it left is said under it.
+        expect(edits.length).toBe(2);
+        const firstResult = readToolResults(sentList[1])[0].content;
+        expect(firstResult).toContain('The change is made');
+        expect(firstResult).toContain(
+            'block 2 ("Big idea") is still in English',
+        );
+        expect(edits[1].args.changes[0]).toEqual({
+            block: 2,
+            text: KHMER_HEADING,
+        });
+        // Once an ask: the second change's result says nothing more.
+        expect(readToolResults(sentList[2])[0].content).not.toContain(
+            'still in English',
+        );
+    });
+});

@@ -23,7 +23,7 @@
 // window's words and are left out; a model is never asked here, so every
 // answer measured is one the window wrote itself.
 //
-// For a language written in Latin letters (French), "in the language" is a
+// For a language written in Latin letters, "in the language" is a
 // string with none of the English words the window is written in, read
 // against the app's own dictionary (every English key's words), so the
 // measure is the same rule for every language.

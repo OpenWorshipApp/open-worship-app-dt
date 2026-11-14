@@ -1,6 +1,6 @@
 ---
 name: mcp-read-website-tool
-description: "owa_read_website is the only tool that reaches OUT; its address policy is enforced twice (sync in the firewall, with DNS in main) and the page loads in a window locked down unlike every other renderer"
+description: "owa_read_website was the first tool that reaches OUT; its address policy is enforced twice (sync in the firewall, with DNS in main) and the page loads in a window locked down unlike every other renderer"
 metadata: 
   node_type: memory
   type: project
@@ -10,10 +10,12 @@ metadata:
 
 `owa_read_website` (added 2026-09-02) reads a page on the public web — text,
 optionally its links, optionally a picture — for questions about the world
-outside the app. Every other tool in `tools/owa-devtools-mcp` drives a window
+outside the app. Every tool before it in `tools/owa-devtools-mcp` drove a window
 the operator is already looking at; this one opens a socket to somewhere a
 language MODEL chose, which inverts the direction of the whole threat model in
-[[agent-access-mcp-chatbot]].
+[[agent-access-mcp-chatbot]]. (`owa_lyric_validate` and `owa_bible_xml` do too
+when handed a `url`, screened and budgeted the same way:
+`NETWORK_WHEN_URL_TOOL_SET` in `firewall.mjs`.)
 
 **Why:** asked for directly — the chatbot needed to extract text from a page
 (the example was the Wikipedia article on the King James Version) and to

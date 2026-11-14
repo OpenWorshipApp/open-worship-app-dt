@@ -43,7 +43,7 @@ afterEach(() => {
 
 function genBibleItem(target: object, title: string) {
     return {
-        bibleKey: 'KHM',
+        bibleKey: 'TQAM',
         target,
         toTitle: vi.fn(async () => title),
     } as any;
@@ -62,7 +62,7 @@ describe('BibleDirectViewTitleComp', () => {
             genBibleItem({ bookKey: 'JHN', chapter: 3 }, 'John 3:16'),
         );
         expect(title.textContent).toBe('John 3:16');
-        expect(title.style.fontFamily).toBe('KHM Font');
+        expect(title.style.fontFamily).toBe('TQAM Font');
     });
 
     test('titles a new target anew, and the same one only once', async () => {

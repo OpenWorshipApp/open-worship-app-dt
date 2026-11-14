@@ -18,8 +18,11 @@ import {
     genTextAttachment,
     numberAttachments,
     toAttachedText,
+    toSongDocumentFiles,
+    toSongFileSources,
     getAttachmentData,
     putAttachmentData,
+    readAskedTextFiles,
     toAskedOfModel,
     toAttachmentLegend,
     toAttachmentNote,
@@ -153,6 +156,105 @@ describe('what the model is handed', () => {
         expect(long.byteSize).toBeGreaterThan(long.summary?.length ?? 0);
     });
 
+    // EC-589: songs drafted from files with no model.
+    test('song files are their names and words, the cut line left out', () => {
+        const long = genTextAttachment(
+            'long hymn.txt',
+            Array.from({ length: 2000 }, () => {
+                return 'a line sung';
+            }).join('\n'),
+        );
+        const sources = toSongFileSources([
+            genTextAttachment('grace.md', 'Amazing grace\nhow sweet'),
+            long,
+        ]);
+        expect(sources?.[0]).toEqual({
+            name: 'grace.md',
+            text: 'Amazing grace\nhow sweet',
+        });
+        expect(sources?.[1].name).toBe('long hymn.txt');
+        expect(sources?.[1].text).not.toContain('was not included');
+        expect(sources?.[1].text.endsWith('a line sung')).toBe(true);
+    });
+
+    test('anything beside the song files makes it a question for a model', () => {
+        expect(toSongFileSources([])).toBeNull();
+        expect(
+            toSongFileSources([
+                genTextAttachment('grace.txt', 'words'),
+                genTextAttachment('data.json', '{}'),
+            ]),
+        ).toBeNull();
+        expect(
+            toSongFileSources([
+                genTextAttachment('grace.txt', 'words'),
+                genFileAttachment('hymn.pdf', 2048, '/songs/hymn.pdf'),
+            ]),
+        ).toBeNull();
+    });
+
+    // EC-590: documents attached alone are drafted from, each read the way
+    // the app reads its kind -- a deck's words reused when kept whole.
+    test('documents are their paths, a deck its words when kept whole', () => {
+        const deck = genTextAttachment(
+            'Grace.pptx',
+            'Amazing grace\nhow sweet',
+            '/docs/Grace.pptx',
+        );
+        const slides = genTextAttachment(
+            'Sunday.ows',
+            'Slide 1: Amazing grace',
+            '/docs/Sunday.ows',
+        );
+        const pdf = genFileAttachment('Hymn.pdf', 2048, '/docs/Hymn.pdf');
+        expect(toSongDocumentFiles([deck, slides, pdf, deck])).toEqual([
+            {
+                filePath: '/docs/Grace.pptx',
+                name: 'Grace.pptx',
+                text: 'Amazing grace\nhow sweet',
+            },
+            // A slide document's attachment describes it for a model, and a
+            // PDF's is its pages: both are read at the draft.
+            { filePath: '/docs/Sunday.ows', name: 'Sunday.ows' },
+            { filePath: '/docs/Hymn.pdf', name: 'Hymn.pdf' },
+        ]);
+    });
+
+    test('a deck whose words were cut is read again, not drafted cut', () => {
+        const long = genTextAttachment(
+            'Big.docx',
+            Array.from({ length: 2000 }, () => {
+                return 'a line sung';
+            }).join('\n'),
+            '/docs/Big.docx',
+        );
+        expect(toSongDocumentFiles([long])).toEqual([
+            { filePath: '/docs/Big.docx', name: 'Big.docx' },
+        ]);
+    });
+
+    test('anything but documents from the disk makes it no such ask', () => {
+        expect(toSongDocumentFiles([])).toBeNull();
+        // No path: nothing to read again.
+        expect(
+            toSongDocumentFiles([genTextAttachment('Grace.pptx', 'words')]),
+        ).toBeNull();
+        expect(
+            toSongDocumentFiles([
+                genTextAttachment('Grace.pptx', 'w', '/docs/Grace.pptx'),
+                genTextAttachment('notes.txt', 'w', '/docs/notes.txt'),
+            ]),
+        ).toBeNull();
+        expect(
+            toSongDocumentFiles([
+                genTextAttachment('song.owl', 'w', '/docs/song.owl'),
+            ]),
+        ).toBeNull();
+        expect(
+            toSongDocumentFiles([genElementAttachment({ label: 'Clear' })]),
+        ).toBeNull();
+    });
+
     test('a pointed-at control is described in words, selector last', () => {
         const attachment = genElementAttachment({
             label: 'Clear Long Text',
@@ -238,6 +340,49 @@ describe('toAskedOfModel', () => {
     // be dressed up as one -- the window turns it away before this is reached.
     test('nothing at all stays nothing', () => {
         expect(toAskedOfModel('   ', [])).toBe('');
+    });
+});
+
+// EC-500: what of a text file the model was shown, read back off the ask.
+describe('readAskedTextFiles', () => {
+    const LONG = Array.from({ length: 900 }, (_value, index) => {
+        return `Line ${index + 1} of the notes, as it was.`;
+    }).join('\n');
+
+    test('each file the ask carries, its words whole or cut where the ask cut them', () => {
+        const asked = toAskedOfModel('Fix the notes.', [
+            genTextAttachment('short.md', '# Short\n\nAll of it.'),
+            genTextAttachment('long.md', LONG),
+        ]);
+
+        const fileList = readAskedTextFiles(asked);
+
+        expect(
+            fileList.map(({ name, isCut }) => {
+                return { name, isCut };
+            }),
+        ).toEqual([
+            { name: 'short.md', isCut: false },
+            { name: 'long.md', isCut: true },
+        ]);
+        // The blank line joining the two is no word of the first.
+        expect(fileList[0].text).toBe('# Short\n\nAll of it.');
+        const shown = fileList[1].text;
+        expect(LONG.startsWith(shown)).toBe(true);
+        expect(shown.length).toBeLessThan(LONG.length);
+        expect(shown).not.toContain('was not included');
+    });
+
+    test('an ask with no file in it, or the head written with no name, reads none', () => {
+        expect(readAskedTextFiles('What does John 3:16 say?')).toEqual([]);
+        expect(
+            readAskedTextFiles(
+                'The user attached a file called "x.md" yesterday.',
+            ),
+        ).toEqual([]);
+        expect(
+            readAskedTextFiles('The user attached a file called "":\nWords.'),
+        ).toEqual([]);
     });
 });
 
@@ -633,9 +778,12 @@ describe('a PDF read as its pages', () => {
         expect(checkCanAttachFileName('Default.own')).toBe(true);
         expect(checkCanAttachFileName('notes.markdown')).toBe(true);
         expect(checkCanAttachFileName('map.jpg')).toBe(true);
+        // A Word file and a PowerPoint deck are read as their words.
+        expect(checkCanAttachFileName('sermon.docx')).toBe(true);
+        expect(checkCanAttachFileName('slides.pptx')).toBe(true);
         // Nothing the window would then refuse.
-        expect(checkCanAttachFileName('sermon.docx')).toBe(false);
-        expect(checkCanAttachFileName('slides.pptx')).toBe(false);
+        expect(checkCanAttachFileName('sermon.doc')).toBe(false);
+        expect(checkCanAttachFileName('slides.ppt')).toBe(false);
         expect(checkCanAttachFileName('song.mp4')).toBe(false);
     });
 });

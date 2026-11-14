@@ -41,6 +41,20 @@ describe('listNewAppPages', () => {
     const setting = { id: 'B', url: 'https://localhost:3000/setting.html' };
     expect(listNewAppPages([main, setting], [main, setting])).toEqual([]);
   });
+
+  // 2026-11-10: a Resources row's press opens its PDF in one more window on
+  // every press, and the press answered `unverified` -- the viewer is no
+  // page of the app. A Webs folder's local page is still nobody's press.
+  it('names a PDF the press opened in the viewer by its file name', () => {
+    const pdf = {
+      id: 'F',
+      url: 'file:///C:/r/pdf/JHN.3.pdf?uuid=JHN.3.pdf-1a2b',
+    };
+    const webPage = { id: 'G', url: 'file:///C:/data/webs/notice.html' };
+    expect(listNewAppPages([main], [main, webPage, pdf])).toEqual([
+      'JHN.3.pdf',
+    ]);
+  });
 });
 
 describe('toPageName', () => {

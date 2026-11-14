@@ -88,6 +88,27 @@ describe('SlideEditorToolTitleComp', () => {
         expect(container.querySelector('[data-body]')).not.toBeNull();
     });
 
+    test('a titled section is a group named by its title, an untitled one is not', async () => {
+        // The name is what a walkthrough scopes by ("Shape Properties >
+        // Shadow"): a canvas item's Presets row has a Shadow look too.
+        await render({ title: 'Shape Properties' });
+        let tool = container.querySelector('.app-tool')!;
+        expect(tool.getAttribute('role')).toBe('group');
+        expect(tool.getAttribute('aria-label')).toBe('Shape Properties');
+
+        await render({ title: 'Box Properties', isCollapsible: true });
+        tool = container.querySelector('.app-tool')!;
+        expect(tool.getAttribute('role')).toBe('group');
+        expect(tool.getAttribute('aria-label')).toBe('Box Properties');
+        // The group names; the header is still what is pressed.
+        expect(header().getAttribute('role')).toBe('button');
+
+        await render({ isInline: true });
+        tool = container.querySelector('.app-tool')!;
+        expect(tool.getAttribute('role')).toBeNull();
+        expect(tool.getAttribute('aria-label')).toBeNull();
+    });
+
     test('a collapsible section toggles and remembers its state', async () => {
         await render({
             title: 'Shadow',

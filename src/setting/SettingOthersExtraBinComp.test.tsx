@@ -16,6 +16,11 @@ const h = vi.hoisted(() => ({
     unregisterMock: vi.fn(),
     changedListeners: [] as (() => void)[],
     reportUpdatesMock: vi.fn(),
+    findInstalledMcpBinPathMock: vi.fn(),
+    copyToClipboardMock: vi.fn(),
+    // The settings the panel keeps, as the real store keeps them: by name,
+    // read once when the row mounts.
+    settings: new Map<string, string>(),
 }));
 
 // The gear's and the tab's points hear what this panel learned.
@@ -57,6 +62,7 @@ vi.mock('../helper/appHooks', async () => {
 
 vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
     checkIsExtraBinInstalled: h.checkIsExtraBinInstalledMock,
+    findInstalledMcpBinPath: h.findInstalledMcpBinPathMock,
     getExtraBinDirPath: () => '/data/extra-bin/win',
     getInstalledExtraBinVersion: h.getInstalledExtraBinVersionMock,
     registerExtraBinChangedListener: (listener: () => void) => {
@@ -64,6 +70,34 @@ vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
         return h.unregisterMock;
     },
 }));
+
+// The texts themselves are mcpClientHelpers.test.ts's; here the picker, on
+// Windows, the platform the panel's paths are written for.
+vi.mock('../server/appProvider', () => ({
+    default: { systemUtils: { isWindows: true, isMac: false } },
+}));
+
+vi.mock('../helper/settingHelpers', async () => {
+    const react = await import('react');
+    return {
+        useStateSettingString: <T extends string>(
+            settingName: string,
+            defaultString: T,
+        ) => {
+            const [value, setValue] = react.useState<string>(
+                h.settings.get(settingName) || defaultString,
+            );
+            const setValueSetting = react.useCallback(
+                (newValue: string) => {
+                    h.settings.set(settingName, newValue);
+                    setValue(newValue);
+                },
+                [settingName],
+            );
+            return [value, setValueSetting];
+        },
+    };
+});
 
 vi.mock('../helper/extra-bin/extraBinInstallHelpers', () => ({
     exportExtraBinArchive: h.exportExtraBinArchiveMock,
@@ -74,6 +108,7 @@ vi.mock('../helper/extra-bin/extraBinInstallHelpers', () => ({
 }));
 
 vi.mock('../server/appHelpers', () => ({
+    copyToClipboard: h.copyToClipboardMock,
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,
 }));
 
@@ -127,6 +162,21 @@ function readDetail(label: string) {
     return detail?.querySelector('.app-data')?.textContent ?? null;
 }
 
+const mcpBinPath = '/data/extra-bin/win/mcp/open-worship-app-mcp.exe';
+
+function getClientSelect() {
+    return container.querySelector('select') as HTMLSelectElement;
+}
+
+async function pickClient(key: string) {
+    const select = getClientSelect();
+    await act(async () => {
+        select.value = key;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(select.value).toBe(key);
+}
+
 function getSection() {
     return container.querySelector('section') as HTMLElement;
 }
@@ -142,11 +192,13 @@ function setLocalState({
     missingNames = [],
     version = null,
     archive = null,
+    mcpBinPath = null,
 }: {
     isInstalled: boolean;
     missingNames?: string[];
     version?: string | null;
     archive?: string | null;
+    mcpBinPath?: string | null;
 }) {
     h.checkIsExtraBinInstalledMock.mockResolvedValue({
         isInstalled,
@@ -154,11 +206,14 @@ function setLocalState({
     });
     h.getInstalledExtraBinVersionMock.mockResolvedValue(version);
     h.findLocalExtraBinArchiveMock.mockResolvedValue(archive);
+    h.findInstalledMcpBinPathMock.mockResolvedValue(mcpBinPath);
 }
 
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.changedListeners = [];
+    h.settings.clear();
+    h.copyToClipboardMock.mockClear();
     setLocalState({ isInstalled: true, version: '2026.2.1' });
     h.getExtraBinEntryMock.mockResolvedValue(ONLINE_ENTRY);
     h.installExtraBinMock.mockResolvedValue(undefined);
@@ -177,6 +232,123 @@ afterEach(() => {
 });
 
 describe('SettingOthersExtraBinComp', () => {
+    test('a pack without the MCP executable shows no AI agents row', async () => {
+        await renderPanel();
+        expect(readDetail('Installed version')).toBe('2026.2.1');
+        expect(readDetail('AI agents (MCP)')).toBeNull();
+        expect(container.querySelector('select')).toBeNull();
+    });
+
+    test('a pack with it shows the Claude Code command first, and Copy puts it on the clipboard', async () => {
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        const command = `claude mcp add owa-devtools -- "${mcpBinPath}"`;
+        expect(readDetail('AI agents (MCP)')).toBe(command);
+        // The whole command, wherever the panel cuts it.
+        expect(
+            container.querySelector(`[title='${command}']`)?.textContent,
+        ).toBe(command);
+        expect(container.textContent).toContain('Run this in a terminal.');
+        // The picker is the row's own control, named by the row's label.
+        const select = getClientSelect();
+        expect(
+            container.querySelector(`label[for='${select.id}']`)?.textContent,
+        ).toBe('AI agents (MCP)');
+
+        await act(async () => findButton('Copy')!.click());
+        expect(h.copyToClipboardMock).toHaveBeenLastCalledWith(
+            command,
+            'AI agents (MCP)',
+        );
+        expect(findButton('Copy JSON')).toBeNull();
+    });
+
+    test('the picker offers every kind of client, grouped, Windows ones included', async () => {
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        const select = getClientSelect();
+        const groups = Array.from(select.querySelectorAll('optgroup')).map(
+            (group) => group.label,
+        );
+        expect(groups).toEqual(['Terminal command', 'Settings file', 'Others']);
+        const names = Array.from(select.querySelectorAll('option')).map(
+            (option) => option.textContent,
+        );
+        for (const name of [
+            'Claude Code',
+            'Codex (ChatGPT)',
+            'Gemini CLI',
+            'Claude Desktop',
+            'Cursor',
+            'VS Code (GitHub Copilot)',
+            'Visual Studio (GitHub Copilot)',
+            'Program path',
+        ]) {
+            expect(names).toContain(name);
+        }
+    });
+
+    test('a settings-file client shows its text whole and where it goes, and Copy copies that', async () => {
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        await pickClient('cursor');
+        const json = JSON.stringify(
+            {
+                mcpServers: {
+                    'owa-devtools': {
+                        type: 'stdio',
+                        command: mcpBinPath,
+                        args: [],
+                    },
+                },
+            },
+            null,
+            2,
+        );
+        expect(container.querySelector('pre')?.textContent).toBe(json);
+        expect(container.textContent).toContain(
+            'Paste into: %USERPROFILE%\\.cursor\\mcp.json',
+        );
+        expect(container.textContent).not.toContain('Run this in a terminal.');
+        await act(async () => findButton('Copy')!.click());
+        expect(h.copyToClipboardMock).toHaveBeenLastCalledWith(
+            json,
+            'AI agents (MCP)',
+        );
+
+        await pickClient('program-path');
+        expect(readDetail('AI agents (MCP)')).toBe(mcpBinPath);
+        expect(container.querySelector('pre')).toBeNull();
+        expect(container.textContent).not.toContain('Paste into:');
+        await act(async () => findButton('Copy')!.click());
+        expect(h.copyToClipboardMock).toHaveBeenLastCalledWith(
+            mcpBinPath,
+            'AI agents (MCP)',
+        );
+    });
+
+    test('the client picked is remembered the next time the panel opens', async () => {
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        await pickClient('codex');
+        expect(h.settings.get('extra-bin-mcp-client')).toBe('codex');
+
+        act(() => root.unmount());
+        root = createRoot(container);
+        await renderPanel();
+        expect(getClientSelect().value).toBe('codex');
+        expect(readDetail('AI agents (MCP)')).toBe(
+            `codex mcp add owa-devtools -- "${mcpBinPath}"`,
+        );
+    });
+
+    test('a remembered client this computer does not have falls back to Claude Code', async () => {
+        h.settings.set('extra-bin-mcp-client', 'no-such-client');
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        expect(getClientSelect().value).toBe('claude-code');
+    });
+
     test('an older pack carries the update point and tells the gear; an update clears it', async () => {
         setLocalState({ isInstalled: true, version: '2026.1.0' });
         await renderPanel();

@@ -116,6 +116,14 @@ beforeEach(() => {
     h.getVerse.mockClear();
 });
 
+// A regional row of another language in English's own table of locales
+// (`data/en/locales.json`), there whichever packages are installed.
+const [regionalLocale, regionalLangCode] = Object.entries(allLocalesMap).find(
+    ([locale, langCode]) => {
+        return langCode !== 'en' && locale.includes('-');
+    },
+)!;
+
 test('locale validation and picker fallback keep the current locale usable', () => {
     // A code is valid when its package is installed: English always is,
     // and a code no package has never is.
@@ -123,12 +131,13 @@ test('locale validation and picker fallback keep the current locale usable', () 
     expect(checkIsValidLangCode('xx')).toBe(false);
     expect(checkIsValidLocale('en-GB')).toBe(true);
     expect(checkIsValidLocale('made-up')).toBe(false);
-    expect(getLangCode('fr-CA')).toBe('fr');
+    expect(regionalLangCode).not.toBe(regionalLocale);
+    expect(getLangCode(regionalLocale as LocaleType)).toBe(regionalLangCode);
     expect(getLangCode('made-up' as LocaleType)).toBeNull();
     expect(checkIsRtl('ar-EG')).toBe(true);
     expect(checkIsRtl('en-US')).toBe(false);
-    setCurrentLocale('fr-FR');
-    expect(getCurrentLocale()).toBe('fr-FR');
+    setCurrentLocale(regionalLocale as LocaleType);
+    expect(getCurrentLocale()).toBe(regionalLocale);
     setCurrentLocale('made-up' as LocaleType);
     expect(getCurrentLocale()).toBe('en-US');
 });

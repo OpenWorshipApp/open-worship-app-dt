@@ -296,12 +296,12 @@ describe('Documents list file row', () => {
             expect(
                 container.querySelector(`[title="${label}"]`),
             ).not.toBeNull();
-            // Its own file, with no slides here for the assistant to change.
-            expect(
-                h.props.contextMenuItems.map(
-                    ({ menuElement }: MenuItem) => menuElement,
-                ),
-            ).not.toContain('Open in Chatbot');
+            // EC-590: handed to the help window as its words or pages, to be
+            // asked about or made into a song (the user: _chatbot have to
+            // support turning powerpoint to lyric_, then _also add other
+            // support like docx pdf ..._).
+            item('Open in Chatbot').onSelect();
+            expect(h.openChatbot).toHaveBeenCalledWith(h.doc.filePath);
             item(openTitle).onSelect();
             await item(refreshTitle).onSelect();
             const open = kind === 'pdf' ? h.openPdf : h.openFile;

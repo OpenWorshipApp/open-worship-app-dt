@@ -1,0 +1,101 @@
+[
+    {
+        "id": "M-01",
+        "form": "sermon",
+        "genre": "Old Testament narrative",
+        "ask": "Help me prepare a sermon on Gideon and his three hundred men, Judges 7"
+    },
+    {
+        "id": "M-02",
+        "form": "sermon",
+        "genre": "Gospel narrative",
+        "ask": "make me a preaching lesson on blind Bartimaeus"
+    },
+    {
+        "id": "M-03",
+        "form": "sermon",
+        "genre": "poetry, wisdom",
+        "ask": "I am preaching from Psalm 1 next week, please prepare the lesson"
+    },
+    {
+        "id": "M-04",
+        "form": "sermon",
+        "genre": "epistle",
+        "ask": "sermon on 2 Corinthians 4:7-18 about treasure in jars of clay"
+    },
+    {
+        "id": "M-05",
+        "form": "sermon",
+        "genre": "prophecy",
+        "ask": "Prepare a sermon on Jeremiah 29:11-14 about hope for people far from home"
+    },
+    {
+        "id": "M-06",
+        "form": "sermon",
+        "genre": "parable",
+        "ask": "help me prepare a sermon on the wise and foolish builders"
+    },
+    {
+        "id": "M-07",
+        "form": "sermon",
+        "genre": "topical",
+        "ask": "I need to preach about giving thanks to God",
+        "then": "first-option"
+    },
+    {
+        "id": "M-08",
+        "form": "sermon",
+        "genre": "occasion",
+        "ask": "write a Good Friday sermon",
+        "then": "first-option"
+    },
+    {
+        "id": "M-09",
+        "form": "sermon",
+        "genre": "time limit",
+        "ask": "a 20 minute sermon on 1 John 4:7-21"
+    },
+    {
+        "id": "M-10",
+        "form": "sermon",
+        "genre": "typed by an elder",
+        "ask": "pls help me make preach for sunday about peter say he not know jesus",
+        "then": "first-option"
+    },
+    {
+        "id": "M-11",
+        "form": "devotion",
+        "genre": "devotion",
+        "ask": "a short devotion on Isaiah 43:1-3 for our men's breakfast"
+    },
+    {
+        "id": "M-12",
+        "form": "children",
+        "genre": "children's lesson",
+        "ask": "a children's lesson on the boy Samuel hearing God call him"
+    },
+    {
+        "id": "M-13",
+        "form": "sermon",
+        "genre": "wisdom, suffering",
+        "ask": "Help me prepare a sermon on Job 1:13-22"
+    },
+    {
+        "id": "M-14",
+        "form": "sermon",
+        "genre": "funeral, epistle",
+        "ask": "a message of hope for a funeral, from 1 Thessalonians 4:13-18"
+    },
+    {
+        "id": "M-15",
+        "form": "sermon",
+        "genre": "Gospel teaching",
+        "ask": "sermon on the vine and the branches, John 15:1-11"
+    },
+    {
+        "id": "M-16",
+        "form": "sermon",
+        "genre": "New Testament narrative, conversion",
+        "ask": "a sermon on the conversion of Saul, Acts 9:1-19"
+    }
+]

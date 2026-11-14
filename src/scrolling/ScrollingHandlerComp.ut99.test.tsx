@@ -140,14 +140,15 @@ describe('ScrollingHandlerComp', () => {
             onAutoScrollFrame,
         );
         // The stylesheet reveals the menu with a sibling selector on the
-        // chevron: the order in the markup is load-bearing.
+        // chevron: the order in the markup is load-bearing. The sheet comes
+        // with the to-the-top arrow (`ScrollToTopComp`).
         const order = Array.from(container.children).map((element) => {
             return element.tagName + '.' + element.className.split(' ')[0];
         });
         expect(order).toEqual([
-            'STYLE.',
             'I.test-play-to-bottom',
             'BUTTON.test-play-menu',
+            'STYLE.',
             'I.test-to-top',
         ]);
         const dots = h.dotsProps.at(-1);

@@ -356,7 +356,7 @@ export const DOM_MATCH_RUNTIME = `
         // can match, and one whose cost is the whole subtree, on a window
         // where this runs for every element in it. The attribute is also the
         // pane's ENGLISH name, which is the point: the visible one is
-        // translated, and a panel that only answers to its Khmer text is a
+        // translated, and a panel that only answers to its translated text is a
         // panel this matcher loses the moment the app is switched over.
         const widget = element.getAttribute('data-widget-name');
         const tag = element.tagName;
@@ -794,8 +794,8 @@ export const DOM_MATCH_RUNTIME = `
     // so it is the tag and type that say, not the property. A <select> is
     // here because choosing an option is the same errand as typing a value
     // and owa_type is the only tool for it -- left out, a picker could be
-    // neither found nor changed, and the one way to answer "put it on Khmer"
-    // was a uid out of a snapshot.
+    // neither found nor changed, and the one way to answer "put it on <a
+    // language>" was a uid out of a snapshot.
     const checkIsTextBox = (element) => {
         if (element.isContentEditable === true) {
             return true;

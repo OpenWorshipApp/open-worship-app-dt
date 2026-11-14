@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-08"
+workflowsVersion: "2026-11-14"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -13,7 +13,7 @@ workflowsVersion: "2026-11-08"
 whole layout back the way it shipped.
 
 Every resizable panel in the app is a **widget**. You can already collapse one by
-dragging its divider all the way to the edge — it shrinks to a thin green strip with
+dragging its divider all the way to the edge — it shrinks to a thin grey-striped strip with
 its name on it, and clicking that strip brings it back. The **View** menu on the top
 menu bar does the same thing by name, which is easier when the strip is hard to find.
 And the divider itself has a right-click menu that does it in place (steps 7–9) —
@@ -30,10 +30,10 @@ the only way in a popup window, whose menu bar is hidden.
    **[en:tran:Advance Bible Lookup]** binoculars toggle that same Advance Lookup section.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
    - `Note` — the document and slide notes under the slide previews (W-03) — is a
-     panel that **starts unticked**: it ships collapsed to its green strip,
+     panel that **starts unticked**: it ships collapsed to its strip,
      because most services never need it. Tick it, or click the strip, to open it.
      **[en:tran:Advance Lookup]**, which the binoculars open, starts unticked too.
-2. Click a ticked one — that panel collapses to its green strip, and the space goes to
+2. Click a ticked one — that panel collapses to its strip, and the space goes to
    its neighbour. 📸
 3. Click it again — the panel comes straight back. Nothing reloads and nothing you
    were doing is interrupted.
@@ -57,8 +57,9 @@ in a popup window:
 
 7. Right-click the **divider between Document List and Presenting Flow List** — the
    thin line between the two panels on the left of the presenter (every divider in the
-   app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
-   the two panels (the left one, or the upper one) collapses to its green strip and the
+   app has this menu, though one between two panels you cannot collapse, as in step 4,
+   offers only **[en:tran:Reset Size]**) — and choose **[en:tran:Close First Widget]**. 📸 The first of
+   the two panels (the left one, or the upper one) collapses to its strip and the
    other takes its space. `Close Second Widget` does the same to the other panel. The
    menu holds those two and **[en:tran:Reset Size]** (step 9), nothing else.
    Hovering the divider shows the same two choices as small arrows, each named for
@@ -66,7 +67,7 @@ in a popup window:
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
    divider between an upper and a lower panel. A collapsed panel has no divider — if
    one of the two is already a strip, click the strip first.
-8. Click the green **[en:tran:Document List]** strip — the panel comes straight back.
+8. Click the **[en:tran:Document List]** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
    shipped with. Double-clicking the divider does the same. The View menu's
@@ -87,5 +88,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

@@ -21,8 +21,13 @@ import {
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import {
     findNoteWindow,
+    toNoteFileFullName,
     type NoteWindowTargetType,
 } from '../helper/ai/noteWindowMatchHelpers';
+import {
+    toPreviewPathKey,
+    toPreviewWindowFilePath,
+} from '../helper/ai/windowOnTopRequestHelpers';
 
 // As the main process lists them (`electron/appWindowListHelpers.ts`).
 export type AppWindowEntryType = {
@@ -32,20 +37,28 @@ export type AppWindowEntryType = {
 };
 
 export type AppWindowType = AppWindowEntryType & {
-    focus: BotFocusType;
+    // The kind of page; `null` for a FILE's own window (`filePath`), which
+    // is no page help is about.
+    focus: BotFocusType | null;
     // The ONE main window, which moves between the Presenter, the Reader
     // and the Editor. Every other window is a popup, and every popup's
     // address carries a `uuid`.
     isMain: boolean;
     label: string;
+    // A file's own window -- its Markdown Preview, or the PDF viewer -- and
+    // the file it shows; absent for a page of the app.
+    filePath?: string;
 };
 
 export type WindowAimType = {
     windowId: string;
-    focus: BotFocusType;
+    // `null` for a file's own window.
+    focus: BotFocusType | null;
     // A Bible Reader or Slide Editor in a window of its own: `owa_goto_page`
     // moves the MAIN window, not this one.
     isSeparateWindow: boolean;
+    // A file's own window: the file it shows (`toFileWindowAim`).
+    filePath?: string;
 };
 
 export const LIST_APP_WINDOWS_CHANNEL = 'main:app:list-app-windows';
@@ -70,8 +83,50 @@ const AIMED_TOOL_NAME_SET: ReadonlySet<string> = new Set([
     'owa_guide_step',
     'owa_guide_status',
 ]);
+// What the APP is doing, and a walkthrough of it: a file's own window is no
+// page of the app -- the Markdown Preview has not even Node to answer a
+// state read -- so these stay with the app's windows while a tab works in
+// one (`toAimedToolArgs`).
+const APP_LEVEL_TOOL_NAME_SET: ReadonlySet<string> = new Set([
+    'owa_app_state',
+    'owa_guide_start',
+    'owa_guide_step',
+    'owa_guide_status',
+]);
 
 const TITLE_PREFIX_PATTERN = /^Open Worship app\s*[-–—]\s*/i;
+// The debugging endpoint lists a window's title escaped for HTML -- seen live
+// 2026-11-10, `Markdown Preview - JHN.3.The New Birth and God&#39;s Love.md`
+// -- so the picker had drawn the escape. One pass, `&amp;` among the rest.
+const HTML_ESCAPE_MAP: Readonly<Record<string, string>> = {
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&amp;': '&',
+};
+
+function toUnescapedTitle(title: string) {
+    return title.replace(/&(?:lt|gt|quot|#39|amp);/g, (escaped) => {
+        return HTML_ESCAPE_MAP[escaped] ?? escaped;
+    });
+}
+
+/**
+ * What a window is called in a sentence and on a picture's chip: the file's
+ * name for a file's own window, else its kind (`Settings`).
+ */
+function toWindowKindName(item: {
+    focus: BotFocusType | null;
+    filePath?: string;
+}) {
+    if (item.filePath !== undefined) {
+        return toNoteFileFullName(item.filePath);
+    }
+    return item.focus === null
+        ? ''
+        : (getBotFocus(item.focus)?.label ?? item.focus);
+}
 
 function toUrlObject(url: string) {
     try {
@@ -108,8 +163,13 @@ export function checkIsMainWindowUrl(url: string) {
  * The windows a tab can work with, the main window first, each with the
  * words the picker shows: the window's own title (which names the song in a
  * Lyric Editor) and whether it is the main window, numbered when two read
- * the same. The help window, the projector screens, the AI Chat and every
- * page help is not about are left out.
+ * the same. A FILE's own window -- a Markdown Preview, the PDF viewer -- is
+ * listed with the file it shows (`filePath`), for the tab on that file to
+ * work in, as a note's tab works in the note's window (2026-11-10, the user,
+ * the Resources 🤖 having opened the preview beside a chat whose **Working
+ * in** did not name it: _should behave like what working for bible-note_).
+ * The help window, the projector screens, the AI Chat and every other page
+ * help is not about are left out.
  */
 export function toAppWindowList(
     entryList: readonly AppWindowEntryType[],
@@ -117,13 +177,16 @@ export function toAppWindowList(
     const windowList: Omit<AppWindowType, 'label'>[] = [];
     for (const entry of entryList) {
         const focus = toFocusOfUrl(entry.url);
-        if (focus === null) {
+        const filePath =
+            focus === null ? toPreviewWindowFilePath(entry.url) : null;
+        if (focus === null && filePath === null) {
             continue;
         }
         windowList.push({
             ...entry,
             focus,
             isMain: checkIsMainWindowUrl(entry.url),
+            ...(filePath === null ? {} : { filePath }),
         });
     }
     windowList.sort((one, other) => {
@@ -134,14 +197,21 @@ export function toAppWindowList(
     // back, and what the model is told is `toAttachmentWindow`'s own.
     return windowList.map((item) => {
         // The window's own title, `Setting (⚙️)`: its name in the window's
-        // language, its mark as it is.
-        const title = item.title.replace(TITLE_PREFIX_PATTERN, '').trim();
+        // language, its mark as it is. A file's window by the file's name
+        // when its title does not say it -- a PDF titles itself from inside.
+        const fileName =
+            item.filePath === undefined ? null : toWindowKindName(item);
+        const title = toUnescapedTitle(item.title)
+            .replace(TITLE_PREFIX_PATTERN, '')
+            .trim();
         const [, words = title, mark = ''] =
             /^(.*?)(\s*\([^()]*\))?$/u.exec(title) ?? [];
         const name =
-            title === ''
-                ? tranLabel(getBotFocus(item.focus)?.label ?? item.focus)
-                : tranLabel(words.trim()) + mark;
+            fileName !== null && !title.includes(fileName)
+                ? fileName
+                : title === ''
+                  ? tranLabel(toWindowKindName(item))
+                  : tranLabel(words.trim()) + mark;
         const base = fillWords(
             item.isMain
                 ? tran('{name} · main window')
@@ -209,12 +279,49 @@ export function toWindowAim(
     if (found === undefined || found.isMain) {
         return null;
     }
+    if (found.focus === null) {
+        return toFileAimOf(found);
+    }
     const descriptor = getBotFocus(found.focus);
     return {
         windowId: found.id,
         focus: found.focus,
         isSeparateWindow: descriptor?.isMainWindow === true,
     };
+}
+
+function toFileAimOf(item: AppWindowType): WindowAimType {
+    return {
+        windowId: item.id,
+        focus: null,
+        isSeparateWindow: false,
+        ...(item.filePath === undefined ? {} : { filePath: item.filePath }),
+    };
+}
+
+/**
+ * The own window of the FILE a tab is about -- the Markdown Preview or the
+ * PDF viewer the Resources 🤖 opened first, or that is open on a file
+ * attached in the tab -- as `toNoteWindowAim` is a note's (2026-11-10, the
+ * user: _should behave like what working for bible-note_). Null while no
+ * window shows that file.
+ */
+export function toFileWindowAim(
+    filePath: string | null | undefined,
+    windowList: readonly AppWindowType[],
+): WindowAimType | null {
+    if (!filePath) {
+        return null;
+    }
+    const key = toPreviewPathKey(filePath);
+    const found = windowList.find((item) => {
+        return (
+            item.filePath !== undefined &&
+            !item.isMain &&
+            toPreviewPathKey(item.filePath) === key
+        );
+    });
+    return found === undefined ? null : toFileAimOf(found);
 }
 
 /**
@@ -272,18 +379,22 @@ export function toNoteWindowAim(
 
 /**
  * The window a TAB works in, as **Working in** says: the window of the note
- * it is on, else the window chosen for it, else the one window of the kind
- * it asks about when that is a popup (`null` for no kind: a tab only
- * FOLLOWING the window it was opened from). `null` for the main window.
+ * it is on, else the own window of the file it is on (`filePath`, the
+ * newest of its files that has one), else the window chosen for it, else
+ * the one window of the kind it asks about when that is a popup (`null` for
+ * no kind: a tab only FOLLOWING the window it was opened from). `null` for
+ * the main window.
  */
 export function toTabWindowAim(
     noteTarget: NoteWindowTargetType | null | undefined,
     chosenWindowId: string | null | undefined,
     focus: BotFocusType | null,
     windowList: readonly AppWindowType[],
+    filePath: string | null = null,
 ): WindowAimType | null {
     return (
         toNoteWindowAim(noteTarget ?? undefined, windowList) ??
+        toFileWindowAim(filePath, windowList) ??
         toWindowAim(chosenWindowId, windowList) ??
         (focus === null ? null : toFocusWindowAim(focus, windowList))
     );
@@ -311,17 +422,18 @@ export function findWindowIdByUrl(
 }
 
 /**
- * The address of the Bible Note window the tab in front works in, which
- * main holds on top for as long as it does (2026-11-08, the user, **Working
- * in** a note window with an arrow to its **Toggle Always On Top**: _a bible
- * note window that attached to chatbot should toggled for stay on top_;
- * `electron/noteWindowOnTopHelpers.ts`). `null` for any other aim, or none.
+ * The address of the window the tab in front works in, which main holds over
+ * the main window for as long as it does (2026-11-08 for a Bible note's
+ * window; 2026-11-10 for every kind, the user: _imagine chatbot working on an
+ * attached window but the window is covered by main window that's wrong
+ * behavior_; `electron/windowOnTopHelpers.ts`). `null` for the main window,
+ * or none.
  */
-export function toHeldNoteWindowUrl(
+export function toHeldWindowUrl(
     aim: WindowAimType | null,
     windowList: readonly AppWindowType[],
 ): string | null {
-    if (aim === null || aim.focus !== 'bibleNote') {
+    if (aim === null) {
         return null;
     }
     const found = windowList.find((item) => {
@@ -363,7 +475,7 @@ export function toAttachmentWindow(item: AppWindowType): AttachmentWindowType {
     return {
         id: item.id,
         page: toWindowPage(item.url),
-        label: getBotFocus(item.focus)?.label ?? item.focus,
+        label: toWindowKindName(item),
         isMain: item.isMain,
     };
 }
@@ -414,14 +526,16 @@ export function toWindowAimLabel(aim: WindowAimType | null) {
     if (aim === null) {
         return null;
     }
-    return getBotFocus(aim.focus)?.label ?? aim.focus;
+    return toWindowKindName(aim);
 }
 
 /**
  * A tool call aimed at the tab's window: a UI tool given no window, or given
  * the bare kind of the chosen one (`reader.html` with a Bible Reader window
  * chosen), gets that window's id. Anything else asked for on purpose -- the
- * Presenter while a Reader window is chosen -- goes where it was sent.
+ * Presenter while a Reader window is chosen -- goes where it was sent. In a
+ * file's own window only what LOOKS at the window is aimed there: a state
+ * read and a walkthrough are the app's (`APP_LEVEL_TOOL_NAME_SET`).
  */
 export function toAimedToolArgs(
     name: string,
@@ -431,12 +545,15 @@ export function toAimedToolArgs(
     if (aim === null || !AIMED_TOOL_NAME_SET.has(name)) {
         return args;
     }
+    if (aim.filePath !== undefined && APP_LEVEL_TOOL_NAME_SET.has(name)) {
+        return args;
+    }
     const page = args?.page;
     if (
         page === undefined ||
         page === null ||
         page === '' ||
-        page === `${aim.focus}.html`
+        (aim.focus !== null && page === `${aim.focus}.html`)
     ) {
         return { ...(args ?? {}), page: aim.windowId };
     }

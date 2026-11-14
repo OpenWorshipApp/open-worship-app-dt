@@ -16,10 +16,12 @@
 // reach it and it can touch no app state.
 
 import { evaluateInApp, listTargets, requireLivePort } from './cdp.mjs';
+import { toUndoAction } from './agentData.mjs';
 import { DEFAULT_LANG_CODE, loadTranBundle } from './tran.mjs';
 
 // A banner is said in the language the app is DISPLAYING, which is not always
-// English (2026-10-06: a Khmer window put up "Assistant clicked something").
+// English (2026-10-06: a translated window put up "Assistant clicked
+// something").
 // So every banner is three things: `text`, the English sentence, unchanged;
 // `key`, the same news with no names in it, which is a `tran()` key in the
 // app's own dictionary; and `detail`, the names the sentence carried (a site,
@@ -27,7 +29,7 @@ import { DEFAULT_LANG_CODE, loadTranBundle } from './tran.mjs';
 // every language or `{ key }` for a word the dictionary has too. A language
 // whose dictionary lacks `key` gets the English sentence WHOLE, never half of
 // one: a phrase missing from the dictionary is a phrase not yet translated,
-// and a banner part Khmer, part English reads worse than one in English.
+// and a banner part translated, part English reads worse than one in English.
 
 // What each tool does, said the way a volunteer would say it. A tool that is
 // not in here reads the app rather than acting on it, and stays quiet. Each
@@ -55,7 +57,7 @@ const ACTING_TOOLS = {
     owa_click: 'clicked something',
     owa_type: 'typed something',
     // The label-aimed twins of `press_key` and `drag`: the same news, the
-    // same dictionary keys, so a Khmer window reads them already.
+    // same dictionary keys, so a translated window reads them already.
     owa_press_key: 'pressed a key',
     owa_drag: 'dragged something',
     // Files dropped from the disk: a drag as far as the window can tell.
@@ -124,8 +126,19 @@ const ACTING_TOOLS = {
     // One run sheet the help window has open, changed many lines at a time:
     // the same news, the sheet named below. `lines` is quiet.
     owa_presenting_flow_edit: 'changed a run sheet',
+    // A foreground component changed through its own panel (a session's
+    // words or look); the component and the session are named below, and
+    // a `read` is quiet.
+    owa_foreground_edit: 'changed a foreground extra',
+    // The screens' own controls, as a Mini Screen card sets them: the Bible
+    // text style, a transition, a group, the lock... A `read` is quiet, and
+    // a `set` that only clears says what taking content off a screen says.
+    owa_screen_edit: 'changed a screen',
     // The Background tabs' files; each action names the file below.
     owa_media_file: 'changed a media file',
+    // A study file saved into Resources → Default (EC-464), named below. A
+    // list, a read, a draft and a preview change nothing and stay quiet.
+    owa_resource_file: 'made a study file',
 };
 
 // A verse as a banner may name it: a key (`JHN 3:16`) or a short reference
@@ -242,7 +255,7 @@ const AGENT_DATA_PHRASE_MAP = {
     },
     // The run sheets. "Run sheet" rather than "presenting flow" in the
     // English: it is what the operator calls it, and the dictionary keys
-    // below are what a Khmer or French window reads instead.
+    // below are what a window in another language reads instead.
     owa_presenting_flow: {
         create: {
             say: (_args, sheet) => `made the run sheet ${sheet}`,
@@ -343,6 +356,13 @@ const FOREGROUND_BANNER_NOUN_MAP = {
     'marquee-top': 'the scrolling message',
     'marquee-bottom': 'the scrolling message',
     'quick-text': 'the line of text',
+    message: 'the message',
+    'long-text': 'the long text',
+    video: 'the video',
+    image: 'the picture',
+    camera: 'the camera',
+    screen: 'the picture of another screen',
+    web: 'the web page',
     all: 'every foreground extra',
 };
 
@@ -355,7 +375,18 @@ const FOREGROUND_LAUNCHER_LABEL_MAP = {
     'marquee-top': 'Marquee Top',
     'marquee-bottom': 'Marquee Bottom',
     'quick-text': 'Quick Text',
+    message: 'Messages',
+    'long-text': 'Long Text Show',
+    video: 'Video Show',
+    image: 'Image Show',
+    camera: 'Camera Show',
+    screen: 'Screen Show',
+    web: 'Web Show',
 };
+
+// A component with no phrase of its own below is named by its launcher row
+// after this one.
+const FOREGROUND_PUT_UP_KEY = 'put a foreground extra on the screen';
 
 const FOREGROUND_STARTED_KEY_MAP = {
     countdown: 'started a countdown on the screen',
@@ -407,9 +438,60 @@ function describeForegroundNotice(args) {
             );
         }
     }
-    return startedKey === undefined
-        ? toNotice(ACTING_TOOLS.owa_foreground)
-        : toNotice(startedKey);
+    if (startedKey === undefined) {
+        const label = FOREGROUND_LAUNCHER_LABEL_MAP[widget];
+        return label === undefined
+            ? toNotice(ACTING_TOOLS.owa_foreground)
+            : toNotice(
+                  `put ${noun ?? 'a foreground extra'} on the screen`,
+                  FOREGROUND_PUT_UP_KEY,
+                  [{ key: label }],
+              );
+    }
+    return toNotice(startedKey);
+}
+
+// `owa_foreground_edit`: the component and the session it changed, named;
+// a `read` is quiet. `show` and `hide` say what the plain door says.
+function describeForegroundEditNotice(args) {
+    if (args?.action === undefined) {
+        return toNotice(ACTING_TOOLS.owa_foreground_edit);
+    }
+    if (args.action === 'read') {
+        return null;
+    }
+    const widget = typeof args?.widget === 'string' ? args.widget : '';
+    if (args.action === 'show' || args.action === 'start') {
+        return describeForegroundNotice({ ...args, action: 'start' });
+    }
+    if (args.action === 'hide') {
+        return describeForegroundNotice({ ...args, action: 'stop' });
+    }
+    const label = FOREGROUND_LAUNCHER_LABEL_MAP[widget];
+    const session = toQuotedName(args?.session, '');
+    return label === undefined
+        ? toNotice(ACTING_TOOLS.owa_foreground_edit)
+        : toNotice(
+              `changed the ${label} ${session}`.trim(),
+              ACTING_TOOLS.owa_foreground_edit,
+              [{ key: label }, session],
+          );
+}
+
+// `owa_screen_edit`: a `read` is quiet; a `set` that only clears is
+// `owa_hide_screens`' news, any other set changed a screen. No action at all
+// is the audit's probe: the generic news.
+function describeScreenEditNotice(args) {
+    if (args?.action === 'read') {
+        return null;
+    }
+    const fieldList = Object.keys(args ?? {}).filter((key) => {
+        return key !== 'action' && key !== 'screens';
+    });
+    if (fieldList.length === 1 && fieldList[0] === 'clear') {
+        return toNotice(ACTING_TOOLS.owa_hide_screens);
+    }
+    return toNotice(ACTING_TOOLS.owa_screen_edit);
 }
 
 // The Bible importer's news, by action, with the Bible and the site taken
@@ -495,6 +577,27 @@ export function describeToolNotice(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
     }
+    if (name === 'owa_resource_file') {
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        if (args.action !== 'save') {
+            return null;
+        }
+        // A `file` is a change to a study file already there; a `name`, a
+        // new one.
+        const isChange =
+            typeof args?.file === 'string' && args.file.trim() !== '';
+        const named = toQuotedName(
+            isChange ? args.file.split(/[\\/]/).pop() : args?.name,
+            null,
+        );
+        const key = isChange ? 'changed a study file' : 'made a study file';
+        const said = isChange
+            ? `changed the study file ${named}`
+            : `made the study file ${named}`;
+        return toNotice(named === null ? key : said, key, [named]);
+    }
     if (name === 'owa_note_edit') {
         if (args?.action === undefined) {
             return toNotice(ACTING_TOOLS[name]);
@@ -515,11 +618,9 @@ export function describeToolNotice(name, args) {
                   : '',
             'a note',
         );
-        return toNotice(
-            `changed the Bible note ${where}`,
-            ACTING_TOOLS[name],
-            [where],
-        );
+        return toNotice(`changed the Bible note ${where}`, ACTING_TOOLS[name], [
+            where,
+        ]);
     }
     if (name === 'owa_slide_edit') {
         // No action is a probe asking whether the tool announces itself.
@@ -644,7 +745,9 @@ export function describeToolNotice(name, args) {
         );
     }
     if (name === 'owa_undo') {
-        return args?.action === 'undo' ? toNotice(ACTING_TOOLS.owa_undo) : null;
+        return toUndoAction(args) === 'undo'
+            ? toNotice(ACTING_TOOLS.owa_undo)
+            : null;
     }
     // A key names itself: "pressed F5" is something the operator can check
     // against the wall, "pressed a key" is not. The words are the same in
@@ -697,6 +800,12 @@ export function describeToolNotice(name, args) {
     }
     if (name === 'owa_foreground') {
         return describeForegroundNotice(args);
+    }
+    if (name === 'owa_foreground_edit') {
+        return describeForegroundEditNotice(args);
+    }
+    if (name === 'owa_screen_edit') {
+        return describeScreenEditNotice(args);
     }
     if (name === 'owa_bible_xml') {
         return describeBibleXmlNotice(args);
@@ -784,7 +893,10 @@ export function listNoticeTranKeys() {
         ...Object.values(BIBLE_XML_KEY_MAP),
         FOREGROUND_STOP_KEY,
         FOREGROUND_STOP_ALL_KEY,
+        FOREGROUND_PUT_UP_KEY,
         'Minutes',
+        // A study file saved over (EC-464); its making is ACTING_TOOLS'.
+        'changed a study file',
     ]);
     for (const phrase of Object.values(AGENT_FILE_PHRASE_MAP)) {
         for (const what of AGENT_FILE_KINDS) {
@@ -843,7 +955,7 @@ function readNoticeDictionaries(now = Date.now()) {
 
 /**
  * The banner's words in every language the app can be shown in, as
- * `{ en: { who, what }, km: {...}, ... }`. The page picks one off its own
+ * `{ en: { who, what }, <code>: {...}, ... }`. The page picks one off its own
  * `<html lang>` -- the attribute `owa_app_state` reports as the language --
  * so no round trip is spent asking which. A language is left out, and the
  * page falls back to English, when its dictionary lacks the phrase.
@@ -919,7 +1031,8 @@ const NOTICE_RUNTIME = `
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483645;' +
         'pointer-events:none';
     // The app's own lettering for a script the system face lacks (the
-    // Battambang a Khmer window is set in), after the system face.
+    // language's own face a translated window is set in), after the system
+    // face.
     const pageFont = getComputedStyle(document.body).fontFamily;
     if (pageFont) {
         host.style.setProperty('--owa-notice-page-font', pageFont);

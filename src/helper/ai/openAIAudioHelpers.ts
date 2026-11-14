@@ -88,8 +88,7 @@ async function generateSpeech(
         } catch (error) {
             showSimpleToast(
                 tran('Text to Speech'),
-                'Fail to convert text to speech. Please check your OpenAI ' +
-                    'API Key and network connection.',
+                tran('Check your OpenAI API key and the internet connection.'),
             );
             handleError(error);
         }
@@ -150,7 +149,7 @@ export async function bibleTextToSpeech(
     if (bibleInfo === null) {
         showSimpleToast(
             tran('Bible Text to Speech'),
-            `Fail to get Bible info for bible key "${bibleKey}".`,
+            `${tran('Target bible not found')}: "${bibleKey}"`,
         );
         return null;
     }

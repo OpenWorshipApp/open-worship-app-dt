@@ -29,12 +29,47 @@ function getSystemDarkMatcher() {
     }
     return globalThis.matchMedia('(prefers-color-scheme: dark)');
 }
+
+// Blink answers `prefers-color-scheme` with LIGHT for as long as a page is
+// being printed (File > Print, a window's own Print button), whatever the
+// system is set to, so a window on the `system` theme turns light in the
+// middle of its own print. A window that makes its paper light itself must
+// not change under the print -- the Markdown Preview would draw its page
+// again, diagrams and all -- and asks, through `keepThemeWhilePrinting`, for
+// the answer read before the print to stand while it lasts. Every other
+// window turns light with the print, as it always has.
+let isThemeKeptWhilePrinting = false;
+export function keepThemeWhilePrinting() {
+    isThemeKeptWhilePrinting = true;
+}
+let printMatcher: MediaQueryList | null = null;
+function checkIsThemeHeld() {
+    if (!isThemeKeptWhilePrinting) {
+        return false;
+    }
+    if (printMatcher === null && globalThis.matchMedia) {
+        printMatcher = globalThis.matchMedia('print');
+    }
+    return printMatcher?.matches ?? false;
+}
+let lastIsSystemDark = false;
+function checkIsSystemDark() {
+    const systemDarkMatcher = getSystemDarkMatcher();
+    if (systemDarkMatcher === null) {
+        return false;
+    }
+    if (!checkIsThemeHeld()) {
+        lastIsSystemDark = systemDarkMatcher.matches;
+    }
+    return lastIsSystemDark;
+}
+
 export function checkIsDarkMode(themeSource?: ThemeOptionType) {
     if (appProvider.isPageScreen) {
         return true;
     }
     themeSource ??= getThemeSourceSetting();
-    if (themeSource === 'system' && getSystemDarkMatcher()?.matches) {
+    if (themeSource === 'system' && checkIsSystemDark()) {
         return true;
     }
     return themeSource === 'dark';
@@ -90,4 +125,10 @@ export function useIsDarkMode() {
     return checkIsDarkMode(themeSource);
 }
 
-getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);
+getSystemDarkMatcher()?.addEventListener('change', () => {
+    // In a window that keeps its theme, the flip printing makes is not the
+    // system's; the one back once the print is done reads the same theme.
+    if (!checkIsThemeHeld()) {
+        applyDarkModeToApp();
+    }
+});

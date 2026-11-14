@@ -31,10 +31,27 @@
 // note's name into its file and id (`src/chatbot/noteChatHelpers.ts`): a
 // model names the note, never a path. An outside agent over stdio gives
 // `file` (a whole `.own` path) and `id`; the app checks both again.
+//
+// Every action runs IN THE NOTE'S OWN WINDOW, through its editor (2026-11-08,
+// the user: _it's dangerous to reand and modify wrong file … chatbot should
+// work directly on UI, e.g. bible-note chatbot should depend on bible-note UI
+// controller_, the goal _chatbot modifying files should work on the fresh
+// latest user seen content_, and _only bible-note is an edge case_). The
+// window is found among the app's windows by its address
+// (`bibleNote.html?file=<name>&id=<id>`), opened from the main window when
+// it is not open, and waited for until its editor is up; the window itself
+// refuses a note that is not the one it shows, by its WHOLE path -- another
+// Bible Notes folder's file of the same name -- and the next window of that
+// address is tried.
 
 import { zod as z } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 
-import { evaluateInApp } from './cdp.mjs';
+import {
+    evaluateInApp,
+    evaluateInTarget,
+    listTargets,
+    requireLivePort,
+} from './cdp.mjs';
 import { genAgentDataExpression } from './agentData.mjs';
 
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
@@ -108,15 +125,178 @@ export function toNoteEditTarget(file, id) {
     return { filePath: text, noteId: id };
 }
 
-async function runNoteWorker(request, page) {
+export const NOTE_WINDOW_PAGE_NAME = 'bibleNote.html';
+// Set by the note window as its editor registers
+// (`NOTE_WINDOW_READY_GLOBAL_NAME` in `noteWindowControllerHelpers.ts`, a
+// test holds the two together).
+export const NOTE_WINDOW_READY_GLOBAL_NAME = '__owaIsNoteWindowReady';
+const NOTE_WINDOW_READY_EXPRESSION =
+    `typeof globalThis.${NOTE_WINDOW_READY_GLOBAL_NAME} === 'function' && ` +
+    `globalThis.${NOTE_WINDOW_READY_GLOBAL_NAME}() === true`;
+// The worker's code for a window showing another note -- try the next
+// (`noteWindowControllerHelpers.ts`, a test holds the two together).
+export const NOTE_WINDOW_OTHER_CODE = 'other-note-window';
+// A window takes a few seconds to open and load its names lookup.
+const NOTE_WINDOW_OPEN_WAIT_MS = 20000;
+const NOTE_WINDOW_POLL_MS = 250;
+// Long enough for new verses read from a Bible and a backup.
+const NOTE_WORKER_TIMEOUT_MS = 60000;
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+/** `Default.own` out of a whole path, either kind of slash. */
+function toNoteFileFullName(filePath) {
+    return String(filePath ?? '')
+        .split(/[\\/]/)
+        .pop();
+}
+
+/**
+ * Whether a window's address is one note's own window -- its file's name
+ * and its id in that file, as the note row's Open opens it. Which FOLDER is
+ * the window's to say: it refuses another one's file.
+ */
+export function checkIsNoteWindowUrl(url, fileFullName, noteId) {
+    let parsed;
+    try {
+        parsed = new URL(url, 'http://localhost/');
+    } catch (_error) {
+        return false;
+    }
+    return (
+        parsed.pathname.split('/').pop() === NOTE_WINDOW_PAGE_NAME &&
+        parsed.searchParams.get('file') === fileFullName &&
+        parsed.searchParams.get('id') === String(noteId)
+    );
+}
+
+async function findNoteWindowTargets(port, request, triedIdSet) {
+    const fileFullName = toNoteFileFullName(request.filePath);
+    return (await listTargets(port)).filter((target) => {
+        return (
+            !triedIdSet.has(target.id) &&
+            checkIsNoteWindowUrl(target.url, fileFullName, request.noteId)
+        );
+    });
+}
+
+async function waitForNoteWindowReady(target) {
+    const deadline = Date.now() + NOTE_WINDOW_OPEN_WAIT_MS;
+    for (;;) {
+        try {
+            if (
+                (await evaluateInTarget(
+                    target,
+                    NOTE_WINDOW_READY_EXPRESSION,
+                    5000,
+                )) === true
+            ) {
+                return true;
+            }
+        } catch (_error) {
+            // Still loading: its page has no context to evaluate in yet.
+        }
+        if (Date.now() >= deadline) {
+            return false;
+        }
+        await sleep(NOTE_WINDOW_POLL_MS);
+    }
+}
+
+/**
+ * Opens the note's window from the main window -- the row's own Open -- and
+ * waits for it among the app's windows. The app checks the note first.
+ */
+async function openNoteWindow(port, request, triedIdSet) {
     const { value } = await evaluateInApp(
-        genAgentDataExpression('note-edit', request),
-        { match: page },
+        genAgentDataExpression('note-window', {
+            filePath: request.filePath,
+            noteId: request.noteId,
+        }),
+        { port },
     );
     if (value === null || typeof value !== 'object') {
         return { isError: true, reason: 'The app did not answer.' };
     }
-    return value;
+    if (value.isError === true) {
+        return value;
+    }
+    const deadline = Date.now() + NOTE_WINDOW_OPEN_WAIT_MS;
+    for (;;) {
+        const found = await findNoteWindowTargets(port, request, triedIdSet);
+        if (found.length > 0) {
+            return { target: found[0] };
+        }
+        if (Date.now() >= deadline) {
+            return {
+                isError: true,
+                reason:
+                    "The note's window did not open. Ask the person to open " +
+                    'the note with Open on its row in the Bible Notes panel.',
+            };
+        }
+        await sleep(NOTE_WINDOW_POLL_MS);
+    }
+}
+
+/**
+ * The request answered by the note's own window: an open one of its
+ * address that says it shows that note, else one opened for it.
+ */
+async function runNoteWorker(request) {
+    const port = await requireLivePort();
+    const triedIdSet = new Set();
+    let isOpened = false;
+    for (;;) {
+        let [target] = await findNoteWindowTargets(port, request, triedIdSet);
+        if (target === undefined) {
+            if (isOpened) {
+                return {
+                    isError: true,
+                    reason:
+                        'No window of this note would take the request. Ask ' +
+                        'the person to close the note windows of that name ' +
+                        'and open the note with Open on its row.',
+                };
+            }
+            const opened = await openNoteWindow(port, request, triedIdSet);
+            if (opened.isError === true) {
+                return opened;
+            }
+            isOpened = true;
+            target = opened.target;
+        }
+        triedIdSet.add(target.id);
+        if (!(await waitForNoteWindowReady(target))) {
+            return {
+                isError: true,
+                reason:
+                    "The note's window is still opening. Try again in a " +
+                    'moment.',
+            };
+        }
+        const value = await evaluateInTarget(
+            target,
+            genAgentDataExpression(
+                'note-edit',
+                request,
+                NOTE_WORKER_TIMEOUT_MS,
+            ),
+            NOTE_WORKER_TIMEOUT_MS + 5000,
+        );
+        if (value === null || typeof value !== 'object') {
+            return { isError: true, reason: 'The app did not answer.' };
+        }
+        // Another folder's note of the same file name: the next window.
+        if (value.code === NOTE_WINDOW_OTHER_CODE) {
+            continue;
+        }
+        return value;
+    }
 }
 
 function toTextResult(value) {
@@ -131,11 +311,14 @@ function toErrorResult(error) {
 }
 
 export const NOTE_EDIT_DESCRIPTION =
-    "Change the user's Bible note attached here. `note`: its name as " +
+    "Change the user's Bible note attached here, in its own window as the " +
+    'person sees it. `note`: its name as ' +
     'attached. `read` gives its numbered blocks (n, kind, text), `hash` and ' +
     "`fonts` (the font box's); `from` reads on. `edit` makes every change " +
     'in ONE call (give `hash`), `changes`: {block, text?, kind?, checked?} ' +
-    'changes block n; {block, remove: true} removes it; {block, after} moves ' +
+    'changes block n -- with a list kind or kind section and its words as ' +
+    'lines it becomes a block a line; {block, remove: true} removes it; ' +
+    '{block, after} moves ' +
     'it (0 = top); {after, kind, text} adds one; kind section adds many, ' +
     'a block a line of mark-up (# heading, - item, 1. item, > quote, ' +
     '---). Added kinds include the ' +
@@ -144,7 +327,10 @@ export const NOTE_EDIT_DESCRIPTION =
     'lines), page-break, equation (KaTeX), sticky (`color` yellow, pink, ' +
     'blue, mint, lavender, peach or sage), date (today or YYYY-MM-DD), poll ' +
     '(the question, then a line a choice), video (YouTube link), website, ' +
-    'media (a link or a path), drawing (a line a box, "A -> B" an arrow), ' +
+    'media (a link or a path), drawing (a line a box, "A -> B" an arrow, a ' +
+    'first line "layout: across" / "circle" / "center"; background fills ' +
+    'its boxes, color its lines; one in the note takes new lines, size ' +
+    'larger/smaller, align), ' +
     "example (the editor's sample note), passage (`ref`). The toolbar, on a " +
     'block or, with `words`, only those words in it: size ("larger", ' +
     '"smaller", px 8-72), font, color and background (a colour, or "none"), ' +
@@ -157,10 +343,14 @@ export const NOTE_EDIT_DESCRIPTION =
     "`redo` step the note's kept history; `view` with invisibleCharacters " +
     'true/false is the ¶. `title` renames. Words: **bold**, *italic*, ' +
     '__underline__, ~~strike~~, `code`, [words](url); keep [^…] [@…] [#…] ' +
-    'tokens; a new [^John 3:16] is a verse the app reads (in `bible`), a new ' +
+    'tokens as read; a verse token names its Bible, [^(KJV) John 3:16]; a ' +
+    'new one is a verse the app reads from the Bible it names (else `bible`, ' +
+    "else the lookup's) -- [^(KJV) Hebrews 11:1] in place of a chip moves it " +
+    'to the KJV; the summary says which Bible each new verse came from. A new ' +
     '[@Name] / [#Place] a mention from the names lookup -- never write verse ' +
     'words yourself. A fixed block (table, picture, passage, sticky …) is ' +
-    'never given words. Changes stay UNSAVED for Save in the note window; ' +
+    "never given words, a drawing's lines aside. Changes stay UNSAVED for " +
+    'Save in the note window; ' +
     'owa_undo puts each back.';
 
 /**
@@ -195,7 +385,8 @@ export async function runNoteEdit(args, runWorker = runNoteWorker) {
             request[key] = args[key];
         }
     }
-    const value = await runWorker(request, args?.page);
+    // Always the note's own window: a `page` given is not where a note is.
+    const value = await runWorker(request);
     if (value.isError === true) {
         return toErrorResult(
             new Error(value.reason ?? 'The note could not be read.'),
@@ -206,13 +397,20 @@ export async function runNoteEdit(args, runWorker = runNoteWorker) {
     return toTextResult(value);
 }
 
-const NOTE_CHANGE_SCHEMA = z.object({
+// Loose (BN-180, shape47's L-03): a strict object dropped what it does not
+// list, so the call's own `title` written as one more change reached the
+// app as `{}` -- which no rule could give back to the call -- and a whole
+// lesson was refused twice for it. The app reads only the fields it knows.
+const NOTE_CHANGE_SCHEMA = z.looseObject({
     block: z.number().int().min(1).optional(),
     after: z.number().int().min(0).optional(),
     kind: z.enum(NOTE_EDIT_KINDS).optional(),
     text: z.string().max(20000).optional(),
     checked: z.boolean().optional(),
     remove: z.boolean().optional(),
+    // An add whose words another block has: on purpose (BN-44). Taught by
+    // the refusal that names the twin, not by the description.
+    again: z.boolean().optional(),
     ref: z.string().max(200).optional(),
     size: z
         .union([z.number().min(8).max(72), z.enum(['larger', 'smaller'])])

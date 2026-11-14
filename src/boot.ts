@@ -21,6 +21,7 @@ import {
 } from './setting/appFontSettingHelpers';
 import appProvider from './server/appProvider';
 import { appHomeStorage } from './server/appHomeStorage';
+import { checkIsMainWindow } from './server/mainWindowHelpers';
 import {
     appLocalStorage,
     DATA_DIR_MOVE_PENDING_SETTING_NAME,
@@ -144,10 +145,16 @@ async function initPreviewerNoteCloseMigration() {
  * A move of the data folder off the Desktop, asked for before the relaunch
  * that brought this window up (`dataDirMoveHelpers.ts`). Before anything else
  * opens a file in that folder: on Windows an open one stops the rename. The
- * module loads only when a move is waiting.
+ * module loads only when a move is waiting, and only in the main window, the
+ * one that runs it (`runPendingDataDirMove`). Another window that waited for
+ * it waited on nothing, with its data folder unknown meanwhile: the Lyric
+ * Editor, which reads its song without awaiting `init`, found no file.
  */
 function checkIsDataDirMovePending() {
-    return appHomeStorage.getItem(DATA_DIR_MOVE_PENDING_SETTING_NAME) !== null;
+    return (
+        appHomeStorage.getItem(DATA_DIR_MOVE_PENDING_SETTING_NAME) !== null &&
+        checkIsMainWindow()
+    );
 }
 
 async function initPendingDataDirMove() {
@@ -161,11 +168,12 @@ async function initPendingDataDirMove() {
 }
 
 export async function init(callback: () => void = () => {}) {
-    // No `await` ahead of the line below unless a move is really waiting: some
-    // windows (`lyricEditor`) read their data without awaiting `init`, and an
-    // `await` hands them the thread even when it resolves at once -- they then
-    // read `$DATA_DIR_PATH\...` settings with nothing to expand them against
-    // and found no file ("Lyric file not found", 2026-11-05).
+    // No `await` ahead of the line below unless this window has a move to run
+    // (the main window only): some windows (`lyricEditor`) read their data
+    // without awaiting `init`, and an `await` hands them the thread even when
+    // it resolves at once -- they then read `$DATA_DIR_PATH\...` settings with
+    // nothing to expand them against and found no file ("Lyric file not
+    // found", 2026-11-05; with a move waiting, 2026-11-12).
     if (checkIsDataDirMovePending()) {
         await initPendingDataDirMove();
     }
@@ -183,9 +191,10 @@ export async function init(callback: () => void = () => {}) {
     await ensureLangPlugins();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech
-    // and `:lang()` CSS see Khmer as Khmer; it otherwise stays the HTML default
-    // ("en") even in km mode. `init` re-runs on every window (re)load, including
-    // the reload `forceReloadAppWindows` triggers after an Apply Settings.
+    // and `:lang()` CSS see a language as itself; it otherwise stays the HTML
+    // default ("en") whatever the app is shown in. `init` re-runs on every
+    // window (re)load, including the reload `forceReloadAppWindows` triggers
+    // after an Apply Settings.
     document.documentElement.lang =
         getLangCode(currentLocale) ?? DEFAULT_LANG_CODE;
     // A right-to-left language keeps the layout and reads each text in the

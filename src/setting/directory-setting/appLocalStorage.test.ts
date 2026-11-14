@@ -447,7 +447,7 @@ describe('a write listener', () => {
 
         appLocalStorage.setItem('screen-bible--line-sync-0', 'true');
         appLocalStorage.removeItem('screen-bible--line-sync-0');
-        appLocalStorage.setItem('language-locale', 'km-KH');
+        appLocalStorage.setItem('language-locale', 'xx-XX');
         appLocalStorage.removeItem('language-locale');
         // Nothing there to remove: nothing changed, nothing to tell.
         appLocalStorage.removeItem('never-written');
@@ -455,7 +455,7 @@ describe('a write listener', () => {
         expect(heard).toEqual([
             ['screen-bible--line-sync-0', 'true', true],
             ['screen-bible--line-sync-0', null, false],
-            ['language-locale', 'km-KH', false],
+            ['language-locale', 'xx-XX', false],
             ['language-locale', null, false],
         ]);
 
@@ -511,13 +511,13 @@ describe('a computer setting', () => {
 
     test('reads the computer, never an old copy in the data folder', async () => {
         const { appLocalStorage } = await loadAppLocalStorage();
-        h.homeItems.set(KEY, 'km-KH');
+        h.homeItems.set(KEY, 'xx-XX');
         h.diskFiles.set(FOLDER_COPY_PATH, 'en-US');
 
-        expect(appLocalStorage.getItem(KEY)).toBe('km-KH');
-        appLocalStorage.setItem(KEY, 'fr-FR');
-        expect(h.homeItems.get(KEY)).toBe('fr-FR');
-        expect(appLocalStorage.getItem(KEY)).toBe('fr-FR');
+        expect(appLocalStorage.getItem(KEY)).toBe('xx-XX');
+        appLocalStorage.setItem(KEY, 'yy-YY');
+        expect(h.homeItems.get(KEY)).toBe('yy-YY');
+        expect(appLocalStorage.getItem(KEY)).toBe('yy-YY');
         expect(h.diskWrites).toEqual([]);
         expect(h.existenceChecks).not.toContain(FOLDER_COPY_PATH);
 
@@ -528,12 +528,12 @@ describe('a computer setting', () => {
 
     test("takes the data folder's value once, and leaves the folder's copy", async () => {
         const { appLocalStorage } = await loadAppLocalStorage();
-        h.diskFiles.set(FOLDER_COPY_PATH, 'km-KH');
+        h.diskFiles.set(FOLDER_COPY_PATH, 'xx-XX');
 
-        expect(appLocalStorage.getItem(KEY)).toBe('km-KH');
-        expect(h.homeItems.get(KEY)).toBe('km-KH');
+        expect(appLocalStorage.getItem(KEY)).toBe('xx-XX');
+        expect(h.homeItems.get(KEY)).toBe('xx-XX');
         expect(h.homeItems.get(`${KEY}-migrated`)).toBe('true');
-        expect(h.diskFiles.get(FOLDER_COPY_PATH)).toBe('km-KH');
+        expect(h.diskFiles.get(FOLDER_COPY_PATH)).toBe('xx-XX');
 
         // Reset since (Import Settings): back to the default, NOT back to
         // what an old folder still holds.
@@ -559,15 +559,15 @@ describe('a computer setting', () => {
         vi.useFakeTimers({ toFake: ['Date'] });
         try {
             vi.setSystemTime(0);
-            h.homeItems.set(KEY, 'km-KH');
-            expect(appLocalStorage.getItem(KEY)).toBe('km-KH');
+            h.homeItems.set(KEY, 'xx-XX');
+            expect(appLocalStorage.getItem(KEY)).toBe('xx-XX');
 
             // Chosen in another window.
-            h.homeItems.set(KEY, 'fr-FR');
+            h.homeItems.set(KEY, 'yy-YY');
             vi.setSystemTime(9000);
-            expect(appLocalStorage.getItem(KEY)).toBe('km-KH');
+            expect(appLocalStorage.getItem(KEY)).toBe('xx-XX');
             vi.setSystemTime(10001);
-            expect(appLocalStorage.getItem(KEY)).toBe('fr-FR');
+            expect(appLocalStorage.getItem(KEY)).toBe('yy-YY');
         } finally {
             vi.useRealTimers();
         }
@@ -583,12 +583,12 @@ describe('a computer setting', () => {
         const { appLocalStorage } = await loadAppLocalStorage();
         const { default: appProvider } =
             await import('../../server/appProvider');
-        h.homeItems.set(KEY, 'fr-FR');
+        h.homeItems.set(KEY, 'yy-YY');
         (appProvider as any).screenUtils = {
-            getContext: () => ({ settings: { [KEY]: 'km-KH' } }),
+            getContext: () => ({ settings: { [KEY]: 'xx-XX' } }),
         };
         try {
-            expect(appLocalStorage.getItem(KEY)).toBe('km-KH');
+            expect(appLocalStorage.getItem(KEY)).toBe('xx-XX');
         } finally {
             delete (appProvider as any).screenUtils;
         }

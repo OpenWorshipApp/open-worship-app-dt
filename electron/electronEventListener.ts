@@ -25,9 +25,13 @@ import {
 import { getRecentConsoleLines } from './consoleLogHelpers';
 import { listAppWindows } from './appWindowListHelpers';
 import {
-    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
-    holdNoteWindowOnTop,
-} from './noteWindowOnTopHelpers';
+    DETAIL_PANEL_REQUEST_CHANNEL,
+    openDetailPanelInReader,
+} from './detailPanelRequestHelpers';
+import {
+    HOLD_WINDOW_ON_TOP_CHANNEL,
+    holdWindowOnTop,
+} from './windowOnTopHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -115,6 +119,10 @@ import {
 } from './screenOutputRegistry';
 import { isVirtualDisplayId } from './virtualDisplayProtocol';
 import { officeFileToPdf } from './electronOfficeHelpers';
+import {
+    captureDocumentPages,
+    type CaptureDocumentPagesParamsType,
+} from './documentCaptureHelpers';
 import {
     getPagesCount,
     pdfToChatPages,
@@ -1079,6 +1087,18 @@ export function initEventOther(appController: ElectronAppController) {
         },
     );
 
+    // A document's pages drawn as pictures, for the help window's assistant
+    // to read words the app could not (`documentCaptureHelpers.ts`): pages a
+    // PowerPoint or Word file was converted to, inside that folder only, or
+    // a slide document's slides the app wrote out itself.
+    onAsync(
+        ipcMain,
+        'main:app:capture-document-pages',
+        (data: CaptureDocumentPagesParamsType) => {
+            return captureDocumentPages(data);
+        },
+    );
+
     onAsync(
         ipcMain,
         'main:app:pdf-pages-count',
@@ -1167,6 +1187,17 @@ export function initEventOther(appController: ElectronAppController) {
         appController.sendMessageToAll('main:app:note-head-changed', {
             filePath: data.filePath,
         });
+    });
+
+    // A person, place or verse pressed in the Markdown Preview opens in the
+    // Reader, else over the main window's own page
+    // (`detailPanelRequestHelpers.ts`).
+    ipcMain.on(DETAIL_PANEL_REQUEST_CHANNEL, (_event, data) => {
+        openDetailPanelInReader(
+            data,
+            appController.mainWin,
+            BrowserWindow.getAllWindows(),
+        );
     });
 
     // The help window working on an answer, for the 🤖 in every other window
@@ -1337,14 +1368,21 @@ export function initEventOther(appController: ElectronAppController) {
             win.setAlwaysOnTop(data.isOnTop);
         },
     );
-    // The help window's tab works in this note window (or in none), held
-    // over the main window: `noteWindowOnTopHelpers.ts`.
+    // What the help window's tab works on -- the window it works in, the
+    // preview window of the file it asks about -- held over the main window:
+    // `windowOnTopHelpers.ts`.
     ipcMain.on(
-        HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
-        (event, data: { url?: unknown } | undefined) => {
-            holdNoteWindowOnTop(
+        HOLD_WINDOW_ON_TOP_CHANNEL,
+        (event, data: { url?: unknown; filePath?: unknown } | undefined) => {
+            holdWindowOnTop(
                 event.sender,
-                typeof data?.url === 'string' ? data.url : null,
+                {
+                    url: typeof data?.url === 'string' ? data.url : null,
+                    filePath:
+                        typeof data?.filePath === 'string'
+                            ? data.filePath
+                            : null,
+                },
                 () => {
                     return appController.mainWin;
                 },

@@ -41,8 +41,8 @@ export type VerseDataType = {
  *
  * English records were extracted FROM the KJV, so its wording is the one that
  * matches them and the reference stays KJV however the reader is set. In any
- * other lookup language the KJV becomes the odd one out: a Khmer record whose
- * own prose is Khmer, citing `Ezekiel 27:11` in English, is unreadable to
+ * other lookup language the KJV becomes the odd one out: a translated record
+ * whose own prose is in its language, citing `Ezekiel 27:11` in English, is unreadable to
  * exactly the person who chose that language — so the reference follows
  * whichever bible the reader is showing instead.
  *
@@ -306,8 +306,8 @@ export const BIBLE_REFERENCE_KIND_BY_SCHEME: {
  * One inline reference as the READER's bible names it.
  *
  * The datasets are written against the KJV, so a token's label is always its
- * English wording — a Khmer record reads its own words up to `[Acts](book-key://ACT)`,
- * one English word stranded in Khmer prose. Only the stored KEY is canonical,
+ * English wording — a translated record reads its own words up to `[Acts](book-key://ACT)`,
+ * one English word stranded in translated prose. Only the stored KEY is canonical,
  * so the label is re-derived here per bible: the book name comes from that
  * bible's own book map and the chapter number through its numeral list, exactly
  * as `bibleRenderHelper.toTitle` writes a verse title.

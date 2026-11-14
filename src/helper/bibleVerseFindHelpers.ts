@@ -39,6 +39,191 @@ export const MAX_FIND_CANDIDATES = 300;
 export const MAX_FIND_REFS = 8;
 // A verse is quoted, not printed whole: a long one is cut here.
 export const FOUND_TEXT_LIMIT = 300;
+// A passage READ by its reference is given whole, within letters its call
+// shares (BN-86, 2026-11-11). Cut at a verse's 300, a lesson's thirteen
+// verses of Luke 10 were read as its first two: every point after them was
+// written from memory, and the blind readers' errors were in exactly those
+// verses -- the Samaritan's question quoted in words Luke never wrote, "the
+// tree of life" brought into Revelation 21:7. One passage gets up to 6000
+// (about fifty verses, the bound `owa_lookup_record` reads a passage to);
+// eight references in one call, 750 each.
+export const READ_PASSAGE_TEXT_BUDGET = 6000;
+
+// The most verses before a passage read with it for a lesson's background.
+export const MAX_VERSES_BEFORE = 10;
+
+// A psalm stands alone: the one before it is another song, never what
+// happens just before it (BN-96, 2026-11-11). Read before Psalms 23, 46 and
+// 51, Psalms 22, 45 and 50 were told as their background -- "Psalm 22, a
+// song of praise", "Psalm 50, general praise" -- and blind readers counted
+// each an error.
+const PSALMS_BOOK_PATTERN = /^(?:psalms?|psa|pss?)\.?$/i;
+
+/**
+ * The verses just before ONE passage, read with it for a new lesson's
+ * background (BN-89, 2026-11-11): up to ten verses before it in its
+ * chapter, or the whole chapter before when it starts a chapter. Null for a
+ * list of places, the first chapter's start, or words not read as one
+ * reference. Told to read them, the model did in about half the lessons,
+ * and the backgrounds of the rest were made up -- "the simple faith of
+ * women" before the Good Samaritan.
+ */
+export function findVersesBeforeRef(refs: string) {
+    const refList = splitRefList(refs);
+    if (refList.length !== 1) {
+        return null;
+    }
+    const parts = parseRefParts(refList[0].replace(/^\([^)\n]{1,24}\)\s*/, ''));
+    // A range over chapters reads as a book holding a chapter and verse.
+    if (parts === null || /\d\s*[:.]/.test(parts.book)) {
+        return null;
+    }
+    const start = parts.verseStart ?? 1;
+    if (start > 1) {
+        const from = Math.max(1, start - MAX_VERSES_BEFORE);
+        return from === start - 1
+            ? `${parts.book} ${parts.chapter}:${from}`
+            : `${parts.book} ${parts.chapter}:${from}-${start - 1}`;
+    }
+    return parts.chapter > 1 && !PSALMS_BOOK_PATTERN.test(parts.book.trim())
+        ? `${parts.book} ${parts.chapter - 1}`
+        : null;
+}
+
+// A passage written with its chapter and verse in a person's words: a book
+// of up to three capitalised words ("of" between them, "Song of Solomon"),
+// a number first or not, then the chapter and the verse or verses.
+const NAMED_PASSAGE_PATTERN =
+    /(?:^|[^\p{L}\p{N}])((?:[1-3] ?)?\p{Lu}\p{L}*(?: (?:of )?\p{Lu}\p{L}*){0,2} \d{1,3}\s*:\s*\d{1,3}(?:\s*[-–]\s*\d{1,3})?)(?![\d:])/gu;
+
+/**
+ * The one passage a lesson's ask names with its chapter and verse -- "a
+ * sermon on Proverbs 3:5-6" -- or null for none, or for more than one.
+ */
+export function findNamedPassageRef(text: string) {
+    const named = new Set<string>();
+    for (const match of String(text ?? '').matchAll(NAMED_PASSAGE_PATTERN)) {
+        named.add(match[1].replace(/\s*([:–-])\s*/g, '$1').replace('–', '-'));
+    }
+    return named.size === 1 ? [...named][0] : null;
+}
+
+// A book's name as one run of letters: "1 Sam" and "1 Samuel", "Psalm" and
+// "Psalms" are one book when the shorter starts the longer.
+function toBookNameStem(book: string) {
+    return book.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+/**
+ * The passage a new lesson's verses before are read for (BN-105,
+ * 2026-11-11): the one the person NAMED, when the model's first read is in
+ * its book -- else the read. Read wider for its setting, a passage's read
+ * starts earlier than the passage: asked for Proverbs 3:5-6, the model read
+ * Proverbs 3 from its first verse, the window read the last ten verses of
+ * Proverbs 2, and the lesson told the strange woman of 2:16 as "the verses
+ * just before this passage" (a blind reader's accuracy 0); the verses just
+ * before it are 3:1-4.
+ */
+export function pickVersesBeforePassage(named: string | null, refs: string) {
+    if (named === null) {
+        return refs;
+    }
+    const namedParts = parseRefParts(named);
+    if (namedParts === null) {
+        return refs;
+    }
+    const namedBook = toBookNameStem(namedParts.book);
+    const isNamedBook = splitRefList(refs).some((ref) => {
+        const parts = parseRefParts(ref.replace(/^\([^)\n]{1,24}\)\s*/, ''));
+        const book = parts === null ? '' : toBookNameStem(parts.book);
+        return (
+            Math.min(book.length, namedBook.length) >= 3 &&
+            (book.startsWith(namedBook) || namedBook.startsWith(book))
+        );
+    });
+    return isNamedBook ? named : refs;
+}
+
+type VerseReadEntryType = { key: string; ref: string; text: string };
+
+/**
+ * The last `count` verses of a chapter read whole -- "(1): … (35): …" under
+ * a key ending ":1-35" -- as their own entry, or the reference to read for
+ * them when the chapter came back cut before its end (BN-100, 2026-11-11).
+ * Read whole for a passage starting a chapter, the chapter before was cut
+ * from its END by the passage budget, and a lesson on Luke 15 told the
+ * Pharisee's dinner of 14:1 as what came "just before", not 14:25-35.
+ * Null when there is nothing to cut.
+ */
+export function toLastVersesRead(
+    entry: VerseReadEntryType | null | undefined,
+    count: number,
+): { entry: VerseReadEntryType } | { ref: string } | null {
+    const range = /:(\d{1,3})-(\d{1,3})$/;
+    const keyMatch = range.exec(String(entry?.key ?? ''));
+    if (entry === null || entry === undefined || keyMatch === null) {
+        return null;
+    }
+    const lastVerse = Number.parseInt(keyMatch[2], 10);
+    const firstVerse = lastVerse - count + 1;
+    if (firstVerse <= Number.parseInt(keyMatch[1], 10)) {
+        return null;
+    }
+    const toRange = (text: string) => {
+        return text.replace(range, `:${firstVerse}-${lastVerse}`);
+    };
+    const start = String(entry.text).indexOf(`(${firstVerse}): `);
+    if (start < 0 || !String(entry.text).includes(`(${lastVerse}): `)) {
+        return { ref: toRange(entry.ref) };
+    }
+    return {
+        entry: {
+            key: toRange(entry.key),
+            ref: toRange(entry.ref),
+            text: String(entry.text).slice(start),
+        },
+    };
+}
+
+// The most chapters one passage over chapters is read across (BN-99).
+const MAX_SPAN_CHAPTERS = 4;
+
+/**
+ * A passage written over chapters -- "Revelation 20:11-21:7", "Jonah
+ * 1:17-2:10" -- as its book, first chapter and verse, and last chapter and
+ * verse, or null for anything else (BN-99, 2026-11-11). Read as one
+ * reference, the app's parser took it for ONE verse, so the tool quoted
+ * 300 letters of chapter 20 and chapter 21 never came back: the funeral
+ * sermon quoted Revelation 21 from memory ("the former heaven", "they shall
+ * be my sons"). The reader reads it a chapter at a time.
+ */
+export function splitChapterSpan(ref: string) {
+    const match =
+        /^(.*?\S)\s*(\d{1,3})\s*[:.]\s*(\d{1,3})\s*[-–]\s*(\d{1,3})\s*[:.]\s*(\d{1,3})$/.exec(
+            toAsciiDigitText(String(ref ?? '').trim()),
+        );
+    if (match === null) {
+        return null;
+    }
+    const [, book, fromChapter, fromVerse, toChapter, toVerse] = match.map(
+        (part, index) => (index > 1 ? Number.parseInt(part, 10) : part),
+    ) as [string, string, number, number, number, number];
+    if (
+        toChapter <= fromChapter ||
+        toChapter - fromChapter >= MAX_SPAN_CHAPTERS
+    ) {
+        return null;
+    }
+    return { book, fromChapter, fromVerse, toChapter, toVerse };
+}
+
+/** How much of each passage a read of `refCount` references gives. */
+export function toReadPassageTextLimit(refCount: number) {
+    return Math.max(
+        FOUND_TEXT_LIMIT,
+        Math.floor(READ_PASSAGE_TEXT_BUDGET / Math.max(1, refCount)),
+    );
+}
 // The start of the refusal for words the Bible's language has none of. The
 // chat reads it to say so in words of its own (`answerVerseFindOffline`), so
 // the worker and the chat share it here, where neither pulls the other in.
@@ -148,7 +333,7 @@ export function genVerseFindSql({
 }
 
 // A word typed in a script with no spaces that is this long is likely a
-// phrase: the Khmer for "Jesus asked Peter many times" is one run of
+// phrase: "Jesus asked Peter many times" in such a script is one run of
 // letters, and found as one it matches nothing.
 export const LONG_UNSPACED_TERM_LENGTH = 7;
 const COMBINING_MARK_PATTERN = /^\p{M}$/u;
@@ -179,8 +364,8 @@ export function segmentByVocabulary(
         }
         if (matched === '') {
             // A vowel sign or a mark is the end of the word before it, not
-            // the start of one: the first letters of Jesus' name in Khmer
-            // and the vowel signs after them are one piece, which the
+            // the start of one: the first letters of Jesus' name in such a
+            // script and the vowel signs after them are one piece, which the
             // Bible's own spelling of the name holds.
             if (
                 unknown === '' &&
@@ -214,6 +399,9 @@ export function segmentByVocabulary(
 // have to be loaded from the language data … must not ship in the app,
 // except english_): a locale's script is the runtime's own likely-subtags,
 // `Intl.Locale#maximize` -- answered in Electron's trimmed ICU as in Node.
+// Every package whose `script.json` says `isUnspaced` is held to this set
+// (`src/lang/data/tests/unspacedScripts.test.ts`): until 2026-11-09 Tibetan
+// said it and was searched as a spaced language.
 const UNSPACED_SCRIPT_SET: ReadonlySet<string> = new Set([
     'Hans',
     'Hant',
@@ -222,6 +410,7 @@ const UNSPACED_SCRIPT_SET: ReadonlySet<string> = new Set([
     'Laoo',
     'Mymr',
     'Thai',
+    'Tibt',
 ]);
 
 export function checkIsSpacedLocale(locale: string) {
@@ -358,11 +547,133 @@ function toBookNameKey(name: string) {
 }
 
 /**
+ * The short forms English writes a book in that no Bible's own names give --
+ * a form no book's name or key starts with (`Jn`, `Ps`, `1 Kgs`) or one that
+ * starts two (`Phil`: Philippians and Philemon) -- keyed as `toBookNameKey`
+ * writes a name, each the one book the usual short forms (the SBL Handbook's
+ * and the two-letter ones) give it (2026-11-13, EC-151: `Ps 23`, `Jn 3:16`,
+ * `Phil 4:13` and `1 Kgs 19:12` were read by no tool, and a study's
+ * `[^Jn 3:16]` was refused as no installed Bible's). A form two books share
+ * (`Hb`: Habakkuk and Hebrews; `Jo`, `Ju`, `Ph`, `Ez`) is none of them. A
+ * study's own words and the Markdown Preview's links read them too
+ * (`genStudyBookNames`, EC-576).
+ */
+export const SHORT_BOOK_NAME_MAP: Readonly<Record<string, string>> = {
+    gn: 'GEN',
+    ex: 'EXO',
+    lv: 'LEV',
+    nm: 'NUM',
+    dt: 'DEU',
+    jg: 'JDG',
+    jgs: 'JDG',
+    ru: 'RUT',
+    rt: 'RUT',
+    '1sm': '1SA',
+    '2sm': '2SA',
+    '1kgs': '1KI',
+    '2kgs': '2KI',
+    ne: 'NEH',
+    jb: 'JOB',
+    ps: 'PSA',
+    pss: 'PSA',
+    pr: 'PRO',
+    prv: 'PRO',
+    qoh: 'ECC',
+    songofsongs: 'SNG',
+    canticles: 'SNG',
+    cant: 'SNG',
+    sg: 'SNG',
+    is: 'ISA',
+    jr: 'JER',
+    lm: 'LAM',
+    da: 'DAN',
+    dn: 'DAN',
+    ho: 'HOS',
+    jl: 'JOL',
+    am: 'AMO',
+    ob: 'OBA',
+    mi: 'MIC',
+    na: 'NAM',
+    hg: 'HAG',
+    zp: 'ZEP',
+    zc: 'ZEC',
+    ml: 'MAL',
+    mt: 'MAT',
+    mk: 'MRK',
+    mr: 'MRK',
+    lk: 'LUK',
+    lu: 'LUK',
+    jn: 'JHN',
+    ac: 'ACT',
+    ro: 'ROM',
+    rm: 'ROM',
+    ga: 'GAL',
+    ep: 'EPH',
+    phil: 'PHP',
+    phlp: 'PHP',
+    cl: 'COL',
+    '1tm': '1TI',
+    '2tm': '2TI',
+    ti: 'TIT',
+    phlm: 'PHM',
+    jm: 'JAS',
+    '1pt': '1PE',
+    '2pt': '2PE',
+    jd: 'JUD',
+    rv: 'REV',
+    re: 'REV',
+};
+
+// Short forms that are everyday English words too, read as a book only
+// written as one is, with a capital: the "is" of "the service is 10:30" in
+// an answer stays a word. A study's own words read them only before a
+// colon (`Is 53:5`, never `Is 2.5`; `genStudyBookNames`).
+export const WORD_LIKE_SHORT_NAME_SET: ReadonlySet<string> = new Set([
+    'am',
+    'ex',
+    'is',
+    're',
+]);
+
+// `I John`, `II Tim`: a book's number in Roman numerals.
+const ROMAN_BOOK_NUMBER_PATTERN = /^\s*(i{1,3})\s+(?=\p{L})/iu;
+
+/**
+ * What a Bible's own names leave unread, read the usual short way: a book's
+ * number in Roman numerals as its digit, then `SHORT_BOOK_NAME_MAP` -- only
+ * for a book the names given have.
+ */
+function resolveShortBookName(
+    name: string,
+    wanted: string,
+    allKeys: ReadonlySet<string>,
+    nameMapList: { [bookKey: string]: string }[],
+): string | null {
+    const roman = ROMAN_BOOK_NUMBER_PATTERN.exec(name);
+    if (roman !== null) {
+        return resolveBookKey(
+            `${roman[1].length} ${name.slice(roman[0].length)}`,
+            nameMapList,
+        );
+    }
+    const key = SHORT_BOOK_NAME_MAP[wanted];
+    if (key === undefined || !allKeys.has(key)) {
+        return null;
+    }
+    if (WORD_LIKE_SHORT_NAME_SET.has(wanted) && !/^\s*\p{Lu}/u.test(name)) {
+        return null;
+    }
+    return key;
+}
+
+/**
  * A book named as it is said -- `John`, `1 John`, `Psalm`, `PSA`, `Rev`, or
  * the Bible's own name for it -- as its key, or null. `nameMapList` is the
- * names to try, in order: the Bible's own, then the English ones. A short
- * form counts only when it starts ONE book's name: `Jo` is John, Job, Joel,
- * Jonah and Joshua at once, and none of them is a guess worth making.
+ * names to try, in order: the Bible's own, then the English ones. A start of
+ * a name counts only when it starts ONE book's name: `Jo` is John, Job, Joel,
+ * Jonah and Joshua at once, and none of them is a guess worth making. Only
+ * when the names leave it unread is a book's usual short form read
+ * (`resolveShortBookName`, EC-151: `Jn`, `Ps`, `Phil`, `1 Kgs`, `I Cor`).
  */
 export function resolveBookKey(
     name: string,
@@ -400,7 +711,10 @@ export function resolveBookKey(
             }
         }
     }
-    return startList.size === 1 ? [...startList][0] : null;
+    if (startList.size === 1) {
+        return [...startList][0];
+    }
+    return resolveShortBookName(name, wanted, allKeys, nameMapList);
 }
 
 /**
@@ -431,28 +745,40 @@ export function resolveBookFilter(
 /**
  * A list of references as it is written -- `Matthew 6:34; Philippians 4:6-7`,
  * one a line, or with commas between whole references -- as one reference
- * each. A comma before a bare number stays: `John 3:16, 17` is one.
+ * each. A comma before a bare number stays: `John 3:16, 17` is one. A
+ * chapter and verse with no book is the book before it's (2026-11-10,
+ * BN-81: asked for "Jonah 1:1-4, 1:17, 2:1, 3:1-5, 4:10-11", the tool read
+ * the first and left the rest unread, and the model asked again a round
+ * for each, its rounds gone before it could answer).
  */
 export function splitRefList(refs: string): string[] {
-    return refs
-        .split(/\s*(?:;|\n|,(?=\s*(?:\d\s*)?[^\d\s,;]))\s*/)
-        .map((one) => {
-            return one.trim();
-        })
-        .filter((one) => {
-            return one.length > 0;
-        })
-        .slice(0, MAX_FIND_REFS);
+    const list: string[] = [];
+    let book: string | null = null;
+    for (const raw of refs.split(
+        /\s*(?:;|\n|,(?=\s*(?:\d\s*)?[^\d\s,;])|,(?=\s*\d+\s*:\s*\d))\s*/,
+    )) {
+        const one = raw.trim();
+        if (one.length === 0) {
+            continue;
+        }
+        if (book !== null && /^\d+\s*:\s*\d/.test(one)) {
+            list.push(`${book} ${one}`);
+            continue;
+        }
+        book = /^(.*?\S)\s+\d+(?:\s*[:,\-–]|\s*$)/.exec(one)?.[1] ?? null;
+        list.push(one);
+    }
+    return list.slice(0, MAX_FIND_REFS);
 }
 
 /**
  * A script's own digits as ASCII (John 3:16 written in
- * Khmer digits -> the same with `3:16`), so a
+ * a script's own digits -> the same with `3:16`), so a
  * reference written the way the reader's Bible writes it parses. Unicode's
  * decimal digits are contiguous runs of ten, so a digit's value is its
  * offset from the start of its own run; `\p{Nd}` alone is not enough
- * (`Number` of a Khmer digit is NaN). Needed by `owa_resource_file`'s `ref`, where a
- * model writing what the person said gave `"<Matthew 18 in Khmer>" is not a book
+ * (`Number` of such a digit is NaN). Needed by `owa_resource_file`'s `ref`, where a
+ * model writing what the person said gave `"<Matthew 18 in its own digits>" is not a book
  * and chapter` (seen live 2026-10-19).
  */
 export function toAsciiDigitText(text: string) {
@@ -533,7 +859,7 @@ export function genVerseRangeReason(
 
 /**
  * Two words at most one letter apart -- one added, dropped or changed:
- * Genesis in Khmer with a vowel sign left out (the user's own, 2026-10-22), `Genisis` for `Genesis`.
+ * Genesis in another script with a vowel sign left out (the user's own, 2026-10-22), `Genisis` for `Genesis`.
  */
 export function checkIsOneEditApart(one: string, other: string) {
     if (one === other) {
@@ -554,7 +880,8 @@ export function checkIsOneEditApart(one: string, other: string) {
 }
 
 // A book's name this long may be one letter off and still be read as it;
-// shorter ones are too near other words (`Job`, `Amos`, and Job in Khmer).
+// shorter ones are too near other words (`Job`, `Amos`, and Job in other
+// scripts).
 const MIN_NEAR_BOOK_NAME_LENGTH = 6;
 
 export type NamedBookType = {
@@ -613,7 +940,7 @@ function findMarkerBefore(text: string, at: number, markerWords: string[]) {
 
 /**
  * The books a person NAMED among the words they remember -- "in Genesis,
- * the rainbow", or the Khmer typed as one run for "search in the book of
+ * the rainbow", or an unspaced script typed as one run for "search in the book of
  * Genesis, Noah released the dove" -- found where they are in `text`
  * (the words as the Bible's language sanitizes them). A name is read whole
  * (several words: "Song of Solomon", "1 John"), or one letter off when it
@@ -1051,7 +1378,7 @@ function toWordStartLikeTerm(term: string) {
  * and how strongly -- the total, the books and the passages at once, where
  * the total alone was its own scan before. `weights` go with `terms`. A
  * verse holding several rare words counts the more for each (their weight
- * times how many): Goliath's two scraps of a Khmer name, together in 1
+ * times how many): Goliath's two scraps of a translated name, together in 1
  * Samuel 17, outweigh one of them in a list of towns in Joshua 15.
  */
 export function genChapterCountSql({
@@ -1108,7 +1435,8 @@ export function genChapterCountSql({
 
 /**
  * The installed Bible that NAMES the book the way it was written -- so a
- * Khmer reference is quoted from the Khmer Bible, not from the KJV the
+ * reference in another language is quoted from that language's Bible, not
+ * from the KJV the
  * lookup happened to be on. The preferred Bible wins when it has the name;
  * entries without a `keyBookMap` are skipped. Falls back to the preferred
  * key.

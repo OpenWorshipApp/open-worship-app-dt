@@ -1,0 +1,2972 @@
+{
+    "A": [
+        {
+            "text": "bigger font on the bible verses",
+            "topic": "style"
+        },
+        {
+            "text": "could you please make the verse yellow?",
+            "topic": "style"
+        },
+        {
+            "text": "people can't read the white text, make it darker",
+            "topic": "style"
+        },
+        {
+            "text": "bold the bible text on all the screens",
+            "topic": "style"
+        },
+        {
+            "text": "add a shadow to the verse text so it pops",
+            "topic": "style"
+        },
+        {
+            "text": "center align the bible text",
+            "topic": "style"
+        },
+        {
+            "text": "the verse is too small to read from the back",
+            "topic": "style"
+        },
+        {
+            "text": "reset the bible text to the default look",
+            "topic": "style"
+        },
+        {
+            "text": "more line spacing on the scripture pls",
+            "topic": "style"
+        },
+        {
+            "text": "what colour is the bible text right now?",
+            "topic": "style"
+        },
+        {
+            "text": "can you add the NIV next to it",
+            "topic": "versions"
+        },
+        {
+            "text": "show three versions of the passage on screen 1",
+            "topic": "versions"
+        },
+        {
+            "text": "remove the KJV from the verse on the projector",
+            "topic": "versions"
+        },
+        {
+            "text": "add ESV beside the kjv",
+            "topic": "versions"
+        },
+        {
+            "text": "which bible versions are showing on screen 2 now?",
+            "topic": "versions"
+        },
+        {
+            "text": "put the NASB and NIV both up with the verse",
+            "topic": "versions"
+        },
+        {
+            "text": "drop the second translation from the second screen",
+            "topic": "versions"
+        },
+        {
+            "text": "i want two versions side by side on the TV",
+            "topic": "versions"
+        },
+        {
+            "text": "swap kjv for niv on screen 1",
+            "topic": "versions"
+        },
+        {
+            "text": "take off all extra translations, just one version",
+            "topic": "versions"
+        },
+        {
+            "text": "turn on line sync",
+            "topic": "lineSync"
+        },
+        {
+            "text": "line the versions up verse by verse please",
+            "topic": "lineSync"
+        },
+        {
+            "text": "turn line sync off on screen 2",
+            "topic": "lineSync"
+        },
+        {
+            "text": "is line sync on right now?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the verses dont match up between the two translations, sync them",
+            "topic": "lineSync"
+        },
+        {
+            "text": "enable linesync on both screens",
+            "topic": "lineSync"
+        },
+        {
+            "text": "stop lining up the versions",
+            "topic": "lineSync"
+        },
+        {
+            "text": "could you switch on line sync for the projector?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "align verses across versions on all the screens",
+            "topic": "lineSync"
+        },
+        {
+            "text": "line sync status?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "zoom transition screen 1",
+            "topic": "transition"
+        },
+        {
+            "text": "make the slide transition a fade",
+            "topic": "transition"
+        },
+        {
+            "text": "turn off the background transition",
+            "topic": "transition"
+        },
+        {
+            "text": "what transitions are set?",
+            "topic": "transition"
+        },
+        {
+            "text": "can you set the foreground transition to none on the second screen",
+            "topic": "transition"
+        },
+        {
+            "text": "the slides change too slow, use no effect",
+            "topic": "transition"
+        },
+        {
+            "text": "change the effect between slides on all the screens to slide",
+            "topic": "transition"
+        },
+        {
+            "text": "background transition zoom pls",
+            "topic": "transition"
+        },
+        {
+            "text": "which transition is the slide using on screen 2?",
+            "topic": "transition"
+        },
+        {
+            "text": "disable all transitions on both screens",
+            "topic": "transition"
+        },
+        {
+            "text": "move screen 1 to the other monitor",
+            "topic": "display"
+        },
+        {
+            "text": "which display is screen 2 on?",
+            "topic": "display"
+        },
+        {
+            "text": "put the second screen on the TV",
+            "topic": "display"
+        },
+        {
+            "text": "screen 0 is showing on my laptop, send it to the projector display",
+            "topic": "display"
+        },
+        {
+            "text": "check the displays",
+            "topic": "display"
+        },
+        {
+            "text": "how many displays are connected right now",
+            "topic": "display"
+        },
+        {
+            "text": "move the stage screen to display 3",
+            "topic": "display"
+        },
+        {
+            "text": "the output is on the wrong monitor, switch it to display 2",
+            "topic": "display"
+        },
+        {
+            "text": "could you move screen 2 to the left monitor?",
+            "topic": "display"
+        },
+        {
+            "text": "screen 1 display?",
+            "topic": "display"
+        },
+        {
+            "text": "group screen 1 and screen 2",
+            "topic": "group"
+        },
+        {
+            "text": "put both screens in the same colour group",
+            "topic": "group"
+        },
+        {
+            "text": "ungroup the screens",
+            "topic": "group"
+        },
+        {
+            "text": "make the second screen show the same as screen 1",
+            "topic": "group"
+        },
+        {
+            "text": "which screens are grouped together?",
+            "topic": "group"
+        },
+        {
+            "text": "take screen 2 out of the group",
+            "topic": "group"
+        },
+        {
+            "text": "can you group the projector and the TV screens",
+            "topic": "group"
+        },
+        {
+            "text": "set screen 0 to the red group",
+            "topic": "group"
+        },
+        {
+            "text": "they need to mirror each other, group all the screens",
+            "topic": "group"
+        },
+        {
+            "text": "what colour group is screen 1 in",
+            "topic": "group"
+        },
+        {
+            "text": "lock screen 2",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock the projector now",
+            "topic": "lock"
+        },
+        {
+            "text": "is screen 1 locked?",
+            "topic": "lock"
+        },
+        {
+            "text": "lock both screens so nothing changes",
+            "topic": "lock"
+        },
+        {
+            "text": "the screen wont take new content, i think its locked - unlock it",
+            "topic": "lock"
+        },
+        {
+            "text": "could you please lock the second screen?",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock all the screens",
+            "topic": "lock"
+        },
+        {
+            "text": "lok screen 0",
+            "topic": "lock"
+        },
+        {
+            "text": "which screens are locked right now",
+            "topic": "lock"
+        },
+        {
+            "text": "keep the TV locked but unlock screen 1",
+            "topic": "lock"
+        },
+        {
+            "text": "set screen 2 to stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "make the left screen stage 2",
+            "topic": "stage"
+        },
+        {
+            "text": "what stage number is screen 1?",
+            "topic": "stage"
+        },
+        {
+            "text": "stage number 3 for the stage monitor",
+            "topic": "stage"
+        },
+        {
+            "text": "remove the stage from screen 2",
+            "topic": "stage"
+        },
+        {
+            "text": "can you put both screens on stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "which screens have a stage set?",
+            "topic": "stage"
+        },
+        {
+            "text": "change the stage of the second screen to stage 2 pls",
+            "topic": "stage"
+        },
+        {
+            "text": "stage 1 on screen 0",
+            "topic": "stage"
+        },
+        {
+            "text": "clear the stage number on all the screens",
+            "topic": "stage"
+        },
+        {
+            "text": "only send things to screen 2",
+            "topic": "select"
+        },
+        {
+            "text": "untick screen 1",
+            "topic": "select"
+        },
+        {
+            "text": "select both screens",
+            "topic": "select"
+        },
+        {
+            "text": "which screens are selected?",
+            "topic": "select"
+        },
+        {
+            "text": "tick the projector and untick the TV",
+            "topic": "select"
+        },
+        {
+            "text": "deselect all the screens",
+            "topic": "select"
+        },
+        {
+            "text": "can you select the second screen only",
+            "topic": "select"
+        },
+        {
+            "text": "stuff is going to the wrong screen, just target screen 0",
+            "topic": "select"
+        },
+        {
+            "text": "select all screens quick",
+            "topic": "select"
+        },
+        {
+            "text": "are both screens ticked right now",
+            "topic": "select"
+        },
+        {
+            "text": "clear screen 2",
+            "topic": "clear"
+        },
+        {
+            "text": "take the verse off screen 1 but leave the other screen",
+            "topic": "clear"
+        },
+        {
+            "text": "clear everything on both screens",
+            "topic": "clear"
+        },
+        {
+            "text": "remove the slide from the projector",
+            "topic": "clear"
+        },
+        {
+            "text": "clear the background on screen 2 only",
+            "topic": "clear"
+        },
+        {
+            "text": "wipe the foreground overlays off all the screens",
+            "topic": "clear"
+        },
+        {
+            "text": "could you clear the bible text from the TV?",
+            "topic": "clear"
+        },
+        {
+            "text": "blank the second screen now!",
+            "topic": "clear"
+        },
+        {
+            "text": "clear all on screen 0",
+            "topic": "clear"
+        },
+        {
+            "text": "take the long text off the left screen",
+            "topic": "clear"
+        },
+        {
+            "text": "how do I lock a screen?",
+            "topic": "howto"
+        },
+        {
+            "text": "where is the transition setting",
+            "topic": "howto"
+        },
+        {
+            "text": "what does line sync do",
+            "topic": "howto"
+        },
+        {
+            "text": "how do i group screens",
+            "topic": "howto"
+        },
+        {
+            "text": "where do i change the bible font size",
+            "topic": "howto"
+        },
+        {
+            "text": "what is the stage number for?",
+            "topic": "howto"
+        },
+        {
+            "text": "turn screen 2 off",
+            "topic": "show_hide"
+        },
+        {
+            "text": "hide the projector output",
+            "topic": "show_hide"
+        },
+        {
+            "text": "show screen 1",
+            "topic": "show_hide"
+        },
+        {
+            "text": "turn on the TV screen",
+            "topic": "show_hide"
+        },
+        {
+            "text": "switch both screens off during the prayer",
+            "topic": "show_hide"
+        },
+        {
+            "text": "hide all the screens",
+            "topic": "show_hide"
+        },
+        {
+            "text": "put John 3:16 on both screens",
+            "topic": "present"
+        },
+        {
+            "text": "show the next slide",
+            "topic": "present"
+        },
+        {
+            "text": "put Psalm 23 up on screen 1",
+            "topic": "present"
+        },
+        {
+            "text": "present Amazing Grace on the projector",
+            "topic": "present"
+        },
+        {
+            "text": "send Romans 8:28 to the second screen",
+            "topic": "present"
+        },
+        {
+            "text": "display the first slide of the sermon deck",
+            "topic": "present"
+        },
+        {
+            "text": "make the countdown text bigger",
+            "topic": "foreground"
+        },
+        {
+            "text": "put a 5 minute timer on the screen",
+            "topic": "foreground"
+        },
+        {
+            "text": "start a stopwatch on screen 2",
+            "topic": "foreground"
+        },
+        {
+            "text": "show a scrolling message welcome everyone",
+            "topic": "foreground"
+        },
+        {
+            "text": "change the clock colour on the projector",
+            "topic": "foreground"
+        },
+        {
+            "text": "put up an announcement overlay about the potluck",
+            "topic": "foreground"
+        },
+        {
+            "text": "lock the song file",
+            "topic": "song_slide"
+        },
+        {
+            "text": "make the song words bigger",
+            "topic": "song_slide"
+        },
+        {
+            "text": "change the slide background colour",
+            "topic": "song_slide"
+        },
+        {
+            "text": "add a transition between lyric lines in the song editor",
+            "topic": "song_slide"
+        },
+        {
+            "text": "bold the text in this slide",
+            "topic": "song_slide"
+        },
+        {
+            "text": "group the text boxes on my slide",
+            "topic": "song_slide"
+        },
+        {
+            "text": "make the text bigger in the reader",
+            "topic": "reader"
+        },
+        {
+            "text": "find verses about love",
+            "topic": "reader"
+        },
+        {
+            "text": "highlight this verse in the reader",
+            "topic": "reader"
+        },
+        {
+            "text": "add a note to Genesis 1:1",
+            "topic": "reader"
+        },
+        {
+            "text": "bold text in the bible reader page",
+            "topic": "reader"
+        },
+        {
+            "text": "search the bible for the word grace",
+            "topic": "reader"
+        },
+        {
+            "text": "change the app theme to dark",
+            "topic": "app"
+        },
+        {
+            "text": "switch the app language to Spanish",
+            "topic": "app"
+        },
+        {
+            "text": "make the app font bigger",
+            "topic": "app"
+        },
+        {
+            "text": "open settings",
+            "topic": "app"
+        },
+        {
+            "text": "how do I change the display language of the menus",
+            "topic": "app"
+        },
+        {
+            "text": "make the main window fullscreen",
+            "topic": "app"
+        },
+        {
+            "text": "thanks, that worked",
+            "topic": "other"
+        },
+        {
+            "text": "who wrote the book of Hebrews?",
+            "topic": "other"
+        },
+        {
+            "text": "hello",
+            "topic": "other"
+        },
+        {
+            "text": "what is the shortest verse in the bible",
+            "topic": "other"
+        },
+        {
+            "text": "you are a lifesaver, thank you",
+            "topic": "other"
+        },
+        {
+            "text": "how many books are in the new testament",
+            "topic": "other"
+        }
+    ],
+    "B": [
+        {
+            "text": "the words on the projector are hard to see, could you make the verse text bigger please",
+            "topic": "style"
+        },
+        {
+            "text": "bible text bolder",
+            "topic": "style"
+        },
+        {
+            "text": "Would you be so kind as to change the colour of the Bible text on all the screens to yellow?",
+            "topic": "style"
+        },
+        {
+            "text": "verse font too small for the back row, bump it up",
+            "topic": "style"
+        },
+        {
+            "text": "center the verse text",
+            "topic": "style"
+        },
+        {
+            "text": "add a shadow to the scripture words so they stand out from the background",
+            "topic": "style"
+        },
+        {
+            "text": "put the bible text back to the default look, i messed it up",
+            "topic": "style"
+        },
+        {
+            "text": "more space between the lines of the verse pls",
+            "topic": "style"
+        },
+        {
+            "text": "make the scripture italic and give it a white outline",
+            "topic": "style"
+        },
+        {
+            "text": "what size is the bible text on the screens right now?",
+            "topic": "style"
+        },
+        {
+            "text": "can you add the NIV next to the KJV on screen 1",
+            "topic": "versions"
+        },
+        {
+            "text": "show three versions of the passage on the projector",
+            "topic": "versions"
+        },
+        {
+            "text": "remove the kjv from the verse on the second screen",
+            "topic": "versions"
+        },
+        {
+            "text": "which bible versions are showing on screen 2 at the moment?",
+            "topic": "versions"
+        },
+        {
+            "text": "esv and nlt together on both screens",
+            "topic": "versions"
+        },
+        {
+            "text": "I would like the verse on the TV to appear in two translations, the NIV and the ESV, if that is possible.",
+            "topic": "versions"
+        },
+        {
+            "text": "drop the niv",
+            "topic": "versions"
+        },
+        {
+            "text": "put another translation beside this one on the right-hand screen",
+            "topic": "versions"
+        },
+        {
+            "text": "take the extra version off, just keep one on every screen",
+            "topic": "versions"
+        },
+        {
+            "text": "swap the second version to NASB on screen 0",
+            "topic": "versions"
+        },
+        {
+            "text": "turn on line sync",
+            "topic": "lineSync"
+        },
+        {
+            "text": "line the versions up verse by verse on the projector please",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the two translations are not matching up, can you sync the lines",
+            "topic": "lineSync"
+        },
+        {
+            "text": "is line sync on or off right now?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "switch off line sync on screen 1",
+            "topic": "lineSync"
+        },
+        {
+            "text": "Could you please enable Line Sync so that each verse of the two versions sits side by side?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "linesync off",
+            "topic": "lineSync"
+        },
+        {
+            "text": "verses wont line up between kjv and niv on the tv, fix that",
+            "topic": "lineSync"
+        },
+        {
+            "text": "sync the versions line by line on both screens",
+            "topic": "lineSync"
+        },
+        {
+            "text": "is the verse sync turned on for screen two",
+            "topic": "lineSync"
+        },
+        {
+            "text": "make the slide transition a zoom",
+            "topic": "transition"
+        },
+        {
+            "text": "turn off the background transition",
+            "topic": "transition"
+        },
+        {
+            "text": "what transitions are set right now?",
+            "topic": "transition"
+        },
+        {
+            "text": "fade between slides on screen 1 please",
+            "topic": "transition"
+        },
+        {
+            "text": "the slides jump too quickly, can we have a gentle fade instead",
+            "topic": "transition"
+        },
+        {
+            "text": "no effect when the foreground changes",
+            "topic": "transition"
+        },
+        {
+            "text": "I would prefer that the backgrounds slide in rather than fade, would you change that for me?",
+            "topic": "transition"
+        },
+        {
+            "text": "set all transitions to none on the second screen",
+            "topic": "transition"
+        },
+        {
+            "text": "transition zoom",
+            "topic": "transition"
+        },
+        {
+            "text": "which effect is the background using on the projector?",
+            "topic": "transition"
+        },
+        {
+            "text": "move screen 1 to the other monitor",
+            "topic": "display"
+        },
+        {
+            "text": "which display is screen 2 on?",
+            "topic": "display"
+        },
+        {
+            "text": "put the second screen on the projector display not the laptop",
+            "topic": "display"
+        },
+        {
+            "text": "screen 1 is showing on my laptop instead of the TV, send it over there",
+            "topic": "display"
+        },
+        {
+            "text": "how many displays does the app see",
+            "topic": "display"
+        },
+        {
+            "text": "Would you kindly move the right-hand screen to the third monitor?",
+            "topic": "display"
+        },
+        {
+            "text": "screen 0 to display 2",
+            "topic": "display"
+        },
+        {
+            "text": "the stage monitor window is on the wrong display, move it please",
+            "topic": "display"
+        },
+        {
+            "text": "check what monitors are connected",
+            "topic": "display"
+        },
+        {
+            "text": "shift screen two onto the first display, quickly",
+            "topic": "display"
+        },
+        {
+            "text": "group screen 1 and screen 2 together",
+            "topic": "group"
+        },
+        {
+            "text": "make both screens show the same thing",
+            "topic": "group"
+        },
+        {
+            "text": "take screen 2 out of the group",
+            "topic": "group"
+        },
+        {
+            "text": "which screens are in the same colour group?",
+            "topic": "group"
+        },
+        {
+            "text": "ungroup all the screens",
+            "topic": "group"
+        },
+        {
+            "text": "I want the side screens to match the main one, could you put them in one group?",
+            "topic": "group"
+        },
+        {
+            "text": "put screen 2 in the red group",
+            "topic": "group"
+        },
+        {
+            "text": "change the colour group of screen 1 to blue",
+            "topic": "group"
+        },
+        {
+            "text": "link the tv and the projector so they mirror",
+            "topic": "group"
+        },
+        {
+            "text": "screen two should be on its own, not grouped",
+            "topic": "group"
+        },
+        {
+            "text": "lock screen 1",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock the second screen please",
+            "topic": "lock"
+        },
+        {
+            "text": "is screen 2 locked?",
+            "topic": "lock"
+        },
+        {
+            "text": "nothing is going to the projector, i think it is locked, can you unlock it",
+            "topic": "lock"
+        },
+        {
+            "text": "lock both screens so nobody changes them mid sermon",
+            "topic": "lock"
+        },
+        {
+            "text": "Would you be so kind as to unlock every screen?",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock all",
+            "topic": "lock"
+        },
+        {
+            "text": "keep the tv locked, only the main screen should change",
+            "topic": "lock"
+        },
+        {
+            "text": "which screens are locked right now",
+            "topic": "lock"
+        },
+        {
+            "text": "lok screen 0 pls",
+            "topic": "lock"
+        },
+        {
+            "text": "set screen 2 to stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "make the right-hand screen the stage display",
+            "topic": "stage"
+        },
+        {
+            "text": "which stage number is screen 1 on?",
+            "topic": "stage"
+        },
+        {
+            "text": "change screen 1 to stage 2",
+            "topic": "stage"
+        },
+        {
+            "text": "take screen 2 off the stage setting",
+            "topic": "stage"
+        },
+        {
+            "text": "I need the monitor facing the choir to be stage number one, could you set that?",
+            "topic": "stage"
+        },
+        {
+            "text": "stage 1 on both screens",
+            "topic": "stage"
+        },
+        {
+            "text": "what stage are the screens set to",
+            "topic": "stage"
+        },
+        {
+            "text": "stage number 3 for the second screen",
+            "topic": "stage"
+        },
+        {
+            "text": "clear the stage number from screen 0",
+            "topic": "stage"
+        },
+        {
+            "text": "only send things to screen 2",
+            "topic": "select"
+        },
+        {
+            "text": "untick screen 1",
+            "topic": "select"
+        },
+        {
+            "text": "select both screens",
+            "topic": "select"
+        },
+        {
+            "text": "which screens are ticked right now?",
+            "topic": "select"
+        },
+        {
+            "text": "the verse went to the wrong screen, tick just the main one",
+            "topic": "select"
+        },
+        {
+            "text": "Would you please select only the second screen for the next thing I present?",
+            "topic": "select"
+        },
+        {
+            "text": "deselect all screens",
+            "topic": "select"
+        },
+        {
+            "text": "tick screen 0 and screen 2 but not 1",
+            "topic": "select"
+        },
+        {
+            "text": "send next to the tv only",
+            "topic": "select"
+        },
+        {
+            "text": "select every screen again",
+            "topic": "select"
+        },
+        {
+            "text": "clear screen 2",
+            "topic": "clear"
+        },
+        {
+            "text": "take the verse off screen 1 but leave the other screen",
+            "topic": "clear"
+        },
+        {
+            "text": "clear everything off both screens now",
+            "topic": "clear"
+        },
+        {
+            "text": "remove the background from the second screen",
+            "topic": "clear"
+        },
+        {
+            "text": "get the slide off the projector",
+            "topic": "clear"
+        },
+        {
+            "text": "Could you please clear the foreground overlays from screen 1 only?",
+            "topic": "clear"
+        },
+        {
+            "text": "wipe the bible text from all screens quick",
+            "topic": "clear"
+        },
+        {
+            "text": "clear bg on the tv",
+            "topic": "clear"
+        },
+        {
+            "text": "take everything off the right-hand screen",
+            "topic": "clear"
+        },
+        {
+            "text": "the lyrics are stuck on screen 0, clear that one",
+            "topic": "clear"
+        },
+        {
+            "text": "how do I change the transition between slides?",
+            "topic": "howto"
+        },
+        {
+            "text": "where is the lock button for a screen",
+            "topic": "howto"
+        },
+        {
+            "text": "What does the colour note on a mini screen do?",
+            "topic": "howto"
+        },
+        {
+            "text": "how do i make the bible text bigger",
+            "topic": "howto"
+        },
+        {
+            "text": "Could you explain how I would add a second Bible version to the verse?",
+            "topic": "howto"
+        },
+        {
+            "text": "where do i pick which display a screen uses",
+            "topic": "howto"
+        },
+        {
+            "text": "turn off the projector",
+            "topic": "show_hide"
+        },
+        {
+            "text": "hide screen 2",
+            "topic": "show_hide"
+        },
+        {
+            "text": "show screen 1 again",
+            "topic": "show_hide"
+        },
+        {
+            "text": "Please switch the second screen on, the service is about to start.",
+            "topic": "show_hide"
+        },
+        {
+            "text": "tv off pls",
+            "topic": "show_hide"
+        },
+        {
+            "text": "screen 0 is black, turn it on",
+            "topic": "show_hide"
+        },
+        {
+            "text": "put john 3:16 on screen 2",
+            "topic": "present"
+        },
+        {
+            "text": "show psalm 23 on the projector",
+            "topic": "present"
+        },
+        {
+            "text": "present the welcome slide on screen 1",
+            "topic": "present"
+        },
+        {
+            "text": "Would you display Romans 8:28 for me, on both screens if you can?",
+            "topic": "present"
+        },
+        {
+            "text": "send amazing grace to the tv",
+            "topic": "present"
+        },
+        {
+            "text": "genesis 1:1 now",
+            "topic": "present"
+        },
+        {
+            "text": "start a five minute countdown on screen 2",
+            "topic": "foreground"
+        },
+        {
+            "text": "put the clock on the projector in a bigger font",
+            "topic": "foreground"
+        },
+        {
+            "text": "scrolling message that says welcome, in red",
+            "topic": "foreground"
+        },
+        {
+            "text": "stopwatch please",
+            "topic": "foreground"
+        },
+        {
+            "text": "Could I have an announcement overlay about the potluck, with a yellow colour?",
+            "topic": "foreground"
+        },
+        {
+            "text": "make the marquee text larger",
+            "topic": "foreground"
+        },
+        {
+            "text": "make the lyrics bigger in the song",
+            "topic": "song_slide"
+        },
+        {
+            "text": "change the slide background colour to dark blue",
+            "topic": "song_slide"
+        },
+        {
+            "text": "add a new verse to the song Amazing Grace",
+            "topic": "song_slide"
+        },
+        {
+            "text": "my slide text is too small, how can I fix the slide",
+            "topic": "song_slide"
+        },
+        {
+            "text": "Could you change the font of the song lyrics to something easier to read?",
+            "topic": "song_slide"
+        },
+        {
+            "text": "add a title to the first slide",
+            "topic": "song_slide"
+        },
+        {
+            "text": "how do i highlight a verse in the reader",
+            "topic": "reader"
+        },
+        {
+            "text": "make the reader text bigger",
+            "topic": "reader"
+        },
+        {
+            "text": "search the bible for the word grace",
+            "topic": "reader"
+        },
+        {
+            "text": "Where can I write a note on a verse in the Bible Reader?",
+            "topic": "reader"
+        },
+        {
+            "text": "reader history back",
+            "topic": "reader"
+        },
+        {
+            "text": "open the reader in a new window",
+            "topic": "reader"
+        },
+        {
+            "text": "switch the app to dark theme",
+            "topic": "app"
+        },
+        {
+            "text": "change the app language",
+            "topic": "app"
+        },
+        {
+            "text": "make the buttons and menus in the app bigger",
+            "topic": "app"
+        },
+        {
+            "text": "where are the settings",
+            "topic": "app"
+        },
+        {
+            "text": "Would you please change the font used by the app's menus?",
+            "topic": "app"
+        },
+        {
+            "text": "app window is too small",
+            "topic": "app"
+        },
+        {
+            "text": "thanks, that worked",
+            "topic": "other"
+        },
+        {
+            "text": "who wrote the book of Hebrews?",
+            "topic": "other"
+        },
+        {
+            "text": "hello are you there",
+            "topic": "other"
+        },
+        {
+            "text": "What does the word selah mean in the Psalms?",
+            "topic": "other"
+        },
+        {
+            "text": "how many chapters in isaiah",
+            "topic": "other"
+        },
+        {
+            "text": "god bless you, you are a great help",
+            "topic": "other"
+        }
+    ],
+    "C": [
+        {
+            "text": "make the bible text bigger on screen 0",
+            "topic": "style"
+        },
+        {
+            "text": "the back row can't read it",
+            "topic": "style"
+        },
+        {
+            "text": "bold the verse text on the projector please",
+            "topic": "style"
+        },
+        {
+            "text": "add an outline to the scripture text, it's lost on the bright background",
+            "topic": "style"
+        },
+        {
+            "text": "text colour to yellow on both screens",
+            "topic": "style"
+        },
+        {
+            "text": "turn on the shadow for bible text",
+            "topic": "style"
+        },
+        {
+            "text": "increase line spacing a bit on screen 2",
+            "topic": "style"
+        },
+        {
+            "text": "centre align the verse on the TV",
+            "topic": "style"
+        },
+        {
+            "text": "reset the bible text style back to normal",
+            "topic": "style"
+        },
+        {
+            "text": "what size is the bible font on screen 1 right now?",
+            "topic": "style"
+        },
+        {
+            "text": "add NIV beside the KJV on screen 0",
+            "topic": "versions"
+        },
+        {
+            "text": "show ESV and NLT together on the projector",
+            "topic": "versions"
+        },
+        {
+            "text": "remove the NKJV from the left screen",
+            "topic": "versions"
+        },
+        {
+            "text": "which bible versions are showing on screen 1?",
+            "topic": "versions"
+        },
+        {
+            "text": "swap KJV for NASB on all screens",
+            "topic": "versions"
+        },
+        {
+            "text": "put a second translation next to it",
+            "topic": "versions"
+        },
+        {
+            "text": "drop NIV, only KJV please",
+            "topic": "versions"
+        },
+        {
+            "text": "can you add the ESV as another version on the stage monitor",
+            "topic": "versions"
+        },
+        {
+            "text": "two versions side by side on screen 2 - KJV and NLT",
+            "topic": "versions"
+        },
+        {
+            "text": "take off the extra translation, it's too cluttered",
+            "topic": "versions"
+        },
+        {
+            "text": "turn line sync on for screen 0",
+            "topic": "lineSync"
+        },
+        {
+            "text": "line up the KJV and NIV verse by verse",
+            "topic": "lineSync"
+        },
+        {
+            "text": "is line sync on or off right now",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the two versions don't line up, the verses are all uneven",
+            "topic": "lineSync"
+        },
+        {
+            "text": "switch off linesync on the projector",
+            "topic": "lineSync"
+        },
+        {
+            "text": "enable line sync both screens",
+            "topic": "lineSync"
+        },
+        {
+            "text": "sync the lines for ESV and NKJV",
+            "topic": "lineSync"
+        },
+        {
+            "text": "line sync screen 1 off pls",
+            "topic": "lineSync"
+        },
+        {
+            "text": "can you check if line sync is enabled on the TV",
+            "topic": "lineSync"
+        },
+        {
+            "text": "make the two translations match line for line",
+            "topic": "lineSync"
+        },
+        {
+            "text": "set the transition on screen 0 to fade",
+            "topic": "transition"
+        },
+        {
+            "text": "no transition at all on the projector",
+            "topic": "transition"
+        },
+        {
+            "text": "change the effect when slides change to zoom",
+            "topic": "transition"
+        },
+        {
+            "text": "what transition is screen 1 using",
+            "topic": "transition"
+        },
+        {
+            "text": "make the background change fade instead of cut",
+            "topic": "transition"
+        },
+        {
+            "text": "turn off the zoom effect on all screens",
+            "topic": "transition"
+        },
+        {
+            "text": "the slides jump too abruptly, soften it",
+            "topic": "transition"
+        },
+        {
+            "text": "foreground transition to fade on the TV",
+            "topic": "transition"
+        },
+        {
+            "text": "use a zoom transition for the bible text on screen 2",
+            "topic": "transition"
+        },
+        {
+            "text": "which transitions are available",
+            "topic": "transition"
+        },
+        {
+            "text": "move screen 1 to the TV",
+            "topic": "display"
+        },
+        {
+            "text": "list the displays connected",
+            "topic": "display"
+        },
+        {
+            "text": "which monitor is screen 0 on?",
+            "topic": "display"
+        },
+        {
+            "text": "put the projector screen on display 2",
+            "topic": "display"
+        },
+        {
+            "text": "screen is on the wrong monitor, it's on my laptop",
+            "topic": "display"
+        },
+        {
+            "text": "send screen 0 to the HDMI one",
+            "topic": "display"
+        },
+        {
+            "text": "how many displays does it see",
+            "topic": "display"
+        },
+        {
+            "text": "swap the displays for screen 0 and screen 1",
+            "topic": "display"
+        },
+        {
+            "text": "move the stage screen to the little monitor at the back",
+            "topic": "display"
+        },
+        {
+            "text": "show me which display each screen is assigned to",
+            "topic": "display"
+        },
+        {
+            "text": "group screen 0 and screen 1 so they show the same thing",
+            "topic": "group"
+        },
+        {
+            "text": "put the TV and the projector in one group",
+            "topic": "group"
+        },
+        {
+            "text": "give screen 2 a red group colour",
+            "topic": "group"
+        },
+        {
+            "text": "which screens are grouped together?",
+            "topic": "group"
+        },
+        {
+            "text": "ungroup screen 1 from the others",
+            "topic": "group"
+        },
+        {
+            "text": "make the left screen mirror the right screen",
+            "topic": "group"
+        },
+        {
+            "text": "set the group note on screen 0 to blue",
+            "topic": "group"
+        },
+        {
+            "text": "remove the grouping on all screens",
+            "topic": "group"
+        },
+        {
+            "text": "screen 1 shows something different from screen 0 and it shouldn't, link them",
+            "topic": "group"
+        },
+        {
+            "text": "what colour is the group for the projector",
+            "topic": "group"
+        },
+        {
+            "text": "lock screen 0",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock the projector screen",
+            "topic": "lock"
+        },
+        {
+            "text": "is the TV locked?",
+            "topic": "lock"
+        },
+        {
+            "text": "lock both screens so nothing changes while the pastor speaks",
+            "topic": "lock"
+        },
+        {
+            "text": "nothing changes on screen 1 when I present, is it locked",
+            "topic": "lock"
+        },
+        {
+            "text": "unlock all screens",
+            "topic": "lock"
+        },
+        {
+            "text": "lock the stage monitor please",
+            "topic": "lock"
+        },
+        {
+            "text": "which screens are currently locked",
+            "topic": "lock"
+        },
+        {
+            "text": "keep screen 2 from updating, lock it",
+            "topic": "lock"
+        },
+        {
+            "text": "release the lock on the left screen",
+            "topic": "lock"
+        },
+        {
+            "text": "what is the stage number of screen 1",
+            "topic": "stage"
+        },
+        {
+            "text": "set screen 0's stage number to 2",
+            "topic": "stage"
+        },
+        {
+            "text": "change stage number on the projector to 1",
+            "topic": "stage"
+        },
+        {
+            "text": "stage number for the TV should be 3",
+            "topic": "stage"
+        },
+        {
+            "text": "list the stage numbers of all screens",
+            "topic": "stage"
+        },
+        {
+            "text": "give the stage monitor stage 4",
+            "topic": "stage"
+        },
+        {
+            "text": "screen 2 has the wrong stage number, fix it to 0",
+            "topic": "stage"
+        },
+        {
+            "text": "what stage is each screen on",
+            "topic": "stage"
+        },
+        {
+            "text": "make both screens stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "reset stage number of screen 1",
+            "topic": "stage"
+        },
+        {
+            "text": "tick screen 0 only so the next verse goes just there",
+            "topic": "select"
+        },
+        {
+            "text": "select all screens",
+            "topic": "select"
+        },
+        {
+            "text": "untick the TV, I only want the projector to get it",
+            "topic": "select"
+        },
+        {
+            "text": "which screens are selected right now?",
+            "topic": "select"
+        },
+        {
+            "text": "deselect screen 1",
+            "topic": "select"
+        },
+        {
+            "text": "present to screen 2 and screen 0 only",
+            "topic": "select"
+        },
+        {
+            "text": "the verse went to the wrong screen, select the left one",
+            "topic": "select"
+        },
+        {
+            "text": "select the stage monitor too",
+            "topic": "select"
+        },
+        {
+            "text": "untick everything",
+            "topic": "select"
+        },
+        {
+            "text": "make screen 1 receive what I present",
+            "topic": "select"
+        },
+        {
+            "text": "clear screen 0",
+            "topic": "clear"
+        },
+        {
+            "text": "wipe the bible text off the projector",
+            "topic": "clear"
+        },
+        {
+            "text": "clear the background on screen 1",
+            "topic": "clear"
+        },
+        {
+            "text": "remove the slide from both screens",
+            "topic": "clear"
+        },
+        {
+            "text": "take the foreground off the TV",
+            "topic": "clear"
+        },
+        {
+            "text": "clear everything on all screens now",
+            "topic": "clear"
+        },
+        {
+            "text": "get rid of the verse that is still showing on screen 2",
+            "topic": "clear"
+        },
+        {
+            "text": "clear just the background layer, keep the verse",
+            "topic": "clear"
+        },
+        {
+            "text": "blank the projector fast",
+            "topic": "clear"
+        },
+        {
+            "text": "is there anything on screen 0's layers? clear whatever there is",
+            "topic": "clear"
+        },
+        {
+            "text": "how do I change the bible text size on a screen myself",
+            "topic": "howto"
+        },
+        {
+            "text": "where is the line sync button?",
+            "topic": "howto"
+        },
+        {
+            "text": "can I group two screens by colour? how",
+            "topic": "howto"
+        },
+        {
+            "text": "how do I move a screen to another monitor",
+            "topic": "howto"
+        },
+        {
+            "text": "where do I set the transition effect",
+            "topic": "howto"
+        },
+        {
+            "text": "how can I add another bible version beside the KJV",
+            "topic": "howto"
+        },
+        {
+            "text": "turn the projector screen off",
+            "topic": "show_hide"
+        },
+        {
+            "text": "is anything showing on screen 1 right now?",
+            "topic": "show_hide"
+        },
+        {
+            "text": "show screen 0 again",
+            "topic": "show_hide"
+        },
+        {
+            "text": "hide all screens",
+            "topic": "show_hide"
+        },
+        {
+            "text": "why is the TV black, is it hidden",
+            "topic": "show_hide"
+        },
+        {
+            "text": "bring the projector screen back up",
+            "topic": "show_hide"
+        },
+        {
+            "text": "put John 3:16 on the screen",
+            "topic": "present"
+        },
+        {
+            "text": "present Psalm 23 NIV",
+            "topic": "present"
+        },
+        {
+            "text": "show Amazing Grace",
+            "topic": "present"
+        },
+        {
+            "text": "put up the welcome slide",
+            "topic": "present"
+        },
+        {
+            "text": "display Romans 8:28 KJV on the projector",
+            "topic": "present"
+        },
+        {
+            "text": "next verse please",
+            "topic": "present"
+        },
+        {
+            "text": "start a 5 minute countdown",
+            "topic": "foreground"
+        },
+        {
+            "text": "show the clock on screen",
+            "topic": "foreground"
+        },
+        {
+            "text": "stopwatch for the sermon",
+            "topic": "foreground"
+        },
+        {
+            "text": "scroll a marquee saying Welcome visitors",
+            "topic": "foreground"
+        },
+        {
+            "text": "quick text: Please silence your phones",
+            "topic": "foreground"
+        },
+        {
+            "text": "put a message up, nursery parents please go to room 3",
+            "topic": "foreground"
+        },
+        {
+            "text": "change the words of verse 2 in this song",
+            "topic": "song_slide"
+        },
+        {
+            "text": "add a new slide to the announcements document",
+            "topic": "song_slide"
+        },
+        {
+            "text": "set the song's background to blue",
+            "topic": "song_slide"
+        },
+        {
+            "text": "fix a typo in the chorus lyrics",
+            "topic": "song_slide"
+        },
+        {
+            "text": "make this slide's transition a fade",
+            "topic": "song_slide"
+        },
+        {
+            "text": "make the title on slide 3 bigger and red",
+            "topic": "song_slide"
+        },
+        {
+            "text": "highlight this verse in the reader in yellow",
+            "topic": "reader"
+        },
+        {
+            "text": "find the verse that says the Lord is my shepherd",
+            "topic": "reader"
+        },
+        {
+            "text": "add a note to Genesis 1:1 in the bible reader",
+            "topic": "reader"
+        },
+        {
+            "text": "open the reader and go to Matthew 5",
+            "topic": "reader"
+        },
+        {
+            "text": "search the whole bible for the word grace",
+            "topic": "reader"
+        },
+        {
+            "text": "show me my bible notes",
+            "topic": "reader"
+        },
+        {
+            "text": "change the app language to Spanish",
+            "topic": "app"
+        },
+        {
+            "text": "switch to dark theme",
+            "topic": "app"
+        },
+        {
+            "text": "is there an update available",
+            "topic": "app"
+        },
+        {
+            "text": "the menu text in the app is too small, change the app font",
+            "topic": "app"
+        },
+        {
+            "text": "open settings",
+            "topic": "app"
+        },
+        {
+            "text": "how do I open the editor window",
+            "topic": "app"
+        },
+        {
+            "text": "please pray for my mother, she is in hospital",
+            "topic": "other"
+        },
+        {
+            "text": "good morning!",
+            "topic": "other"
+        },
+        {
+            "text": "thanks, you're a lifesaver",
+            "topic": "other"
+        },
+        {
+            "text": "what time does the service start",
+            "topic": "other"
+        },
+        {
+            "text": "the coffee machine is broken again",
+            "topic": "other"
+        },
+        {
+            "text": "who are you",
+            "topic": "other"
+        }
+    ],
+    "D": [
+        {
+            "text": "Verse text is tiny on the projector, people in the back are squinting",
+            "topic": "style"
+        },
+        {
+            "text": "add the NIV next to the KJV on screen 1",
+            "topic": "versions"
+        },
+        {
+            "text": "Turn on line sync for screen 1",
+            "topic": "lineSync"
+        },
+        {
+            "text": "set screen 1's transition to fade",
+            "topic": "transition"
+        },
+        {
+            "text": "The right screen keeps coming up on my laptop instead of the TV",
+            "topic": "display"
+        },
+        {
+            "text": "group screen 1 and screen 2 together",
+            "topic": "group"
+        },
+        {
+            "text": "lock screen 1",
+            "topic": "lock"
+        },
+        {
+            "text": "Set the stage number for screen 1 to 2",
+            "topic": "stage"
+        },
+        {
+            "text": "select all screens",
+            "topic": "select"
+        },
+        {
+            "text": "clear out screen 1",
+            "topic": "clear"
+        },
+        {
+            "text": "How do I make the verse bigger on the projector?",
+            "topic": "howto"
+        },
+        {
+            "text": "hide screen 2 for a minute",
+            "topic": "show_hide"
+        },
+        {
+            "text": "Put John 3:16 on screen two",
+            "topic": "present"
+        },
+        {
+            "text": "put a 5 minute countdown on the stage monitor",
+            "topic": "foreground"
+        },
+        {
+            "text": "fix the typo in verse 2 of How Great Thou Art",
+            "topic": "song_slide"
+        },
+        {
+            "text": "highlight Philippians 4:13 in yellow for my study",
+            "topic": "reader"
+        },
+        {
+            "text": "The app is way too bright at night, put it in dark mode",
+            "topic": "app"
+        },
+        {
+            "text": "Good morning! the screens are all set up, just saying hi",
+            "topic": "other"
+        },
+        {
+            "text": "make the bible words bigger on screen 1",
+            "topic": "style"
+        },
+        {
+            "text": "Take ESV off the main screen, keep just the KJV",
+            "topic": "versions"
+        },
+        {
+            "text": "the KJV and NIV on the projector dont line up verse by verse anymore",
+            "topic": "lineSync"
+        },
+        {
+            "text": "No transition on the stage monitor, just cut straight to the next slide",
+            "topic": "transition"
+        },
+        {
+            "text": "please move screen one over to the HDMI output",
+            "topic": "display"
+        },
+        {
+            "text": "Ungroup the stage monitor from the main screen",
+            "topic": "group"
+        },
+        {
+            "text": "unlock the stage monitor",
+            "topic": "lock"
+        },
+        {
+            "text": "what stage number is screen 0 on?",
+            "topic": "stage"
+        },
+        {
+            "text": "only send stuff to screen 2 from now on",
+            "topic": "select"
+        },
+        {
+            "text": "take the verse off the projecter",
+            "topic": "clear"
+        },
+        {
+            "text": "where's the button to lock a screen",
+            "topic": "howto"
+        },
+        {
+            "text": "turn off the projector while we pray",
+            "topic": "show_hide"
+        },
+        {
+            "text": "show Amazing Grace on the projector",
+            "topic": "present"
+        },
+        {
+            "text": "scroll 'parents of child 14 please come to the nursery' across screen 1",
+            "topic": "foreground"
+        },
+        {
+            "text": "make the chorus text bigger in the song editor",
+            "topic": "song_slide"
+        },
+        {
+            "text": "search the bible reader for 'be still and know' in the KJV",
+            "topic": "reader"
+        },
+        {
+            "text": "switch the whole program to Spanish, menus and all",
+            "topic": "app"
+        },
+        {
+            "text": "thanks, the screen looks perfect now",
+            "topic": "other"
+        },
+        {
+            "text": "the scripture runs off the edge of the stage monitor, size it down a notch",
+            "topic": "style"
+        },
+        {
+            "text": "swap the NLT for NKJV on the stage display",
+            "topic": "versions"
+        },
+        {
+            "text": "switch off line sync on the stage TV",
+            "topic": "lineSync"
+        },
+        {
+            "text": "make the background fade slower on the projector, about two seconds",
+            "topic": "transition"
+        },
+        {
+            "text": "which displays are conected to this computer",
+            "topic": "display"
+        },
+        {
+            "text": "link the foyer TV to the projector so both show the same thing",
+            "topic": "group"
+        },
+        {
+            "text": "Lock the foyer TV so nobody changes it by accident",
+            "topic": "lock"
+        },
+        {
+            "text": "change screen one to stage 3",
+            "topic": "stage"
+        },
+        {
+            "text": "untick the foyer TV",
+            "topic": "select"
+        },
+        {
+            "text": "Wipe everything off every screen",
+            "topic": "clear"
+        },
+        {
+            "text": "Can I show two translations at once on screen 1?",
+            "topic": "howto"
+        },
+        {
+            "text": "Is anything showing on the foyer TV right now?",
+            "topic": "show_hide"
+        },
+        {
+            "text": "throw the welcome slide up on the big screen",
+            "topic": "present"
+        },
+        {
+            "text": "Show a clock in the corner of the confidence monitor",
+            "topic": "foreground"
+        },
+        {
+            "text": "Move the title box higher on slide 3 of the sermon deck",
+            "topic": "song_slide"
+        },
+        {
+            "text": "jot a note on Romans 12:2, I want it for Sunday's sermon",
+            "topic": "reader"
+        },
+        {
+            "text": "the buttons and labels are tiny on my laptop, make the app font bigger",
+            "topic": "app"
+        },
+        {
+            "text": "pray for our tech team, the projector gave us grief all week",
+            "topic": "other"
+        },
+        {
+            "text": "Switch the verse font to Arial on screen two",
+            "topic": "style"
+        },
+        {
+            "text": "give the right screen a second translation too, ESV",
+            "topic": "versions"
+        },
+        {
+            "text": "Keep both translations on screen three in step, line for line",
+            "topic": "lineSync"
+        },
+        {
+            "text": "change the slide transition on screen two to zoom",
+            "topic": "transition"
+        },
+        {
+            "text": "Send the stage screen to the second monitor",
+            "topic": "display"
+        },
+        {
+            "text": "could you make screen two the same as screen one?",
+            "topic": "group"
+        },
+        {
+            "text": "is the main screen locked? nothing I send shows up on it",
+            "topic": "lock"
+        },
+        {
+            "text": "put the confidence monitor on stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "Add the stage monitor to the selected screens",
+            "topic": "select"
+        },
+        {
+            "text": "clear just the background on the back wall screen",
+            "topic": "clear"
+        },
+        {
+            "text": "how do you change the fade between slides on the stage monitor",
+            "topic": "howto"
+        },
+        {
+            "text": "bring screen one back, it disappeared",
+            "topic": "show_hide"
+        },
+        {
+            "text": "Play the baptism video on the main screen",
+            "topic": "present"
+        },
+        {
+            "text": "start a stopwatch on the stage screen for the preacher",
+            "topic": "foreground"
+        },
+        {
+            "text": "in the editor give my announcements deck a fade between its slides",
+            "topic": "song_slide"
+        },
+        {
+            "text": "Open ESV and NKJV side by side in the reader so I can compare",
+            "topic": "reader"
+        },
+        {
+            "text": "download the NKJV bible onto this computer",
+            "topic": "app"
+        },
+        {
+            "text": "what's the real difference between the NIV and the ESV translations?",
+            "topic": "other"
+        },
+        {
+            "text": "can you put a dark outline round the bible text on the main screen so it pops over the moving background",
+            "topic": "style"
+        },
+        {
+            "text": "What versions are on the projector right now?",
+            "topic": "versions"
+        },
+        {
+            "text": "is line sync running on the big screen?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "Slides on the big screen snap over too abruptly, give them a soft fade",
+            "topic": "transition"
+        },
+        {
+            "text": "the main screen opened on my control monitor, put it on the projector instead",
+            "topic": "display"
+        },
+        {
+            "text": "mirror the left screen onto the right one",
+            "topic": "group"
+        },
+        {
+            "text": "freeze screen three on what it has now so clicks dont change it",
+            "topic": "lock"
+        },
+        {
+            "text": "screen 3 has the wrong stage, it should be 0",
+            "topic": "stage"
+        },
+        {
+            "text": "which screens are ticked right now?",
+            "topic": "select"
+        },
+        {
+            "text": "remove the slide from screen two but leave the background",
+            "topic": "clear"
+        },
+        {
+            "text": "where do I pick which monitor the main screen goes to?",
+            "topic": "howto"
+        },
+        {
+            "text": "show the stage monitor again",
+            "topic": "show_hide"
+        },
+        {
+            "text": "get psalm 23 verses 1 to 6 up on the stage monitor",
+            "topic": "present"
+        },
+        {
+            "text": "run a marquee on the foyer TV saying service starts at 10",
+            "topic": "foreground"
+        },
+        {
+            "text": "the bridge is missing from Oceans, add it into the song's lyrics",
+            "topic": "song_slide"
+        },
+        {
+            "text": "show cross references for Isaiah 53:5 here, not on the screen",
+            "topic": "reader"
+        },
+        {
+            "text": "is there a newer version of the app out?",
+            "topic": "app"
+        },
+        {
+            "text": "is psalm 117 the shortest chapter in the whole bible?",
+            "topic": "other"
+        },
+        {
+            "text": "Bold the reading on the lobby TV and lose the italics",
+            "topic": "style"
+        },
+        {
+            "text": "I want KJV, NIV and ESV, all three on the big screen",
+            "topic": "versions"
+        },
+        {
+            "text": "match the ESV to the KJV row by row on the main screen",
+            "topic": "lineSync"
+        },
+        {
+            "text": "what transtion is the main screen set to at the moment?",
+            "topic": "transition"
+        },
+        {
+            "text": "what resolution is screen 0's display at?",
+            "topic": "display"
+        },
+        {
+            "text": "Unlink screen 0, it needs to do its own thing",
+            "topic": "group"
+        },
+        {
+            "text": "unfreeze screen 0, I need to put the next verse up",
+            "topic": "lock"
+        },
+        {
+            "text": "whats the lobby TV's stage set to",
+            "topic": "stage"
+        },
+        {
+            "text": "present to the left and right screens only, not the confidence monitor",
+            "topic": "select"
+        },
+        {
+            "text": "get the bible text off the big screen, quick",
+            "topic": "clear"
+        },
+        {
+            "text": "is there a way to clear just the background and keep the verse?",
+            "topic": "howto"
+        },
+        {
+            "text": "is the main screen even on? the congregation sees nothing",
+            "topic": "show_hide"
+        },
+        {
+            "text": "set our church logo picture as the background on the foyer TV",
+            "topic": "present"
+        },
+        {
+            "text": "pop an announcement over the verse on the big screen: potluck after service",
+            "topic": "foreground"
+        },
+        {
+            "text": "words on the second slide of the welcome deck are off center, fix the layout",
+            "topic": "song_slide"
+        },
+        {
+            "text": "flip to Psalm 119:105 in my reader tab",
+            "topic": "reader"
+        },
+        {
+            "text": "where's the data folder that keeps my bibles and backgrounds",
+            "topic": "app"
+        },
+        {
+            "text": "what does Jeremiah 29:11 mean for us today",
+            "topic": "other"
+        },
+        {
+            "text": "the verses should be yellow on the confidence monitor, not white",
+            "topic": "style"
+        },
+        {
+            "text": "drop the third verison from the foyer tv its too crowded",
+            "topic": "versions"
+        },
+        {
+            "text": "disable linesync on screen 0 please",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the fade on the foyer TV drags, speed it up",
+            "topic": "transition"
+        },
+        {
+            "text": "List the monitors you can see plugged in",
+            "topic": "display"
+        },
+        {
+            "text": "are the left and right screens grouped?",
+            "topic": "group"
+        },
+        {
+            "text": "Keep the confidence monitor locked through the sermon",
+            "topic": "lock"
+        },
+        {
+            "text": "Bump the left screen's stage up by one",
+            "topic": "stage"
+        },
+        {
+            "text": "deselect screen 0, nothing should go there",
+            "topic": "select"
+        },
+        {
+            "text": "kill the foreground layer on the lobby TV",
+            "topic": "clear"
+        },
+        {
+            "text": "center the passage on screen 0, it's stuck over on the left",
+            "topic": "style"
+        },
+        {
+            "text": "screen zero has the wrong bible, change it from NIV to NASB",
+            "topic": "versions"
+        },
+        {
+            "text": "The versions on the lobby screen drift apart, sync them up",
+            "topic": "lineSync"
+        },
+        {
+            "text": "Turn off the background transition on screen 0",
+            "topic": "transition"
+        },
+        {
+            "text": "assign the foyer TV screen to display 3",
+            "topic": "display"
+        },
+        {
+            "text": "put the overflow room TV in a group with the big screen",
+            "topic": "group"
+        },
+        {
+            "text": "take the lock off the left screen",
+            "topic": "lock"
+        },
+        {
+            "text": "make the right screen stage two",
+            "topic": "stage"
+        },
+        {
+            "text": "tick screen three as well please",
+            "topic": "select"
+        },
+        {
+            "text": "The sermon's done, pull the scripture off screen 0",
+            "topic": "clear"
+        },
+        {
+            "text": "Lines are crammed together on the big screen, space the verse out more",
+            "topic": "style"
+        },
+        {
+            "text": "Throw the amplified bible in as another version on the left screen",
+            "topic": "versions"
+        },
+        {
+            "text": "enable line-sync on the left and right screens",
+            "topic": "lineSync"
+        },
+        {
+            "text": "half a second fade for slides on the left screen pls",
+            "topic": "transition"
+        },
+        {
+            "text": "both screens landed on the same HDMI output, shift screen 2 to the other display",
+            "topic": "display"
+        },
+        {
+            "text": "pull screen 3 out of its group",
+            "topic": "group"
+        },
+        {
+            "text": "secure the big screen so the kids in the booth cant mess with it",
+            "topic": "lock"
+        },
+        {
+            "text": "stage number of the big screen?",
+            "topic": "stage"
+        },
+        {
+            "text": "Uncheck every screen except the main projector",
+            "topic": "select"
+        },
+        {
+            "text": "the old background is still sitting on the right screen, get rid of it",
+            "topic": "clear"
+        },
+        {
+            "text": "put the right screen's bible styling back to the default look",
+            "topic": "style"
+        },
+        {
+            "text": "which translations is screen 2 showing",
+            "topic": "versions"
+        },
+        {
+            "text": "NIV keeps running a verse ahead of KJV on the confidence monitor",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the background zooms in every time it changes on the right screen, stop that",
+            "topic": "transition"
+        },
+        {
+            "text": "after plugging in the new cable the big screen went to the wrong TV",
+            "topic": "display"
+        },
+        {
+            "text": "the balcony screen should always copy whatever the main projector has",
+            "topic": "group"
+        },
+        {
+            "text": "protect the right screen from accidental changes",
+            "topic": "lock"
+        },
+        {
+            "text": "give the stage monitor stage number 4",
+            "topic": "stage"
+        },
+        {
+            "text": "include the overflow room TV in the screens I'm sending to",
+            "topic": "select"
+        },
+        {
+            "text": "empty all layers on the confidence monitor",
+            "topic": "clear"
+        }
+    ],
+    "E": [
+        {
+            "text": "the scripture on screen 1 looks washed out, can we make it bold",
+            "topic": "style"
+        },
+        {
+            "text": "sorry, total beginner here, how do I make the bible text bigger on the projector?",
+            "topic": "howto"
+        },
+        {
+            "text": "add the NIV next to the KJV on screen 1",
+            "topic": "versions"
+        },
+        {
+            "text": "turn the projector on please",
+            "topic": "show_hide"
+        },
+        {
+            "text": "turn on line sync for screen 3",
+            "topic": "lineSync"
+        },
+        {
+            "text": "put John 3:16 on the projector, KJV is fine",
+            "topic": "present"
+        },
+        {
+            "text": "set the slide transition on screen 1 to fade",
+            "topic": "transition"
+        },
+        {
+            "text": "put a five minute countdown on the projector",
+            "topic": "foreground"
+        },
+        {
+            "text": "help, screen 1 is showing on my laptop instead of the TV",
+            "topic": "display"
+        },
+        {
+            "text": "fix the typo in the second verse of Amazing Grace",
+            "topic": "song_slide"
+        },
+        {
+            "text": "group screen 1 and screen 2 together",
+            "topic": "group"
+        },
+        {
+            "text": "highlight John 3:16 in the reader",
+            "topic": "reader"
+        },
+        {
+            "text": "lock screen 1",
+            "topic": "lock"
+        },
+        {
+            "text": "put the app itself in dark mode, the white glare at the sound desk is brutal",
+            "topic": "app"
+        },
+        {
+            "text": "what stage number is screen 1?",
+            "topic": "stage"
+        },
+        {
+            "text": "good morning! first time on the projector team today",
+            "topic": "other"
+        },
+        {
+            "text": "hi sorry, could you select all the screens for me?",
+            "topic": "select"
+        },
+        {
+            "text": "clear screen 2",
+            "topic": "clear"
+        },
+        {
+            "text": "quick take teh verse off the projector",
+            "topic": "clear"
+        },
+        {
+            "text": "thanks, the screens look great now",
+            "topic": "other"
+        },
+        {
+            "text": "only send to screen 2 from now on",
+            "topic": "select"
+        },
+        {
+            "text": "all the app's text is in another language now, change it back to English",
+            "topic": "app"
+        },
+        {
+            "text": "set the confidence monitor's stage number to 2",
+            "topic": "stage"
+        },
+        {
+            "text": "search the bible reader for living water",
+            "topic": "reader"
+        },
+        {
+            "text": "nobody should be able to bump the stage monitor during the sermon, lock it",
+            "topic": "lock"
+        },
+        {
+            "text": "in the slide editor make the title on slide 3 bigger",
+            "topic": "song_slide"
+        },
+        {
+            "text": "make the side screens show the same thing",
+            "topic": "group"
+        },
+        {
+            "text": "show the clock on the stage monitor",
+            "topic": "foreground"
+        },
+        {
+            "text": "move the stage monitor output to the second HDMI port",
+            "topic": "display"
+        },
+        {
+            "text": "show Psalm 23 on screen two",
+            "topic": "present"
+        },
+        {
+            "text": "no transition on the projector please, the slides should just snap over",
+            "topic": "transition"
+        },
+        {
+            "text": "hide screen 1 for a minute",
+            "topic": "show_hide"
+        },
+        {
+            "text": "the KJV and NIV on the projector are out of step, line them up verse by verse",
+            "topic": "lineSync"
+        },
+        {
+            "text": "wheres the button for adding a second translation to a screen?",
+            "topic": "howto"
+        },
+        {
+            "text": "which bible versions are on the projector right now?",
+            "topic": "versions"
+        },
+        {
+            "text": "Could you kindly make the Bible text larger on the main screen? My eyes are not what they were.",
+            "topic": "style"
+        },
+        {
+            "text": "swap the ESV out for the NLT on screen 3",
+            "topic": "versions"
+        },
+        {
+            "text": "folks in the back cant read the verse on the big screen",
+            "topic": "style"
+        },
+        {
+            "text": "is anything showing on the big screen right now?",
+            "topic": "show_hide"
+        },
+        {
+            "text": "make the background crossfade on the right screen slower, like two seconds",
+            "topic": "transition"
+        },
+        {
+            "text": "switch off line sync on the left screen",
+            "topic": "lineSync"
+        },
+        {
+            "text": "start a stopwatch on the confidence monitor for the sermon",
+            "topic": "foreground"
+        },
+        {
+            "text": "throw the next song up on the big screen",
+            "topic": "present"
+        },
+        {
+            "text": "ungroup the stage monitor from the main projector",
+            "topic": "group"
+        },
+        {
+            "text": "what displays are hooked up right now?",
+            "topic": "display"
+        },
+        {
+            "text": "compare KJV and NIV side by side in the reader",
+            "topic": "reader"
+        },
+        {
+            "text": "set this slide's own transition to zoom in the editor",
+            "topic": "song_slide"
+        },
+        {
+            "text": "change screen two to stage 1",
+            "topic": "stage"
+        },
+        {
+            "text": "unlock the projecter, I cant change anything on it",
+            "topic": "lock"
+        },
+        {
+            "text": "is the KJV more accurate than the NIV?",
+            "topic": "other"
+        },
+        {
+            "text": "the menus and buttons are tiny, make the apps own font bigger, not the screens",
+            "topic": "app"
+        },
+        {
+            "text": "remove the background from the main screen but keep the words up",
+            "topic": "clear"
+        },
+        {
+            "text": "untick the overflow room TV, it shouldnt get the verses",
+            "topic": "select"
+        },
+        {
+            "text": "can I lock a screen so it doesnt get changed by mistake?",
+            "topic": "howto"
+        },
+        {
+            "text": "what does line sync do and where do I switch it on?",
+            "topic": "howto"
+        },
+        {
+            "text": "is screen two locked?",
+            "topic": "lock"
+        },
+        {
+            "text": "put a black outline round the passage on the side screens, the letters vanish on the light background",
+            "topic": "style"
+        },
+        {
+            "text": "add the stage monitor to the selected screens",
+            "topic": "select"
+        },
+        {
+            "text": "drop the NKJV from the side screens, KJV alone is fine",
+            "topic": "versions"
+        },
+        {
+            "text": "wipe everything off every screen",
+            "topic": "clear"
+        },
+        {
+            "text": "hold both translations on screen one in step, line for line",
+            "topic": "lineSync"
+        },
+        {
+            "text": "please pray for our media team, first service with the new screens on sunday",
+            "topic": "other"
+        },
+        {
+            "text": "the zoom effect between slides on the side screens makes people dizzy lol, switch it to a dissolve",
+            "topic": "transition"
+        },
+        {
+            "text": "where does the app keep its data folder? want to move it to the D drive",
+            "topic": "app"
+        },
+        {
+            "text": "route screen two to the projector output instead of the confidence monitor",
+            "topic": "display"
+        },
+        {
+            "text": "add a note on Romans 8:28 for my sermon",
+            "topic": "reader"
+        },
+        {
+            "text": "link the foyer TV to screen 0 so it follows along",
+            "topic": "group"
+        },
+        {
+            "text": "the chorus of 10,000 Reasons is missing a line, add it to the song",
+            "topic": "song_slide"
+        },
+        {
+            "text": "the stage monitor should be stage 3 not stage 0",
+            "topic": "stage"
+        },
+        {
+            "text": "scroll 'parking lot B is full' across the bottom of the foyer TV",
+            "topic": "foreground"
+        },
+        {
+            "text": "display the welcome slide on the foyer TV",
+            "topic": "present"
+        },
+        {
+            "text": "the stage monitor window disappeared, show it again",
+            "topic": "show_hide"
+        },
+        {
+            "text": "linesync the two versions on scr 2",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the big screen came up on the wrong monitior again",
+            "topic": "display"
+        },
+        {
+            "text": "where do I pick which monitor each screen goes out to",
+            "topic": "howto"
+        },
+        {
+            "text": "ngl the bible font on screen two is ugly, switch it to something plainer like Arial",
+            "topic": "style"
+        },
+        {
+            "text": "my ESV download is stuck at 40 percent",
+            "topic": "app"
+        },
+        {
+            "text": "I need a banner over the verse on screen 1 saying kids go to class now",
+            "topic": "foreground"
+        },
+        {
+            "text": "get rid of the countdown overlay on the stage monitor",
+            "topic": "clear"
+        },
+        {
+            "text": "pastor wants a third translation on the stage monitor too, the Amplified",
+            "topic": "versions"
+        },
+        {
+            "text": "shut off the foyer tv screen, service is over",
+            "topic": "show_hide"
+        },
+        {
+            "text": "Which stage is the foyer television set to?",
+            "topic": "stage"
+        },
+        {
+            "text": "move the text box on the welcome slide down a bit",
+            "topic": "song_slide"
+        },
+        {
+            "text": "present to the projector and the side screens only",
+            "topic": "select"
+        },
+        {
+            "text": "who wrote the book of Hebrews?",
+            "topic": "other"
+        },
+        {
+            "text": "give screen two a zoom when the background changes",
+            "topic": "transition"
+        },
+        {
+            "text": "play the baptism video on the side screens",
+            "topic": "present"
+        },
+        {
+            "text": "lock foyer tv asap",
+            "topic": "lock"
+        },
+        {
+            "text": "pull up the cross references for Psalm 119:105",
+            "topic": "reader"
+        },
+        {
+            "text": "unlink screen two, it needs to do its own thing now",
+            "topic": "group"
+        },
+        {
+            "text": "mirror the big screen onto the back wall",
+            "topic": "group"
+        },
+        {
+            "text": "change my highlight on Psalm 23 from yellow to green",
+            "topic": "reader"
+        },
+        {
+            "text": "deselect screen zero",
+            "topic": "select"
+        },
+        {
+            "text": "can you get the church logo picture up on screen 0",
+            "topic": "present"
+        },
+        {
+            "text": "the big screen ignores everything I click, did someone lock it?",
+            "topic": "lock"
+        },
+        {
+            "text": "put the side screens on stage number two",
+            "topic": "stage"
+        },
+        {
+            "text": "add a blank slide after slide 4 in this sundays sermon deck",
+            "topic": "song_slide"
+        },
+        {
+            "text": "left-align Psalm 1 on the TV, centered looks odd with the long verses",
+            "topic": "style"
+        },
+        {
+            "text": "what size TV should our church buy for the foyer?",
+            "topic": "other"
+        },
+        {
+            "text": "which monitor is screen 0 assigned to?",
+            "topic": "display"
+        },
+        {
+            "text": "check for updates, im on an old version",
+            "topic": "app"
+        },
+        {
+            "text": "strip just the bible text off screen two, leave the slide",
+            "topic": "clear"
+        },
+        {
+            "text": "how do I choose which screens get the verse when I present",
+            "topic": "howto"
+        },
+        {
+            "text": "whats the transtion time on the stage monitor?",
+            "topic": "transition"
+        },
+        {
+            "text": "bring screen two back up",
+            "topic": "show_hide"
+        },
+        {
+            "text": "screen two needs a second verison beside the passage, NASB please",
+            "topic": "versions"
+        },
+        {
+            "text": "count down to 10:30 on the big screen before service",
+            "topic": "foreground"
+        },
+        {
+            "text": "ESV is a verse ahead of the KJV on the stage monitor, make them match",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the slide changes on the TV are too slow, speed up the animation",
+            "topic": "transition"
+        },
+        {
+            "text": "um the old slide is still sitting on the foyer tv, can you clean that off?",
+            "topic": "clear"
+        },
+        {
+            "text": "the TV has The Message paraphrase on it, switch that to the ESV",
+            "topic": "versions"
+        },
+        {
+            "text": "protect the confidence monitor from changes until the service ends",
+            "topic": "lock"
+        },
+        {
+            "text": "reset the stage monitor's bible styling to the default look",
+            "topic": "style"
+        },
+        {
+            "text": "screen three should copy screen one",
+            "topic": "group"
+        },
+        {
+            "text": "give the big screen stage 0",
+            "topic": "stage"
+        },
+        {
+            "text": "the long verses look weird synced up on the TV, disable line sync there",
+            "topic": "lineSync"
+        },
+        {
+            "text": "which screens are ticked right now?",
+            "topic": "select"
+        },
+        {
+            "text": "what resolution is the right screen's display running at?",
+            "topic": "display"
+        },
+        {
+            "text": "just plugged a new TV in the lobby, point screen 3 at it",
+            "topic": "display"
+        },
+        {
+            "text": "the verse lines on screen 0 are spaced way to far apart",
+            "topic": "style"
+        },
+        {
+            "text": "projector has the wrong stage number, make it 4",
+            "topic": "stage"
+        },
+        {
+            "text": "the back wall keeps getting everything I put up, leave it out of the selection",
+            "topic": "select"
+        },
+        {
+            "text": "left and right screens should always match, tie them together",
+            "topic": "group"
+        },
+        {
+            "text": "nuke all the layers on screen 0",
+            "topic": "clear"
+        },
+        {
+            "text": "is line sync on for the main screen?",
+            "topic": "lineSync"
+        },
+        {
+            "text": "hard cut instead of fading when the background swaps on the back wall",
+            "topic": "transition"
+        },
+        {
+            "text": "one translation is plenty for the confidence monitor, remove the extra one",
+            "topic": "versions"
+        },
+        {
+            "text": "screen zero is locked, free it up",
+            "topic": "lock"
+        },
+        {
+            "text": "keep the side screens locked while the kids mess with the laptop",
+            "topic": "lock"
+        },
+        {
+            "text": "is the foyer tv still KJV only or did someone add the NIV",
+            "topic": "versions"
+        },
+        {
+            "text": "pull the background video off the back wall",
+            "topic": "clear"
+        },
+        {
+            "text": "keep the two bibles on the back wall lined up verse for verse",
+            "topic": "lineSync"
+        },
+        {
+            "text": "the projector feed keeps landing on the pastors desk monitor, switch it to the epson",
+            "topic": "display"
+        },
+        {
+            "text": "check the boxes for screen 1 and 3, leave the rest unchecked",
+            "topic": "select"
+        },
+        {
+            "text": "half second fade for slides on the foyer tv",
+            "topic": "transition"
+        },
+        {
+            "text": "yo can the bible verses be yellow on the foyer tv instead of white",
+            "topic": "style"
+        },
+        {
+            "text": "can you tell me the stage # of the back wall",
+            "topic": "stage"
+        },
+        {
+            "text": "bruh the TVs are grouped and I need different stuff on each, split them up",
+            "topic": "group"
+        },
+        {
+            "text": "everything should go to every screen except the confidence monitor",
+            "topic": "select"
+        },
+        {
+            "text": "is the confidence monitor grouped with anything?",
+            "topic": "group"
+        },
+        {
+            "text": "the KJV text runs right into the edge of the back wall, give it a margin",
+            "topic": "style"
+        },
+        {
+            "text": "what transition is screen 0 using right now",
+            "topic": "transition"
+        },
+        {
+            "text": "empty the left screen completely",
+            "topic": "clear"
+        },
+        {
+            "text": "take the lock off the back wall",
+            "topic": "lock"
+        },
+        {
+            "text": "I need the King James and the NLT together on the main screen",
+            "topic": "versions"
+        },
+        {
+            "text": "does the app see the second display? cables in",
+            "topic": "display"
+        },
+        {
+            "text": "bump screen 3's stage up by one",
+            "topic": "stage"
+        },
+        {
+            "text": "versions on the confidence monitor dont line up with each other, sync em",
+            "topic": "lineSync"
+        }
+    ]
+}

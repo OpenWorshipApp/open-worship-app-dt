@@ -136,6 +136,12 @@ export type AgentFileRequestType = {
     name?: string;
     newName?: string;
     content?: string;
+    /**
+     * `create` of a song only: the face every stage draws it in, kept in the
+     * song's own stage setting -- a song made from a PowerPoint keeps the
+     * font its slides were set in.
+     */
+    fontFamily?: unknown;
     slide?: unknown;
     to?: unknown;
     items?: unknown;
@@ -218,6 +224,7 @@ type AgentFileKindType = {
         dirPath: string,
         name: string,
         content: string,
+        options?: { fontFamily?: unknown },
     ) => Promise<FileSource | null>;
     /** Into the editing history — never a save. */
     update: (filePath: string, content: string) => Promise<string | null>;
@@ -550,9 +557,16 @@ export const AGENT_FILE_KIND_MAP: Record<
         mimetypeName: 'lyric',
         label: 'song',
         checkContent: checkLyricContent,
-        create: async (dirPath, name, content) => {
+        create: async (dirPath, name, content, { fontFamily } = {}) => {
             const Lyric = await getLyricClass();
-            return await Lyric.createWithContent(dirPath, name, content);
+            // Checked again here, at the disk: a font name is written into
+            // CSS (`toValidLyricStageSetting` keeps what a family name is
+            // made of, or nothing).
+            return typeof fontFamily === 'string'
+                ? await Lyric.createWithContent(dirPath, name, content, {
+                      fontFamily,
+                  })
+                : await Lyric.createWithContent(dirPath, name, content);
         },
         update: async (filePath, content) => {
             const Lyric = await getLyricClass();
@@ -821,6 +835,7 @@ async function handleCreate(
     content: string,
     kind: AgentFileKindType,
     kindName: AgentFileKindNameType,
+    fontFamily: unknown = undefined,
 ) {
     const filePath = toFilePath(dirPath, name, kind);
     if (filePath === null) {
@@ -850,7 +865,9 @@ async function handleCreate(
             `Made the ${kind.label} “${name}”`,
             [{ type: 'file', filePath, text: null, kind: kindName }],
             async () => {
-                const created = await kind.create(dirPath, name, content);
+                const created = await kind.create(dirPath, name, content, {
+                    fontFamily,
+                });
                 if (created === null) {
                     throw new Error(`The ${kind.label} could not be created.`);
                 }
@@ -1653,7 +1670,14 @@ export async function handleAgentFileRequest(
                 return fail(contentReason);
             }
             return action === 'create'
-                ? await handleCreate(dirPath, safeName, content, kind, kindName)
+                ? await handleCreate(
+                      dirPath,
+                      safeName,
+                      content,
+                      kind,
+                      kindName,
+                      request.fontFamily,
+                  )
                 : await handleUpdate(
                       dirPath,
                       safeName,

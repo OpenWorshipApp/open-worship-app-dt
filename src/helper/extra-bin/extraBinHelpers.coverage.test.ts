@@ -34,10 +34,6 @@ vi.mock('../../server/appProvider', () => ({
         },
     },
 }));
-vi.mock('../../lang/langHelpers', () => ({ tran: (text: string) => text }));
-vi.mock('../../popup-widget/popupWidgetHelpers', () => ({
-    showAppConfirm: async () => false,
-}));
 vi.mock('../../server/fileHelpers', () => ({
     ensureDirectory: h.ensureDirectory,
     fsCheckFileExist: h.fsCheckFileExist,

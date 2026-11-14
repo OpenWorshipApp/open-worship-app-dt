@@ -51,6 +51,10 @@ vi.mock('../server/fileHelpers', () => {
     };
 });
 
+// No Bible Notes folder set: these name Resources files alone (EC-509).
+vi.mock('../bible-list/note/bibleNotesDirHelpers', () => {
+    return { getActiveBibleNotesDirPath: () => null };
+});
 vi.mock('../resources/resourcesFolderHelpers', () => {
     return {
         getResourcesFolderList: () => h.getResourcesFolderList(),
@@ -537,8 +541,8 @@ describe('genAttachmentFromPath', () => {
     });
 
     it('refuses a kind it cannot read by name, without reading it', async () => {
-        expect(await genAttachmentFromPath('/docs/Sermon.docx')).toEqual({
-            failure: 'I cannot read Sermon.docx — try a picture of it instead.',
+        expect(await genAttachmentFromPath('/docs/Sermon.doc')).toEqual({
+            failure: 'I cannot read Sermon.doc — try a picture of it instead.',
         });
         expect(await genAttachmentFromPath('/pics/logo.svg')).toEqual({
             failure: 'I cannot read logo.svg — try a picture of it instead.',

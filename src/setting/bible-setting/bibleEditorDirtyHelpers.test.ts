@@ -55,7 +55,7 @@ describe('bibleEditorDirtyHelpers', () => {
         markDirty('KJV', 'bible-info', true);
         markDirty('KJV', 'bible-extra', true);
         expect(checkIsBibleKeyDirty('KJV')).toBe(true);
-        expect(checkIsBibleKeyDirty('KSV')).toBe(false);
+        expect(checkIsBibleKeyDirty('TQVS')).toBe(false);
 
         setBibleEditorDirty('KJV', 'bible-info', false);
         expect(checkIsBibleKeyDirty('KJV')).toBe(true);
@@ -65,8 +65,8 @@ describe('bibleEditorDirtyHelpers', () => {
     });
 
     test('clearing an editor that was never dirty changes nothing', () => {
-        setBibleEditorDirty('KSV', 'bible-info', false);
-        expect(checkIsBibleKeyDirty('KSV')).toBe(false);
+        setBibleEditorDirty('TQVS', 'bible-info', false);
+        expect(checkIsBibleKeyDirty('TQVS')).toBe(false);
         expect(warnIfAnyBibleEditorDirty('anything')).toBe(false);
     });
 
@@ -114,9 +114,9 @@ describe('bibleEditorDirtyHelpers', () => {
         expect(warnIfBibleKeyDirty('KJV', 'Save first.')).toBe(false);
         expect(showSimpleToastMock).not.toHaveBeenCalled();
 
-        markDirty('KSV', 'bible-info', true);
+        markDirty('TQVS', 'bible-info', true);
         expect(warnIfBibleKeyDirty('KJV', 'Save first.')).toBe(false);
-        expect(warnIfBibleKeyDirty('KSV', 'Save first.')).toBe(true);
+        expect(warnIfBibleKeyDirty('TQVS', 'Save first.')).toBe(true);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             't(Unsaved Bible Data)',
             't(Save first.)',
@@ -128,7 +128,7 @@ describe('bibleEditorDirtyHelpers', () => {
             false,
         );
 
-        markDirty('KSV', 'book-chapter', true);
+        markDirty('TQVS', 'book-chapter', true);
 
         expect(warnIfAnyBibleEditorDirty('Save before refreshing.')).toBe(true);
         expect(showSimpleToastMock).toHaveBeenCalledWith(

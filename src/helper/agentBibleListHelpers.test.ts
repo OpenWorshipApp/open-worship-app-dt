@@ -68,15 +68,15 @@ vi.mock('../bible-list/Bible', () => ({
 vi.mock('./agentBibleHelpers', () => ({
     MAX_REFERENCE_LENGTH: 60,
     resolveVersionOrder: async (version: string | null) => {
-        if (version !== null && !['KJV', 'KH'].includes(version)) {
+        if (version !== null && !['KJV', 'TQAH'].includes(version)) {
             return {
                 reason: `There is no version "${version}".`,
-                versions: ['KJV', 'KH'],
+                versions: ['KJV', 'TQAH'],
             };
         }
         return {
-            order: version === null ? ['KJV', 'KH'] : [version],
-            installed: ['KJV', 'KH'],
+            order: version === null ? ['KJV', 'TQAH'] : [version],
+            installed: ['KJV', 'TQAH'],
         };
     },
     resolveBibleItem: mocks.resolveBibleItem,
@@ -123,7 +123,10 @@ vi.mock('./agentBackupHelpers', () => ({
 }));
 
 import { NoBackupError } from './agentBackupHelpers';
-import { handleAgentBibleListRequest } from './agentBibleListHelpers';
+import {
+    handleAgentBibleListRequest,
+    saveAgentBibleItemFirst,
+} from './agentBibleListHelpers';
 
 function genPassage(id: number, title: string, fields: object = {}) {
     return {
@@ -300,18 +303,18 @@ describe('add', () => {
         ],
         [
             { reference: 'John 3:16', version: 'NIV' },
-            'There is no version "NIV". Installed versions: KJV, KH.',
+            'There is no version "NIV". Installed versions: KJV, TQAH.',
         ],
         [
             { reference: 'Hezekiah 3:1' },
             '"Hezekiah 3:1" could not be read as a passage in any installed ' +
                 "version. Write it as the version's full book name, chapter " +
                 'and verse -- "John 3:16", "Psalm 23:1-6" -- or a whole ' +
-                'chapter as "Psalm 23". Installed versions: KJV, KH.',
+                'chapter as "Psalm 23". Installed versions: KJV, TQAH.',
         ],
         [
-            { reference: 'Hezekiah 3:1', version: 'KH' },
-            expect.stringContaining('could not be read as a passage in KH.'),
+            { reference: 'Hezekiah 3:1', version: 'TQAH' },
+            expect.stringContaining('could not be read as a passage in TQAH.'),
         ],
         [
             { reference: 'John 3:16', list: 'Easter' },
@@ -455,7 +458,7 @@ describe('update', () => {
         ],
         [
             { id: 5, version: 'NIV' },
-            'There is no version "NIV". Installed versions: KJV, KH.',
+            'There is no version "NIV". Installed versions: KJV, TQAH.',
         ],
         [
             { id: 5, reference: 'Hezekiah 3:1' },
@@ -472,7 +475,7 @@ describe('update', () => {
     test('an empty list says so', async () => {
         state.lists = { '/bibles/Default.owb': genList([]) };
         await expect(
-            request({ action: 'update', id: 1, version: 'KH' }),
+            request({ action: 'update', id: 1, version: 'TQAH' }),
         ).resolves.toMatchObject({
             reason: expect.stringContaining(
                 'has no passage with the id 1. It is empty.',
@@ -481,8 +484,8 @@ describe('update', () => {
     });
 
     test('the same passage in another version: what it IS changes, its id and settings stay', async () => {
-        const khmer = genPassage(0, '(KH) [xx] John 3:16', {
-            bibleKey: 'KH',
+        const otherVersion = genPassage(0, '(TQAH) [xx] John 3:16', {
+            bibleKey: 'TQAH',
             target: {
                 bookKey: 'JHN',
                 chapter: 3,
@@ -490,12 +493,12 @@ describe('update', () => {
                 verseEnd: 16,
             },
         });
-        mocks.fromVerseKey.mockResolvedValue(khmer);
+        mocks.fromVerseKey.mockResolvedValue(otherVersion);
         await expect(
-            request({ action: 'update', id: 5, version: 'KH' }),
+            request({ action: 'update', id: 5, version: 'TQAH' }),
         ).resolves.toEqual({
             where: 'Presenter',
-            updated: '(KH) [xx] John 3:16',
+            updated: '(TQAH) [xx] John 3:16',
             was: '(KJV) John 3:16',
             list: 'Default',
             id: 5,
@@ -503,10 +506,10 @@ describe('update', () => {
         });
         // Read by its language-neutral key, so the book name need not be
         // one the other version knows.
-        expect(mocks.fromVerseKey).toHaveBeenCalledWith('KH', 'JHN 3:16');
+        expect(mocks.fromVerseKey).toHaveBeenCalledWith('TQAH', 'JHN 3:16');
         expect(mocks.runWithAgentBackup).toHaveBeenCalledWith(
             'Changed “(KJV) John 3:16” in the Bibles list “Default” to ' +
-                '“(KH) [xx] John 3:16”',
+                '“(TQAH) [xx] John 3:16”',
             [expect.objectContaining({ filePath: '/bibles/Default.owb' })],
             expect.any(Function),
         );
@@ -514,8 +517,8 @@ describe('update', () => {
             5,
             expect.objectContaining({
                 id: 5,
-                bibleKey: 'KH',
-                target: khmer.target,
+                bibleKey: 'TQAH',
+                target: otherVersion.target,
                 isAudioEnabled: true,
                 extraBibleKeys: ['KJV'],
             }),
@@ -526,23 +529,23 @@ describe('update', () => {
     test('a passage the other version cannot read is not changed', async () => {
         mocks.fromVerseKey.mockResolvedValue(null);
         await expect(
-            request({ action: 'update', id: 5, version: 'KH' }),
+            request({ action: 'update', id: 5, version: 'TQAH' }),
         ).resolves.toEqual({
             isError: true,
             reason:
-                '(KJV) John 3:16 could not be read in KH, so it was not ' +
+                '(KJV) John 3:16 could not be read in TQAH, so it was not ' +
                 'changed.',
         });
         expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
     });
 
     test('a new reference with no version is read in the passage’s own version first', async () => {
-        list.items[0].bibleKey = 'KH';
+        list.items[0].bibleKey = 'TQAH';
         await request({ action: 'update', id: 5, reference: 'John 3:17' });
         expect(mocks.resolveBibleItem).toHaveBeenCalledWith('John 3:17', [
-            'KH',
+            'TQAH',
             'KJV',
-            'KH',
+            'TQAH',
         ]);
     });
 
@@ -852,5 +855,98 @@ describe('whole lists', () => {
         });
         expect(mocks.snapshotAgentFileForDelete).not.toHaveBeenCalled();
         expect(mocks.handleError).toHaveBeenCalledOnce();
+    });
+});
+
+// 2026-11-14, EC-704, the user: _the rule is bible verse have to save to list
+// first (if not added) before show on screen_.
+describe('saved into the Bibles list before it is shown', () => {
+    const withTarget = (item: any) => {
+        return {
+            ...item,
+            checkIsTargetIdentical: (other: any) => {
+                return (
+                    JSON.stringify(item.target) === JSON.stringify(other.target)
+                );
+            },
+        };
+    };
+
+    test('a passage the Default list holds is not saved twice', async () => {
+        const list = genList([withTarget(genPassage(4, '(KJV) John 3:16'))]);
+        state.lists = { '/bibles/Default.owb': list };
+        await expect(saveAgentBibleItemFirst(JOHN)).resolves.toEqual({
+            list: 'Default',
+            isNew: false,
+            id: 4,
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        expect(list.save).not.toHaveBeenCalled();
+    });
+
+    test('another version or verse is saved, backed up for its undo', async () => {
+        const list = genList([
+            withTarget(genPassage(1, '(TQAH) John 3:16', { bibleKey: 'TQAH' })),
+            withTarget(
+                genPassage(2, '(KJV) John 3:17', {
+                    target: {
+                        bookKey: 'JHN',
+                        chapter: 3,
+                        verseStart: 17,
+                        verseEnd: 17,
+                    },
+                }),
+            ),
+        ]);
+        state.lists = { '/bibles/Default.owb': list };
+        await expect(saveAgentBibleItemFirst(JOHN)).resolves.toEqual({
+            list: 'Default',
+            isNew: true,
+            id: 3,
+            undoId: 'undo-1',
+        });
+        expect(mocks.runWithAgentBackup).toHaveBeenCalledWith(
+            'Saved “(KJV) John 3:16” to the Bibles list “Default”',
+            [
+                {
+                    type: 'file',
+                    filePath: '/bibles/Default.owb',
+                    text: 'the list as saved',
+                },
+            ],
+            expect.any(Function),
+        );
+        expect(list.addBibleItem).toHaveBeenCalledWith(JOHN);
+        expect(list.save).toHaveBeenCalled();
+    });
+
+    test('into a Default list made on the way', async () => {
+        const made = genList([]);
+        mocks.getDefault.mockResolvedValue(made);
+        await expect(saveAgentBibleItemFirst(JOHN)).resolves.toMatchObject({
+            list: 'Default',
+            isNew: true,
+            undoId: 'undo-1',
+        });
+        expect(made.addBibleItem).toHaveBeenCalledWith(JOHN);
+    });
+
+    test('no Bibles folder, no backup: refused, nothing saved', async () => {
+        state.dirs = {};
+        await expect(saveAgentBibleItemFirst(JOHN)).resolves.toEqual({
+            isError: true,
+            reason:
+                'No Bibles folder is set up for the Presenter yet. The user ' +
+                'chooses one in Settings under Path Settings.',
+        });
+        state.dirs = { 'presenter-bibles': '/bibles' };
+        const list = genList([]);
+        state.lists = { '/bibles/Default.owb': list };
+        mocks.snapshotAgentFile.mockRejectedValueOnce(new Error('disk full'));
+        await expect(saveAgentBibleItemFirst(JOHN)).resolves.toEqual({
+            isError: true,
+            reason: 'Nothing was changed: no backup (disk full).',
+        });
+        expect(list.save).not.toHaveBeenCalled();
     });
 });

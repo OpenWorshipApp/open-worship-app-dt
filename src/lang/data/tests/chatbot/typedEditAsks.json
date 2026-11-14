@@ -1,0 +1,592 @@
+{
+    "af": {
+        "folder": "af",
+        "larger": "maak die teks groter",
+        "smaller": "maak die teks kleiner",
+        "bold": "maak al die teks vet",
+        "firstLineBold": "Maak die eerste reël vet"
+    },
+    "am": {
+        "folder": "am",
+        "larger": "ጽሑፉን ትልቅ አድርግ",
+        "smaller": "ጽሑፉን ትንሽ አድርግ",
+        "bold": "ሁሉንም ጽሑፍ ደማቅ አድርግ",
+        "firstLineBold": "የመጀመሪያውን መስመር ደማቅ አድርግ"
+    },
+    "ar": {
+        "folder": "ar",
+        "larger": "كبر النص",
+        "smaller": "صغر النص",
+        "bold": "اجعل كل النص عريضا",
+        "firstLineBold": "اجعل السطر الأول عريضا"
+    },
+    "az": {
+        "folder": "az",
+        "larger": "mətni böyüt",
+        "smaller": "mətni kiçilt",
+        "bold": "bütün mətni qalın et",
+        "firstLineBold": "Birinci sətri qalın et"
+    },
+    "be": {
+        "folder": "be",
+        "larger": "павялічы тэкст",
+        "smaller": "паменшы тэкст",
+        "bold": "зрабі ўвесь тэкст тоўстым",
+        "firstLineBold": "Зрабі першы радок тоўстым"
+    },
+    "bg": {
+        "folder": "bg",
+        "larger": "увеличи текста",
+        "smaller": "намали текста",
+        "bold": "направи целия текст удебелен",
+        "firstLineBold": "Направи първия ред удебелен"
+    },
+    "bn": {
+        "folder": "bn",
+        "larger": "লেখা বড় করো",
+        "smaller": "লেখা ছোট করো",
+        "bold": "সব লেখা বোল্ড করো",
+        "firstLineBold": "প্রথম লাইনটি বোল্ড করো"
+    },
+    "bo": {
+        "folder": "bo",
+        "larger": "ཡི་གེ་ཆེ་རུ་གཏོང་",
+        "smaller": "ཡི་གེ་ཆུང་རུ་གཏོང་",
+        "firstLineBold": "ཕྲེང་དང་པོ་ bold བཟོ"
+    },
+    "ca": {
+        "folder": "ca",
+        "larger": "fes el text més gran",
+        "smaller": "fes el text més petit",
+        "bold": "posa tot el text en negreta",
+        "firstLineBold": "Posa la primera línia en negreta"
+    },
+    "ceb": {
+        "folder": "ceb",
+        "larger": "padakoa ang teksto",
+        "smaller": "pagamya ang teksto",
+        "bold": "himoa nga bold ang tanan nga teksto",
+        "firstLineBold": "Himoa nga bold ang unang linya"
+    },
+    "cs": {
+        "folder": "cs",
+        "larger": "zvětši text",
+        "smaller": "zmenši text",
+        "bold": "udělej celý text tučně",
+        "firstLineBold": "Udělej první řádek tučně"
+    },
+    "da": {
+        "folder": "da",
+        "larger": "gør teksten større",
+        "smaller": "gør teksten mindre",
+        "bold": "gør al teksten fed",
+        "firstLineBold": "Gør den første linje fed"
+    },
+    "de": {
+        "folder": "de",
+        "larger": "mach den text größer",
+        "smaller": "mach den text kleiner",
+        "bold": "mach den ganzen text fett",
+        "firstLineBold": "Mach die erste Zeile fett"
+    },
+    "el": {
+        "folder": "el",
+        "larger": "μεγάλωσε το κείμενο",
+        "smaller": "μίκρυνε το κείμενο",
+        "bold": "κάνε όλο το κείμενο έντονο",
+        "firstLineBold": "Κάνε την πρώτη γραμμή έντονη"
+    },
+    "es": {
+        "folder": "es",
+        "larger": "haz el texto más grande",
+        "smaller": "haz el texto más pequeño",
+        "bold": "pon todo el texto en negrita",
+        "firstLineBold": "Pon la primera línea en negrita"
+    },
+    "et": {
+        "folder": "et",
+        "larger": "suurenda teksti",
+        "smaller": "vähenda teksti",
+        "bold": "tee kogu tekst paksuks",
+        "firstLineBold": "Tee esimene rida paksuks"
+    },
+    "fa": {
+        "folder": "fa",
+        "larger": "متن را بزرگتر کن",
+        "smaller": "متن را کوچکتر کن",
+        "bold": "همه متن را بولد کن",
+        "firstLineBold": "خط اول را پررنگ کن"
+    },
+    "fi": {
+        "folder": "fi",
+        "larger": "suurenna tekstiä",
+        "smaller": "pienennä tekstiä",
+        "bold": "lihavoi koko teksti",
+        "firstLineBold": "Lihavoi ensimmäinen rivi"
+    },
+    "fil=tl": {
+        "folder": "fil",
+        "larger": "palakihin ang teksto",
+        "smaller": "paliitin ang teksto",
+        "bold": "gawing bold ang lahat ng teksto",
+        "firstLineBold": "Gawing bold ang unang linya"
+    },
+    "fj": {
+        "folder": "fj",
+        "larger": "vakalevutaka na volavola",
+        "smaller": "vakalailaitaka na volavola",
+        "bold": "cakava me bold na volavola kece",
+        "firstLineBold": "Cakava me bold na i matai ni laini"
+    },
+    "ga": {
+        "folder": "ga",
+        "larger": "déan an téacs níos mó",
+        "smaller": "déan an téacs níos lú",
+        "bold": "cuir an téacs ar fad i gcló trom",
+        "firstLineBold": "Cuir an chéad líne i gcló trom"
+    },
+    "gl": {
+        "folder": "gl",
+        "larger": "fai o texto máis grande",
+        "smaller": "fai o texto máis pequeno",
+        "bold": "pon todo o texto en negriña",
+        "firstLineBold": "Pon a primeira liña en negra"
+    },
+    "gu": {
+        "folder": "gu",
+        "larger": "લખાણ મોટું કરો",
+        "smaller": "લખાણ નાનું કરો",
+        "bold": "બધું લખાણ બોલ્ડ કરો",
+        "firstLineBold": "પહેલી લીટી બોલ્ડ કરો"
+    },
+    "ha": {
+        "folder": "ha",
+        "larger": "ƙara girman rubutu",
+        "smaller": "rage girman rubutu",
+        "bold": "mai da dukan rubutu mai kauri",
+        "firstLineBold": "Mai da layin farko mai kauri"
+    },
+    "he": {
+        "folder": "he",
+        "larger": "הגדל את הטקסט",
+        "smaller": "הקטן את הטקסט",
+        "bold": "הדגש את כל הטקסט",
+        "firstLineBold": "הדגש את השורה הראשונה"
+    },
+    "hi": {
+        "folder": "hi",
+        "larger": "अक्षर बड़े करो",
+        "smaller": "अक्षर छोटे करो",
+        "bold": "सारा टेक्स्ट बोल्ड करो",
+        "firstLineBold": "पहली पंक्ति को बोल्ड करो"
+    },
+    "hr": {
+        "folder": "hr",
+        "larger": "povećaj tekst",
+        "smaller": "smanji tekst",
+        "bold": "podebljaj sav tekst",
+        "firstLineBold": "Podebljaj prvi redak"
+    },
+    "ht": {
+        "folder": "ht",
+        "larger": "fè tèks la pi gwo",
+        "smaller": "fè tèks la pi piti",
+        "bold": "mete tout tèks la an gra",
+        "firstLineBold": "Mete premye liy la an gra"
+    },
+    "hu": {
+        "folder": "hu",
+        "larger": "nagyítsd a szöveget",
+        "smaller": "kicsinyítsd a szöveget",
+        "bold": "legyen az egész szöveg félkövér",
+        "firstLineBold": "Legyen félkövér az első sor"
+    },
+    "hy": {
+        "folder": "hy",
+        "larger": "մեծացրու տեքստը",
+        "smaller": "փոքրացրու տեքստը",
+        "bold": "ամբողջ տեքստը թավ դարձրու",
+        "firstLineBold": "Առաջին տողը թավ դարձրու"
+    },
+    "id": {
+        "folder": "id",
+        "larger": "perbesar teks",
+        "smaller": "perkecil teks",
+        "bold": "tebalkan semua teks",
+        "firstLineBold": "Tebalkan baris pertama"
+    },
+    "ig": {
+        "folder": "ig",
+        "smaller": "mee ka mkpụrụedemede dị obere",
+        "bold": "mee ka ederede niile bụrụ bold",
+        "firstLineBold": "Mee ka ahịrị mbụ bụrụ bold"
+    },
+    "is": {
+        "folder": "is",
+        "larger": "stækkaðu textann",
+        "smaller": "minnkaðu textann",
+        "bold": "feitletraðu allan textann",
+        "firstLineBold": "Feitletraðu fyrstu línuna"
+    },
+    "it": {
+        "folder": "it",
+        "larger": "ingrandisci il testo",
+        "smaller": "rimpicciolisci il testo",
+        "bold": "metti tutto il testo in grassetto",
+        "firstLineBold": "Metti la prima riga in grassetto"
+    },
+    "ja": {
+        "folder": "ja",
+        "larger": "文字を大きくして",
+        "smaller": "文字を小さくして",
+        "bold": "全部太字にして",
+        "firstLineBold": "最初の行を太字にして"
+    },
+    "ka": {
+        "folder": "ka",
+        "larger": "გაადიდე ტექსტი",
+        "smaller": "დააპატარავე ტექსტი",
+        "firstLineBold": "პირველი ხაზი გაამუქე"
+    },
+    "kk": {
+        "folder": "kk",
+        "larger": "мәтінді үлкейт",
+        "smaller": "мәтінді кішірейт",
+        "bold": "барлық мәтінді қалың қыл",
+        "firstLineBold": "Бірінші жолды қалың қыл"
+    },
+    "kn": {
+        "folder": "kn",
+        "larger": "ಅಕ್ಷರಗಳನ್ನು ದೊಡ್ಡದು ಮಾಡಿ",
+        "smaller": "ಅಕ್ಷರಗಳನ್ನು ಚಿಕ್ಕದು ಮಾಡಿ",
+        "bold": "ಎಲ್ಲಾ ಪಠ್ಯವನ್ನು ದಪ್ಪ ಮಾಡಿ",
+        "firstLineBold": "ಮೊದಲ ಸಾಲನ್ನು ದಪ್ಪ ಮಾಡಿ"
+    },
+    "ko": {
+        "folder": "ko",
+        "larger": "글자를 크게 해 줘",
+        "smaller": "글자를 작게 해 줘",
+        "bold": "모든 글자를 굵게 해 줘",
+        "firstLineBold": "첫 번째 줄을 굵게 해 줘"
+    },
+    "lo": {
+        "folder": "lo",
+        "larger": "ເຮັດໃຫ້ຕົວໜັງສືໃຫຍ່ຂຶ້ນ",
+        "smaller": "ເຮັດໃຫ້ຕົວໜັງສືນ້ອຍລົງ",
+        "bold": "ເຮັດໃຫ້ຕົວໜັງສືທັງໝົດເປັນຕົວໜາ",
+        "firstLineBold": "ເຮັດໃຫ້ແຖວທຳອິດເປັນຕົວໜາ"
+    },
+    "lt": {
+        "folder": "lt",
+        "larger": "padidink tekstą",
+        "smaller": "sumažink tekstą",
+        "bold": "paryškink visą tekstą",
+        "firstLineBold": "Paryškink pirmą eilutę"
+    },
+    "lv": {
+        "folder": "lv",
+        "larger": "palielini tekstu",
+        "smaller": "samazini tekstu",
+        "bold": "padari visu tekstu treknu",
+        "firstLineBold": "Padari pirmo rindu treknu"
+    },
+    "mg": {
+        "folder": "mg",
+        "larger": "ataovy lehibe kokoa ny soratra",
+        "bold": "ataovy matevina ny soratra rehetra",
+        "firstLineBold": "Ataovy matevina ny andalana voalohany"
+    },
+    "mi": {
+        "folder": "mi",
+        "larger": "whakanuia ake te tuhinga",
+        "smaller": "whakaitia iho te tuhinga",
+        "bold": "kia mātotoru te tuhinga katoa",
+        "firstLineBold": "Kia mātotoru te rārangi tuatahi"
+    },
+    "mk": {
+        "folder": "mk",
+        "larger": "зголеми го текстот",
+        "smaller": "намали го текстот",
+        "bold": "направи го целиот текст задебелен",
+        "firstLineBold": "Направи го првиот ред задебелен"
+    },
+    "ml": {
+        "folder": "ml",
+        "larger": "അക്ഷരങ്ങൾ വലുതാക്കുക",
+        "smaller": "അക്ഷരങ്ങൾ ചെറുതാക്കുക",
+        "bold": "എല്ലാ ടെക്സ്റ്റും ബോൾഡ് ആക്കുക",
+        "firstLineBold": "ആദ്യ വരി ബോൾഡ് ആക്കുക"
+    },
+    "mn": {
+        "folder": "mn",
+        "larger": "текстийг томруул",
+        "smaller": "текстийг жижигрүүл",
+        "bold": "бүх текстийг тод болго",
+        "firstLineBold": "Эхний мөрийг тод болго"
+    },
+    "mr": {
+        "folder": "mr",
+        "larger": "अक्षरे मोठी करा",
+        "smaller": "अक्षरे लहान करा",
+        "bold": "सर्व मजकूर ठळक करा",
+        "firstLineBold": "पहिली ओळ ठळक करा"
+    },
+    "ms": {
+        "folder": "ms",
+        "larger": "besarkan teks",
+        "smaller": "kecilkan teks",
+        "bold": "tebalkan semua teks",
+        "firstLineBold": "Tebalkan baris pertama"
+    },
+    "my": {
+        "folder": "my",
+        "larger": "စာလုံးကြီးအောင်လုပ်ပါ",
+        "smaller": "စာလုံးသေးအောင်လုပ်ပါ",
+        "bold": "စာအားလုံးကိုထူအောင်လုပ်ပါ",
+        "firstLineBold": "ပထမစာကြောင်းကိုထူအောင်လုပ်ပါ"
+    },
+    "nb=no": {
+        "folder": "nb",
+        "larger": "gjør teksten større",
+        "smaller": "gjør teksten mindre",
+        "bold": "gjør all teksten fet",
+        "firstLineBold": "Gjør den første linjen fet"
+    },
+    "ne": {
+        "folder": "ne",
+        "larger": "अक्षर ठूलो बनाउनुहोस्",
+        "smaller": "अक्षर सानो बनाउनुहोस्",
+        "bold": "सबै पाठ बोल्ड बनाउनुहोस्",
+        "firstLineBold": "पहिलो लाइन बोल्ड बनाउनुहोस्"
+    },
+    "nl": {
+        "folder": "nl",
+        "larger": "maak de tekst groter",
+        "smaller": "maak de tekst kleiner",
+        "bold": "maak alle tekst vet",
+        "firstLineBold": "Maak de eerste regel vet"
+    },
+    "ny": {
+        "folder": "ny",
+        "larger": "kulitsani zilembo",
+        "smaller": "chepetsani zilembo",
+        "bold": "pangani zilembo zonse kukhala bold",
+        "firstLineBold": "Pangani mzere woyamba kukhala bold"
+    },
+    "om": {
+        "folder": "om",
+        "firstLineBold": "Sarara jalqabaa furdisi"
+    },
+    "or": {
+        "folder": "or",
+        "larger": "ଅକ୍ଷର ବଡ଼ କର",
+        "smaller": "ଅକ୍ଷର ଛୋଟ କର",
+        "bold": "ସବୁ ଲେଖା ମୋଟା କର",
+        "firstLineBold": "ପ୍ରଥମ ଧାଡ଼ି ମୋଟା କର"
+    },
+    "pa": {
+        "folder": "pa",
+        "larger": "ਅੱਖਰ ਵੱਡੇ ਕਰੋ",
+        "smaller": "ਅੱਖਰ ਛੋਟੇ ਕਰੋ",
+        "bold": "ਸਾਰੀ ਲਿਖਤ ਬੋਲਡ ਕਰੋ",
+        "firstLineBold": "ਪਹਿਲੀ ਲਾਈਨ ਬੋਲਡ ਕਰੋ"
+    },
+    "pl": {
+        "folder": "pl",
+        "larger": "powiększ tekst",
+        "smaller": "pomniejsz tekst",
+        "bold": "pogrub cały tekst",
+        "firstLineBold": "Pogrub pierwszy wiersz"
+    },
+    "pt": {
+        "folder": "pt",
+        "larger": "aumenta o texto",
+        "smaller": "diminui o texto",
+        "bold": "coloque todo o texto em negrito",
+        "firstLineBold": "Coloque a primeira linha em negrito"
+    },
+    "rn": {
+        "folder": "rn",
+        "larger": "ongereza ubunini bw'inyuguti",
+        "smaller": "gabanya ubunini bw'inyuguti",
+        "bold": "shira inyuguti zose muri bold",
+        "firstLineBold": "Shira umurongo wa mbere muri bold"
+    },
+    "ro": {
+        "folder": "ro",
+        "larger": "mărește textul",
+        "smaller": "micșorează textul",
+        "bold": "fă tot textul îngroșat",
+        "firstLineBold": "Fă primul rând îngroșat"
+    },
+    "ru": {
+        "folder": "ru",
+        "larger": "увеличь текст",
+        "smaller": "уменьши текст",
+        "bold": "сделай весь текст жирным",
+        "firstLineBold": "Сделай первую строку жирной"
+    },
+    "rw": {
+        "folder": "rw",
+        "larger": "ongera ubunini bw'inyuguti",
+        "smaller": "gabanya ubunini bw'inyuguti",
+        "bold": "shyira inyandiko yose muri bold",
+        "firstLineBold": "Shyira umurongo wa mbere muri bold"
+    },
+    "si": {
+        "folder": "si",
+        "larger": "අකුරු ලොකු කරන්න",
+        "smaller": "අකුරු පොඩි කරන්න",
+        "bold": "සියලු පෙළ bold කරන්න",
+        "firstLineBold": "පළමු පේළිය තද කරන්න"
+    },
+    "sk": {
+        "folder": "sk",
+        "larger": "zväčši text",
+        "smaller": "zmenši text",
+        "bold": "urob celý text tučným",
+        "firstLineBold": "Urob prvý riadok tučným"
+    },
+    "sl": {
+        "folder": "sl",
+        "larger": "povečaj besedilo",
+        "smaller": "pomanjšaj besedilo",
+        "bold": "naredi vse besedilo krepko",
+        "firstLineBold": "Naredi prvo vrstico krepko"
+    },
+    "sm": {
+        "folder": "sm",
+        "larger": "fa'atele le tusitusiga",
+        "smaller": "fa'aitiiti le tusitusiga",
+        "bold": "fa'amafiafia uma le tusitusiga",
+        "firstLineBold": "Fa'amafiafia le laina muamua"
+    },
+    "sn": {
+        "folder": "sn",
+        "larger": "wedzera saizi yemavara",
+        "smaller": "deredza saizi yemavara",
+        "firstLineBold": "Ita mutsara wekutanga ukore"
+    },
+    "so": {
+        "folder": "so",
+        "larger": "weynee qoraalka",
+        "smaller": "yaree cabbirka qoraalka",
+        "firstLineBold": "Sadarka koowaad ka dhig mid qaro weyn"
+    },
+    "sq": {
+        "folder": "sq",
+        "larger": "zmadho tekstin",
+        "smaller": "zvogëlo tekstin",
+        "bold": "bëje gjithë tekstin të trashë",
+        "firstLineBold": "Bëje rreshtin e parë të trashë"
+    },
+    "sr": {
+        "folder": "sr",
+        "larger": "повећај текст",
+        "smaller": "смањи текст",
+        "bold": "подебљај сав текст",
+        "firstLineBold": "Подебљај први ред"
+    },
+    "sv": {
+        "folder": "sv",
+        "larger": "gör texten större",
+        "smaller": "gör texten mindre",
+        "bold": "gör all text fet",
+        "firstLineBold": "Gör den första raden fet"
+    },
+    "sw": {
+        "folder": "sw",
+        "larger": "ongeza ukubwa wa maandishi",
+        "smaller": "punguza ukubwa wa maandishi",
+        "bold": "fanya maandishi yote kuwa mazito",
+        "firstLineBold": "Fanya mstari wa kwanza kuwa mzito"
+    },
+    "ta": {
+        "folder": "ta",
+        "larger": "எழுத்துகளை பெரிதாக்கு",
+        "smaller": "எழுத்துகளை சிறிதாக்கு",
+        "bold": "எல்லா உரையையும் தடிமனாக்கு",
+        "firstLineBold": "முதல் வரியை தடிமனாக்கு"
+    },
+    "te": {
+        "folder": "te",
+        "larger": "అక్షరాలను పెద్దవి చేయి",
+        "smaller": "అక్షరాలను చిన్నవి చేయి",
+        "bold": "అన్ని అక్షరాలను బోల్డ్ చేయి",
+        "firstLineBold": "మొదటి లైన్‌ను బోల్డ్ చేయి"
+    },
+    "th": {
+        "folder": "th",
+        "larger": "ขยายตัวอักษร",
+        "smaller": "ย่อตัวอักษร",
+        "bold": "ทำตัวหนาทั้งหมด",
+        "firstLineBold": "ทำบรรทัดแรกให้เป็นตัวหนา"
+    },
+    "to": {
+        "folder": "to",
+        "bold": "ngaohi ke bold 'a e tohi kotoa",
+        "firstLineBold": "Ngaohi ke bold 'a e laine 'uluaki"
+    },
+    "tr": {
+        "folder": "tr",
+        "larger": "yazıyı büyüt",
+        "smaller": "yazıyı küçült",
+        "bold": "tüm metni kalın yap",
+        "firstLineBold": "İlk satırı kalın yap"
+    },
+    "uk": {
+        "folder": "uk",
+        "larger": "збільш текст",
+        "smaller": "зменш текст",
+        "bold": "зроби весь текст жирним",
+        "firstLineBold": "Зроби перший рядок жирним"
+    },
+    "ur": {
+        "folder": "ur",
+        "larger": "متن بڑا کریں",
+        "smaller": "متن چھوٹا کریں",
+        "bold": "سارا متن بولڈ کریں",
+        "firstLineBold": "پہلی سطر کو بولڈ کریں"
+    },
+    "vi": {
+        "folder": "vi",
+        "larger": "phóng to chữ",
+        "smaller": "thu nhỏ chữ",
+        "bold": "in đậm tất cả chữ",
+        "firstLineBold": "In đậm dòng đầu tiên"
+    },
+    "xh": {
+        "folder": "xh",
+        "larger": "yandisa umbhalo",
+        "smaller": "nciphisa umbhalo",
+        "bold": "yenza wonke umbhalo ube bold",
+        "firstLineBold": "Yenza umgca wokuqala ube bold"
+    },
+    "yo": {
+        "folder": "yo",
+        "larger": "mú ọ̀rọ̀ tóbi síi",
+        "bold": "jẹ́ kí gbogbo ọ̀rọ̀ jẹ́ bold",
+        "firstLineBold": "Jẹ́ kí ìlà àkọ́kọ́ jẹ́ bold"
+    },
+    "zh": {
+        "folder": "zh",
+        "larger": "把字放大",
+        "smaller": "把字缩小",
+        "bold": "全部加粗",
+        "firstLineBold": "把第一行加粗"
+    },
+    "zh=zh-Hant": {
+        "folder": "zh",
+        "larger": "把字放大",
+        "smaller": "把字縮小",
+        "bold": "全部加粗",
+        "firstLineBold": "把第一行加粗"
+    },
+    "zu": {
+        "folder": "zu",
+        "larger": "khulisa umbhalo",
+        "smaller": "nciphisa umbhalo",
+        "bold": "yenza wonke umbhalo ube bold",
+        "firstLineBold": "Yenza umugqa wokuqala ube bold"
+    }
+}

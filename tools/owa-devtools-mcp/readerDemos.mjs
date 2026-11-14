@@ -216,14 +216,24 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-copy-passage',
     label: 'Choose how to copy a passage',
-    detail: 'Open the Copy menu for the passage you are reading.',
+    detail:
+      'Open the Copy menu for the passage you are reading; More… lists every way to copy the title and text.',
     title: 'Choose how to copy a passage',
     steps: [
       {
-        text: 'Open Copy above the passage and choose the format you want.',
+        text: 'Open Copy above the passage.',
         find: 'Lookup > Copy',
         translateFind: true,
         action: 'click',
+      },
+      {
+        text: 'Choose More… to see every way to copy the title and text.',
+        find: 'More…',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Pick a format such as Title (Version) or Text without Numbers; the passage goes on the clipboard, ready to paste.',
       },
     ],
   },
@@ -986,8 +996,8 @@ export function getReaderDemo(id, translate = (value) => value) {
       .join(' > ');
   // A panel is matched by its `data-widget-name`, which stays English in
   // every language, while the control inside shows translated words: in a
-  // Khmer window only "Bibles > <Khmer Filter by name>" can land. It goes
-  // last: the renderer's inline fallback (`getDailyTipGuide`) takes the last.
+  // translated window only "Bibles > <translated Filter by name>" can land.
+  // It goes last: the renderer's inline fallback (`getDailyTipGuide`) takes the last.
   const translateControlOnly = (label) => {
     const parts = label.split(' > ');
     return parts.length < 2

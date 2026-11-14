@@ -50,6 +50,7 @@ import { toPresentingFlowMediaControl } from '../presenting-flow/presentingFlowM
 import {
     AGENT_FLOW_FOREGROUND_WIDGETS,
     genAgentForegroundData,
+    readAgentForegroundSpec,
 } from './agentFlowForegroundRules';
 
 /** The most changes one call may carry: a long service, every line touched. */
@@ -335,7 +336,17 @@ export function readAgentFlowChangeNeeds(
         if (after !== undefined && after !== 0) {
             const reason = checkLine(after, `${at}: \`after\``);
             if (reason !== null) {
-                return fail(reason);
+                // A model numbering lines it is adding in this very call
+                // (EC-469): adds sharing an `after` keep the order given.
+                return fail(
+                    lineCount === 0
+                        ? `${at}: the sheet has no lines yet -- leave ` +
+                              '`after` out and the adds go in the order ' +
+                              'given.'
+                        : `${reason} A line added in this call has no ` +
+                              'number yet: adds with the same `after` go ' +
+                              'in the order given.',
+                );
             }
         }
         if (add !== undefined) {
@@ -598,14 +609,14 @@ export function applyAgentFlowChanges(
                 }
                 newItemJson = { ...prepared_ };
             } else if (add.foreground !== undefined) {
-                const foreground = add.foreground;
-                if (foreground === null || typeof foreground !== 'object') {
+                const spec = readAgentForegroundSpec(add.foreground, add);
+                if (spec === null) {
                     return fail(
                         `${at}: \`foreground\` is {widget, …} -- ` +
                             `widget one of ${AGENT_FLOW_FOREGROUND_WIDGETS.join(', ')}.`,
                     );
                 }
-                const { widget, ...fields } = foreground;
+                const { widget, fields } = spec;
                 // A new one looks like the newest line of its widget.
                 const lookLine = [...itemJsonList].reverse().find((one) => {
                     return (
@@ -944,7 +955,9 @@ export function applyAgentFlowChanges(
             ) {
                 return fail(`${at}: ${name} is not a foreground line.`);
             }
-            const { widget: _widget, ...fields } = change.foreground;
+            const fields =
+                readAgentForegroundSpec(change.foreground, change)?.fields ??
+                {};
             const built = genAgentForegroundData(
                 target,
                 fields,

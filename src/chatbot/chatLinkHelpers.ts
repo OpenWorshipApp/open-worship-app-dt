@@ -33,8 +33,8 @@ const MAX_SHOWN_LINK_LENGTH = 60;
 /**
  * An address as it is DRAWN: decoded, without `https://` and `www.`, a
  * search's `+` as the spaces they are, cut at 60 characters (2026-10-17,
- * EC-297: a Google search for Khmer words was drawn as 300 characters of
- * `%E1%9E%96…`, which nobody can read). What is opened is the address itself.
+ * EC-297: a Google search for non-Latin words was drawn as 300 characters
+ * of percent-escapes, which nobody can read). What is opened is the address itself.
  */
 export function toShownLinkText(url: string) {
     let shown: string;
