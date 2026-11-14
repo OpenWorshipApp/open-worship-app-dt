@@ -36,6 +36,8 @@ const h = vi.hoisted(() => {
         handleDragStart: vi.fn(),
         cameraDragSerialize: vi.fn(),
         showAppContextMenu: vi.fn(),
+        copyToClipboard: vi.fn(),
+        showFileOrDirExplorer: vi.fn(),
         handleAutoHide: vi.fn(),
         settingWrites: [] as [string, unknown][],
         settingNames: [] as string[],
@@ -119,8 +121,13 @@ vi.mock('../helper/settingHelpers', async () => {
 vi.mock('../server/electronSendHelpers', () => ({
     electronSendAsync: (channel: string) => h.electronSendAsync(channel),
 }));
+vi.mock('../server/appHelpers', () => ({
+    copyToClipboard: (text: string) => h.copyToClipboard(text),
+    showFileOrDirExplorer: (path: string) => h.showFileOrDirExplorer(path),
+}));
 vi.mock('../server/appProvider', () => ({
     default: {
+        systemUtils: { isMac: false },
         messageUtils: {
             sendDataSync: (channel: string) => h.sendDataSync(channel),
             sendData: (channel: string, data: unknown) =>
@@ -733,6 +740,67 @@ describe('Background bits', () => {
             ['1', '/docs/Easter.pptx<>11', '1'],
             ['5', '/docs/Easter.pptx<>15', '5'],
         ]);
+    });
+
+    test('each track opens a menu of its own that copies its path and reveals it', async () => {
+        await act(async () =>
+            root.render(
+                <VaryAppDocumentAudiosComp
+                    appDocumentAudioData={{
+                        'Easter.pptx': [
+                            {
+                                slideIndex: 0,
+                                slideId: 11,
+                                filePaths: ['/a/intro.mp3', '/a/bell.mp3'],
+                                slideFilePath: '/docs/Easter.pptx',
+                            },
+                        ],
+                    }}
+                />,
+            ),
+        );
+        const readMenu = (index: number) => {
+            const [, items] = h.showAppContextMenu.mock.calls[index] as [
+                any,
+                any[],
+            ];
+            return items;
+        };
+        // The document's name has no menu: only its tracks do.
+        const title = [...host.querySelectorAll('span')].find(
+            (element) => element.textContent === 'Easter.pptx',
+        )!;
+        await act(async () => {
+            title.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        expect(h.showAppContextMenu).not.toHaveBeenCalled();
+        const bell = host.querySelector('[data-audio-body="/a/bell.mp3"]')!;
+        await act(async () => {
+            bell.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        expect(h.showAppContextMenu).toHaveBeenCalledTimes(1);
+        const items = readMenu(0);
+        expect(items.map((item) => item.menuElement)).toEqual([
+            'Copy Path to Clipboard',
+            'Reveal in File Explorer',
+        ]);
+        items[0].onSelect();
+        expect(h.copyToClipboard).toHaveBeenCalledWith('/a/bell.mp3');
+        items[1].onSelect();
+        expect(h.showFileOrDirExplorer).toHaveBeenCalledWith('/a/bell.mp3');
+        // Each track carries a ⋮, and it opens THAT track's menu.
+        const dotsList = host.querySelectorAll<HTMLButtonElement>(
+            '[data-dots="inline"]',
+        );
+        expect(dotsList).toHaveLength(2);
+        await act(async () => dotsList[0].click());
+        expect(h.showAppContextMenu).toHaveBeenCalledTimes(2);
+        readMenu(1)[0].onSelect();
+        expect(h.copyToClipboard).toHaveBeenLastCalledWith('/a/intro.mp3');
     });
 
     test('the video header switch reads and writes the fading-at-the-end setting, on by default', async () => {

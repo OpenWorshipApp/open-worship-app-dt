@@ -3,7 +3,17 @@ import AudioBodyComp from './AudioBodyComp';
 import { tran } from '../lang/langHelpers';
 import RenderSlideIndexComp from '../app-document-presenter/items/RenderSlideIndexComp';
 import { toKeyByFilePath } from '../app-document-list/appDocumentHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
 
+/**
+ * One track a slide carries. Its menu reaches the sound file itself, which
+ * lives in the document's preview folder (`<pptx>-htmls/`), not beside the
+ * PowerPoint -- so it is the one path a person cannot guess.
+ */
 function AudioElementComp({
     slideIndex,
     slideId,
@@ -15,9 +25,30 @@ function AudioElementComp({
     filePath: string;
     slideFilePath: string;
 }>) {
+    const handleContextMenuOpening = (event: any) => {
+        showAppContextMenu(event, [
+            {
+                childBefore: genContextMenuItemIcon('clipboard'),
+                menuElement: tran('Copy Path to Clipboard'),
+                onSelect: () => {
+                    copyToClipboard(filePath);
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('folder2-open'),
+                menuElement: getMenuTitleRevealFile(),
+                onSelect: () => {
+                    showFileOrDirExplorer(filePath);
+                },
+            },
+        ]);
+    };
     return (
-        <div className="d-flex">
-            <div>
+        <div
+            className="d-flex align-items-center"
+            onContextMenu={handleContextMenuOpening}
+        >
+            <div className="align-self-start">
                 <RenderSlideIndexComp
                     viewIndex={slideIndex + 1}
                     dataKey={toKeyByFilePath(slideFilePath, slideId)}
@@ -25,6 +56,7 @@ function AudioElementComp({
                 />
             </div>
             <AudioBodyComp key={filePath} filePath={filePath} />
+            <ContextMenuDotsButtonComp onOpening={handleContextMenuOpening} />
         </div>
     );
 }
