@@ -5,6 +5,8 @@ import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 
 export type MarkdownPrintAnswerType = 'add' | 'without' | 'cancel';
+// What the page is being got ready for: paper, or a Word document.
+export type MarkdownPageOutputType = 'print' | 'word';
 
 function preventFocusLeaving(event: MouseEvent) {
     // A press beside the question must not take the focus away from it, or
@@ -21,19 +23,23 @@ function preventFocusLeaving(event: MouseEvent) {
  * and details at the end of the printout, print the page alone, or not
  * print. Its own small dialog -- this window runs none of the app's popups.
  * It is never on paper (`MarkdownPreviewAppComp.scss`), and while the
- * details are read its buttons wait.
+ * details are read its buttons wait. Asked the same way before a Word
+ * document is made of the page (`purpose: 'word'`, 2026-11-14), the details
+ * then going at the end of the document.
  */
 export default function MarkdownPrintAskComp({
     verseCount,
     nameCount,
     placeCount,
     isReading,
+    purpose = 'print',
     onAnswer,
 }: Readonly<{
     verseCount: number;
     nameCount: number;
     placeCount: number;
     isReading: boolean;
+    purpose?: MarkdownPageOutputType;
     onAnswer: (answer: MarkdownPrintAnswerType) => void;
 }>) {
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -91,6 +97,7 @@ export default function MarkdownPrintAskComp({
             return text !== '';
         })
         .join(' · ');
+    const isWord = purpose === 'word';
     return (
         <div
             className="app-markdown-print-ask-backdrop"
@@ -111,10 +118,20 @@ export default function MarkdownPrintAskComp({
                         id="app-markdown-print-ask-question"
                         className="app-markdown-print-ask-question"
                     >
-                        <i className="bi bi-printer" />
-                        {tran(
-                            'Add the Bible text and the name and place details to the end of the printout?',
-                        )}
+                        <i
+                            className={
+                                isWord
+                                    ? 'bi bi-file-earmark-word'
+                                    : 'bi bi-printer'
+                            }
+                        />
+                        {isWord
+                            ? tran(
+                                  'Add the Bible text and the name and place details to the end of the Word document?',
+                              )
+                            : tran(
+                                  'Add the Bible text and the name and place details to the end of the printout?',
+                              )}
                     </p>
                     <p
                         id="app-markdown-print-ask-counts"
@@ -142,7 +159,9 @@ export default function MarkdownPrintAskComp({
                             ) : (
                                 <i className="bi bi-journal-plus" />
                             )}
-                            {tran('Add and Print')}
+                            {isWord
+                                ? tran('Add and Export')
+                                : tran('Add and Print')}
                         </button>
                         <button
                             type="button"
@@ -152,7 +171,9 @@ export default function MarkdownPrintAskComp({
                                 onAnswer('without');
                             }}
                         >
-                            {tran('Print Page Only')}
+                            {isWord
+                                ? tran('Export Page Only')
+                                : tran('Print Page Only')}
                         </button>
                         <button
                             type="button"

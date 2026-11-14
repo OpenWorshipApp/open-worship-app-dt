@@ -248,7 +248,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - `resize_page` to a small (~1024×700) and large size: right column flips layout,
   nothing overlaps.
 
-### S14 — Keyboard matrix `[KB-01..65]`
+### S14 — Keyboard matrix `[KB-01..68]`
 - Run every row of the KB table in the matrix explicitly (many will already be PASS from
   earlier scenarios — just fill in the gaps).
 
@@ -438,7 +438,7 @@ the wrong thing in front of a congregation. A stale label or an untranslated str
 - Bible key not downloaded → `BibleNotAvailableComp` renders instead of a crash.
 - Empty find query / no find results → sane empty state, no console errors.
 
-### S17 — Context-menu items `[CM-01..101]`
+### S17 — Context-menu items `[CM-01..103]`
 - For each host that opens a right-click menu (document / lyric / bible / background / note
   items, slide thumbnails, editor slide list, mini-screen previewer card, display / stage /
   transition controls, generic file lists), 🖱️R to open it and assert the item set via

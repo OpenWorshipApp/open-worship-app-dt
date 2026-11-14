@@ -269,8 +269,8 @@ The OS menu is invisible to CDP: drive it with `owa_menu` (`list` names every it
 
 > This is the short list. The **complete** shortcut set — every registered in-app shortcut
 > plus electron application-menu accelerators — is enumerated as unit tests in
-> [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..65`); right-click menu items are
-> §CM (`CM-01..101`).
+> [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..68`); right-click menu items are
+> §CM (`CM-01..103`).
 
 ## Stable ids present in production
 

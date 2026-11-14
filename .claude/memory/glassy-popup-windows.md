@@ -10,7 +10,7 @@ metadata:
 
 A popup is its own OS window, so `backdrop-filter` inside it has nothing of the
 app to blur. The frosted look comes from the compositor instead:
-`appGlassy: true` in `openChatbotPage` (`src/helper/domHelpers.ts`; the AI Chat
+`appGlassy: true` in `openChatbotPage` (`src/helper/chatbotPageHelpers.ts`, re-exported by `domHelpers`; the AI Chat
 window's `openAiChatPage` sets it too) →
 `genGlassOptions` in `electron/electronHelpers.ts` → `backgroundMaterial:
 'acrylic'` on Windows, `vibrancy: 'under-window'` on macOS, with

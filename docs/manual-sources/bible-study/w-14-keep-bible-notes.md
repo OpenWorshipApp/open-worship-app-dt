@@ -22,7 +22,8 @@ workflowsVersion: "2026-11-14"
    among the notes files, its first line the name as a heading, and it opens in its own
    **Markdown Preview** window — click its row to open it again, and press
    **[en:tran:Edit]** there to write (W-37 step 6). Its row's menu adds
-   **[en:tran:Preview]** and **[en:tran:Open in Default App]** to the usual Rename, Copy
+   **[en:tran:Preview]**, **[en:tran:Open in Chatbot]** (while AI is on) and
+   **[en:tran:Open in Default App]** to the usual Rename, Duplicate, Reload, Copy
    Path, Reveal and **[en:tran:Move to Trash]**. A Markdown file dropped on the panel is
    copied into its folder, as a notes file is. 📸
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸

@@ -31,6 +31,14 @@ import {
     renderMermaidDiagrams,
     takeDrawnDiagrams,
 } from './markdownMermaidHelpers';
+import {
+    addPassageFolds,
+    findPassageToggle,
+    type PassageFoldLabelsType,
+    togglePassageFold,
+} from './markdownPassageFoldHelpers';
+import type * as MarkdownWordExportHelpersModule from './markdownWordExportHelpers';
+import type { WordPageSnapshotType } from './markdownWordHelpers';
 import type {
     PrintAppendixLabelsType,
     PrintAppendixType,
@@ -40,6 +48,7 @@ import {
     drawLightDiagramsForPrint,
     loadPicturesForPrint,
     registerPrintPreparation,
+    removeLightDiagramsForPrint,
     removePrintAppendix,
 } from './markdownPrintHelpers';
 import {
@@ -60,6 +69,7 @@ import {
 } from './markdownPreviewRenderHelpers';
 import MarkdownPreviewChatbotButtonComp from './MarkdownPreviewChatbotButtonComp';
 import MarkdownPrintAskComp, {
+    type MarkdownPageOutputType,
     type MarkdownPrintAnswerType,
 } from './MarkdownPrintAskComp';
 
@@ -91,6 +101,8 @@ const PRINT_ASK_MILLISECONDS = 5 * 60_000;
 // A page got ready for paper stays as it is until the paper is made
 // (`afterprint`); one main never prints is let go after this.
 const PRINT_HOLD_MILLISECONDS = 10_000;
+
+type MarkdownWordExportHelpersType = typeof MarkdownWordExportHelpersModule;
 
 const STATUS_MESSAGE_MAP: Record<
     Exclude<MarkdownPreviewLoadResultType['status'], 'ready' | 'loading'>,
@@ -207,6 +219,10 @@ function genPrintAppendixLabels(): PrintAppendixLabelsType {
     };
 }
 
+function genPassageFoldLabels(): PassageFoldLabelsType {
+    return { collapse: tran('Collapse'), expand: tran('Expand') };
+}
+
 /** `promise`, or `milliseconds` -- whichever is first; never a throw. */
 async function waitAtMost(promise: Promise<unknown>, milliseconds: number) {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -283,6 +299,12 @@ export default function MarkdownPreviewAppComp() {
     // Set by the Edit press, which has just read the file itself.
     const isEditReadSkippedRef = useRef(false);
     const articleRef = useRef<HTMLDivElement>(null);
+    // The quoted passages folded on screen, put back on every draw of the
+    // page (`markdownPassageFoldHelpers.ts`). A few short keys, for as long
+    // as this window shows its file.
+    const [foldedPassageKeySet] = useState(() => {
+        return new Set<string>();
+    });
     // The page beside the editor, which scrolls by itself.
     const pageRef = useRef<HTMLDivElement>(null);
     // What the diagrams on the page were drawn from, so the next render of it
@@ -330,8 +352,11 @@ export default function MarkdownPreviewAppComp() {
     // places, and how it is answered.
     const [printAsk, setPrintAsk] = useState<{
         references: PrintReferencesType;
+        purpose: MarkdownPageOutputType;
         isReading: boolean;
     } | null>(null);
+    // The Word document being written, once the page has been read for it.
+    const [isExportingWord, setIsExportingWord] = useState(false);
     const printAnswerRef = useRef<
         ((answer: MarkdownPrintAnswerType) => void) | null
     >(null);
@@ -573,6 +598,11 @@ export default function MarkdownPreviewAppComp() {
                 drawnMap,
             );
         }
+        addPassageFolds(
+            articleElement,
+            foldedPassageKeySet,
+            genPassageFoldLabels(),
+        );
         let isStale = false;
         const checkIsStale = () => {
             return isStale;
@@ -618,7 +648,7 @@ export default function MarkdownPreviewAppComp() {
         };
         diagramPassWaitRef.current?.();
         return markStale;
-    }, [loadResult, theme, langFontFamilies]);
+    }, [loadResult, theme, langFontFamilies, foldedPassageKeySet]);
 
     // Printing: main asks this page to get ready before every print of the
     // window -- File > Print, and the Print below, which gets it ready itself
@@ -672,10 +702,10 @@ export default function MarkdownPreviewAppComp() {
         }
     }, []);
     // A page that links verses, people or places asks first whether their
-    // Bible text and details go at the end of the printout
-    // (`MarkdownPrintAskComp`); Cancel prints nothing.
+    // Bible text and details go at the end of the printout, or of the Word
+    // document (`MarkdownPrintAskComp`); Cancel makes nothing.
     const askAboutPrintReferences = useCallback(
-        (references: PrintReferencesType) => {
+        (references: PrintReferencesType, purpose: MarkdownPageOutputType) => {
             return new Promise<MarkdownPrintAnswerType>((resolve) => {
                 const timeout = setTimeout(() => {
                     answer('cancel');
@@ -686,7 +716,7 @@ export default function MarkdownPreviewAppComp() {
                     resolve(value);
                 }
                 printAnswerRef.current = answer;
-                setPrintAsk({ references, isReading: false });
+                setPrintAsk({ references, purpose, isReading: false });
             });
         },
         [],
@@ -733,6 +763,67 @@ export default function MarkdownPreviewAppComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+    // From the moment the page is got ready for paper or for a Word document,
+    // it is held (`printHoldRef`); a print main has not made yet keeps its
+    // hold, and lets the next one draw what it held.
+    const holdPageForOutput = useCallback(() => {
+        const printHold = printHoldRef.current ?? {
+            heldLoadResult: null,
+            timeout: null,
+        };
+        if (printHold.timeout !== null) {
+            clearTimeout(printHold.timeout);
+            printHold.timeout = null;
+        }
+        printHoldRef.current = printHold;
+        return printHold;
+    }, []);
+    // The page as a print or a Word document takes it: the last words typed
+    // drawn, its verses, people and places made links -- and the person
+    // asked whether their details go at the end, and those read when they
+    // do -- and its diagrams drawn, light in a dark window. Null when the
+    // person said Cancel.
+    const readyPageForOutput = useCallback(
+        async (
+            printHold: {
+                heldLoadResult: MarkdownPreviewLoadResultType | null;
+            },
+            purpose: MarkdownPageOutputType,
+        ) => {
+            await drawPageForPrint(printHold);
+            // The page's verses, people and places are made links a moment
+            // after it is drawn, and the question counts them.
+            const pageReferences = pageReferencesRef.current;
+            if (pageReferences !== null) {
+                await waitAtMost(pageReferences, PRINT_PAGE_WAIT_MILLISECONDS);
+            }
+            const articleElement = articleRef.current;
+            let appendix: PrintAppendixType | null = null;
+            if (articleElement !== null) {
+                // A print never carries the one before's.
+                removePrintAppendix(articleElement);
+                const references = await collectPageReferences(articleElement);
+                if (references !== null) {
+                    const answer = await askAboutPrintReferences(
+                        references,
+                        purpose,
+                    );
+                    if (answer === 'cancel') {
+                        return null;
+                    }
+                    if (answer === 'add') {
+                        setPrintAsk({ references, purpose, isReading: true });
+                        appendix = await readPageReferences(references);
+                    }
+                    setPrintAsk(null);
+                }
+            }
+            await waitForDiagramsForPrint();
+            return { appendix };
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     // True once the page is ready for paper; false when the person said
     // Cancel, or a print is already being got ready -- main then prints
     // nothing.
@@ -749,45 +840,14 @@ export default function MarkdownPreviewAppComp() {
         }
         isPreparingPrintRef.current = true;
         setIsPreparingPrint(true);
-        // Held from here until the paper is made; a print main has not made
-        // yet keeps its hold, and lets the next one draw what it held.
-        const printHold = printHoldRef.current ?? {
-            heldLoadResult: null,
-            timeout: null,
-        };
-        if (printHold.timeout !== null) {
-            clearTimeout(printHold.timeout);
-            printHold.timeout = null;
-        }
-        printHoldRef.current = printHold;
+        // Held from here until the paper is made.
+        const printHold = holdPageForOutput();
         let isReady = false;
         try {
-            await drawPageForPrint(printHold);
-            // The page's verses, people and places are made links a moment
-            // after it is drawn, and the question counts them.
-            const pageReferences = pageReferencesRef.current;
-            if (pageReferences !== null) {
-                await waitAtMost(pageReferences, PRINT_PAGE_WAIT_MILLISECONDS);
+            const readyPage = await readyPageForOutput(printHold, 'print');
+            if (readyPage === null) {
+                return false;
             }
-            const articleElement = articleRef.current;
-            let appendix: PrintAppendixType | null = null;
-            if (articleElement !== null) {
-                // A print never carries the one before's.
-                removePrintAppendix(articleElement);
-                const references = await collectPageReferences(articleElement);
-                if (references !== null) {
-                    const answer = await askAboutPrintReferences(references);
-                    if (answer === 'cancel') {
-                        return false;
-                    }
-                    if (answer === 'add') {
-                        setPrintAsk({ references, isReading: true });
-                        appendix = await readPageReferences(references);
-                    }
-                    setPrintAsk(null);
-                }
-            }
-            await waitForDiagramsForPrint();
             const currentArticleElement = articleRef.current;
             if (currentArticleElement !== null) {
                 await waitAtMost(
@@ -795,12 +855,12 @@ export default function MarkdownPreviewAppComp() {
                     PRINT_PAGE_WAIT_MILLISECONDS,
                 );
             }
-            if (appendix !== null && currentArticleElement !== null) {
+            if (readyPage.appendix !== null && currentArticleElement !== null) {
                 const { addPrintAppendix } =
                     await import('./markdownPrintAppendixHelpers');
                 addPrintAppendix(
                     currentArticleElement,
-                    appendix,
+                    readyPage.appendix,
                     genPrintAppendixLabels(),
                 );
             }
@@ -853,6 +913,85 @@ export default function MarkdownPreviewAppComp() {
             printHtmlText();
         }
     }, [preparePrint]);
+
+    // Word (2026-11-14, the user: _add ms-word icon to click and export to
+    // microsoft word, like printing it has to ask for add name/location-name
+    // bible detail at the end of last page_). The page is got ready as for a
+    // print -- the same question first -- then read into the document at
+    // once and let go; its pictures are loaded and the file written after
+    // (`markdownWordExportHelpers.ts`), into Downloads, and shown there.
+    const handleWordExporting = useCallback(async () => {
+        const currentFilePath = filePathRef.current;
+        if (currentFilePath === null || isPreparingPrintRef.current) {
+            return;
+        }
+        isPreparingPrintRef.current = true;
+        setIsPreparingPrint(true);
+        const printHold = holdPageForOutput();
+        let exportHelpers: MarkdownWordExportHelpersType | null = null;
+        let snapshot: WordPageSnapshotType | null = null;
+        try {
+            const readyPage = await readyPageForOutput(printHold, 'word');
+            const articleElement = articleRef.current;
+            if (readyPage === null || articleElement === null) {
+                return;
+            }
+            const [wordHelpers, appendixHelpers] = await Promise.all([
+                import('./markdownWordHelpers'),
+                readyPage.appendix === null
+                    ? null
+                    : import('./markdownPrintAppendixHelpers'),
+            ]);
+            exportHelpers = await import('./markdownWordExportHelpers');
+            const pickTextLang = await exportHelpers.genWordTextLangPicker();
+            const appendixElement =
+                readyPage.appendix === null || appendixHelpers === null
+                    ? null
+                    : appendixHelpers.genPrintAppendixElement(
+                          document,
+                          readyPage.appendix,
+                          genPrintAppendixLabels(),
+                      );
+            const currentArticleElement = articleRef.current ?? articleElement;
+            snapshot = wordHelpers.snapshotMarkdownWordPage(
+                appendixElement === null
+                    ? [currentArticleElement]
+                    : [currentArticleElement, appendixElement],
+                { pickTextLang },
+            );
+        } catch (error) {
+            handleError(error);
+            showWarning(tran('Error'));
+        } finally {
+            printAnswerRef.current = null;
+            isPreparingPrintRef.current = false;
+            setPrintAsk(null);
+            setIsPreparingPrint(false);
+            // The light diagrams a dark window drew for it are not on
+            // paper: no `afterprint` takes them away.
+            if (articleRef.current !== null) {
+                removeLightDiagramsForPrint(articleRef.current);
+            }
+            releasePageAfterPrint();
+        }
+        if (snapshot === null || exportHelpers === null) {
+            return;
+        }
+        setIsExportingWord(true);
+        try {
+            const wordFilePath = await exportHelpers.exportMarkdownWordFile(
+                snapshot,
+                currentFilePath,
+            );
+            showFileOrDirExplorer(wordFilePath);
+        } catch (error) {
+            handleError(error);
+            showWarning(tran('Error'));
+        } finally {
+            setIsExportingWord(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleSaving = useCallback(async () => {
         const currentFilePath = filePathRef.current;
@@ -1072,6 +1211,17 @@ export default function MarkdownPreviewAppComp() {
         if (articleElement === null) {
             return;
         }
+        const passageToggle = findPassageToggle(target);
+        if (passageToggle !== null && articleElement.contains(passageToggle)) {
+            if (event.type === 'click') {
+                togglePassageFold(
+                    passageToggle,
+                    foldedPassageKeySet,
+                    genPassageFoldLabels(),
+                );
+            }
+            return;
+        }
         const refElement = target?.closest?.(`.${MARKDOWN_REF_CLASS}`);
         if (
             refElement &&
@@ -1237,6 +1387,30 @@ export default function MarkdownPreviewAppComp() {
                 >
                     <i className="bi bi-printer" />
                 </button>
+                {/* The page as a Word document, in Downloads: asked like a
+                    print, written by `markdownWordExportHelpers.ts`. */}
+                <button
+                    type="button"
+                    className="btn btn-sm app-markdown-preview-action app-markdown-preview-word"
+                    title={tran('Export to MS Word')}
+                    aria-label={tran('Export to MS Word')}
+                    aria-busy={isExportingWord}
+                    disabled={
+                        loadResult.status !== 'ready' ||
+                        isPreparingPrint ||
+                        isExportingWord
+                    }
+                    onClick={handleWordExporting}
+                >
+                    {isExportingWord ? (
+                        <span
+                            className="spinner-border spinner-border-sm"
+                            aria-hidden="true"
+                        />
+                    ) : (
+                        <i className="bi bi-file-earmark-word" />
+                    )}
+                </button>
                 <button
                     type="button"
                     className="btn btn-sm app-markdown-preview-action"
@@ -1265,6 +1439,7 @@ export default function MarkdownPreviewAppComp() {
                     nameCount={printAsk.references.names.length}
                     placeCount={printAsk.references.places.length}
                     isReading={printAsk.isReading}
+                    purpose={printAsk.purpose}
                     onAnswer={handlePrintAnswering}
                 />
             )}

@@ -8,8 +8,9 @@ metadata:
   modified: 2026-10-29T19:55:54.546Z
 ---
 
-Every answer in the help window ends with two or three short things the user can
-PRESS instead of typing their next message. Before this, an answer carried
+Every answer in the help window ends with up to five short things the user can
+PRESS instead of typing their next message (three beside buttons of its own;
+two or three until 2026-11-13, `EC-584`). Before this, an answer carried
 buttons only when the model happened to read a manual page, so anything answered
 from live app state ended in a blank box — and the reported case was the
 assistant asking *"Would you like help turning one on for the congregation?"*
@@ -62,7 +63,7 @@ have, and that a future change here will re-break:
   complies with its placement.
 - **Rows of buttons add up.** An offline manual answer already carries four of
   its own, and two options under them made six under one paragraph.
-  `MAX_BUTTON_COUNT` 5 caps both rows TOGETHER; per-row caps do not.
+  `MAX_BUTTON_COUNT` caps both rows TOGETHER (5 then, 7 since 2026-11-13, `EC-584`); per-row caps do not.
 
 Cost: no new tool and **0 extra tool-schema tokens** — the system prompt grew
 ~66 tokens/round (+0.7%), paid for by compressing four clauses that were

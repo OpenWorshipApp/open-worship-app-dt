@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 4065a6e9dae47e9d
+translatedFrom: a84654dd5e157b62
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -130,3 +130,13 @@ translatedFrom: 4065a6e9dae47e9d
     **[en:tran:Use the app font]** pour le dessiner comme tous les autres chants. Ce changement est
     une modification du chant lui-même : le **[en:tran:Undo]** du chant le défait, sur toutes les
     scènes et dans cette fenêtre. 📸
+
+15. **Des notes pour vous dans le chant — un bloc `Note`.** Dans l'Éditeur de paroles, un bloc
+    nommé `ol:Note` (ou `ol:Note 2`, `ol:Note 3`, …) contient une note pour la personne qui présente le
+    chant : _rejouer les couplets 3 et 4_. Tant que le chant est sélectionné dans le Présentateur, chacun
+    de ces blocs s'affiche sous l'Aperçu des scènes dans une seule case **[en:tran:Document Note]**,
+    chaque note formant sa propre partie, titrée du nom de son bloc, dans l'ordre où le chant les écrit.
+    La case est en lecture seule (modifiez une note dans l'Éditeur de paroles, et la case suit), elle
+    n'est **jamais envoyée à un écran du public**, et un chant sans bloc `Note` n'a pas de case du tout.
+    Pour la ranger, faites glisser le séparateur au-dessus d'elle jusqu'au bord inférieur, ou décochez
+    **View** → **[en:tran:Widgets]** → **[en:tran:Note]** (W-31) ; elle reste rangée pour tous les chants. 📸

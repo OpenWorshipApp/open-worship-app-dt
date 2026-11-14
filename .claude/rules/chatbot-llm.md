@@ -27,7 +27,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   firewall and for the same reason: `askLlmBot` filters the list, and
   `runMcpTool` REFUSES the call, because these tools are named in the app's own
   manual and a filtered list alone is a suggestion. Every refusal says what to
-  use instead. Fourteen groups today (`MODEL_HIDDEN_TOOL_GROUP_LIST`), the
+  use instead. Fifteen groups today (`MODEL_HIDDEN_TOOL_GROUP_LIST`), the
   first six: the three the window presses itself
   (`owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`) plus
   `take_screenshot`, which quietly undid that same decision; the acting tools

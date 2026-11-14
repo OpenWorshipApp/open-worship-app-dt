@@ -12,10 +12,10 @@ yt-dlp in the extra-bin pack is rebuilt from a pinned tag, per platform, by
 `extra-work/experiment-building/<os>-build-yt-dlp.*` (their default tag is the
 shipped one); the old `yt-dlp-*` file leaves the platform dir (the pack takes
 the FIRST file matching the prefix), `info.json` `version` goes up, and
-`node extra-work/build-extra-bin.mjs` re-packs. Last done 2026-11-07:
+`node extra-work/build-extra-bin.mjs` re-packs. Done 2026-11-07:
 2026.08.19 -> 2026.10.26, pack 0.0.4 -> 0.0.5, for `win`, `win-arm64` and
-`linux-arm64` only -- `linux`, `mac` and `mac-int` still carry 2026.08.19
-until rebuilt on their own hosts.
+`linux-arm64` only; `linux` followed on 2026-11-09 and `mac` and `mac-int` on
+2026-11-14 (pack 0.0.6), so every platform now carries 2026.10.26.
 
 **Why:** PyInstaller builds for the arch of the Python running it, and a Linux
 bundle links the host glibc, so no one host builds all six; upgrades land one

@@ -32,7 +32,7 @@ back into a folder by a program either.
   list reads) beside `<id>.data.json` (the texts, read only by an undo), the
   last 100 for 30 days (`agentBackupPlanHelpers.ts`, pure and unit-tested). It
   is not in the whole-data archive.
-- An undo applies a rename, then files, then editing heads, then settings (`home-setting`, `app-setting`) — a document's
+- An undo applies a rename, then files, then editing heads, then settings (`home-setting`, `app-setting`, `screen-setting`), then what the screens hold (`screen-foreground`, `screen-text`, `screen-layer`) — a screen unlocked before its settings, locked or turned on again after them, and one the change added taken away last (`sortRestoresForUndo`) — a document's
   unsaved state can only go into a document that exists — takes its own backup
   first, and names later changes to the same file that went back with it.
   `owa_undo` with no id takes the newest change that is neither undone nor an
@@ -41,7 +41,7 @@ back into a folder by a program either.
   history discarded only once the file is really gone.
 - The store is SHARED by every agent on the machine: a script checking undo
   must pass each change's own `undoId`, or it may undo another session's work.
-- The firewall rations removals (every `delete*`, a run sheet's `remove` and `undo`) at 10 per 5 min, except an undo, by its own id, of a change the same session made with a tool that takes nothing away (BN-46, 2026-11-09),
+- The firewall rations removals (every `delete*`, a run sheet's `remove` / `remove-lines`, a song's `remove-section` / `remove-translations` / `remove-chords`, and `undo`) at 10 per 5 min, except an undo, by its own id, of a change the same session made with a tool that takes nothing away (BN-46, 2026-11-09),
   apart from the 25 presses a minute. `owa_bible_note` refuses a write but an `add` (2026-11-08) while
   that file is open in a `bibleNote.html` window, which saves its stale copy
   back over it.

@@ -568,7 +568,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   save to list first (if not added) before show on screen_ -- it had said
   _nothing saved_ until then, and _show gen 3 on screen_ put up a passage
   the list never got; `saveAgentBibleItemFirst` in
-  `agentBibleListHelpers.ts`, as the Lookup's double-click,
+  `agentBibleListHelpers.ts`, as the Lookup's own save-and-show button,
   `addBibleItemAndPresent`, saves and then shows): backed up like
   `owa_bible_item add`, the result's `listed` naming the list, `isNew` and
   its `undoId`, a new save said in the `note` and by `/verse`; a save that

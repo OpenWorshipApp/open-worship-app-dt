@@ -1,11 +1,11 @@
 ---
-id: W-62
+id: W-64
 title: "Connecter votre propre agent d'IA à l'application (MCP)"
 section: "Configuration"
 lang: fr
-translatedFrom: "e2d2f5664543d5e5"
+translatedFrom: "31b523b0b1ec4526"
 ---
-# W-62 — Connecter votre propre agent d'IA à l'application (MCP)
+# W-64 — Connecter votre propre agent d'IA à l'application (MCP)
 
 **Objectif :** permettre à un agent d'IA que vous utilisez sur cet ordinateur — Claude Code, Claude Desktop, Cursor ou un autre programme qui parle MCP (le Model Context Protocol) — de voir Open Worship et de s'en servir comme le fait l'assistant de l'application. Le programme auquel l'agent parle est fourni avec les outils de téléchargement : il n'y a donc rien d'autre à installer sur l'ordinateur.
 

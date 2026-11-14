@@ -11,7 +11,10 @@ metadata:
 `listCandidatePorts` in `tools/owa-devtools-mcp/discovery.mjs` returns ONLY the
 port that was named on purpose — by `pinCdpPort` (the in-app host) or by
 `OWA_CDP_PORT`. With nothing named it still walks the published instances
-newest-first and then the legacy fallbacks.
+newest-first and then the legacy fallbacks — except on the stdio server since
+2026-11-13 (`requireAppChoice`): with several apps up and none chosen it
+returns no port, and once `owa_choose_app` chose one, only that app's (none
+once it quit).
 
 **Why:** it used to put the named port at the HEAD of that full list, and
 `resolveCdpPort` takes the first that ANSWERS. So a dead pin fell through in

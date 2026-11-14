@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, test } from 'vitest';
@@ -50,4 +51,32 @@ describe('the manual names only what the code still has', () => {
     test('no coverage row cites a source file that is gone', () => {
         expect(readSignal('gone-file')).toEqual([]);
     }, 60000);
+});
+
+// A recipe is found by its id: the help page, the known questions'
+// `resources.recipe`, the review ledger and every translation key on it. Two
+// recipes carried W-62 for three days (2026-11-11 and 2026-11-13), so the
+// assistant read one page for both and the ledger could stamp neither.
+test('every manual recipe id is used once', () => {
+    const text = readFileSync(
+        path.join(
+            REPO_ROOT,
+            '.claude',
+            'skills',
+            'owa-robot-test',
+            'references',
+            'user-workflows.md',
+        ),
+        'utf-8',
+    );
+    const idList = [...text.matchAll(/^###\s+(W-\d+[a-z]?)\s/gm)].map(
+        (match) => {
+            return match[1];
+        },
+    );
+    expect(idList.length).toBeGreaterThan(0);
+    const repeatedList = idList.filter((id, index) => {
+        return idList.indexOf(id) !== index;
+    });
+    expect(repeatedList).toEqual([]);
 });

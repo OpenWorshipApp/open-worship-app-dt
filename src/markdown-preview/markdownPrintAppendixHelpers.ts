@@ -240,26 +240,24 @@ function appendSection(
 }
 
 /**
- * Puts the appendix after the page's last line, built of text nodes only --
- * a record's or a verse's words are never markup here. Shown on paper alone
- * (`MarkdownPreviewAppComp.scss`), and taken away when the print is done
- * (`afterprint`), or by the next print, or with the page drawn again.
- * Returns whether there was anything to put.
+ * The appendix, built of text nodes only -- a record's or a verse's words
+ * are never markup here -- and put nowhere: null when there is nothing in
+ * it. The print puts it after the page's last line (`addPrintAppendix`); the
+ * Word export reads it after the page's, never putting it on the page.
  */
-export function addPrintAppendix(
-    container: HTMLElement,
+export function genPrintAppendixElement(
+    ownerDocument: Document,
     appendix: PrintAppendixType,
     labels: PrintAppendixLabelsType,
 ) {
-    removePrintAppendix(container);
     if (
         appendix.verses.length === 0 &&
         appendix.names.length === 0 &&
         appendix.places.length === 0
     ) {
-        return false;
+        return null;
     }
-    const appendixElement = container.ownerDocument.createElement('div');
+    const appendixElement = ownerDocument.createElement('div');
     appendixElement.className = PRINT_APPENDIX_CLASS_NAME;
     appendElement(appendixElement, 'hr', '');
     if (appendix.verses.length > 0) {
@@ -290,6 +288,29 @@ export function addPrintAppendix(
             `${PRINT_APPENDIX_CLASS_NAME}-left-out`,
             labels.leftOut.replace('{count}', String(appendix.leftOutCount)),
         );
+    }
+    return appendixElement;
+}
+
+/**
+ * Puts the appendix after the page's last line. Shown on paper alone
+ * (`MarkdownPreviewAppComp.scss`), and taken away when the print is done
+ * (`afterprint`), or by the next print, or with the page drawn again.
+ * Returns whether there was anything to put.
+ */
+export function addPrintAppendix(
+    container: HTMLElement,
+    appendix: PrintAppendixType,
+    labels: PrintAppendixLabelsType,
+) {
+    removePrintAppendix(container);
+    const appendixElement = genPrintAppendixElement(
+        container.ownerDocument,
+        appendix,
+        labels,
+    );
+    if (appendixElement === null) {
+        return false;
     }
     container.append(appendixElement);
     globalThis.addEventListener(

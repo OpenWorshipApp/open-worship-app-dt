@@ -31,7 +31,7 @@ one schema (+491 tokens a round) rather than six tools.
   (the worker), the `owa-agent-foreground` relay in `domHelpers.ts` (lazy
   import). `widget` countdown | stopwatch | clock | marquee-top |
   marquee-bottom | quick-text | all (stop only); `minutes` OR `at` (a clock
-  time today; one gone by is refused); `text` (≤ 300; since 2026-11-09 a marquee ≤ 600, a quick text or a message ≤ 3 000); `seconds` for a quick
+  time today — since 2026-11-13 a day too, as the panel's Start Countdown to DateTime takes one, `parseCountdownAt`, `EC-580`; one gone by is refused); `text` (≤ 300; since 2026-11-09 a marquee ≤ 600, a quick text or a message ≤ 3 000); `seconds` for a quick
   text (default 10 — the widget's own default, 3 then and 5 since 2026-11-09, is too short for an
   announcement). A stop of a widget not on is `did: stopped` with a note.
 - `stateOf` in `genClickExpression` (`domMatch.mjs`) reads `aria-selected`

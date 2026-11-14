@@ -8,7 +8,7 @@ metadata:
 History: `getInjectedAppDocumentFilePath()` runs at **module load in every
 renderer** and treats any `?file=` query param as a file in the *documents*
 directory. But `?file=` is shared by the `bibleNote`, `lyricEditor` and
-`webEditor` popups (`getParamFileFullName`, `src/helper/domHelpers.ts`),
+`webEditor` popups (`getParamFileFullName`, `src/helper/urlParamHelpers.ts`, re-exported by `src/helper/domHelpers.ts`),
 whose files live elsewhere — so opening a Bible Note logged
 `Error: App document file not found: Default.own` plus a `[trace]` every single
 time (confirmed live 2026-07-25, Bible Note window console).

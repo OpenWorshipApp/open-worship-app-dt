@@ -5,7 +5,7 @@ Recommended run in Git Bash on Windows or Terminal on MacOS/Linux.
 From 0.0.6 every pack carries `mcp/open-worship-app-mcp[.exe]`: the app's own
 MCP server (`tools/owa-devtools-mcp`) as a Node single executable, for an AI
 agent on a machine with no Node (Settings → Others → Extra Binaries →
-**AI agents (MCP)**, recipe W-62). Unlike ffmpeg or yt-dlp it is NOT committed
+**AI agents (MCP)**, recipe W-64). Unlike ffmpeg or yt-dlp it is NOT committed
 here: `node extra-work/build-extra-bin.mjs` builds it every time it builds the
 pack, from the same file tree as the npm package `open-worship-app-mcp`
 (`extra-work/mcp-dist/`), and checks it answers before packing it.

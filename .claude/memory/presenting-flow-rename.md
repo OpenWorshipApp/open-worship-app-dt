@@ -36,13 +36,13 @@ false of the translations, and an English-only grep cannot see the difference. S
   CLI flag. Renaming it breaks every media download
   ([[owa-robot-test-presenting-flow-mode]] rows `MD-01..04`). It is no longer the only
   `playlist` hit in src/+electron/: HLS's own playlists (`electron/hlsSegmenter.ts`,
-  `electron/virtualDisplayService.ts`) are a format's word like this flag, and
+  `electron/virtualDisplayService.ts`, `electron/virtualDisplayProtocol.ts`) are a format's word like this flag, and
   `RUN_SHEET_PATTERN` (`src/chatbot/helpBotHelpers.ts`) matches the word as one a user may type —
   kept on purpose (the user's decision, 2026-10-11): it is a volunteer's vocabulary, not a name in the app.
 - (The second lookalike, `displayListeners` — the letters `playList` inside
   `di-splayList-eners` — lived in `src/_screen/preview/preview.runtime.test.tsx`,
   which has since been deleted; `displayList` in `src/chatbot/reportHelpers.ts`
-  holds the same letters today.)
+  and `src/chatbot/screenChangeOfferHelpers.ts` holds the same letters today.)
 
 **The one-off migration** lives in
 [src/helper/presentingFlowRenameMigration.ts](../../src/helper/presentingFlowRenameMigration.ts),

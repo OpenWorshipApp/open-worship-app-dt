@@ -35,9 +35,9 @@ a quick text of a Bible verse, and change how one looks or where it sits on the 
    bigger and red_, _pause it_, _take it off the screen_.
 2. To talk about ONE session of a panel, attach it to the chat:
    - right-click a session's button on the panel's strip (**[en:tran:Default]**,
-     **Session 2**, **＋**), or press the **⋮** on the one you are on, and choose
+     **Session 2**), or press the **⋮** on the one you are on, and choose
      **[en:tran:Open in Chatbot]**; 📸
-   - or press the robot in the panel's own header, beside its transition button: it
+   - or press the robot in the panel's own header, beside its transition button (the **[en:tran:Long Text Show]** panel has none): it
      attaches the session you are on (**[en:tran:Camera Show]** and
      **[en:tran:Screen Show]** have no sessions, so their robot attaches the panel);
    - or, in the help window, press the **⋮** at the left of the box and choose

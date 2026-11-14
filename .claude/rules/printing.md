@@ -133,6 +133,40 @@ paths:
   `true` at once; a call while one is being asked answers `false`. Each
   diagram wait inside the page is bounded at 10 s (`waitAtMost`), which is
   what lets main wait 10 minutes for a person.
+- **The head row's Word button writes the page as a `.docx`, asking the
+  same question Print does** (2026-11-14, the user: _add ms-word icon to
+  click and export to microsoft word, like printing it has to as for add
+  name/location-name bible detail at the end of last page_). It sits after
+  Print, Word blue, and shares Print's road up to the paper:
+  `holdPageForOutput` + `readyPageForOutput(printHold, 'word')`
+  (`MarkdownPreviewAppComp.tsx`) draw the page, ask in Word's words
+  (`MarkdownPrintAskComp`'s `purpose: 'word'` -- **Add and Export** /
+  **Export Page Only** / **Cancel**), read the appendix only on Add and wait
+  for the diagrams, the light copies a dark window draws included. Nothing
+  prints, so no `afterprint` cleans up: the handler's `finally` removes the
+  light copies (`removeLightDiagramsForPrint`) and releases the page. The
+  appendix is built DETACHED (`genPrintAppendixElement`, the same text nodes
+  `addPrintAppendix` puts on paper) and never touches the page. Three dynamic
+  imports, none on the window's static closure: `markdownWordHelpers.ts`
+  turns the drawn DOM into WordprocessingML in one synchronous pass
+  (`snapshotMarkdownWordPage`: headings with bookmarks a `#` link reaches,
+  lists as numbering, tables with a repeated header row, quotes, code,
+  links, pictures as tokens); `markdownWordMediaHelpers.ts` loads each
+  picture only while it is written -- a PNG/JPEG/GIF/BMP as it is (a JPEG
+  the camera turned by EXIF is redrawn), anything else redrawn on a canvas,
+  a diagram's SVG drawn at 2x from a `data:` URL (a `blob:` one TAINTS the
+  canvas once a `foreignObject` label is in it) with the page's
+  `@font-face` fonts it names embedded, as an SVG drawn as a picture
+  reaches no web font; `markdownWordExportHelpers.ts` streams the zip
+  (`OfficeZipWriter` into `createOfficeFileSink`, shared with the
+  PowerPoint export) to Downloads as `<file name>.docx`, the next free name
+  when taken, deletes a half-written file on failure and reveals the result.
+  A language's face and direction come from the INSTALLED language data
+  (`genWordTextLangPicker`: `checkIsThisLang`, `checkIsRtl`), never a script
+  table in code; the paper is Letter in a Letter region, else A4
+  (`genWordPageSize`). The XML escapes it shares with the Bible export live
+  in the leaf `officeXmlHelpers.ts`: `docxHelpers.ts` imports the file
+  helpers, which reach `appProvider`.
 - **Nothing of a Markdown Preview page is left off its paper** (2026-11-12,
   the user's goal _print preserve content_). Each way it was lost was found
   by checking a printout against its page -- every word of the page, read

@@ -6,11 +6,7 @@
 // one slide's DOM and one picture at a time however long the document is.
 
 import type AppDocument from '../app-document-list/AppDocument';
-import {
-    fsCreateWriteStream,
-    fsDeleteFile,
-    getDownloadPath,
-} from '../server/fileHelpers';
+import { fsDeleteFile, getDownloadPath } from '../server/fileHelpers';
 import {
     genNextArchiveFilePath,
     toArchiveFileName,
@@ -25,6 +21,7 @@ import {
     showProgressBarMessage,
 } from '../progress-bar/progressBarHelpers';
 import appProvider from '../server/appProvider';
+import { createOfficeFileSink } from './officeFileSinkHelpers';
 import { OfficeZipWriter } from './officeZipHelpers';
 import type {
     PptxDeckInfoType,
@@ -60,47 +57,6 @@ import { PptxSlideMeasurer } from './pptxSlideMeasureHelpers';
 
 export const PPTX_DOT_EXTENSION = '.pptx';
 const EXPORT_TITLE = 'Export to PPTX';
-
-function createFileSink(filePath: string) {
-    const stream = fsCreateWriteStream(filePath);
-    let streamError: Error | null = null;
-    stream.on('error', (error) => {
-        streamError = error;
-    });
-    return {
-        write: (chunk: Uint8Array) => {
-            return new Promise<void>((resolve, reject) => {
-                if (streamError !== null) {
-                    reject(streamError);
-                    return;
-                }
-                // one entry per call and each awaited: backpressure for free
-                stream.write(chunk, (error) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
-        },
-        close: () => {
-            return new Promise<void>((resolve, reject) => {
-                if (streamError !== null) {
-                    reject(streamError);
-                    return;
-                }
-                stream.once('error', reject);
-                stream.end(() => {
-                    resolve();
-                });
-            });
-        },
-        abort: () => {
-            stream.destroy();
-        },
-    };
-}
 
 // Pictures by source: a background every slide shares is written once.
 class PptxMediaStore {
@@ -255,14 +211,14 @@ async function exportEntryToPptx(
     progressPrefix: string,
 ) {
     let filePath: string | null = null;
-    let sink: ReturnType<typeof createFileSink> | null = null;
+    let sink: ReturnType<typeof createOfficeFileSink> | null = null;
     try {
         filePath = await genNextArchiveFilePath(
             getDownloadPath(),
             toArchiveFileName(entry.name, PPTX_DOT_EXTENSION, 'Document'),
             PPTX_DOT_EXTENSION,
         );
-        sink = createFileSink(filePath);
+        sink = createOfficeFileSink(filePath);
         const { write } = sink;
         await writePackage(
             entry.appDocument,

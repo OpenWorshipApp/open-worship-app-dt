@@ -18,7 +18,7 @@ only a package that ships the lookup dataset has needles to draw), null
 otherwise.
 
 **Why the English matcher cannot simply be pointed at Khmer.** It reads the
-TEXT: cuts it into `[A-Za-z]` tokens, requires an initial capital, probes each
+TEXT: cuts it into `[A-Za-z]` tokens (the ae/oe ligatures too, since 2026-10-01), requires an initial capital, probes each
 run of up to 4 words against a map of every surface form in the dataset, and
 resolves by verse evidence OR by a form being borne by exactly one record in the
 whole dataset. Khmer has no spaces between words and no capitals, so there is

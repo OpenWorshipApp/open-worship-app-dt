@@ -20,7 +20,7 @@ agent without this checkout, two ways:
 - **Executable**: the extra-bin pack's `mcp/open-worship-app-mcp[.exe]` from
   0.0.6 (see [[extra-bin-on-demand]]), for a machine with no Node; Settings →
   Extra Binaries → **AI agents (MCP)** hands out the command or settings text
-  for the AI client chosen in its picker (W-62).
+  for the AI client chosen in its picker (W-64).
 - **Both carry the app version they were made from** (`mcp-version.json`
   beside the server, written by `stageMcpRuntimeTree`; `mcpVersion.mjs` falls
   back to the root `package.json` in a checkout). On the stdio door

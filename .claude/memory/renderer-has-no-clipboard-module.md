@@ -8,7 +8,7 @@ metadata:
   modified: 2026-09-17T20:07:39.551Z
 ---
 
-Electron 44 exports only `contextBridge`, `ipcRenderer`, `webFrame` and
+Electron 44 (and 45, since 2026-11-06) exports only `contextBridge`, `ipcRenderer`, `webFrame` and
 `webUtils` to a renderer, so `import { clipboard } from 'electron'` in
 `electron/client/systemUtils.ts` resolved to `undefined` and
 `appProvider.systemUtils.copyToClipboard` threw

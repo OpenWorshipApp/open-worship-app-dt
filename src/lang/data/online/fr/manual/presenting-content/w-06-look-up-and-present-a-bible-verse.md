@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 87ef1fa05479e0c8
+translatedFrom: 68b974fe48fa10db
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -61,7 +61,7 @@ translatedFrom: 87ef1fa05479e0c8
 7. Si vous êtes pressé, demandez plutôt à l'application : ouvrez l'assistant (**🤖**, W-42) et tapez
    _Mettez John 3:16 à l'écran_ — ou la commande **/verse John 3:16**, qui
    n'a besoin d'aucun assistant. Le passage s'affiche dans la version sur laquelle se trouve la recherche, et
-   la réponse dit ce qui est à l'écran maintenant. Comme un double-clic dans la recherche, il est d'abord
+   la réponse dit ce qui est à l'écran maintenant. Comme le **[en:tran:Save bible item and show on screen]** de la recherche (étape 3), il est d'abord
    enregistré dans la liste **[en:tran:Bibles]**, sauf si la liste le contient déjà, et la réponse le dit.
    Quand aucun assistant ne peut répondre, un passage demandé dans une autre langue est lu dans la Bible
    installée qui nomme son livre, avec un seul bouton qui l'affiche à l'écran ; quand aucune Bible installée

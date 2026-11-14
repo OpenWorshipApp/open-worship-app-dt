@@ -23,6 +23,7 @@ import {
     addPrintAppendix,
     collectPrintReferences,
     countPrintReferences,
+    genPrintAppendixElement,
 } from './markdownPrintAppendixHelpers';
 
 const LABELS: PrintAppendixLabelsType = {
@@ -313,5 +314,32 @@ describe('the appendix after the page', () => {
         globalThis.dispatchEvent(new Event('afterprint'));
 
         expect(page.innerHTML).toBe('The page.');
+    });
+});
+
+// The Word export reads the appendix after the page, never putting it on it.
+describe('the appendix for a Word document', () => {
+    test('is built as the print builds it, put nowhere, and gone with nothing after a print', () => {
+        const element = genPrintAppendixElement(document, APPENDIX, LABELS)!;
+        expect(element.isConnected).toBe(false);
+        expect(element.className).toBe('app-markdown-print-appendix');
+        expect(
+            [...element.querySelectorAll('h2')].map((one) => {
+                return one.textContent;
+            }),
+        ).toEqual(['Verses', 'Names', 'Places']);
+        // No print takes it away: it was never anywhere to take away from.
+        globalThis.dispatchEvent(new Event('afterprint'));
+        expect(element.querySelectorAll('h2')).toHaveLength(3);
+    });
+
+    test('is nothing when nothing was read', () => {
+        expect(
+            genPrintAppendixElement(
+                document,
+                { verses: [], names: [], places: [], leftOutCount: 2 },
+                LABELS,
+            ),
+        ).toBeNull();
     });
 });

@@ -39,9 +39,11 @@ says the throw class is dev-only), no `data-react-comp-*` stamps, the Extra
 Binaries pack downloaded from the real CDN, no main-process stdout (`SC-05`
 BLOCKED). Three traps, all in the script: the pack's `npm run build` kills a
 running dev app (or EPERMs and the BUILD dies) and an `electron:watch` chain
-restarts it when `electron-build/` returns, after which it is the NEWEST
-published instance and every `owa-devtools` call drives it — `owa_app_state`
-must show `isDev: false` and an `owa://local` URL before anything counts; the
+restarts it when `electron-build/` returns, after which two apps are published
+and the stdio `owa-devtools` server drives neither until `owa_choose_app`
+names one (until 2026-11-13 the NEWEST published instance took every call) —
+`owa_app_state` must show `isDev: false` and an `owa://local` URL before
+anything counts; the
 release-dir exe shares userData and the single-instance lock with the
 installed app, so the second one quits silently; and
 `ELECTRON_RUN_AS_NODE` makes the packaged exe run as Node exactly as it does
@@ -77,7 +79,7 @@ recorded in the matrix. (The matrix lives at
 **Those three binaries are NOT bundled with the app** (refactor27). They ship as
 a separate `bin-<ver>.tar.gz` the user installs from **Settings → Others → Extra
 Binaries** into `<data parent dir>/extra-bin/<platform>/` (`yt/`, `ffmpeg/bin/`,
-`qjs/`, also `cloudflared/` for Screen Mirror's tunnel, plus `info.json` and the archive itself, which is kept on purpose so a
+`qjs/`, also `cloudflared/` for Screen Mirror's tunnel and, from pack 0.0.6, `mcp/` (the app's MCP server as one program, for an AI client), plus `info.json` and the archive itself, which is kept on purpose so a
 corrupted binary can be re-extracted offline). `<platform>` is the build's own
 name for the pack (`win`, `mac`, `mac-int`, `linux-arm64` …): the data folder
 travels between OSes on a stick, and one shared folder mixed their packs
@@ -177,7 +179,7 @@ chatbot** answering a volunteer over HTTP. Preference order for any change is
 (the window a slide's website loads in) are CLOSED, the latter down to a
 documented `webSecurity: false` residual. `MC-14` put a RATCHET on the token
 bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
-`MODEL_TOKEN_CEILING` (8 350 since `MC-50` on 2026-10-10; 7 800 after EC-196, the Bible importer that replaced MC-48's lookup; ~7 787 measured, against 7 253 since `MC-07` cut the
+`MODEL_TOKEN_CEILING` (8 480 since 2026-11-09, when `owa_foreground` learned every foreground component; 8 350 after `MC-50` on 2026-10-10; 7 800 after EC-196, the Bible importer that replaced MC-48's lookup; ~7 787 measured, against 7 253 since `MC-07` cut the
 descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
 so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was
@@ -206,7 +208,7 @@ persistent partition, http(s) only, popups to the system browser, no
 permissions, no preload, no node, a host page with no `require` — measured
 from INSIDE the guest by `scripts/probe-aichat.mjs` over raw CDP (a
 `<webview>` is not a `list_pages` target; `/json/list` names it). The browser
-tells the truth about itself: `references/threat-model.md` carries the four
+tells the truth about itself: `references/threat-model.md` carries the five
 walls and the 2026-09-11 measurements (`navigator.webdriver` `true` as
 launched; a plain-Chrome user agent looping Cloudflare's box on claude.ai
 for good, Electron's own passing with no box), `references/backlog.md` the
@@ -287,7 +289,10 @@ rules a test or hook could hold, skill routing, the 🤖's 3 000-character
 index window, and repeated session friction into `AD-xx` proposals
 that wait for `apply`. The friction comes from `scripts/session-friction.mjs`,
 which reads the local Claude Code transcripts, prints masked error signatures
-only, and is never quoted into a note, since notes ship.
+only, and is never quoted into a note, since notes ship. One signature became
+machinery (`AD-34`, 2026-11-14): a `PreToolUse` Bash hook,
+`scripts/zsh-glob-guard.mjs`, refuses `--include=*.ts`-style unquoted globs
+under zsh and names the quoted form.
 
 Its binding rules: **code is the truth for facts, a doc for decisions**. A
 note recording a decision that the code now breaks is a possible regression,

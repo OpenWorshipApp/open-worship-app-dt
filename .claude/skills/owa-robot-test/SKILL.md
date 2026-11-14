@@ -182,8 +182,10 @@ touch any process it did not start.
    EPERMs on a loaded `.dll` and it is the **build** that dies (memory
    `build-kills-running-dev-app`). And an `electron:dev` / `electron:watch` chain
    (nodemon on `electron-build`) **restarts the dev app when the build re-creates that
-   folder**, after which the dev app is the NEWEST published instance and every
-   `owa-devtools` call lands on it instead of the build under test. So: a dev stack you
+   folder**, after which two apps are published again and the `owa-devtools` stdio
+   server drives NEITHER until `owa_choose_app` names one (one already chosen stays
+   chosen; until 2026-11-13 every call landed on the newer dev app instead of the build
+   under test). So: a dev stack you
    started → kill its terminal (the whole chain, not one child). One you did **not**
    start → stop and tell the user; never `taskkill` every `electron.exe` (memory
    `dont-taskkill-all-electron`).
@@ -277,7 +279,9 @@ finding (check that `setting.json` — KB §3 — and whether the exe is really 
 
 #### P3 — Confirm you are driving the packaged app, then continue at step 3
 
-The `owa-devtools` server picks the **newest** live instance per call; with the dev
+The `owa-devtools` stdio server drives the ONE live instance; with several up and none
+chosen it drives NONE — every tool answers with the list of apps and does nothing —
+until `owa_choose_app` chooses one by `pid` (since 2026-11-13). With the dev
 app stopped that is the packaged one, but it is a fact to **prove, not assume**, before
 a single click — a wrong-instance run reports the dev tree as the release. Call
 `owa_app_state` and require BOTH:
@@ -289,18 +293,22 @@ If a dev instance is also live, stop it (P0-1) or pin the client with `OWA_CDP_P
 (only a client started after the variable is set sees it — restart the MCP server).
 Then run **steps 3–8 unchanged**, with the prod deltas below.
 
-⚠️ **When you cannot stop the dev app, drive the `owa_*` tools through the PACKAGED
-app's own in-app MCP host instead** (proved 2026-09-11, when a watcher chain kept
+⚠️ **When you cannot stop the dev app, choose the packaged one with `owa_choose_app`**
+(its `pid` as `prod-app.mjs status` prints it; ask the user first — the server's own
+instructions say never to pick for them). Both tool families then follow that app,
+across a restart on its own profile, and `owa_app_state`'s `workedWith.pid` must be that
+pid. Before that tool (2026-11-13) the way was to **drive the `owa_*` tools through the
+PACKAGED app's own in-app MCP host instead** (proved 2026-09-11, when a watcher chain kept
 restarting a dev app that was newer than the build under test, and the user had asked
-for nothing to be stopped). The two tool families fail apart, which is what makes this
-survivable:
+for nothing to be stopped), which still works. The two tool families failed apart then,
+which is what made it survivable:
 
-- `owa_*` through `owa-devtools` re-resolves **newest-first on every call**, so a dev
-  app started after the packaged one silently answers with ITS windows — the tell is
+- `owa_*` through `owa-devtools` re-resolved **newest-first on every call**, so a dev
+  app started after the packaged one silently answered with ITS windows — the tell is
   `owa_click` replying "no open page matching" and naming pages you never opened, or
   any answer carrying `https://localhost:3000`.
 - the chrome-devtools half (`list_pages`, `take_snapshot`, uid `click`, `press_key`,
-  `take_screenshot`) stays attached to the instance it connected to, so it keeps
+  `take_screenshot`) stayed attached to the instance it connected to, so it kept
   driving the packaged pages — re-check `list_pages` shows `owa://local` before
   trusting any result, since a reconnect would re-resolve too.
 
@@ -318,7 +326,7 @@ firewall), so it doubles as a prod row rather than costing one.
 
 | Area                                               | Dev                                             | Packaged — what to do instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1/::1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
+| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1/::1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`; `screen-mirror.html` too since 2026-11-14) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
 | userData / `setting.json` (KB §3, §10)             | `%APPDATA%\open-worship-app-dev`                | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`.                                                                                                                                                                                                                                                                                                                                               |
 | Missing key (§6d)                                  | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a translated screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
 | Toast stack check (§6, GL-10)                      | lock, `F6`, hover the toast, `F6`               | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`).                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -369,6 +377,9 @@ origin driven is not a prod report.
 
 1. `mcp__owa-devtools__list_pages` → locate the page whose URL ends in `presenter.html`
    (other targets like `screen.html` may appear when presenting; ignore them for now).
+   With more than one app running (a packaged app beside dev counts), every tool first
+   answers with the list of apps and does nothing: ask the user which to drive, then
+   `owa_choose_app` its `pid`.
 2. `mcp__owa-devtools__select_page` on that page.
 3. Confirm React finished mounting (not just DOM-loaded) with
    `mcp__owa-devtools__wait_for` on a name the page only draws once it has mounted.
@@ -522,9 +533,9 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~970 rows with stable
-IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..65`) and
-the context-menu-item matrix (`CM-01..101`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~1,150 rows with stable
+IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..68`) and
+the context-menu-item matrix (`CM-01..103`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
 counts as exercised only with evidence (screenshot, an asserted snapshot or `owa_*` result, or
 console/network diff) — see the matrix's "Evidence rule".
@@ -1315,11 +1326,11 @@ port>` and restart the MCP client. Nothing observed before that fix counts as pr
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~970 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~1,150 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
-  citation, including a complete keyboard-shortcut matrix (`KB-01..65`, every registered
+  citation, including a complete keyboard-shortcut matrix (`KB-01..68`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
-  a context-menu-item matrix (`CM-01..101`). Screen controlling & presenting rows
+  a context-menu-item matrix (`CM-01..103`). Screen controlling & presenting rows
   (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run not
   focused on one area; the
   file also carries the policy-exclusion table, statuses, evidence rule, and the coverage

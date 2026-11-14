@@ -21,7 +21,8 @@ Four things that landed together on 2026-09-10 (`EC-123`, `EC-161`,
 - **The offline bot drafts a song link** (`readSongLinkAsk` in
   `lyricDraftHelpers.ts` → `answerLyricLink` in `helpBotHelpers.ts`, before
   the paste check): a song word beside exactly ONE https address in a short
-  message. A bare address is not enough (a YouTube link, a Bible XML file).
+  message (one or more since 2026-11-13, `EC-589`: several links are several
+  songs, `answerLyricLinks`, `MAX_SONGS_PER_ASK` 4). A bare address is not enough (a YouTube link, a Bible XML file).
   With the assistant paused, the starter chip *Create a lyric file from
   https://…* had been searched for in the manual and answered with how to
   make an empty file.

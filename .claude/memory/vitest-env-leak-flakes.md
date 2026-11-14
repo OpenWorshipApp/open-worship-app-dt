@@ -8,7 +8,9 @@ metadata:
 `vitest.config.ts` sets `environment: 'node'` globally; jsdom is opted into
 per-file with a `// @vitest-environment jsdom` first line. Workers are reused
 across files, so jsdom globals **leak** into later node-env files in the same
-worker. A test that transitively imports `src/server/appProvider.ts` (which does
+worker. (That is how the 2026-07-26 failure below was read; since 2026-11-14
+`vitest.config.ts` runs `pool: 'threads'` with `isolate` left on and says
+every file gets a fresh worker.) A test that transitively imports `src/server/appProvider.ts` (which does
 `document.addEventListener(...)` at module scope) therefore passes or fails
 depending on file scheduling. Seen 2026-07-26: `src/toast/toastHelpers.test.ts`
 (since deleted in the 47053c9d test prune) passed for several runs, then failed

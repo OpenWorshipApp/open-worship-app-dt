@@ -11,7 +11,7 @@ in the tool's own words — *"That did not work: The app has no open page matchi
 It now OPENS the window and starts the walkthrough in it.
 
 **Why:** two hard-codings of the same shape, in two files, both sitting beside
-`tools/owa-devtools-mcp/botFocus.mjs`, which declares all eight windows and how
+`tools/owa-devtools-mcp/botFocus.mjs`, which declares every window (eight then, nine since the Screen Mirror page joined it on 2026-11-14) and how
 each is reached. `PAGE_SWITCH_HINTS` (chatbot) and `dropStepsAlreadyDone`
 (`guide.mjs`) each knew the presenter and the reader only, so the other six
 windows fell through — to a raw error in one case, and to a card whose step 1

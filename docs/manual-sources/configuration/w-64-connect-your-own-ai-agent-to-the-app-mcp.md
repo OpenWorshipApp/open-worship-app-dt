@@ -1,5 +1,5 @@
 ---
-id: W-62
+id: W-64
 title: "Connect your own AI agent to the app (MCP)"
 section: "Configuration"
 verify: [ST-93, MD-05]
@@ -7,7 +7,7 @@ screenshots: 2
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-14"
 ---
-# W-62 — Connect your own AI agent to the app (MCP)
+# W-64 — Connect your own AI agent to the app (MCP)
 
 **Goal:** let an AI agent you run on this computer — Claude Code, Claude Desktop, Cursor
 or another program that speaks MCP (the Model Context Protocol) — see Open Worship and

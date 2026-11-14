@@ -18,7 +18,7 @@ the edge or shadow that keeps them readable over a picture. A
    are hidden until you do, and they stay up while the mouse is on them. The
    passage in the middle **[en:tran:Bibles]** tab has the same **⋯** under it,
    with the same button behind it, and **[en:tran:Long Text Show]** has it
-   beside **[en:tran:Add Language]**, always in view.
+   at the far end of the row that starts with **[en:tran:Add Language]**, always in view.
 2. In the row of buttons that came up, press **[en:tran:Bible/LongText Properties]** —
    the one with a book and a gear. A floating panel opens; there is no card to
    open inside it, and no separate colour for verse numbers. 📸

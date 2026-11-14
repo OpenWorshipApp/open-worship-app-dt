@@ -196,7 +196,8 @@ in its menu is the OS route. Everything else still follows the rule below.
 (OS default app). No drag payload, no double-click-present, no screen
 integration, and PDFs deliberately bypass the app's pdf-to-images pipeline.
 Row menu (Copy Path / Reveal, plus Open everywhere but a `.own` note file, and
-Preview, Preview PDF and Ask the Assistant About This File where they apply) deliberately does NOT import
+Preview, Preview PDF, Ask the Assistant About This File and, on a Markdown row,
+Copy to Bible Notes (since 2026-11-13) where they apply) deliberately does NOT import
 `genCommonMenu` — that would pull `FileSource` + dir watchers + screen helpers
 into the lookup panel. Same anti-import stance as `ResourcesDirBoxComp`
 refusing `BibleCrossRefWrapperComp` (it copies only the collapsed-no-body

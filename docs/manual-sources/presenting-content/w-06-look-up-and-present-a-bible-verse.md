@@ -63,7 +63,7 @@ workflowsVersion: "2026-11-14"
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
-   the answer says what is on the screen now. Like a double-click in the lookup,
+   the answer says what is on the screen now. Like the lookup's **[en:tran:Save bible item and show on screen]** (step 3),
    it is saved to the **[en:tran:Bibles]** list first, unless the list already
    holds it, and the answer says so. With no assistant to answer, a passage asked for in another language is
    read from the installed Bible that names its book, with one button that puts it

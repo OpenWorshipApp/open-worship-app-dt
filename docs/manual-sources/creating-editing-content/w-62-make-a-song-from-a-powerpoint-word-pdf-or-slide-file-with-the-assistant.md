@@ -15,7 +15,7 @@ the font its slides were set in.
 
 1. The file must be in the **[en:tran:Documents]** list, in the Presenter's left column: that
    is the list the help window looks in. 📸
-2. In the help window (the 🤖), type _make a song from my PowerPoint_ and press **Send**. The
+2. In the help window (the 🤖), type _make a song from my PowerPoint_ and press **[en:tran:Send]**. The
    window answers by itself, with no assistant asked: _Which file should I make the song
    from? Press its name, or type its number._ over the PowerPoint files in
    **[en:tran:Documents]**. `/lyric-from` does the same with every PowerPoint, Word, PDF and
@@ -26,7 +26,7 @@ the font its slides were set in.
    is written: its title and parts, what had to be guessed, the headings at the top of the
    slides that were left out of the words, and the font its slides were set in — _Every
    stage shows it in …, the font of its slides._ 📸
-5. Press **Create "…"** to add it to your songs, or **Copy song text** to paste it into the
+5. Press **Create "…"** to add it to your songs, or **[en:tran:Copy song text]** to paste it into the
    Lyric Editor yourself. Created, it is in **[en:tran:Documents]** —
    **[en:tran:Show it in the list]** finds its row — and every stage draws it in the font of
    its slides; **[en:tran:Song Font]** in Stage Style changes that (W-05 step 14).

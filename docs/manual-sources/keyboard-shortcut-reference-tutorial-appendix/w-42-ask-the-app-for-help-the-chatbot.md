@@ -20,8 +20,8 @@ it is describing.
    the **[en:tran:Be careful with AI]** question with **[en:tran:Open]** — ticking
    **[en:tran:Do not show this again for 30 days]** first puts the question away for that
    long — and a narrow window opens beside the app. 📸
-   **The 🤖 button is only on the three windows with a top bar** — the Presenter, the
-   Bible Reader and the Slide Editor — and Settings has a 🤖 **[en:tran:App Assistant]**
+   **The 🤖 button is only on the four windows with a top bar** — the Presenter, the
+   Bible Reader, the Slide Editor and the Screen Mirror page — and Settings has a 🤖 **[en:tran:App Assistant]**
    button of its own, at the foot of its list of tabs. Everywhere else, and on those as
    well, the way in is the **Tools** menu → **[en:tran:App Assistant]**, or **Ctrl+Shift+A**
    (**⌘+Shift+A** on Mac). That works from a Bible Note, Settings, the Web Editor, the
@@ -62,7 +62,7 @@ it is describing.
    each caption sits above its list; drag the window wider and the captions move
    beside their lists.) The first,
    **[en:tran:ASKING ABOUT]**, says which window of the app you are asking about —
-   **[en:tran:Presenter]**, **[en:tran:Bible Reader]**, **[en:tran:Document Editor]**, **[en:tran:Bible Note]**, **[en:tran:Settings]**,
+   **[en:tran:Presenter]**, **[en:tran:Bible Reader]**, **[en:tran:Document Editor]**, **[en:tran:Screen Mirror]**, **[en:tran:Bible Note]**, **[en:tran:Settings]**,
    **[en:tran:Web Editor]**, **[en:tran:Lyric Editor]** or **[en:tran:Local Web Share]**. Every time you open the
    help — including bringing an already-open help window back to the front — the
    active tab starts on the window you opened it from. A choice you make afterwards
@@ -1137,7 +1137,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **[en:tran:Background]** → **[en:tran:Videos]** (or **[en:tran:Audios]**),
     right-click an empty part of the list, **[en:tran:Download From URL]**; the
     box already holds the link, so **[en:tran:Ok]** is all that is left (W-21).
-    **Show me step by step** under it rings each control.
+    **[en:tran:Show me step by step]** under it rings each control.
     **[en:tran:Undo this change]** under the answer takes it all back: what was
     put in, and a file, list or page it made. 📸
     A question about HOW to make one (_How do I make a new slide document?_) is

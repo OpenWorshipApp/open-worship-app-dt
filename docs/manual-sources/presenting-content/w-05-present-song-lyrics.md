@@ -137,7 +137,7 @@ workflowsVersion: "2026-11-14"
     The box is read-only (change a note in the Lyric Editor, and the box follows), it is
     **never sent to an audience screen**, and a song with no `Note` block has no box at all.
     To put it away, drag the divider above it down to the bottom edge, or untick
-    **View → Widgets → Note** (W-31); it stays put away for every song. 📸
+    **View** → **[en:tran:Widgets]** → **[en:tran:Note]** (W-31); it stays put away for every song. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:

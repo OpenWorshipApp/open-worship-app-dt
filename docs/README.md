@@ -37,9 +37,10 @@ npm run docs:preview  # serve the built site
 
 > VitePress was installed with `--ignore-scripts` back when this repo had an
 > `install` hook that downloaded yt-dlp/ffmpeg. There is an `install` hook again
-> (`extra-work/build.sh` → `extra-work/build-extra-bin.mjs`), but it only packs
-> the already-committed binaries from `extra-work/experiment-building/` into
-> `release/bin-<ver>.tar.gz` and downloads no binary; since 2026-11-06 the hook
+> (`extra-work/build.sh` → `extra-work/build-extra-bin.mjs`), but it packs
+> the already-committed binaries from `extra-work/experiment-building/` — and,
+> since pack 0.0.6, the app's MCP server as one executable it BUILDS from this
+> checkout (`mcp/`) — into `release/bin-<ver>.tar.gz` and downloads no binary; since 2026-11-06 the hook
 > also runs `extra-work/install-lang-deps.mjs --warn-only`, an `npm ci` in each
 > language folder that declares dependencies of its own (its song plugin).
 > `--ignore-scripts` skips both, which costs you the locally built pack the dev

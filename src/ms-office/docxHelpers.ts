@@ -4,6 +4,9 @@
 
 import { fsWriteFile, pathJoin } from '../server/fileHelpers';
 import { toZipBytes } from './officeZipHelpers';
+import { escapeXMLAttribute, escapeXMLText } from './officeXmlHelpers';
+
+export { escapeXMLAttribute, escapeXMLText } from './officeXmlHelpers';
 
 export type BibleWordEntryType = {
     title: string;
@@ -39,24 +42,6 @@ const PACKAGE_RELS_XML =
     'officeDocument/2006/relationships/officeDocument" ' +
     'Target="word/document.xml"/>' +
     '</Relationships>';
-
-// XML 1.0 cannot represent these at all, not even as entities. Verse text and
-// font names come from user-imported bible files, and letting one through
-// yields a `document.xml` that Word refuses to open.
-// eslint-disable-next-line no-control-regex -- matching them is the point
-const INVALID_XML_CHAR_REGEX = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g;
-
-function escapeXMLText(value: string) {
-    return value
-        .replaceAll(INVALID_XML_CHAR_REGEX, '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
-}
-
-function escapeXMLAttribute(value: string) {
-    return escapeXMLText(value).replaceAll('"', '&quot;');
-}
 
 function toRunXML(
     text: string,

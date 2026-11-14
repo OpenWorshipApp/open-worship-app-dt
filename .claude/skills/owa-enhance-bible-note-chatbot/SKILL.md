@@ -111,7 +111,7 @@ BN items). A lead or a failing parity test is the first job.
 ### 2. Research
 
 On a scratch profile with the note conversation open, ask the standing note
-BN items) with `scripts/ask-note-chat.mjs` (or all of them with
+asks (`references/note-asks.md`, and those of open BN items) with `scripts/ask-note-chat.mjs` (or all of them with
 `scripts/run-note-asks.mjs`, which undoes each) and grade
 each: tool calls (one is the bar), fields right, the note right on a
 screenshot of the note window, the answer true. A new failure is a BN item

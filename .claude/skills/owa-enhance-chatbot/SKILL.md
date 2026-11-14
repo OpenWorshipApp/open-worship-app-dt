@@ -58,7 +58,7 @@ Update the Status column when the evidence changes — up **or** down. A rung is
 - The tool loop burns rounds, tokens, or money → §D.
 - Something in the chatbot window itself: tabs, model picker, copy, layout → §E.
 
-Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-179`),
+Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-197`),
 and app features that merely happen to be *described* by the manual.
 
 ## The subsystem, in one list
@@ -70,14 +70,14 @@ and app features that merely happen to be *described* by the manual.
 | Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — no model: manual search and state answers read off the app's tools, plus `genGuideActions` / `runBotAction`             |
 | LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic, OpenAI, Kimi, Bedrock, custom servers, Free) |
 | MCP client                        | `src/chatbot/mcpClient.ts` — one session, re-opened on a 404 sweep                                       |
-| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 45 `owa_*` tools (44 on the chatbot's door; 26 of them sent to the model)                |
+| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 47 `owa_*` tools (45 on the chatbot's door; 26 of them sent to the model)                |
 | DOM matching for `find/click/type`| `tools/owa-devtools-mcp/domMatch.mjs` (+ test)                                                          |
 | Walkthrough cards                 | `tools/owa-devtools-mcp/guide.mjs` (+ test) — shadow-root card, `demo` mode                              |
 | Knowledge search                  | `tools/owa-devtools-mcp/help.mjs` — reads `electron-build/knowledge/index.json`                          |
 | "Something is driving your app"   | `tools/owa-devtools-mcp/notify.mjs` (+ test) — `ACTING_TOOLS`                                            |
 | Server assembly                   | `tools/owa-devtools-mcp/server.mjs` — chrome-devtools-mcp + `registerOwaTools`, telemetry forced off      |
 | In-app HTTP door                  | `tools/owa-devtools-mcp/host.mjs` — 8 sessions max, 15-minute idle sweep                                 |
-| Outside-agent stdio door          | `tools/owa-devtools-mcp/bin.mjs`, `cdp.mjs`, `discovery.mjs`                                            |
+| Outside-agent stdio door          | `tools/owa-devtools-mcp/bin.mjs` → `stdio.mjs` (`bridge.mjs` for `--bridge`), `cdp.mjs`, `discovery.mjs`, `appChoice.mjs`                                            |
 | Doors + master switch             | `electron/aiHelpers.ts` — `enableRemoteDebugging`, `startMcpHost`, `publishAiEndpoints`, `checkIsAiEnabled` |
 | Knowledge bundle                  | `extra-work/build-knowledge.mjs` → `electron-build/knowledge/` (part of `electron:build`)                 |
 | Live verification scripts         | `extra-work/verify-chatbot-tools.mjs`, `extra-work/verify-chatbot-e2e.mjs`                               |
@@ -93,9 +93,11 @@ feature works.
 
 1. **One server, two callers.** The chatbot (HTTP) and an outside agent (stdio)
    get the SAME tool set from `server.mjs`. Anything added for one is shipped to
-   the other — the one exception, said in the code, is `owa_drop_files`, on the
+   the other — the two exceptions, said in the code, are `owa_drop_files`, on the
    stdio door alone (2026-10-22: it copies files off the disk into the user's
-   folders). Never fork behaviour on the caller without saying so in the code.
+   folders), and `owa_choose_app`, stdio alone too (2026-11-13: which of
+   several running apps an outside agent works with; the in-app host is
+   pinned to its own). Never fork behaviour on the caller without saying so in the code.
 2. **A tool that acts must announce itself.** Add it to `ACTING_TOOLS` in
    `notify.mjs` or it changes the operator's window with no banner. The audit
    script warns on this.
@@ -150,7 +152,7 @@ reads exactly like the app being down and is really the app running with no door
 Read it rather than guessing (dev writes its own `-dev` data dir):
 
 ```bash
-node -e "const fs=require('fs');const p=process.env.APPDATA+'/open-worship-app-dev/setting.json';console.log(JSON.stringify(JSON.parse(fs.readFileSync(p,'utf8')).clientSetting['ai-enabled']))"
+node -e "const fs=require('fs');const p=(process.env.APPDATA||require('os').homedir()+'/Library/Application Support')+'/open-worship-app-dev/setting.json';console.log(JSON.stringify(JSON.parse(fs.readFileSync(p,'utf8')).clientSetting['ai-enabled']))"
 ```
 
 `"true"` / `"false"` / absent (dev: absent means on). It is read at LAUNCH, so
@@ -608,4 +610,4 @@ knows the app's internals.
   A save under `src/` by ANY session reloads the help window and loses the
   ask in flight: the driver marks the page and reports `RELOADED`
   (ungraded) rather than a wrong answer.
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-188`.
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-197`.

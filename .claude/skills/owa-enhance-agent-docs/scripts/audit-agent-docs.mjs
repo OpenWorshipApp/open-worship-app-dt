@@ -63,6 +63,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -272,6 +273,10 @@ const LEDGER_NAME_SET = new Set([
     'plan.md',
     'baseline.md',
     'user-workflows.md',
+    // The dated heads of the manual and the matrix past their newest ~20
+    // entries, moved out unchanged on 2026-11-14 (`AD-33`).
+    'user-workflows-history.md',
+    'coverage-matrix-history.md',
     // What only the running app can settle, as filed on the day it was read.
     'live-checks.md',
 ]);
@@ -1177,9 +1182,26 @@ function runEnvCheck(docList) {
 
 function runIdsCheck(docList) {
     const ownerTextMap = new Map();
+    // A ledger's `-history.md` beside it holds its older entries (`AD-33`):
+    // an id retired from the rows and named only in a dated entry is still
+    // the ledger's.
     const readOwnerText = (relPath) => {
         if (!ownerTextMap.has(relPath)) {
-            ownerTextMap.set(relPath, readText(relPath));
+            // The matrix is past MAX_READ_BYTES (3.2 MB on 2026-11-14): read
+            // at the old cap, every id it owns was skipped as unreadable.
+            const ownerReadBytes = 16 * 1024 * 1024;
+            const text = readText(relPath, ownerReadBytes);
+            const historyText =
+                text === null
+                    ? null
+                    : readText(
+                          relPath.replace(/\.md$/, '-history.md'),
+                          ownerReadBytes,
+                      );
+            ownerTextMap.set(
+                relPath,
+                historyText === null ? text : `${text}\n${historyText}`,
+            );
         }
         return ownerTextMap.get(relPath);
     };
@@ -1684,17 +1706,52 @@ function runBudgetCheck() {
     const claudeBytes = sizeOf('.claude/CLAUDE.md');
     const indexLineList = readDocLines('.claude/memory/MEMORY.md');
     const indexBytes = sizeOf('.claude/memory/MEMORY.md');
+    // A session loads Claude Code's auto-memory index, which is per user and
+    // per machine (`~/.claude/projects/<the repo path, every non-alphanumeric
+    // a dash>/memory/MEMORY.md`), not this repo's own index (AD-32,
+    // 2026-11-14: one line there against 115 here, and only the one line was
+    // in a session's context). The repo's index is paid for only where the
+    // memory directory is pointed at `.claude/memory`.
+    let userIndexText = null;
+    try {
+        userIndexText = readFileSync(
+            path.join(
+                os.homedir(),
+                '.claude',
+                'projects',
+                REPO_ROOT.replace(/[^A-Za-z0-9]/g, '-'),
+                'memory',
+                'MEMORY.md',
+            ),
+            'utf-8',
+        );
+    } catch {
+        userIndexText = null;
+    }
+    const userIndexBytes =
+        userIndexText === null ? 0 : Buffer.byteLength(userIndexText);
     const alwaysLoaded = [
         {
             at: '.claude/CLAUDE.md',
             text: `${claudeBytes} B ≈ ${estimateTokens(claudeBytes)} tokens, every session`,
         },
         {
+            at: '~/.claude/projects/<repo>/memory/MEMORY.md',
+            text:
+                userIndexText === null
+                    ? 'none on this machine: no auto-memory index is loaded'
+                    : `${userIndexBytes} B ≈ ${estimateTokens(userIndexBytes)} tokens, ` +
+                      `${userIndexText.split('\n').filter(Boolean).length} lines: ` +
+                      "this machine's auto-memory index, the one a session loads",
+        },
+        {
             at: '.claude/memory/MEMORY.md',
             text:
                 `${indexBytes} B ≈ ${estimateTokens(indexBytes)} tokens, ` +
-                `${indexLineList.length} lines (the first ` +
-                `${MEMORY_INDEX_LOADED_LINES} are loaded)`,
+                `${indexLineList.length} lines -- loaded (the first ` +
+                `${MEMORY_INDEX_LOADED_LINES}) only where Claude Code's memory ` +
+                'directory is pointed here; elsewhere a note is reached by a ' +
+                '"memory <name>" mention, a rule or a link',
         },
     ];
     const longIndexLines = indexLineList

@@ -21,7 +21,7 @@ like a picture of slides you like.
    **[en:tran:Discard changed]** and **[en:tran:Save]** at the bottom of the canvas does the
    same for the document being edited.
 2. The help window opens a chat of its own with the document attached under the box, and a
-   card that says what it can change, with five buttons. 📸
+   card that says what it can change, with six buttons. 📸
 3. Press a button under the card, or type what you want:
    - **Replace the words with …** puts the slides' words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation on the line
@@ -47,6 +47,8 @@ like a picture of slides you like.
      own pictures or videos behind the slides, the one whose name fits (_mountain_ finds
      `wp_mountain_reflection.jpg`), and says which. When none fits, drop that picture into the
      **[en:tran:Background]** panel's pictures first and ask again.
+   - **[en:tran:Make a song from it]** writes the slides' words out as a new song, done by the
+     help window with no assistant asked (W-42 step 18).
    - **Backgrounds** by words: _Put the sunrise picture behind every slide_, _Make slide 3's
      background dark blue_, _Take the background off slide 2_. A background is **kept at
      once** — it is not one of the unsaved changes, and needs no Save — and the slide card

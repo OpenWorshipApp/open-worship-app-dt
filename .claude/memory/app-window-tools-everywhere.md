@@ -18,7 +18,8 @@ lyricEditor, experiment, screen-mirror — and deliberately NOT on `about`,
 `camera-broker`, `vd-screen`, `virtual-display` or `virtual-display-viewer`). Inclusion is decided by which entry file
 imports it; there is no page gate anywhere.
 
-Only three windows have a top bar to hold the 🤖 button, so the way in
+Only three windows have a top bar to hold the 🤖 button (four since
+2026-11-14: the Screen Mirror page's bar carries it too), so the way in
 everywhere is `Tools → Start Controlling` / `Ctrl+Shift+P` and
 `Tools → App Assistant` / `Ctrl+Shift+A`. A popup's menu bar is hidden
 (`setMenuBarVisibility(false)`), so on most windows the **shortcut is the only

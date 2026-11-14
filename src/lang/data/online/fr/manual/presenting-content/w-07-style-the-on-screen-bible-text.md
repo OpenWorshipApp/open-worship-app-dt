@@ -3,7 +3,7 @@ id: W-07
 title: "Mettre en forme le texte biblique à l'écran"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 46075c5e04d8b3ed
+translatedFrom: fc5d124964d6713a
 ---
 # W-07 — Mettre en forme le texte biblique à l'écran
 
@@ -15,7 +15,7 @@ le contour ou l'ombre qui les garde lisibles par-dessus une image. Un
    les trois points **⋯** sur son bord inférieur. Les boutons sous le mini-écran
    sont cachés jusqu'à ce que vous le fassiez, et ils restent visibles tant que la souris est dessus. Le
    passage dans l'onglet du milieu **[en:tran:Bibles]** a le même **⋯** en dessous,
-   avec le même bouton derrière, et **[en:tran:Long Text Show]** l'a à côté de
+   avec le même bouton derrière, et **[en:tran:Long Text Show]** l'a tout au bout de la rangée qui commence par
    **[en:tran:Add Language]**, toujours visible.
 2. Dans la rangée de boutons qui est apparue, appuyez sur **[en:tran:Bible/LongText Properties]** —
    celui avec un livre et un engrenage. Un panneau flottant s'ouvre ; il n'y a pas de carte à

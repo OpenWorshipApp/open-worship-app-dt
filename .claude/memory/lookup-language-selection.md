@@ -19,7 +19,7 @@ Four things about it are easy to get wrong:
   Passing every shipped package read ~70MB to serve one language. Switching
   languages therefore RELOADS rather than setting `manager.defaultLang`.
 - **The in-text index (`verse-text-index.json`) is English and must stay English.**
-  It matches KJV wording in rendered verse text (`TOKEN_PATTERN` is `[A-Za-z]`,
+  It matches KJV wording in rendered verse text (`TOKEN_PATTERN` is `[A-Za-z]` plus the ae/oe ligatures,
   gated to `BIBLE_KJV_KEY`), so the underlines never follow the setting. TWO files
   are per-language and neither is that one. The LABELS sidecar —
   `verse-record-labels-<code>.json`, built by
@@ -81,7 +81,7 @@ passes a `{ fontFamily }` style object into
 `NamesLookupManager.fromRawDataset` / `LocationsLookupManager.fromRawDataset`,
 so the mention popup, hover card and advanced panel render Khmer correctly —
 the app-side hook below does not reach them. (The map data itself moved out of
-`public/data/` into `src/lang/data/online/<code>/location-name-map-data/`, with
+`public/data/` into `src/lang/data/en/location-name-map-data/` for English and `src/lang/data/online/<code>/location-name-map-data/` for a package that ships one, with
 `.prettierignore` entries — `e2acb3c0`.)
 
 The language also decides how the records are WRITTEN, not only their words

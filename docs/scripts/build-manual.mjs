@@ -204,6 +204,15 @@ for (const line of lines) {
     }
     if (wf) {
         flush();
+        // One id, one recipe: the help, the known questions and the review
+        // ledger find a page by its id, and two recipes carried W-62 for
+        // three days before anything said so (2026-11-14).
+        const sameIdRecipe = workflows.find((w) => w.id === wf[1]);
+        if (sameIdRecipe !== undefined) {
+            throw new Error(
+                `Two recipes carry the id ${wf[1]}: "${sameIdRecipe.title}" and "${wf[2].trim()}"`,
+            );
+        }
         cur = {
             id: wf[1],
             title: wf[2].trim(),

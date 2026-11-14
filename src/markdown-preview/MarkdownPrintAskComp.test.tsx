@@ -32,6 +32,7 @@ async function render(
         nameCount: number;
         placeCount: number;
         isReading: boolean;
+        purpose: 'print' | 'word';
     }> = {},
 ) {
     await act(async () => {
@@ -171,5 +172,35 @@ describe('the question before a print', () => {
         });
         buttonList()[1].dispatchEvent(onButton);
         expect(onButton.defaultPrevented).toBe(false);
+    });
+});
+
+// 2026-11-14: the same question before a Word document is made of the page.
+describe('the question before a Word document', () => {
+    test('asks about the Word document, in its own words, each button its answer', async () => {
+        await render({ purpose: 'word' });
+
+        expect(
+            container.querySelector('#app-markdown-print-ask-question')
+                ?.textContent,
+        ).toBe(
+            '«Add the Bible text and the name and place details to the end of the Word document?»',
+        );
+        expect(
+            container.querySelector(
+                '#app-markdown-print-ask-question .bi-file-earmark-word',
+            ),
+        ).not.toBeNull();
+        expect(
+            buttonList().map((element) => {
+                return element.textContent;
+            }),
+        ).toEqual(['«Add and Export»', '«Export Page Only»', '«Cancel»']);
+        for (const element of buttonList()) {
+            act(() => {
+                element.click();
+            });
+        }
+        expect(onAnswer.mock.calls).toEqual([['add'], ['without'], ['cancel']]);
     });
 });

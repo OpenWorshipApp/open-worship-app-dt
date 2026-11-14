@@ -3,7 +3,7 @@ id: W-56
 title: "Modifier un chant avec l'assistant (le traduire, ajouter une partie, des accords, sa tonalité)"
 section: "Créer et modifier du contenu"
 lang: fr
-translatedFrom: 97d6800667b447bb
+translatedFrom: 3d5a8405a3809e2e
 ---
 # W-56 — Modifier un chant avec l'assistant (le traduire, ajouter une partie, des accords, sa tonalité)
 
@@ -17,6 +17,8 @@ translatedFrom: 97d6800667b447bb
    - La langue proposée est celle que dit le nom du chant, si ce n'est pas l'anglais (`Still khmer`) ; sinon, pour un nom écrit dans une autre langue que l'anglais, c'est l'anglais quand l'application est affichée dans cette langue, et la langue de l'application quand elle ne l'est pas ; sinon, c'est celle dans laquelle l'application est affichée, sauf si c'est l'anglais : les boutons disent alors _another language_ et l'assistant demande laquelle ; si on lui demande de traduire sans dire de quelle façon, il pose d'abord cette question-là.
    - **[en:tran:Add a section]**, **[en:tran:Add chords]**, **[en:tran:Change the key]** : l'assistant demande les paroles ou la tonalité quand il en a besoin. Une note pour les musiciens est une partie à part entière, tenue hors de l'ordre de lecture et donc hors de l'écran — sauf si l'assistant la place après une partie (demandée _après le couplet 1_, par exemple) : placée, elle est jouée à cet endroit, une diapositive comme toute autre partie.
    - Tapé avec vos propres mots : _traduis-le en khmer_, _ajoute un couplet après le couplet 2 : …_, _transpose-le en sol_, _enlève le pont_.
+   - Un mot corrigé ou changé — _corrige la faute de frappe dans le couplet 1 : « grase » doit être « grâce »_, _remplace « grâce » par « miséricorde » partout_, _vérifie l'orthographe_ — change ces mots-là et rien d'autre : chaque accord reste sur son mot et une ligne de traduction reste sous sa ligne. Une vérification de l'orthographe laisse tranquille une forme ancienne comme _'Twas_, et un titre qui contient le mot est nommé dans la réponse, pas changé. _Change la ligne sous la première ligne du couplet 1 en …_ change cette seule ligne de traduction ; _enlève les lignes de traduction_ les enlève toutes, en gardant les accords.
+   - Parties et accords — _renomme le refrain en Chœur_ renomme cette partie là où elle se trouve, en gardant ses accords et ses lignes, et avec elle chaque endroit où elle est jouée dans l'ordre. _Enlève les accords du refrain_ (ou _enlève tous les accords du chant_) laisse les paroles ; une partie Instrumental garde ses accords, et la réponse le dit. _Remplace chaque accord F par Fmaj7_ change cet accord partout où il est joué et laisse F# et F/A tels quels.
 4. La réponse dit ce qui a changé. La modification n'est **pas encore enregistrée** : le chant affiche un **\*** rouge à côté de son nom dans **[en:tran:Documents]**. **[en:tran:Undo this change]** sous la réponse l'annule ; **[en:tran:Show it in the list]** trouve sa ligne.
 5. Pour la garder, appuyez sur **[en:tran:Save]** dans la rangée sous l'en-tête **[en:tran:Stage Previewer]** du chant, dans le Présentateur (**[en:tran:Undo]** à cet endroit revient aussi en arrière), ou ouvrez le chant avec **[en:tran:Edit]** dans son menu et appuyez sur **Save**. Un Éditeur de paroles déjà ouvert sur le chant affiche la modification de lui-même ; si vous étiez en train d'y taper à ce moment-là, votre saisie est gardée et la ligne
    **[en:tran:The assistant changed this song.]** propose **[en:tran:Load the change]**.

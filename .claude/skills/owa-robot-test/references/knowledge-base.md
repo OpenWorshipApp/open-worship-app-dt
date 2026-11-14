@@ -23,7 +23,7 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
    file it as a bug without confirming (this exact thing happened — the Khmer→English switch
    was the user).
 4. **Most console output is expected dev noise** (Electron security warnings, React DevTools,
-   `printHtmlText`, empty `[log]`). Don't report it (§5).
+   empty `[log]`). Don't report it (§5).
 5. **Restore what you change** (live background, selected doc, shown screens). Screen
    controlling & presenting is **mandatory in every run** (SKILL §6a): show the screen
    briefly, drive its `screen.html` CDP target, then **hide it again** — only leaving it
@@ -608,7 +608,7 @@ round and proves the interlock still works, which is itself worth a line in the 
 | `[warn] Electron Security Warning (allowRunningInsecureContent)` | **dev only** |
 | `[info] Download the React DevTools…` | dev only |
 | `[debug] [vite] connecting… / connected` | dev HMR |
-| `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
+| An empty `[log]` (the `[log] printHtmlText` once beside it is gone: that `console.log` was removed on 2026-09-27) | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
 | `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
 | `Unrecognized feature: 'web-share'.` (slide editor, or any page showing a LIVE YouTube box) | Chromium in Electron does not know the `web-share` permission, and the YouTube box's iframe asks for it in its `allow` list (the standard YouTube embed snippet, `BoxEditorNormalViewYouTubeModeComp.tsx`). One per live player; since 2026-09-26 only the editing canvas and a screen run one — a thumbnail is a still (ED-51). Observed 2026-09-26 |
 | `[warn] If you are profiling the playground app, please ensure you turn off the debug view…` (reader page) | third-party dev-mode noise from the bundled **`bible-note`** dependency (`node_modules/bible-note/dist/bible-note.mjs`) — nothing in `src/` emits it. Observed 2026-09-11 |
@@ -1595,9 +1595,10 @@ The 4th entry of the Bible Find previewer's 4-way select
 - **A row is a single click** → opens in the OS default app, except a PDF (the app's own
   viewer), a markdown file (its preview window), and a bible-note file or a `.json` link
   list (both unfold in place). No drag, no double-click-present, no screen integration. Row
-  menu: Ask the Assistant About This File (AI on; a picture, PDF, note or text file — the
-  row's 🤖 does the same) / Preview / Preview PDF (for those kinds) / Open (not for a note
-  file) / Copy Path to Clipboard / Reveal.
+  menu: Ask the Assistant About This File (AI on; a picture, PDF, note, text, Word or
+  PowerPoint file — the row's 🤖 does the same) / Preview / Preview PDF (for those kinds) /
+  Open (not for a note file) / Copy to Bible Notes (a markdown file) / Copy Path to
+  Clipboard / Reveal.
   Folder-header menu: Refresh / Add Folder / Add Files / Reveal / Copy to Data Directory /
   Remove Folder (red, confirm with Yes/No).
 - **Empty states are correct behaviour:** no folders → a single **Add Folder**
@@ -1681,11 +1682,15 @@ packaged run — confirm them the first time and drop the mark.
   to start quits in `main()` before `ready` (`requestSingleInstanceLock` → `app.quit()`),
   and the first only gets a `second-instance` focus. No error anywhere; the launch just
   "does nothing".
-- The `owa-devtools` stdio server your tools come from resolves the app **newest
-  first on every call** (`resolveAppBrowserUrl`, `requireLivePort`). Only the in-app
-  HTTP host is pinned to its own instance (`pinCdpPort`, 2026-09-09). So a dev app
-  started AFTER the packaged one silently takes over every tool call — `owa_app_state`
-  is the tell (`instances[0].isDev`, and the window URL scheme). `OWA_CDP_PORT` pins an
+- The `owa-devtools` stdio server your tools come from drives the ONE live app; with
+  several published and none chosen it drives NONE (2026-11-13): every `owa_*` tool
+  (`requireLivePort`) and every chrome-devtools tool (`appChoice.mjs`) answers with the
+  list of apps and _Nothing was done_, until `owa_choose_app` chooses one by `pid` — ask
+  the user which. Both halves then follow that app, across a restart on its own profile
+  and kind. Until then it resolved the app **newest first on every call**, so a dev app
+  started AFTER the packaged one silently took over every tool call. Only the in-app
+  HTTP host is pinned to its own instance (`pinCdpPort`, 2026-09-09). `owa_app_state`
+  is the tell (`workedWith.pid` against `instances`' `isDev`, and the window URL scheme). `OWA_CDP_PORT` pins an
   outside client, read at its start.
 - **`npm run build` (inside every `pack:*`) deletes `electron-build/`**, the dev app's
   main entry — memory `build-kills-running-dev-app` — and an `electron:watch` chain

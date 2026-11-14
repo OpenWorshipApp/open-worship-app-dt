@@ -70,7 +70,7 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   (2026-11-07, the user: _build `node_modules/bible-note/knowledge/ui-rag.md`
   into chatbot knowledge. goal: chatbot is can help modify and answer
   everything on bible-note_). The `bible-note` package ships a user guide for
-  the editor inside a note's window, 131 chunks under `##` headings, each with
+  the editor inside a note's window, 133 chunks under `##` headings, each with
   a JSON comment. It is a devDependency and NOT in a packaged app, so
   `build-knowledge.mjs` copies it in through `extra-work/bibleNoteGuideHelpers.mjs`
   (pure, tested against the real file by `bibleNoteGuide.test.mjs`): one page
@@ -78,7 +78,7 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `bible-note:ui/<section>/<slug>`, an `index.json` of its own (`kind`
   `manual`, `surface` `bibleNote`, `source` `bible-note`), front matter,
   chunk comments and every `bible-note@x.y.z` taken off (nothing of a release
-  may ride), a missing package a `✗` line and the rest of the build. **Ten
+  may ride), a missing package a `✗` line and the rest of the build. **Nine
   chunks are left out because they are false here** (`DROPPED_CHUNK_ID_LIST`:
   the seven settings-panel chunks -- the app mounts no settings panel, so no
   gear, no Dark Mode switch, no Reset to Defaults -- and Share as Link and

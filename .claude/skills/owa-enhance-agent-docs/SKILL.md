@@ -54,7 +54,7 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    Write a transcript finding as a class of trouble and never quote it (memory
    `no-user-specific-references-in-notes`).
 6. **Smaller is a feature.** Every session pays for every byte of
-   `CLAUDE.md` and the head of `MEMORY.md`. A fix that adds text must earn it.
+   `CLAUDE.md` and of the memory index it loads. A fix that adds text must earn it.
    For an overgrown always-loaded section, the best fix is to move it into a
    `paths:`-scoped rule. Don't write down what the code already says.
 7. **Another session may be mid-work.** Run `git status` first. Edit a doc
@@ -113,7 +113,7 @@ to `owa-enhance`. This skill files the lead and names where it went.
 | Document | Read by | Loaded | Notes |
 | --- | --- | --- | --- |
 | `.claude/CLAUDE.md` | every Claude session; 🤖 corpus | **always** | the costliest bytes in the repo |
-| `.claude/memory/MEMORY.md` | every Claude session | **always** (first 200 lines) | one line per note, a hook not a summary |
+| `.claude/memory/MEMORY.md` | a session whose Claude Code memory directory is `.claude/memory` | then **always** (first 200 lines) | one line per note, a hook not a summary. By default a session loads its per-user index instead (`~/.claude/projects/<repo>/memory/MEMORY.md`; one line where measured, 2026-11-14, `AD-32`), and finds these notes by CLAUDE.md's `memory <name>` mentions, rules and links — `--check=budget` reports both |
 | `.claude/memory/*.md` | on demand from the index | when relevant | front matter `name` · `description` · `metadata.type` |
 | `.claude/rules/*.md` | Claude once a file matching `paths:` is read | conditional | a glob that matches nothing means a rule that never loads |
 | `.claude/skills/*/SKILL.md` | description: every session's skill listing; body: on invoke | listing always | the listing cuts a description at ~1 530 characters |
@@ -146,7 +146,7 @@ node .claude/skills/owa-enhance-agent-docs/scripts/session-friction.mjs       # 
 
 Both are read-only, need no app and no network, and write nothing.
 `audit-agent-docs.mjs` takes `--check=<a,b>`, `--doc=<path prefix>`, `--all`,
-`--with-ledgers` and `--json` (and `--allow-dirty` beside a stamp).
+`--with-ledgers` and `--json` (and `--allow-dirty` or `--at-head` beside a stamp).
 `session-friction.mjs` takes `--sessions=N`,
 `--since=YYYY-MM-DD`, `--dir=`, `--all` and `--json`. Every line either prints
 is a **lead**.
@@ -279,7 +279,8 @@ first few lines of every list and described the rest.
 
 `src/test-setup/manualRecipes.test.ts` holds the first two manual signals in
 the gate: `npm run lint` fails on a recipe naming a label no code draws and on
-a coverage row citing a file that is gone. `src/test-setup/agentDocsAudit.test.ts`
+a coverage row citing a file that is gone — and, since 2026-11-14 (`AD-31`), on
+a recipe id two headings carry, which `docs:gen` refuses too. `src/test-setup/agentDocsAudit.test.ts`
 holds the rest of the hard checks (`AD-21`) — `paths`, `symbols`, `tools`,
 `scripts`, `env`, `ids`, `memory`, `rules`, `skills`, front matter that does
 not parse as YAML included (`AD-20`) — so a document is failed the day it is
@@ -444,6 +445,10 @@ restates the code, or a lead nobody confirmed.
 - [scripts/session-friction.mjs](./scripts/session-friction.mjs): repeated
   errors by masked signature and session count, rejected calls, interrupts,
   hot reads and hot commands, from the local Claude Code transcripts.
+- [scripts/zsh-glob-guard.mjs](./scripts/zsh-glob-guard.mjs): the
+  `PreToolUse` Bash hook in `.claude/settings.json` (`AD-34`) that refuses an
+  unquoted glob in a `--flag=value` word under zsh, which would abort the line
+  with "no matches found"; `src/test-setup/zshGlobGuard.test.ts` holds it.
 - [references/checks.md](./references/checks.md): per check, its false
   positives, how to confirm, how to fix, and the reading checks no script does.
 - [references/leverage.md](./references/leverage.md): the seven lenses, with

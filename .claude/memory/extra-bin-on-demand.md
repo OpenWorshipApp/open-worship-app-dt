@@ -41,7 +41,7 @@ app whose whole point is running on weak church hardware.
   the Node that ran the build (official nodejs.org build only; its arch picks
   `mac`/`mac-int`). `OWA_EXTRA_BIN_NO_MCP=1`, an unusable Node or a failed check
   builds without it (`hasMcp: false` in `release/bin-info.json`), and `release.sh`
-  refuses to publish that. Recipe W-62, matrix ST-93.
+  refuses to publish that. Recipe W-64, matrix ST-93.
 - **One folder per OS since 2026-09-19 (`EN-29`):**
   `<data parent>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs,info.json,bin-*.tar.gz}`,
   `<platform>` named exactly as `extra-work/buildPlatformHelpers.mjs` names packs (`win`,

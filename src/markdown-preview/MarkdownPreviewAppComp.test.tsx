@@ -47,6 +47,7 @@ const h = vi.hoisted(() => ({
     requestPanel: vi.fn(),
     readAppendix: vi.fn(),
     handleError: vi.fn(),
+    exportWord: vi.fn(),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -164,6 +165,12 @@ vi.mock('./markdownPrintAppendixReadHelpers', () => ({
 vi.mock('../helper/errorHelpers', () => ({
     handleError: h.handleError,
 }));
+// Writing the file has tests of its own (`markdownWordHelpers.test.ts`);
+// here, what the window hands it -- the page as read, by the real reader.
+vi.mock('./markdownWordExportHelpers', () => ({
+    genWordTextLangPicker: async () => () => null,
+    exportMarkdownWordFile: h.exportWord,
+}));
 
 import MarkdownPreviewAppComp from './MarkdownPreviewAppComp';
 
@@ -246,6 +253,7 @@ beforeEach(() => {
     h.requestPanel.mockReset();
     h.readAppendix.mockReset();
     h.handleError.mockReset();
+    h.exportWord.mockReset().mockResolvedValue('/downloads/start.docx');
     watchError = vi.fn<(listener: () => void) => void>();
     h.watch
         .mockReset()
@@ -1941,5 +1949,214 @@ describe('Markdown Preview window — Sections and back to the top', () => {
             ),
         ).toBe(true);
         expect(arrow.dataset.right).toBe('12px');
+    });
+});
+
+// 2026-11-14, the user: _add ms-word icon to click and export to microsoft
+// word, like printing it has to ask for add name/location-name bible detail
+// at the end of last page_.
+describe('Markdown Preview window — Export to MS Word', () => {
+    const REF_PAGE = {
+        status: 'ready',
+        html:
+            '<p><span class="app-markdown-ref">John 3:16</span> and ' +
+            '<span class="app-markdown-ref">Moses</span></p>',
+        mermaidSources: [],
+    };
+    const APPENDIX = {
+        verses: [
+            {
+                title: 'John 3:16',
+                bibleKey: 'KJV',
+                chapters: [
+                    {
+                        title: null,
+                        verses: [{ verse: '16', text: 'For God so loved' }],
+                    },
+                ],
+                isCut: false,
+            },
+        ],
+        names: [],
+        places: [],
+        leftOutCount: 0,
+    };
+
+    async function settle() {
+        for (let round = 0; round < 6; round++) {
+            await act(async () => {
+                await vi.dynamicImportSettled();
+            });
+        }
+    }
+
+    function dialogButton(label: string) {
+        const element = [
+            ...container.querySelectorAll<HTMLButtonElement>(
+                '[role="dialog"] button',
+            ),
+        ].find((one) => {
+            return one.textContent === label;
+        });
+        expect(element).toBeDefined();
+        return element!;
+    }
+
+    async function renderRefPage() {
+        h.load.mockResolvedValue(REF_PAGE);
+        await render();
+        const [verse, moses] = container.querySelectorAll('.app-markdown-ref');
+        h.findRef.mockImplementation((element: Element) => {
+            if (element === verse) {
+                return {
+                    kind: 'panel',
+                    request: {
+                        kind: 'verse',
+                        target: 'JHN 3:16',
+                        name: 'John 3:16',
+                    },
+                };
+            }
+            return element === moses
+                ? {
+                      kind: 'panel',
+                      request: {
+                          kind: 'name',
+                          target: 'moses_1',
+                          name: 'Moses',
+                      },
+                  }
+                : null;
+        });
+    }
+
+    it('a page linking none is written at once and shown in its folder', async () => {
+        await render();
+        expect(button('Export to MS Word').disabled).toBe(false);
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+
+        expect(container.querySelector('[role="dialog"]')).toBeNull();
+        expect(h.exportWord).toHaveBeenCalledTimes(1);
+        const [snapshot, filePath] = h.exportWord.mock.calls[0];
+        expect(filePath).toBe('/docs/start.md');
+        expect(snapshot.bodyXml).toContain('<w:pStyle w:val="Heading1"/>');
+        expect(snapshot.bodyXml).toContain('Top link');
+        expect(snapshot.links).toEqual(['https://example.org']);
+        expect(h.reveal).toHaveBeenCalledWith('/downloads/start.docx');
+        // Nothing of paper: no print, no appendix put on the page.
+        expect(h.print).not.toHaveBeenCalled();
+        expect(button('Export to MS Word').disabled).toBe(false);
+    });
+
+    it('asks as a print does, in its own words, and Cancel writes nothing', async () => {
+        await renderRefPage();
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+
+        expect(
+            container.querySelector('#app-markdown-print-ask-question')
+                ?.textContent,
+        ).toBe(
+            'Add the Bible text and the name and place details to the end of the Word document?',
+        );
+        expect(button('Export to MS Word').disabled).toBe(true);
+        expect(button('Print').disabled).toBe(true);
+        dialogButton('Export Page Only');
+        await act(async () => dialogButton('Cancel').click());
+        await settle();
+
+        expect(container.querySelector('[role="dialog"]')).toBeNull();
+        expect(h.readAppendix).not.toHaveBeenCalled();
+        expect(h.exportWord).not.toHaveBeenCalled();
+        expect(button('Export to MS Word').disabled).toBe(false);
+    });
+
+    it('Add and Export puts the details after the page in the document, never on the page', async () => {
+        h.readAppendix.mockResolvedValue(APPENDIX);
+        await renderRefPage();
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+        await act(async () => dialogButton('Add and Export').click());
+        await settle();
+
+        expect(h.readAppendix).toHaveBeenCalledTimes(1);
+        expect(h.exportWord).toHaveBeenCalledTimes(1);
+        const bodyXml: string = h.exportWord.mock.calls[0][0].bodyXml;
+        expect(bodyXml.indexOf('Moses')).toBeLessThan(
+            bodyXml.indexOf('For God so loved'),
+        );
+        expect(bodyXml).toContain('<w:t xml:space="preserve">Verses</w:t>');
+        expect(
+            container.querySelector('.app-markdown-print-appendix'),
+        ).toBeNull();
+        expect(h.reveal).toHaveBeenCalledWith('/downloads/start.docx');
+    });
+
+    it('Export Page Only reads nothing more', async () => {
+        await renderRefPage();
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+        await act(async () => dialogButton('Export Page Only').click());
+        await settle();
+
+        expect(h.readAppendix).not.toHaveBeenCalled();
+        expect(h.exportWord).toHaveBeenCalledTimes(1);
+        expect(h.exportWord.mock.calls[0][0].bodyXml).not.toContain('Verses');
+    });
+
+    it('a dark page is written with its diagrams drawn light, and the light ones are let go after', async () => {
+        h.theme = 'dark';
+        h.load.mockResolvedValue({
+            status: 'ready',
+            html: '<div class="app-markdown-mermaid" data-mermaid-index="0"><pre><code>graph TD</code></pre></div>',
+            mermaidSources: ['graph TD'],
+        });
+        const genDrawing = (picture: string) => {
+            return async (element: HTMLElement) => {
+                for (const placeholder of element.querySelectorAll(
+                    '[data-mermaid-index]',
+                )) {
+                    placeholder.innerHTML = picture;
+                    placeholder.classList.add('app-markdown-mermaid--rendered');
+                }
+            };
+        };
+        h.mermaid
+            .mockImplementationOnce(
+                genDrawing('<svg class="dark" viewBox="0 0 40 20"></svg>'),
+            )
+            .mockImplementationOnce(
+                genDrawing('<svg class="light" viewBox="0 0 40 20"></svg>'),
+            );
+        await render();
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+
+        expect(h.exportWord).toHaveBeenCalledTimes(1);
+        const { pictures } = h.exportWord.mock.calls[0][0];
+        expect(pictures).toHaveLength(1);
+        expect(pictures[0].source.svgText).toContain('class="light"');
+        expect(
+            container.querySelector('.app-markdown-mermaid--print'),
+        ).toBeNull();
+        expect(
+            container.querySelector('.app-markdown-mermaid--has-print'),
+        ).toBeNull();
+    });
+
+    it('a document that cannot be written says so', async () => {
+        h.exportWord.mockRejectedValue(new Error('disk full'));
+        await render();
+        await act(async () => button('Export to MS Word').click());
+        await settle();
+
+        expect(h.handleError).toHaveBeenCalled();
+        expect(
+            container.querySelector('.app-markdown-preview-warning')
+                ?.textContent,
+        ).toBe('Error');
+        expect(h.reveal).not.toHaveBeenCalled();
+        expect(button('Export to MS Word').disabled).toBe(false);
     });
 });

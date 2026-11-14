@@ -61,7 +61,8 @@ makes the change, named the way the screen card and the Bible text panel name it
 screen's number first when there is more than one screen: **[en:tran:Make the words larger]**,
 **[en:tran:Bold]**, **[en:tran:Lock]**, **[en:tran:Slide transition]: zoom**, **Add …** for a
 Bible installed here, **[en:tran:Clear Long Text]**. Press it: the answer says the setting as
-it is now, with **[en:tran:Undo this change]** under it. A line typed under that answer —
+it is now (a look other than the size, such as bold, a colour or centring, says just _Done._),
+with **[en:tran:Undo this change]** under it. A line typed under that answer —
 _Centre it_ — gets its button too. _Add a new screen_ gets **[en:tran:Add New Screen]**:
 pressed, the answer says the new screen's number, the display it is on and which screens are
 ticked. A question that names no value, a change that is already

@@ -127,7 +127,7 @@ window says plainly that nothing was sent and saves `OWA-<date>-<id>.md` and its
 
 **Since 2026-09-12 the Send answer says WHO wants it** (the user's ask: *provide
 copy-able content and copy-able email address*). The address comes from
-`findContactEmail` in `src/server/appHelpers.ts`, beside `getHelpPageUrl`: the
+`findContactEmail` in `src/server/appHelpers.ts`, which re-exports `getHelpPageUrl` (since 2026-10-13 in the leaf `src/server/onlineHelpHelpers.ts`): the
 app's **help page first**, read live through the same locked-down
 `main:app:read-web-page` reader `owa_read_website` uses — the site is a React
 shell, so a plain fetch of its HTML sees no address; the RENDERED words carry

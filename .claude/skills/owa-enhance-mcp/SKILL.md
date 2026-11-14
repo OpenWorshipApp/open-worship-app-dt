@@ -20,7 +20,7 @@ The stdio door also reaches an agent with no checkout, two ways — §E:
 | Way | Who | Made by |
 | --- | --- | --- |
 | **npm** `open-worship-app-mcp` | an agent on a machine with Node; a program using the JS/TS API | `npm run build-open-worship-app-mcp` → `../owa-mcp-dist` |
-| **executable** `mcp/open-worship-app-mcp[.exe]` | an agent on a machine with no Node (Settings → Extra Binaries → **AI agents (MCP)**, W-62) | `extra-work/build-extra-bin.mjs`, extra-bin pack 0.0.6+ |
+| **executable** `mcp/open-worship-app-mcp[.exe]` | an agent on a machine with no Node (Settings → Extra Binaries → **AI agents (MCP)**, W-64) | `extra-work/build-extra-bin.mjs`, extra-bin pack 0.0.6+ |
 
 One server, two callers, four properties to hold at once:
 
@@ -355,5 +355,5 @@ capability only reachable by someone who already knows the internals.
   — the npm package build and its verify (`--dry-run`, `--live=dev`);
   `extra-work/mcp-dist/` — the shared tree, the executable, the handshake and
   their tests.
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-178`; W-62 /
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-178`; W-64 /
   `ST-93` for the executable from Settings.

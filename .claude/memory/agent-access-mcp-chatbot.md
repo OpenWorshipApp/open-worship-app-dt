@@ -47,8 +47,10 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   the packaged app's own chatbot answered about the dev window. `startMcpHost`
   passes `getCdpPort` and `host.mjs` calls `pinCdpPort` in `discovery.mjs`;
   BOTH resolution paths read it — the `browserUrl` getter and `cdp.mjs`'s
-  `requireLivePort` (what every `owa_*` tool uses). The stdio bin never pins,
-  so an outside agent still follows the newest app. Verified against the
+  `requireLivePort` (what every `owa_*` tool uses). The stdio bin never pins;
+  since 2026-11-13 an outside agent with several apps running drives none
+  until one is chosen with `owa_choose_app` (`requireAppChoice` in
+  `discovery.mjs`), and with one running it follows that one. Verified against the
   packaged build with a planted newer decoy instance file.
 - **App-level tools read the DOM or use `ipcRenderer`; they never `import()` an
   app module** (that re-runs `document.onkeydown` and kills every shortcut —
@@ -61,8 +63,9 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   index, so a question is one file read, not some 400. Internal hits are labelled —
   they are notes for whoever builds the app, not user instructions.
 - **Reachable from every window, six providers, many models.** The **🤖**
-  button is in the top-right toolbar (left of **?**) of the three windows that
-  have one — presenter, slide editor, reader — as `ChatbotButtonComp` in
+  button is in the top-right toolbar (left of **?**) of the four that
+  have one — presenter, slide editor, reader and, since 2026-11-14, the
+  Screen Mirror page — as `ChatbotButtonComp` in
   `src/others/commonButtons.tsx`. Everywhere else the way in is
   `Tools → App Assistant` / **Ctrl+Shift+A**, from `AppAssistantComp`, which
   `AppWindowToolsComp` mounts on all ten pages beside the presenting control

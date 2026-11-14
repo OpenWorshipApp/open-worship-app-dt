@@ -452,3 +452,67 @@ page's id. The stronger fix -- the refusal itself naming that tool -- is
 code in `tools/owa-devtools-mcp/owaTools.mjs`, left to `owa-enhance-mcp`.
 **Cost.** 0 always-loaded bytes (an on-demand note). **Proof.** The mechanism
 only: a friction signature cannot be re-measured in one session.
+
+## AD-31 · One recipe id, one recipe — `done` 2026-11-14 · S2 · L3
+
+**Signal.** Two `### W-62 —` headings: the song from a PowerPoint
+(2026-11-11c) and connecting an AI agent (2026-11-13e). `owa_help_page W-62`
+read one page for both, the MCP known questions rode the song's id, the
+review ledger held one key twice and could stamp neither, and each language's
+MCP page was judged against the song's English: 4 audit leads no read could
+clear. **Change.** The later recipe is W-64 (heading, the two
+`questions/settings.json` rows, the fr and km pages renamed with their id,
+five notes and READMEs, a dated-head pointer; the history kept as written,
+an exception to the file's "never renumber" that the user approved), and the
+id is guarded twice: `docs:gen` throws on a repeated id, and
+`manualRecipes.test.ts` holds every `### W-` id once. **Cost.** 0
+always-loaded bytes. **Proof.** The test failed on the doubled heading
+(`expected [ 'W-62' ] to deeply equal []`) and passes now; `docs:gen` refused
+it by name; `readHelpPage` returns each page by its own id; the `manual`
+check's 4 W-62 leads went to 0 and both languages read 75 of 75 current.
+
+## AD-32 · The memory index a session loads is measured — `done` 2026-11-14 · S3 · L2
+
+**Signal.** The surface table and `--check=budget` billed
+`.claude/memory/MEMORY.md` (115 lines, ≈ 4 763 tokens) to every session, but
+Claude Code loads its per-user index (`~/.claude/projects/<repo>/memory/`),
+which held one line on the machine measured; the repo's index was in no
+session's context there, so its 261 notes were reached only by a
+`memory <name>` mention, a rule or a link. **Change.** The budget check reads
+and reports the per-user index beside the repo's, and says when the repo's is
+loaded; the surface table and Non-negotiable 6 say the same; one reference
+note in that machine's per-user memory points at the repo's notes. **Cost.**
+1 line (≈ 30 tokens) in that machine's per-user index; 0 in the repo.
+**Proof.** `--check=budget` now prints `192 B ≈ 48 tokens, 1 lines` for the
+index a session loads, where it printed 4 763 tokens for one it does not.
+
+## AD-33 · The dated heads are archived past their newest twenty — `done` 2026-11-14 · S3 · L2
+
+**Signal.** `user-workflows.md` was 981 KB, 470 KB of it 400 dated entries
+above the first recipe, and was read whole in 3 of 27 sessions; the matrix
+head was 447 KB of 3.6 MB. **Change.** All but the newest 20 entries of each
+moved unchanged, in order, to `user-workflows-history.md` and
+`docs/test-paths/coverage-matrix-history.md`, with a pointer and the rule
+(when the head passes about twenty, the oldest move to the top of the
+history). The audit lists both as ledgers, and its `ids` check reads a
+ledger's `-history.md` with it -- and reads the matrix at all: at 3.2 MB it
+was past `MAX_READ_BYTES` (2 MB), so every matrix-owned id had been skipped
+as unreadable. **Cost.** 0 always-loaded bytes. **Proof.** 981 411 → 531 658 B
+and 3 648 162 → 3 218 535 B; `docs:gen` output byte-identical (pages,
+manifest, sidebar); the `ids` check, now reading the whole matrix and its
+history, finds no citation it lacks.
+
+## AD-34 · zsh's flag glob is refused before it runs — `done` 2026-11-14 · S4 · L4
+
+**Signal.** `(eval):N: no matches found: --include=*.ts` in 3 of 27
+sessions (×4), and twice in the run that filed this: zsh aborts the line on
+an unquoted glob in a `--flag=value` word that matches no file, bash passes
+it through. **Change.** `scripts/zsh-glob-guard.mjs hook`, a PreToolUse guard
+for Bash under zsh: it refuses exactly that shape (quotes, backslashes,
+comments and here-documents followed) and names the quoted form.
+`src/test-setup/zshGlobGuard.test.ts` holds both outcomes. Wired as a
+`PreToolUse` `Bash` hook in `.claude/settings.json` with the user's own yes
+(it runs in everyone's sessions). **Cost.** 0 always-loaded bytes; ≈ 29 ms
+per Bash call. **Proof.** 4 tests; `zsh -c` shows the unquoted line dying with
+`no matches found` before grep runs; live, the hook refused
+`grep --include=*.zzz` with the quoted form and let `--include='*.zzz'` run.

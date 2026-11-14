@@ -138,8 +138,9 @@ window as a whole — tabs, pickers, its language, the caution — is in
   downloaded Bible is IN (`state.locale`, else the first DETECTED locale):
   `km-KH` gives `ពគប`, `គខប`, `គកស១៦`, `អគត`, `GKHB`, `KCB`, `en-US` the
   English seven, `fr-FR` `LSG` -- never the invented names a downloaded file
-  carries (`KM2023`, `KHMER2019` …). The three JSON maps are read directly in
-  `chatTranHelpers` rather than through a language pack: the import's language
+  carries (`KM2023`, `KHMER2019` …). Each language's map is read in `chatTranHelpers` by language code
+  (`getLangFile`, `langFileStore.ts`: English's, and each enabled language
+  plugin's that carries one) rather than by loading that language's pack: the import's language
   is often not the window's, and loading a whole pack (dictionary, fonts,
   lookup data) for one small map would cost a low-spec machine its memory. **A
   language the app holds no names for -- Thai today -- keeps the file's own
