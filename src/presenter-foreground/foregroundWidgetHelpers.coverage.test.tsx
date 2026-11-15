@@ -239,19 +239,45 @@ describe('the panel each launcher row opens', () => {
 });
 
 describe('the launcher menu', () => {
-    function renderMenuElements(items: { menuElement: any }[]) {
+    function renderMenuElements(
+        items: { menuElement: any; childAfter?: any }[],
+    ) {
         act(() => {
             root.render(
                 <>
                     {items.map((item, index) => (
                         <div key={index} data-row={index}>
-                            {item.menuElement}
+                            <div data-label="">{item.menuElement}</div>
+                            {item.childAfter ?? null}
                         </div>
                     ))}
                 </>,
             );
         });
     }
+
+    test('keeps the badges and the slide show mark out of the label, which is the name alone', () => {
+        // The label is what the menu ellipsises at its width cap; a mark
+        // inside it was cut off, and its scrolling line read "Fill Show2".
+        state.runningKeys = ['foreground-fill'];
+        state.foregroundList = [[2, { webDataList: [{ id: 'w' }] }]];
+        const items = genForegroundPanelMenuItems('', vi.fn(), (key) => key);
+        renderMenuElements(items);
+        items.forEach((item, index) => {
+            const label = container.querySelector(
+                `[data-row="${index}"] [data-label]`,
+            ) as HTMLElement;
+            expect(label.textContent).toBe(item.title);
+            expect(label.querySelector('.badge, .bi')).toBeNull();
+        });
+        const fillIndex = items.findIndex((item) => item.title === 'Fill Show');
+        expect(
+            container.querySelector(
+                `[data-row="${fillIndex}"] .bi-play-circle-fill`,
+            ),
+        ).not.toBeNull();
+        expect(container.querySelectorAll('.badge').length).toBeGreaterThan(0);
+    });
 
     test('marks where a slide show runs, in the default session or any other', () => {
         state.runningKeys = [

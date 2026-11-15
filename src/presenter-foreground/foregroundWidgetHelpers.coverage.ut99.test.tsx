@@ -233,8 +233,11 @@ describe('the foreground components', () => {
             })!;
         };
         const readMark = (title: string) => {
-            const [, , autoPlay] = (findItem(title).menuElement as any).props
-                .children;
+            const childAfter = findItem(title).childAfter as any;
+            if (childAfter === undefined) {
+                return null;
+            }
+            const [, autoPlay] = childAfter.props.children;
             return autoPlay === null ? null : autoPlay.props.title;
         };
         expect(readMark('t(Video Show)')).toBe('t(Slide show is running)');

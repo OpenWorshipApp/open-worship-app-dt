@@ -95,10 +95,11 @@ describe('the foreground launcher', () => {
             return item.title === 'Messages';
         });
         const readBadges = (item: any) => {
-            // menuElement: <span><span class?>label</span>{badges}{autoPlay}</span>
-            const [label, badges] = item.menuElement.props.children;
+            // menuElement: <span class?>label</span>, the name alone;
+            // childAfter: <span>{badges}{autoPlay}</span>, or none at all.
+            const badges = item.childAfter?.props.children[0] ?? [];
             return {
-                className: label.props.className,
+                className: item.menuElement.props.className,
                 screenIds: badges.map((badge: any) => badge.props.children),
             };
         };

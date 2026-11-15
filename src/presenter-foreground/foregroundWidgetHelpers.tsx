@@ -354,30 +354,40 @@ export function genForegroundPanelMenuItems(
                     }
                 />
             ),
+            // The name alone is the label, which the menu ellipsises at its
+            // 210px cap. The badges and the slide show mark ride AFTER it, out
+            // of the label: inside it, "Animation Show [0] ▶" did not fit and
+            // the ▶ -- the one place a show running behind a closed panel is
+            // said -- was cut off at the edge, while the label's scrolling
+            // second line read "Animation Show0" (Afrikaans
+            // "Animasievertoning" overflowed with a badge alone).
             menuElement: (
-                <span className="d-flex align-items-center gap-2">
-                    <span className={isOnScreen ? 'app-on-screen' : ''}>
-                        {translate(widget.labelKey)}
-                    </span>
-                    {screenIds.map((screenId) => {
-                        return (
-                            <span
-                                key={screenId}
-                                className="badge bg-info text-dark"
-                                title={`${translate('Screen')}: ${screenId}`}
-                            >
-                                {screenId}
-                            </span>
-                        );
-                    })}
-                    {isAutoPlaying ? (
-                        <i
-                            className="bi bi-play-circle-fill text-info"
-                            title={translate('Slide show is running')}
-                        />
-                    ) : null}
+                <span className={isOnScreen ? 'app-on-screen' : ''}>
+                    {translate(widget.labelKey)}
                 </span>
             ),
+            childAfter:
+                isOnScreen || isAutoPlaying ? (
+                    <span className="d-flex align-items-center align-self-center gap-1 flex-shrink-0 ms-1">
+                        {screenIds.map((screenId) => {
+                            return (
+                                <span
+                                    key={screenId}
+                                    className="badge bg-info text-dark"
+                                    title={`${translate('Screen')}: ${screenId}`}
+                                >
+                                    {screenId}
+                                </span>
+                            );
+                        })}
+                        {isAutoPlaying ? (
+                            <i
+                                className="bi bi-play-circle-fill text-info"
+                                title={translate('Slide show is running')}
+                            />
+                        ) : null}
+                    </span>
+                ) : undefined,
             onSelect: () => {
                 onToggle(widget.key);
             },
