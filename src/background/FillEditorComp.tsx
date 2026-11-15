@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 
 import AppRangeComp, { type AppRangeDefaultType } from '../others/AppRangeComp';
-import { colorToTransparent } from '../others/color/colorValueHelpers';
+import {
+    type AppColorType,
+    colorToTransparent,
+} from '../others/color/colorValueHelpers';
 import { tran } from '../lang/langHelpers';
 import { tranFillMotion, tranFillPatternName } from './fillLabelHelpers';
 import {
@@ -26,9 +29,11 @@ const ANGLE_RANGE: AppRangeDefaultType = {
     max: 359,
     step: 1,
 };
-const INK_ALPHA_RANGE: AppRangeDefaultType = {
-    size: 32,
-    min: 1,
+// 0 to 255, as the colour picker's own Opacity counts; 0 is allowed here: a
+// gradient fading to nothing lets the screen behind show through.
+const OPACITY_RANGE: AppRangeDefaultType = {
+    size: 255,
+    min: 0,
     max: 255,
     step: 1,
 };
@@ -44,51 +49,92 @@ function toWellColor(color: string) {
     return (toFillHexColor(color) ?? '#000000').slice(0, 7).toLowerCase();
 }
 
-/** A colour from a well, with the alpha it had before. */
-function withAlpha(wellColor: string, oldColor: string) {
-    const alpha = (toFillHexColor(oldColor) ?? '').slice(7);
-    return `${wellColor.toUpperCase()}${alpha}` as `#${string}`;
+/** How solid a colour is: 0 (not at all) to 255 (six digits). */
+function toAlpha(color: string) {
+    return colorToTransparent(toFillHexColor(color) ?? '#000000');
 }
 
-function toAlphaHex(alpha: number) {
-    return Math.round(Math.min(255, Math.max(0, alpha)))
-        .toString(16)
-        .padStart(2, '0')
-        .toUpperCase();
+/**
+ * A colour's six digits with `alpha` as its see-through; a solid one is
+ * written with six digits alone, so it stays equal to the same colour
+ * written without one.
+ */
+function toFillColorWithAlpha(color: string, alpha: number): AppColorType {
+    const rgb = toWellColor(color).toUpperCase() as AppColorType;
+    const rounded = Math.round(Math.min(255, Math.max(0, alpha)));
+    if (rounded >= 255) {
+        return rgb;
+    }
+    return `${rgb}${rounded.toString(16).padStart(2, '0').toUpperCase()}`;
 }
 
 function FillEditorRowComp({
     label,
+    isTop = false,
     children,
-}: Readonly<{ label: string; children: ReactNode }>) {
+}: Readonly<{ label: string; isTop?: boolean; children: ReactNode }>) {
     return (
-        <div className="fill-editor-row">
+        <div className={'fill-editor-row' + (isTop ? ' is-top' : '')}>
             <span className="fill-editor-label">{label}</span>
             <div className="fill-editor-value">{children}</div>
         </div>
     );
 }
 
-function ColorWellComp({
+/**
+ * One colour of a fill, see-through included (2026-11-14, the user: _make
+ * all color in customizing panel support transparency setting_): the well
+ * picks its six digits, the range beside it how solid it is. A native well
+ * shows six digits only, so it is drawn at the colour's own opacity over a
+ * checkerboard -- a faint colour reads as one, as the foreground's swatches
+ * do (`.fg-swatch`).
+ */
+function FillColorFieldComp({
     color,
     label,
     onChange,
+    children,
 }: Readonly<{
-    color: string;
+    color: AppColorType;
     label: string;
-    onChange: (wellColor: string) => void;
+    onChange: (color: AppColorType) => void;
+    /** What else this colour's line holds: its Remove button. */
+    children?: ReactNode;
 }>) {
+    const alpha = toAlpha(color);
+    const opacityLabel = `${tran('Opacity')}: ${label}`;
     return (
-        <input
-            type="color"
-            className="pointer color-picker-mix-input"
-            aria-label={label}
-            title={label}
-            value={toWellColor(color)}
-            onChange={(event) => {
-                onChange(event.currentTarget.value);
-            }}
-        />
+        <span className="fill-editor-color">
+            <span className="fill-editor-well">
+                <input
+                    type="color"
+                    className="pointer fill-editor-well-input"
+                    aria-label={label}
+                    title={label}
+                    value={toWellColor(color)}
+                    style={{ opacity: alpha / 255 }}
+                    onChange={(event) => {
+                        onChange(
+                            toFillColorWithAlpha(
+                                event.currentTarget.value,
+                                alpha,
+                            ),
+                        );
+                    }}
+                />
+            </span>
+            <AppRangeComp
+                value={alpha}
+                title={opacityLabel}
+                setValue={(newAlpha) => {
+                    onChange(toFillColorWithAlpha(color, newAlpha));
+                }}
+                defaultSize={OPACITY_RANGE}
+                isShowValue
+                isCompact
+            />
+            {children}
+        </span>
     );
 }
 
@@ -144,25 +190,22 @@ function GradientFieldsComp({
     const canRemove = fill.colors.length > MIN_FILL_GRADIENT_COLOR_COUNT;
     return (
         <>
-            <FillEditorRowComp label={tran('Colors')}>
+            <FillEditorRowComp label={tran('Colors')} isTop>
                 <div className="fill-editor-colors">
                     {fill.colors.map((color, index) => {
                         const label = `${colorLabel} ${index + 1}`;
                         return (
                             // By place: two stops may hold the same colour.
-                            <span key={index} className="fill-editor-color">
-                                <ColorWellComp
-                                    color={color}
-                                    label={label}
-                                    onChange={(wellColor) => {
-                                        const colors = [...fill.colors];
-                                        colors[index] = withAlpha(
-                                            wellColor,
-                                            color,
-                                        );
-                                        onChange({ ...fill, colors });
-                                    }}
-                                />
+                            <FillColorFieldComp
+                                key={index}
+                                color={color}
+                                label={label}
+                                onChange={(newColor) => {
+                                    const colors = [...fill.colors];
+                                    colors[index] = newColor;
+                                    onChange({ ...fill, colors });
+                                }}
+                            >
                                 {canRemove ? (
                                     <button
                                         type="button"
@@ -183,7 +226,7 @@ function GradientFieldsComp({
                                         <i className="bi bi-x" />
                                     </button>
                                 ) : null}
-                            </span>
+                            </FillColorFieldComp>
                         );
                     })}
                     {fill.colors.length < MAX_FILL_GRADIENT_COLOR_COUNT ? (
@@ -248,7 +291,6 @@ function PatternFieldsComp({
     const patternsLabel = tran('Patterns');
     const backgroundColorLabel = tran('Background Color');
     const colorLabel = tran('Color');
-    const opacityLabel = tran('Opacity');
     const sizeLabel = tran('Size');
     return (
         <>
@@ -276,42 +318,21 @@ function PatternFieldsComp({
                 </select>
             </FillEditorRowComp>
             <FillEditorRowComp label={backgroundColorLabel}>
-                <ColorWellComp
+                <FillColorFieldComp
                     color={fill.base}
                     label={backgroundColorLabel}
-                    onChange={(wellColor) => {
-                        onChange({
-                            ...fill,
-                            base: withAlpha(wellColor, fill.base),
-                        });
+                    onChange={(base) => {
+                        onChange({ ...fill, base });
                     }}
                 />
             </FillEditorRowComp>
             <FillEditorRowComp label={colorLabel}>
-                <ColorWellComp
+                <FillColorFieldComp
                     color={fill.ink}
                     label={colorLabel}
-                    onChange={(wellColor) => {
-                        onChange({
-                            ...fill,
-                            ink: withAlpha(wellColor, fill.ink),
-                        });
+                    onChange={(ink) => {
+                        onChange({ ...fill, ink });
                     }}
-                />
-            </FillEditorRowComp>
-            <FillEditorRowComp label={opacityLabel}>
-                <AppRangeComp
-                    value={colorToTransparent(fill.ink)}
-                    title={opacityLabel}
-                    setValue={(alpha) => {
-                        onChange({
-                            ...fill,
-                            ink: `${fill.ink.slice(0, 7)}${toAlphaHex(alpha)}` as `#${string}`,
-                        });
-                    }}
-                    defaultSize={INK_ALPHA_RANGE}
-                    isShowValue
-                    isCompact
                 />
             </FillEditorRowComp>
             <FillEditorRowComp label={sizeLabel}>

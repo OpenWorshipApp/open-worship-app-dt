@@ -1685,6 +1685,9 @@
                         "gradient",
                         "pattern",
                         "copy css",
+                        "transparent",
+                        "see-through",
+                        "opacity",
                         "no picture"
                     ],
                     "resources": {

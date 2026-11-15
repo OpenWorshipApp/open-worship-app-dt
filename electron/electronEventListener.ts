@@ -480,7 +480,12 @@ export function initEventListenerApp(appController: ElectronAppController) {
                     )) ?? null
                 );
             }
-            return await readDisplayWallpaper({ displayIndex, width, sizes });
+            return await readDisplayWallpaper({
+                displayId,
+                displayIndex,
+                width,
+                sizes,
+            });
         },
     );
 }

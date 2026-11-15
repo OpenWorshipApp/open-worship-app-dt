@@ -25,9 +25,11 @@ workflowsVersion: "2026-11-14"
      left of its line, in that screen's color, folds the section to that line, which then shows
      the screen's number and what it holds; press the arrow again to open it.
    - **[en:tran:Customize]**, beside the tiles while a screen holds a gradient or a pattern,
-     changes its colors, **[en:tran:Type]**, **[en:tran:Angle]**, **[en:tran:Opacity]**,
-     **[en:tran:Size]** and **[en:tran:Speed]**; the screen follows half a second after you
-     stop. The sliders button at the end of the **[en:tran:Gradients]** line opens and closes it.
+     changes its colors, **[en:tran:Type]**, **[en:tran:Angle]**, **[en:tran:Size]** and
+     **[en:tran:Speed]**; the screen follows half a second after you stop. Each color has its own
+     **[en:tran:Opacity]** slider beside it (0 lets what is behind the screen show through, 255
+     is solid), and its well is drawn that faint over a checkerboard. The sliders button at the
+     end of the **[en:tran:Gradients]** line opens and closes it.
    - **[en:tran:Save as Preset]**, under the patterns, keeps what is up as a button of its own
      under **[en:tran:Presets]**.
    - Right-click a gradient or pattern tile, or a saved button, → **[en:tran:Copy CSS]** to

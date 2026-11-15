@@ -330,6 +330,17 @@ describe('what it holds', () => {
         await helpers.readDisplayWallpaper({ displayIndex: 0, width: 99999 });
         expect(image.resize).toHaveBeenCalledWith({ width: 640 });
     });
+
+    test('a HEIC is left to macOS: no thumbnailer is asked here', async () => {
+        answerCommand(() =>
+            genRegistryOutput([['WallPaper', 'C:\\pictures\\one.heic']]),
+        );
+        mocks.createFromPath.mockReturnValue({ isEmpty: () => true });
+        await expect(
+            helpers.readDisplayWallpaper({ displayIndex: 0 }),
+        ).resolves.toBeNull();
+        expect(mocks.createThumbnailFromPath).not.toHaveBeenCalled();
+    });
 });
 
 describe('on macOS', () => {
@@ -360,6 +371,129 @@ describe('on macOS', () => {
     test('falls back to the first desktop for a position it has none for', async () => {
         await helpers.readDisplayWallpaper({ displayIndex: 5 });
         expect(mocks.createFromPath).toHaveBeenCalledWith('/Users/x/one.jpg');
+    });
+
+    test('System Events answering "missing value" is no picture', async () => {
+        answerCommand(() => 'missing value\n');
+        await expect(
+            helpers.readDisplayWallpaper({ displayIndex: 0 }),
+        ).resolves.toBeNull();
+        expect(mocks.statSync).not.toHaveBeenCalled();
+    });
+});
+
+describe('on macOS, asking NSWorkspace', () => {
+    const WORKSPACE_OUTPUT =
+        '1\t/Users/x/main.jpg\n3\t/Users/x/side.jpg\n7\t\n';
+
+    function answerWorkspace(
+        workspaceStdout: string | null,
+        plutilStdout: string | null = null,
+    ) {
+        answerCommand((command, args) => {
+            if (command === 'plutil') {
+                return plutilStdout;
+            }
+            if (args.includes('JavaScript')) {
+                return workspaceStdout;
+            }
+            return '/Users/x/events.jpg\n';
+        });
+    }
+
+    function checkIsSystemEventsAsked() {
+        return mocks.execFile.mock.calls.some(([, args]) => {
+            return !args.includes('JavaScript') && args[0] === '-e';
+        });
+    }
+
+    beforeEach(async () => {
+        definePlatform('darwin');
+        answerWorkspace(WORKSPACE_OUTPUT);
+        mocks.createThumbnailFromPath.mockReset();
+        vi.resetModules();
+        helpers = await import('./displayWallpaperHelpers');
+    });
+
+    test('takes the picture of the screen with this display id', async () => {
+        const wallpaper = await helpers.readDisplayWallpaper({
+            displayId: 3,
+            displayIndex: 0,
+        });
+        expect(mocks.createFromPath).toHaveBeenCalledWith('/Users/x/side.jpg');
+        expect(wallpaper?.imageDataUrl).toBe(EXPECTED_DATA_URL);
+        expect(checkIsSystemEventsAsked()).toBe(false);
+    });
+
+    test('falls back to the position for an id it does not list', async () => {
+        await helpers.readDisplayWallpaper({ displayId: 99, displayIndex: 1 });
+        expect(mocks.createFromPath).toHaveBeenCalledWith('/Users/x/side.jpg');
+    });
+
+    test('a screen with no picture named falls through to System Events', async () => {
+        answerWorkspace('7\t\n');
+        await helpers.readDisplayWallpaper({ displayId: 7, displayIndex: 0 });
+        expect(checkIsSystemEventsAsked()).toBe(true);
+        expect(mocks.createFromPath).toHaveBeenCalledWith(
+            '/Users/x/events.jpg',
+        );
+    });
+
+    test('a system .madesktop is drawn from the still it names', async () => {
+        answerWorkspace(
+            '1\t/System/Big Sur.madesktop\n',
+            '/System/.thumbnails/Big Sur.jpg\n',
+        );
+        await helpers.readDisplayWallpaper({ displayId: 1, displayIndex: 0 });
+        expect(mocks.createFromPath).toHaveBeenCalledWith(
+            '/System/.thumbnails/Big Sur.jpg',
+        );
+    });
+
+    test('a .madesktop naming no still is no picture', async () => {
+        answerWorkspace('1\t/System/Big Sur.madesktop\n', null);
+        await expect(
+            helpers.readDisplayWallpaper({ displayId: 1, displayIndex: 0 }),
+        ).resolves.toBeNull();
+        expect(mocks.createFromPath).not.toHaveBeenCalled();
+    });
+
+    test('a HEIC the decoder cannot read comes from the system thumbnailer', async () => {
+        answerWorkspace('1\t/System/DefaultDesktop.heic\n');
+        mocks.createFromPath.mockReturnValue({ isEmpty: () => true });
+        mocks.createThumbnailFromPath.mockResolvedValue(genImage(400));
+        const wallpaper = await helpers.readDisplayWallpaper({
+            displayId: 1,
+            displayIndex: 0,
+            width: 400,
+        });
+        expect(mocks.createThumbnailFromPath).toHaveBeenCalledWith(
+            '/System/DefaultDesktop.heic',
+            { width: 400, height: 400 },
+        );
+        expect(wallpaper?.imageDataUrl).toBe(EXPECTED_DATA_URL);
+    });
+
+    test.each([
+        ['a file that is not a picture', '/Users/x/clip.mov', 'unused'],
+        ['an empty thumbnail', '/Users/x/one.heic', 'empty'],
+        ['a thumbnailer failure', '/Users/x/one.heic', 'throws'],
+    ])('%s is no picture', async (_name, filePath, thumbnail) => {
+        answerWorkspace(`1\t${filePath}\n`);
+        mocks.createFromPath.mockReturnValue({ isEmpty: () => true });
+        if (thumbnail === 'empty') {
+            mocks.createThumbnailFromPath.mockResolvedValue({
+                isEmpty: () => true,
+            });
+        } else if (thumbnail === 'throws') {
+            mocks.createThumbnailFromPath.mockRejectedValue(new Error('no'));
+        }
+        await expect(
+            helpers.readDisplayWallpaper({ displayId: 1, displayIndex: 0 }),
+        ).resolves.toBeNull();
+        if (thumbnail === 'unused') {
+            expect(mocks.createThumbnailFromPath).not.toHaveBeenCalled();
+        }
     });
 });
 

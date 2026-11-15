@@ -697,6 +697,50 @@ describe('Customize', () => {
         expect(apply).toHaveBeenCalledTimes(5);
     });
 
+    it('lets each of a gradient’s colours be see-through, its well drawn as faint as it is', async () => {
+        vi.useFakeTimers();
+        await mountHeld(NAVY_GRADIENT);
+        const apply = state.manager!.applyBackgroundSrc;
+        const flush = async () => {
+            await act(async () => {
+                vi.advanceTimersByTime(500);
+            });
+            const src = apply.mock.lastCall![1].src;
+            state.manager!.backgroundSrc = { type: 'fill', src };
+            return src;
+        };
+        const readOpacity = (label: string) => {
+            return host.querySelector<HTMLInputElement>(
+                `input[type="range"][aria-label="Opacity: ${label}"]`,
+            )!;
+        };
+        const readWell = (label: string) => {
+            return host.querySelector<HTMLInputElement>(
+                `input[type="color"][aria-label="${label}"]`,
+            )!;
+        };
+        // A solid colour is all there: its well drawn whole.
+        expect(readOpacity('Color 2').value).toBe('255');
+        expect(readWell('Color 2').style.opacity).toBe('1');
+        await act(async () => changeInput(readOpacity('Color 2'), '51'));
+        expect(await flush()).toBe(
+            'gradient?shape=linear&angle=180&colors=0F172A-1E3A8A33',
+        );
+        expect(readWell('Color 2').style.opacity).toBe('0.2');
+        // A new colour from the well keeps how see-through it was.
+        await act(async () => changeInput(readWell('Color 2'), '#ff0000'));
+        expect(await flush()).toBe(
+            'gradient?shape=linear&angle=180&colors=0F172A-FF000033',
+        );
+        // The first colour is untouched by the second's.
+        expect(readOpacity('Color 1').value).toBe('255');
+        // All the way back is six digits again: the same colour as before.
+        await act(async () => changeInput(readOpacity('Color 2'), '255'));
+        expect(await flush()).toBe(
+            'gradient?shape=linear&angle=180&colors=0F172A-FF0000',
+        );
+    });
+
     it('changes a pattern part by part, its tint keeping its see-through', async () => {
         vi.useFakeTimers();
         await mountHeld(DARK_DOTS);
@@ -745,13 +789,25 @@ describe('Customize', () => {
         await act(async () =>
             changeInput(
                 host.querySelector<HTMLInputElement>(
-                    'input[type="range"][aria-label="Opacity"]',
+                    'input[type="range"][aria-label="Opacity: Color"]',
                 )!,
                 '128',
             ),
         );
         expect(await flush()).toBe(
             'pattern?name=zigzag&base=000000&ink=00FF0080&size=24',
+        );
+        // The background colour lets the screen show through as well.
+        await act(async () =>
+            changeInput(
+                host.querySelector<HTMLInputElement>(
+                    'input[type="range"][aria-label="Opacity: Background Color"]',
+                )!,
+                '0',
+            ),
+        );
+        expect(await flush()).toBe(
+            'pattern?name=zigzag&base=00000000&ink=00FF0080&size=24',
         );
         await act(async () =>
             changeInput(
@@ -762,7 +818,7 @@ describe('Customize', () => {
             ),
         );
         expect(await flush()).toBe(
-            'pattern?name=zigzag&base=000000&ink=00FF0080&size=64',
+            'pattern?name=zigzag&base=00000000&ink=00FF0080&size=64',
         );
     });
 });

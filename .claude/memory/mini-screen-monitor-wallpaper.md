@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: bc1540be-5b63-4911-80d5-2f674d20397b
-  modified: 2026-09-27T19:45:44.578Z
+  modified: 2026-11-14T20:15:00.000Z
 ---
 
 Each mini screen previewer card draws **that display's desktop wallpaper**
@@ -29,11 +29,24 @@ A wallpaper is a FILE: no other window is in it, and it needs no retaking.
 **How to apply:** do not "improve" this back into a screen capture. Read the
 wallpaper per platform — Windows `CachedFiles\CachedImage_<w>_<h>_POS*.jpg`
 (per-monitor and pre-fitted; ambiguous when two monitors share a size, then
-fall back) else `HKCU\Control Panel\Desktop`'s `WallPaper`; macOS `System
-Events` `picture of every desktop`, indexed by display position; GNOME
-`gsettings`. Those key off a monitor's PIXEL SIZE or its POSITION, so the
-renderer passes `displayIndex` and `sizes` from the display list it already
-holds rather than the main process reaching for `screen`. One read per display
+fall back) else `HKCU\Control Panel\Desktop`'s `WallPaper`; macOS
+`NSWorkspace.desktopImageURLForScreen` through `osascript -l JavaScript`,
+matched by `NSScreenNumber` (= Electron's display id), a `.madesktop` resolved
+to its `thumbnailPath`, then `System Events` `picture of every desktop` by
+position as the fallback; GNOME `gsettings`. Those key off a monitor's ID,
+PIXEL SIZE or POSITION, so the renderer passes `displayId`, `displayIndex` and
+`sizes` from the display list it already holds rather than the main process
+reaching for `screen`.
+
+**macOS since Sonoma (2026-11-14):** System Events answers `missing value` for
+the system's own pictures (the default aerial, a dynamic desktop) — every card
+on such a Mac kept the checkered pattern. `NSWorkspace` still names the still
+the desktop draws (`/System/Library/CoreServices/DefaultDesktop.heic`), and
+needs no Automation prompt. Every system wallpaper is a HEIC, which
+`nativeImage.createFromPath` returns EMPTY for; it is decoded by
+`nativeImage.createThumbnailFromPath` (QuickLook) — for image extensions only,
+since QuickLook answers a generic document icon for anything else (a
+`.madesktop` included). One read per display
 is shared by every card on it and released with the last one; the desktop's own
 layout is copied (Fill / Fit / Stretch / Centre / Tile) because a "Fit"
 wallpaper really does show the desktop colour down its sides. A machine that

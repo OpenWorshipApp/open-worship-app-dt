@@ -248,6 +248,18 @@ describe('painting a fill', () => {
         );
     });
 
+    it('paints nothing under a gradient that lets the screen show through', () => {
+        // Under it, the first colour would make the faint stop solid.
+        const fading = parse('gradient?angle=180&colors=1E3A8A-1E3A8A00');
+        expect(genFillCss(fading)).toEqual({
+            backgroundColor: 'transparent',
+            backgroundImage: 'linear-gradient(180deg, #1E3A8A, #1E3A8A00)',
+        });
+        expect(genFillBackground(fading)).toBe(
+            'linear-gradient(180deg, #1E3A8A, #1E3A8A00), transparent',
+        );
+    });
+
     it('paints a pattern tile by tile, smaller for a preview', () => {
         const dots = parse(
             'pattern?name=dots&base=172554&ink=FFFFFF26&size=24',

@@ -205,9 +205,95 @@ async function readWindowsWallpaper(
 
 // -- macOS -------------------------------------------------------------------
 
+// One `<NSScreenNumber>\t<path>` line per screen, asked of `NSWorkspace` itself.
+// Since Sonoma, System Events answers `missing value` for the system's own
+// pictures (the default aerial, a dynamic desktop): there is no file for it to
+// name, yet `desktopImageURLForScreen` still names the still the desktop
+// draws. It is also no Apple Event, so no "wants to control System Events"
+// prompt.
+const MAC_DESKTOP_IMAGES_SCRIPT = [
+    "ObjC.import('AppKit');",
+    'const screens = $.NSScreen.screens;',
+    'const lines = [];',
+    'for (let i = 0; i < screens.count; i++) {',
+    '    const screen = screens.objectAtIndex(i);',
+    '    const url = $.NSWorkspace.sharedWorkspace' +
+        '.desktopImageURLForScreen(screen);',
+    "    const id = screen.deviceDescription.objectForKey('NSScreenNumber');",
+    "    lines.push(String(id.js) + '\\t' + (url.isNil() ? '' : url.path.js));",
+    '}',
+    "lines.join('\\n');",
+].join('\n');
+
+/**
+ * The picture `NSWorkspace` names for this display. Electron's display id on
+ * macOS IS the `NSScreenNumber`, so the screen is matched by id; its position is
+ * only the fallback, since `NSScreen.screens` puts the menu-bar screen first
+ * whatever order Electron lists them in.
+ */
+async function readMacWorkspaceWallpaper(
+    displayId: number | undefined,
+    displayIndex: number,
+) {
+    const stdout = await runCommand('osascript', [
+        '-l',
+        'JavaScript',
+        '-e',
+        MAC_DESKTOP_IMAGES_SCRIPT,
+    ]);
+    if (stdout === null) {
+        return null;
+    }
+    const screens = stdout
+        .split(/\r?\n/)
+        .map((line) => line.split('\t'))
+        .filter((parts) => parts.length === 2 && parts[1].trim() !== '')
+        .map(([id, filePath]) => ({
+            id: Number(id),
+            filePath: filePath.trim(),
+        }));
+    const matched =
+        screens.find((screen) => screen.id === displayId) ??
+        screens[displayIndex] ??
+        screens[0];
+    return matched?.filePath ?? null;
+}
+
+/**
+ * A system desktop chosen in Wallpaper settings is a `.madesktop` plist, not a
+ * picture; it names the still that stands for it.
+ */
+async function resolveMacDesktopFile(filePath: string) {
+    if (!filePath.toLowerCase().endsWith('.madesktop')) {
+        return filePath;
+    }
+    const stdout = await runCommand('plutil', [
+        '-extract',
+        'thumbnailPath',
+        'raw',
+        '-o',
+        '-',
+        filePath,
+    ]);
+    const thumbnailPath = stdout?.trim() ?? '';
+    return thumbnailPath === '' ? null : thumbnailPath;
+}
+
 async function readMacWallpaper(
+    displayId: number | undefined,
     displayIndex: number,
 ): Promise<ReadWallpaperType> {
+    const workspaceFilePath = await readMacWorkspaceWallpaper(
+        displayId,
+        displayIndex,
+    );
+    if (workspaceFilePath !== null) {
+        return {
+            filePath: await resolveMacDesktopFile(workspaceFilePath),
+            color: null,
+            fit: 'cover',
+        };
+    }
     const stdout = await runCommand('osascript', [
         '-e',
         'tell application "System Events" to get picture of every desktop',
@@ -219,7 +305,7 @@ async function readMacWallpaper(
     const filePaths = stdout
         .split(',')
         .map((part) => part.trim())
-        .filter((part) => part !== '');
+        .filter((part) => part !== '' && part !== 'missing value');
     return {
         filePath: filePaths[displayIndex] ?? filePaths[0] ?? null,
         color: null,
@@ -266,7 +352,39 @@ async function readLinuxWallpaper(): Promise<ReadWallpaperType> {
 
 // -- Shared ------------------------------------------------------------------
 
-function toImageDataUrl(filePath: string | null, width: number) {
+// Pictures `nativeImage.createFromPath` cannot decode (it reads PNG and JPEG)
+// but macOS's own thumbnailer can. Every system wallpaper since Big Sur is a
+// HEIC. Images only: for any other file QuickLook answers a document icon.
+const MAC_THUMBNAIL_EXTENSIONS = new Set([
+    '.heic',
+    '.heif',
+    '.tif',
+    '.tiff',
+    '.webp',
+    '.gif',
+    '.bmp',
+]);
+
+async function readMacThumbnail(filePath: string, width: number) {
+    if (
+        process.platform !== 'darwin' ||
+        !MAC_THUMBNAIL_EXTENSIONS.has(path.extname(filePath).toLowerCase())
+    ) {
+        return null;
+    }
+    try {
+        // A square box keeps the picture's own shape at `width` across.
+        const image = await nativeImage.createThumbnailFromPath(filePath, {
+            width,
+            height: width,
+        });
+        return image.isEmpty() ? null : image;
+    } catch (_error) {
+        return null;
+    }
+}
+
+async function toImageDataUrl(filePath: string | null, width: number) {
     if (filePath === null) {
         return null;
     }
@@ -279,8 +397,11 @@ function toImageDataUrl(filePath: string | null, width: number) {
         // on. The colour beside it is still an answer.
         return null;
     }
-    const image = nativeImage.createFromPath(filePath);
-    if (image.isEmpty()) {
+    const decoded = nativeImage.createFromPath(filePath);
+    const image = decoded.isEmpty()
+        ? await readMacThumbnail(filePath, width)
+        : decoded;
+    if (image === null || image.isEmpty()) {
         return null;
     }
     // `resize` with a width alone keeps the aspect ratio, so the card gets the
@@ -301,6 +422,7 @@ function toValidWidth(width: unknown) {
 }
 
 function readPlatformWallpaper(
+    displayId: number | undefined,
     displayIndex: number,
     sizes: DisplaySizeType[],
 ): Promise<ReadWallpaperType> {
@@ -308,7 +430,7 @@ function readPlatformWallpaper(
         return readWindowsWallpaper(sizes);
     }
     if (process.platform === 'darwin') {
-        return readMacWallpaper(displayIndex);
+        return readMacWallpaper(displayId, displayIndex);
     }
     return readLinuxWallpaper();
 }
@@ -319,29 +441,35 @@ function readPlatformWallpaper(
  * reader here, a wallpaper file that has moved, a locked-down account. Null is
  * an answer, not a failure: the card draws its "nothing here" pattern.
  *
- * `displayIndex` and `sizes` come from the renderer, which already holds the
- * ordered display list: the platform readers key off a monitor's POSITION
- * (macOS) or its PIXEL SIZE (Windows), and resolving those here would mean
- * reaching for Electron's `screen` module from a helper that is loaded before
- * that is safe.
+ * `displayId`, `displayIndex` and `sizes` come from the renderer, which already
+ * holds the ordered display list: the platform readers key off a monitor's ID
+ * then POSITION (macOS) or its PIXEL SIZE (Windows), and resolving those here
+ * would mean reaching for Electron's `screen` module from a helper that is
+ * loaded before that is safe.
  */
 export async function readDisplayWallpaper({
+    displayId,
     displayIndex,
     width,
     sizes,
 }: {
+    displayId?: number;
     displayIndex: number;
     width?: number;
     sizes?: DisplaySizeType[];
 }): Promise<DisplayWallpaperType | null> {
     const validWidth = toValidWidth(width);
-    const cacheKey = `${displayIndex}:${validWidth}`;
+    const cacheKey = `${displayId ?? ''}:${displayIndex}:${validWidth}`;
     const cached = cacheMap.get(cacheKey);
     if (cached !== undefined) {
         return cached.wallpaper;
     }
-    const read = await readPlatformWallpaper(displayIndex, sizes ?? []);
-    const imageDataUrl = toImageDataUrl(read.filePath, validWidth);
+    const read = await readPlatformWallpaper(
+        displayId,
+        displayIndex,
+        sizes ?? [],
+    );
+    const imageDataUrl = await toImageDataUrl(read.filePath, validWidth);
     const wallpaper =
         imageDataUrl === null && read.color === null
             ? null
@@ -378,7 +506,7 @@ export async function readVirtualDisplayWallpaper(
     }
     let imageDataUrl: string | null = null;
     if (wallpaper.kind === 'image') {
-        imageDataUrl = toImageDataUrl(wallpaper.filePath, validWidth);
+        imageDataUrl = await toImageDataUrl(wallpaper.filePath, validWidth);
     } else if (process.platform === 'win32' || process.platform === 'darwin') {
         try {
             const still = await nativeImage.createThumbnailFromPath(

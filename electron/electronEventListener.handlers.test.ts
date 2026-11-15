@@ -491,6 +491,7 @@ describe('pictures of what the operator sees', () => {
             }),
         ).toBe('data:image/jpeg;x');
         expect(mocks.readDisplayWallpaper).toHaveBeenCalledWith({
+            displayId: MONITOR.id,
             displayIndex: 1,
             width: 320,
             sizes,

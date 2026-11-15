@@ -377,6 +377,7 @@ describe('app doors', () => {
         });
         expect(monitor).toBe('data:wallpaper');
         expect(state.readDisplayWallpaper).toHaveBeenCalledWith({
+            displayId: 8,
             displayIndex: 1,
             width: 320,
             sizes,

@@ -255,41 +255,82 @@
   }
 }
 
-.fill-editor-colors {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
+// A row whose value is several lines (a gradient's colours): its name sits
+// on the first line rather than half-way down them.
+.fill-editor-row.is-top {
+  align-items: flex-start;
+
+  > .fill-editor-label {
+    line-height: 22px;
+  }
 }
 
+// A gradient's colours, one to a line: each carries its own Opacity.
+.fill-editor-colors {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+// One colour: its well, how solid it is, and (a gradient's) its Remove.
 .fill-editor-color {
-  display: inline-flex;
+  display: flex;
+  flex: 1 1 auto;
   align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  min-width: 0;
 }
 
 // The native colour well, drawn as one more swatch -- as the colour picker's
-// Mix Color well is.
-.fill-editor .color-picker-mix-input {
-  width: 30px;
-  height: 22px;
+// Mix Color well is -- over a checkerboard, at the colour's own opacity: a
+// native well shows six digits only.
+.fill-editor-well {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.55);
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, var(--app-line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--app-line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--app-line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--app-line) 75%);
+  background-size: 6px 6px;
+  background-position:
+    0 0,
+    0 3px,
+    3px -3px,
+    -3px 0;
+  background-origin: content-box;
+  background-clip: content-box;
+
+  // The ring goes on the frame: the well itself is drawn faint.
+  &:has(:focus-visible) {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 2px;
+  }
+}
+
+.fill-editor-well-input {
+  width: 26px;
+  height: 18px;
   padding: 0;
   border: 0;
-  border-radius: 4px;
   background: none;
-  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.55);
+  outline: none;
 
   &::-webkit-color-swatch-wrapper {
-    padding: 2px;
+    padding: 0;
   }
 
   &::-webkit-color-swatch {
     border: 0;
-    border-radius: 3px;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--bs-info);
-    outline-offset: 2px;
+    border-radius: 0;
   }
 }
 

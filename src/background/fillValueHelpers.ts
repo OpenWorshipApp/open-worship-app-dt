@@ -334,8 +334,14 @@ export function genFillCss(fill: FillType, scale = 1): FillCssType {
     }
     if (fill.kind === 'gradient') {
         const stops = fill.colors.join(', ');
+        // A stop that lets what is behind show through would be painted
+        // twice -- once in the gradient, once as the colour under it -- and
+        // the under-colour would make it solid where it should be faint.
+        const isSeeThrough = fill.colors.some((color) => {
+            return colorToTransparent(color) < 255;
+        });
         return {
-            backgroundColor: fill.colors[0],
+            backgroundColor: isSeeThrough ? 'transparent' : fill.colors[0],
             backgroundImage:
                 fill.shape === 'radial'
                     ? `radial-gradient(ellipse at center, ${stops})`
