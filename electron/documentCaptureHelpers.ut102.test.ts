@@ -4,10 +4,10 @@
  * load, the picture cut to size, and everything taken away again -- with a
  * fake window, a real temporary folder and the clock under the test's hand.
  */
+import { readFileSync } from 'node:fs';
 import {
     mkdir,
     mkdtemp,
-    readFile,
     realpath,
     rm,
     stat,
@@ -306,11 +306,16 @@ describe('checkIsDocumentRequestAllowed', () => {
 describe('pages the app wrote itself', () => {
     it('stages each page in a temporary folder, draws it and takes the folder away', async () => {
         const seen: { filePath: string; text: string }[] = [];
-        state.behaviour.onLoad = async (url) => {
+        // Read SYNCHRONOUSLY: `loadURL` races the 15 s timer on the fake
+        // clock, and `runClockUntilSettled` moves that clock 700 ms a turn
+        // whether or not real work is pending -- an async read slowed past
+        // ~21 turns (a loaded machine, a virus scan of the file just written)
+        // lost the race and failed with "The page took too long to draw."
+        state.behaviour.onLoad = (url) => {
             const localPath = fileURLToPath(url);
             seen.push({
                 filePath: localPath,
-                text: await readFile(localPath, 'utf8'),
+                text: readFileSync(localPath, 'utf8'),
             });
         };
         const result = await runClockUntilSettled(

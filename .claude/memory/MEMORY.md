@@ -31,7 +31,7 @@
 - [Document stages](document-stage-previewer.md) — drawn at render time
 - [Shadow previews have no border-box](shadow-preview-no-border-box.md) — a 100% box with padding overflows
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
-- [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0
+- [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0, OBS camera tile spinning · ["Check a report" = report only](check-report-means-report-only.md) — verdicts + recommendation, no edits until the user picks
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — wrap in `<bdi>`
 - [File-list folder sessions](file-list-folder-sessions.md) — Documents/Flows/Bibles/Notes
 - Panes: [closed pane stays closed](full-view-toggle-collapses-widget.md) · [Note pane ships closed](previewer-note-pane-ships-closed.md) · [close persists the grow](widget-close-must-persist-absorbed-grow.md) · [View menu toggles](view-menu-widget-toggles.md)

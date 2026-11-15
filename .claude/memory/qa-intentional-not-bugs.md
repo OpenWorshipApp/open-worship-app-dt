@@ -1,11 +1,11 @@
 ---
 name: qa-intentional-not-bugs
-description: "Four presenter behaviours that look like bugs during QA but are intentional — don't re-file them"
+description: "Presenter behaviours that look like bugs during QA but are intentional or accepted by the user — don't re-file them"
 metadata: 
   node_type: memory
   type: project
   originSessionId: c56a2c6e-966a-423b-8bff-4b856646eb12
-  modified: 2026-09-27T01:19:43.389Z
+  modified: 2026-11-15T20:45:45.608Z
 ---
 
 Traced to source during the 2026-07-29 robot run. Each looks like a defect on screen; all
@@ -49,6 +49,12 @@ four are deliberate. Don't file them again.
    cap inside an `overflow: auto` box, so a 612×792 portrait page on a 1494×934 screen
    renders 1479×1914 and only its top ~49% is visible. Flip to `Not Full Width` to confirm
    the contain path — and put the setting back.
+5. **A Background → Cameras tile spinning for good on OBS Virtual Camera** — accepted, not
+   deliberate (2026-11-15, the user: _skip the camera finding_). With OBS's virtual camera
+   not started, opening it fails with `NotReadableError: Could not start video source`, and
+   `RenderCameraVideoComp` passes no `onUnavailable`, so its spinner stays (the Foreground's
+   camera tile does say so). Robot run 20261115-1635 filed it as F-1. The HP camera beside
+   it showing a crossed-out camera is the laptop's privacy cover closed — not a bug either.
 
 **How to apply:** when a QA observation looks wrong, read the source before filing;
 recovering the *original* live background is possible from the presenter's network log (the

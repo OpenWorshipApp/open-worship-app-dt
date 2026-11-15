@@ -13,6 +13,8 @@ const h = vi.hoisted(() => ({
     listProps: null as any,
     drop: vi.fn(),
     isOnOwnFolder: false,
+    // The path row's own right-click: the FOLDER's menu.
+    folderMenu: vi.fn(),
 }));
 
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
@@ -74,7 +76,11 @@ vi.mock('../context-menu/contextMenuIconHelpers', () => ({
 }));
 vi.mock('./PathSelectorComp', () => ({
     default: ({ extraElements }: { extraElements: ReactNode }) =>
-        createElement('div', { className: 'path-selector' }, extraElements),
+        createElement(
+            'div',
+            { className: 'path-selector', onContextMenu: h.folderMenu },
+            extraElements,
+        ),
 }));
 vi.mock('./RenderListComp', () => ({
     default: (props: unknown) => {
@@ -165,6 +171,7 @@ beforeEach(() => {
     h.showMenu.mockClear();
     h.selectedFiles.mockClear();
     h.drop.mockClear();
+    h.folderMenu.mockClear();
     h.listProps = null;
     h.isOnOwnFolder = false;
     onNewFile = vi
@@ -201,6 +208,24 @@ describe('file list container', () => {
             frame.dispatchEvent(new Event('drop', { bubbles: true })),
         );
         expect(h.drop).toHaveBeenCalledTimes(1);
+    });
+
+    it("a right-click on the path row's ⋮ opens the list's menu, not the folder's", async () => {
+        await renderList({ onNewFile });
+        const rightClick = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 12,
+            clientY: 34,
+        });
+        await act(async () => menuButton().dispatchEvent(rightClick));
+        expect(h.showMenu).toHaveBeenCalledOnce();
+        expect(h.showMenu.mock.calls[0][0]).toMatchObject({
+            clientX: 12,
+            clientY: 34,
+        });
+        expect(h.folderMenu).not.toHaveBeenCalled();
+        expect(rightClick.defaultPrevented).toBe(true);
     });
 
     it('offers separate new-file kinds and passes the chosen kind to the creator', async () => {

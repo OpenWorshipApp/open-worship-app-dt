@@ -78,6 +78,17 @@ function ListMenuButtonComp({
         onShowMenuRef.current?.(event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // A right-click on the button opens the LIST's menu as well, the way
+    // every `⋮` does (`ContextMenuDotsButtonComp`). Left to bubble, it reached
+    // the path row around it and opened the FOLDER's menu instead -- so the
+    // manual's "⋮ More Options → Download From URL", followed with a right
+    // click, found no Download From URL (robot test 2026-11-15, F-2).
+    const handleContextMenuOpening = useCallback((event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onShowMenuRef.current?.(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // The menu positions itself from `clientX`/`clientY`, which a KeyboardEvent
     // has not got — so open it at the button's own corner instead of handing on
     // an event with undefined coordinates.
@@ -105,6 +116,7 @@ function ListMenuButtonComp({
             aria-label={tran('More Options')}
             title={tran('More Options')}
             onClick={handleClicking}
+            onContextMenu={handleContextMenuOpening}
             onKeyDown={handleKeyDowning}
             style={{
                 color: 'var(--bs-secondary-color)',
