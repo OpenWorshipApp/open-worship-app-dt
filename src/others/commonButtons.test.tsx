@@ -194,6 +194,38 @@ describe('others commonButtons', () => {
         expect(h.goToPathMock).toHaveBeenCalledWith('/home');
     });
 
+    test('QuitCurrentPageComp stays when the ask-first answers no', async () => {
+        const checkCanLeave = vi.fn(async () => false);
+        await render(
+            <QuitCurrentPageComp
+                title="Quit"
+                pathname="/home"
+                checkCanLeave={checkCanLeave}
+            />,
+        );
+        await act(async () => {
+            clickButton();
+        });
+        expect(checkCanLeave).toHaveBeenCalledTimes(1);
+        expect(h.goToPathMock).not.toHaveBeenCalled();
+    });
+
+    test('QuitCurrentPageComp leaves once the ask-first answers yes', async () => {
+        const checkCanLeave = vi.fn(async () => true);
+        await render(
+            <QuitCurrentPageComp
+                title="Quit"
+                pathname="/home"
+                checkCanLeave={checkCanLeave}
+            />,
+        );
+        await act(async () => {
+            clickButton();
+        });
+        expect(checkCanLeave).toHaveBeenCalledTimes(1);
+        expect(h.goToPathMock).toHaveBeenCalledWith('/home');
+    });
+
     test('QuitCurrentPageComp shows nothing outside the main window', async () => {
         h.appProvider.messageUtils.sendDataSync.mockReturnValue(false);
         await render(<QuitCurrentPageComp title="Quit" pathname="/home" />);

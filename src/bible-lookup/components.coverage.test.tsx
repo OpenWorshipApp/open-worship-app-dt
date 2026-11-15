@@ -52,6 +52,7 @@ const h = vi.hoisted(() => ({
     useNextEditingBibleItem: vi.fn(),
     useCloseBibleItemRenderer: vi.fn(),
     getBibleInfo: vi.fn(),
+    askLeavingBibleReader: vi.fn(async () => false),
 }));
 
 vi.mock('../server/appProvider', () => ({
@@ -208,9 +209,13 @@ vi.mock('../helper/settingHelpers', async () => {
 });
 vi.mock('../others/commonButtons', () => ({
     useToggleBibleLookupPopupContext: () => h.hideBibleLookupPopup,
-    QuitCurrentPageComp: ({ title, pathname }: any) => {
+    QuitCurrentPageComp: ({ title, pathname, checkCanLeave }: any) => {
         return (
-            <button className="ut-quit" data-pathname={pathname}>
+            <button
+                className="ut-quit"
+                data-pathname={pathname}
+                onClick={checkCanLeave}
+            >
                 {title}
             </button>
         );
@@ -219,6 +224,9 @@ vi.mock('../others/commonButtons', () => ({
     ChatbotButtonComp: () => <button className="ut-chatbot" />,
     AiChatButtonComp: () => <button className="ut-aichat" />,
     HelpButtonComp: () => <button className="ut-help" />,
+}));
+vi.mock('../bible-reader/leavingBibleReaderHelpers', () => ({
+    askLeavingBibleReader: h.askLeavingBibleReader,
 }));
 vi.mock('../others/LoadingComp', () => ({
     default: () => <div className="ut-loading">loading</div>,
@@ -919,6 +927,9 @@ describe('RenderExtraButtonsRightComp', () => {
         const quit = query('.ut-quit') as HTMLElement;
         expect(quit.textContent).toBe('Go Back to Presenter');
         expect(quit.dataset.pathname).toBe('/presenter.html');
+        // Leaving the Reader asks first (a stray click by an elderly reader).
+        await press(quit);
+        expect(h.askLeavingBibleReader).toHaveBeenCalledTimes(1);
         for (const selector of [
             '.ut-setting',
             '.ut-chatbot',

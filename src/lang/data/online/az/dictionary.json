@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Seçilmiş ekranlar üçün rəng, qradiyent və ya naxış seçin; Fərdiləşdir onu dəyişir, Hazır ayar kimi saxla isə saxlayır.",
     "Copy CSS": "CSS-i kopyala",
     "(dev)CSS Animation": "(dev)CSS animasiyası",
-    "CSS animation backgrounds will be built here.": "CSS animasiyalı fonlar burada yaradılacaq."
+    "CSS animation backgrounds will be built here.": "CSS animasiyalı fonlar burada yaradılacaq.",
+    "Leave the Bible Reader?": "İncil Oxucusundan çıxılsın?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "İncil Oxucusundan çıxıb Təqdimatçıya keçmək üzrəsiniz. Qayıtdığınız zaman parçalarınız burada olacaq.",
+    "To come back, click this tab at the top left of the Presenter:": "Geri qayıtmaq üçün Təqdimatçının yuxarı sol küncündəki bu nişana klikləyin:",
+    "Stay in Bible Reader": "İncil Oxucusunda qal"
 }

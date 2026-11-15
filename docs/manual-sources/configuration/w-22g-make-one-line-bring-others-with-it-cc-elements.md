@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-14"
+workflowsVersion: "2026-11-15"
 ---
 # W-22g — Make one line bring others with it (CC elements)
 

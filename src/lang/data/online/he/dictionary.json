@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "בחרו צבע, מעבר צבע או דוגמה למסכים שנבחרו; התאמה אישית משנה אותו ושמירה כהגדרה קבועה שומרת אותו.",
     "Copy CSS": "העתקת CSS",
     "(dev)CSS Animation": "(dev)אנימציית CSS",
-    "CSS animation backgrounds will be built here.": "כאן ייבנו רקעים עם אנימציית CSS."
+    "CSS animation backgrounds will be built here.": "כאן ייבנו רקעים עם אנימציית CSS.",
+    "Leave the Bible Reader?": "לצאת מקורא כתבי הקודש?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "אתם עומדים לצאת מקורא כתבי הקודש ולעבור למציג. הקטעים שלכם יחכו כאן כשתחזרו.",
+    "To come back, click this tab at the top left of the Presenter:": "כדי לחזור, לחצו על הכרטיסייה הזו בפינה השמאלית העליונה של המציג:",
+    "Stay in Bible Reader": "להישאר בקורא כתבי הקודש"
 }

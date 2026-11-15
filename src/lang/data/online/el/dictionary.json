@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Επιλέξτε ένα χρώμα, μια διαβάθμιση ή ένα μοτίβο για τις επιλεγμένες οθόνες· η Προσαρμογή το αλλάζει και η Αποθήκευση ως προρύθμιση το κρατά.",
     "Copy CSS": "Αντιγραφή CSS",
     "(dev)CSS Animation": "(dev)Κίνηση CSS",
-    "CSS animation backgrounds will be built here.": "Εδώ θα δημιουργηθούν φόντα με κίνηση CSS."
+    "CSS animation backgrounds will be built here.": "Εδώ θα δημιουργηθούν φόντα με κίνηση CSS.",
+    "Leave the Bible Reader?": "Έξοδος από την Ανάγνωση Αγίας Γραφής;",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Πρόκειται να φύγετε από την Ανάγνωση Αγίας Γραφής και να μεταβείτε στην Παρουσίαση. Τα χωρία σας θα είναι εδώ όταν επιστρέψετε.",
+    "To come back, click this tab at the top left of the Presenter:": "Για να επιστρέψετε, κάντε κλικ σε αυτή την καρτέλα πάνω αριστερά στην Παρουσίαση:",
+    "Stay in Bible Reader": "Παραμονή στην Ανάγνωση Αγίας Γραφής"
 }

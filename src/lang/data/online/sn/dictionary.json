@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Sarudzai ruvara, mavara anoshanduka kana patani yemasikirini akasarudzwa; Gadzirisa inoishandura, Chengetedza seChakagadzirirwa inoichengeta.",
     "Copy CSS": "Kopa CSS",
     "(dev)CSS Animation": "(dev)Mifananidzo inofamba yeCSS",
-    "CSS animation backgrounds will be built here.": "Zvekumashure zvine mifananidzo inofamba yeCSS zvichagadzirwa pano."
+    "CSS animation backgrounds will be built here.": "Zvekumashure zvine mifananidzo inofamba yeCSS zvichagadzirwa pano.",
+    "Leave the Bible Reader?": "Kubuda muMuverengi weBhaibheri?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Wava kuda kubuda muMuverengi weBhaibheri woenda kuMuratidzi. Ndima dzako dzichange dziri pano kana wadzoka.",
+    "To come back, click this tab at the top left of the Presenter:": "Kuti udzoke, baya tebhu iyi kumusoro kuruboshwe kweMuratidzi:",
+    "Stay in Bible Reader": "Gara muMuverengi weBhaibheri"
 }

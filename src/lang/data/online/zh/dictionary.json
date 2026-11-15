@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "为所选屏幕选择颜色、渐变或图案；自定义可以更改它，另存为预设可以保留它。",
     "Copy CSS": "复制 CSS",
     "(dev)CSS Animation": "（开发）CSS 动画",
-    "CSS animation backgrounds will be built here.": "CSS 动画背景将在这里构建。"
+    "CSS animation backgrounds will be built here.": "CSS 动画背景将在这里构建。",
+    "Leave the Bible Reader?": "离开圣经阅读？",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "你即将离开圣经阅读并前往演示台。回来时，你打开的经文仍会在这里。",
+    "To come back, click this tab at the top left of the Presenter:": "要返回，请点击演示台左上方的这个标签：",
+    "Stay in Bible Reader": "留在圣经阅读"
 }

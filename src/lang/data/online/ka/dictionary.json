@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "აირჩიეთ ფერი, გრადიენტი ან ნიმუში არჩეული ეკრანებისთვის; „მორგება“ ცვლის მას, „პრესეტად შენახვა“ კი ინახავს.",
     "Copy CSS": "CSS-ის კოპირება",
     "(dev)CSS Animation": "(dev)CSS ანიმაცია",
-    "CSS animation backgrounds will be built here.": "CSS ანიმაციის ფონები აქ შეიქმნება."
+    "CSS animation backgrounds will be built here.": "CSS ანიმაციის ფონები აქ შეიქმნება.",
+    "Leave the Bible Reader?": "გავიდეთ ბიბლიის კითხვიდან?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "თქვენ ტოვებთ ბიბლიის კითხვას და გადადიხართ პრეზენტაციაზე. დაბრუნებისას თქვენი მონაკვეთები აქ დაგხვდებათ.",
+    "To come back, click this tab at the top left of the Presenter:": "დასაბრუნებლად დააწკაპუნეთ ამ ჩანართზე პრეზენტაციის ზედა მარცხენა კუთხეში:",
+    "Stay in Bible Reader": "ბიბლიის კითხვაში დარჩენა"
 }

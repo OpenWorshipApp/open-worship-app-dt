@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Filifili se lanu, se lanu fesuisuiaʻi po o se mamanu mo lau ua filifilia; e suia e Fetuʻunaʻi ae teu e Teu o se Faʻatulagaga Sauni.",
     "Copy CSS": "Kopi le CSS",
     "(dev)CSS Animation": "(dev)Ata gaoioi CSS",
-    "CSS animation backgrounds will be built here.": "O le a fausia iinei mea i tua e iai ata gaoioi CSS."
+    "CSS animation backgrounds will be built here.": "O le a fausia iinei mea i tua e iai ata gaoioi CSS.",
+    "Leave the Bible Reader?": "Tuua le Faitauga o le Tusi Paia?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "O le a e tuua le Faitauga o le Tusi Paia ae alu i le Faʻaaliga. O le a iai pea au mau iinei pe a e toe foʻi mai.",
+    "To come back, click this tab at the top left of the Presenter:": "Ina ia toe foʻi mai, kiliki le tab lenei i le pito i luga agavale o le Faʻaaliga:",
+    "Stay in Bible Reader": "Nofo i le Faitauga o le Tusi Paia"
 }

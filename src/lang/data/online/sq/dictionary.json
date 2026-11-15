@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Zgjidhni një ngjyrë, një gradient ose një motiv për ekranet e zgjedhura; Personalizo e ndryshon dhe Ruaj si paracaktim e mban.",
     "Copy CSS": "Kopjo CSS-në",
     "(dev)CSS Animation": "(dev)Animacion CSS",
-    "CSS animation backgrounds will be built here.": "Këtu do të ndërtohen sfonde me animacion CSS."
+    "CSS animation backgrounds will be built here.": "Këtu do të ndërtohen sfonde me animacion CSS.",
+    "Leave the Bible Reader?": "Të dilet nga Lexuesi i Biblës?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Jeni duke dalë nga Lexuesi i Biblës për të shkuar te Prezantuesi. Pasazhet tuaja do të jenë këtu kur të ktheheni.",
+    "To come back, click this tab at the top left of the Presenter:": "Për t’u kthyer, klikoni këtë skedë lart majtas te Prezantuesi:",
+    "Stay in Bible Reader": "Qëndro te Lexuesi i Biblës"
 }

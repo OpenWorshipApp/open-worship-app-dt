@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Dooro midab, midabyo isbedbeddela ama naqshad shaashadaha la doortay; Habee ayaa beddela, U kaydi Hab Diyaarsan ahaan ayaa kaydiya.",
     "Copy CSS": "Koobiyee CSS-ka",
     "(dev)CSS Animation": "(dev)Dhaqdhaqaaqa CSS",
-    "CSS animation backgrounds will be built here.": "Gadaasha leh dhaqdhaqaaqa CSS halkan ayaa lagu dhisi doonaa."
+    "CSS animation backgrounds will be built here.": "Gadaasha leh dhaqdhaqaaqa CSS halkan ayaa lagu dhisi doonaa.",
+    "Leave the Bible Reader?": "Ka bax Akhriyaha Kitaabka?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Waxaad ku dhowdahay inaad ka baxdo Akhriyaha Kitaabka oo aad u gudubto Bandhigaha. Qaybahaagu halkan ayay joogi doonaan markaad soo noqoto.",
+    "To come back, click this tab at the top left of the Presenter:": "Si aad u soo noqoto, guji tab-kan ee ku yaal dusha bidix ee Bandhigaha:",
+    "Stay in Bible Reader": "Ku sii jir Akhriyaha Kitaabka"
 }

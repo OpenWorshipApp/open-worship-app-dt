@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Sankhani mtundu, mitundu yosinthasintha kapena mapangidwe pa masikirini osankhidwa; Konzani mwamakonda imasintha, ndipo Sungani ngati Chokonzedweratu imasunga.",
     "Copy CSS": "Koperani CSS",
     "(dev)CSS Animation": "(dev)Zithunzi zoyenda za CSS",
-    "CSS animation backgrounds will be built here.": "Zakumbuyo zokhala ndi zithunzi zoyenda za CSS zidzapangidwa pano."
+    "CSS animation backgrounds will be built here.": "Zakumbuyo zokhala ndi zithunzi zoyenda za CSS zidzapangidwa pano.",
+    "Leave the Bible Reader?": "Kuchoka pa Wowerenga Baibulo?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Mukufuna kuchoka pa Wowerenga Baibulo ndi kupita ku Wowonetsa. Mavesi anu adzakhalabe pano mukabwerera.",
+    "To come back, click this tab at the top left of the Presenter:": "Kuti mubwerere, dinani tabu iyi kumanzere pamwamba pa Wowonetsa:",
+    "Stay in Bible Reader": "Khalani pa Wowerenga Baibulo"
 }

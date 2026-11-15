@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Виберіть колір, градієнт або візерунок для вибраних екранів; «Налаштувати» змінює його, а «Зберегти як шаблон» зберігає.",
     "Copy CSS": "Копіювати CSS",
     "(dev)CSS Animation": "(dev)CSS-анімація",
-    "CSS animation backgrounds will be built here.": "Тут буде створено тла з CSS-анімацією."
+    "CSS animation backgrounds will be built here.": "Тут буде створено тла з CSS-анімацією.",
+    "Leave the Bible Reader?": "Вийти з Читання Біблії?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ви збираєтеся вийти з Читання Біблії й перейти до режиму «Ведучий». Коли повернетеся, ваші уривки будуть тут.",
+    "To come back, click this tab at the top left of the Presenter:": "Щоб повернутися, натисніть цю вкладку вгорі ліворуч у режимі «Ведучий»:",
+    "Stay in Bible Reader": "Залишитися в Читанні Біблії"
 }

@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [CB-192, CB-193, CB-194, CB-195, CB-196, CB-197]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-14"
+workflowsVersion: "2026-11-15"
 ---
 # W-63 — Change the screens with the assistant (the Bible text's look, another version, a transition, the display)
 
@@ -74,5 +74,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-192` · `CB-193` · `CB-194` · `CB-195` · `CB-196` · `CB-197`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

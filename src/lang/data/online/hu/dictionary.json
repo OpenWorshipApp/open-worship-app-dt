@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Válasszon színt, színátmenetet vagy mintát a kijelölt képernyőkhöz; a Testreszabás módosítja, a Mentés előbeállításként pedig megőrzi.",
     "Copy CSS": "CSS másolása",
     "(dev)CSS Animation": "(fejl.) CSS-animáció",
-    "CSS animation backgrounds will be built here.": "Itt készülnek majd a CSS-animációs hátterek."
+    "CSS animation backgrounds will be built here.": "Itt készülnek majd a CSS-animációs hátterek.",
+    "Leave the Bible Reader?": "Kilép a Bibliaolvasóból?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Most kilép a Bibliaolvasóból, és a Vetítésre lép. Az igeszakaszai itt lesznek, amikor visszatér.",
+    "To come back, click this tab at the top left of the Presenter:": "A visszatéréshez kattintson erre a fülre a Vetítés bal felső részén:",
+    "Stay in Bible Reader": "Maradok a Bibliaolvasóban"
 }

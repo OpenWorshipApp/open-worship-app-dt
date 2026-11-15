@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "தேர்ந்தெடுத்த திரைகளுக்கு ஒரு வண்ணம், வண்ணச் சாய்வு அல்லது வடிவத்தைத் தேர்ந்தெடுக்கவும்; தனிப்பயனாக்கு அதை மாற்றும், முன்னமைவாகச் சேமி அதை வைத்திருக்கும்.",
     "Copy CSS": "CSS-ஐ நகலெடு",
     "(dev)CSS Animation": "(dev)CSS அசைவூட்டம்",
-    "CSS animation backgrounds will be built here.": "CSS அசைவூட்டப் பின்னணிகள் இங்கே உருவாக்கப்படும்."
+    "CSS animation backgrounds will be built here.": "CSS அசைவூட்டப் பின்னணிகள் இங்கே உருவாக்கப்படும்.",
+    "Leave the Bible Reader?": "வேதாகம வாசிப்பிலிருந்து வெளியேறவா?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "நீங்கள் வேதாகம வாசிப்பை விட்டு வழங்குபவர் பக்கத்துக்குச் செல்லப் போகிறீர்கள். நீங்கள் திரும்பி வரும்போது உங்கள் வசனப் பகுதிகள் இங்கேயே இருக்கும்.",
+    "To come back, click this tab at the top left of the Presenter:": "திரும்பி வர, வழங்குபவர் பக்கத்தின் மேல் இடதுபுறத்தில் உள்ள இந்தத் தாவலைக் கிளிக் செய்யவும்:",
+    "Stay in Bible Reader": "வேதாகம வாசிப்பிலேயே இருக்கவும்"
 }

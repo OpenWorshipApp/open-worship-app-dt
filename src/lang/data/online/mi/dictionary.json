@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Kōwhiria he tae, he rōnaki, he tauira rānei mō ngā mata kua tīpakohia; mā Whakaritea e huri, mā Tiaki hei Tautuhinga Tōmua e pupuri.",
     "Copy CSS": "Tāruatia te CSS",
     "(dev)CSS Animation": "(dev)Hākoritanga CSS",
-    "CSS animation backgrounds will be built here.": "Ka hangaia ki konei ngā papamuri hākoritanga CSS."
+    "CSS animation backgrounds will be built here.": "Ka hangaia ki konei ngā papamuri hākoritanga CSS.",
+    "Leave the Bible Reader?": "Me wehe i te Kaipānui Paipera?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kei te wehe koe i te Kaipānui Paipera ka haere ki te Kaiwhakaatu. Ka noho tonu mai ō irava ki konei ina hoki mai koe.",
+    "To come back, click this tab at the top left of the Presenter:": "Hei hoki mai, pāwhiritia tēnei ripa ki runga mauī o te Kaiwhakaatu:",
+    "Stay in Bible Reader": "Noho ki te Kaipānui Paipera"
 }

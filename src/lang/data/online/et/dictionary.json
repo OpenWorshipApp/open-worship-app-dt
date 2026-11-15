@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Vali valitud ekraanidele värv, üleminek või muster; Kohanda muudab seda ja Salvesta eelseadistusena hoiab selle alles.",
     "Copy CSS": "Kopeeri CSS",
     "(dev)CSS Animation": "(dev)CSS-animatsioon",
-    "CSS animation backgrounds will be built here.": "CSS-animatsiooniga taustad luuakse siia."
+    "CSS animation backgrounds will be built here.": "CSS-animatsiooniga taustad luuakse siia.",
+    "Leave the Bible Reader?": "Lahkuda Piibli Lugejast?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Oled lahkumas Piibli Lugejast ja minemas Esitajasse. Sinu kirjakohad on tagasi tulles alles.",
+    "To come back, click this tab at the top left of the Presenter:": "Tagasi tulemiseks klõpsa Esitaja üleval vasakul sellel vahekaardil:",
+    "Stay in Bible Reader": "Jää Piibli Lugejasse"
 }

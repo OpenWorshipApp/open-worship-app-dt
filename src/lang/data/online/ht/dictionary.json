@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Chwazi yon koulè, yon degrade oswa yon modèl pou ekran ki chwazi yo; Pèsonalize chanje l epi Anrejistre kòm Prereglaj kenbe l.",
     "Copy CSS": "Kopye CSS",
     "(dev)CSS Animation": "(dev)Animasyon CSS",
-    "CSS animation backgrounds will be built here.": "Fon ak animasyon CSS yo pral fèt isit la."
+    "CSS animation backgrounds will be built here.": "Fon ak animasyon CSS yo pral fèt isit la.",
+    "Leave the Bible Reader?": "Kite Lektè Bib la?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ou pral kite Lektè Bib la pou ale nan Prezantatè a. Pasaj ou yo ap toujou la lè ou tounen.",
+    "To come back, click this tab at the top left of the Presenter:": "Pou tounen, klike sou onglè sa a anwo agoch nan Prezantatè a:",
+    "Stay in Bible Reader": "Rete nan Lektè Bib la"
 }

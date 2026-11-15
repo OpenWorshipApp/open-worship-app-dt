@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "اختر لونًا أو تدرجًا أو نمطًا للشاشات المحددة؛ يغيّره تخصيص ويحفظه حفظ كإعداد مسبق.",
     "Copy CSS": "نسخ CSS",
     "(dev)CSS Animation": "(dev)رسوم CSS المتحركة",
-    "CSS animation backgrounds will be built here.": "ستُنشأ هنا خلفيات برسوم CSS المتحركة."
+    "CSS animation backgrounds will be built here.": "ستُنشأ هنا خلفيات برسوم CSS المتحركة.",
+    "Leave the Bible Reader?": "هل تريد مغادرة صفحة القراءة؟",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "أنت على وشك مغادرة صفحة القراءة والانتقال إلى العرض. ستبقى مقاطعك هنا عند عودتك.",
+    "To come back, click this tab at the top left of the Presenter:": "للعودة، انقر على علامة التبويب هذه في أعلى يسار العرض:",
+    "Stay in Bible Reader": "البقاء في القراءة"
 }

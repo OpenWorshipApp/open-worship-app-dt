@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Roghnaigh dath, grádán nó patrún do na scáileáin roghnaithe; athraíonn Saincheap é agus coinníonn Sábháil mar réamhshocrú é.",
     "Copy CSS": "Cóipeáil an CSS",
     "(dev)CSS Animation": "(dev)Beochan CSS",
-    "CSS animation backgrounds will be built here.": "Tógfar cúlraí beochana CSS anseo."
+    "CSS animation backgrounds will be built here.": "Tógfar cúlraí beochana CSS anseo.",
+    "Leave the Bible Reader?": "Fág Léitheoir an Bhíobla?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Tá tú ar tí Léitheoir an Bhíobla a fhágáil agus dul chuig an Láithreoir. Beidh do shleachta anseo fós nuair a fhillfidh tú.",
+    "To come back, click this tab at the top left of the Presenter:": "Chun filleadh, cliceáil an cluaisín seo ag barr ar chlé an Láithreora:",
+    "Stay in Bible Reader": "Fan i Léitheoir an Bhíobla"
 }

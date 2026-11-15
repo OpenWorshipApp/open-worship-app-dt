@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Misafidiana loko, loko miova tsikelikely na lamina ho an'ny efijery voafidy; ny Amboary no manova azy ary ny Tehirizo ho fikirana voaomana no mitahiry azy.",
     "Copy CSS": "Adikao ny CSS",
     "(dev)CSS Animation": "(dev)Sary mihetsika CSS",
-    "CSS animation backgrounds will be built here.": "Hamboarina eto ny ambadika misy sary mihetsika CSS."
+    "CSS animation backgrounds will be built here.": "Hamboarina eto ny ambadika misy sary mihetsika CSS.",
+    "Leave the Bible Reader?": "Hiala amin’ny Mpamaky Baiboly?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Efa hiala amin’ny Mpamaky Baiboly ianao ka handeha any amin’ny Mpampiseho. Mbola ho eto ihany ireo andinintsoratrao rehefa miverina ianao.",
+    "To come back, click this tab at the top left of the Presenter:": "Raha hiverina, tsindrio ity takelaka ity eo amin’ny ankavia ambony amin’ny Mpampiseho:",
+    "Stay in Bible Reader": "Hijanona ao amin’ny Mpamaky Baiboly"
 }

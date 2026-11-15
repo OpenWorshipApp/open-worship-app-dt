@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "برای صفحه‌نمایش‌های انتخاب‌شده یک رنگ، گرادیان یا الگو انتخاب کنید؛ سفارشی‌سازی آن را تغییر می‌دهد و ذخیره به عنوان پیش‌تنظیم آن را نگه می‌دارد.",
     "Copy CSS": "کپی CSS",
     "(dev)CSS Animation": "(dev)انیمیشن CSS",
-    "CSS animation backgrounds will be built here.": "پس‌زمینه‌های انیمیشن CSS در اینجا ساخته خواهند شد."
+    "CSS animation backgrounds will be built here.": "پس‌زمینه‌های انیمیشن CSS در اینجا ساخته خواهند شد.",
+    "Leave the Bible Reader?": "از مطالعه کتاب مقدس خارج می‌شوید؟",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "در حال خروج از مطالعه کتاب مقدس و رفتن به ارائه هستید. وقتی برگردید، بخش‌های شما همین‌جا خواهند بود.",
+    "To come back, click this tab at the top left of the Presenter:": "برای بازگشت، روی این زبانه در بالا سمت چپ ارائه کلیک کنید:",
+    "Stay in Bible Reader": "ماندن در مطالعه کتاب مقدس"
 }

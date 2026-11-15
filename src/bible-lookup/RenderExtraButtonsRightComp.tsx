@@ -11,6 +11,7 @@ import {
 } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { askLeavingBibleReader } from '../bible-reader/leavingBibleReaderHelpers';
 
 const CLOSE_ON_ADD_BIBLE_ITEM = 'close-on-add-bible-item';
 
@@ -118,6 +119,7 @@ export default function RenderExtraButtonsRightComp({
                         <QuitCurrentPageComp
                             title={tran('Go Back to Presenter')}
                             pathname={appProvider.presenterHomePage}
+                            checkCanLeave={askLeavingBibleReader}
                         />
                         <SettingButtonComp />
                         <ChatbotButtonComp />

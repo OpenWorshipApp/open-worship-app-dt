@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Ընտրեք գույն, գրադիենտ կամ նախշ ընտրված էկրանների համար։ «Հարմարեցնել»-ը փոխում է այն, իսկ «Պահպանել որպես նախադրյալ»-ը պահում է այն։",
     "Copy CSS": "Պատճենել CSS-ը",
     "(dev)CSS Animation": "(dev)CSS անիմացիա",
-    "CSS animation backgrounds will be built here.": "CSS անիմացիայով ֆոները կստեղծվեն այստեղ։"
+    "CSS animation backgrounds will be built here.": "CSS անիմացիայով ֆոները կստեղծվեն այստեղ։",
+    "Leave the Bible Reader?": "Դուրս գա՞լ Աստվածաշնչի ընթերցումից",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Դուք պատրաստվում եք դուրս գալ Աստվածաշնչի ընթերցումից և անցնել Ներկայացմանը։ Ձեր հատվածները այստեղ կլինեն, երբ վերադառնաք։",
+    "To come back, click this tab at the top left of the Presenter:": "Վերադառնալու համար սեղմեք Ներկայացման վերևի ձախ մասում գտնվող այս ներդիրը։",
+    "Stay in Bible Reader": "Մնալ Աստվածաշնչի ընթերցումում"
 }

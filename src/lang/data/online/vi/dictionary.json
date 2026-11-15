@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Chọn một màu, một dải chuyển sắc hoặc một họa tiết cho các màn hình đã chọn; Tùy chỉnh sẽ thay đổi nó và Lưu thành mẫu cài sẵn sẽ giữ lại nó.",
     "Copy CSS": "Sao chép CSS",
     "(dev)CSS Animation": "(dev)Hoạt ảnh CSS",
-    "CSS animation backgrounds will be built here.": "Nền hoạt ảnh CSS sẽ được xây dựng tại đây."
+    "CSS animation backgrounds will be built here.": "Nền hoạt ảnh CSS sẽ được xây dựng tại đây.",
+    "Leave the Bible Reader?": "Rời khỏi Đọc Kinh Thánh?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Bạn sắp rời khỏi Đọc Kinh Thánh và chuyển sang Trình chiếu. Các đoạn Kinh Thánh của bạn vẫn sẽ ở đây khi bạn quay lại.",
+    "To come back, click this tab at the top left of the Presenter:": "Để quay lại, hãy nhấp vào thẻ này ở góc trên bên trái của Trình chiếu:",
+    "Stay in Bible Reader": "Ở lại Đọc Kinh Thánh"
 }

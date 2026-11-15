@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Chagua rangi, mpito wa rangi au ruwaza kwa skrini zilizochaguliwa; Badilisha upendavyo huibadilisha na Hifadhi kama mpangilio awali huihifadhi.",
     "Copy CSS": "Nakili CSS",
     "(dev)CSS Animation": "(dev)Uhuishaji wa CSS",
-    "CSS animation backgrounds will be built here.": "Mandharinyuma yenye uhuishaji wa CSS yatajengwa hapa."
+    "CSS animation backgrounds will be built here.": "Mandharinyuma yenye uhuishaji wa CSS yatajengwa hapa.",
+    "Leave the Bible Reader?": "Kuondoka kwenye Usomaji wa Biblia?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Unakaribia kuondoka kwenye Usomaji wa Biblia na kwenda kwenye Uwasilishaji. Vifungu vyako vitakuwa hapa utakaporudi.",
+    "To come back, click this tab at the top left of the Presenter:": "Ili kurudi, bofya kichupo hiki juu kushoto mwa Uwasilishaji:",
+    "Stay in Bible Reader": "Baki kwenye Usomaji wa Biblia"
 }

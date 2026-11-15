@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Velg en farge, en fargeovergang eller et mønster for de valgte skjermene; Tilpass endrer det, og Lagre som forhåndsinnstilling tar vare på det.",
     "Copy CSS": "Kopier CSS",
     "(dev)CSS Animation": "(dev)CSS-animasjon",
-    "CSS animation backgrounds will be built here.": "Bakgrunner med CSS-animasjon bygges her."
+    "CSS animation backgrounds will be built here.": "Bakgrunner med CSS-animasjon bygges her.",
+    "Leave the Bible Reader?": "Forlate Bibellesing?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Du er i ferd med å forlate Bibellesing og gå til Presentasjon. Skriftstedene dine er her fortsatt når du kommer tilbake.",
+    "To come back, click this tab at the top left of the Presenter:": "For å komme tilbake, klikk på denne fanen øverst til venstre i Presentasjon:",
+    "Stay in Bible Reader": "Bli i Bibellesing"
 }

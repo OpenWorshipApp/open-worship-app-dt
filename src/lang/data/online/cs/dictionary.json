@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Vyberte barvu, přechod nebo vzor pro vybrané obrazovky; Přizpůsobit jej změní a Uložit jako předvolbu jej uchová.",
     "Copy CSS": "Kopírovat CSS",
     "(dev)CSS Animation": "(dev)CSS animace",
-    "CSS animation backgrounds will be built here.": "Zde vzniknou pozadí s CSS animací."
+    "CSS animation backgrounds will be built here.": "Zde vzniknou pozadí s CSS animací.",
+    "Leave the Bible Reader?": "Opustit Čtení Bible?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Chystáte se opustit Čtení Bible a přejít do Prezentace. Vaše pasáže tu po návratu zůstanou.",
+    "To come back, click this tab at the top left of the Presenter:": "Pro návrat klikněte na tuto kartu vlevo nahoře v Prezentaci:",
+    "Stay in Bible Reader": "Zůstat ve Čtení Bible"
 }

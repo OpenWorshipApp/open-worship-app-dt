@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "เลือกสี สีไล่ระดับ หรือลวดลายสำหรับหน้าจอที่เลือก ปรับแต่ง จะเปลี่ยนมัน และ บันทึกเป็นค่าที่ตั้งไว้ล่วงหน้า จะเก็บไว้",
     "Copy CSS": "คัดลอก CSS",
     "(dev)CSS Animation": "(dev)แอนิเมชัน CSS",
-    "CSS animation backgrounds will be built here.": "พื้นหลังแอนิเมชัน CSS จะสร้างขึ้นที่นี่"
+    "CSS animation backgrounds will be built here.": "พื้นหลังแอนิเมชัน CSS จะสร้างขึ้นที่นี่",
+    "Leave the Bible Reader?": "ออกจากผู้อ่านพระคัมภีร์หรือไม่",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "คุณกำลังจะออกจากผู้อ่านพระคัมภีร์และไปที่หน้านำเสนอ ข้อพระคัมภีร์ของคุณจะยังอยู่ที่นี่เมื่อคุณกลับมา",
+    "To come back, click this tab at the top left of the Presenter:": "หากต้องการกลับมา ให้คลิกแท็บนี้ที่มุมซ้ายบนของหน้านำเสนอ:",
+    "Stay in Bible Reader": "อยู่ในผู้อ่านพระคัมภีร์ต่อ"
 }

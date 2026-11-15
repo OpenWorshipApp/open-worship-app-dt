@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Pilih warna, gradien, atau pola untuk layar yang dipilih; Sesuaikan mengubahnya dan Simpan sebagai Preset menyimpannya.",
     "Copy CSS": "Salin CSS",
     "(dev)CSS Animation": "(dev)Animasi CSS",
-    "CSS animation backgrounds will be built here.": "Latar belakang animasi CSS akan dibuat di sini."
+    "CSS animation backgrounds will be built here.": "Latar belakang animasi CSS akan dibuat di sini.",
+    "Leave the Bible Reader?": "Keluar dari Pembaca Alkitab?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Anda akan keluar dari Pembaca Alkitab dan pergi ke Presentasi. Bagian Alkitab Anda tetap ada di sini saat Anda kembali.",
+    "To come back, click this tab at the top left of the Presenter:": "Untuk kembali, klik tab ini di kiri atas Presentasi:",
+    "Stay in Bible Reader": "Tetap di Pembaca Alkitab"
 }

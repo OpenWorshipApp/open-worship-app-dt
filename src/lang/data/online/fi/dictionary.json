@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Valitse valituille näytöille väri, liukuväri tai kuvio; Mukauta muuttaa sitä ja Tallenna esiasetuksena säilyttää sen.",
     "Copy CSS": "Kopioi CSS",
     "(dev)CSS Animation": "(dev)CSS-animaatio",
-    "CSS animation backgrounds will be built here.": "CSS-animaatiotaustat rakennetaan tänne."
+    "CSS animation backgrounds will be built here.": "CSS-animaatiotaustat rakennetaan tänne.",
+    "Leave the Bible Reader?": "Poistutaanko Raamatun lukijasta?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Olet poistumassa Raamatun lukijasta ja siirtymässä Esitykseen. Kohtasi ovat tallessa, kun palaat.",
+    "To come back, click this tab at the top left of the Presenter:": "Palaa takaisin napsauttamalla tätä välilehteä Esityksen vasemmassa yläkulmassa:",
+    "Stay in Bible Reader": "Pysy Raamatun lukijassa"
 }

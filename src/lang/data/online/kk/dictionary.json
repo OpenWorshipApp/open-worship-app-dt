@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Таңдалған экрандар үшін түс, градиент немесе өрнек таңдаңыз; «Баптау» оны өзгертеді, ал «Үлгі ретінде сақтау» оны сақтайды.",
     "Copy CSS": "CSS-ті көшіру",
     "(dev)CSS Animation": "(dev)CSS анимациясы",
-    "CSS animation backgrounds will be built here.": "CSS анимациясы бар фондар осында жасалады."
+    "CSS animation backgrounds will be built here.": "CSS анимациясы бар фондар осында жасалады.",
+    "Leave the Bible Reader?": "Киелі кітап оқудан шығасыз ба?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Сіз Киелі кітап оқудан шығып, Көрсетушіге өткелі тұрсыз. Қайтып келгенде үзінділеріңіз осында болады.",
+    "To come back, click this tab at the top left of the Presenter:": "Қайту үшін Көрсетушінің жоғарғы сол жағындағы осы қойындыны басыңыз:",
+    "Stay in Bible Reader": "Киелі кітап оқуда қалу"
 }

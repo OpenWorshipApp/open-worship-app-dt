@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Pumili ng kulay, gradient o disenyo para sa mga napiling screen; binabago ito ng I-customize at itinatabi ito ng I-save bilang Preset.",
     "Copy CSS": "Kopyahin ang CSS",
     "(dev)CSS Animation": "(dev)Animasyong CSS",
-    "CSS animation backgrounds will be built here.": "Dito bubuuin ang mga likurang may animasyong CSS."
+    "CSS animation backgrounds will be built here.": "Dito bubuuin ang mga likurang may animasyong CSS.",
+    "Leave the Bible Reader?": "Iwan ang Pagbasa ng Bibliya?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Iiwan mo na ang Pagbasa ng Bibliya at pupunta sa Pagtatanghal. Nandito pa rin ang iyong mga talata pagbalik mo.",
+    "To come back, click this tab at the top left of the Presenter:": "Para bumalik, i-click ang tab na ito sa itaas na kaliwa ng Pagtatanghal:",
+    "Stay in Bible Reader": "Manatili sa Pagbasa ng Bibliya"
 }

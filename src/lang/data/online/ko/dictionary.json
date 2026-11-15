@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "선택한 화면에 색상, 그라데이션 또는 패턴을 고르세요. 맞춤 설정으로 바꾸고 프리셋으로 저장으로 보관합니다.",
     "Copy CSS": "CSS 복사",
     "(dev)CSS Animation": "(개발)CSS 애니메이션",
-    "CSS animation backgrounds will be built here.": "CSS 애니메이션 배경은 여기에서 만들어질 예정입니다."
+    "CSS animation backgrounds will be built here.": "CSS 애니메이션 배경은 여기에서 만들어질 예정입니다.",
+    "Leave the Bible Reader?": "성경 읽기를 나가시겠습니까?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "성경 읽기를 나가 발표로 이동하려고 합니다. 돌아오면 보던 본문이 그대로 있습니다.",
+    "To come back, click this tab at the top left of the Presenter:": "돌아오려면 발표 화면 왼쪽 위에 있는 이 탭을 클릭하세요:",
+    "Stay in Bible Reader": "성경 읽기에 머무르기"
 }

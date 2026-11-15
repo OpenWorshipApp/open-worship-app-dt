@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, CM-93]
 screenshots: 17
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-14"
+workflowsVersion: "2026-11-15"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -301,5 +301,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `RD-129` · `RD-130` · `RD-131` · `RD-132` · `RD-133` · `RD-134` · `RD-135` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

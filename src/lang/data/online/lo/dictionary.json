@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "ເລືອກສີ, ສີໄລ່ລະດັບ ຫຼື ລວດລາຍສຳລັບໜ້າຈໍທີ່ເລືອກ; ປັບແຕ່ງ ຈະປ່ຽນມັນ ແລະ ບັນທຶກເປັນຄ່າທີ່ຕັ້ງໄວ້ລ່ວງໜ້າ ຈະເກັບມັນໄວ້",
     "Copy CSS": "ສຳເນົາ CSS",
     "(dev)CSS Animation": "(dev)ພາບເຄື່ອນໄຫວ CSS",
-    "CSS animation backgrounds will be built here.": "ພື້ນຫຼັງພາບເຄື່ອນໄຫວ CSS ຈະຖືກສ້າງຂຶ້ນຢູ່ບ່ອນນີ້."
+    "CSS animation backgrounds will be built here.": "ພື້ນຫຼັງພາບເຄື່ອນໄຫວ CSS ຈະຖືກສ້າງຂຶ້ນຢູ່ບ່ອນນີ້.",
+    "Leave the Bible Reader?": "ອອກຈາກໜ້າອ່ານພຣະຄຳພີບໍ?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ທ່ານກຳລັງຈະອອກຈາກໜ້າອ່ານພຣະຄຳພີ ແລະ ໄປທີ່ໜ້ານຳສະເໜີ. ຂໍ້ພຣະຄຳພີຂອງທ່ານຈະຍັງຢູ່ບ່ອນນີ້ເມື່ອທ່ານກັບມາ.",
+    "To come back, click this tab at the top left of the Presenter:": "ເພື່ອກັບມາ, ໃຫ້ຄລິກແຖບນີ້ຢູ່ເທິງເບື້ອງຊ້າຍຂອງໜ້ານຳສະເໜີ:",
+    "Stay in Bible Reader": "ຢູ່ໜ້າອ່ານພຣະຄຳພີຕໍ່"
 }

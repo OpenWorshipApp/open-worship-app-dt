@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Hitamo ibara, amabara avanze cyangwa igishushanyo ku mugaragaza zahiswemo; Hindura uko ubishaka irabihindura, naho Bika nk'icyateganyijwe ikabibika.",
     "Copy CSS": "Koporora CSS",
     "(dev)CSS Animation": "(dev)Amashusho yimuka ya CSS",
-    "CSS animation backgrounds will be built here.": "Ibiri inyuma bifite amashusho yimuka ya CSS bizakorerwa hano."
+    "CSS animation backgrounds will be built here.": "Ibiri inyuma bifite amashusho yimuka ya CSS bizakorerwa hano.",
+    "Leave the Bible Reader?": "Kuva muri Gusoma Bibiliya?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ugiye kuva muri Gusoma Bibiliya ujye kuri Kwerekana. Ibice byawe bizaba bikiri hano nugaruka.",
+    "To come back, click this tab at the top left of the Presenter:": "Kugira ngo ugaruke, kanda kuri iyi tabu iri hejuru ibumoso kuri Kwerekana:",
+    "Stay in Bible Reader": "Guma muri Gusoma Bibiliya"
 }

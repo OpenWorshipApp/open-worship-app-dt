@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Seçili ekranlar için bir renk, gradyan veya desen seçin; Özelleştir onu değiştirir, Hazır Ayar Olarak Kaydet ise saklar.",
     "Copy CSS": "CSS'i Kopyala",
     "(dev)CSS Animation": "(geliştirici)CSS Animasyonu",
-    "CSS animation backgrounds will be built here.": "CSS animasyonlu arka planlar burada oluşturulacak."
+    "CSS animation backgrounds will be built here.": "CSS animasyonlu arka planlar burada oluşturulacak.",
+    "Leave the Bible Reader?": "Kutsal Kitap Okuyucusundan çıkılsın mı?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kutsal Kitap Okuyucusundan çıkıp Sunuma geçmek üzeresiniz. Geri döndüğünüzde pasajlarınız burada olacak.",
+    "To come back, click this tab at the top left of the Presenter:": "Geri dönmek için Sunumun sol üst köşesindeki bu sekmeye tıklayın:",
+    "Stay in Bible Reader": "Kutsal Kitap Okuyucusunda kal"
 }

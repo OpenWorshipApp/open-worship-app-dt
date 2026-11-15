@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Escolle unha cor, un degradado ou un padrón para as pantallas seleccionadas; Personalizar cámbiao e Gardar como predefinición consérvao.",
     "Copy CSS": "Copiar CSS",
     "(dev)CSS Animation": "(dev)Animación CSS",
-    "CSS animation backgrounds will be built here.": "Aquí crearanse os fondos con animación CSS."
+    "CSS animation backgrounds will be built here.": "Aquí crearanse os fondos con animación CSS.",
+    "Leave the Bible Reader?": "Saír do Lector da Biblia?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Está a piques de saír do Lector da Biblia e ir ao Presentador. As súas pasaxes seguirán aquí cando volva.",
+    "To come back, click this tab at the top left of the Presenter:": "Para volver, prema nesta lapela arriba á esquerda do Presentador:",
+    "Stay in Bible Reader": "Quedar no Lector da Biblia"
 }

@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Odaberite boju, prijelaz ili uzorak za odabrane zaslone; Prilagodi ga mijenja, a Spremi kao predložak ga čuva.",
     "Copy CSS": "Kopiraj CSS",
     "(dev)CSS Animation": "(dev)CSS animacija",
-    "CSS animation backgrounds will be built here.": "Ovdje će se izraditi pozadine s CSS animacijom."
+    "CSS animation backgrounds will be built here.": "Ovdje će se izraditi pozadine s CSS animacijom.",
+    "Leave the Bible Reader?": "Napustiti Čitanje Biblije?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Upravo ćete napustiti Čitanje Biblije i otići na Prezentaciju. Vaši odlomci bit će ovdje kad se vratite.",
+    "To come back, click this tab at the top left of the Presenter:": "Za povratak kliknite ovu karticu gore lijevo u Prezentaciji:",
+    "Stay in Bible Reader": "Ostani u Čitanju Biblije"
 }

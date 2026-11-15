@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "選択したスクリーンに色、グラデーション、またはパターンを選びます。カスタマイズで変更し、プリセットとして保存で保存します。",
     "Copy CSS": "CSSをコピー",
     "(dev)CSS Animation": "（開発）CSSアニメーション",
-    "CSS animation backgrounds will be built here.": "CSSアニメーションの背景はここで作成されます。"
+    "CSS animation backgrounds will be built here.": "CSSアニメーションの背景はここで作成されます。",
+    "Leave the Bible Reader?": "聖書閲覧を離れますか？",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "聖書閲覧を離れて発表者に移動します。戻ったときも開いていた箇所はそのまま残っています。",
+    "To come back, click this tab at the top left of the Presenter:": "戻るには、発表者の左上にあるこのタブをクリックしてください：",
+    "Stay in Bible Reader": "聖書閲覧にとどまる"
 }

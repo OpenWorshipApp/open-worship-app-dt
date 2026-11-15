@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Zaɓi launi, sauyin launi ko zane don allunan da aka zaɓa; Keɓance yana canza shi, Ajiye a matsayin Saitacce kuma yana adana shi.",
     "Copy CSS": "Kwafi CSS",
     "(dev)CSS Animation": "(dev)Zanen CSS mai motsi",
-    "CSS animation backgrounds will be built here.": "Za a gina bangon zanen CSS mai motsi a nan."
+    "CSS animation backgrounds will be built here.": "Za a gina bangon zanen CSS mai motsi a nan.",
+    "Leave the Bible Reader?": "Bar Mai Karatun Littafi Mai Tsarki?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kuna gab da barin Mai Karatun Littafi Mai Tsarki ku tafi Mai Gabatarwa. Nassoshinku za su kasance a nan idan kun dawo.",
+    "To come back, click this tab at the top left of the Presenter:": "Don dawowa, danna wannan shafin a saman hagu na Mai Gabatarwa:",
+    "Stay in Bible Reader": "Zauna a Mai Karatun Littafi Mai Tsarki"
 }

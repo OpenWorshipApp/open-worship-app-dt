@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Eine Farbe, einen Verlauf oder ein Muster für die ausgewählten Bildschirme wählen; „Anpassen“ ändert sie, und „Als Voreinstellung speichern“ behält sie.",
     "Copy CSS": "CSS kopieren",
     "(dev)CSS Animation": "(Entwickler)CSS-Animation",
-    "CSS animation backgrounds will be built here.": "Hintergründe mit CSS-Animation entstehen hier."
+    "CSS animation backgrounds will be built here.": "Hintergründe mit CSS-Animation entstehen hier.",
+    "Leave the Bible Reader?": "Bibel-Lesen verlassen?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Sie verlassen gleich Bibel-Lesen und wechseln zur Präsentation. Ihre Bibelstellen sind noch da, wenn Sie zurückkommen.",
+    "To come back, click this tab at the top left of the Presenter:": "Um zurückzukehren, klicken Sie oben links in der Präsentation auf diesen Tab:",
+    "Stay in Bible Reader": "In Bibel-Lesen bleiben"
 }

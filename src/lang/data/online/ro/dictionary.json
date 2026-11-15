@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Alegeți o culoare, un degradeu sau un model pentru ecranele selectate; Personalizare îl modifică, iar Salvare ca presetare îl păstrează.",
     "Copy CSS": "Copiere CSS",
     "(dev)CSS Animation": "(dev)Animație CSS",
-    "CSS animation backgrounds will be built here.": "Aici vor fi create fundaluri cu animație CSS."
+    "CSS animation backgrounds will be built here.": "Aici vor fi create fundaluri cu animație CSS.",
+    "Leave the Bible Reader?": "Părăsiți Citire Biblie?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Sunteți pe cale să părăsiți Citire Biblie și să mergeți la Prezentare. Pasajele dvs. vor fi tot aici când reveniți.",
+    "To come back, click this tab at the top left of the Presenter:": "Pentru a reveni, faceți clic pe această filă din stânga sus a Prezentării:",
+    "Stay in Bible Reader": "Rămâneți în Citire Biblie"
 }

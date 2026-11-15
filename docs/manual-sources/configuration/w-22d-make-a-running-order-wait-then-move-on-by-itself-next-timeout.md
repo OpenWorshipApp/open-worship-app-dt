@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-14"
+workflowsVersion: "2026-11-15"
 ---
 # W-22d — Make a running order wait, then move on by itself (Next: Timeout)
 

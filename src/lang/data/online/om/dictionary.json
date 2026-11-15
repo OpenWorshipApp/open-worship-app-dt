@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Iskiriinota filatamaniif halluu, halluu jijjiiramaa ykn akkaataa filadhaa; Dhuunfeessi ni jijjiira, Akka Qophiitti Olkaa'i immoo ni olkaa'a.",
     "Copy CSS": "CSS Garagalchi",
     "(dev)CSS Animation": "(dev)Sochii CSS",
-    "CSS animation backgrounds will be built here.": "Duubeewwan sochii CSS asitti ni ijaaramu."
+    "CSS animation backgrounds will be built here.": "Duubeewwan sochii CSS asitti ni ijaaramu.",
+    "Leave the Bible Reader?": "Dubbisaa Macaafa Qulqulluu dhiisuu?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Dubbisaa Macaafa Qulqulluu dhiiftanii gara Dhiyeessaa deemuuf jirtu. Yeroo deebitanitti kutaaleen keessan asuma jiraatu.",
+    "To come back, click this tab at the top left of the Presenter:": "Deebi’uuf, tab kana gubbaa bitaa Dhiyeessaa irratti cuqaasaa:",
+    "Stay in Bible Reader": "Dubbisaa Macaafa Qulqulluu keessa turi"
 }

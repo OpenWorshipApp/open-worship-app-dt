@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "འདེམས་ཟིན་པའི་བརྙན་ཡོལ་ལ་ཚོན་མདོག་གམ། ཚོན་མདོག་རིམ་འགྱུར། ཡང་ན་རི་མོ་ཞིག་འདེམས། རང་སྒྲིག་བྱེད་ཀྱིས་དེ་བསྒྱུར་ཞིང་། སྔོན་སྒྲིག་ཏུ་ཉར་གྱིས་དེ་ཉར།",
     "Copy CSS": "CSS འདྲ་བཤུས",
     "(dev)CSS Animation": "(dev)CSS འགུལ་རིས",
-    "CSS animation backgrounds will be built here.": "CSS འགུལ་རིས་ཅན་གྱི་རྒྱབ་ལྗོངས་འདི་རུ་བཟོ་རྒྱུ་ཡིན།"
+    "CSS animation backgrounds will be built here.": "CSS འགུལ་རིས་ཅན་གྱི་རྒྱབ་ལྗོངས་འདི་རུ་བཟོ་རྒྱུ་ཡིན།",
+    "Leave the Bible Reader?": "གསུང་རབ་ཀློག་ཆས་ནས་ཕྱིར་ཐོན་ནམ།",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ཁྱེད་ཀྱིས་གསུང་རབ་ཀློག་ཆས་བཞག་ནས་འགྲེམས་སྟོན་ཆས་ལ་འགྲོ་གི་ཡོད། ཕྱིར་ལོག་དུས་ཁྱེད་ཀྱི་ལུང་ཚན་རྣམས་འདིར་ཡོད།",
+    "To come back, click this tab at the top left of the Presenter:": "ཕྱིར་ལོག་པར་འགྲེམས་སྟོན་ཆས་ཀྱི་སྟེང་གཡོན་ཕྱོགས་ཀྱི་ཤོག་བྱང་འདི་ལ་མནན་རོགས།",
+    "Stay in Bible Reader": "གསུང་རབ་ཀློག་ཆས་ནང་སྡོད།"
 }

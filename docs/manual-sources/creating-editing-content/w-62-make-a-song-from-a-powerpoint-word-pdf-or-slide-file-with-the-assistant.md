@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [CB-188, PM-179]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-14"
+workflowsVersion: "2026-11-15"
 ---
 # W-62 — Make a song from a PowerPoint, Word, PDF or slide file with the assistant
 
@@ -39,5 +39,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-188` · `PM-179`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

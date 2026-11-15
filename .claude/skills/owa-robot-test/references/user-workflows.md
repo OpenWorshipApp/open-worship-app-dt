@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-14o** (**W-08 — every color in Customize has its own [en:tran:Opacity].** The user, with Customize's color wells circled: _make all color in customizing panel support transparency setting_. A gradient's colors are one to a line, each its well, an [en:tran:Opacity] slider from 0 to 255 and its Remove; a pattern's [en:tran:Background Color] and [en:tran:Color] carry one each, and the pattern's separate Opacity row is gone. A well is drawn at its color's opacity over a checkerboard. A gradient with a see-through color paints nothing under itself, which had made the faint stop solid. Seen live 2026-11-14 on the dev app with a gradient up: Color 2 at 43 drawn faint over the checkerboard and the Mini Screen fading to it. Not seen live: a pattern's two sliders (the unit test drives them). PM-184.)
+**workflowsVersion: 2026-11-15** (**W-02 — the Bible Reader's 🖥️ [en:tran:Go Back to Presenter] asks first.** The user: _elderly user might click the button by accident and quit the reader. give a confirm asking be leaving reader page. give enough information about leaving and how to come back from presenter page_. The question **[en:tran:Leave the Bible Reader?]** says the passages stay and draws the Presenter's 📖 [en:tran:Bible Reader] tab, at its top left, as the way back; **[en:tran:Stay in Bible Reader]**, Esc and the ✕ stay, and Enter does nothing, so a reader who pressed the button by mistake and then Enter for the reference box is not taken away. `owa_goto_page` and the help window's own way to the Presenter still go straight there. Seen live 2026-11-15 on the dev app in English: the question, its words, the tab and its two buttons; what each button does is held by the unit tests. NAV-12.)
+
+Previous: **workflowsVersion: 2026-11-14o** (**W-08 — every color in Customize has its own [en:tran:Opacity].** The user, with Customize's color wells circled: _make all color in customizing panel support transparency setting_. A gradient's colors are one to a line, each its well, an [en:tran:Opacity] slider from 0 to 255 and its Remove; a pattern's [en:tran:Background Color] and [en:tran:Color] carry one each, and the pattern's separate Opacity row is gone. A well is drawn at its color's opacity over a checkerboard. A gradient with a see-through color paints nothing under itself, which had made the faint stop solid. Seen live 2026-11-14 on the dev app with a gradient up: Color 2 at 43 drawn faint over the checkerboard and the Mini Screen fading to it. Not seen live: a pattern's two sliders (the unit test drives them). PM-184.)
 
 Previous: **workflowsVersion: 2026-11-14n** (**W-08, W-28 and W-48 — the Background panel's Colors tab is [en:tran:Fills]: a color, a gradient or a pattern.** The user asked for gradients, then patterns under a name that covers both (_Fills_), moving ones, Customize and saved fills, then the layout: _make each section collapsible_, _make the collapsing icon colored follow screen color_, _add a toggle icon somewhere in the gradient|pattern panel to open/close the customizing panel_, _the preset section should be part of gradient|pattern_, _each element (gradient pattern) should be able to copy the css_. Seen live 2026-11-14 on the dev app: a tile pressed goes up and is lit; Dark / Light swaps the rows below it; a moving tile's wind mark, and neither the tile nor the Mini Screen moving; a screen's section folded to its line by the arrow in its color, its number and what it holds kept; Customize's rows, a change going up after the pause, and its toggle at the end of the Gradients line; a saved fill's button under the patterns; the Fills tab's and a tile's right-click offering [en:tran:Transition]; **[en:tran:Copy CSS]** on a still and a moving tile and on a saved button, its toast, and what it copied painting -- and the moving ones moving -- in a page of its own. Not seen: the motion on a showing screen, the save itself (its name box is the person's) and a press on a saved fill. W-28's table row reads _Fills — a colour_, the one a slide takes. PM-181..PM-186.)
 
@@ -158,12 +160,16 @@ _Verify: GL-24, GL-06, CM-04, PL-31._
 
 1. Click a header tab — the window switches to that page in place. A page has no tab
    for itself, and the Bible Reader has no tabs at all: come back from it with its 🖥️
-   **[en:tran:Go Back to Presenter]** button.
+   **[en:tran:Go Back to Presenter]** button. That button asks first, so a stray click
+   never leaves the Reader: press **[en:tran:Go Back to Presenter]** in the question to
+   go, or **[en:tran:Stay in Bible Reader]** (or **Esc**) to stay. The question shows
+   the Presenter's 📖 **[en:tran:Bible Reader]** tab, at its top left, which brings you
+   back to your passages as you left them.
 2. The **[en:tran:Slide Editor]** tab opens the editor only for a selected slide document:
    select one in the left list first (W-03), then click the tab; with nothing
    selected the app shows an alert ("[en:tran:No slide selected]") and stays put.
 
-_Verify: NAV-01..04._
+_Verify: NAV-01..04, NAV-12._
 
 ---
 

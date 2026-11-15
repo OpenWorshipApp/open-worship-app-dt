@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "ရွေးထားသော မျက်နှာပြင်များအတွက် အရောင်၊ အရောင်အဆင့်ပြောင်း သို့မဟုတ် ပုံစံ တစ်ခုကို ရွေးပါ။ စိတ်ကြိုက်ပြင်ရန် က ပြောင်းပေးပြီး ကြိုတင်သတ်မှတ်ချက်အဖြစ် သိမ်းရန် က သိမ်းထားပေးသည်။",
     "Copy CSS": "CSS ကူးယူရန်",
     "(dev)CSS Animation": "(dev)CSS လှုပ်ရှားသက်ဝင်ပုံ",
-    "CSS animation backgrounds will be built here.": "CSS လှုပ်ရှားသက်ဝင်ပုံ နောက်ခံများကို ဤနေရာတွင် တည်ဆောက်ပါမည်။"
+    "CSS animation backgrounds will be built here.": "CSS လှုပ်ရှားသက်ဝင်ပုံ နောက်ခံများကို ဤနေရာတွင် တည်ဆောက်ပါမည်။",
+    "Leave the Bible Reader?": "သမ္မာကျမ်းစာ ဖတ်ရှုရန် မှ ထွက်မလား။",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "သင်သည် သမ္မာကျမ်းစာ ဖတ်ရှုရန် မှ ထွက်ပြီး တင်ဆက်မှုသို့ သွားတော့မည်။ ပြန်လာသောအခါ သင့်ကျမ်းပိုဒ်များ ဤနေရာတွင် ရှိနေပါမည်။",
+    "To come back, click this tab at the top left of the Presenter:": "ပြန်လာရန် တင်ဆက်မှု၏ ဘယ်ဘက်အပေါ်ရှိ ဤတဘ်ကို နှိပ်ပါ။",
+    "Stay in Bible Reader": "သမ္မာကျမ်းစာ ဖတ်ရှုရန် တွင် ဆက်နေမည်"
 }

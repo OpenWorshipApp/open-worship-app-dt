@@ -29,12 +29,21 @@ import { openOnlineHelp } from '../server/onlineHelpHelpers';
 export function QuitCurrentPageComp({
     title,
     pathname,
+    checkCanLeave,
 }: Readonly<{
     title: string;
     pathname?: string;
+    // Asked first; the page stays unless it answers true (the Reader's
+    // confirm, `askLeavingBibleReader`).
+    checkCanLeave?: () => Promise<boolean>;
 }>) {
     const pathnameRef = useAppCurrentRef(pathname);
-    const handleClick = useCallback(() => {
+    const checkCanLeaveRef = useAppCurrentRef(checkCanLeave);
+    const handleClick = useCallback(async () => {
+        const checkCanLeave = checkCanLeaveRef.current;
+        if (checkCanLeave !== undefined && !(await checkCanLeave())) {
+            return;
+        }
         goToPath(pathnameRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

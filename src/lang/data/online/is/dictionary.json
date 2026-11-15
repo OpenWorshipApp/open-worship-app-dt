@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Veldu lit, litstigul eða mynstur fyrir völdu skjáina; Sérsníða breytir honum og Vista sem forstillingu geymir hann.",
     "Copy CSS": "Afrita CSS",
     "(dev)CSS Animation": "(dev)CSS-hreyfimynd",
-    "CSS animation backgrounds will be built here.": "Bakgrunnar með CSS-hreyfimyndum verða smíðaðir hér."
+    "CSS animation backgrounds will be built here.": "Bakgrunnar með CSS-hreyfimyndum verða smíðaðir hér.",
+    "Leave the Bible Reader?": "Fara úr Biblíulesara?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Þú ert að fara úr Biblíulesara yfir í Kynningu. Ritningarstaðirnir þínir verða hér þegar þú kemur aftur.",
+    "To come back, click this tab at the top left of the Presenter:": "Til að koma aftur skaltu smella á þennan flipa efst til vinstri í Kynningu:",
+    "Stay in Bible Reader": "Vera áfram í Biblíulesara"
 }

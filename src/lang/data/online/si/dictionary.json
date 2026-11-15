@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "තෝරාගත් තිර සඳහා වර්ණයක්, අනුක්‍රමණයක් හෝ රටාවක් තෝරන්න; අභිරුචිකරණය එය වෙනස් කරයි, පූර්ව සැකසුමක් ලෙස සුරකින්න එය තබා ගනී.",
     "Copy CSS": "CSS පිටපත් කරන්න",
     "(dev)CSS Animation": "(dev)CSS සජීවීකරණය",
-    "CSS animation backgrounds will be built here.": "CSS සජීවීකරණ පසුබිම් මෙහි නිර්මාණය කෙරේ."
+    "CSS animation backgrounds will be built here.": "CSS සජීවීකරණ පසුබිම් මෙහි නිර්මාණය කෙරේ.",
+    "Leave the Bible Reader?": "බයිබල් කියවනයෙන් ඉවත් වන්නද?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ඔබ බයිබල් කියවනයෙන් ඉවත් වී ඉදිරිපත්කරු වෙත යාමට සූදානම්. ඔබ ආපසු පැමිණි විට ඔබේ ඡේද මෙහිම තිබේ.",
+    "To come back, click this tab at the top left of the Presenter:": "ආපසු පැමිණීමට, ඉදිරිපත්කරුගේ ඉහළ වම් පැත්තේ ඇති මෙම ටැබය ක්ලික් කරන්න:",
+    "Stay in Bible Reader": "බයිබල් කියවනයේම රැඳී සිටින්න"
 }

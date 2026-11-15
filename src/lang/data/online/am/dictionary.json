@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "ለተመረጡት ስክሪኖች ቀለም፣ ቅልመት ወይም ንድፍ ይምረጡ፤ አብጅ ይቀይረዋል፣ እንደ ቅድመ ዝግጅት አስቀምጥ ደግሞ ያስቀምጠዋል።",
     "Copy CSS": "CSS ቅዳ",
     "(dev)CSS Animation": "(dev)የCSS እነማ",
-    "CSS animation backgrounds will be built here.": "የCSS እነማ ዳራዎች እዚህ ይገነባሉ።"
+    "CSS animation backgrounds will be built here.": "የCSS እነማ ዳራዎች እዚህ ይገነባሉ።",
+    "Leave the Bible Reader?": "የመጽሐፍ ቅዱስ ንባብን ትተው ይወጣሉ?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "የመጽሐፍ ቅዱስ ንባብን ትተው ወደ ማቅረቢያ ሊሄዱ ነው። ሲመለሱ ምንባቦችዎ እዚሁ ይገኛሉ።",
+    "To come back, click this tab at the top left of the Presenter:": "ለመመለስ፣ በማቅረቢያ ላይ ከላይ በግራ በኩል ያለውን ይህን ትር ይጫኑ፦",
+    "Stay in Bible Reader": "በመጽሐፍ ቅዱስ ንባብ ውስጥ ይቆዩ"
 }

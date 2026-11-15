@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Pasirinkite spalvą, gradientą arba raštą pasirinktiems ekranams; „Tinkinti“ jį pakeičia, o „Įrašyti kaip išankstinį nustatymą“ jį išsaugo.",
     "Copy CSS": "Kopijuoti CSS",
     "(dev)CSS Animation": "(dev) CSS animacija",
-    "CSS animation backgrounds will be built here.": "Čia bus kuriami fonai su CSS animacija."
+    "CSS animation backgrounds will be built here.": "Čia bus kuriami fonai su CSS animacija.",
+    "Leave the Bible Reader?": "Išeiti iš Biblijos skaitymo?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ketinate išeiti iš Biblijos skaitymo ir pereiti į Pateikimą. Grįžus jūsų ištraukos bus čia.",
+    "To come back, click this tab at the top left of the Presenter:": "Norėdami grįžti, spustelėkite šį skirtuką Pateikimo viršuje kairėje:",
+    "Stay in Bible Reader": "Likti Biblijos skaityme"
 }

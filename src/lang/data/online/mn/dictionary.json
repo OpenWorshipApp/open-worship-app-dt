@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Сонгосон дэлгэцүүдэд өнгө, градиент эсвэл хээ сонгоно уу; «Тохируулах» үүнийг өөрчилж, «Бэлэн тохиргоо болгон хадгалах» үүнийг хадгална.",
     "Copy CSS": "CSS хуулах",
     "(dev)CSS Animation": "(dev)CSS хөдөлгөөнт дүрс",
-    "CSS animation backgrounds will be built here.": "CSS хөдөлгөөнт дүрстэй дэвсгэрүүдийг энд бүтээнэ."
+    "CSS animation backgrounds will be built here.": "CSS хөдөлгөөнт дүрстэй дэвсгэрүүдийг энд бүтээнэ.",
+    "Leave the Bible Reader?": "Библийн уншигчаас гарах уу?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Та Библийн уншигчаас гарч Үзүүлэгч рүү шилжих гэж байна. Буцаж ирэхэд таны хэсгүүд энд байх болно.",
+    "To come back, click this tab at the top left of the Presenter:": "Буцаж ирэхийн тулд Үзүүлэгчийн зүүн дээд хэсэгт байгаа энэ табыг дарна уу:",
+    "Stay in Bible Reader": "Библийн уншигчид үлдэх"
 }

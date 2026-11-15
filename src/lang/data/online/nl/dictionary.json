@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Kies een kleur, een verloop of een patroon voor de geselecteerde schermen; Aanpassen wijzigt het en Opslaan als voorinstelling bewaart het.",
     "Copy CSS": "CSS kopiëren",
     "(dev)CSS Animation": "(dev) CSS-animatie",
-    "CSS animation backgrounds will be built here.": "Achtergronden met CSS-animatie worden hier gemaakt."
+    "CSS animation backgrounds will be built here.": "Achtergronden met CSS-animatie worden hier gemaakt.",
+    "Leave the Bible Reader?": "Bijbellezer verlaten?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "U staat op het punt de Bijbellezer te verlaten en naar Presentatie te gaan. Uw bijbelgedeelten staan er nog als u terugkomt.",
+    "To come back, click this tab at the top left of the Presenter:": "Klik om terug te komen op dit tabblad linksboven in Presentatie:",
+    "Stay in Bible Reader": "In Bijbellezer blijven"
 }

@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Khetha umbala, imibala eshintshayo noma iphethini yezikrini ezikhethiwe; u-Enza ngokwezifiso uyakushintsha, u-Gcina Njengokusethiwe uyakugcina.",
     "Copy CSS": "Kopisha i-CSS",
     "(dev)CSS Animation": "(dev)Opopayi be-CSS",
-    "CSS animation backgrounds will be built here.": "Izingemuva ezinopopayi be-CSS zizokwakhiwa lapha."
+    "CSS animation backgrounds will be built here.": "Izingemuva ezinopopayi be-CSS zizokwakhiwa lapha.",
+    "Leave the Bible Reader?": "Phuma kuMfundi WeBhayibheli?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Usuzophuma kuMfundi WeBhayibheli uye kuMethuli. Izindima zakho zizobe zisekhona lapha uma ubuya.",
+    "To come back, click this tab at the top left of the Presenter:": "Ukuze ubuye, chofoza le thebhu phezulu ngakwesobunxele kuMethuli:",
+    "Stay in Bible Reader": "Hlala kuMfundi WeBhayibheli"
 }

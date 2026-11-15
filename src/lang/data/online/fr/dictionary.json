@@ -4390,5 +4390,9 @@
     "Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.": "Choisissez une couleur, un dégradé ou un motif pour les écrans sélectionnés ; Personnaliser le modifie et Enregistrer comme préréglage le conserve.",
     "Copy CSS": "Copier le CSS",
     "(dev)CSS Animation": "(dev)Animation CSS",
-    "CSS animation backgrounds will be built here.": "Les arrière-plans à animation CSS seront créés ici."
+    "CSS animation backgrounds will be built here.": "Les arrière-plans à animation CSS seront créés ici.",
+    "Leave the Bible Reader?": "Quitter le Lecteur biblique ?",
+    "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Vous allez quitter le Lecteur biblique pour aller au Présentateur. Vos passages seront toujours là à votre retour.",
+    "To come back, click this tab at the top left of the Presenter:": "Pour revenir, cliquez sur cet onglet en haut à gauche du Présentateur :",
+    "Stay in Bible Reader": "Rester dans le Lecteur biblique"
 }
