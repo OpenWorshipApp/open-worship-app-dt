@@ -149,6 +149,7 @@ import {
     selectFiles,
     toScreenFileURL,
 } from './fileHelpers';
+import appProvider from './appProvider';
 
 let workDir: string;
 const inWorkDir = (...parts: string[]) => path.join(workDir, ...parts);
@@ -329,7 +330,13 @@ describe('file operations on a temporary directory', () => {
         h.electronSendAsync
             .mockResolvedValueOnce([workDir])
             .mockResolvedValueOnce([filePath]);
+        h.sendDataSync.mockImplementation((_channel, name) => `/${name}`);
         expect(await selectDirs()).toEqual([workDir]);
+        expect(h.electronSendAsync).toHaveBeenNthCalledWith(
+            1,
+            'main:app:select-dirs',
+            { defaultPath: path.join('/home', '.owa') },
+        );
         expect(
             await selectFiles([{ name: 'Songs', extensions: ['ows'] }]),
         ).toEqual([filePath]);
@@ -396,6 +403,24 @@ describe('file operations on a temporary directory', () => {
             'report.txt',
         );
         expect(getFileFullName(filePath)).toBe('picture.bin');
+    });
+
+    it('opens the folder picker in the data folder once one is chosen', async () => {
+        const sessionData = appProvider.sessionData as {
+            defaultStorageDirPath: string | null;
+        };
+        sessionData.defaultStorageDirPath = workDir;
+        try {
+            h.electronSendAsync.mockResolvedValueOnce([]);
+            expect(await selectDirs()).toEqual([]);
+            expect(h.electronSendAsync).toHaveBeenCalledWith(
+                'main:app:select-dirs',
+                { defaultPath: workDir },
+            );
+            expect(h.sendDataSync).not.toHaveBeenCalled();
+        } finally {
+            sessionData.defaultStorageDirPath = null;
+        }
     });
 
     it('uses the special-path IPC and reads blob URLs as data URLs', async () => {

@@ -400,6 +400,27 @@ describe('electronEventListener handlers', () => {
         expect(
             electronMockState.dialog.showOpenDialog.mock.calls.at(-1)?.[1],
         ).toEqual({ properties: ['openDirectory', 'showHiddenFiles'] });
+
+        // it opens where the renderer asks (the data folder, or `~/.owa`)
+        await findOnHandler('main:app:select-dirs')(
+            { sender },
+            { replyEventName: 'reply:dirs', defaultPath: '/home/.owa' },
+        );
+        expect(
+            electronMockState.dialog.showOpenDialog.mock.calls.at(-1)?.[1],
+        ).toEqual({
+            defaultPath: '/home/.owa',
+            properties: ['openDirectory', 'showHiddenFiles'],
+        });
+
+        // and ignores a start folder that is not a path
+        await findOnHandler('main:app:select-dirs')(
+            { sender },
+            { replyEventName: 'reply:dirs', defaultPath: 42 },
+        );
+        expect(
+            electronMockState.dialog.showOpenDialog.mock.calls.at(-1)?.[1],
+        ).toEqual({ properties: ['openDirectory', 'showHiddenFiles'] });
     });
 
     test('an async handler needs a reply channel and reports its failures', async () => {

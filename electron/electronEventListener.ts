@@ -353,14 +353,25 @@ export function initEventListenerApp(appController: ElectronAppController) {
         answerAiChatMicrophoneAsk(event.sender.id, data);
     });
 
-    onAsync(ipcMain, 'main:app:select-dirs', async () => {
-        const result = await dialog.showOpenDialog(appController.mainWin, {
-            // The default data folder is `~/.owa/open-worship-data`, hidden
-            // on macOS and Linux: without this it cannot be picked again.
-            properties: ['openDirectory', 'showHiddenFiles'],
-        });
-        return result.filePaths;
-    });
+    onAsync(
+        ipcMain,
+        'main:app:select-dirs',
+        async (data: { defaultPath?: unknown } | undefined) => {
+            // The renderer opens it in the data folder, or `~/.owa` before
+            // one is chosen (`getSelectDirsDefaultPath`).
+            const defaultPath = data?.defaultPath;
+            const result = await dialog.showOpenDialog(appController.mainWin, {
+                ...(typeof defaultPath === 'string' && defaultPath
+                    ? { defaultPath }
+                    : {}),
+                // The default data folder is `~/.owa/open-worship-data`,
+                // hidden on macOS and Linux: without this it cannot be
+                // picked again.
+                properties: ['openDirectory', 'showHiddenFiles'],
+            });
+            return result.filePaths;
+        },
+    );
 
     onAsync(
         ipcMain,

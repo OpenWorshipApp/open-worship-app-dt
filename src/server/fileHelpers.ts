@@ -1391,9 +1391,21 @@ export function getFileFullName(file: File | string): string | undefined {
     return fileFullName;
 }
 
+/**
+ * Where the folder picker opens: the data folder in use, or `<home>/.owa`
+ * before one is chosen -- the OS's last-used folder was rarely near the
+ * app's files, and `.owa` is hidden on macOS and Linux, so hard to reach by
+ * hand.
+ */
+export function getSelectDirsDefaultPath() {
+    return getDataDirPath() ?? pathJoin(getHomePath(), OWA_HOME_FOLDER_NAME);
+}
+
 export async function selectDirs() {
     showProgressBar('Selecting Directory');
-    const dirs = await electronSendAsync<string[]>('main:app:select-dirs');
+    const dirs = await electronSendAsync<string[]>('main:app:select-dirs', {
+        defaultPath: getSelectDirsDefaultPath(),
+    });
     hideProgressBar('Selecting Directory');
     return dirs;
 }
