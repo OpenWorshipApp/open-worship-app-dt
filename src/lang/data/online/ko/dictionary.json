@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "진행 순서를 짭니다: 각 행에서 동작 추가, 특정 화면 설정, CC 요소 추가, 미디어 컨트롤 추가. 예배 순서 미리 보기로 실행합니다.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "더 보기 옵션은 패널의 메뉴를 엽니다. 문서 목록의 메뉴에는 새 앱 문서, 새 가사, URL에서 가져오기, URL에서 다운로드, SongSelect에서 가져오기가 있습니다.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "문서 목록의 더 보기 옵션에 있는 퍼블릭 도메인 찬송에서 가져오기로 계정 없이 내장 찬송을 둘러봅니다.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor는 문서 목록 위에 폴더 상자를 엽니다. 마우스 오른쪽 버튼으로 클릭하면 클립보드에 복사, 상위 경로 편집 또는 세션 추가가 있습니다.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "경로 편집기 표시는 문서 목록 위에 폴더 상자를 엽니다. 마우스 오른쪽 버튼으로 클릭하면 클립보드에 복사, 상위 경로 편집 또는 세션 추가가 있습니다.",
     "Pin document keeps presenting from one document while you select another.": "문서 고정을 켜면 다른 문서를 선택해도 한 문서에서 계속 발표합니다.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "이름으로 필터를 사용하면 긴 문서 목록을 좁혀 볼 수 있으며, 아무것도 옮기거나 지우지 않습니다.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "유형으로 필터는 슬라이드, 가사, PDF 등 한 종류의 문서만 보여 줍니다.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "성경/긴 텍스트 속성: 프리셋, 프리셋으로 저장, 어두운 배경용 밝은 글자, 강조 표시 색상, 윤곽선, 그림자 흐림, 글로우.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "문서 목록 패널을 켜거나 끕니다. 더 보기 옵션 메뉴에는 로컬 파일 추가, 가져오기 항목이 있고, 새로 고침 버튼은 폴더를 다시 읽으며, 문서 메뉴에는 내보내기, 색 메모 항목이 있습니다.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "정렬 버튼은 파일을 바꾸지 않고 문서 목록 패널의 순서를 정합니다. 긴 목록은 맨 위로 스크롤, 맨 아래까지 재생, 자동 스크롤 옵션 버튼으로 이동합니다.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor 버튼은 어느 배경 폴더가 열려 있는지 보여 줍니다. 아직 폴더를 고르지 않았다면 폴더 선택, 기본값 선택, 설정으로 이동 중 하나를 누르세요.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "경로 편집기 표시 버튼은 어느 배경 폴더가 열려 있는지 보여 줍니다. 아직 폴더를 고르지 않았다면 폴더 선택, 기본값 선택, 설정으로 이동 중 하나를 누르세요.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "문서를 선택한 다음 슬라이드 카드를 클릭해 청중에게 보냅니다. 크기가 맞지 않으면 슬라이드 크기 맞추기 버튼이, 슬라이드를 불러오지 못하면 다시 로드 버튼이 나타납니다.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "가사를 선택하고 무대 슬라이드를 발표합니다. 화면 카드 아래의 무대 화면 번호를 바꾸려면 클릭, 증가, 감소 버튼으로 표시할 무대 화면을 고릅니다.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "선택한 문서를 편집하는 동안에도 발표 화면을 계속 볼 수 있습니다. 저장 버튼으로 변경 내용을 저장합니다.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "성경 읽기를 나가시겠습니까?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "성경 읽기를 나가 발표로 이동하려고 합니다. 돌아오면 보던 본문이 그대로 있습니다.",
     "To come back, click this tab at the top left of the Presenter:": "돌아오려면 발표 화면 왼쪽 위에 있는 이 탭을 클릭하세요:",
-    "Stay in Bible Reader": "성경 읽기에 머무르기"
+    "Stay in Bible Reader": "성경 읽기에 머무르기",
+    "Show path editor": "경로 편집기 표시",
+    "Hide path editor": "경로 편집기 숨기기",
+    "Background > Show path editor": "Background > 경로 편집기 표시",
+    "Document List > Show path editor": "Document List > 경로 편집기 표시"
 }

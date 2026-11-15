@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Sudarykite eigos tvarką: Pridėti veiksmą, Nustatyti konkretų ekraną, Pridėti CC elementus ir Pridėti medijos valdymą jos eilutėse; Peržiūrėti pamaldų eigą ją paleidžia.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Daugiau parinkčių atidaro skydelio meniu; skydelio Dokumentų sąrašas meniu yra Naujas programos dokumentas, Nauja giesmė, Importuoti iš URL, Atsisiųsti iš URL ir Importuoti iš SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importuoti iš viešojo turto giesmių, esantis skydelio Dokumentų sąrašas meniu Daugiau parinkčių, naršo įtaisytas giesmes be paskyros.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor atidaro aplanko laukelį virš Dokumentų sąrašas; spustelėkite jį dešiniuoju pelės mygtuku, kad gautumėte Kopijuoti į iškarpinę ir Redaguoti tėvinį kelią, arba Pridėti seansą.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Rodyti kelio redaktorių atidaro aplanko laukelį virš Dokumentų sąrašas; spustelėkite jį dešiniuoju pelės mygtuku, kad gautumėte Kopijuoti į iškarpinę ir Redaguoti tėvinį kelią, arba Pridėti seansą.",
     "Pin document keeps presenting from one document while you select another.": "Prisegti dokumentą toliau pateikia iš vieno dokumento, kol pasirenkate kitą.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtruoti pagal pavadinimą susiaurina ilgą skydelį Dokumentų sąrašas nieko neperkeliant ir netrinant.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtruoti pagal tipą rodo tik skaidres, giesmes, PDF failus ar kitos rūšies dokumentus.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Biblijos/ilgo teksto ypatybės: Išankstiniai nustatymai, Įrašyti kaip išankstinį nustatymą, Šviesūs žodžiai tamsiame fone, Paryškinimo spalva, Kontūras, Šešėlio suliejimas ir Švytėjimas.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Rodykite arba slėpkite skydelį Dokumentų sąrašas. Meniu Daugiau parinkčių yra Pridėti vietinius failus ir Importuoti, Atnaujinti iš naujo nuskaito aplanką, o dokumento meniu yra Eksportuoti ir Spalvos pastaba.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Rūšiuoti surikiuoja skydelį Dokumentų sąrašas nekeisdamas jokio failo; Slinkti į viršų, Slinkti iki apačios ir Automatinio slinkimo parinktys padeda judėti ilgu sąrašu.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor rodo, kuris skirtuko Fonas aplankas atidarytas; jei aplankas dar nepasirinktas, naudokite Pasirinkti aplanką, Pasirinkti numatytąjį arba Eiti į nustatymus.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Rodyti kelio redaktorių rodo, kuris skirtuko Fonas aplankas atidarytas; jei aplankas dar nepasirinktas, naudokite Pasirinkti aplanką, Pasirinkti numatytąjį arba Eiti į nustatymus.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Pasirinkite dokumentą, tada spustelėkite skaidrės kortelę, kad ją parodytumėte auditorijai; Taisyti skaidrės matmenis rodomas, kai dydis nesutampa, Įkelti iš naujo – kai skaidrės neįkeliamos.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Pasirinkite giesmę ir pateikite jos scenos skaidres; po ekrano kortele Spustelėkite, kad pakeistumėte scenos numerį, Padidinti arba Sumažinti parenka, kurią sceną kortelė rodo.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Laikykite Pateikimą matomą, kol redaguojate pasirinktą dokumentą; Įrašyti išsaugo pakeitimus.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Išeiti iš Biblijos skaitymo?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ketinate išeiti iš Biblijos skaitymo ir pereiti į Pateikimą. Grįžus jūsų ištraukos bus čia.",
     "To come back, click this tab at the top left of the Presenter:": "Norėdami grįžti, spustelėkite šį skirtuką Pateikimo viršuje kairėje:",
-    "Stay in Bible Reader": "Likti Biblijos skaityme"
+    "Stay in Bible Reader": "Likti Biblijos skaityme",
+    "Show path editor": "Rodyti kelio redaktorių",
+    "Hide path editor": "Slėpti kelio redaktorių",
+    "Background > Show path editor": "Background > Rodyti kelio redaktorių",
+    "Document List > Show path editor": "Document List > Rodyti kelio redaktorių"
 }

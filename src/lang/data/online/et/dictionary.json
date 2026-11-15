@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Koosta esitusjärjestus: Lisa toiming, Määra kindel ekraan, Lisa CC-elemente ja Lisa meedia juhtimine selle ridadel; Eelvaata esitusplaani käivitab selle.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Veel suvandeid avab paneeli menüü; paneeli Dokumentide loend menüüs on Uus dokument, Uus laul, Impordi URL-ilt, Laadi alla URL-ilt ja Impordi SongSelectist.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Impordi avaliku omandi lauludest, paneeli Dokumentide loend menüüs Veel suvandeid, sirvib sisseehitatud kirikulaule ilma kontota.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor avab kaustakasti paneeli Dokumentide loend kohal; paremklõpsa sellel, et saada Kopeeri lõikelauale ja Muuda emakausta teed, või Lisa seanss.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Näita tee redaktorit avab kaustakasti paneeli Dokumentide loend kohal; paremklõpsa sellel, et saada Kopeeri lõikelauale ja Muuda emakausta teed, või Lisa seanss.",
     "Pin document keeps presenting from one document while you select another.": "Kinnita dokument jätkab esitamist ühest dokumendist, kuni valid teise.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtreeri nime järgi kitsendab pikka loendit Dokumentide loend ilma midagi teisaldamata või kustutamata.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtreeri tüübi järgi näitab ainult slaide, laule, PDF-e või muud tüüpi dokumente.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Piibli/pika teksti omadused: Eelseadistused, Salvesta eelseadistusena, Hele tekst tumedal taustal, Esiletõstu värv, Kontuur, Varju hägu ja Hõõg.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Näita või peida Dokumentide loend. Menüüs Veel suvandeid on Lisa kohalikke faile ja Impordi, Värskenda loeb kausta uuesti ning dokumendi menüüs on Ekspordi ja Värvimärge.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Sorteeri järjestab paneeli Dokumentide loend ühtki faili muutmata; Keri üles, Esita lõpuni ja Automaatse kerimise suvandid aitavad pikas loendis liikuda.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor näitab, milline vahekaardi Taust kaust on avatud; kui kausta pole veel valitud, kasuta nuppe Vali kaust, Vali vaikimisi või Ava seaded.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Näita tee redaktorit näitab, milline vahekaardi Taust kaust on avatud; kui kausta pole veel valitud, kasuta nuppe Vali kaust, Vali vaikimisi või Ava seaded.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Vali dokument ja klõpsa siis slaidikaardil, et see publikule saata; Paranda slaidi mõõtmed ilmub, kui suurus ei sobi, Laadi uuesti siis, kui slaidid ei laadi.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Vali laul ja esita selle lava slaidid; ekraanikaardi all valivad Lava numbri muutmiseks klõpsa, Suurenda või Vähenda, millist lava kaart näitab.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Hoia Esitaja nähtaval, kui muudad valitud dokumenti; Salvesta säilitab muudatused.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Lahkuda Piibli Lugejast?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Oled lahkumas Piibli Lugejast ja minemas Esitajasse. Sinu kirjakohad on tagasi tulles alles.",
     "To come back, click this tab at the top left of the Presenter:": "Tagasi tulemiseks klõpsa Esitaja üleval vasakul sellel vahekaardil:",
-    "Stay in Bible Reader": "Jää Piibli Lugejasse"
+    "Stay in Bible Reader": "Jää Piibli Lugejasse",
+    "Show path editor": "Näita tee redaktorit",
+    "Hide path editor": "Peida tee redaktor",
+    "Background > Show path editor": "Background > Näita tee redaktorit",
+    "Document List > Show path editor": "Document List > Näita tee redaktorit"
 }

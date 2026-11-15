@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Hazie usoro ihe omume: Tinye Omume, Tọọ Ihuenyo Akọwapụtara, Tinye Ihe CC na Tinye Njikwa Mgbasa n'ahịrị ya; Nlele Usoro Ngosi na-agba ya.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Nhọrọ Ndị Ọzọ na-emepe menu akụkụ; nke Ndepụta Dọkụmentị nwere Dọkụmentị Ọhụrụ, Abụ Ọhụrụ, Bubata Site na URL, Budata Site na URL na Bubata Site na SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Bubata Site n'Abụ Ọha, dị na Nhọrọ Ndị Ọzọ nke Ndepụta Dọkụmentị, na-enyocha abụ otuto e wunyere n'ime na-enweghị akaụntụ.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor na-emepe igbe folda n'elu Ndepụta Dọkụmentị; pịa ya aka nri maka Detuo na Klipbọọdụ na Dezie Ụzọ Nne, ma ọ bụ Tinye Nnọkọ.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Gosi onye ndezi ụzọ na-emepe igbe folda n'elu Ndepụta Dọkụmentị; pịa ya aka nri maka Detuo na Klipbọọdụ na Dezie Ụzọ Nne, ma ọ bụ Tinye Nnọkọ.",
     "Pin document keeps presenting from one document while you select another.": "Tụnye ntụtụ na dọkụmentị na-eme ka ngosi si n'otu dọkụmentị gaa n'ihu mgbe ị na-ahọrọ nke ọzọ.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Zachaa site n'aha na-ebelata Ndepụta Dọkụmentị toro ogologo n'ebughị ma ọ bụ ehichapụghị ihe ọ bụla.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Zachaa site n'ụdị na-egosi naanị slaịdị, abụ, PDF ma ọ bụ ụdị dọkụmentị ọzọ.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Njirimara Baịbụl/Ederede Ogologo: Nkwadebe, Chekwaa dịka Nkwadebe, Okwu na-enwu enwu maka ndabere gbara ọchịchịrị, Agba Nkọwapụta, Ahịrị gburugburu, Mgbachapụ Onyinyo na Nchapụta.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Gosi ma ọ bụ zoo Ndepụta Dọkụmentị. Nhọrọ Ndị Ọzọ ya nwere Tinye Faịlụ Dị na Kọmputa na Bubata, Mee ọhụrụ na-agụ folda ahụ ọzọ, ma menu nke dọkụmentị nwere Bupụ na Ndetu Agba.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Hazie na-ahazi Ndepụta Dọkụmentị n'agbanweghị faịlụ ọ bụla; Pịgharịa gaa n'elu, Pịgharịa ruo n'ala na Nhọrọ Mpịgharị Akpaaka na-enyere gị aka ịgagharị n'ogologo ndepụta.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor na-egosi folda Ndabere nke mepere emepe; ọ bụrụ na a họrọbeghị folda, pịa Họrọ folda, Họrọ Nke Ndabara ma ọ bụ Gaa na Ntọala.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Gosi onye ndezi ụzọ na-egosi folda Ndabere nke mepere emepe; ọ bụrụ na a họrọbeghị folda, pịa Họrọ folda, Họrọ Nke Ndabara ma ọ bụ Gaa na Ntọala.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Họrọ dọkụmentị, wee pịa kaadị slaịdị iji zipu ya n'ihu ndị na-ekiri; Dozie nha slaịdị na-apụta mgbe nha ya ekwekọghị, Bugharịa mgbe slaịdị anaghị ebu.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Họrọ abụ ma gosipụta slaịdị ogbo ya; n'okpuru kaadị ihuenyo, Pịa iji gbanwee Nọmba Ogbo, Mụbaa ma ọ bụ Belata na-ahọrọ ogbo ọ na-egosi.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Debe Onye Ngosi ka ọ na-apụta ìhè mgbe ị na-edezi dọkụmentị a họrọrọ; Chekwaa na-echekwa mgbanwe ndị ahụ.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Ịhapụ Onye Ọgụgụ Baịbụl?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ị na-achọ ịhapụ Onye Ọgụgụ Baịbụl gaa n’Onye Ngosi. Akụkụ Akwụkwọ Nsọ gị ga-adị ebe a mgbe ị laghachiri.",
     "To come back, click this tab at the top left of the Presenter:": "Iji laghachi, pịa taabụ a n’elu aka ekpe nke Onye Ngosi:",
-    "Stay in Bible Reader": "Nọrọ n’Onye Ọgụgụ Baịbụl"
+    "Stay in Bible Reader": "Nọrọ n’Onye Ọgụgụ Baịbụl",
+    "Show path editor": "Gosi onye ndezi ụzọ",
+    "Hide path editor": "Zoo onye ndezi ụzọ",
+    "Background > Show path editor": "Background > Gosi onye ndezi ụzọ",
+    "Document List > Show path editor": "Document List > Gosi onye ndezi ụzọ"
 }

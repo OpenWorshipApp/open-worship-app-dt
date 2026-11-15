@@ -159,17 +159,33 @@ describe('Reader demos', () => {
     );
   });
 
-  it('leaves the untranslated path editor title untranslated (TP-01)', () => {
+  it('finds the path editor by its translated title, in its English panel (TP-01 fixed)', () => {
+    // PathSelectorComp draws "Show path editor" through tran(), so a
+    // translated window shows the dictionary's words and only those land.
+    // The panel is NOT translated: Khmer's Bible Notes is "notes of the
+    // Bible", unspaced, so a translated Bibles scope covered both panels and
+    // the press was refused as one of two twins (seen live 2026-11-15).
     const translate = (value) => {
-      if (value === 'Show path editor') {
-        throw new Error('no key in that language');
-      }
-      return value;
+      return value === 'Show path editor'
+        ? 'translated:path'
+        : `translated:${value}`;
     };
-    for (const id of ['reader-bibles-folder', 'reader-notes-folder']) {
-      const demo = getReaderDemo(id, translate);
-      expect(demo.steps[0].finds[0]).toMatch(/ > Show path editor$/);
+    for (const [id, panel] of [
+      ['reader-bibles-folder', 'Bibles'],
+      ['reader-notes-folder', 'Bible Notes'],
+    ]) {
+      const finds = getReaderDemo(id, translate).steps[0].finds;
+      expect(finds).toEqual([
+        `${panel} > Show path editor`,
+        `${panel} > translated:path`,
+      ]);
     }
+    // Every other scoped Reader tip keeps both forms, as before.
+    expect(getReaderDemo('reader-sort-notes', translate).steps[0].finds).toEqual([
+      'Bible Notes > Sort',
+      'translated:Bible Notes > translated:Sort',
+      'Bible Notes > translated:Sort',
+    ]);
   });
 
   it('keeps mixed Reader lessons actionable only where a control is named', () => {

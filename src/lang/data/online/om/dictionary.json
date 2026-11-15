@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Tartiiba sagantaa qindeessi: sarara isaa irratti Gocha Ida'i, Iskiriinii Murtaa'e Qindeessi, Elementota CC Ida'i fi To'annoo Miidiyaa Ida'i; Tartiiba Dhiyeessaa Duraan Ilaali ni hojjechiisa.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Filannoowwan Dabalataa baafata gabatee tokkoo bana; kan Tarree Sanadootaa keessa Sanada Haaraa, Faarfannaa Haaraa, URL Irraa Galchi, URL Irraa Buufadhu fi SongSelect Irraa Galchi jiru.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Faarfannaawwan Qabeenya Ummataa Irraa Galchi, Filannoowwan Dabalataa kan Tarree Sanadootaa keessatti, faarfannaawwan appii keessa jiran herrega malee sakatta'a.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor saanduqa foldarii Tarree Sanadootaa gubbaatti bana; Gara Kilippboordiitti Garagalchi fi Karaa Olaanaa Gulaali, ykn Marsaa Ida'i argachuuf mirgaan cuqaasi.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Gulaalaa karaa agarsiisi saanduqa foldarii Tarree Sanadootaa gubbaatti bana; Gara Kilippboordiitti Garagalchi fi Karaa Olaanaa Gulaali, ykn Marsaa Ida'i argachuuf mirgaan cuqaasi.",
     "Pin document keeps presenting from one document while you select another.": "Sanada qabsiisi yeroo sanada biraa filattu sanada tokko irraa dhiyeessuu itti fufsiisa.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Maqaan calleessi Tarree Sanadootaa dheeraa homaa osoo hin socho'siisin ykn hin haqin ni gabaabsa.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Gosaan calleessi islaayidoota, faarfannaawwan, PDF ykn gosa sanadaa biraa qofa agarsiisa.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Amaloota Macaafa Qulqulluu/Barreeffama Dheeraa: Qophiiwwan, Akka Qophiitti Olkaa'i, Jechoota ifaa duubee dukkanaa'aaf, Halluu Calaqqisiisuu, Sarara Alaa, Dimimmisa Gaaddidduu fi Calaqqee.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Tarree Sanadootaa agarsiisaa ykn dhoksaa. Filannoowwan Dabalataa isaa keessa Faayiloota Naannoo Ida'i fi Galchi jiru, Haaressi kuusaa irra deebi'ee dubbisa, baafata sanadaa keessa immoo Al-ergi fi Yaadannoo Halluu jiru.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Tartiibessi faayilii tokkollee osoo hin jijjiirin Tarree Sanadootaa tartiibessa; Gara gubbaatti sochoosi, Hanga jalaatti sochoosi fi Filannoowwan Sochoosa Ofumaa tarree dheeraa keessa isin sochoosu.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor kuusaan Duubee kam akka banaa jiru agarsiisa; yoo kuusaan ammallee hin filatamin, Kuusaa filadhu, Durtii Filadhu ykn Gara Qindaa'inootaa Deemi fayyadamaa.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Gulaalaa karaa agarsiisi kuusaan Duubee kam akka banaa jiru agarsiisa; yoo kuusaan ammallee hin filatamin, Kuusaa filadhu, Durtii Filadhu ykn Gara Qindaa'inootaa Deemi fayyadamaa.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Sanada tokko filadhaa, achiis kaardii islaayidii cuqaasaatii gara ilaaltotaatti ergaa; yoo hammi isaa wal hin simne Safartuu islaayidii sirreessi ni mul'ata, yoo islaayidoonni fe'amuu didan immoo Irra Deebi'ii Fe'i.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Faarfannaa filadhaatii islaayidoota waltajjii isaa dhiyeessaa; kaardii iskiriinii jalatti, Lakkoofsa Waltajjii jijjiiruuf cuqaasaa, Dabali ykn Hir'isi waltajjii kaardiin sun agarsiisu filata.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Yeroo sanada filatame gulaaltan Dhiyeessaan akka mul'atu tursiisaa; Olkaa'i jijjiirama ni olkaa'a.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Dubbisaa Macaafa Qulqulluu dhiisuu?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Dubbisaa Macaafa Qulqulluu dhiiftanii gara Dhiyeessaa deemuuf jirtu. Yeroo deebitanitti kutaaleen keessan asuma jiraatu.",
     "To come back, click this tab at the top left of the Presenter:": "Deebi’uuf, tab kana gubbaa bitaa Dhiyeessaa irratti cuqaasaa:",
-    "Stay in Bible Reader": "Dubbisaa Macaafa Qulqulluu keessa turi"
+    "Stay in Bible Reader": "Dubbisaa Macaafa Qulqulluu keessa turi",
+    "Show path editor": "Gulaalaa karaa agarsiisi",
+    "Hide path editor": "Gulaalaa karaa dhoksi",
+    "Background > Show path editor": "Background > Gulaalaa karaa agarsiisi",
+    "Document List > Show path editor": "Document List > Gulaalaa karaa agarsiisi"
 }

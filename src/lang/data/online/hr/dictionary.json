@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Složite redoslijed: u njegovim recima Dodaj radnju, Postavi određeni zaslon, Dodaj CC elemente i Dodaj upravljanje medijem; Pregledaj redoslijed bogoslužja ga pokreće.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Više opcija otvara izbornik ploče; izbornik ploče Popis dokumenata ima Novi dokument aplikacije, Novi tekst pjesme, Uvezi s URL-a, Preuzmi s URL-a i Uvezi iz SongSelecta.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Uvezi iz pjesama iz javnog dobra, u Više opcija ploče Popis dokumenata, pregledava ugrađene himne bez računa.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor otvara polje mape iznad Popis dokumenata; desnim klikom na njega dobivate Kopiraj u međuspremnik i Uredi nadređenu putanju, ili Dodaj sesiju.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "„Prikaži uređivač putanje“ otvara polje mape iznad Popis dokumenata; desnim klikom na njega dobivate Kopiraj u međuspremnik i Uredi nadređenu putanju, ili Dodaj sesiju.",
     "Pin document keeps presenting from one document while you select another.": "Prikvači dokument nastavlja prikaz iz jednog dokumenta dok odabirete drugi.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtriraj po nazivu sužava dugi Popis dokumenata bez premještanja ili brisanja.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtriraj po vrsti prikazuje samo slajdove, tekstove pjesama, PDF-ove ili drugu vrstu dokumenta.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Svojstva Biblije/dugog teksta: Predlošci, Spremi kao predložak, Svijetle riječi za tamnu pozadinu, Boja isticanja, Kontura, Zamućenje sjene i Sjaj.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Prikažite ili sakrijte „Popis dokumenata“. Njegov izbornik „Više opcija“ ima „Dodaj lokalne datoteke“ i „Uvezi“, „Osvježi“ ponovno čita mapu, a izbornik dokumenta ima „Izvezi“ i „Bilješka u boji“.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "„Poredaj“ slaže „Popis dokumenata“ bez mijenjanja datoteke; „Pomakni na vrh“, „Pomakni do dna“ i „Opcije automatskog pomicanja“ pomažu da se krećete kroz dugi popis.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "„Show path editor“ pokazuje koja je mapa kartice „Pozadina“ otvorena; ako mapa još nije odabrana, pritisnite „Odaberite mapu“, „Odaberi zadano“ ili „Idi na postavke“.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "„Prikaži uređivač putanje“ pokazuje koja je mapa kartice „Pozadina“ otvorena; ako mapa još nije odabrana, pritisnite „Odaberite mapu“, „Odaberi zadano“ ili „Idi na postavke“.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Odaberite dokument, zatim kliknite karticu slajda da ga pošaljete publici; „Popravi dimenziju slajda“ pojavljuje se kad veličina ne odgovara, a „Ponovno učitaj“ kad se slajdovi ne učitaju.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Odaberite tekst pjesme i prezentirajte njegove slajdove za pozornicu; ispod kartice zaslona, „Kliknite za promjenu broja pozornice“, „Povećaj“ ili „Smanji“ bira pozornicu koju on prikazuje.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "„Prezentacija“ ostaje na vidiku dok uređujete odabrani dokument; „Spremi“ sprema promjene.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Napustiti Čitanje Biblije?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Upravo ćete napustiti Čitanje Biblije i otići na Prezentaciju. Vaši odlomci bit će ovdje kad se vratite.",
     "To come back, click this tab at the top left of the Presenter:": "Za povratak kliknite ovu karticu gore lijevo u Prezentaciji:",
-    "Stay in Bible Reader": "Ostani u Čitanju Biblije"
+    "Stay in Bible Reader": "Ostani u Čitanju Biblije",
+    "Show path editor": "Prikaži uređivač putanje",
+    "Hide path editor": "Sakrij uređivač putanje",
+    "Background > Show path editor": "Background > Prikaži uređivač putanje",
+    "Document List > Show path editor": "Document List > Prikaži uređivač putanje"
 }

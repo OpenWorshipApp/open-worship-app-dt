@@ -225,12 +225,14 @@ export const READER_EXTRA_DEMO_LIST = [
     'Find the Reader saved-passage folder',
     'Use Show path editor in Bibles to see the folder; Choose a folder picks another, and right-click the path to Copy to Clipboard.',
     [
-      // No translateFind: PathSelectorComp draws this title untranslated, so
-      // no language package has its key and tran() throws on it (TP-01).
+      // The panel keeps its English widget name: translated, Bibles also
+      // covered Bible Notes in Khmer, whose toggle carries the same words.
       {
-        find: 'Bibles > Show path editor',
-        text: 'Toggle Show path editor in the Bibles panel.',
-        action: 'click',
+        ...click(
+          'Bibles > Show path editor',
+          'Toggle Show path editor in the Bibles panel.',
+        ),
+        isPanelNameKept: true,
       },
       'The path belongs to the Reader Bibles list. Choose a folder picks another location yourself, and right-click the path for Copy to Clipboard or Edit Parent Path; the Presenter keeps a separate passage list.',
     ],
@@ -295,11 +297,13 @@ export const READER_EXTRA_DEMO_LIST = [
     'Find the Bible Notes folder',
     'Use Show path editor in Bible Notes to locate your note library; Choose a folder picks another one.',
     [
-      // No translateFind: see bibles-folder (TP-01).
+      // As bibles-folder: the toggle's twin is in the Bibles panel.
       {
-        find: 'Bible Notes > Show path editor',
-        text: 'Toggle Show path editor in the Bible Notes panel.',
-        action: 'click',
+        ...click(
+          'Bible Notes > Show path editor',
+          'Toggle Show path editor in the Bible Notes panel.',
+        ),
+        isPanelNameKept: true,
       },
       'Inspect the current folder. To use another library, press Choose a folder yourself and return here to see the files in that location.',
     ],

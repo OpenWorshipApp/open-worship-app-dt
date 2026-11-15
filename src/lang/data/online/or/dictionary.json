@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "କାର୍ଯ୍ୟକ୍ରମର କ୍ରମ ସଜାନ୍ତୁ: ଏହାର ଧାଡ଼ିରେ କାର୍ଯ୍ୟ ଯୋଡ଼ନ୍ତୁ, ନିର୍ଦ୍ଦିଷ୍ଟ ସ୍କ୍ରିନ୍ ସେଟ୍ କରନ୍ତୁ, CC ଉପାଦାନ ଯୋଡ଼ନ୍ତୁ ଓ ମିଡିଆ ନିୟନ୍ତ୍ରଣ ଯୋଡ଼ନ୍ତୁ; ଉପସ୍ଥାପନ କ୍ରମ ପୂର୍ବାବଲୋକନ କରନ୍ତୁ ଏହାକୁ ଚଲାଏ।",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "ଅଧିକ ବିକଳ୍ପ ପ୍ୟାନେଲର ମେନୁ ଖୋଲେ; ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ମେନୁରେ ନୂଆ ଡକ୍ୟୁମେଣ୍ଟ, ନୂଆ ଗୀତ, URL ରୁ ଆମଦାନି କରନ୍ତୁ, URL ରୁ ଡାଉନଲୋଡ୍ କରନ୍ତୁ ଓ SongSelect ରୁ ଆମଦାନି କରନ୍ତୁ ଅଛି।",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ପ୍ୟାନେଲର ଅଧିକ ବିକଳ୍ପ ମେନୁରେ ଥିବା ସାର୍ବଜନୀନ ଡୋମେନ୍ ଗୀତରୁ ଆମଦାନି କରନ୍ତୁ ଆକାଉଣ୍ଟ ବିନା ଭିତରେ ଥିବା ଭଜନ ଦେଖାଏ।",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ପ୍ୟାନେଲ ଉପରେ ଫୋଲ୍ଡର ବାକ୍ସ ଖୋଲେ; କ୍ଲିପବୋର୍ଡକୁ କପି କରନ୍ତୁ ଓ ମୂଳ ପଥ ସମ୍ପାଦନ କରନ୍ତୁ, କିମ୍ବା ଅଧିବେଶନ ଯୋଡ଼ନ୍ତୁ ପାଇଁ ଏଥିରେ ରାଇଟ୍-କ୍ଲିକ୍ କରନ୍ତୁ।",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "‘ପଥ ସମ୍ପାଦକ ଦେଖାନ୍ତୁ’ ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ପ୍ୟାନେଲ ଉପରେ ଫୋଲ୍ଡର ବାକ୍ସ ଖୋଲେ; କ୍ଲିପବୋର୍ଡକୁ କପି କରନ୍ତୁ ଓ ମୂଳ ପଥ ସମ୍ପାଦନ କରନ୍ତୁ, କିମ୍ବା ଅଧିବେଶନ ଯୋଡ଼ନ୍ତୁ ପାଇଁ ଏଥିରେ ରାଇଟ୍-କ୍ଲିକ୍ କରନ୍ତୁ।",
     "Pin document keeps presenting from one document while you select another.": "ଡକ୍ୟୁମେଣ୍ଟ ପିନ୍ କରନ୍ତୁ ବଟନରେ ଆପଣ ଅନ୍ୟ ଡକ୍ୟୁମେଣ୍ଟ ବାଛିଲେ ମଧ୍ୟ ଗୋଟିଏ ଡକ୍ୟୁମେଣ୍ଟରୁ ଉପସ୍ଥାପନ ଜାରି ରହେ।",
     "Filter by name narrows a long Document List without moving or deleting anything.": "ନାମ ଦ୍ୱାରା ଫିଲ୍ଟର୍ କରନ୍ତୁ କିଛି ନ ଘୁଞ୍ଚାଇ କି ନ ହଟାଇ ଲମ୍ବା ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ଛୋଟ କରେ।",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "ପ୍ରକାର ଦ୍ୱାରା ଫିଲ୍ଟର୍ କରନ୍ତୁ କେବଳ ସ୍ଲାଇଡ୍, ଗୀତ, PDF କିମ୍ବା ଅନ୍ୟ ପ୍ରକାରର ଡକ୍ୟୁମେଣ୍ଟ ଦେଖାଏ।",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "ବାଇବେଲ/ଲମ୍ବା ଲେଖା ଗୁଣଧର୍ମ: ପ୍ରିସେଟ୍, ପ୍ରିସେଟ୍ ଭାବେ ସେଭ୍ କରନ୍ତୁ, ଗାଢ଼ ପୃଷ୍ଠଭୂମି ପାଇଁ ହାଲୁକା ଶବ୍ଦ, ହାଇଲାଇଟ୍ ରଙ୍ଗ, ବାହ୍ୟରେଖା, ଛାୟା ଅସ୍ପଷ୍ଟତା ଓ ଆଭା।",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ଚାଲୁ/ବନ୍ଦ କରନ୍ତୁ। ଏହାର ‘ଅଧିକ ବିକଳ୍ପ’ ମେନୁରେ ‘ସ୍ଥାନୀୟ ଫାଇଲ୍ ଯୋଡ଼ନ୍ତୁ’ ଓ ‘ଆମଦାନି କରନ୍ତୁ’ ଅଛି, ‘ରିଫ୍ରେସ୍ କରନ୍ତୁ’ ବଟନ ଫୋଲ୍ଡରକୁ ପୁଣି ପଢ଼େ, ଏବଂ ଡକ୍ୟୁମେଣ୍ଟର ମେନୁରେ ‘ରପ୍ତାନି କରନ୍ତୁ’ ଓ ‘ରଙ୍ଗ ଟିପ୍ପଣୀ’ ଅଛି।",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘ସଜାନ୍ତୁ’ ବଟନ କୌଣସି ଫାଇଲ୍ ନ ବଦଳାଇ ଡକ୍ୟୁମେଣ୍ଟ ତାଲିକା ସଜାଏ; ଲମ୍ବା ତାଲିକାରେ ଆଗକୁ ଯିବାକୁ ‘ଉପରକୁ ସ୍କ୍ରୋଲ୍ କରନ୍ତୁ’, ‘ତଳ ପର୍ଯ୍ୟନ୍ତ ଚଲାନ୍ତୁ’ ଓ ‘ସ୍ୱୟଂ ସ୍କ୍ରୋଲ୍ ବିକଳ୍ପ’ ବ୍ୟବହାର କରନ୍ତୁ।",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor ଦେଖାଏ କେଉଁ ପୃଷ୍ଠଭୂମି ଫୋଲ୍ଡର ଖୋଲା ଅଛି; ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଫୋଲ୍ଡର ବଛା ହୋଇନଥିଲେ ‘ଏକ ଫୋଲ୍ଡର ବାଛନ୍ତୁ’, ‘ଡିଫଲ୍ଟ ବାଛନ୍ତୁ’ କିମ୍ବା ‘ସେଟିଂସକୁ ଯାଆନ୍ତୁ’ ବାଛନ୍ତୁ।",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "‘ପଥ ସମ୍ପାଦକ ଦେଖାନ୍ତୁ’ ଦେଖାଏ କେଉଁ ପୃଷ୍ଠଭୂମି ଫୋଲ୍ଡର ଖୋଲା ଅଛି; ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଫୋଲ୍ଡର ବଛା ହୋଇନଥିଲେ ‘ଏକ ଫୋଲ୍ଡର ବାଛନ୍ତୁ’, ‘ଡିଫଲ୍ଟ ବାଛନ୍ତୁ’ କିମ୍ବା ‘ସେଟିଂସକୁ ଯାଆନ୍ତୁ’ ବାଛନ୍ତୁ।",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ଏକ ଡକ୍ୟୁମେଣ୍ଟ ଚୟନ କରନ୍ତୁ, ତାପରେ ଏକ ସ୍ଲାଇଡ୍ କାର୍ଡରେ କ୍ଲିକ୍ କରି ତାହାକୁ ଦର୍ଶକଙ୍କୁ ପଠାନ୍ତୁ; ଆକାର ନ ମିଳିଲେ ‘ସ୍ଲାଇଡ୍ ପରିମାପ ଠିକ୍ କରନ୍ତୁ’ ଦେଖାଯାଏ, ଏବଂ ସ୍ଲାଇଡ୍ ଲୋଡ୍ ନ ହେଲେ ‘ପୁଣି ଲୋଡ୍ କରନ୍ତୁ’।",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "ଏକ ଗୀତ ବାଛନ୍ତୁ ଏବଂ ଏହାର ମଞ୍ଚ ସ୍ଲାଇଡ୍ ଉପସ୍ଥାପନ କରନ୍ତୁ; ସ୍କ୍ରିନ୍ କାର୍ଡ ତଳେ ‘ମଞ୍ଚ ସଂଖ୍ୟା ବଦଳାଇବାକୁ କ୍ଲିକ୍ କରନ୍ତୁ’, ‘ବଢ଼ାନ୍ତୁ’ କିମ୍ବା ‘କମାନ୍ତୁ’ ଦ୍ୱାରା ତାହା କେଉଁ ମଞ୍ଚ ଦେଖାଇବ ବାଛନ୍ତୁ।",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "ଚୟନିତ ଡକ୍ୟୁମେଣ୍ଟ ସମ୍ପାଦନ କରିବା ବେଳେ ଉପସ୍ଥାପକକୁ ଦୃଶ୍ୟମାନ ରଖନ୍ତୁ; ‘ସେଭ୍ କରନ୍ତୁ’ ବଟନ ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ରଖେ।",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "ବାଇବେଲ ପାଠକ ଛାଡ଼ିବେ କି?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ଆପଣ ବାଇବେଲ ପାଠକ ଛାଡ଼ି ଉପସ୍ଥାପକକୁ ଯାଉଛନ୍ତି। ଫେରିଆସିଲେ ଆପଣଙ୍କ ଅଂଶଗୁଡ଼ିକ ଏଠାରେ ରହିବ।",
     "To come back, click this tab at the top left of the Presenter:": "ଫେରିବା ପାଇଁ, ଉପସ୍ଥାପକର ଉପର ବାମ ପଟେ ଥିବା ଏହି ଟ୍ୟାବ୍‌କୁ କ୍ଲିକ୍ କରନ୍ତୁ:",
-    "Stay in Bible Reader": "ବାଇବେଲ ପାଠକରେ ରୁହନ୍ତୁ"
+    "Stay in Bible Reader": "ବାଇବେଲ ପାଠକରେ ରୁହନ୍ତୁ",
+    "Show path editor": "ପଥ ସମ୍ପାଦକ ଦେଖାନ୍ତୁ",
+    "Hide path editor": "ପଥ ସମ୍ପାଦକ ଲୁଚାନ୍ତୁ",
+    "Background > Show path editor": "Background > ପଥ ସମ୍ପାଦକ ଦେଖାନ୍ତୁ",
+    "Document List > Show path editor": "Document List > ପଥ ସମ୍ପାଦକ ଦେଖାନ୍ତୁ"
 }

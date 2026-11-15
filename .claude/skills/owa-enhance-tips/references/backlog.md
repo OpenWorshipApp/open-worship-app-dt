@@ -242,7 +242,7 @@ plaintext inside the installer: no one's own data.
 
 ---
 
-## TP-01 · "Show path editor" is no `tran()` key, and three tips translate it — `open` · S2 · reader, presenter
+## TP-01 · "Show path editor" is no `tran()` key, and three tips translate it — `done` · S2 · reader, presenter
 
 **Evidence.** `tip-coverage.mjs --quality` on 2026-10-16: `reader-bibles-folder`,
 `reader-notes-folder` (`Bibles > Show path editor`, `Bible Notes > Show path
@@ -267,6 +267,26 @@ of `presenter-background-folder` (`Background > Show path editor`, whose whole
 scoped label WAS a key, so a Khmer window looked only for a translated name
 the control never draws) dropped `translateFind` too, and that key left all 87
 packages. No tip translates the path editor's name now.
+**Done 2026-11-15** (robot run `20261115-1542`, its F2): `PathSelectorComp`
+draws `tran('Show path editor')` / `tran('Hide path editor')`, two whole keys,
+in all 87 packages, each worded as that language's own tips already named the
+control; the tip details that still said the English name now say it (178
+sentences), and every version was raised. The four steps translate again:
+`presenter-path-editor` is scoped now (`Document List > Show path editor`,
+`translateFind`) -- bare, the name is three controls (Document List, Bibles,
+Bible Notes) and the card refused it as a twin -- and with `Background > Show
+path editor` its whole scoped key is back in all 87, the English panel name
+kept as every scoped key does. The Reader pair carry `isPanelNameKept`
+(`getReaderDemo`): Khmer's Bible Notes is "notes of the Bible" with no space,
+so a translated Bibles scope covered both panels and was refused as a twin.
+`dailyTipTranslations.test.ts` now holds every key a tip hands `tran()` for a
+find to every package -- this gap had passed every test. **Proof:** on a
+scratch profile in Khmer (the packed `km` 0.0.127), `presenter-path-editor`,
+`reader-bibles-folder` and `reader-notes-folder` each ran start → **Do it**,
+the press opening its own panel's editor; `presenter-background-folder` was
+not run live (a fresh profile forces that editor open, so its toggle reads
+Hide). `tip-coverage.mjs <window> --quality`: 0 errors on presenter.html and
+reader.html, no `find-untranslated` line.
 
 ## TP-02 · A Khmer detail names the control in other words, so Khmer search misses it — `done` · S2 · reader
 

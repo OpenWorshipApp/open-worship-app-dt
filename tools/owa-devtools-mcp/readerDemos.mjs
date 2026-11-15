@@ -1004,10 +1004,15 @@ export function getReaderDemo(id, translate = (value) => value) {
       ? translate(label)
       : [...parts.slice(0, -1), translate(parts.at(-1))].join(' > ');
   };
-  const toTranslatedFinds = (label) => [
-    translateLabel(label),
-    translateControlOnly(label),
-  ];
+  // `isPanelNameKept` drops the fully translated form for a step whose panel
+  // name, translated, sits inside another panel's: Khmer writes Bible Notes
+  // as "notes of the Bible", with no space, so the translated Bibles scope
+  // also covered Bible Notes and the path editor's tip was refused as one of
+  // two twins. The panel's English widget name is one panel only.
+  const toTranslatedFinds = (label, isPanelNameKept = false) =>
+    isPanelNameKept
+      ? [translateControlOnly(label)]
+      : [translateLabel(label), translateControlOnly(label)];
   return {
     ...source,
     label: translate(source.label),
@@ -1019,6 +1024,7 @@ export function getReaderDemo(id, translate = (value) => value) {
         translateFinds,
         translateSuffix = '',
         translateValue,
+        isPanelNameKept,
         ...step
       } = sourceStep;
       const finds = [
@@ -1026,7 +1032,7 @@ export function getReaderDemo(id, translate = (value) => value) {
       ];
       if (translateFind) {
         const key = translateFind === true ? step.find : translateFind;
-        for (const translated of toTranslatedFinds(key)) {
+        for (const translated of toTranslatedFinds(key, isPanelNameKept)) {
           if (translated !== key) {
             finds.push(`${translated}${translateSuffix}`);
           }
@@ -1034,7 +1040,7 @@ export function getReaderDemo(id, translate = (value) => value) {
       }
       if (translateFinds === true) {
         for (const find of [...finds]) {
-          for (const translated of toTranslatedFinds(find)) {
+          for (const translated of toTranslatedFinds(find, isPanelNameKept)) {
             if (translated !== find) {
               finds.push(translated);
             }

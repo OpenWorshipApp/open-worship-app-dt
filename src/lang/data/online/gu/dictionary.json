@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "કાર્યક્રમનો ક્રમ ગોઠવો: તેની હરોળો પર ક્રિયા ઉમેરો, ચોક્કસ સ્ક્રીન સેટ કરો, CC તત્ત્વો ઉમેરો અને મીડિયા નિયંત્રણ ઉમેરો; કાર્યક્રમ ક્રમનું પૂર્વાવલોકન કરો તેને ચલાવે છે.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "વધુ વિકલ્પો પૅનલનું મેનુ ખોલે છે; દસ્તાવેજ યાદી મેનુમાં નવો દસ્તાવેજ, નવું ગીત, URL પરથી આયાત કરો, URL પરથી ડાઉનલોડ કરો અને SongSelect માંથી આયાત કરો છે.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "દસ્તાવેજ યાદી પૅનલના વધુ વિકલ્પો મેનુમાંનું પબ્લિક ડોમેન ગીતોમાંથી આયાત કરો ખાતા વિના અંદર રહેલાં ભજનો બતાવે છે.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor દસ્તાવેજ યાદી પૅનલ ઉપર ફોલ્ડર બૉક્સ ખોલે છે; ક્લિપબોર્ડ પર કૉપિ કરો અને મૂળ પાથ સંપાદિત કરો, અથવા સત્ર ઉમેરો માટે તેના પર રાઇટ-ક્લિક કરો.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "પાથ સંપાદક બતાવો દસ્તાવેજ યાદી પૅનલ ઉપર ફોલ્ડર બૉક્સ ખોલે છે; ક્લિપબોર્ડ પર કૉપિ કરો અને મૂળ પાથ સંપાદિત કરો, અથવા સત્ર ઉમેરો માટે તેના પર રાઇટ-ક્લિક કરો.",
     "Pin document keeps presenting from one document while you select another.": "દસ્તાવેજ પિન કરો બટનથી તમે બીજો દસ્તાવેજ પસંદ કરો ત્યારે પણ એક જ દસ્તાવેજમાંથી પ્રસ્તુતિ ચાલુ રહે છે.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "નામથી ફિલ્ટર કરો કંઈ ખસેડ્યા કે કાઢ્યા વિના લાંબી દસ્તાવેજ યાદી ટૂંકી કરે છે.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "પ્રકારથી ફિલ્ટર કરો ફક્ત સ્લાઇડ, ગીતો, PDF અથવા બીજા પ્રકારના દસ્તાવેજ બતાવે છે.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "બાઇબલ/લાંબા લખાણના ગુણધર્મો: પ્રીસેટ, પ્રીસેટ તરીકે સાચવો, ઘાટી પૃષ્ઠભૂમિ માટે આછા શબ્દો, હાઇલાઇટનો રંગ, રૂપરેખા, પડછાયાની ઝાંખપ અને ગ્લો.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "દસ્તાવેજ યાદી ચાલુ કે બંધ કરો. તેના ‘વધુ વિકલ્પો’ મેનુમાં ‘સ્થાનિક ફાઇલો ઉમેરો’ અને ‘આયાત કરો’ છે, ‘રિફ્રેશ કરો’ ફોલ્ડર ફરી વાંચે છે, અને દસ્તાવેજના મેનુમાં ‘નિકાસ કરો’ અને ‘રંગીન નોંધ’ છે.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘ક્રમમાં ગોઠવો’ કોઈ ફાઇલ બદલ્યા વિના દસ્તાવેજ યાદી ક્રમમાં ગોઠવે છે; લાંબી યાદીમાં ફરવા ‘ઉપર સ્ક્રોલ કરો’, ‘નીચે સુધી ચલાવો’ અને ‘આપોઆપ સ્ક્રોલના વિકલ્પો’ વાપરો.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor બતાવે છે કે કયું પૃષ્ઠભૂમિ ફોલ્ડર ખુલ્લું છે; હજી ફોલ્ડર પસંદ ન કર્યું હોય તો ‘ફોલ્ડર પસંદ કરો’, ‘ડિફૉલ્ટ પસંદ કરો’ અથવા ‘સેટિંગ્સ પર જાઓ’ પસંદ કરો.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "પાથ સંપાદક બતાવો બતાવે છે કે કયું પૃષ્ઠભૂમિ ફોલ્ડર ખુલ્લું છે; હજી ફોલ્ડર પસંદ ન કર્યું હોય તો ‘ફોલ્ડર પસંદ કરો’, ‘ડિફૉલ્ટ પસંદ કરો’ અથવા ‘સેટિંગ્સ પર જાઓ’ પસંદ કરો.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "દસ્તાવેજ પસંદ કરો, પછી સ્લાઇડ કાર્ડ પર ક્લિક કરીને તેને શ્રોતાઓને મોકલો; કદ મેળ ન ખાય ત્યારે ‘સ્લાઇડનું પરિમાણ સુધારો’ દેખાય છે, અને સ્લાઇડ લોડ ન થાય ત્યારે ‘ફરીથી લોડ કરો’.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "ગીતના શબ્દો પસંદ કરો અને તેની મંચ સ્લાઇડ રજૂ કરો; સ્ક્રીન કાર્ડ નીચે ‘મંચ નંબર બદલવા ક્લિક કરો’, ‘વધારો’ અથવા ‘ઘટાડો’ વડે તે કયો મંચ બતાવે તે પસંદ કરો.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "પસંદ કરેલા દસ્તાવેજનું સંપાદન કરતી વખતે પ્રસ્તુતકર્તાને દેખાતું રાખો; ‘સાચવો’ ફેરફારો સાચવે છે.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "બાઇબલ વાંચન છોડવું છે?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "તમે બાઇબલ વાંચન છોડીને પ્રસ્તુતકર્તા પર જઈ રહ્યા છો. પાછા આવશો ત્યારે તમારા ફકરા અહીં જ હશે.",
     "To come back, click this tab at the top left of the Presenter:": "પાછા આવવા માટે, પ્રસ્તુતકર્તાની ઉપર ડાબી બાજુના આ ટેબ પર ક્લિક કરો:",
-    "Stay in Bible Reader": "બાઇબલ વાંચનમાં રહો"
+    "Stay in Bible Reader": "બાઇબલ વાંચનમાં રહો",
+    "Show path editor": "પાથ સંપાદક બતાવો",
+    "Hide path editor": "પાથ સંપાદક છુપાવો",
+    "Background > Show path editor": "Background > પાથ સંપાદક બતાવો",
+    "Document List > Show path editor": "Document List > પાથ સંપાદક બતાવો"
 }

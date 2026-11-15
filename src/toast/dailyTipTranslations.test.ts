@@ -50,6 +50,67 @@ function toLookupKey(text: string) {
     return text.trim().toLowerCase();
 }
 
+type DemoStepType = {
+    find?: string | null;
+    finds?: string[];
+    translateFind?: boolean | string;
+    translateFinds?: boolean;
+};
+
+// The words a tip hands to `tran()` for the control it presses, read the way
+// each catalog reads them: the Presenter's `getPresenterDemo` translates a
+// find whole -- a scoped one is a key of its own, its panel's English widget
+// name kept -- and the Reader's `getReaderDemo` part by part. A find with no
+// key throws in a translated dev window as a missing label does; in a
+// packaged one it stays English and lands on nothing. On 2026-11-15 the path
+// editor's two Presenter tips went back to translated finds with no
+// `Background > Show path editor` key, and only a live Khmer run saw it.
+function listPresenterFindKeys() {
+    return PRESENTER_DEMO_LIST.flatMap(({ steps }) => {
+        return (steps as DemoStepType[]).flatMap((step) => {
+            const keyList: string[] = [];
+            if (step.translateFind && typeof step.find === 'string') {
+                keyList.push(step.find);
+            }
+            if (step.translateFinds === true) {
+                keyList.push(
+                    ...(step.finds ??
+                        (typeof step.find === 'string' ? [step.find] : [])),
+                );
+            }
+            return keyList;
+        });
+    });
+}
+
+function listReaderFindKeys() {
+    return READER_DEMO_LIST.flatMap(({ steps }) => {
+        return (steps as DemoStepType[]).flatMap((step) => {
+            const findList: string[] = [];
+            if (step.translateFind) {
+                const key =
+                    step.translateFind === true
+                        ? step.find
+                        : step.translateFind;
+                if (typeof key === 'string') {
+                    findList.push(key);
+                }
+            }
+            if (step.translateFinds === true) {
+                findList.push(
+                    ...(step.finds ??
+                        (typeof step.find === 'string' ? [step.find] : [])),
+                );
+            }
+            return findList.flatMap((find) => find.split(' > '));
+        });
+    });
+}
+
+const FIND_KEY_LIST = [
+    ...new Set([...listPresenterFindKeys(), ...listReaderFindKeys()]),
+];
+
 describe('tip translations in every language package', () => {
     // None when only English is in the checkout, and the suite still runs.
     it('reads the packages there are, so a green run means something', () => {
@@ -77,5 +138,14 @@ describe.each(LANG_CODE_LIST)('%s tip translations', (langCode) => {
             return dictionary[toLookupKey(text)] === text;
         });
         expect(englishList).toEqual([]);
+    });
+
+    it('has a key for every control a tip finds by its translated words', () => {
+        const dictionary = readLangPackageDictionary(langCode);
+        const missingList = FIND_KEY_LIST.filter((key) => {
+            const value = dictionary[toLookupKey(key)];
+            return typeof value !== 'string' || value.trim().length === 0;
+        });
+        expect(missingList).toEqual([]);
     });
 });

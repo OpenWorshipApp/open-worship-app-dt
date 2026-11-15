@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Organiza unha orde do culto: Engadir acción, Definir unha pantalla específica, Engadir elementos CC e Engadir control multimedia nas súas filas; Vista previa do fluxo de presentación execútaa.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Máis opcións abre o menú dun panel; o da Lista de documentos ten Novo documento da aplicación, Nova letra, Importar desde URL, Descargar desde URL e Importar desde SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importar de cancións de dominio público, en Máis opcións da Lista de documentos, explora himnos incluídos sen necesidade de conta.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor abre a caixa do cartafol por riba da Lista de documentos; fai clic co botón dereito nela para Copiar no portapapeis e Editar a ruta pai, ou Engadir sesión.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Amosar o editor de ruta abre a caixa do cartafol por riba da Lista de documentos; fai clic co botón dereito nela para Copiar no portapapeis e Editar a ruta pai, ou Engadir sesión.",
     "Pin document keeps presenting from one document while you select another.": "Fixar o documento segue presentando un documento mentres seleccionas outro.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtrar por nome restrinxe unha Lista de documentos longa sen mover nin eliminar nada.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtrar por tipo amosa só diapositivas, letras, PDF ou outro tipo de documento.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Propiedades da Biblia/texto longo: Predefinicións, Gardar como predefinición, Palabras claras para un fondo escuro, Cor do realce, Contorno, Desenfoque da sombra e Brillo.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Amosa ou oculta a Lista de documentos. O seu menú Máis opcións ten Engadir ficheiros locais e Importar, Actualizar volve ler o cartafol, e o menú dun documento ten Exportar e Cor da nota.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Ordenar cambia a orde da Lista de documentos sen modificar ningún ficheiro; Desprazarse ao principio, Reproducir ata o final e Opcións de desprazamento automático percorren unha lista longa.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor amosa que cartafol de Fondo está aberto; se aínda non escolliches ningún, usa Escoller un cartafol, Seleccionar o predeterminado ou Ir á configuración.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Amosar o editor de ruta amosa que cartafol de Fondo está aberto; se aínda non escolliches ningún, usa Escoller un cartafol, Seleccionar o predeterminado ou Ir á configuración.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Selecciona un documento e fai clic nunha tarxeta de diapositiva para enviala ao público; Corrixir a dimensión da diapositiva aparece cando o seu tamaño non coincide, e Recargar cando as diapositivas non cargan.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Escolle unha letra e presenta as súas diapositivas de escenario; baixo unha tarxeta de pantalla, Fai clic para cambiar o número do escenario, Aumentar ou Diminuír escolle o escenario que amosa.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Mantén visible o Presentador mentres editas o documento seleccionado; Gardar conserva os cambios.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Saír do Lector da Biblia?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Está a piques de saír do Lector da Biblia e ir ao Presentador. As súas pasaxes seguirán aquí cando volva.",
     "To come back, click this tab at the top left of the Presenter:": "Para volver, prema nesta lapela arriba á esquerda do Presentador:",
-    "Stay in Bible Reader": "Quedar no Lector da Biblia"
+    "Stay in Bible Reader": "Quedar no Lector da Biblia",
+    "Show path editor": "Amosar o editor de ruta",
+    "Hide path editor": "Ocultar o editor de ruta",
+    "Background > Show path editor": "Background > Amosar o editor de ruta",
+    "Document List > Show path editor": "Document List > Amosar o editor de ruta"
 }

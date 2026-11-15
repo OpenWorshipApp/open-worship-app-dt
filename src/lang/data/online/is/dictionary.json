@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Raðaðu dagskrá: Bæta við aðgerð, Velja tiltekinn skjá, Bæta við CC-atriðum og Bæta við miðlastjórnun á línum hennar; Forskoða kynningarflæði keyrir hana.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Fleiri valkostir opnar valmynd spjalds; valmynd Skjalalisti hefur Nýtt skjal, Nýr söngtexti, Flytja inn af vefslóð, Sækja af vefslóð og Flytja inn úr SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Flytja inn úr lögum í almenningseign, undir Fleiri valkostir í Skjalalisti, flettir í innbyggðum sálmum án aðgangs.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor opnar möppureitinn fyrir ofan Skjalalisti; hægrismelltu á hann fyrir Afrita á klippiborð og Breyta yfirslóð, eða Bæta við lotu.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Sýna slóðarritil opnar möppureitinn fyrir ofan Skjalalisti; hægrismelltu á hann fyrir Afrita á klippiborð og Breyta yfirslóð, eða Bæta við lotu.",
     "Pin document keeps presenting from one document while you select another.": "Festa skjal heldur áfram að kynna úr einu skjali meðan þú velur annað.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Sía eftir nafni þrengir langan Skjalalisti án þess að færa eða eyða neinu.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Sía eftir gerð sýnir aðeins glærur, söngtexta, PDF-skjöl eða aðra skjalagerð.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Eiginleikar Biblíu/langs texta: Forstillingar, Vista sem forstillingu, Ljós orð á dökkum bakgrunni, Litur auðkenningar, Útlína, Móða skugga og Ljómi.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Sýndu eða feldu spjaldið Skjalalisti. Í valmyndinni Fleiri valkostir eru Bæta við staðbundnum skrám og Flytja inn, Endurnýja les möppuna aftur, og í valmynd skjals eru Flytja út og Litaathugasemd.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Raða raðar spjaldinu Skjalalisti án þess að breyta skrá; Fletta efst, Spila niður í botn og Valkostir sjálfvirkrar flettingar hjálpa við að fara um langan lista.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor sýnir hvaða mappa er opin í flipanum Bakgrunnur; ef engin mappa hefur verið valin enn, notaðu Velja möppu, Velja sjálfgefið eða Fara í stillingar.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Sýna slóðarritil sýnir hvaða mappa er opin í flipanum Bakgrunnur; ef engin mappa hefur verið valin enn, notaðu Velja möppu, Velja sjálfgefið eða Fara í stillingar.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Veldu skjal og smelltu svo á glæruspjald til að senda það til áhorfenda; Laga stærðarmál glæru birtist þegar stærðin passar ekki, Endurhlaða þegar glærur hlaðast ekki.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Veldu söngtexta og kynntu sviðsglærur hans; undir skjáspjaldi velja Smelltu til að breyta númeri sviðs, Auka eða Minnka hvaða svið spjaldið sýnir.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Hafðu Kynningu í augsýn á meðan þú breytir völdu skjali; Vista geymir breytingarnar.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Fara úr Biblíulesara?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Þú ert að fara úr Biblíulesara yfir í Kynningu. Ritningarstaðirnir þínir verða hér þegar þú kemur aftur.",
     "To come back, click this tab at the top left of the Presenter:": "Til að koma aftur skaltu smella á þennan flipa efst til vinstri í Kynningu:",
-    "Stay in Bible Reader": "Vera áfram í Biblíulesara"
+    "Stay in Bible Reader": "Vera áfram í Biblíulesara",
+    "Show path editor": "Sýna slóðarritil",
+    "Hide path editor": "Fela slóðarritil",
+    "Background > Show path editor": "Background > Sýna slóðarritil",
+    "Document List > Show path editor": "Document List > Sýna slóðarritil"
 }

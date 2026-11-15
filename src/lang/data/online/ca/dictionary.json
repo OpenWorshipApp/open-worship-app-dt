@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Organitzeu un ordre de servei: Afegeix una acció, Fixa una pantalla concreta, Afegeix elements CC i Afegeix un control multimèdia a les seves files; Previsualitza el flux de presentació l'executa.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Més opcions obre el menú d'un tauler; el de Llista de documents té Document de l'aplicació nou, Lletra nova, Importa des d'una URL, Baixa des d'una URL i Importa des de SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importa des de Cançons de domini públic, a Més opcions de la Llista de documents, explora himnes inclosos sense cap compte.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor obre el quadre de carpeta de sobre de la Llista de documents; feu-hi clic amb el botó dret per a Copia al porta-retalls i Edita la ruta principal, o Afegeix una sessió.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Mostra l'editor de ruta obre el quadre de carpeta de sobre de la Llista de documents; feu-hi clic amb el botó dret per a Copia al porta-retalls i Edita la ruta principal, o Afegeix una sessió.",
     "Pin document keeps presenting from one document while you select another.": "Fixa el document continua presentant un document mentre en seleccioneu un altre.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtra per nom redueix una Llista de documents llarga sense moure ni suprimir res.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtra per tipus mostra només diapositives, lletres, PDF o un altre tipus de document.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Propietats de la Bíblia/text llarg: Predefinits, Desa com a predefinit, Text clar per a un fons fosc, Color del ressaltat, Contorn, Desenfocament de l'ombra i Resplendor.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Mostreu o amagueu la Llista de documents. El seu menú Més opcions té Afegeix fitxers locals i Importa, Actualitza torna a llegir la carpeta, i el menú d'un document té Exporta i Nota de color.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Ordena canvia l'ordre de la Llista de documents sense modificar cap fitxer; Desplaça't al principi, Reprodueix fins al final i Opcions de desplaçament automàtic recorren una llista llarga.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor mostra quina carpeta de Fons és oberta; si encara no n'heu triat cap, feu servir Tria una carpeta, Selecciona el valor per defecte o Ves a la configuració.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Mostra l'editor de ruta mostra quina carpeta de Fons és oberta; si encara no n'heu triat cap, feu servir Tria una carpeta, Selecciona el valor per defecte o Ves a la configuració.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Seleccioneu un document i feu clic en una targeta de diapositiva per enviar-la al públic; Corregeix la dimensió de la diapositiva apareix quan la mida no coincideix, i Recarrega quan les diapositives no es carreguen.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Trieu una lletra i presenteu-ne les diapositives d'escenari; sota una targeta de pantalla, Feu clic per canviar el número d'escenari, Augmenta o Disminueix tria l'escenari que mostra.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Mantingueu visible el Presentador mentre editeu el document seleccionat; Desa conserva els canvis.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Voleu sortir del Lector de la Bíblia?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Esteu a punt de sortir del Lector de la Bíblia i anar al Presentador. Els vostres passatges seguiran aquí quan torneu.",
     "To come back, click this tab at the top left of the Presenter:": "Per tornar, feu clic a aquesta pestanya a dalt a l’esquerra del Presentador:",
-    "Stay in Bible Reader": "Queda’t al Lector de la Bíblia"
+    "Stay in Bible Reader": "Queda’t al Lector de la Bíblia",
+    "Show path editor": "Mostra l'editor de ruta",
+    "Hide path editor": "Amaga l'editor de ruta",
+    "Background > Show path editor": "Background > Mostra l'editor de ruta",
+    "Document List > Show path editor": "Document List > Mostra l'editor de ruta"
 }

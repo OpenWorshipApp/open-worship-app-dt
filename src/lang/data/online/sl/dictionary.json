@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Sestavite potek: v njegovih vrsticah Dodaj dejanje, Nastavi določen zaslon, Dodaj elemente CC in Dodaj nadzor medijev; Predogled poteka predstavitve ga zažene.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Več možnosti odpre meni plošče; meni plošče Seznam dokumentov ima Nov dokument aplikacije, Nova pesem, Uvozi z URL-ja, Prenesi z URL-ja in Uvozi iz SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Uvozi iz pesmi v javni lasti, v Več možnosti plošče Seznam dokumentov, brska po vgrajenih hvalnicah brez računa.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor odpre polje mape nad Seznam dokumentov; z desnim klikom nanj dobite Kopiraj v odložišče in Uredi nadrejeno pot ali Dodaj sejo.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "»Pokaži urejevalnik poti« odpre polje mape nad Seznam dokumentov; z desnim klikom nanj dobite Kopiraj v odložišče in Uredi nadrejeno pot ali Dodaj sejo.",
     "Pin document keeps presenting from one document while you select another.": "Pripni dokument nadaljuje predstavitev iz enega dokumenta, medtem ko izberete drugega.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtriraj po imenu skrči dolg Seznam dokumentov, ne da bi kar koli premaknil ali izbrisal.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtriraj po vrsti prikaže le diapozitive, pesmi, PDF-je ali drugo vrsto dokumenta.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Lastnosti Biblije/dolgega besedila: Prednastavitve, Shrani kot prednastavitev, Svetle besede za temno ozadje, Barva označevanja, Obris, Zameglitev sence in Sij.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Pokažite ali skrijte »Seznam dokumentov«. Njegov meni »Več možnosti« ima »Dodaj lokalne datoteke« in »Uvozi«, »Osveži« znova prebere mapo, meni dokumenta pa ima »Izvozi« in »Barvna opomba«.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "»Razvrsti« uredi »Seznam dokumentov«, ne da bi spremenil datoteko; »Pomakni na vrh«, »Predvajaj do dna« in »Možnosti samodejnega drsenja« vas premikajo po dolgem seznamu.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "»Show path editor« pokaže, katera mapa zavihka »Ozadje« je odprta; če mapa še ni izbrana, pritisnite »Izberite mapo«, »Izberi privzeto« ali »Pojdi v nastavitve«.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "»Pokaži urejevalnik poti« pokaže, katera mapa zavihka »Ozadje« je odprta; če mapa še ni izbrana, pritisnite »Izberite mapo«, »Izberi privzeto« ali »Pojdi v nastavitve«.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Izberite dokument, nato kliknite kartico diapozitiva, da ga pošljete občinstvu; »Popravi dimenzijo diapozitiva« se pokaže, ko se velikost ne ujema, »Ponovno naloži« pa, ko se diapozitivi ne naložijo.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Izberite besedilo pesmi in predstavite njegove diapozitive odra; pod kartico zaslona »Kliknite za spremembo številke odra«, »Povečaj« ali »Zmanjšaj« izbere oder, ki ga prikazuje.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "»Predstavitelj« ostane na očeh, medtem ko urejate izbrani dokument; »Shrani« shrani spremembe.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Zapustiti Bralnik Biblije?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Zapustili boste Bralnik Biblije in odšli v Predstavitelja. Vaši odlomki bodo tukaj, ko se vrnete.",
     "To come back, click this tab at the top left of the Presenter:": "Za vrnitev kliknite ta zavihek zgoraj levo v Predstavitelju:",
-    "Stay in Bible Reader": "Ostani v Bralniku Biblije"
+    "Stay in Bible Reader": "Ostani v Bralniku Biblije",
+    "Show path editor": "Pokaži urejevalnik poti",
+    "Hide path editor": "Skrij urejevalnik poti",
+    "Background > Show path editor": "Background > Pokaži urejevalnik poti",
+    "Document List > Show path editor": "Document List > Pokaži urejevalnik poti"
 }

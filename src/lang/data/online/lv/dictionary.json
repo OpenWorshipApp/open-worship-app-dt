@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Sastādiet norises secību: Pievienot darbību, Iestatīt konkrētu ekrānu, Pievienot CC elementus un Pievienot multivides vadību tās rindās; Priekšskatīt prezentēšanas plūsmu to izpilda.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Papildu opcijas atver paneļa izvēlni; paneļa Dokumentu saraksts izvēlnē ir Jauns dokuments, Jauna dziesma, Importēt no URL, Lejupielādēt no URL un Importēt no SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importēt no publiskā īpašuma dziesmām, kas ir paneļa Dokumentu saraksts izvēlnē Papildu opcijas, pārlūko iebūvētas garīgās dziesmas bez konta.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor atver mapes lodziņu virs Dokumentu saraksts; ar peles labo pogu noklikšķiniet uz tā, lai izvēlētos Kopēt starpliktuvē un Rediģēt vecākmapes ceļu, vai Pievienot sesiju.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Rādīt ceļa redaktoru atver mapes lodziņu virs Dokumentu saraksts; ar peles labo pogu noklikšķiniet uz tā, lai izvēlētos Kopēt starpliktuvē un Rediģēt vecākmapes ceļu, vai Pievienot sesiju.",
     "Pin document keeps presenting from one document while you select another.": "Piespraust dokumentu turpina prezentēt no viena dokumenta, kamēr jūs izvēlaties citu.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtrēt pēc nosaukuma sašaurina garu paneli Dokumentu saraksts, neko nepārvietojot un neizdzēšot.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtrēt pēc veida rāda tikai slaidus, dziesmas, PDF failus vai citu dokumentu veidu.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Bībeles/garā teksta rekvizīti: Sagataves, Saglabāt kā sagatavi, Gaišs teksts uz tumša fona, Izcēluma krāsa, Kontūra, Ēnas izplūdums un Mirdzums.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Rādiet vai paslēpiet paneli Dokumentu saraksts. Izvēlnē Papildu opcijas ir Pievienot vietējos failus un Importēt, Atsvaidzināt vēlreiz nolasa mapi, un dokumenta izvēlnē ir Eksportēt un Krāsu piezīme.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Kārtot sakārto paneli Dokumentu saraksts, nemainot nevienu failu; Ritināt uz augšu, Atskaņot līdz apakšai un Automātiskās ritināšanas opcijas palīdz pārvietoties garā sarakstā.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor parāda, kura cilnes Fons mape ir atvērta; ja mape vēl nav izvēlēta, izmantojiet Izvēlieties mapi, Izvēlēties noklusējumu vai Doties uz iestatījumiem.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Rādīt ceļa redaktoru parāda, kura cilnes Fons mape ir atvērta; ja mape vēl nav izvēlēta, izmantojiet Izvēlieties mapi, Izvēlēties noklusējumu vai Doties uz iestatījumiem.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Izvēlieties dokumentu un pēc tam noklikšķiniet uz slaida kartītes, lai to nosūtītu skatītājiem; Labot slaida izmērus parādās, ja izmērs neatbilst, Pārlādēt – ja slaidi neielādējas.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Izvēlieties dziesmu un prezentējiet tās skatuves slaidus; zem ekrāna kartītes Noklikšķiniet, lai mainītu skatuves numuru, Palielināt vai Samazināt izvēlas, kuru skatuvi kartīte rāda.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Paturiet Prezentētāju redzamu, kamēr rediģējat izvēlēto dokumentu; Saglabāt saglabā izmaiņas.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Iziet no Bībeles lasītāja?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Jūs grasāties iziet no Bībeles lasītāja un pāriet uz Prezentētāju. Kad atgriezīsieties, jūsu fragmenti būs šeit.",
     "To come back, click this tab at the top left of the Presenter:": "Lai atgrieztos, noklikšķiniet uz šīs cilnes Prezentētāja augšējā kreisajā stūrī:",
-    "Stay in Bible Reader": "Palikt Bībeles lasītājā"
+    "Stay in Bible Reader": "Palikt Bībeles lasītājā",
+    "Show path editor": "Rādīt ceļa redaktoru",
+    "Hide path editor": "Paslēpt ceļa redaktoru",
+    "Background > Show path editor": "Background > Rādīt ceļa redaktoru",
+    "Document List > Show path editor": "Document List > Rādīt ceļa redaktoru"
 }

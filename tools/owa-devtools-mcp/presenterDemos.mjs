@@ -723,10 +723,11 @@ export const PRESENTER_DEMO_LIST = [
     steps: [
       {
         text: 'Show the path editor at the top of the Document List.',
-        find: 'Show path editor',
-        finds: ['Document List > Show path editor', 'Show path editor'],
-        // TP-01: PathSelectorComp draws this title in English in every
-        // language and it is no dictionary key, so it is not translated.
+        // Scoped: the Bibles and Bible Notes panels carry the same toggle,
+        // so a bare name is three controls and no aim. The scoped key keeps
+        // the panel's English widget name, the control in the language.
+        find: 'Document List > Show path editor',
+        translateFind: true,
         action: 'click',
       },
     ],
@@ -1532,8 +1533,7 @@ export const PRESENTER_DEMO_LIST = [
       {
         text: 'Toggle Show path editor inside Background.',
         find: 'Background > Show path editor',
-        // TP-01: PathSelectorComp draws this title in English in every
-        // language, so a translated name would find nothing.
+        translateFind: true,
         action: 'click',
       },
       {

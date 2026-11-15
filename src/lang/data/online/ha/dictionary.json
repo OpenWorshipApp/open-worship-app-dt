@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Tsara jerin ayyukan ibada: Ƙara Aiki, Saita Takamaiman Allo, Ƙara Abubuwan CC da Ƙara Sarrafa Midiya a layukansa; Samfotin Tsarin Gabatarwa na gudanar da shi.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Ƙarin Zaɓuɓɓuka na buɗe menu na sashe; na Jerin Takardu na da Sabuwar Takarda, Sabuwar Waƙa, Shigo da daga URL, Sauke daga URL da Shigo da daga SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Shigo da daga Waƙoƙin Mallakar Jama'a, a cikin Ƙarin Zaɓuɓɓuka na Jerin Takardu, na bincika waƙoƙin yabo da ke cikin manhajar ba tare da asusu ba.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor na buɗe akwatin babban fayil a saman Jerin Takardu; danna dama a kai don Kwafi zuwa Allon Kwafi da Gyara Hanyar Sama, ko Ƙara Zama.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Nuna editan hanya na buɗe akwatin babban fayil a saman Jerin Takardu; danna dama a kai don Kwafi zuwa Allon Kwafi da Gyara Hanyar Sama, ko Ƙara Zama.",
     "Pin document keeps presenting from one document while you select another.": "Maƙala takarda na ci gaba da gabatarwa daga takarda ɗaya yayin da kake zaɓar wata.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Tace ta suna na taƙaita dogon Jerin Takardu ba tare da motsa ko goge komai ba.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Tace ta Iri na nuna silaidodi, waƙoƙi, PDF ko wani nau'in takarda kawai.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Kaddarorin Littafi Mai Tsarki/Dogon Rubutu: Saitattu, Ajiye a matsayin Saitacce, Kalmomi masu haske don bango mai duhu, Launin Haskakawa, Layin kewaye, Dusashewar Inuwa da Haske kewaye.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Nuna ko ɓoye Jerin Takardu. A cikin Ƙarin Zaɓuɓɓuka ɗinsa akwai Ƙara Fayilolin Kwamfuta da Shigo da, Wartsake yana sake karanta babban fayil, kuma menu na takarda yana da Fitar da da Alamar Launi.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Jera yana jera Jerin Takardu ba tare da canza wani fayil ba; Gungura zuwa sama, Gungura zuwa ƙasa da Zaɓuɓɓukan Gungurawa ta Atomatik suna kai ka cikin dogon jeri.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor yana nuna wane babban fayil ɗin Bango ne a buɗe; idan ba a zaɓi babban fayil ba tukuna, yi amfani da Zaɓi babban fayil, Zaɓi Na Asali ko Je zuwa Saituna.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Nuna editan hanya yana nuna wane babban fayil ɗin Bango ne a buɗe; idan ba a zaɓi babban fayil ba tukuna, yi amfani da Zaɓi babban fayil, Zaɓi Na Asali ko Je zuwa Saituna.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Zaɓi takarda, sannan danna katin silaidi don aika shi ga masu sauraro; Gyara ma'aunin silaidi yana bayyana idan girmansa bai dace ba, Sake Lodawa kuma idan silaidodi sun kasa lodawa.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Zaɓi waƙa kuma gabatar da silaidodin dandalinta; a ƙarƙashin katin allo, Danna don canza Lambar Dandali, Ƙara ko Rage yana zaɓar dandalin da katin yake nunawa.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Bar Mai Gabatarwa a bayyane yayin da kake gyara takardar da aka zaɓa; Ajiye yana adana canje-canjen.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Bar Mai Karatun Littafi Mai Tsarki?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kuna gab da barin Mai Karatun Littafi Mai Tsarki ku tafi Mai Gabatarwa. Nassoshinku za su kasance a nan idan kun dawo.",
     "To come back, click this tab at the top left of the Presenter:": "Don dawowa, danna wannan shafin a saman hagu na Mai Gabatarwa:",
-    "Stay in Bible Reader": "Zauna a Mai Karatun Littafi Mai Tsarki"
+    "Stay in Bible Reader": "Zauna a Mai Karatun Littafi Mai Tsarki",
+    "Show path editor": "Nuna editan hanya",
+    "Hide path editor": "Ɓoye editan hanya",
+    "Background > Show path editor": "Background > Nuna editan hanya",
+    "Document List > Show path editor": "Document List > Nuna editan hanya"
 }

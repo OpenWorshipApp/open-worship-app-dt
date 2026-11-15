@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Ordna en körordning: Lägg till åtgärd, Ange en specifik skärm, Lägg till CC-element och Lägg till mediestyrning på raderna; Förhandsgranska gudstjänstordning kör den.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Fler alternativ öppnar en panels meny; menyn i Dokumentlista har Nytt dokument, Ny sångtext, Importera från URL, Ladda ned från URL och Importera från SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importera från sånger i allmän egendom, under Fler alternativ i Dokumentlista, bläddrar bland inbyggda psalmer utan konto.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor öppnar mapprutan ovanför Dokumentlista; högerklicka på den för Kopiera till Urklipp och Redigera överordnad sökväg, eller Lägg till session.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Visa sökvägsredigerare öppnar mapprutan ovanför Dokumentlista; högerklicka på den för Kopiera till Urklipp och Redigera överordnad sökväg, eller Lägg till session.",
     "Pin document keeps presenting from one document while you select another.": "Fäst dokument fortsätter att presentera från ett dokument medan du väljer ett annat.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtrera efter namn begränsar en lång Dokumentlista utan att flytta eller radera något.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtrera efter typ visar bara bilder, sångtexter, PDF-filer eller en annan dokumenttyp.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Egenskaper för Bibel/lång text: Förinställningar, Spara som förinställning, Ljus text för en mörk bakgrund, Markeringsfärg, Kontur, Skuggoskärpa och Glöd.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Visa eller dölj Dokumentlista. Under Fler alternativ finns Lägg till lokala filer och Importera, Uppdatera läser in mappen igen, och ett dokuments meny har Exportera och Färganteckning.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Sortera ordnar Dokumentlista utan att ändra någon fil; Rulla till toppen, Spela till botten och Alternativ för automatisk rullning tar dig genom en lång lista.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor visar vilken mapp för Bakgrund som är öppen; om ingen mapp är vald ännu, använd Välj en mapp, Välj standard eller Gå till Inställningar.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Visa sökvägsredigerare visar vilken mapp för Bakgrund som är öppen; om ingen mapp är vald ännu, använd Välj en mapp, Välj standard eller Gå till Inställningar.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Välj ett dokument och klicka sedan på ett bildkort för att visa det för publiken; Åtgärda bildens storlek visas när storleken inte stämmer, Läs in igen när bilder inte läses in.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Välj en sångtext och presentera dess scenbilder; under ett skärmkort väljer Klicka för att ändra scenskärmens nummer, Öka eller Minska vilken scenskärm kortet visar.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Ha Presentation i sikte medan du redigerar det valda dokumentet; Spara behåller ändringarna.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Lämna Bibelläsning?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Du är på väg att lämna Bibelläsning och gå till Presentation. Dina bibelställen finns kvar när du kommer tillbaka.",
     "To come back, click this tab at the top left of the Presenter:": "Klicka på den här fliken uppe till vänster i Presentation för att komma tillbaka:",
-    "Stay in Bible Reader": "Stanna i Bibelläsning"
+    "Stay in Bible Reader": "Stanna i Bibelläsning",
+    "Show path editor": "Visa sökvägsredigerare",
+    "Hide path editor": "Dölj sökvägsredigerare",
+    "Background > Show path editor": "Background > Visa sökvägsredigerare",
+    "Document List > Show path editor": "Document List > Visa sökvägsredigerare"
 }

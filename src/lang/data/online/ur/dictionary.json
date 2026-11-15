@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "عبادت کی ترتیب بنائیں: اس کی قطاروں پر عمل شامل کریں، مخصوص اسکرین طے کریں، CC عناصر شامل کریں اور میڈیا کنٹرول شامل کریں؛ عبادت کی ترتیب کا پیش منظر دیکھیں اسے چلاتا ہے۔",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "مزید اختیارات کسی پینل کا مینو کھولتا ہے؛ دستاویزات کی فہرست کے مینو میں نئی ایپ دستاویز، نیا گیت، URL سے درآمد کریں، URL سے ڈاؤن لوڈ کریں اور SongSelect سے درآمد کریں ہیں۔",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "عوامی ملکیت کے گیتوں سے درآمد کریں، جو دستاویزات کی فہرست کے مزید اختیارات میں ہے، بغیر اکاؤنٹ کے ایپ میں موجود حمدیں دکھاتا ہے۔",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor دستاویزات کی فہرست کے اوپر فولڈر باکس کھولتا ہے؛ کلپ بورڈ پر کاپی کریں اور والد کا راستہ تبدیل کریں، یا سیشن شامل کریں کے لیے اس پر رائٹ کلک کریں۔",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "راستے کا ایڈیٹر دکھائیں دستاویزات کی فہرست کے اوپر فولڈر باکس کھولتا ہے؛ کلپ بورڈ پر کاپی کریں اور والد کا راستہ تبدیل کریں، یا سیشن شامل کریں کے لیے اس پر رائٹ کلک کریں۔",
     "Pin document keeps presenting from one document while you select another.": "دستاویز پن کریں ایک دستاویز سے پیش کاری جاری رکھتا ہے جبکہ آپ دوسری منتخب کرتے ہیں۔",
     "Filter by name narrows a long Document List without moving or deleting anything.": "نام سے فلٹر کریں لمبی دستاویزات کی فہرست کو کچھ منتقل یا حذف کیے بغیر مختصر کرتا ہے۔",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "قسم سے فلٹر کریں صرف سلائیڈز، گیت، PDF یا کوئی اور قسم کی دستاویز دکھاتا ہے۔",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "بائبل/طویل متن کی خصوصیات: پری سیٹس، پری سیٹ کے طور پر محفوظ کریں، گہرے پس منظر کے لیے ہلکے الفاظ، نمایاں کرنے کا رنگ، خاکہ، سائے کا دھندلاپن اور چمک۔",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "دستاویزات کی فہرست دکھائیں یا چھپائیں۔ اس کے مزید اختیارات میں مقامی فائلیں شامل کریں اور درآمد کریں ہیں، تازہ کریں فولڈر دوبارہ پڑھتا ہے، اور دستاویز کے مینو میں برآمد کریں اور رنگین نوٹ ہیں۔",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "ترتیب دیں کسی فائل کو بدلے بغیر دستاویزات کی فہرست کو ترتیب دیتا ہے؛ سب سے اوپر اسکرول کریں، نیچے تک چلائیں اور خودکار اسکرول کے اختیارات لمبی فہرست میں آگے پیچھے لے جاتے ہیں۔",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor دکھاتا ہے کہ پس منظر کا کون سا فولڈر کھلا ہے؛ اگر ابھی کوئی فولڈر منتخب نہیں ہوا تو فولڈر منتخب کریں، ڈیفالٹ منتخب کریں یا ترتیبات پر جائیں۔",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "راستے کا ایڈیٹر دکھائیں دکھاتا ہے کہ پس منظر کا کون سا فولڈر کھلا ہے؛ اگر ابھی کوئی فولڈر منتخب نہیں ہوا تو فولڈر منتخب کریں، ڈیفالٹ منتخب کریں یا ترتیبات پر جائیں۔",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "کوئی دستاویز منتخب کریں، پھر سلائیڈ کارڈ پر کلک کر کے اسے سامعین کو بھیجیں؛ جب سائز میل نہ کھائے تو سلائیڈ کی پیمائش درست کریں ظاہر ہوتا ہے، اور جب سلائیڈز لوڈ نہ ہوں تو دوبارہ لوڈ کریں۔",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "کوئی گیت چنیں اور اس کی اسٹیج سلائیڈز پیش کریں؛ اسکرین کارڈ کے نیچے اسٹیج نمبر بدلنے کے لیے کلک کریں، بڑھائیں یا کم کریں وہ اسٹیج چنتا ہے جو یہ دکھاتا ہے۔",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "منتخب دستاویز میں ترمیم کرتے وقت پیش کار کو نظر کے سامنے رکھیں؛ محفوظ کریں تبدیلیاں محفوظ رکھتا ہے۔",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "بائبل ریڈر چھوڑنا ہے؟",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "آپ بائبل ریڈر چھوڑ کر پیش کار پر جانے والے ہیں۔ واپس آنے پر آپ کے حوالہ جات یہیں ہوں گے۔",
     "To come back, click this tab at the top left of the Presenter:": "واپس آنے کے لیے، پیش کار کے اوپر بائیں جانب اس ٹیب پر کلک کریں:",
-    "Stay in Bible Reader": "بائبل ریڈر میں رہیں"
+    "Stay in Bible Reader": "بائبل ریڈر میں رہیں",
+    "Show path editor": "راستے کا ایڈیٹر دکھائیں",
+    "Hide path editor": "راستے کا ایڈیٹر چھپائیں",
+    "Background > Show path editor": "Background > راستے کا ایڈیٹر دکھائیں",
+    "Document List > Show path editor": "Document List > راستے کا ایڈیٹر دکھائیں"
 }

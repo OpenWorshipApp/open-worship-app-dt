@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "ຈັດລຳດັບລາຍການ: ໃຊ້ “ເພີ່ມການກະທຳ” “ກຳນົດໜ້າຈໍສະເພາະ” “ເພີ່ມອົງປະກອບ CC” ແລະ “ເພີ່ມການຄວບຄຸມມີເດຍ” ໃນແຕ່ລະແຖວ ສ່ວນ “ເບິ່ງຕົວຢ່າງລຳດັບການນະມັດສະການ” ໃຊ້ຫຼິ້ນລຳດັບນັ້ນ",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "“ຕົວເລືອກເພີ່ມເຕີມ” ເປີດເມນູຂອງແຜງ ເມນູຂອງ “ລາຍການເອກະສານ” ມີ “ເອກະສານແອັບໃໝ່” “ເນື້ອເພງໃໝ່” “ນຳເຂົ້າຈາກ URL” “ດາວໂຫຼດຈາກ URL” ແລະ “ນຳເຂົ້າຈາກ SongSelect”",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "“ນຳເຂົ້າຈາກເພງສາທາລະນະສົມບັດ” ໃນ “ຕົວເລືອກເພີ່ມເຕີມ” ຂອງ “ລາຍການເອກະສານ” ໃຊ້ເບິ່ງເພງນະມັດສະການທີ່ມີໃນຕົວ ໂດຍບໍ່ຕ້ອງມີບັນຊີ",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor ເປີດຊ່ອງໂຟລເດີເໜືອ “ລາຍການເອກະສານ” ຄລິກຂວາທີ່ຊ່ອງນັ້ນເພື່ອ “ສຳເນົາໄປຄລິບບອດ” ແລະ “ແກ້ໄຂເສັ້ນທາງໂຟລເດີແມ່” ຫຼື “ເພີ່ມຊຸດ”",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "ສະແດງຕົວແກ້ເສັ້ນທາງ ເປີດຊ່ອງໂຟລເດີເໜືອ “ລາຍການເອກະສານ” ຄລິກຂວາທີ່ຊ່ອງນັ້ນເພື່ອ “ສຳເນົາໄປຄລິບບອດ” ແລະ “ແກ້ໄຂເສັ້ນທາງໂຟລເດີແມ່” ຫຼື “ເພີ່ມຊຸດ”",
     "Pin document keeps presenting from one document while you select another.": "“ປັກໝຸດເອກະສານ” ເຮັດໃຫ້ນຳສະເໜີຈາກເອກະສານເດີມຕໍ່ໄປ ໃນຂະນະທີ່ທ່ານເລືອກເອກະສານອື່ນ",
     "Filter by name narrows a long Document List without moving or deleting anything.": "“ກັ່ນຕອງຕາມຊື່” ຊ່ວຍຫຍໍ້ “ລາຍການເອກະສານ” ທີ່ຍາວໃຫ້ສັ້ນລົງ ໂດຍບໍ່ຍ້າຍ ຫຼື ລຶບຫຍັງເລີຍ",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "“ກັ່ນຕອງຕາມປະເພດ” ສະແດງສະເພາະສະໄລ້ ເນື້ອເພງ PDF ຫຼື ເອກະສານປະເພດອື່ນ",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "“ຄຸນສົມບັດພຣະຄຳພີ/ຂໍ້ຄວາມຍາວ”: “ຄ່າທີ່ຕັ້ງໄວ້ລ່ວງໜ້າ” “ບັນທຶກເປັນຄ່າທີ່ຕັ້ງໄວ້ລ່ວງໜ້າ” “ຕົວອັກສອນອ່ອນສຳລັບພື້ນຫຼັງມືດ” “ສີໄຮໄລ້” “ເສັ້ນຂອບ” “ຄວາມເບລອຂອງເງົາ” ແລະ “ແສງເຫຼືອງ”",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "ເປີດ ຫຼື ປິດ “ລາຍການເອກະສານ” ໃນ “ຕົວເລືອກເພີ່ມເຕີມ” ມີ “ເພີ່ມໄຟລ໌ໃນເຄື່ອງ” ແລະ “ນຳເຂົ້າ” ສ່ວນ “ໂຫຼດຄືນໃໝ່” ຈະອ່ານໂຟລເດີຄືນໃໝ່ ແລະ ເມນູຂອງເອກະສານມີ “ສົ່ງອອກ” ແລະ “ໝາຍເຫດສີ”",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "“ຮຽງລຳດັບ” ຈັດລຽງ “ລາຍການເອກະສານ” ໂດຍບໍ່ປ່ຽນໄຟລ໌ໃດ ສ່ວນ “ເລື່ອນໄປເທິງສຸດ” “ຫຼິ້ນໄປລຸ່ມສຸດ” ແລະ “ຕົວເລືອກການເລື່ອນອັດຕະໂນມັດ” ໃຊ້ເລື່ອນຜ່ານລາຍການທີ່ຍາວ",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor ສະແດງວ່າເປີດໂຟລເດີ “ພື້ນຫຼັງ” ໃດຢູ່ ຖ້າຍັງບໍ່ໄດ້ເລືອກໂຟລເດີ ໃຫ້ໃຊ້ “ເລືອກໂຟລເດີ” “ເລືອກຄ່າເລີ່ມຕົ້ນ” ຫຼື “ໄປທີ່ການຕັ້ງຄ່າ”",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "ສະແດງຕົວແກ້ເສັ້ນທາງ ສະແດງວ່າເປີດໂຟລເດີ “ພື້ນຫຼັງ” ໃດຢູ່ ຖ້າຍັງບໍ່ໄດ້ເລືອກໂຟລເດີ ໃຫ້ໃຊ້ “ເລືອກໂຟລເດີ” “ເລືອກຄ່າເລີ່ມຕົ້ນ” ຫຼື “ໄປທີ່ການຕັ້ງຄ່າ”",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ເລືອກເອກະສານ ແລ້ວຄລິກບັດສະໄລ້ເພື່ອສົ່ງໄປຫາຜູ້ຊົມ “ແກ້ຂະໜາດສະໄລ້” ຈະສະແດງເມື່ອຂະໜາດບໍ່ກົງກັນ ແລະ “ໂຫຼດໃໝ່” ຈະສະແດງເມື່ອໂຫຼດສະໄລ້ບໍ່ສຳເລັດ",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "ເລືອກເນື້ອເພງ ແລ້ວນຳສະເໜີສະໄລ້ຈໍເວທີ ຢູ່ລຸ່ມບັດໜ້າຈໍ “ກົດເພື່ອປ່ຽນເລກຈໍເວທີ” “ເພີ່ມ” ຫຼື “ຫຼຸດ” ໃຊ້ເລືອກຈໍເວທີທີ່ຈະສະແດງ",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "ໃຫ້ການນຳສະເໜີຍັງເຫັນຢູ່ໃນຂະນະທີ່ທ່ານແກ້ໄຂເອກະສານທີ່ເລືອກ ສ່ວນ “ບັນທຶກ” ຈະບັນທຶກການປ່ຽນແປງ",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "ອອກຈາກໜ້າອ່ານພຣະຄຳພີບໍ?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ທ່ານກຳລັງຈະອອກຈາກໜ້າອ່ານພຣະຄຳພີ ແລະ ໄປທີ່ໜ້ານຳສະເໜີ. ຂໍ້ພຣະຄຳພີຂອງທ່ານຈະຍັງຢູ່ບ່ອນນີ້ເມື່ອທ່ານກັບມາ.",
     "To come back, click this tab at the top left of the Presenter:": "ເພື່ອກັບມາ, ໃຫ້ຄລິກແຖບນີ້ຢູ່ເທິງເບື້ອງຊ້າຍຂອງໜ້ານຳສະເໜີ:",
-    "Stay in Bible Reader": "ຢູ່ໜ້າອ່ານພຣະຄຳພີຕໍ່"
+    "Stay in Bible Reader": "ຢູ່ໜ້າອ່ານພຣະຄຳພີຕໍ່",
+    "Show path editor": "ສະແດງຕົວແກ້ເສັ້ນທາງ",
+    "Hide path editor": "ເຊື່ອງຕົວແກ້ເສັ້ນທາງ",
+    "Background > Show path editor": "Background > ສະແດງຕົວແກ້ເສັ້ນທາງ",
+    "Document List > Show path editor": "Document List > ສະແດງຕົວແກ້ເສັ້ນທາງ"
 }

@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "進行の順番を組み立てます：各行で「アクションを追加」、「特定のスクリーンを設定」、「CC 要素を追加」、「メディア コントロールを追加」。「進行表をプレビュー」で実行します。",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "「その他のオプション」はパネルのメニューを開きます。「ドキュメント リスト」のメニューには「新しいドキュメント」、「新しい歌詞」、「URL からインポート」、「URL からダウンロード」、「SongSelect からインポート」があります。",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "「ドキュメント リスト」の「その他のオプション」にある「パブリック ドメインの賛美歌からインポート」では、アカウントなしで内蔵の賛美歌を閲覧できます。",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor で「ドキュメント リスト」の上にフォルダー欄が開きます。右クリックで「クリップボードにコピー」と「親パスを編集」、または「セッションを追加」。",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "「パスエディターを表示」で「ドキュメント リスト」の上にフォルダー欄が開きます。右クリックで「クリップボードにコピー」と「親パスを編集」、または「セッションを追加」。",
     "Pin document keeps presenting from one document while you select another.": "「ドキュメントをピン留め」すると、別のドキュメントを選んでも一つのドキュメントから投影し続けます。",
     "Filter by name narrows a long Document List without moving or deleting anything.": "「名前で絞り込み」で長い「ドキュメント リスト」を絞り込めます。何も移動や削除はしません。",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "「種類で絞り込み」で、スライド、歌詞、PDF などの一種類のドキュメントだけを表示します。",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "「聖書/長文のプロパティ」：「プリセット」、「プリセットとして保存」、「暗い背景用の明るい文字」、「ハイライトの色」、「輪郭」、「影のぼかし」、「グロー」。",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "「ドキュメント リスト」を切り替えます。その「その他のオプション」には「ローカル ファイルを追加」と「インポート」があり、「再読み込み」でフォルダーを読み直します。ドキュメントのメニューには「エクスポート」と「カラーメモ」があります。",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "「並べ替え」はファイルを変更せずに「ドキュメント リスト」を並べ替えます。長いリストは「先頭へスクロール」、「最下部までスクロール」、「自動スクロールのオプション」で移動します。",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor で、開いている「背景」フォルダーがわかります。まだフォルダーを選んでいないときは「フォルダーを選択」、「既定を選択」、「設定へ移動」を使います。",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "「パスエディターを表示」で、開いている「背景」フォルダーがわかります。まだフォルダーを選んでいないときは「フォルダーを選択」、「既定を選択」、「設定へ移動」を使います。",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ドキュメントを選び、スライド カードをクリックして会衆に送ります。サイズが合わないときは「スライドのサイズを修正」が、スライドを読み込めないときは「リロード」が表示されます。",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "歌詞を選んで、そのステージ スライドを投影します。スクリーン カードの下にある「クリックしてステージ番号を変更」、「増やす」、「減らす」で表示するステージを選びます。",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "選択したドキュメントを編集している間も、発表者を表示したままにします。「保存」で変更を保存します。",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "聖書閲覧を離れますか？",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "聖書閲覧を離れて発表者に移動します。戻ったときも開いていた箇所はそのまま残っています。",
     "To come back, click this tab at the top left of the Presenter:": "戻るには、発表者の左上にあるこのタブをクリックしてください：",
-    "Stay in Bible Reader": "聖書閲覧にとどまる"
+    "Stay in Bible Reader": "聖書閲覧にとどまる",
+    "Show path editor": "パスエディターを表示",
+    "Hide path editor": "パスエディターを非表示",
+    "Background > Show path editor": "Background > パスエディターを表示",
+    "Document List > Show path editor": "Document List > パスエディターを表示"
 }

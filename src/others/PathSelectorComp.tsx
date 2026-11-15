@@ -202,6 +202,12 @@ export default function PathSelectorComp({
         currentDirSource.dirPath = droppedDirPath;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Two whole keys, never one built from pieces: a phrase stitched from
+    // parts cannot be translated, and every window but an English one drew
+    // this title in English.
+    const toggleTitle = shouldShowingEditor
+        ? tran('Hide path editor')
+        : tran('Show path editor');
     return (
         <div
             className={
@@ -215,16 +221,29 @@ export default function PathSelectorComp({
         >
             <div
                 className="d-flex path-previewer app-caught-hover-pointer"
-                title={(shouldShowingEditor ? 'Hide' : 'Show') + ' path editor'}
+                title={toggleTitle}
                 onClick={handleToggleEditor}
             >
-                <i
-                    className={`bi ${
-                        shouldShowingEditor
-                            ? 'bi-chevron-down'
-                            : 'bi-chevron-right'
-                    }`}
-                />
+                {/* The keyboard's way to the editor: Tab reaches it, Enter or
+                    Space press it. It has no handler of its own -- its click
+                    bubbles to the row's, so it toggles once, the same as a
+                    click on the path. The row itself is not made the button:
+                    it holds the ⋮ button, and a button's children are hidden
+                    from a screen reader. */}
+                <button
+                    type="button"
+                    className="path-previewer-toggle"
+                    aria-label={toggleTitle}
+                    aria-expanded={shouldShowingEditor}
+                >
+                    <i
+                        className={`bi ${
+                            shouldShowingEditor
+                                ? 'bi-chevron-down'
+                                : 'bi-chevron-right'
+                        }`}
+                    />
+                </button>
                 {!shouldShowingEditor && (
                     <RenderPathTitleComp
                         dirSource={dirSource}

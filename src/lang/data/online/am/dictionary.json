@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "የአገልግሎት ቅደም ተከተል ያዘጋጁ፦ በረድፎቹ ላይ እርምጃ ጨምር፣ የተወሰነ ስክሪን አዘጋጅ፣ CC ኤለመንቶችን ጨምር እና የሚዲያ ቁጥጥር ጨምር፤ የአምልኮ ሥርዓት ቅደም ተከተልን ቅድመ እይታ ያስኬደዋል።",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "ተጨማሪ አማራጮች የፓነሉን ምናሌ ይከፍታል፤ የሰነዶች ዝርዝር ምናሌ አዲስ የመተግበሪያ ሰነድ፣ አዲስ የመዝሙር ግጥም፣ ከURL አስመጣ፣ ከURL አውርድ እና ከ SongSelect አስመጣ አለው።",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "የሰነዶች ዝርዝር ተጨማሪ አማራጮች ውስጥ ያለው ከሕዝብ ንብረት መዝሙሮች አስመጣ ያለ መለያ አብሮ የተሰሩ መዝሙሮችን ያስሳል።",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor የሰነዶች ዝርዝር ላይ የአቃፊ ሳጥን ይከፍታል፤ ወደ ቅንጥብ ሰሌዳ ቅዳ እና የወላጅ ዱካ አርትዕ፣ ወይም ክፍለ ጊዜ አክል ለማግኘት በቀኝ ጠቅ ያድርጉት።",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "«የዱካ አርታዒውን አሳይ» የሰነዶች ዝርዝር ላይ የአቃፊ ሳጥን ይከፍታል፤ ወደ ቅንጥብ ሰሌዳ ቅዳ እና የወላጅ ዱካ አርትዕ፣ ወይም ክፍለ ጊዜ አክል ለማግኘት በቀኝ ጠቅ ያድርጉት።",
     "Pin document keeps presenting from one document while you select another.": "ሰነዱን ሰካ ሌላ ሰነድ በሚመርጡበት ጊዜ ከአንድ ሰነድ ማቅረብን ያስቀጥላል።",
     "Filter by name narrows a long Document List without moving or deleting anything.": "በስም አጣራ ምንም ሳያንቀሳቅስ ወይም ሳይሰርዝ ረጅም የሰነዶች ዝርዝር ያጠባል።",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "በዓይነት አጣራ ስላይዶችን፣ መዝሙሮችን፣ PDFዎችን ወይም ሌላ የሰነድ ዓይነትን ብቻ ያሳያል።",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "የመጽሐፍ ቅዱስ/ረጅም ጽሑፍ ባህሪያት፦ ቅድመ ዝግጅቶች፣ እንደ ቅድመ ዝግጅት አስቀምጥ፣ ለጨለማ ዳራ ቀላል ቃላት፣ የማድመቂያ ቀለም፣ ዝርዝር ድንበር፣ የጥላ ብዥታ እና ድምቀት።",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "የሰነዶች ዝርዝር የሚለውን ፓነል ያሳዩ ወይም ይደብቁ። የእሱ ተጨማሪ አማራጮች ምናሌ የአካባቢ ፋይሎችን ጨምር እና አስመጣ ይዟል፣ አድስ አቃፊውን እንደገና ያነባል፣ የሰነድ ምናሌ ደግሞ ላክ እና የቀለም ማስታወሻ ይዟል።",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "ደርድር የሚለው ቁልፍ ምንም ፋይል ሳይቀይር የሰነዶች ዝርዝር ውስጥ ያሉትን ሰነዶች ይደረድራል፤ ወደ ላይ ተመለስ፣ እስከ ታች አጫውት እና የራስ-ሰር ማሸብለል አማራጮች ረጅም ዝርዝርን ያስሱበታል።",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor የትኛው ዳራ አቃፊ እንደተከፈተ ያሳያል፤ ገና አቃፊ ካልተመረጠ፣ አቃፊ ምረጥ፣ ነባሪውን ምረጥ ወይም ወደ ቅንብሮች ሂድ ይጠቀሙ።",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "«የዱካ አርታዒውን አሳይ» የትኛው ዳራ አቃፊ እንደተከፈተ ያሳያል፤ ገና አቃፊ ካልተመረጠ፣ አቃፊ ምረጥ፣ ነባሪውን ምረጥ ወይም ወደ ቅንብሮች ሂድ ይጠቀሙ።",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ሰነድ ይምረጡ፣ ከዚያ ስላይድ ካርድን ጠቅ አድርገው ወደ ታዳሚው ይላኩት፤ መጠኑ ካልተዛመደ የስላይድ ስፋትና ቁመት አስተካክል ይታያል፣ ስላይዶቹ መጫን ካልቻሉ ደግሞ እንደገና ጫን ይታያል።",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "የመዝሙር ግጥም ይምረጡና የመድረክ ስላይዶቹን ያቅርቡ፤ ከስክሪን ካርድ በታች፣ የመድረክ ማሳያ ቁጥርን ለመቀየር ጠቅ ያድርጉ፣ ጨምር ወይም ቀንስ ካርዱ የሚያሳየውን መድረክ ይመርጣል።",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "የተመረጠውን ሰነድ በሚያርሙበት ጊዜ ማቅረቢያውን በእይታ ውስጥ ያቆዩ፤ አስቀምጥ ለውጦቹን ያስቀምጣል።",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "የመጽሐፍ ቅዱስ ንባብን ትተው ይወጣሉ?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "የመጽሐፍ ቅዱስ ንባብን ትተው ወደ ማቅረቢያ ሊሄዱ ነው። ሲመለሱ ምንባቦችዎ እዚሁ ይገኛሉ።",
     "To come back, click this tab at the top left of the Presenter:": "ለመመለስ፣ በማቅረቢያ ላይ ከላይ በግራ በኩል ያለውን ይህን ትር ይጫኑ፦",
-    "Stay in Bible Reader": "በመጽሐፍ ቅዱስ ንባብ ውስጥ ይቆዩ"
+    "Stay in Bible Reader": "በመጽሐፍ ቅዱስ ንባብ ውስጥ ይቆዩ",
+    "Show path editor": "የዱካ አርታዒውን አሳይ",
+    "Hide path editor": "የዱካ አርታዒውን ደብቅ",
+    "Background > Show path editor": "Background > የዱካ አርታዒውን አሳይ",
+    "Document List > Show path editor": "Document List > የዱካ አርታዒውን አሳይ"
 }

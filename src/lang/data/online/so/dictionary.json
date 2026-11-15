@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Diyaari habka adeegga: Ku dar Fal, Deji Shaashad Gaar ah, Ku dar Curiyeyaal CC ah iyo Ku dar Xakamaynta Warbaahinta safafkiisa; Horudhac Socodka Bandhigga ayaa socodsiiya.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Doorashooyin Kale wuxuu furaa liiska guddiga; kan Liiska Dukumentiyada waxaa ku jira Dukumenti Cusub, Hees Cusub, Ka soo geli URL, Ka soo deji URL iyo Ka soo geli SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Ka soo geli Heesaha Hantida Guud, oo ku jira Doorashooyin Kale ee Liiska Dukumentiyada, wuxuu daalacdaa heeso ku dhex jira barnaamijka iyada oo aan akoon loo baahnayn.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor wuxuu furaa sanduuqa galka ee ka korreeya Liiska Dukumentiyada; midig-guji si aad u hesho Ku koobiyee sabuuradda iyo Wax ka beddel Jidka Waalidka, ama Ku dar Fadhi.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Tus tafatiraha jidka wuxuu furaa sanduuqa galka ee ka korreeya Liiska Dukumentiyada; midig-guji si aad u hesho Ku koobiyee sabuuradda iyo Wax ka beddel Jidka Waalidka, ama Ku dar Fadhi.",
     "Pin document keeps presenting from one document while you select another.": "Ku dhaji dukumentiga wuxuu sii wadaa bandhigga hal dukumenti inta aad dooranayso mid kale.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Ku shaandhee magaca wuxuu yareeyaa Liiska Dukumentiyada dheer iyada oo aan waxba la guurin ama la tirtirin.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Ku shaandhee Nooca wuxuu muujiyaa oo keliya silaydyo, heeso, PDF ama nooc kale oo dukumenti ah.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Sifooyinka Kitaabka/Qoraalka Dheer: Hababka diyaarsan, U kaydi Hab Diyaarsan ahaan, Erayo iftiin ah oo loogu talagalay gadaal mugdi ah, Midabka Iftiiminta, Xarriiqda Dibadda, Ceeryaamada Hooska iyo Dhalaal.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Tus ama qari Liiska Dukumentiyada. Gudaha Doorashooyin Kale waxaa ku jira Ku dar Faylal Gudaha ah iyo Soo geli, Dib u cusboonaysii wuxuu dib u akhriyaa galka, menu-ga dukumentigana waxaa ku jira Dhoofi iyo Calaamadda Midabka.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Kala sooc wuxuu kala horreysiiyaa Liiska Dukumentiyada isagoon fayl beddelin; U dhaqaaji korka, Si toos ah ugu dhaqaaji ilaa hoose iyo Doorashooyinka Dhaqaajinta Tooska ah waxay kaa dhex wadaan liis dheer.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor wuxuu muujiyaa galka Gadaasha ee furan; haddii aan gal weli la dooran, isticmaal Dooro gal, Dooro Caadiga ama Tag Dejinta.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Tus tafatiraha jidka wuxuu muujiyaa galka Gadaasha ee furan; haddii aan gal weli la dooran, isticmaal Dooro gal, Dooro Caadiga ama Tag Dejinta.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Dooro dukumenti, kadib guji kaarka silayd si aad ugu dirto goobjoogayaasha; Sax cabbirka silaydka wuxuu soo baxaa marka cabbirkiisu aanu ku habboonayn, Dib u soo rar marka silaydyadu ay soo bixi waayaan.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Dooro hees oo bandhig silaydyadeeda masraxa; kaarka shaashadda hoostiisa, Guji si aad u beddesho Lambarka Masraxa, Kordhi ama Yaree ayaa dooranaya masraxa uu kaarku muujinayo.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Bandhigaha ku hay muuqda inta aad wax ka beddelayso dukumentiga la doortay; Kaydi ayaa kaydiya isbeddelada.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Ka bax Akhriyaha Kitaabka?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Waxaad ku dhowdahay inaad ka baxdo Akhriyaha Kitaabka oo aad u gudubto Bandhigaha. Qaybahaagu halkan ayay joogi doonaan markaad soo noqoto.",
     "To come back, click this tab at the top left of the Presenter:": "Si aad u soo noqoto, guji tab-kan ee ku yaal dusha bidix ee Bandhigaha:",
-    "Stay in Bible Reader": "Ku sii jir Akhriyaha Kitaabka"
+    "Stay in Bible Reader": "Ku sii jir Akhriyaha Kitaabka",
+    "Show path editor": "Tus tafatiraha jidka",
+    "Hide path editor": "Qari tafatiraha jidka",
+    "Background > Show path editor": "Background > Tus tafatiraha jidka",
+    "Document List > Show path editor": "Document List > Tus tafatiraha jidka"
 }

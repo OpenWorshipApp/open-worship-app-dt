@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "จัดลำดับรายการ: ใช้ “เพิ่มการกระทำ” “กำหนดหน้าจอเฉพาะ” “เพิ่มองค์ประกอบ CC” และ “เพิ่มการควบคุมมีเดีย” ในแต่ละแถว ส่วน “ดูตัวอย่างลำดับการนมัสการ” ใช้เล่นลำดับนั้น",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "“ตัวเลือกเพิ่มเติม” เปิดเมนูของแผง เมนูของ “รายการเอกสาร” มี “เอกสารแอปใหม่” “เนื้อเพลงใหม่” “นำเข้าจาก URL” “ดาวน์โหลดจาก URL” และ “นำเข้าจาก SongSelect”",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "“นำเข้าจากเพลงสาธารณสมบัติ” ใน “ตัวเลือกเพิ่มเติม” ของ “รายการเอกสาร” ใช้เรียกดูเพลงนมัสการที่มีในตัวโดยไม่ต้องมีบัญชี",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor เปิดช่องโฟลเดอร์เหนือ “รายการเอกสาร” คลิกขวาที่ช่องนั้นเพื่อ “คัดลอกไปยังคลิปบอร์ด” และ “แก้ไขเส้นทางโฟลเดอร์หลัก” หรือ “เพิ่มเซสชัน”",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "แสดงตัวแก้ไขเส้นทาง เปิดช่องโฟลเดอร์เหนือ “รายการเอกสาร” คลิกขวาที่ช่องนั้นเพื่อ “คัดลอกไปยังคลิปบอร์ด” และ “แก้ไขเส้นทางโฟลเดอร์หลัก” หรือ “เพิ่มเซสชัน”",
     "Pin document keeps presenting from one document while you select another.": "“ปักหมุดเอกสาร” ทำให้นำเสนอจากเอกสารเดิมต่อไปขณะที่คุณเลือกเอกสารอื่น",
     "Filter by name narrows a long Document List without moving or deleting anything.": "“กรองตามชื่อ” ช่วยย่อ “รายการเอกสาร” ที่ยาวให้สั้นลง โดยไม่ย้ายหรือลบสิ่งใด",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "“กรองตามประเภท” แสดงเฉพาะสไลด์ เนื้อเพลง PDF หรือเอกสารประเภทอื่น",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "“คุณสมบัติพระคัมภีร์/ข้อความยาว”: “ค่าที่ตั้งไว้ล่วงหน้า” “บันทึกเป็นค่าที่ตั้งไว้ล่วงหน้า” “ตัวอักษรสว่างสำหรับพื้นหลังมืด” “สีไฮไลต์” “เส้นรอบนอก” “ความเบลอของเงา” และ “เรืองแสง”",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "สลับ “รายการเอกสาร” ใน “ตัวเลือกเพิ่มเติม” มี “เพิ่มไฟล์ในเครื่อง” และ “นำเข้า” ส่วน “รีเฟรช” จะอ่านโฟลเดอร์อีกครั้ง และเมนูของเอกสารมี “ส่งออก” และ “สีบันทึก”",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "“เรียงลำดับ” จัดลำดับ “รายการเอกสาร” โดยไม่เปลี่ยนไฟล์ใด ส่วน “เลื่อนไปด้านบน” “เล่นไปจนสุด” และ “ตัวเลือกการเลื่อนอัตโนมัติ” ใช้เลื่อนผ่านรายการที่ยาว",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor แสดงว่าเปิดโฟลเดอร์ “พื้นหลัง” ใดอยู่ ถ้ายังไม่ได้เลือกโฟลเดอร์ ให้ใช้ “เลือกโฟลเดอร์” “เลือกค่าเริ่มต้น” หรือ “ไปที่การตั้งค่า”",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "แสดงตัวแก้ไขเส้นทาง แสดงว่าเปิดโฟลเดอร์ “พื้นหลัง” ใดอยู่ ถ้ายังไม่ได้เลือกโฟลเดอร์ ให้ใช้ “เลือกโฟลเดอร์” “เลือกค่าเริ่มต้น” หรือ “ไปที่การตั้งค่า”",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "เลือกเอกสาร แล้วคลิกการ์ดสไลด์เพื่อส่งไปให้ผู้ชม “แก้ไขขนาดสไลด์” จะแสดงเมื่อขนาดไม่ตรงกัน และ “โหลดใหม่” จะแสดงเมื่อโหลดสไลด์ไม่สำเร็จ",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "เลือกเนื้อเพลงแล้วนำเสนอสไลด์จอเวที ใต้การ์ดหน้าจอ “คลิกเพื่อเปลี่ยนหมายเลขจอเวที” “เพิ่มค่า” หรือ “ลดค่า” ใช้เลือกจอเวทีที่จะแสดง",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "ให้ผู้นำเสนอยังมองเห็นได้ขณะที่คุณแก้ไขเอกสารที่เลือก ส่วน “บันทึก” จะบันทึกการเปลี่ยนแปลง",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "ออกจากผู้อ่านพระคัมภีร์หรือไม่",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "คุณกำลังจะออกจากผู้อ่านพระคัมภีร์และไปที่หน้านำเสนอ ข้อพระคัมภีร์ของคุณจะยังอยู่ที่นี่เมื่อคุณกลับมา",
     "To come back, click this tab at the top left of the Presenter:": "หากต้องการกลับมา ให้คลิกแท็บนี้ที่มุมซ้ายบนของหน้านำเสนอ:",
-    "Stay in Bible Reader": "อยู่ในผู้อ่านพระคัมภีร์ต่อ"
+    "Stay in Bible Reader": "อยู่ในผู้อ่านพระคัมภีร์ต่อ",
+    "Show path editor": "แสดงตัวแก้ไขเส้นทาง",
+    "Hide path editor": "ซ่อนตัวแก้ไขเส้นทาง",
+    "Background > Show path editor": "Background > แสดงตัวแก้ไขเส้นทาง",
+    "Document List > Show path editor": "Document List > แสดงตัวแก้ไขเส้นทาง"
 }

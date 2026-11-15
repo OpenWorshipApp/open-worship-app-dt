@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "གོ་རིམ་ཞིག་སྒྲིག་པར། ཕྲེང་རེ་རེའི་སྟེང་དུ་ “བྱ་སྤྱོད་ཁ་སྣོན” “བརྙན་ཡོལ་དམིགས་བསལ་ཞིག་སྒྲིག” “CC རྣམ་གྲངས་ཁ་སྣོན” དང་ “བརྙན་སྒྲའི་ཚོད་འཛིན་ཁ་སྣོན” བེད་སྤྱོད་གཏོང་། “འགྲེམས་སྟོན་གོ་རིམ་སྔོན་ལྟ” ལ་མནན་ན་གོ་རིམ་དེ་འཁོར་སྐྱོད་བྱེད།",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "“གདམ་ག་གཞན” ལ་མནན་ན་ལྷེ་ཚན་གྱི་འདེམས་ཐོ་ཁ་ཕྱེ། “ཡིག་ཚགས་ཐོ” ནང་གི་འདེམས་ཐོར་ “ཡིག་ཚགས་གསར་པ” “གླུ་ཚིག་གསར་པ” “URL ནས་ནང་འདྲེན” “URL ནས་ཕབ་ལེན” དང་ “SongSelect ནས་ནང་འདྲེན” ཡོད།",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "“ཡིག་ཚགས་ཐོ” ནང་གི་ “གདམ་ག་གཞན” ནང་ཡོད་པའི་ “སྤྱི་མཐུན་ཁྱབ་ཁོངས་ཀྱི་གླུ་གཞས་ནས་ནང་འདྲེན” ལ་མནན་ན་རྩིས་ཐོ་མེད་པར་ནང་འདུས་བསྟོད་གླུ་ལྟ་ཐུབ།",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor ལ་མནན་ན་ “ཡིག་ཚགས་ཐོ” ཡི་སྟེང་དུ་ཡིག་སྣོད་སྒྲོམ་ཁ་ཕྱེ། དེར་གཡས་མནན་བྱས་ན་ “སྦྱར་པང་དུ་འདྲ་བཤུས” དང་ “ཕ་མའི་ལམ་ཐིག་རྩོམ་སྒྲིག” ཡང་ན་ “སྐབས་ཁ་སྣོན” ཐོན།",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "“ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྟོན” ལ་མནན་ན་ “ཡིག་ཚགས་ཐོ” ཡི་སྟེང་དུ་ཡིག་སྣོད་སྒྲོམ་ཁ་ཕྱེ། དེར་གཡས་མནན་བྱས་ན་ “སྦྱར་པང་དུ་འདྲ་བཤུས” དང་ “ཕ་མའི་ལམ་ཐིག་རྩོམ་སྒྲིག” ཡང་ན་ “སྐབས་ཁ་སྣོན” ཐོན།",
     "Pin document keeps presenting from one document while you select another.": "“ཡིག་ཚགས་གཟེར་འཛུགས” ལ་མནན་ན་ཡིག་ཚགས་གཞན་ཞིག་འདེམས་སྐབས་ཀྱང་ཡིག་ཚགས་གཅིག་ནས་མུ་མཐུད་འགྲེམས་སྟོན་བྱེད།",
     "Filter by name narrows a long Document List without moving or deleting anything.": "“མིང་གིས་འཚག་སྒྲིག” ལ་བརྟེན་ནས་ “ཡིག་ཚགས་ཐོ” རིང་པོ་ཐུང་དུ་གཏོང་ཐུབ། ཅི་ཡང་སྤོ་བ་དང་བསུབ་པ་མི་བྱེད།",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "“རིགས་ཀྱིས་འཚག་སྒྲིག” ལ་བརྟེན་ནས་བརྙན་ཤོག་དང་། གླུ་ཚིག PDF ཡང་ན་ཡིག་ཚགས་རིགས་གཞན་ཞིག་ཁོ་ན་སྟོན།",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "“གསུང་རབ/ཡི་གེ་རིང་པོའི་ཁྱད་ཆོས” ནང་། “སྔོན་སྒྲིག” “སྔོན་སྒྲིག་ཏུ་ཉར” “མདོག་ནག་པོའི་རྒྱབ་ལྗོངས་ཆེད་དུ་ཚིག་གསལ་པོ” “གསལ་རྟགས་ཀྱི་ཚོན་མདོག” “མཐའ་ཐིག” “གྲིབ་མའི་རབ་རིབ” དང་ “འོད་མདངས”།",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "“ཡིག་ཚགས་ཐོ” ཁ་ཕྱེ་བའམ་ཁ་རྒྱག དེའི་ “གདམ་ག་གཞན” ནང་ “ས་གནས་ཀྱི་ཡིག་ཆ་ཁ་སྣོན” དང་ “ནང་འདྲེན” ཡོད། “གསར་འདོན” གིས་ཡིག་སྣོད་བསྐྱར་དུ་ཀློག ཡིག་ཚགས་ཀྱི་འདེམས་ཐོའི་ནང་ “ཕྱིར་འདྲེན” དང་ “ཚོན་མདོག་ཟིན་བྲིས” ཡོད།",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "“གོ་རིམ་སྒྲིག” གིས་ཡིག་ཆ་མ་བསྒྱུར་བར་ “ཡིག་ཚགས་ཐོ” གོ་རིམ་སྒྲིག “ཐོག་མར་འགྲིལ” “མཐིལ་བར་གཏོང” དང་ “རང་འགུལ་འགྲིལ་བའི་གདམ་ག” གིས་ཐོ་རིང་པོའི་ནང་སྤོ།",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor གིས་ “རྒྱབ་ལྗོངས” ཡིག་སྣོད་གང་ཁ་ཕྱེ་ཡོད་སྟོན། ཡིག་སྣོད་ད་དུང་མ་བདམས་ན་ “ཡིག་སྣོད་ཅིག་འདེམས” “སོར་བཞག་འདེམས” ཡང་ན་ “སྒྲིག་འགོད་ལ་འགྲོ” བེད་སྤྱོད།",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "“ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྟོན” གིས་ “རྒྱབ་ལྗོངས” ཡིག་སྣོད་གང་ཁ་ཕྱེ་ཡོད་སྟོན། ཡིག་སྣོད་ད་དུང་མ་བདམས་ན་ “ཡིག་སྣོད་ཅིག་འདེམས” “སོར་བཞག་འདེམས” ཡང་ན་ “སྒྲིག་འགོད་ལ་འགྲོ” བེད་སྤྱོད།",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ཡིག་ཚགས་ཤིག་འདེམས་ནས་བརྙན་ཤོག་ཤོག་ཁྲ་ཞིག་མནན་ཏེ་ཚོགས་མིར་གཏོང་། ཚད་གཞི་མི་མཐུན་ན་ “བརྙན་ཤོག་གི་ཚད་གཞི་བཅོས” མངོན། བརྙན་ཤོག་ནང་འཇུག་མ་ཐུབ་ན་ “བསྐྱར་འཇུག” མངོན།",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "གླུ་ཚིག་ཅིག་འདེམས་ནས་དེའི་སྟེགས་བུའི་བརྙན་ཤོག་འགྲེམས་སྟོན། བརྙན་ཡོལ་ཤོག་ཁྲའི་འོག་གི་ “སྟེགས་བུའི་ཨང་གྲངས་བསྒྱུར་བར་མནན” “མང་དུ་གཏོང” ཡང་ན་ “ཉུང་དུ་གཏོང” གིས་སྟོན་རྒྱུའི་སྟེགས་བུ་འདེམས།",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "འདེམས་ཟིན་པའི་ཡིག་ཚགས་རྩོམ་སྒྲིག་བྱེད་སྐབས་འགྲེམས་སྟོན་ཆས་མངོན་ནས་ཞོག “ཉར་ཚགས” གིས་བཟོ་བཅོས་ཉར་ཚགས་བྱེད།",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "གསུང་རབ་ཀློག་ཆས་ནས་ཕྱིར་ཐོན་ནམ།",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ཁྱེད་ཀྱིས་གསུང་རབ་ཀློག་ཆས་བཞག་ནས་འགྲེམས་སྟོན་ཆས་ལ་འགྲོ་གི་ཡོད། ཕྱིར་ལོག་དུས་ཁྱེད་ཀྱི་ལུང་ཚན་རྣམས་འདིར་ཡོད།",
     "To come back, click this tab at the top left of the Presenter:": "ཕྱིར་ལོག་པར་འགྲེམས་སྟོན་ཆས་ཀྱི་སྟེང་གཡོན་ཕྱོགས་ཀྱི་ཤོག་བྱང་འདི་ལ་མནན་རོགས།",
-    "Stay in Bible Reader": "གསུང་རབ་ཀློག་ཆས་ནང་སྡོད།"
+    "Stay in Bible Reader": "གསུང་རབ་ཀློག་ཆས་ནང་སྡོད།",
+    "Show path editor": "ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྟོན",
+    "Hide path editor": "ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྦས",
+    "Background > Show path editor": "Background > ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྟོན",
+    "Document List > Show path editor": "Document List > ལམ་ཐིག་རྩོམ་སྒྲིག་ཆས་སྟོན"
 }

@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Susun urutan ibadah: Tambah Aksi, Atur Layar Tertentu, Tambah Elemen CC dan Tambah Kontrol Media pada barisnya; Pratinjau Urutan Ibadah menjalankannya.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Opsi Lainnya membuka menu panel; menu Daftar Dokumen berisi Dokumen Aplikasi Baru, Lirik Baru, Impor dari URL, Unduh dari URL dan Impor dari SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Impor dari Lagu Domain Publik, di Opsi Lainnya pada Daftar Dokumen, menelusuri himne bawaan tanpa akun.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor membuka kotak folder di atas Daftar Dokumen; klik kanan kotak itu untuk Salin ke Papan Klip dan Sunting Jalur Induk, atau Tambah Sesi.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Tampilkan penyunting jalur membuka kotak folder di atas Daftar Dokumen; klik kanan kotak itu untuk Salin ke Papan Klip dan Sunting Jalur Induk, atau Tambah Sesi.",
     "Pin document keeps presenting from one document while you select another.": "Sematkan dokumen tetap menyajikan dari satu dokumen selagi Anda memilih dokumen lain.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Saring berdasarkan nama mempersempit Daftar Dokumen yang panjang tanpa memindahkan atau menghapus apa pun.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Saring berdasarkan Jenis hanya menampilkan slide, lirik, PDF atau jenis dokumen lain.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Properti Alkitab/Teks Panjang: Preset, Simpan sebagai Preset, Teks terang untuk latar belakang gelap, Warna Sorotan, Kontur, Keburaman Bayangan dan Cahaya.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Tampilkan atau sembunyikan Daftar Dokumen. Menu Opsi Lainnya di sana berisi Tambah File Lokal dan Impor, Segarkan membaca ulang folder, dan menu sebuah dokumen berisi Ekspor dan Catatan Warna.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Urutkan mengurutkan Daftar Dokumen tanpa mengubah file; Gulir ke atas, Putar sampai bawah dan Opsi Gulir Otomatis membantu menelusuri daftar yang panjang.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor menunjukkan folder Latar Belakang mana yang terbuka; jika belum ada folder yang dipilih, gunakan Pilih folder, Pilih Default atau Buka Pengaturan.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Tampilkan penyunting jalur menunjukkan folder Latar Belakang mana yang terbuka; jika belum ada folder yang dipilih, gunakan Pilih folder, Pilih Default atau Buka Pengaturan.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Pilih dokumen, lalu klik kartu slide untuk mengirimnya ke jemaat; Perbaiki dimensi slide muncul bila ukurannya tidak cocok, Muat Ulang bila slide gagal dimuat.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Pilih lirik dan presentasikan slide panggungnya; di bawah kartu layar, Klik untuk mengubah Nomor Panggung, Tambah atau Kurangi memilih panggung yang ditampilkannya.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Biarkan Presentasi tetap terlihat saat Anda menyunting dokumen yang dipilih; Simpan menyimpan perubahannya.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Keluar dari Pembaca Alkitab?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Anda akan keluar dari Pembaca Alkitab dan pergi ke Presentasi. Bagian Alkitab Anda tetap ada di sini saat Anda kembali.",
     "To come back, click this tab at the top left of the Presenter:": "Untuk kembali, klik tab ini di kiri atas Presentasi:",
-    "Stay in Bible Reader": "Tetap di Pembaca Alkitab"
+    "Stay in Bible Reader": "Tetap di Pembaca Alkitab",
+    "Show path editor": "Tampilkan penyunting jalur",
+    "Hide path editor": "Sembunyikan penyunting jalur",
+    "Background > Show path editor": "Background > Tampilkan penyunting jalur",
+    "Document List > Show path editor": "Document List > Tampilkan penyunting jalur"
 }

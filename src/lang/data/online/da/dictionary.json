@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Sammensæt en rækkefølge: Tilføj handling, Angiv en bestemt skærm, Tilføj CC-elementer og Tilføj mediestyring på rækkerne; Vis gudstjenesteforløb i forhåndsvisning afspiller den.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Flere valgmuligheder åbner et panels menu; menuen i Dokumentliste har Nyt dokument, Ny sangtekst, Importer fra URL, Download fra URL og Importer fra SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importer fra Public Domain Songs, under Flere valgmuligheder i Dokumentliste, gennemser indbyggede salmer uden konto.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor åbner mappefeltet over Dokumentliste; højreklik på det for Kopiér til udklipsholder og Rediger overordnet sti, eller Tilføj session.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Vis stieditor åbner mappefeltet over Dokumentliste; højreklik på det for Kopiér til udklipsholder og Rediger overordnet sti, eller Tilføj session.",
     "Pin document keeps presenting from one document while you select another.": "Fastgør dokument bliver ved med at præsentere fra ét dokument, mens du vælger et andet.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtrer efter navn indsnævrer en lang Dokumentliste uden at flytte eller slette noget.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtrer efter type viser kun slides, sangtekster, PDF'er eller en anden dokumenttype.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Egenskaber for Bibel/lang tekst: Forudindstillinger, Gem som forudindstilling, Lys tekst til en mørk baggrund, Fremhævningsfarve, Omrids, Skyggeslør og Glød.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Vis eller skjul Dokumentliste. Under Flere valgmuligheder findes Tilføj lokale filer og Importer, Opdater læser mappen igen, og et dokuments menu har Eksporter og Farvenote.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Sortér ordner Dokumentliste uden at ændre en fil; Rul til toppen, Afspil til bunden og Indstillinger for automatisk rulning hjælper gennem en lang liste.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor viser, hvilken mappe til Baggrund der er åben; er der endnu ikke valgt en mappe, så brug Vælg en mappe, Vælg standard eller Gå til indstillinger.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Vis stieditor viser, hvilken mappe til Baggrund der er åben; er der endnu ikke valgt en mappe, så brug Vælg en mappe, Vælg standard eller Gå til indstillinger.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Vælg et dokument, og klik derefter på et slidekort for at sende det til publikum; Ret slidets dimension vises, når størrelsen ikke passer, Genindlæs, når slides ikke kan indlæses.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Vælg en sangtekst, og præsenter dens scenevisningsslides; under et skærmkort vælger Klik for at ændre scenenummer, Øg eller Mindsk, hvilken scene kortet viser.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Hold Præsentation i syne, mens du redigerer det valgte dokument; Gem beholder ændringerne.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Forlad Bibellæsning?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Du er ved at forlade Bibellæsning og gå til Præsentation. Dine skriftsteder er her stadig, når du kommer tilbage.",
     "To come back, click this tab at the top left of the Presenter:": "Klik på denne fane øverst til venstre i Præsentation for at komme tilbage:",
-    "Stay in Bible Reader": "Bliv i Bibellæsning"
+    "Stay in Bible Reader": "Bliv i Bibellæsning",
+    "Show path editor": "Vis stieditor",
+    "Hide path editor": "Skjul stieditor",
+    "Background > Show path editor": "Background > Vis stieditor",
+    "Document List > Show path editor": "Document List > Vis stieditor"
 }

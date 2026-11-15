@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "ترتیب اجرا را بچینید: افزودن کنش، تنظیم صفحه‌نمایش مشخص، افزودن عنصرهای CC و افزودن کنترل رسانه روی ردیف‌های آن؛ پیش‌نمایش برنامه مراسم آن را اجرا می‌کند.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "گزینه‌های بیشتر منوی یک پنل را باز می‌کند؛ منوی فهرست اسناد شامل سند جدید برنامه، متن سرود جدید، ورود از URL، بارگیری از URL و ورود از SongSelect است.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "ورود از سرودهای مالکیت عمومی، در گزینه‌های بیشتر فهرست اسناد، سرودهای داخلی را بدون حساب کاربری مرور می‌کند.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor کادر پوشه را بالای فهرست اسناد باز می‌کند؛ برای کپی در کلیپ‌بورد و ویرایش مسیر والد، یا افزودن جلسه روی آن راست‌کلیک کنید.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "«نمایش ویرایشگر مسیر» کادر پوشه را بالای فهرست اسناد باز می‌کند؛ برای کپی در کلیپ‌بورد و ویرایش مسیر والد، یا افزودن جلسه روی آن راست‌کلیک کنید.",
     "Pin document keeps presenting from one document while you select another.": "سنجاق کردن سند ارائه را از یک سند ادامه می‌دهد در حالی که سند دیگری را انتخاب می‌کنید.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "فیلتر بر اساس نام یک فهرست اسناد طولانی را بدون جابه‌جایی یا حذف چیزی محدود می‌کند.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "فیلتر بر اساس نوع فقط اسلایدها، متن سرودها، PDFها یا نوع دیگری از سند را نشان می‌دهد.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "ویژگی‌های کتاب مقدس/متن بلند: پیش‌تنظیم‌ها، ذخیره به عنوان پیش‌تنظیم، کلمات روشن برای پس‌زمینه تیره، رنگ هایلایت، طرح کلی، محوشدگی سایه و درخشش.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "فهرست اسناد را نمایش دهید یا پنهان کنید. در گزینه‌های بیشتر آن، افزودن فایل‌های محلی و ورود هست، تازه‌سازی پوشه را دوباره می‌خواند و منوی هر سند صدور و یادداشت رنگی دارد.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "مرتب‌سازی ترتیب فهرست اسناد را بدون تغییر هیچ فایلی عوض می‌کند؛ پیمایش به بالا، پخش تا پایین و گزینه‌های پیمایش خودکار شما را در فهرست بلند جابه‌جا می‌کنند.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor نشان می‌دهد کدام پوشه پس‌زمینه باز است؛ اگر هنوز پوشه‌ای انتخاب نشده، انتخاب پوشه، انتخاب پیش‌فرض یا رفتن به تنظیمات را بزنید.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "«نمایش ویرایشگر مسیر» نشان می‌دهد کدام پوشه پس‌زمینه باز است؛ اگر هنوز پوشه‌ای انتخاب نشده، انتخاب پوشه، انتخاب پیش‌فرض یا رفتن به تنظیمات را بزنید.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "یک سند را انتخاب کنید، سپس روی یک کارت اسلاید کلیک کنید تا برای حضار فرستاده شود؛ وقتی اندازه‌اش جور نیست اصلاح ابعاد اسلاید نمایان می‌شود و وقتی اسلایدها بارگذاری نمی‌شوند بارگذاری مجدد.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "یک سرود را انتخاب کنید و اسلایدهای صحنه‌اش را ارائه دهید؛ زیر کارت صفحه‌نمایش، برای تغییر شماره صحنه کلیک کنید، افزایش یا کاهش صحنه‌ای را که نشان می‌دهد انتخاب می‌کند.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "هنگام ویرایش سند انتخاب‌شده، ارائه را در دید نگه دارید؛ ذخیره تغییرات را نگه می‌دارد.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "از مطالعه کتاب مقدس خارج می‌شوید؟",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "در حال خروج از مطالعه کتاب مقدس و رفتن به ارائه هستید. وقتی برگردید، بخش‌های شما همین‌جا خواهند بود.",
     "To come back, click this tab at the top left of the Presenter:": "برای بازگشت، روی این زبانه در بالا سمت چپ ارائه کلیک کنید:",
-    "Stay in Bible Reader": "ماندن در مطالعه کتاب مقدس"
+    "Stay in Bible Reader": "ماندن در مطالعه کتاب مقدس",
+    "Show path editor": "نمایش ویرایشگر مسیر",
+    "Hide path editor": "پنهان کردن ویرایشگر مسیر",
+    "Background > Show path editor": "Background > نمایش ویرایشگر مسیر",
+    "Document List > Show path editor": "Document List > نمایش ویرایشگر مسیر"
 }

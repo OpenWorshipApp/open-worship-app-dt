@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "कार्यक्रमको क्रम मिलाउनुहोस्: यसका पङ्क्तिहरूमा कार्य थप्नुहोस्, विशेष स्क्रिन सेट गर्नुहोस्, CC तत्वहरू थप्नुहोस् र मिडिया नियन्त्रण थप्नुहोस्; आराधना क्रमको पूर्वावलोकन गर्नुहोस् बटनले यसलाई चलाउँछ।",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "थप विकल्पहरू बटनले प्यानलको मेनु खोल्छ; कागजात सूची मेनुमा नयाँ एप कागजात, नयाँ गीतको बोल, URL बाट आयात गर्नुहोस्, URL बाट डाउनलोड गर्नुहोस् र SongSelect बाट आयात गर्नुहोस् छन्।",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "कागजात सूची प्यानलको थप विकल्पहरू मेनुमा रहेको सार्वजनिक डोमेन गीतहरूबाट आयात गर्नुहोस् बटनले खाताबिनै भित्रै भएका भजनहरू देखाउँछ।",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor बटनले कागजात सूची प्यानलमाथि फोल्डर बाकस खोल्छ; क्लिपबोर्डमा प्रतिलिपि गर्नुहोस् र अभिभावक पथ सम्पादन गर्नुहोस्, वा सत्र थप्नुहोस् का लागि त्यसमा दायाँ-क्लिक गर्नुहोस्।",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "पथ सम्पादक देखाउनुहोस् बटनले कागजात सूची प्यानलमाथि फोल्डर बाकस खोल्छ; क्लिपबोर्डमा प्रतिलिपि गर्नुहोस् र अभिभावक पथ सम्पादन गर्नुहोस्, वा सत्र थप्नुहोस् का लागि त्यसमा दायाँ-क्लिक गर्नुहोस्।",
     "Pin document keeps presenting from one document while you select another.": "कागजात पिन गर्नुहोस् बटनले तपाईंले अर्को कागजात छान्दा पनि एउटै कागजातबाट प्रस्तुति जारी राख्छ।",
     "Filter by name narrows a long Document List without moving or deleting anything.": "नामबाट फिल्टर गर्नुहोस् बटनले केही नसारी वा नमेटी लामो कागजात सूची छोट्याउँछ।",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "प्रकारबाट फिल्टर गर्नुहोस् बटनले स्लाइड, गीत, PDF वा अर्को प्रकारका कागजात मात्र देखाउँछ।",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "बाइबल/लामो पाठ गुणहरू: प्रिसेटहरू, प्रिसेटका रूपमा सुरक्षित गर्नुहोस्, गाढा पृष्ठभूमिका लागि उज्यालो शब्दहरू, हाइलाइटको रङ, रूपरेखा, छायाको ब्लर र चमक।",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "कागजात सूची खोल्नुहोस् वा बन्द गर्नुहोस्। यसको ‘थप विकल्पहरू’ मा ‘स्थानीय फाइलहरू थप्नुहोस्’ र ‘आयात गर्नुहोस्’ छन्, ‘रिफ्रेस गर्नुहोस्’ बटनले फोल्डर फेरि पढ्छ, र कागजातको मेनुमा ‘निर्यात गर्नुहोस्’ र ‘रङको टिपोट’ छन्।",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘क्रमबद्ध गर्नुहोस्’ बटनले कुनै फाइल नबदली कागजात सूची क्रमबद्ध गर्छ; लामो सूचीमा सर्न ‘माथितिर स्क्रोल गर्नुहोस्’, ‘तलसम्म चलाउनुहोस्’ र ‘स्वचालित स्क्रोलका विकल्पहरू’ प्रयोग गर्नुहोस्।",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor बटनले कुन पृष्ठभूमि फोल्डर खुला छ भनी देखाउँछ; अहिलेसम्म फोल्डर छानिएको छैन भने ‘फोल्डर छान्नुहोस्’, ‘पूर्वनिर्धारित छान्नुहोस्’ वा ‘सेटिङमा जानुहोस्’ छान्नुहोस्।",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "पथ सम्पादक देखाउनुहोस् बटनले कुन पृष्ठभूमि फोल्डर खुला छ भनी देखाउँछ; अहिलेसम्म फोल्डर छानिएको छैन भने ‘फोल्डर छान्नुहोस्’, ‘पूर्वनिर्धारित छान्नुहोस्’ वा ‘सेटिङमा जानुहोस्’ छान्नुहोस्।",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "कागजात छान्नुहोस्, त्यसपछि स्लाइड कार्डमा क्लिक गरेर त्यसलाई श्रोतालाई पठाउनुहोस्; आकार नमिलेमा ‘स्लाइडको आयाम मिलाउनुहोस्’ देखिन्छ, स्लाइड लोड नभएमा ‘रिलोड गर्नुहोस्’।",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "गीतको बोल छान्नुहोस् र यसका स्टेज स्लाइडहरू प्रस्तुत गर्नुहोस्; स्क्रिन कार्डमुनि ‘स्टेज नम्बर बदल्न क्लिक गर्नुहोस्’, ‘बढाउनुहोस्’ वा ‘घटाउनुहोस्’ बटनले त्यसले कुन स्टेज देखाउने भनी छान्छ।",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "चयन गरिएको कागजात सम्पादन गर्दा प्रस्तुतकर्तालाई देखिने राख्नुहोस्; ‘सुरक्षित गर्नुहोस्’ बटनले परिवर्तनहरू राख्छ।",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "बाइबल पठन छोड्ने?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "तपाईं बाइबल पठन छोडेर प्रस्तुतकर्तामा जाँदै हुनुहुन्छ। फर्केपछि तपाईंका खण्डहरू यहीँ हुनेछन्।",
     "To come back, click this tab at the top left of the Presenter:": "फर्कन, प्रस्तुतकर्ताको माथि बायाँ भागमा रहेको यो ट्याब क्लिक गर्नुहोस्:",
-    "Stay in Bible Reader": "बाइबल पठनमै रहनुहोस्"
+    "Stay in Bible Reader": "बाइबल पठनमै रहनुहोस्",
+    "Show path editor": "पथ सम्पादक देखाउनुहोस्",
+    "Hide path editor": "पथ सम्पादक लुकाउनुहोस्",
+    "Background > Show path editor": "Background > पथ सम्पादक देखाउनुहोस्",
+    "Document List > Show path editor": "Document List > पथ सम्पादक देखाउनुहोस्"
 }

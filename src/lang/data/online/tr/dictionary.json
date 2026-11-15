@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Bir akış sırası oluşturun: satırlarda “Eylem Ekle”, “Belirli Bir Ekran Ayarla”, “CC Öğeleri Ekle” ve “Medya Denetimi Ekle”; “Ayin Akışını Önizle” onu çalıştırır.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "“Diğer Seçenekler” bir panelin menüsünü açar; “Belge Listesi” menüsünde “Yeni Belge”, “Yeni Şarkı Sözü”, “URL'den İçe Aktar”, “URL'den İndir” ve “SongSelect'ten İçe Aktar” bulunur.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "“Belge Listesi” panelinin “Diğer Seçenekler” menüsündeki “Kamu Malı İlahilerden İçe Aktar”, hesap gerektirmeden yerleşik ilahilere göz atmanızı sağlar.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor, “Belge Listesi” üstündeki klasör kutusunu açar; ona sağ tıklayıp “Panoya Kopyala” ve “Üst Yolu Düzenle” ya da “Oturum Ekle” seçin.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Yol düzenleyiciyi göster, “Belge Listesi” üstündeki klasör kutusunu açar; ona sağ tıklayıp “Panoya Kopyala” ve “Üst Yolu Düzenle” ya da “Oturum Ekle” seçin.",
     "Pin document keeps presenting from one document while you select another.": "“Belgeyi sabitle”, siz başka bir belge seçerken sunumu tek bir belgeden sürdürür.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "“Ada göre süz”, uzun bir “Belge Listesi” panelini hiçbir şeyi taşımadan veya silmeden daraltır.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "“Türe göre süz” yalnızca slaytları, şarkı sözlerini, PDF'leri veya başka bir belge türünü gösterir.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "“Kutsal Kitap/Uzun Metin Özellikleri”: “Hazır ayarlar”, “Hazır Ayar Olarak Kaydet”, “Koyu bir arka plan için açık renkli kelimeler”, “Vurgu Rengi”, “Dış çizgi”, “Gölge Bulanıklığı” ve “Parıltı”.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "“Belge Listesi” panelini açın veya kapatın. “Diğer Seçenekler” menüsünde “Yerel Dosya Ekle” ve “İçe Aktar” bulunur, “Yenile” düğmesi klasörü yeniden okur, bir belgenin menüsünde ise “Dışa Aktar” ve “Renk Notu” vardır.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "“Sırala” düğmesi hiçbir dosyayı değiştirmeden “Belge Listesi” panelini sıralar; uzun bir listede “En üste kaydır”, “En alta kadar oynat” ve “Otomatik Kaydırma Seçenekleri” ile ilerleyin.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor hangi “Arka Plan” klasörünün açık olduğunu gösterir; henüz klasör seçilmediyse “Bir klasör seçin”, “Varsayılanı Seç” veya “Ayarlara Git” düğmesine basın.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Yol düzenleyiciyi göster hangi “Arka Plan” klasörünün açık olduğunu gösterir; henüz klasör seçilmediyse “Bir klasör seçin”, “Varsayılanı Seç” veya “Ayarlara Git” düğmesine basın.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Bir belge seçin, ardından bir slayt kartına tıklayarak onu izleyiciye gönderin; boyutu uymadığında “Slayt boyutunu düzelt”, slaytlar yüklenemediğinde “Yeniden Yükle” düğmesi görünür.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Bir şarkı sözü seçin ve sahne slaytlarını sunun; bir ekran kartının altındaki “Sahne numarasını değiştirmek için tıklayın”, “Artır” veya “Azalt” gösterilecek sahneyi seçer.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Seçili belgeyi düzenlerken Sunucuyu görünür tutun; “Kaydet” düğmesi değişiklikleri kaydeder.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Kutsal Kitap Okuyucusundan çıkılsın mı?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kutsal Kitap Okuyucusundan çıkıp Sunuma geçmek üzeresiniz. Geri döndüğünüzde pasajlarınız burada olacak.",
     "To come back, click this tab at the top left of the Presenter:": "Geri dönmek için Sunumun sol üst köşesindeki bu sekmeye tıklayın:",
-    "Stay in Bible Reader": "Kutsal Kitap Okuyucusunda kal"
+    "Stay in Bible Reader": "Kutsal Kitap Okuyucusunda kal",
+    "Show path editor": "Yol düzenleyiciyi göster",
+    "Hide path editor": "Yol düzenleyiciyi gizle",
+    "Background > Show path editor": "Background > Yol düzenleyiciyi göster",
+    "Document List > Show path editor": "Document List > Yol düzenleyiciyi göster"
 }

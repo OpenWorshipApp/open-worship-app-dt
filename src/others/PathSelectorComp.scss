@@ -5,6 +5,24 @@
     display: flex;
   }
 
+  // The chevron, drawn as before: a bare glyph, its ring for the keyboard
+  // alone. Static, nothing animates.
+  .path-previewer-toggle {
+    background: transparent;
+    border: 0;
+    border-radius: var(--bs-border-radius);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    line-height: inherit;
+    padding: 0;
+
+    &:focus-visible {
+      outline: 2px solid var(--bs-info);
+      outline-offset: 1px;
+    }
+  }
+
   .app-add-items-button {
     border-radius: var(--bs-border-radius);
     padding: 0;

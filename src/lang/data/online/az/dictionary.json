@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Gedişat sırası qurun: sətirlərdə “Əməliyyat əlavə et”, “Müəyyən ekranı təyin et”, “CC elementləri əlavə et” və “Media idarəsi əlavə et”; “Təqdimat axınının önbaxışı” onu işə salır.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "“Daha çox seçim” panelin menyusunu açır; “Sənəd siyahısı” menyusunda “Yeni tətbiq sənədi”, “Yeni mahnı”, “URL-dən idxal et”, “URL-dən yüklə” və “SongSelect-dən idxal et” var.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "“Sənəd siyahısı” panelinin “Daha çox seçim” menyusundakı “İctimai domen mahnılarından idxal et” hesab tələb etmədən daxili ilahilərə baxmağa imkan verir.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor “Sənəd siyahısı” üstündəki qovluq qutusunu açır; onun üzərinə sağ klikləyib “Mübadilə buferinə kopyala” və “Ana yolu redaktə et” və ya “Sessiya əlavə et” seçin.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Yol redaktorunu göstər “Sənəd siyahısı” üstündəki qovluq qutusunu açır; onun üzərinə sağ klikləyib “Mübadilə buferinə kopyala” və “Ana yolu redaktə et” və ya “Sessiya əlavə et” seçin.",
     "Pin document keeps presenting from one document while you select another.": "“Sənədi sancaqla” siz başqa sənəd seçərkən təqdimatı bir sənəddən davam etdirir.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "“Ada görə süz” heç nəyi köçürmədən və ya silmədən uzun “Sənəd siyahısı” panelini daraldır.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "“Növə görə süz” yalnız slaydları, mahnı mətnlərini, PDF-ləri və ya başqa bir sənəd növünü göstərir.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "“İncil/uzun mətn xassələri”: “Hazır ayarlar”, “Hazır ayar kimi saxla”, “Tünd fon üçün açıq rəngli sözlər”, “Vurğulama rəngi”, “Kontur”, “Kölgənin bulanıqlığı” və “Parıltı”.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "“Sənəd siyahısı” panelini açın və ya bağlayın. Onun “Daha çox seçim” menyusunda “Yerli fayllar əlavə et” və “İdxal et” var, “Yenilə” düyməsi qovluğu yenidən oxuyur, sənədin menyusunda isə “İxrac et” və “Rəngli qeyd” var.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "“Sırala” düyməsi heç bir faylı dəyişmədən “Sənəd siyahısı” panelini sıralayır; uzun siyahıda “Yuxarıya sürüşdür”, “Aşağıya qədər oxut” və “Avtomatik sürüşdürmə seçimləri” ilə hərəkət edin.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor hansı “Fon” qovluğunun açıq olduğunu göstərir; hələ qovluq seçilməyibsə, “Qovluq seçin”, “Susmaya görə seç” və ya “Ayarlara keç” düyməsini basın.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Yol redaktorunu göstər hansı “Fon” qovluğunun açıq olduğunu göstərir; hələ qovluq seçilməyibsə, “Qovluq seçin”, “Susmaya görə seç” və ya “Ayarlara keç” düyməsini basın.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Sənəd seçin, sonra slayd kartına klikləyərək onu auditoriyaya göndərin; ölçü uyğun gəlmədikdə “Slayd ölçüsünü düzəlt”, slaydlar yüklənmədikdə “Yenidən yüklə” düyməsi görünür.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Mahnı seçin və onun səhnə slaydlarını təqdim edin; ekran kartının altındakı “Səhnə nömrəsini dəyişmək üçün klikləyin”, “Artır” və ya “Azalt” göstəriləcək səhnəni seçir.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Seçilmiş sənədi redaktə edərkən Təqdimatçını görünən saxlayın; “Saxla” düyməsi dəyişiklikləri saxlayır.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "İncil Oxucusundan çıxılsın?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "İncil Oxucusundan çıxıb Təqdimatçıya keçmək üzrəsiniz. Qayıtdığınız zaman parçalarınız burada olacaq.",
     "To come back, click this tab at the top left of the Presenter:": "Geri qayıtmaq üçün Təqdimatçının yuxarı sol küncündəki bu nişana klikləyin:",
-    "Stay in Bible Reader": "İncil Oxucusunda qal"
+    "Stay in Bible Reader": "İncil Oxucusunda qal",
+    "Show path editor": "Yol redaktorunu göstər",
+    "Hide path editor": "Yol redaktorunu gizlət",
+    "Background > Show path editor": "Background > Yol redaktorunu göstər",
+    "Document List > Show path editor": "Document List > Yol redaktorunu göstər"
 }

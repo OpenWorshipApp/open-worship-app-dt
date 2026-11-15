@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Ṣètò ìtòlẹ́sẹẹsẹ ètò: Fi Ìṣe kún un, Ṣètò Ìbòjú Pàtó, Fi Àwọn Ẹ̀yà CC kún un àti Fi Ìdarí Mídíà kún un lórí àwọn ìlà rẹ̀; Àwòtẹ́lẹ̀ Ìtòlẹ́sẹẹsẹ Ìgbékalẹ̀ ń ṣe é.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Àwọn Àṣàyàn Mìíràn ń ṣí àkójọ àṣàyàn pánẹ́ẹ̀lì kan; ti Àkójọ Àkọsílẹ̀ ní Àkọsílẹ̀ Áàpù Tuntun, Orin Tuntun, Kó wọlé láti URL, Ṣe ìgbàsílẹ̀ láti URL àti Kó wọlé láti SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Kó wọlé láti Àwọn Orin Ohun Ìní Gbogbo Ènìyàn, nínú Àwọn Àṣàyàn Mìíràn ti Àkójọ Àkọsílẹ̀, ń ṣàwárí àwọn orin ìyìn tí ó wà nínú áàpù láìsí àkáǹtì.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor ń ṣí àpótí fódà lókè Àkójọ Àkọsílẹ̀; tẹ̀ ẹ́ ní ọ̀tún fún Ṣe àdàkọ sí pátákó àdàkọ àti Ṣàtúnṣe Ipa-ọ̀nà Òbí, tàbí Fi Àkókò Ìlò kún un.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Fi olóòtú ipa-ọ̀nà hàn ń ṣí àpótí fódà lókè Àkójọ Àkọsílẹ̀; tẹ̀ ẹ́ ní ọ̀tún fún Ṣe àdàkọ sí pátákó àdàkọ àti Ṣàtúnṣe Ipa-ọ̀nà Òbí, tàbí Fi Àkókò Ìlò kún un.",
     "Pin document keeps presenting from one document while you select another.": "Kan àkọsílẹ̀ mọ́lẹ̀ ń jẹ́ kí ìgbékalẹ̀ máa bá a lọ láti àkọsílẹ̀ kan nígbà tí o bá yan òmíràn.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Ṣẹ́ nípa orúkọ ń dín Àkójọ Àkọsílẹ̀ gígùn kù láìgbé tàbí pa ohunkóhun rẹ́.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Ṣẹ́ nípa Irú ń fi sìláìdì, orin, PDF tàbí irú àkọsílẹ̀ mìíràn nìkan hàn.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Àwọn Àbùdá Bíbélì/Ọ̀rọ̀ Gígùn: Àwọn ètò àpèsè, Tọ́jú bí Ètò Àpèsè, Ọ̀rọ̀ aláwọ̀ fífẹ́ẹ́rẹ́ fún ẹ̀yìn dúdú, Àwọ̀ Àmì Ìtẹnumọ́, Ìlà Àyíká, Ìṣújú Òjìji àti Ìtànná.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Ẹ fihàn tàbí ẹ fi Àkójọ Àkọsílẹ̀ pamọ́. Àwọn Àṣàyàn Mìíràn rẹ̀ ní Fi Àwọn Fáìlì Inú Ẹ̀rọ kún un àti Kó wọlé, Sọ dọ̀tun ń ka fódà náà lẹ́ẹ̀kan sí i, mẹ́nù àkọsílẹ̀ kan sì ní Kó jáde àti Àkíyèsí Àwọ̀.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Tò ń tò Àkójọ Àkọsílẹ̀ láìyí fáìlì kankan padà; Yí i lọ sí òkè, Yí i lọ dé ìsàlẹ̀ àti Àwọn Àṣàyàn Yíyí Aládàáṣe ń ràn yín lọ́wọ́ láti rìn káàkiri àkójọ gígùn.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor ń fi fódà Ẹ̀yìn tí ó ṣí hàn; bí ẹ kò bá tíì yan fódà, ẹ tẹ Yàn fódà kan, Yàn Àtilẹ̀wá tàbí Lọ sí Àwọn Ètò.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Fi olóòtú ipa-ọ̀nà hàn ń fi fódà Ẹ̀yìn tí ó ṣí hàn; bí ẹ kò bá tíì yan fódà, ẹ tẹ Yàn fódà kan, Yàn Àtilẹ̀wá tàbí Lọ sí Àwọn Ètò.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Ẹ yan àkọsílẹ̀ kan, lẹ́yìn náà ẹ tẹ káàdì sìláìdì kan láti fi ránṣẹ́ sí àwọn olùwòran; Ṣàtúnṣe ìwọ̀n sìláìdì ń hàn nígbà tí ìwọ̀n rẹ̀ kò bá bá a mu, Tún gbé wọlé nígbà tí sìláìdì kò bá gbé wọlé.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Ẹ yan orin kan kí ẹ sì gbé àwọn sìláìdì pèpéle rẹ̀ kalẹ̀; lábẹ́ káàdì ìbòjú kan, Tẹ̀ láti yí Nọ́mbà Pèpéle padà, Mú pọ̀ síi tàbí Dín kù ń yan pèpéle tí ó ń fihàn.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Ẹ jẹ́ kí Olùgbékalẹ̀ wà lójú yín nígbà tí ẹ ń ṣàtúnṣe àkọsílẹ̀ tí ẹ yàn; Tọ́jú ń pa àwọn àyípadà mọ́.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Ṣé kí o kúrò ní Olùkàwé Bíbélì?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "O fẹ́ kúrò ní Olùkàwé Bíbélì láti lọ sí Olùgbékalẹ̀. Àwọn ẹsẹ rẹ yóò ṣì wà níbí nígbà tí o bá padà.",
     "To come back, click this tab at the top left of the Presenter:": "Láti padà, tẹ táàbù yìí ní òkè apá òsì Olùgbékalẹ̀:",
-    "Stay in Bible Reader": "Dúró ní Olùkàwé Bíbélì"
+    "Stay in Bible Reader": "Dúró ní Olùkàwé Bíbélì",
+    "Show path editor": "Fi olóòtú ipa-ọ̀nà hàn",
+    "Hide path editor": "Fi olóòtú ipa-ọ̀nà pamọ́",
+    "Background > Show path editor": "Background > Fi olóòtú ipa-ọ̀nà hàn",
+    "Document List > Show path editor": "Document List > Fi olóòtú ipa-ọ̀nà hàn"
 }

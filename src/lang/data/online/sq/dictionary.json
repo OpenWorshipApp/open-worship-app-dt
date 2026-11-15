@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Rregulloni një rend shërbimi: Shto veprim, Cakto një ekran të veçantë, Shto elementë CC dhe Shto kontroll medie në rreshtat e tij; Paraparje e rrjedhës së prezantimit e luan.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Më shumë opsione hap menynë e një paneli; ajo e Lista e dokumenteve ka Dokument i ri, Këngë e re, Importo nga URL, Shkarko nga URL dhe Importo nga SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importo nga këngët e domenit publik, te Më shumë opsione e Lista e dokumenteve, shfleton himne të integruara pa llogari.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor hap kutinë e dosjes mbi Lista e dokumenteve; klikoni me të djathtën mbi të për Kopjo në kujtesën e fragmenteve dhe Redakto rrugën mëmë, ose Shto seancë.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Shfaq redaktuesin e rrugës hap kutinë e dosjes mbi Lista e dokumenteve; klikoni me të djathtën mbi të për Kopjo në kujtesën e fragmenteve dhe Redakto rrugën mëmë, ose Shto seancë.",
     "Pin document keeps presenting from one document while you select another.": "Gozhdo dokumentin vazhdon prezantimin nga një dokument ndërsa zgjidhni një tjetër.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtro sipas emrit ngushton Lista e dokumenteve kur është e gjatë, pa zhvendosur apo fshirë asgjë.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtro sipas llojit shfaq vetëm diapozitivë, këngë, PDF ose një lloj tjetër dokumenti.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Vetitë e Biblës/tekstit të gjatë: Paracaktimet, Ruaj si paracaktim, Fjalë të çelëta për një sfond të errët, Ngjyra e theksimit, Kontur, Turbullimi i hijes dhe Shkëlqim.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Shfaqni ose fshihni panelin Lista e dokumenteve. Menyja Më shumë opsione e tij ka Shto skedarë lokalë dhe Importo, Rifresko e lexon sërish dosjen, ndërsa menyja e një dokumenti ka Eksporto dhe Shënim me ngjyrë.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Butoni Rendit rendit panelin Lista e dokumenteve pa ndryshuar asnjë skedar; Lëviz në krye, Luaj deri poshtë dhe Opsionet e lëvizjes automatike ju ndihmojnë të lëvizni nëpër një listë të gjatë.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor tregon cila dosje është e hapur te Sfondi; nëse ende nuk është zgjedhur dosje, zgjidhni Zgjidhni një dosje, Zgjidh parazgjedhjen ose Shko te cilësimet.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Shfaq redaktuesin e rrugës tregon cila dosje është e hapur te Sfondi; nëse ende nuk është zgjedhur dosje, zgjidhni Zgjidhni një dosje, Zgjidh parazgjedhjen ose Shko te cilësimet.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Zgjidhni një dokument, pastaj klikoni një kartë diapozitivi për ta dërguar te publiku; Rregullo përmasat e diapozitivit shfaqet kur përmasa nuk përputhet, Ringarko kur diapozitivët nuk ngarkohen.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Zgjidhni një këngë dhe prezantoni diapozitivët e saj për skenën; nën një kartë ekrani, „Klikoni për të ndryshuar numrin e skenës“, Rrit ose Zvogëlo zgjedh skenën që shfaq.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Mbajeni Prezantuesin para syve ndërsa redaktoni dokumentin e zgjedhur; Ruaj i ruan ndryshimet.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Të dilet nga Lexuesi i Biblës?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Jeni duke dalë nga Lexuesi i Biblës për të shkuar te Prezantuesi. Pasazhet tuaja do të jenë këtu kur të ktheheni.",
     "To come back, click this tab at the top left of the Presenter:": "Për t’u kthyer, klikoni këtë skedë lart majtas te Prezantuesi:",
-    "Stay in Bible Reader": "Qëndro te Lexuesi i Biblës"
+    "Stay in Bible Reader": "Qëndro te Lexuesi i Biblës",
+    "Show path editor": "Shfaq redaktuesin e rrugës",
+    "Hide path editor": "Fshih redaktuesin e rrugës",
+    "Background > Show path editor": "Background > Shfaq redaktuesin e rrugës",
+    "Document List > Show path editor": "Document List > Shfaq redaktuesin e rrugës"
 }

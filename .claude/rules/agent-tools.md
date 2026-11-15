@@ -346,7 +346,15 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   in every language, so in a Khmer window `ព្រះគម្ពីរ > ត្រងតាមឈ្មោះ`
   matched nothing and `Bibles > ត្រងតាមឈ្មោះ` lands. That variant is the last
   find, because the renderer's inline fallback (`getDailyTipGuide`) takes the
-  last one.
+  last one. **A step whose translated panel name sits inside another
+  panel's keeps the English one alone** (2026-11-15, `isPanelNameKept` in
+  `getReaderDemo`): since a scope also matches the name a panel SHOWS, Khmer's
+  Bibles, `ព្រះគម្ពីរ`, covered Bible Notes, `កំណត់ត្រាព្រះគម្ពីរ` ("notes
+  of the Bible", unspaced), and the host's card took that find first and
+  refused the press as one of two twins. The Presenter catalog translates a
+  scoped find WHOLE, so `Background > Show path editor` is a dictionary key of
+  its own whose value keeps the English panel; `dailyTipTranslations.test.ts`
+  holds every key a tip hands `tran()` for a find to every package.
   The coverage map is `tools/owa-devtools-mcp/reader-demo-coverage.md`; the
   measured figure is `/owa-enhance-tips`'s, against a control inventory per
   window (`.claude/skills/owa-enhance-tips/references/inventory/`).

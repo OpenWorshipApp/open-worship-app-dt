@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "סדרו סדר אירוע: הוספת פעולה, הגדרת מסך מסוים, הוספת אלמנטי CC והוספת בקרת מדיה בשורות שלו; תצוגה מקדימה של סדר האירוע מריצה אותו.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "אפשרויות נוספות פותח את התפריט של חלונית; בזה של רשימת מסמכים יש מסמך חדש, שיר חדש, ייבוא מ-URL, הורדה מ-URL וייבוא מ-SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "ייבוא משירי נחלת הכלל, באפשרויות נוספות של רשימת מסמכים, מאפשר לעיין במזמורים מובנים ללא חשבון.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor פותח את תיבת התיקייה מעל רשימת מסמכים; לחיצה ימנית עליה מציעה העתקה ללוח ועריכת נתיב האב, או הוספת מפגש.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "\"הצגת עורך נתיב\" פותח את תיבת התיקייה מעל רשימת מסמכים; לחיצה ימנית עליה מציעה העתקה ללוח ועריכת נתיב האב, או הוספת מפגש.",
     "Pin document keeps presenting from one document while you select another.": "הצמדת מסמך ממשיכה להציג ממסמך אחד בזמן שאתם בוחרים מסמך אחר.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "סינון לפי שם מצמצם רשימת מסמכים ארוכה בלי להזיז או למחוק דבר.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "סינון לפי סוג מציג רק שקופיות, שירים, קובצי PDF או סוג מסמך אחר.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "מאפייני כתבי הקודש/טקסט ארוך: הגדרות קבועות, שמירה כהגדרה קבועה, מילים בהירות לרקע כהה, צבע הדגשה, מתאר, טשטוש צל וזוהר.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "הציגו או הסתירו את רשימת מסמכים. בתפריט אפשרויות נוספות שלה נמצאים הוספת קבצים מקומיים וגם ייבוא, הכפתור רענון קורא שוב את התיקייה, ובתפריט של מסמך יש ייצוא וגם הערת צבע.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "הכפתור מיון ממיין את רשימת מסמכים בלי לשנות אף קובץ; גלילה לראש, ניגון עד התחתית וגם אפשרויות גלילה אוטומטית עוזרים לנוע ברשימה ארוכה.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor מראה איזו תיקיית רקע פתוחה; אם עדיין לא נבחרה תיקייה, לחצו על בחירת תיקייה, בחירת ברירת מחדל או מעבר להגדרות.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "\"הצגת עורך נתיב\" מראה איזו תיקיית רקע פתוחה; אם עדיין לא נבחרה תיקייה, לחצו על בחירת תיקייה, בחירת ברירת מחדל או מעבר להגדרות.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "בחרו מסמך ואז לחצו על כרטיס שקופית כדי לשלוח אותה לקהל; תיקון ממד השקופית מופיע כשהגודל שלה אינו תואם, והכפתור טעינה מחדש כשהשקופיות לא נטענות.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "בחרו שיר והציגו את שקופיות הבמה שלו; מתחת לכרטיס מסך, לחצו כדי לשנות את מספר הבמה, הגדלה או הפחתה בוחרים איזו במה הוא מציג.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "השאירו את המציג בתצוגה בזמן שאתם עורכים את המסמך הנבחר; הכפתור שמירה שומר את השינויים.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "לצאת מקורא כתבי הקודש?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "אתם עומדים לצאת מקורא כתבי הקודש ולעבור למציג. הקטעים שלכם יחכו כאן כשתחזרו.",
     "To come back, click this tab at the top left of the Presenter:": "כדי לחזור, לחצו על הכרטיסייה הזו בפינה השמאלית העליונה של המציג:",
-    "Stay in Bible Reader": "להישאר בקורא כתבי הקודש"
+    "Stay in Bible Reader": "להישאר בקורא כתבי הקודש",
+    "Show path editor": "הצגת עורך נתיב",
+    "Hide path editor": "הסתרת עורך נתיב",
+    "Background > Show path editor": "Background > הצגת עורך נתיב",
+    "Document List > Show path editor": "Document List > הצגת עורך נתיב"
 }

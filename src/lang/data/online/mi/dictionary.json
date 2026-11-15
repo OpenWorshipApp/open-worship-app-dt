@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Whakaraupapahia te raupapa: Tāpiri Mahi, Tautuhi Mata Motuhake, Tāpiri Huānga CC me Tāpiri Mana Pāpāho ki ōna rārangi; mā te Arokite Raupapa Whakaatu e whakahaere.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Ka huakina e Ētahi atu Kōwhiringa te tahua o tētahi pae; kei tō te Rārangi Tuhinga te Tuhinga Taupānga Hōu, te Waiata Hōu, te Kawemai mai i te URL, te Tikiake mai i te URL me te Kawemai mai i SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Ko Kawemai mai i ngā Waiata Rohe Tūmatanui, kei Ētahi atu Kōwhiringa o te Rārangi Tuhinga, ka tirotiro i ngā hīmene kua roto kē, kāore he pūkete e hiahiatia.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Ka huakina e Show path editor te pouaka kōpaki i runga ake i te Rārangi Tuhinga; pāwhiri-matau ki reira mō Tāruatia ki te Papatopenga me Whakatika Ara Matua, mō Tāpiri Wātū rānei.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Ka huakina e Whakaatu i te kaiwhakatika ara te pouaka kōpaki i runga ake i te Rārangi Tuhinga; pāwhiri-matau ki reira mō Tāruatia ki te Papatopenga me Whakatika Ara Matua, mō Tāpiri Wātū rānei.",
     "Pin document keeps presenting from one document while you select another.": "Mā te Titi tuhinga e whakaatu tonu mai i tētahi tuhinga i a koe e tīpako ana i tētahi atu.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Ka whāiti te Tātari mā te ingoa i tētahi Rārangi Tuhinga roa, kāore he mea e nukuhia, e mukua rānei.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Ka whakaatu noa te Tātari mā te Momo i ngā kiriata, ngā waiata, ngā PDF, tētahi atu momo tuhinga rānei.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Āhuatanga Paipera/Kuputuhi Roa: Ngā Tautuhinga Tōmua, Tiaki hei Tautuhinga Tōmua, Kupu mārama mō tētahi papamuri pōuri, Tae Miramira, Whakahuahua, Pōkēkē Atarangi me Kanapa.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Whakaatu, huna rānei i te Rārangi Tuhinga. Kei te tahua Ētahi atu Kōwhiringa o taua pae ko Tāpiri Kōnae ā-Rohe me Kawemai, ka pānui anō a Whakahou i te kōpaki, ā, kei te tahua o tētahi tuhinga ko Kaweatu me Tuhipoka Tae.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Ka kōmaka a Kōmaka i te Rārangi Tuhinga me te kore e panoni i tētahi kōnae; mā Panuku ki runga, Pūrei ki raro me Ngā Kōwhiringa Panuku Aunoa e neke i roto i tētahi rārangi roa.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Ka whakaatu a Show path editor ko tēhea kōpaki Papamuri e tuwhera ana; ki te kore anō he kōpaki kia kōwhiria, whakamahia te Kōwhiria he kōpaki, te Tīpako Taunoa, te Haere ki Tautuhinga rānei.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Ka whakaatu a Whakaatu i te kaiwhakatika ara ko tēhea kōpaki Papamuri e tuwhera ana; ki te kore anō he kōpaki kia kōwhiria, whakamahia te Kōwhiria he kōpaki, te Tīpako Taunoa, te Haere ki Tautuhinga rānei.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Tīpakohia tētahi tuhinga, kātahi ka pāwhiri i tētahi kāri kiriata hei tuku ki te minenga; ka puta a Whakatikahia te rahinga kiriata ina kāore e hāngai te rahi, ā, a Uta anō ina kāore ngā kiriata e uta.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Kōwhiria tētahi waiata, ā, whakaaturia ōna kiriata atamira; i raro i tētahi kāri mata, mā Pāwhiri hei huri i te Nama Atamira, Whakanui, Whakaiti rānei e kōwhiri te atamira ka whakaaturia.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Kia kitea tonu te Kaiwhakaatu i a koe e whakatika ana i te tuhinga kua tīpakohia; mā Tiaki e tiaki ngā panoni.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Me wehe i te Kaipānui Paipera?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Kei te wehe koe i te Kaipānui Paipera ka haere ki te Kaiwhakaatu. Ka noho tonu mai ō irava ki konei ina hoki mai koe.",
     "To come back, click this tab at the top left of the Presenter:": "Hei hoki mai, pāwhiritia tēnei ripa ki runga mauī o te Kaiwhakaatu:",
-    "Stay in Bible Reader": "Noho ki te Kaipānui Paipera"
+    "Stay in Bible Reader": "Noho ki te Kaipānui Paipera",
+    "Show path editor": "Whakaatu i te kaiwhakatika ara",
+    "Hide path editor": "Huna i te kaiwhakatika ara",
+    "Background > Show path editor": "Background > Whakaatu i te kaiwhakatika ara",
+    "Document List > Show path editor": "Document List > Whakaatu i te kaiwhakatika ara"
 }

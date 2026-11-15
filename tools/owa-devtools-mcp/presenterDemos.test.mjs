@@ -163,11 +163,6 @@ describe('Presenter demos', () => {
         expect(step.finds.every((find) => find.startsWith(`${panel} > `))).toBe(
           true,
         );
-        if (step.find.endsWith(' > Show path editor')) {
-          // TP-01: the path editor's title is English in every language.
-          expect(step.finds).toEqual([step.find]);
-          continue;
-        }
         expect(step.finds.some((find) => find.includes('translated:'))).toBe(
           true,
         );

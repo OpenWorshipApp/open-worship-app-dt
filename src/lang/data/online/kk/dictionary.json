@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Орындалу ретін құрыңыз: жолдарда «Әрекет қосу», «Нақты экранды орнату», «CC элементтерін қосу» және «Медиа басқаруын қосу»; «Көрсету жоспарын алдын ала қарау» оны іске қосады.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "«Қосымша опциялар» панельдің мәзірін ашады; «Құжаттар тізімі» мәзірінде «Жаңа қолданба құжаты», «Жаңа ән мәтіні», «URL мекенжайынан импорттау», «URL мекенжайынан жүктеп алу» және «SongSelect-тен импорттау» бар.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "«Құжаттар тізімі» ішіндегі «Қосымша опциялар» мәзіріндегі «Қоғамдық игілік әндерінен импорттау» тіркелгісіз кірістірілген гимндерді шолуға мүмкіндік береді.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor «Құжаттар тізімі» үстіндегі қалта өрісін ашады; оны тінтуірдің оң жақ батырмасымен басып, «Буферге көшіру» және «Басты жолды өзгерту» немесе «Сеанс қосу» таңдаңыз.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "«Жол өңдегішін көрсету» «Құжаттар тізімі» үстіндегі қалта өрісін ашады; оны тінтуірдің оң жақ батырмасымен басып, «Буферге көшіру» және «Басты жолды өзгерту» немесе «Сеанс қосу» таңдаңыз.",
     "Pin document keeps presenting from one document while you select another.": "«Құжатты бекіту» басқа құжатты таңдаған кезде де бір құжаттан көрсетуді жалғастырады.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "«Атауы бойынша сүзу» ұзын «Құжаттар тізімі» панелін ештеңені жылжытпай не жоймай тарылтады.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "«Түрі бойынша сүзу» тек слайдтарды, ән мәтіндерін, PDF файлдарын немесе басқа бір құжат түрін көрсетеді.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "«Киелі кітап/ұзын мәтін қасиеттері»: «Алдын ала орнатылғандар», «Үлгі ретінде сақтау», «Қараңғы фонға арналған ашық мәтін», «Бөлектеу түсі», «Контур», «Көлеңке бұлыңғырлығы» және «Жарқыл».",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "«Құжаттар тізімі» панелін ашыңыз не жабыңыз. Оның «Қосымша опциялар» мәзірінде «Жергілікті файлдарды қосу» және «Импорттау» бар, «Жаңарту» батырмасы қалтаны қайта оқиды, ал құжат мәзірінде «Экспорттау» және «Жазба түсі» бар.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "«Сұрыптау» батырмасы ешбір файлды өзгертпей «Құжаттар тізімі» панеліндегі құжаттарды сұрыптайды; ұзын тізімде «Жоғарыға айналдыру», «Соңына дейін айналдыру» және «Автоайналдыру опциялары» арқылы жылжисыз.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor қай «Фон» қалтасы ашық екенін көрсетеді; әлі қалта таңдалмаса, «Қалтаны таңдау», «Әдепкіні таңдау» немесе «Параметрлерге өту» батырмасын басыңыз.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "«Жол өңдегішін көрсету» қай «Фон» қалтасы ашық екенін көрсетеді; әлі қалта таңдалмаса, «Қалтаны таңдау», «Әдепкіні таңдау» немесе «Параметрлерге өту» батырмасын басыңыз.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Құжатты таңдап, слайд карточкасын басып, оны көрермендерге жіберіңіз; өлшемі сәйкес келмесе «Слайд өлшемін түзету», слайдтар жүктелмесе «Қайта жүктеу» батырмасы шығады.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Ән мәтінін таңдап, оның сахналық слайдтарын көрсетіңіз; экран карточкасының астындағы «Сахна нөмірін өзгерту үшін басыңыз», «Арттыру» немесе «Азайту» батырмасы ол көрсететін сахнаны таңдайды.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Таңдалған құжатты өңдеген кезде Көрсетушіні көрінетін күйде қалдырыңыз; «Сақтау» батырмасы өзгерістерді сақтайды.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Киелі кітап оқудан шығасыз ба?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Сіз Киелі кітап оқудан шығып, Көрсетушіге өткелі тұрсыз. Қайтып келгенде үзінділеріңіз осында болады.",
     "To come back, click this tab at the top left of the Presenter:": "Қайту үшін Көрсетушінің жоғарғы сол жағындағы осы қойындыны басыңыз:",
-    "Stay in Bible Reader": "Киелі кітап оқуда қалу"
+    "Stay in Bible Reader": "Киелі кітап оқуда қалу",
+    "Show path editor": "Жол өңдегішін көрсету",
+    "Hide path editor": "Жол өңдегішін жасыру",
+    "Background > Show path editor": "Background > Жол өңдегішін көрсету",
+    "Document List > Show path editor": "Document List > Жол өңдегішін көрсету"
 }

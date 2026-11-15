@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Sắp xếp trình tự buổi lễ: Thêm hành động, Đặt màn hình chiếu cụ thể, Thêm phần tử CC và Thêm điều khiển phương tiện trên các hàng; Xem trước trình tự buổi lễ chạy thử.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Thêm tùy chọn mở menu của một bảng; menu của Danh sách tài liệu có Tài liệu mới, Bài hát mới, Nhập từ URL, Tải xuống từ URL và Nhập từ SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Nhập từ Bài hát phạm vi công cộng, trong Thêm tùy chọn của Danh sách tài liệu, duyệt các bài thánh ca có sẵn mà không cần tài khoản.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor mở ô thư mục phía trên Danh sách tài liệu; nhấp chuột phải vào đó để Sao chép vào bộ nhớ tạm và Sửa đường dẫn gốc, hoặc Thêm phiên.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Hiện trình sửa đường dẫn mở ô thư mục phía trên Danh sách tài liệu; nhấp chuột phải vào đó để Sao chép vào bộ nhớ tạm và Sửa đường dẫn gốc, hoặc Thêm phiên.",
     "Pin document keeps presenting from one document while you select another.": "Ghim tài liệu giữ việc trình chiếu từ một tài liệu trong khi bạn chọn tài liệu khác.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Lọc theo tên thu gọn một Danh sách tài liệu dài mà không di chuyển hay xóa gì.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Lọc theo loại chỉ hiện trang chiếu, lời bài hát, PDF hoặc một loại tài liệu khác.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Thuộc tính Kinh Thánh/văn bản dài: Mẫu cài sẵn, Lưu thành mẫu cài sẵn, Chữ sáng cho nền tối, Màu tô sáng, Đường viền, Độ nhòe của bóng và Phát sáng.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Bật hoặc tắt Danh sách tài liệu. Thêm tùy chọn của bảng này có Thêm tệp cục bộ và Nhập, Làm mới đọc lại thư mục, còn menu của một tài liệu có Xuất và Màu ghi chú.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Sắp xếp sắp xếp Danh sách tài liệu mà không thay đổi tệp nào; Cuộn lên đầu, Phát đến cuối và Tùy chọn cuộn tự động giúp đi qua một danh sách dài.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor cho biết thư mục Nền nào đang mở; khi chưa chọn thư mục, dùng Chọn một thư mục, Chọn mặc định hoặc Đến Cài đặt.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Hiện trình sửa đường dẫn cho biết thư mục Nền nào đang mở; khi chưa chọn thư mục, dùng Chọn một thư mục, Chọn mặc định hoặc Đến Cài đặt.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Chọn một tài liệu, rồi nhấp vào một thẻ trang chiếu để gửi lên màn hình chiếu; Sửa kích thước trang chiếu hiện ra khi kích thước không khớp, Tải lại khi trang chiếu không tải được.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Chọn một bài hát và trình chiếu các trang chiếu sân khấu của nó; dưới thẻ màn hình, Nhấp để đổi số màn hình sân khấu, Tăng hoặc Giảm chọn sân khấu được hiển thị.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Giữ Trình chiếu trong tầm nhìn khi bạn sửa tài liệu đã chọn; Lưu lưu các thay đổi.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Rời khỏi Đọc Kinh Thánh?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Bạn sắp rời khỏi Đọc Kinh Thánh và chuyển sang Trình chiếu. Các đoạn Kinh Thánh của bạn vẫn sẽ ở đây khi bạn quay lại.",
     "To come back, click this tab at the top left of the Presenter:": "Để quay lại, hãy nhấp vào thẻ này ở góc trên bên trái của Trình chiếu:",
-    "Stay in Bible Reader": "Ở lại Đọc Kinh Thánh"
+    "Stay in Bible Reader": "Ở lại Đọc Kinh Thánh",
+    "Show path editor": "Hiện trình sửa đường dẫn",
+    "Hide path editor": "Ẩn trình sửa đường dẫn",
+    "Background > Show path editor": "Background > Hiện trình sửa đường dẫn",
+    "Document List > Show path editor": "Document List > Hiện trình sửa đường dẫn"
 }

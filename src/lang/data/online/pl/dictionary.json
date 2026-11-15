@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Ułóż kolejność: w jej wierszach Dodaj akcję, Ustaw konkretny ekran, Dodaj elementy CC i Dodaj sterowanie multimediami; Podgląd planu nabożeństwa ją uruchamia.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Więcej opcji otwiera menu panelu; menu panelu Lista dokumentów ma Nowy dokument aplikacji, Nowy tekst pieśni, Importuj z adresu URL, Pobierz z adresu URL i Importuj z SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Importuj z pieśni domeny publicznej, w Więcej opcji panelu Lista dokumentów, przegląda wbudowane hymny bez konta.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor otwiera pole folderu nad Lista dokumentów; kliknij je prawym przyciskiem, aby wybrać Kopiuj do schowka i Edytuj ścieżkę nadrzędną lub Dodaj sesję.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "„Pokaż edytor ścieżki” otwiera pole folderu nad Lista dokumentów; kliknij je prawym przyciskiem, aby wybrać Kopiuj do schowka i Edytuj ścieżkę nadrzędną lub Dodaj sesję.",
     "Pin document keeps presenting from one document while you select another.": "Przypnij dokument utrzymuje prezentację z jednego dokumentu, gdy wybierasz inny.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Filtruj według nazwy zawęża długą Lista dokumentów bez przenoszenia i usuwania czegokolwiek.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Filtruj według typu pokazuje tylko slajdy, teksty pieśni, pliki PDF lub inny rodzaj dokumentu.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Właściwości Biblii/długiego tekstu: Ustawienia wstępne, Zapisz jako ustawienie wstępne, Jasny tekst na ciemnym tle, Kolor zakreślenia, Kontur, Rozmycie cienia i Poświata.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Pokaż lub ukryj „Lista dokumentów”. Jej menu „Więcej opcji” ma „Dodaj pliki lokalne” i „Importuj”, „Odśwież” ponownie odczytuje folder, a menu dokumentu ma „Eksportuj” i „Kolor notatki”.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "„Sortuj” porządkuje „Lista dokumentów” bez zmiany pliku; „Przewiń na górę”, „Przewiń na dół” i „Opcje automatycznego przewijania” pomagają poruszać się po długiej liście.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "„Show path editor” pokazuje, który folder karty „Tło” jest otwarty; jeśli folder nie jest jeszcze wybrany, naciśnij „Wybierz folder”, „Wybierz domyślne” lub „Przejdź do ustawień”.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "„Pokaż edytor ścieżki” pokazuje, który folder karty „Tło” jest otwarty; jeśli folder nie jest jeszcze wybrany, naciśnij „Wybierz folder”, „Wybierz domyślne” lub „Przejdź do ustawień”.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Wybierz dokument, a potem kliknij kartę slajdu, aby wysłać go do publiczności; „Napraw wymiar slajdu” pojawia się, gdy rozmiar się nie zgadza, a „Załaduj ponownie”, gdy slajdy się nie wczytają.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Wybierz tekst pieśni i zaprezentuj jego slajdy sceniczne; pod kartą ekranu „Kliknij, aby zmienić numer sceny”, „Zwiększ” lub „Zmniejsz” wybiera scenę, którą pokazuje.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "„Prezentacja” pozostaje na widoku, gdy edytujesz wybrany dokument; „Zapisz” zapisuje zmiany.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Opuścić Czytanie Biblii?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Zamierzasz opuścić Czytanie Biblii i przejść do Prezentacji. Twoje fragmenty będą tu, gdy wrócisz.",
     "To come back, click this tab at the top left of the Presenter:": "Aby wrócić, kliknij tę kartę w lewym górnym rogu Prezentacji:",
-    "Stay in Bible Reader": "Zostań w Czytaniu Biblii"
+    "Stay in Bible Reader": "Zostań w Czytaniu Biblii",
+    "Show path editor": "Pokaż edytor ścieżki",
+    "Hide path editor": "Ukryj edytor ścieżki",
+    "Background > Show path editor": "Background > Pokaż edytor ścieżki",
+    "Document List > Show path editor": "Document List > Pokaż edytor ścieżki"
 }

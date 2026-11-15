@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Составьте порядок служения: в его строках Добавить действие, Задать конкретный экран, Добавить элементы CC и Добавить управление медиа; Предпросмотр плана служения запускает его.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Ещё открывает меню панели; в меню панели Список документов есть Новый документ, Новый текст песни, Импортировать по URL, Скачать по URL и Импорт из SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Импорт из песен общественного достояния в меню Ещё панели Список документов открывает встроенные гимны без учётной записи.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor открывает поле папки над панелью Список документов; щёлкните его правой кнопкой, чтобы выбрать Копировать в буфер обмена и Изменить родительский путь или Добавить сеанс.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "«Показать редактор пути» открывает поле папки над панелью Список документов; щёлкните его правой кнопкой, чтобы выбрать Копировать в буфер обмена и Изменить родительский путь или Добавить сеанс.",
     "Pin document keeps presenting from one document while you select another.": "Закрепить документ продолжает показ из одного документа, пока вы выбираете другой.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Фильтр по имени сужает длинный Список документов, ничего не перемещая и не удаляя.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Фильтр по типу показывает только слайды, тексты песен, PDF или другой вид документов.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Свойства Библии/длинного текста: Пресеты, Сохранить как пресет, Светлый текст для тёмного фона, Цвет выделения, Контур, Размытие тени и Свечение.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Покажите или скройте «Список документов». В его меню «Ещё» есть «Добавить локальные файлы» и «Импортировать», «Обновить» заново читает папку, а в меню документа есть «Экспортировать» и «Цвет заметки».",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "«Сортировка» упорядочивает «Список документов», не меняя файлы; «Прокрутить наверх», «Прокрутить до конца» и «Параметры автопрокрутки» помогают перемещаться по длинному списку.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "«Show path editor» показывает, какая папка вкладки «Фон» открыта; если папка ещё не выбрана, нажмите «Выбрать папку», «Выбрать по умолчанию» или «Перейти к настройкам».",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "«Показать редактор пути» показывает, какая папка вкладки «Фон» открыта; если папка ещё не выбрана, нажмите «Выбрать папку», «Выбрать по умолчанию» или «Перейти к настройкам».",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Выберите документ, затем щёлкните карточку слайда, чтобы отправить его зрителям; «Исправить размер слайда» появляется, если размер не совпадает, а «Перезагрузить» — если слайды не загрузились.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Выберите текст песни и выведите его слайды для сцены; под карточкой экрана «Нажмите, чтобы изменить номер экрана для сцены», «Увеличить» или «Уменьшить» выбирают, какую сцену он показывает.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Окно «Показ» остаётся на виду, пока вы редактируете выбранный документ; «Сохранить» сохраняет изменения.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Выйти из Чтения Библии?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Вы собираетесь выйти из Чтения Библии и перейти к Показу. Когда вернётесь, ваши отрывки будут здесь.",
     "To come back, click this tab at the top left of the Presenter:": "Чтобы вернуться, нажмите эту вкладку вверху слева в Показе:",
-    "Stay in Bible Reader": "Остаться в Чтении Библии"
+    "Stay in Bible Reader": "Остаться в Чтении Библии",
+    "Show path editor": "Показать редактор пути",
+    "Hide path editor": "Скрыть редактор пути",
+    "Background > Show path editor": "Background > Показать редактор пути",
+    "Document List > Show path editor": "Document List > Показать редактор пути"
 }

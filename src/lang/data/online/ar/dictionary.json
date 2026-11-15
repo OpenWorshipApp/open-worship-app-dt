@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "رتّب تسلسل الخدمة: إضافة إجراء، تعيين شاشة محددة، إضافة عناصر CC و إضافة تحكم في الوسائط على صفوفه؛ و معاينة ترتيب الخدمة يشغّله.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "مزيد من الخيارات يفتح قائمة اللوحة؛ وفي قائمة المستندات: مستند جديد، ترنيمة جديدة، استيراد من رابط، تنزيل من رابط و استيراد من SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "استيراد من ترانيم الملكية العامة، ضمن مزيد من الخيارات في قائمة المستندات، يتيح تصفح ترانيم مدمجة دون حساب.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor يفتح مربع المجلد أعلى قائمة المستندات؛ انقر عليه بزر الفأرة الأيمن لـ نسخ إلى الحافظة و تحرير المسار الأصل، أو إضافة جلسة.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "«إظهار محرر المسار» يفتح مربع المجلد أعلى قائمة المستندات؛ انقر عليه بزر الفأرة الأيمن لـ نسخ إلى الحافظة و تحرير المسار الأصل، أو إضافة جلسة.",
     "Pin document keeps presenting from one document while you select another.": "تثبيت المستند يُبقي العرض من مستند واحد بينما تحدد مستندًا آخر.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "تصفية بالاسم تضيّق قائمة المستندات الطويلة دون نقل أي شيء أو حذفه.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "تصفية حسب النوع تعرض الشرائح أو الترانيم أو ملفات PDF أو نوعًا آخر من المستندات فقط.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "خصائص الكتاب المقدس/النص الطويل: إعدادات مسبقة، حفظ كإعداد مسبق، كلمات فاتحة لخلفية داكنة، لون التمييز، حدود خارجية، تمويه الظل و توهج.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "أظهر قائمة المستندات أو أخفها. في مزيد من الخيارات: إضافة ملفات محلية و استيراد، ويعيد تحديث قراءة المجلد، وفي قائمة المستند: تصدير و ملاحظة اللون.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "يرتّب الزر ترتيب قائمة المستندات دون تغيير أي ملف؛ و التمرير إلى الأعلى و تشغيل حتى الأسفل و خيارات التمرير التلقائي للتنقل في قائمة طويلة.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "يُظهر Show path editor مجلد الخلفية المفتوح؛ وإن لم يُختر مجلد بعد: اختيار مجلد أو تحديد الافتراضي أو الانتقال إلى الإعدادات.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "يُظهر «إظهار محرر المسار» مجلد الخلفية المفتوح؛ وإن لم يُختر مجلد بعد: اختيار مجلد أو تحديد الافتراضي أو الانتقال إلى الإعدادات.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "حدّد مستندًا، ثم انقر بطاقة شريحة لإرسالها إلى الحضور؛ يظهر إصلاح أبعاد الشريحة عندما لا يطابق حجمها، و إعادة التحميل عندما يتعذّر تحميل الشرائح.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "اختر ترنيمة واعرض شرائح المنصة الخاصة بها؛ وأسفل بطاقة الشاشة، يختار انقر لتغيير رقم شاشة المنصة أو زيادة أو إنقاص شاشة المنصة التي تعرضها.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "أبقِ العرض ظاهرًا أثناء تحرير المستند المحدد؛ ويحفظ حفظ التغييرات.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "هل تريد مغادرة صفحة القراءة؟",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "أنت على وشك مغادرة صفحة القراءة والانتقال إلى العرض. ستبقى مقاطعك هنا عند عودتك.",
     "To come back, click this tab at the top left of the Presenter:": "للعودة، انقر على علامة التبويب هذه في أعلى يسار العرض:",
-    "Stay in Bible Reader": "البقاء في القراءة"
+    "Stay in Bible Reader": "البقاء في القراءة",
+    "Show path editor": "إظهار محرر المسار",
+    "Hide path editor": "إخفاء محرر المسار",
+    "Background > Show path editor": "Background > إظهار محرر المسار",
+    "Document List > Show path editor": "Document List > إظهار محرر المسار"
 }

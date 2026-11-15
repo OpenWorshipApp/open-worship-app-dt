@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "कार्यक्रमाचा क्रम लावा: त्याच्या ओळींवर क्रिया जोडा, विशिष्ट स्क्रीन सेट करा, CC घटक जोडा आणि मीडिया नियंत्रण जोडा; सेवा क्रमाचे पूर्वावलोकन करा तो चालवते.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "अधिक पर्याय पॅनेलचा मेनू उघडते; दस्तऐवज यादी मेनूमध्ये नवीन ॲप दस्तऐवज, नवीन गीत, URL वरून आयात करा, URL वरून डाउनलोड करा आणि SongSelect वरून आयात करा आहेत.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "दस्तऐवज यादी पॅनेलच्या अधिक पर्याय मेनूतील सार्वजनिक डोमेन गीतांमधून आयात करा खात्याशिवाय अंगभूत भजने दाखवते.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor दस्तऐवज यादी पॅनेलवर फोल्डर बॉक्स उघडतो; क्लिपबोर्डवर कॉपी करा आणि पालक पाथ संपादित करा, किंवा सत्र जोडा साठी त्यावर उजवे-क्लिक करा.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "‘पाथ संपादक दाखवा’ दस्तऐवज यादी पॅनेलवर फोल्डर बॉक्स उघडतो; क्लिपबोर्डवर कॉपी करा आणि पालक पाथ संपादित करा, किंवा सत्र जोडा साठी त्यावर उजवे-क्लिक करा.",
     "Pin document keeps presenting from one document while you select another.": "दस्तऐवज पिन करा बटणामुळे तुम्ही दुसरा दस्तऐवज निवडला तरी एकाच दस्तऐवजातून सादरीकरण चालू राहते.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "नावाने फिल्टर करा काहीही न हलवता किंवा न हटवता लांब दस्तऐवज यादी लहान करते.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "प्रकाराने फिल्टर करा फक्त स्लाइड, गीते, PDF किंवा इतर प्रकारचे दस्तऐवज दाखवते.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "बायबल/दीर्घ मजकूर गुणधर्म: प्रीसेट, प्रीसेट म्हणून जतन करा, गडद पार्श्वभूमीसाठी हलके शब्द, हायलाइटचा रंग, बाह्यरेखा, सावली ब्लर आणि ग्लो.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "दस्तऐवज यादी चालू किंवा बंद करा. तिच्या ‘अधिक पर्याय’ मध्ये ‘स्थानिक फाइली जोडा’ आणि ‘आयात करा’ आहेत, ‘रिफ्रेश करा’ फोल्डर पुन्हा वाचते, आणि दस्तऐवजाच्या मेनूमध्ये ‘निर्यात करा’ आणि ‘रंगीत टीप’ आहेत.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘क्रमवारी लावा’ कोणतीही फाइल न बदलता दस्तऐवज यादी क्रमाने लावते; लांब यादीत फिरण्यासाठी ‘सर्वात वर स्क्रोल करा’, ‘खालपर्यंत प्ले करा’ आणि ‘स्वयं स्क्रोल पर्याय’ वापरा.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor कोणते पार्श्वभूमी फोल्डर उघडे आहे ते दाखवतो; अजून फोल्डर निवडले नसल्यास ‘फोल्डर निवडा’, ‘डीफॉल्ट निवडा’ किंवा ‘सेटिंग्जवर जा’ निवडा.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "‘पाथ संपादक दाखवा’ कोणते पार्श्वभूमी फोल्डर उघडे आहे ते दाखवतो; अजून फोल्डर निवडले नसल्यास ‘फोल्डर निवडा’, ‘डीफॉल्ट निवडा’ किंवा ‘सेटिंग्जवर जा’ निवडा.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "एक दस्तऐवज निवडा, मग स्लाइड कार्डवर क्लिक करून ती प्रेक्षकांना पाठवा; आकार जुळत नसल्यास ‘स्लाइडचे परिमाण दुरुस्त करा’ दिसते, आणि स्लाइड लोड न झाल्यास ‘रीलोड करा’.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "एक गीत निवडा आणि त्याच्या स्टेज स्लाइड सादर करा; स्क्रीन कार्डखाली ‘स्टेज क्रमांक बदलण्यासाठी क्लिक करा’, ‘वाढवा’ किंवा ‘कमी करा’ ने ते कार्ड कोणता स्टेज दाखवेल ते निवडा.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "निवडलेला दस्तऐवज संपादित करताना सादरकर्ता दिसत राहू द्या; ‘जतन करा’ बदल जतन करते.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "बायबल वाचन सोडायचे?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "तुम्ही बायबल वाचन सोडून सादरकर्त्याकडे जात आहात. परत आल्यावर तुमचे उतारे इथेच असतील.",
     "To come back, click this tab at the top left of the Presenter:": "परत येण्यासाठी, सादरकर्त्याच्या वर डावीकडील या टॅबवर क्लिक करा:",
-    "Stay in Bible Reader": "बायबल वाचनातच राहा"
+    "Stay in Bible Reader": "बायबल वाचनातच राहा",
+    "Show path editor": "पाथ संपादक दाखवा",
+    "Hide path editor": "पाथ संपादक लपवा",
+    "Background > Show path editor": "Background > पाथ संपादक दाखवा",
+    "Document List > Show path editor": "Document List > पाथ संपादक दाखवा"
 }

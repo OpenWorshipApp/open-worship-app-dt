@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "වැඩසටහනේ අනුපිළිවෙළ සකසන්න: එහි පේළිවල ක්‍රියාවක් එක් කරන්න, නිශ්චිත තිරයක් සකසන්න, CC මූලාංග එක් කරන්න සහ මාධ්‍ය පාලනයක් එක් කරන්න; ඉදිරිපත් කිරීමේ ප්‍රවාහය පෙරදසුන් කරන්න එය ධාවනය කරයි.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "තවත් විකල්ප පැනලයක මෙනුව විවෘත කරයි; ලේඛන ලැයිස්තුව මෙනුවේ නව යෙදුම් ලේඛනය, නව ගී පද, URL වෙතින් ආයාත කරන්න, URL වෙතින් බාගන්න සහ SongSelect වෙතින් ආයාත කරන්න ඇත.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "ලේඛන ලැයිස්තුව පැනලයේ තවත් විකල්ප මෙනුවේ ඇති පොදු වසමේ ගීත වෙතින් ආයාත කරන්න ගිණුමක් නොමැතිව ඇතුළත් ගීතිකා පෙන්වයි.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor ලේඛන ලැයිස්තුව පැනලයට ඉහළින් ෆෝල්ඩර කොටුව විවෘත කරයි; පසුරු පුවරුවට පිටපත් කරන්න සහ මාපිය මාර්ගය සංස්කරණය කරන්න, හෝ සැසියක් එක් කරන්න සඳහා එය මත දකුණු-ක්ලික් කරන්න.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "මාර්ග සංස්කාරකය පෙන්වන්න ලේඛන ලැයිස්තුව පැනලයට ඉහළින් ෆෝල්ඩර කොටුව විවෘත කරයි; පසුරු පුවරුවට පිටපත් කරන්න සහ මාපිය මාර්ගය සංස්කරණය කරන්න, හෝ සැසියක් එක් කරන්න සඳහා එය මත දකුණු-ක්ලික් කරන්න.",
     "Pin document keeps presenting from one document while you select another.": "ලේඛනය අමුණන්න බොත්තමෙන්, ඔබ වෙනත් ලේඛනයක් තෝරා ගත්තත් එකම ලේඛනයෙන් ඉදිරිපත් කිරීම දිගටම සිදු වේ.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "නමින් පෙරන්න කිසිවක් ගෙන නොයා හෝ මකා නොදමා දිගු ලේඛන ලැයිස්තුව කෙටි කරයි.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "වර්ගය අනුව පෙරන්න ස්ලයිඩ, ගීත, PDF හෝ වෙනත් වර්ගයක ලේඛන පමණක් පෙන්වයි.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "බයිබල්/දිගු පෙළ ගුණාංග: පූර්ව සැකසුම්, පූර්ව සැකසුමක් ලෙස සුරකින්න, අඳුරු පසුබිමක් සඳහා ලා වර්ණ වචන, ඉස්මතු කිරීමේ වර්ණය, දළ රේඛාව, සෙවණැලි බොඳ කිරීම සහ දිලිසීම.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "ලේඛන ලැයිස්තුව පැනලය පෙන්වන්න හෝ සඟවන්න. එහි ‘තවත් විකල්ප’ මෙනුවේ ‘දේශීය ගොනු එක් කරන්න’ සහ ‘ආයාත කරන්න’ ඇත, ‘නැවුම් කරන්න’ බොත්තම ෆෝල්ඩරය නැවත කියවයි, සහ ලේඛනයක මෙනුවේ ‘අපනයනය කරන්න’ සහ ‘වර්ණ සටහන’ ඇත.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘වර්ග කරන්න’ බොත්තම කිසිදු ගොනුවක් වෙනස් නොකර ලේඛන ලැයිස්තුව පැනලය පිළිවෙළට සකසයි; දිගු ලැයිස්තුවක් හරහා යාමට ‘ඉහළටම අනුචලනය කරන්න’, ‘පහළට වාදනය කරන්න’ සහ ‘ස්වයං අනුචලන විකල්ප’ භාවිත කරන්න.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor විවෘතව ඇත්තේ කුමන පසුබිම ෆෝල්ඩරයදැයි පෙන්වයි; තවම ෆෝල්ඩරයක් තෝරා නැත්නම් ‘ෆෝල්ඩරයක් තෝරන්න’, ‘පෙරනිමිය තෝරන්න’ හෝ ‘සැකසුම් වෙත යන්න’ තෝරන්න.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "මාර්ග සංස්කාරකය පෙන්වන්න විවෘතව ඇත්තේ කුමන පසුබිම ෆෝල්ඩරයදැයි පෙන්වයි; තවම ෆෝල්ඩරයක් තෝරා නැත්නම් ‘ෆෝල්ඩරයක් තෝරන්න’, ‘පෙරනිමිය තෝරන්න’ හෝ ‘සැකසුම් වෙත යන්න’ තෝරන්න.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ලේඛනයක් තෝරා, ඉන්පසු ස්ලයිඩ කාඩ්පතක් ක්ලික් කර එය ප්‍රේක්ෂකයින් වෙත යවන්න; ප්‍රමාණය නොගැළපෙන විට ‘ස්ලයිඩ මානය නිවැරදි කරන්න’ බොත්තම පෙන්වයි, ස්ලයිඩ පූරණය නොවන විට ‘නැවත පූරණය කරන්න’ බොත්තම පෙන්වයි.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "ගීයක් තෝරා එහි වේදිකා ස්ලයිඩ ඉදිරිපත් කරන්න; තිර කාඩ්පතට යටින් ඇති ‘වේදිකා අංකය වෙනස් කිරීමට ක්ලික් කරන්න’, ‘වැඩි කරන්න’ හෝ ‘අඩු කරන්න’ එය පෙන්වන වේදිකාව තෝරයි.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "තෝරාගත් ලේඛනය සංස්කරණය කරන අතරතුර ඉදිරිපත්කරු පෙනෙන ලෙස තබන්න; ‘සුරකින්න’ බොත්තම වෙනස්කම් සුරකියි.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "බයිබල් කියවනයෙන් ඉවත් වන්නද?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "ඔබ බයිබල් කියවනයෙන් ඉවත් වී ඉදිරිපත්කරු වෙත යාමට සූදානම්. ඔබ ආපසු පැමිණි විට ඔබේ ඡේද මෙහිම තිබේ.",
     "To come back, click this tab at the top left of the Presenter:": "ආපසු පැමිණීමට, ඉදිරිපත්කරුගේ ඉහළ වම් පැත්තේ ඇති මෙම ටැබය ක්ලික් කරන්න:",
-    "Stay in Bible Reader": "බයිබල් කියවනයේම රැඳී සිටින්න"
+    "Stay in Bible Reader": "බයිබල් කියවනයේම රැඳී සිටින්න",
+    "Show path editor": "මාර්ග සංස්කාරකය පෙන්වන්න",
+    "Hide path editor": "මාර්ග සංස්කාරකය සඟවන්න",
+    "Background > Show path editor": "Background > මාර්ග සංස්කාරකය පෙන්වන්න",
+    "Document List > Show path editor": "Document List > මාර්ග සංස්කාරකය පෙන්වන්න"
 }

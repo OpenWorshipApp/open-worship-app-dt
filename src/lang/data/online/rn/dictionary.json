@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "Tegura urutonde rw'iteraniro: Ongeramwo igikorwa, Shiraho icerekano kimwe cihariye, Ongeramwo ibintu vya CC na Ongeramwo ubuyobozi bw'ivyerekanwa ku mirongo yarwo; Raba imbere Urutonde rw'ukwerekana irarukoresha.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "Ayandi mahitamwo yugurura menyu y'igice; iya Urutonde rw'inyandiko irimwo Inyandiko nshasha, Indirimbo nshasha, Injiza uvuye kuri URL, Manura uvuye kuri URL na Injiza kuva kuri SongSelect.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "Injiza kuva mu ndirimbo z'abantu bose, iri muri Ayandi mahitamwo ya Urutonde rw'inyandiko, iraba indirimbo ziri muri porogarama ata konti ikenewe.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor yugurura agasanduku k'ububiko hejuru ya Urutonde rw'inyandiko; kanda iburyo kuri co uronke Kopa mu bubiko bw'agateganyo na Hindura inzira y'Ububiko bukuru, canke Ongeramwo ikiringo.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Erekana umuhinduzi w'inzira yugurura agasanduku k'ububiko hejuru ya Urutonde rw'inyandiko; kanda iburyo kuri co uronke Kopa mu bubiko bw'agateganyo na Hindura inzira y'Ububiko bukuru, canke Ongeramwo ikiringo.",
     "Pin document keeps presenting from one document while you select another.": "Fatisha inyandiko ibandanya kwerekana kuva ku nyandiko imwe mu gihe uhitamwo iyindi.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "Yungurura ukoresheje izina igabanya Urutonde rw'inyandiko rurerure ata kintu kimuwe canke gifutwe.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "Yungurura ukurikije ubwoko yerekana amasilayidi, indirimbo, PDF canke ubundi bwoko bw'inyandiko gusa.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "Ivyiranga vya Bibiliya/amajambo maremare: Ivyateguwe, Bika nk'ivyateguwe, Amajambo y'umuco ku biri inyuma vy'umwijima, Ibara ryo gushimangira, Urubibe rw'inyuguti, Igihu c'igicucu na Umuco uzengurutse.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "Mwerekane canke muhishe Urutonde rw'inyandiko. Muri Ayandi mahitamwo yarwo harimwo Ongeramwo amadosiye yo kuri orudinateri na Injiza, Garura bushasha isubira gusoma ububiko, kandi menu y'inyandiko irimwo Sohora na Icandiko c'ibara.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "Tondeka itondeka Urutonde rw'inyandiko ata dosiye n'imwe ihinduwe; Nyereza gushika hejuru, Nyereza gushika hasi na Amahitamwo y'ukunyereza kwikora bibafasha kugendagenda mu rutonde rurerure.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Show path editor yerekana ububiko bwo muri Ibiri inyuma bwuguruye; nimba nta bubiko burahitamwo, mukoreshe Hitamwo ububiko, Hitamwo ubusanzwe canke Ja ku Gutunganya.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "Erekana umuhinduzi w'inzira yerekana ububiko bwo muri Ibiri inyuma bwuguruye; nimba nta bubiko burahitamwo, mukoreshe Hitamwo ububiko, Hitamwo ubusanzwe canke Ja ku Gutunganya.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "Muhitemwo inyandiko, hanyuma mukande ku ikarata y'isilayidi kugira muyirungikire abitavye; Kosora ingero z'isilayidi iboneka igihe ingero zayo zidahuye, na Subira upakire igihe amasilayidi yanse kuza.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "Muhitemwo indirimbo maze mushire ku cerekano amasilayidi yayo y'ikibanza; munsi y'ikarata y'icerekano, Kanda kugira uhindure inomero y'ikibanza, Ongereza canke Gabanya bihitamwo ikibanza ikarata yerekana.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "Mugumye Umwerekanyi aboneka igihe muhindura inyandiko yahiswemwo; Bika ibika amahinduka.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "Kuva mu Musomyi wa Bibiliya?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "Ugiye kuva mu Musomyi wa Bibiliya ujye ku Mwerekanyi. Ibice vyawe bizoba bikiri ng’aha igihe uzogaruka.",
     "To come back, click this tab at the top left of the Presenter:": "Kugira ugaruke, fyonda kuri iki gice kiri hejuru ibubamfu ku Mwerekanyi:",
-    "Stay in Bible Reader": "Guma mu Musomyi wa Bibiliya"
+    "Stay in Bible Reader": "Guma mu Musomyi wa Bibiliya",
+    "Show path editor": "Erekana umuhinduzi w'inzira",
+    "Hide path editor": "Hisha umuhinduzi w'inzira",
+    "Background > Show path editor": "Background > Erekana umuhinduzi w'inzira",
+    "Document List > Show path editor": "Document List > Erekana umuhinduzi w'inzira"
 }

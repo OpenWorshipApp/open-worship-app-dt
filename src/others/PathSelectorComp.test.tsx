@@ -365,6 +365,43 @@ describe('PathSelectorComp folder dropping', () => {
         expect(previewer.title).toBe('Show path editor');
     });
 
+    test('the chevron is a button the keyboard reaches, toggling once a press', async () => {
+        const { dirSource } = genDirSource('/data/old');
+        await render(dirSource);
+        const previewer = container.querySelector(
+            '.path-previewer',
+        ) as HTMLElement;
+        const toggle = previewer.querySelector('button') as HTMLButtonElement;
+        // A real button: Tab stops on it and Enter or Space press it,
+        // which a clickable div never had (robot run 20261115-1542, F1).
+        expect(toggle.type).toBe('button');
+        expect(toggle.tabIndex).toBe(0);
+        expect(toggle.getAttribute('aria-label')).toBe('Show path editor');
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        // Its click bubbles to the row's handler and nothing else: one
+        // press, one toggle -- not open and shut again.
+        await act(async () => {
+            toggle.click();
+        });
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.getAttribute('aria-label')).toBe('Hide path editor');
+        expect(previewer.title).toBe('Hide path editor');
+        await act(async () => {
+            toggle.click();
+        });
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    test('an empty box keeps its editor open and says so', async () => {
+        const { dirSource } = genDirSource('');
+        await render(dirSource);
+        const toggle = container.querySelector(
+            '.path-previewer button',
+        ) as HTMLButtonElement;
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.getAttribute('aria-label')).toBe('Hide path editor');
+    });
+
     test('leaving onto a child keeps the outline, leaving the box drops it', async () => {
         const { dirSource } = genDirSource('/data/old');
         await render(dirSource);

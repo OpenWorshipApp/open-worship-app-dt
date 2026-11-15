@@ -4173,7 +4173,7 @@
     "Arrange a running order: Add Action, Set Specific Screen, Add CC Elements and Add Media Control on its rows; Preview Presenting Flow runs it.": "కార్యక్రమ క్రమాన్ని అమర్చండి: దాని వరుసలపై చర్య జోడించు, నిర్దిష్ట స్క్రీన్‌ను సెట్ చేయి, CC మూలకాలను జోడించు, మీడియా నియంత్రణ జోడించు; ఆరాధన క్రమం ప్రివ్యూ దాన్ని నడిపిస్తుంది.",
     "More Options opens a panel's menu; the Document List's has New App Document, New Lyric, Import From URL, Download From URL and Import From SongSelect.": "మరిన్ని ఎంపికలు ఒక ప్యానెల్ మెనూను తెరుస్తుంది; పత్రాల జాబితా మెనూలో కొత్త యాప్ పత్రం, కొత్త పాట సాహిత్యం, URL నుండి దిగుమతి చేయి, URL నుండి డౌన్‌లోడ్ చేయి, SongSelect నుండి దిగుమతి చేయి ఉంటాయి.",
     "Import From Public Domain Songs, in the Document List's More Options, browses built-in hymns with no account.": "పత్రాల జాబితా ప్యానెల్ యొక్క మరిన్ని ఎంపికలు మెనూలోని పబ్లిక్ డొమైన్ పాటల నుండి దిగుమతి చేయి ఖాతా లేకుండానే అంతర్నిర్మిత కీర్తనలను చూపిస్తుంది.",
-    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "Show path editor పత్రాల జాబితా ప్యానెల్ పైన ఫోల్డర్ పెట్టెను తెరుస్తుంది; క్లిప్‌బోర్డ్‌కు కాపీ చేయి, పేరెంట్ పాత్ సవరించు, లేదా సెషన్‌ను జోడించు కోసం దానిపై కుడి-క్లిక్ చేయండి.",
+    "Show path editor opens the folder box above the Document List; right-click it for Copy to Clipboard and Edit Parent Path, or Add Session.": "పాత్ ఎడిటర్‌ను చూపించు పత్రాల జాబితా ప్యానెల్ పైన ఫోల్డర్ పెట్టెను తెరుస్తుంది; క్లిప్‌బోర్డ్‌కు కాపీ చేయి, పేరెంట్ పాత్ సవరించు, లేదా సెషన్‌ను జోడించు కోసం దానిపై కుడి-క్లిక్ చేయండి.",
     "Pin document keeps presenting from one document while you select another.": "పత్రాన్ని పిన్ చేయి బటన్‌తో మీరు వేరే పత్రాన్ని ఎంచుకున్నా ఒకే పత్రం నుండి ప్రదర్శన కొనసాగుతుంది.",
     "Filter by name narrows a long Document List without moving or deleting anything.": "పేరుతో ఫిల్టర్ చేయి దేన్నీ కదపకుండా, తొలగించకుండా పొడవైన పత్రాల జాబితా ప్యానెల్‌ను కుదిస్తుంది.",
     "Filter by Type shows only slides, lyrics, PDFs or another document kind.": "రకం ద్వారా ఫిల్టర్ చేయి స్లైడ్‌లు, పాటలు, PDF లేదా మరో రకం పత్రాలను మాత్రమే చూపిస్తుంది.",
@@ -4203,7 +4203,7 @@
     "Bible/LongText Properties: Presets, Save as Preset, Light words for a dark background, Highlight Color, Outline, Shadow Blur and Glow.": "బైబిల్/పొడవైన వచన లక్షణాలు: ప్రీసెట్‌లు, ప్రీసెట్‌గా సేవ్ చేయి, ముదురు నేపథ్యానికి లేత రంగు పదాలు, హైలైట్ రంగు, అవుట్‌లైన్, నీడ బ్లర్ మరియు గ్లో.",
     "Toggle the Document List. Its More Options has Add Local Files and Import, Refresh reads the folder again, and a document's menu has Export and Color Note.": "పత్రాల జాబితా ప్యానెల్‌ను చూపించండి లేదా దాచండి. దాని ‘మరిన్ని ఎంపికలు’ మెనూలో ‘స్థానిక ఫైళ్లను జోడించు’, ‘దిగుమతి చేయి’ ఉంటాయి, ‘రిఫ్రెష్ చేయి’ బటన్ ఫోల్డర్‌ను మళ్లీ చదువుతుంది, పత్రం మెనూలో ‘ఎగుమతి చేయి’, ‘రంగు గమనిక’ ఉంటాయి.",
     "Sort orders the Document List without changing a file; Scroll to the top, Play to bottom and Auto Scroll Options move through a long list.": "‘క్రమబద్ధీకరించు’ బటన్ ఏ ఫైల్‌నూ మార్చకుండా పత్రాల జాబితా ప్యానెల్‌ను క్రమబద్ధీకరిస్తుంది; పొడవైన జాబితాలో కదలడానికి ‘పైకి స్క్రోల్ చేయి’, ‘అడుగు వరకు ప్లే చేయి’, ‘ఆటో స్క్రోల్ ఎంపికలు’ వాడండి.",
-    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "ఏ నేపథ్యం ఫోల్డర్ తెరిచి ఉందో Show path editor చూపిస్తుంది; ఇంకా ఫోల్డర్ ఎంచుకోకపోతే ‘ఫోల్డర్‌ను ఎంచుకోండి’, ‘డిఫాల్ట్ ఎంచుకో’ లేదా ‘సెట్టింగ్‌లకు వెళ్లు’ ఎంచుకోండి.",
+    "Show path editor shows which Background folder is open; with no folder chosen yet, Choose a folder, Select Default or Go to Settings.": "ఏ నేపథ్యం ఫోల్డర్ తెరిచి ఉందో పాత్ ఎడిటర్‌ను చూపించు చూపిస్తుంది; ఇంకా ఫోల్డర్ ఎంచుకోకపోతే ‘ఫోల్డర్‌ను ఎంచుకోండి’, ‘డిఫాల్ట్ ఎంచుకో’ లేదా ‘సెట్టింగ్‌లకు వెళ్లు’ ఎంచుకోండి.",
     "Select a document, then click a slide card to send it to the audience; Fix slide dimension shows when its size does not match, Reload when slides fail to load.": "ఒక పత్రాన్ని ఎంచుకుని, ఒక స్లైడ్ కార్డుపై క్లిక్ చేసి దాన్ని ప్రేక్షకులకు పంపండి; పరిమాణం సరిపోలనప్పుడు ‘స్లైడ్ కొలతను సరిచేయి’, స్లైడ్‌లు లోడ్ కానప్పుడు ‘రీలోడ్ చేయి’ కనిపిస్తుంది.",
     "Choose a lyric and present its stage slides; under a screen card, Click to change Stage Number, Increment or Decrement picks the stage it shows.": "ఒక పాటను ఎంచుకుని దాని వేదిక స్లైడ్‌లను ప్రదర్శించండి; స్క్రీన్ కార్డు కింద ఉన్న ‘వేదిక స్క్రీన్ సంఖ్యను మార్చడానికి క్లిక్ చేయండి’, ‘పెంచు’ లేదా ‘తగ్గించు’ అది ఏ వేదికను చూపించాలో ఎంచుకుంటుంది.",
     "Keep the Presenter in view while you edit the selected document; Save keeps the changes.": "ఎంచుకున్న పత్రాన్ని ఎడిట్ చేస్తున్నప్పుడు ప్రెజెంటర్‌ను కనిపించేలా ఉంచండి; ‘సేవ్ చేయి’ బటన్ మార్పులను భద్రపరుస్తుంది.",
@@ -4394,5 +4394,9 @@
     "Leave the Bible Reader?": "బైబిల్ రీడర్ నుండి వెళ్లాలా?",
     "You are about to leave the Bible Reader and go to the Presenter. Your passages will still be here when you come back.": "మీరు బైబిల్ రీడర్ నుండి బయటకు వెళ్లి ప్రదర్శనకు వెళ్లబోతున్నారు. మీరు తిరిగి వచ్చినప్పుడు మీ వాక్యభాగాలు ఇక్కడే ఉంటాయి.",
     "To come back, click this tab at the top left of the Presenter:": "తిరిగి రావడానికి, ప్రదర్శనలో పైన ఎడమవైపున ఉన్న ఈ ట్యాబ్‌ను క్లిక్ చేయండి:",
-    "Stay in Bible Reader": "బైబిల్ రీడర్‌లోనే ఉండండి"
+    "Stay in Bible Reader": "బైబిల్ రీడర్‌లోనే ఉండండి",
+    "Show path editor": "పాత్ ఎడిటర్‌ను చూపించు",
+    "Hide path editor": "పాత్ ఎడిటర్‌ను దాచు",
+    "Background > Show path editor": "Background > పాత్ ఎడిటర్‌ను చూపించు",
+    "Document List > Show path editor": "Document List > పాత్ ఎడిటర్‌ను చూపించు"
 }
