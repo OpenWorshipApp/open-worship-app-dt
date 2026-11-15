@@ -118,6 +118,29 @@ export abstract class AppDocumentSourceAbs {
             initDate: new Date().toJSON(),
         };
     }
+
+    /**
+     * Writes `freshText` into a file that holds NOTHING, and says whether it
+     * did. Only for a list's default file, which the app makes by itself.
+     *
+     * Making one can be cut short between the file appearing and its text
+     * landing -- the page navigated away, the machine lost power -- and the
+     * empty file left behind never reads: the Reader's Bibles showed "Fail to
+     * read file data: Default.owb" for good, Reload read the same nothing,
+     * and every verse saved to the list was refused (robot test F1,
+     * 2026-11-15). Empty means nothing to lose. A file holding text that does
+     * not read is left alone: that may be someone's data.
+     */
+    protected static async restoreBlankFile(
+        filePath: string,
+        freshText: string,
+    ) {
+        const text = await FileSource.readFileData(filePath, true);
+        if (text === null || text.trim() !== '') {
+            return false;
+        }
+        return await FileSource.getInstance(filePath).writeFileData(freshText);
+    }
 }
 
 export default abstract class AppEditableDocumentSourceAbs<

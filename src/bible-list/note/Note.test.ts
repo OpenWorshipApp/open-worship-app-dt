@@ -543,6 +543,45 @@ describe('bible-list/note Note editing history', () => {
         }
     });
 
+    test('an empty default note is written again, an unreadable one left alone', async () => {
+        // A make cut short between the file appearing and its text landing.
+        let disk = '';
+        h.getDirPathMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockImplementation(async () => disk);
+        h.writeFileDataMock.mockImplementation(async (_filePath, data) => {
+            disk = data;
+            return true;
+        });
+        try {
+            const repaired = await Note.getDefault();
+            expect(repaired?.isOpened).toBe(true);
+            expect(repaired?.items).toHaveLength(1);
+            expect(h.createNewFileDetailMock).not.toHaveBeenCalled();
+            expect(JSON.parse(disk)).toMatchObject({
+                metadata: { app: 'OpenWorship', isOpened: true },
+            });
+
+            // An unsaved copy behind the empty file is what the note reads,
+            // so it is not written over.
+            disk = '';
+            h.writeFileDataMock.mockClear();
+            h.getCurrentHistoryMock.mockResolvedValueOnce(
+                JSON.stringify(genNoteJson([genItem(1, 'unsaved')])),
+            );
+            expect((await Note.getDefault())?.items[0].content).toBe('unsaved');
+            expect(h.writeFileDataMock).not.toHaveBeenCalled();
+
+            // Text that does not read may be someone's notes.
+            disk = '{"items": [';
+            expect(await Note.getDefault()).toBeNull();
+            expect(h.writeFileDataMock).not.toHaveBeenCalled();
+            expect(disk).toBe('{"items": [');
+        } finally {
+            h.readFileDataMock.mockImplementation(async () => null);
+        }
+    });
+
     test('default note handles absent directory and failed creation', async () => {
         h.getDirPathMock.mockReturnValue(null);
         expect(await Note.getDefault()).toBeNull();

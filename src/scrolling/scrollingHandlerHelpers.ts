@@ -14,6 +14,18 @@ export {
     TO_THE_TOP_CLASSNAME,
 };
 export const TO_THE_TOP_STYLE_STRING = `
+/*
+ * The corner stack floats over the list it scrolls, so it must out-rank the
+ * rows. Bootstrap lifts an ".active" list-group-item to z-index 2, and in the
+ * Bibles and Bible Notes panels the open folder is ONE active li wrapping every
+ * row inside it: the arrow sat under all of them, their menu dots drew over it
+ * and the row beneath took the press.
+ */
+.${PLAY_TO_BOTTOM_CLASSNAME},
+.${PLAY_TO_BOTTOM_MENU_CLASSNAME},
+.${TO_THE_TOP_CLASSNAME} {
+    z-index: 3;
+}
 .${PLAY_TO_BOTTOM_CLASSNAME} {
     padding: 0;
     margin: 0;

@@ -414,6 +414,55 @@ describe('Bible', () => {
         );
     });
 
+    test('writes an empty default list again, and leaves an unreadable one alone', async () => {
+        // A make cut short between the file appearing and its text landing.
+        mocks.files.set('/bibles/Default.bible', '');
+        mocks.fsListFilesWithMimetypeMock.mockResolvedValue([
+            '/bibles/Default.bible',
+        ]);
+        const repaired = await Bible.getDefault();
+        expect(repaired?.filePath).toBe('/bibles/Default.bible');
+        expect(repaired?.isOpened).toBe(true);
+        expect(repaired?.items).toEqual([]);
+        expect(mocks.createNewFileDetailMock).not.toHaveBeenCalled();
+        const written = JSON.parse(
+            mocks.files.get('/bibles/Default.bible') ?? '',
+        );
+        expect(written).toMatchObject({
+            items: [],
+            metadata: { app: 'OpenWorship', isOpened: true },
+        });
+        // The list takes a verse again, which an empty file refused.
+        const addedItem = mocks.MockBibleItem.fromJson(createBibleItemJson(7));
+        expect(await Bible.addBibleItemToDefault(addedItem as any)).toBe(
+            addedItem,
+        );
+
+        // Only spaces is as empty.
+        mocks.files.set('/bibles/Default.bible', ' \n');
+        expect((await Bible.getDefault())?.items).toEqual([]);
+
+        // Text that does not read may be someone's list: never written over.
+        const unreadable = '{"items": [{"id": 1';
+        mocks.files.set('/bibles/Default.bible', unreadable);
+        expect(await Bible.getDefault()).toBeNull();
+        expect(mocks.files.get('/bibles/Default.bible')).toBe(unreadable);
+    });
+
+    test('makes the default list once when asked twice at the same moment', async () => {
+        mocks.fsListFilesWithMimetypeMock.mockImplementation(async () => {
+            return [...mocks.files.keys()];
+        });
+        const [first, second] = await Promise.all([
+            Bible.getDefault(),
+            Bible.getDefault(),
+        ]);
+        expect(mocks.createNewFileDetailMock).toHaveBeenCalledTimes(1);
+        expect(first?.filePath).toBe('/bibles/Default.bible');
+        expect(second?.filePath).toBe('/bibles/Default.bible');
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
     test('moves bible items between files and handles missing or invalid sources', async () => {
         mocks.files.set(
             '/bibles/target.bible',

@@ -178,6 +178,29 @@ describe('scrollingHandlerHelpers', () => {
         expect(play.onclick).toBeNull();
     });
 
+    test('the corner stack out-ranks an active list row (Bootstrap z-index 2)', () => {
+        // The open folder in the Bibles panel is one `.list-group-item.active`
+        // wrapping every row; under it the arrow drew behind the rows.
+        const style = document.createElement('style');
+        style.textContent = TO_THE_TOP_STYLE_STRING;
+        document.head.append(style);
+        try {
+            for (const className of [
+                TO_THE_TOP_CLASSNAME,
+                PLAY_TO_BOTTOM_CLASSNAME,
+            ]) {
+                const element = document.createElement('i');
+                element.className = className;
+                document.body.append(element);
+                expect(
+                    Number(getComputedStyle(element).zIndex),
+                ).toBeGreaterThan(2);
+            }
+        } finally {
+            style.remove();
+        }
+    });
+
     test('applied again (an inline ref, every render) it swaps its scroll listener', () => {
         const parent = document.createElement('div');
         const toTop = document.createElement('i');

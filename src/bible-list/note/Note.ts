@@ -20,6 +20,7 @@ import { tran } from '../../lang/langHelpers';
 import { checkIsBibleNoteFileName } from './bibleNotePreviewHelpers';
 import NoteItem from './NoteItem';
 import { type NoteItemType } from './noteItemHelpers';
+import { unlocking } from '../../server/unlockingHelpers';
 
 export type NoteType = {
     items: NoteItemType[];
@@ -323,20 +324,35 @@ export default class Note
         if (!dir) {
             return null;
         }
+        // One at a time per folder, for the reason `Bible.getDefault` gives.
+        return await unlocking(`default-note-${dir}`, () => {
+            return this.getOrCreateDefault(dir);
+        });
+    }
+
+    private static async getOrCreateDefault(dir: string) {
         const filePaths = (await fsListFilesWithMimetype(dir, 'note')) ?? [];
-        if (filePaths === null) {
-            return null;
-        }
-        for (const filePath of filePaths) {
-            if (Note.checkIsDefault(filePath)) {
-                return Note.fromFilePath(filePath);
+        let filePath =
+            filePaths.find((listedFilePath) => {
+                return Note.checkIsDefault(listedFilePath);
+            }) ?? null;
+        if (filePath === null) {
+            const defaultFileSource = await this.create(
+                dir,
+                Note.DEFAULT_FILE_NAME,
+            );
+            filePath = defaultFileSource?.filePath ?? null;
+        } else {
+            // `fromFilePath` already falls back to the editing head, so only
+            // an empty file with no unsaved copy behind it is made again.
+            const note = await Note.fromFilePath(filePath);
+            if (
+                note !== null ||
+                !(await this.restoreBlankFile(filePath, this.genNewFileData()))
+            ) {
+                return note;
             }
         }
-        const defaultFileSource = await this.create(
-            dir,
-            Note.DEFAULT_FILE_NAME,
-        );
-        const filePath = defaultFileSource?.filePath ?? null;
         const defaultNote = filePath ? await Note.fromFilePath(filePath) : null;
         if (!defaultNote) {
             showSimpleToast(
@@ -355,15 +371,18 @@ export default class Note
         return defaultNote;
     }
 
-    static async create(dir: string, name: string) {
-        const data = Note.toJsonString({
+    private static genNewFileData() {
+        return Note.toJsonString({
             metadata: super.genMetadata(),
             items: [],
         });
+    }
+
+    static async create(dir: string, name: string) {
         const filePath = await createNewFileDetail(
             dir,
             name,
-            data,
+            this.genNewFileData(),
             this.mimetypeName,
         );
         if (filePath !== null) {

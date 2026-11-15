@@ -74,6 +74,11 @@ vi.mock('./bibleNoteArchiveHelpers', () => ({
     selectAndImportBibleNoteArchive: h.selectAndImportBibleNoteArchive,
 }));
 vi.mock('./noteHelpers', () => ({ sortNoteFilePaths: h.sortNoteFilePaths }));
+// The real hooks read the app's provider as they load.
+vi.mock('../../helper/appHooks', async () => {
+    const { useEffect } = await import('react');
+    return { useAppEffect: useEffect };
+});
 
 import BibleNoteListComp from './BibleNoteListComp';
 import {

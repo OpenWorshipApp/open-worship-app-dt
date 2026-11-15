@@ -6,6 +6,7 @@ import FileListHandlerComp from '../others/FileListHandlerComp';
 import Bible from './Bible';
 import BibleFileComp from './BibleFileComp';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { getSettingPrefix } from '../helper/settingHelpers';
 import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
@@ -110,11 +111,16 @@ function BibleListBodyComp({
             );
         });
     }, []);
+    // Make sure the default bible file exists -- once per folder read, not on
+    // every render: each ask lists the folder.
+    useAppEffect(() => {
+        if (dirSource !== null) {
+            Bible.getDefault();
+        }
+    }, [dirSource]);
     if (dirSource === null) {
         return null;
     }
-    // Make sure the default bible file is created
-    Bible.getDefault();
     const settingPrefix = getSettingPrefix();
     const defaultDataDirName = appProvider.isPageReader
         ? defaultDataDirNames.BIBLE_READ

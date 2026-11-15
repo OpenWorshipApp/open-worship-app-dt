@@ -9,6 +9,7 @@ import {
     dirSourceSettingNames,
 } from '../../helper/constants';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import { tran } from '../../lang/langHelpers';
 import type { DroppedFileType } from '../../others/droppingFileHelpers';
 import { toIconedLabel } from '../../others/labelIconHelpers';
@@ -155,11 +156,16 @@ function BibleNoteListBodyComp({
     isDirSettingRouteHidden: boolean;
 }>) {
     const dirSource = useGenDirSourceReload(dirSourceSettingName);
+    // Make sure the default note file exists -- once per folder read, not on
+    // every render: each ask lists the folder.
+    useAppEffect(() => {
+        if (dirSource !== null) {
+            Note.getDefault();
+        }
+    }, [dirSource]);
     if (dirSource === null) {
         return null;
     }
-    // Make sure the default note file is created
-    Note.getDefault();
     return (
         <FileListHandlerComp
             className="note-list app-cue-list"

@@ -60,6 +60,11 @@ vi.mock('../helper/settingHelpers', () => ({
     getSettingPrefix: () => 'reader-',
 }));
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
+// The real hooks read the provider's `systemUtils` as they load.
+vi.mock('../helper/appHooks', async () => {
+    const { useEffect } = await import('react');
+    return { useAppEffect: useEffect };
+});
 vi.mock('./bibleHelpers', () => ({
     checkIsBibleItemOnScreen: h.checkIsBibleItemOnScreen,
     sortBibleFilePaths: h.sortBibleFilePaths,

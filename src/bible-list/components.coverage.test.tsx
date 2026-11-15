@@ -193,6 +193,7 @@ vi.mock('../helper/appHooks', async () => {
             ref.current = value;
             return ref;
         },
+        useAppEffect: useEffect,
         // `undefined` until the read answers, as the real hook is.
         useAppStateAsync: (
             callee: () => unknown,

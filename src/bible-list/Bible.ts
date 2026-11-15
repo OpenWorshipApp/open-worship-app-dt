@@ -19,6 +19,7 @@ import { handleError } from '../helper/errorHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { notifyElementHighlight } from '../helper/domHelpers';
+import { unlocking } from '../server/unlockingHelpers';
 
 export type BibleType = {
     items: BibleItemType[];
@@ -280,20 +281,37 @@ export default class Bible
         if (!dir) {
             return null;
         }
+        // One at a time per folder: two asks that both find no default would
+        // both make one, and one finding the other's file still empty would
+        // write over it mid-write.
+        return await unlocking(`default-bible-${dir}`, () => {
+            return this.getOrCreateDefault(dir);
+        });
+    }
+
+    private static async getOrCreateDefault(dir: string) {
         const filePaths = (await fsListFilesWithMimetype(dir, 'bible')) ?? [];
-        if (filePaths === null) {
-            return null;
-        }
-        for (const filePath of filePaths) {
-            if (Bible.checkIsDefault(filePath)) {
-                return Bible.fromFilePath(filePath);
+        let filePath =
+            filePaths.find((listedFilePath) => {
+                return Bible.checkIsDefault(listedFilePath);
+            }) ?? null;
+        if (filePath === null) {
+            const defaultFileSource = await this.create(
+                dir,
+                Bible.DEFAULT_FILE_NAME,
+            );
+            filePath = defaultFileSource?.filePath ?? null;
+        } else {
+            const bible = await Bible.fromFilePath(filePath);
+            // An empty default was never written, so it is made again below
+            // as if it were new; anything else is returned as it reads.
+            if (
+                bible !== null ||
+                !(await this.restoreBlankFile(filePath, this.genNewFileData()))
+            ) {
+                return bible;
             }
         }
-        const defaultFileSource = await this.create(
-            dir,
-            Bible.DEFAULT_FILE_NAME,
-        );
-        const filePath = defaultFileSource?.filePath ?? null;
         const defaultBible = filePath
             ? await Bible.fromFilePath(filePath)
             : null;
@@ -308,15 +326,18 @@ export default class Bible
         return defaultBible;
     }
 
-    static async create(dir: string, name: string) {
-        const data = JSON.stringify({
+    private static genNewFileData() {
+        return JSON.stringify({
             metadata: super.genMetadata(),
             items: [],
         });
+    }
+
+    static async create(dir: string, name: string) {
         const filePath = await createNewFileDetail(
             dir,
             name,
-            data,
+            this.genNewFileData(),
             this.mimetypeName,
         );
         if (filePath !== null) {
