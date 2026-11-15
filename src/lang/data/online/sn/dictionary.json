@@ -4462,5 +4462,11 @@
     "Resurrection": "Kumuka",
     "Communion": "Kudya Kwemasikati kweShe",
     "Revival": "Kumutswa",
-    "Effect": "Mhedzisiro"
+    "Effect": "Mhedzisiro",
+    "Fill Show": "Kuratidza Chekuzadza",
+    "Animation Show": "Kuratidza Mufananidzo Unofamba",
+    "Hide Fill": "Viga Chekuzadza",
+    "Hide Animation": "Viga Mufananidzo Unofamba",
+    "Clear FG Fill Show": "Chenesa Kuratidza Chekuzadza kweKumberi",
+    "Clear FG Animation Show": "Chenesa Kuratidza Mufananidzo Unofamba kweKumberi"
 }

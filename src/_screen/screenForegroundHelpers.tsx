@@ -1,9 +1,12 @@
+import type { CSSProperties } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
 import { tran } from '../lang/langHelpers';
 import { getHTMLChild } from '../helper/helpers';
 import type ScreenManagerBase from './managers/ScreenManagerBase';
 import type {
+    ForegroundAnimationDataType,
+    ForegroundFillDataType,
     ForegroundMessageDataType,
     ForegroundCountdownDataType,
     ForegroundImageDataType,
@@ -35,6 +38,15 @@ import appProvider from '../server/appProvider';
 import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 import { genMarqueeFontSize } from './marqueeBandHelpers';
 import { FOREGROUND_MESSAGE_CLASS } from './foregroundMessageStackHelpers';
+import ScreenBackgroundFillComp from './ScreenBackgroundFillComp';
+import ScreenBackgroundAnimationComp from './ScreenBackgroundAnimationComp';
+import {
+    genGlslAnimationElement,
+    toGlslAnimation,
+} from './screenAnimationBackgroundHelpers';
+import { ensureCssAnimationKeyframes } from '../background/cssAnimationLayerHelpers';
+import { toAnimationBlendFromSrc } from '../background/animationValueHelpers';
+import { DEFAULT_BLEND_MODE } from '../helper/blendModeHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
 const MARQUEE_FADE_MILLISECOND = 1000;
@@ -754,6 +766,151 @@ export function genHtmlForegroundImage(
         },
         handleRemoving: async () => {
             await animData.animOut(element);
+        },
+    };
+}
+
+type DisplayDimType = { width: number; height: number };
+
+/**
+ * The box a Fill Show or Animation Show overlay is drawn in. Neither has a
+ * size of its own the way a picture does, so the box takes the SCREEN's
+ * shape: at the Properties' Width it is that share of the screen, and with
+ * no Properties at all (a run-sheet row from before them) it is the whole
+ * screen. What is drawn inside fills the box.
+ */
+function genForegroundPaintBox(
+    extraStyle: CSSProperties,
+    displayDim: DisplayDimType,
+) {
+    const box = document.createElement('div');
+    // Pinned to the top left only when nothing places it: Properties pins a
+    // box to the right or the bottom by `right` / `bottom` alone, and a
+    // `left` left here would win over them and pull it back to the left.
+    const isPlaced = ['left', 'right', 'top', 'bottom', 'inset'].some(
+        (name) => {
+            return (extraStyle as Record<string, unknown>)[name] !== undefined;
+        },
+    );
+    Object.assign(
+        box.style,
+        {
+            display: 'block',
+            position: 'absolute',
+            width: '100%',
+            overflow: 'hidden',
+        },
+        isPlaced ? {} : { left: '0', top: '0' },
+        extraStyle,
+        {
+            height: 'auto',
+            aspectRatio: `${Math.max(1, displayDim.width)} / ${Math.max(
+                1,
+                displayDim.height,
+            )}`,
+        },
+    );
+    return box;
+}
+
+function fillPaintBox(box: HTMLElement, htmlText: string) {
+    box.innerHTML = htmlText;
+    const child = box.firstElementChild;
+    if (child instanceof HTMLElement) {
+        Object.assign(child.style, {
+            position: 'absolute',
+            inset: '0',
+            width: '100%',
+            height: '100%',
+        });
+    }
+}
+
+/**
+ * A fill shown OVER the slide -- Fill Show. The same markup a fill
+ * background is (`ScreenBackgroundFillComp`): moving, by `transform` alone,
+ * only in the screen's own window; still in every preview.
+ */
+export function genHtmlForegroundFill(
+    { src, extraStyle = {} }: ForegroundFillDataType,
+    animData: StyleAnimType,
+    displayDim: DisplayDimType,
+    isPageScreen = appProvider.isPageScreen,
+) {
+    const box = genForegroundPaintBox(extraStyle, displayDim);
+    fillPaintBox(
+        box,
+        renderToStaticMarkup(
+            <ScreenBackgroundFillComp src={src} isMoving={isPageScreen} />,
+        ),
+    );
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(box, parentContainer);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(box);
+        },
+    };
+}
+
+/**
+ * An animation shown OVER the slide -- Animation Show. A CSS one is its
+ * layers' markup, moving only in the screen's own window; a shader runs on
+ * a canvas there and is ONE still frame everywhere else
+ * (`genGlslAnimationElement`), and lets go of its graphics context when it
+ * comes off.
+ *
+ * The animation's own blend mode is lifted onto the box unless the session's
+ * Properties chose one: the box blends as a whole, so a blend left on the
+ * layers inside it would blend with nothing.
+ */
+export function genHtmlForegroundAnimation(
+    { src, extraStyle = {} }: ForegroundAnimationDataType,
+    animData: StyleAnimType,
+    displayDim: DisplayDimType,
+    isPageScreen = appProvider.isPageScreen,
+) {
+    const box = genForegroundPaintBox(extraStyle, displayDim);
+    const ownBlend = extraStyle.mixBlendMode;
+    if (ownBlend === undefined || ownBlend === DEFAULT_BLEND_MODE) {
+        const animationBlend = toAnimationBlendFromSrc(src);
+        if (animationBlend !== DEFAULT_BLEND_MODE) {
+            box.style.mixBlendMode = animationBlend;
+        }
+    }
+    let stopPromise: Promise<() => void> | null = null;
+    const glslAnimation = toGlslAnimation(src);
+    if (glslAnimation === null) {
+        if (isPageScreen) {
+            ensureCssAnimationKeyframes(document);
+        }
+        fillPaintBox(
+            box,
+            renderToStaticMarkup(
+                <ScreenBackgroundAnimationComp
+                    src={src}
+                    isMoving={isPageScreen}
+                />,
+            ),
+        );
+    } else {
+        const { element, promise } = genGlslAnimationElement(glslAnimation, {
+            isLive: isPageScreen,
+            width: displayDim.width,
+            height: displayDim.height,
+        });
+        box.appendChild(element);
+        stopPromise = promise;
+    }
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(box, parentContainer);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(box);
+            const stop = await stopPromise;
+            stop?.();
         },
     };
 }

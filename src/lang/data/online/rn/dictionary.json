@@ -4462,5 +4462,11 @@
     "Resurrection": "Izuka",
     "Communion": "Igaburo ry'Umukama",
     "Revival": "Ukuzukira",
-    "Effect": "Ingaruka"
+    "Effect": "Ingaruka",
+    "Fill Show": "Icuzuza ku cerekano",
+    "Animation Show": "Igikoresho kigenda ku cerekano",
+    "Hide Fill": "Hisha icuzuza",
+    "Hide Animation": "Hisha igikoresho kigenda",
+    "Clear FG Fill Show": "Hanagura Icuzuza ku cerekano (ibiri imbere)",
+    "Clear FG Animation Show": "Hanagura Igikoresho kigenda ku cerekano (ibiri imbere)"
 }

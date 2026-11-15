@@ -4462,5 +4462,11 @@
     "Resurrection": "Prisikėlimas",
     "Communion": "Komunija",
     "Revival": "Dvasinis atgimimas",
-    "Effect": "Efektas"
+    "Effect": "Efektas",
+    "Fill Show": "Užpildo rodymas",
+    "Animation Show": "Animacijos rodymas",
+    "Hide Fill": "Slėpti užpildą",
+    "Hide Animation": "Slėpti animaciją",
+    "Clear FG Fill Show": "Išvalyti užpildo rodymą (priekinis planas)",
+    "Clear FG Animation Show": "Išvalyti animacijos rodymą (priekinis planas)"
 }

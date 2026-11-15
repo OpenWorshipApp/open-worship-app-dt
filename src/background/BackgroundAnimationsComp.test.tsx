@@ -135,6 +135,35 @@ vi.mock('./AnimationCodeEditorComp', () => ({
     ),
 }));
 
+// The session strip and the slide show are their own modules' to test:
+// here what the tab hands them, and the saved list each session hands its
+// pickers.
+const frame = vi.hoisted(() => ({
+    sessionId: '',
+    frames: [] as { kind: string; isShowing: boolean; activeId: string }[],
+    syncs: [] as [string, number][],
+}));
+vi.mock('./PaintTabFrameComp', () => ({
+    default: ({ kind, session, isShowing, children }: any) => {
+        frame.frames.push({ kind, isShowing, activeId: session.activeId });
+        return (
+            <div data-frame={kind} data-showing={`${isShowing}`}>
+                {children}
+            </div>
+        );
+    },
+    usePaintSessionStrip: () => ({
+        activeId: frame.sessionId,
+        suffix: frame.sessionId === '' ? '' : `-${frame.sessionId}`,
+        element: null,
+    }),
+}));
+vi.mock('./BackgroundPaintAutoPlayComp', () => ({
+    useBackgroundPaintAutoPlaySync: (kind: string, count: number) => {
+        frame.syncs.push([kind, count]);
+    },
+}));
+
 import BackgroundAnimationsComp from './BackgroundAnimationsComp';
 import {
     CSS_ANIMATION_SAMPLE_LIST,
@@ -173,6 +202,9 @@ async function render() {
 }
 
 beforeEach(() => {
+    frame.sessionId = '';
+    frame.frames = [];
+    frame.syncs = [];
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     state.selected = [];
     state.update = null;
@@ -333,6 +365,38 @@ describe('BackgroundAnimationsComp', () => {
         expect(tiles('CSS Animations')).toHaveLength(0);
         expect(host.querySelector('.fill-picker-held')?.textContent).toBe(
             'Easter - Sunrise',
+        );
+    });
+});
+
+describe('its sessions and slide show', () => {
+    it('sits under the strip, the show offered once one is up', async () => {
+        await act(async () => root.render(<BackgroundAnimationsComp />));
+        expect(frame.frames.at(-1)).toEqual({
+            kind: 'animation',
+            isShowing: false,
+            activeId: '',
+        });
+        expect(frame.syncs.at(-1)).toEqual(['animation', 0]);
+        state.selected = [
+            ['1', { src: 'css?name=aurora&colors=1E3A8A-581C87' }],
+        ];
+        await act(async () => state.update!());
+        expect(frame.frames.at(-1)!.isShowing).toBe(true);
+        // The tab reconciles the show, so a clear that takes the strip's
+        // control away still ends it.
+        expect(frame.syncs.at(-1)).toEqual(['animation', 1]);
+    });
+
+    it("keeps each session's saved ones in a list of its own", async () => {
+        await act(async () => root.render(<BackgroundAnimationsComp />));
+        expect(state.presets.at(-1)!.savedSettingName).toBe(
+            'background-animation-presets',
+        );
+        frame.sessionId = 's9';
+        await act(async () => root.render(<BackgroundAnimationsComp />));
+        expect(state.presets.at(-1)!.savedSettingName).toBe(
+            'background-animation-presets-s9',
         );
     });
 });

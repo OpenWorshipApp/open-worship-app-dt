@@ -55,6 +55,8 @@ describe('what each foreground component keeps', () => {
             'stopwatch-s2',
             'video-show-s2',
             'image-show-s2',
+            'fill-show-s2',
+            'animation-show-s2',
             'web-show-s2',
         ]);
         // The Default session is the empty suffix: the bare prefix.

@@ -3,7 +3,7 @@ id: W-10
 title: "Contrôler ce que voit l'assemblée (mini-écran + effacements)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: ea84574304edda0a
+translatedFrom: 55866e7f7ddf98bf
 ---
 # W-10 — Contrôler ce que voit l'assemblée (mini-écran + effacements)
 
@@ -60,8 +60,9 @@ translatedFrom: ea84574304edda0a
   écran projette — le menu liste chaque moniteur avec sa résolution, et marque
   l'actuel d'un `*` et le principal de `(principal)`.
 - **Rien sur le projecteur ?** Vérifiez sa carte de haut en bas : il est affiché (**[en:tran:Toggle showing screen]**, ou **F5**) ; le **[en:tran:Display]** de son pied nomme le projecteur, pas l'écran de cet ordinateur — choisissez-le là ; et quelque chose y est présenté — un bouton d'effacement allumé dit quelle couche contient quelque chose.
-- **Transitions** (pied, `Tr:`) : les boutons **[en:tran:Slide]:**, **[en:tran:Background]:** et
-  **[en:tran:Foreground]:** choisissent l'animation de changement pour cet écran —
+- **Transitions** (pied, `Tr:`) : les boutons **SL** (diapositive), **BG** (arrière-plan) et **FG**
+  (premier plan) — les mêmes codes que les boutons d'effacement dans l'en-tête de la carte ; survolez-en un
+  pour voir son nom complet — choisissent l'animation de changement pour cet écran —
   **aucune / fondu / déplacement / zoom**. Ils servent de valeur par défaut : un document, une diapositive, un
   onglet d'Arrière-plan, un arrière-plan, un panneau de premier plan ou l'une de ses sessions peut
   avoir sa propre transition à la place (W-48). 📸
@@ -70,7 +71,7 @@ translatedFrom: ea84574304edda0a
   de répétition le met en boucle. L'application refuse de fermer le lecteur pendant que l'audio joue.
 - **Numéro de scène** (pied, `St:`) : cliquez pour attribuer à cet écran un numéro de scène
   (0–5, ou augmenter/diminuer) pour les configurations avec vue de scène. Passer un écran à une scène
-  au-dessus de 0 règle aussi sa transition **[en:tran:Slide]:** sur **aucune**, et une note dans le coin le signale ; vous pouvez en choisir une autre
+  au-dessus de 0 règle aussi sa transition **SL** sur **aucune**, et une note dans le coin le signale ; vous pouvez en choisir une autre
   ensuite, et revenir à la scène 0 laisse la transition telle quelle. La transition propre d'un document
   ou d'une diapositive (W-48) l'emporte toujours sur elle.
 - **Dessiner ou mettre un spot sur l'écran** (pied, le pinceau — **[en:tran:Drawing]**) : appuyez dessus

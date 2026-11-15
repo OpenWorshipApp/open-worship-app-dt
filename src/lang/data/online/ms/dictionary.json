@@ -4462,5 +4462,11 @@
     "Resurrection": "Kebangkitan",
     "Communion": "Perjamuan Kudus",
     "Revival": "Kebangunan Rohani",
-    "Effect": "Kesan"
+    "Effect": "Kesan",
+    "Fill Show": "Paparan Isian",
+    "Animation Show": "Paparan Animasi",
+    "Hide Fill": "Sembunyikan Isian",
+    "Hide Animation": "Sembunyikan Animasi",
+    "Clear FG Fill Show": "Kosongkan Paparan Isian Latar Depan",
+    "Clear FG Animation Show": "Kosongkan Paparan Animasi Latar Depan"
 }

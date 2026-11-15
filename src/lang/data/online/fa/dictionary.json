@@ -4462,5 +4462,11 @@
     "Resurrection": "رستاخیز",
     "Communion": "شام ربانی",
     "Revival": "احیا",
-    "Effect": "جلوه"
+    "Effect": "جلوه",
+    "Fill Show": "نمایش پرکننده",
+    "Animation Show": "نمایش پویانمایی",
+    "Hide Fill": "پنهان کردن پرکننده",
+    "Hide Animation": "پنهان کردن پویانمایی",
+    "Clear FG Fill Show": "پاک کردن نمایش پرکننده پیش‌زمینه",
+    "Clear FG Animation Show": "پاک کردن نمایش پویانمایی پیش‌زمینه"
 }

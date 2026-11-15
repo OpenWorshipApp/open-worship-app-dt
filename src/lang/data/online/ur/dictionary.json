@@ -4462,5 +4462,11 @@
     "Resurrection": "قیامت",
     "Communion": "عشائے ربانی",
     "Revival": "احیاء",
-    "Effect": "اثر"
+    "Effect": "اثر",
+    "Fill Show": "بھرائی کی نمائش",
+    "Animation Show": "اینیمیشن کی نمائش",
+    "Hide Fill": "بھرائی چھپائیں",
+    "Hide Animation": "اینیمیشن چھپائیں",
+    "Clear FG Fill Show": "پیش منظر کی بھرائی نمائش صاف کریں",
+    "Clear FG Animation Show": "پیش منظر کی اینیمیشن نمائش صاف کریں"
 }

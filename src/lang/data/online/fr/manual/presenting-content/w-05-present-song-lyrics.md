@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: a84654dd5e157b62
+translatedFrom: 9fc0101bbfeaaf3d
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -73,7 +73,7 @@ translatedFrom: a84654dd5e157b62
    suivant collé à gauche
    juste en dessous, le touchant — sans marge autour ni espace entre eux, quoi qu'indique **[en:tran:Slide Margin (%)]** (la marge
    reste à l'intérieur de la boîte de chaque couplet). Un écran passé à une scène au-dessus de 0 voit sa
-   transition **[en:tran:Slide]:** réglée sur **none** (W-10).
+   transition de diapositive (**SL** sur la ligne `Tr:`) réglée sur **none** (W-10).
 9. Dans cette fenêtre **[en:tran:Stage Style]** — le **⚙** de la pastille de la scène, dans l'Aperçu des scènes du Présentateur — **[en:tran:Reset]** remet cette scène aux valeurs par défaut. En haut de la fenêtre,
    **[en:tran:Presets]** propose **[en:tran:Full Screen]**, **[en:tran:Center]** (la disposition de
    départ), **[en:tran:Top Banner]** et **[en:tran:Bottom Banner]**, qui règlent la disposition et

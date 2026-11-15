@@ -128,6 +128,32 @@ export function genQuickTextOwnSettingNames(suffix: string) {
     };
 }
 
+/**
+ * Fill Show and Animation Show keep sessions and a picture's Properties as
+ * Image Show does, and no folder: what a session puts up is picked from the
+ * Background panel's own Fills and Animations. A session also remembers
+ * whether its Customize was closed.
+ */
+export function genPaintCustomizeClosedSettingName(
+    kind: 'fill' | 'animation',
+    suffix: string,
+) {
+    return `foreground-${kind}-show-customize-closed${suffix}`;
+}
+
+function genPaintRule(kind: 'fill' | 'animation'): ForegroundComponentRuleType {
+    return {
+        hasSessions: true,
+        toSessionPrefix: (suffix) => {
+            return `${kind}-show${suffix}`;
+        },
+        flags: PICTURE_FLAGS,
+        toOwnSettingNames: (suffix) => {
+            return [genPaintCustomizeClosedSettingName(kind, suffix)];
+        },
+    };
+}
+
 function genMediaRule(
     kind: 'video' | 'image' | 'web',
     dirSettingName: string,
@@ -245,6 +271,8 @@ export const FOREGROUND_COMPONENT_RULE_MAP: Record<
     },
     video: genMediaRule('video', dirSourceSettingNames.FOREGROUND_VIDEO),
     image: genMediaRule('image', dirSourceSettingNames.FOREGROUND_IMAGE),
+    fill: genPaintRule('fill'),
+    animation: genPaintRule('animation'),
     // The same folder the Background Webs tab lists: a page put up is the
     // same page whichever layer it lands on.
     web: genMediaRule('web', dirSourceSettingNames.BACKGROUND_WEB),

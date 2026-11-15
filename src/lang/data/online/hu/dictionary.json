@@ -4462,5 +4462,11 @@
     "Resurrection": "Feltámadás",
     "Communion": "Úrvacsora",
     "Revival": "Ébredés",
-    "Effect": "Effektus"
+    "Effect": "Effektus",
+    "Fill Show": "Kitöltés megjelenítése",
+    "Animation Show": "Animáció megjelenítése",
+    "Hide Fill": "Kitöltés elrejtése",
+    "Hide Animation": "Animáció elrejtése",
+    "Clear FG Fill Show": "Előtér kitöltésmegjelenítés kiürítése",
+    "Clear FG Animation Show": "Előtér animációmegjelenítés kiürítése"
 }

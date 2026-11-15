@@ -4462,5 +4462,11 @@
     "Resurrection": "Izuka",
     "Communion": "Ifunguro ry'Umwami",
     "Revival": "Izuka ry'umutima",
-    "Effect": "Ingaruka"
+    "Effect": "Ingaruka",
+    "Fill Show": "Kwerekana ibyuzuza",
+    "Animation Show": "Kwerekana animasiyo",
+    "Hide Fill": "Hisha icyuzuza",
+    "Hide Animation": "Hisha animasiyo",
+    "Clear FG Fill Show": "Sukura Kwerekana ibyuzuza (imbere)",
+    "Clear FG Animation Show": "Sukura Kwerekana animasiyo (imbere)"
 }

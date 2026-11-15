@@ -1,4 +1,10 @@
-import { useCallback, useState, type DragEvent, type MouseEvent } from 'react';
+import {
+    use,
+    useCallback,
+    useState,
+    type DragEvent,
+    type MouseEvent,
+} from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -7,6 +13,7 @@ import { pressElementLikeButton } from '../helper/helpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
+import { PaintTargetContext } from '../others/color/colorSwatchMenuHelpers';
 import AnimationPreviewComp from './AnimationPreviewComp';
 import { genAnimationCopyCodeMenuItems } from './animationMenuHelpers';
 import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
@@ -39,7 +46,15 @@ export default function AnimationTileComp({
     const srcRef = useAppCurrentRef(src);
     const onPickRef = useAppCurrentRef(onPick);
     const [isHovered, setIsHovered] = useState(false);
+    // In Animation Show the tile's drag and Show on Screens go to the
+    // foreground, and its Transition row -- a background's -- is not offered.
+    const paintTarget = use(PaintTargetContext);
+    const paintTargetRef = useAppCurrentRef(paintTarget);
     const handleDragStarting = useCallback((event: DragEvent) => {
+        if (paintTargetRef.current !== null) {
+            paintTargetRef.current.handleDragStart(event, srcRef.current);
+            return;
+        }
         handleDragStart(event, {
             dragSerialize: () => {
                 return {
@@ -52,6 +67,14 @@ export default function AnimationTileComp({
     }, []);
     const handleContextMenu = useCallback((event: MouseEvent) => {
         const animationSrc = srcRef.current;
+        const currentTarget = paintTargetRef.current;
+        if (currentTarget !== null) {
+            showAppContextMenu(event as any, [
+                ...genAnimationCopyCodeMenuItems(animationSrc),
+                ...currentTarget.genShowOnScreensMenuItems(animationSrc),
+            ]);
+            return;
+        }
         showAppContextMenu(event as any, [
             ...genAnimationCopyCodeMenuItems(animationSrc),
             ...genShowOnScreensContextMenu((menuEvent) => {

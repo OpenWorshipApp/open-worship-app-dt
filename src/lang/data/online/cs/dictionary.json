@@ -4462,5 +4462,11 @@
     "Resurrection": "Vzkříšení",
     "Communion": "Večeře Páně",
     "Revival": "Probuzení",
-    "Effect": "Efekt"
+    "Effect": "Efekt",
+    "Fill Show": "Zobrazení výplně",
+    "Animation Show": "Zobrazení animace",
+    "Hide Fill": "Skrýt výplň",
+    "Hide Animation": "Skrýt animaci",
+    "Clear FG Fill Show": "Vymazat zobrazení výplně v popředí",
+    "Clear FG Animation Show": "Vymazat zobrazení animace v popředí"
 }

@@ -215,6 +215,10 @@ describe('presenting-flow on-screen matching', () => {
             webDataList: [{ filePath: '/web' }],
             videoDataList: [{ filePath: '/video' }],
             imageDataList: [{ filePath: '/image' }],
+            fillDataList: [{ src: '#FF0000' }],
+            animationDataList: [
+                { src: 'css?name=aurora&colors=1E3A8A-581C87' },
+            ],
         };
         state.foregrounds = { one: foregroundData };
         const cases = [
@@ -230,6 +234,8 @@ describe('presenting-flow on-screen matching', () => {
             ['web', { filePath: '/web' }],
             ['video', { filePath: '/video' }],
             ['image', { filePath: '/image' }],
+            ['fill', { src: '#FF0000' }],
+            ['animation', { src: 'css?name=aurora&colors=1E3A8A-581C87' }],
         ];
         for (const [target, data] of cases) {
             expect(
@@ -247,6 +253,15 @@ describe('presenting-flow on-screen matching', () => {
                 item({
                     isForeground: true,
                     data: { target: 'missing', data: {} },
+                }),
+            ),
+        ).toBe(false);
+        // A Fill Show row is live only while ITS fill is up.
+        expect(
+            await checkIsPresentingFlowItemOnScreen(
+                item({
+                    isForeground: true,
+                    data: { target: 'fill', data: { src: '#0000FF' } },
                 }),
             ),
         ).toBe(false);

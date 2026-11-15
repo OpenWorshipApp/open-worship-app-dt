@@ -4462,5 +4462,11 @@
     "Resurrection": "උත්ථානය",
     "Communion": "සමිඳුන්ගේ භෝජනය",
     "Revival": "පුනර්ජීවනය",
-    "Effect": "ආචරණය"
+    "Effect": "ආචරණය",
+    "Fill Show": "පිරවුම් දර්ශනය",
+    "Animation Show": "සජීවීකරණ දර්ශනය",
+    "Hide Fill": "පිරවුම සඟවන්න",
+    "Hide Animation": "සජීවීකරණය සඟවන්න",
+    "Clear FG Fill Show": "පෙරබිම් පිරවුම් දර්ශනය හිස් කරන්න",
+    "Clear FG Animation Show": "පෙරබිම් සජීවීකරණ දර්ශනය හිස් කරන්න"
 }

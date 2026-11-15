@@ -11,12 +11,17 @@ import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { pressElementLikeButton } from '../../helper/helpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
-import { ColorSwatchExtraMenuContext } from './colorSwatchMenuHelpers';
+import {
+    ColorSwatchExtraMenuContext,
+    PaintTargetContext,
+    type PaintTargetType,
+} from './colorSwatchMenuHelpers';
 
 function showContextMenu(
     event: any,
     color: AppColorType,
     extraMenuItems: ContextMenuItemType[] = [],
+    paintTarget: PaintTargetType | null = null,
 ) {
     const menuItems: ContextMenuItemType[] = [
         {
@@ -26,14 +31,16 @@ function showContextMenu(
                 copyToClipboard(color);
             },
         },
-        ...genShowOnScreensContextMenu((event) => {
-            ScreenBackgroundManager.handleBackgroundSelecting(
-                event,
-                'fill',
-                { src: color },
-                true,
-            );
-        }),
+        ...(paintTarget === null
+            ? genShowOnScreensContextMenu((event) => {
+                  ScreenBackgroundManager.handleBackgroundSelecting(
+                      event,
+                      'fill',
+                      { src: color },
+                      true,
+                  );
+              })
+            : paintTarget.genShowOnScreensMenuItems(color)),
         ...extraMenuItems,
     ];
     showAppContextMenu(event, menuItems);
@@ -52,7 +59,13 @@ export default function RenderColorComp({
     const colorRef = useAppCurrentRef(color);
     const genExtraMenuItems = use(ColorSwatchExtraMenuContext);
     const genExtraMenuItemsRef = useAppCurrentRef(genExtraMenuItems);
+    const paintTarget = use(PaintTargetContext);
+    const paintTargetRef = useAppCurrentRef(paintTarget);
     const handleDragStart = useCallback((event: DragEvent) => {
+        if (paintTargetRef.current !== null) {
+            paintTargetRef.current.handleDragStart(event, colorRef.current);
+            return;
+        }
         serializeForDragging(event, colorRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -61,6 +74,7 @@ export default function RenderColorComp({
             event,
             colorRef.current,
             genExtraMenuItemsRef.current?.(colorRef.current),
+            paintTargetRef.current,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

@@ -84,6 +84,16 @@ export type ForegroundSessionsPropsType = {
         suffix: string,
         sessionIds: string[],
     ) => void;
+    /**
+     * Whether that session's slide show is running, for the ▶ on its chip.
+     * Left out by a widget that runs none: a countdown and a marquee are
+     * one item that stays up.
+     */
+    checkIsAutoPlaying?: (
+        sessionId: string,
+        suffix: string,
+        sessionIds: string[],
+    ) => boolean;
 };
 
 /** The sessions strip of a foreground component (see `widgetKey`). */
@@ -152,9 +162,12 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
                             toSessionSuffix(sessionId),
                             sessionIds,
                         ),
-                        // None of these widgets runs a slide show: a countdown
-                        // and a marquee are one item that stays up.
-                        isAutoPlaying: false,
+                        isAutoPlaying:
+                            props.checkIsAutoPlaying?.(
+                                sessionId,
+                                toSessionSuffix(sessionId),
+                                sessionIds,
+                            ) ?? false,
                     };
                 }}
                 // The chip's own Open in Chatbot: this session attached to

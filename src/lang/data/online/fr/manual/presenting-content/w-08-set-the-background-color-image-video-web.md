@@ -3,7 +3,7 @@ id: W-08
 title: "Définir l'arrière-plan (couleur / image / vidéo / web)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 11a9e9b10fc20174
+translatedFrom: 56127a1a55e0f1af
 ---
 # W-08 — Définir l'arrière-plan (couleur / image / vidéo / web)
 
@@ -91,3 +91,19 @@ de cette session — jamais les fichiers eux-mêmes. **[en:tran:Documents]**, **
 et **[en:tran:Bible Notes]** ont la même rangée sous leur titre (W-58). Dans les onglets Images, Vidéos et Sites web,
 le diaporama se trouve sur la même rangée, et un ▶ bleu sur un bouton signifie que le diaporama de cette session
 continue pendant que vous en regardez une autre.
+
+**Sessions et diaporama sur Remplissages et Animations.** Les onglets **[en:tran:Fills]** et
+**[en:tran:Animations]** ont la même rangée de boutons de session au-dessus de leurs vignettes :
+**[en:tran:Default]**, puis celles que vous ajoutez avec **＋**. Une session y garde ses propres remplissages ou
+animations enregistrés sous **[en:tran:Presets]**, si bien que l'une peut tenir les couleurs de cette saison et une
+autre celles du culte des jeunes ; ceux de la session par défaut sont aussi ceux que proposent **[en:tran:Fill Show]**
+et **[en:tran:Animation Show]** (W-09). Supprimer une session oublie ses enregistrés et son diaporama. Dès qu'un
+écran affiche le genre de l'onglet, la rangée porte aussi le diaporama : appuyez sur **[en:tran:Start Slide Show]** (▶)
+et, toutes les tant de secondes — le nombre à côté —, chaque écran qui en affiche un passe à la vignette suivante
+de la rangée où se trouve celle affichée : le shader suivant, l'animation CSS suivante, le dégradé ou le motif
+suivant du côté que montre **[en:tran:Dark]** / **[en:tran:Light]**, ou l'enregistré suivant de la session quand
+celui affiché en fait partie. La façon dont l'écran l'avait ajusté et stylé l'accompagne. Une couleur
+de la palette, ou une vignette modifiée dans **[en:tran:Customize]**, n'appartient à aucune rangée et reste en
+place. Un écran n'a qu'un arrière-plan, donc un onglet ne fait tourner qu'un diaporama : le lancer dans une autre
+session arrête le premier, et le ▶ bleu passe sur le bouton de cette session. **[en:tran:Clear Background]**
+(**F7**) arrête le diaporama, et afficher une vignette ensuite ne le relance pas.

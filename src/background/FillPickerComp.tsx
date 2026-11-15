@@ -112,6 +112,16 @@ function FillTileGridComp({
 }
 
 /** How one screen's picker is laid out, remembered for that screen. */
+/**
+ * Whether Customize is closed, for a picker that is not one screen's: a
+ * Foreground panel's Fill Show or Animation Show session remembers it for
+ * itself.
+ */
+export type FillPickerCustomizeViewType = Readonly<{
+    isCustomizeClosed: boolean;
+    onCustomizeToggle: () => void;
+}>;
+
 export type FillPickerScreenViewType = Readonly<{
     screenId: number;
     isFolded: boolean;
@@ -207,10 +217,14 @@ export function FillCustomizeToggleComp({
  */
 export default function FillPickerComp({
     screenView,
+    customizeView: customizeViewProp,
     heldSrc,
     onPick,
     onEdit,
+    presetSettingName = FILL_PRESET_SETTING_NAME,
 }: Readonly<{
+    /** Customize's own toggle, for a picker that is not one screen's. */
+    customizeView?: FillPickerCustomizeViewType;
     /**
      * The screen a picker is ONE screen's: its fold before the Dark / Light
      * switch, its badge after it -- folded or not -- and whether its
@@ -223,6 +237,12 @@ export default function FillPickerComp({
     onPick: (src: string | null, event: MouseEvent) => void;
     /** A change made in Customize; without it there is nothing to change. */
     onEdit?: (src: string) => void;
+    /**
+     * Where the saved ones are kept: a Background tab's session keeps its
+     * own (`toPaintPresetSettingName`); left out, the one list there has
+     * always been.
+     */
+    presetSettingName?: string;
 }>) {
     const heldFill = useMemo(() => {
         return parseFill(heldSrc);
@@ -306,8 +326,9 @@ export default function FillPickerComp({
     // Offered for a held gradient or pattern on a screen's own picker; open
     // unless that screen's was closed.
     const isCustomizeOffered = isEditable && draft !== null;
+    const customizeView = screenView ?? customizeViewProp;
     const isCustomizeOpen =
-        isCustomizeOffered && screenView?.isCustomizeClosed !== true;
+        isCustomizeOffered && customizeView?.isCustomizeClosed !== true;
     return (
         <div className="fill-picker">
             <div className="fill-picker-bar">
@@ -362,10 +383,12 @@ export default function FillPickerComp({
                             onPick={handlePicking}
                             headEnd={
                                 isCustomizeOffered &&
-                                screenView !== undefined ? (
+                                customizeView !== undefined ? (
                                     <FillCustomizeToggleComp
                                         isOpen={isCustomizeOpen}
-                                        onToggle={screenView.onCustomizeToggle}
+                                        onToggle={
+                                            customizeView.onCustomizeToggle
+                                        }
                                     />
                                 ) : null
                             }
@@ -381,7 +404,7 @@ export default function FillPickerComp({
                             them are (_the preset section should be part of
                             gradient|pattern_). */}
                         <PresetsRowComp<SavedFillPresetType>
-                            savedSettingName={FILL_PRESET_SETTING_NAME}
+                            savedSettingName={presetSettingName}
                             toSavedPreset={toSavedFillPreset}
                             builtIns={[]}
                             readCurrent={readCurrent}

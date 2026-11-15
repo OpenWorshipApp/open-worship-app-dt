@@ -363,6 +363,8 @@ const FOREGROUND_BANNER_NOUN_MAP = {
     camera: 'the camera',
     screen: 'the picture of another screen',
     web: 'the web page',
+    fill: 'the colour fill',
+    animation: 'the moving background',
     all: 'every foreground extra',
 };
 
@@ -382,6 +384,8 @@ const FOREGROUND_LAUNCHER_LABEL_MAP = {
     camera: 'Camera Show',
     screen: 'Screen Show',
     web: 'Web Show',
+    fill: 'Fill Show',
+    animation: 'Animation Show',
 };
 
 // A component with no phrase of its own below is named by its launcher row

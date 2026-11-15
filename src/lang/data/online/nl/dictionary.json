@@ -4462,5 +4462,11 @@
     "Resurrection": "Opstanding",
     "Communion": "Avondmaal",
     "Revival": "Opwekking",
-    "Effect": "Effect"
+    "Effect": "Effect",
+    "Fill Show": "Opvulling tonen",
+    "Animation Show": "Animatie tonen",
+    "Hide Fill": "Opvulling verbergen",
+    "Hide Animation": "Animatie verbergen",
+    "Clear FG Fill Show": "Opvullingsweergave op de voorgrond wissen",
+    "Clear FG Animation Show": "Animatieweergave op de voorgrond wissen"
 }

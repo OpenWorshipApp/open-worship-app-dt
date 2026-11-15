@@ -1,6 +1,6 @@
 ---
 name: background-animation-runtime
-description: Why the Background panel's Animations (CSS + GLSL) move only on the screen, draw stills from one shared WebGL context, keep a gradient under the canvas and accept no raw CSS
+description: Why the Background panel's Animations (CSS + GLSL) move only on the screen, draw stills from one shared WebGL context, keep a gradient under the canvas and accept no raw CSS; how the Fills/Animations sessions and slide shows (background and foreground) walk a row and end on a clear
 metadata:
   node_type: memory
   type: project
@@ -64,3 +64,48 @@ from another computer carries its backgrounds onto this projector.
   (`useMemo(() => genTimeoutAttempt(500), [])`): one picker per screen.
   Apply in the code panel flushes at once. The code editor is Monaco, lazy,
   language `cpp`, a fresh model uri per opening disposed after close.
+- **On the foreground too** (2026-11-15): **Fill Show** and **Animation
+  Show** (`ForegroundPaintShowComp`) draw the same pickers over the slide, per
+  session, Image Show's way. The overlay box is the screen's shape
+  (`genForegroundPaintBox`): pinned top left ONLY when Properties places it
+  nowhere, because a right or bottom place sets `right` / `bottom` alone and a
+  default `left: 0` beat it (a top-right fill drew at the top left). Live
+  only in the screen window, as here. Like this tab, the panel is ONE picker
+  while its session has nothing up and a picker PER SCREEN once it has (the
+  user: _it's not split to new section for another screen selected. I drop
+  glsl on another screen, it show customizing for only screen_): a single
+  picker had held the first screen's tile and sent a Customize change onto
+  every screen, writing one screen's animation over the other's. The fold
+  per screen is component state, not a setting (one per session per screen
+  would only pile up); Customize-closed is the session's, shared.
+- **Sessions and a slide show, both tabs and both shows** (2026-11-15, the
+  user: _like background image, `Fills` and `Animations` should support
+  session and auto-play_, then _`Fills Show` and `Animations Show` should
+  support auto-play as well_). The Fills and Animations tabs carry the Images
+  tab's session strip (`PaintTabFrameComp`, `useBackgroundSessionStrip`); a
+  session is a SAVED LIST (`toPaintPresetSettingName`, Default's the old
+  `background-{fill,animation}-presets`, which the foreground's pickers keep
+  reading, so removing a session never forgets Default's). A show walks the
+  ROW the one up is in (`findPaintShowRow`: the session's saved list when the
+  one up is in it, else the built-in gradients or patterns of its Dark/Light
+  side, the CSS samples or the shaders), compared as a fill or an animation,
+  never as a string. A palette colour or a Customize change is in no row and
+  stays: there is nothing sensible to step to, and inventing one would put a
+  colour up nobody picked. Its clocks live OUTSIDE React
+  (`applyAutoPlayRunners`, keyed by the settings prefix) as the Images tab's
+  do, because the tabs unmount whenever another is looked at. **One show per
+  background layer**: a show started in one session ends the others'
+  (`stopOtherSessionShows`), since every show would step every screen.
+  **A clear ends a show** (`syncBackgroundPaintAutoPlayRunners`, called by
+  the TAB on what is up, not by the strip, which leaves with the clear):
+  left playing, the next tile put up would start cycling by itself. A step
+  goes through `applyBackgroundSrcWithSyncGroup`, never the press path,
+  which toggles a src already up off (a row of one). The foreground shows
+  (`foregroundPaintAutoPlayHelpers.ts`) walk only the session's OWN
+  overlays, each keeping its look, under `foreground-{fill,animation}{suffix}`
+  -- the key the Foreground menu already reads for its running mark -- and
+  `ForegroundMediaComp`'s ownership test became exact
+  (`key === base || key.startsWith(base + '-')`): its `startsWith('foreground-')`
+  had claimed every foreground show's timer, so a media show's panel
+  reconciling its own (Image Show open and redrawn) would have stopped a
+  running Fill Show. Seen live on a scratch instance in Afrikaans.

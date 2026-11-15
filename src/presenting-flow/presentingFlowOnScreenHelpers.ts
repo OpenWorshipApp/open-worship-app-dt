@@ -21,6 +21,8 @@ import { deserializeDragData } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import type { ForegroundDragTargetType } from '../presenter-foreground/foregroundDragHelpers';
 import { toForegroundRowKey } from '../presenter-foreground/foregroundDragHelpers';
+import { compareFillSrc } from '../background/fillValueHelpers';
+import { compareAnimationSrc } from '../background/animationValueHelpers';
 import PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
 
@@ -214,6 +216,18 @@ const foregroundOnScreenMatcherMap: Record<
     image: (foregroundData, data) => {
         return (foregroundData.imageDataList ?? []).some((item: any) => {
             return item.filePath === data?.filePath;
+        });
+    },
+    // The fill or animation itself: a row is live while that one is up,
+    // whichever session put it there.
+    fill: (foregroundData, data) => {
+        return (foregroundData.fillDataList ?? []).some((item: any) => {
+            return compareFillSrc(item?.src, data?.src);
+        });
+    },
+    animation: (foregroundData, data) => {
+        return (foregroundData.animationDataList ?? []).some((item: any) => {
+            return compareAnimationSrc(item?.src, data?.src);
         });
     },
 };

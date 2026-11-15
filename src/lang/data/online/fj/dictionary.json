@@ -4462,5 +4462,11 @@
     "Resurrection": "Tu Cake Tale",
     "Communion": "Kamunioni",
     "Revival": "Vakaukauwa Tale",
-    "Effect": "Yaga"
+    "Effect": "Yaga",
+    "Fill Show": "Vakaraitaki Vakatawa",
+    "Animation Show": "Vakaraitaki Ia Cakacaka",
+    "Hide Fill": "Vunitaka na Vakatawa",
+    "Hide Animation": "Vunitaka na Ia Cakacaka",
+    "Clear FG Fill Show": "Vakalalataka na Vakaraitaki Vakatawa (Liu)",
+    "Clear FG Animation Show": "Vakalalataka na Vakaraitaki Ia Cakacaka (Liu)"
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "పునరుత్థానం",
     "Communion": "ప్రభు రాత్రి భోజనం",
     "Revival": "పునరుజ్జీవం",
-    "Effect": "ప్రభావం"
+    "Effect": "ప్రభావం",
+    "Fill Show": "నింపు ప్రదర్శన",
+    "Animation Show": "యానిమేషన్ ప్రదర్శన",
+    "Hide Fill": "నింపును దాచు",
+    "Hide Animation": "యానిమేషన్‌ను దాచు",
+    "Clear FG Fill Show": "ముందుభాగం నింపు ప్రదర్శనను తొలగించు",
+    "Clear FG Animation Show": "ముందుభాగం యానిమేషన్ ప్రదర్శనను తొలగించు"
 }

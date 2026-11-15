@@ -4462,5 +4462,11 @@
     "Resurrection": "Ressurreição",
     "Communion": "Santa Ceia",
     "Revival": "Avivamento",
-    "Effect": "Efeito"
+    "Effect": "Efeito",
+    "Fill Show": "Exibição de preenchimento",
+    "Animation Show": "Exibição de animação",
+    "Hide Fill": "Ocultar preenchimento",
+    "Hide Animation": "Ocultar animação",
+    "Clear FG Fill Show": "Limpar Exibição de preenchimento do primeiro plano",
+    "Clear FG Animation Show": "Limpar Exibição de animação do primeiro plano"
 }

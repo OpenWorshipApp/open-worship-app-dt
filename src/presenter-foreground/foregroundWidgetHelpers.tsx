@@ -166,6 +166,30 @@ export const FOREGROUND_WIDGET_LIST: ForegroundWidgetType[] = [
         }),
     },
     {
+        // The Background panel's Fills and Animations, put OVER the slide
+        // the way Image Show puts a picture there (2026-11-15).
+        key: 'fill',
+        labelKey: 'Fill Show',
+        iconName: 'palette',
+        checkIsOnScreen: (data) => {
+            return (data.fillDataList ?? []).length > 0;
+        },
+        Comp: lazy(() => {
+            return import('./ForegroundFillComp');
+        }),
+    },
+    {
+        key: 'animation',
+        labelKey: 'Animation Show',
+        iconName: 'magic',
+        checkIsOnScreen: (data) => {
+            return (data.animationDataList ?? []).length > 0;
+        },
+        Comp: lazy(() => {
+            return import('./ForegroundAnimationComp');
+        }),
+    },
+    {
         key: 'camera',
         labelKey: 'Camera Show',
         iconName: 'camera-video',

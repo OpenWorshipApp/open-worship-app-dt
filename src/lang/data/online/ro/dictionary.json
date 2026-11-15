@@ -4462,5 +4462,11 @@
     "Resurrection": "Înviere",
     "Communion": "Cina Domnului",
     "Revival": "Trezire spirituală",
-    "Effect": "Efect"
+    "Effect": "Efect",
+    "Fill Show": "Afișare umplere",
+    "Animation Show": "Afișare animație",
+    "Hide Fill": "Ascundere umplere",
+    "Hide Animation": "Ascundere animație",
+    "Clear FG Fill Show": "Golire afișare umplere din prim-plan",
+    "Clear FG Animation Show": "Golire afișare animație din prim-plan"
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Resurrecció",
     "Communion": "Comunió",
     "Revival": "Reviscolament",
-    "Effect": "Efecte"
+    "Effect": "Efecte",
+    "Fill Show": "Mostra emplenament",
+    "Animation Show": "Mostra animació",
+    "Hide Fill": "Amaga l'emplenament",
+    "Hide Animation": "Amaga l'animació",
+    "Clear FG Fill Show": "Neteja Mostra emplenament de primer pla",
+    "Clear FG Animation Show": "Neteja Mostra animació de primer pla"
 }

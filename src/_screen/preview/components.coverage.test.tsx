@@ -1104,7 +1104,20 @@ describe('ScreenPreviewerFooterComp', () => {
         const slideButton = container.querySelector(
             'button[title="Slide transition"]',
         ) as HTMLButtonElement;
-        expect(slideButton.textContent).toBe('Slide:');
+        // The layers read as the clear buttons' codes; the translated name
+        // stays on the tooltip and is what a screen reader announces.
+        expect(
+            ['Slide', 'Background', 'Foreground'].map((layer) => {
+                const button = container.querySelector(
+                    `button[title="${layer} transition"]`,
+                ) as HTMLButtonElement;
+                return [button.textContent, button.getAttribute('aria-label')];
+            }),
+        ).toEqual([
+            ['SL', 'Slide transition'],
+            ['BG', 'Background transition'],
+            ['FG', 'Foreground transition'],
+        ]);
         expect(slideButton.querySelector('.bi-shadows')).not.toBeNull();
 
         await click(slideButton);

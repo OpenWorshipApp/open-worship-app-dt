@@ -4462,5 +4462,11 @@
     "Resurrection": "Opstandelse",
     "Communion": "Nadver",
     "Revival": "Vækkelse",
-    "Effect": "Effekt"
+    "Effect": "Effekt",
+    "Fill Show": "Udfyldningsvisning",
+    "Animation Show": "Animationsvisning",
+    "Hide Fill": "Skjul udfyldning",
+    "Hide Animation": "Skjul animation",
+    "Clear FG Fill Show": "Ryd forgrundsudfyldningsvisning",
+    "Clear FG Animation Show": "Ryd forgrundsanimationsvisning"
 }

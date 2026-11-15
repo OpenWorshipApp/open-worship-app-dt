@@ -4462,5 +4462,11 @@
     "Resurrection": "Resurrección",
     "Communion": "Comunión",
     "Revival": "Avivamiento",
-    "Effect": "Efecto"
+    "Effect": "Efecto",
+    "Fill Show": "Mostrar relleno",
+    "Animation Show": "Mostrar animación",
+    "Hide Fill": "Ocultar relleno",
+    "Hide Animation": "Ocultar animación",
+    "Clear FG Fill Show": "Borrar Mostrar relleno de primer plano",
+    "Clear FG Animation Show": "Borrar Mostrar animación de primer plano"
 }

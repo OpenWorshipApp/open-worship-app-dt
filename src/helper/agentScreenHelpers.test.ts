@@ -356,6 +356,8 @@ describe('toForegroundSummary', () => {
             webDataList: [],
             videoDataList: [{ filePath: 'C:\\media\\snow.mp4' }],
             imageDataList: [{ filePath: '/media/logo.png' }],
+            fillDataList: [],
+            animationDataList: [],
         });
         expect(items).toEqual([
             'stopwatch at 00:01:05, running',

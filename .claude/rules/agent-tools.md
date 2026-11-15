@@ -791,6 +791,20 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   <component> "<session>"_; a read is quiet. Seen live on a scratch profile
   through a fresh stdio server (the token cost and the window's side are in
   `chatbot-llm.md` / `chatbot-files-report.md`).
+  **Fill Show and Animation Show are read, restyled and hidden, never put
+  up** (2026-11-15, the user: _add `Fills` and `Animation` to foreground as
+  well_, _the same way image show and video show_). Both joined
+  `FOREGROUND_COMPONENT_LIST` and only `owa_foreground_edit`'s widget list
+  (`FOREGROUND_EDIT_WIDGETS`, `agentForegroundEdit.mjs`): what goes up is the
+  tile PRESSED in the panel, and no field names one. `show` / `start` are
+  refused in `handleStart` BEFORE anything is written
+  (`genPaintShowReason`, shared with `planShow`): refused after the write,
+  the session's look had been set anyway and the refusal offered an
+  `owa_undo` for a change nobody asked for. `read`, `set` (place, width,
+  opacity, blend, transition) and `hide` work as on Image Show. Seen live
+  2026-11-15 through a scratch instance's HTTP door: a Screen blend set on
+  a fill up at the top right, the fill hidden, an animation `show` refused
+  with nothing written.
 - **The screens' OWN controls are `owa_screen_edit`** (2026-11-13, the
   user: _chatbot is very smart to help user control screen_ -- the size,
   colour or style of the Bible showing, another version added to it, a

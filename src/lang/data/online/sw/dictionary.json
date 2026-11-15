@@ -4462,5 +4462,11 @@
     "Resurrection": "Ufufuo",
     "Communion": "Meza ya Bwana",
     "Revival": "Uamsho",
-    "Effect": "Athari"
+    "Effect": "Athari",
+    "Fill Show": "Onyesho la ujazo",
+    "Animation Show": "Onyesho la mchoro unaosogea",
+    "Hide Fill": "Ficha ujazo",
+    "Hide Animation": "Ficha mchoro unaosogea",
+    "Clear FG Fill Show": "Futa onyesho la ujazo la tabaka la mbele",
+    "Clear FG Animation Show": "Futa onyesho la mchoro unaosogea la tabaka la mbele"
 }

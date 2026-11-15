@@ -4462,5 +4462,11 @@
     "Resurrection": "Toetuʻu",
     "Communion": "Kai Efiafi ʻa e ʻEiki",
     "Revival": "Fakatupu Fōʻou",
-    "Effect": "Nāunau"
+    "Effect": "Nāunau",
+    "Fill Show": "Fakaʻaliʻali Fakafonu",
+    "Animation Show": "Fakaʻaliʻali Fakaʻaonga",
+    "Hide Fill": "Fufuuʻi ʻa e Fakafonu",
+    "Hide Animation": "Fufuuʻi ʻa e Fakaʻaonga",
+    "Clear FG Fill Show": "Fakamaʻa ʻa e Fakaʻaliʻali Fakafonu (Puipuimuʻa)",
+    "Clear FG Animation Show": "Fakamaʻa ʻa e Fakaʻaliʻali Fakaʻaonga (Puipuimuʻa)"
 }

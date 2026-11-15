@@ -3,7 +3,7 @@ id: W-09
 title: "Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: d05a13c0fa2fa69e
+translatedFrom: 039663623464ae36
 ---
 # W-09 — Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)
 
@@ -129,6 +129,25 @@ Afficher/Démarrer :
   Ouvrez [en:tran:Video Show] depuis l'onglet [en:tran:Foreground], ouvrez
   _[en:tran:Properties]_ dans son panneau et cochez **[en:tran:Play With Sound]** : un
   curseur **[en:tran:Volume]** apparaît dessous, et ce curseur est le volume du clip.
+- **[en:tran:Fill Show]** et **[en:tran:Animation Show] :** une couleur, un dégradé ou
+  un motif, ou une animation en mouvement, affichés _par-dessus_ la diapositive comme
+  le fait **[en:tran:Image Show]** pour une image. Leurs vignettes sont celles des
+  onglets **[en:tran:Fills]** et **[en:tran:Animations]** du panneau Arrière-plan, CSS comme GLSL.
+  Cliquez sur une vignette pour l'afficher, cliquez de nouveau pour la retirer, ou
+  faites-la glisser sur le Mini-écran. La superposition a la forme de l'écran, aussi
+  large et placée là où _Propriétés_ l'indique, si bien qu'une couleur peut tenir un coin
+  par-dessus la diapositive et une animation le milieu. Elle ne bouge que sur l'écran
+  lui-même ; le Mini-écran et les vignettes restent immobiles. Tant que la session
+  n'affiche rien, il y a un seul sélecteur, qui envoie aux écrans cochés ; dès qu'elle
+  affiche quelque chose, il y a un sélecteur par écran qui en affiche un, chacun avec
+  la vignette de cet écran cochée et son propre **[en:tran:Customize]**, et un clic ou
+  une modification y va à cet écran seul, comme dans les onglets d'Arrière-plan. Dès que la session
+  en affiche un, la rangée épinglée en haut porte son diaporama, comme celui d'**[en:tran:Image Show]** :
+  **[en:tran:Start Slide Show]** fait passer chacune des superpositions de la session à la vignette
+  suivante de sa rangée toutes les tant de secondes, comme le fait le diaporama des onglets d'Arrière-plan (W-08),
+  ses _Propriétés_ gardées ; la superposition d'une autre session reste telle quelle.
+  **[en:tran:Clear Foreground]** (**F10**) arrête le diaporama, et une vignette affichée ensuite
+  ne le relance pas.
 - **Sessions — chaque composant de premier plan en a**, sauf [en:tran:Camera Show] et
   [en:tran:Screen Show], qui présentent plutôt une carte par caméra et par écran. Ce sont
   les boutons en rangée épinglés en haut du panneau, avec **＋** pour en ajouter une, et une session est une
@@ -143,6 +162,8 @@ Afficher/Démarrer :
   et **[en:tran:Web Show]**, une session possède aussi son **propre
   dossier** et son **propre diaporama**, si bien que l'une peut faire défiler un diaporama de votre dossier
   d'arrière-plans pendant qu'une autre affiche un logo venu d'ailleurs, les deux à l'écran en même temps.
+  Une session de **[en:tran:Fill Show]** ou d'**[en:tran:Animation Show]** possède aussi son propre
+  diaporama.
   Préparer une session ne met rien à l'écran : c'est son bouton d'affichage qui le fait, quand vous voulez celle-là.
 - Faites un clic droit sur une session (ou appuyez sur son **⋮**) pour la renommer ou la supprimer. Une seule session
   est affichée à la fois, alors chaque bouton porte ses propres marques : le point « à l'écran » quand
@@ -171,7 +192,8 @@ Afficher/Démarrer :
   préréglage **[en:tran:Top Right]** d'un compte à rebours, le bandeau **[en:tran:Bible Verse]**
   d'un texte rapide). **[en:tran:Clear Foreground]** les retire toujours tous. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** et **[en:tran:Web Show]** gardent un fichier par session : cliquer une autre
-  vignette le remplace. Deux images à la fois — un habillage et un logo — sont deux sessions :
+  vignette le remplace, et **[en:tran:Fill Show]** et **[en:tran:Animation Show]**
+  gardent de même un remplissage ou une animation par session. Deux images à la fois — un habillage et un logo — sont deux sessions :
   ajoutez-en une avec **＋** et affichez une image depuis chacune.
 - Le panneau **[en:tran:Properties]** se trouve une seule fois à côté des boutons de session et règle
   chaque élément que cette session affiche — position, largeur, échelle, opacité, coin et fusion.
@@ -197,7 +219,7 @@ Afficher/Démarrer :
   reste où vous l'avez laissée pour que vous puissiez continuer à chercher la prochaine image pendant que le diaporama
   tourne.
 - **[en:tran:Blend Mode]** (sous _Propriétés_ sur Affichage vidéo, Affichage d'image, Affichage de la caméra,
-  Affichage d’écran et Affichage Web) décide comment la superposition se mélange avec ce qui est dessous. C'est la
+  Affichage d’écran, Affichage Web, Affichage de remplissage et Affichage d'animation) décide comment la superposition se mélange avec ce qui est dessous. C'est la
   solution pour un clip à fond noir : choisissez **[en:tran:Screen Blend]** et le
   noir disparaît, ne laissant que la neige qui tombe, les étincelles ou la lumière par-dessus la diapositive en direct.
   **[en:tran:Multiply]** fait l'inverse — le blanc disparaît. **[en:tran:Normal]** est

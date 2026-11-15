@@ -4462,5 +4462,11 @@
     "Resurrection": "Sarakicid",
     "Communion": "Cashadii Rabbi",
     "Revival": "Soo Noolayn",
-    "Effect": "Saameyn"
+    "Effect": "Saameyn",
+    "Fill Show": "Bandhigga Buuxiyaha",
+    "Animation Show": "Bandhigga Animeeshanka",
+    "Hide Fill": "Qari Buuxiyaha",
+    "Hide Animation": "Qari Animeeshanka",
+    "Clear FG Fill Show": "Nadiifi Bandhigga Buuxiyaha (Dulsaar)",
+    "Clear FG Animation Show": "Nadiifi Bandhigga Animeeshanka (Dulsaar)"
 }

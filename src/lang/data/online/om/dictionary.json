@@ -4462,5 +4462,11 @@
     "Resurrection": "Du'aa Ka'uumsa",
     "Communion": "Cidha Gooftaa",
     "Revival": "Haaromsa",
-    "Effect": "Bu'aa"
+    "Effect": "Bu'aa",
+    "Fill Show": "Agarsiisa Guutuu",
+    "Animation Show": "Agarsiisa Fakkii Socho'oo",
+    "Hide Fill": "Guutuu Dhoksi",
+    "Hide Animation": "Fakkii Socho'oo Dhoksi",
+    "Clear FG Fill Show": "Agarsiisa Guutuu Fuulduraa Qulqulleessi",
+    "Clear FG Animation Show": "Agarsiisa Fakkii Socho'oo Fuulduraa Qulqulleessi"
 }

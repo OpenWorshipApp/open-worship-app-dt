@@ -4462,5 +4462,11 @@
     "Resurrection": "부활",
     "Communion": "성찬",
     "Revival": "부흥",
-    "Effect": "효과"
+    "Effect": "효과",
+    "Fill Show": "채우기 표시",
+    "Animation Show": "애니메이션 표시",
+    "Hide Fill": "채우기 숨기기",
+    "Hide Animation": "애니메이션 숨기기",
+    "Clear FG Fill Show": "전경 채우기 표시 지우기",
+    "Clear FG Animation Show": "전경 애니메이션 표시 지우기"
 }

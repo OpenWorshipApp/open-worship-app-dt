@@ -72,7 +72,7 @@ function genSessionSettingNames(
 }
 
 function toAutoPlayPrefix(
-    props: BackgroundSessionsPropsType,
+    props: { autoPlayPrefix?: string },
     sessionId: string,
 ) {
     if (props.autoPlayPrefix === undefined) {
@@ -81,7 +81,22 @@ function toAutoPlayPrefix(
     return `${props.autoPlayPrefix}${toSessionSuffix(sessionId)}`;
 }
 
-export function useBackgroundSessions(props: BackgroundSessionsPropsType) {
+/**
+ * The session strip alone, for a tab whose sessions own no folder: the Fills
+ * and Animations tabs' sessions own their saved fills or animations and
+ * their slide show, and `genSessionSettingNames` names every setting one of
+ * them keeps, so a removed session takes all of it with it.
+ */
+export type BackgroundSessionStripPropsType = {
+    target: string;
+    autoPlayPrefix?: string;
+    genSessionSettingNames: (sessionId: string) => string[];
+    checkCanChangeSession?: () => boolean;
+};
+
+export function useBackgroundSessionStrip(
+    props: BackgroundSessionStripPropsType,
+) {
     const {
         sessions,
         activeId,
@@ -136,11 +151,14 @@ export function useBackgroundSessions(props: BackgroundSessionsPropsType) {
         removeSessionRef.current(sessionId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const genRemovedSettingNames = useCallback((sessionId: string) => {
+        return propsRef.current.genSessionSettingNames(sessionId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const suffix = toSessionSuffix(activeId);
     return {
         activeId,
         suffix,
-        dirSourceSettingName: `${props.dirSourceSettingName}${suffix}`,
         autoPlayPrefix: toAutoPlayPrefix(props, activeId) ?? undefined,
         element: (
             <MediaSessionsComp
@@ -151,10 +169,7 @@ export function useBackgroundSessions(props: BackgroundSessionsPropsType) {
                 onAdd={handleSessionAdding}
                 onRename={renameSession}
                 onRemove={handleSessionRemoving}
-                genRemovedSettingNames={genSessionSettingNames.bind(
-                    null,
-                    props,
-                )}
+                genRemovedSettingNames={genRemovedSettingNames}
                 genSessionState={(sessionId) => {
                     return {
                         // Deliberately not answered per session. There is ONE
@@ -171,5 +186,20 @@ export function useBackgroundSessions(props: BackgroundSessionsPropsType) {
                 }}
             />
         ),
+    };
+}
+
+export function useBackgroundSessions(props: BackgroundSessionsPropsType) {
+    const strip = useBackgroundSessionStrip({
+        target: props.target,
+        autoPlayPrefix: props.autoPlayPrefix,
+        checkCanChangeSession: props.checkCanChangeSession,
+        genSessionSettingNames: (sessionId) => {
+            return genSessionSettingNames(props, sessionId);
+        },
+    });
+    return {
+        ...strip,
+        dirSourceSettingName: `${props.dirSourceSettingName}${strip.suffix}`,
     };
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Augšāmcelšanās",
     "Communion": "Svētais vakarēdiens",
     "Revival": "Garīga atmoda",
-    "Effect": "Efekts"
+    "Effect": "Efekts",
+    "Fill Show": "Aizpildījuma rādījums",
+    "Animation Show": "Animācijas rādījums",
+    "Hide Fill": "Paslēpt aizpildījumu",
+    "Hide Animation": "Paslēpt animāciju",
+    "Clear FG Fill Show": "Notīrīt PP aizpildījuma rādījumu",
+    "Clear FG Animation Show": "Notīrīt PP animācijas rādījumu"
 }

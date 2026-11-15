@@ -4462,5 +4462,11 @@
     "Resurrection": "Aiséirí",
     "Communion": "Comaoineach",
     "Revival": "Athbheochan",
-    "Effect": "Éifeacht"
+    "Effect": "Éifeacht",
+    "Fill Show": "Taispeántas líonta",
+    "Animation Show": "Taispeántas beochana",
+    "Hide Fill": "Folaigh an líonadh",
+    "Hide Animation": "Folaigh an bheochan",
+    "Clear FG Fill Show": "Glan taispeántas líonta (tulra)",
+    "Clear FG Animation Show": "Glan taispeántas beochana (tulra)"
 }

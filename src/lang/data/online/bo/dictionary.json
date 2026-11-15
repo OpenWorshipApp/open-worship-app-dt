@@ -4462,5 +4462,11 @@
     "Resurrection": "ལངས་པ།",
     "Communion": "ཨ་རྒྱ་ཟས།",
     "Revival": "སླར་གསོ།",
-    "Effect": "ནུས་པ།"
+    "Effect": "ནུས་པ།",
+    "Fill Show": "ཁ་སྐོང་སྟོན་པ",
+    "Animation Show": "སྒུལ་བརྙན་སྟོན་པ",
+    "Hide Fill": "ཁ་སྐོང་སྦས",
+    "Hide Animation": "སྒུལ་བརྙན་སྦས",
+    "Clear FG Fill Show": "མདུན་ལྗོངས་ཀྱི་ཁ་སྐོང་སྟོན་པ་གཙང་སེལ",
+    "Clear FG Animation Show": "མདུན་ལྗོངས་ཀྱི་སྒུལ་བརྙན་སྟོན་པ་གཙང་སེལ"
 }

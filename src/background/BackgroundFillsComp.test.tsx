@@ -196,10 +196,42 @@ vi.mock('../others/color/ColorPicker', async () => {
 });
 vi.mock('../others/color/colorSwatchMenuHelpers', async () => {
     const { createContext } = await import('react');
-    return { ColorSwatchExtraMenuContext: createContext(null) };
+    return {
+        ColorSwatchExtraMenuContext: createContext(null),
+        PaintTargetContext: createContext(null),
+    };
 });
 vi.mock('./backgroundTransitionMenuHelpers', () => ({
     genBackgroundItemTransitionMenuItems: state.transition,
+}));
+
+// The session strip and the slide show are their own modules' to test:
+// here what the tab hands them, and the saved list each session hands its
+// pickers.
+const frame = vi.hoisted(() => ({
+    sessionId: '',
+    frames: [] as { kind: string; isShowing: boolean; activeId: string }[],
+    syncs: [] as [string, number][],
+}));
+vi.mock('./PaintTabFrameComp', () => ({
+    default: ({ kind, session, isShowing, children }: any) => {
+        frame.frames.push({ kind, isShowing, activeId: session.activeId });
+        return (
+            <div data-frame={kind} data-showing={`${isShowing}`}>
+                {children}
+            </div>
+        );
+    },
+    usePaintSessionStrip: () => ({
+        activeId: frame.sessionId,
+        suffix: frame.sessionId === '' ? '' : `-${frame.sessionId}`,
+        element: null,
+    }),
+}));
+vi.mock('./BackgroundPaintAutoPlayComp', () => ({
+    useBackgroundPaintAutoPlaySync: (kind: string, count: number) => {
+        frame.syncs.push([kind, count]);
+    },
 }));
 
 import BackgroundFillsComp from './BackgroundFillsComp';
@@ -245,6 +277,9 @@ function lastPresets() {
 }
 
 beforeEach(() => {
+    frame.sessionId = '';
+    frame.frames = [];
+    frame.syncs = [];
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     state.selected = [];
     state.update = null;
@@ -1082,5 +1117,35 @@ describe('saved fills', () => {
             'Copy CSS',
         );
         expect(lastPresets().genSavedMenuItems({ src: 'url(x)' })).toEqual([]);
+    });
+});
+
+describe('its sessions and slide show', () => {
+    it('sits under the strip, the show offered once one is up', async () => {
+        await act(async () => root.render(<BackgroundFillsComp />));
+        expect(frame.frames.at(-1)).toEqual({
+            kind: 'fill',
+            isShowing: false,
+            activeId: '',
+        });
+        expect(frame.syncs.at(-1)).toEqual(['fill', 0]);
+        state.selected = [['1', { src: NAVY_GRADIENT }]];
+        await act(async () => state.update!());
+        expect(frame.frames.at(-1)!.isShowing).toBe(true);
+        // The tab reconciles the show, so a clear that takes the strip's
+        // control away still ends it.
+        expect(frame.syncs.at(-1)).toEqual(['fill', 1]);
+    });
+
+    it("keeps each session's saved ones in a list of its own", async () => {
+        await act(async () => root.render(<BackgroundFillsComp />));
+        expect(state.presets.at(-1)!.savedSettingName).toBe(
+            'background-fill-presets',
+        );
+        frame.sessionId = 's9';
+        await act(async () => root.render(<BackgroundFillsComp />));
+        expect(state.presets.at(-1)!.savedSettingName).toBe(
+            'background-fill-presets-s9',
+        );
     });
 });

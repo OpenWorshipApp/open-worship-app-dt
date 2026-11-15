@@ -20,6 +20,9 @@ import {
 import { ColorSwatchExtraMenuContext } from '../others/color/colorSwatchMenuHelpers';
 import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
 import FillPickerComp from './FillPickerComp';
+import PaintTabFrameComp, { usePaintSessionStrip } from './PaintTabFrameComp';
+import { useBackgroundPaintAutoPlaySync } from './BackgroundPaintAutoPlayComp';
+import { toPaintPresetSettingName } from './paintShowOrderHelpers';
 
 function genFillTransitionMenuItems(fillSrc: string) {
     return genBackgroundItemTransitionMenuItems('fill', fillSrc);
@@ -51,9 +54,11 @@ function getScreenBackgroundManager(screenId: number) {
 function RenderFillPickerPerScreenComp({
     screenId,
     backgroundSrc,
+    presetSettingName,
 }: Readonly<{
     screenId: number;
     backgroundSrc: BackgroundSrcType;
+    presetSettingName: string;
 }>) {
     const screenIdRef = useAppCurrentRef(screenId);
     // Both remembered for this screen -- and dropped with it, since a deleted
@@ -114,6 +119,7 @@ function RenderFillPickerPerScreenComp({
                 heldSrc={backgroundSrc.src}
                 onPick={handleFillPicking}
                 onEdit={handleFillEditing}
+                presetSettingName={presetSettingName}
             />
         </div>
     );
@@ -126,6 +132,12 @@ function RenderFillPickerPerScreenComp({
  * chosen the way every background tab chooses them; once one does, there is
  * a picker for each screen holding one -- its own fill lit, Customize for a
  * gradient or a pattern, and its press going to that screen alone.
+ *
+ * Over them, the Images tab's strip (2026-11-15, the user: _like background
+ * image, `Fills` and `Animations` should support session and auto-play_):
+ * the sessions, each keeping its own saved fills, and -- once a fill is up --
+ * the slide show, which walks the row the fill up is in
+ * (`BackgroundPaintAutoPlayComp`).
  */
 export default function BackgroundFillsComp() {
     const [selectedBackgroundSrcList, setSelectedBackgroundSrcList] = useState<
@@ -146,6 +158,12 @@ export default function BackgroundFillsComp() {
         undefined,
         initBackgroundSrcList,
     );
+    const session = usePaintSessionStrip('fill');
+    useBackgroundPaintAutoPlaySync(
+        'fill',
+        selectedBackgroundSrcList?.length ?? 0,
+    );
+    const presetSettingName = toPaintPresetSettingName('fill', session.suffix);
     const handleBackgroundSelecting = useCallback(
         (src: string | null, event: MouseEvent) => {
             if (src === null) {
@@ -209,41 +227,53 @@ export default function BackgroundFillsComp() {
     // content and left the rest of the panel empty beside it. Each picker
     // spans the panel now, one screen's under another's.
     return (
-        <div
-            ref={containerRef}
-            className="w-100 h-100"
-            style={{
-                overflowY: 'auto',
-            }}
-            onClickCapture={handleSwatchPressing}
+        <PaintTabFrameComp
+            kind="fill"
+            session={session}
+            isShowing={selectedBackgroundSrcList.length > 0}
         >
-            {/* Only here is a swatch a BACKGROUND, so only here does its
+            <div
+                ref={containerRef}
+                // Keyed by session: its saved fills are its own list.
+                key={session.activeId}
+                className="w-100 h-100"
+                style={{
+                    overflowY: 'auto',
+                }}
+                onClickCapture={handleSwatchPressing}
+            >
+                {/* Only here is a swatch a BACKGROUND, so only here does its
                 right-click offer the fill's own transition. */}
-            <ColorSwatchExtraMenuContext value={genFillTransitionMenuItems}>
-                {selectedBackgroundSrcList.length === 0 ? (
-                    <div className="p-1 m-1">
-                        <FillPickerComp
-                            heldSrc={null}
-                            onPick={handleBackgroundSelecting}
-                        />
-                    </div>
-                ) : (
-                    selectedBackgroundSrcList.map(([key, backgroundSrc]) => {
-                        const screenId = Number.parseInt(key);
-                        return (
-                            <RenderFillPickerPerScreenComp
-                                // Keyed by the SCREEN. The fill used to be part
-                                // of the key, so every change threw the whole
-                                // picker away -- and the keyboard focus with
-                                // it -- only to build the same picker again.
-                                key={key}
-                                screenId={screenId}
-                                backgroundSrc={backgroundSrc}
+                <ColorSwatchExtraMenuContext value={genFillTransitionMenuItems}>
+                    {selectedBackgroundSrcList.length === 0 ? (
+                        <div className="p-1 m-1">
+                            <FillPickerComp
+                                heldSrc={null}
+                                onPick={handleBackgroundSelecting}
+                                presetSettingName={presetSettingName}
                             />
-                        );
-                    })
-                )}
-            </ColorSwatchExtraMenuContext>
-        </div>
+                        </div>
+                    ) : (
+                        selectedBackgroundSrcList.map(
+                            ([key, backgroundSrc]) => {
+                                const screenId = Number.parseInt(key);
+                                return (
+                                    <RenderFillPickerPerScreenComp
+                                        // Keyed by the SCREEN. The fill used to be part
+                                        // of the key, so every change threw the whole
+                                        // picker away -- and the keyboard focus with
+                                        // it -- only to build the same picker again.
+                                        key={key}
+                                        screenId={screenId}
+                                        backgroundSrc={backgroundSrc}
+                                        presetSettingName={presetSettingName}
+                                    />
+                                );
+                            },
+                        )
+                    )}
+                </ColorSwatchExtraMenuContext>
+            </div>
+        </PaintTabFrameComp>
     );
 }

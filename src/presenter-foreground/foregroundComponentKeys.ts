@@ -1,5 +1,5 @@
 /**
- * The thirteen foreground components by key and by their English label, with
+ * The fifteen foreground components by key and by their English label, with
  * nothing else: no React, no screen manager, no panel. The help window names
  * a component on a chip and reads one out of a question with this list, and
  * the agent worker checks a key against it -- neither may pull the launcher
@@ -22,6 +22,8 @@ export const FOREGROUND_COMPONENT_LIST = [
     { key: 'time', labelKey: 'Time' },
     { key: 'video', labelKey: 'Video Show' },
     { key: 'image', labelKey: 'Image Show' },
+    { key: 'fill', labelKey: 'Fill Show' },
+    { key: 'animation', labelKey: 'Animation Show' },
     { key: 'camera', labelKey: 'Camera Show' },
     { key: 'screen', labelKey: 'Screen Show' },
     { key: 'web', labelKey: 'Web Show' },

@@ -71,8 +71,8 @@ workflowsVersion: "2026-11-15"
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    on 2 to 4 the verse sits flush in the screen's top left corner with the next one flush left
    under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Margin (%)]** says (the margin stays
-   inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
-   transition set to **none** (W-10).
+   inside each verse's own box). A screen moved to any stage above 0 has its slide
+   transition (**SL** on the `Tr:` row) set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
    Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
    **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting

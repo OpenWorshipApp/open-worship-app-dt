@@ -4462,5 +4462,11 @@
     "Resurrection": "Ringjallja",
     "Communion": "Darka e Zotit",
     "Revival": "Zgjimi",
-    "Effect": "Efekti"
+    "Effect": "Efekti",
+    "Fill Show": "Shfaqja e mbushjes",
+    "Animation Show": "Shfaqja e animacionit",
+    "Hide Fill": "Fshih mbushjen",
+    "Hide Animation": "Fshih animacionin",
+    "Clear FG Fill Show": "Pastro shfaqjen e mbushjes (paraplan)",
+    "Clear FG Animation Show": "Pastro shfaqjen e animacionit (paraplan)"
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Opstanding",
     "Communion": "Nagmaal",
     "Revival": "Herlewing",
-    "Effect": "Effek"
+    "Effect": "Effek",
+    "Fill Show": "Vullingvertoning",
+    "Animation Show": "Animasievertoning",
+    "Hide Fill": "Versteek vulling",
+    "Hide Animation": "Versteek animasie",
+    "Clear FG Fill Show": "Maak voorgrond-vullingvertoning skoon",
+    "Clear FG Animation Show": "Maak voorgrond-animasievertoning skoon"
 }

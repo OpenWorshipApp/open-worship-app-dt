@@ -104,6 +104,7 @@ import {
     applyTimerOnScreen,
     checkIsOnScreen,
     checkIsReason,
+    genPaintShowReason,
     hideOnScreen,
     listOwnedData,
     planShow,
@@ -257,6 +258,8 @@ const WIDGET_NOUN_MAP: Record<ForegroundComponentKeyType, string> = {
     'long-text': 'long text',
     video: 'video',
     image: 'picture',
+    fill: 'colour fill',
+    animation: 'moving background',
     camera: 'camera',
     screen: 'picture of another screen',
     web: 'web page',
@@ -1115,6 +1118,12 @@ function hideWholeComponent(
         case 'screen':
             manager.setScreenDataList([]);
             return;
+        case 'fill':
+            manager.removeSessionData('fillDataList', null);
+            return;
+        case 'animation':
+            manager.removeSessionData('animationDataList', null);
+            return;
         default:
             // A single-slot widget: whatever session put it up.
             hideOnScreen({ ...context, sessionIds: [] }, screenManager);
@@ -1181,6 +1190,10 @@ function checkHasComponent(
             return (data.cameraDataList ?? []).length > 0;
         case 'screen':
             return (data.screenDataList ?? []).length > 0;
+        case 'fill':
+            return (data.fillDataList ?? []).length > 0;
+        case 'animation':
+            return (data.animationDataList ?? []).length > 0;
         default:
             return false;
     }
@@ -1619,6 +1632,11 @@ async function handleStart(
 ): Promise<AgentForegroundResultType> {
     if (widget === 'stopwatch' || widget === 'countdown') {
         // A plain "start" counts from the press, as it always has.
+    }
+    // Refused before anything is written: there is nothing in words a Fill
+    // Show or Animation Show could put up, so its session is left alone.
+    if (widget === 'fill' || widget === 'animation') {
+        return toReason(genPaintShowReason(widget));
     }
     const edgeAsk = toEdgeQuickTextAsk(widget, request);
     if (edgeAsk !== null) {

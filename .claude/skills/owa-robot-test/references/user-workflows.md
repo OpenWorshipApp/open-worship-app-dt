@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-15b** (**W-08, W-28, W-48 — the Background panel's [en:tran:Animations], CSS and GLSL.** The user: _implement `Animation` for background, it should provide both css and glsl_, _support creative animation_, _locate the `Animations` after `Fills`_, _make sure it support transparency and blending mode so for screen in screen show it should supply the affect_, _supply maximum sample for christian worshiping background_, _have to allow customizing and preset_. W-08: the tab after **[en:tran:Fills]**, its worship samples still everywhere but on the screen, **[en:tran:Customize]** (effect, see-through colours, speed, density or quality, opacity, blend mode), a shader's **[en:tran:Edit Code]** and **[en:tran:Shader Code]**, **[en:tran:Save as Preset]**, **[en:tran:Copy Code]**. W-48: the tab and a tile take a **[en:tran:Transition]**. W-28: an animation tile is no box on a slide. Seen live 2026-11-15 on a scratch instance of the dev app: the tab after Fills, Easter - Sunrise on screen 0 with the Mini Screen still, Customize's Fast reaching the screen, a saved chip putting flames up at 80% opacity with a screen blend, the Shader Code panel with its preview, both right-click menus, and all of it in Afrikaans. Not seen live: a tile moving under the pointer, a shader's error line, Reset and Apply (typing in the code editor needs the window in front), the copied text, the canvas refusing the drag, and the Screen Show blend (it needs two screens) -- the unit tests drive them. PM-187..PM-192.)
+**workflowsVersion: 2026-11-15e** (**W-03, W-05 and W-10 — the Mini Screen's `Tr:` buttons read SL, BG and FG.** The user, with a picture of the footer's _Slide:_, _Background:_ and _Foreground:_ circled: _change transition name to `SL` `BG` `FL`_, `FG` chosen when asked, to match the clear buttons in the card's header. The three buttons show the codes, untranslated like the clear buttons' and `St:`; each keeps its translated **[en:tran:Slide transition]** / **[en:tran:Background transition]** / **[en:tran:Foreground transition]** as its tooltip and its name for a screen reader. Seen live 2026-11-15 on the dev Presenter in English: both Mini Screens' footers read `Tr: SL BG FG`, each button named _Slide transition_ / _Background transition_ / _Foreground transition_; the menu each opens is unchanged and held by the unit tests. SP-06.)
+
+Previous: **workflowsVersion: 2026-11-15d** (**W-08 and W-09 — sessions and a slide show on [en:tran:Fills] and [en:tran:Animations], and a slide show on [en:tran:Fill Show] and [en:tran:Animation Show].** The user, with the Images tab's session row and its ▶ `5` s show circled: _like background image, `Fills` and `Animations` should support session and auto-play_, then _`Fills Show` and `Animations Show` should support auto-play as well_. W-08: the two tabs carry the session row; a session keeps its own saved ones; once one is up the row carries the slide show, which moves every screen holding one on to the next tile of its row with its fit and look; one show per tab; F7 ends it. W-09: the same show in Fill Show's and Animation Show's pinned row, per session, ended by F10. Seen live 2026-11-15 on a scratch instance of the dev app, in Afrikaans: the session row on both tabs and the show only once something was up; the shaders walked in their drawn order (Easter - Sunrise, then the crosses, on through the glass and the aurora) every five seconds; **＋** made a second session, whose show ended Default's, its ▶ leaving Default's button; the dark gradients walked from the first to the fifth; **[en:tran:Clear Background]** took the show away and a sunrise put up after stayed put; on Animation Show, Glory - Light Rays walked to Heaven - Clouds, **[en:tran:Clear Foreground]** took the show away and the rays put up after stayed put; no console error. Not seen live: a fill saved into a session's own list (its name box is the person's), removing a session, Fill Show's show, a foreground session's ▶ and the Foreground menu's mark, and an English pass -- the unit tests drive them.)
+
+Previous: **workflowsVersion: 2026-11-15c** (**W-09 — [en:tran:Fill Show] and [en:tran:Animation Show] on the foreground.** The user: _add `Fills` and `Animation` to foreground as well_, _make sure it work the same way image show and video show_. Two foreground components with the Background tabs' tiles: a press puts the fill or the animation over the slide for the session in front, a second press takes it off, another tile replaces it, a session holds one, its _Properties_ (place, width, opacity, blend) are Image Show's, and a tile dragged onto the Mini Screen goes up. Seen live 2026-11-15 on a scratch instance of the dev app, in Afrikaans: both rows in the Foreground menu; a gradient put up and placed top right at half width with a Screen blend over a GLSL background; a CSS animation centred and moving on the screen, then a GLSL one replacing it, then taken off by a second press; a colour dragged onto the Mini Screen going up as a foreground fill with the session's look; a shader dropped on a second screen opening a picker of its own beside the first screen's, and the first screen's **[en:tran:Fast]** changing that screen's animation alone; **[en:tran:Clear Foreground]** taking it off. Not seen live: the Hide row pressed (the tools may not press it), a second session, the run sheet's rows and their clears, and an English pass -- the unit tests drive them.)
+
+Previous: **workflowsVersion: 2026-11-15b** (**W-08, W-28, W-48 — the Background panel's [en:tran:Animations], CSS and GLSL.** The user: _implement `Animation` for background, it should provide both css and glsl_, _support creative animation_, _locate the `Animations` after `Fills`_, _make sure it support transparency and blending mode so for screen in screen show it should supply the affect_, _supply maximum sample for christian worshiping background_, _have to allow customizing and preset_. W-08: the tab after **[en:tran:Fills]**, its worship samples still everywhere but on the screen, **[en:tran:Customize]** (effect, see-through colours, speed, density or quality, opacity, blend mode), a shader's **[en:tran:Edit Code]** and **[en:tran:Shader Code]**, **[en:tran:Save as Preset]**, **[en:tran:Copy Code]**. W-48: the tab and a tile take a **[en:tran:Transition]**. W-28: an animation tile is no box on a slide. Seen live 2026-11-15 on a scratch instance of the dev app: the tab after Fills, Easter - Sunrise on screen 0 with the Mini Screen still, Customize's Fast reaching the screen, a saved chip putting flames up at 80% opacity with a screen blend, the Shader Code panel with its preview, both right-click menus, and all of it in Afrikaans. Not seen live: a tile moving under the pointer, a shader's error line, Reset and Apply (typing in the code editor needs the window in front), the copied text, the canvas refusing the drag, and the Screen Show blend (it needs two screens) -- the unit tests drive them. PM-187..PM-192.)
 
 Previous: **workflowsVersion: 2026-11-15a** (**W-01 and W-50 — [en:tran:Stay Awake] can keep the computer awake for a while only.** The user, with the cup circled: _add timer to stay-awake, for user's option over infinite awaking_. A press on the cup opens its menu: **[en:tran:Until I turn it off]**, **[en:tran:For 30 minutes]**, **[en:tran:For 1 hour]**, **[en:tran:For 2 hours]**, **[en:tran:For 4 hours]** and **[en:tran:Off]**, the current choice ticked; under a timer the cup steams unfilled, its tooltip says until when and the menu's first row is that time, and at that moment the computer may sleep again and the cup switches itself off. Seen live 2026-11-15 on a scratch instance (macOS), Screen Mirror page: a timer seeded to end at 12:04:05 held the display awake (`pmset -g assertions`) with the tooltip _… until 12:04 PM_ and _Until 12:04 PM_ ticked, and let go at 12:04:06 with no press, the cup grey and empty; For 30 minutes, Off and Until I turn it off each pressed and each held or released as it says; the Bible Reader released it; in French the menu and the tooltip in French (_Jusqu'à 13:05_). And on the Presenter, on a second scratch instance: its header cup's menu with _Until 12:11 PM_ ticked, and the display let go at 12:11:22, the moment the timer ended, the cup grey and empty by itself. NAV-24, SP-32.)
 
@@ -233,8 +239,8 @@ _Verify: NAV-01..04, NAV-12._
    coming ones too (`2/7`, `3/7`) — in a large figure on a half-transparent dark pill.
 
    Set a stage monitor's **St:** to **2** and the singer always sees what is coming.
-   Moving a screen to any stage above 0 also sets its **[en:tran:Slide]:** transition to **none**
-   (W-10). To see
+   Moving a screen to any stage above 0 also sets its slide transition (**SL** on the
+   `Tr:` row) to **none** (W-10). To see
    it here first, click **[en:tran:Add Stage]** in the **[en:tran:Stage Previewer]** header
    above the slides and pick a stage: it arrives as its own chip and its own pane, side by
    side with **[en:tran:Stage] 0**, which always stays. The **×** on a chip
@@ -373,8 +379,8 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    on 2 to 4 the verse sits flush in the screen's top left corner with the next one flush left
    under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Margin (%)]** says (the margin stays
-   inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
-   transition set to **none** (W-10).
+   inside each verse's own box). A screen moved to any stage above 0 has its slide
+   transition (**SL** on the `Tr:` row) set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
    Stage Previewer — **[en:tran:Reset]** puts that stage back to the defaults. At its top,
    **[en:tran:Presets]** offers **[en:tran:Full Screen]**, **[en:tran:Center]** (the starting
@@ -730,7 +736,23 @@ and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On t
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 
-_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..192, KB-04._
+**Sessions and a slide show on Fills and Animations.** The **[en:tran:Fills]** and
+**[en:tran:Animations]** tabs carry the same row of session buttons above their tiles:
+**[en:tran:Default]**, then any you add with **＋**. A session there keeps its own saved fills or
+animations under **[en:tran:Presets]**, so one can hold this season's colours and another the
+youth service's; Default's are the ones **[en:tran:Fill Show]** and **[en:tran:Animation Show]**
+offer too (W-09). Removing a session forgets its saved ones and its show. Once a screen holds the
+tab's kind, the row also carries the slide show: press **[en:tran:Start Slide Show]** (▶) and,
+every so many seconds — the number beside it — each screen holding one moves on to the next tile
+of the row the one up is in: the next shader, the next CSS animation, the next gradient or
+pattern on the side **[en:tran:Dark]** / **[en:tran:Light]** shows, or the session's next saved
+one when the one up is among them. How the screen had it fitted and styled goes with it. A colour
+from the palette, or a tile changed in **[en:tran:Customize]**, belongs to no row and stays where
+it is. A screen has one background, so a tab runs one show: starting it in another session stops
+the first, and the blue ▶ moves to that session's button. **[en:tran:Clear Background]**
+(**F7**) ends the show, and putting a tile up afterwards does not start it again.
+
+_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..192, PM-195, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -883,6 +905,24 @@ button:
   [en:tran:Foreground] tab, open _[en:tran:Properties]_ in its panel and tick
   **[en:tran:Play With Sound]**: a **[en:tran:Volume]** slider appears under it, and
   that slider is the clip's volume.
+- **[en:tran:Fill Show]** and **[en:tran:Animation Show]:** a colour, gradient or
+  pattern, or a moving animation, shown _over_ the slide the way **[en:tran:Image Show]**
+  shows a picture. Their tiles are the ones the Background panel's **[en:tran:Fills]**
+  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike. Click a tile to put it up,
+  click it again to take it off, or drag it onto the Mini Screen. The overlay is the
+  shape of the screen, as wide as _Properties_ says and placed where it says, so a
+  colour can sit in one corner over the live slide and an animation in the middle. It
+  moves only on the screen itself; the Mini Screen and the tiles hold still. While
+  the session has nothing up there is one picker, whose press goes to the ticked
+  screens; once it has one up, there is a picker per screen holding one, each with
+  that screen's tile ticked and its own **[en:tran:Customize]**, and a press or a
+  change there goes to that screen alone, as in the Background tabs. Once the session
+  has one up, the row pinned at the top carries its slide show, as Image Show's does:
+  **[en:tran:Start Slide Show]** moves each of the session's overlays on to the next
+  tile of its row every so many seconds, the way the Background tabs' show does (W-08),
+  its _Properties_ kept; another session's overlay stays as it is.
+  **[en:tran:Clear Foreground]** (**F10**) ends the show, and a tile put up afterwards
+  does not start it again.
 - **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
   [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
   the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
@@ -897,6 +937,8 @@ button:
   and **[en:tran:Web Show]** a session also owns its **own
   folder** and its **own slide show**, so one can run a show over your backgrounds
   folder while another holds a logo from somewhere else, both on screen at once.
+  A **[en:tran:Fill Show]** or **[en:tran:Animation Show]** session owns its own slide
+  show too.
   Setting a session up puts nothing on the screen: its show button does that, when
   you want that one.
 - Right-click a session (or press its **⋮**) to rename or remove it. Only one session
@@ -926,7 +968,8 @@ button:
   **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
   **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
-  another tile replaces it. Two pictures up at once — an overlay and a logo — are two
+  another tile replaces it, and **[en:tran:Fill Show]** and **[en:tran:Animation Show]**
+  hold one fill or animation per session the same way. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
 - The **[en:tran:Properties]** panel sits once beside the session buttons and governs
   every item that session shows — position, width, scale, opacity, corner and blend.
@@ -989,7 +1032,7 @@ button:
   stays where you left it so you can keep looking for the next picture while the show
   runs.
 - **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show,
-  Screen Show and Web Show) decides how the overlay mixes with whatever is under it. It is the
+  Screen Show, Web Show, Fill Show and Animation Show) decides how the overlay mixes with whatever is under it. It is the
   answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
@@ -1019,7 +1062,7 @@ show button is offered, never pressed unasked. **/countdown 5**, **/countdown
 10:30** and **/marquee Please silence your phones** do the same with no assistant,
 and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6).
 
-_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67._
+_Verify: PM-15..25, PM-28, PM-34, PM-128..PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, PM-193..196, KB-03, KB-07, CB-67._
 
 ### W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -1194,8 +1237,9 @@ _Verify: PM-163, PM-164, PM-165, PM-166, PM-167._
   (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **[en:tran:Display]** names the
   projector, not this computer's own screen — pick it there; and something is on it — a
   lit clear button says which layer holds something.
-- **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
-  **[en:tran:Foreground]:** buttons choose the change animation for that screen —
+- **Transitions** (footer, `Tr:`): the **SL** (slide), **BG** (background) and **FG**
+  (foreground) buttons — the same codes as the clear buttons in the card's header; hover one
+  for its full name — choose the change animation for that screen —
   **none / fade / move / zoom**. They are the fallback: a document, a slide, a
   Background tab, one background, a foreground panel or one of its sessions can
   carry its own transition instead (W-48). 📸
@@ -1204,7 +1248,7 @@ _Verify: PM-163, PM-164, PM-165, PM-166, PM-167._
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
-  above 0 also sets its **[en:tran:Slide]:** transition to **none**, and a note in the
+  above 0 also sets its **SL** transition to **none**, and a note in the
   corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.

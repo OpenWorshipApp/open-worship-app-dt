@@ -4462,5 +4462,11 @@
     "Resurrection": "Уваскрасенне",
     "Communion": "Прычасце",
     "Revival": "Абуджэнне",
-    "Effect": "Эфект"
+    "Effect": "Эфект",
+    "Fill Show": "Паказ заліўкі",
+    "Animation Show": "Паказ анімацыі",
+    "Hide Fill": "Схаваць заліўку",
+    "Hide Animation": "Схаваць анімацыю",
+    "Clear FG Fill Show": "Ачысціць паказ заліўкі на пярэднім плане",
+    "Clear FG Animation Show": "Ачысціць паказ анімацыі на пярэднім плане"
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Tashin Matattu",
     "Communion": "Tarayya Mai Tsarki",
     "Revival": "Farkawa ta Ruhaniya",
-    "Effect": "Tasiri"
+    "Effect": "Tasiri",
+    "Fill Show": "Nunin Cikawa",
+    "Animation Show": "Nunin Rayarwa",
+    "Hide Fill": "Ɓoye Cikawa",
+    "Hide Animation": "Ɓoye Rayarwa",
+    "Clear FG Fill Show": "Goge Nunin Cikawa (Gaba)",
+    "Clear FG Animation Show": "Goge Nunin Rayarwa (Gaba)"
 }

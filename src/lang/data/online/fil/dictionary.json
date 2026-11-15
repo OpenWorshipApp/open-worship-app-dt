@@ -4462,5 +4462,11 @@
     "Resurrection": "Muling pagkabuhay",
     "Communion": "Komunyon",
     "Revival": "Muling pagbangon",
-    "Effect": "Epekto"
+    "Effect": "Epekto",
+    "Fill Show": "Pagpapakita ng Pampuno",
+    "Animation Show": "Pagpapakita ng Animation",
+    "Hide Fill": "Itago ang Pampuno",
+    "Hide Animation": "Itago ang Animation",
+    "Clear FG Fill Show": "I-clear ang FG Fill Show",
+    "Clear FG Animation Show": "I-clear ang FG Animation Show"
 }

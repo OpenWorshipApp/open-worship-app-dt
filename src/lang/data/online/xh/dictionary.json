@@ -4462,5 +4462,11 @@
     "Resurrection": "Uvuko",
     "Communion": "Isidlo SeNkosi",
     "Revival": "Ivuselelo",
-    "Effect": "Isiphumo"
+    "Effect": "Isiphumo",
+    "Fill Show": "Umboniso Wokuzalisa",
+    "Animation Show": "Umboniso Wokuhambisa Imifanekiso",
+    "Hide Fill": "Fihla Ukuzalisa",
+    "Hide Animation": "Fihla Ukuhambisa Imifanekiso",
+    "Clear FG Fill Show": "Coca uMboniso Wokuzalisa weNgaphambili",
+    "Clear FG Animation Show": "Coca uMboniso Wokuhambisa Imifanekiso weNgaphambili"
 }

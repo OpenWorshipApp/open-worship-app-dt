@@ -57,6 +57,12 @@ vi.mock('./ForegroundTimeComp', () => ({
 vi.mock('./ForegroundMediaComp', () => ({
     default: ({ kind }: { kind: string }) => <span>panel:media:{kind}</span>,
 }));
+vi.mock('./ForegroundFillComp', () => ({
+    default: () => <span>panel:fill</span>,
+}));
+vi.mock('./ForegroundAnimationComp', () => ({
+    default: () => <span>panel:animation</span>,
+}));
 vi.mock('./ForegroundCameraComp', () => ({
     default: () => <span>panel:camera</span>,
 }));
@@ -105,6 +111,8 @@ describe('which data puts a component on a screen', () => {
         timeDataList: [],
         videoDataList: [],
         imageDataList: [],
+        fillDataList: [],
+        animationDataList: [],
         cameraDataList: [],
         screenDataList: [],
         webDataList: [],
@@ -119,6 +127,8 @@ describe('which data puts a component on a screen', () => {
         time: { timeDataList: [{ id: 't' }] },
         video: { videoDataList: [{ id: 'v' }] },
         image: { imageDataList: [{ id: 'i' }] },
+        fill: { fillDataList: [{ src: '#FF0000' }] },
+        animation: { animationDataList: [{ src: 'css?name=aurora' }] },
         camera: { cameraDataList: [{ id: 'k' }] },
         screen: { screenDataList: [{ id: 1 }] },
         web: { webDataList: [{ id: 'w' }] },
@@ -157,6 +167,8 @@ describe('which data puts a component on a screen', () => {
             'time',
             'video',
             'image',
+            'fill',
+            'animation',
             'camera',
             'screen',
             'web',
@@ -187,6 +199,8 @@ describe('the panel each launcher row opens', () => {
         ['time', 'panel:time'],
         ['video', 'panel:media:video'],
         ['image', 'panel:media:image'],
+        ['fill', 'panel:fill'],
+        ['animation', 'panel:animation'],
         ['camera', 'panel:camera'],
         ['screen', 'panel:screen'],
         ['web', 'panel:media:web'],

@@ -65,8 +65,9 @@ workflowsVersion: "2026-11-15"
   (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **[en:tran:Display]** names the
   projector, not this computer's own screen — pick it there; and something is on it — a
   lit clear button says which layer holds something.
-- **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
-  **[en:tran:Foreground]:** buttons choose the change animation for that screen —
+- **Transitions** (footer, `Tr:`): the **SL** (slide), **BG** (background) and **FG**
+  (foreground) buttons — the same codes as the clear buttons in the card's header; hover one
+  for its full name — choose the change animation for that screen —
   **none / fade / move / zoom**. They are the fallback: a document, a slide, a
   Background tab, one background, a foreground panel or one of its sessions can
   carry its own transition instead (W-48). 📸
@@ -75,7 +76,7 @@ workflowsVersion: "2026-11-15"
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
-  above 0 also sets its **[en:tran:Slide]:** transition to **none**, and a note in the
+  above 0 also sets its **SL** transition to **none**, and a note in the
   corner says so; you can pick another one
   afterwards, and going back to stage 0 leaves the transition as it is. A document's
   or a slide's own transition (W-48) still wins over it.

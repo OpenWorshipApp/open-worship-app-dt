@@ -1084,6 +1084,26 @@ describe('what is refused, in sentences', () => {
         expect(locked.reason).toContain('locked');
     });
 
+    it('a Fill or Animation Show put up by words, before anything is written', async () => {
+        const settingsBefore = [...h.settings.entries()];
+        const backupsBefore = h.restoresList.length;
+        for (const [widget, action, opening] of [
+            ['fill', 'show', 'A Fill Show'],
+            ['animation', 'start', 'An Animation Show'],
+        ] as const) {
+            const result: any = await handleAgentForegroundRequest(
+                { action, widget, session: 'Default' },
+                NOW,
+            );
+            expect(result.isError).toBe(true);
+            expect(result.reason.startsWith(opening)).toBe(true);
+            // Nothing was set, so there is nothing to undo and none offered.
+            expect(result.reason).not.toContain('owa_undo');
+        }
+        expect([...h.settings.entries()]).toEqual(settingsBefore);
+        expect(h.restoresList).toHaveLength(backupsBefore);
+    });
+
     it('an unknown component, and "all" anywhere but stop', async () => {
         const unknown: any = await handleAgentForegroundRequest({
             widget: 'fireworks',

@@ -57,6 +57,8 @@ const WIDGET_NOUN_MAP = {
     camera: 'camera',
     screen: 'picture of another screen',
     web: 'web page',
+    fill: 'colour fill',
+    animation: 'moving background',
     all: 'foreground extras',
 };
 

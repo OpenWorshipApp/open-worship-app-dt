@@ -4462,5 +4462,11 @@
     "Resurrection": "Fitsanganana amin'ny maty",
     "Communion": "Fanasan-tongotra sy Fanekena Masina",
     "Revival": "Famelombelomana ara-panahy",
-    "Effect": "Endrika"
+    "Effect": "Endrika",
+    "Fill Show": "Fampisehoana famenoana",
+    "Animation Show": "Fampisehoana sary mihetsika",
+    "Hide Fill": "Afeno ny famenoana",
+    "Hide Animation": "Afeno ny sary mihetsika",
+    "Clear FG Fill Show": "Diovy ny Fampisehoana famenoana (Ambony)",
+    "Clear FG Animation Show": "Diovy ny Fampisehoana sary mihetsika (Ambony)"
 }

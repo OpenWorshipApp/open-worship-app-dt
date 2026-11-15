@@ -4462,5 +4462,11 @@
     "Resurrection": "Vstajenje",
     "Communion": "Obhajilo",
     "Revival": "Prebuditev",
-    "Effect": "Učinek"
+    "Effect": "Učinek",
+    "Fill Show": "Prikaz polnila",
+    "Animation Show": "Prikaz animacije",
+    "Hide Fill": "Skrij polnilo",
+    "Hide Animation": "Skrij animacijo",
+    "Clear FG Fill Show": "Počisti prikaz polnila v ospredju",
+    "Clear FG Animation Show": "Počisti prikaz animacije v ospredju"
 }

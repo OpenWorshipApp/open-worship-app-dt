@@ -58,10 +58,7 @@ import { getVideoDurationSeconds } from '../helper/videoDurationHelpers';
 import ForegroundSoundControlComp, {
     getForegroundSoundData,
 } from './ForegroundSoundControlComp';
-import {
-    FOREGROUND_AUTO_PLAY_KEY_PREFIX,
-    toForegroundAutoPlayPrefix,
-} from './foregroundAutoPlayPrefix';
+import { toForegroundAutoPlayPrefix } from './foregroundAutoPlayPrefix';
 import {
     getForegroundShowingScreenIdDataList,
     getScreenForegroundManagerByDropped,
@@ -889,10 +886,16 @@ function syncAutoPlayRunners() {
             });
         }
     }
-    // Only the foreground's own shows: the background lists reconcile their
-    // timers from their own panels and must not be stopped from here.
+    // Only the media widgets' own shows: the background lists, and Fill
+    // Show and Animation Show beside these, reconcile their timers from
+    // their own panels and must not be stopped from here -- a prefix of
+    // `foreground-` alone took a running Fill Show down on every redraw of
+    // Image Show.
     applyAutoPlayRunners(runners, (key) => {
-        return key.startsWith(FOREGROUND_AUTO_PLAY_KEY_PREFIX);
+        return foregroundMediaKindList.some((kind) => {
+            const base = toForegroundAutoPlayPrefix(kind, '');
+            return key === base || key.startsWith(`${base}-`);
+        });
     });
 }
 

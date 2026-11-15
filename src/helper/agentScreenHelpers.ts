@@ -397,6 +397,20 @@ export function toForegroundSummary(
     for (const image of foregroundData.imageDataList ?? []) {
         items.push(`picture ${pathBasename(image.filePath ?? '')}`.trim());
     }
+    for (const paint of foregroundData.fillDataList ?? []) {
+        const fill = parseFill(paint.src);
+        items.push(
+            fill === null ? 'colour fill' : `colour fill ${describeFill(fill)}`,
+        );
+    }
+    for (const paint of foregroundData.animationDataList ?? []) {
+        const animation = parseAnimation(paint.src);
+        items.push(
+            animation === null
+                ? 'moving background'
+                : `moving background ${describeAnimation(animation)}`,
+        );
+    }
     return items;
 }
 

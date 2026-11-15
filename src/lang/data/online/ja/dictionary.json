@@ -4462,5 +4462,11 @@
     "Resurrection": "復活",
     "Communion": "聖餐",
     "Revival": "リバイバル",
-    "Effect": "エフェクト"
+    "Effect": "エフェクト",
+    "Fill Show": "塗り表示",
+    "Animation Show": "アニメーション表示",
+    "Hide Fill": "塗りを非表示",
+    "Hide Animation": "アニメーションを非表示",
+    "Clear FG Fill Show": "前面の塗り表示をクリア",
+    "Clear FG Animation Show": "前面のアニメーション表示をクリア"
 }

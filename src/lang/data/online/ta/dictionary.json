@@ -4462,5 +4462,11 @@
     "Resurrection": "உயிர்த்தெழுதல்",
     "Communion": "திருவிருந்து",
     "Revival": "எழுப்புதல்",
-    "Effect": "விளைவு"
+    "Effect": "விளைவு",
+    "Fill Show": "நிரப்புக் காட்சி",
+    "Animation Show": "அசைவூட்டக் காட்சி",
+    "Hide Fill": "நிரப்பை மறை",
+    "Hide Animation": "அசைவூட்டத்தை மறை",
+    "Clear FG Fill Show": "முன்புல நிரப்புக் காட்சியை அழி",
+    "Clear FG Animation Show": "முன்புல அசைவூட்டக் காட்சியை அழி"
 }

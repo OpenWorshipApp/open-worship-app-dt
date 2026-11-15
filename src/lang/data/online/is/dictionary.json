@@ -4462,5 +4462,11 @@
     "Resurrection": "Upprisa",
     "Communion": "Altarisganga",
     "Revival": "Vakning",
-    "Effect": "Áhrif"
+    "Effect": "Áhrif",
+    "Fill Show": "Fyllingarsýning",
+    "Animation Show": "Hreyfimyndasýning",
+    "Hide Fill": "Fela fyllingu",
+    "Hide Animation": "Fela hreyfimynd",
+    "Clear FG Fill Show": "Hreinsa fyllingarsýningu (forgrunnur)",
+    "Clear FG Animation Show": "Hreinsa hreyfimyndasýningu (forgrunnur)"
 }

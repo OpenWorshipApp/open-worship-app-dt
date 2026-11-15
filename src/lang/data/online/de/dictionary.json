@@ -4462,5 +4462,11 @@
     "Resurrection": "Auferstehung",
     "Communion": "Abendmahl",
     "Revival": "Erweckung",
-    "Effect": "Effekt"
+    "Effect": "Effekt",
+    "Fill Show": "Füllungs-Anzeige",
+    "Animation Show": "Animations-Anzeige",
+    "Hide Fill": "Füllung ausblenden",
+    "Hide Animation": "Animation ausblenden",
+    "Clear FG Fill Show": "Vordergrund-Füllungs-Anzeige leeren",
+    "Clear FG Animation Show": "Vordergrund-Animations-Anzeige leeren"
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Kuuka kwa akufa",
     "Communion": "Mgonero Woyera",
     "Revival": "Chitsitsimutso",
-    "Effect": "Zotsatira"
+    "Effect": "Zotsatira",
+    "Fill Show": "Chiwonetsero cha Zodzaza",
+    "Animation Show": "Chiwonetsero cha Makanema oyenda",
+    "Hide Fill": "Bisani Chodzaza",
+    "Hide Animation": "Bisani Makanema oyenda",
+    "Clear FG Fill Show": "Yeretsani Chiwonetsero cha Zodzaza (Chakutsogolo)",
+    "Clear FG Animation Show": "Yeretsani Chiwonetsero cha Makanema oyenda (Chakutsogolo)"
 }

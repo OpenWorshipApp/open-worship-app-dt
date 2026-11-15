@@ -3,7 +3,7 @@ id: W-03
 title: "Présenter une diapositive d'un document"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 0e3ac116d72abe75
+translatedFrom: 1e2277b93d5bba07
 ---
 # W-03 — Présenter une diapositive d'un document
 
@@ -26,7 +26,7 @@ translatedFrom: 0e3ac116d72abe75
 
    Comme pour les scènes d'un chant (W-05), les diapositives autour de l'actuelle ne sont jamais estompées. Sur chaque scène qui affiche un compte, **chaque** diapositive à l'écran porte le sien — celles à venir aussi (`2/7`, `3/7`) — en grand chiffre sur une pastille sombre semi-transparente.
 
-   Réglez le **St:** d'un moniteur de scène sur **2** et le chanteur voit toujours ce qui arrive. Passer un écran à une scène au-dessus de 0 règle aussi sa transition **[en:tran:Slide]:** sur **none** (W-10). Pour la voir ici d'abord, cliquez sur **[en:tran:Add Stage]** dans l'en-tête **[en:tran:Stage Previewer]** au-dessus des diapositives et choisissez une scène : elle arrive avec sa propre étiquette et son propre volet, côte à côte avec **[en:tran:Stage] 0**, qui reste toujours. Le **×** sur une étiquette (**[en:tran:Hide Stage] 2**) retire ce volet, et **[en:tran:Add Stage]** le ramène aussitôt. Dans un volet étroit — à côté de l'onglet Bibles, par exemple — le titre de l'en-tête s'efface en premier et **[en:tran:Add Stage]** se réduit à son **+**, de sorte que chaque étiquette reste visible. Il n'y a rien à régler sur la scène d'un document — contrairement à celles d'un chant, ses étiquettes n'ont pas de ⚙. Cliquer sur une diapositive dans n'importe quel volet présente la même diapositive ; chaque écran la dessine selon son propre **St:**. 📸
+   Réglez le **St:** d'un moniteur de scène sur **2** et le chanteur voit toujours ce qui arrive. Passer un écran à une scène au-dessus de 0 règle aussi sa transition de diapositive (**SL** sur la ligne `Tr:`) sur **none** (W-10). Pour la voir ici d'abord, cliquez sur **[en:tran:Add Stage]** dans l'en-tête **[en:tran:Stage Previewer]** au-dessus des diapositives et choisissez une scène : elle arrive avec sa propre étiquette et son propre volet, côte à côte avec **[en:tran:Stage] 0**, qui reste toujours. Le **×** sur une étiquette (**[en:tran:Hide Stage] 2**) retire ce volet, et **[en:tran:Add Stage]** le ramène aussitôt. Dans un volet étroit — à côté de l'onglet Bibles, par exemple — le titre de l'en-tête s'efface en premier et **[en:tran:Add Stage]** se réduit à son **+**, de sorte que chaque étiquette reste visible. Il n'y a rien à régler sur la scène d'un document — contrairement à celles d'un chant, ses étiquettes n'ont pas de ⚙. Cliquer sur une diapositive dans n'importe quel volet présente la même diapositive ; chaque écran la dessine selon son propre **St:**. 📸
 
 Astuces :
 

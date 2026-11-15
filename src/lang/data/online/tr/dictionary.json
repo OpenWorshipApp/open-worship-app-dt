@@ -4462,5 +4462,11 @@
     "Resurrection": "Diriliş",
     "Communion": "Rab'bin Sofrası",
     "Revival": "Uyanış",
-    "Effect": "Efekt"
+    "Effect": "Efekt",
+    "Fill Show": "Dolgu Gösterimi",
+    "Animation Show": "Animasyon Gösterimi",
+    "Hide Fill": "Dolguyu Gizle",
+    "Hide Animation": "Animasyonu Gizle",
+    "Clear FG Fill Show": "Ön Plan Dolgu Gösterimini Temizle",
+    "Clear FG Animation Show": "Ön Plan Animasyon Gösterimini Temizle"
 }

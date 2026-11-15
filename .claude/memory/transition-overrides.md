@@ -15,9 +15,9 @@ level below the screen's **Tr:** row can carry its OWN transition:
 
 | Layer | Levels (most specific wins) | Stored in |
 |---|---|---|
-| Slides | screen `Slide:` → slides preview (`self`) → slide (id) | `<file>.transition.json` sidecar beside the document (`SlideTransitionManager`) |
-| Background | screen `Background:` → tab (type) → item (src) | settings `background-tab-transition` / `background-item-transition` (JSON maps) |
-| Foreground | screen `Foreground:` (new on the Tr row) → component → session | `foreground-component-transition-<widgetKey>` / the session's existing `…-setting-show-widget-transition` |
+| Slides | screen `SL` → slides preview (`self`) → slide (id) | `<file>.transition.json` sidecar beside the document (`SlideTransitionManager`) |
+| Background | screen `BG` → tab (type) → item (src) | settings `background-tab-transition` / `background-item-transition` (JSON maps) |
+| Foreground | screen `FG` (new on the Tr row) → component → session | `foreground-component-transition-<widgetKey>` / the session's existing `…-setting-show-widget-transition` |
 
 Rules that are easy to break:
 

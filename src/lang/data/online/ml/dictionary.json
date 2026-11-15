@@ -4462,5 +4462,11 @@
     "Resurrection": "പുനരുത്ഥാനം",
     "Communion": "കർത്തൃമേശ",
     "Revival": "ഉണർവ്",
-    "Effect": "ഇഫക്റ്റ്"
+    "Effect": "ഇഫക്റ്റ്",
+    "Fill Show": "നിറയ്ക്കൽ പ്രദർശനം",
+    "Animation Show": "ആനിമേഷൻ പ്രദർശനം",
+    "Hide Fill": "നിറയ്ക്കൽ മറയ്ക്കുക",
+    "Hide Animation": "ആനിമേഷൻ മറയ്ക്കുക",
+    "Clear FG Fill Show": "മുൻഭാഗ നിറയ്ക്കൽ പ്രദർശനം മായ്ക്കുക",
+    "Clear FG Animation Show": "മുൻഭാഗ ആനിമേഷൻ പ്രദർശനം മായ്ക്കുക"
 }

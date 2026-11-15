@@ -4462,5 +4462,11 @@
     "Resurrection": "પુનરુત્થાન",
     "Communion": "પવિત્ર ભોજન",
     "Revival": "આત્મિક જાગૃતિ",
-    "Effect": "અસર"
+    "Effect": "અસર",
+    "Fill Show": "ભરણ બતાવો",
+    "Animation Show": "એનિમેશન બતાવો",
+    "Hide Fill": "ભરણ છુપાવો",
+    "Hide Animation": "એનિમેશન છુપાવો",
+    "Clear FG Fill Show": "અગ્રભાગ ભરણ બતાવો સાફ કરો",
+    "Clear FG Animation Show": "અગ્રભાગ એનિમેશન બતાવો સાફ કરો"
 }

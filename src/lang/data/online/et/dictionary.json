@@ -4462,5 +4462,11 @@
     "Resurrection": "Ülestõusmine",
     "Communion": "Armulaud",
     "Revival": "Ärkamine",
-    "Effect": "Efekt"
+    "Effect": "Efekt",
+    "Fill Show": "Täitekuva",
+    "Animation Show": "Animatsioonikuva",
+    "Hide Fill": "Peida täide",
+    "Hide Animation": "Peida animatsioon",
+    "Clear FG Fill Show": "Tühjenda esiplaani täitekuva",
+    "Clear FG Animation Show": "Tühjenda esiplaani animatsioonikuva"
 }

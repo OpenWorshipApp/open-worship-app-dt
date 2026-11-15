@@ -4462,5 +4462,11 @@
     "Resurrection": "Uskrsnuće",
     "Communion": "Euharistija",
     "Revival": "Duhovna obnova",
-    "Effect": "Efekt"
+    "Effect": "Efekt",
+    "Fill Show": "Prikaz ispune",
+    "Animation Show": "Prikaz animacije",
+    "Hide Fill": "Sakrij ispunu",
+    "Hide Animation": "Sakrij animaciju",
+    "Clear FG Fill Show": "Očisti prikaz ispune u prednjem planu",
+    "Clear FG Animation Show": "Očisti prikaz animacije u prednjem planu"
 }

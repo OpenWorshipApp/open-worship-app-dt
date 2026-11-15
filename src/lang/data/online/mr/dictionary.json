@@ -4462,5 +4462,11 @@
     "Resurrection": "पुनरुत्थान",
     "Communion": "प्रभुभोजन",
     "Revival": "पुनरुज्जीवन",
-    "Effect": "प्रभाव"
+    "Effect": "प्रभाव",
+    "Fill Show": "भरणे प्रदर्शन",
+    "Animation Show": "अ‍ॅनिमेशन प्रदर्शन",
+    "Hide Fill": "भरणे लपवा",
+    "Hide Animation": "अ‍ॅनिमेशन लपवा",
+    "Clear FG Fill Show": "अग्रभाग भरणे प्रदर्शन साफ करा",
+    "Clear FG Animation Show": "अग्रभाग अ‍ॅनिमेशन प्रदर्शन साफ करा"
 }

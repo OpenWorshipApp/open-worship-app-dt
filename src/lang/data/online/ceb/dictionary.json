@@ -4462,5 +4462,11 @@
     "Resurrection": "Pagkabanhaw sa Ginoo",
     "Communion": "Komunyon",
     "Revival": "Pagbag-o sa espiritu",
-    "Effect": "Epekto"
+    "Effect": "Epekto",
+    "Fill Show": "Pasundayag sa Pangpuno",
+    "Animation Show": "Pasundayag sa Animasyon",
+    "Hide Fill": "Itago ang Pangpuno",
+    "Hide Animation": "Itago ang Animasyon",
+    "Clear FG Fill Show": "Limpyohi ang Pasundayag sa Pangpuno (Atubangan)",
+    "Clear FG Animation Show": "Limpyohi ang Pasundayag sa Animasyon (Atubangan)"
 }

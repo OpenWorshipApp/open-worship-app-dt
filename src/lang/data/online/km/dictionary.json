@@ -4462,5 +4462,11 @@
     "Resurrection": "ការរស់ឡើងវិញ",
     "Communion": "ពិធីបរិភោគព្រះអាហារ",
     "Revival": "ការរស់ឡើងវិញខាងវិញ្ញាណ",
-    "Effect": "ឥទ្ធិពល"
+    "Effect": "ឥទ្ធិពល",
+    "Fill Show": "បង្ហាញការបំពេញ",
+    "Animation Show": "បង្ហាញចលនា",
+    "Hide Fill": "លាក់ការបំពេញ",
+    "Hide Animation": "លាក់ចលនា",
+    "Clear FG Fill Show": "សម្អាតការបង្ហាញការបំពេញខាងមុខ",
+    "Clear FG Animation Show": "សម្អាតការបង្ហាញចលនាខាងមុខ"
 }

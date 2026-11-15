@@ -4462,5 +4462,11 @@
     "Resurrection": "การฟื้นคืนพระชนม์",
     "Communion": "พิธีมหาสนิท",
     "Revival": "การฟื้นฟูจิตวิญญาณ",
-    "Effect": "เอฟเฟกต์"
+    "Effect": "เอฟเฟกต์",
+    "Fill Show": "แสดงการเติมสี",
+    "Animation Show": "แสดงแอนิเมชัน",
+    "Hide Fill": "ซ่อนการเติมสี",
+    "Hide Animation": "ซ่อนแอนิเมชัน",
+    "Clear FG Fill Show": "ล้างแสดงการเติมสีชั้นหน้า",
+    "Clear FG Animation Show": "ล้างแสดงแอนิเมชันชั้นหน้า"
 }

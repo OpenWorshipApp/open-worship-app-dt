@@ -4462,5 +4462,11 @@
     "Resurrection": "Dirilmə",
     "Communion": "Rəbbin Şam yeməyi",
     "Revival": "Dirçəliş",
-    "Effect": "Effekt"
+    "Effect": "Effekt",
+    "Fill Show": "Doldurma göstərişi",
+    "Animation Show": "Animasiya göstərişi",
+    "Hide Fill": "Doldurmanı gizlət",
+    "Hide Animation": "Animasiyanı gizlət",
+    "Clear FG Fill Show": "Ön plan doldurma göstərişini təmizlə",
+    "Clear FG Animation Show": "Ön plan animasiya göstərişini təmizlə"
 }

@@ -18,6 +18,9 @@ import {
     BACKGROUND_ANIMATION_FOLDED_SETTING_PREFIX,
 } from '../_screen/managers/screenSettingKeyHelpers';
 import AnimationPickerComp from './AnimationPickerComp';
+import PaintTabFrameComp, { usePaintSessionStrip } from './PaintTabFrameComp';
+import { useBackgroundPaintAutoPlaySync } from './BackgroundPaintAutoPlayComp';
+import { toPaintPresetSettingName } from './paintShowOrderHelpers';
 
 // How long after a tile press its focus may still be put back. The press and
 // the re-render it causes are milliseconds apart; anything later is some other
@@ -28,9 +31,11 @@ const PRESSABLE_SELECTOR = '.animation-tile[role="button"]';
 function RenderAnimationPickerPerScreenComp({
     screenId,
     backgroundSrc,
+    presetSettingName,
 }: Readonly<{
     screenId: number;
     backgroundSrc: BackgroundSrcType;
+    presetSettingName: string;
 }>) {
     const screenIdRef = useAppCurrentRef(screenId);
     // Both remembered for this screen -- and dropped with it, since a deleted
@@ -94,6 +99,7 @@ function RenderAnimationPickerPerScreenComp({
                 heldSrc={backgroundSrc.src}
                 onPick={handlePicking}
                 onEdit={handleEditing}
+                presetSettingName={presetSettingName}
             />
         </div>
     );
@@ -112,6 +118,12 @@ function RenderAnimationPickerPerScreenComp({
  *
  * It moves only where it is presented (`ScreenBackgroundComp`); the tiles
  * here are still until the pointer is on one.
+ *
+ * Over them, the Images tab's strip (2026-11-15, the user: _like background
+ * image, `Fills` and `Animations` should support session and auto-play_):
+ * the sessions, each keeping its own saved animations, and -- once one is
+ * up -- the slide show, which walks the row the one up is in
+ * (`BackgroundPaintAutoPlayComp`).
  */
 export default function BackgroundAnimationsComp() {
     const [selectedBackgroundSrcList, setSelectedBackgroundSrcList] = useState<
@@ -131,6 +143,15 @@ export default function BackgroundAnimationsComp() {
         ['update'],
         undefined,
         initBackgroundSrcList,
+    );
+    const session = usePaintSessionStrip('animation');
+    useBackgroundPaintAutoPlaySync(
+        'animation',
+        selectedBackgroundSrcList?.length ?? 0,
+    );
+    const presetSettingName = toPaintPresetSettingName(
+        'animation',
+        session.suffix,
     );
     const handleBackgroundSelecting = useCallback(
         (src: string, event: MouseEvent) => {
@@ -182,34 +203,44 @@ export default function BackgroundAnimationsComp() {
         return null;
     }
     return (
-        <div
-            ref={containerRef}
-            className="w-100 h-100"
-            style={{
-                overflowY: 'auto',
-            }}
-            onClickCapture={handleTilePressing}
+        <PaintTabFrameComp
+            kind="animation"
+            session={session}
+            isShowing={selectedBackgroundSrcList.length > 0}
         >
-            {selectedBackgroundSrcList.length === 0 ? (
-                <div className="p-1 m-1">
-                    <AnimationPickerComp
-                        heldSrc={null}
-                        onPick={handleBackgroundSelecting}
-                    />
-                </div>
-            ) : (
-                selectedBackgroundSrcList.map(([key, backgroundSrc]) => {
-                    return (
-                        <RenderAnimationPickerPerScreenComp
-                            // Keyed by the SCREEN: a change of animation
-                            // keeps the picker, and the keyboard focus in it.
-                            key={key}
-                            screenId={Number.parseInt(key)}
-                            backgroundSrc={backgroundSrc}
+            <div
+                ref={containerRef}
+                // Keyed by session: its saved animations are its own list.
+                key={session.activeId}
+                className="w-100 h-100"
+                style={{
+                    overflowY: 'auto',
+                }}
+                onClickCapture={handleTilePressing}
+            >
+                {selectedBackgroundSrcList.length === 0 ? (
+                    <div className="p-1 m-1">
+                        <AnimationPickerComp
+                            heldSrc={null}
+                            onPick={handleBackgroundSelecting}
+                            presetSettingName={presetSettingName}
                         />
-                    );
-                })
-            )}
-        </div>
+                    </div>
+                ) : (
+                    selectedBackgroundSrcList.map(([key, backgroundSrc]) => {
+                        return (
+                            <RenderAnimationPickerPerScreenComp
+                                // Keyed by the SCREEN: a change of animation
+                                // keeps the picker, and the keyboard focus in it.
+                                key={key}
+                                screenId={Number.parseInt(key)}
+                                backgroundSrc={backgroundSrc}
+                                presetSettingName={presetSettingName}
+                            />
+                        );
+                    })
+                )}
+            </div>
+        </PaintTabFrameComp>
     );
 }

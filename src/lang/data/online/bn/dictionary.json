@@ -4462,5 +4462,11 @@
     "Resurrection": "পুনরুত্থান",
     "Communion": "প্রভুর ভোজ",
     "Revival": "পুনর্জাগরণ",
-    "Effect": "প্রভাব"
+    "Effect": "প্রভাব",
+    "Fill Show": "ভরাট প্রদর্শন",
+    "Animation Show": "অ্যানিমেশন প্রদর্শন",
+    "Hide Fill": "ভরাট লুকান",
+    "Hide Animation": "অ্যানিমেশন লুকান",
+    "Clear FG Fill Show": "সামনের স্তরের ভরাট প্রদর্শন পরিষ্কার করুন",
+    "Clear FG Animation Show": "সামনের স্তরের অ্যানিমেশন প্রদর্শন পরিষ্কার করুন"
 }

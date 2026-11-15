@@ -421,6 +421,24 @@ export type ForegroundImageDataType = ForegroundLayerDataType & {
     extraStyle?: CSSProperties;
 };
 /**
+ * A fill or an animation shown OVER the slide rather than behind it -- the
+ * Foreground panel's Fill Show and Animation Show (2026-11-15, the user: _add
+ * `Fills` and `Animation` to foreground as well_, _make sure it work the same
+ * way image show and video show_). `src` is the same canonical value the
+ * Background tabs put up (`fillValueHelpers`, `animationValueHelpers`) and is
+ * checked again where it is drawn, so a hand-edited setting or a run sheet
+ * from another computer draws nothing rather than something unchecked. Size,
+ * place, blend and layer ride in `extraStyle` as an Image Show's do; a
+ * session owns one entry per screen, keyed by `id` (none for Default).
+ */
+export type ForegroundFillDataType = ForegroundLayerDataType & {
+    transitionEffect?: TransitionEffectType;
+    src: string;
+    id?: string;
+    extraStyle?: CSSProperties;
+};
+export type ForegroundAnimationDataType = ForegroundFillDataType;
+/**
  * Every session of a widget owns its own overlay on a screen (2026-11-09, the
  * user: _each session of all foreground components should own it's screen
  * render_ -- a Quick Text of Matthew up, then Session 6's shown beside it
@@ -442,6 +460,8 @@ export type ForegroundDataType = {
     webDataList: ForegroundWebDataType[];
     videoDataList: ForegroundVideoDataType[];
     imageDataList: ForegroundImageDataType[];
+    fillDataList: ForegroundFillDataType[];
+    animationDataList: ForegroundAnimationDataType[];
 };
 export type ForegroundSrcListType = {
     [key: string]: ForegroundDataType;

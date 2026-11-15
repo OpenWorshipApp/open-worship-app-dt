@@ -4462,5 +4462,11 @@
     "Resurrection": "Ylösnousemus",
     "Communion": "Ehtoollinen",
     "Revival": "Herätys",
-    "Effect": "Tehoste"
+    "Effect": "Tehoste",
+    "Fill Show": "Täytön näyttö",
+    "Animation Show": "Animaation näyttö",
+    "Hide Fill": "Piilota täyttö",
+    "Hide Animation": "Piilota animaatio",
+    "Clear FG Fill Show": "Tyhjennä etualan täytön näyttö",
+    "Clear FG Animation Show": "Tyhjennä etualan animaation näyttö"
 }

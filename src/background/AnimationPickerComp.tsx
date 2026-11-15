@@ -20,6 +20,7 @@ import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 import {
     FillCustomizeToggleComp,
     FillPickerFoldComp,
+    type FillPickerCustomizeViewType,
     type FillPickerScreenViewType,
 } from './FillPickerComp';
 import AnimationTileComp from './AnimationTileComp';
@@ -147,16 +148,26 @@ function AnimationHeldComp({
  */
 export default function AnimationPickerComp({
     screenView,
+    customizeView: customizeViewProp,
     heldSrc,
     onPick,
     onEdit,
+    presetSettingName = ANIMATION_PRESET_SETTING_NAME,
 }: Readonly<{
     screenView?: FillPickerScreenViewType;
+    /** Customize's own toggle, for a picker that is not one screen's. */
+    customizeView?: FillPickerCustomizeViewType;
     /** The animation this picker's screen holds; null when it holds none. */
     heldSrc: string | null;
     onPick: (src: string, event: MouseEvent) => void;
     /** A change made in Customize; without it there is nothing to change. */
     onEdit?: (src: string) => void;
+    /**
+     * Where the saved ones are kept: a Background tab's session keeps its
+     * own (`toPaintPresetSettingName`); left out, the one list there has
+     * always been.
+     */
+    presetSettingName?: string;
 }>) {
     const heldAnimation = useMemo(() => {
         return parseAnimation(heldSrc);
@@ -230,8 +241,9 @@ export default function AnimationPickerComp({
     const isEditable = onEdit !== undefined;
     const isFolded = screenView?.isFolded === true;
     const isCustomizeOffered = isEditable && draft !== null;
+    const customizeView = screenView ?? customizeViewProp;
     const isCustomizeOpen =
-        isCustomizeOffered && screenView?.isCustomizeClosed !== true;
+        isCustomizeOffered && customizeView?.isCustomizeClosed !== true;
     return (
         <div className="fill-picker animation-picker">
             <div className="fill-picker-bar">
@@ -256,10 +268,12 @@ export default function AnimationPickerComp({
                             onPick={handlePicking}
                             headEnd={
                                 isCustomizeOffered &&
-                                screenView !== undefined ? (
+                                customizeView !== undefined ? (
                                     <FillCustomizeToggleComp
                                         isOpen={isCustomizeOpen}
-                                        onToggle={screenView.onCustomizeToggle}
+                                        onToggle={
+                                            customizeView.onCustomizeToggle
+                                        }
                                     />
                                 ) : null
                             }
@@ -272,7 +286,7 @@ export default function AnimationPickerComp({
                             onPick={handlePicking}
                         />
                         <PresetsRowComp<SavedAnimationPresetType>
-                            savedSettingName={ANIMATION_PRESET_SETTING_NAME}
+                            savedSettingName={presetSettingName}
                             toSavedPreset={toSavedAnimationPreset}
                             builtIns={[]}
                             readCurrent={readCurrent}

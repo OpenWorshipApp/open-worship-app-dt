@@ -4462,5 +4462,11 @@
     "Resurrection": "القيامة",
     "Communion": "العشاء الرباني",
     "Revival": "النهضة",
-    "Effect": "التأثير"
+    "Effect": "التأثير",
+    "Fill Show": "عرض تعبئة",
+    "Animation Show": "عرض رسم متحرك",
+    "Hide Fill": "إخفاء التعبئة",
+    "Hide Animation": "إخفاء الرسم المتحرك",
+    "Clear FG Fill Show": "مسح عرض التعبئة في المقدمة",
+    "Clear FG Animation Show": "مسح عرض الرسم المتحرك في المقدمة"
 }

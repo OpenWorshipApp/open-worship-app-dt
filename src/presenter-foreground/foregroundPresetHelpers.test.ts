@@ -301,6 +301,8 @@ describe('foreground presets', () => {
                     'marquee-bottom',
                     'video',
                     'image',
+                    'fill',
+                    'animation',
                     'web',
                     'screen',
                     'camera',

@@ -2,7 +2,7 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, PM-193, PM-194, PM-195, PM-196, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-15"
@@ -158,6 +158,24 @@ button:
   [en:tran:Foreground] tab, open _[en:tran:Properties]_ in its panel and tick
   **[en:tran:Play With Sound]**: a **[en:tran:Volume]** slider appears under it, and
   that slider is the clip's volume.
+- **[en:tran:Fill Show]** and **[en:tran:Animation Show]:** a colour, gradient or
+  pattern, or a moving animation, shown _over_ the slide the way **[en:tran:Image Show]**
+  shows a picture. Their tiles are the ones the Background panel's **[en:tran:Fills]**
+  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike. Click a tile to put it up,
+  click it again to take it off, or drag it onto the Mini Screen. The overlay is the
+  shape of the screen, as wide as _Properties_ says and placed where it says, so a
+  colour can sit in one corner over the live slide and an animation in the middle. It
+  moves only on the screen itself; the Mini Screen and the tiles hold still. While
+  the session has nothing up there is one picker, whose press goes to the ticked
+  screens; once it has one up, there is a picker per screen holding one, each with
+  that screen's tile ticked and its own **[en:tran:Customize]**, and a press or a
+  change there goes to that screen alone, as in the Background tabs. Once the session
+  has one up, the row pinned at the top carries its slide show, as Image Show's does:
+  **[en:tran:Start Slide Show]** moves each of the session's overlays on to the next
+  tile of its row every so many seconds, the way the Background tabs' show does (W-08),
+  its _Properties_ kept; another session's overlay stays as it is.
+  **[en:tran:Clear Foreground]** (**F10**) ends the show, and a tile put up afterwards
+  does not start it again.
 - **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
   [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
   the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
@@ -172,6 +190,8 @@ button:
   and **[en:tran:Web Show]** a session also owns its **own
   folder** and its **own slide show**, so one can run a show over your backgrounds
   folder while another holds a logo from somewhere else, both on screen at once.
+  A **[en:tran:Fill Show]** or **[en:tran:Animation Show]** session owns its own slide
+  show too.
   Setting a session up puts nothing on the screen: its show button does that, when
   you want that one.
 - Right-click a session (or press its **⋮**) to rename or remove it. Only one session
@@ -201,7 +221,8 @@ button:
   **[en:tran:Top Right]** preset, a Quick Text's **[en:tran:Bible Verse]** band).
   **[en:tran:Clear Foreground]** still takes every one down. **[en:tran:Image Show]**,
   **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
-  another tile replaces it. Two pictures up at once — an overlay and a logo — are two
+  another tile replaces it, and **[en:tran:Fill Show]** and **[en:tran:Animation Show]**
+  hold one fill or animation per session the same way. Two pictures up at once — an overlay and a logo — are two
   sessions: add one with **＋** and show a picture from each.
 - The **[en:tran:Properties]** panel sits once beside the session buttons and governs
   every item that session shows — position, width, scale, opacity, corner and blend.
@@ -264,7 +285,7 @@ button:
   stays where you left it so you can keep looking for the next picture while the show
   runs.
 - **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show,
-  Screen Show and Web Show) decides how the overlay mixes with whatever is under it. It is the
+  Screen Show, Web Show, Fill Show and Animation Show) decides how the overlay mixes with whatever is under it. It is the
   answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
@@ -297,7 +318,7 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `PM-193` · `PM-194` · `PM-195` · `PM-196` · `KB-03` · `KB-07` · `CB-67`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

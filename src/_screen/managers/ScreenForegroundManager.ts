@@ -13,6 +13,8 @@ import type { ClockPeriodType } from './TimingController';
 import {
     genHtmlForegroundMessage,
     genHtmlForegroundCountdown,
+    genHtmlForegroundAnimation,
+    genHtmlForegroundFill,
     genHtmlForegroundImage,
     genHtmlForegroundMarquee,
     genHtmlForegroundQuickText,
@@ -46,6 +48,8 @@ import type {
     ForegroundStopwatchDataType,
     ForegroundVideoDataType,
     ForegroundWebDataType,
+    ForegroundFillDataType,
+    ForegroundAnimationDataType,
 } from '../screenTypeHelpers';
 import {
     DEFAULT_MARQUEE_SPEED_PERCENTAGE,
@@ -117,7 +121,9 @@ export type ForegroundSessionListKeyType =
     | 'stopwatchDataList'
     | 'marqueeTopDataList'
     | 'marqueeBottomDataList'
-    | 'quickTextDataList';
+    | 'quickTextDataList'
+    | 'fillDataList'
+    | 'animationDataList';
 
 type SessionListItemType<K extends ForegroundSessionListKeyType> =
     ForegroundDataType[K][number];
@@ -188,6 +194,10 @@ function toMessageDataList(foregroundData: any): any[] {
         ];
     }
     return [];
+}
+
+function toListOrEmpty(dataList: unknown): any[] {
+    return Array.isArray(dataList) ? dataList : [];
 }
 
 // The Screen Show pictures of a saved foreground entry. Anything that is not
@@ -309,6 +319,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['webDataList', whenMounted(this.renderWeb.bind(this))],
             ['videoDataList', whenMounted(this.renderVideo.bind(this))],
             ['imageDataList', whenMounted(this.renderImage.bind(this))],
+            ['fillDataList', whenMounted(this.renderFill.bind(this))],
+            ['animationDataList', whenMounted(this.renderAnimation.bind(this))],
         ]);
         this.setterMap = new Map<
             string,
@@ -341,6 +353,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['webDataList', this.setWebDataList.bind(this)],
             ['videoDataList', this.setVideoDataList.bind(this)],
             ['imageDataList', this.setImageDataList.bind(this)],
+            ['fillDataList', this.genSessionListSetter('fillDataList')],
+            [
+                'animationDataList',
+                this.genSessionListSetter('animationDataList'),
+            ],
         ]);
     }
 
@@ -407,6 +424,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             webDataList: foregroundData['webDataList'] ?? [],
             videoDataList: foregroundData['videoDataList'] ?? [],
             imageDataList: foregroundData['imageDataList'] ?? [],
+            // No older single-datum slot to fold in: both were lists from the
+            // day they came (2026-11-15). Anything else is dropped rather
+            // than allowed to stop the rest from loading.
+            fillDataList: toListOrEmpty(foregroundData['fillDataList']),
+            animationDataList: toListOrEmpty(
+                foregroundData['animationDataList'],
+            ),
         };
         return newForegroundData;
     }
@@ -1747,6 +1771,49 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             },
             isForceChoosing,
         );
+    }
+
+    /**
+     * Fill Show's overlay: a colour, gradient or pattern in a box the
+     * session's Properties size and place, moving only where presented.
+     */
+    renderFill(data: ForegroundFillDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundFill(
+            data,
+            this.styleAnimFor(data),
+            {
+                width: this.screenManagerBase.width,
+                height: this.screenManagerBase.height,
+            },
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    /** This session's fill up, or changed -- see `putSessionData`. */
+    setFillData(data: ForegroundFillDataType, isNoSyncGroup = false) {
+        this.putSessionData('fillDataList', data, isNoSyncGroup);
+    }
+
+    /**
+     * Animation Show's overlay: CSS layers or a shader in a box. A shader
+     * runs only in the screen's own window and lets go of its graphics
+     * context when the overlay comes off (`handleRemoving`).
+     */
+    renderAnimation(data: ForegroundAnimationDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundAnimation(
+            data,
+            this.styleAnimFor(data),
+            {
+                width: this.screenManagerBase.width,
+                height: this.screenManagerBase.height,
+            },
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    /** This session's animation up, or changed -- see `putSessionData`. */
+    setAnimationData(data: ForegroundAnimationDataType, isNoSyncGroup = false) {
+        this.putSessionData('animationDataList', data, isNoSyncGroup);
     }
 
     renderImage(data: ForegroundImageDataType) {

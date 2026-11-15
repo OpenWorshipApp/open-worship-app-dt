@@ -72,6 +72,12 @@ vi.mock('./ForegroundVideoComp', () => ({
 vi.mock('./ForegroundImageComp', () => ({
     default: () => <span data-comp="image" />,
 }));
+vi.mock('./ForegroundFillComp', () => ({
+    default: () => <span data-comp="fill" />,
+}));
+vi.mock('./ForegroundAnimationComp', () => ({
+    default: () => <span data-comp="animation" />,
+}));
 vi.mock('./ForegroundCameraComp', () => ({
     default: () => <span data-comp="camera" />,
 }));
@@ -133,6 +139,8 @@ describe('the foreground components', () => {
             'time',
             'video',
             'image',
+            'fill',
+            'animation',
             'camera',
             'screen',
             'web',
@@ -168,6 +176,8 @@ describe('the foreground components', () => {
         ['time', 'timeDataList'],
         ['video', 'videoDataList'],
         ['image', 'imageDataList'],
+        ['fill', 'fillDataList'],
+        ['animation', 'animationDataList'],
         ['camera', 'cameraDataList'],
         ['screen', 'screenDataList'],
         ['web', 'webDataList'],

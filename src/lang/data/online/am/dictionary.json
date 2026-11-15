@@ -4462,5 +4462,11 @@
     "Resurrection": "ትንሣኤ",
     "Communion": "ቅዱስ ቁርባን",
     "Revival": "መነቃቃት",
-    "Effect": "ውጤት"
+    "Effect": "ውጤት",
+    "Fill Show": "የሙሌት ማሳያ",
+    "Animation Show": "የእነማ ማሳያ",
+    "Hide Fill": "ሙሌትን ደብቅ",
+    "Hide Animation": "እነማን ደብቅ",
+    "Clear FG Fill Show": "የፊት ገጽ ሙሌት ማሳያን አጽዳ",
+    "Clear FG Animation Show": "የፊት ገጽ እነማ ማሳያን አጽዳ"
 }

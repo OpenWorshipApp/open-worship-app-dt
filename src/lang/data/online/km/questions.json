@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-11-14",
+    "updated": "2026-11-15",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -1032,6 +1032,10 @@
             "en": "Can I change or write the code of a shader background?",
             "text": "តើខ្ញុំអាចកែ ឬសរសេរកូដស្ហេឌឺនៃផ្ទៃខាងក្រោយបានទេ?"
         },
+        "presenter.background.background-paint-slide-show": {
+            "en": "Can the background colours or animations change by themselves?",
+            "text": "តើពណ៌ ឬចលនានៃផ្ទៃខាងក្រោយ អាចប្ដូរដោយខ្លួនឯងបានទេ?"
+        },
         "presenter.background.background-image": {
             "en": "How do I use my own picture as the background?",
             "text": "តើខ្ញុំប្រើរូបភាពរបស់ខ្ញុំផ្ទាល់ជាផ្ទៃខាងក្រោយដោយរបៀបណា?"
@@ -1135,6 +1139,14 @@
         "presenter.foreground.slideshow": {
             "en": "How do I run a slideshow of images?",
             "text": "តើខ្ញុំបង្ហាញរូបភាពជាស្លាយបន្តបន្ទាប់គ្នាដោយរបៀបណា?"
+        },
+        "presenter.foreground.fill-animation-show": {
+            "en": "How do I put a colour or a moving animation over the slide?",
+            "text": "តើខ្ញុំដាក់ពណ៌ ឬចលនា ពីលើស្លាយដោយរបៀបណា?"
+        },
+        "presenter.foreground.fill-animation-show-slide-show": {
+            "en": "Can the colour or animation over the slide change by itself?",
+            "text": "តើពណ៌ ឬចលនាពីលើស្លាយ អាចប្ដូរដោយខ្លួនឯងបានទេ?"
         },
         "presenter.foreground.play-audio": {
             "en": "How do I play a song or backing track?",

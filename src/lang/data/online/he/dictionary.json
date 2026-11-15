@@ -4462,5 +4462,11 @@
     "Resurrection": "תחייה",
     "Communion": "סעודת האדון",
     "Revival": "התעוררות רוחנית",
-    "Effect": "אפקט"
+    "Effect": "אפקט",
+    "Fill Show": "הצגת מילוי",
+    "Animation Show": "הצגת הנפשה",
+    "Hide Fill": "הסתרת המילוי",
+    "Hide Animation": "הסתרת ההנפשה",
+    "Clear FG Fill Show": "ניקוי הצגת מילוי בחזית",
+    "Clear FG Animation Show": "ניקוי הצגת הנפשה בחזית"
 }

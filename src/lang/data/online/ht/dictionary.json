@@ -4462,5 +4462,11 @@
     "Resurrection": "Rezirèksyon",
     "Communion": "Sentsèn",
     "Revival": "Revèy espirityèl",
-    "Effect": "Efè"
+    "Effect": "Efè",
+    "Fill Show": "Afichaj Ranpli",
+    "Animation Show": "Afichaj Animasyon",
+    "Hide Fill": "Kache Ranpli",
+    "Hide Animation": "Kache Animasyon",
+    "Clear FG Fill Show": "Efase Afichaj Ranpli (premye plan)",
+    "Clear FG Animation Show": "Efase Afichaj Animasyon (premye plan)"
 }

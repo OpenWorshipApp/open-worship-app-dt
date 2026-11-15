@@ -4462,5 +4462,11 @@
     "Resurrection": "Àjíǹde",
     "Communion": "Oúnjẹ Alẹ́ Olúwa",
     "Revival": "Ìsọjí",
-    "Effect": "Ipa"
+    "Effect": "Ipa",
+    "Fill Show": "Ìfihàn Àkún",
+    "Animation Show": "Ìfihàn Ìṣíkiri",
+    "Hide Fill": "Fi Àkún Pamọ́",
+    "Hide Animation": "Fi Ìṣíkiri Pamọ́",
+    "Clear FG Fill Show": "Nù Ìfihàn Àkún Iwájú",
+    "Clear FG Animation Show": "Nù Ìfihàn Ìṣíkiri Iwájú"
 }

@@ -136,7 +136,7 @@ the screen hidden (unless it started showing) and all changed state restored.
   is locked" toast; unlock restores (SP-03).
 - Screen-id badge + color note round-trip (SP-04); display-choosing context menu lists
   every display, `*` on current — re-select current as a safe no-op (SP-05).
-- Transitions `Tr: Slide:/Background:/Foreground:` — pick a different effect (none/fade/move/zoom),
+- Transitions `Tr: SL/BG/FG` — pick a different effect (none/fade/move/zoom),
   present, observe, restore (SP-06). Stage number `St:` menu round-trip (SP-07).
 - With a video background live: `bi-soundwave` toggles the audio-handler rows; play/
   pause syncs the bg video; repeat toggle flips; off-while-playing pops a toast

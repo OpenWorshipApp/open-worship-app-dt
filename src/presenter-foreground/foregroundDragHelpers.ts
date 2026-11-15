@@ -13,6 +13,8 @@ import {
     toTransitionPart,
     toValidTransitionEffect,
 } from '../_screen/transitionOverrideHelpers';
+import { toCanonicalFillSrc } from '../background/fillValueHelpers';
+import { toCanonicalAnimationSrc } from '../background/animationValueHelpers';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
@@ -32,6 +34,8 @@ export const foregroundDragTargetList = [
     'camera',
     'screen',
     'web',
+    'fill',
+    'animation',
 ] as const;
 export type ForegroundDragTargetType =
     (typeof foregroundDragTargetList)[number];
@@ -62,6 +66,8 @@ const targetLabelMap: Record<ForegroundDragTargetType, string> = {
     camera: 'Camera Show',
     screen: 'Screen Show',
     web: 'Web Show',
+    fill: 'Fill Show',
+    animation: 'Animation Show',
 };
 
 const targetIconMap: Record<ForegroundDragTargetType, string> = {
@@ -77,6 +83,8 @@ const targetIconMap: Record<ForegroundDragTargetType, string> = {
     camera: 'camera-video',
     screen: 'display',
     web: 'globe2',
+    fill: 'palette',
+    animation: 'magic',
 };
 
 export function genForegroundDragInf(
@@ -325,5 +333,21 @@ export async function applyForegroundDragData(
         screenForegroundManager.addVideoData(data);
     } else if (target === 'image') {
         screenForegroundManager.addImageData(data);
+    } else if (target === 'fill' || target === 'animation') {
+        // A row comes from a file: only a fill or an animation as the
+        // Background tabs write one gets through, in its one canonical form.
+        const src =
+            target === 'fill'
+                ? toCanonicalFillSrc(data.src)
+                : toCanonicalAnimationSrc(data.src);
+        if (src === null) {
+            return;
+        }
+        const paintData = { ...data, src };
+        if (target === 'fill') {
+            screenForegroundManager.setFillData(paintData);
+        } else {
+            screenForegroundManager.setAnimationData(paintData);
+        }
     }
 }

@@ -4462,5 +4462,11 @@
     "Resurrection": "Sự sống lại",
     "Communion": "Tiệc thánh",
     "Revival": "Phục hưng",
-    "Effect": "Hiệu ứng"
+    "Effect": "Hiệu ứng",
+    "Fill Show": "Hiển thị kiểu tô",
+    "Animation Show": "Hiển thị hoạt ảnh",
+    "Hide Fill": "Ẩn kiểu tô",
+    "Hide Animation": "Ẩn hoạt ảnh",
+    "Clear FG Fill Show": "Xóa hiển thị kiểu tô lớp trên",
+    "Clear FG Animation Show": "Xóa hiển thị hoạt ảnh lớp trên"
 }

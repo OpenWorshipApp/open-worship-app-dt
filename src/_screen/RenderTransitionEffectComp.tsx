@@ -63,6 +63,7 @@ export default function RenderTransitionEffectComp({
             className="btn btn-outline-secondary"
             type="button"
             title={domTitle}
+            aria-label={domTitle}
             onClick={handleOpenContextMenu}
         >
             {title}

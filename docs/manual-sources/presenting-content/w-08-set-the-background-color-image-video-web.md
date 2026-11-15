@@ -2,7 +2,7 @@
 id: W-08
 title: "Set the background (color / image / video / web)"
 section: "Presenting content"
-verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, PM-187, PM-188, PM-189, PM-190, PM-191, PM-192, KB-04]
+verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, PM-187, PM-188, PM-189, PM-190, PM-191, PM-192, PM-195, KB-04]
 screenshots: 5
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-15"
@@ -97,10 +97,26 @@ and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On t
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 
+**Sessions and a slide show on Fills and Animations.** The **[en:tran:Fills]** and
+**[en:tran:Animations]** tabs carry the same row of session buttons above their tiles:
+**[en:tran:Default]**, then any you add with **＋**. A session there keeps its own saved fills or
+animations under **[en:tran:Presets]**, so one can hold this season's colours and another the
+youth service's; Default's are the ones **[en:tran:Fill Show]** and **[en:tran:Animation Show]**
+offer too (W-09). Removing a session forgets its saved ones and its show. Once a screen holds the
+tab's kind, the row also carries the slide show: press **[en:tran:Start Slide Show]** (▶) and,
+every so many seconds — the number beside it — each screen holding one moves on to the next tile
+of the row the one up is in: the next shader, the next CSS animation, the next gradient or
+pattern on the side **[en:tran:Dark]** / **[en:tran:Light]** shows, or the session's next saved
+one when the one up is among them. How the screen had it fitted and styled goes with it. A colour
+from the palette, or a tile changed in **[en:tran:Customize]**, belongs to no row and stays where
+it is. A screen has one background, so a tab runs one show: starting it in another session stops
+the first, and the blue ▶ moves to that session's button. **[en:tran:Clear Background]**
+(**F7**) ends the show, and putting a tile up afterwards does not start it again.
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `PM-187` · `PM-188` · `PM-189` · `PM-190` · `PM-191` · `PM-192` · `KB-04`
+`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `PM-187` · `PM-188` · `PM-189` · `PM-190` · `PM-191` · `PM-192` · `PM-195` · `KB-04`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

@@ -4462,5 +4462,11 @@
     "Resurrection": "Mbilite n'ọnwụ",
     "Communion": "Nri Nsọ Nke Onyeisi",
     "Revival": "Mkpali Mmụọ",
-    "Effect": "Mmetụta"
+    "Effect": "Mmetụta",
+    "Fill Show": "Ngosi Mmejupụta",
+    "Animation Show": "Ngosi Ihe na-ese ese",
+    "Hide Fill": "Zoo Mmejupụta",
+    "Hide Animation": "Zoo Ihe na-ese ese",
+    "Clear FG Fill Show": "Kpochapụ Ngosi Mmejupụta (Ihu)",
+    "Clear FG Animation Show": "Kpochapụ Ngosi Ihe na-ese ese (Ihu)"
 }

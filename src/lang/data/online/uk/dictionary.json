@@ -4462,5 +4462,11 @@
     "Resurrection": "Воскресіння",
     "Communion": "Причастя",
     "Revival": "Пробудження",
-    "Effect": "Ефект"
+    "Effect": "Ефект",
+    "Fill Show": "Показ заливки",
+    "Animation Show": "Показ анімації",
+    "Hide Fill": "Приховати заливку",
+    "Hide Animation": "Приховати анімацію",
+    "Clear FG Fill Show": "Очистити показ заливки на передньому плані",
+    "Clear FG Animation Show": "Очистити показ анімації на передньому плані"
 }

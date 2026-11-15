@@ -4462,5 +4462,11 @@
     "Resurrection": "Uppståndelse",
     "Communion": "Nattvard",
     "Revival": "Väckelse",
-    "Effect": "Effekt"
+    "Effect": "Effekt",
+    "Fill Show": "Visa fyllning",
+    "Animation Show": "Visa animation",
+    "Hide Fill": "Dölj fyllning",
+    "Hide Animation": "Dölj animation",
+    "Clear FG Fill Show": "Rensa förgrundens Visa fyllning",
+    "Clear FG Animation Show": "Rensa förgrundens Visa animation"
 }

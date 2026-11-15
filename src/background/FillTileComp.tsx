@@ -6,7 +6,10 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { pressElementLikeButton } from '../helper/helpers';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { serializeForDragging } from '../others/color/colorHelpers';
-import { ColorSwatchExtraMenuContext } from '../others/color/colorSwatchMenuHelpers';
+import {
+    ColorSwatchExtraMenuContext,
+    PaintTargetContext,
+} from '../others/color/colorSwatchMenuHelpers';
 import { genFillCopyCssMenuItems } from './fillCssMenuHelpers';
 import {
     checkIsFillDark,
@@ -47,7 +50,14 @@ export default function FillTileComp({
     const onPickRef = useAppCurrentRef(onPick);
     const genExtraMenuItems = use(ColorSwatchExtraMenuContext);
     const genExtraMenuItemsRef = useAppCurrentRef(genExtraMenuItems);
+    // In Fill Show the tile's drag and Show on Screens go to the foreground.
+    const paintTarget = use(PaintTargetContext);
+    const paintTargetRef = useAppCurrentRef(paintTarget);
     const handleDragStart = useCallback((event: DragEvent) => {
+        if (paintTargetRef.current !== null) {
+            paintTargetRef.current.handleDragStart(event, srcRef.current);
+            return;
+        }
         serializeForDragging(event, srcRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -55,14 +65,16 @@ export default function FillTileComp({
         const fillSrc = srcRef.current;
         showAppContextMenu(event as any, [
             ...genFillCopyCssMenuItems(fillSrc),
-            ...genShowOnScreensContextMenu((menuEvent) => {
-                ScreenBackgroundManager.handleBackgroundSelecting(
-                    menuEvent,
-                    'fill',
-                    { src: fillSrc },
-                    true,
-                );
-            }),
+            ...(paintTargetRef.current === null
+                ? genShowOnScreensContextMenu((menuEvent) => {
+                      ScreenBackgroundManager.handleBackgroundSelecting(
+                          menuEvent,
+                          'fill',
+                          { src: fillSrc },
+                          true,
+                      );
+                  })
+                : paintTargetRef.current.genShowOnScreensMenuItems(fillSrc)),
             ...(genExtraMenuItemsRef.current?.(fillSrc) ?? []),
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps

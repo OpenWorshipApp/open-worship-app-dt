@@ -636,7 +636,13 @@ describe('foreground media autoplay', () => {
         ).toBe('false');
         const owns = mocks.reconcile.mock.calls.at(-1)?.[1];
         expect(owns('foreground-image-a')).toBe(true);
+        expect(owns('foreground-video')).toBe(true);
         expect(owns('background-image-a')).toBe(false);
+        // Fill Show and Animation Show keep timers of their own beside these:
+        // owning every `foreground-` key stopped them at each redraw here.
+        expect(owns('foreground-fill')).toBe(false);
+        expect(owns('foreground-animation-a')).toBe(false);
+        expect(owns('foreground-imagery')).toBe(false);
     });
 
     test('a video can wait until media ends with no seconds set, and falls back if duration is unreadable', async () => {

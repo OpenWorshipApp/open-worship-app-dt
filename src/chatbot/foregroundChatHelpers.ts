@@ -314,6 +314,8 @@ const COMPONENT_WORD_MAP: Record<ForegroundComponentKeyType, string[]> = {
     ],
     video: ['video show'],
     image: ['image show'],
+    fill: ['fill show'],
+    animation: ['animation show'],
     camera: ['camera show'],
     screen: ['screen show'],
     web: ['web show'],

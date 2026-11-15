@@ -1748,6 +1748,28 @@
                     }
                 },
                 {
+                    "id": "background-paint-slide-show",
+                    "text": "Can the background colours or animations change by themselves?",
+                    "kind": "howto",
+                    "keywords": [
+                        "background slideshow",
+                        "fills slideshow",
+                        "animations slideshow",
+                        "cycle backgrounds",
+                        "rotate backgrounds",
+                        "next gradient",
+                        "next animation",
+                        "fills session",
+                        "animations session"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "passage": "Sessions and a slide show on Fills and Animations",
+                        "find": "Background > Animations",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "background-image",
                     "text": "How do I use my own picture as the background?",
                     "kind": "howto",
@@ -2242,6 +2264,43 @@
                         "recipe": "W-09",
                         "passage": "The slide show sits in the row of session buttons at the top of the panel",
                         "find": "Image Show",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "fill-animation-show",
+                    "text": "How do I put a colour or a moving animation over the slide?",
+                    "kind": "howto",
+                    "keywords": [
+                        "fill show",
+                        "animation show",
+                        "colour overlay",
+                        "gradient over slide",
+                        "animated overlay",
+                        "moving background over text"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "passage": "shown over the slide the way Image Show shows a picture",
+                        "find": "Fill Show",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "fill-animation-show-slide-show",
+                    "text": "Can the colour or animation over the slide change by itself?",
+                    "kind": "howto",
+                    "keywords": [
+                        "fill show slideshow",
+                        "animation show slideshow",
+                        "cycle overlays",
+                        "rotate overlays",
+                        "next overlay"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "passage": "the row pinned at the top carries its slide show",
+                        "find": "Animation Show",
                         "guide": true
                     }
                 },

@@ -171,6 +171,8 @@ const SESSION_LIST_KEY_MAP: Partial<
     'marquee-top': 'marqueeTopDataList',
     'marquee-bottom': 'marqueeBottomDataList',
     'quick-text': 'quickTextDataList',
+    fill: 'fillDataList',
+    animation: 'animationDataList',
 };
 
 function pickSessionList(
@@ -241,7 +243,9 @@ export function listOwnedData(
         case 'stopwatch':
         case 'marquee-top':
         case 'marquee-bottom':
-        case 'quick-text': {
+        case 'quick-text':
+        case 'fill':
+        case 'animation': {
             return pickSessionList(widget, data).filter(isOwned);
         }
         case 'message':
@@ -498,6 +502,20 @@ function genClockData(clockId: string): ForegroundTimeDataType {
 
 /** A Quick Text's detail where its panel has it in the middle (EC-591). */
 export const QUICK_TEXT_MIDDLE_WORDS = ', in the middle of the screen';
+
+/**
+ * Why a Fill Show or Animation Show cannot be put up by words: its session
+ * holds a look, and what goes up is the fill or animation PRESSED in its
+ * panel. What is up can still be restyled and hidden.
+ */
+export function genPaintShowReason(widget: 'fill' | 'animation') {
+    return (
+        `${widget === 'fill' ? 'A Fill' : 'An Animation'} Show puts up the ` +
+        'one pressed in its panel, and this tool cannot choose one. Say to ' +
+        'open the panel and press one; what is up can then be restyled ' +
+        '(set) or hidden here.'
+    );
+}
 
 /**
  * What the session's Show button would put up, worked out ONCE so every
@@ -792,6 +810,12 @@ export async function planShow(
         }
         case 'long-text':
             return planLongTextShow(context);
+        // A Fill Show or Animation Show session holds a look, never a fill:
+        // the fill or animation is the one pressed in its panel. What it has
+        // up can be restyled and hidden here; putting one up is a press.
+        case 'fill':
+        case 'animation':
+            return { reason: genPaintShowReason(widget) };
         default:
             return { reason: `There is no component called "${widget}".` };
     }
@@ -901,6 +925,8 @@ export function hideOnScreen(
         case 'marquee-top':
         case 'marquee-bottom':
         case 'quick-text':
+        case 'fill':
+        case 'animation':
             for (const data of ownedList) {
                 removeSingle(widget, manager, data);
             }
@@ -1014,7 +1040,9 @@ export async function restyleOnScreen(
     switch (widget) {
         case 'countdown':
         case 'stopwatch':
-        case 'quick-text': {
+        case 'quick-text':
+        case 'fill':
+        case 'animation': {
             const prefix = toLookPrefix(context) ?? '';
             const old = ownedList[0];
             // The panel takes it off first, so the overlay is drawn afresh.

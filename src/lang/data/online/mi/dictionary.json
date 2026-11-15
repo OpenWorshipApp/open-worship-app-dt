@@ -4462,5 +4462,11 @@
     "Resurrection": "Te Ararā",
     "Communion": "Te Hākari a te Ariki",
     "Revival": "Te Whakaoranga",
-    "Effect": "Pānga"
+    "Effect": "Pānga",
+    "Fill Show": "Whakaaturanga Whakakī",
+    "Animation Show": "Whakaaturanga Hākoritanga",
+    "Hide Fill": "Huna Whakakī",
+    "Hide Animation": "Huna Hākoritanga",
+    "Clear FG Fill Show": "Ūkui Whakaaturanga Whakakī Papamua",
+    "Clear FG Animation Show": "Ūkui Whakaaturanga Hākoritanga Papamua"
 }

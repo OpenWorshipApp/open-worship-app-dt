@@ -317,6 +317,20 @@ const foregroundClearMap: Record<
             manager.setImageDataList([]);
         },
     },
+    fill: {
+        label: 'Clear FG Fill Show',
+        badge: 'FL',
+        clear: (manager) => {
+            manager.removeSessionData('fillDataList', null);
+        },
+    },
+    animation: {
+        label: 'Clear FG Animation Show',
+        badge: 'AN',
+        clear: (manager) => {
+            manager.removeSessionData('animationDataList', null);
+        },
+    },
     camera: {
         label: 'Clear FG Camera Show',
         badge: 'CM',

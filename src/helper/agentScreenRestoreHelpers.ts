@@ -76,6 +76,8 @@ const FOREGROUND_LIST_KEY_MAP: Partial<
     web: 'webDataList',
     video: 'videoDataList',
     image: 'imageDataList',
+    fill: 'fillDataList',
+    animation: 'animationDataList',
 };
 
 export function toForegroundListKey(widget: ForegroundComponentKeyType) {

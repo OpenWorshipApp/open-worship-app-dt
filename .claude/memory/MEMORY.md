@@ -102,7 +102,7 @@
 - [Languages' fonts in every font list](language-fonts-in-every-font-list.md) — every ENABLED package's `app-…` face on top (Bible text is drawn in…
 - [Canvas blend mode](canvas-item-blend-mode.md) · [Canvas shadow](canvas-item-shadow.md) · [Foreground blend & stacking](foreground-blend-mode-stacking.md)
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19 · [Transition overrides](transition-overrides.md)
-- [Background Animations (CSS + GLSL)](background-animation-runtime.md) — live on the screen only, one shared still context, gradient under the canvas, no raw CSS
+- [Background Animations (CSS + GLSL)](background-animation-runtime.md) — live on the screen only, one shared still context, gradient under the canvas, no raw CSS; Fills/Animations sessions and slide shows walk a row, a clear ends one
 - [Looping video crossfades with a twin](video-loop-crossfade-two-elements.md) · [Own font list with weights](own-font-list-with-weights.md)
 - [Data folder path is aliased](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md) — and the Lyric editor's same-tick read; tell a user's build by its stack lines
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule

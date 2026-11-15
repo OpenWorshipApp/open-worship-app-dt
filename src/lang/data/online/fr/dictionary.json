@@ -4462,5 +4462,11 @@
     "Resurrection": "Résurrection",
     "Communion": "Sainte Cène",
     "Revival": "Réveil",
-    "Effect": "Effet"
+    "Effect": "Effet",
+    "Fill Show": "Affichage de remplissage",
+    "Animation Show": "Affichage d'animation",
+    "Hide Fill": "Masquer le remplissage",
+    "Hide Animation": "Masquer l'animation",
+    "Clear FG Fill Show": "Effacer l'affichage de remplissage au premier plan",
+    "Clear FG Animation Show": "Effacer l'affichage d'animation au premier plan"
 }

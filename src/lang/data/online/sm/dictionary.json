@@ -4462,5 +4462,11 @@
     "Resurrection": "Toetu",
     "Communion": "Talisuaga a le Alii",
     "Revival": "Toe Faafouga",
-    "Effect": "Aafiaga"
+    "Effect": "Aafiaga",
+    "Fill Show": "Faʻaaliga Mea Faʻatumu",
+    "Animation Show": "Faʻaaliga Faʻafiafiaga Gaoioi",
+    "Hide Fill": "Nana le Mea Faʻatumu",
+    "Hide Animation": "Nana le Faʻafiafiaga Gaoioi",
+    "Clear FG Fill Show": "Soloi le Faʻaaliga Mea Faʻatumu (Mea i Luma)",
+    "Clear FG Animation Show": "Soloi le Faʻaaliga Faʻafiafiaga Gaoioi (Mea i Luma)"
 }

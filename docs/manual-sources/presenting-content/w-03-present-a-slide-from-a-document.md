@@ -53,8 +53,8 @@ workflowsVersion: "2026-11-15"
    coming ones too (`2/7`, `3/7`) — in a large figure on a half-transparent dark pill.
 
    Set a stage monitor's **St:** to **2** and the singer always sees what is coming.
-   Moving a screen to any stage above 0 also sets its **[en:tran:Slide]:** transition to **none**
-   (W-10). To see
+   Moving a screen to any stage above 0 also sets its slide transition (**SL** on the
+   `Tr:` row) to **none** (W-10). To see
    it here first, click **[en:tran:Add Stage]** in the **[en:tran:Stage Previewer]** header
    above the slides and pick a stage: it arrives as its own chip and its own pane, side by
    side with **[en:tran:Stage] 0**, which always stays. The **×** on a chip

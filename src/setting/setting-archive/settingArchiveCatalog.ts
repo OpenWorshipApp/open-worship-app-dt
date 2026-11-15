@@ -719,6 +719,12 @@ const LOCAL_RULE_LIST: LocalRuleType[] = [
             'image-show',
             'video-show',
             'web-show',
+            // Fill Show and Animation Show: a session's look, and whether
+            // its Customize is closed (`foreground-fill-show-customize-…`).
+            'fill-show',
+            'animation-show',
+            'foreground-fill-show',
+            'foreground-animation-show',
             'select-dir-image-fg-',
             'select-dir-video-fg-',
         ],

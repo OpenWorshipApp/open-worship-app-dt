@@ -45,8 +45,15 @@ export const FOREGROUND_EDIT_ACTIONS = [
 // Every component, and `all` for a `hide` alone (EC-529): _clear everything_
 // in a foreground conversation is the panel's Clear Foreground (F10), every
 // extra off every screen -- `hide` had taken one session at a time. Any other
-// action naming `all` is refused by the worker.
-export const FOREGROUND_EDIT_WIDGETS = AGENT_FOREGROUND_WIDGETS;
+// action naming `all` is refused by the worker. Fill Show and Animation Show
+// (2026-11-15) are this tool's alone: a session of one is read, restyled and
+// hidden here, while what it puts up is pressed in its panel -- so the
+// ordinary `owa_foreground`, offered on every question, did not grow.
+export const FOREGROUND_EDIT_WIDGETS = [
+    ...AGENT_FOREGROUND_WIDGETS,
+    'fill',
+    'animation',
+];
 
 export const FOREGROUND_TIMER_DOS = ['start', 'pause', 'resume', 'reset', 'add'];
 

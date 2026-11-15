@@ -166,7 +166,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
     screen-id badge (`data-screen-id`) · color-note dot · lock icon
     (`bi-unlock` green / `bi-lock-fill` red).
   - Footer: display button `label(screenId):displayId` (menu of OS displays) ·
-    `Tr:` transition buttons `Slide:`/`Background:`/`Foreground:` (menu: none/fade/move/zoom) ·
+    `Tr:` transition buttons `SL`/`BG`/`FG` (menu: none/fade/move/zoom) ·
     `bi-soundwave` audio-handlers toggle (only with a live video background; expands
     per-video `<audio controls>` players + repeat toggles) · stage `St: N` (menu 0–5).
   - Body: right-click a card → Solo/Select/Delete/Line-Sync/Refresh menu; right-click

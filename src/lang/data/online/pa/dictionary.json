@@ -4462,5 +4462,11 @@
     "Resurrection": "ਮੁਰਦਿਆਂ ਵਿੱਚੋਂ ਜੀ ਉੱਠਣਾ",
     "Communion": "ਪ੍ਰਭੂ ਭੋਜ",
     "Revival": "ਪੁਨਰ-ਜਾਗਰਣ",
-    "Effect": "ਪ੍ਰਭਾਵ"
+    "Effect": "ਪ੍ਰਭਾਵ",
+    "Fill Show": "ਭਰਾਈ ਦਿਖਾਓ",
+    "Animation Show": "ਐਨੀਮੇਸ਼ਨ ਦਿਖਾਓ",
+    "Hide Fill": "ਭਰਾਈ ਲੁਕਾਓ",
+    "Hide Animation": "ਐਨੀਮੇਸ਼ਨ ਲੁਕਾਓ",
+    "Clear FG Fill Show": "ਅਗਲੀ ਪਰਤ ਦਾ ਭਰਾਈ ਦਿਖਾਓ ਸਾਫ਼ ਕਰੋ",
+    "Clear FG Animation Show": "ਅਗਲੀ ਪਰਤ ਦਾ ਐਨੀਮੇਸ਼ਨ ਦਿਖਾਓ ਸਾਫ਼ ਕਰੋ"
 }

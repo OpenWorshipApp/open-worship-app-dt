@@ -13,13 +13,18 @@ export default function ScreenEffectControlComp() {
             <small className="me-1" aria-hidden="true">
                 Tr:
             </small>
+            {/* The layers by the codes their clear buttons above wear, not by
+                their translated names: `Slide:` / `Background:` /
+                `Foreground:` pushed the footer past one line in most
+                languages. Each button's title and aria-label still carry the
+                translated `<layer> transition`. */}
             <RenderTransitionEffectComp
-                title={tran('Slide') + ':'}
+                title="SL"
                 domTitle={tran('Slide transition')}
                 screenEffectManager={screenManager.varyAppDocumentEffectManager}
             />
             <RenderTransitionEffectComp
-                title={tran('Background') + ':'}
+                title="BG"
                 domTitle={tran('Background transition')}
                 screenEffectManager={screenManager.backgroundEffectManager}
             />
@@ -27,7 +32,7 @@ export default function ScreenEffectControlComp() {
                 neither its session nor its component chose one. It had no
                 button: every text and timer overlay was hardcoded to fade. */}
             <RenderTransitionEffectComp
-                title={tran('Foreground') + ':'}
+                title="FG"
                 domTitle={tran('Foreground transition')}
                 screenEffectManager={screenManager.foregroundEffectManager}
             />

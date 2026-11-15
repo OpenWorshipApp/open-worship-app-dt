@@ -594,6 +594,10 @@ export const FOREGROUND_PRESET_MAP: Readonly<
     ],
     video: PICTURE_PRESET_LIST,
     image: PICTURE_PRESET_LIST,
+    // A fill or an animation is drawn at the screen's own shape, so the
+    // picture's places read on it the same way: the whole screen, a corner.
+    fill: PICTURE_PRESET_LIST,
+    animation: PICTURE_PRESET_LIST,
     web: PICTURE_PRESET_LIST,
     screen: PICTURE_PRESET_LIST,
     camera: [

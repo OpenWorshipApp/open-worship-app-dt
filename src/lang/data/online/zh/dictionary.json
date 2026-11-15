@@ -4462,5 +4462,11 @@
     "Resurrection": "复活",
     "Communion": "圣餐",
     "Revival": "复兴",
-    "Effect": "效果"
+    "Effect": "效果",
+    "Fill Show": "填充显示",
+    "Animation Show": "动画显示",
+    "Hide Fill": "隐藏填充",
+    "Hide Animation": "隐藏动画",
+    "Clear FG Fill Show": "清除前景填充显示",
+    "Clear FG Animation Show": "清除前景动画显示"
 }
