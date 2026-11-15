@@ -75,13 +75,7 @@ export function runMcpHandshake({
     let stdoutBuffer = '';
     let stderrText = '';
     let isDone = false;
-    const finish = (error, value) => {
-      if (isDone) {
-        return;
-      }
-      isDone = true;
-      clearTimeout(timeoutId);
-      child.kill();
+    const settle = (error, value) => {
       if (error) {
         const stderrTail = stderrText.trim().split('\n').slice(-8).join('\n');
         error.message += stderrTail
@@ -91,6 +85,32 @@ export function runMcpHandshake({
       } else {
         resolve(value);
       }
+    };
+    // Settles only once the server has EXITED: callers remove its `cwd` /
+    // `TEMP` folder next, and Windows refuses (EPERM) to delete a folder a
+    // live process still holds -- `kill()` returns before the process is gone.
+    const finish = (error, value) => {
+      if (isDone) {
+        return;
+      }
+      isDone = true;
+      clearTimeout(timeoutId);
+      const hasExited =
+        child.pid === undefined ||
+        child.exitCode !== null ||
+        child.signalCode !== null;
+      if (hasExited) {
+        settle(error, value);
+        return;
+      }
+      const exitWaitId = setTimeout(() => {
+        settle(error, value);
+      }, 10000);
+      child.once('exit', () => {
+        clearTimeout(exitWaitId);
+        settle(error, value);
+      });
+      child.kill();
     };
     const timeoutId = setTimeout(() => {
       finish(new Error(`The MCP server did not answer within ${timeoutMs} ms`));
