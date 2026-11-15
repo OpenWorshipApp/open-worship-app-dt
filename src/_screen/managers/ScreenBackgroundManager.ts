@@ -21,6 +21,12 @@ import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
 import { checkIsFillSrc } from '../../background/fillValueHelpers';
+import {
+    checkIsAnimationSeeThrough,
+    checkIsAnimationSrc,
+    parseAnimation,
+    toAnimationStillFillSrc,
+} from '../../background/animationValueHelpers';
 import { withCurrentBackgroundType } from '../../background/backgroundFillLegacyHelpers';
 import {
     collectLiveOnScreenMap,
@@ -171,6 +177,16 @@ class ScreenBackgroundManager
         this._backgroundSrc = backgroundSrc;
         if (backgroundSrc?.type === 'fill') {
             this.addPropEvent('fill-set', backgroundSrc.src);
+        } else if (backgroundSrc?.type === 'animation') {
+            // Judged by its colours as one gradient, as a fill is -- unless
+            // it is see-through, when nobody can say what the words sit on.
+            const animation = parseAnimation(backgroundSrc.src);
+            if (animation !== null && !checkIsAnimationSeeThrough(animation)) {
+                this.addPropEvent(
+                    'fill-set',
+                    toAnimationStillFillSrc(animation),
+                );
+            }
         }
         this.render();
         persistOnScreenEntry({
@@ -893,6 +909,15 @@ class ScreenBackgroundManager
             // source wrote, and a run sheet can come from anywhere.
             this.applyBackgroundSrcWithSyncGroup({
                 type: 'fill',
+                src: item,
+            });
+        } else if (
+            type === DragTypeEnum.BACKGROUND_ANIMATION &&
+            checkIsAnimationSrc(item)
+        ) {
+            // Only an animation this app can draw, for the same reason.
+            this.applyBackgroundSrcWithSyncGroup({
+                type: 'animation',
                 src: item,
             });
         }

@@ -476,7 +476,7 @@ describe.each(
         );
         const labels: string[] = [];
         let tabCount = 0;
-        for (const name of ['tabTypeList', 'devTabTypeList']) {
+        for (const name of ['tabTypeList']) {
             const start = source.indexOf(`const ${name} = [`);
             const end = source.indexOf('] as const;', start);
             if (start === -1 || end === -1) {
@@ -493,7 +493,7 @@ describe.each(
         // One per tab, every one of them a literal.
         expect(labels.length).toBe(tabCount);
         expect(labels).toContain('Fills');
-        expect(labels).toContain('(dev)CSS Animation');
+        expect(labels).toContain('Animations');
         expect(
             labels.filter((label) => {
                 return !keySet.has(sanitizeTranKey(label));

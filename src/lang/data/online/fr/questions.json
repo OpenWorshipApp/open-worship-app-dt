@@ -1024,6 +1024,14 @@
             "en": "How do I set a plain colour background?",
             "text": "Comment mettre un arrière-plan de couleur unie ?"
         },
+        "presenter.background.background-animation": {
+            "en": "How do I put an animated background on the screen?",
+            "text": "Comment mettre un arrière-plan animé sur l'écran ?"
+        },
+        "presenter.background.background-shader-code": {
+            "en": "Can I change or write the code of a shader background?",
+            "text": "Puis-je modifier ou écrire le code d'un arrière-plan shader ?"
+        },
         "presenter.background.background-image": {
             "en": "How do I use my own picture as the background?",
             "text": "Comment utiliser ma propre image comme arrière-plan ?"

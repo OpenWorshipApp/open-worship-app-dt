@@ -251,6 +251,68 @@ describe('ElectronMainController', () => {
         }
     });
 
+    test('a timed choice lets the computer sleep by itself at its moment', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        vi.useFakeTimers({ now: 1_800_000_000_000 });
+        try {
+            const { start, stop } = electronMockState.powerSaveBlocker;
+            const stayAwake = {
+                value: `${Date.now() + 30 * 60_000}` as string | null,
+            };
+            const { controller, navigate } =
+                createStayAwakeController(stayAwake);
+
+            // Read where it never asks: no request and no timer.
+            navigate('owa://local/reader.html');
+            expect(vi.getTimerCount()).toBe(0);
+
+            navigate('owa://local/presenter.html');
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(vi.getTimerCount()).toBe(1);
+
+            vi.advanceTimersByTime(30 * 60_000 - 1);
+            expect(stop).not.toHaveBeenCalled();
+            vi.advanceTimersByTime(1);
+            expect(stop).toHaveBeenCalledTimes(1);
+            expect(stop).toHaveBeenCalledWith(start.mock.results[0].value);
+            expect(vi.getTimerCount()).toBe(0);
+
+            // A moment already past is off, now and after a reload.
+            controller.syncStayAwake();
+            navigate('owa://local/presenter.html');
+            expect(start).toHaveBeenCalledTimes(1);
+
+            // A new choice replaces the timer the old one had.
+            stayAwake.value = `${Date.now() + 60 * 60_000}`;
+            controller.syncStayAwake();
+            expect(start).toHaveBeenCalledTimes(2);
+            stayAwake.value = `${Date.now() + 2 * 60 * 60_000}`;
+            controller.syncStayAwake();
+            expect(vi.getTimerCount()).toBe(1);
+            vi.advanceTimersByTime(60 * 60_000);
+            expect(stop).toHaveBeenCalledTimes(1);
+
+            // Leaving the page lets go and drops the timer with it.
+            navigate('owa://local/reader.html');
+            expect(stop).toHaveBeenCalledTimes(2);
+            expect(vi.getTimerCount()).toBe(0);
+
+            // Switched on until switched off while a timer ran: no timer.
+            navigate('owa://local/screen-mirror.html');
+            expect(vi.getTimerCount()).toBe(1);
+            stayAwake.value = 'true';
+            controller.syncStayAwake();
+            expect(vi.getTimerCount()).toBe(0);
+            vi.advanceTimersByTime(4 * 60 * 60_000);
+            expect(stop).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+            processExit.mockRestore();
+        }
+    });
+
     test('sends screen messages over the configured channel', () => {
         const processExit = vi
             .spyOn(process, 'exit')

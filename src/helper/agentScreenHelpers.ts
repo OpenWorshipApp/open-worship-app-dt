@@ -60,6 +60,10 @@ import {
 import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
 import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
 import { describeFill, parseFill } from '../background/fillValueHelpers';
+import {
+    describeAnimation,
+    parseAnimation,
+} from '../background/animationValueHelpers';
 
 export type AgentScreenBackgroundSummaryType = {
     kind: string;
@@ -230,6 +234,14 @@ export function toBackgroundSummary(
         return {
             kind: 'fill',
             name: fill === null ? null : describeFill(fill),
+        };
+    }
+    if (type === 'animation') {
+        // Its effect, colours, speed and look in words: never the code.
+        const animation = parseAnimation(src);
+        return {
+            kind: 'animation',
+            name: animation === null ? null : describeAnimation(animation),
         };
     }
     if (type === 'web') {

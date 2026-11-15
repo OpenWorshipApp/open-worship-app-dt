@@ -231,6 +231,7 @@ function getPresenterTips(): DailyTipType[] {
     ]);
     const backgroundIds = new Set([
         'presenter-colors-tab',
+        'presenter-animations-tab',
         'presenter-images-tab',
         'presenter-videos-tab',
         'presenter-cameras-tab',

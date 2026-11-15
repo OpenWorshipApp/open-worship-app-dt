@@ -44,6 +44,7 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Background: 'card-image',
     'Background Audio': 'file-earmark-music',
     Fills: 'palette',
+    Animations: 'magic',
     Images: 'image',
     Videos: 'film',
     Cameras: 'camera-video',
@@ -67,7 +68,6 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Others: 'three-dots',
     'AI Providers': 'robot',
     '(dev)Experiment': 'beaker',
-    '(dev)CSS Animation': 'magic',
     // -- layout panes
     'App Presenter Left': 'layout-sidebar',
     'App Presenter Middle': 'layout-split',

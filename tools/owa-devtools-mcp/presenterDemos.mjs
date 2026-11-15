@@ -642,6 +642,24 @@ export const PRESENTER_DEMO_LIST = [
     ],
   },
   {
+    id: 'presenter-animations-tab',
+    label: 'Open background animations',
+    detail:
+      'Choose a CSS or GLSL animation for the selected screens; Customize changes its colors and speed, Edit Code changes a shader, and Save as Preset keeps it.',
+    title: 'Open background animations',
+    steps: [
+      {
+        text: 'Open Animations in the Background panel.',
+        find: 'Animations',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'A tile moves while the pointer rests on it; press one to put it on the selected screens. On the screen it moves, and everywhere else it stays still.',
+      },
+    ],
+  },
+  {
     id: 'presenter-images-tab',
     label: 'Open background images',
     detail: 'Browse still pictures available for screen backgrounds.',

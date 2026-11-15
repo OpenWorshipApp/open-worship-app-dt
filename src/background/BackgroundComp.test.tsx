@@ -13,8 +13,6 @@ const h = vi.hoisted(() => ({
     showAppContextMenu: vi.fn(),
     listeners: new Map<string, () => void>(),
     resizeChecks: [] as Array<() => void>,
-    // A release build unless a test says otherwise, as `appProvider` reads it.
-    isDev: false,
     // The tab a setting remembers, `null` for none.
     savedTabKey: null as string | null,
 }));
@@ -33,13 +31,7 @@ vi.mock('../helper/settingHelpers', async () => {
     };
 });
 vi.mock('../server/appProvider', () => ({
-    default: {
-        systemUtils: {
-            get isDev() {
-                return h.isDev;
-            },
-        },
-    },
+    default: { systemUtils: { isDev: false } },
 }));
 vi.mock('../others/TabRenderComp', async () => {
     const react = await import('react');
@@ -176,7 +168,6 @@ beforeEach(async () => {
     vi.clearAllMocks();
     h.listeners.clear();
     h.resizeChecks.length = 0;
-    h.isDev = false;
     h.savedTabKey = null;
     h.checkAudioPlaying.mockReturnValue(false);
     h.checkBackgroundAudioPlaying.mockReturnValue(false);
@@ -216,6 +207,7 @@ describe('Background panel', () => {
     it('shows translated tabs and switches the visible background body', () => {
         expect(tabNames()).toEqual([
             'Fills',
+            'Animations',
             'Images',
             'Videos',
             'Cameras',
@@ -316,74 +308,53 @@ describe('Background panel', () => {
     });
 });
 
-describe('the development tab', () => {
-    it('a development build adds (dev)CSS Animation after Webs: never lit, no transition, no menu', async () => {
-        h.isDev = true;
-        // Every type on a screen at once: none of them is the new tab's.
-        h.getBackgroundSrcListOnScreenSetting.mockReturnValue(
-            Object.fromEntries(
-                ['fill', 'image', 'video', 'camera', 'web'].map(
-                    (type, index) => {
-                        return [String(index + 1), { type, src: type }];
-                    },
-                ),
-            ),
-        );
+describe('the Animations tab', () => {
+    it('sits right after Fills in every build, lit while a screen shows an animation, with its own transition and menu', async () => {
+        h.getBackgroundSrcListOnScreenSetting.mockReturnValue({
+            '1': { type: 'animation', src: 'css?name=aurora' },
+        });
         await renderAgain();
-        expect(tabNames()).toEqual([
-            'Fills',
-            'Images',
-            'Videos',
-            'Cameras',
-            'Webs',
-            '(dev)CSS Animation',
-        ]);
+        expect(tabNames().slice(0, 2)).toEqual(['Fills', 'Animations']);
         const tab = container.querySelector<HTMLButtonElement>(
-            '[data-tab="css-animation"]',
+            '[data-tab="animation"]',
         )!;
-        expect(tab.getAttribute('data-on-screen')).toBe('false');
+        expect(tab.getAttribute('data-on-screen')).toBe('true');
         expect(
             container
-                .querySelector('[data-tab="web"]')
+                .querySelector('[data-tab="fill"]')
                 ?.getAttribute('data-on-screen'),
-        ).toBe('true');
-        expect(tab.querySelector('[data-transition]')).toBeNull();
-        expect(
-            container.querySelector('[data-tab="web"] [data-transition]'),
-        ).not.toBeNull();
+        ).toBe('false');
+        expect(tab.querySelector('[data-transition]')).not.toBeNull();
         act(() =>
             tab.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })),
         );
-        expect(h.genBackgroundTabTransitionMenuItems).not.toHaveBeenCalled();
-        expect(h.showAppContextMenu).not.toHaveBeenCalled();
-        click('[data-tab="css-animation"]');
+        expect(h.genBackgroundTabTransitionMenuItems).toHaveBeenCalledWith(
+            'animation',
+        );
+        click('[data-tab="animation"]');
         expect(
-            container.querySelector('[data-body="css-animation"]'),
+            container.querySelector('[data-body="animation"]'),
         ).not.toBeNull();
         expect(tab.getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('a development build opens on the tab when it is the one remembered', async () => {
-        h.isDev = true;
-        h.savedTabKey = 'css-animation';
-        await renderAgain();
-        expect(
-            container.querySelector('[data-body="css-animation"]'),
-        ).not.toBeNull();
-    });
-
-    it('a release build remembering it shows Images, and the old name of Fills still opens Fills', async () => {
+    it('opens on Animations for the development placeholder remembered before it, on Fills for its old name, else on Images', async () => {
         h.savedTabKey = 'css-animation';
         await renderAgain();
         expect(tabNames()).not.toContain('(dev)CSS Animation');
+        expect(
+            container.querySelector('[data-body="animation"]'),
+        ).not.toBeNull();
+        h.savedTabKey = 'color';
+        await renderAgain();
+        expect(container.querySelector('[data-body="fill"]')).not.toBeNull();
+        h.savedTabKey = 'gone-tab';
+        await renderAgain();
         expect(container.querySelector('[data-body="image"]')).not.toBeNull();
         expect(
             container
                 .querySelector('[data-tab="image"]')
                 ?.getAttribute('aria-pressed'),
         ).toBe('true');
-        h.savedTabKey = 'color';
-        await renderAgain();
-        expect(container.querySelector('[data-body="fill"]')).not.toBeNull();
     });
 });

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 
 import { renderToStaticMarkup } from 'react-dom/server';
 import ScreenBackgroundFillComp from './ScreenBackgroundFillComp';
+import ScreenBackgroundAnimationComp from './ScreenBackgroundAnimationComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
@@ -27,6 +28,11 @@ import {
     checkIsViewerCameraId,
     listenViewerCameraLive,
 } from '../virtual-display/viewerCameraTransport';
+import {
+    genGlslAnimationElement,
+    toGlslAnimation,
+} from './screenAnimationBackgroundHelpers';
+import { ensureCssAnimationKeyframes } from '../background/cssAnimationLayerHelpers';
 
 export function genHtmlBackground(
     screenId: number,
@@ -34,7 +40,21 @@ export function genHtmlBackground(
 ) {
     let promise: Promise<() => void> = Promise.resolve(() => {});
     let child: HTMLDivElement = document.createElement('div');
-    if (backgroundSrc.type === 'camera') {
+    const glslAnimation =
+        backgroundSrc.type === 'animation'
+            ? toGlslAnimation(backgroundSrc.src)
+            : null;
+    if (glslAnimation !== null) {
+        // A shader runs on a canvas, live only where it is presented.
+        const screenManagerBase = getScreenManagerBase(screenId);
+        const result = genGlslAnimationElement(glslAnimation, {
+            isLive: appProvider.isPageScreen,
+            width: screenManagerBase?.width ?? 16,
+            height: screenManagerBase?.height ?? 9,
+        });
+        child = result.element;
+        promise = result.promise;
+    } else if (backgroundSrc.type === 'camera') {
         const video = document.createElement('video');
         // No sound in a camera; unmuted, a browser will not start it untapped.
         video.muted = true;
@@ -106,6 +126,9 @@ export function genHtmlBackground(
             appProvider.isPageScreen,
         ) as HTMLDivElement;
     } else {
+        if (backgroundSrc.type === 'animation' && appProvider.isPageScreen) {
+            ensureCssAnimationKeyframes(document);
+        }
         const div = document.createElement('div');
         const screenManagerBase = getScreenManagerBase(screenId);
         const htmlStr = renderToStaticMarkup(
@@ -158,6 +181,13 @@ function RenderScreenBackgroundComp({
         case 'fill':
             return (
                 <ScreenBackgroundFillComp
+                    src={backgroundSrc.src}
+                    isMoving={appProvider.isPageScreen}
+                />
+            );
+        case 'animation':
+            return (
+                <ScreenBackgroundAnimationComp
                     src={backgroundSrc.src}
                     isMoving={appProvider.isPageScreen}
                 />

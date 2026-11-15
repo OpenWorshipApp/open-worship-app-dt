@@ -26,6 +26,7 @@ import type PresentingFlowItem from './PresentingFlowItem';
 
 const backgroundDragTypeMap: { [key: string]: BackgroundType } = {
     [DragTypeEnum.BACKGROUND_FILL]: 'fill',
+    [DragTypeEnum.BACKGROUND_ANIMATION]: 'animation',
     [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
     [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
     [DragTypeEnum.BACKGROUND_CAMERA]: 'camera',
@@ -52,7 +53,10 @@ function checkIsBackgroundOnScreen(presentingFlowItem: PresentingFlowItem) {
     if (backgroundType === undefined) {
         return false;
     }
-    if (presentingFlowItem.type === DragTypeEnum.BACKGROUND_FILL) {
+    if (
+        presentingFlowItem.type === DragTypeEnum.BACKGROUND_FILL ||
+        presentingFlowItem.type === DragTypeEnum.BACKGROUND_ANIMATION
+    ) {
         return (
             ScreenBackgroundManager.getSelectBackgroundSrcList(
                 presentingFlowItem.data,

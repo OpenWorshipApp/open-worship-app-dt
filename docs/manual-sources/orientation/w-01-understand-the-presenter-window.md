@@ -21,11 +21,19 @@ The Presenter has a header and three resizable columns:
   (center, `Ctrl+B`), and the **[en:tran:Setting]** gear + Help buttons (right). 📸
   Left of the gear, the cup is **[en:tran:Stay Awake]**: while it is on — and
   it is, unless you switch it off — this computer does not go to sleep or
-  turn its display off for as long as the Presenter is open. Click the cup to
-  switch it off (it turns grey and empty) and again to switch it back on; the
-  choice is kept for the next launch. The Bible Reader and the Slide Editor
-  never hold the computer awake, so they have no cup. A screen that is
-  showing keeps the display on by itself, whatever the cup says.
+  turn its display off for as long as the Presenter is open. Click the cup
+  for its menu, the choice it is on ticked: **[en:tran:Until I turn it off]**
+  keeps it awake with no end, **[en:tran:For 30 minutes]**,
+  **[en:tran:For 1 hour]**, **[en:tran:For 2 hours]** and
+  **[en:tran:For 4 hours]** keep it awake that long and then let it sleep
+  again, and **[en:tran:Off]** switches it off (the cup turns grey and
+  empty). While a timer runs the cup steams but is not filled in, its
+  tooltip says until when, and the menu's first row, ticked, is that time;
+  when the time comes the cup switches itself off. The choice is kept for
+  the next launch — a timer that ran out while the app was closed opens off.
+  The Bible Reader and the Slide Editor never hold the computer awake, so
+  they have no cup. A screen that is showing keeps the display on by
+  itself, whatever the cup says.
   The **?** at the far right (**[en:tran:Help]**) opens a small menu of three rows:
   **[en:tran:Open Online Help]** opens the app's help page on its website, in
   your web browser, **[en:tran:Open Chatbot]** opens the help window that

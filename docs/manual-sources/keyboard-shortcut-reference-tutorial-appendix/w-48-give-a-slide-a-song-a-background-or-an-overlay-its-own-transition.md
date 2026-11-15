@@ -48,12 +48,12 @@ its slide, then its document, then the screen when its own choice is unticked.
    zoomed slide to the cut-in slide, the new one is there at once while the old
    one zooms away.
 4. **A Background tab.** Right-click **[en:tran:Images]** (or
-   **[en:tran:Fills]**, **[en:tran:Videos]**, **[en:tran:Cameras]**,
-   **[en:tran:Webs]**) and choose **[en:tran:Transition]**. Ticked, every
+   **[en:tran:Fills]**, **[en:tran:Animations]**, **[en:tran:Videos]**,
+   **[en:tran:Cameras]**, **[en:tran:Webs]**) and choose **[en:tran:Transition]**. Ticked, every
    background from that tab comes in that way; the tab shows the effect's icon
    after its name.
 5. **One background.** Press the ⋮ on a picture, video or web tile (right-click
-   a colour swatch, a gradient or pattern tile, a camera or a web link) and choose
+   a colour swatch, a gradient or pattern tile, an animation tile, a camera or a web link) and choose
    **[en:tran:Transition]**. It follows its tab until you tick it; a picture or
    video tile then shows the effect's icon in its corner.
 6. **A foreground panel, all its sessions.** Each foreground panel but

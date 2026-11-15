@@ -51,6 +51,11 @@ import {
     parseFill,
     toFillAverageColor,
 } from '../background/fillValueHelpers';
+import {
+    genAnimationCodeLabel,
+    parseAnimation,
+    toAnimationStillFill,
+} from '../background/animationValueHelpers';
 
 export const ERROR_TYPE = 'error';
 
@@ -64,6 +69,7 @@ export const slideDragTypeList = [
 
 export const backgroundDragTypeList = [
     DragTypeEnum.BACKGROUND_FILL,
+    DragTypeEnum.BACKGROUND_ANIMATION,
     DragTypeEnum.BACKGROUND_IMAGE,
     DragTypeEnum.BACKGROUND_VIDEO,
     DragTypeEnum.BACKGROUND_CAMERA,
@@ -798,6 +804,12 @@ export default class PresentingFlowItem {
             const fill = parseFill(this.data);
             return fill === null ? undefined : toFillAverageColor(fill);
         }
+        if (this.type === DragTypeEnum.BACKGROUND_ANIMATION) {
+            const animation = parseAnimation(this.data);
+            return animation === null
+                ? undefined
+                : toFillAverageColor(toAnimationStillFill(animation));
+        }
         if (this.isAppDocument) {
             return toDocumentIcon(this.itemFilePath)[1];
         }
@@ -1275,6 +1287,13 @@ async function toDroppedDataTitle(
         // Codes, arrows and degrees: the same in every language.
         const fill = parseFill(item);
         return fill === null ? `${item}` : genFillCodeLabel(fill);
+    }
+    if (type === DragTypeEnum.BACKGROUND_ANIMATION) {
+        // Its engine and colours: the same in every language.
+        const animation = parseAnimation(item);
+        return animation === null
+            ? 'Animation'
+            : genAnimationCodeLabel(animation);
     }
     if (type === DragTypeEnum.BACKGROUND_CAMERA) {
         return 'Camera';

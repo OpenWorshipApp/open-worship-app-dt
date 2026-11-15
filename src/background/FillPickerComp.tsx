@@ -126,7 +126,7 @@ export type FillPickerScreenViewType = Readonly<{
  * (2026-11-14, the user: _make the collapsing icon colored follow screen
  * color_).
  */
-function FillPickerFoldComp({
+export function FillPickerFoldComp({
     screenView: { screenId, isFolded, onFoldToggle },
 }: Readonly<{ screenView: FillPickerScreenViewType }>) {
     const screenLabel = `${tran('Screen')} ${screenId}`;
@@ -170,7 +170,7 @@ function FillHeldComp({ fill }: Readonly<{ fill: FillType }>) {
  * the customizing panel_). Closed, its box is gone and the tiles take the
  * row.
  */
-function FillCustomizeToggleComp({
+export function FillCustomizeToggleComp({
     isOpen,
     onToggle,
 }: Readonly<{ isOpen: boolean; onToggle: () => void }>) {

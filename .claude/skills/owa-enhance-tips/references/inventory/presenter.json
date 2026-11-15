@@ -1,7 +1,7 @@
 {
     "page": "presenter",
     "window": "presenter.html",
-    "updated": "2026-11-10",
+    "updated": "2026-11-15",
     "scope": "html/presenter.html -> src/presenter.tsx: the header, the Document List (documents and lyrics), the Presenting Flow List and its preview, the previewer (slides, stages, stage style, slide notes, the editing toolbar), the Presenter's Bible pane, the Bible Lookup popup's presenting jobs, the Bibles and Bible Notes lists, Background (colours, images, videos, cameras, webs, audios), every Foreground component's floating panel, the Mini Screen (screen cards, drawing and focusing, the Virtual Screens Manager, Bible/LongText Properties), Presenting Control, the tips card and the native menus as the Presenter shows them. The lookup popup's study tools are the Reader's inventory; Settings, the editors, the note window and the AI windows are other windows'. A row or menu shared by several lists (Rename, Duplicate, Move up...) is one item: the app draws it from one component and it does the same job in each list. Destructive rows are items, counted and never acted.",
     "sourceDirs": [
         "src/presenter",
@@ -21,6 +21,10 @@
     ],
     "sourceFiles": [],
     "ignore": [
+        {
+            "pattern": "^(?:CSS Animations|GLSL Shaders)$",
+            "reason": "a section heading in the Background Animations picker, not a control (the tab is bg-animations)"
+        },
         {
             "pattern": "^\\([^)]+\\)\\s?\\S",
             "reason": "a passage reference such as (KJV) John 3:16: the person's own history, saved lists and views, not a control's name"
@@ -1365,11 +1369,29 @@
             "labels": ["Webs"]
         },
         {
-            "id": "bg-css-animation",
+            "id": "bg-animations",
             "surface": "Background",
-            "labels": ["(dev)CSS Animation"],
-            "aliases": ["CSS animation backgrounds will be built here."],
-            "exclude": "a development placeholder, drawn only in a dev build; no volunteer sees it"
+            "labels": ["Animations"],
+            "search": ["animation", "shader", "moving background"]
+        },
+        {
+            "id": "bg-customize",
+            "surface": "Background",
+            "labels": ["Customize"],
+            "aliases": ["Effect", "Colors", "Density", "Quality"],
+            "search": ["speed", "opacity", "blend"]
+        },
+        {
+            "id": "bg-animation-code",
+            "surface": "Background",
+            "labels": ["Edit Code"],
+            "aliases": ["Shader Code"],
+            "search": ["shader", "glsl"]
+        },
+        {
+            "id": "bg-animation-copy-code",
+            "surface": "Background",
+            "labels": ["Copy Code"]
         },
         {
             "id": "bg-audios",

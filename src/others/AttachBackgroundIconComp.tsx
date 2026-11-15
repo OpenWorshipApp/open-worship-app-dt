@@ -12,6 +12,11 @@ import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 import { genFillLabel } from '../background/fillLabelHelpers';
 import { parseFill, toFillAverageColor } from '../background/fillValueHelpers';
+import {
+    parseAnimation,
+    toAnimationStillFill,
+} from '../background/animationValueHelpers';
+import { genAnimationLabel } from '../background/animationLabelHelpers';
 
 function showMediaContextMenu(event: any, filePath: string) {
     event.stopPropagation();
@@ -104,6 +109,21 @@ export default function AttachBackgroundIconComp({
                 title={title}
                 iType="filter-circle-fill"
                 iStyle={{ color: toFillAverageColor(fill) }}
+            />
+        );
+    }
+    if (backgroundType === DragTypeEnum.BACKGROUND_ANIMATION) {
+        const animation = parseAnimation(item);
+        if (animation === null) {
+            return null;
+        }
+        return (
+            <RendItemComp
+                title={`${tran('Animations')}: ${genAnimationLabel(animation)}`}
+                iType="magic"
+                iStyle={{
+                    color: toFillAverageColor(toAnimationStillFill(animation)),
+                }}
             />
         );
     }

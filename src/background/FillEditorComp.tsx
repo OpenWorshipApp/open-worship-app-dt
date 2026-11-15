@@ -68,7 +68,7 @@ function toFillColorWithAlpha(color: string, alpha: number): AppColorType {
     return `${rgb}${rounded.toString(16).padStart(2, '0').toUpperCase()}`;
 }
 
-function FillEditorRowComp({
+export function FillEditorRowComp({
     label,
     isTop = false,
     children,
@@ -89,7 +89,7 @@ function FillEditorRowComp({
  * checkerboard -- a faint colour reads as one, as the foreground's swatches
  * do (`.fg-swatch`).
  */
-function FillColorFieldComp({
+export function FillColorFieldComp({
     color,
     label,
     onChange,
@@ -139,7 +139,7 @@ function FillColorFieldComp({
 }
 
 /** Buttons of which one is on, as the screens' own pickers draw them. */
-function ChoiceRowComp<T extends string>({
+export function ChoiceRowComp<T extends string>({
     label,
     value,
     choices,

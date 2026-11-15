@@ -112,7 +112,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(116);
+        expect(getDailyTips('presenter')).toHaveLength(117);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );

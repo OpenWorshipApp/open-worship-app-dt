@@ -21,6 +21,7 @@ import type FileSource from '../../helper/FileSource';
 import { useWebCapturing } from '../../helper/capturingHelpers';
 import { tran } from '../../lang/langHelpers';
 import { genFillCss, parseFill } from '../../background/fillValueHelpers';
+import AnimationPreviewComp from '../../background/AnimationPreviewComp';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
@@ -89,6 +90,10 @@ export function genAttachBackgroundComponent(
                 }}
             />
         );
+    }
+    if (droppedData.type === DragTypeEnum.BACKGROUND_ANIMATION) {
+        // Still, as every preview draws one: it moves on a screen only.
+        return <AnimationPreviewComp src={droppedData.item} />;
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_CAMERA) {
         return (

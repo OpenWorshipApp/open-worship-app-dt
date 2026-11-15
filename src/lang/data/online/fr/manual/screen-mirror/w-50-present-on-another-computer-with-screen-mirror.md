@@ -3,7 +3,7 @@ id: W-50
 title: "Présenter sur un autre ordinateur avec Screen Mirror"
 section: "Screen Mirror"
 lang: fr
-translatedFrom: 3e3706254b7231eb
+translatedFrom: 6a3680e8ea6f25f7
 ---
 # W-50 — Présenter sur un autre ordinateur avec Screen Mirror
 
@@ -33,7 +33,8 @@ même réseau, ou Internet une fois que l'hôte s'y ouvre (étape 7).
    de revenir, et à sa droite se trouvent les boutons de l'en-tête du Presenter. La tasse
    est **[en:tran:Stay Awake]** — activée sauf si vous l'éteignez, elle empêche cet
    ordinateur de se mettre en veille tant que la page est ouverte, ce dont a besoin un
-   ordinateur qui tient lieu de projecteur — puis la roue dentée des réglages, le 🤖
+   ordinateur qui tient lieu de projecteur ; son menu la garde aussi éveillée pour un
+   temps donné seulement, comme dans le Presenter — puis la roue dentée des réglages, le 🤖
    **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** et **[en:tran:Help]**. Le 🤖 ouvert
    ici répond au sujet de cette page. La page
    cherche des hôtes dès qu'elle s'ouvre et les liste sous

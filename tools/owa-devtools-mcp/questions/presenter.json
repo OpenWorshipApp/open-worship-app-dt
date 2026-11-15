@@ -151,7 +151,10 @@
                         "display off",
                         "screensaver",
                         "goes dark",
-                        "cup"
+                        "cup",
+                        "awake timer",
+                        "sleep timer",
+                        "stay awake for"
                     ],
                     "resources": {
                         "recipe": "W-01",
@@ -1694,6 +1697,53 @@
                     "resources": {
                         "recipe": "W-08",
                         "find": "Background > Fills",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-animation",
+                    "text": "How do I put an animated background on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "animation",
+                        "animated",
+                        "animations tab",
+                        "css animation",
+                        "glsl",
+                        "shader",
+                        "snow",
+                        "light rays",
+                        "sunrise",
+                        "flames",
+                        "aurora",
+                        "starfield",
+                        "blend mode"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "passage": "a moving background made for worship",
+                        "find": "Background > Animations",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-shader-code",
+                    "text": "Can I change or write the code of a shader background?",
+                    "kind": "howto",
+                    "keywords": [
+                        "shader code",
+                        "edit code",
+                        "glsl code",
+                        "shadertoy",
+                        "mainimage",
+                        "my own shader",
+                        "custom shader",
+                        "copy code"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "passage": "Short shaders written for Shadertoy",
+                        "find": "Background > Animations",
                         "guide": true
                     }
                 },

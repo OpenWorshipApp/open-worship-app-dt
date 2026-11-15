@@ -18,7 +18,16 @@ import {
     WEBSITE_ITEM_ATTR,
     WEBSITE_URL_ATTR,
 } from '../helper/constants';
-import { genFillCss, parseFill } from '../background/fillValueHelpers';
+import {
+    genFillBackground,
+    genFillCss,
+    parseFill,
+} from '../background/fillValueHelpers';
+import {
+    parseAnimation,
+    toAnimationStillFill,
+    type GlslAnimationType,
+} from '../background/animationValueHelpers';
 
 function toPageName(slide: Slide) {
     return `page-${slide.width}x${slide.height}`;
@@ -48,6 +57,21 @@ function escapeHtmlText(text: string) {
     return div.innerHTML;
 }
 
+async function captureGlslStillDataUrl(animation: GlslAnimationType) {
+    try {
+        const { drawGlslStill } =
+            await import('../background/glslStillRenderer');
+        const canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 720;
+        return drawGlslStill(animation, canvas)
+            ? canvas.toDataURL('image/png')
+            : null;
+    } catch {
+        return null;
+    }
+}
+
 async function genBackgroundHtml(
     droppedData: DroppedDataType | null,
     videoFrameCache: Map<string, Promise<string | null>>,
@@ -67,6 +91,37 @@ async function genBackgroundHtml(
         const fill = parseFill(droppedData.item);
         if (fill !== null) {
             Object.assign(backgroundDiv.style, genFillCss(fill));
+        }
+        return backgroundDiv.outerHTML;
+    }
+    if (droppedData.type === DragTypeEnum.BACKGROUND_ANIMATION) {
+        // Paper holds it as it stands: a CSS one as its still layers, a
+        // shader as one frame, else the gradient of its colours.
+        const animation = parseAnimation(droppedData.item);
+        if (animation === null) {
+            return '';
+        }
+        if (animation.engine === 'css') {
+            const { genCssAnimationStillMarkup } =
+                await import('../background/cssAnimationLayerHelpers');
+            backgroundDiv.innerHTML = genCssAnimationStillMarkup(animation);
+            return backgroundDiv.outerHTML;
+        }
+        Object.assign(backgroundDiv.style, {
+            background: genFillBackground(toAnimationStillFill(animation)),
+            opacity: `${animation.opacity / 100}`,
+        });
+        const frameDataUrl = await captureGlslStillDataUrl(animation);
+        if (frameDataUrl !== null) {
+            const image = document.createElement('img');
+            image.alt = '';
+            image.src = frameDataUrl;
+            Object.assign(image.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+            });
+            backgroundDiv.appendChild(image);
         }
         return backgroundDiv.outerHTML;
     }

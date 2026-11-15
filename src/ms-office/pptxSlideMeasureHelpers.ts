@@ -18,6 +18,10 @@ import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import { parseFill, toFillAverageColor } from '../background/fillValueHelpers';
+import {
+    parseAnimation,
+    toAnimationStillFill,
+} from '../background/animationValueHelpers';
 import { PREVIEW_ONLY_ATTR, WEBSITE_ITEM_ATTR } from '../helper/constants';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { extractYouTubeVideoId } from '../slide-editor/canvas/youtubeUrlHelpers';
@@ -488,6 +492,19 @@ export class PptxSlideMeasurer {
                 const fill = parseFill(droppedData.item);
                 const color = parseCssColor(
                     fill === null ? null : toFillAverageColor(fill),
+                );
+                return color === null
+                    ? null
+                    : { kind: 'color', color: compositeOverBlack(color) };
+            }
+            if (droppedData.type === DragTypeEnum.BACKGROUND_ANIMATION) {
+                // A slide background here does not move: the colour its
+                // colours read as together.
+                const animation = parseAnimation(droppedData.item);
+                const color = parseCssColor(
+                    animation === null
+                        ? null
+                        : toFillAverageColor(toAnimationStillFill(animation)),
                 );
                 return color === null
                     ? null

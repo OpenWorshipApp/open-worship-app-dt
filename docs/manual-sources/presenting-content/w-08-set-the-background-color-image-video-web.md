@@ -2,8 +2,8 @@
 id: W-08
 title: "Set the background (color / image / video / web)"
 section: "Presenting content"
-verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, KB-04]
-screenshots: 4
+verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, PM-187, PM-188, PM-189, PM-190, PM-191, PM-192, KB-04]
+screenshots: 5
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-15"
 ---
@@ -14,7 +14,7 @@ workflowsVersion: "2026-11-15"
 1. Find the **[en:tran:Background]** panel at the bottom of the middle column,
    open with its tabs showing. If it has been folded to a thin bar, click the
    bar and the panel opens again. 📸
-2. Pick a tab: **[en:tran:Fills] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
+2. Pick a tab: **[en:tran:Fills] / [en:tran:Animations] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
    - **[en:tran:Fills]:** a plain color, a gradient or a pattern. Click a color swatch, or a tile
      under **[en:tran:Gradients]** or **[en:tran:Patterns]**. **[en:tran:Dark]** /
      **[en:tran:Light]** at the top swaps the rows below between deep and pale ones. A tile with
@@ -36,6 +36,27 @@ workflowsVersion: "2026-11-15"
      take its CSS somewhere else, at a screen's size. A still one copies as its lines of CSS; a
      moving one as a short stylesheet that moves it as the screen does — put the class
      `owa-fill` on what it is to fill.
+   - **[en:tran:Animations]:** a moving background made for worship — snow, light rays, a
+     sunrise, flames, a cross in glory — in two kinds: **[en:tran:CSS Animations]**, light
+     enough for any computer, and **[en:tran:GLSL Shaders]**, drawn by the graphics card.
+     Every tile is still; rest the pointer on one to see it move, and click it to put it on
+     the screen. Only the screen moves: the Mini Screen and every preview show one still
+     frame. 📸
+   - **[en:tran:Customize]**, beside the tiles while a screen holds an animation, changes its
+     **[en:tran:Effect]**, its colors (the first is the **[en:tran:Background Color]**, each
+     with its own **[en:tran:Opacity]**), **[en:tran:Speed]**, **[en:tran:Density]** (CSS)
+     or **[en:tran:Quality]** (a shader: lower is lighter on an old computer), the whole
+     animation's **[en:tran:Opacity]** and its **[en:tran:Blend Mode]** with what is behind
+     the screen; the screen follows half a second after you stop. **[en:tran:Save as Preset]**
+     keeps it as a button under **[en:tran:Presets]**.
+   - A shader's **[en:tran:Edit Code]** opens **[en:tran:Shader Code]**: its code beside a
+     moving preview. A mistake shows under the preview with its line, and
+     **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts the code back
+     as it was. Short shaders written for Shadertoy (a `mainImage`, no textures) can be
+     pasted in.
+   - Right-click a tile → **[en:tran:Copy Code]** to take the animation somewhere else: a
+     CSS one as a whole web page (paste it into a page file of your own in the Web Editor,
+     W-15, and the **[en:tran:Webs]** tab shows it), a shader as its code.
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -79,7 +100,7 @@ is still running while you look at another one.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `KB-04`
+`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `PM-187` · `PM-188` · `PM-189` · `PM-190` · `PM-191` · `PM-192` · `KB-04`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
 :::

@@ -47,6 +47,8 @@ Tips:
 
 - Dropping onto a box only matters for **colours**. Every other kind lands as a new box
   wherever the cursor was, on top of whatever is underneath.
+- An **[en:tran:Animations]** tile is not a box: the canvas stays bright under it and takes
+  nothing. An animation is a background for the whole screen — click its tile (W-08).
 - This is the same drag that sets a screen background — the panel item is unchanged, you
   are only making a copy of it on the slide.
 - A camera box remembers **which** camera by name as well as by id, so it still finds the

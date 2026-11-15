@@ -175,6 +175,20 @@ describe('saying what a background is', () => {
         ).toBe('fill');
         expect(
             describeAttachedBackground({
+                type: 'bg-animation',
+                item: 'css?name=snow&colors=052E16-FFFFFF&speed=slow&density=high',
+            }),
+        ).toBe(
+            'snowfall CSS animation, #052E16 → #FFFFFF, slow speed, high density',
+        );
+        expect(
+            describeAttachedBackground({
+                type: 'bg-animation',
+                item: 'css?name=snow',
+            }),
+        ).toBe('animation');
+        expect(
+            describeAttachedBackground({
                 type: 'bg-image',
                 item: 'C:\\bg\\sunrise.jpg',
             }),

@@ -231,6 +231,20 @@ describe('toBackgroundSummary', () => {
         ).toEqual({ kind: 'fill', name: null });
         expect(toBackgroundSummary(null)).toBeNull();
     });
+    it('says an animation in words, never its code', () => {
+        expect(
+            toBackgroundSummary({
+                type: 'animation',
+                src: 'glsl?name=flames&colors=1C0500-F97316&speed=normal&quality=normal&opacity=70&blend=screen',
+            } as any),
+        ).toEqual({
+            kind: 'animation',
+            name: 'flames GLSL shader, #1C0500 → #F97316, normal speed, normal quality, 70% opacity, screen blend',
+        });
+        expect(
+            toBackgroundSummary({ type: 'animation', src: 'nope' } as any),
+        ).toEqual({ kind: 'animation', name: null });
+    });
     it('names a web page by its address and never a camera by its device', () => {
         expect(
             toBackgroundSummary({

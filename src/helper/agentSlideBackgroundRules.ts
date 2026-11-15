@@ -4,6 +4,10 @@ import {
     parseFill,
     toCanonicalFillSrc,
 } from '../background/fillValueHelpers';
+import {
+    describeAnimation,
+    parseAnimation,
+} from '../background/animationValueHelpers';
 
 /**
  * The pure rules of `owa_slide_edit`'s `set-background`: a slide's attached
@@ -205,6 +209,7 @@ export type AttachedBackgroundShapeType = {
 
 const TYPE_WORD_MAP: Record<string, string> = {
     'bg-fill': 'fill',
+    'bg-animation': 'animation',
     'bg-image': 'picture',
     'bg-video': 'video',
     'bg-web': 'web page',
@@ -233,6 +238,10 @@ export function describeAttachedBackground(
         return fill.kind === 'solid'
             ? `colour ${fill.color}`
             : describeFill(fill);
+    }
+    if (type === 'bg-animation') {
+        const animation = parseAnimation(data.item);
+        return animation === null ? word : describeAnimation(animation);
     }
     const item = data.item as { fullName?: unknown } | string | null;
     const fullName =

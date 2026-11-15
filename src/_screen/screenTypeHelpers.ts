@@ -88,6 +88,8 @@ const _backgroundTypeList = [
     // A colour, a gradient or a pattern (`fillValueHelpers`); saved as
     // `color` before 2026-11-14 (`backgroundFillLegacyHelpers`).
     'fill',
+    // A CSS or GLSL animation (`animationValueHelpers`).
+    'animation',
     'image',
     'video',
     'camera',

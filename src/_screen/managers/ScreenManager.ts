@@ -511,6 +511,7 @@ export default class ScreenManager extends ScreenManagerBase {
         if (
             [
                 DragTypeEnum.BACKGROUND_FILL,
+                DragTypeEnum.BACKGROUND_ANIMATION,
                 DragTypeEnum.BACKGROUND_IMAGE,
                 DragTypeEnum.BACKGROUND_VIDEO,
                 DragTypeEnum.BACKGROUND_WEB,

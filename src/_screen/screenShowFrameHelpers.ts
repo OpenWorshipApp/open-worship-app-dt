@@ -7,6 +7,7 @@ import type {
 } from './screenTypeHelpers';
 import appProvider from '../server/appProvider';
 import { checkIsScreenShowSourceId } from './screenShowGraphHelpers';
+import { toAnimationBlendFromSrc } from '../background/animationValueHelpers';
 
 /**
  * Screen Show: screen N's CONTENT drawn inside screen M, whether or not N's own
@@ -94,6 +95,35 @@ function toStateKey(message: ScreenMessageType) {
         default:
             return null;
     }
+}
+
+/**
+ * The blend the copy's box takes from N's background: an animation's own,
+ * else none. `undefined` when `messages` says nothing about N's background.
+ *
+ * Why the box: a blend mixes an element with what is under it IN ITS OWN
+ * page, and the copy is a page of its own -- inside it, N's animation sits
+ * on nothing and its blend does nothing. Lifted onto the box, N's content
+ * mixes with M's (2026-11-15, the user: _make sure it support transparency
+ * and blending mode so for screen in screen show it should supply the
+ * affect_). The whole copy blends, its words with it: an iframe is one
+ * picture to the page it is in.
+ */
+export function findScreenShowBackgroundBlend(
+    messages: ScreenMessageType[],
+): string | undefined {
+    let blend: string | undefined;
+    for (const message of messages) {
+        if (message.type !== 'background') {
+            continue;
+        }
+        const data = message.data as { type?: unknown; src?: unknown } | null;
+        blend =
+            data?.type === 'animation'
+                ? toAnimationBlendFromSrc(data.src)
+                : 'normal';
+    }
+    return blend;
 }
 
 function checkIsPayload(payload: any): payload is ScreenShowPayloadType {
@@ -300,6 +330,21 @@ export function mountScreenShowFrame({
     let iframe: HTMLIFrameElement | null = null;
     let frameListener: ((messages: ScreenMessageType[]) => void) | null = null;
     let resizeObserver: ResizeObserver | null = null;
+    // The overlay's Properties chose a blend: that one stands.
+    const isOwnBlend =
+        typeof extraStyle.mixBlendMode === 'string' &&
+        extraStyle.mixBlendMode !== 'normal';
+    let backgroundBlend = 'normal';
+    const applyBackgroundBlend = (messages: ScreenMessageType[]) => {
+        const blend = findScreenShowBackgroundBlend(messages);
+        if (blend === undefined) {
+            return;
+        }
+        backgroundBlend = blend;
+        if (box !== null && !isOwnBlend) {
+            box.style.mixBlendMode = blend;
+        }
+    };
 
     const applyScale = () => {
         if (box === null || iframe === null || size === null) {
@@ -339,6 +384,9 @@ export function mountScreenShowFrame({
             overflow: 'hidden',
             pointerEvents: 'none',
         } satisfies CSSProperties);
+        if (!isOwnBlend) {
+            box.style.mixBlendMode = backgroundBlend;
+        }
         iframe = document.createElement('iframe');
         iframe.setAttribute('aria-hidden', 'true');
         iframe.tabIndex = -1;
@@ -416,11 +464,13 @@ export function mountScreenShowFrame({
     };
     getHosts().set(key, host);
     const stopListening = addPayloadListener(sourceScreenId, (payload) => {
+        applyBackgroundBlend(payload.messages);
         putUp(payload.width, payload.height);
         frameListener?.(payload.messages);
     });
     const snapshot = readSnapshot();
     if (snapshot !== null) {
+        applyBackgroundBlend(snapshot.messages);
         putUp(snapshot.width, snapshot.height);
     }
 

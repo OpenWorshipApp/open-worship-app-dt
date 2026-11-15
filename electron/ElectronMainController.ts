@@ -3,7 +3,12 @@ import path from 'node:path';
 
 import { type ScreenMessageType } from './electronEventListener';
 import { genKeepAwake } from './keepAwakeHelpers';
-import { STAY_AWAKE_SETTING_NAME, toIsStayAwake } from './stayAwakeProtocol';
+import {
+    STAY_AWAKE_SETTING_NAME,
+    toIsStayAwake,
+    toStayAwakeTimerDelay,
+    toStayAwakeUntil,
+} from './stayAwakeProtocol';
 import { genRoutProps, genRouteUrl } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
@@ -123,6 +128,10 @@ const stayAwakeHtmlFiles = new Set([
 // sleep again; the Reader and the editor never ask. The window closing ends
 // the process, which releases the request with it.
 //
+// A timed choice (`toStayAwakeUntil`) lets go by itself at its moment: this
+// process holds the one timer for it, because a renderer's timers are slowed
+// while its window is behind others, and the request is this process's.
+//
 // Answers with the function to call once the toggle's setting has changed.
 function keepAwakeOnPresentingPages(
     win: BrowserWindow,
@@ -130,13 +139,19 @@ function keepAwakeOnPresentingPages(
 ) {
     const setIsAwake = genKeepAwake();
     let isOnPresentingPage = false;
+    let expiryTimer: ReturnType<typeof setTimeout> | null = null;
     const sync = () => {
-        setIsAwake(
-            isOnPresentingPage &&
-                toIsStayAwake(
-                    settingManager.getClientSetting(STAY_AWAKE_SETTING_NAME),
-                ),
-        );
+        if (expiryTimer !== null) {
+            clearTimeout(expiryTimer);
+            expiryTimer = null;
+        }
+        const value = settingManager.getClientSetting(STAY_AWAKE_SETTING_NAME);
+        const now = Date.now();
+        const until = toStayAwakeUntil(value);
+        if (isOnPresentingPage && until !== null && until > now) {
+            expiryTimer = setTimeout(sync, toStayAwakeTimerDelay(until, now));
+        }
+        setIsAwake(isOnPresentingPage && toIsStayAwake(value, now));
     };
     win.webContents.on('did-navigate', (_event, url) => {
         isOnPresentingPage =

@@ -35,7 +35,8 @@ internet once the host opens to it (step 7).
    at its right are the Presenter header's own buttons. The cup is
    **[en:tran:Stay Awake]** — on unless you switch it off, it keeps this
    computer from sleeping for as long as the page is open, which is what a
-   computer standing in for a projector needs — then the gear for Settings,
+   computer standing in for a projector needs; its menu also keeps it awake
+   for a set time only, as in the Presenter — then the gear for Settings,
    the 🤖 **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** and
    **[en:tran:Help]**. The 🤖 opened here answers about this page. The page
    looks for hosts as it opens, listing them under

@@ -8,6 +8,7 @@ import {
 } from '../background/backgroundWebUrlHelpers';
 import { withCurrentDragType } from '../background/backgroundFillLegacyHelpers';
 import { checkIsFillSrc } from '../background/fillValueHelpers';
+import { checkIsAnimationSrc } from '../background/animationValueHelpers';
 import { fsCheckFileExist, fsDeleteFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
@@ -48,6 +49,7 @@ export default class AttachBackgroundManager {
                     if (
                         [
                             DragTypeEnum.BACKGROUND_FILL,
+                            DragTypeEnum.BACKGROUND_ANIMATION,
                             DragTypeEnum.BACKGROUND_CAMERA,
                         ].includes(value.type)
                     ) {
@@ -113,6 +115,12 @@ export default class AttachBackgroundManager {
                     const value = withCurrentDragType(savedValue as any);
                     if (value.type === DragTypeEnum.BACKGROUND_FILL) {
                         return [key, checkIsFillSrc(value.item) ? value : null];
+                    }
+                    if (value.type === DragTypeEnum.BACKGROUND_ANIMATION) {
+                        return [
+                            key,
+                            checkIsAnimationSrc(value.item) ? value : null,
+                        ];
                     }
                     if (value.type === DragTypeEnum.BACKGROUND_CAMERA) {
                         return [key, value];

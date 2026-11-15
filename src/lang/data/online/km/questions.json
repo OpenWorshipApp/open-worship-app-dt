@@ -1024,6 +1024,14 @@
             "en": "How do I set a plain colour background?",
             "text": "តើខ្ញុំដាក់ផ្ទៃខាងក្រោយជាពណ៌សុទ្ធដោយរបៀបណា?"
         },
+        "presenter.background.background-animation": {
+            "en": "How do I put an animated background on the screen?",
+            "text": "តើខ្ញុំដាក់ផ្ទៃខាងក្រោយមានចលនានៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.background.background-shader-code": {
+            "en": "Can I change or write the code of a shader background?",
+            "text": "តើខ្ញុំអាចកែ ឬសរសេរកូដស្ហេឌឺនៃផ្ទៃខាងក្រោយបានទេ?"
+        },
         "presenter.background.background-image": {
             "en": "How do I use my own picture as the background?",
             "text": "តើខ្ញុំប្រើរូបភាពរបស់ខ្ញុំផ្ទាល់ជាផ្ទៃខាងក្រោយដោយរបៀបណា?"

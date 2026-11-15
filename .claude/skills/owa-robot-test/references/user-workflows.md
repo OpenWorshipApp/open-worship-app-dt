@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-15** (**W-02 — the Bible Reader's 🖥️ [en:tran:Go Back to Presenter] asks first.** The user: _elderly user might click the button by accident and quit the reader. give a confirm asking be leaving reader page. give enough information about leaving and how to come back from presenter page_. The question **[en:tran:Leave the Bible Reader?]** says the passages stay and draws the Presenter's 📖 [en:tran:Bible Reader] tab, at its top left, as the way back; **[en:tran:Stay in Bible Reader]**, Esc and the ✕ stay, and Enter does nothing, so a reader who pressed the button by mistake and then Enter for the reference box is not taken away. `owa_goto_page` and the help window's own way to the Presenter still go straight there. Seen live 2026-11-15 on the dev app in English: the question, its words, the tab and its two buttons; what each button does is held by the unit tests. NAV-12.)
+**workflowsVersion: 2026-11-15b** (**W-08, W-28, W-48 — the Background panel's [en:tran:Animations], CSS and GLSL.** The user: _implement `Animation` for background, it should provide both css and glsl_, _support creative animation_, _locate the `Animations` after `Fills`_, _make sure it support transparency and blending mode so for screen in screen show it should supply the affect_, _supply maximum sample for christian worshiping background_, _have to allow customizing and preset_. W-08: the tab after **[en:tran:Fills]**, its worship samples still everywhere but on the screen, **[en:tran:Customize]** (effect, see-through colours, speed, density or quality, opacity, blend mode), a shader's **[en:tran:Edit Code]** and **[en:tran:Shader Code]**, **[en:tran:Save as Preset]**, **[en:tran:Copy Code]**. W-48: the tab and a tile take a **[en:tran:Transition]**. W-28: an animation tile is no box on a slide. Seen live 2026-11-15 on a scratch instance of the dev app: the tab after Fills, Easter - Sunrise on screen 0 with the Mini Screen still, Customize's Fast reaching the screen, a saved chip putting flames up at 80% opacity with a screen blend, the Shader Code panel with its preview, both right-click menus, and all of it in Afrikaans. Not seen live: a tile moving under the pointer, a shader's error line, Reset and Apply (typing in the code editor needs the window in front), the copied text, the canvas refusing the drag, and the Screen Show blend (it needs two screens) -- the unit tests drive them. PM-187..PM-192.)
+
+Previous: **workflowsVersion: 2026-11-15a** (**W-01 and W-50 — [en:tran:Stay Awake] can keep the computer awake for a while only.** The user, with the cup circled: _add timer to stay-awake, for user's option over infinite awaking_. A press on the cup opens its menu: **[en:tran:Until I turn it off]**, **[en:tran:For 30 minutes]**, **[en:tran:For 1 hour]**, **[en:tran:For 2 hours]**, **[en:tran:For 4 hours]** and **[en:tran:Off]**, the current choice ticked; under a timer the cup steams unfilled, its tooltip says until when and the menu's first row is that time, and at that moment the computer may sleep again and the cup switches itself off. Seen live 2026-11-15 on a scratch instance (macOS), Screen Mirror page: a timer seeded to end at 12:04:05 held the display awake (`pmset -g assertions`) with the tooltip _… until 12:04 PM_ and _Until 12:04 PM_ ticked, and let go at 12:04:06 with no press, the cup grey and empty; For 30 minutes, Off and Until I turn it off each pressed and each held or released as it says; the Bible Reader released it; in French the menu and the tooltip in French (_Jusqu'à 13:05_). And on the Presenter, on a second scratch instance: its header cup's menu with _Until 12:11 PM_ ticked, and the display let go at 12:11:22, the moment the timer ended, the cup grey and empty by itself. NAV-24, SP-32.)
+
+Previous: **workflowsVersion: 2026-11-15** (**W-02 — the Bible Reader's 🖥️ [en:tran:Go Back to Presenter] asks first.** The user: _elderly user might click the button by accident and quit the reader. give a confirm asking be leaving reader page. give enough information about leaving and how to come back from presenter page_. The question **[en:tran:Leave the Bible Reader?]** says the passages stay and draws the Presenter's 📖 [en:tran:Bible Reader] tab, at its top left, as the way back; **[en:tran:Stay in Bible Reader]**, Esc and the ✕ stay, and Enter does nothing, so a reader who pressed the button by mistake and then Enter for the reference box is not taken away. `owa_goto_page` and the help window's own way to the Presenter still go straight there. Seen live 2026-11-15 on the dev app in English: the question, its words, the tab and its two buttons; what each button does is held by the unit tests. NAV-12.)
 
 Previous: **workflowsVersion: 2026-11-14o** (**W-08 — every color in Customize has its own [en:tran:Opacity].** The user, with Customize's color wells circled: _make all color in customizing panel support transparency setting_. A gradient's colors are one to a line, each its well, an [en:tran:Opacity] slider from 0 to 255 and its Remove; a pattern's [en:tran:Background Color] and [en:tran:Color] carry one each, and the pattern's separate Opacity row is gone. A well is drawn at its color's opacity over a checkerboard. A gradient with a see-through color paints nothing under itself, which had made the faint stop solid. Seen live 2026-11-14 on the dev app with a gradient up: Color 2 at 43 drawn faint over the checkerboard and the Mini Screen fading to it. Not seen live: a pattern's two sliders (the unit test drives them). PM-184.)
 
@@ -87,11 +91,19 @@ The Presenter has a header and three resizable columns:
   (center, `Ctrl+B`), and the **[en:tran:Setting]** gear + Help buttons (right). 📸
   Left of the gear, the cup is **[en:tran:Stay Awake]**: while it is on — and
   it is, unless you switch it off — this computer does not go to sleep or
-  turn its display off for as long as the Presenter is open. Click the cup to
-  switch it off (it turns grey and empty) and again to switch it back on; the
-  choice is kept for the next launch. The Bible Reader and the Slide Editor
-  never hold the computer awake, so they have no cup. A screen that is
-  showing keeps the display on by itself, whatever the cup says.
+  turn its display off for as long as the Presenter is open. Click the cup
+  for its menu, the choice it is on ticked: **[en:tran:Until I turn it off]**
+  keeps it awake with no end, **[en:tran:For 30 minutes]**,
+  **[en:tran:For 1 hour]**, **[en:tran:For 2 hours]** and
+  **[en:tran:For 4 hours]** keep it awake that long and then let it sleep
+  again, and **[en:tran:Off]** switches it off (the cup turns grey and
+  empty). While a timer runs the cup steams but is not filled in, its
+  tooltip says until when, and the menu's first row, ticked, is that time;
+  when the time comes the cup switches itself off. The choice is kept for
+  the next launch — a timer that ran out while the app was closed opens off.
+  The Bible Reader and the Slide Editor never hold the computer awake, so
+  they have no cup. A screen that is showing keeps the display on by
+  itself, whatever the cup says.
   The **?** at the far right (**[en:tran:Help]**) opens a small menu of three rows:
   **[en:tran:Open Online Help]** opens the app's help page on its website, in
   your web browser, **[en:tran:Open Chatbot]** opens the help window that
@@ -635,7 +647,7 @@ _Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
 1. Find the **[en:tran:Background]** panel at the bottom of the middle column,
    open with its tabs showing. If it has been folded to a thin bar, click the
    bar and the panel opens again. 📸
-2. Pick a tab: **[en:tran:Fills] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
+2. Pick a tab: **[en:tran:Fills] / [en:tran:Animations] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
    - **[en:tran:Fills]:** a plain color, a gradient or a pattern. Click a color swatch, or a tile
      under **[en:tran:Gradients]** or **[en:tran:Patterns]**. **[en:tran:Dark]** /
      **[en:tran:Light]** at the top swaps the rows below between deep and pale ones. A tile with
@@ -657,6 +669,27 @@ _Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
      take its CSS somewhere else, at a screen's size. A still one copies as its lines of CSS; a
      moving one as a short stylesheet that moves it as the screen does — put the class
      `owa-fill` on what it is to fill.
+   - **[en:tran:Animations]:** a moving background made for worship — snow, light rays, a
+     sunrise, flames, a cross in glory — in two kinds: **[en:tran:CSS Animations]**, light
+     enough for any computer, and **[en:tran:GLSL Shaders]**, drawn by the graphics card.
+     Every tile is still; rest the pointer on one to see it move, and click it to put it on
+     the screen. Only the screen moves: the Mini Screen and every preview show one still
+     frame. 📸
+   - **[en:tran:Customize]**, beside the tiles while a screen holds an animation, changes its
+     **[en:tran:Effect]**, its colors (the first is the **[en:tran:Background Color]**, each
+     with its own **[en:tran:Opacity]**), **[en:tran:Speed]**, **[en:tran:Density]** (CSS)
+     or **[en:tran:Quality]** (a shader: lower is lighter on an old computer), the whole
+     animation's **[en:tran:Opacity]** and its **[en:tran:Blend Mode]** with what is behind
+     the screen; the screen follows half a second after you stop. **[en:tran:Save as Preset]**
+     keeps it as a button under **[en:tran:Presets]**.
+   - A shader's **[en:tran:Edit Code]** opens **[en:tran:Shader Code]**: its code beside a
+     moving preview. A mistake shows under the preview with its line, and
+     **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts the code back
+     as it was. Short shaders written for Shadertoy (a `mainImage`, no textures) can be
+     pasted in.
+   - Right-click a tile → **[en:tran:Copy Code]** to take the animation somewhere else: a
+     CSS one as a whole web page (paste it into a page file of your own in the Web Editor,
+     W-15, and the **[en:tran:Webs]** tab shows it), a shader as its code.
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -697,7 +730,7 @@ and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On t
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 
-_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..186, KB-04._
+_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..192, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -3549,6 +3582,8 @@ Tips:
 
 - Dropping onto a box only matters for **colours**. Every other kind lands as a new box
   wherever the cursor was, on top of whatever is underneath.
+- An **[en:tran:Animations]** tile is not a box: the canvas stays bright under it and takes
+  nothing. An animation is a background for the whole screen — click its tile (W-08).
 - This is the same drag that sets a screen background — the panel item is unchanged, you
   are only making a copy of it on the slide.
 - A camera box remembers **which** camera by name as well as by id, so it still finds the
@@ -6480,12 +6515,12 @@ its slide, then its document, then the screen when its own choice is unticked.
    zoomed slide to the cut-in slide, the new one is there at once while the old
    one zooms away.
 4. **A Background tab.** Right-click **[en:tran:Images]** (or
-   **[en:tran:Fills]**, **[en:tran:Videos]**, **[en:tran:Cameras]**,
-   **[en:tran:Webs]**) and choose **[en:tran:Transition]**. Ticked, every
+   **[en:tran:Fills]**, **[en:tran:Animations]**, **[en:tran:Videos]**,
+   **[en:tran:Cameras]**, **[en:tran:Webs]**) and choose **[en:tran:Transition]**. Ticked, every
    background from that tab comes in that way; the tab shows the effect's icon
    after its name.
 5. **One background.** Press the ⋮ on a picture, video or web tile (right-click
-   a colour swatch, a gradient or pattern tile, a camera or a web link) and choose
+   a colour swatch, a gradient or pattern tile, an animation tile, a camera or a web link) and choose
    **[en:tran:Transition]**. It follows its tab until you tick it; a picture or
    video tile then shows the effect's icon in its corner.
 6. **A foreground panel, all its sessions.** Each foreground panel but
@@ -6656,7 +6691,8 @@ internet once the host opens to it (step 7).
    at its right are the Presenter header's own buttons. The cup is
    **[en:tran:Stay Awake]** — on unless you switch it off, it keeps this
    computer from sleeping for as long as the page is open, which is what a
-   computer standing in for a projector needs — then the gear for Settings,
+   computer standing in for a projector needs; its menu also keeps it awake
+   for a set time only, as in the Presenter — then the gear for Settings,
    the 🤖 **[en:tran:App Assistant]**, ✨ **[en:tran:AI Chat]** and
    **[en:tran:Help]**. The 🤖 opened here answers about this page. The page
    looks for hosts as it opens, listing them under

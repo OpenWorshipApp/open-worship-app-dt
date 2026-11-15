@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 116 Presenter lessons with stable unique ids', () => {
+  it('offers 117 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -36,6 +36,7 @@ describe('Presenter demos', () => {
       'presenter-foreground-sessions',
       'presenter-foreground-clear',
       'presenter-colors-tab',
+      'presenter-animations-tab',
       'presenter-images-tab',
       'presenter-videos-tab',
       'presenter-cameras-tab',
@@ -127,13 +128,13 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(116);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(117);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
     expect(
       PRESENTER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
-    ).toHaveLength(25);
+    ).toHaveLength(26);
   });
 
   it('returns fresh steps with translated alternatives', () => {

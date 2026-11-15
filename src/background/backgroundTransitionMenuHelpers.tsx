@@ -29,6 +29,7 @@ import {
  */
 const BACKGROUND_TAB_LABEL_MAP: Partial<Record<BackgroundType, string>> = {
     fill: 'Fills',
+    animation: 'Animations',
     image: 'Images',
     video: 'Videos',
     camera: 'Cameras',

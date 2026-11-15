@@ -23,6 +23,11 @@ export const MINI_SCREEN_NO_RENDERING_SETTING_PREFIX =
 export const BACKGROUND_FILL_FOLDED_SETTING_PREFIX = 'background-fill-folded-';
 export const BACKGROUND_FILL_CUSTOMIZE_CLOSED_SETTING_PREFIX =
     'background-fill-customize-closed-';
+// The same two for the Animations tab (`BackgroundAnimationsComp`).
+export const BACKGROUND_ANIMATION_FOLDED_SETTING_PREFIX =
+    'background-animation-folded-';
+export const BACKGROUND_ANIMATION_CUSTOMIZE_CLOSED_SETTING_PREFIX =
+    'background-animation-customize-closed-';
 
 // Every prefix above. Add new per-screen previewer settings to BOTH the export
 // above and this list, or deleting a screen will leave them behind.
@@ -37,4 +42,6 @@ export const previewerSettingPrefixList = [
     MINI_SCREEN_NO_RENDERING_SETTING_PREFIX,
     BACKGROUND_FILL_FOLDED_SETTING_PREFIX,
     BACKGROUND_FILL_CUSTOMIZE_CLOSED_SETTING_PREFIX,
+    BACKGROUND_ANIMATION_FOLDED_SETTING_PREFIX,
+    BACKGROUND_ANIMATION_CUSTOMIZE_CLOSED_SETTING_PREFIX,
 ];

@@ -3,7 +3,7 @@ id: W-08
 title: "Définir l'arrière-plan (couleur / image / vidéo / web)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 2ba34cc3bcced4e0
+translatedFrom: 11a9e9b10fc20174
 ---
 # W-08 — Définir l'arrière-plan (couleur / image / vidéo / web)
 
@@ -12,10 +12,49 @@ translatedFrom: 2ba34cc3bcced4e0
 1. Repérez le panneau **[en:tran:Background]** en bas de la colonne du milieu,
    ouvert avec ses onglets visibles. S'il a été replié en une fine barre, cliquez sur la
    barre et le panneau s'ouvre de nouveau. 📸
-2. Choisissez un onglet : **[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
-   - **[en:tran:Colors] :** cliquez sur une pastille. Si la couleur risque de gêner la lecture du texte biblique, l'application
-     change la couleur du texte pour qu'il reste visible et le signale dans un message avec son propre bouton
-     **[en:tran:Undo]** — elle ne demande rien.
+2. Choisissez un onglet : **[en:tran:Fills] / [en:tran:Animations] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
+   - **[en:tran:Fills] :** une couleur unie, un dégradé ou un motif. Cliquez sur une pastille de couleur, ou sur une tuile
+     sous **[en:tran:Gradients]** ou **[en:tran:Patterns]**. **[en:tran:Dark]** /
+     **[en:tran:Light]**, en haut, fait passer les rangées du dessous de teintes profondes à des teintes pâles. Une tuile
+     marquée d'un petit signe de vent bouge à l'écran ; la tuile elle-même et le Mini-écran restent immobiles. Si une
+     couleur risque de gêner la lecture du texte biblique, l'application change la couleur du texte pour qu'il reste visible
+     et le signale dans un message avec son propre bouton **[en:tran:Undo]** — elle ne demande rien. 📸
+   - Dès qu'un écran affiche un remplissage, l'onglet a une section pour chacun de ces écrans. La flèche à
+     gauche de sa ligne, dans la couleur de cet écran, replie la section sur cette ligne, qui montre alors
+     le numéro de l'écran et ce qu'il affiche ; appuyez de nouveau sur la flèche pour l'ouvrir.
+   - **[en:tran:Customize]**, à côté des tuiles quand un écran affiche un dégradé ou un motif,
+     change ses couleurs, **[en:tran:Type]**, **[en:tran:Angle]**, **[en:tran:Size]** et
+     **[en:tran:Speed]** ; l'écran suit une demi-seconde après votre dernier changement. Chaque couleur a son propre
+     curseur **[en:tran:Opacity]** à côté d'elle (0 laisse voir ce qu'il y a derrière l'écran, 255
+     la rend opaque), et sa pastille est dessinée aussi pâle sur un damier. Le bouton des curseurs, au bout
+     de la ligne **[en:tran:Gradients]**, l'ouvre et le ferme.
+   - **[en:tran:Save as Preset]**, sous les motifs, garde ce qui est affiché comme un bouton à part
+     sous **[en:tran:Presets]**.
+   - Clic droit sur une tuile de dégradé ou de motif, ou sur un bouton enregistré, → **[en:tran:Copy CSS]** pour
+     emporter son CSS ailleurs, à la taille d'un écran. Une tuile immobile se copie en lignes de CSS ; une
+     tuile animée en une courte feuille de style qui la fait bouger comme à l'écran — mettez la classe
+     `owa-fill` sur ce qu'elle doit remplir.
+   - **[en:tran:Animations] :** un arrière-plan animé fait pour le culte — neige, rayons de lumière,
+     lever de soleil, flammes, croix dans la gloire — de deux sortes : **[en:tran:CSS Animations]**, assez légères
+     pour n'importe quel ordinateur, et **[en:tran:GLSL Shaders]**, dessinés par la carte graphique.
+     Chaque tuile est immobile ; posez le pointeur dessus pour la voir bouger, et cliquez dessus pour la mettre à
+     l'écran. Seul l'écran bouge : le Mini-écran et chaque aperçu montrent une seule image
+     fixe. 📸
+   - **[en:tran:Customize]**, à côté des tuiles quand un écran affiche une animation, change son
+     **[en:tran:Effect]**, ses couleurs (la première est la **[en:tran:Background Color]**, chacune
+     avec sa propre **[en:tran:Opacity]**), **[en:tran:Speed]**, **[en:tran:Density]** (CSS)
+     ou **[en:tran:Quality]** (un shader : plus bas, il pèse moins sur un vieil ordinateur), l'**[en:tran:Opacity]** de toute
+     l'animation et son **[en:tran:Blend Mode]** avec ce qu'il y a derrière
+     l'écran ; l'écran suit une demi-seconde après votre dernier changement. **[en:tran:Save as Preset]**
+     la garde comme un bouton sous **[en:tran:Presets]**.
+   - Le bouton **[en:tran:Edit Code]** d'un shader ouvre **[en:tran:Shader Code]** : son code à côté d'un
+     aperçu animé. Une erreur s'affiche sous l'aperçu avec sa ligne, et
+     **[en:tran:Apply]** attend qu'il n'y en ait plus ; **[en:tran:Reset]** remet le code
+     tel qu'il était. De courts shaders écrits pour Shadertoy (un `mainImage`, sans textures) peuvent y être
+     collés.
+   - Clic droit sur une tuile → **[en:tran:Copy Code]** pour emporter l'animation ailleurs : une
+     animation CSS comme une page web complète (collez-la dans un fichier de page à vous dans l'Éditeur de page web,
+     W-15, et l'onglet **[en:tran:Webs]** l'affiche), un shader comme son code.
    - **[en:tran:Images] / [en:tran:Videos] :** **cliquez** sur un élément pour en faire l'arrière-plan en direct ;
      cliquez de nouveau sur le même élément pour le retirer. 📸
    - **[en:tran:Cameras] :** choisissez une caméra branchée.

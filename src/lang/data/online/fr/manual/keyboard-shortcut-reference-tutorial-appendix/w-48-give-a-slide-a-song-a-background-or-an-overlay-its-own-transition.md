@@ -3,7 +3,7 @@ id: W-48
 title: "Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: fbad8f9687991c8d
+translatedFrom: 52354340be164ebf
 ---
 # W-48 — Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition
 
@@ -45,12 +45,12 @@ sa diapositive, puis son document, puis l'écran quand son propre choix est déc
    diapositive en zoom à la diapositive sans transition, la nouvelle est là tout de suite pendant que l'ancienne
    s'éloigne en zoom.
 4. **Un onglet de l'Arrière-plan.** Faites un clic droit sur **[en:tran:Images]** (ou
-   **[en:tran:Colors]**, **[en:tran:Videos]**, **[en:tran:Cameras]**,
-   **[en:tran:Webs]**) et choisissez **[en:tran:Transition]**. Une fois la case cochée, chaque
+   **[en:tran:Fills]**, **[en:tran:Animations]**, **[en:tran:Videos]**,
+   **[en:tran:Cameras]**, **[en:tran:Webs]**) et choisissez **[en:tran:Transition]**. Une fois la case cochée, chaque
    arrière-plan de cet onglet arrive de cette façon ; l'onglet affiche l'icône de l'effet
    après son nom.
 5. **Un seul arrière-plan.** Appuyez sur le ⋮ d'une tuile d'image, de vidéo ou de page web (faites un clic droit
-   sur une pastille de couleur, une caméra ou un lien web) et choisissez
+   sur une pastille de couleur, une tuile de dégradé ou de motif, une tuile d'animation, une caméra ou un lien web) et choisissez
    **[en:tran:Transition]**. Il suit son onglet jusqu'à ce que vous cochiez la case ; une tuile d'image ou de
    vidéo affiche alors l'icône de l'effet dans son coin.
 6. **Un panneau de premier plan, toutes ses sessions.** Chaque panneau de premier plan sauf

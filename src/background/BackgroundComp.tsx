@@ -32,7 +32,6 @@ import {
     genBackgroundTabTransitionMenuItems,
 } from './backgroundTransitionMenuHelpers';
 import { toCurrentBackgroundTypeName } from './backgroundFillLegacyHelpers';
-import appProvider from '../server/appProvider';
 
 // A tab's icon and its words, the words in a span the header can fold away
 // when the row is too narrow for all of them (`useIsTabRowCompact`). The
@@ -114,8 +113,8 @@ const LazyBackgroundWebComp = lazy(() => {
 const LazyBackgroundAudiosComp = lazy(() => {
     return import('./BackgroundAudiosComp');
 });
-const LazyBackgroundCssAnimationComp = lazy(() => {
-    return import('./BackgroundCssAnimationComp');
+const LazyBackgroundAnimationsComp = lazy(() => {
+    return import('./BackgroundAnimationsComp');
 });
 
 function RenderAudiosTabComp({
@@ -181,33 +180,24 @@ const genIsSelected = (
 // the language before the app has loaded it.
 const tabTypeList = [
     ['fill', 'Fills', LazyBackgroundFillsComp],
+    // After Fills (2026-11-15, the user: _locate the `Animations` after
+    // `Fills`_): both are made here rather than picked from a folder.
+    ['animation', 'Animations', LazyBackgroundAnimationsComp],
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
     ['camera', 'Cameras', LazyBackgroundCamerasComp],
     ['web', 'Webs', LazyBackgroundWebComp],
 ] as const;
-// A development build's tab alone, as the `(dev)Experiment` page is: the
-// place kept for CSS animation backgrounds, a note until they are built
-// (`BackgroundCssAnimationComp`). No background type is its own yet, so it
-// is never lit as on a screen and has no transition of its own.
-const DEV_CSS_ANIMATION_TAB_KEY = 'css-animation';
-const devTabTypeList = [
-    [
-        DEV_CSS_ANIMATION_TAB_KEY,
-        '(dev)CSS Animation',
-        LazyBackgroundCssAnimationComp,
-    ],
-] as const;
-type TabKeyType =
-    | (typeof tabTypeList)[number][0]
-    | typeof DEV_CSS_ANIMATION_TAB_KEY
-    | 'audio';
+type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 const DEFAULT_TAB_KEY: TabKeyType = 'image';
+// A development build's placeholder tab for these was saved under this key.
+const LEGACY_ANIMATION_TAB_KEY = 'css-animation';
 
-function genTabTypeList() {
-    return appProvider.systemUtils.isDev
-        ? [...tabTypeList, ...devTabTypeList]
-        : [...tabTypeList];
+function toCurrentTabKey(savedTabKey: string) {
+    if (savedTabKey === LEGACY_ANIMATION_TAB_KEY) {
+        return 'animation';
+    }
+    return toCurrentBackgroundTypeName(savedTabKey);
 }
 
 export default function BackgroundComp() {
@@ -242,40 +232,31 @@ export default function BackgroundComp() {
         'background-tab',
         DEFAULT_TAB_KEY,
     );
-    const shownTabTypeList = useMemo(genTabTypeList, []);
-    // Saved as `color` before the Fills tab had its name; a tab this build
-    // does not draw (the development one, in a settings archive taken to a
-    // release) shows the default rather than an empty panel.
-    const currentTabKey = toCurrentBackgroundTypeName(savedTabKey);
-    const tabKey = shownTabTypeList.some(([key]) => key === currentTabKey)
-        ? currentTabKey
+    // Saved as `color` before the Fills tab had its name; a tab no build
+    // draws any more shows the default rather than an empty panel.
+    const currentTabKey = toCurrentTabKey(savedTabKey);
+    const tabKey = tabTypeList.some(([key]) => key === currentTabKey)
+        ? (currentTabKey as TabKeyType)
         : DEFAULT_TAB_KEY;
     useScreenBackgroundManagerEvents(['update']);
 
     const normalBackgroundChild = useMemo(() => {
-        return shownTabTypeList.map(([type, _, target]) => {
+        return tabTypeList.map(([type, _, target]) => {
             return genTabBody<TabKeyType>(tabKey, [type, target]);
         });
-    }, [shownTabTypeList, tabKey]);
+    }, [tabKey]);
     const tabs = useMemo(() => {
-        return shownTabTypeList.map(([key, labelKey]) => {
+        return tabTypeList.map(([key, labelKey]) => {
             return {
                 key,
                 title: (
                     <>
                         <RenderTabLabelComp labelKey={labelKey} />
                         {/* While the tab has its OWN transition. */}
-                        {key === DEV_CSS_ANIMATION_TAB_KEY ? null : (
-                            <BackgroundTransitionBadgeComp
-                                backgroundType={key}
-                            />
-                        )}
+                        <BackgroundTransitionBadgeComp backgroundType={key} />
                     </>
                 ),
                 checkIsOnScreen: (targeKey: TabKeyType) => {
-                    if (targeKey === DEV_CSS_ANIMATION_TAB_KEY) {
-                        return false;
-                    }
                     const backgroundSrcList =
                         getBackgroundSrcListOnScreenSetting();
                     return genIsSelected(backgroundSrcList, targeKey);
@@ -286,10 +267,7 @@ export default function BackgroundComp() {
                     targetKey: TabKeyType,
                     event: MouseEvent<HTMLButtonElement>,
                 ) => {
-                    if (
-                        targetKey === 'audio' ||
-                        targetKey === DEV_CSS_ANIMATION_TAB_KEY
-                    ) {
+                    if (targetKey === 'audio') {
                         return;
                     }
                     const menuItems =
@@ -300,7 +278,7 @@ export default function BackgroundComp() {
                 },
             };
         });
-    }, [shownTabTypeList]);
+    }, []);
     const { headerRef, isCompact } = useIsTabRowCompact();
     return (
         <div className="background w-100 h-100 d-flex flex-column">

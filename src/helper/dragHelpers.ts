@@ -20,6 +20,7 @@ import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
 import { toCurrentDragTypeName } from '../background/backgroundFillLegacyHelpers';
 import { checkIsFillSrc } from '../background/fillValueHelpers';
+import { checkIsAnimationSrc } from '../background/animationValueHelpers';
 import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
 import { tran } from '../lang/langHelpers';
 import LyricSlide from '../lyric-list/LyricSlide';
@@ -190,6 +191,10 @@ function deserializeBackgroundData(type: DragTypeEnum, data: any) {
         // A fill or nothing: a drop is never the way CSS reaches a screen.
         return checkIsFillSrc(data) ? data : null;
     }
+    if (type === DragTypeEnum.BACKGROUND_ANIMATION) {
+        // An animation this app can draw, or nothing, for the same reason.
+        return checkIsAnimationSrc(data) ? data : null;
+    }
     return null;
 }
 
@@ -238,6 +243,7 @@ export function handleAttachBackgroundDrop(
         droppedData === null ||
         ![
             DragTypeEnum.BACKGROUND_FILL,
+            DragTypeEnum.BACKGROUND_ANIMATION,
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
             DragTypeEnum.BACKGROUND_CAMERA,

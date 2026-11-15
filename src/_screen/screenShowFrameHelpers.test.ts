@@ -125,6 +125,92 @@ describe('screenShowFrameHelpers', () => {
         expect(iframe.style.transform).toBe('scale(0.25)');
     });
 
+    test("lifts the source's animation blend onto the box, after its every change, unless the overlay has its own", async () => {
+        const { mountScreenShowFrame, receiveScreenShowPayload } =
+            await import('./screenShowFrameHelpers');
+        const animationMessage = (src: string) => {
+            return {
+                screenId: 1,
+                type: 'background',
+                data: { type: 'animation', src },
+            };
+        };
+        const blendSrc =
+            'css?name=snow&colors=000000-FFFFFF&speed=normal&density=normal&blend=screen';
+        const parentContainer = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer,
+        });
+        receiveScreenShowPayload(
+            genPayload({ messages: [animationMessage(blendSrc)] }),
+        );
+        const box = parentContainer.firstElementChild as HTMLDivElement;
+        expect(box.style.mixBlendMode).toBe('screen');
+        // A change that says nothing of the background keeps it.
+        receiveScreenShowPayload(
+            genPayload({
+                isSnapshot: false,
+                messages: [{ screenId: 1, type: 'focus', data: null }],
+            }),
+        );
+        expect(box.style.mixBlendMode).toBe('screen');
+        // Another background, or an animation with none, takes it off.
+        receiveScreenShowPayload(
+            genPayload({
+                isSnapshot: false,
+                messages: [
+                    {
+                        screenId: 1,
+                        type: 'background',
+                        data: { type: 'image', src: 'a.png' },
+                    },
+                ],
+            }),
+        );
+        expect(box.style.mixBlendMode).toBe('normal');
+
+        // The overlay's Properties chose one: that one stands.
+        const ownContainer = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: ownContainer,
+            extraStyle: { mixBlendMode: 'multiply' },
+            getSnapshot: () => {
+                return genPayload({ messages: [animationMessage(blendSrc)] });
+            },
+        });
+        const ownBox = ownContainer.firstElementChild as HTMLDivElement;
+        expect(ownBox.style.mixBlendMode).toBe('multiply');
+    });
+
+    test('reads the blend from the last background a list of messages names', async () => {
+        const { findScreenShowBackgroundBlend } =
+            await import('./screenShowFrameHelpers');
+        expect(findScreenShowBackgroundBlend([])).toBeUndefined();
+        expect(
+            findScreenShowBackgroundBlend([
+                {
+                    screenId: 1,
+                    type: 'background',
+                    data: {
+                        type: 'animation',
+                        src: 'glsl?name=plasma&colors=000000-FFFFFF&blend=overlay',
+                    },
+                },
+            ] as any),
+        ).toBe('overlay');
+        expect(
+            findScreenShowBackgroundBlend([
+                { screenId: 1, type: 'background', data: null },
+            ] as any),
+        ).toBe('normal');
+    });
+
     test('is see-through, whatever backing the datum carries', async () => {
         const { mountScreenShowFrame } =
             await import('./screenShowFrameHelpers');

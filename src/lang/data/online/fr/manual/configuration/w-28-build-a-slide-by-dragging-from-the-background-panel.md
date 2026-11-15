@@ -3,7 +3,7 @@ id: W-28
 title: "Construire une diapositive en faisant glisser depuis le panneau Arrière-plan"
 section: "Configuration"
 lang: fr
-translatedFrom: e648e9744d67d329
+translatedFrom: dcddcdbaa510032f
 ---
 # W-28 — Construire une diapositive en faisant glisser depuis le panneau Arrière-plan
 
@@ -14,7 +14,7 @@ déjà en train de parcourir.
 **Conditions préalables :** un document de diapositives ouvert dans l'**[en:tran:Slide Editor]**, et le
 panneau **[en:tran:Background]** du bas visible.
 
-1. Choisissez un onglet dans le panneau **[en:tran:Background]** du bas — **[en:tran:Colors]**,
+1. Choisissez un onglet dans le panneau **[en:tran:Background]** du bas — **[en:tran:Fills]**,
    **[en:tran:Images]**, **[en:tran:Videos]**, **[en:tran:Cameras]** ou **[en:tran:Webs]**. À l'extrémité
    droite de la même rangée, **[en:tran:Audios]** ouvre la liste audio à côté d'eux. 📸
 2. Faites glisser un élément hors du panneau et maintenez-le au-dessus du canevas. Le canevas
@@ -30,7 +30,7 @@ panneau **[en:tran:Background]** du bas visible.
    | Sites web — une page locale     | une boîte de site web montrant une **capture d'écran** de cette page (voir W-15, étape 5)                      |
    | Sites web — une URL enregistrée | une boîte de site web montrant une **capture d'écran** ; un lien **YouTube** devient une vraie boîte YouTube   |
    | Caméras                         | une boîte de caméra, portant le nom de cette caméra                                                            |
-   | Couleurs                        | une simple boîte colorée (voir l'étape 4)                                                                      |
+   | Remplissages — une couleur      | une simple boîte colorée (voir l'étape 4)                                                                      |
 
    📸
 
@@ -47,6 +47,8 @@ Astuces :
 
 - Déposer sur une boîte ne compte que pour les **couleurs**. Tout le reste arrive comme une nouvelle
   boîte, là où se trouvait le curseur, par-dessus ce qui est en dessous.
+- Une tuile **[en:tran:Animations]** n'est pas une boîte : le canevas reste clair sous elle et ne
+  prend rien. Une animation est un arrière-plan pour tout l'écran — cliquez sur sa tuile (W-08).
 - C'est le même glisser-déposer que celui qui définit l'arrière-plan d'un écran — l'élément du panneau ne
   change pas, vous en faites seulement une copie sur la diapositive.
 - Une boîte de caméra retient **quelle** caméra par son nom aussi bien que par son identifiant, donc elle

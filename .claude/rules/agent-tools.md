@@ -364,7 +364,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 116 lessons across documents,
+  person's own word. The Presenter catalog has 117 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
   planning, app help and the View menu (2026-11-09: 23 added, among them the
   Long Text Show, the Virtual Screens Manager's guests and display cards, run
@@ -375,8 +375,9 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   their own presses; when every component's Properties gained a Presets row,
   a lesson of its own opened Properties and teaches the row in words -- a
   bare `Presets` find matches a tile, `Presets: Speaker`, before the row, and
-  a tile rewrites the session's look, so it is a `skipIfVisible` only).
-  Eighty-three
+  a tile rewrites the session's look, so it is a `skipIfVisible` only;
+  2026-11-15, the Background panel's Animations tab: 117).
+  Eighty-four
   lessons begin with a safe deterministic **Do it**
   action, then turn any explanation-only follow-up into **Next**; ten native-menu
   or disruptive lessons remain fully self-guided, and 23 teach in words a menu

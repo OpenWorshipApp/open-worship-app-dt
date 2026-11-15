@@ -22,6 +22,7 @@ import type PresentingFlowItem from './PresentingFlowItem';
 
 const dragTypeIconMap: { [key: string]: string } = {
     [DragTypeEnum.BACKGROUND_FILL]: 'palette',
+    [DragTypeEnum.BACKGROUND_ANIMATION]: 'magic',
     [DragTypeEnum.BACKGROUND_IMAGE]: 'file-earmark-image',
     [DragTypeEnum.BACKGROUND_VIDEO]: 'file-earmark-play',
     [DragTypeEnum.BACKGROUND_CAMERA]: 'camera-video',

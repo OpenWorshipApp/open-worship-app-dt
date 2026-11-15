@@ -12,7 +12,6 @@ const h = vi.hoisted(() => ({
     genBackgroundTabTransitionMenuItems: vi.fn(),
     showAppContextMenu: vi.fn(),
     resizeProps: null as any,
-    isDev: false,
 }));
 
 vi.mock('../helper/settingHelpers', async () => {
@@ -25,13 +24,7 @@ vi.mock('../helper/settingHelpers', async () => {
     };
 });
 vi.mock('../server/appProvider', () => ({
-    default: {
-        systemUtils: {
-            get isDev() {
-                return h.isDev;
-            },
-        },
-    },
+    default: { systemUtils: { isDev: false } },
 }));
 vi.mock('../others/TabRenderComp', async () => {
     const react = await import('react');
@@ -91,6 +84,7 @@ vi.mock('../resize-actor/ResizeActorComp', async () => {
 });
 for (const [path, name] of [
     ['./BackgroundFillsComp', 'fills'],
+    ['./BackgroundAnimationsComp', 'animations'],
     ['./BackgroundImagesComp', 'images'],
     ['./BackgroundVideosComp', 'videos'],
     ['./BackgroundCamerasComp', 'cameras'],
@@ -185,7 +179,6 @@ async function click(element: Element) {
 
 beforeEach(async () => {
     h.resizeProps = null;
-    h.isDev = false;
     h.genBackgroundTabTransitionMenuItems.mockReturnValue([]);
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     vi.stubGlobal(
@@ -214,6 +207,7 @@ describe('Background panel bodies', () => {
         expect(panels()).toEqual(['images']);
         for (const [tab, panel] of [
             ['fill', 'fills'],
+            ['animation', 'animations'],
             ['video', 'videos'],
             ['camera', 'cameras'],
             ['web', 'webs'],
@@ -277,21 +271,5 @@ describe('Background panel bodies', () => {
             'image',
         );
         expect(h.showAppContextMenu).not.toHaveBeenCalled();
-    });
-
-    // Not a stub: the development tab's own placeholder, loaded as the tab
-    // loads it.
-    it('a development build’s (dev)CSS Animation tab loads its note, and only it', async () => {
-        h.isDev = true;
-        await act(async () => root.unmount());
-        root = createRoot(container);
-        await act(async () => root.render(createElement(BackgroundComp)));
-        await flush();
-        await click(container.querySelector('[data-tab="css-animation"]')!);
-        await waitForPanel('.bi-magic');
-        expect(panels()).toEqual([]);
-        expect(container.textContent).toContain(
-            'CSS animation backgrounds will be built here.',
-        );
     });
 });
