@@ -286,8 +286,8 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   .color-picker {
-    background-color: var(--bs-gray-700);
-    border: 1px solid var(--bs-gray-800);
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-line);
     .text-color-preview {
       text-shadow:
         0 0 2px var(--bs-gray-900),

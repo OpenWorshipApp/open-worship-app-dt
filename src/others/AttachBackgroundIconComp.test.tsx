@@ -99,7 +99,7 @@ describe('AttachBackgroundIconComp', () => {
     });
 
     test('a colour shows its swatch, and a press goes nowhere', async () => {
-        state.data = { type: DragTypeEnum.BACKGROUND_COLOR, item: '#ff0000' };
+        state.data = { type: DragTypeEnum.BACKGROUND_FILL, item: '#ff0000' };
         const button = (await renderIcon())!;
         expect(button.title).toBe('Color: #ff0000');
         expect(button.getAttribute('aria-label')).toBe('Color: #ff0000');

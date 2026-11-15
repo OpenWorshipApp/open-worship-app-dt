@@ -31,7 +31,7 @@ import {
  *
  * Its clock lives OUTSIDE React, exactly like the foreground widgets' -- and
  * for a sharper reason here: the background lists are TABS, so switching to
- * Colors for a moment unmounts this one, and a show that stopped because the
+ * Fills for a moment unmounts this one, and a show that stopped because the
  * operator looked at another tab would be a show nobody could trust through a
  * service.
  */

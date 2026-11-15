@@ -28,7 +28,7 @@ import {
  * `tranKeyCoverage.test.ts` can read them.
  */
 const BACKGROUND_TAB_LABEL_MAP: Partial<Record<BackgroundType, string>> = {
-    color: 'Colors',
+    fill: 'Fills',
     image: 'Images',
     video: 'Videos',
     camera: 'Cameras',

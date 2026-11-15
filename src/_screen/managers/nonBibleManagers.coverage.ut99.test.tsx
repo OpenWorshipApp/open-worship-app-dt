@@ -464,11 +464,11 @@ describe('non-Bible manager coverage', () => {
         const effect = createEffectManager();
         mocks.appProvider.isPagePresenter = true;
         mocks.getBackgroundSrcListOnScreenSetting.mockReturnValue({
-            21: { type: 'color', src: '#334455' },
+            21: { type: 'fill', src: '#334455' },
         });
         const presenterManager = new ScreenBackgroundManager(base, effect);
         expect(presenterManager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#334455',
         });
         await presenterManager.receiveScreenDropped({
@@ -476,7 +476,7 @@ describe('non-Bible manager coverage', () => {
             item: { src: 'ignored' },
         } as any);
         expect(presenterManager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#334455',
         });
 
@@ -554,16 +554,16 @@ describe('non-Bible manager coverage', () => {
         expect(manager.backgroundSrc?.type).toBe('camera');
 
         await manager.receiveScreenDropped({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#112233',
         } as any);
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#112233',
         });
         expect(manager.toSyncMessage()).toEqual({
             type: 'background',
-            data: { type: 'color', src: '#112233' },
+            data: { type: 'fill', src: '#112233' },
         });
         expect(manager.isShowing).toBe(true);
 
@@ -1835,10 +1835,10 @@ describe('non-Bible manager coverage', () => {
         manager.receiveSyncScreen({
             screenId: 24,
             type: 'background',
-            data: { type: 'color', src: '#123456' },
+            data: { type: 'fill', src: '#123456' },
         } as any);
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#123456',
         });
 
@@ -1851,10 +1851,10 @@ describe('non-Bible manager coverage', () => {
         });
 
         // picking the background that is already showing clears it
-        await manager.applyBackgroundSrc('color', { src: '#123456' } as any);
+        await manager.applyBackgroundSrc('fill', { src: '#123456' } as any);
         expect(manager.backgroundSrc).toBeNull();
 
-        await manager.applyBackgroundSrc('color', {
+        await manager.applyBackgroundSrc('fill', {
             src: '#654321',
             scaleType: 'cover',
         } as any);
@@ -1863,7 +1863,7 @@ describe('non-Bible manager coverage', () => {
         );
 
         // an explicit "no background" also clears
-        await manager.applyBackgroundSrc('color', { src: null } as any);
+        await manager.applyBackgroundSrc('fill', { src: null } as any);
         expect(manager.backgroundSrc).toBeNull();
     });
 
@@ -2172,18 +2172,18 @@ describe('non-Bible manager coverage', () => {
             base,
             createEffectManager(),
         );
-        manager.backgroundSrc = { type: 'color', src: '#101010' };
+        manager.backgroundSrc = { type: 'fill', src: '#101010' };
         base.sendScreenMessage.mockClear();
         mocks.setSetting.mockClear();
 
-        manager.backgroundSrc = { type: 'color', src: '#101010' };
+        manager.backgroundSrc = { type: 'fill', src: '#101010' };
         expect(base.sendScreenMessage).not.toHaveBeenCalled();
         expect(mocks.setSetting).not.toHaveBeenCalled();
 
         base.checkIsLockedWithMessage.mockReturnValue(true);
-        manager.backgroundSrc = { type: 'color', src: '#202020' };
+        manager.backgroundSrc = { type: 'fill', src: '#202020' };
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#101010',
         });
         expect(base.sendScreenMessage).not.toHaveBeenCalled();
@@ -2194,7 +2194,7 @@ describe('non-Bible manager coverage', () => {
     test('the presenter rebuilds an unreadable background map from the screens it holds', () => {
         mocks.appProvider.isPagePresenter = true;
         mocks.getBackgroundSrcListOnScreenSetting.mockReturnValue({
-            502: { type: 'color', src: '#aaaaaa' },
+            502: { type: 'fill', src: '#aaaaaa' },
         });
         const kept = new ScreenBackgroundManager(
             createScreenManagerBase(502),
@@ -2204,7 +2204,7 @@ describe('non-Bible manager coverage', () => {
             createScreenManagerBase(503),
             createEffectManager(),
         );
-        expect(kept.backgroundSrc).toEqual({ type: 'color', src: '#aaaaaa' });
+        expect(kept.backgroundSrc).toEqual({ type: 'fill', src: '#aaaaaa' });
         mocks.getBackgroundSrcListOnScreenSetting.mockImplementation(
             () => ({}),
         );
@@ -2212,7 +2212,7 @@ describe('non-Bible manager coverage', () => {
             return key === 'screen-bg-manager' ? '{"502": {bro' : undefined;
         });
 
-        changing.backgroundSrc = { type: 'color', src: '#bbbbbb' };
+        changing.backgroundSrc = { type: 'fill', src: '#bbbbbb' };
 
         expect(mocks.handleError).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -2223,8 +2223,8 @@ describe('non-Bible manager coverage', () => {
             .filter(([name]) => name === 'screen-bg-manager')
             .at(-1)!;
         const written = JSON.parse(json as string);
-        expect(written['502']).toEqual({ type: 'color', src: '#aaaaaa' });
-        expect(written['503']).toEqual({ type: 'color', src: '#bbbbbb' });
+        expect(written['502']).toEqual({ type: 'fill', src: '#aaaaaa' });
+        expect(written['503']).toEqual({ type: 'fill', src: '#bbbbbb' });
         kept.delete();
         changing.delete();
     });
@@ -2327,7 +2327,7 @@ describe('non-Bible manager coverage', () => {
 
         await ScreenBackgroundManager.handleBackgroundSelecting(
             new MouseEvent('click'),
-            'color',
+            'fill',
             { src: '#00ff00' } as any,
         );
 
@@ -2338,7 +2338,7 @@ describe('non-Bible manager coverage', () => {
         );
         await vi.waitFor(() => {
             expect(manager.backgroundSrc).toEqual(
-                expect.objectContaining({ type: 'color', src: '#00ff00' }),
+                expect.objectContaining({ type: 'fill', src: '#00ff00' }),
             );
         });
         manager.delete();
@@ -2549,10 +2549,10 @@ describe('non-Bible manager coverage', () => {
         ScreenBackgroundManager.receiveSyncScreen({
             screenId: 511,
             type: 'background',
-            data: { type: 'color', src: '#0000ff' },
+            data: { type: 'fill', src: '#0000ff' },
         } as any);
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#0000ff',
         });
 

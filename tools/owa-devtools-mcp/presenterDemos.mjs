@@ -628,14 +628,14 @@ export const PRESENTER_DEMO_LIST = [
   },
   {
     id: 'presenter-colors-tab',
-    label: 'Open background colors',
+    label: 'Open background fills',
     detail:
-      'Choose a solid color for the selected screens, or Select custom color and Copy Color.',
-    title: 'Open background colors',
+      'Choose a color, a gradient or a pattern for the selected screens; Customize changes it and Save as Preset keeps it.',
+    title: 'Open background fills',
     steps: [
       {
-        text: 'Open Colors in the Background panel.',
-        find: 'Colors',
+        text: 'Open Fills in the Background panel.',
+        find: 'Fills',
         translateFind: true,
         action: 'click',
       },
@@ -950,8 +950,8 @@ export const PRESENTER_DEMO_LIST = [
     isFeatured: false,
     steps: [
       {
-        text: 'Open Background > Colors and choose the color you want.',
-        find: 'Colors',
+        text: 'Open Background > Fills and choose the color you want.',
+        find: 'Fills',
         translateFind: true,
         action: 'click',
       },

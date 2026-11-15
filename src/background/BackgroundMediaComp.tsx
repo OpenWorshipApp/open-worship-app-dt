@@ -71,7 +71,7 @@ type PropsType = {
     /**
      * Run a slide show over this list, under this settings prefix. Only the
      * lists whose items can BE a background carry one -- there is nothing for
-     * a show to advance through on Colors or Cameras.
+     * a show to advance through on Fills or Cameras.
      */
     autoPlayPrefix?: string;
     /**
@@ -294,7 +294,7 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                         contextMenuItems={props.contextMenuItems}
                         genContextMenuItems={props.genContextMenuItems}
                         fileSelectionOption={
-                            backgroundType === 'color'
+                            backgroundType === 'fill'
                                 ? undefined
                                 : {
                                       windowTitle: `Select ${backgroundType} files`,

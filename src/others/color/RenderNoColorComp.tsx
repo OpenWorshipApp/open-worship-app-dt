@@ -20,6 +20,8 @@ export default function RenderNoColorComp({
     const handleKeyDown = useCallback((event: any) => {
         pressElementLikeButton(event);
     }, []);
+    // A tile with a red slash through it, the usual sign for "none", the
+    // height of the two swatch rows beside it (`ColorPicker.scss`).
     return (
         <div
             role="button"
@@ -28,17 +30,11 @@ export default function RenderNoColorComp({
             aria-pressed={isSelected}
             title={tran('No Color')}
             onKeyDown={handleKeyDown}
-            className="m-1 color-item app-caught-hover-pointer"
-            style={{
-                width: '20px',
-                height: '15px',
-                backgroundColor: '#fff',
-                color: 'red',
-                border: isSelected ? '3px dashed #fff' : '',
-            }}
+            className={
+                'color-item color-item-none app-caught-hover-pointer' +
+                (isSelected ? ' is-selected' : '')
+            }
             onClick={handleClick}
-        >
-            x
-        </div>
+        />
     );
 }

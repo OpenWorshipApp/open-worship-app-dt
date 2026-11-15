@@ -11,13 +11,13 @@ import {
 } from './agentSlideBackgroundRules';
 
 describe('reading a set-background request', () => {
-    it('takes a colour, a name or none, for some slides or all', () => {
+    it('takes a fill, a name or none, for some slides or all', () => {
         expect(checkIsAgentSlideBackgroundAction('set-background')).toBe(true);
         expect(checkIsAgentSlideBackgroundAction('update-slides')).toBe(false);
         expect(
             readAgentSlideBackgroundRequest({ background: ' #1A2B3C ' }),
         ).toEqual({
-            wanted: { kind: 'color', color: '#1a2b3c' },
+            wanted: { kind: 'fill', src: '#1A2B3C' },
             slides: null,
         });
         expect(
@@ -26,8 +26,31 @@ describe('reading a set-background request', () => {
                 slides: [2, 1, 2],
             }),
         ).toEqual({
-            wanted: { kind: 'color', color: '#1a2b3c80' },
+            wanted: { kind: 'fill', src: '#1A2B3C80' },
             slides: [2, 1],
+        });
+        // A gradient or a pattern as the Fills tab writes one, in its one
+        // form whichever way it came.
+        expect(
+            readAgentSlideBackgroundRequest({
+                background: 'gradient?colors=1e3a8a-581c87&angle=135',
+            }),
+        ).toEqual({
+            wanted: {
+                kind: 'fill',
+                src: 'gradient?shape=linear&angle=135&colors=1E3A8A-581C87',
+            },
+            slides: null,
+        });
+        expect(
+            readAgentSlideBackgroundRequest({
+                background: 'pattern?name=dots&base=172554&ink=FFFFFF26',
+            }),
+        ).toMatchObject({
+            wanted: {
+                kind: 'fill',
+                src: 'pattern?name=dots&base=172554&ink=FFFFFF26&size=32',
+            },
         });
         expect(readAgentSlideBackgroundRequest({ background: 'None' })).toEqual(
             { wanted: { kind: 'none' }, slides: null },
@@ -129,8 +152,27 @@ describe('saying what a background is', () => {
         expect(describeAttachedBackground(null)).toBe(null);
         expect(describeAttachedBackground(undefined)).toBe(null);
         expect(
-            describeAttachedBackground({ type: 'bg-color', item: '#000000' }),
+            describeAttachedBackground({ type: 'bg-fill', item: '#000000' }),
         ).toBe('colour #000000');
+        // Saved before the Fills tab had its name.
+        expect(
+            describeAttachedBackground({ type: 'bg-color', item: '#abc' }),
+        ).toBe('colour #AABBCC');
+        expect(
+            describeAttachedBackground({
+                type: 'bg-fill',
+                item: 'gradient?shape=linear&angle=135&colors=1E3A8A-581C87',
+            }),
+        ).toBe('linear 135° gradient #1E3A8A → #581C87');
+        expect(
+            describeAttachedBackground({
+                type: 'bg-fill',
+                item: 'pattern?name=grid&base=18181B&ink=FFFFFF1A&size=32&motion=slow',
+            }),
+        ).toBe('grid pattern, #FFFFFF1A on #18181B, 32px tiles, moving slow');
+        expect(
+            describeAttachedBackground({ type: 'bg-fill', item: 'url(x)' }),
+        ).toBe('fill');
         expect(
             describeAttachedBackground({
                 type: 'bg-image',

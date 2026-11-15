@@ -4,12 +4,16 @@ import type { AppColorType } from './colorValueHelpers';
 
 export * from './colorValueHelpers';
 
-export function serializeForDragging(event: any, color: AppColorType) {
+/** A colour -- or any fill (`fillValueHelpers`) -- dragged as a background. */
+export function serializeForDragging(
+    event: any,
+    fillSrc: AppColorType | string,
+) {
     handleDragStart(event, {
         dragSerialize: () => {
             return {
-                type: DragTypeEnum.BACKGROUND_COLOR,
-                data: color,
+                type: DragTypeEnum.BACKGROUND_FILL,
+                data: fillSrc,
             };
         },
     });

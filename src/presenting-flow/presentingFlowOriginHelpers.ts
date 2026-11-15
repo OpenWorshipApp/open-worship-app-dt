@@ -59,7 +59,7 @@ function toOriginElementGetter(
     if (
         (backgroundDragTypeList.includes(type as DragTypeEnum) ||
             presentingFlowItem.isAudio) &&
-        type !== DragTypeEnum.BACKGROUND_COLOR &&
+        type !== DragTypeEnum.BACKGROUND_FILL &&
         type !== DragTypeEnum.BACKGROUND_CAMERA
     ) {
         const src = toBackgroundSrc(presentingFlowItem);

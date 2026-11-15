@@ -244,10 +244,10 @@ export async function handleSlideBackgroundAt(
     }
     let droppedData: DroppedDataType | null = null;
     let described: string | null = null;
-    if (checked.wanted.kind === 'color') {
+    if (checked.wanted.kind === 'fill') {
         droppedData = {
-            type: DragTypeEnum.BACKGROUND_COLOR,
-            item: checked.wanted.color,
+            type: DragTypeEnum.BACKGROUND_FILL,
+            item: checked.wanted.src,
         };
         described = describeAttachedBackground(droppedData);
     } else if (checked.wanted.kind === 'file') {

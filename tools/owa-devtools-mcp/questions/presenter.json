@@ -1681,11 +1681,15 @@
                         "black",
                         "plain",
                         "colours tab",
+                        "fills tab",
+                        "gradient",
+                        "pattern",
+                        "copy css",
                         "no picture"
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "find": "Background > Colors",
+                        "find": "Background > Fills",
                         "guide": true
                     }
                 },

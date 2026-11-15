@@ -11,6 +11,7 @@ import {
     useState,
 } from 'react';
 
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     mutateSavedPresets,
@@ -62,7 +63,7 @@ function PresetButtonComp({
     label: string;
     title: string;
     chipColors: PresetChipColorsType | null;
-    onPick: () => void;
+    onPick: (event: MouseEvent) => void;
     onMenuOpening?: (event: MouseEvent) => void;
     onButtonMouseDown?: (event: MouseEvent) => void;
 }>) {
@@ -119,9 +120,11 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
     onSavedPick,
     filterSaved,
     genSavedChipColors,
+    genSavedMenuItems,
     headEnd,
     isCompact = false,
     onButtonMouseDown,
+    canSave = true,
 }: Readonly<{
     savedSettingName: string;
     toSavedPreset: (
@@ -131,16 +134,24 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
     builtIns: PresetsRowBuiltInType[];
     /** What Save keeps: the look in front, read when the name is given. */
     readCurrent: () => Omit<T, 'id' | 'name'>;
-    onSavedPick: (preset: T) => void;
+    /** The press too, for a look that asks where it goes (which screen). */
+    onSavedPick: (preset: T, event: MouseEvent) => void;
     /** Which saved looks this panel can wear; all of them when absent. */
     filterSaved?: (preset: T) => boolean;
     genSavedChipColors?: (preset: T) => PresetChipColorsType | null;
+    /**
+     * Rows a saved look's right-click starts with, for what the look holds
+     * rather than what it is called (a saved fill's Copy CSS).
+     */
+    genSavedMenuItems?: (preset: T) => ContextMenuItemType[];
     /** At the right of the name: Dark / Light, where the panel has one. */
     headEnd?: ReactNode;
     /** The name on the same line as the buttons, for a strip of tools. */
     isCompact?: boolean;
     /** A strip whose canvas keeps the keyboard passes its focus keeper. */
     onButtonMouseDown?: (event: MouseEvent) => void;
+    /** False while the panel holds no look to keep (nothing is up). */
+    canSave?: boolean;
 }>) {
     // Read once, when the row mounts; after that every write in this window
     // hands the new list to every row over it.
@@ -159,6 +170,8 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
         toSavedPreset,
         readCurrent,
         onSavedPick,
+        canSave,
+        genSavedMenuItems,
     };
     const propsRef = useRef(currentProps);
     propsRef.current = currentProps;
@@ -209,6 +222,7 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
             import('../popup-widget/popupWidgetHelpers'),
         ]);
         showAppContextMenu(nativeEvent, [
+            ...(propsRef.current.genSavedMenuItems?.(preset) ?? []),
             {
                 childBefore: genContextMenuItemIcon('pencil-square'),
                 menuElement: tran('Rename Preset'),
@@ -224,19 +238,24 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
                     }
                 },
             },
-            {
-                childBefore: genContextMenuItemIcon('arrow-repeat'),
-                menuElement: tran('Replace with Current Look'),
-                onSelect: () => {
-                    mutate((presets) => {
-                        return replaceSavedPreset(
-                            presets,
-                            preset.id,
-                            propsRef.current.readCurrent(),
-                        );
-                    });
-                },
-            },
+            // With no look in front there is nothing to replace it with.
+            ...(propsRef.current.canSave
+                ? [
+                      {
+                          childBefore: genContextMenuItemIcon('arrow-repeat'),
+                          menuElement: tran('Replace with Current Look'),
+                          onSelect: () => {
+                              mutate((presets) => {
+                                  return replaceSavedPreset(
+                                      presets,
+                                      preset.id,
+                                      propsRef.current.readCurrent(),
+                                  );
+                              });
+                          },
+                      },
+                  ]
+                : []),
             {
                 childBefore: genContextMenuItemIcon('x-circle'),
                 menuElement: tran('Remove Preset'),
@@ -295,8 +314,8 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
                             label={preset.name}
                             title={`${groupLabel}: ${preset.name}`}
                             chipColors={genSavedChipColors?.(preset) ?? null}
-                            onPick={() => {
-                                propsRef.current.onSavedPick(preset);
+                            onPick={(event) => {
+                                propsRef.current.onSavedPick(preset, event);
                             }}
                             onMenuOpening={(event) => {
                                 handleMenuOpening(event, preset);
@@ -313,7 +332,7 @@ export default function PresetsRowComp<T extends SavedPresetBaseType>({
                             ? tran('Remove a preset to save a new one')
                             : saveLabel
                     }
-                    disabled={isFull}
+                    disabled={isFull || !canSave}
                     onMouseDown={onButtonMouseDown}
                     onClick={handleSaving}
                 >

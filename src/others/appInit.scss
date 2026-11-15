@@ -439,6 +439,13 @@ $app-context-menu-dots-opacity: 0.1;
     padding-right: calc(var(--app-action-rail) * 2 + 6px) !important;
   }
 
+  // A bible item's rail is ⋮ + colour note, and the badge joins them only
+  // while a background is attached -- so the third slot is held open only
+  // then, not on every row of the list.
+  .app-has-action-rail-2:has(> .app-action-rail > :nth-child(3)) {
+    padding-right: calc(var(--app-action-rail) * 3 + 6px) !important;
+  }
+
   // Every other ⋮ in the app predates `ContextMenuDotsButtonComp` and carries
   // chrome of its own — a ghost button, an outline button, a bare round icon.
   // Only the ALPHA is unified here: a menu button should read at one weight

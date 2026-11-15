@@ -225,7 +225,7 @@ describe('PowerPoint slide measurement', () => {
                 const color = id === undefined ? undefined : attached.get(id);
                 return color === undefined
                     ? null
-                    : { type: DragTypeEnum.BACKGROUND_COLOR, item: color };
+                    : { type: DragTypeEnum.BACKGROUND_FILL, item: color };
             },
         );
         const measurer = makeMeasurer();
@@ -253,12 +253,12 @@ describe('PowerPoint slide measurement', () => {
             async (path: string, id?: number) => {
                 if (id === 1)
                     return {
-                        type: DragTypeEnum.BACKGROUND_COLOR,
+                        type: DragTypeEnum.BACKGROUND_FILL,
                         item: '#FF0000',
                     };
                 if (path === 'Second.owa' && id === undefined) {
                     return {
-                        type: DragTypeEnum.BACKGROUND_COLOR,
+                        type: DragTypeEnum.BACKGROUND_FILL,
                         item: '#0000FF',
                     };
                 }
@@ -283,7 +283,7 @@ describe('PowerPoint slide measurement', () => {
 
     it('rejects a malformed background color without dropping slide content', async () => {
         fixture.getAttachedBackground.mockResolvedValue({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: 'invalid',
         });
         const measurer = makeMeasurer();

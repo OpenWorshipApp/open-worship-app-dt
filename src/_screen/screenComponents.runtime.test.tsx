@@ -151,8 +151,12 @@ vi.mock('../others/color/colorHelpers', () => ({
     HEX_COLOR_BLACK: '#000000',
 }));
 
-vi.mock('./ScreenBackgroundColorComp', () => ({
-    default: ({ color }: any) => <div data-background="color">{color}</div>,
+vi.mock('./ScreenBackgroundFillComp', () => ({
+    default: ({ src, isMoving }: any) => (
+        <div data-background="fill" data-moving={String(isMoving)}>
+            {src}
+        </div>
+    ),
 }));
 
 vi.mock('./ScreenBackgroundImageComp', () => ({
@@ -513,10 +517,10 @@ describe('screen component runtime behavior', () => {
         expect(
             renderToStaticMarkup(
                 <RenderBackgroundComp
-                    backgroundSrc={{ type: 'color', src: '#123456' } as any}
+                    backgroundSrc={{ type: 'fill', src: '#123456' } as any}
                 />,
             ),
-        ).toContain('data-background="color"');
+        ).toContain('data-background="fill"');
 
         // The presenter's mini screen gets a screenshot, never a live page: a
         // background covers the whole output, so it is the most expensive page
@@ -793,7 +797,7 @@ describe('screen component runtime behavior', () => {
         const sources = [
             { type: 'image', src: '/image.png' },
             { type: 'video', src: '/video.mp4' },
-            { type: 'color', src: '#123456' },
+            { type: 'fill', src: '#123456' },
         ];
         for (const { type, src } of sources) {
             const { newDiv, promise } = genHtmlBackground(7, {

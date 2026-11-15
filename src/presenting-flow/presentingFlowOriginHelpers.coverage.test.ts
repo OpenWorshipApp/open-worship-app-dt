@@ -39,7 +39,7 @@ vi.mock('./PresentingFlowItem', async () => {
         backgroundDragTypeList: [
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
-            DragTypeEnum.BACKGROUND_COLOR,
+            DragTypeEnum.BACKGROUND_FILL,
             DragTypeEnum.BACKGROUND_CAMERA,
             DragTypeEnum.BACKGROUND_WEB,
         ],
@@ -144,7 +144,7 @@ describe('presenting-flow origin reveal helpers', () => {
         expect(notifyPresentingFlowItemOrigin(item())).toBe(false);
         expect(
             notifyPresentingFlowItemOrigin(
-                item({ type: DragTypeEnum.BACKGROUND_COLOR }),
+                item({ type: DragTypeEnum.BACKGROUND_FILL }),
             ),
         ).toBe(false);
         expect(

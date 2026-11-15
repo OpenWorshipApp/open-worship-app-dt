@@ -315,7 +315,6 @@ export default function BibleItemRenderComp({
                 <div
                     className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}
                 >
-                    <ItemColorNoteComp item={bibleItem} />
                     <div className="d-flex flex-fill">
                         <div className="px-1">
                             <BibleKeySelectionMiniComp
@@ -372,8 +371,14 @@ export default function BibleItemRenderComp({
                 </div>
                 {/* Pinned to the row's border edge, outside the content's own
                 padding: that is what puts this rail at the same x as every
-                other list's, which is the whole point of having one. */}
-                <div className="app-action-rail app-action-rail--pinned">
+                other list's, which is the whole point of having one. The
+                colour note ends it, as on a document row. */}
+                <div
+                    className={
+                        'color-note-container app-action-rail' +
+                        ' app-action-rail--pinned'
+                    }
+                >
                     <AttachBackgroundIconComp
                         filePath={filePath}
                         id={bibleItem.id}
@@ -381,6 +386,7 @@ export default function BibleItemRenderComp({
                     <ContextMenuDotsButtonComp
                         onOpening={handleContextMenuOpening}
                     />
+                    <ItemColorNoteComp item={bibleItem} />
                 </div>
             </li>
             {generatingBibleItem !== null && (

@@ -161,7 +161,7 @@ describe('setting a background', () => {
         });
     });
 
-    it('puts a video or a colour behind every slide', async () => {
+    it('puts a video or a fill behind every slide', async () => {
         await handleSlideBackgroundAt(DOC_PATH, 'Talk', json, {
             wanted: { kind: 'file', name: 'waves.mp4' },
             slides: null,
@@ -169,13 +169,25 @@ describe('setting a background', () => {
         expect(Object.keys(mocked.sidecar.data)).toEqual(['11', '12', '13']);
         expect(mocked.sidecar.data['12'].type).toBe('bg-video');
         const colored = await handleSlideBackgroundAt(DOC_PATH, 'Talk', json, {
-            wanted: { kind: 'color', color: '#102030' },
+            wanted: { kind: 'fill', src: '#102030' },
             slides: [2],
         });
         expect(colored).toMatchObject({ background: 'colour #102030' });
         expect(mocked.sidecar.data['12']).toEqual({
-            type: 'bg-color',
+            type: 'bg-fill',
             item: '#102030',
+        });
+        const gradient = 'gradient?shape=radial&angle=180&colors=1E40AF-0B1120';
+        const graded = await handleSlideBackgroundAt(DOC_PATH, 'Talk', json, {
+            wanted: { kind: 'fill', src: gradient },
+            slides: [3],
+        });
+        expect(graded).toMatchObject({
+            background: 'radial gradient #1E40AF → #0B1120',
+        });
+        expect(mocked.sidecar.data['13']).toEqual({
+            type: 'bg-fill',
+            item: gradient,
         });
     });
 
@@ -264,7 +276,7 @@ describe('setting a background', () => {
         mocked.isBackupBroken.value = true;
         expect(
             await handleSlideBackgroundAt(DOC_PATH, 'Talk', json, {
-                wanted: { kind: 'color', color: '#000000' },
+                wanted: { kind: 'fill', src: '#000000' },
                 slides: null,
             }),
         ).toMatchObject({ isError: true, reason: 'No backup could be kept.' });

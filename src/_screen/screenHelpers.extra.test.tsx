@@ -238,7 +238,7 @@ describe('screenHelpers extra coverage', () => {
             }
             if (key === screenManagerSettingNames.BACKGROUND) {
                 return JSON.stringify({
-                    1: { type: 'color' },
+                    1: { type: 'fill' },
                     2: { src: '#fff' },
                 });
             }
@@ -263,7 +263,7 @@ describe('screenHelpers extra coverage', () => {
         getSettingMock.mockImplementation((key: string) => {
             if (key === screenManagerSettingNames.BACKGROUND) {
                 return JSON.stringify({
-                    1: { type: 'color', src: '#fff' },
+                    1: { type: 'fill', src: '#fff' },
                 });
             }
             if (key === screenManagerSettingNames.FOREGROUND) {
@@ -276,7 +276,7 @@ describe('screenHelpers extra coverage', () => {
             screenHelpers.getBackgroundSrcListOnScreenSetting();
         expect(Object.keys(backgroundList)).toEqual(['1']);
         delete backgroundList['1'];
-        (backgroundList as any)['9'] = { type: 'color', src: '#000' };
+        (backgroundList as any)['9'] = { type: 'fill', src: '#000' };
         expect(
             Object.keys(screenHelpers.getBackgroundSrcListOnScreenSetting()),
         ).toEqual(['1']);

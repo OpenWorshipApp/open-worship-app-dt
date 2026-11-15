@@ -1149,7 +1149,7 @@ describe('ScreenLongTextManager coverage', () => {
         mocks.checkIsColorDark.mockImplementation((value: string) => {
             return value === '#000000' || value === '#111111';
         });
-        ScreenLongTextManager.getInstance(91).reflectBackgroundColor('#111111');
+        ScreenLongTextManager.getInstance(91).reflectBackgroundFill('#111111');
         expect(mocks.showColorToast).toHaveBeenCalledOnce();
         // Said, never asked: nothing blocks while the run goes on.
         expect(mocks.showAppConfirm).not.toHaveBeenCalled();
@@ -1189,7 +1189,7 @@ describe('ScreenLongTextManager coverage', () => {
         mocks.checkIsColorDark.mockImplementation(
             (value: string) => value === '#111111',
         );
-        ScreenLongTextManager.getInstance(91).reflectBackgroundColor('#ffffff');
+        ScreenLongTextManager.getInstance(91).reflectBackgroundFill('#ffffff');
         // No clash, nothing changed, nothing said.
         expect(mocks.showColorToast).toHaveBeenCalledOnce();
     });

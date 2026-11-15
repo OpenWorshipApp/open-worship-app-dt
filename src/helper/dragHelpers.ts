@@ -1,6 +1,5 @@
 import BibleItem from '../bible-list/BibleItem';
 import NoteItem from '../bible-list/note/NoteItem';
-import { colorDeserialize } from '../others/color/colorHelpers';
 import type { DragDataType, DroppedDataType } from './DragInf';
 import type DragInf from './DragInf';
 import { DragTypeEnum, genDragMimeType } from './DragInf';
@@ -19,6 +18,8 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
+import { toCurrentDragTypeName } from '../background/backgroundFillLegacyHelpers';
+import { checkIsFillSrc } from '../background/fillValueHelpers';
 import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
 import { tran } from '../lang/langHelpers';
 import LyricSlide from '../lyric-list/LyricSlide';
@@ -185,16 +186,20 @@ function deserializeBackgroundData(type: DragTypeEnum, data: any) {
     if (type === DragTypeEnum.BACKGROUND_CAMERA) {
         return cameraDragDeserialize(data);
     }
-    if (type === DragTypeEnum.BACKGROUND_COLOR) {
-        return colorDeserialize(data);
+    if (type === DragTypeEnum.BACKGROUND_FILL) {
+        // A fill or nothing: a drop is never the way CSS reaches a screen.
+        return checkIsFillSrc(data) ? data : null;
     }
     return null;
 }
 
 export function deserializeDragData({
-    type,
+    type: savedType,
     data,
 }: DragDataType<any>): DroppedDataType | null {
+    // A run sheet line keeps the drag it was made from, and a fill's was
+    // `bg-color` before the Fills tab had its name.
+    const type = toCurrentDragTypeName(savedType) as DragTypeEnum;
     let item: any;
     if (type === DragTypeEnum.SLIDE) {
         item = Slide.dragDeserialize(data);
@@ -232,7 +237,7 @@ export function handleAttachBackgroundDrop(
     if (
         droppedData === null ||
         ![
-            DragTypeEnum.BACKGROUND_COLOR,
+            DragTypeEnum.BACKGROUND_FILL,
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
             DragTypeEnum.BACKGROUND_CAMERA,

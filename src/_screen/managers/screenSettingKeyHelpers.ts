@@ -18,6 +18,11 @@ export const DRAW_PAINT_DOTS_SETTING_PREFIX = 'draw-paint-dots-';
 // The preview card's "No rendering" toggle (`miniScreenRenderingHelpers`).
 export const MINI_SCREEN_NO_RENDERING_SETTING_PREFIX =
     'mini-screen-no-rendering-';
+// A screen's picker folded, and its Customize closed, in the Background
+// panel's Fills (`BackgroundFillsComp`).
+export const BACKGROUND_FILL_FOLDED_SETTING_PREFIX = 'background-fill-folded-';
+export const BACKGROUND_FILL_CUSTOMIZE_CLOSED_SETTING_PREFIX =
+    'background-fill-customize-closed-';
 
 // Every prefix above. Add new per-screen previewer settings to BOTH the export
 // above and this list, or deleting a screen will leave them behind.
@@ -30,4 +35,6 @@ export const previewerSettingPrefixList = [
     DRAW_PAINT_3D_SETTING_PREFIX,
     DRAW_PAINT_DOTS_SETTING_PREFIX,
     MINI_SCREEN_NO_RENDERING_SETTING_PREFIX,
+    BACKGROUND_FILL_FOLDED_SETTING_PREFIX,
+    BACKGROUND_FILL_CUSTOMIZE_CLOSED_SETTING_PREFIX,
 ];

@@ -20,6 +20,7 @@ import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
 import type FileSource from '../../helper/FileSource';
 import { useWebCapturing } from '../../helper/capturingHelpers';
 import { tran } from '../../lang/langHelpers';
+import { genFillCss, parseFill } from '../../background/fillValueHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
@@ -62,6 +63,9 @@ const fillingParentStyle: CSSProperties = {
 };
 export function genAttachBackgroundComponent(
     droppedData: DroppedDataType | null | undefined,
+    // How much smaller than a screen the box is: a pattern's tiles are in
+    // screen pixels, and drawn full size on a thumbnail one tile fills it.
+    scale = 1,
 ) {
     if (!droppedData) {
         return (
@@ -74,12 +78,14 @@ export function genAttachBackgroundComponent(
             ></div>
         );
     }
-    if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
+    if (droppedData.type === DragTypeEnum.BACKGROUND_FILL) {
+        // Still, as every preview draws a fill: it moves on a screen only.
+        const fill = parseFill(droppedData.item);
         return (
             <div
                 style={{
                     ...fillingParentStyle,
-                    backgroundColor: droppedData.item,
+                    ...(fill === null ? {} : genFillCss(fill, scale)),
                 }}
             />
         );

@@ -193,7 +193,7 @@ class MockBibleManager {
     clear = vi.fn();
     delete = vi.fn();
     sendSyncScreen = vi.fn();
-    reflectBackgroundColor = vi.fn();
+    reflectBackgroundFill = vi.fn();
     registerEventListener = vi.fn(genRegisteredEvents);
     unregisterEventListener = vi.fn();
     toSyncMessage = () => ({ type: 'bible-screen-view', data: null });
@@ -368,7 +368,7 @@ describe('ScreenManager runtime orchestration', () => {
         baseInstances.set(1, screenManager);
 
         screenManager.receiveScreenDropped({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#fff',
         } as any);
         expect(
@@ -851,13 +851,13 @@ describe('ScreenManager runtime orchestration', () => {
 
         expect(
             onScreen.screenBackgroundManager.registerEventListener,
-        ).not.toHaveBeenCalledWith(['color-set'], expect.any(Function));
+        ).not.toHaveBeenCalledWith(['fill-set'], expect.any(Function));
 
         appProviderMock.isPageScreen = false;
         const onPresenter = new ScreenManager(12);
         expect(
             onPresenter.screenBackgroundManager.registerEventListener,
-        ).toHaveBeenCalledWith(['color-set'], expect.any(Function));
+        ).toHaveBeenCalledWith(['fill-set'], expect.any(Function));
     });
 
     test('persists setter state, forwards full syncs, clears sub-managers, and respects sync-group guards', async () => {
@@ -908,7 +908,7 @@ describe('ScreenManager runtime orchestration', () => {
         ).mock.calls[0]?.[1];
         initCallback?.('#445566');
         expect(
-            screenManager.screenLongTextManager.reflectBackgroundColor,
+            screenManager.screenLongTextManager.reflectBackgroundFill,
         ).toHaveBeenCalledWith('#445566');
 
         screenManager.clear();

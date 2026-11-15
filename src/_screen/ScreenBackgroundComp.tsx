@@ -1,10 +1,9 @@
 import { useRef } from 'react';
 
 import { renderToStaticMarkup } from 'react-dom/server';
-import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
+import ScreenBackgroundFillComp from './ScreenBackgroundFillComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
-import type { AppColorType } from '../others/color/colorHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { getScreenManagerBase } from './managers/screenManagerBaseHelpers';
 import {
@@ -156,10 +155,11 @@ function RenderScreenBackgroundComp({
             return <ScreenBackgroundImageComp backgroundSrc={backgroundSrc} />;
         case 'video':
             return <ScreenBackgroundVideoComp backgroundSrc={backgroundSrc} />;
-        case 'color':
+        case 'fill':
             return (
-                <ScreenBackgroundColorComp
-                    color={backgroundSrc.src as AppColorType}
+                <ScreenBackgroundFillComp
+                    src={backgroundSrc.src}
+                    isMoving={appProvider.isPageScreen}
                 />
             );
         case 'camera':

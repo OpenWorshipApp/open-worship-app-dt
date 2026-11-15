@@ -445,7 +445,7 @@ describe('read: what a screen shows', () => {
         };
         h.contentById[1] = {
             slide: { kind: 'slide', document: 'Notices', name: '' },
-            background: { kind: 'color', name: '' },
+            background: { kind: 'fill', name: '' },
         };
         const result = await edit({ action: 'read' });
         expect(result.screens[0]).toMatchObject({
@@ -455,7 +455,7 @@ describe('read: what a screen shows', () => {
         });
         expect(result.screens[1]).toMatchObject({
             slide: 'slide "Notices"',
-            background: 'color',
+            background: 'fill',
         });
         expect(result.screens[1]).not.toHaveProperty('foreground');
     });

@@ -18,6 +18,7 @@ import {
     WEBSITE_ITEM_ATTR,
     WEBSITE_URL_ATTR,
 } from '../helper/constants';
+import { genFillCss, parseFill } from '../background/fillValueHelpers';
 
 function toPageName(slide: Slide) {
     return `page-${slide.width}x${slide.height}`;
@@ -60,8 +61,13 @@ async function genBackgroundHtml(
         inset: '0',
         overflow: 'hidden',
     });
-    if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
-        backgroundDiv.style.backgroundColor = droppedData.item;
+    if (droppedData.type === DragTypeEnum.BACKGROUND_FILL) {
+        // A slide prints at its own size, so a pattern's tiles are as on a
+        // screen; a moving one prints as it stands.
+        const fill = parseFill(droppedData.item);
+        if (fill !== null) {
+            Object.assign(backgroundDiv.style, genFillCss(fill));
+        }
         return backgroundDiv.outerHTML;
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {

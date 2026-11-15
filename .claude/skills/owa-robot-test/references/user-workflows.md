@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-14m** (**The AI-agent recipe is W-64 now; W-62 is the song from a PowerPoint alone.** Two recipes had carried W-62 since 2026-11-13e, so the help read one page for both and neither could be marked read. The one added later, _Connect your own AI agent to the app (MCP)_, took the next free id, with its known questions, the French and Khmer pages and every note that named it; a `W-62` about the AI agent in an entry from 2026-11-13e on means W-64. `docs:gen` and a gate test now refuse an id used twice. No step changed.)
+**workflowsVersion: 2026-11-14n** (**W-08, W-28 and W-48 — the Background panel's Colors tab is [en:tran:Fills]: a color, a gradient or a pattern.** The user asked for gradients, then patterns under a name that covers both (_Fills_), moving ones, Customize and saved fills, then the layout: _make each section collapsible_, _make the collapsing icon colored follow screen color_, _add a toggle icon somewhere in the gradient|pattern panel to open/close the customizing panel_, _the preset section should be part of gradient|pattern_, _each element (gradient pattern) should be able to copy the css_. Seen live 2026-11-14 on the dev app: a tile pressed goes up and is lit; Dark / Light swaps the rows below it; a moving tile's wind mark, and neither the tile nor the Mini Screen moving; a screen's section folded to its line by the arrow in its color, its number and what it holds kept; Customize's rows, a change going up after the pause, and its toggle at the end of the Gradients line; a saved fill's button under the patterns; the Fills tab's and a tile's right-click offering [en:tran:Transition]; **[en:tran:Copy CSS]** on a still and a moving tile and on a saved button, its toast, and what it copied painting -- and the moving ones moving -- in a page of its own. Not seen: the motion on a showing screen, the save itself (its name box is the person's) and a press on a saved fill. W-28's table row reads _Fills — a colour_, the one a slide takes. PM-181..PM-186.)
+
+Previous: **workflowsVersion: 2026-11-14m** (**The AI-agent recipe is W-64 now; W-62 is the song from a PowerPoint alone.** Two recipes had carried W-62 since 2026-11-13e, so the help read one page for both and neither could be marked read. The one added later, _Connect your own AI agent to the app (MCP)_, took the next free id, with its known questions, the French and Khmer pages and every note that named it; a `W-62` about the AI agent in an entry from 2026-11-13e on means W-64. `docs:gen` and a gate test now refuse an id used twice. No step changed.)
 
 Previous: **workflowsVersion: 2026-11-14l** (**Forty-four recipes read against the code, no app** (`/owa-enhance-agent-docs`, HEAD `0285748bb`): every recipe whose words or code had moved since it was last read, step by step against the files its Verify rows cite. Corrected: W-42 step 1 and step 5 (the Screen Mirror page has a top bar with the 🤖 too, and is a choice under ASKING ABOUT); W-57 steps 2 and 3 (the card has six buttons, **[en:tran:Make a song from it]** the sixth); W-63 (with no assistant, a look other than the size answers _Done._ alone); W-06 step 7 (the Lookup saves and shows by its own **[en:tran:Save bible item and show on screen]**, not by a double-click); W-14 step 1 (a Markdown row's menu: Open in Chatbot while AI is on, and Duplicate and Reload in the usual tail); W-61 step 2 (the strip's **＋** opens no menu, and the Long Text Show panel has no transition button); W-07 step 1 (Long Text Show keeps the book and gear at the far end of the row Add Language starts); controls written as templates in W-05, W-42 and W-62's song recipe. Not seen live (no app was running; `references/live-checks.md` of `owa-enhance-agent-docs` lists each): W-14 Open in Chatbot on a Markdown row, W-37 step 6, W-42 step 6's third topic button, W-50 step 2's 🤖, W-61 step 3, W-62's Read the words off the pictures, W-63 step 4. **Two recipes carry the id W-62**: the song from a PowerPoint (2026-11-11c) and the AI agent (2026-11-13e), so the help reads one page for both; left for a decision, nothing renumbered.)
 
@@ -625,10 +627,26 @@ _Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
 1. Find the **[en:tran:Background]** panel at the bottom of the middle column,
    open with its tabs showing. If it has been folded to a thin bar, click the
    bar and the panel opens again. 📸
-2. Pick a tab: **[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
-   - **[en:tran:Colors]:** click a swatch. If the color could clash with the Bible text, the app
-     changes the text color so it stays visible and says so in a message with its own
-     **[en:tran:Undo]** — it asks nothing.
+2. Pick a tab: **[en:tran:Fills] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
+   - **[en:tran:Fills]:** a plain color, a gradient or a pattern. Click a color swatch, or a tile
+     under **[en:tran:Gradients]** or **[en:tran:Patterns]**. **[en:tran:Dark]** /
+     **[en:tran:Light]** at the top swaps the rows below between deep and pale ones. A tile with
+     a small wind mark moves on the screen; the tile itself and the Mini Screen stay still. If a
+     color could clash with the Bible text, the app changes the text color so it stays visible
+     and says so in a message with its own **[en:tran:Undo]** — it asks nothing. 📸
+   - Once a screen holds a fill, the tab has a section for each such screen. The arrow at the
+     left of its line, in that screen's color, folds the section to that line, which then shows
+     the screen's number and what it holds; press the arrow again to open it.
+   - **[en:tran:Customize]**, beside the tiles while a screen holds a gradient or a pattern,
+     changes its colors, **[en:tran:Type]**, **[en:tran:Angle]**, **[en:tran:Opacity]**,
+     **[en:tran:Size]** and **[en:tran:Speed]**; the screen follows half a second after you
+     stop. The sliders button at the end of the **[en:tran:Gradients]** line opens and closes it.
+   - **[en:tran:Save as Preset]**, under the patterns, keeps what is up as a button of its own
+     under **[en:tran:Presets]**.
+   - Right-click a gradient or pattern tile, or a saved button, → **[en:tran:Copy CSS]** to
+     take its CSS somewhere else, at a screen's size. A still one copies as its lines of CSS; a
+     moving one as a short stylesheet that moves it as the screen does — put the class
+     `owa-fill` on what it is to fill.
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -669,7 +687,7 @@ and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On t
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 
-_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, KB-04._
+_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..186, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -3489,7 +3507,7 @@ walking the Insert menu — just drag it out of the panel you are already browsi
 **Preconditions:** a slide document open in the **[en:tran:Slide Editor]**, and the bottom
 **[en:tran:Background]** panel visible.
 
-1. Pick a tab in the bottom **[en:tran:Background]** panel — **[en:tran:Colors]**, **[en:tran:Images]**,
+1. Pick a tab in the bottom **[en:tran:Background]** panel — **[en:tran:Fills]**, **[en:tran:Images]**,
    **[en:tran:Videos]**, **[en:tran:Cameras]** or **[en:tran:Webs]**. At the right end of the same row,
    **[en:tran:Audios]** opens the audio list beside them. 📸
 2. Drag one item out of the panel and hold it over the canvas. The canvas **dims** to show
@@ -3505,7 +3523,7 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    | Webs — a local page | a website box showing a **screenshot** of that page (see W-15 step 5)                 |
    | Webs — a saved URL  | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
    | Cameras             | a camera box, labelled with that camera                                               |
-   | Colors              | a plain coloured box (see step 4)                                                     |
+   | Fills — a colour    | a plain coloured box (see step 4)                                                     |
 
    📸
 
@@ -6452,12 +6470,12 @@ its slide, then its document, then the screen when its own choice is unticked.
    zoomed slide to the cut-in slide, the new one is there at once while the old
    one zooms away.
 4. **A Background tab.** Right-click **[en:tran:Images]** (or
-   **[en:tran:Colors]**, **[en:tran:Videos]**, **[en:tran:Cameras]**,
+   **[en:tran:Fills]**, **[en:tran:Videos]**, **[en:tran:Cameras]**,
    **[en:tran:Webs]**) and choose **[en:tran:Transition]**. Ticked, every
    background from that tab comes in that way; the tab shows the effect's icon
    after its name.
 5. **One background.** Press the ⋮ on a picture, video or web tile (right-click
-   a colour swatch, a camera or a web link) and choose
+   a colour swatch, a gradient or pattern tile, a camera or a web link) and choose
    **[en:tran:Transition]**. It follows its tab until you tick it; a picture or
    video tile then shows the effect's icon in its corner.
 6. **A foreground panel, all its sessions.** Each foreground panel but

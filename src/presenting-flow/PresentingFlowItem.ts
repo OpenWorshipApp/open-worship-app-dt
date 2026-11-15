@@ -45,6 +45,12 @@ import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleKeyFormatHelpers';
 import { getTargetChapterEnd } from '../helper/bible-helpers/bibleTargetHelpers';
+import { toCurrentDragTypeName } from '../background/backgroundFillLegacyHelpers';
+import {
+    genFillCodeLabel,
+    parseFill,
+    toFillAverageColor,
+} from '../background/fillValueHelpers';
 
 export const ERROR_TYPE = 'error';
 
@@ -57,7 +63,7 @@ export const slideDragTypeList = [
 ] as DragTypeEnum[];
 
 export const backgroundDragTypeList = [
-    DragTypeEnum.BACKGROUND_COLOR,
+    DragTypeEnum.BACKGROUND_FILL,
     DragTypeEnum.BACKGROUND_IMAGE,
     DragTypeEnum.BACKGROUND_VIDEO,
     DragTypeEnum.BACKGROUND_CAMERA,
@@ -293,7 +299,9 @@ export default class PresentingFlowItem {
         return this.originalJson.extraStyle ?? {};
     }
     get type() {
-        return this.originalJson.type;
+        // A fill's line was saved as `bg-color` before the Fills tab had its
+        // name; the file keeps what it holds until the line is written again.
+        return toCurrentDragTypeName(this.originalJson.type);
     }
     get itemFilePath() {
         return this.originalJson.filePath ?? '';
@@ -785,8 +793,10 @@ export default class PresentingFlowItem {
 
     /** Only the kinds whose icon carries meaning in colour set this. */
     get iconColor() {
-        if (this.type === DragTypeEnum.BACKGROUND_COLOR) {
-            return this.data;
+        if (this.type === DragTypeEnum.BACKGROUND_FILL) {
+            // The colour a gradient or a pattern reads as across the room.
+            const fill = parseFill(this.data);
+            return fill === null ? undefined : toFillAverageColor(fill);
         }
         if (this.isAppDocument) {
             return toDocumentIcon(this.itemFilePath)[1];
@@ -1239,7 +1249,7 @@ export default class PresentingFlowItem {
             return;
         }
         if (
-            !acceptedDragTypeList.includes(json.type) ||
+            !acceptedDragTypeList.includes(toCurrentDragTypeName(json.type)) ||
             (json.filePath !== undefined &&
                 typeof json.filePath !== 'string') ||
             (json.id !== undefined && typeof json.id !== 'number') ||
@@ -1261,8 +1271,10 @@ async function toDroppedDataTitle(
     item: any,
     dragData: DragDataType<any>,
 ) {
-    if (type === DragTypeEnum.BACKGROUND_COLOR) {
-        return `${item}`;
+    if (type === DragTypeEnum.BACKGROUND_FILL) {
+        // Codes, arrows and degrees: the same in every language.
+        const fill = parseFill(item);
+        return fill === null ? `${item}` : genFillCodeLabel(fill);
     }
     if (type === DragTypeEnum.BACKGROUND_CAMERA) {
         return 'Camera';

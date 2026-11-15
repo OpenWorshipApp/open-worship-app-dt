@@ -415,7 +415,7 @@ describe('manager helper coverage', () => {
             await import('./screenBackgroundHelpers');
 
         getAttachedBackgroundMock
-            .mockResolvedValueOnce({ type: 'bg-color', item: '#fff' })
+            .mockResolvedValueOnce({ type: 'bg-fill', item: '#fff' })
             .mockResolvedValueOnce(null)
             .mockResolvedValueOnce({ type: 'bg-image', item: '/bg.png' })
             .mockResolvedValueOnce(null)
@@ -450,7 +450,7 @@ describe('manager helper coverage', () => {
         );
 
         expect(receiveScreenDroppedMock).toHaveBeenCalledWith({
-            type: 'bg-color',
+            type: 'bg-fill',
             item: '#fff',
         });
         expect(receiveScreenDroppedMock).toHaveBeenCalledWith({

@@ -221,7 +221,7 @@ describe('PresentingFlowItem data model', () => {
         expect(slide.clone().toJson()).toEqual(slide.toJson());
 
         const defaults = new PresentingFlowItem('/flow', {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             data: '#fff',
         });
         expect(defaults.uuid).toBeNull();
@@ -232,11 +232,29 @@ describe('PresentingFlowItem data model', () => {
         expect(defaults.colorNote).toBeNull();
         expect(defaults.screenIds).toEqual([]);
         expect(defaults.isBackground).toBe(true);
-        expect(defaults.iconColor).toBe('#fff');
+        expect(defaults.iconColor).toBe('#FFFFFF');
         expect(defaults.dragSerialize()).toEqual({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             data: '#fff',
         });
+
+        // A line saved before the Fills tab had its name, holding a gradient:
+        // a fill row, tinted the colour the gradient reads as.
+        const legacyJson = {
+            type: 'bg-color' as DragTypeEnum,
+            data: 'gradient?shape=linear&angle=90&colors=000000-FFFFFF',
+        };
+        expect(() => PresentingFlowItem.validate(legacyJson)).not.toThrow();
+        const legacy = new PresentingFlowItem('/flow', legacyJson);
+        expect(legacy.type).toBe(DragTypeEnum.BACKGROUND_FILL);
+        expect(legacy.isBackground).toBe(true);
+        expect(legacy.iconColor).toBe('#808080');
+        expect(
+            new PresentingFlowItem('/flow', {
+                type: DragTypeEnum.BACKGROUND_FILL,
+                data: 'url(x)',
+            }).iconColor,
+        ).toBeUndefined();
 
         const document = new PresentingFlowItem('/flow', {
             type: DragTypeEnum.APP_DOCUMENT,
@@ -486,7 +504,7 @@ describe('PresentingFlowItem data model', () => {
         ).toThrow('Invalid presenting flow item data');
         expect(() =>
             PresentingFlowItem.validate({
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
                 data: '#000',
             }),
         ).not.toThrow();
@@ -524,7 +542,17 @@ describe('PresentingFlowItem data model', () => {
         expect(document).toMatchObject({ title: 'service' });
 
         for (const [type, item, expectedTitle] of [
-            [DragTypeEnum.BACKGROUND_COLOR, '#123456', '#123456'],
+            [DragTypeEnum.BACKGROUND_FILL, '#123456', '#123456'],
+            [
+                DragTypeEnum.BACKGROUND_FILL,
+                'gradient?shape=radial&angle=0&colors=000000-FFFFFF',
+                '◎ #000000 → #FFFFFF',
+            ],
+            [
+                DragTypeEnum.BACKGROUND_FILL,
+                'pattern?name=dots&base=172554&ink=FFFFFF1F&size=24',
+                '#FFFFFF1F / #172554',
+            ],
             [DragTypeEnum.BACKGROUND_CAMERA, {}, 'Camera'],
             [
                 DragTypeEnum.BACKGROUND_IMAGE,
@@ -635,7 +663,7 @@ describe('PresentingFlowItem data model', () => {
         expect(mocks.handleError).toHaveBeenCalledWith(expect.any(Error));
         await expect(
             new PresentingFlowItem('/flow', {
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
             }).getVarySlide(),
         ).resolves.toBeNull();
     });
@@ -692,7 +720,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
     test('a sheet with no CC anywhere is bound as it is, and nothing on it follows', () => {
         const slide = genSlide();
         const background = PresentingFlowItem.fromJson('/flow', {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             uuid: uuid('color'),
             data: '#000',
         });
@@ -717,7 +745,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
             slideCcItems: { 3: [{ uuid: uuid('color') }] },
         });
         const background = PresentingFlowItem.fromJson('/flow', {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             uuid: uuid('color'),
             data: '#000',
         });
@@ -725,7 +753,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
         expect(documentEntry.hasCcItems).toBe(false);
         const effective = documentEntry.getEffectiveSlideCcItems(3);
         expect(effective).toHaveLength(1);
-        expect(effective[0].type).toBe(DragTypeEnum.BACKGROUND_COLOR);
+        expect(effective[0].type).toBe(DragTypeEnum.BACKGROUND_FILL);
         expect(documentEntry.getEffectiveSlideCcItems(4)).toEqual([]);
     });
 
@@ -743,7 +771,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
             filePath: '/service.owa',
         });
         const background = PresentingFlowItem.fromJson('/flow', {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             uuid: uuid('color'),
             data: '#000',
         });
@@ -753,7 +781,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
         PresentingFlowItem.bindCcSources([host, documentEntry, background]);
         // A document is opened, never shown, so it can follow nothing.
         expect(host.ccItems.map((item) => item.type)).toEqual([
-            DragTypeEnum.BACKGROUND_COLOR,
+            DragTypeEnum.BACKGROUND_FILL,
         ]);
     });
 
@@ -815,7 +843,7 @@ describe('PresentingFlowItem edges a sheet meets', () => {
 
     test('content without a number carries no badge, and only a verse is a Bible item', () => {
         const background = new PresentingFlowItem('/flow', {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             data: '#000',
         });
         const verse = new PresentingFlowItem('/flow', {

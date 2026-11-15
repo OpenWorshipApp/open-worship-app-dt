@@ -207,9 +207,9 @@ export default class ScreenManager extends ScreenManagerBase {
             return;
         }
         this.screenBackgroundManager.registerEventListener(
-            ['color-set'],
-            (color: string) => {
-                this.screenLongTextManager.reflectBackgroundColor(color);
+            ['fill-set'],
+            (fillSrc: string) => {
+                this.screenLongTextManager.reflectBackgroundFill(fillSrc);
             },
         );
     }
@@ -510,7 +510,7 @@ export default class ScreenManager extends ScreenManagerBase {
     receiveScreenDropped(droppedData: DroppedDataType): Promise<void> {
         if (
             [
-                DragTypeEnum.BACKGROUND_COLOR,
+                DragTypeEnum.BACKGROUND_FILL,
                 DragTypeEnum.BACKGROUND_IMAGE,
                 DragTypeEnum.BACKGROUND_VIDEO,
                 DragTypeEnum.BACKGROUND_WEB,

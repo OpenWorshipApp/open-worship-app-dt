@@ -59,6 +59,7 @@ import {
 } from '../_screen/managers/timerStateHelpers';
 import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
 import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
+import { describeFill, parseFill } from '../background/fillValueHelpers';
 
 export type AgentScreenBackgroundSummaryType = {
     kind: string;
@@ -223,8 +224,13 @@ export function toBackgroundSummary(
         return null;
     }
     const { type, src } = backgroundSrc;
-    if (type === 'color') {
-        return { kind: 'color', name: src ?? null };
+    if (type === 'fill') {
+        // A colour by its code, a gradient or a pattern in words.
+        const fill = parseFill(src);
+        return {
+            kind: 'fill',
+            name: fill === null ? null : describeFill(fill),
+        };
     }
     if (type === 'web') {
         return { kind: 'web page', name: src ?? null };

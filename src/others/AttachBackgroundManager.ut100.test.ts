@@ -80,8 +80,8 @@ vi.mock('./CacheManager', () => ({
 import { DragTypeEnum } from '../helper/DragInf';
 import AttachBackgroundManager from './AttachBackgroundManager';
 
-const red = { type: DragTypeEnum.BACKGROUND_COLOR, item: '#ff0000' } as any;
-const blue = { type: DragTypeEnum.BACKGROUND_COLOR, item: '#0000ff' } as any;
+const red = { type: DragTypeEnum.BACKGROUND_FILL, item: '#ff0000' } as any;
+const blue = { type: DragTypeEnum.BACKGROUND_FILL, item: '#0000ff' } as any;
 
 function genMeta(filePath: string) {
     return AttachBackgroundManager.genMetaDataFilePath(filePath);

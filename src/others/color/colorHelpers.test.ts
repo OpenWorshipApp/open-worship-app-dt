@@ -13,7 +13,6 @@ import {
     HEX_COLOR_BLACK,
     HEX_COLOR_WHITE,
     checkIsColorDark,
-    colorDeserialize,
     colorToTransparent,
     compareColor,
     removeOpacityFromHexColor,
@@ -48,11 +47,9 @@ describe('colorHelpers', () => {
         expect(transparentColor(255)).toBe('ff');
     });
 
-    test('compares colors ignoring opacity and preserves serialized values', () => {
+    test('compares colors ignoring opacity', () => {
         expect(compareColor('#abcdef', '#ABCDEF99')).toBe(true);
         expect(compareColor('rgb(0, 0, 0)' as any, 'white' as any)).toBe(false);
-
-        expect(colorDeserialize('#123456')).toBe('#123456');
     });
 
     test('serializes dragging and classifies dark colors with alpha awareness', () => {
@@ -65,7 +62,7 @@ describe('colorHelpers', () => {
             mocks.handleDragStartMock.mock.calls[0]?.[1]?.dragSerialize(),
         ).toEqual({
             data: '#123456',
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
         });
 
         expect(checkIsColorDark('#000000')).toBe(true);

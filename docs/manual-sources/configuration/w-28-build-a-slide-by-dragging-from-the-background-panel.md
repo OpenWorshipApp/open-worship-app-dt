@@ -15,7 +15,7 @@ walking the Insert menu — just drag it out of the panel you are already browsi
 **Preconditions:** a slide document open in the **[en:tran:Slide Editor]**, and the bottom
 **[en:tran:Background]** panel visible.
 
-1. Pick a tab in the bottom **[en:tran:Background]** panel — **[en:tran:Colors]**, **[en:tran:Images]**,
+1. Pick a tab in the bottom **[en:tran:Background]** panel — **[en:tran:Fills]**, **[en:tran:Images]**,
    **[en:tran:Videos]**, **[en:tran:Cameras]** or **[en:tran:Webs]**. At the right end of the same row,
    **[en:tran:Audios]** opens the audio list beside them. 📸
 2. Drag one item out of the panel and hold it over the canvas. The canvas **dims** to show
@@ -31,7 +31,7 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    | Webs — a local page | a website box showing a **screenshot** of that page (see W-15 step 5)                 |
    | Webs — a saved URL  | a website box showing a **screenshot**; a **YouTube** link becomes a real YouTube box |
    | Cameras             | a camera box, labelled with that camera                                               |
-   | Colors              | a plain coloured box (see step 4)                                                     |
+   | Fills — a colour    | a plain coloured box (see step 4)                                                     |
 
    📸
 

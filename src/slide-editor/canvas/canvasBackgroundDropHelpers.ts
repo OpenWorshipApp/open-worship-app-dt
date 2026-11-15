@@ -6,6 +6,7 @@ import type CanvasController from './CanvasController';
 import { getAllCameraDevices } from '../../helper/cameraHelpers';
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { checkIsSolidFillSrc } from '../../background/fillValueHelpers';
 
 /**
  * Dropping a Background-panel item onto the slide canvas.
@@ -29,7 +30,7 @@ export const canvasBackgroundDropTypeList = [
     DragTypeEnum.BACKGROUND_AUDIO,
     DragTypeEnum.BACKGROUND_WEB,
     DragTypeEnum.BACKGROUND_CAMERA,
-    DragTypeEnum.BACKGROUND_COLOR,
+    DragTypeEnum.BACKGROUND_FILL,
 ];
 
 // Precomputed once: `dragOverHandling` runs on every pointer move over the
@@ -87,9 +88,12 @@ export function planCanvasBackgroundDrop({
     if (type === DragTypeEnum.BACKGROUND_CAMERA) {
         return { kind: 'camera', deviceId: item.src };
     }
-    if (type === DragTypeEnum.BACKGROUND_COLOR) {
-        // Unlike the others, the deserialized item IS the value.
-        return { kind: 'color', color: item };
+    if (type === DragTypeEnum.BACKGROUND_FILL) {
+        // Unlike the others, the deserialized item IS the value -- and a box
+        // takes a colour alone: a gradient or a pattern is a screen's fill.
+        return checkIsSolidFillSrc(item)
+            ? { kind: 'color', color: item }
+            : null;
     }
     return null;
 }

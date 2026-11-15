@@ -10,6 +10,8 @@ import { showFileOrDirExplorer } from '../server/appHelpers';
 import type FileSource from '../helper/FileSource';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
+import { genFillLabel } from '../background/fillLabelHelpers';
+import { parseFill, toFillAverageColor } from '../background/fillValueHelpers';
 
 function showMediaContextMenu(event: any, filePath: string) {
     event.stopPropagation();
@@ -86,12 +88,22 @@ export default function AttachBackgroundIconComp({
         return null;
     }
     const { type: backgroundType, item } = attachedBackgroundData;
-    if (backgroundType === DragTypeEnum.BACKGROUND_COLOR) {
+    if (backgroundType === DragTypeEnum.BACKGROUND_FILL) {
+        const fill = parseFill(item);
+        if (fill === null) {
+            return null;
+        }
+        // A colour by its code, as ever; a gradient or a pattern by the
+        // fill's own name, in the colour it reads as.
+        const title =
+            fill.kind === 'solid'
+                ? `${tran('Color')}: ${item}`
+                : `${fill.kind === 'gradient' ? tran('Gradients') : tran('Patterns')}: ${genFillLabel(fill)}`;
         return (
             <RendItemComp
-                title={`${tran('Color')}: ${item}`}
+                title={title}
                 iType="filter-circle-fill"
-                iStyle={{ color: item }}
+                iStyle={{ color: toFillAverageColor(fill) }}
             />
         );
     }

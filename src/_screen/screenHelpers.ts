@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { withCurrentBackgroundType } from '../background/backgroundFillLegacyHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
@@ -171,7 +172,18 @@ const readBackgroundSrcListOnScreen =
                         return item.type && item.src;
                     })
                 ) {
-                    return getValidOnScreen(json);
+                    // A screen saved while the fill kind was the colour
+                    // kind is read as a fill (`backgroundFillLegacyHelpers`).
+                    return getValidOnScreen(
+                        Object.fromEntries(
+                            Object.entries(json).map(([key, item]) => {
+                                return [
+                                    key,
+                                    withCurrentBackgroundType(item as any),
+                                ];
+                            }),
+                        ),
+                    );
                 }
             }
             return {};

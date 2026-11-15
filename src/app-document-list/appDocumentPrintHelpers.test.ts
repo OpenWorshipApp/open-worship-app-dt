@@ -32,7 +32,7 @@ vi.mock('../others/AttachBackgroundManager', () => ({
 vi.mock('../helper/printCssHelpers', () => ({ collectFontFaceCss: h.fontCss }));
 vi.mock('../helper/DragInf', () => ({
     DragTypeEnum: {
-        BACKGROUND_COLOR: 'color',
+        BACKGROUND_FILL: 'bg-fill',
         BACKGROUND_IMAGE: 'image',
         BACKGROUND_VIDEO: 'video',
     },
@@ -112,13 +112,13 @@ describe('document printing', () => {
 
     it('uses slide backgrounds first and falls back to the document background', async () => {
         h.background.mockImplementation(async (_path: string, id?: string) => {
-            if (id === 'color') return { type: 'color', item: '#123456' };
+            if (id === 'filled') return { type: 'bg-fill', item: '#123456' };
             if (id === undefined)
                 return { type: 'image', item: { src: 'file:///back.png' } };
             return null;
         });
         await printAppDocument({
-            getSlides: async () => [slide('color'), slide('fallback')],
+            getSlides: async () => [slide('filled'), slide('fallback')],
             fileSource: { name: 'Service' },
         } as any);
         const pages = Array.from(
@@ -133,9 +133,45 @@ describe('document printing', () => {
         );
         expect(h.background).toHaveBeenCalledWith(
             'C:/documents/service.owa',
-            'color',
+            'filled',
         );
         expect(h.background).toHaveBeenCalledWith('C:/documents/service.owa');
+    });
+
+    it('prints a gradient or a pattern as a screen paints it, and nothing for a non-fill', async () => {
+        h.background.mockImplementation(async (_path: string, id?: string) => {
+            if (id === 'gradient') {
+                return {
+                    type: 'bg-fill',
+                    item: 'gradient?shape=linear&angle=90&colors=000000-FFFFFF&motion=slow',
+                };
+            }
+            if (id === 'pattern') {
+                return {
+                    type: 'bg-fill',
+                    item: 'pattern?name=dots&base=172554&ink=FFFFFF26&size=24',
+                };
+            }
+            if (id === 'junk') {
+                return {
+                    type: 'bg-fill',
+                    item: 'url(https://example.com/a.png)',
+                };
+            }
+            return null;
+        });
+        await printAppDocument({
+            getSlides: async () => [
+                slide('gradient'),
+                slide('pattern'),
+                slide('junk'),
+            ],
+            fileSource: { name: 'Service' },
+        } as any);
+        const html = sentHtml();
+        expect(html).toContain('linear-gradient(90deg');
+        expect(html).toContain('background-size: 24px 24px');
+        expect(html).not.toContain('example.com');
     });
 
     it('captures a repeated video background once for the document', async () => {

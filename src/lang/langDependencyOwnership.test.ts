@@ -67,8 +67,13 @@ describe("a language's song plugin is the language's own", () => {
 
     // Read while the suite is collected, as the confinement test reads the
     // same list: thousands of files, which a test's own timeout is not for.
+    // A file git still lists but the working tree has deleted has nothing to
+    // import, as `language-confinement.mjs` reads it too.
     const codeFileList = listScannedFiles().filter((file: string) => {
-        return CODE_FILE_PATTERN.test(file);
+        return (
+            CODE_FILE_PATTERN.test(file) &&
+            existsSync(path.join(REPO_ROOT, file))
+        );
     });
     const importList = codeFileList.flatMap((file: string) => {
         const text = readFileSync(path.join(REPO_ROOT, file), 'utf8');

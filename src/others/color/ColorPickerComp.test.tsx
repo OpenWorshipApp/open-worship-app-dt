@@ -293,7 +293,7 @@ describe('color picker controls', () => {
         await act(async () => menuItems[1].onSelect(new MouseEvent('click')));
         expect(h.background).toHaveBeenCalledWith(
             expect.any(MouseEvent),
-            'color',
+            'fill',
             { src: '#EE0000' },
             true,
         );
@@ -503,5 +503,72 @@ describe('color picker value box, opacity and menu', () => {
         });
         expect(onSelection).toHaveBeenCalledTimes(2);
         expect(onSelection.mock.calls[1][0]).toBeNull();
+    });
+});
+
+describe('the Dark / Light tones under the basic swatches', () => {
+    async function renderColors(selectedColor: `#${string}` | null) {
+        const onSelection = vi.fn();
+        await act(async () =>
+            root.render(
+                createElement(RenderColorsComp, {
+                    colors: { navy: '#000080' },
+                    selectedColor,
+                    onColorChange: onSelection,
+                }),
+            ),
+        );
+        return onSelection;
+    }
+
+    function getToneButton(label: 'Dark' | 'Light') {
+        const group = container.querySelector('[role="group"]')!;
+        expect(group.getAttribute('aria-label')).toBe('Colors');
+        return [...group.querySelectorAll('button')].find((button) => {
+            return button.textContent === label;
+        })!;
+    }
+
+    it('opens on Dark with nothing held, and the switch swaps the tones', async () => {
+        const onSelection = await renderColors(null);
+        expect(getToneButton('Dark').getAttribute('aria-pressed')).toBe('true');
+        expect(
+            container.querySelector('[aria-label="#1E3A8A"]'),
+        ).not.toBeNull();
+        expect(container.querySelector('[aria-label="#DBEAFE"]')).toBeNull();
+        // The basic swatch stays whichever side is shown.
+        expect(container.querySelector('[aria-label="navy"]')).not.toBeNull();
+
+        await act(async () => getToneButton('Light').click());
+        expect(getToneButton('Light').getAttribute('aria-pressed')).toBe(
+            'true',
+        );
+        expect(container.querySelector('[aria-label="#1E3A8A"]')).toBeNull();
+        await act(async () => getButton('#DBEAFE').click());
+        expect(onSelection).toHaveBeenCalledTimes(1);
+        expect(onSelection.mock.calls[0][0]).toBe('#DBEAFE');
+        expect(container.querySelector('[aria-label="navy"]')).not.toBeNull();
+    });
+
+    it('opens on the held tone and follows it when it moves to the other side', async () => {
+        await renderColors('#FEE2E2');
+        expect(getButton('#FEE2E2').getAttribute('aria-pressed')).toBe('true');
+        expect(getButton('#FEE2E2').classList.contains('is-selected')).toBe(
+            true,
+        );
+
+        await renderColors('#450A0A');
+        expect(getToneButton('Dark').getAttribute('aria-pressed')).toBe('true');
+        expect(getButton('#450A0A').getAttribute('aria-pressed')).toBe('true');
+        // A dark swatch draws its tick in white.
+        expect(getButton('#450A0A').classList.contains('is-dark')).toBe(true);
+
+        // A press on the switch is not undone by a held colour that did not
+        // change side.
+        await act(async () => getToneButton('Light').click());
+        await renderColors('#450A0A');
+        expect(getToneButton('Light').getAttribute('aria-pressed')).toBe(
+            'true',
+        );
     });
 });

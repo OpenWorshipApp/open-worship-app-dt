@@ -40,27 +40,36 @@ function ColorModeButtonComp({
  * box: which side of the slide they are for. The side is the panel's to read
  * (off the words' colour, never stored); a press asks for the other one, and
  * the panel makes its colours contrast (`genContrastColors`).
+ *
+ * A colour picker uses the same switch for which tones it offers
+ * (`RenderColorsComp`), naming the group and the buttons for that.
  */
 export default function ColorModeSwitchComp({
     mode,
     onChange,
     onButtonMouseDown,
+    groupLabel,
+    darkTitle,
+    lightTitle,
 }: Readonly<{
     mode: ColorModeType;
     onChange: (mode: ColorModeType) => void;
     onButtonMouseDown?: (event: MouseEvent) => void;
+    groupLabel?: string;
+    darkTitle?: string;
+    lightTitle?: string;
 }>) {
     return (
         <div
             className="app-presets-mode"
             role="group"
-            aria-label={tran('Background')}
+            aria-label={groupLabel ?? tran('Background')}
         >
             <ColorModeButtonComp
                 isOn={mode === 'dark'}
                 iconClassName="bi bi-moon-stars-fill"
                 label={tran('Dark')}
-                title={tran('Light words for a dark background')}
+                title={darkTitle ?? tran('Light words for a dark background')}
                 onPick={() => {
                     onChange('dark');
                 }}
@@ -70,7 +79,7 @@ export default function ColorModeSwitchComp({
                 isOn={mode === 'light'}
                 iconClassName="bi bi-sun-fill"
                 label={tran('Light')}
-                title={tran('Dark words for a light background')}
+                title={lightTitle ?? tran('Dark words for a light background')}
                 onPick={() => {
                     onChange('light');
                 }}

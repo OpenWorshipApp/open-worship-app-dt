@@ -14,7 +14,9 @@ export enum DragTypeEnum {
     BACKGROUND_WEB = 'bg-web',
     BACKGROUND_AUDIO = 'bg-audio',
     BACKGROUND_IMAGE = 'bg-image',
-    BACKGROUND_COLOR = 'bg-color',
+    // A colour, a gradient or a pattern (`fillValueHelpers`). Saved as
+    // `bg-color` before 2026-11-14 (`backgroundFillLegacyHelpers`).
+    BACKGROUND_FILL = 'bg-fill',
     // A whole document (pdf/pptx/docx/lyric/app-document) by file path. It is a
     // reference, not a snapshot: nothing but the path travels with the drag.
     APP_DOCUMENT = 'appDocument',

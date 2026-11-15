@@ -243,7 +243,10 @@ describe('a Presets row', () => {
         await act(async () => {
             getButton('Presets: Two').click();
         });
-        expect(onSavedPick).toHaveBeenCalledExactlyOnceWith(TWO);
+        expect(onSavedPick).toHaveBeenCalledExactlyOnceWith(
+            TWO,
+            expect.anything(),
+        );
         expect(onPick).toHaveBeenCalledOnce();
     });
 
@@ -257,7 +260,10 @@ describe('a Presets row', () => {
             getButton('Presets: One').click();
         });
         expect(firstPick).not.toHaveBeenCalled();
-        expect(laterPick).toHaveBeenCalledExactlyOnceWith(ONE);
+        expect(laterPick).toHaveBeenCalledExactlyOnceWith(
+            ONE,
+            expect.anything(),
+        );
     });
 
     test('a chip shows the colours it is given, and none when it has none', async () => {
@@ -566,5 +572,36 @@ describe("a saved look's menu", () => {
             await h.menuItems[2].onSelect();
         });
         expect(readStored()).toEqual([TWO]);
+    });
+
+    test("a panel's own rows come first, for the look the chip holds", async () => {
+        storePresets([ONE, TWO]);
+        const onCopy = vi.fn();
+        const genSavedMenuItems = vi.fn((preset: ColorPresetType) => {
+            return [
+                {
+                    menuElement: 'Copy CSS',
+                    onSelect: () => {
+                        onCopy(preset.color);
+                    },
+                },
+            ];
+        });
+        await render(genRow({ genSavedMenuItems }));
+        await openMenu('Presets: Two');
+        expect(genSavedMenuItems).toHaveBeenCalledWith(TWO);
+        expect(
+            h.menuItems.map((item) => {
+                return item.menuElement;
+            }),
+        ).toEqual([
+            'Copy CSS',
+            'Rename Preset',
+            'Replace with Current Look',
+            'Remove Preset',
+        ]);
+        h.menuItems[0].onSelect();
+        expect(onCopy).toHaveBeenCalledWith('#222222');
+        expect(readStored()).toEqual([ONE, TWO]);
     });
 });

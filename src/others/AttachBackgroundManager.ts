@@ -6,6 +6,8 @@ import {
     BackgroundWebUrlSource,
     isBackgroundWebUrlItemData,
 } from '../background/backgroundWebUrlHelpers';
+import { withCurrentDragType } from '../background/backgroundFillLegacyHelpers';
+import { checkIsFillSrc } from '../background/fillValueHelpers';
 import { fsCheckFileExist, fsDeleteFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
@@ -45,7 +47,7 @@ export default class AttachBackgroundManager {
                 .map(([key, value]): [string, DroppedDataType | null] => {
                     if (
                         [
-                            DragTypeEnum.BACKGROUND_COLOR,
+                            DragTypeEnum.BACKGROUND_FILL,
                             DragTypeEnum.BACKGROUND_CAMERA,
                         ].includes(value.type)
                     ) {
@@ -106,13 +108,13 @@ export default class AttachBackgroundManager {
         }
         const newData = Object.fromEntries(
             Object.entries(data)
-                .map(([key, value]): [string, DroppedDataType | null] => {
-                    if (
-                        [
-                            DragTypeEnum.BACKGROUND_COLOR,
-                            DragTypeEnum.BACKGROUND_CAMERA,
-                        ].includes(value.type)
-                    ) {
+                .map(([key, savedValue]): [string, DroppedDataType | null] => {
+                    // A fill was attached as `bg-color` before its rename.
+                    const value = withCurrentDragType(savedValue as any);
+                    if (value.type === DragTypeEnum.BACKGROUND_FILL) {
+                        return [key, checkIsFillSrc(value.item) ? value : null];
+                    }
+                    if (value.type === DragTypeEnum.BACKGROUND_CAMERA) {
                         return [key, value];
                     }
                     if (

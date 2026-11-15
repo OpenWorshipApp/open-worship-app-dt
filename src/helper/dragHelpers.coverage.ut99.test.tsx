@@ -14,7 +14,6 @@ const { mocks, fileSourceEvents, constructed } = vi.hoisted(() => ({
         fileSourceDeserialize: vi.fn(),
         webDeserialize: vi.fn(),
         cameraDeserialize: vi.fn(),
-        colorDeserialize: vi.fn(),
         pdfValidate: vi.fn(),
         pptxValidate: vi.fn(),
         docxValidate: vi.fn(),
@@ -53,9 +52,6 @@ vi.mock('../bible-list/BibleItem', () => ({
 }));
 vi.mock('../bible-list/note/NoteItem', () => ({
     default: { dragDeserialize: mocks.noteItemDeserialize },
-}));
-vi.mock('../others/color/colorHelpers', () => ({
-    colorDeserialize: mocks.colorDeserialize,
 }));
 vi.mock('./FileSource', () => ({
     default: { dragDeserialize: mocks.fileSourceDeserialize },
@@ -138,7 +134,6 @@ describe('deserializeDragData routes each kind to its own reader', () => {
         [DragTypeEnum.BACKGROUND_AUDIO, 'fileSourceDeserialize'],
         [DragTypeEnum.BACKGROUND_WEB, 'webDeserialize'],
         [DragTypeEnum.BACKGROUND_CAMERA, 'cameraDeserialize'],
-        [DragTypeEnum.BACKGROUND_COLOR, 'colorDeserialize'],
     ] as const)('%s', (type, mockName) => {
         const item = { from: mockName };
         mocks[mockName].mockReturnValue(item);
@@ -296,7 +291,7 @@ describe('useAttachedBackgroundData', () => {
 
     test('loads the attached background, and reloads it when its meta file updates', async () => {
         mocks.getAttachedBackground.mockResolvedValueOnce({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#111111',
         });
         await act(async () => {
@@ -307,7 +302,7 @@ describe('useAttachedBackgroundData', () => {
             2,
         );
         expect(container.textContent).toBe(
-            JSON.stringify({ type: 'bg-color', item: '#111111' }),
+            JSON.stringify({ type: 'bg-fill', item: '#111111' }),
         );
         expect(seen[0]).toBeUndefined();
 
@@ -329,7 +324,7 @@ describe('useAttachedBackgroundData', () => {
     test('a new file path starts over from loading', async () => {
         let resolveSecond: (value: unknown) => void = () => {};
         mocks.getAttachedBackground
-            .mockResolvedValueOnce({ type: 'bg-color', item: '#1' })
+            .mockResolvedValueOnce({ type: 'bg-fill', item: '#1' })
             .mockReturnValueOnce(
                 new Promise((resolve) => {
                     resolveSecond = resolve;
@@ -351,7 +346,7 @@ describe('useAttachedBackgroundData', () => {
         expect(fileSourceEvents.at(-1)!.filePath).toBe('/docs/b.owd.meta');
 
         await act(async () => {
-            resolveSecond({ type: 'bg-color', item: '#2' });
+            resolveSecond({ type: 'bg-fill', item: '#2' });
         });
         expect(container.textContent).toContain('#2');
     });

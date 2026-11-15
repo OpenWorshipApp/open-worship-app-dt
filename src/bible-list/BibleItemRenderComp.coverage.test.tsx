@@ -80,7 +80,7 @@ vi.mock('../others/commonButtons', () => ({
 }));
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
 vi.mock('../helper/DragInf', () => ({
-    DragTypeEnum: { BIBLE_ITEM: 'bibleItem', BACKGROUND_COLOR: 'color' },
+    DragTypeEnum: { BIBLE_ITEM: 'bibleItem', BACKGROUND_FILL: 'bg-fill' },
 }));
 vi.mock('../helper/helpers', () => ({
     changeDragEventStyle: h.changeDragEventStyle,
@@ -560,7 +560,7 @@ describe('a saved passage row', () => {
     });
 
     test('anything else dropped on it is attached as its background', async () => {
-        h.extractDropData.mockReturnValue({ type: 'color', item: '#fff' });
+        h.extractDropData.mockReturnValue({ type: 'bg-fill', item: '#fff' });
         await renderRow();
         await fire(getRow(), 'drop');
         expect(h.handleAttachBackgroundDrop).toHaveBeenCalledTimes(1);

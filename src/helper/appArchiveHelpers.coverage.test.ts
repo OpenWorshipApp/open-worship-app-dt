@@ -794,7 +794,7 @@ describe('what a bundle leaves out, and what an import refuses', () => {
         h.files.set(
             '/tmp/extract/files/bg.json',
             JSON.stringify({
-                color: { type: DragTypeEnum.BACKGROUND_COLOR, item: '#fff' },
+                color: { type: DragTypeEnum.BACKGROUND_FILL, item: '#fff' },
                 broken: { type: DragTypeEnum.BACKGROUND_IMAGE, item: 7 },
                 elsewhere: {
                     type: DragTypeEnum.BACKGROUND_IMAGE,
@@ -813,7 +813,7 @@ describe('what a bundle leaves out, and what an import refuses', () => {
             new Map([['/old/doc.ows', '/documents/doc.ows']]),
         );
         expect(JSON.parse(h.files.get('/documents/doc.ows.bg.json')!)).toEqual({
-            color: { type: DragTypeEnum.BACKGROUND_COLOR, item: '#fff' },
+            color: { type: DragTypeEnum.BACKGROUND_FILL, item: '#fff' },
             broken: { type: DragTypeEnum.BACKGROUND_IMAGE, item: 7 },
             elsewhere: {
                 type: DragTypeEnum.BACKGROUND_IMAGE,

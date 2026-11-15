@@ -212,14 +212,14 @@ describe('handleAttachBackgroundDrop', () => {
             .mockResolvedValue(undefined as any);
         const event = makeDropEvent(
             JSON.stringify({
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
                 data: '#008080',
             }),
         );
         handleAttachBackgroundDrop(event as any, { filePath: '/b.owb', id: 2 });
         expect(event.stopPropagation).toHaveBeenCalled();
         expect(attach).toHaveBeenCalledWith(
-            { type: DragTypeEnum.BACKGROUND_COLOR, item: '#008080' },
+            { type: DragTypeEnum.BACKGROUND_FILL, item: '#008080' },
             '/b.owb',
             2,
         );

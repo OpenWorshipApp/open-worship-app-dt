@@ -149,8 +149,9 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
     `floating-widget-rect-foreground-<key>`).
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-arrows-fullscreen` /
   `bi bi-fullscreen-exit`.
-- **Background tabs** (`.nav.nav-tabs`): `Colors`, `Images`, `Videos`, `Cameras`,
-  `Webs`. `Audios` is a separate toggle (`RenderAudiosTabComp`), not a tab-bar
+- **Background tabs** (`.nav.nav-tabs`): `Fills` (`Colors` until 2026-11-14),
+  `Images`, `Videos`, `Cameras`, `Webs`, and in a development build
+  `(dev)CSS Animation`, a note alone (PM-187). `Audios` is a separate toggle (`RenderAudiosTabComp`), not a tab-bar
   member; it shows `.app-on-screen` while audio plays.
 
 ### Right column — bible + mini screen

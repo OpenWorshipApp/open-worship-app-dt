@@ -168,7 +168,7 @@ describe('presenting-flow on-screen matching', () => {
         expect(
             await checkIsPresentingFlowItemOnScreen(
                 item({
-                    type: DragTypeEnum.BACKGROUND_COLOR,
+                    type: DragTypeEnum.BACKGROUND_FILL,
                     data: '#f00',
                     isBackground: true,
                 }),

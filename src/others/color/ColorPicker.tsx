@@ -12,6 +12,7 @@ import {
     removeOpacityFromHexColor,
 } from './colorHelpers';
 import OpacitySliderComp from './OpacitySliderComp';
+import type { ColorModeType } from './colorContrastHelpers';
 import RenderColorsComp from './RenderColorsComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
@@ -123,6 +124,8 @@ export default function ColorPickerComp({
     isCollapsable = false,
     isNoImmediate = false,
     colorInputLabel,
+    tone,
+    isOtherValueHeld = false,
 }: Readonly<{
     defaultColor: AppColorType;
     color: AppColorType | null | undefined;
@@ -131,6 +134,10 @@ export default function ColorPickerComp({
     isCollapsable?: boolean;
     isNoImmediate?: boolean;
     colorInputLabel?: string;
+    /** The tones' side, when the owner draws the Dark / Light switch. */
+    tone?: ColorModeType;
+    /** A held value that is not a colour: no swatch, not No Color, is lit. */
+    isOtherValueHeld?: boolean;
 }>) {
     const [isOpened, setIsOpened] = useState(false);
     const [localColor, setLocalColor] = useState(color);
@@ -245,9 +252,13 @@ export default function ColorPickerComp({
             </div>
         );
     }
+    // Opened: the collapse arrow (when it folds), the swatches and opacity,
+    // then the ⋮ in the top-right corner. The ⋮ used to come before the
+    // swatches, and `.app-flex-item` is a flex row, so its `float-end` never
+    // floated: it stood alone at the top-left of the panel.
     return (
         <div
-            className="app-flex-item color-picker"
+            className="app-flex-item color-picker color-picker-open"
             onContextMenu={handleContextMenuOpening}
         >
             {isCollapsable ? (
@@ -262,17 +273,15 @@ export default function ColorPickerComp({
                     <i className="bi bi-chevron-down" />
                 </button>
             ) : null}
-            <ContextMenuDotsButtonComp
-                className="float-end"
-                onOpening={handleContextMenuOpening}
-            />
-            <div className="p-1 app-overflow-hidden">
+            <div className="color-picker-body">
                 <RenderColorsComp
                     colors={colorList.main}
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
                     isNoImmediate={isNoImmediate}
                     canNoColor={onNoColor !== undefined}
+                    tone={tone}
+                    isOtherValueHeld={isOtherValueHeld}
                 />
                 {localColor !== null && (
                     <OpacitySliderComp
@@ -281,6 +290,10 @@ export default function ColorPickerComp({
                     />
                 )}
             </div>
+            <ContextMenuDotsButtonComp
+                className="color-picker-dots"
+                onOpening={handleContextMenuOpening}
+            />
         </div>
     );
 }

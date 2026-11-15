@@ -22,7 +22,6 @@ const h = vi.hoisted(() => {
         fileSource: tagged('FileSource'),
         web: tagged('web'),
         camera: tagged('camera'),
-        color: tagged('color'),
         documentSlideValid: true,
         getAttachedBackground: vi.fn(),
         detachBackground: vi.fn(),
@@ -65,9 +64,6 @@ vi.mock('../background/backgroundWebUrlHelpers', () => ({
 }));
 vi.mock('../background/backgroundHelpers', () => ({
     cameraDragDeserialize: h.camera,
-}));
-vi.mock('../others/color/colorHelpers', () => ({
-    colorDeserialize: h.color,
 }));
 vi.mock('../app-document-list/PdfSlide', () => ({
     default: genDocumentSlideClass('pdf'),
@@ -150,7 +146,6 @@ describe('deserializeDragData routes each kind to its own reader', () => {
         [DragTypeEnum.BACKGROUND_AUDIO, 'FileSource', h.fileSource],
         [DragTypeEnum.BACKGROUND_WEB, 'web', h.web],
         [DragTypeEnum.BACKGROUND_CAMERA, 'camera', h.camera],
-        [DragTypeEnum.BACKGROUND_COLOR, 'color', h.color],
     ];
     test.each(routes)('%s is read by %s', (type, reader, deserialize) => {
         const data = { from: type };
@@ -159,6 +154,41 @@ describe('deserializeDragData routes each kind to its own reader', () => {
             item: { deserializedBy: reader, data },
         });
         expect(deserialize).toHaveBeenCalledWith(data);
+    });
+
+    test('a fill is read only when it is one, under either of its names', () => {
+        const gradient =
+            'gradient?shape=linear&angle=135&colors=1E3A8A-581C87&motion=slow';
+        for (const data of ['#008080', '#00808080', gradient]) {
+            expect(
+                deserializeDragData({
+                    type: DragTypeEnum.BACKGROUND_FILL,
+                    data,
+                }),
+            ).toEqual({ type: DragTypeEnum.BACKGROUND_FILL, item: data });
+        }
+        // A run sheet line made before the Fills tab had its name.
+        expect(
+            deserializeDragData({
+                type: 'bg-color' as DragTypeEnum,
+                data: '#008080',
+            }),
+        ).toEqual({ type: DragTypeEnum.BACKGROUND_FILL, item: '#008080' });
+        // No CSS rides a drag onto a screen.
+        for (const data of [
+            'url(https://example.com/x.png)',
+            'gradient?shape=linear&colors=red-blue',
+            'pattern?name=dots&base=000000&ink=FFFFFF&size=4000',
+            { src: '#008080' },
+            null,
+        ]) {
+            expect(
+                deserializeDragData({
+                    type: DragTypeEnum.BACKGROUND_FILL,
+                    data,
+                }),
+            ).toBeNull();
+        }
     });
 
     test('a reader that refuses its data makes the drop nothing', () => {
@@ -241,7 +271,7 @@ describe('useAttachedBackgroundData', () => {
             seen.push(useAttachedBackgroundData('/docs/a.ows', 2));
             return null;
         }
-        const first = { type: DragTypeEnum.BACKGROUND_COLOR, item: '#000' };
+        const first = { type: DragTypeEnum.BACKGROUND_FILL, item: '#000' };
         h.getAttachedBackground.mockResolvedValueOnce(first);
         await act(async () => root.render(<ProbeComp />));
         expect(h.getAttachedBackground).toHaveBeenCalledWith('/docs/a.ows', 2);
@@ -253,7 +283,7 @@ describe('useAttachedBackgroundData', () => {
         expect(eventNames).toEqual(['update']);
         expect(watchedPath).toBe('/docs/a.ows.meta');
 
-        const second = { type: DragTypeEnum.BACKGROUND_COLOR, item: '#fff' };
+        const second = { type: DragTypeEnum.BACKGROUND_FILL, item: '#fff' };
         h.getAttachedBackground.mockResolvedValueOnce(second);
         await act(async () => {
             onUpdate();

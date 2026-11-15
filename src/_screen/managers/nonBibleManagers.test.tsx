@@ -244,11 +244,11 @@ describe('non-Bible screen managers', () => {
             effectManager,
         );
         const listener = vi.fn();
-        manager.registerEventListener(['color-set'], listener);
+        manager.registerEventListener(['fill-set'], listener);
         const root = document.createElement('div');
         manager.rootContainer = root;
 
-        manager.backgroundSrc = { type: 'color', src: '#ffffff' } as any;
+        manager.backgroundSrc = { type: 'fill', src: '#ffffff' } as any;
         await Promise.resolve();
 
         expect(listener).toHaveBeenCalledWith('#ffffff', expect.any(Number));
@@ -257,17 +257,26 @@ describe('non-Bible screen managers', () => {
             {
                 screenId: 21,
                 type: 'background',
-                data: { type: 'color', src: '#ffffff' },
+                data: { type: 'fill', src: '#ffffff' },
             },
             false,
         );
 
         await manager.receiveScreenDropped({
-            type: 'bg-color',
+            type: 'bg-fill',
             item: '#000000',
         } as any);
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
+            src: '#000000',
+        });
+        // Only a fill this app can draw goes up.
+        await manager.receiveScreenDropped({
+            type: 'bg-fill',
+            item: 'url(https://example.com/a.png)',
+        } as any);
+        expect(manager.backgroundSrc).toEqual({
+            type: 'fill',
             src: '#000000',
         });
 
@@ -580,7 +589,7 @@ describe('non-Bible screen managers', () => {
         } as any);
         const root = document.createElement('div');
         manager.rootContainer = root;
-        manager.backgroundSrc = { type: 'color', src: '#ffffff' } as any;
+        manager.backgroundSrc = { type: 'fill', src: '#ffffff' } as any;
         await vi.waitFor(() => {
             expect(root.children).toHaveLength(1);
         });
@@ -606,7 +615,7 @@ describe('non-Bible screen managers', () => {
         expect(clearTracks).toHaveBeenCalledOnce();
         expect(manager.rootContainer).toBeNull();
         expect(manager.backgroundSrc).toEqual({
-            type: 'color',
+            type: 'fill',
             src: '#ffffff',
         });
 

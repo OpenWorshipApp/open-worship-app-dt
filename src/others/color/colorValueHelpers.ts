@@ -71,10 +71,6 @@ export function compareColor(
     );
 }
 
-export function colorDeserialize(data: AppColorType) {
-    return data;
-}
-
 export function checkIsColorDark(color: any): boolean {
     const hexColor = toHexColorString(color);
     if (hexColor === null) {

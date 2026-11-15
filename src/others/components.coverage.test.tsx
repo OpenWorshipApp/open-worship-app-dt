@@ -520,19 +520,39 @@ describe('AttachBackgroundIconComp', () => {
         document.addEventListener('click', documentClick);
         try {
             h.state.attachedBackgroundData = {
-                type: DragTypeEnum.BACKGROUND_COLOR,
-                item: 'red',
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: '#FF0000',
             };
             await render(<AttachBackgroundIconComp filePath="/d/a.slides" />);
             let button = container.querySelector('button')!;
-            expect(button.title).toBe('Color: red');
-            expect(button.getAttribute('aria-label')).toBe('Color: red');
+            expect(button.title).toBe('Color: #FF0000');
+            expect(button.getAttribute('aria-label')).toBe('Color: #FF0000');
             const icon = button.querySelector('i')!;
             expect(icon.className).toBe('bi bi-filter-circle-fill');
-            expect(icon.style.color).toBe('red');
+            expect(icon.style.color).toBe('rgb(255, 0, 0)');
             await dispatch(button, mouse('click'));
             expect(documentClick).not.toHaveBeenCalled();
             expect(h.mocks.showAppContextMenu).not.toHaveBeenCalled();
+
+            // A gradient by its own name, in the colour it reads as.
+            h.state.attachedBackgroundData = {
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: 'gradient?shape=linear&angle=90&colors=000000-FFFFFF',
+            };
+            await render(<AttachBackgroundIconComp filePath="/d/a.slides" />);
+            button = container.querySelector('button')!;
+            expect(button.title).toBe('Gradients: 90° #000000 → #FFFFFF');
+            expect(button.querySelector('i')!.style.color).toBe(
+                'rgb(128, 128, 128)',
+            );
+
+            // Something that is not a fill draws no badge at all.
+            h.state.attachedBackgroundData = {
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: 'url(x)',
+            };
+            await render(<AttachBackgroundIconComp filePath="/d/a.slides" />);
+            expect(container.innerHTML).toBe('');
 
             h.state.attachedBackgroundData = {
                 type: DragTypeEnum.BACKGROUND_CAMERA,

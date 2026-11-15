@@ -1,3 +1,10 @@
+import { toCurrentDragTypeName } from '../background/backgroundFillLegacyHelpers';
+import {
+    describeFill,
+    parseFill,
+    toCanonicalFillSrc,
+} from '../background/fillValueHelpers';
+
 /**
  * The pure rules of `owa_slide_edit`'s `set-background`: a slide's attached
  * background -- what the little background mark on a slide card is, and
@@ -10,7 +17,8 @@
  * its words, and the assistant could only say "pick a picture in the
  * Background panel". A background is not a box on the slide -- it is the
  * screen's layer -- so it is set here by the name the Background panel shows
- * it under, a colour, or `none`.
+ * it under, a fill (a colour, or a gradient or a pattern written the way the
+ * Fills tab writes one, `fillValueHelpers`), or `none`.
  *
  * Nothing here touches a file; `agentSlideBackgroundHelpers.ts` does.
  */
@@ -27,7 +35,7 @@ export function checkIsAgentSlideBackgroundAction(
 }
 
 export type AgentSlideBackgroundWantedType =
-    | { kind: 'color'; color: `#${string}` }
+    | { kind: 'fill'; src: string }
     | { kind: 'none' }
     | { kind: 'file'; name: string };
 
@@ -54,7 +62,6 @@ export const AGENT_SLIDE_BACKGROUND_LIMITS = {
     listedNames: 30,
 };
 
-const COLOR_PATTERN = /^#(?:[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const NONE_WORDS = new Set(['none', 'no background', 'nothing']);
 
 function refuse(reason: string): AgentSlideBackgroundRefusalType {
@@ -95,11 +102,9 @@ export function readAgentSlideBackgroundRequest(request: {
         }
         slides = [...new Set(request.slides as number[])];
     }
-    if (COLOR_PATTERN.test(text)) {
-        return {
-            wanted: { kind: 'color', color: text.toLowerCase() as any },
-            slides,
-        };
+    const fillSrc = toCanonicalFillSrc(text);
+    if (fillSrc !== null) {
+        return { wanted: { kind: 'fill', src: fillSrc }, slides };
     }
     if (text.startsWith('#')) {
         return refuse(
@@ -199,7 +204,7 @@ export type AttachedBackgroundShapeType = {
 };
 
 const TYPE_WORD_MAP: Record<string, string> = {
-    'bg-color': 'colour',
+    'bg-fill': 'fill',
     'bg-image': 'picture',
     'bg-video': 'video',
     'bg-web': 'web page',
@@ -207,8 +212,10 @@ const TYPE_WORD_MAP: Record<string, string> = {
 };
 
 /**
- * How a background reads to the model: `colour #102030`, `picture
- * sunrise.jpg`, `video waves.mp4`, `web page`, `camera`. `null` for none.
+ * How a background reads to the model: `colour #102030`, `linear 135°
+ * gradient #1E3A8A → #581C87`, `picture sunrise.jpg`, `video waves.mp4`,
+ * `web page`, `camera`. `null` for none. A fill saved before its rename
+ * (`bg-color`) reads as one.
  */
 export function describeAttachedBackground(
     data: AttachedBackgroundShapeType | null | undefined,
@@ -216,9 +223,16 @@ export function describeAttachedBackground(
     if (data === null || data === undefined) {
         return null;
     }
-    const word = TYPE_WORD_MAP[String(data.type)] ?? 'background';
-    if (data.type === 'bg-color' && typeof data.item === 'string') {
-        return `${word} ${data.item}`;
+    const type = toCurrentDragTypeName(data.type);
+    const word = TYPE_WORD_MAP[String(type)] ?? 'background';
+    if (type === 'bg-fill') {
+        const fill = parseFill(data.item);
+        if (fill === null) {
+            return word;
+        }
+        return fill.kind === 'solid'
+            ? `colour ${fill.color}`
+            : describeFill(fill);
     }
     const item = data.item as { fullName?: unknown } | string | null;
     const fullName =

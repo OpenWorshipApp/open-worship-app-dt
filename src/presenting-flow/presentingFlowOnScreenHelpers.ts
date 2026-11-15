@@ -25,7 +25,7 @@ import PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
 
 const backgroundDragTypeMap: { [key: string]: BackgroundType } = {
-    [DragTypeEnum.BACKGROUND_COLOR]: 'color',
+    [DragTypeEnum.BACKGROUND_FILL]: 'fill',
     [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
     [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
     [DragTypeEnum.BACKGROUND_CAMERA]: 'camera',
@@ -52,7 +52,7 @@ function checkIsBackgroundOnScreen(presentingFlowItem: PresentingFlowItem) {
     if (backgroundType === undefined) {
         return false;
     }
-    if (presentingFlowItem.type === DragTypeEnum.BACKGROUND_COLOR) {
+    if (presentingFlowItem.type === DragTypeEnum.BACKGROUND_FILL) {
         return (
             ScreenBackgroundManager.getSelectBackgroundSrcList(
                 presentingFlowItem.data,

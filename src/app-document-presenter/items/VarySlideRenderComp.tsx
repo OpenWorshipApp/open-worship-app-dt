@@ -198,9 +198,13 @@ function VarySlideBodyRenderComp({
         varySlideData.filePath,
         varySlideData.id,
     );
+    const backgroundScale = actualParentWidth / varySlideData.width;
     const attachedBackgroundElement = useMemo(() => {
-        return genAttachBackgroundComponent(attachedBackgroundData);
-    }, [attachedBackgroundData]);
+        return genAttachBackgroundComponent(
+            attachedBackgroundData,
+            backgroundScale,
+        );
+    }, [attachedBackgroundData, backgroundScale]);
     const actualStyle = useMemo(() => {
         const scale = actualParentWidth / varySlideData.width;
         const height = varySlideData.height * scale;

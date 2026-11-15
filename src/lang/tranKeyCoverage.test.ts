@@ -460,6 +460,47 @@ describe.each(
         ).toEqual([]);
     });
 
+    // The Background panel names its tabs with `tran(labelKey)` over a list
+    // (`BackgroundComp`'s `tabTypeList`, and a development build's own
+    // `devTabTypeList`), out of the sweep's reach too. The panel is on the
+    // Presenter the whole time, so a tab added without its string blanks it
+    // in a translated window -- a development one first, for its own tab.
+    test('every Background tab label has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
+        const source = readFileSync(
+            path.join(SRC_DIR, 'background', 'BackgroundComp.tsx'),
+            'utf-8',
+        );
+        const labels: string[] = [];
+        let tabCount = 0;
+        for (const name of ['tabTypeList', 'devTabTypeList']) {
+            const start = source.indexOf(`const ${name} = [`);
+            const end = source.indexOf('] as const;', start);
+            if (start === -1 || end === -1) {
+                throw new Error(`\`${name}\` is no longer shaped as expected`);
+            }
+            const list = source.slice(start, end);
+            tabCount += [...list.matchAll(/\bLazy\w+Comp\b/g)].length;
+            for (const match of list.matchAll(
+                /,\s*('(?:[^'\\\n]|\\.)*')\s*,\s*Lazy\w+Comp\b/g,
+            )) {
+                labels.push(evaluateLiteral(match[1]) as string);
+            }
+        }
+        // One per tab, every one of them a literal.
+        expect(labels.length).toBe(tabCount);
+        expect(labels).toContain('Fills');
+        expect(labels).toContain('(dev)CSS Animation');
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
     // Export / Import Settings draws its section tree with
     // `tran(leaf.titleKey)` over the catalog, and its dialogs hand their
     // messages to the tree as props -- all dynamic, all out of the sweep's

@@ -113,7 +113,7 @@ export default function SelectCustomColorComp({
             <input
                 ref={inputRef}
                 title={tran('Select custom color')}
-                className="pointer"
+                className="pointer color-picker-mix-input"
                 type="color"
                 value={localColor}
                 onChange={handleChange}

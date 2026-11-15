@@ -1339,9 +1339,9 @@
             "labels": ["Edit Comment"]
         },
         {
-            "id": "bg-colors",
+            "id": "bg-fills",
             "surface": "Background",
-            "labels": ["Colors"]
+            "labels": ["Fills"]
         },
         {
             "id": "bg-images",
@@ -1363,6 +1363,13 @@
             "id": "bg-webs",
             "surface": "Background",
             "labels": ["Webs"]
+        },
+        {
+            "id": "bg-css-animation",
+            "surface": "Background",
+            "labels": ["(dev)CSS Animation"],
+            "aliases": ["CSS animation backgrounds will be built here."],
+            "exclude": "a development placeholder, drawn only in a dev build; no volunteer sees it"
         },
         {
             "id": "bg-audios",

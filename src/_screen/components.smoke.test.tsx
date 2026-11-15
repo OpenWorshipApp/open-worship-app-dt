@@ -384,8 +384,8 @@ describe('screen component smoke tests', () => {
     });
 
     test('renders root screen components with mocked screen manager context', async () => {
-        const { default: ScreenBackgroundColorComp } =
-            await import('./ScreenBackgroundColorComp');
+        const { default: ScreenBackgroundFillComp } =
+            await import('./ScreenBackgroundFillComp');
         const { default: ScreenBackgroundImageComp } =
             await import('./ScreenBackgroundImageComp');
         const { default: ScreenBackgroundVideoComp } =
@@ -406,7 +406,9 @@ describe('screen component smoke tests', () => {
         const { default: ScreenAppComp } = await import('./ScreenAppComp');
 
         expect(
-            renderToStaticMarkup(<ScreenBackgroundColorComp color="#123456" />),
+            renderToStaticMarkup(
+                <ScreenBackgroundFillComp src="#123456" isMoving={false} />,
+            ),
         ).toContain('background-color:#123456');
         expect(
             renderToStaticMarkup(

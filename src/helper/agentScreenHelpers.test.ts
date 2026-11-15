@@ -209,14 +209,26 @@ describe('toSlideSummary', () => {
 });
 
 describe('toBackgroundSummary', () => {
-    it('names a file by its basename and a colour by its value', () => {
+    it('names a file by its basename and a fill by its value', () => {
         expect(
             toBackgroundSummary({ type: 'video', src: '/bg/videos/sea.mp4' }),
         ).toEqual({ kind: 'video', name: 'sea.mp4' });
-        expect(toBackgroundSummary({ type: 'color', src: '#112233' })).toEqual({
-            kind: 'color',
+        expect(toBackgroundSummary({ type: 'fill', src: '#112233' })).toEqual({
+            kind: 'fill',
             name: '#112233',
         });
+        expect(
+            toBackgroundSummary({
+                type: 'fill',
+                src: 'gradient?shape=linear&angle=135&colors=1E3A8A-581C87&motion=slow',
+            }),
+        ).toEqual({
+            kind: 'fill',
+            name: 'linear 135° gradient #1E3A8A → #581C87, moving slow',
+        });
+        expect(
+            toBackgroundSummary({ type: 'fill', src: 'url(x)' } as any),
+        ).toEqual({ kind: 'fill', name: null });
         expect(toBackgroundSummary(null)).toBeNull();
     });
     it('names a web page by its address and never a camera by its device', () => {

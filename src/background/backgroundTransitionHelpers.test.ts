@@ -22,6 +22,7 @@ import {
     BACKGROUND_ITEM_TRANSITION_SETTING_NAME,
     BACKGROUND_TAB_TRANSITION_SETTING_NAME,
     BACKGROUND_TRANSITION_CHANGED_EVENT,
+    getBackgroundTabTransition,
     resolveBackgroundTransition,
     setBackgroundItemTransition,
     setBackgroundTabTransition,
@@ -51,13 +52,13 @@ describe('background transitions', () => {
     });
 
     test('stamping writes the key only when there is an override', () => {
-        const color = { type: 'color' as const, src: '#000000' };
-        expect('transitionEffect' in stampBackgroundTransition(color)).toBe(
+        const fill = { type: 'fill' as const, src: '#000000' };
+        expect('transitionEffect' in stampBackgroundTransition(fill)).toBe(
             false,
         );
         setBackgroundItemTransition('#000000', 'fade');
-        expect(stampBackgroundTransition(color)).toEqual({
-            ...color,
+        expect(stampBackgroundTransition(fill)).toEqual({
+            ...fill,
             transitionEffect: 'fade',
         });
         // An override taken away leaves no stale key on a re-stamp.
@@ -65,10 +66,30 @@ describe('background transitions', () => {
         expect(
             'transitionEffect' in
                 stampBackgroundTransition({
-                    ...color,
+                    ...fill,
                     transitionEffect: 'fade',
                 }),
         ).toBe(false);
+    });
+
+    test('the Fills tab keeps the transition it was given as Colors', () => {
+        settings.set(
+            BACKGROUND_TAB_TRANSITION_SETTING_NAME,
+            JSON.stringify({ color: 'zoom', image: 'fade' }),
+        );
+        expect(getBackgroundTabTransition('fill')).toBe('zoom');
+        expect(getBackgroundTabTransition('image')).toBe('fade');
+        // The next change writes it under its current name alone.
+        setBackgroundTabTransition('video', 'move');
+        expect(
+            JSON.parse(settings.get(BACKGROUND_TAB_TRANSITION_SETTING_NAME)!),
+        ).toEqual({ fill: 'zoom', image: 'fade', video: 'move' });
+        // Saved both ways, the current name wins.
+        settings.set(
+            BACKGROUND_TAB_TRANSITION_SETTING_NAME,
+            JSON.stringify({ color: 'zoom', fill: 'none' }),
+        );
+        expect(getBackgroundTabTransition('fill')).toBe('none');
     });
 
     test('unticking the last entry removes the setting, and junk is ignored', () => {

@@ -1,0 +1,314 @@
+// The Background panel's Fills, across the whole panel (2026-11-14, the user:
+// _make it fill parent container_, then _make these to be inline block_):
+// the one Dark / Light switch and, after it, the screen's badge on a line of
+// their own (_move the dark/light bage to inline block with screen id list_,
+// _make it on the left_), then boxes side by side -- the colour picker's,
+// the gradients and patterns, and Customize.
+// The last two share whatever the row leaves, and a box wraps under the one
+// before it when the panel is too narrow for both. A screen's own picker
+// folds to that line (_make each section collapsible_), its fold first. The
+// saved fills sit under the patterns (_the preset section should be part of
+// gradient|pattern_), and Customize's box is there only while it is open.
+.fill-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+
+  > .fill-picker-bar {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding-inline-start: 2px;
+  }
+}
+
+// The chevron alone; its colour is the screen's, set where it is drawn.
+.fill-picker-fold {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font-size: 1rem;
+  line-height: 1;
+
+  &:hover {
+    background-color: rgba(128, 128, 128, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+// A folded picker's screen holds this: a still tile, never a moving one, and
+// its name, cut short before the line wraps.
+.fill-picker-held {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.78rem;
+  opacity: 0.85;
+
+  > .fill-picker-held-tile {
+    flex: none;
+    width: 34px;
+    aspect-ratio: 16 / 9;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.55);
+  }
+
+  > .fill-picker-held-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// The colour picker's own look, so the three read as one row of boxes.
+.fill-picker-box {
+  display: flex;
+  flex: 1 1 250px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--app-line);
+  border-radius: var(--bs-border-radius);
+  background-color: var(--app-surface);
+
+  // The saved fills end their box, so the line `.app-presets` draws under
+  // itself would have nothing under it; and they keep their own height
+  // rather than `.app-presets`' 100% of a box stretched to its row. A line
+  // over them sets them apart from the tiles.
+  > .app-presets {
+    flex: 0 0 auto;
+    padding-top: 6px;
+    padding-bottom: 0;
+    border-top: 1px solid var(--app-line);
+    border-bottom: 0;
+  }
+}
+
+.fill-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fill-picker-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+
+  // The name is dimmed; a control on its line is not.
+  > i,
+  > span {
+    opacity: 0.65;
+  }
+}
+
+// Customize's toggle, at the far end of the gradients' line: lit while open.
+.fill-picker-customize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+    background-color: rgba(128, 128, 128, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+
+  &.is-on {
+    opacity: 1;
+    border-color: var(--app-accent);
+    color: var(--app-accent);
+  }
+}
+
+// Each a little screen: 16:9, so a gradient's angle reads as it will on the
+// wall. As many to a row as the box holds (the four of a 270px box at the
+// least width), so a wide panel lays each kind out on one line; auto-fill,
+// not auto-fit, so the two kinds keep the same columns and one tile size.
+.fill-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+  // Room for the ring the held tile and a focused one draw outside
+  // themselves, which the clipped panel would otherwise cut at the edges.
+  padding: 4px;
+}
+
+.fill-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  // The same hairline as a colour swatch, so a pale tile on the light panel
+  // is still a tile.
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.55);
+  transition: transform 0.08s ease-out;
+
+  &:hover {
+    transform: scale(1.08);
+    z-index: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px dashed var(--bs-info);
+    outline-offset: 2px;
+  }
+
+  &.is-selected {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+  }
+
+  > i {
+    line-height: 1;
+    color: #000000;
+    // Never the press's target: `BackgroundFillsComp` reads the pressed tile
+    // off `event.target`.
+    pointer-events: none;
+  }
+
+  &.is-dark > i {
+    color: #ffffff;
+  }
+
+  > .bi-check-lg {
+    font-size: 0.8rem;
+  }
+
+  // A still mark that this one moves on a screen: the tile itself never
+  // does, so an open panel costs no frame.
+  > .fill-tile-motion {
+    position: absolute;
+    top: 2px;
+    inset-inline-end: 3px;
+    font-size: 0.6rem;
+    opacity: 0.85;
+  }
+}
+
+// The head of a box of its own: no line over it.
+.fill-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fill-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+// One column wide enough for "Background Color", and the words give way
+// before the controls do.
+.fill-editor-label {
+  flex: 0 1 8.5em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.fill-editor-value {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+
+  > select {
+    min-width: 0;
+  }
+}
+
+.fill-editor-colors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.fill-editor-color {
+  display: inline-flex;
+  align-items: center;
+}
+
+// The native colour well, drawn as one more swatch -- as the colour picker's
+// Mix Color well is.
+.fill-editor .color-picker-mix-input {
+  width: 30px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.55);
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 2px;
+  }
+
+  &::-webkit-color-swatch {
+    border: 0;
+    border-radius: 3px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 2px;
+  }
+}
+
+// `.btn` too, to beat `.app .btn`'s hardcoded padding.
+.btn.fill-editor-remove,
+.btn.fill-editor-add {
+  padding: 0 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.fill-editor-choices {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+
+  > .btn {
+    padding: 0 6px;
+    font-size: 0.72rem;
+    line-height: 1.6;
+  }
+}

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 
+import { checkIsFillDark, parseFill } from '../../background/fillValueHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
@@ -963,8 +964,15 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         }
     }
 
-    reflectBackgroundColor(backgroundColor: string) {
-        const isBackgroundColorDark = checkIsColorDark(backgroundColor);
+    reflectBackgroundFill(fillSrc: string) {
+        // A gradient or a pattern is judged by the colour it reads as from
+        // across the room (`toFillAverageColor`): read as a colour, it was no
+        // colour at all, so a dark gradient turned white words black.
+        const fill = parseFill(fillSrc);
+        if (fill === null) {
+            return;
+        }
+        const isBackgroundColorDark = checkIsFillDark(fill);
         const isTextColorDark = checkIsColorDark(
             ScreenLongTextManager.textStyleTextColor,
         );

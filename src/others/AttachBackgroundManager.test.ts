@@ -182,7 +182,7 @@ describe('AttachBackgroundManager', () => {
 
         await manager.saveData(filePath, {
             color: {
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
                 item: '#fff000',
             },
             camera: {
@@ -210,7 +210,7 @@ describe('AttachBackgroundManager', () => {
         expect(getMockFileSource(metaPath).writeFileData).toHaveBeenCalledWith(
             JSON.stringify({
                 color: {
-                    type: DragTypeEnum.BACKGROUND_COLOR,
+                    type: DragTypeEnum.BACKGROUND_FILL,
                     item: '#fff000',
                 },
                 camera: {
@@ -248,9 +248,20 @@ describe('AttachBackgroundManager', () => {
 
         fsCheckFileExistMock.mockResolvedValue(true);
         jsonDataMap[metaPath] = {
-            color: {
-                type: DragTypeEnum.BACKGROUND_COLOR,
+            fill: {
+                type: DragTypeEnum.BACKGROUND_FILL,
                 item: '#000000',
+            },
+            // Attached before the Fills tab had its name.
+            legacy: { type: 'bg-color', item: '#123456' },
+            pattern: {
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: 'pattern?name=dots&base=172554&ink=FFFFFF1F&size=24',
+            },
+            // Never CSS, whoever wrote the file.
+            junk: {
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: 'url(https://example.com/x.png)',
             },
             camera: {
                 type: DragTypeEnum.BACKGROUND_CAMERA,
@@ -279,10 +290,18 @@ describe('AttachBackgroundManager', () => {
         const data = await manager.readData(filePath);
 
         expect(fsWriteFileMock).not.toHaveBeenCalled();
-        expect(data.color).toEqual({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+        expect(data.fill).toEqual({
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#000000',
         });
+        expect(data.legacy).toEqual({
+            type: DragTypeEnum.BACKGROUND_FILL,
+            item: '#123456',
+        });
+        expect(data.pattern.item).toBe(
+            'pattern?name=dots&base=172554&ink=FFFFFF1F&size=24',
+        );
+        expect('junk' in data).toBe(false);
         expect(data.camera).toEqual({
             type: DragTypeEnum.BACKGROUND_CAMERA,
             item: { src: 'camera:1' },
@@ -300,7 +319,7 @@ describe('AttachBackgroundManager', () => {
         const manager = new AttachBackgroundManager();
         const filePath = '/docs/cache.txt';
         const droppedData = {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#112233',
         };
         const readSpy = vi.spyOn(manager, 'readData').mockResolvedValue({});
@@ -336,7 +355,7 @@ describe('AttachBackgroundManager', () => {
 
         await manager.attachDroppedBackground(
             {
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
                 item: '#abcdef',
             },
             filePath,
@@ -419,7 +438,7 @@ describe('AttachBackgroundManager', () => {
         const filePath = '/docs/first-look.txt';
         const metaPath = AttachBackgroundManager.genMetaDataFilePath(filePath);
         const colorData = {
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#445566',
         };
         jsonDataMap[metaPath] = { '3': colorData };

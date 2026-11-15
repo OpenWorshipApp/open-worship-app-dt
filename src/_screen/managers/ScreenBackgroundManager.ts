@@ -20,6 +20,8 @@ import ScreenEventHandler, {
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
+import { checkIsFillSrc } from '../../background/fillValueHelpers';
+import { withCurrentBackgroundType } from '../../background/backgroundFillLegacyHelpers';
 import {
     collectLiveOnScreenMap,
     persistOnScreenEntry,
@@ -46,7 +48,7 @@ import {
 } from '../../helper/mediaHelpers';
 import { appLog } from '../../helper/loggerHelpers';
 
-export type ScreenBackgroundManagerEventType = 'update' | 'color-set';
+export type ScreenBackgroundManagerEventType = 'update' | 'fill-set';
 
 const FADING_DURATION_SECOND = 3;
 // `HAVE_CURRENT_DATA`: the element has a frame to show. The
@@ -150,11 +152,16 @@ class ScreenBackgroundManager
         // where its own transition (else its tab's) is put on it, on the
         // presenter, BEFORE the equality check: stamped, it compares equal to
         // the same background already up. The screen window keeps the one it
-        // was handed.
+        // was handed. One saved before the colour kind became the fill kind
+        // (an undo backup, a sync group's copy) is read the new way first.
+        const currentBackgroundSrc =
+            targetBackgroundSrc === null
+                ? null
+                : withCurrentBackgroundType(targetBackgroundSrc);
         const backgroundSrc =
-            targetBackgroundSrc !== null && !appProvider.isPageScreen
-                ? stampBackgroundTransition(targetBackgroundSrc)
-                : targetBackgroundSrc;
+            currentBackgroundSrc !== null && !appProvider.isPageScreen
+                ? stampBackgroundTransition(currentBackgroundSrc)
+                : currentBackgroundSrc;
         if (
             this.screenManagerBase.checkIsLockedWithMessage() ||
             checkAreObjectsEqual(this._backgroundSrc, backgroundSrc)
@@ -162,8 +169,8 @@ class ScreenBackgroundManager
             return;
         }
         this._backgroundSrc = backgroundSrc;
-        if (backgroundSrc?.type === 'color') {
-            this.addPropEvent('color-set', backgroundSrc.src);
+        if (backgroundSrc?.type === 'fill') {
+            this.addPropEvent('fill-set', backgroundSrc.src);
         }
         this.render();
         persistOnScreenEntry({
@@ -878,9 +885,14 @@ class ScreenBackgroundManager
                     backgroundTypeMap[type],
                 );
             this.applyBackgroundSrcWithSyncGroup(backgroundSrc);
-        } else if (type === DragTypeEnum.BACKGROUND_COLOR) {
+        } else if (
+            type === DragTypeEnum.BACKGROUND_FILL &&
+            checkIsFillSrc(item)
+        ) {
+            // Only a fill this app can draw: a drop carries whatever its
+            // source wrote, and a run sheet can come from anywhere.
             this.applyBackgroundSrcWithSyncGroup({
-                type: 'color',
+                type: 'fill',
                 src: item,
             });
         }

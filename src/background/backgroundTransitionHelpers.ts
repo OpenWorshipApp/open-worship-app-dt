@@ -13,9 +13,10 @@ import {
     toValidTransitionEffect,
     withTransitionEffect,
 } from '../_screen/transitionOverrideHelpers';
+import { withCurrentBackgroundTypeKeys } from './backgroundFillLegacyHelpers';
 
 /**
- * A Background tab's own transition (Colors, Images, Videos, Cameras, Webs)
+ * A Background tab's own transition (Fills, Images, Videos, Cameras, Webs)
  * and one background's own -- each overriding the screen's `Background:`,
  * the item over its tab. Kept the way `video-fading-at-the-end` keeps its
  * per-file choice: one JSON map per setting key (`appLocalStorage` is a file
@@ -23,8 +24,8 @@ import {
  * entries that are switched on.
  *
  * Items are keyed by the `src` a background goes up with -- the file's `src`
- * for a picture, video or web file, the colour for a colour, the device for a
- * camera, the address for a web link.
+ * for a picture, video or web file, the fill's own text for a fill
+ * (`fillValueHelpers`), the device for a camera, the address for a web link.
  */
 export const BACKGROUND_TAB_TRANSITION_SETTING_NAME =
     'background-tab-transition';
@@ -62,8 +63,13 @@ function readTransitionMap(settingName: string): TransitionMapType {
             }
         }
     } catch (_error) {}
-    parsedMapCache.set(settingName, { raw, map });
-    return map;
+    // A tab is keyed by its background type, and the Fills tab's was `color`.
+    const currentMap =
+        settingName === BACKGROUND_TAB_TRANSITION_SETTING_NAME
+            ? withCurrentBackgroundTypeKeys(map)
+            : map;
+    parsedMapCache.set(settingName, { raw, map: currentMap });
+    return currentMap;
 }
 
 function writeTransitionEntry(

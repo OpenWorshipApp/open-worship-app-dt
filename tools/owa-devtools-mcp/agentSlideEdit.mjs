@@ -20,8 +20,9 @@
 //     rounds for a twelve-slide sermon, past every round cap;
 //   - `file` takes the document as the help window ATTACHED it, by its whole
 //     path, wherever it lives;
-//   - `set-background` puts a colour, or a picture or video of the
-//     Background panel by name, behind many slides at once (the slide's
+//   - `set-background` puts a fill (a colour, or a gradient or pattern as
+//     the Fills tab writes one), or a picture or video of the Background
+//     panel by name, behind many slides at once (the slide's
 //     attached background, `agentSlideBackgroundHelpers.ts`) -- a picture of
 //     slides the user liked has a photo behind its words, and no box can be
 //     one. `slides` lists what the panel holds.

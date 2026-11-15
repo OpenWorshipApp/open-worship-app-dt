@@ -83,6 +83,10 @@ import {
     usePresentingFlowPreviewItemExpanding,
 } from './presentingFlowPreviewFloatingHelpers';
 
+// The screen a line's fill is drawn for, near enough: a pattern's tiles are
+// in screen pixels, and the card is a small 16:9 picture of one.
+const FILL_PREVIEW_SCREEN_WIDTH = 1920;
+
 /**
  * Whether a click landed on something the widget OFFERS — an element header, a
  * slide card, an action's button, a CC row — rather than on the space around
@@ -1015,7 +1019,10 @@ function PresentingFlowBackgroundItemPreviewComp({
             onClick={handleClicking}
             {...screenReachProps}
         >
-            {genAttachBackgroundComponent(droppedData)}
+            {genAttachBackgroundComponent(
+                droppedData,
+                thumbnailWidth / FILL_PREVIEW_SCREEN_WIDTH,
+            )}
         </div>
     );
 }

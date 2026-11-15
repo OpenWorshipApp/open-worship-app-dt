@@ -46,7 +46,9 @@ Rules that are easy to break:
 - The sidecar travels: `FILE_EXTENSIONS` (rename/trash), `AGENT_SIDECAR_EXTENSIONS`,
   `preDelete`, and the archives as an optional `transitionMetas` manifest field.
 - Colour swatches are every colour picker in the app; only the Background
-  Colors tab provides their transition row (`ColorSwatchExtraMenuContext`).
+  Fills tab (the Colors tab until 2026-11-14) provides their transition row
+  (`ColorSwatchExtraMenuContext`), and its gradient and pattern tiles read
+  the same context.
 - Inherited labels read `ScreenEffectManager.getCommonEffectType`; a panel
   restored open on start-up is drawn before any screen exists, so it listens to
   `SCREEN_EFFECT_CHANGED_EVENT` (it read "Varies by screen" until it did).

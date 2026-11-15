@@ -670,7 +670,7 @@ describe('slide action request routing', () => {
             expect.stringMatching(/Example\.ows$/),
             'Example',
             { metadata: { ...metadata }, items: oldItems },
-            { wanted: { kind: 'color', color: '#000000' }, slides: [1] },
+            { wanted: { kind: 'fill', src: '#000000' }, slides: [1] },
         );
         // It is no editing-history change: no history snapshot is taken.
         expect(h.snapshotEditing).not.toHaveBeenCalled();

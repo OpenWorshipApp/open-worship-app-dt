@@ -257,15 +257,17 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   Collapsed, it's an `app-hidden-widget` (~6px, shows only a
   `Background` / `Note` label). Its tabs **do not exist in the DOM until expanded** — an early
   `.nav-tabs` scan finds only the header + presenter tab groups. **Click the `Background`
-  label to expand**, then the tabs (`Colors…Audios`) render as real `button.nav-link`s.
+  label to expand**, then the tabs (`Fills…Audios`; `Fills` was `Colors` until 2026-11-14) render as real `button.nav-link`s.
 - **Color swatches are `role="button"` controls** (`RenderColorComp` / `RenderNoColorComp`:
   `tabIndex=0`, the colour name as `aria-label`, `aria-pressed` on the one in force, Enter /
   Space press them). `take_snapshot` lists them as `button "fuchsia"` … `button "white"` plus
   `button "No Color"` — press them by `uid` (verified 2026-09-12; earlier revisions said plain
   `div`s carrying only a `title`, and before that `role=group` — both stale). **Focus stays on
-  the swatch that was pressed**, by mouse or by Tab + Enter: `BackgroundColorsComp` keys each
-  screen's picker by the SCREEN rather than by the colour, and puts focus back on the same
-  swatch when a re-render dropped it within 2 s of the press. A keyboard user losing their
+  the swatch that was pressed**, by mouse or by Tab + Enter: `BackgroundFillsComp` keys each
+  screen's picker by the SCREEN rather than by the fill, and puts focus back on the same
+  swatch -- or gradient / pattern tile (`.fill-tile`, `role="button"` too) -- when a
+  re-render dropped it within 2 s of the press. A FOLDED screen section has no swatch to
+  return to (PM-183). A keyboard user losing their
   place after a press is a regression now, not the standing Info it once was. Every press
   re-renders the row, so a swatch `uid` from before the press is dead after it — snapshot
   again (`click` answers "no longer exists").
@@ -512,7 +514,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 
 ## 6. `.app-on-screen` / live-output semantics — and driving the screen window
 - Any element currently shown on the presentation output carries **`.app-on-screen`**.
-- The background tab whose content is live gets a **`●` prefix** (e.g. `●Videos`, `●Colors`; it was `*` once, §5).
+- The background tab whose content is live gets a **`●` prefix** (e.g. `●Videos`, `●Fills`; it was `*` once, §5).
 - Use both to verify "send to screen" toggles:
   `[...document.querySelectorAll('.app-on-screen')].map(e=>e.textContent.trim())`.
 

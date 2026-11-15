@@ -17,6 +17,7 @@ import { captureVideoFrameDataUrl } from '../helper/mediaHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
+import { parseFill, toFillAverageColor } from '../background/fillValueHelpers';
 import { PREVIEW_ONLY_ATTR, WEBSITE_ITEM_ATTR } from '../helper/constants';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { extractYouTubeVideoId } from '../slide-editor/canvas/youtubeUrlHelpers';
@@ -480,8 +481,14 @@ export class PptxSlideMeasurer {
             return null;
         }
         try {
-            if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
-                const color = parseCssColor(droppedData.item);
+            if (droppedData.type === DragTypeEnum.BACKGROUND_FILL) {
+                // A gradient or a pattern goes in as the colour it reads as
+                // across the room: a slide background here is one colour or
+                // one picture.
+                const fill = parseFill(droppedData.item);
+                const color = parseCssColor(
+                    fill === null ? null : toFillAverageColor(fill),
+                );
                 return color === null
                     ? null
                     : { kind: 'color', color: compositeOverBlack(color) };

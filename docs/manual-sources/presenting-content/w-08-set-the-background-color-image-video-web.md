@@ -2,8 +2,8 @@
 id: W-08
 title: "Set the background (color / image / video / web)"
 section: "Presenting content"
-verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, KB-04]
-screenshots: 3
+verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, KB-04]
+screenshots: 4
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-14"
 ---
@@ -14,10 +14,26 @@ workflowsVersion: "2026-11-14"
 1. Find the **[en:tran:Background]** panel at the bottom of the middle column,
    open with its tabs showing. If it has been folded to a thin bar, click the
    bar and the panel opens again. 📸
-2. Pick a tab: **[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
-   - **[en:tran:Colors]:** click a swatch. If the color could clash with the Bible text, the app
-     changes the text color so it stays visible and says so in a message with its own
-     **[en:tran:Undo]** — it asks nothing.
+2. Pick a tab: **[en:tran:Fills] / [en:tran:Images] / [en:tran:Videos] / [en:tran:Cameras] / [en:tran:Webs]**.
+   - **[en:tran:Fills]:** a plain color, a gradient or a pattern. Click a color swatch, or a tile
+     under **[en:tran:Gradients]** or **[en:tran:Patterns]**. **[en:tran:Dark]** /
+     **[en:tran:Light]** at the top swaps the rows below between deep and pale ones. A tile with
+     a small wind mark moves on the screen; the tile itself and the Mini Screen stay still. If a
+     color could clash with the Bible text, the app changes the text color so it stays visible
+     and says so in a message with its own **[en:tran:Undo]** — it asks nothing. 📸
+   - Once a screen holds a fill, the tab has a section for each such screen. The arrow at the
+     left of its line, in that screen's color, folds the section to that line, which then shows
+     the screen's number and what it holds; press the arrow again to open it.
+   - **[en:tran:Customize]**, beside the tiles while a screen holds a gradient or a pattern,
+     changes its colors, **[en:tran:Type]**, **[en:tran:Angle]**, **[en:tran:Opacity]**,
+     **[en:tran:Size]** and **[en:tran:Speed]**; the screen follows half a second after you
+     stop. The sliders button at the end of the **[en:tran:Gradients]** line opens and closes it.
+   - **[en:tran:Save as Preset]**, under the patterns, keeps what is up as a button of its own
+     under **[en:tran:Presets]**.
+   - Right-click a gradient or pattern tile, or a saved button, → **[en:tran:Copy CSS]** to
+     take its CSS somewhere else, at a screen's size. A still one copies as its lines of CSS; a
+     moving one as a short stylesheet that moves it as the screen does — put the class
+     `owa-fill` on what it is to fill.
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -61,7 +77,7 @@ is still running while you look at another one.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `KB-04`
+`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `KB-04`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-14).
 :::

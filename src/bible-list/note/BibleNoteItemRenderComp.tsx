@@ -219,7 +219,7 @@ export default function BibleNoteItemRenderComp({
     }`;
     return (
         <li
-            className="list-group-item item app-has-action-rail"
+            className="list-group-item item app-has-action-rail-2"
             title={tran('Double click to open note')}
             data-note-item-id={`${fileSource.name}-${noteItem.id}`}
             data-index={index + 1}
@@ -234,7 +234,6 @@ export default function BibleNoteItemRenderComp({
             }
         >
             <div className="d-flex ps-1">
-                <ItemColorNoteComp item={noteItem} />
                 <i
                     className={'bi bi-journal mx-1 app-caught-hover-pointer'}
                     role="button"
@@ -286,11 +285,18 @@ export default function BibleNoteItemRenderComp({
                     </div>
                 )}
             </div>
+            {/* The ⋮ then the colour note, as on a document row. */}
             {isEditingTitle ? null : (
-                <div className="app-action-rail app-action-rail--pinned">
+                <div
+                    className={
+                        'color-note-container app-action-rail' +
+                        ' app-action-rail--pinned'
+                    }
+                >
                     <ContextMenuDotsButtonComp
                         onOpening={handleContextMenuOpening}
                     />
+                    <ItemColorNoteComp item={noteItem} />
                 </div>
             )}
         </li>

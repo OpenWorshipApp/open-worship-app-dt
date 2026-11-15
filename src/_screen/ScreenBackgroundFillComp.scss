@@ -1,0 +1,70 @@
+// A moving fill (`ScreenBackgroundFillComp`): only `transform` is animated, on
+// a layer larger than the screen, so the compositor slides a picture painted
+// once. Animating `background-position` would repaint the whole projector
+// every frame -- `CLAUDE.md`'s rule against animated paint properties, at
+// screen size. A fill's Copy CSS writes this motion out
+// (`fillCssTextHelpers.ts`): change one, change both.
+.app-fill-box {
+  position: relative;
+  overflow: hidden;
+}
+
+.app-fill-motion {
+  position: absolute;
+  will-change: transform;
+  animation-duration: var(--app-fill-seconds, 12s);
+  animation-iteration-count: infinite;
+}
+
+// A pattern drifts one tile down and right, then starts over where it began:
+// the tile repeats, so the jump back cannot be seen.
+.app-fill-drift {
+  top: calc(-1 * var(--app-fill-tile, 32px));
+  left: calc(-1 * var(--app-fill-tile, 32px));
+  right: 0;
+  bottom: 0;
+  animation-name: app-fill-drift;
+  animation-timing-function: linear;
+}
+
+// A gradient sways to and fro across a layer a quarter larger on every side,
+// never far enough to show its edge (8% of 150% is 12% of the screen).
+.app-fill-sway {
+  inset: -25%;
+  animation-name: app-fill-sway;
+  animation-timing-function: ease-in-out;
+  animation-direction: alternate;
+}
+
+@keyframes app-fill-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(
+      var(--app-fill-tile, 32px),
+      var(--app-fill-tile, 32px),
+      0
+    );
+  }
+}
+
+@keyframes app-fill-sway {
+  from {
+    transform: translate3d(-8%, -6%, 0);
+  }
+  to {
+    transform: translate3d(8%, 6%, 0);
+  }
+}
+
+// Exempt from the global `prefers-reduced-motion` clamp in `interaction.scss`
+// for the reason a video background is never stopped by it: the motion was
+// chosen for the congregation's screen by whoever set it up. The selector
+// outweighs the clamp's, `!important` against `!important`.
+@media (prefers-reduced-motion: reduce) {
+  .app .app-fill-motion:not(.spinner-border):not(.spinner-grow) {
+    animation-duration: var(--app-fill-seconds, 12s) !important;
+    animation-iteration-count: infinite !important;
+  }
+}

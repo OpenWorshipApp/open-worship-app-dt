@@ -107,10 +107,17 @@ describe('planCanvasBackgroundDrop', () => {
     test('maps a color, whose deserialized item IS the value', () => {
         expect(
             planCanvasBackgroundDrop({
-                type: DragTypeEnum.BACKGROUND_COLOR,
+                type: DragTypeEnum.BACKGROUND_FILL,
                 item: '#123456',
             }),
         ).toEqual({ kind: 'color', color: '#123456' });
+        // A box takes a colour alone: a gradient is a screen's fill.
+        expect(
+            planCanvasBackgroundDrop({
+                type: DragTypeEnum.BACKGROUND_FILL,
+                item: 'gradient?shape=linear&angle=135&colors=1E3A8A-581C87',
+            }),
+        ).toBeNull();
     });
 
     test.each([

@@ -130,7 +130,7 @@ describe('slideItemRenderHelpers', () => {
         );
 
         const colorElement = genAttachBackgroundComponent({
-            type: DragTypeEnum.BACKGROUND_COLOR,
+            type: DragTypeEnum.BACKGROUND_FILL,
             item: '#112233',
         } as any) as any;
         expect(colorElement.props.style.backgroundColor).toBe('#112233');

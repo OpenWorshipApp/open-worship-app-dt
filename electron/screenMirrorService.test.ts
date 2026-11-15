@@ -309,7 +309,7 @@ test('routes local screen messages through output context and identifies remote 
     const untouched = {
         screenId: 501,
         type: 'background',
-        data: { type: 'color', src: '#ffffff' },
+        data: { type: 'fill', src: '#ffffff' },
     } as any;
     expect(service.localMessage(untouched)).toBe(untouched);
     expect(service.isRemoteOutput(501)).toBe(false);
@@ -333,7 +333,7 @@ test('routes local screen messages through output context and identifies remote 
         screenId: 502,
         type: 'background',
         stage: 4,
-        data: { type: 'color', src: '#ffffff' },
+        data: { type: 'fill', src: '#ffffff' },
     } as any;
     expect(service.localMessage(message)).toMatchObject({ stage: 4 });
     expect(context.stage).toBe(4);
@@ -1576,11 +1576,11 @@ test('a local output can change sound ownership and refresh its presenter snapsh
     ).toBe(true);
 
     const refreshed = answerBootstraps(service, [
-        { type: 'background', data: { type: 'color', color: '#123456' } },
+        { type: 'background', data: { type: 'fill', src: '#123456' } },
     ]);
     await service.refreshContext(12);
     expect(service.getOutputContext(12)?.messages).toMatchObject([
-        { type: 'background', data: { color: '#123456' } },
+        { type: 'background', data: { src: '#123456' } },
     ]);
     const feedback = {
         screenId: 12,

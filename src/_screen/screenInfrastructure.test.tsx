@@ -100,7 +100,7 @@ vi.mock('../bible-list/BibleItem', () => ({
 vi.mock('../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: {
         getAttachedBackground: vi.fn(async () => ({
-            type: 'bg-color',
+            type: 'bg-fill',
             item: '#fff',
         })),
     },
@@ -365,8 +365,9 @@ describe('screen infrastructure', () => {
             }
             if (key === screenManagerSettingNames.BACKGROUND) {
                 return JSON.stringify({
+                    // Saved before the Fills tab had its name.
                     1: { type: 'color', src: '#fff' },
-                    9: { type: 'color', src: '#000' },
+                    9: { type: 'fill', src: '#000' },
                 });
             }
             if (key === screenManagerSettingNames.FULL_TEXT) {
@@ -447,7 +448,7 @@ describe('screen infrastructure', () => {
             1: { marqueeBottomDataList: [{ text: 'hello' }], timeDataList: [] },
         });
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({
-            1: { type: 'color', src: '#fff' },
+            1: { type: 'fill', src: '#fff' },
         });
         expect(
             Object.keys(screenHelpers.getBibleListOnScreenSetting()),
@@ -605,7 +606,7 @@ describe('screen infrastructure', () => {
 
         await applyAttachBackground(1, '/tmp/file.app', 3);
         expect(receiveDroppedMock).toHaveBeenCalledWith({
-            type: 'bg-color',
+            type: 'bg-fill',
             item: '#fff',
         });
 

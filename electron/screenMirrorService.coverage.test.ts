@@ -892,7 +892,7 @@ test('a message too big to send, or a socket too far behind, is resynchronized',
         service.sendScreenMessage({
             screenId: 2,
             type: 'background',
-            data: { type: 'color', src: '#000000' },
+            data: { type: 'fill', src: '#000000' },
         } as any),
     ).toBe(true);
     expect(socket.packets).toHaveLength(before);
@@ -958,7 +958,7 @@ test('screen messages go only to a guest output whose guest is still here', () =
     const message = {
         screenId: 1,
         type: 'background',
-        data: { type: 'color', src: '#000000' },
+        data: { type: 'fill', src: '#000000' },
     } as any;
     expect(service.sendScreenMessage(message)).toBe(false);
 

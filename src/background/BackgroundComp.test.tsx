@@ -13,6 +13,10 @@ const h = vi.hoisted(() => ({
     showAppContextMenu: vi.fn(),
     listeners: new Map<string, () => void>(),
     resizeChecks: [] as Array<() => void>,
+    // A release build unless a test says otherwise, as `appProvider` reads it.
+    isDev: false,
+    // The tab a setting remembers, `null` for none.
+    savedTabKey: null as string | null,
 }));
 
 vi.mock('../helper/settingHelpers', async () => {
@@ -20,10 +24,23 @@ vi.mock('../helper/settingHelpers', async () => {
     return {
         useStateSettingBoolean: (_key: string, initial: boolean) =>
             react.useState(initial),
-        useStateSettingString: (_key: string, initial: string) =>
-            react.useState(initial),
+        useStateSettingString: (key: string, initial: string) =>
+            react.useState(
+                key === 'background-tab' && h.savedTabKey !== null
+                    ? h.savedTabKey
+                    : initial,
+            ),
     };
 });
+vi.mock('../server/appProvider', () => ({
+    default: {
+        systemUtils: {
+            get isDev() {
+                return h.isDev;
+            },
+        },
+    },
+}));
 vi.mock('../others/TabRenderComp', async () => {
     const react = await import('react');
     return {
@@ -141,10 +158,26 @@ import BackgroundComp from './BackgroundComp';
 let container: HTMLDivElement;
 let root: Root;
 
+// Drawn again from the start, for a build or a remembered tab the first
+// drawing did not have: the tab list is chosen once, when the panel mounts.
+async function renderAgain() {
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await act(async () => root.render(createElement(BackgroundComp)));
+}
+
+function tabNames() {
+    return Array.from(container.querySelectorAll('[data-tab]')).map(
+        (element) => element.textContent,
+    );
+}
+
 beforeEach(async () => {
     vi.clearAllMocks();
     h.listeners.clear();
     h.resizeChecks.length = 0;
+    h.isDev = false;
+    h.savedTabKey = null;
     h.checkAudioPlaying.mockReturnValue(false);
     h.checkBackgroundAudioPlaying.mockReturnValue(false);
     h.getBackgroundSrcListOnScreenSetting.mockReturnValue({});
@@ -181,11 +214,13 @@ function click(selector: string) {
 
 describe('Background panel', () => {
     it('shows translated tabs and switches the visible background body', () => {
-        expect(
-            Array.from(container.querySelectorAll('[data-tab]')).map(
-                (element) => element.textContent,
-            ),
-        ).toEqual(['Colors', 'Images', 'Videos', 'Cameras', 'Webs']);
+        expect(tabNames()).toEqual([
+            'Fills',
+            'Images',
+            'Videos',
+            'Cameras',
+            'Webs',
+        ]);
         expect(container.querySelector('[data-body="image"]')).not.toBeNull();
         click('[data-tab="video"]');
         expect(container.querySelector('[data-body="video"]')).not.toBeNull();
@@ -200,7 +235,7 @@ describe('Background panel', () => {
         h.getBackgroundSrcListOnScreenSetting.mockReturnValue({
             '1': { type: 'image', src: 'picture.png' },
         });
-        click('[data-tab="color"]');
+        click('[data-tab="fill"]');
         expect(
             container
                 .querySelector('[data-tab="image"]')
@@ -278,5 +313,77 @@ describe('Background panel', () => {
         expect(
             container.querySelector('.background .header')?.className,
         ).not.toContain('is-compact');
+    });
+});
+
+describe('the development tab', () => {
+    it('a development build adds (dev)CSS Animation after Webs: never lit, no transition, no menu', async () => {
+        h.isDev = true;
+        // Every type on a screen at once: none of them is the new tab's.
+        h.getBackgroundSrcListOnScreenSetting.mockReturnValue(
+            Object.fromEntries(
+                ['fill', 'image', 'video', 'camera', 'web'].map(
+                    (type, index) => {
+                        return [String(index + 1), { type, src: type }];
+                    },
+                ),
+            ),
+        );
+        await renderAgain();
+        expect(tabNames()).toEqual([
+            'Fills',
+            'Images',
+            'Videos',
+            'Cameras',
+            'Webs',
+            '(dev)CSS Animation',
+        ]);
+        const tab = container.querySelector<HTMLButtonElement>(
+            '[data-tab="css-animation"]',
+        )!;
+        expect(tab.getAttribute('data-on-screen')).toBe('false');
+        expect(
+            container
+                .querySelector('[data-tab="web"]')
+                ?.getAttribute('data-on-screen'),
+        ).toBe('true');
+        expect(tab.querySelector('[data-transition]')).toBeNull();
+        expect(
+            container.querySelector('[data-tab="web"] [data-transition]'),
+        ).not.toBeNull();
+        act(() =>
+            tab.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true })),
+        );
+        expect(h.genBackgroundTabTransitionMenuItems).not.toHaveBeenCalled();
+        expect(h.showAppContextMenu).not.toHaveBeenCalled();
+        click('[data-tab="css-animation"]');
+        expect(
+            container.querySelector('[data-body="css-animation"]'),
+        ).not.toBeNull();
+        expect(tab.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('a development build opens on the tab when it is the one remembered', async () => {
+        h.isDev = true;
+        h.savedTabKey = 'css-animation';
+        await renderAgain();
+        expect(
+            container.querySelector('[data-body="css-animation"]'),
+        ).not.toBeNull();
+    });
+
+    it('a release build remembering it shows Images, and the old name of Fills still opens Fills', async () => {
+        h.savedTabKey = 'css-animation';
+        await renderAgain();
+        expect(tabNames()).not.toContain('(dev)CSS Animation');
+        expect(container.querySelector('[data-body="image"]')).not.toBeNull();
+        expect(
+            container
+                .querySelector('[data-tab="image"]')
+                ?.getAttribute('aria-pressed'),
+        ).toBe('true');
+        h.savedTabKey = 'color';
+        await renderAgain();
+        expect(container.querySelector('[data-body="fill"]')).not.toBeNull();
     });
 });

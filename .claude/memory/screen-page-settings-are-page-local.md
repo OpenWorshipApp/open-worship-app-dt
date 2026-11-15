@@ -22,8 +22,9 @@ vd-20261008b (2026-10-08), fixed the same day:
   font size 104 in the presenter, 101px on the screen. Now a screen's
   `setItem` writes into its own context copy (page-local, never disk).
 - **A screen undid the presenter's contrast fix.** `ScreenManager.initEvent`
-  ran on screen pages too: a colour background fired `color-set` there,
-  `reflectBackgroundColor` "applied" a contrasting colour that was dropped and
+  ran on screen pages too: a colour background fired `fill-set` there,
+  `reflectBackgroundFill` "applied" a contrasting colour (color-set and
+  reflectBackgroundColor until the Fills rename, 2026-11-14) that was dropped and
   sent the snapshot's style BACK, and the presenter adopted it -- white Bible
   text on the white background a verse attaches, on the Mini Screen as well,
   right after a toast saying the colour had been changed. `initEvent` now

@@ -3,15 +3,13 @@ import { use, useCallback, type DragEvent, type MouseEvent } from 'react';
 import { copyToClipboard } from '../../server/appHelpers';
 import type { AppColorType } from './colorHelpers';
 import { serializeForDragging } from './colorHelpers';
+import { checkIsColorDark } from './colorValueHelpers';
 import { genShowOnScreensContextMenu } from '../FileItemHandlerComp';
 import ScreenBackgroundManager from '../../_screen/managers/ScreenBackgroundManager';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
-import {
-    HIGHLIGHT_SELECTED_CLASSNAME,
-    pressElementLikeButton,
-} from '../../helper/helpers';
+import { pressElementLikeButton } from '../../helper/helpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { ColorSwatchExtraMenuContext } from './colorSwatchMenuHelpers';
 
@@ -31,7 +29,7 @@ function showContextMenu(
         ...genShowOnScreensContextMenu((event) => {
             ScreenBackgroundManager.handleBackgroundSelecting(
                 event,
-                'color',
+                'fill',
                 { src: color },
                 true,
             );
@@ -82,7 +80,11 @@ export default function RenderColorComp({
     const handleKeyDown = useCallback((event: any) => {
         pressElementLikeButton(event);
     }, []);
-    const element = (
+    // A square tile on a grid (`ColorPicker.scss`): the one in force gets a
+    // steady ring and a tick in whichever of black or white reads on it. It
+    // used to be wrapped in a bordered, pulsing span, which pushed every
+    // swatch after it along the row.
+    return (
         <div
             role="button"
             tabIndex={0}
@@ -94,23 +96,16 @@ export default function RenderColorComp({
             onContextMenu={handleContextMenu}
             onKeyDown={handleKeyDown}
             className={
-                'm-1 color-item app-caught-hover-pointer' +
-                (isSelected ? ' app-border-white-round' : '')
+                'color-item app-caught-hover-pointer' +
+                (isSelected ? ' is-selected' : '') +
+                (checkIsColorDark(color) ? ' is-dark' : '')
             }
-            style={{
-                width: '20px',
-                height: '15px',
-                backgroundColor: color,
-            }}
+            style={{ backgroundColor: color }}
             onClick={handleClick}
-        />
+        >
+            {isSelected ? (
+                <i className="bi bi-check-lg" aria-hidden="true" />
+            ) : null}
+        </div>
     );
-    if (isSelected) {
-        return (
-            <span className={`${HIGHLIGHT_SELECTED_CLASSNAME} animation`}>
-                {element}
-            </span>
-        );
-    }
-    return element;
 }
